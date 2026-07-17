@@ -274,7 +274,7 @@ public partial class CalculationPage : ContentPage
         ShowLongDivision(dividend, divisor);
     }
 
-    private bool TryReadNumber(string? input,string emptyMessage, out decimal number)
+    private bool TryReadNumber(string? input, string emptyMessage, out decimal number)
     {
         number = 0;
 
@@ -354,7 +354,7 @@ public partial class CalculationPage : ContentPage
         string resultText = FormatNumber(result);
 
         string operationSymbol = GetOperationSymbol();
-        if(operationSymbol != "÷")
+        if (operationSymbol != "÷")
         {
             HideLongDivision();
         }
@@ -814,7 +814,7 @@ public partial class CalculationPage : ContentPage
         selectedButton.TextColor =
             selectedText;
     }
-    
+
     private static void ResetSubTabButton(
     Button button,
     Color backgroundColor,

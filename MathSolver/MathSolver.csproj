@@ -79,6 +79,9 @@
 	  <MauiXaml Update="Views\FormulaPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\FractionView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\MultiplicationTablePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

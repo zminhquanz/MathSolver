@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentView
+    x:Class="MathSolver.Views.FractionView"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:MathSolver.Models"
+    BackgroundColor="Transparent">
+
+    <!-- FractionView tự quản lý vùng cuộn.
+         Không bọc nó trong ScrollView ở CalculationPage. -->
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="14,4,14,18"
+            Spacing="12"
+            HorizontalOptions="Center"
+            MaximumWidthRequest="1000">
+
+            <VerticalStackLayout Spacing="3">
+
+                <Label
+                    Text="PHÂN SỐ"
+                    FontSize="25"
+                    FontAttributes="Bold"
+                    TextColor="#1E293B" />
+
+                <Label
+                    Text="Cộng, trừ, nhân, chia, quy đồng và rút gọn phân số"
+                    FontSize="14"
+                    TextColor="#64748B" />
+
+            </VerticalStackLayout>
+
+            <!-- Nhập hai phân số -->
+            <Border
+                Padding="16"
+                BackgroundColor="White"
+                Stroke="#DDD6FE"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="14">
+
+                    <Grid
+                        x:Name="FractionInputGrid"
+                        ColumnDefinitions="*,180,*"
+                        ColumnSpacing="16">
+
+                        <Border
+                            x:Name="FirstFractionCard"
+                            Grid.Column="0"
+                            Padding="12"
+                            BackgroundColor="#F8FAFC"
+                            Stroke="#E2E8F0">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="7">
+
+                                <Label
+                                    Text="Phân số thứ nhất"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="#334155" />
+
+                                <Entry
+                                    x:Name="FirstNumeratorEntry"
+                                    TextColor="#172033"
+                                    Placeholder="Tử số"
+                                    Keyboard="Numeric"
+                                    FontSize="18"
+                                    HorizontalTextAlignment="Center" />
+
+                                <BoxView
+                                    HeightRequest="2"
+                                    BackgroundColor="#6D28D9" />
+
+                                <Entry
+                                    x:Name="FirstDenominatorEntry"
+                                    TextColor="#172033"
+                                    Placeholder="Mẫu số"
+                                    Keyboard="Numeric"
+                                    FontSize="18"
+                                    HorizontalTextAlignment="Center" />
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                        <VerticalStackLayout
+                            x:Name="OperationPanel"
+                            Grid.Column="1"
+                            Spacing="7"
+                            VerticalOptions="Center">
+
+                            <Label
+                                Text="Phép toán"
+                                FontSize="12"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="#64748B" />
+
+                            <Picker
+                                x:Name="OperationPicker"
+                                TextColor="#172033"
+                                SelectedIndex="0"
+                                HorizontalTextAlignment="Center">
+
+                                <Picker.Items>
+                                    <x:String>Cộng (+)</x:String>
+                                    <x:String>Trừ (−)</x:String>
+                                    <x:String>Nhân (×)</x:String>
+                                    <x:String>Chia (÷)</x:String>
+                                    <x:String>Quy đồng mẫu số</x:String>
+                                </Picker.Items>
+
+                            </Picker>
+
+                        </VerticalStackLayout>
+
+                        <Border
+                            x:Name="SecondFractionCard"
+                            Grid.Column="2"
+                            Padding="12"
+                            BackgroundColor="#F8FAFC"
+                            Stroke="#E2E8F0">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="7">
+
+                                <Label
+                                    Text="Phân số thứ hai"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="#334155" />
+
+                                <Entry
+                                    x:Name="SecondNumeratorEntry"
+                                    TextColor="#172033"
+                                    Placeholder="Tử số"
+                                    Keyboard="Numeric"
+                                    FontSize="18"
+                                    HorizontalTextAlignment="Center" />
+
+                                <BoxView
+                                    HeightRequest="2"
+                                    BackgroundColor="#6D28D9" />
+
+                                <Entry
+                                    x:Name="SecondDenominatorEntry"
+                                    TextColor="#172033"
+                                    Placeholder="Mẫu số"
+                                    Keyboard="Numeric"
+                                    FontSize="18"
+                                    HorizontalTextAlignment="Center" />
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                    </Grid>
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10">
+
+                        <Button
+                            Grid.Column="0"
+                            Text="Tính và trình bày lời giải"
+                            HeightRequest="46"
+                            CornerRadius="10"
+                            FontAttributes="Bold"
+                            BackgroundColor="#6D28D9"
+                            TextColor="White"
+                            Clicked="OnCalculateClicked" />
+
+                        <Button
+                            Grid.Column="1"
+                            Text="Xóa dữ liệu"
+                            HeightRequest="46"
+                            CornerRadius="10"
+                            FontAttributes="Bold"
+                            BackgroundColor="#E2E8F0"
+                            TextColor="#334155"
+                            Clicked="OnClearClicked" />
+
+                    </Grid>
+
+                    <Border
+                        x:Name="ErrorBorder"
+                        IsVisible="False"
+                        Padding="11"
+                        BackgroundColor="#FEF2F2"
+                        Stroke="#FCA5A5">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="9" />
+                        </Border.StrokeShape>
+
+                        <Label
+                            x:Name="ErrorLabel"
+                            FontAttributes="Bold"
+                            TextColor="#B91C1C"
+                            LineBreakMode="WordWrap" />
+
+                    </Border>
+
+                </VerticalStackLayout>
+
+            </Border>
+
+            <!-- Kết quả -->
+            <Border
+                x:Name="ResultBorder"
+                IsVisible="False"
+                Padding="14"
+                BackgroundColor="#ECFDF5"
+                Stroke="#86EFAC">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+
+                <Grid ColumnDefinitions="Auto,*">
+
+                    <Label
+                        Text="Kết quả"
+                        FontAttributes="Bold"
+                        TextColor="#166534" />
+
+                    <Label
+                        x:Name="ResultLabel"
+                        Grid.Column="1"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="End"
+                        TextColor="#166534" />
+
+                </Grid>
+
+            </Border>
+
+            <Label
+                x:Name="SolutionTitle"
+                IsVisible="False"
+                Text="Lời giải chi tiết"
+                FontSize="20"
+                FontAttributes="Bold"
+                TextColor="#5B21B6" />
+
+            <VerticalStackLayout
+                BindableLayout.ItemsSource="{Binding Source={x:Reference Root}, Path=SolutionSteps}"
+                Spacing="9">
+
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:FractionSolutionStep">
+
+                        <Border
+                            Padding="13"
+                            BackgroundColor="White"
+                            Stroke="#D8E2EF">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="6">
+
+                                <Label
+                                    Text="{Binding Title}"
+                                    FontAttributes="Bold"
+                                    TextColor="#6D28D9" />
+
+                                <Label
+                                    Text="{Binding Content}"
+                                    FontSize="15"
+                                    LineHeight="1.15"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="#334155" />
+
+                            </VerticalStackLayout>
+
+                            <Border.Triggers>
+                                <DataTrigger
+                                    TargetType="Border"
+                                    Binding="{Binding IsImportant}"
+                                    Value="True">
+
+                                    <Setter
+                                        Property="BackgroundColor"
+                                        Value="#F5F3FF" />
+
+                                    <Setter
+                                        Property="Stroke"
+                                        Value="#C4B5FD" />
+
+                                </DataTrigger>
+                            </Border.Triggers>
+
+                        </Border>
+
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+
+            </VerticalStackLayout>
+
+            <!-- Lưu ý khi sử dụng -->
+            <Border
+Padding="16"
+BackgroundColor="#FFF7ED"
+Stroke="#FDBA74"
+StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <Grid
+    ColumnDefinitions="Auto,*"
+    ColumnSpacing="12">
+
+                    <Label
+        Grid.Column="0"
+        Text="⚠"
+        FontSize="24"
+        VerticalOptions="Start"
+        TextColor="#EA580C" />
+
+                    <VerticalStackLayout
+        Grid.Column="1"
+        Spacing="6">
+
+                        <Label
+            Text="Lưu ý khi sử dụng"
+            FontSize="16"
+            FontAttributes="Bold"
+            TextColor="#9A3412" />
+
+                        <Label
+            Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
+            FontSize="14"
+            LineHeight="1.25"
+            TextColor="#7C2D12" />
+
+                        <Label
+            Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
+            FontSize="14"
+            FontAttributes="Italic"
+            LineHeight="1.25"
+            TextColor="#9A3412" />
+
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentView>

@@ -4,6 +4,7 @@
     x:Class="MathSolver.Views.CalculationPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:MathSolver.Views"
     BackgroundColor="#F4F7FB">
 
     <Grid RowDefinitions="Auto,*">
@@ -1241,89 +1242,11 @@
                 </VerticalStackLayout>
             </ScrollView>
             <!-- Tab Phân số -->
-            <ScrollView
+            <Grid
                 x:Name="FractionTabContent"
                 IsVisible="False">
-
-                <VerticalStackLayout
-                    Padding="14,4,14,18"
-                    Spacing="12"
-                    HorizontalOptions="Center"
-                    MaximumWidthRequest="1000">
-
-                    <VerticalStackLayout Spacing="3">
-
-                        <Label
-                            Text="PHÂN SỐ"
-                            FontSize="25"
-                            FontAttributes="Bold"
-                            TextColor="#1E293B" />
-
-                        <Label
-                            Text="Cộng, trừ, nhân, chia và rút gọn phân số"
-                            FontSize="14"
-                            TextColor="#64748B" />
-
-                    </VerticalStackLayout>
-
-                    <Border
-                        Padding="22"
-                        BackgroundColor="White"
-                        Stroke="#DDD6FE"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout
-                            Spacing="12"
-                            HorizontalOptions="Center">
-
-                            <Label
-                                Text="½"
-                                FontSize="48"
-                                HorizontalTextAlignment="Center"
-                                TextColor="#6D28D9" />
-
-                            <Label
-                                Text="Chức năng phân số"
-                                FontSize="20"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="#1E293B" />
-
-                            <Label
-                                Text="Khu vực này sẽ dùng để giải cộng, trừ, nhân, chia phân số; quy đồng mẫu số; rút gọn và trình bày lời giải từng bước."
-                                FontSize="14"
-                                LineHeight="1.25"
-                                HorizontalTextAlignment="Center"
-                                TextColor="#64748B" />
-
-                            <Border
-                                Padding="10,6"
-                                BackgroundColor="#F5F3FF"
-                                Stroke="#DDD6FE"
-                                StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Label
-                                    Text="Đang phát triển"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    TextColor="#6D28D9" />
-
-                            </Border>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                </VerticalStackLayout>
-            </ScrollView>
+                <views:FractionView />
+            </Grid>
 
             <!-- Tab tìm x -->
             <ScrollView
