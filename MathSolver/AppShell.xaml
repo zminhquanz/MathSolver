@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="MathSolver.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:MathSolver.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="True"
+    Title="Math Solver">
+
+    <!-- Tiêu đề cố định trên thanh điều hướng -->
+    <Shell.TitleView>
+
+        <Grid Padding="4,0">
+
+            <Label
+            Text="Math Solver"
+            FontSize="20"
+            FontAttributes="Bold"
+            VerticalTextAlignment="Center"
+            TextColor="#6D28D9"/>
+
+        </Grid>
+
+    </Shell.TitleView>
+
+    <TabBar 
+        Shell.TabBarBackgroundColor="#FFFFFF"
+        Shell.TabBarForegroundColor="#6D28D9"
+        Shell.TabBarTitleColor="#6D28D9"
+        Shell.TabBarUnselectedColor="#64748B">
+
+        <!-- Tab giải phép tính -->
+        <ShellContent
+            Title="Giải toán"
+            Route="CalculationPage"
+            Icon="calculate.png"
+            ContentTemplate="{DataTemplate views:CalculationPage}" />
+
+        <!-- Tab công thức -->
+        <ShellContent
+            Title="Công thức"
+            Route="FormulaPage"
+            Icon="function.png"
+            ContentTemplate="{DataTemplate views:FormulaPage}" />
+
+        <!-- Tab bảng cửu chương -->
+        <ShellContent
+            Title="Cửu chương"
+            Route="MultiplicationTablePage"
+            Icon="grid_on.png"
+            ContentTemplate="{DataTemplate views:MultiplicationTablePage}" />
+    </TabBar>
+</Shell>

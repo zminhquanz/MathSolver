@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentPage
+    x:Class="MathSolver.Views.FormulaPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:MathSolver.Models"
+    BackgroundColor="#F4F7FB">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- Tiêu đề trang -->
+        <VerticalStackLayout
+            Grid.Row="0"
+            Padding="14,12,14,10"
+            Spacing="3"
+            HorizontalOptions="Center"
+            MaximumWidthRequest="1280">
+
+            <Label
+                Text="CÔNG THỨC TOÁN"
+                FontSize="27"
+                FontAttributes="Bold"
+                HorizontalTextAlignment="Center"
+                TextColor="#1E3A5F" />
+
+            <Label
+                Text="Tra cứu công thức hình học và quy tắc tìm thành phần chưa biết"
+                FontSize="14"
+                HorizontalTextAlignment="Center"
+                TextColor="#64748B" />
+
+        </VerticalStackLayout>
+
+        <!-- Thanh tab con -->
+        <Border
+            Grid.Row="0"
+            Margin="14,12,14,8"
+            Padding="6"
+            BackgroundColor="White"
+            Stroke="#DDD6FE"
+            StrokeThickness="1">
+
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+
+            <Grid
+                ColumnDefinitions="*,*"
+                ColumnSpacing="6">
+
+                <Button
+                    x:Name="UnknownComponentTabButton"
+                    Grid.Column="0"
+                    Text="𝑥  Tìm thành phần chưa biết"
+                    HeightRequest="48"
+                    Padding="10,0"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    BackgroundColor="#6D28D9"
+                    TextColor="White"
+                    Clicked="OnUnknownComponentTabClicked" />
+
+                <Button
+                    x:Name="GeometryTabButton"
+                    Grid.Column="1"
+                    Text="△  Hình học"
+                    HeightRequest="48"
+                    Padding="10,0"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    BackgroundColor="Transparent"
+                    TextColor="#475569"
+                    Clicked="OnGeometryTabClicked" />
+
+            </Grid>
+
+        </Border>
+
+        <!-- Nội dung tab con -->
+        <Grid
+            Grid.Row="2"
+            Margin="14,0,14,14"
+            HorizontalOptions="Center"
+            MaximumWidthRequest="1280">
+
+            <!-- TAB: TÌM THÀNH PHẦN CHƯA BIẾT -->
+            <Grid
+                x:Name="UnknownComponentContent"
+                IsVisible="True">
+
+                <CollectionView
+                    x:Name="UnknownComponentCollectionView"
+                    ItemsSource="{Binding UnknownComponentItems}"
+                    SelectionMode="None"
+                    ItemSizingStrategy="MeasureAllItems">
+
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout
+                            x:Name="UnknownComponentGridLayout"
+                            Orientation="Vertical"
+                            Span="3"
+                            HorizontalItemSpacing="12"
+                            VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.Header>
+                        <VerticalStackLayout
+                            Padding="2,0,2,12"
+                            Spacing="3">
+
+                            <Label
+                                Text="Tìm thành phần chưa biết"
+                                FontSize="21"
+                                FontAttributes="Bold"
+                                TextColor="#5B21B6" />
+
+                            <Label
+                                Text="Quan sát dạng tổng quát, quy tắc và ví dụ minh họa"
+                                FontSize="13"
+                                TextColor="#64748B" />
+
+                        </VerticalStackLayout>
+                    </CollectionView.Header>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:UnknownComponentItem">
+
+                            <Border
+                                Padding="13"
+                                BackgroundColor="#F8FAFC"
+                                Stroke="#D8E2EF"
+                                StrokeThickness="1"
+                                VerticalOptions="Start">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="13" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="10">
+
+                                    <!-- Tiêu đề thẻ -->
+                                    <Grid
+                                        ColumnDefinitions="40,*"
+                                        ColumnSpacing="10">
+
+                                        <Border
+                                            Grid.Column="0"
+                                            Padding="0"
+                                            BackgroundColor="#EDE9FE"
+                                            Stroke="#C4B5FD"
+                                            StrokeThickness="1">
+
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="10" />
+                                            </Border.StrokeShape>
+
+                                            <Label
+                                                Text="{Binding OperationSymbol}"
+                                                FontSize="20"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="Center"
+                                                VerticalTextAlignment="Center"
+                                                TextColor="#6D28D9" />
+
+                                        </Border>
+
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="{Binding Title}"
+                                            FontSize="16"
+                                            FontAttributes="Bold"
+                                            VerticalTextAlignment="Center"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="#1E3A5F" />
+
+                                    </Grid>
+
+                                    <!-- Dạng tổng quát -->
+                                    <Border
+                                        Padding="9,7"
+                                        BackgroundColor="White"
+                                        Stroke="#DDD6FE"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <Grid
+                                            ColumnDefinitions="Auto,*"
+                                            ColumnSpacing="8">
+
+                                            <Label
+                                                Grid.Column="0"
+                                                Text="Dạng:"
+                                                FontSize="12"
+                                                FontAttributes="Bold"
+                                                VerticalTextAlignment="Center"
+                                                TextColor="#64748B" />
+
+                                            <Label
+                                                Grid.Column="1"
+                                                Text="{Binding Structure}"
+                                                FontSize="16"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="Center"
+                                                TextColor="#6D28D9" />
+
+                                        </Grid>
+
+                                    </Border>
+
+                                    <!-- Quy tắc -->
+                                    <VerticalStackLayout Spacing="3">
+
+                                        <Label
+                                            Text="Quy tắc"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            TextColor="#64748B" />
+
+                                        <Label
+                                            Text="{Binding Rule}"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            LineHeight="1.1"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="#334155" />
+
+                                    </VerticalStackLayout>
+
+                                    <!-- Ví dụ -->
+                                    <Border
+                                        Padding="10"
+                                        BackgroundColor="#EFF6FF"
+                                        Stroke="#BFDBFE"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <Grid
+                                            ColumnDefinitions="Auto,*"
+                                            ColumnSpacing="10">
+
+                                            <Label
+                                                Grid.Column="0"
+                                                Text="Ví dụ : "
+                                                FontSize="15"
+                                                FontAttributes="Bold"
+                                                TextColor="#2563EB" />
+
+                                            <VerticalStackLayout
+                                                Grid.Column="1"
+                                                Spacing="2">
+
+                                                <Label
+                                                    Text="{Binding Example}"
+                                                    FontSize="14"
+                                                    LineHeight="1.4"
+                                                    TextColor="#1E3A5F" />
+
+                                                <Label
+                                                    Text="{Binding ExampleSolution}"
+                                                    FontSize="14"
+                                                    LineBreakMode="WordWrap"
+                                                    TextColor="#334155" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
+            </Grid>
+            <!-- TAB: HÌNH HỌC -->
+            <Grid
+                x:Name="GeometryContent"
+                IsVisible="False">
+                <CollectionView
+                    x:Name="GeometryCollectionView"
+                    ItemsSource="{Binding GeometryItems}"
+                    SelectionMode="None"
+                    ItemSizingStrategy="MeasureFirstItem">
+
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout
+                            x:Name="GeometryGridLayout"
+                            Orientation="Vertical"
+                            Span="3"
+                            HorizontalItemSpacing="12"
+                            VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.Header>
+                        <VerticalStackLayout
+                            Padding="2,0,2,12"
+                            Spacing="3">
+
+                            <Label
+                                Text="Chu vi, diện tích và thể tích"
+                                FontSize="21"
+                                FontAttributes="Bold"
+                                TextColor="#5B21B6" />
+
+                            <Label
+                                Text="Hình minh họa, ký hiệu và công thức thường dùng"
+                                FontSize="13"
+                                TextColor="#64748B" />
+
+                        </VerticalStackLayout>
+                    </CollectionView.Header>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:GeometryFormulaItem">
+
+                            <Border
+                            HeightRequest="{Binding CardHeight}"
+                            Padding="12"
+                            BackgroundColor="#F8FAFC"
+                            Stroke="#D8E2EF"
+                            StrokeThickness="1"
+                            VerticalOptions="Fill">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="13" />
+                                </Border.StrokeShape>
+
+                                <Grid
+                                RowDefinitions="Auto,190,1,Auto,*"
+                                RowSpacing="10">
+
+                                    <!-- Tên hình -->
+                                    <Label
+                                    Grid.Row="0"
+                                    Text="{Binding Name}"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    TextColor="#1D4ED8" />
+
+                                    <!-- Hình minh họa -->
+                                    <GraphicsView
+                                    Grid.Row="1"
+                                    Drawable="{Binding Diagram}"
+                                    HeightRequest="190"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
+                                    BackgroundColor="Transparent" />
+
+                                    <!-- Đường phân cách -->
+                                    <BoxView
+                                    Grid.Row="2"
+                                    HeightRequest="1"
+                                    BackgroundColor="#E2E8F0" />
+
+                                    <!-- Danh sách công thức -->
+                                    <VerticalStackLayout
+                                    Grid.Row="3"
+                                    BindableLayout.ItemsSource="{Binding Formulas}"
+                                    Spacing="5"
+                                    VerticalOptions="Start">
+
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+
+                                                <Border
+                                                Padding="9,7"
+                                                BackgroundColor="White"
+                                                Stroke="#E2E8F0"
+                                                StrokeThickness="1">
+
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="8" />
+                                                    </Border.StrokeShape>
+
+                                                    <Label
+                                                    Text="{Binding .}"
+                                                    FontSize="14"
+                                                    FontAttributes="Bold"
+                                                    LineBreakMode="WordWrap"
+                                                    TextColor="#334155" />
+
+                                                </Border>
+
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+
+                                    </VerticalStackLayout>
+
+                                    <!-- Chú thích ký hiệu -->
+                                    <Border
+                                    Grid.Row="4"
+                                    Padding="10"
+                                    BackgroundColor="#F5F3FF"
+                                    Stroke="#DDD6FE"
+                                    StrokeThickness="1"
+                                    VerticalOptions="Fill">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="8" />
+                                        </Border.StrokeShape>
+
+                                        <VerticalStackLayout
+                                        BindableLayout.ItemsSource="{Binding Symbols}"
+                                        Spacing="3"
+                                        VerticalOptions="Start">
+
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+
+                                                    <Label
+                                                    Text="{Binding .}"
+                                                    FontSize="12"
+                                                    FontAttributes="Italic"
+                                                    LineBreakMode="WordWrap"
+                                                    TextColor="#5B21B6" />
+
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

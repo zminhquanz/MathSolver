@@ -1,0 +1,107 @@
+# Build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+arm/
+arm64/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# .NET
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+TestResults/
+BenchmarkDotNet.Artifacts/
+
+# MAUI / Xamarin
+*.apk
+*.aab
+*.ipa
+*.app
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.keystore
+*.jks
+
+# Android generated files
+*.dex
+*.class
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Apple generated files
+*.dSYM/
+*.dSYM.zip
+*.xcarchive/
+DerivedData/
+
+# Windows packaging output
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_Payload/
+*.cer
+*.pfx
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+~$*
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+logs/
+*.binlog
+
+# User secrets and local configuration
+secrets.json
+appsettings.Development.json
+.env
+.env.*
+!.env.example
+
+# Signing and private keys
+*.key
+*.pem
+*.p12
+*.mobileprovision
+
+# Publish output
+publish/
