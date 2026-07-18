@@ -1,4 +1,5 @@
-﻿using MathSolver.Models;
+﻿using MathSolver.Services;
+using MathSolver.Models;
 using Microsoft.Maui.Graphics;
 
 namespace MathSolver.Graphics;
@@ -19,7 +20,10 @@ public sealed class LongDivisionDrawable : IDrawable
 
         try
         {
-            canvas.FillColor = Colors.White;
+            canvas.FillColor =
+                ThemeResource.GetColor(
+                    "SurfaceColor",
+                    "#FFFFFF");
             canvas.FillRectangle(dirtyRect);
 
             if (Result is null)
@@ -406,11 +410,16 @@ public sealed class LongDivisionDrawable : IDrawable
         canvas.FontSize =
             fontSize;
 
+        Color primaryText =
+            ThemeResource.GetColor(
+                "TextPrimaryColor",
+                "#172033");
+
         canvas.FontColor =
-            Color.FromArgb("#172033");
+            primaryText;
 
         canvas.StrokeColor =
-            Color.FromArgb("#172033");
+            primaryText;
 
         canvas.StrokeSize =
             2.2f * scale;
@@ -421,7 +430,9 @@ public sealed class LongDivisionDrawable : IDrawable
         RectF bounds)
     {
         canvas.FontColor =
-            Color.FromArgb("#64748B");
+            ThemeResource.GetColor(
+                "TextSecondaryColor",
+                "#64748B");
 
         canvas.FontSize = 14;
 

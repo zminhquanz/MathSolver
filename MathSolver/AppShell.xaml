@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <Shell
     x:Class="MathSolver.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -6,45 +6,79 @@
     xmlns:views="clr-namespace:MathSolver.Views"
     Shell.FlyoutBehavior="Disabled"
     Shell.NavBarIsVisible="True"
+    Shell.BackgroundColor="{DynamicResource ShellBackgroundColor}"
+    Shell.ForegroundColor="{DynamicResource ShellForegroundColor}"
+    Shell.TitleColor="{DynamicResource TextPrimaryColor}"
+    Shell.UnselectedColor="{DynamicResource ShellUnselectedColor}"
     Title="Math Solver">
 
-    <!-- Tiêu đề cố định trên thanh điều hướng -->
+    <!--
+        Thanh tiêu đề được chia thành hai vùng:
+        - Tên ứng dụng bên trái.
+        - TitleActionButtons bên phải để có thể thêm nhiều nút về sau.
+    -->
     <Shell.TitleView>
-
-        <Grid Padding="4,0">
+        <Grid
+            Padding="8,0,4,0"
+            ColumnDefinitions="*,Auto"
+            ColumnSpacing="10">
 
             <Label
-            Text="Math Solver"
-            FontSize="20"
-            FontAttributes="Bold"
-            VerticalTextAlignment="Center"
-            TextColor="#6D28D9"/>
+                Grid.Column="0"
+                Text="Math Solver"
+                FontSize="20"
+                FontAttributes="Bold"
+                VerticalTextAlignment="Center"
+                TextColor="{DynamicResource ShellForegroundColor}" />
 
+            <HorizontalStackLayout
+                x:Name="TitleActionButtons"
+                Grid.Column="1"
+                Spacing="4"
+                HorizontalOptions="End"
+                VerticalOptions="Center">
+
+                <Button
+                    x:Name="SettingsButton"
+                    Text="⚙"
+                    FontSize="22"
+                    FontAttributes="Bold"
+                    WidthRequest="42"
+                    HeightRequest="42"
+                    MinimumWidthRequest="42"
+                    MinimumHeightRequest="42"
+                    Padding="0"
+                    CornerRadius="21"
+                    BackgroundColor="Transparent"
+                    TextColor="{DynamicResource ShellForegroundColor}"
+                    AutomationProperties.Name="Mở cài đặt giao diện"
+                    ToolTipProperties.Text="Cài đặt giao diện"
+                    Clicked="OnSettingsClicked" />
+
+                <!-- Có thể thêm các nút tiêu đề khác tại đây về sau. -->
+            </HorizontalStackLayout>
         </Grid>
-
     </Shell.TitleView>
 
-    <TabBar 
-        Shell.TabBarBackgroundColor="#FFFFFF"
-        Shell.TabBarForegroundColor="#6D28D9"
-        Shell.TabBarTitleColor="#6D28D9"
-        Shell.TabBarUnselectedColor="#64748B">
+    <TabBar
+        x:Name="MainTabBar"
+        Shell.TabBarBackgroundColor="{DynamicResource ShellBackgroundColor}"
+        Shell.TabBarForegroundColor="{DynamicResource ShellForegroundColor}"
+        Shell.TabBarTitleColor="{DynamicResource ShellForegroundColor}"
+        Shell.TabBarUnselectedColor="{DynamicResource ShellUnselectedColor}">
 
-        <!-- Tab giải phép tính -->
         <ShellContent
             Title="Giải toán"
             Route="CalculationPage"
             Icon="calculate.png"
             ContentTemplate="{DataTemplate views:CalculationPage}" />
 
-        <!-- Tab công thức -->
         <ShellContent
             Title="Công thức"
             Route="FormulaPage"
             Icon="function.png"
             ContentTemplate="{DataTemplate views:FormulaPage}" />
 
-        <!-- Tab bảng cửu chương -->
         <ShellContent
             Title="Cửu chương"
             Route="MultiplicationTablePage"

@@ -48,6 +48,10 @@ public sealed class FractionExpressionView : ContentView
 
     public FractionExpressionView()
     {
+        SetDynamicResource(
+            MathColorProperty,
+            "TextPrimaryColor");
+
         Rebuild();
     }
 

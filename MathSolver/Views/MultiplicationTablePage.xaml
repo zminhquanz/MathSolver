@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentPage
     x:Class="MathSolver.Views.MultiplicationTablePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#F4F7FB">
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <Grid RowDefinitions="Auto,*">
 
@@ -13,8 +13,8 @@
             Grid.Row="0"
             Margin="14,14,14,8"
             Padding="14"
-            BackgroundColor="White"
-            Stroke="#D7E2EE"
+            BackgroundColor="{DynamicResource SurfaceColor}"
+            Stroke="{DynamicResource BorderBrush}"
             StrokeThickness="1">
 
             <Border.StrokeShape>
@@ -29,12 +29,12 @@
                         Text="BẢNG CỬU CHƯƠNG"
                         FontSize="25"
                         FontAttributes="Bold"
-                        TextColor="#1E3A5F" />
+                        TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Label
                         Text="Hiển thị đầy đủ từ bảng 1 đến bảng 10"
                         FontSize="14"
-                        TextColor="#60758A" />
+                        TextColor="{DynamicResource TextSecondaryColor}" />
 
                 </VerticalStackLayout>
 
@@ -50,8 +50,8 @@
                         FontSize="16"
                         FontAttributes="Bold"
                         CornerRadius="12"
-                        BackgroundColor="#2563EB"
-                        TextColor="White"
+                        BackgroundColor="{DynamicResource PrimaryColor}"
+                        TextColor="{DynamicResource OnPrimaryColor}"
                         Clicked="OnMultiplicationClicked" />
 
                     <Button
@@ -62,8 +62,8 @@
                         FontSize="16"
                         FontAttributes="Bold"
                         CornerRadius="12"
-                        BackgroundColor="#E8EEF6"
-                        TextColor="#334155"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        TextColor="{DynamicResource TextPrimaryColor}"
                         Clicked="OnDivisionClicked" />
 
                 </Grid>
@@ -93,8 +93,8 @@
                 <DataTemplate>
                     <Border
                     Padding="10"
-                    BackgroundColor="White"
-                    Stroke="#D7E2EE"
+                    BackgroundColor="{DynamicResource SurfaceColor}"
+                    Stroke="{DynamicResource BorderBrush}"
                     StrokeThickness="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="12" />
@@ -106,10 +106,10 @@
                         FontSize="17"
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
-                        TextColor="#1D4ED8" />
+                        TextColor="{DynamicResource PrimaryColor}" />
                             <BoxView
                         HeightRequest="1"
-                        BackgroundColor="#E2E8F0" />
+                        BackgroundColor="{DynamicResource DividerColor}" />
                             <VerticalStackLayout
                         BindableLayout.ItemsSource="{Binding Rows}"
                         Spacing="4">
@@ -117,8 +117,8 @@
                                     <DataTemplate>
                                         <Border
                                     Padding="5,4"
-                                    BackgroundColor="#F8FAFC"
-                                    Stroke="#E2E8F0"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource DividerBrush}"
                                     StrokeThickness="1">
 
                                             <Border.StrokeShape>
@@ -131,7 +131,7 @@
                                         FontAttributes="Bold"
                                         HorizontalTextAlignment="Center"
                                         LineBreakMode="NoWrap"
-                                        TextColor="#334155" />
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>

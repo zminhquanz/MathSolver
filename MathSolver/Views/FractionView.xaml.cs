@@ -1,4 +1,4 @@
-using MathSolver.Models;
+﻿using MathSolver.Models;
 using MathSolver.Services;
 using System.Collections.ObjectModel;
 using System.Numerics;
@@ -75,11 +75,13 @@ public partial class FractionView : ContentView
                 break;
         }
 
-        selectedButton.BackgroundColor =
-            Color.FromArgb("#2563EB");
+        selectedButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
 
-        selectedButton.TextColor =
-            Colors.White;
+        selectedButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
 
         ResetOutput();
     }
@@ -328,28 +330,24 @@ public partial class FractionView : ContentView
 
     private void ResetOperationButtonStyles()
     {
-        Color normalBackground =
-            Color.FromArgb("#E8EEF6");
-
-        Color normalText =
-            Color.FromArgb("#334155");
-
         Button[] buttons =
         [
             AddButton,
-        SubtractButton,
-        MultiplyButton,
-        DivideButton,
-        CommonDenominatorButton
+            SubtractButton,
+            MultiplyButton,
+            DivideButton,
+            CommonDenominatorButton
         ];
 
         foreach (Button button in buttons)
         {
-            button.BackgroundColor =
-                normalBackground;
+            button.SetDynamicResource(
+                Button.BackgroundColorProperty,
+                "SurfaceAltColor");
 
-            button.TextColor =
-                normalText;
+            button.SetDynamicResource(
+                Button.TextColorProperty,
+                "TextPrimaryColor");
         }
     }
 }

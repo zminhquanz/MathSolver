@@ -37,43 +37,32 @@ public partial class MultiplicationTablePage : ContentPage
 
     private void UpdateButtonStyles()
     {
-        Color selectedBackground =
-            Color.FromArgb("#2563EB");
+        ResetModeButton(MultiplicationButton);
+        ResetModeButton(DivisionButton);
 
-        Color normalBackground =
-            Color.FromArgb("#E8EEF6");
+        Button selectedButton =
+            _selectedMode == TableMode.Multiplication
+                ? MultiplicationButton
+                : DivisionButton;
 
-        Color normalText =
-            Color.FromArgb("#334155");
+        selectedButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
 
-        MultiplicationButton.BackgroundColor =
-            normalBackground;
+        selectedButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
+    }
 
-        MultiplicationButton.TextColor =
-            normalText;
+    private static void ResetModeButton(Button button)
+    {
+        button.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "SurfaceAltColor");
 
-        DivisionButton.BackgroundColor =
-            normalBackground;
-
-        DivisionButton.TextColor =
-            normalText;
-
-        if (_selectedMode == TableMode.Multiplication)
-        {
-            MultiplicationButton.BackgroundColor =
-                selectedBackground;
-
-            MultiplicationButton.TextColor =
-                Colors.White;
-        }
-        else
-        {
-            DivisionButton.BackgroundColor =
-                selectedBackground;
-
-            DivisionButton.TextColor =
-                Colors.White;
-        }
+        button.SetDynamicResource(
+            Button.TextColorProperty,
+            "TextPrimaryColor");
     }
 
     private void GenerateTables()

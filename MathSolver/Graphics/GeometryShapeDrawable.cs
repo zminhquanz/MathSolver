@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Graphics;
+﻿using MathSolver.Services;
+using Microsoft.Maui.Graphics;
 
 namespace MathSolver.Graphics;
 
@@ -22,14 +23,20 @@ public sealed class GeometryShapeDrawable : IDrawable
 {
     public GeometryShapeType ShapeType { get; init; }
 
-    private static readonly Color ShapeColor =
-        Color.FromArgb("#7C3AED");
+    private static Color ShapeColor =>
+        ThemeResource.GetColor(
+            "PrimaryColor",
+            "#7C3AED");
 
-    private static readonly Color AuxiliaryColor =
-        Color.FromArgb("#94A3B8");
+    private static Color AuxiliaryColor =>
+        ThemeResource.GetColor(
+            "TextSecondaryColor",
+            "#94A3B8");
 
-    private static readonly Color LabelColor =
-        Color.FromArgb("#334155");
+    private static Color LabelColor =>
+        ThemeResource.GetColor(
+            "TextPrimaryColor",
+            "#334155");
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
@@ -740,7 +747,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.SaveState();
 
         canvas.StrokeColor =
-            Color.FromArgb("#94A3B8");
+            AuxiliaryColor;
 
         canvas.StrokeSize = 1.8f;
 
@@ -823,7 +830,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.SaveState();
 
         canvas.StrokeColor =
-            Color.FromArgb("#94A3B8");
+            AuxiliaryColor;
 
         canvas.StrokeSize = 1.6f;
 
@@ -917,7 +924,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.SaveState();
 
         canvas.StrokeColor =
-            Color.FromArgb("#94A3B8");
+            AuxiliaryColor;
 
         canvas.StrokeSize = 1.6f;
 

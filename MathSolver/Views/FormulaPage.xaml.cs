@@ -1,6 +1,6 @@
-using System.Collections.ObjectModel;
-using MathSolver.Graphics;
+﻿using MathSolver.Graphics;
 using MathSolver.Models;
+using System.Collections.ObjectModel;
 
 namespace MathSolver.Views;
 
@@ -26,6 +26,21 @@ public partial class FormulaPage : ContentPage
         SelectFormulaSubTab(
             FormulaSubTab.UnknownComponent,
             forceRefresh: true);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // Các hình học lấy màu trực tiếp từ resource hiện tại.
+        RefreshGeometryCollectionView();
+    }
+
+    private void RefreshGeometryCollectionView()
+    {
+        GeometryCollectionView.ItemsSource = null;
+        GeometryCollectionView.ItemsSource = GeometryItems;
+        GeometryCollectionView.InvalidateMeasure();
     }
 
     private void OnUnknownComponentTabClicked(
@@ -72,37 +87,37 @@ public partial class FormulaPage : ContentPage
     private void UpdateSubTabStyles(
         bool unknownSelected)
     {
-        Color selectedBackground =
-            Color.FromArgb("#6D28D9");
+        ApplyFormulaTabStyle(
+            UnknownComponentTabButton,
+            unknownSelected);
 
-        Color selectedText =
-            Colors.White;
+        ApplyFormulaTabStyle(
+            GeometryTabButton,
+            !unknownSelected);
+    }
 
-        Color normalBackground =
-            Colors.Transparent;
+    private static void ApplyFormulaTabStyle(
+        Button button,
+        bool selected)
+    {
+        if (selected)
+        {
+            button.SetDynamicResource(
+                Button.BackgroundColorProperty,
+                "PrimaryColor");
 
-        Color normalText =
-            Color.FromArgb("#475569");
+            button.SetDynamicResource(
+                Button.TextColorProperty,
+                "OnPrimaryColor");
+        }
+        else
+        {
+            button.BackgroundColor = Colors.Transparent;
 
-        UnknownComponentTabButton.BackgroundColor =
-            unknownSelected
-                ? selectedBackground
-                : normalBackground;
-
-        UnknownComponentTabButton.TextColor =
-            unknownSelected
-                ? selectedText
-                : normalText;
-
-        GeometryTabButton.BackgroundColor =
-            unknownSelected
-                ? normalBackground
-                : selectedBackground;
-
-        GeometryTabButton.TextColor =
-            unknownSelected
-                ? normalText
-                : selectedText;
+            button.SetDynamicResource(
+                Button.TextColorProperty,
+                "TextSecondaryColor");
+        }
     }
 
     protected override void OnSizeAllocated(double width, double height)

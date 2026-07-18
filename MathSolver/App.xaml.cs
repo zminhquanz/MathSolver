@@ -1,17 +1,20 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using MathSolver.Services;
 
-namespace MathSolver
+namespace MathSolver;
+
+public partial class App : Application
 {
-    public partial class App : Application
+    public App()
     {
-        public App()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
 
-        protected override Window CreateWindow(IActivationState? activationState)
-        {
-            return new Window(new AppShell());
-        }
+        AppThemeManager.Initialize(this);
+    }
+
+    protected override Window CreateWindow(
+        IActivationState? activationState)
+    {
+        return new Window(
+            new AppShell());
     }
 }

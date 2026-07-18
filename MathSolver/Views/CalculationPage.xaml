@@ -5,7 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:MathSolver.Views"
-    BackgroundColor="#F4F7FB">
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <Grid RowDefinitions="Auto,*">
 
@@ -14,8 +14,8 @@
             Grid.Row="0"
             Margin="14,12,14,8"
             Padding="6"
-            BackgroundColor="White"
-            Stroke="#DDD6FE"
+            BackgroundColor="{DynamicResource SurfaceColor}"
+            Stroke="{DynamicResource PrimaryBorderBrush}"
             StrokeThickness="1">
 
             <Border.StrokeShape>
@@ -148,8 +148,8 @@
                     FontSize="14"
                     FontAttributes="Bold"
                     CornerRadius="10"
-                    BackgroundColor="#6D28D9"
-                    TextColor="White"
+                    BackgroundColor="{DynamicResource PrimaryColor}"
+                    TextColor="{DynamicResource OnPrimaryColor}"
                     Clicked="OnBasicTabClicked" />
 
                 <Button
@@ -162,7 +162,7 @@
                     FontAttributes="Bold"
                     CornerRadius="10"
                     BackgroundColor="Transparent"
-                    TextColor="#475569"
+                    TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnFractionTabClicked" />
 
                 <Button
@@ -175,7 +175,7 @@
                     FontAttributes="Bold"
                     CornerRadius="10"
                     BackgroundColor="Transparent"
-                    TextColor="#475569"
+                    TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnFindXTabClicked" />
 
                 <Button
@@ -188,7 +188,7 @@
                     FontAttributes="Bold"
                     CornerRadius="10"
                     BackgroundColor="Transparent"
-                    TextColor="#475569"
+                    TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 
             </Grid>
@@ -375,7 +375,7 @@
                         Text="+ − × ÷"
                         FontSize="42"
                         HorizontalTextAlignment="Center"
-                        TextColor="#6D28D9" />
+                        TextColor="{DynamicResource PrimaryColor}" />
 
                         <Label
                         x:Name="PageTitle"
@@ -383,22 +383,22 @@
                         FontSize="27"
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
-                        TextColor="#1E3A5F" />
+                        TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                         x:Name="PageSubtitle"
                         Text="Cộng • Trừ • Nhân • Chia"
                         FontSize="15"
                         HorizontalTextAlignment="Center"
-                        TextColor="#60758A" />
+                        TextColor="{DynamicResource TextSecondaryColor}" />
 
                     </VerticalStackLayout>
 
                     <!-- Chọn loại số -->
                     <Border
                     Padding="12"
-                    BackgroundColor="#F8FAFC"
-                    Stroke="#CBD5E1"
+                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                    Stroke="{DynamicResource BorderBrush}"
                     StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -410,12 +410,12 @@
                             Text="1. Chọn loại số"
                             FontSize="18"
                             FontAttributes="Bold"
-                            TextColor="#263B50" />
+                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Label
                             Text="Loại số được phép nhập"
                             FontSize="14"
-                            TextColor="#52677B" />
+                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Grid
                             ColumnDefinitions="*,*"
@@ -428,7 +428,7 @@
                                 GroupName="NumberType"
                                 IsChecked="True"
                                 CheckedChanged="OnNumberTypeChanged"
-                                TextColor="#334155" />
+                                TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <RadioButton
                                 x:Name="DecimalRadioButton"
@@ -436,7 +436,7 @@
                                 Content="Số thập phân"
                                 GroupName="NumberType"
                                 CheckedChanged="OnNumberTypeChanged"
-                                TextColor="#334155" />
+                                TextColor="{DynamicResource TextPrimaryColor}" />
 
                             </Grid>
 
@@ -444,7 +444,7 @@
                             x:Name="NumberTypeDescriptionLabel"
                             Text="Chỉ được nhập số nguyên, ví dụ: 12, 50 hoặc -8."
                             FontSize="13"
-                            TextColor="#64748B" />
+                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -453,8 +453,8 @@
                     <!-- Khung chọn phép tính -->
                     <Border
                     Padding="14"
-                    BackgroundColor="White"
-                    Stroke="#D7E2EE"
+                    BackgroundColor="{DynamicResource SurfaceColor}"
+                    Stroke="{DynamicResource BorderBrush}"
                     StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -467,7 +467,7 @@
                             Text="2. Chọn phép tính"
                             FontSize="18"
                             FontAttributes="Bold"
-                            TextColor="#263B50" />
+                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Grid
                             x:Name="OperationButtonsGrid"
@@ -483,8 +483,8 @@
                                 HeightRequest="48"
                                 Padding="8,0"
                                 CornerRadius="12"
-                                BackgroundColor="#E8EEF6"
-                                TextColor="#334155"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                TextColor="{DynamicResource TextPrimaryColor}"
                                 Clicked="OnAddClicked" />
 
                                 <Button
@@ -496,8 +496,8 @@
                                 HeightRequest="48"
                                 Padding="8,0"
                                 CornerRadius="12"
-                                BackgroundColor="#E8EEF6"
-                                TextColor="#334155"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                TextColor="{DynamicResource TextPrimaryColor}"
                                 Clicked="OnSubtractClicked" />
 
                                 <Button
@@ -509,8 +509,8 @@
                                 HeightRequest="48"
                                 Padding="8,0"
                                 CornerRadius="12"
-                                BackgroundColor="#E8EEF6"
-                                TextColor="#334155"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                TextColor="{DynamicResource TextPrimaryColor}"
                                 Clicked="OnMultiplyClicked" />
 
                                 <Button
@@ -522,8 +522,8 @@
                                 HeightRequest="48"
                                 Padding="8,0"
                                 CornerRadius="12"
-                                BackgroundColor="#2563EB"
-                                TextColor="White"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
                                 Clicked="OnDivideClicked" />
 
                             </Grid>
@@ -535,8 +535,8 @@
                     <!-- Khung nhập số -->
                     <Border
                     Padding="14"
-                    BackgroundColor="White"
-                    Stroke="#D7E2EE"
+                    BackgroundColor="{DynamicResource SurfaceColor}"
+                    Stroke="{DynamicResource BorderBrush}"
                     StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -549,7 +549,7 @@
                              Text="3. Nhập các số"
                              FontSize="18"
                              FontAttributes="Bold"
-                             TextColor="#263B50" />
+                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Grid
                             x:Name="NumberInputGrid"
@@ -736,7 +736,7 @@
                                 Grid.Column="0"
                                 Text="Số thứ nhất"
                                 FontSize="14"
-                                TextColor="#52677B" />
+                                TextColor="{DynamicResource TextSecondaryColor}" />
 
                                 <!-- Ô số thứ nhất -->
                                 <Border
@@ -745,8 +745,8 @@
                                 Grid.Column="0"
                                 HeightRequest="46"
                                 Padding="10,0"
-                                BackgroundColor="#F8FAFC"
-                                Stroke="#CBD5E1"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                Stroke="{DynamicResource BorderBrush}"
                                 StrokeThickness="1">
 
                                     <Border.StrokeShape>
@@ -760,7 +760,7 @@
                                     FontSize="17"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
-                                    TextColor="#172033"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnNumberEntryTextChanged" />
 
@@ -777,7 +777,7 @@
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 VerticalTextAlignment="Center"
-                                TextColor="#2563EB" />
+                                TextColor="{DynamicResource PrimaryColor}" />
 
                                 <!-- Nhãn số thứ hai -->
                                 <Label
@@ -786,7 +786,7 @@
                                 Grid.Column="2"
                                 Text="Số thứ hai"
                                 FontSize="14"
-                                TextColor="#52677B" />
+                                TextColor="{DynamicResource TextSecondaryColor}" />
 
                                 <!-- Ô số thứ hai -->
                                 <Border
@@ -795,8 +795,8 @@
                                 Grid.Column="2"
                                 HeightRequest="46"
                                 Padding="10,0"
-                                BackgroundColor="#F8FAFC"
-                                Stroke="#CBD5E1"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                Stroke="{DynamicResource BorderBrush}"
                                 StrokeThickness="1">
 
                                     <Border.StrokeShape>
@@ -810,7 +810,7 @@
                                     FontSize="17"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
-                                    TextColor="#172033"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnNumberEntryTextChanged" />
 
@@ -829,8 +829,8 @@
                                 FontAttributes="Bold"
                                 HeightRequest="54"
                                 CornerRadius="14"
-                                BackgroundColor="#16A34A"
-                                TextColor="White"
+                                BackgroundColor="{DynamicResource SuccessColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
                                 Clicked="OnCalculateClicked" />
 
                                 <Button
@@ -840,8 +840,8 @@
                                 FontAttributes="Bold"
                                 HeightRequest="54"
                                 CornerRadius="14"
-                                BackgroundColor="#E2E8F0"
-                                TextColor="#334155"
+                                BackgroundColor="{DynamicResource DividerColor}"
+                                TextColor="{DynamicResource TextPrimaryColor}"
                                 Clicked="OnClearClicked" />
 
                             </Grid>
@@ -854,8 +854,8 @@
                     x:Name="ErrorBorder"
                     IsVisible="False"
                     Padding="14"
-                    BackgroundColor="#FEF2F2"
-                    Stroke="#FCA5A5"
+                    BackgroundColor="{DynamicResource DangerSoftColor}"
+                    Stroke="{DynamicResource DangerBorderBrush}"
                     StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -865,7 +865,7 @@
                         <Label
                         x:Name="ErrorLabel"
                         FontSize="15"
-                        TextColor="#B91C1C" />
+                        TextColor="{DynamicResource DangerColor}" />
 
                     </Border>
 
@@ -874,8 +874,8 @@
                     x:Name="ResultBorder"
                     IsVisible="False"
                     Padding="14"
-                    BackgroundColor="White"
-                    Stroke="#BFDBFE"
+                    BackgroundColor="{DynamicResource SurfaceColor}"
+                    Stroke="{DynamicResource PrimaryBorderBrush}"
                     StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -888,39 +888,39 @@
                             Text="4. Kết quả"
                             FontSize="17"
                             FontAttributes="Bold"
-                            TextColor="#263B50" />
+                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Label
                             x:Name="ExpressionLabel"
                             FontSize="21"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
-                            TextColor="#1D4ED8" />
+                            TextColor="{DynamicResource PrimaryColor}" />
 
                             <BoxView
                             HeightRequest="1"
-                            BackgroundColor="#E2E8F0" />
+                            BackgroundColor="{DynamicResource DividerColor}" />
 
                             <Label
                             Text="Đáp số"
                             FontSize="13"
                             HorizontalTextAlignment="Center"
-                            TextColor="#64748B" />
+                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Label
                             x:Name="ResultLabel"
                             FontSize="30"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
-                            TextColor="#15803D" />
+                            TextColor="{DynamicResource SuccessColor}" />
 
                             <!-- Chi tiết phép chia -->
                             <Border
                             x:Name="DivisionDetailBorder"
                             IsVisible="False"
                             Padding="12"
-                            BackgroundColor="#F0FDF4"
-                            Stroke="#BBF7D0"
+                            BackgroundColor="{DynamicResource SuccessSoftColor}"
+                            Stroke="{DynamicResource SuccessBorderBrush}"
                             StrokeThickness="1">
 
                                 <Border.StrokeShape>
@@ -934,7 +934,7 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="#166534" />
+                                    TextColor="{DynamicResource SuccessColor}" />
 
                                     <Grid
                                     ColumnDefinitions="*,*"
@@ -943,8 +943,8 @@
                                         <Border
                                         Grid.Column="0"
                                         Padding="12"
-                                        BackgroundColor="White"
-                                        Stroke="#D1FAE5"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource SuccessSoftBrush}"
                                         StrokeThickness="1">
 
                                             <Border.StrokeShape>
@@ -957,14 +957,14 @@
                                                 Text="Thương"
                                                 FontSize="14"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="#64748B" />
+                                                TextColor="{DynamicResource TextSecondaryColor}" />
 
                                                 <Label
                                                 x:Name="QuotientLabel"
                                                 FontSize="28"
                                                 FontAttributes="Bold"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="#15803D" />
+                                                TextColor="{DynamicResource SuccessColor}" />
 
                                             </VerticalStackLayout>
 
@@ -973,8 +973,8 @@
                                         <Border
                                         Grid.Column="1"
                                         Padding="12"
-                                        BackgroundColor="White"
-                                        Stroke="#D1FAE5"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource SuccessSoftBrush}"
                                         StrokeThickness="1">
 
                                             <Border.StrokeShape>
@@ -987,14 +987,14 @@
                                         Text="Số dư"
                                         FontSize="14"
                                         HorizontalTextAlignment="Center"
-                                        TextColor="#64748B" />
+                                        TextColor="{DynamicResource TextSecondaryColor}" />
 
                                                 <Label
                                         x:Name="RemainderLabel"
                                         FontSize="28"
                                         FontAttributes="Bold"
                                         HorizontalTextAlignment="Center"
-                                        TextColor="#EA580C" />
+                                        TextColor="{DynamicResource WarningColor}" />
 
                                             </VerticalStackLayout>
                                         </Border>
@@ -1004,8 +1004,8 @@
 
                             <Border
                             Padding="14"
-                            BackgroundColor="#EFF6FF"
-                            Stroke="#DBEAFE"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
                             StrokeThickness="1">
 
                                 <Border.StrokeShape>
@@ -1018,13 +1018,13 @@
                                 Text="Lời giải"
                                 FontSize="16"
                                 FontAttributes="Bold"
-                                TextColor="#1E40AF" />
+                                TextColor="{DynamicResource PrimaryDarkColor}" />
 
                                     <Label
                                 x:Name="ExplanationLabel"
                                 FontSize="16"
                                 LineHeight="1.3"
-                                TextColor="#334155" />
+                                TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 </VerticalStackLayout>
                             </Border>
@@ -1034,8 +1034,8 @@
                             x:Name="LongDivisionBorder"
                             IsVisible="False"
                             Padding="14"
-                            BackgroundColor="#FFFFFF"
-                            Stroke="#CBD5E1"
+                            BackgroundColor="{DynamicResource SurfaceColor}"
+                            Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -1047,18 +1047,18 @@
                                     Text="Phép chia đặt tính"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    TextColor="#1E3A5F" />
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                                     <Label
                                     Text="Các bước thực hiện phép chia theo cách trình bày ở tiểu học."
                                     FontSize="13"
-                                    TextColor="#64748B" />
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
 
                                     <!-- Chọn cách hiển thị riêng cho phép chia đặt tính -->
                                     <Border
                                     Padding="12"
-                                    BackgroundColor="#F8FAFC"
-                                    Stroke="#E2E8F0"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource DividerBrush}"
                                     StrokeThickness="1">
 
                                         <Border.StrokeShape>
@@ -1071,7 +1071,7 @@
                                             Text="Hiển thị phép chia"
                                             FontSize="15"
                                             FontAttributes="Bold"
-                                            TextColor="#334155" />
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                                             <Grid
                                             ColumnDefinitions="*,*"
@@ -1081,8 +1081,8 @@
                                                 x:Name="ElementaryDivisionModeBorder"
                                                 Grid.Column="0"
                                                 Padding="12"
-                                                BackgroundColor="#F5F3FF"
-                                                Stroke="#7C3AED"
+                                                BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                                Stroke="{DynamicResource PrimaryBrush}"
                                                 StrokeThickness="1.5">
 
                                                     <Border.StrokeShape>
@@ -1109,12 +1109,12 @@
                                                             Text="Theo chương trình Tiểu học"
                                                             FontSize="14"
                                                             FontAttributes="Bold"
-                                                            TextColor="#5B21B6" />
+                                                            TextColor="{DynamicResource PrimaryColor}" />
 
                                                             <Label
                                                             Text="Thương và số dư"
                                                             FontSize="12"
-                                                            TextColor="#64748B" />
+                                                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                                                         </VerticalStackLayout>
 
@@ -1126,8 +1126,8 @@
                                                 x:Name="DecimalDivisionModeBorder"
                                                 Grid.Column="1"
                                                 Padding="12"
-                                                BackgroundColor="White"
-                                                Stroke="#CBD5E1"
+                                                BackgroundColor="{DynamicResource SurfaceColor}"
+                                                Stroke="{DynamicResource BorderBrush}"
                                                 StrokeThickness="1">
 
                                                     <Border.StrokeShape>
@@ -1153,13 +1153,13 @@
                                                             Text="Theo số thập phân"
                                                             FontSize="14"
                                                             FontAttributes="Bold"
-                                                            TextColor="#334155" />
+                                                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                             <Label
                                                             Text="Tiếp tục chia đến kết quả thập phân"
                                                             FontSize="12"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="#64748B" />
+                                                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                                                         </VerticalStackLayout>
 
@@ -1175,8 +1175,8 @@
 
                                     <Border
                                         Padding="8"
-                                        BackgroundColor="#FAFAFA"
-                                        Stroke="#E2E8F0"
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                        Stroke="{DynamicResource DividerBrush}"
                                         StrokeThickness="1">
 
                                         <Border.StrokeShape>
@@ -1188,7 +1188,7 @@
                                         HeightRequest="320"
                                         MinimumHeightRequest="180"
                                         HorizontalOptions="Fill"
-                                        BackgroundColor="#FAFAFA" />
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}" />
 
                                     </Border>
                                 </VerticalStackLayout>
@@ -1198,8 +1198,8 @@
                             x:Name="AdditionalBorder"    
                             IsVisible="True"
                             Padding="14"
-                            BackgroundColor="#FFFFFF"
-                            Stroke="#CBD5E1"
+                            BackgroundColor="{DynamicResource SurfaceColor}"
+                            Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -1210,13 +1210,13 @@
                                     Text="Thông tin thêm"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="#1E40AF" />
+                                    TextColor="{DynamicResource PrimaryDarkColor}" />
 
                                     <Label
                                         x:Name="AdditionalLabel"
                                         FontSize="16"
                                         LineHeight="1.3"
-                                        TextColor="#334155"/>
+                                        TextColor="{DynamicResource TextPrimaryColor}"/>
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>
@@ -1225,8 +1225,8 @@
                     <!-- Lưu ý khi sử dụng -->
                     <Border
                     Padding="16"
-                    BackgroundColor="#FFF7ED"
-                    Stroke="#FDBA74"
+                    BackgroundColor="{DynamicResource WarningSoftColor}"
+                    Stroke="{DynamicResource WarningBorderBrush}"
                     StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -1242,7 +1242,7 @@
                             Text="⚠"
                             FontSize="24"
                             VerticalOptions="Start"
-                            TextColor="#EA580C" />
+                            TextColor="{DynamicResource WarningColor}" />
 
                             <VerticalStackLayout
                             Grid.Column="1"
@@ -1252,20 +1252,20 @@
                                 Text="Lưu ý khi sử dụng"
                                 FontSize="16"
                                 FontAttributes="Bold"
-                                TextColor="#9A3412" />
+                                TextColor="{DynamicResource WarningColor}" />
 
                                 <Label
                                 Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
                                 FontSize="14"
                                 LineHeight="1.25"
-                                TextColor="#7C2D12" />
+                                TextColor="{DynamicResource WarningColor}" />
 
                                 <Label
                                 Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
                                 FontSize="14"
                                 FontAttributes="Italic"
                                 LineHeight="1.25"
-                                TextColor="#9A3412" />
+                                TextColor="{DynamicResource WarningColor}" />
 
                             </VerticalStackLayout>
                         </Grid>
@@ -1296,19 +1296,19 @@
                             Text="TÌM X"
                             FontSize="25"
                             FontAttributes="Bold"
-                            TextColor="#1E293B" />
+                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             Text="Tìm thành phần chưa biết trong phép tính"
                             FontSize="14"
-                            TextColor="#64748B" />
+                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                     </VerticalStackLayout>
 
                     <Border
                         Padding="22"
-                        BackgroundColor="White"
-                        Stroke="#DDD6FE"
+                        BackgroundColor="{DynamicResource SurfaceColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
                         StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -1324,26 +1324,26 @@
                                 FontSize="44"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
-                                TextColor="#6D28D9" />
+                                TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 Text="Chức năng tìm x"
                                 FontSize="20"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
-                                TextColor="#1E293B" />
+                                TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Label
                                 Text="Khu vực này sẽ hỗ trợ tìm số hạng, số bị trừ, số trừ, thừa số, số bị chia và số chia chưa biết."
                                 FontSize="14"
                                 LineHeight="1.25"
                                 HorizontalTextAlignment="Center"
-                                TextColor="#64748B" />
+                                TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Border
                                 Padding="10,6"
-                                BackgroundColor="#F5F3FF"
-                                Stroke="#DDD6FE"
+                                BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                Stroke="{DynamicResource PrimaryBorderBrush}"
                                 StrokeThickness="1">
 
                                 <Border.StrokeShape>
@@ -1354,7 +1354,7 @@
                                     Text="Đang phát triển"
                                     FontSize="14"
                                     FontAttributes="Bold"
-                                    TextColor="#6D28D9" />
+                                    TextColor="{DynamicResource PrimaryColor}" />
 
                             </Border>
 
@@ -1383,19 +1383,19 @@
                             Text="HÌNH HỌC"
                             FontSize="25"
                             FontAttributes="Bold"
-                            TextColor="#1E293B" />
+                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             Text="Tính chu vi và diện tích các hình"
                             FontSize="14"
-                            TextColor="#64748B" />
+                            TextColor="{DynamicResource TextSecondaryColor}" />
 
                     </VerticalStackLayout>
 
                     <Border
                         Padding="22"
-                        BackgroundColor="White"
-                        Stroke="#DDD6FE"
+                        BackgroundColor="{DynamicResource SurfaceColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
                         StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -1410,26 +1410,26 @@
                                 Text="□  △  ○"
                                 FontSize="40"
                                 HorizontalTextAlignment="Center"
-                                TextColor="#6D28D9" />
+                                TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 Text="Chu vi và diện tích"
                                 FontSize="20"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
-                                TextColor="#1E293B" />
+                                TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Label
                                 Text="Khu vực này sẽ hỗ trợ hình vuông, hình chữ nhật, tam giác, hình tròn, hình thang và các hình học khác."
                                 FontSize="14"
                                 LineHeight="1.25"
                                 HorizontalTextAlignment="Center"
-                                TextColor="#64748B" />
+                                TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Border
                                 Padding="10,6"
-                                BackgroundColor="#F5F3FF"
-                                Stroke="#DDD6FE"
+                                BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                Stroke="{DynamicResource PrimaryBorderBrush}"
                                 StrokeThickness="1">
 
                                 <Border.StrokeShape>
@@ -1440,7 +1440,7 @@
                                     Text="Đang phát triển"
                                     FontSize="14"
                                     FontAttributes="Bold"
-                                    TextColor="#6D28D9" />
+                                    TextColor="{DynamicResource PrimaryColor}" />
 
                             </Border>
 

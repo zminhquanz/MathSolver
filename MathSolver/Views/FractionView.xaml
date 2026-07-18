@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentView
     x:Class="MathSolver.Views.FractionView"
@@ -24,27 +24,27 @@
                 Text="½"
                 FontSize="42"
                 HorizontalTextAlignment="Center"
-                TextColor="#6D28D9" />
+                TextColor="{DynamicResource PrimaryColor}" />
 
                 <Label
                     Text="PHÂN SỐ"
                     FontSize="25"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
-                    TextColor="#1E293B" />
+                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                 <Label
                     Text="Cộng, trừ, nhân, chia, và rút gọn phân số"
                     FontSize="14"
                     HorizontalTextAlignment="Center"
-                    TextColor="#64748B" />
+                    TextColor="{DynamicResource TextSecondaryColor}" />
 
             </VerticalStackLayout>
             <!-- Khung chọn phép tính -->
             <Border
             Padding="14"
-            BackgroundColor="White"
-            Stroke="#D7E2EE"
+            BackgroundColor="{DynamicResource SurfaceColor}"
+            Stroke="{DynamicResource BorderBrush}"
             StrokeThickness="1">
 
                 <Border.StrokeShape>
@@ -56,7 +56,7 @@
                     Text="1. Chọn phép tính"
                     FontSize="16"
                     FontAttributes="Bold"
-                    TextColor="#334155" />
+                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Grid
                     ColumnDefinitions="*,*,*,*,1.4*"
@@ -120,8 +120,8 @@
             <!-- Khung nhập hai phân số -->
             <Border
                 Padding="16"
-                BackgroundColor="White"
-                Stroke="#DDD6FE"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource PrimaryBorderBrush}"
                 StrokeThickness="1">
 
                 <Border.StrokeShape>
@@ -134,7 +134,7 @@
                      Text="2. Nhập phân số"
                      FontSize="18"
                      FontAttributes="Bold"
-                     TextColor="#263B50" />
+                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Grid
                     x:Name="FractionInputGrid"
@@ -155,11 +155,11 @@
                                     Text="Phân số thứ nhất"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="#334155" />
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Entry
                                     x:Name="FirstNumeratorEntry"
-                                    TextColor="#172033"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
                                     Placeholder="Tử số"
                                     Keyboard="Numeric"
                                     FontSize="18"
@@ -167,11 +167,11 @@
 
                                 <BoxView
                                     HeightRequest="2"
-                                    BackgroundColor="#6D28D9" />
+                                    BackgroundColor="{DynamicResource PrimaryColor}" />
 
                                 <Entry
                                     x:Name="FirstDenominatorEntry"
-                                    TextColor="#172033"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
                                     Placeholder="Mẫu số"
                                     Keyboard="Numeric"
                                     FontSize="18"
@@ -189,7 +189,7 @@
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
                         VerticalTextAlignment="Center"
-                        TextColor="#2563EB" />
+                        TextColor="{DynamicResource PrimaryColor}" />
 
                         <Border
                         x:Name="SecondFractionCard"
@@ -205,11 +205,11 @@
                                     Text="Phân số thứ hai"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="#334155" />
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Entry
                                     x:Name="SecondNumeratorEntry"
-                                    TextColor="#172033"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
                                     Placeholder="Tử số"
                                     Keyboard="Numeric"
                                     FontSize="18"
@@ -217,11 +217,11 @@
 
                                 <BoxView
                                     HeightRequest="2"
-                                    BackgroundColor="#6D28D9" />
+                                    BackgroundColor="{DynamicResource PrimaryColor}" />
 
                                 <Entry
                                     x:Name="SecondDenominatorEntry"
-                                    TextColor="#172033"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
                                     Placeholder="Mẫu số"
                                     Keyboard="Numeric"
                                     FontSize="18"
@@ -243,8 +243,8 @@
                             HeightRequest="46"
                             CornerRadius="10"
                             FontAttributes="Bold"
-                            BackgroundColor="#6D28D9"
-                            TextColor="White"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
@@ -253,8 +253,8 @@
                             HeightRequest="46"
                             CornerRadius="10"
                             FontAttributes="Bold"
-                            BackgroundColor="#E2E8F0"
-                            TextColor="#334155"
+                            BackgroundColor="{DynamicResource DividerColor}"
+                            TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnClearClicked" />
 
                     </Grid>
@@ -263,8 +263,8 @@
                         x:Name="ErrorBorder"
                         IsVisible="False"
                         Padding="11"
-                        BackgroundColor="#FEF2F2"
-                        Stroke="#FCA5A5">
+                        BackgroundColor="{DynamicResource DangerSoftColor}"
+                        Stroke="{DynamicResource DangerBorderBrush}">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="9" />
@@ -273,7 +273,7 @@
                         <Label
                             x:Name="ErrorLabel"
                             FontAttributes="Bold"
-                            TextColor="#B91C1C"
+                            TextColor="{DynamicResource DangerColor}"
                             LineBreakMode="WordWrap" />
 
                     </Border>
@@ -287,8 +287,8 @@
     x:Name="ResultBorder"
     IsVisible="False"
     Padding="14"
-    BackgroundColor="White"
-    Stroke="#BFDBFE"
+    BackgroundColor="{DynamicResource SurfaceColor}"
+    Stroke="{DynamicResource PrimaryBorderBrush}"
     StrokeThickness="1">
 
                 <Border.StrokeShape>
@@ -302,37 +302,37 @@
             Text="3. Kết quả"
             FontSize="16"
             FontAttributes="Bold"
-            TextColor="#334155" />
+            TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <!-- Biểu thức đầy đủ -->
                     <controls:FractionExpressionView
             x:Name="FullExpressionMathView"
             MathFontSize="18"
-            MathColor="#2563EB"
+            MathColor="{DynamicResource PrimaryColor}"
             HorizontalOptions="Center" />
 
                     <BoxView
             HeightRequest="1"
-            BackgroundColor="#E2E8F0" />
+            BackgroundColor="{DynamicResource DividerColor}" />
 
                     <!-- Đáp số -->
                     <Label
             Text="Đáp số"
             FontSize="13"
             HorizontalTextAlignment="Center"
-            TextColor="#64748B" />
+            TextColor="{DynamicResource TextSecondaryColor}" />
 
                     <controls:FractionExpressionView
             x:Name="AnswerMathView"
             MathFontSize="24"
-            MathColor="#15803D"
+            MathColor="{DynamicResource SuccessColor}"
             HorizontalOptions="Center" />
 
                     <!-- Lời giải -->
                     <Border
             Padding="12"
-            BackgroundColor="#EFF6FF"
-            Stroke="#BFDBFE"
+            BackgroundColor="{DynamicResource PrimarySoftColor}"
+            Stroke="{DynamicResource PrimaryBorderBrush}"
             StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -345,7 +345,7 @@
                     Text="Lời giải chi tiết"
                     FontSize="16"
                     FontAttributes="Bold"
-                    TextColor="#1D4ED8" />
+                    TextColor="{DynamicResource PrimaryColor}" />
 
                             <VerticalStackLayout
                     BindableLayout.ItemsSource="{Binding Source={x:Reference Root}, Path=SolutionSteps}"
@@ -356,8 +356,8 @@
 
                                         <Border
                                 Padding="12"
-                                BackgroundColor="White"
-                                Stroke="#D8E2EF">
+                                BackgroundColor="{DynamicResource SurfaceColor}"
+                                Stroke="{DynamicResource BorderBrush}">
 
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="10" />
@@ -368,13 +368,13 @@
                                                 <Label
                                         Text="{Binding Title}"
                                         FontAttributes="Bold"
-                                        TextColor="#6D28D9" />
+                                        TextColor="{DynamicResource PrimaryColor}" />
 
                                                 <Label
                                         Text="{Binding Description}"
                                         FontSize="14"
                                         LineBreakMode="WordWrap"
-                                        TextColor="#475569">
+                                        TextColor="{DynamicResource TextSecondaryColor}">
 
                                                     <Label.Triggers>
                                                         <DataTrigger
@@ -401,7 +401,7 @@
                                                             <controls:FractionExpressionView
                                                             Expression="{Binding .}"
                                                             MathFontSize="16"
-                                                            MathColor="#334155"
+                                                            MathColor="{DynamicResource TextPrimaryColor}"
                                                             HorizontalOptions="Start" />
 
                                                         </DataTemplate>
@@ -428,8 +428,8 @@
             <!-- Lưu ý khi sử dụng -->
             <Border
             Padding="16"
-            BackgroundColor="#FFF7ED"
-            Stroke="#FDBA74"
+            BackgroundColor="{DynamicResource WarningSoftColor}"
+            Stroke="{DynamicResource WarningBorderBrush}"
             StrokeThickness="1">
 
                 <Border.StrokeShape>
@@ -445,7 +445,7 @@
                     Text="⚠"
                     FontSize="24"
                     VerticalOptions="Start"
-                    TextColor="#EA580C" />
+                    TextColor="{DynamicResource WarningColor}" />
 
                     <VerticalStackLayout
                     Grid.Column="1"
@@ -455,20 +455,20 @@
                         Text="Lưu ý khi sử dụng"
                         FontSize="16"
                         FontAttributes="Bold"
-                        TextColor="#9A3412" />
+                        TextColor="{DynamicResource WarningColor}" />
 
                         <Label
                         Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
                         FontSize="14"
                         LineHeight="1.25"
-                        TextColor="#7C2D12" />
+                        TextColor="{DynamicResource WarningColor}" />
 
                         <Label
                         Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
                         FontSize="14"
                         FontAttributes="Italic"
                         LineHeight="1.25"
-                        TextColor="#9A3412" />
+                        TextColor="{DynamicResource WarningColor}" />
 
                     </VerticalStackLayout>
                 </Grid>

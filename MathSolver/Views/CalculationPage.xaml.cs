@@ -33,6 +33,14 @@ public partial class CalculationPage : ContentPage
         SelectSubTab(CalculationSubTab.Basic);
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // Drawable đọc màu từ theme ở mỗi lần vẽ.
+        LongDivisionGraphicsView.Invalidate();
+    }
+
     private void OnAddClicked(object sender, EventArgs e)
     {
         SelectOperation(ArithmeticOperation.Add);
@@ -89,28 +97,37 @@ public partial class CalculationPage : ContentPage
                 break;
         }
 
-        selectedButton.BackgroundColor = Color.FromArgb("#2563EB");
-        selectedButton.TextColor = Colors.White;
+        selectedButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+
+        selectedButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
 
         HideMessages();
     }
 
     private void ResetOperationButtonStyles()
     {
-        Color normalBackground = Color.FromArgb("#E8EEF6");
-        Color normalTextColor = Color.FromArgb("#334155");
+        Button[] buttons =
+        [
+            AddButton,
+            SubtractButton,
+            MultiplyButton,
+            DivideButton
+        ];
 
-        AddButton.BackgroundColor = normalBackground;
-        AddButton.TextColor = normalTextColor;
+        foreach (Button button in buttons)
+        {
+            button.SetDynamicResource(
+                Button.BackgroundColorProperty,
+                "SurfaceAltColor");
 
-        SubtractButton.BackgroundColor = normalBackground;
-        SubtractButton.TextColor = normalTextColor;
-
-        MultiplyButton.BackgroundColor = normalBackground;
-        MultiplyButton.TextColor = normalTextColor;
-
-        DivideButton.BackgroundColor = normalBackground;
-        DivideButton.TextColor = normalTextColor;
+            button.SetDynamicResource(
+                Button.TextColorProperty,
+                "TextPrimaryColor");
+        }
     }
 
     private void OnCalculateClicked(object sender, EventArgs e)
@@ -889,74 +906,37 @@ public partial class CalculationPage : ContentPage
 
     private void UpdateSubTabButtonStyles()
     {
-        Color selectedBackground =
-            Color.FromArgb("#6D28D9");
-
-        Color normalBackground =
-            Colors.Transparent;
-
-        Color selectedText =
-            Colors.White;
-
-        Color normalText =
-            Color.FromArgb("#475569");
-
-        ResetSubTabButton(
-            BasicTabButton,
-            normalBackground,
-            normalText);
-
-        ResetSubTabButton(
-            FractionTabButton,
-            normalBackground,
-            normalText);
-
-        ResetSubTabButton(
-            FindXTabButton,
-            normalBackground,
-            normalText);
-
-        ResetSubTabButton(
-            GeometryTabButton,
-            normalBackground,
-            normalText);
-
+        ResetSubTabButton(BasicTabButton);
+        ResetSubTabButton(FractionTabButton);
+        ResetSubTabButton(FindXTabButton);
+        ResetSubTabButton(GeometryTabButton);
 
         Button selectedButton =
             _selectedSubTab switch
             {
-                CalculationSubTab.Basic =>
-                    BasicTabButton,
-
-                CalculationSubTab.Fraction =>
-                    FractionTabButton,
-
-                CalculationSubTab.FindX =>
-                    FindXTabButton,
-
-                CalculationSubTab.Geometry =>
-                    GeometryTabButton,
-
+                CalculationSubTab.Basic => BasicTabButton,
+                CalculationSubTab.Fraction => FractionTabButton,
+                CalculationSubTab.FindX => FindXTabButton,
+                CalculationSubTab.Geometry => GeometryTabButton,
                 _ => BasicTabButton
             };
 
-        selectedButton.BackgroundColor =
-            selectedBackground;
+        selectedButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
 
-        selectedButton.TextColor =
-            selectedText;
+        selectedButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
     }
 
-    private static void ResetSubTabButton(
-    Button button,
-    Color backgroundColor,
-    Color textColor)
+    private static void ResetSubTabButton(Button button)
     {
-        button.BackgroundColor =
-            backgroundColor;
+        button.BackgroundColor = Colors.Transparent;
 
-        button.TextColor =
-            textColor;
+        button.SetDynamicResource(
+            Button.TextColorProperty,
+            "TextSecondaryColor");
     }
 
     private static string CreateDecimalDivisionExplanation(
@@ -1065,47 +1045,37 @@ public partial class CalculationPage : ContentPage
 
     private void UpdateLongDivisionModeStyles()
     {
-        Color selectedBackground =
-            Color.FromArgb("#F5F3FF");
-
-        Color selectedStroke =
-            Color.FromArgb("#7C3AED");
-
-        Color normalBackground =
-            Colors.White;
-
-        Color normalStroke =
-            Color.FromArgb("#CBD5E1");
-
         bool elementarySelected =
             _longDivisionDisplayMode ==
             LongDivisionDisplayMode.Elementary;
 
-        ElementaryDivisionModeBorder.BackgroundColor =
-            elementarySelected
-                ? selectedBackground
-                : normalBackground;
+        ApplyLongDivisionModeStyle(
+            ElementaryDivisionModeBorder,
+            elementarySelected);
 
-        ElementaryDivisionModeBorder.Stroke =
-            elementarySelected
-                ? selectedStroke
-                : normalStroke;
+        ApplyLongDivisionModeStyle(
+            DecimalDivisionModeBorder,
+            !elementarySelected);
+    }
 
-        ElementaryDivisionModeBorder.StrokeThickness =
-            elementarySelected ? 1.5 : 1;
+    private static void ApplyLongDivisionModeStyle(
+        Border border,
+        bool selected)
+    {
+        border.SetDynamicResource(
+            Border.BackgroundColorProperty,
+            selected
+                ? "PrimarySoftColor"
+                : "SurfaceColor");
 
-        DecimalDivisionModeBorder.BackgroundColor =
-            elementarySelected
-                ? normalBackground
-                : selectedBackground;
+        border.SetDynamicResource(
+            Border.StrokeProperty,
+            selected
+                ? "PrimaryBrush"
+                : "BorderBrush");
 
-        DecimalDivisionModeBorder.Stroke =
-            elementarySelected
-                ? normalStroke
-                : selectedStroke;
-
-        DecimalDivisionModeBorder.StrokeThickness =
-            elementarySelected ? 1 : 1.5;
+        border.StrokeThickness =
+            selected ? 1.5 : 1;
     }
 
     private void RefreshLongDivision()
