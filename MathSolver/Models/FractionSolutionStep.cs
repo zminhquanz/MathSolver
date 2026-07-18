@@ -1,10 +1,16 @@
+using System.Collections.ObjectModel;
+
 namespace MathSolver.Models;
 
 public sealed class FractionSolutionStep
 {
-    public required string Title { get; init; }
+    public string Title { get; init; } =
+        string.Empty;
 
-    public required string Content { get; init; }
+    public string Description { get; init; } =
+        string.Empty;
+
+    public ObservableCollection<string> MathLines { get; } = [];
 
     public bool IsImportant { get; init; }
 }

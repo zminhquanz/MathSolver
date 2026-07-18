@@ -34,7 +34,7 @@
                     TextColor="#1E293B" />
 
                 <Label
-                    Text="Cộng, trừ, nhân, chia, quy đồng và rút gọn phân số"
+                    Text="Cộng, trừ, nhân, chia, và rút gọn phân số"
                     FontSize="14"
                     HorizontalTextAlignment="Center"
                     TextColor="#64748B" />
@@ -284,11 +284,12 @@
 
             <!-- Kết quả -->
             <Border
-                x:Name="ResultBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="#ECFDF5"
-                Stroke="#86EFAC">
+    x:Name="ResultBorder"
+    IsVisible="False"
+    Padding="14"
+    BackgroundColor="White"
+    Stroke="#BFDBFE"
+    StrokeThickness="1">
 
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="12" />
@@ -296,83 +297,133 @@
 
                 <VerticalStackLayout Spacing="10">
 
+                    <!-- Tiêu đề -->
                     <Label
-                    Text="3. Kết quả"
-                    FontSize="17"
-                    FontAttributes="Bold"
-                    TextColor="#166534" />
+            Text="3. Kết quả"
+            FontSize="16"
+            FontAttributes="Bold"
+            TextColor="#334155" />
+
+                    <!-- Biểu thức đầy đủ -->
+                    <controls:FractionExpressionView
+            x:Name="FullExpressionMathView"
+            MathFontSize="18"
+            MathColor="#2563EB"
+            HorizontalOptions="Center" />
+
+                    <BoxView
+            HeightRequest="1"
+            BackgroundColor="#E2E8F0" />
+
+                    <!-- Đáp số -->
+                    <Label
+            Text="Đáp số"
+            FontSize="13"
+            HorizontalTextAlignment="Center"
+            TextColor="#64748B" />
 
                     <controls:FractionExpressionView
-                    x:Name="ResultMathView"
-                    Grid.Column="1"
-                    MathFontSize="20"
-                    MathColor="#166534"
-                    HorizontalOptions="End"
-                    VerticalOptions="Center" />
+            x:Name="AnswerMathView"
+            MathFontSize="24"
+            MathColor="#15803D"
+            HorizontalOptions="Center" />
 
-                    <Label
-                    x:Name="SolutionTitle"
-                    IsVisible="False"
+                    <!-- Lời giải -->
+                    <Border
+            Padding="12"
+            BackgroundColor="#EFF6FF"
+            Stroke="#BFDBFE"
+            StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label
                     Text="Lời giải chi tiết"
-                    FontSize="20"
+                    FontSize="16"
                     FontAttributes="Bold"
-                    TextColor="#5B21B6" />
+                    TextColor="#1D4ED8" />
 
-                    <VerticalStackLayout
+                            <VerticalStackLayout
                     BindableLayout.ItemsSource="{Binding Source={x:Reference Root}, Path=SolutionSteps}"
                     Spacing="9">
 
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="models:FractionSolutionStep">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:FractionSolutionStep">
 
-                                <Border
-                                Padding="13"
+                                        <Border
+                                Padding="12"
                                 BackgroundColor="White"
                                 Stroke="#D8E2EF">
 
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="10" />
+                                            </Border.StrokeShape>
 
-                                    <VerticalStackLayout Spacing="6">
+                                            <VerticalStackLayout Spacing="8">
 
-                                        <Label
+                                                <Label
                                         Text="{Binding Title}"
                                         FontAttributes="Bold"
                                         TextColor="#6D28D9" />
 
-                                        <controls:FractionExpressionView
-                                        Expression="{Binding Content}"
-                                        MathFontSize="15"
-                                        MathColor="#334155" />
+                                                <Label
+                                        Text="{Binding Description}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="#475569">
 
-                                    </VerticalStackLayout>
+                                                    <Label.Triggers>
+                                                        <DataTrigger
+                                                TargetType="Label"
+                                                Binding="{Binding Description}"
+                                                Value="">
 
-                                    <Border.Triggers>
-                                        <DataTrigger
-                                        TargetType="Border"
-                                        Binding="{Binding IsImportant}"
-                                        Value="True">
+                                                            <Setter
+                                                    Property="IsVisible"
+                                                    Value="False" />
 
-                                            <Setter
-                                            Property="BackgroundColor"
-                                            Value="#F5F3FF" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
 
-                                            <Setter
-                                            Property="Stroke"
-                                            Value="#C4B5FD" />
+                                                </Label>
 
-                                        </DataTrigger>
-                                    </Border.Triggers>
+                                                <VerticalStackLayout
+                                                BindableLayout.ItemsSource="{Binding MathLines}"
+                                                Spacing="8">
 
-                                </Border>
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="x:String">
 
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
+                                                            <controls:FractionExpressionView
+                                                            Expression="{Binding .}"
+                                                            MathFontSize="16"
+                                                            MathColor="#334155"
+                                                            HorizontalOptions="Start" />
 
-                    </VerticalStackLayout>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+
+                                                </VerticalStackLayout>
+
+                                            </VerticalStackLayout>
+
+                                        </Border>
+
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+
+                            </VerticalStackLayout>
+
+                        </VerticalStackLayout>
+
+                    </Border>
 
                 </VerticalStackLayout>
+
             </Border>
             <!-- Lưu ý khi sử dụng -->
             <Border

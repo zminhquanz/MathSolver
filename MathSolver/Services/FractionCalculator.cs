@@ -79,60 +79,185 @@ public static class FractionCalculator
         };
     }
 
-    private static FractionCalculationResult AddOrSubtract(
-        BigInteger n1,
-        BigInteger d1,
-        BigInteger n2,
-        BigInteger d2,
-        bool subtract)
+    private static FractionCalculationResult AddOrSubtract(BigInteger numerator1, BigInteger denominator1, BigInteger numerator2, BigInteger denominator2, bool subtract)
     {
-        BigInteger lcm = LeastCommonMultiple(d1, d2);
-        BigInteger factor1 = lcm / d1;
-        BigInteger factor2 = lcm / d2;
-        BigInteger converted1 = n1 * factor1;
-        BigInteger converted2 = n2 * factor2;
-        BigInteger rawNumerator =
+        BigInteger commonDenominator =
+        LeastCommonMultiple(
+            denominator1,
+            denominator2);
+
+        BigInteger multiplier1 =
+            commonDenominator /
+            denominator1;
+
+        BigInteger multiplier2 =
+            commonDenominator /
+            denominator2;
+
+        BigInteger convertedNumerator1 =
+            numerator1 *
+            multiplier1;
+
+        BigInteger convertedNumerator2 =
+            numerator2 *
+            multiplier2;
+
+        BigInteger resultNumerator =
             subtract
-                ? converted1 - converted2
-                : converted1 + converted2;
+                ? convertedNumerator1 -
+                  convertedNumerator2
+                : convertedNumerator1 +
+                  convertedNumerator2;
 
-        string symbol = subtract ? "−" : "+";
-        string action = subtract ? "Trừ hai tử số" : "Cộng hai tử số";
+        string operationSymbol =
+            subtract ? "−" : "+";
 
-        var result = Success(
-            FormatSimplified(rawNumerator, lcm));
+        string simplifiedResult =
+            FormatSimplified(
+            resultNumerator,
+            commonDenominator);
 
+        string operationTitle =
+            subtract
+                ? "Trừ hai tử số"
+                : "Cộng hai tử số";
+
+        string operationDescription =
+            subtract
+                ? $"Hai phân số đã có cùng mẫu số " +
+                  $"{commonDenominator}, nên giữ nguyên mẫu số " +
+                  $"và trừ hai tử số:\n" +
+                  $"{convertedNumerator1} − " +
+                  $"{convertedNumerator2} = " +
+                  $"{resultNumerator}."
+                : $"Hai phân số đã có cùng mẫu số " +
+                  $"{commonDenominator}, nên giữ nguyên mẫu số " +
+                  $"và cộng hai tử số:\n" +
+                  $"{convertedNumerator1} + " +
+                  $"{convertedNumerator2} = " +
+                  $"{resultNumerator}.";
+
+        var result =
+        Success(
+            resultExpression:
+                simplifiedResult,
+
+            fullExpression:
+                $"{numerator1}/{denominator1} " +
+                $"{operationSymbol} " +
+                $"{numerator2}/{denominator2} " +
+                $"= {simplifiedResult}");
+
+        // Bước 1: Phép tính ban đầu
         result.Steps.Add(
-            Step(
-                "Phép tính",
-                $"{n1}/{d1} {symbol} {n2}/{d2}"));
+            CreateMathStep(
+                title: "Phép tính",
 
+                description:
+                    subtract
+                        ? "Ta thực hiện phép trừ hai phân số."
+                        : "Ta thực hiện phép cộng hai phân số.",
+
+                mathLines:
+                [
+                    $"{numerator1}/{denominator1} " +
+                $"{operationSymbol} " +
+                $"{numerator2}/{denominator2}"
+                ]));
+
+        // Bước 2: Tìm mẫu số chung
         result.Steps.Add(
-            Step(
-                "Tìm mẫu số chung nhỏ nhất",
-                $"BCNN({d1}, {d2}) = {lcm}"));
+            CreateTextStep(
+                title:
+                    "Tìm mẫu số chung nhỏ nhất",
 
+                description:
+                    $"BCNN({denominator1}, " +
+                    $"{denominator2}) = " +
+                    $"{commonDenominator}."));
+
+        // Bước 3: Quy đồng
         result.Steps.Add(
-            Step(
-                "Quy đồng mẫu số",
-                $"{n1}÷{d1} = ({n1} × {factor1}) ÷ " +
-                $"({d1} × {factor1}) = {converted1}÷{lcm}\n" +
-                $"{n2}÷{d2} = ({n2} × {factor2}) ÷ " +
-                $"({d2} × {factor2}) = {converted2}÷{lcm}"));
+            CreateMathStep(
+                title:
+                    "Quy đồng mẫu số",
 
+                description:
+                    $"Phân số thứ nhất nhân cả tử và mẫu " +
+                    $"với {multiplier1}.\n" +
+                    $"Phân số thứ hai nhân cả tử và mẫu " +
+                    $"với {multiplier2}.",
+
+                mathLines:
+                [
+                    $"{numerator1}/{denominator1} " +
+                $"= {convertedNumerator1}/" +
+                $"{commonDenominator}",
+
+                $"{numerator2}/{denominator2} " +
+                $"= {convertedNumerator2}/" +
+                $"{commonDenominator}"
+                ]));
+
+        // Bước 4: Cộng hoặc trừ
         result.Steps.Add(
-            Step(
-                action,
-                $"{converted1}÷{lcm} {symbol} {converted2}÷{lcm}\n" +
-                $"= ({converted1} {symbol} {converted2})÷{lcm}\n" +
-                $"= {rawNumerator}÷{lcm}"));
+            CreateMathStep(
+                title:
+                    operationTitle,
 
+                description:
+                    operationDescription,
+
+                mathLines:
+                [
+                    $"{convertedNumerator1}/" +
+                $"{commonDenominator} " +
+                $"{operationSymbol} " +
+                $"{convertedNumerator2}/" +
+                $"{commonDenominator}",
+
+                $"= {resultNumerator}/" +
+                $"{commonDenominator}"
+                ]));
+
+        // Bước 5: Rút gọn
         AddSimplificationStep(
             result,
-            rawNumerator,
-            lcm);
+            resultNumerator,
+            commonDenominator);
 
         return result;
+    }
+
+    private static FractionSolutionStep CreateMathStep(string title, string description, IEnumerable<string> mathLines, bool important = false)
+    {
+        var step =
+        new FractionSolutionStep
+        {
+            Title = title,
+            Description = description,
+            IsImportant = important
+        };
+
+        foreach (string line in mathLines)
+        {
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                step.MathLines.Add(line);
+            }
+        }
+
+        return step;
+    }
+
+    private static FractionSolutionStep CreateTextStep(string title, string description, bool important = false)
+    {
+        return new FractionSolutionStep
+        {
+            Title = title,
+            Description = description,
+            IsImportant = important
+        };
     }
 
     private static FractionCalculationResult Multiply(
@@ -144,21 +269,48 @@ public static class FractionCalculator
         BigInteger numerator = n1 * n2;
         BigInteger denominator = d1 * d2;
 
-        var result = Success(
-            FormatSimplified(
-                numerator,
-                denominator));
+        string simplifiedResult =
+        FormatSimplified(
+            numerator,
+            denominator);
+
+        var result =
+            Success(
+                resultExpression:
+                    simplifiedResult,
+
+                fullExpression:
+                    $"{n1}/{d1} × {n2}/{d2} " +
+                    $"= {simplifiedResult}");
 
         result.Steps.Add(
-            Step(
-                "Phép tính",
-                $"{n1}/{d1} × {n2}/{d2}"));
+            CreateMathStep(
+                title: "Phép tính",
+                description: "",
+                mathLines:
+                [
+                    $"{n1}/{d1} × {n2}/{d2}"
+                ]));
 
         result.Steps.Add(
-            Step(
-                "Nhân tử với tử, mẫu với mẫu",
-                $"({n1} × {n2}) / ({d1} × {d2})\n" +
-                $"= {numerator}/{denominator}"));
+            CreateMathStep(
+                title: "Thực hiện phép nhân",
+                description: "Nhân tử với tử, mẫu với mẫu",
+                mathLines:
+                [
+                    $"({n1} × {n2}) / ({d1} × {d2})\n" +
+                    $"= {numerator}/{denominator}"
+                ]));
+
+        result.Steps.Add(
+            CreateMathStep(
+                title: "Kết quả phép nhân",
+                description: "",
+                mathLines:
+                [
+                    $"{n1}/{d1} × {n2}/{d2}",
+                    $"= {numerator}/{denominator}"
+                ]));
 
         AddSimplificationStep(
             result,
@@ -187,27 +339,61 @@ public static class FractionCalculator
             ref numerator,
             ref denominator);
 
-        var result = Success(
-            FormatSimplified(
-                numerator,
-                denominator));
+        string simplifiedResult =
+        FormatSimplified(
+            numerator,
+            denominator);
+
+        var result =
+            Success(
+                resultExpression:
+                    simplifiedResult,
+
+                fullExpression:
+                    $"{n1}/{d1} ÷ {n2}/{d2} " +
+                    $"= {simplifiedResult}");
 
         result.Steps.Add(
-            Step(
-                "Phép tính",
-                $"{n1}/{d1} ÷ {n2}/{d2}"));
+            CreateMathStep(
+                title: "Phép tính",
+                description: "",
+                mathLines:
+                [
+                    $"{n1}/{d1} ÷ {n2}/{d2}"
+                ]));
 
         result.Steps.Add(
-            Step(
-                "Đảo phân số chia",
-                $"{n1}/{d1} ÷ {n2}/{d2}\n" +
-                $"= {n1}/{d1} × {d2}/{n2}"));
+            CreateMathStep(
+                title: "Đảo phân số chia",
+                description: "",
+                mathLines:
+                [
+                    $"{n1}/{d1} ÷ {n2}/{d2}\n" +
+                    $"= {n1}/{d1} × {d2}/{n2}"
+                ]));
 
         result.Steps.Add(
-            Step(
-                "Thực hiện phép nhân",
-                $"= ({n1} × {d2}) / ({d1} × {n2})\n" +
-                $"= {numerator}/{denominator}"));
+            CreateMathStep(
+                title: "Thực hiện phép nhân",
+                description: "",
+                mathLines:
+                [
+                    $"= ({n1} × {d2}) ÷ ({d1} × {n2})\n" +
+                    $"= {numerator}/{denominator}"
+                ]));
+        result.Steps.Add(
+            CreateMathStep(
+                title: "Kết quả phép chia",
+
+                description:
+                    "Đổi phép chia thành phép nhân với phân số nghịch đảo:",
+
+                mathLines:
+                [
+                    $"{n1}/{d1} ÷ {n2}/{d2}",
+                    $"= {n1}/{d1} × {d2}/{n2}",
+                    $"= {numerator}/{denominator}"
+                ]));
 
         AddSimplificationStep(
             result,
@@ -232,46 +418,78 @@ public static class FractionCalculator
         string answer =
             $"{converted1}/{lcm} và {converted2}/{lcm}";
 
-        var result = Success(answer);
+        string resultExpression = $"{converted1}/{lcm} và " + $"{converted2}/{lcm}";
+
+        var result =
+            Success(
+                resultExpression:
+                    resultExpression,
+
+                fullExpression:
+                    $"{n1}/{d1} và {n2}/{d2}");
 
         result.Steps.Add(
-            Step(
-                "Hai phân số ban đầu",
-                $"{n1}/{d1} và {n2}/{d2}"));
+            CreateMathStep(
+                title: "Hai phân số ban đầu",
+                description: "",
+                mathLines:
+                [
+                    $"{n1}/{d1} và {n2}/{d2}"
+                ]));
 
         result.Steps.Add(
-            Step(
-                "Tìm mẫu số chung nhỏ nhất",
-                $"BCNN({d1}, {d2}) = {lcm}"));
+            CreateTextStep(
+            "Tìm mẫu số chung nhỏ nhất",
+            $"BCNN({d1}, {d2}) = {lcm}"));
 
         result.Steps.Add(
-            Step(
-                "Quy đồng mẫu số",
-                $"{n1}/{d1} = ({n1} × {factor1}) / " +
-                $"({d1} × {factor1}) = {converted1}/{lcm}\n" +
-                $"{n2}/{d2} = ({n2} × {factor2}) / " +
-                $"({d2} × {factor2}) = {converted2}/{lcm}"));
+            CreateMathStep(
+                title: "Quy đồng mẫu số",
+                description: "",
+                mathLines:
+                [
+                    $"{n1}/{d1} = ({n1} × {factor1}) / " +
+                    $"({d1} × {factor1}) = {converted1}/{lcm}\n" +
+                    $"{n2}/{d2} = ({n2} × {factor2}) / " +
+                    $"({d2} × {factor2}) = {converted2}/{lcm}"
+                ]));
 
         result.Steps.Add(
-            Step(
-                "Kết quả quy đồng",
-                answer,
-                important: true));
+            CreateMathStep(
+            title: "Kết quả quy đồng",
+
+            description:
+                "Hai phân số sau khi quy đồng là:",
+
+            mathLines:
+            [
+                $"{converted1}/{lcm} và {converted2}/{lcm}"
+            ],
+
+            important: true));
 
         return result;
     }
 
     private static void AddSimplificationStep(
-        FractionCalculationResult result,
-        BigInteger numerator,
-        BigInteger denominator)
+    FractionCalculationResult result,
+    BigInteger numerator,
+    BigInteger denominator)
     {
         if (numerator.IsZero)
         {
             result.Steps.Add(
-                Step(
-                    "Kết quả",
-                    $"{numerator}/{denominator} = 0",
+                CreateMathStep(
+                    title: "Kết quả",
+
+                    description:
+                        "Phân số có tử số bằng 0 nên kết quả bằng 0.",
+
+                    mathLines:
+                    [
+                        $"{numerator}/{denominator} = 0"
+                    ],
+
                     important: true));
 
             return;
@@ -295,22 +513,35 @@ public static class FractionCalculator
         if (gcd > BigInteger.One)
         {
             result.Steps.Add(
-                Step(
-                    "Rút gọn phân số",
-                    $"ƯCLN(|{numerator}|, {denominator}) = {gcd}\n" +
-                    $"{numerator}/{denominator}\n" +
-                    $"= ({numerator} ÷ {gcd}) / " +
-                    $"({denominator} ÷ {gcd})\n" +
-                    $"= {FormatFraction(simplifiedNumerator, simplifiedDenominator)}",
+                CreateMathStep(
+                    title: "Rút gọn phân số",
+
+                    description:
+                        $"ƯCLN({numerator}, {denominator}) = {gcd}. " +
+                        $"Chia cả tử và mẫu cho {gcd}.",
+
+                    mathLines:
+                    [
+                        $"{numerator}/{denominator} = " +
+                    $"{simplifiedNumerator}/{simplifiedDenominator}"
+                    ],
+
                     important: true));
         }
         else
         {
             result.Steps.Add(
-                Step(
-                    "Kết quả",
-                    $"{FormatFraction(numerator, denominator)} " +
-                    "đã là phân số tối giản.",
+                CreateMathStep(
+                    title: "Kết quả",
+
+                    description:
+                        "Phân số đã ở dạng tối giản.",
+
+                    mathLines:
+                    [
+                        $"{numerator}/{denominator}"
+                    ],
+
                     important: true));
         }
     }
@@ -379,12 +610,14 @@ public static class FractionCalculator
     }
 
     private static FractionCalculationResult Success(
-        string resultText)
+    string resultExpression,
+    string fullExpression)
     {
         return new FractionCalculationResult
         {
             IsSuccess = true,
-            ResultText = resultText
+            ResultExpression = resultExpression,
+            FullExpression = fullExpression
         };
     }
 
@@ -400,13 +633,13 @@ public static class FractionCalculator
 
     private static FractionSolutionStep Step(
         string title,
-        string content,
+        string description,
         bool important = false)
     {
         return new FractionSolutionStep
         {
             Title = title,
-            Content = content,
+            Description = description,
             IsImportant = important
         };
     }

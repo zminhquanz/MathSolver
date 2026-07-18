@@ -372,8 +372,8 @@
                     <VerticalStackLayout Spacing="2" Margin="0,4,0,6">
 
                         <Label
-                        Text="➕ ➖ ✖ ➗"
-                        FontSize="22"
+                        Text="+ − × ÷"
+                        FontSize="42"
                         HorizontalTextAlignment="Center"
                         TextColor="#6D28D9" />
 

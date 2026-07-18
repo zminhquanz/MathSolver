@@ -132,19 +132,19 @@ public partial class FractionView : ContentView
 
         if (!TryReadInteger(
                 FirstNumeratorEntry.Text,
-                "tử số của phân số thứ nhất",
+                "Tử số của phân số thứ nhất",
                 out BigInteger numerator1) ||
             !TryReadInteger(
                 FirstDenominatorEntry.Text,
-                "mẫu số của phân số thứ nhất",
+                "Mẫu số của phân số thứ nhất",
                 out BigInteger denominator1) ||
             !TryReadInteger(
                 SecondNumeratorEntry.Text,
-                "tử số của phân số thứ hai",
+                "Tử số của phân số thứ hai",
                 out BigInteger numerator2) ||
             !TryReadInteger(
                 SecondDenominatorEntry.Text,
-                "mẫu số của phân số thứ hai",
+                "Mẫu số của phân số thứ hai",
                 out BigInteger denominator2))
         {
             return;
@@ -164,7 +164,11 @@ public partial class FractionView : ContentView
             return;
         }
 
-        ResultMathView.Expression = result.ResultText;
+        FullExpressionMathView.Expression =
+        result.FullExpression;
+
+        AnswerMathView.Expression =
+            result.ResultExpression;
 
         foreach (FractionSolutionStep step in result.Steps)
         {
@@ -172,7 +176,6 @@ public partial class FractionView : ContentView
         }
 
         ResultBorder.IsVisible = true;
-        SolutionTitle.IsVisible = true;
     }
 
     private void OnClearClicked(
@@ -221,20 +224,30 @@ public partial class FractionView : ContentView
         ErrorLabel.Text = string.Empty;
 
         ResultBorder.IsVisible = false;
-        ResultMathView.Expression = string.Empty;
 
-        SolutionTitle.IsVisible = false;
+        FullExpressionMathView.Expression =
+            string.Empty;
+
+        AnswerMathView.Expression =
+            string.Empty;
+
         SolutionSteps.Clear();
     }
 
     private void ShowError(
-        string message)
+    string message)
     {
         ErrorLabel.Text = message;
         ErrorBorder.IsVisible = true;
 
         ResultBorder.IsVisible = false;
-        SolutionTitle.IsVisible = false;
+
+        FullExpressionMathView.Expression =
+            string.Empty;
+
+        AnswerMathView.Expression =
+            string.Empty;
+
         SolutionSteps.Clear();
     }
 
