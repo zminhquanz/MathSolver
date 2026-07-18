@@ -40,44 +40,44 @@
                             <VisualState.Setters>
 
                                 <Setter
-                    TargetName="BasicTabButton"
-                    Property="Button.Text"
-                    Value="Cơ bản" />
+                                TargetName="BasicTabButton"
+                                Property="Button.Text"
+                                Value="Cơ bản" />
 
                                 <Setter
-                    TargetName="FractionTabButton"
-                    Property="Button.Text"
-                    Value="Phân số" />
+                                TargetName="FractionTabButton"
+                                Property="Button.Text"
+                                Value="Phân số" />
 
                                 <Setter
-                    TargetName="FindXTabButton"
-                    Property="Button.Text"
-                    Value="Tìm x" />
+                                TargetName="FindXTabButton"
+                                Property="Button.Text"
+                                Value="Tìm x" />
 
                                 <Setter
-                    TargetName="GeometryTabButton"
-                    Property="Button.Text"
-                    Value="Hình học" />
+                                TargetName="GeometryTabButton"
+                                Property="Button.Text"
+                                Value="Hình học" />
 
                                 <Setter
-                    TargetName="BasicTabButton"
-                    Property="Button.FontSize"
-                    Value="12" />
+                                TargetName="BasicTabButton"
+                                Property="Button.FontSize"
+                                Value="12" />
 
                                 <Setter
-                    TargetName="FractionTabButton"
-                    Property="Button.FontSize"
-                    Value="12" />
+                                TargetName="FractionTabButton"
+                                Property="Button.FontSize"
+                                Value="12" />
 
                                 <Setter
-                    TargetName="FindXTabButton"
-                    Property="Button.FontSize"
-                    Value="12" />
+                                TargetName="FindXTabButton"
+                                Property="Button.FontSize"
+                                Value="12" />
 
                                 <Setter
-                    TargetName="GeometryTabButton"
-                    Property="Button.FontSize"
-                    Value="12" />
+                                TargetName="GeometryTabButton"
+                                Property="Button.FontSize"
+                                Value="12" />
 
                             </VisualState.Setters>
 
@@ -92,44 +92,44 @@
                             <VisualState.Setters>
 
                                 <Setter
-                    TargetName="BasicTabButton"
-                    Property="Button.Text"
-                    Value="➕ Cơ bản" />
+                                TargetName="BasicTabButton"
+                                Property="Button.Text"
+                                Value="+ Cơ bản" />
 
                                 <Setter
-                    TargetName="FractionTabButton"
-                    Property="Button.Text"
-                    Value="½ Phân số" />
+                                TargetName="FractionTabButton"
+                                Property="Button.Text"
+                                Value="½ Phân số" />
 
                                 <Setter
-                    TargetName="FindXTabButton"
-                    Property="Button.Text"
-                    Value="𝑥 Tìm x" />
+                                TargetName="FindXTabButton"
+                                Property="Button.Text"
+                                Value="𝑥 Tìm x" />
 
                                 <Setter
-                    TargetName="GeometryTabButton"
-                    Property="Button.Text"
-                    Value="△ Hình học" />
+                                TargetName="GeometryTabButton"
+                                Property="Button.Text"
+                                Value="△ Hình học" />
 
                                 <Setter
-                    TargetName="BasicTabButton"
-                    Property="Button.FontSize"
-                    Value="14" />
+                                TargetName="BasicTabButton"
+                                Property="Button.FontSize"
+                                Value="14" />
 
                                 <Setter
-                    TargetName="FractionTabButton"
-                    Property="Button.FontSize"
-                    Value="14" />
+                                TargetName="FractionTabButton"
+                                Property="Button.FontSize"
+                                Value="14" />
 
                                 <Setter
-                    TargetName="FindXTabButton"
-                    Property="Button.FontSize"
-                    Value="14" />
+                                TargetName="FindXTabButton"
+                                Property="Button.FontSize"
+                                Value="14" />
 
                                 <Setter
-                    TargetName="GeometryTabButton"
-                    Property="Button.FontSize"
-                    Value="14" />
+                                TargetName="GeometryTabButton"
+                                Property="Button.FontSize"
+                                Value="14" />
 
                             </VisualState.Setters>
 
@@ -142,7 +142,7 @@
                 <Button
                     x:Name="BasicTabButton"
                     Grid.Column="0"
-                    Text="➕ Cơ bản"
+                    Text="+ Cơ bản"
                     HeightRequest="44"
                     Padding="8,0"
                     FontSize="14"
@@ -217,47 +217,47 @@
                                 <VisualState.Setters>
 
                                     <Setter
-                                Property="Padding"
-                                Value="10" />
+                                    Property="Padding"
+                                    Value="10" />
 
                                     <Setter
-                                Property="Spacing"
-                                Value="10" />
+                                    Property="Spacing"
+                                    Value="10" />
 
                                     <Setter
-                                TargetName="PageTitle"
-                                Property="Label.FontSize"
-                                Value="24" />
+                                    TargetName="PageTitle"
+                                    Property="Label.FontSize"
+                                    Value="24" />
 
                                     <Setter
-                                TargetName="PageSubtitle"
-                                Property="Label.FontSize"
-                                Value="14" />
+                                    TargetName="PageSubtitle"
+                                    Property="Label.FontSize"
+                                    Value="14" />
 
                                     <Setter
-                                TargetName="OperationButtonsGrid"
-                                Property="Grid.ColumnSpacing"
-                                Value="6" />
+                                    TargetName="OperationButtonsGrid"
+                                    Property="Grid.ColumnSpacing"
+                                    Value="6" />
 
                                     <Setter
-                                TargetName="AddButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="AddButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                     <Setter
-                                TargetName="SubtractButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="SubtractButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                     <Setter
-                                TargetName="MultiplyButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="MultiplyButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                     <Setter
-                                TargetName="DivideButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="DivideButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                 </VisualState.Setters>
 
@@ -273,42 +273,42 @@
                                 <VisualState.Setters>
 
                                     <Setter
-                                Property="Padding"
-                                Value="14" />
+                                    Property="Padding"
+                                    Value="14" />
 
                                     <Setter
-                                Property="Spacing"
-                                Value="12" />
+                                    Property="Spacing"
+                                    Value="12" />
 
                                     <Setter
-                                TargetName="PageTitle"
-                                Property="Label.FontSize"
-                                Value="26" />
+                                    TargetName="PageTitle"
+                                    Property="Label.FontSize"
+                                    Value="26" />
 
                                     <Setter
-                                TargetName="PageSubtitle"
-                                Property="Label.FontSize"
-                                Value="15" />
+                                    TargetName="PageSubtitle"
+                                    Property="Label.FontSize"
+                                    Value="15" />
 
                                     <Setter
-                                TargetName="AddButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
+                                    TargetName="AddButton"
+                                    Property="Button.HeightRequest"
+                                    Value="50" />
 
                                     <Setter
-                                TargetName="SubtractButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
+                                    TargetName="SubtractButton"
+                                    Property="Button.HeightRequest"
+                                    Value="50" />
 
                                     <Setter
-                                TargetName="MultiplyButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
+                                    TargetName="MultiplyButton"
+                                    Property="Button.HeightRequest"
+                                    Value="50" />
 
                                     <Setter
-                                TargetName="DivideButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
+                                    TargetName="DivideButton"
+                                    Property="Button.HeightRequest"
+                                    Value="50" />
 
                                 </VisualState.Setters>
 
@@ -324,42 +324,42 @@
                                 <VisualState.Setters>
 
                                     <Setter
-                                Property="Padding"
-                                Value="18,14" />
+                                    Property="Padding"
+                                    Value="18,14" />
 
                                     <Setter
-                                Property="Spacing"
-                                Value="12" />
+                                    Property="Spacing"
+                                    Value="12" />
 
                                     <Setter
-                                TargetName="PageTitle"
-                                Property="Label.FontSize"
-                                Value="27" />
+                                    TargetName="PageTitle"
+                                    Property="Label.FontSize"
+                                    Value="27" />
 
                                     <Setter
-                                TargetName="PageSubtitle"
-                                Property="Label.FontSize"
-                                Value="15" />
+                                    TargetName="PageSubtitle"
+                                    Property="Label.FontSize"
+                                    Value="15" />
 
                                     <Setter
-                                TargetName="AddButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="AddButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                     <Setter
-                                TargetName="SubtractButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="SubtractButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                     <Setter
-                                TargetName="MultiplyButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="MultiplyButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                     <Setter
-                                TargetName="DivideButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
+                                    TargetName="DivideButton"
+                                    Property="Button.HeightRequest"
+                                    Value="48" />
 
                                 </VisualState.Setters>
 
@@ -372,28 +372,34 @@
                     <VerticalStackLayout Spacing="2" Margin="0,4,0,6">
 
                         <Label
-                    x:Name="PageTitle"
-                    Text="PHÉP TÍNH CƠ BẢN"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="#1E3A5F" />
+                        Text="➕ ➖ ✖ ➗"
+                        FontSize="22"
+                        HorizontalTextAlignment="Center"
+                        TextColor="#6D28D9" />
 
                         <Label
-                    x:Name="PageSubtitle"
-                    Text="Cộng • Trừ • Nhân • Chia"
-                    FontSize="15"
-                    HorizontalTextAlignment="Center"
-                    TextColor="#60758A" />
+                        x:Name="PageTitle"
+                        Text="PHÉP TÍNH CƠ BẢN"
+                        FontSize="27"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="Center"
+                        TextColor="#1E3A5F" />
+
+                        <Label
+                        x:Name="PageSubtitle"
+                        Text="Cộng • Trừ • Nhân • Chia"
+                        FontSize="15"
+                        HorizontalTextAlignment="Center"
+                        TextColor="#60758A" />
 
                     </VerticalStackLayout>
 
                     <!-- Chọn loại số -->
                     <Border
-                Padding="12"
-                BackgroundColor="#F8FAFC"
-                Stroke="#CBD5E1"
-                StrokeThickness="1">
+                    Padding="12"
+                    BackgroundColor="#F8FAFC"
+                    Stroke="#CBD5E1"
+                    StrokeThickness="1">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="12" />
@@ -401,44 +407,44 @@
 
                         <VerticalStackLayout Spacing="10">
                             <Label
-                        Text="1. Chọn loại số"
-                        FontSize="18"
-                        FontAttributes="Bold"
-                        TextColor="#263B50" />
+                            Text="1. Chọn loại số"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="#263B50" />
 
                             <Label
-                        Text="Loại số được phép nhập"
-                        FontSize="14"
-                        TextColor="#52677B" />
+                            Text="Loại số được phép nhập"
+                            FontSize="14"
+                            TextColor="#52677B" />
 
                             <Grid
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="12">
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="12">
 
                                 <RadioButton
-                            x:Name="IntegerRadioButton"
-                            Grid.Column="0"
-                            Content="Số nguyên"
-                            GroupName="NumberType"
-                            IsChecked="True"
-                            CheckedChanged="OnNumberTypeChanged"
-                            TextColor="#334155" />
+                                x:Name="IntegerRadioButton"
+                                Grid.Column="0"
+                                Content="Số nguyên"
+                                GroupName="NumberType"
+                                IsChecked="True"
+                                CheckedChanged="OnNumberTypeChanged"
+                                TextColor="#334155" />
 
                                 <RadioButton
-                            x:Name="DecimalRadioButton"
-                            Grid.Column="1"
-                            Content="Số thập phân"
-                            GroupName="NumberType"
-                            CheckedChanged="OnNumberTypeChanged"
-                            TextColor="#334155" />
+                                x:Name="DecimalRadioButton"
+                                Grid.Column="1"
+                                Content="Số thập phân"
+                                GroupName="NumberType"
+                                CheckedChanged="OnNumberTypeChanged"
+                                TextColor="#334155" />
 
                             </Grid>
 
                             <Label
-                        x:Name="NumberTypeDescriptionLabel"
-                        Text="Chỉ được nhập số nguyên, ví dụ: 12, 50 hoặc -8."
-                        FontSize="13"
-                        TextColor="#64748B" />
+                            x:Name="NumberTypeDescriptionLabel"
+                            Text="Chỉ được nhập số nguyên, ví dụ: 12, 50 hoặc -8."
+                            FontSize="13"
+                            TextColor="#64748B" />
 
                         </VerticalStackLayout>
 
@@ -446,10 +452,10 @@
 
                     <!-- Khung chọn phép tính -->
                     <Border
-                Padding="14"
-                BackgroundColor="White"
-                Stroke="#D7E2EE"
-                StrokeThickness="1">
+                    Padding="14"
+                    BackgroundColor="White"
+                    Stroke="#D7E2EE"
+                    StrokeThickness="1">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
@@ -458,67 +464,67 @@
                         <VerticalStackLayout Spacing="14">
 
                             <Label
-                        Text="2. Chọn phép tính"
-                        FontSize="18"
-                        FontAttributes="Bold"
-                        TextColor="#263B50" />
+                            Text="2. Chọn phép tính"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="#263B50" />
 
                             <Grid
-                        x:Name="OperationButtonsGrid"
-                        ColumnDefinitions="*,*,*,*"
-                        ColumnSpacing="8">
+                            x:Name="OperationButtonsGrid"
+                            ColumnDefinitions="*,*,*,*"
+                            ColumnSpacing="8">
 
                                 <Button
-                            x:Name="AddButton"
-                            Grid.Column="0"
-                            Text="+"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
-                            BackgroundColor="#E8EEF6"
-                            TextColor="#334155"
-                            Clicked="OnAddClicked" />
+                                x:Name="AddButton"
+                                Grid.Column="0"
+                                Text="+"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                HeightRequest="48"
+                                Padding="8,0"
+                                CornerRadius="12"
+                                BackgroundColor="#E8EEF6"
+                                TextColor="#334155"
+                                Clicked="OnAddClicked" />
 
                                 <Button
-                            x:Name="SubtractButton"
-                            Grid.Column="1"
-                            Text="−"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
-                            BackgroundColor="#E8EEF6"
-                            TextColor="#334155"
-                            Clicked="OnSubtractClicked" />
+                                x:Name="SubtractButton"
+                                Grid.Column="1"
+                                Text="−"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                HeightRequest="48"
+                                Padding="8,0"
+                                CornerRadius="12"
+                                BackgroundColor="#E8EEF6"
+                                TextColor="#334155"
+                                Clicked="OnSubtractClicked" />
 
                                 <Button
-                            x:Name="MultiplyButton"
-                            Grid.Column="2"
-                            Text="×"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
-                            BackgroundColor="#E8EEF6"
-                            TextColor="#334155"
-                            Clicked="OnMultiplyClicked" />
+                                x:Name="MultiplyButton"
+                                Grid.Column="2"
+                                Text="×"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                HeightRequest="48"
+                                Padding="8,0"
+                                CornerRadius="12"
+                                BackgroundColor="#E8EEF6"
+                                TextColor="#334155"
+                                Clicked="OnMultiplyClicked" />
 
                                 <Button
-                            x:Name="DivideButton"
-                            Grid.Column="3"
-                            Text="÷"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
-                            BackgroundColor="#2563EB"
-                            TextColor="White"
-                            Clicked="OnDivideClicked" />
+                                x:Name="DivideButton"
+                                Grid.Column="3"
+                                Text="÷"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                HeightRequest="48"
+                                Padding="8,0"
+                                CornerRadius="12"
+                                BackgroundColor="#2563EB"
+                                TextColor="White"
+                                Clicked="OnDivideClicked" />
 
                             </Grid>
 
@@ -528,10 +534,10 @@
 
                     <!-- Khung nhập số -->
                     <Border
-                Padding="14"
-                BackgroundColor="White"
-                Stroke="#D7E2EE"
-                StrokeThickness="1">
+                    Padding="14"
+                    BackgroundColor="White"
+                    Stroke="#D7E2EE"
+                    StrokeThickness="1">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
@@ -540,17 +546,17 @@
                         <VerticalStackLayout Spacing="14">
 
                             <Label
-                         Text="3. Nhập các số"
-                         FontSize="18"
-                         FontAttributes="Bold"
-                         TextColor="#263B50" />
+                             Text="3. Nhập các số"
+                             FontSize="18"
+                             FontAttributes="Bold"
+                             TextColor="#263B50" />
 
                             <Grid
-                        x:Name="NumberInputGrid"
-                        ColumnDefinitions="*,Auto,*"
-                        RowDefinitions="Auto,Auto"
-                        ColumnSpacing="12"
-                        RowSpacing="6">
+                            x:Name="NumberInputGrid"
+                            ColumnDefinitions="*,Auto,*"
+                            RowDefinitions="Auto,Auto"
+                            ColumnSpacing="12"
+                            RowSpacing="6">
 
                                 <VisualStateManager.VisualStateGroups>
 
@@ -566,74 +572,74 @@
                                             <VisualState.Setters>
 
                                                 <Setter
-                    TargetName="NumberInputGrid"
-                    Property="Grid.ColumnDefinitions"
-                    Value="*" />
+                                                TargetName="NumberInputGrid"
+                                                Property="Grid.ColumnDefinitions"
+                                                Value="*" />
 
                                                 <Setter
-                    TargetName="NumberInputGrid"
-                    Property="Grid.RowDefinitions"
-                    Value="Auto,Auto,Auto,Auto,Auto" />
+                                                TargetName="NumberInputGrid"
+                                                Property="Grid.RowDefinitions"
+                                                Value="Auto,Auto,Auto,Auto,Auto" />
 
                                                 <Setter
-                    TargetName="FirstNumberLabel"
-                    Property="Grid.Row"
-                    Value="0" />
+                                                TargetName="FirstNumberLabel"
+                                                Property="Grid.Row"
+                                                Value="0" />
 
                                                 <Setter
-                    TargetName="FirstNumberLabel"
-                    Property="Grid.Column"
-                    Value="0" />
+                                                TargetName="FirstNumberLabel"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                                 <Setter
-                    TargetName="FirstNumberBorder"
-                    Property="Grid.Row"
-                    Value="1" />
+                                                TargetName="FirstNumberBorder"
+                                                Property="Grid.Row"
+                                                Value="1" />
 
                                                 <Setter
-                    TargetName="FirstNumberBorder"
-                    Property="Grid.Column"
-                    Value="0" />
+                                                TargetName="FirstNumberBorder"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                                 <Setter
-                    TargetName="OperatorLabel"
-                    Property="Grid.Row"
-                    Value="2" />
+                                                TargetName="OperatorLabel"
+                                                Property="Grid.Row"
+                                                Value="2" />
 
                                                 <Setter
-                    TargetName="OperatorLabel"
-                    Property="Grid.Column"
-                    Value="0" />
+                                                TargetName="OperatorLabel"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                                 <Setter
-                    TargetName="OperatorLabel"
-                    Property="VisualElement.WidthRequest"
-                    Value="-1" />
+                                                TargetName="OperatorLabel"
+                                                Property="VisualElement.WidthRequest"
+                                                Value="-1" />
 
                                                 <Setter
-                    TargetName="OperatorLabel"
-                    Property="VisualElement.HeightRequest"
-                    Value="34" />
+                                                TargetName="OperatorLabel"
+                                                Property="VisualElement.HeightRequest"
+                                                Value="34" />
 
                                                 <Setter
-                    TargetName="SecondNumberLabel"
-                    Property="Grid.Row"
-                    Value="3" />
+                                                TargetName="SecondNumberLabel"
+                                                Property="Grid.Row"
+                                                Value="3" />
 
                                                 <Setter
-                    TargetName="SecondNumberLabel"
-                    Property="Grid.Column"
-                    Value="0" />
+                                                TargetName="SecondNumberLabel"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                                 <Setter
-                    TargetName="SecondNumberBorder"
-                    Property="Grid.Row"
-                    Value="4" />
+                                                TargetName="SecondNumberBorder"
+                                                Property="Grid.Row"
+                                                Value="4" />
 
                                                 <Setter
-                    TargetName="SecondNumberBorder"
-                    Property="Grid.Column"
-                    Value="0" />
+                                                TargetName="SecondNumberBorder"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                             </VisualState.Setters>
 
@@ -649,74 +655,74 @@
                                             <VisualState.Setters>
 
                                                 <Setter
-                                            TargetName="NumberInputGrid"
-                                            Property="Grid.ColumnDefinitions"
-                                            Value="*,Auto,*" />
+                                                TargetName="NumberInputGrid"
+                                                Property="Grid.ColumnDefinitions"
+                                                Value="*,Auto,*" />
 
                                                 <Setter
-                                            TargetName="NumberInputGrid"
-                                            Property="Grid.RowDefinitions"
-                                            Value="Auto,Auto" />
+                                                TargetName="NumberInputGrid"
+                                                Property="Grid.RowDefinitions"
+                                                Value="Auto,Auto" />
 
                                                 <Setter
-                                            TargetName="FirstNumberLabel"
-                                            Property="Grid.Row"
-                                            Value="0" />
+                                                TargetName="FirstNumberLabel"
+                                                Property="Grid.Row"
+                                                Value="0" />
 
                                                 <Setter
-                                            TargetName="FirstNumberLabel"
-                                            Property="Grid.Column"
-                                            Value="0" />
+                                                TargetName="FirstNumberLabel"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                                 <Setter
-                                            TargetName="FirstNumberBorder"
-                                            Property="Grid.Row"
-                                            Value="1" />
+                                                TargetName="FirstNumberBorder"
+                                                Property="Grid.Row"
+                                                Value="1" />
 
                                                 <Setter
-                                            TargetName="FirstNumberBorder"
-                                            Property="Grid.Column"
-                                            Value="0" />
+                                                TargetName="FirstNumberBorder"
+                                                Property="Grid.Column"
+                                                Value="0" />
 
                                                 <Setter
-                                            TargetName="OperatorLabel"
-                                            Property="Grid.Row"
-                                            Value="1" />
+                                                TargetName="OperatorLabel"
+                                                Property="Grid.Row"
+                                                Value="1" />
 
                                                 <Setter
-                                            TargetName="OperatorLabel"
-                                            Property="Grid.Column"
-                                            Value="1" />
+                                                TargetName="OperatorLabel"
+                                                Property="Grid.Column"
+                                                Value="1" />
 
                                                 <Setter
-                                            TargetName="OperatorLabel"
-                                            Property="VisualElement.WidthRequest"
-                                            Value="40" />
+                                                TargetName="OperatorLabel"
+                                                Property="VisualElement.WidthRequest"
+                                                Value="40" />
 
                                                 <Setter
-                                            TargetName="OperatorLabel"
-                                            Property="VisualElement.HeightRequest"
-                                            Value="-1" />
+                                                TargetName="OperatorLabel"
+                                                Property="VisualElement.HeightRequest"
+                                                Value="-1" />
 
                                                 <Setter
-                                            TargetName="SecondNumberLabel"
-                                            Property="Grid.Row"
-                                            Value="0" />
+                                                TargetName="SecondNumberLabel"
+                                                Property="Grid.Row"
+                                                Value="0" />
 
                                                 <Setter
-                                            TargetName="SecondNumberLabel"
-                                            Property="Grid.Column"
-                                            Value="2" />
+                                                TargetName="SecondNumberLabel"
+                                                Property="Grid.Column"
+                                                Value="2" />
 
                                                 <Setter
-                                            TargetName="SecondNumberBorder"
-                                            Property="Grid.Row"
-                                            Value="1" />
+                                                TargetName="SecondNumberBorder"
+                                                Property="Grid.Row"
+                                                Value="1" />
 
                                                 <Setter
-                                            TargetName="SecondNumberBorder"
-                                            Property="Grid.Column"
-                                            Value="2" />
+                                                TargetName="SecondNumberBorder"
+                                                Property="Grid.Column"
+                                                Value="2" />
 
                                             </VisualState.Setters>
                                         </VisualState>
@@ -725,118 +731,118 @@
 
                                 <!-- Nhãn số thứ nhất -->
                                 <Label
-                            x:Name="FirstNumberLabel"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Text="Số thứ nhất"
-                            FontSize="14"
-                            TextColor="#52677B" />
+                                x:Name="FirstNumberLabel"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Text="Số thứ nhất"
+                                FontSize="14"
+                                TextColor="#52677B" />
 
                                 <!-- Ô số thứ nhất -->
                                 <Border
-                            x:Name="FirstNumberBorder"
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            HeightRequest="46"
-                            Padding="10,0"
-                            BackgroundColor="#F8FAFC"
-                            Stroke="#CBD5E1"
-                            StrokeThickness="1">
+                                x:Name="FirstNumberBorder"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                HeightRequest="46"
+                                Padding="10,0"
+                                BackgroundColor="#F8FAFC"
+                                Stroke="#CBD5E1"
+                                StrokeThickness="1">
 
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
                                     <Entry
-                                x:Name="FirstNumberEntry"
-                                Placeholder="Ví dụ: 25"
-                                Keyboard="Numeric"
-                                FontSize="17"
-                                VerticalTextAlignment="Center"
-                                BackgroundColor="Transparent"
-                                TextColor="#172033"
-                                ClearButtonVisibility="WhileEditing"
-                                TextChanged="OnNumberEntryTextChanged" />
+                                    x:Name="FirstNumberEntry"
+                                    Placeholder="Ví dụ: 25"
+                                    Keyboard="Numeric"
+                                    FontSize="17"
+                                    VerticalTextAlignment="Center"
+                                    BackgroundColor="Transparent"
+                                    TextColor="#172033"
+                                    ClearButtonVisibility="WhileEditing"
+                                    TextChanged="OnNumberEntryTextChanged" />
 
                                 </Border>
 
                                 <!-- Dấu phép tính -->
                                 <Label
-                            x:Name="OperatorLabel"
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            WidthRequest="40"
-                            Text="+"
-                            FontSize="25"
-                            FontAttributes="Bold"
-                            HorizontalTextAlignment="Center"
-                            VerticalTextAlignment="Center"
-                            TextColor="#2563EB" />
+                                x:Name="OperatorLabel"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                WidthRequest="40"
+                                Text="+"
+                                FontSize="25"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                VerticalTextAlignment="Center"
+                                TextColor="#2563EB" />
 
                                 <!-- Nhãn số thứ hai -->
                                 <Label
-                            x:Name="SecondNumberLabel"
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Text="Số thứ hai"
-                            FontSize="14"
-                            TextColor="#52677B" />
+                                x:Name="SecondNumberLabel"
+                                Grid.Row="0"
+                                Grid.Column="2"
+                                Text="Số thứ hai"
+                                FontSize="14"
+                                TextColor="#52677B" />
 
                                 <!-- Ô số thứ hai -->
                                 <Border
-                            x:Name="SecondNumberBorder"
-                            Grid.Row="1"
-                            Grid.Column="2"
-                            HeightRequest="46"
-                            Padding="10,0"
-                            BackgroundColor="#F8FAFC"
-                            Stroke="#CBD5E1"
-                            StrokeThickness="1">
+                                x:Name="SecondNumberBorder"
+                                Grid.Row="1"
+                                Grid.Column="2"
+                                HeightRequest="46"
+                                Padding="10,0"
+                                BackgroundColor="#F8FAFC"
+                                Stroke="#CBD5E1"
+                                StrokeThickness="1">
 
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
                                     <Entry
-                                x:Name="SecondNumberEntry"
-                                Placeholder="Ví dụ: 15"
-                                Keyboard="Numeric"
-                                FontSize="17"
-                                VerticalTextAlignment="Center"
-                                BackgroundColor="Transparent"
-                                TextColor="#172033"
-                                ClearButtonVisibility="WhileEditing"
-                                TextChanged="OnNumberEntryTextChanged" />
+                                    x:Name="SecondNumberEntry"
+                                    Placeholder="Ví dụ: 15"
+                                    Keyboard="Numeric"
+                                    FontSize="17"
+                                    VerticalTextAlignment="Center"
+                                    BackgroundColor="Transparent"
+                                    TextColor="#172033"
+                                    ClearButtonVisibility="WhileEditing"
+                                    TextChanged="OnNumberEntryTextChanged" />
 
                                 </Border>
                             </Grid>
 
                             <Grid
-                        Margin="0,8,0,0"
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="12">
+                            Margin="0,8,0,0"
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="12">
+                                
+                                <Button
+                                Grid.Column="0"
+                                Text="Tính kết quả và trình bày lời giải"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                HeightRequest="54"
+                                CornerRadius="14"
+                                BackgroundColor="#16A34A"
+                                TextColor="White"
+                                Clicked="OnCalculateClicked" />
 
                                 <Button
-                            Grid.Column="0"
-                            Text="Xóa"
-                            FontSize="17"
-                            FontAttributes="Bold"
-                            HeightRequest="54"
-                            CornerRadius="14"
-                            BackgroundColor="#E2E8F0"
-                            TextColor="#334155"
-                            Clicked="OnClearClicked" />
-
-                                <Button
-                            Grid.Column="1"
-                            Text="Tính kết quả"
-                            FontSize="17"
-                            FontAttributes="Bold"
-                            HeightRequest="54"
-                            CornerRadius="14"
-                            BackgroundColor="#16A34A"
-                            TextColor="White"
-                            Clicked="OnCalculateClicked" />
+                                Grid.Column="1"
+                                Text="Xóa"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                HeightRequest="54"
+                                CornerRadius="14"
+                                BackgroundColor="#E2E8F0"
+                                TextColor="#334155"
+                                Clicked="OnClearClicked" />
 
                             </Grid>
                         </VerticalStackLayout>
@@ -845,32 +851,32 @@
 
                     <!-- Thông báo lỗi -->
                     <Border
-                x:Name="ErrorBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="#FEF2F2"
-                Stroke="#FCA5A5"
-                StrokeThickness="1">
+                    x:Name="ErrorBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="#FEF2F2"
+                    Stroke="#FCA5A5"
+                    StrokeThickness="1">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
                         </Border.StrokeShape>
 
                         <Label
-                    x:Name="ErrorLabel"
-                    FontSize="15"
-                    TextColor="#B91C1C" />
+                        x:Name="ErrorLabel"
+                        FontSize="15"
+                        TextColor="#B91C1C" />
 
                     </Border>
 
                     <!-- Kết quả -->
                     <Border
-                x:Name="ResultBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="White"
-                Stroke="#BFDBFE"
-                StrokeThickness="1">
+                    x:Name="ResultBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="White"
+                    Stroke="#BFDBFE"
+                    StrokeThickness="1">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
@@ -879,43 +885,43 @@
                         <VerticalStackLayout Spacing="10">
 
                             <Label
-                        Text="4. Kết quả"
-                        FontSize="17"
-                        FontAttributes="Bold"
-                        TextColor="#263B50" />
+                            Text="4. Kết quả"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            TextColor="#263B50" />
 
                             <Label
-                        x:Name="ExpressionLabel"
-                        FontSize="21"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        TextColor="#1D4ED8" />
+                            x:Name="ExpressionLabel"
+                            FontSize="21"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            TextColor="#1D4ED8" />
 
                             <BoxView
-                        HeightRequest="1"
-                        BackgroundColor="#E2E8F0" />
+                            HeightRequest="1"
+                            BackgroundColor="#E2E8F0" />
 
                             <Label
-                        Text="Đáp số"
-                        FontSize="13"
-                        HorizontalTextAlignment="Center"
-                        TextColor="#64748B" />
+                            Text="Đáp số"
+                            FontSize="13"
+                            HorizontalTextAlignment="Center"
+                            TextColor="#64748B" />
 
                             <Label
-                        x:Name="ResultLabel"
-                        FontSize="30"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        TextColor="#15803D" />
+                            x:Name="ResultLabel"
+                            FontSize="30"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            TextColor="#15803D" />
 
                             <!-- Chi tiết phép chia -->
                             <Border
-                        x:Name="DivisionDetailBorder"
-                        IsVisible="False"
-                        Padding="12"
-                        BackgroundColor="#F0FDF4"
-                        Stroke="#BBF7D0"
-                        StrokeThickness="1">
+                            x:Name="DivisionDetailBorder"
+                            IsVisible="False"
+                            Padding="12"
+                            BackgroundColor="#F0FDF4"
+                            Stroke="#BBF7D0"
+                            StrokeThickness="1">
 
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="10" />
@@ -924,22 +930,22 @@
                                 <VerticalStackLayout Spacing="8">
 
                                     <Label
-                                x:Name="DivisionTypeLabel"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="#166534" />
+                                    x:Name="DivisionTypeLabel"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="#166534" />
 
                                     <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
+                                    ColumnDefinitions="*,*"
+                                    ColumnSpacing="10">
                                         <!-- Thương -->
                                         <Border
-                                    Grid.Column="0"
-                                    Padding="12"
-                                    BackgroundColor="White"
-                                    Stroke="#D1FAE5"
-                                    StrokeThickness="1">
+                                        Grid.Column="0"
+                                        Padding="12"
+                                        BackgroundColor="White"
+                                        Stroke="#D1FAE5"
+                                        StrokeThickness="1">
 
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="10" />
@@ -948,28 +954,28 @@
                                             <VerticalStackLayout Spacing="4">
 
                                                 <Label
-                                        Text="Thương"
-                                        FontSize="14"
-                                        HorizontalTextAlignment="Center"
-                                        TextColor="#64748B" />
+                                                Text="Thương"
+                                                FontSize="14"
+                                                HorizontalTextAlignment="Center"
+                                                TextColor="#64748B" />
 
                                                 <Label
-                                        x:Name="QuotientLabel"
-                                        FontSize="28"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        TextColor="#15803D" />
+                                                x:Name="QuotientLabel"
+                                                FontSize="28"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="Center"
+                                                TextColor="#15803D" />
 
                                             </VerticalStackLayout>
 
                                         </Border>
                                         <!-- Số dư -->
                                         <Border
-                                    Grid.Column="1"
-                                    Padding="12"
-                                    BackgroundColor="White"
-                                    Stroke="#D1FAE5"
-                                    StrokeThickness="1">
+                                        Grid.Column="1"
+                                        Padding="12"
+                                        BackgroundColor="White"
+                                        Stroke="#D1FAE5"
+                                        StrokeThickness="1">
 
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="10" />
@@ -997,10 +1003,10 @@
                             </Border>
 
                             <Border
-                        Padding="14"
-                        BackgroundColor="#EFF6FF"
-                        Stroke="#DBEAFE"
-                        StrokeThickness="1">
+                            Padding="14"
+                            BackgroundColor="#EFF6FF"
+                            Stroke="#DBEAFE"
+                            StrokeThickness="1">
 
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="14" />
@@ -1418,7 +1424,6 @@
                     </Border>
 
                 </VerticalStackLayout>
-
             </ScrollView>
         </Grid>
     </Grid>

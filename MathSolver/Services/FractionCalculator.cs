@@ -1,5 +1,5 @@
-using System.Numerics;
 using MathSolver.Models;
+using System.Numerics;
 
 namespace MathSolver.Services;
 
@@ -115,17 +115,17 @@ public static class FractionCalculator
         result.Steps.Add(
             Step(
                 "Quy đồng mẫu số",
-                $"{n1}/{d1} = ({n1} × {factor1}) / " +
-                $"({d1} × {factor1}) = {converted1}/{lcm}\n" +
-                $"{n2}/{d2} = ({n2} × {factor2}) / " +
-                $"({d2} × {factor2}) = {converted2}/{lcm}"));
+                $"{n1}÷{d1} = ({n1} × {factor1}) ÷ " +
+                $"({d1} × {factor1}) = {converted1}÷{lcm}\n" +
+                $"{n2}÷{d2} = ({n2} × {factor2}) ÷ " +
+                $"({d2} × {factor2}) = {converted2}÷{lcm}"));
 
         result.Steps.Add(
             Step(
                 action,
-                $"{converted1}/{lcm} {symbol} {converted2}/{lcm}\n" +
-                $"= ({converted1} {symbol} {converted2})/{lcm}\n" +
-                $"= {rawNumerator}/{lcm}"));
+                $"{converted1}÷{lcm} {symbol} {converted2}÷{lcm}\n" +
+                $"= ({converted1} {symbol} {converted2})÷{lcm}\n" +
+                $"= {rawNumerator}÷{lcm}"));
 
         AddSimplificationStep(
             result,

@@ -1,8 +1,7 @@
-﻿using System.Globalization;
-
+﻿using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Services;
-using MathSolver.Graphics;
+using System.Globalization;
 
 namespace MathSolver.Views;
 

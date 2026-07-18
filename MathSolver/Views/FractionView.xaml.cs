@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
-using System.Numerics;
 using MathSolver.Models;
 using MathSolver.Services;
+using System.Collections.ObjectModel;
+using System.Numerics;
 
 namespace MathSolver.Views;
 
@@ -9,12 +9,119 @@ public partial class FractionView : ContentView
 {
     private bool _isCompact;
 
-    public ObservableCollection<FractionSolutionStep>
-        SolutionSteps { get; } = [];
+    public ObservableCollection<FractionSolutionStep> SolutionSteps { get; } = [];
+
+    private FractionOperation _selectedOperation = FractionOperation.Add;
 
     public FractionView()
     {
         InitializeComponent();
+
+        SelectOperation(FractionOperation.Add);
+    }
+
+    private void SelectOperation(
+    FractionOperation operation)
+    {
+        _selectedOperation = operation;
+
+        ResetOperationButtonStyles();
+
+        Button selectedButton;
+
+        switch (operation)
+        {
+            case FractionOperation.Add:
+                selectedButton = AddButton;
+
+                OperatorLabel.Text = "+";
+                OperatorLabel.IsVisible = true;
+                break;
+
+            case FractionOperation.Subtract:
+                selectedButton = SubtractButton;
+
+                OperatorLabel.Text = "−";
+                OperatorLabel.IsVisible = true;
+                break;
+
+            case FractionOperation.Multiply:
+                selectedButton = MultiplyButton;
+
+                OperatorLabel.Text = "×";
+                OperatorLabel.IsVisible = true;
+                break;
+
+            case FractionOperation.Divide:
+                selectedButton = DivideButton;
+
+                OperatorLabel.Text = "÷";
+                OperatorLabel.IsVisible = true;
+                break;
+
+            case FractionOperation.CommonDenominator:
+                selectedButton = CommonDenominatorButton;
+                OperatorLabel.Text = "Và";
+
+                OperatorLabel.IsVisible = true;
+
+                break;
+
+            default:
+                selectedButton = AddButton;
+
+                OperatorLabel.Text = "+";
+                OperatorLabel.IsVisible = true;
+                break;
+        }
+
+        selectedButton.BackgroundColor =
+            Color.FromArgb("#2563EB");
+
+        selectedButton.TextColor =
+            Colors.White;
+
+        ResetOutput();
+    }
+
+    private void OnAddClicked(
+    object? sender,
+    EventArgs e)
+    {
+        SelectOperation(
+            FractionOperation.Add);
+    }
+
+    private void OnSubtractClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectOperation(
+            FractionOperation.Subtract);
+    }
+
+    private void OnMultiplyClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectOperation(
+            FractionOperation.Multiply);
+    }
+
+    private void OnDivideClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectOperation(
+            FractionOperation.Divide);
+    }
+
+    private void OnCommonDenominatorClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectOperation(
+            FractionOperation.CommonDenominator);
     }
 
     private void OnCalculateClicked(
@@ -43,24 +150,13 @@ public partial class FractionView : ContentView
             return;
         }
 
-        FractionOperation operation =
-            OperationPicker.SelectedIndex switch
-            {
-                0 => FractionOperation.Add,
-                1 => FractionOperation.Subtract,
-                2 => FractionOperation.Multiply,
-                3 => FractionOperation.Divide,
-                4 => FractionOperation.CommonDenominator,
-                _ => FractionOperation.Add
-            };
-
         FractionCalculationResult result =
-            FractionCalculator.Calculate(
-                numerator1,
-                denominator1,
-                numerator2,
-                denominator2,
-                operation);
+    FractionCalculator.Calculate(
+        numerator1,
+        denominator1,
+        numerator2,
+        denominator2,
+        _selectedOperation);
 
         if (!result.IsSuccess)
         {
@@ -68,7 +164,7 @@ public partial class FractionView : ContentView
             return;
         }
 
-        ResultLabel.Text = result.ResultText;
+        ResultMathView.Expression = result.ResultText;
 
         foreach (FractionSolutionStep step in result.Steps)
         {
@@ -87,8 +183,6 @@ public partial class FractionView : ContentView
         FirstDenominatorEntry.Text = string.Empty;
         SecondNumeratorEntry.Text = string.Empty;
         SecondDenominatorEntry.Text = string.Empty;
-
-        OperationPicker.SelectedIndex = 0;
 
         ResetOutput();
         FirstNumeratorEntry.Focus();
@@ -127,7 +221,7 @@ public partial class FractionView : ContentView
         ErrorLabel.Text = string.Empty;
 
         ResultBorder.IsVisible = false;
-        ResultLabel.Text = string.Empty;
+        ResultMathView.Expression = string.Empty;
 
         SolutionTitle.IsVisible = false;
         SolutionSteps.Clear();
@@ -181,8 +275,8 @@ public partial class FractionView : ContentView
             Grid.SetRow(FirstFractionCard, 0);
             Grid.SetColumn(FirstFractionCard, 0);
 
-            Grid.SetRow(OperationPanel, 1);
-            Grid.SetColumn(OperationPanel, 0);
+            Grid.SetRow(OperatorLabel, 1);
+            Grid.SetColumn(OperatorLabel, 0);
 
             Grid.SetRow(SecondFractionCard, 2);
             Grid.SetColumn(SecondFractionCard, 0);
@@ -208,14 +302,41 @@ public partial class FractionView : ContentView
             Grid.SetRow(FirstFractionCard, 0);
             Grid.SetColumn(FirstFractionCard, 0);
 
-            Grid.SetRow(OperationPanel, 0);
-            Grid.SetColumn(OperationPanel, 1);
+            Grid.SetRow(OperatorLabel, 0);
+            Grid.SetColumn(OperatorLabel, 1);
 
             Grid.SetRow(SecondFractionCard, 0);
             Grid.SetColumn(SecondFractionCard, 2);
 
             FractionInputGrid.RowSpacing = 0;
             FractionInputGrid.ColumnSpacing = 16;
+        }
+    }
+
+    private void ResetOperationButtonStyles()
+    {
+        Color normalBackground =
+            Color.FromArgb("#E8EEF6");
+
+        Color normalText =
+            Color.FromArgb("#334155");
+
+        Button[] buttons =
+        [
+            AddButton,
+        SubtractButton,
+        MultiplyButton,
+        DivideButton,
+        CommonDenominatorButton
+        ];
+
+        foreach (Button button in buttons)
+        {
+            button.BackgroundColor =
+                normalBackground;
+
+            button.TextColor =
+                normalText;
         }
     }
 }
