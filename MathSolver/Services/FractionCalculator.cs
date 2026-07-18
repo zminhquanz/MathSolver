@@ -79,12 +79,21 @@ public static class FractionCalculator
         };
     }
 
-    private static FractionCalculationResult AddOrSubtract(BigInteger numerator1, BigInteger denominator1, BigInteger numerator2, BigInteger denominator2, bool subtract)
+    private static FractionCalculationResult AddOrSubtract(
+        BigInteger numerator1,
+        BigInteger denominator1,
+        BigInteger numerator2,
+        BigInteger denominator2,
+        bool subtract)
     {
+        string operationSymbol = subtract ? "−" : "+";
+        string operationName = subtract ? "phép trừ" : "phép cộng";
+        string verb = subtract ? "trừ" : "cộng";
+
         BigInteger commonDenominator =
-        LeastCommonMultiple(
-            denominator1,
-            denominator2);
+            LeastCommonMultiple(
+                denominator1,
+                denominator2);
 
         BigInteger multiplier1 =
             commonDenominator /
@@ -95,132 +104,183 @@ public static class FractionCalculator
             denominator2;
 
         BigInteger convertedNumerator1 =
-            numerator1 *
-            multiplier1;
+            numerator1 * multiplier1;
 
         BigInteger convertedNumerator2 =
-            numerator2 *
-            multiplier2;
+            numerator2 * multiplier2;
 
         BigInteger resultNumerator =
             subtract
-                ? convertedNumerator1 -
-                  convertedNumerator2
-                : convertedNumerator1 +
-                  convertedNumerator2;
-
-        string operationSymbol =
-            subtract ? "−" : "+";
+                ? convertedNumerator1 - convertedNumerator2
+                : convertedNumerator1 + convertedNumerator2;
 
         string simplifiedResult =
             FormatSimplified(
-            resultNumerator,
-            commonDenominator);
-
-        string operationTitle =
-            subtract
-                ? "Trừ hai tử số"
-                : "Cộng hai tử số";
-
-        string operationDescription =
-            subtract
-                ? $"Hai phân số đã có cùng mẫu số " +
-                  $"{commonDenominator}, nên giữ nguyên mẫu số " +
-                  $"và trừ hai tử số:\n" +
-                  $"{convertedNumerator1} − " +
-                  $"{convertedNumerator2} = " +
-                  $"{resultNumerator}."
-                : $"Hai phân số đã có cùng mẫu số " +
-                  $"{commonDenominator}, nên giữ nguyên mẫu số " +
-                  $"và cộng hai tử số:\n" +
-                  $"{convertedNumerator1} + " +
-                  $"{convertedNumerator2} = " +
-                  $"{resultNumerator}.";
+                resultNumerator,
+                commonDenominator);
 
         var result =
-        Success(
-            resultExpression:
-                simplifiedResult,
+            Success(
+                resultExpression:
+                    simplifiedResult,
 
-            fullExpression:
-                $"{numerator1}/{denominator1} " +
-                $"{operationSymbol} " +
-                $"{numerator2}/{denominator2} " +
-                $"= {simplifiedResult}");
+                fullExpression:
+                    $"{numerator1}/{denominator1} " +
+                    $"{operationSymbol} " +
+                    $"{numerator2}/{denominator2} " +
+                    $"= {simplifiedResult}");
 
-        // Bước 1: Phép tính ban đầu
+        // Bước 1: Hiển thị phép tính ban đầu.
         result.Steps.Add(
             CreateMathStep(
-                title: "Phép tính",
+                title: "Phép tính ban đầu",
 
                 description:
+                    $"Ta thực hiện {operationName} hai phân số.",
+
+                mathLines:
+                [
+                    $"{numerator1}/{denominator1} " +
+                    $"{operationSymbol} " +
+                    $"{numerator2}/{denominator2}"
+                ]));
+
+        bool alreadyHaveSameDenominator =
+            denominator1 == denominator2;
+
+        if (alreadyHaveSameDenominator)
+        {
+            // Hai phân số đã cùng mẫu số nên không cần quy đồng.
+            result.Steps.Add(
+                CreateTextStep(
+                    title: "Kiểm tra mẫu số",
+
+                    description:
+                        $"Hai phân số đã có cùng mẫu số {denominator1}, " +
+                        "nên không cần quy đồng."));
+        }
+        else
+        {
+            // Bước 2: Tìm mẫu số chung nhỏ nhất.
+            result.Steps.Add(
+                CreateMathStep(
+                    title: "Tìm mẫu số chung nhỏ nhất",
+
+                    description:
+                        "Mẫu số chung nhỏ nhất là bội chung nhỏ nhất " +
+                        "của hai mẫu số.",
+
+                    mathLines:
+                    [
+                        $"BCNN({denominator1}, {denominator2}) " +
+                        $"= {commonDenominator}"
+                    ]));
+
+            // Bước 3: Quy đồng phân số thứ nhất.
+            result.Steps.Add(
+                CreateMathStep(
+                    title: "Quy đồng phân số thứ nhất",
+
+                    description:
+                        $"Để đổi mẫu số {denominator1} thành " +
+                        $"{commonDenominator}, ta nhân cả tử và mẫu " +
+                        $"với {multiplier1}.",
+
+                    mathLines:
+                    [
+                        $"{commonDenominator} ÷ {denominator1} " +
+                        $"= {multiplier1}",
+
+                        $"{numerator1} × {multiplier1} " +
+                        $"= {convertedNumerator1}",
+
+                        $"{denominator1} × {multiplier1} " +
+                        $"= {commonDenominator}",
+
+                        $"{numerator1}/{denominator1} " +
+                        $"= {convertedNumerator1}/{commonDenominator}"
+                    ]));
+
+            // Bước 4: Quy đồng phân số thứ hai.
+            result.Steps.Add(
+                CreateMathStep(
+                    title: "Quy đồng phân số thứ hai",
+
+                    description:
+                        $"Để đổi mẫu số {denominator2} thành " +
+                        $"{commonDenominator}, ta nhân cả tử và mẫu " +
+                        $"với {multiplier2}.",
+
+                    mathLines:
+                    [
+                        $"{commonDenominator} ÷ {denominator2} " +
+                        $"= {multiplier2}",
+
+                        $"{numerator2} × {multiplier2} " +
+                        $"= {convertedNumerator2}",
+
+                        $"{denominator2} × {multiplier2} " +
+                        $"= {commonDenominator}",
+
+                        $"{numerator2}/{denominator2} " +
+                        $"= {convertedNumerator2}/{commonDenominator}"
+                    ]));
+
+            // Bước 5: Hiển thị hai phân số sau khi quy đồng.
+            result.Steps.Add(
+                CreateMathStep(
+                    title: "Kết quả sau khi quy đồng",
+
+                    description:
+                        "Hai phân số lúc này đã có cùng mẫu số.",
+
+                    mathLines:
+                    [
+                        $"{convertedNumerator1}/{commonDenominator} " +
+                        $"và {convertedNumerator2}/{commonDenominator}"
+                    ]));
+        }
+
+        // Bước tiếp theo: Giữ nguyên mẫu số và cộng hoặc trừ hai tử số.
+        result.Steps.Add(
+            CreateMathStep(
+                title:
                     subtract
-                        ? "Ta thực hiện phép trừ hai phân số."
-                        : "Ta thực hiện phép cộng hai phân số.",
+                        ? "Trừ hai phân số"
+                        : "Cộng hai phân số",
+
+                description:
+                    $"Hai phân số đã có cùng mẫu số " +
+                    $"{commonDenominator}. Ta giữ nguyên mẫu số và " +
+                    $"{verb} hai tử số.",
 
                 mathLines:
                 [
-                    $"{numerator1}/{denominator1} " +
-                $"{operationSymbol} " +
-                $"{numerator2}/{denominator2}"
+                    $"{convertedNumerator1}/{commonDenominator} " +
+                    $"{operationSymbol} " +
+                    $"{convertedNumerator2}/{commonDenominator}"
                 ]));
 
-        // Bước 2: Tìm mẫu số chung
-        result.Steps.Add(
-            CreateTextStep(
-                title:
-                    "Tìm mẫu số chung nhỏ nhất",
-
-                description:
-                    $"BCNN({denominator1}, " +
-                    $"{denominator2}) = " +
-                    $"{commonDenominator}."));
-
-        // Bước 3: Quy đồng
+        // Tính riêng tử số để học sinh thấy rõ phép cộng hoặc phép trừ.
         result.Steps.Add(
             CreateMathStep(
                 title:
-                    "Quy đồng mẫu số",
+                    subtract
+                        ? "Trừ hai tử số"
+                        : "Cộng hai tử số",
 
                 description:
-                    $"Phân số thứ nhất nhân cả tử và mẫu " +
-                    $"với {multiplier1}.\n" +
-                    $"Phân số thứ hai nhân cả tử và mẫu " +
-                    $"với {multiplier2}.",
+                    $"Giữ nguyên mẫu số {commonDenominator}.",
 
                 mathLines:
                 [
-                    $"{numerator1}/{denominator1} " +
-                $"= {convertedNumerator1}/" +
-                $"{commonDenominator}",
+                    $"{convertedNumerator1} {operationSymbol} " +
+                    $"{convertedNumerator2} = {resultNumerator}",
 
-                $"{numerator2}/{denominator2} " +
-                $"= {convertedNumerator2}/" +
-                $"{commonDenominator}"
+                    $"= {resultNumerator}/{commonDenominator}"
                 ]));
 
-        // Bước 4: Cộng hoặc trừ
-        result.Steps.Add(
-            CreateMathStep(
-                title:
-                    operationTitle,
-
-                description:
-                    operationDescription,
-
-                mathLines:
-                [
-                    $"{convertedNumerator1}/" +
-                $"{commonDenominator} " +
-                $"{operationSymbol} " +
-                $"{convertedNumerator2}/" +
-                $"{commonDenominator}",
-
-                $"= {resultNumerator}/" +
-                $"{commonDenominator}"
-                ]));
-
-        // Bước 5: Rút gọn
+        // Bước cuối: rút gọn phân số nếu có thể.
         AddSimplificationStep(
             result,
             resultNumerator,
@@ -298,7 +358,8 @@ public static class FractionCalculator
                 description: "Nhân tử với tử, mẫu với mẫu",
                 mathLines:
                 [
-                    $"({n1} × {n2}) / ({d1} × {d2})\n" +
+                    $"{n1}/{d1} × {n2}/{d2}",
+                    $"= {n1}×{n2}/{d1}×{d2}",
                     $"= {numerator}/{denominator}"
                 ]));
 
@@ -448,9 +509,9 @@ public static class FractionCalculator
                 description: "",
                 mathLines:
                 [
-                    $"{n1}/{d1} = ({n1} × {factor1}) / " +
+                    $"{n1}/{d1} = ({n1} × {factor1}) ÷ " +
                     $"({d1} × {factor1}) = {converted1}/{lcm}\n" +
-                    $"{n2}/{d2} = ({n2} × {factor2}) / " +
+                    $"{n2}/{d2} = ({n2} × {factor2}) ÷ " +
                     $"({d2} × {factor2}) = {converted2}/{lcm}"
                 ]));
 

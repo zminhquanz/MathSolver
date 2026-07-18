@@ -1191,7 +1191,32 @@
                                         BackgroundColor="#FAFAFA" />
 
                                     </Border>
+                                </VerticalStackLayout>
+                            </Border>
 
+                            <Border
+                            x:Name="AdditionalBorder"    
+                            IsVisible="True"
+                            Padding="14"
+                            BackgroundColor="#FFFFFF"
+                            Stroke="#CBD5E1"
+                            StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="10">
+                                    <Label
+                                    Text="Thông tin thêm"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="#1E40AF" />
+
+                                    <Label
+                                        x:Name="AdditionalLabel"
+                                        FontSize="16"
+                                        LineHeight="1.3"
+                                        TextColor="#334155"/>
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>

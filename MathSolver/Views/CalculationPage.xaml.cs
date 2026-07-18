@@ -147,6 +147,7 @@ public partial class CalculationPage : ContentPage
             _currentDivisionDividend = firstNumber;
             _currentDivisionDivisor = secondNumber;
 
+            //Phép chia thì sẽ có thêm phép chia đặt tính nên tạo ra hai hàm riêng biệt dành cho số nguyên và số thập phân để hiển thị kết quả
             if (_selectedNumberType == NumberInputType.Integer)
             {
                 ShowElementaryDivisionResult(firstNumber, secondNumber);
@@ -157,12 +158,13 @@ public partial class CalculationPage : ContentPage
             }
 
             RefreshLongDivision();
-            return;
         }
-
-        decimal result = Calculate(firstNumber, secondNumber);
-
-        ShowResult(firstNumber, secondNumber, result);
+        else
+        {
+            //Trả kết quả dành cho cộng, trừ, nhân
+            decimal result = Calculate(firstNumber, secondNumber);
+            ShowResult(firstNumber, secondNumber, result);
+        }
     }
 
     private void ShowDivisionByZeroError(decimal firstNumber)
@@ -241,8 +243,8 @@ public partial class CalculationPage : ContentPage
                 $"{Math.Abs(remainder)}.";
         }
 
-        // Bổ sung phần vẽ đặt tính.
         ShowLongDivision(dividend, divisor);
+        AdditionalLabel.Text = CreateAdditional(dividendInteger, divisorInteger, quotient);
     }
     private static bool IsWholeNumber(decimal number)
     {
@@ -271,6 +273,7 @@ public partial class CalculationPage : ContentPage
         DivisionDetailBorder.IsVisible = false;
         ResultBorder.IsVisible = true;
         ShowLongDivision(dividend, divisor);
+        AdditionalLabel.Text = CreateAdditional(dividend, divisor, result);
     }
 
     private bool TryReadNumber(string? input, string emptyMessage, out decimal number)
@@ -368,6 +371,8 @@ public partial class CalculationPage : ContentPage
             secondText,
             resultText);
 
+        AdditionalLabel.Text = CreateAdditional(firstNumber, secondNumber, result);
+
         ResultBorder.IsVisible = true;
     }
 
@@ -393,11 +398,139 @@ public partial class CalculationPage : ContentPage
                 $"{firstNumber} × {secondNumber} = {result}.\n" +
                 $"Vậy kết quả là {result}.",
 
-            ArithmeticOperation.Divide =>
-                $"Ta lấy {firstNumber} chia cho {secondNumber}.\n" +
-                $"{firstNumber} ÷ {secondNumber} = {result}.\n" +
-                $"Vậy kết quả là {result}.",
+            _ => string.Empty
+        };
+    }
 
+    private string CreateAdditional(decimal firstNumber, decimal secondNumber, decimal result)
+    {
+        string firstText = FormatNumber(firstNumber);
+        string secondText = FormatNumber(secondNumber);
+        string resultText = FormatNumber(result);
+        string sumContentAdditional = "";
+        string subContentAdditional = "";
+        string mulContentAdditional = "";
+        string divContentAdditional = "";
+
+        //Trường hợp cộng số 0, một trong hai số nhập vào có số 0
+        if (_selectedOperation == ArithmeticOperation.Add)
+        {
+            sumContentAdditional = $"Phép cộng có tính chất giao hoán, kết hợp và cộng với số 0";
+            if ((firstNumber == 0 && secondNumber != 0) || (firstNumber != 0 && secondNumber == 0))
+            {
+                sumContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán và cộng số 0" +
+                    $"\nNên là {firstText} + {secondText} = {secondText} + {firstText} = {resultText}";
+            }
+            //Trường hợp giao hoán, cả hai số nhập vào lớn hơn 0
+            else if (firstNumber > 0 && secondNumber > 0 && firstNumber != secondNumber)
+            {
+                sumContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán" +
+                    $"\nNên là {firstText} + {secondText} = {secondText} + {firstText} = {resultText}";
+            }
+            //Trường hợp giao hoán, cả hai số đều bằng nhau
+            else if (firstNumber > 0 && secondNumber > 0 && firstNumber == secondNumber)
+            {
+                sumContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán vì hai số nhập vào đều bằng nhau" +
+                    $"\nNên là {firstText} + {secondText} = {resultText}";
+            }
+            //Trường hợp giao hoán, cả hai số đều bằng 0
+            else if (firstNumber == 0 && secondNumber == 0)
+            {
+                sumContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán vì hai số nhập vào đều là số 0" +
+                    $"\nNên là {firstText} + {secondText} = {resultText}";
+            }
+        }
+        else if (_selectedOperation == ArithmeticOperation.Subtract)
+        {
+            subContentAdditional = $"Phép trừ có tính chất trừ đi số 0 và trừ đi chính nó nên lúc nào cũng bằng 0";
+            //Trừ đi số 0
+            if (secondNumber == 0)
+            {
+                subContentAdditional +=
+                    $"\nĐây là trường hợp trừ đi số 0 nên lúc nào cũng bằng với số bị trừ" +
+                    $"\nNên là {firstText} - {secondText} = {resultText}";
+            }
+
+            //Trừ đi chính nó
+            else if (firstNumber == secondNumber)
+            {
+                subContentAdditional +=
+                    $"\nĐây là trường hợp trừ đi chính nó nên lúc nào cũng bằng 0" +
+                    $"\nNên là {firstText} - {secondText} = {resultText}";
+            }
+        }
+        else if (_selectedOperation == ArithmeticOperation.Multiply)
+        {
+            mulContentAdditional = $"Phép nhân có tính chất giao hoán, kết hợp, nhân với 1, nhân với 0 và tính chất phân phối";
+
+            if (firstNumber == 0 || secondNumber == 0)
+            {
+                mulContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán và nhân với số 0 nên lúc nào cũng bằng 0" +
+                    $"\nNên là {firstText} × {secondText} = {resultText}";
+            }
+            else if (firstNumber == 1 || secondNumber == 1)
+            {
+                mulContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán và nhân với số 1 nên lúc nào cũng bằng với thừa số thứ nhất hoặc thừa số thứ hai" +
+                    $"\nNên là {firstText} × {secondText} = {resultText}";
+            }
+            else if (firstNumber > 0 && secondNumber > 0 && firstNumber != secondNumber)
+            {
+                mulContentAdditional +=
+                    $"\nĐây là trường hợp có tính chất giao hoán" +
+                    $"\nNên là {firstText} × {secondText} = {secondText} × {firstText} = {resultText}";
+            }
+        }
+        else if (_selectedOperation == ArithmeticOperation.Divide)
+        {
+            divContentAdditional = $"Phép chia có tính chất chia cho 1, chia cho chính nó, số 0 chia cho một số";
+            //Trường hợp chia cho 1 và số 0 chia cho 1 số
+            if (firstNumber == 0 && secondNumber == 1)
+            {
+                divContentAdditional +=
+                    $"\nĐây là trường hợp chia cho 1 và số 0 chia cho 1 số nên lúc nào cũng bằng với số bị chia là 0" +
+                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
+            }
+            //Trường hợp chia cho 1
+            else if (firstNumber > 0 && secondNumber == 1)
+            {
+                divContentAdditional +=
+                    $"\nĐây là trường hợp chia cho 1 nên lúc cũng bằng với số bị chia" +
+                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
+            }
+
+            //Trường hợp chia cho chính nó
+            else if (firstNumber == secondNumber)
+            {
+                divContentAdditional +=
+                    $"\nĐây là trường hợp chia cho chính nó nên lúc nào cũng bằng 1" +
+                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
+            }
+
+            //Trường hợp số 0 chia cho một số
+            else if (firstNumber == 0 && secondNumber > 1)
+            {
+                divContentAdditional +=
+                    $"\nĐây là trường hợp số 0 chia cho một số nên lúc nào cũng bằng 0" +
+                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
+            }
+        }
+
+        return _selectedOperation switch
+        {
+            ArithmeticOperation.Add =>
+                sumContentAdditional,
+            ArithmeticOperation.Subtract =>
+                subContentAdditional,
+            ArithmeticOperation.Multiply =>
+                mulContentAdditional,
+            ArithmeticOperation.Divide =>
+                divContentAdditional,
             _ => string.Empty
         };
     }

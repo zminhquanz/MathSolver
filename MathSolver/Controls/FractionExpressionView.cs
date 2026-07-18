@@ -245,9 +245,9 @@ public sealed class FractionExpressionView : ContentView
         int slashIndex =
             token.IndexOf('/');
 
+        // Một phân số chỉ được có đúng một dấu "/".
         if (slashIndex <= 0 ||
-            slashIndex !=
-            token.LastIndexOf('/') ||
+            slashIndex != token.LastIndexOf('/') ||
             slashIndex >= token.Length - 1)
         {
             return false;
@@ -259,19 +259,157 @@ public sealed class FractionExpressionView : ContentView
         string denominatorText =
             token[(slashIndex + 1)..];
 
-        if (!BigInteger.TryParse(
+        // Không chỉ nhận một số nguyên như 4/5,
+        // mà còn nhận tích ở tử và mẫu như:
+        // 4×6/5×7 hoặc (4×6)/(5×7).
+        if (!TryNormalizeFractionPart(
                 numeratorText,
-                out _) ||
-            !BigInteger.TryParse(
+                out numerator) ||
+            !TryNormalizeFractionPart(
                 denominatorText,
-                out _))
+                out denominator))
+        {
+            numerator = string.Empty;
+            denominator = string.Empty;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryNormalizeFractionPart(
+        string text,
+        out string displayText)
+    {
+        displayText = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(text))
         {
             return false;
         }
 
-        numerator = numeratorText;
-        denominator = denominatorText;
+        string normalizedText =
+            RemoveOuterParentheses(
+                text.Trim());
+
+        // Hỗ trợ cả dấu nhân toán học và dấu *.
+        string[] factors =
+            normalizedText.Split(
+                ['×', '*'],
+                StringSplitOptions.None);
+
+        if (factors.Length == 0)
+        {
+            return false;
+        }
+
+        var displayFactors =
+            new List<string>(
+                factors.Length);
+
+        foreach (string factor in factors)
+        {
+            string factorText =
+                RemoveOuterParentheses(
+                    factor.Trim());
+
+            // Không chấp nhận toán tử nhân bị thiếu toán hạng,
+            // ví dụ 4× hoặc ×6.
+            if (string.IsNullOrWhiteSpace(
+                    factorText))
+            {
+                return false;
+            }
+
+            // Cho phép cả dấu âm Unicode và dấu trừ thông thường.
+            string parsableFactor =
+                factorText.Replace(
+                    '−',
+                    '-');
+
+            if (!BigInteger.TryParse(
+                    parsableFactor,
+                    out BigInteger value))
+            {
+                return false;
+            }
+
+            displayFactors.Add(
+                FormatIntegerForDisplay(
+                    value));
+        }
+
+        displayText =
+            string.Join(
+                " × ",
+                displayFactors);
 
         return true;
+    }
+
+    private static string RemoveOuterParentheses(
+        string text)
+    {
+        string result =
+            text.Trim();
+
+        while (result.Length >= 2 &&
+               result[0] == '(' &&
+               result[^1] == ')' &&
+               HasSingleOuterParenthesesPair(
+                   result))
+        {
+            result =
+                result[1..^1]
+                    .Trim();
+        }
+
+        return result;
+    }
+
+    private static bool HasSingleOuterParenthesesPair(
+        string text)
+    {
+        int depth = 0;
+
+        for (int index = 0;
+             index < text.Length;
+             index++)
+        {
+            char character =
+                text[index];
+
+            if (character == '(')
+            {
+                depth++;
+            }
+            else if (character == ')')
+            {
+                depth--;
+
+                if (depth < 0)
+                {
+                    return false;
+                }
+
+                // Nếu cặp ngoặc ngoài đóng trước ký tự cuối,
+                // thì ngoặc không bao toàn bộ biểu thức.
+                if (depth == 0 &&
+                    index < text.Length - 1)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return depth == 0;
+    }
+
+    private static string FormatIntegerForDisplay(
+        BigInteger value)
+    {
+        return value.Sign < 0
+            ? $"−{BigInteger.Abs(value)}"
+            : value.ToString();
     }
 }
