@@ -3,6 +3,7 @@
     x:Class="MathSolver.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     Title="Cài đặt giao diện"
     Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True"
@@ -193,7 +194,7 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
 
-                            <Entry
+                            <controls:BorderlessEntry
                                 x:Name="HexColorEntry"
                                 Placeholder="#6D28D9"
                                 MaxLength="7"
@@ -201,6 +202,8 @@
                                 TextColor="{DynamicResource TextPrimaryColor}"
                                 PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                 BackgroundColor="Transparent"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
                                 Completed="OnApplyHexClicked" />
                         </Border>
 

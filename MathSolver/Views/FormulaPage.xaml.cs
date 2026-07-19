@@ -8,8 +8,6 @@ public partial class FormulaPage : ContentPage
 {
     private FormulaSubTab _selectedSubTab = FormulaSubTab.UnknownComponent;
 
-    private int _currentSpan;
-
     public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } = [];
 
     public ObservableCollection<UnknownComponentItem> UnknownComponentItems { get; } = [];
@@ -18,26 +16,87 @@ public partial class FormulaPage : ContentPage
     {
         InitializeComponent();
 
-        UnknownComponentCollectionView.ItemsSource = UnknownComponentItems;
+        BindingContext =
+            this;
 
-        GeometryCollectionView.ItemsSource = GeometryItems;
+        BindableLayout.SetItemsSource(
+            UnknownComponentFlexLayout,
+            UnknownComponentItems);
 
-        SelectFormulaSubTab(FormulaSubTab.UnknownComponent);
+        BindableLayout.SetItemsSource(
+            GeometryFlexLayout,
+            GeometryItems);
+
+        SelectFormulaSubTab(
+            FormulaSubTab.UnknownComponent);
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
 
-        // Các hình học lấy màu trực tiếp từ resource hiện tại.
-        RefreshGeometryCollectionView();
+        if (_selectedSubTab ==
+            FormulaSubTab.UnknownComponent)
+        {
+            RefreshUnknownComponentLayout();
+        }
+        else
+        {
+            // Tạo lại các card để GraphicsView nhận màu theme hiện tại.
+            RefreshGeometryLayout();
+        }
     }
 
-    private void RefreshGeometryCollectionView()
+    private void RefreshUnknownComponentLayout()
     {
-        GeometryCollectionView.ItemsSource = null;
-        GeometryCollectionView.ItemsSource = GeometryItems;
-        GeometryCollectionView.InvalidateMeasure();
+        BindableLayout.SetItemsSource(
+            UnknownComponentFlexLayout,
+            null);
+
+        BindableLayout.SetItemsSource(
+            UnknownComponentFlexLayout,
+            UnknownComponentItems);
+
+        Dispatcher.Dispatch(
+            () =>
+            {
+                UpdateUnknownComponentCardWidths(
+                    UnknownComponentFlexLayout.Width);
+
+                Dispatcher.Dispatch(
+                    () =>
+                    {
+                        UpdateUnknownComponentCardWidths(
+                            UnknownComponentFlexLayout.Width);
+                    });
+            });
+    }
+
+    private void RefreshGeometryLayout()
+    {
+        BindableLayout.SetItemsSource(
+            GeometryFlexLayout,
+            null);
+
+        BindableLayout.SetItemsSource(
+            GeometryFlexLayout,
+            GeometryItems);
+
+        Dispatcher.Dispatch(
+            () =>
+            {
+                UpdateGeometryCardWidths(
+                    GeometryFlexLayout.Width);
+
+                // BindableLayout có thể vừa mới tạo xong children.
+                // Gọi lại một lần sau khi layout đầu tiên hoàn tất.
+                Dispatcher.Dispatch(
+                    () =>
+                    {
+                        UpdateGeometryCardWidths(
+                            GeometryFlexLayout.Width);
+                    });
+            });
     }
 
     private void OnUnknownComponentTabClicked(object? sender, EventArgs e)
@@ -71,6 +130,8 @@ public partial class FormulaPage : ContentPage
                 CreateUnknownComponentItems();
             }
 
+            RefreshUnknownComponentLayout();
+
             return;
         }
 
@@ -79,8 +140,10 @@ public partial class FormulaPage : ContentPage
             CreateGeometryItems();
         }
 
-        // Tạo lại các cell để GraphicsView nhận màu theme hiện tại.
-        RefreshGeometryCollectionView();
+        // CardHeight của từng hình chỉ là chiều cao tối thiểu.
+        // Grid trong XAML dùng hàng Auto nên card có nhiều công thức
+        // hoặc chú thích sẽ tự mở rộng theo nội dung.
+        RefreshGeometryLayout();
     }
 
     private void UpdateSubTabButtonStyles()
@@ -116,48 +179,163 @@ public partial class FormulaPage : ContentPage
             "TextPrimaryColor");
     }
 
-    protected override void OnSizeAllocated(double width, double height)
+    protected override void OnSizeAllocated(
+        double width,
+        double height)
     {
-        base.OnSizeAllocated(width, height);
+        base.OnSizeAllocated(
+            width,
+            height);
 
         if (width <= 0)
         {
             return;
         }
 
-        int desiredSpan;
-        double geometryCardHeight;
+        Dispatcher.Dispatch(
+            () =>
+            {
+                if (_selectedSubTab ==
+                    FormulaSubTab.UnknownComponent)
+                {
+                    UpdateUnknownComponentCardWidths(
+                        UnknownComponentFlexLayout.Width);
+                }
+                else
+                {
+                    UpdateGeometryCardWidths(
+                        GeometryFlexLayout.Width);
+                }
+            });
+    }
 
-        if (width >= 1180)
+    private void OnUnknownComponentFlexLayoutSizeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (sender is FlexLayout layout)
         {
-            desiredSpan = 3;
-            geometryCardHeight = 570;
+            UpdateUnknownComponentCardWidths(
+                layout.Width);
         }
-        else if (width >= 720)
+    }
+
+    private void UpdateUnknownComponentCardWidths(
+        double availableWidth)
+    {
+        UpdateFlexCardWidths(
+            UnknownComponentFlexLayout,
+            availableWidth);
+    }
+
+    private void OnGeometryFlexLayoutSizeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (sender is FlexLayout layout)
         {
-            desiredSpan = 2;
-            geometryCardHeight = 590;
+            UpdateGeometryCardWidths(
+                layout.Width);
         }
-        else
+    }
+
+    private void UpdateGeometryCardWidths(
+        double availableWidth)
+    {
+        UpdateFlexCardWidths(
+            GeometryFlexLayout,
+            availableWidth);
+    }
+
+    private static void UpdateFlexCardWidths(
+        FlexLayout layout,
+        double availableWidth)
+    {
+        if (availableWidth <= 0 ||
+            layout.Children.Count == 0)
         {
-            desiredSpan = 1;
-            geometryCardHeight = 620;
+            return;
         }
 
-        if (_currentSpan != desiredSpan)
+        // Mỗi Border có Margin="6" ở cả hai bên.
+        const double horizontalMarginPerCard =
+            12;
+
+        // WidthRequest của Border cần chừa thêm phần padding và stroke.
+        const double borderPaddingAndStroke =
+            30;
+
+        // Chừa khoảng trống cho scrollbar, sai số làm tròn và mép phải.
+        const double rightSafetySpace =
+            28;
+
+        int columnCount =
+            availableWidth switch
+            {
+                >= 740 => 3,
+                >= 500 => 2,
+                _ => 1
+            };
+
+        double totalMargins =
+            columnCount *
+            horizontalMarginPerCard;
+
+        double outerWidthPerCard =
+            Math.Floor(
+                (availableWidth -
+                 totalMargins -
+                 rightSafetySpace) /
+                columnCount);
+
+        double requestedWidth =
+            outerWidthPerCard -
+            borderPaddingAndStroke;
+
+        requestedWidth =
+            Math.Max(
+                190,
+                requestedWidth);
+
+        bool sizeChanged =
+            false;
+
+        foreach (IView child
+                 in layout.Children)
         {
-            _currentSpan = desiredSpan;
+            if (child is not VisualElement element)
+            {
+                continue;
+            }
 
-            UnknownComponentGridLayout.Span =
-                desiredSpan;
+            if (Math.Abs(
+                    element.WidthRequest -
+                    requestedWidth) < 1)
+            {
+                continue;
+            }
 
-            GeometryGridLayout.Span =
-                desiredSpan;
+            element.MinimumWidthRequest =
+                0;
+
+            element.WidthRequest =
+                requestedWidth;
+
+            sizeChanged =
+                true;
         }
 
-        foreach (GeometryFormulaItem item in GeometryItems)
+        if (!sizeChanged)
         {
-            item.CardHeight = geometryCardHeight;
+            return;
+        }
+
+        layout.InvalidateMeasure();
+
+        if (layout.Parent
+            is VisualElement parent)
+        {
+            parent.InvalidateMeasure();
         }
     }
 

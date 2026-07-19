@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:MathSolver.Views"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <Grid RowDefinitions="Auto,*">
@@ -750,13 +751,15 @@
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
-                                    <Entry
+                                    <controls:BorderlessEntry
                                     x:Name="FirstNumberEntry"
                                     Placeholder="Ví dụ: 25"
                                     Keyboard="Numeric"
                                     FontSize="17"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnNumberEntryTextChanged" />
@@ -800,13 +803,15 @@
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
-                                    <Entry
+                                    <controls:BorderlessEntry
                                     x:Name="SecondNumberEntry"
                                     Placeholder="Ví dụ: 15"
                                     Keyboard="Numeric"
                                     FontSize="17"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnNumberEntryTextChanged" />
@@ -826,7 +831,7 @@
                                 FontAttributes="Bold"
                                 HeightRequest="54"
                                 CornerRadius="14"
-                                BackgroundColor="{DynamicResource SuccessColor}"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
                                 TextColor="{DynamicResource OnPrimaryColor}"
                                 Clicked="OnCalculateClicked" />
 
@@ -909,15 +914,15 @@
                             FontSize="30"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource SuccessColor}" />
+                            TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <!-- Chi tiết phép chia -->
                             <Border
                             x:Name="DivisionDetailBorder"
                             IsVisible="False"
                             Padding="12"
-                            BackgroundColor="{DynamicResource SuccessSoftColor}"
-                            Stroke="{DynamicResource SuccessBorderBrush}"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
                             StrokeThickness="1">
 
                                 <Border.StrokeShape>
@@ -1195,8 +1200,8 @@
                             x:Name="AdditionalBorder"    
                             IsVisible="True"
                             Padding="14"
-                            BackgroundColor="{DynamicResource SurfaceColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
                             StrokeThickness="1">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
