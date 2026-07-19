@@ -9,6 +9,11 @@ public partial class SettingsPage : ContentPage
     public SettingsPage()
     {
         InitializeComponent();
+
+        // Settings là một màn hình riêng, không hiển thị ba tab chính.
+        Shell.SetTabBarIsVisible(this, false);
+        Shell.SetNavBarIsVisible(this, true);
+
         LoadCurrentSettings();
     }
 
@@ -29,24 +34,6 @@ public partial class SettingsPage : ContentPage
     private void OnThemeChanged(object? sender, EventArgs e)
     {
         LoadCurrentSettings();
-    }
-
-    private async void OnCloseClicked(
-        object sender,
-        EventArgs e)
-    {
-        if (Shell.Current is AppShell appShell)
-        {
-            await appShell.CloseSettingsAsync();
-            return;
-        }
-
-        if (Shell.Current is not null)
-        {
-            await Shell.Current.GoToAsync(
-                "..",
-                animate: false);
-        }
     }
 
     private void OnSystemThemeClicked(object sender, EventArgs e)

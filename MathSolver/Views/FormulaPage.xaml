@@ -71,7 +71,6 @@
                     FontSize="14"
                     FontAttributes="Bold"
                     CornerRadius="10"
-                    BackgroundColor="Transparent"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 

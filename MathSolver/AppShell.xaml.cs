@@ -124,20 +124,20 @@ public partial class AppShell : Shell
         bool settingsOpen =
             IsSettingsOpen();
 
-        SettingsButton.Text =
-            settingsOpen ? "✕" : "⚙";
+        // Khi Settings đang mở, ẩn toàn bộ nhóm nút góc phải.
+        // Khu vực này vẫn có thể chứa thêm nút trong tương lai, nhưng
+        // chúng chỉ xuất hiện ở các màn hình chính.
+        TitleActionButtons.IsVisible =
+            !settingsOpen;
+
 
         ToolTipProperties.SetText(
             SettingsButton,
-            settingsOpen
-                ? "Đóng cài đặt"
-                : "Cài đặt giao diện");
+            "Cài đặt giao diện");
 
         AutomationProperties.SetName(
             SettingsButton,
-            settingsOpen
-                ? "Đóng cài đặt giao diện"
-                : "Mở cài đặt giao diện");
+            "Mở cài đặt giao diện");
     }
 
     public async Task CloseSettingsAsync()

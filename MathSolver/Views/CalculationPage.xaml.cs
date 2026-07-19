@@ -932,11 +932,13 @@ public partial class CalculationPage : ContentPage
 
     private static void ResetSubTabButton(Button button)
     {
-        button.BackgroundColor = Colors.Transparent;
+        button.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "SurfaceAltColor");
 
         button.SetDynamicResource(
             Button.TextColorProperty,
-            "TextSecondaryColor");
+            "TextPrimaryColor");
     }
 
     private static string CreateDecimalDivisionExplanation(

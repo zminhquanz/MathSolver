@@ -4,6 +4,8 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Cài đặt giao diện"
+    Shell.TabBarIsVisible="False"
+    Shell.NavBarIsVisible="True"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <ScrollView>
@@ -13,46 +15,21 @@
             HorizontalOptions="Center"
             MaximumWidthRequest="900">
 
-            <Grid
-                ColumnDefinitions="Auto,*"
-                ColumnSpacing="12">
+            <VerticalStackLayout
+                Spacing="3"
+                HorizontalOptions="Fill">
 
-                <Button
-                    Grid.Column="0"
-                    Text="←"
-                    FontSize="22"
+                <Label
+                    Text="CÀI ĐẶT GIAO DIỆN"
+                    FontSize="27"
                     FontAttributes="Bold"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    MinimumWidthRequest="44"
-                    MinimumHeightRequest="44"
-                    Padding="0"
-                    CornerRadius="22"
-                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                    TextColor="{DynamicResource TextPrimaryColor}"
-                    BorderColor="{DynamicResource BorderColor}"
-                    BorderWidth="1"
-                    AutomationProperties.Name="Trở về giao diện chính"
-                    ToolTipProperties.Text="Trở về"
-                    Clicked="OnCloseClicked" />
+                    TextColor="{DynamicResource TextPrimaryColor}" />
 
-                <VerticalStackLayout
-                    Grid.Column="1"
-                    Spacing="3"
-                    VerticalOptions="Center">
-
-                    <Label
-                        Text="CÀI ĐẶT GIAO DIỆN"
-                        FontSize="27"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                    <Label
-                        Text="Chọn phong cách sáng, tối và bất kỳ màu chủ đề nào cho Math Solver"
-                        FontSize="14"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-                </VerticalStackLayout>
-            </Grid>
+                <Label
+                    Text="Chọn phong cách sáng, tối và bất kỳ màu chủ đề nào cho Math Solver"
+                    FontSize="14"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
 
             <Border Style="{StaticResource ThemeCardStyle}">
                 <VerticalStackLayout Spacing="13">

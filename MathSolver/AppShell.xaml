@@ -38,21 +38,19 @@
                 HorizontalOptions="End"
                 VerticalOptions="Center">
 
-                <Button
+                <ImageButton
                     x:Name="SettingsButton"
-                    Text="⚙"
-                    FontSize="22"
-                    FontAttributes="Bold"
+                    Source="settings.png"
+                    Aspect="AspectFit"
                     WidthRequest="42"
                     HeightRequest="42"
-                    MinimumWidthRequest="42"
-                    MinimumHeightRequest="42"
-                    Padding="0"
+                    Padding="10"
                     CornerRadius="21"
-                    BackgroundColor="Transparent"
-                    TextColor="{DynamicResource ShellForegroundColor}"
+                    BorderWidth="1"
                     AutomationProperties.Name="Mở cài đặt giao diện"
                     ToolTipProperties.Text="Cài đặt giao diện"
+                    BackgroundColor="{DynamicResource PrimaryColor}"
+                    BorderColor="{DynamicResource PrimaryBorderColor}"
                     Clicked="OnSettingsClicked" />
 
                 <!-- Có thể thêm các nút tiêu đề khác tại đây về sau. -->

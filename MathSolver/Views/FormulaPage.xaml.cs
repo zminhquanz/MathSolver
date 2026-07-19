@@ -18,14 +18,11 @@ public partial class FormulaPage : ContentPage
     {
         InitializeComponent();
 
-        BindingContext = this;
+        UnknownComponentCollectionView.ItemsSource = UnknownComponentItems;
 
-        CreateGeometryItems();
-        CreateUnknownComponentItems();
+        GeometryCollectionView.ItemsSource = GeometryItems;
 
-        SelectFormulaSubTab(
-            FormulaSubTab.UnknownComponent,
-            forceRefresh: true);
+        SelectFormulaSubTab(FormulaSubTab.UnknownComponent);
     }
 
     protected override void OnAppearing()
@@ -43,81 +40,80 @@ public partial class FormulaPage : ContentPage
         GeometryCollectionView.InvalidateMeasure();
     }
 
-    private void OnUnknownComponentTabClicked(
-        object? sender,
-        EventArgs e)
+    private void OnUnknownComponentTabClicked(object? sender, EventArgs e)
     {
-        SelectFormulaSubTab(
-            FormulaSubTab.UnknownComponent);
+        SelectFormulaSubTab(FormulaSubTab.UnknownComponent);
     }
 
-    private void OnGeometryTabClicked(
-        object? sender,
-        EventArgs e)
+    private void OnGeometryTabClicked(object? sender, EventArgs e)
     {
-        SelectFormulaSubTab(
-            FormulaSubTab.Geometry);
+        SelectFormulaSubTab(FormulaSubTab.Geometry);
     }
 
-    private void SelectFormulaSubTab(
-        FormulaSubTab selectedTab,
-        bool forceRefresh = false)
+    private void SelectFormulaSubTab(FormulaSubTab selectedTab)
     {
-        if (!forceRefresh &&
-            _selectedSubTab == selectedTab)
+        _selectedSubTab = selectedTab;
+
+        bool showUnknownComponent = selectedTab == FormulaSubTab.UnknownComponent;
+
+        // Hiển thị đúng vùng nội dung theo tab đang chọn.
+        UnknownComponentContent.IsVisible = showUnknownComponent;
+
+        GeometryContent.IsVisible = !showUnknownComponent;
+
+        UpdateSubTabButtonStyles();
+
+        if (showUnknownComponent)
         {
+            // Không tạo lại danh sách mỗi lần đổi tab.
+            if (UnknownComponentItems.Count == 0)
+            {
+                CreateUnknownComponentItems();
+            }
+
             return;
         }
 
-        _selectedSubTab = selectedTab;
+        if (GeometryItems.Count == 0)
+        {
+            CreateGeometryItems();
+        }
 
-        bool showUnknown =
-            selectedTab ==
-            FormulaSubTab.UnknownComponent;
-
-        UnknownComponentContent.IsVisible =
-            showUnknown;
-
-        GeometryContent.IsVisible =
-            !showUnknown;
-
-        UpdateSubTabStyles(showUnknown);
+        // Tạo lại các cell để GraphicsView nhận màu theme hiện tại.
+        RefreshGeometryCollectionView();
     }
 
-    private void UpdateSubTabStyles(
-        bool unknownSelected)
+    private void UpdateSubTabButtonStyles()
     {
-        ApplyFormulaTabStyle(
-            UnknownComponentTabButton,
-            unknownSelected);
+        ResetSubTabButton(UnknownComponentTabButton);
+        ResetSubTabButton(GeometryTabButton);
 
-        ApplyFormulaTabStyle(
-            GeometryTabButton,
-            !unknownSelected);
+        Button selectedButton =
+            _selectedSubTab switch
+            {
+                FormulaSubTab.UnknownComponent => UnknownComponentTabButton,
+                FormulaSubTab.Geometry => GeometryTabButton,
+                _ => UnknownComponentTabButton
+            };
+
+        selectedButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+
+        selectedButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
     }
 
-    private static void ApplyFormulaTabStyle(
-        Button button,
-        bool selected)
+    private static void ResetSubTabButton(Button button)
     {
-        if (selected)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "PrimaryColor");
+        button.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "SurfaceAltColor");
 
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "OnPrimaryColor");
-        }
-        else
-        {
-            button.BackgroundColor = Colors.Transparent;
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextSecondaryColor");
-        }
+        button.SetDynamicResource(
+            Button.TextColorProperty,
+            "TextPrimaryColor");
     }
 
     protected override void OnSizeAllocated(double width, double height)
