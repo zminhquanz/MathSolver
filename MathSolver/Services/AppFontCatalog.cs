@@ -52,7 +52,27 @@ public static class AppFontCatalog
             Key: "OpenSansSemibold",
             DisplayName: "Open Sans SemiBold",
             FileName: "OpenSans-Semibold.ttf",
-            Alias: "OpenSansSemibold")
+            Alias: "OpenSansSemibold"),
+        new(
+            Key:"RobotoRegular",
+            DisplayName: "Roboto",
+            FileName: "Roboto-Regular.ttf",
+            Alias: "RobotoRegular"),
+        new(
+            Key:"RobotoItalic",
+            DisplayName: "Roboto Italic",
+            FileName: "Roboto-Italic.ttf",
+            Alias: "RobotoItalic"),
+        new(
+            Key:"GoogleSans-Regular",
+            DisplayName: "Google Sans",
+            FileName: "GoogleSans-Regular.ttf",
+            Alias: "GoogleSans-Regular"),
+        new(
+            Key:"GoogleSans-Italic",
+            DisplayName: "Google Sans Italic",
+            FileName: "GoogleSans-Italic.ttf",
+            Alias: "GoogleSans-Italic")
 
         // Ví dụ thêm font mới:
         //

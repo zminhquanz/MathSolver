@@ -52,8 +52,6 @@
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     BorderColor="{DynamicResource PrimaryBorderColor}"
                     Clicked="OnSettingsClicked" />
-
-                <!-- Có thể thêm các nút tiêu đề khác tại đây về sau. -->
             </HorizontalStackLayout>
         </Grid>
     </Shell.TitleView>
