@@ -341,6 +341,97 @@
                 </VerticalStackLayout>
             </Border>
 
+
+            <!-- TÙY CHỈNH PHÔNG CHỮ -->
+            <Border Style="{StaticResource ThemeCardStyle}">
+                <VerticalStackLayout Spacing="13">
+
+                    <Label
+                        Text="Phông chữ"
+                        FontSize="19"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Label
+                        Text="Chọn phông chữ dùng cho toàn bộ giao diện Math Solver."
+                        FontSize="13"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                    <Border
+                        Padding="12,0"
+                        BackgroundColor="{DynamicResource InputBackgroundColor}"
+                        Stroke="{DynamicResource BorderBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+
+                        <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="10">
+
+                            <Label
+                                Grid.Column="0"
+                                Text="Aa"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                VerticalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <controls:BorderlessPicker
+                                x:Name="FontPicker"
+                                Grid.Column="1"
+                                ItemDisplayBinding="{Binding DisplayName}"
+                                HeightRequest="44"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
+                                FontSize="14"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TitleColor="{DynamicResource TextSecondaryColor}"
+                                BackgroundColor="Transparent"
+                                SelectedIndexChanged="OnFontSelectionChanged" />
+
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        Padding="14"
+                        BackgroundColor="{DynamicResource SurfaceColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="7">
+
+                            <Label
+                                Text="Xem trước phông chữ"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            <Label
+                                x:Name="FontPreviewLabel"
+                                Text="Aa Bb Cc — 0123456789 — Toán học"
+                                FontSize="23"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Label
+                                x:Name="SelectedFontNameLabel"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                        </VerticalStackLayout>
+                    </Border>
+
+                </VerticalStackLayout>
+            </Border>
+
             <Border Style="{StaticResource ThemeCardStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label
@@ -350,7 +441,7 @@
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Label
-                        Text="Đưa ứng dụng về màu tím và phong cách theo hệ thống."
+                        Text="Đưa ứng dụng về màu tím, phông Open Sans và phong cách theo hệ thống."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 

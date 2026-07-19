@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using MathSolver.Services;
+using Microsoft.Extensions.Logging;
 
 namespace MathSolver
 {
@@ -11,8 +12,9 @@ namespace MathSolver
                 .UseMauiApp<App>()
                 .ConfigureFonts(fonts =>
                 {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    // Toàn bộ font được quản lý tại AppFontCatalog.
+                    // Khi thêm font mới, không cần sửa MauiProgram.
+                    AppFontCatalog.RegisterFonts(fonts);
                 });
 
 #if DEBUG

@@ -5,6 +5,13 @@ namespace MathSolver.Views;
 public partial class SettingsPage : ContentPage
 {
     private bool _updatingControls;
+    private bool _updatingFontSelection;
+
+    // Picker.ItemsSource yêu cầu IList, trong khi AppFontCatalog.Options
+    // được khai báo là IReadOnlyList. Tạo một List dùng chung để vừa
+    // tương thích với Picker, vừa giữ đúng cùng các AppFontOption.
+    private readonly List<AppFontOption> _fontOptions =
+        AppFontCatalog.Options.ToList();
 
     public SettingsPage()
     {
@@ -14,6 +21,9 @@ public partial class SettingsPage : ContentPage
         Shell.SetTabBarIsVisible(this, false);
         Shell.SetNavBarIsVisible(this, true);
 
+        FontPicker.ItemsSource =
+            _fontOptions;
+
         LoadCurrentSettings();
     }
 
@@ -22,18 +32,29 @@ public partial class SettingsPage : ContentPage
         base.OnAppearing();
 
         AppThemeManager.ThemeChanged += OnThemeChanged;
+        AppFontManager.FontChanged += OnFontChanged;
+
         LoadCurrentSettings();
     }
 
     protected override void OnDisappearing()
     {
         AppThemeManager.ThemeChanged -= OnThemeChanged;
+        AppFontManager.FontChanged -= OnFontChanged;
+
         base.OnDisappearing();
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
         LoadCurrentSettings();
+    }
+
+    private void OnFontChanged(
+        object? sender,
+        EventArgs e)
+    {
+        LoadFontSettings();
     }
 
     private void OnSystemThemeClicked(object sender, EventArgs e)
@@ -98,6 +119,8 @@ public partial class SettingsPage : ContentPage
     private void OnResetClicked(object sender, EventArgs e)
     {
         AppThemeManager.ResetToDefault();
+        AppFontManager.ResetToDefault();
+
         LoadCurrentSettings();
     }
 
@@ -128,6 +151,58 @@ public partial class SettingsPage : ContentPage
             AppThemeManager.CurrentAccentHex);
 
         UpdateThemeModeButtons();
+        LoadFontSettings();
+    }
+
+    private void LoadFontSettings()
+    {
+        AppFontOption selectedFont =
+            AppFontManager.CurrentFont;
+
+        _updatingFontSelection =
+            true;
+
+        FontPicker.SelectedItem =
+            _fontOptions.FirstOrDefault(
+                option =>
+                    option.Key ==
+                    selectedFont.Key);
+
+        _updatingFontSelection =
+            false;
+
+        UpdateFontPreview(
+            selectedFont);
+    }
+
+    private void OnFontSelectionChanged(
+        object sender,
+        EventArgs e)
+    {
+        if (_updatingFontSelection ||
+            FontPicker.SelectedItem
+            is not AppFontOption selectedFont)
+        {
+            return;
+        }
+
+        AppFontManager.SetFont(
+            selectedFont.Key);
+
+        UpdateFontPreview(
+            selectedFont);
+    }
+
+    private void UpdateFontPreview(
+        AppFontOption font)
+    {
+        // Gán trực tiếp để phần xem trước đổi ngay,
+        // kể cả khi chọn font hệ thống (chuỗi rỗng).
+        FontPreviewLabel.FontFamily =
+            font.FontFamily;
+
+        SelectedFontNameLabel.Text =
+            font.DisplayName;
     }
 
     private void SetColorControls(Color color, string hexColor)

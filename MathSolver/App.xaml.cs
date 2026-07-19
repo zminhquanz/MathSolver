@@ -9,6 +9,7 @@ public partial class App : Application
         InitializeComponent();
 
         AppThemeManager.Initialize(this);
+        AppFontManager.Initialize(this);
     }
 
     protected override Window CreateWindow(

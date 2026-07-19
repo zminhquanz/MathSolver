@@ -5,6 +5,14 @@
              x:Class="MathSolver.App">
     <Application.Resources>
         <ResourceDictionary>
+
+            <!--
+                Giá trị mặc định cho Styles.xaml.
+                AppFontManager sẽ thay resource này theo lựa chọn đã lưu.
+            -->
+            <x:String x:Key="AppFontFamily">OpenSansRegular</x:String>
+            <x:String x:Key="AppFontDisplayName">Open Sans</x:String>
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
