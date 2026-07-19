@@ -1,8 +1,4 @@
-﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage;
-
-namespace MathSolver.Services;
+﻿namespace MathSolver.Services;
 
 public static class AppFontManager
 {
@@ -127,8 +123,7 @@ public static class AppFontManager
         }
         else
         {
-            MainThread.BeginInvokeOnMainThread(
-                Apply);
+            MainThread.BeginInvokeOnMainThread(Apply);
         }
     }
 }

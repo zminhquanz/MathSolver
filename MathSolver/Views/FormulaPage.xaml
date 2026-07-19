@@ -150,7 +150,9 @@
                                             <RoundRectangle CornerRadius="13" />
                                         </Border.StrokeShape>
 
-                                        <VerticalStackLayout Spacing="10">
+                                        <VerticalStackLayout
+                                            Spacing="10"
+                                            VerticalOptions="Start">
 
                                             <!-- Tiêu đề thẻ -->
                                             <Grid
@@ -226,7 +228,9 @@
                                             </Border>
 
                                             <!-- Quy tắc -->
-                                            <VerticalStackLayout Spacing="3">
+                                            <VerticalStackLayout
+                                                Spacing="3"
+                                                MinimumHeightRequest="48">
 
                                                 <Label
                                                     Text="Quy tắc"

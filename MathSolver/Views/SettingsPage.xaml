@@ -358,7 +358,7 @@
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                     <Border
-                        Padding="12,0"
+                        Padding="0"
                         BackgroundColor="{DynamicResource InputBackgroundColor}"
                         Stroke="{DynamicResource BorderBrush}"
                         StrokeThickness="1">
@@ -368,22 +368,20 @@
                         </Border.StrokeShape>
 
                         <Grid
-                            ColumnDefinitions="Auto,*"
-                            ColumnSpacing="10">
+                            HeightRequest="46"
+                            ColumnDefinitions="*,44">
 
-                            <Label
-                                Grid.Column="0"
-                                Text="Aa"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                VerticalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
+                            <!--
+                                Picker phủ toàn bộ chiều rộng để người dùng có thể
+                                bấm cả vùng mũi tên. Padding native bên phải được
+                                chừa trong BorderlessPicker.cs.
+                            -->
                             <controls:BorderlessPicker
                                 x:Name="FontPicker"
-                                Grid.Column="1"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
                                 ItemDisplayBinding="{Binding DisplayName}"
-                                HeightRequest="44"
+                                Margin="12,0,0,0"
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Fill"
                                 FontSize="14"
@@ -391,6 +389,42 @@
                                 TitleColor="{DynamicResource TextSecondaryColor}"
                                 BackgroundColor="Transparent"
                                 SelectedIndexChanged="OnFontSelectionChanged" />
+
+                            <!-- Vạch phân cách nhẹ cho vùng nút xổ xuống. -->
+                            <BoxView
+                                Grid.Column="1"
+                                WidthRequest="1"
+                                Margin="0,9,0,9"
+                                HorizontalOptions="Start"
+                                BackgroundColor="{DynamicResource DividerColor}"
+                                InputTransparent="True" />
+
+                            <!-- Nút xổ xuống dạng pill nhỏ, cân giữa và đồng bộ theme. -->
+                            <Border
+                                Grid.Column="1"
+                                WidthRequest="30"
+                                HeightRequest="30"
+                                Margin="6"
+                                Padding="0"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                Stroke="{DynamicResource PrimaryBorderBrush}"
+                                StrokeThickness="1"
+                                InputTransparent="True">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+
+                                <Label
+                                    Text="▾"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+                            </Border>
 
                         </Grid>
                     </Border>

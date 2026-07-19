@@ -39,14 +39,20 @@ public sealed class BorderlessPicker : Picker
             new Microsoft.UI.Xaml.Thickness(
                 0,
                 0,
-                2,
+                30,
                 0);
 
-        comboBox.UseSystemFocusVisuals =
-            false;
+        comboBox.HorizontalAlignment =
+            Microsoft.UI.Xaml.HorizontalAlignment.Stretch;
 
         comboBox.HorizontalContentAlignment =
             Microsoft.UI.Xaml.HorizontalAlignment.Stretch;
+
+        comboBox.MinWidth =
+            0;
+
+        comboBox.UseSystemFocusVisuals =
+            false;
 
         // WinUI đổi brush theo trạng thái normal, hover, pressed và focus.
         // Ghi đè các resource này để hai vạch dọc native không xuất hiện lại.
@@ -72,6 +78,21 @@ public sealed class BorderlessPicker : Picker
             transparentBrush;
 
         comboBox.Resources["ComboBoxBorderBrushDisabled"] =
+            transparentBrush;
+
+        comboBox.Resources["ComboBoxDropDownGlyphForeground"] =
+            transparentBrush;
+
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundFocused"] =
+            transparentBrush;
+
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundFocusedPressed"] =
+            transparentBrush;
+
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundDisabled"] =
+            transparentBrush;
+
+        comboBox.Resources["ComboBoxEditableDropDownGlyphForeground"] =
             transparentBrush;
 
 #elif ANDROID
