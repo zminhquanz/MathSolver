@@ -1,9 +1,8 @@
 ﻿using MathSolver.Models;
 using MathSolver.Services;
 using System.Collections.ObjectModel;
-using System.Numerics;
-
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -12,6 +11,16 @@ namespace MathSolver.Views;
 public partial class FractionView : ContentView
 {
     private bool _isCompact;
+    private bool _isUpdatingNumberText;
+
+    // Ghi nhớ nội dung đang được khôi phục sau khi nhập sai.
+    private readonly Dictionary<Entry, string>
+        _pendingRestoredEntryTexts =
+            [];
+
+    private const string IntegerTypingErrorMessage =
+        "Tử số và mẫu số chỉ được nhập số nguyên; " +
+        "không được dùng dấu chấm (.) hoặc dấu phẩy (,).";
 
     // Giá trị chính xác của Entry được lưu ở dạng khoa học dùng chữ e.
     // Ví dụ: 1.234567890123456789e18.
@@ -252,6 +261,8 @@ public partial class FractionView : ContentView
         EventArgs e)
     {
         _entryScientificCodeValues.Clear();
+        _pendingRestoredEntryTexts.Clear();
+
         FirstNumeratorEntry.Text = string.Empty;
         FirstDenominatorEntry.Text = string.Empty;
         SecondNumeratorEntry.Text = string.Empty;
@@ -337,28 +348,142 @@ public partial class FractionView : ContentView
             : entry.Text;
     }
 
+    private void OnNumberEntryTextChanged(
+    object? sender,
+    TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string newText =
+            e.NewTextValue ?? string.Empty;
+
+        // SetEntryText khôi phục OldTextValue sẽ phát sinh thêm TextChanged.
+        // Bỏ qua sự kiện đó để nó không xóa thông báo lỗi vừa hiển thị.
+        if (_pendingRestoredEntryTexts.TryGetValue(
+                entry,
+                out string? restoredText))
+        {
+            _pendingRestoredEntryTexts.Remove(entry);
+
+            if (string.Equals(
+                    newText,
+                    restoredText,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        if (_isUpdatingNumberText)
+        {
+            return;
+        }
+
+        if (IsValidInputWhileTyping(newText))
+        {
+            // Chỉ xóa lỗi khi người dùng thực sự nhập lại nội dung hợp lệ,
+            // không phải khi chương trình đang khôi phục nội dung cũ.
+            if (ErrorBorder.IsVisible &&
+                string.Equals(
+                    ErrorLabel.Text,
+                    IntegerTypingErrorMessage,
+                    StringComparison.Ordinal))
+            {
+                ErrorBorder.IsVisible = false;
+                ErrorLabel.Text = string.Empty;
+            }
+
+            return;
+        }
+
+        string oldText =
+            e.OldTextValue ?? string.Empty;
+
+        // Hiển thị thông báo trước.
+        ShowError(IntegerTypingErrorMessage);
+
+        // Đánh dấu nội dung sắp được khôi phục để bỏ qua
+        // TextChanged phát sinh từ việc gán Entry.Text.
+        _pendingRestoredEntryTexts[entry] =
+            oldText;
+
+        SetEntryText(
+            entry,
+            oldText);
+    }
+
+    private static bool IsValidInputWhileTyping(
+        string text)
+    {
+        // Cho phép xóa trắng Entry và cho phép nhập dấu âm trước,
+        // sau đó người dùng tiếp tục nhập các chữ số.
+        if (text.Length == 0 ||
+            text is "-" or "−")
+        {
+            return true;
+        }
+
+        int firstDigitIndex =
+            text[0] is '-' or '−'
+                ? 1
+                : 0;
+
+        if (firstDigitIndex == 1 &&
+            text.Length == 1)
+        {
+            return true;
+        }
+
+        for (int index = firstDigitIndex;
+             index < text.Length;
+             index++)
+        {
+            if (!char.IsDigit(text[index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private void OnFractionEntryFocused(
         object? sender,
         FocusEventArgs e)
     {
-        if (sender is not Entry entry ||
-            !_entryScientificCodeValues.TryGetValue(
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string sourceText =
+            _entryScientificCodeValues.TryGetValue(
                 entry,
-                out string? scientificCode) ||
-            !TryParseBigIntegerInput(
-                scientificCode,
+                out string? scientificCode)
+                ? scientificCode
+                : entry.Text ?? string.Empty;
+
+        string normalized =
+            NormalizeIntegerInput(sourceText);
+
+        if (!TryParseBigIntegerInput(
+                normalized,
                 out BigInteger value))
         {
             return;
         }
 
-        _entryScientificCodeValues.Remove(
-            entry);
+        _entryScientificCodeValues.Remove(entry);
 
+        // Khi đang nhập chỉ hiển thị dấu âm và chữ số, không giữ
+        // dấu phân cách hàng nghìn để TextChanged kiểm tra đúng.
         SetEntryText(
             entry,
-            FormatIntegerForEditing(
-                value));
+            value.ToString(
+                CultureInfo.InvariantCulture));
     }
 
     private void OnFractionEntryUnfocused(
@@ -414,18 +539,22 @@ public partial class FractionView : ContentView
                 value));
     }
 
-    private static void SetEntryText(
+    private void SetEntryText(
         Entry entry,
         string text)
     {
-        entry.Text =
-            text;
+        _isUpdatingNumberText = true;
 
-        entry.CursorPosition =
-            text.Length;
-
-        entry.SelectionLength =
-            0;
+        try
+        {
+            entry.Text = text;
+            entry.CursorPosition = text.Length;
+            entry.SelectionLength = 0;
+        }
+        finally
+        {
+            _isUpdatingNumberText = false;
+        }
     }
 
     private static string NormalizeIntegerInput(

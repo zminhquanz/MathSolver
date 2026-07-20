@@ -19,148 +19,6 @@
             HorizontalOptions="Center"
             MaximumWidthRequest="1120">
 
-            <VisualStateManager.VisualStateGroups>
-                <VisualStateGroup x:Name="FractionWindowSizeStates">
-
-                    <!-- Điện thoại hoặc cửa sổ hẹp -->
-                    <VisualState x:Name="Compact">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="0" />
-                        </VisualState.StateTriggers>
-
-                        <VisualState.Setters>
-                            <Setter
-                                Property="Padding"
-                                Value="10" />
-
-                            <Setter
-                                Property="Spacing"
-                                Value="10" />
-
-                            <Setter
-                                TargetName="FractionPageTitle"
-                                Property="Label.FontSize"
-                                Value="24" />
-
-                            <Setter
-                                TargetName="FractionPageSubtitle"
-                                Property="Label.FontSize"
-                                Value="13" />
-
-                            <Setter
-                                TargetName="OperationButtonsGrid"
-                                Property="Grid.ColumnSpacing"
-                                Value="6" />
-
-                            <Setter
-                                TargetName="AddButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
-
-                            <Setter
-                                TargetName="SubtractButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
-
-                            <Setter
-                                TargetName="MultiplyButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
-
-                            <Setter
-                                TargetName="DivideButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
-
-                            <Setter
-                                TargetName="CommonDenominatorButton"
-                                Property="Button.HeightRequest"
-                                Value="48" />
-                        </VisualState.Setters>
-                    </VisualState>
-
-                    <!-- Tablet hoặc cửa sổ vừa -->
-                    <VisualState x:Name="Medium">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="700" />
-                        </VisualState.StateTriggers>
-
-                        <VisualState.Setters>
-                            <Setter
-                                Property="Padding"
-                                Value="14" />
-
-                            <Setter
-                                Property="Spacing"
-                                Value="12" />
-
-                            <Setter
-                                TargetName="FractionPageTitle"
-                                Property="Label.FontSize"
-                                Value="26" />
-
-                            <Setter
-                                TargetName="FractionPageSubtitle"
-                                Property="Label.FontSize"
-                                Value="15" />
-
-                            <Setter
-                                TargetName="AddButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
-
-                            <Setter
-                                TargetName="SubtractButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
-
-                            <Setter
-                                TargetName="MultiplyButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
-
-                            <Setter
-                                TargetName="DivideButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
-
-                            <Setter
-                                TargetName="CommonDenominatorButton"
-                                Property="Button.HeightRequest"
-                                Value="50" />
-                        </VisualState.Setters>
-                    </VisualState>
-
-                    <!-- Desktop rộng -->
-                    <VisualState x:Name="Expanded">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="1100" />
-                        </VisualState.StateTriggers>
-
-                        <VisualState.Setters>
-                            <Setter
-                                Property="Padding"
-                                Value="18,14" />
-
-                            <Setter
-                                Property="Spacing"
-                                Value="12" />
-
-                            <Setter
-                                TargetName="FractionPageTitle"
-                                Property="Label.FontSize"
-                                Value="27" />
-
-                            <Setter
-                                TargetName="FractionPageSubtitle"
-                                Property="Label.FontSize"
-                                Value="15" />
-                        </VisualState.Setters>
-                    </VisualState>
-
-                </VisualStateGroup>
-            </VisualStateManager.VisualStateGroups>
-
             <!-- Tiêu đề đồng bộ với tab Cơ bản -->
             <VerticalStackLayout
                 Margin="0,4,0,6"
@@ -364,7 +222,8 @@
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
                                 <BoxView
@@ -391,7 +250,8 @@
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
                             </VerticalStackLayout>
@@ -452,7 +312,8 @@
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
                                 <BoxView
@@ -479,7 +340,8 @@
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
                             </VerticalStackLayout>
