@@ -1,7 +1,9 @@
 ﻿using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Services;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -16,6 +18,15 @@ public partial class CalculationPage : ContentPage
     private NumberInputType _selectedNumberType = NumberInputType.Integer;
 
     private bool _isUpdatingNumberText;
+
+    // Khi Entry mất focus và số quá dài, giá trị chính xác được giữ
+    // bằng dạng khoa học dùng chữ e, ví dụ: 1e18.
+    private readonly Dictionary<Entry, string> _entryScientificCodeValues = new();
+
+    // Trên giao diện, số có hơn 18 chữ số sẽ được rút gọn thành
+    // dạng a × 10ⁿ để không làm vỡ bố cục.
+    private const int ScientificDisplayDigitThreshold = 18;
+    private const int ScientificDisplaySignificantDigits = 12;
 
     // decimal hỗ trợ khoảng 28–29 chữ số có nghĩa.
     // Dùng 28 để mọi giá trị nhập đều nằm trong vùng an toàn.
@@ -37,6 +48,18 @@ public partial class CalculationPage : ContentPage
         InitializeComponent();
 
         LongDivisionGraphicsView.Drawable = _longDivisionDrawable;
+
+        FirstNumberEntry.Focused +=
+            OnNumberEntryFocused;
+
+        FirstNumberEntry.Unfocused +=
+            OnNumberEntryUnfocused;
+
+        SecondNumberEntry.Focused +=
+            OnNumberEntryFocused;
+
+        SecondNumberEntry.Unfocused +=
+            OnNumberEntryUnfocused;
 
         SelectOperation(ArithmeticOperation.Add);
 
@@ -145,7 +168,8 @@ public partial class CalculationPage : ContentPage
         HideMessages();
 
         if (!TryReadNumber(
-                FirstNumberEntry.Text,
+                GetEntryInputText(
+                    FirstNumberEntry),
                 "Vui lòng nhập số thứ nhất.",
                 out decimal firstNumber))
         {
@@ -154,7 +178,8 @@ public partial class CalculationPage : ContentPage
         }
 
         if (!TryReadNumber(
-                SecondNumberEntry.Text,
+                GetEntryInputText(
+                    SecondNumberEntry),
                 "Vui lòng nhập số thứ hai.",
                 out decimal secondNumber))
         {
@@ -210,7 +235,7 @@ public partial class CalculationPage : ContentPage
 
     private void ShowDivisionByZeroError(decimal firstNumber)
     {
-        string firstText = FormatNumber(firstNumber);
+        string firstText = FormatNumberForDisplay(firstNumber);
 
         ErrorLabel.Text = "Bạn không thể chia cho 0.";
         ErrorBorder.IsVisible = true;
@@ -262,19 +287,19 @@ public partial class CalculationPage : ContentPage
                 remainder);
 
         string dividendText =
-            FormatInteger(
+            FormatIntegerForDisplay(
                 dividendInteger);
 
         string divisorText =
-            FormatInteger(
+            FormatIntegerForDisplay(
                 divisorInteger);
 
         string quotientText =
-            FormatInteger(
+            FormatIntegerForDisplay(
                 quotient);
 
         string remainderText =
-            FormatInteger(
+            FormatIntegerForDisplay(
                 absoluteRemainder);
 
         ExpressionLabel.Text =
@@ -391,15 +416,15 @@ public partial class CalculationPage : ContentPage
         }
 
         string dividendText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 dividend);
 
         string divisorText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 divisor);
 
         string resultText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 result);
 
         ExpressionLabel.Text =
@@ -419,21 +444,39 @@ public partial class CalculationPage : ContentPage
         AdditionalLabel.Text = CreateAdditional(dividend, divisor, result);
     }
 
-    private bool TryReadNumber(string? input, string emptyMessage, out decimal number)
+    private bool TryReadNumber(
+        string? input,
+        string emptyMessage,
+        out decimal number)
     {
         number = 0;
 
-        if (string.IsNullOrWhiteSpace(input))
+        if (string.IsNullOrWhiteSpace(
+                input))
         {
-            ShowError(emptyMessage);
+            ShowError(
+                emptyMessage);
+
             return false;
         }
 
-        string normalizedInput = input.Trim();
+        string normalizedInput =
+            NormalizeNumberForParsing(
+                input.Trim());
 
-        if (!IsCompleteValidNumber(normalizedInput))
+        bool isScientificCode =
+            IsScientificCodeNotation(
+                normalizedInput);
+
+        if ((!isScientificCode &&
+             !IsCompleteValidNumber(
+                 normalizedInput)) ||
+            (isScientificCode &&
+             !IsCompleteScientificCodeNumber(
+                 normalizedInput)))
         {
-            if (_selectedNumberType == NumberInputType.Integer)
+            if (_selectedNumberType ==
+                NumberInputType.Integer)
             {
                 ShowError(
                     $"Giá trị \"{input}\" không phải là số nguyên hợp lệ.");
@@ -447,30 +490,30 @@ public partial class CalculationPage : ContentPage
             return false;
         }
 
-        // Dấu phẩy chỉ dùng để phân nhóm hàng nghìn khi hiển thị.
-        // Dấu chấm mới là dấu phân cách phần thập phân.
-        normalizedInput =
-            normalizedInput.Replace(
-                ",",
-                string.Empty);
-
-        bool isValid = decimal.TryParse(
-            normalizedInput,
-            NumberStyles.AllowLeadingSign |
-            NumberStyles.AllowDecimalPoint,
-            CultureInfo.InvariantCulture,
-            out number);
+        bool isValid =
+            decimal.TryParse(
+                normalizedInput,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out number);
 
         if (!isValid)
         {
-            ShowError($"Giá trị \"{input}\" không phải là số hợp lệ.");
+            ShowError(
+                $"Giá trị \"{input}\" không phải là số hợp lệ.");
+
             return false;
         }
 
-        if (_selectedNumberType == NumberInputType.Integer &&
-            decimal.Truncate(number) != number)
+        if (_selectedNumberType ==
+                NumberInputType.Integer &&
+            decimal.Truncate(
+                number) !=
+            number)
         {
-            ShowError("Bạn đang chọn chế độ số nguyên.");
+            ShowError(
+                "Bạn đang chọn chế độ số nguyên.");
+
             return false;
         }
 
@@ -604,9 +647,9 @@ public partial class CalculationPage : ContentPage
 
         ErrorLabel.Text =
             $"{resultName} của phép tính " +
-            $"{FormatNumber(firstNumber)} " +
+            $"{FormatNumberForDisplay(firstNumber)} " +
             $"{operationSymbol} " +
-            $"{FormatNumber(secondNumber)} " +
+            $"{FormatNumberForDisplay(secondNumber)} " +
             "vượt quá phạm vi số mà ứng dụng đang hỗ trợ.";
 
         ErrorBorder.IsVisible = true;
@@ -622,11 +665,11 @@ public partial class CalculationPage : ContentPage
         decimal result)
     {
         string firstText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 firstNumber);
 
         string secondText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 secondNumber);
 
         string resultText =
@@ -682,150 +725,302 @@ public partial class CalculationPage : ContentPage
         };
     }
 
-    private string CreateAdditional(decimal firstNumber, decimal secondNumber, decimal result)
+    private string CreateAdditional(
+        decimal firstNumber,
+        decimal secondNumber,
+        decimal result)
     {
         string firstText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 firstNumber);
 
         string secondText =
-            FormatNumber(
+            FormatNumberForDisplay(
                 secondNumber);
 
         string resultText =
-            _selectedOperation == ArithmeticOperation.Divide
-                ? FormatNumber(
+            _selectedOperation ==
+            ArithmeticOperation.Divide
+                ? FormatNumberForDisplay(
                     result)
                 : FormatOperationResult(
                     firstNumber,
                     secondNumber,
                     result);
-        string sumContentAdditional = "";
-        string subContentAdditional = "";
-        string mulContentAdditional = "";
-        string divContentAdditional = "";
-
-        //Trường hợp cộng số 0, một trong hai số nhập vào có số 0
-        if (_selectedOperation == ArithmeticOperation.Add)
-        {
-            sumContentAdditional = $"Phép cộng có tính chất giao hoán, kết hợp và cộng với số 0";
-            if ((firstNumber == 0 && secondNumber != 0) || (firstNumber != 0 && secondNumber == 0))
-            {
-                sumContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán và cộng số 0" +
-                    $"\nNên là {firstText} + {secondText} = {secondText} + {firstText} = {resultText}";
-            }
-            //Trường hợp giao hoán, cả hai số nhập vào lớn hơn 0
-            else if (firstNumber > 0 && secondNumber > 0 && firstNumber != secondNumber)
-            {
-                sumContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán" +
-                    $"\nNên là {firstText} + {secondText} = {secondText} + {firstText} = {resultText}";
-            }
-            //Trường hợp giao hoán, cả hai số đều bằng nhau
-            else if (firstNumber > 0 && secondNumber > 0 && firstNumber == secondNumber)
-            {
-                sumContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán vì hai số nhập vào đều bằng nhau" +
-                    $"\nNên là {firstText} + {secondText} = {resultText}";
-            }
-            //Trường hợp giao hoán, cả hai số đều bằng 0
-            else if (firstNumber == 0 && secondNumber == 0)
-            {
-                sumContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán vì hai số nhập vào đều là số 0" +
-                    $"\nNên là {firstText} + {secondText} = {resultText}";
-            }
-        }
-        else if (_selectedOperation == ArithmeticOperation.Subtract)
-        {
-            subContentAdditional = $"Phép trừ có tính chất trừ đi số 0 và trừ đi chính nó nên lúc nào cũng bằng 0";
-            //Trừ đi số 0
-            if (secondNumber == 0)
-            {
-                subContentAdditional +=
-                    $"\nĐây là trường hợp trừ đi số 0 nên lúc nào cũng bằng với số bị trừ" +
-                    $"\nNên là {firstText} - {secondText} = {resultText}";
-            }
-
-            //Trừ đi chính nó
-            else if (firstNumber == secondNumber)
-            {
-                subContentAdditional +=
-                    $"\nĐây là trường hợp trừ đi chính nó nên lúc nào cũng bằng 0" +
-                    $"\nNên là {firstText} - {secondText} = {resultText}";
-            }
-        }
-        else if (_selectedOperation == ArithmeticOperation.Multiply)
-        {
-            mulContentAdditional = $"Phép nhân có tính chất giao hoán, kết hợp, nhân với 1, nhân với 0 và tính chất phân phối";
-
-            if (firstNumber == 0 || secondNumber == 0)
-            {
-                mulContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán và nhân với số 0 nên lúc nào cũng bằng 0" +
-                    $"\nNên là {firstText} × {secondText} = {resultText}";
-            }
-            else if (firstNumber == 1 || secondNumber == 1)
-            {
-                mulContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán và nhân với số 1 nên lúc nào cũng bằng với thừa số thứ nhất hoặc thừa số thứ hai" +
-                    $"\nNên là {firstText} × {secondText} = {resultText}";
-            }
-            else if (firstNumber > 0 && secondNumber > 0 && firstNumber != secondNumber)
-            {
-                mulContentAdditional +=
-                    $"\nĐây là trường hợp có tính chất giao hoán" +
-                    $"\nNên là {firstText} × {secondText} = {secondText} × {firstText} = {resultText}";
-            }
-        }
-        else if (_selectedOperation == ArithmeticOperation.Divide)
-        {
-            divContentAdditional = $"Phép chia có tính chất chia cho 1, chia cho chính nó, số 0 chia cho một số";
-            //Trường hợp chia cho 1 và số 0 chia cho 1 số
-            if (firstNumber == 0 && secondNumber == 1)
-            {
-                divContentAdditional +=
-                    $"\nĐây là trường hợp chia cho 1 và số 0 chia cho 1 số nên lúc nào cũng bằng với số bị chia là 0" +
-                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
-            }
-            //Trường hợp chia cho 1
-            else if (firstNumber > 0 && secondNumber == 1)
-            {
-                divContentAdditional +=
-                    $"\nĐây là trường hợp chia cho 1 nên lúc cũng bằng với số bị chia" +
-                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
-            }
-
-            //Trường hợp chia cho chính nó
-            else if (firstNumber == secondNumber)
-            {
-                divContentAdditional +=
-                    $"\nĐây là trường hợp chia cho chính nó nên lúc nào cũng bằng 1" +
-                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
-            }
-
-            //Trường hợp số 0 chia cho một số
-            else if (firstNumber == 0 && secondNumber > 1)
-            {
-                divContentAdditional +=
-                    $"\nĐây là trường hợp số 0 chia cho một số nên lúc nào cũng bằng 0" +
-                    $"\nNên là {firstText} ÷ {secondText} = {resultText}";
-            }
-        }
 
         return _selectedOperation switch
         {
             ArithmeticOperation.Add =>
-                sumContentAdditional,
+                CreateAdditionAdditional(
+                    firstNumber,
+                    secondNumber,
+                    firstText,
+                    secondText,
+                    resultText),
+
             ArithmeticOperation.Subtract =>
-                subContentAdditional,
+                CreateSubtractionAdditional(
+                    firstNumber,
+                    secondNumber,
+                    firstText,
+                    secondText,
+                    resultText),
+
             ArithmeticOperation.Multiply =>
-                mulContentAdditional,
+                CreateMultiplicationAdditional(
+                    firstNumber,
+                    secondNumber,
+                    firstText,
+                    secondText,
+                    resultText),
+
             ArithmeticOperation.Divide =>
-                divContentAdditional,
-            _ => string.Empty
+                CreateDivisionAdditional(
+                    firstNumber,
+                    secondNumber,
+                    firstText,
+                    secondText,
+                    resultText),
+
+            _ =>
+                string.Empty
         };
+    }
+
+    private static string CreateAdditionAdditional(
+        decimal firstNumber,
+        decimal secondNumber,
+        string firstText,
+        string secondText,
+        string resultText)
+    {
+        const string properties =
+            "Phép cộng có tính chất giao hoán và kết hợp.\n" +
+            "Số 0 là phần tử trung hòa của phép cộng.";
+
+        if (firstNumber == 0 &&
+            secondNumber == 0)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Cả hai số hạng đều bằng 0.",
+                "0 + 0 = 0.",
+                $"{firstText} + {secondText} = {resultText}");
+        }
+
+        if (firstNumber == 0 ||
+            secondNumber == 0)
+        {
+            string nonZeroText =
+                firstNumber == 0
+                    ? secondText
+                    : firstText;
+
+            return BuildAdditionalText(
+                properties,
+                "Đây là trường hợp cộng với số 0.",
+                "a + 0 = 0 + a = a",
+                $"{firstText} + {secondText} = " +
+                $"{nonZeroText} = {resultText}");
+        }
+
+        if (firstNumber == secondNumber)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Hai số hạng bằng nhau.",
+                "a + a = 2 × a",
+                $"{firstText} + {secondText} = {resultText}");
+        }
+
+        return BuildAdditionalText(
+            properties,
+            "Áp dụng tính chất giao hoán.",
+            "a + b = b + a",
+            $"{firstText} + {secondText}\n" +
+            $"= {secondText} + {firstText}\n" +
+            $"= {resultText}");
+    }
+
+    private static string CreateSubtractionAdditional(
+        decimal firstNumber,
+        decimal secondNumber,
+        string firstText,
+        string secondText,
+        string resultText)
+    {
+        const string properties =
+            "Phép trừ không có tính chất giao hoán.\n" +
+            "Phép trừ cũng không có tính chất kết hợp.";
+
+        if (secondNumber == 0)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Đây là trường hợp trừ đi số 0.",
+                "a − 0 = a",
+                $"{firstText} − {secondText} = {resultText}");
+        }
+
+        if (firstNumber == secondNumber)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Một số trừ chính nó luôn bằng 0.",
+                "a − a = 0",
+                $"{firstText} − {secondText} = {resultText}");
+        }
+
+        if (firstNumber == 0)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Lấy 0 trừ một số sẽ được số đối của số đó.",
+                "0 − a = −a",
+                $"{firstText} − {secondText} = {resultText}");
+        }
+
+        return BuildAdditionalText(
+            properties,
+            "Có thể kiểm tra phép trừ bằng phép cộng.",
+            "Hiệu + số trừ = số bị trừ",
+            $"{resultText} + {secondText} = {firstText}");
+    }
+
+    private static string CreateMultiplicationAdditional(
+        decimal firstNumber,
+        decimal secondNumber,
+        string firstText,
+        string secondText,
+        string resultText)
+    {
+        const string properties =
+            "Phép nhân có tính chất giao hoán, kết hợp và phân phối.\n" +
+            "Số 1 là phần tử đơn vị; số 0 là phần tử hấp thụ.";
+
+        if (firstNumber == 0 ||
+            secondNumber == 0)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Đây là trường hợp nhân với số 0.",
+                "a × 0 = 0 × a = 0",
+                $"{firstText} × {secondText} = {resultText}");
+        }
+
+        if (firstNumber == 1 ||
+            secondNumber == 1)
+        {
+            string unchangedText =
+                firstNumber == 1
+                    ? secondText
+                    : firstText;
+
+            return BuildAdditionalText(
+                properties,
+                "Đây là trường hợp nhân với số 1.",
+                "a × 1 = 1 × a = a",
+                $"{firstText} × {secondText} = " +
+                $"{unchangedText} = {resultText}");
+        }
+
+        if (firstNumber == -1 ||
+            secondNumber == -1)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Nhân với −1 sẽ đổi một số thành số đối của nó.",
+                "a × (−1) = −a",
+                $"{firstText} × {secondText} = {resultText}");
+        }
+
+        if (firstNumber == secondNumber)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Hai thừa số bằng nhau nên đây là một bình phương.",
+                "a × a = a²",
+                $"{firstText} × {secondText} = {resultText}");
+        }
+
+        return BuildAdditionalText(
+            properties,
+            "Áp dụng tính chất giao hoán.",
+            "a × b = b × a",
+            $"{firstText} × {secondText}\n" +
+            $"= {secondText} × {firstText}\n" +
+            $"= {resultText}");
+    }
+
+    private static string CreateDivisionAdditional(
+        decimal firstNumber,
+        decimal secondNumber,
+        string firstText,
+        string secondText,
+        string resultText)
+    {
+        const string properties =
+            "Phép chia không có tính chất giao hoán.\n" +
+            "Phép chia cũng không có tính chất kết hợp.\n" +
+            "Mọi quy tắc chỉ áp dụng khi số chia khác 0.";
+
+        if (firstNumber == 0)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Số 0 chia cho một số khác 0 luôn bằng 0.",
+                "0 ÷ a = 0, với a ≠ 0",
+                $"{firstText} ÷ {secondText} = {resultText}");
+        }
+
+        if (secondNumber == 1)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Một số chia cho 1 vẫn giữ nguyên.",
+                "a ÷ 1 = a",
+                $"{firstText} ÷ {secondText} = {resultText}");
+        }
+
+        if (firstNumber == secondNumber)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Một số khác 0 chia cho chính nó luôn bằng 1.",
+                "a ÷ a = 1, với a ≠ 0",
+                $"{firstText} ÷ {secondText} = {resultText}");
+        }
+
+        if (secondNumber == -1)
+        {
+            return BuildAdditionalText(
+                properties,
+                "Chia cho −1 sẽ đổi một số thành số đối của nó.",
+                "a ÷ (−1) = −a",
+                $"{firstText} ÷ {secondText} = {resultText}");
+        }
+
+        return BuildAdditionalText(
+            properties,
+            "Có thể kiểm tra phép chia bằng phép nhân.",
+            "Thương × số chia = số bị chia",
+            $"{resultText} × {secondText} = {firstText}");
+    }
+
+    private static string BuildAdditionalText(
+        string properties,
+        string currentCase,
+        string rule,
+        string example)
+    {
+        return
+            $"Tính chất chung\n" +
+            $"• {properties.Replace("\n", "\n• ")}\n\n" +
+            $"Trường hợp đang áp dụng\n" +
+            $"• {currentCase}\n" +
+            $"• Quy tắc: {rule}\n\n" +
+            $"Minh họa\n" +
+            $"{example}";
     }
 
     private string GetOperationSymbol()
@@ -879,22 +1074,35 @@ public partial class CalculationPage : ContentPage
                 0,
                 MaxDecimalPlaces);
 
+        string standardText;
+
         if (displayDecimalPlaces == 0)
         {
-            return result.ToString(
-                "#,##0",
-                CultureInfo.InvariantCulture);
+            standardText =
+                result.ToString(
+                    "#,##0",
+                    CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            string format =
+                "#,##0." +
+                new string(
+                    '0',
+                    displayDecimalPlaces);
+
+            standardText =
+                result.ToString(
+                    format,
+                    CultureInfo.InvariantCulture);
         }
 
-        string format =
-            "#,##0." +
-            new string(
-                '0',
-                displayDecimalPlaces);
-
-        return result.ToString(
-            format,
-            CultureInfo.InvariantCulture);
+        return CountNumericDigits(
+                   standardText) >
+               ScientificDisplayDigitThreshold
+            ? FormatScientificForDisplay(
+                result)
+            : standardText;
     }
 
     private static int GetDecimalScale(
@@ -984,8 +1192,8 @@ public partial class CalculationPage : ContentPage
             GetOperationSymbol();
 
         ErrorLabel.Text =
-            $"Phép tính {FormatNumber(firstNumber)} " +
-            $"{operationSymbol} {FormatNumber(secondNumber)} " +
+            $"Phép tính {FormatNumberForDisplay(firstNumber)} " +
+            $"{operationSymbol} {FormatNumberForDisplay(secondNumber)} " +
             $"cho kết quả cần nhiều hơn {MaxDecimalPlaces} chữ số " +
             "sau dấu chấm hoặc không thể biểu diễn chính xác trong " +
             "giới hạn hiện tại. Ứng dụng không làm tròn kết quả để " +
@@ -1006,12 +1214,25 @@ public partial class CalculationPage : ContentPage
     private static string FormatNumber(
         decimal number)
     {
-        // Dấu phẩy phân nhóm hàng nghìn, triệu, tỷ...
-        // Dấu chấm phân cách phần thập phân.
-        // Tối đa 10 chữ số thập phân và bỏ số 0 dư ở cuối.
+        // Định dạng đầy đủ dùng cho chỉnh sửa và các phép xử lý nội bộ.
         return number.ToString(
             "#,##0.##########",
             CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatNumberForDisplay(
+        decimal number)
+    {
+        string standardText =
+            FormatNumber(
+                number);
+
+        return CountNumericDigits(
+                   standardText) >
+               ScientificDisplayDigitThreshold
+            ? FormatScientificForDisplay(
+                number)
+            : standardText;
     }
 
     private static string FormatInteger(
@@ -1022,8 +1243,307 @@ public partial class CalculationPage : ContentPage
             CultureInfo.InvariantCulture);
     }
 
+    private static string FormatIntegerForDisplay(
+        BigInteger number)
+    {
+        string standardText =
+            FormatInteger(
+                number);
+
+        if (CountNumericDigits(
+                standardText) <=
+            ScientificDisplayDigitThreshold)
+        {
+            return standardText;
+        }
+
+        bool isNegative =
+            number.Sign < 0;
+
+        string digits =
+            BigInteger.Abs(
+                number)
+            .ToString(
+                CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length - 1;
+
+        string mantissaDigits =
+            digits[..Math.Min(
+                ScientificDisplaySignificantDigits,
+                digits.Length)];
+
+        bool wasRounded =
+            digits.Length >
+            ScientificDisplaySignificantDigits &&
+            digits[ScientificDisplaySignificantDigits..]
+                .Any(
+                    character =>
+                        character != '0');
+
+        string mantissa =
+            BuildMantissaText(
+                mantissaDigits);
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        string approximation =
+            wasRounded
+                ? "≈ "
+                : string.Empty;
+
+        if (mantissa == "1")
+        {
+            return
+                $"{approximation}{sign}10{ToSuperscript(exponent)}";
+        }
+
+        return
+            $"{approximation}{sign}{mantissa} × " +
+            $"10{ToSuperscript(exponent)}";
+    }
+
+    private static string FormatScientificForDisplay(
+        decimal number)
+    {
+        string code =
+            FormatScientificForCode(
+                number);
+
+        int exponentSeparatorIndex =
+            code.IndexOf(
+                'e');
+
+        string exactMantissaText =
+            code[..exponentSeparatorIndex];
+
+        int exponent =
+            int.Parse(
+                code[(exponentSeparatorIndex + 1)..],
+                CultureInfo.InvariantCulture);
+
+        decimal exactMantissa =
+            decimal.Parse(
+                exactMantissaText,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture);
+
+        int mantissaDecimalPlaces =
+            Math.Max(
+                0,
+                ScientificDisplaySignificantDigits - 1);
+
+        decimal roundedMantissa =
+            Math.Round(
+                exactMantissa,
+                mantissaDecimalPlaces,
+                MidpointRounding.AwayFromZero);
+
+        if (Math.Abs(
+                roundedMantissa) >=
+            10)
+        {
+            roundedMantissa /=
+                10;
+
+            exponent++;
+        }
+
+        bool wasRounded =
+            roundedMantissa !=
+            exactMantissa;
+
+        string mantissaText =
+            roundedMantissa.ToString(
+                "0.###########",
+                CultureInfo.InvariantCulture);
+
+        string approximation =
+            wasRounded
+                ? "≈ "
+                : string.Empty;
+
+        if (mantissaText == "1")
+        {
+            return
+                $"{approximation}10{ToSuperscript(exponent)}";
+        }
+
+        if (mantissaText == "-1")
+        {
+            return
+                $"{approximation}−10{ToSuperscript(exponent)}";
+        }
+
+        return
+            $"{approximation}{mantissaText} × " +
+            $"10{ToSuperscript(exponent)}";
+    }
+
+    private static string FormatScientificForCode(
+        decimal number)
+    {
+        if (number == 0)
+        {
+            return "0e0";
+        }
+
+        string scientificText =
+            number.ToString(
+                "0.############################E+0",
+                CultureInfo.InvariantCulture);
+
+        int exponentIndex =
+            scientificText.IndexOf(
+                'E');
+
+        string mantissa =
+            scientificText[..exponentIndex];
+
+        string exponent =
+            scientificText[(exponentIndex + 1)..]
+                .TrimStart('+');
+
+        return
+            $"{mantissa}e{exponent}";
+    }
+
+    private static string BuildMantissaText(
+        string digits)
+    {
+        if (digits.Length == 1)
+        {
+            return digits;
+        }
+
+        return
+            $"{digits[0]}.{digits[1..]}"
+                .TrimEnd('0')
+                .TrimEnd('.');
+    }
+
+    private static string ToSuperscript(
+        int exponent)
+    {
+        string exponentText =
+            exponent.ToString(
+                CultureInfo.InvariantCulture);
+
+        var builder =
+            new StringBuilder(
+                exponentText.Length);
+
+        foreach (char character
+                 in exponentText)
+        {
+            builder.Append(
+                character switch
+                {
+                    '-' => '⁻',
+                    '0' => '⁰',
+                    '1' => '¹',
+                    '2' => '²',
+                    '3' => '³',
+                    '4' => '⁴',
+                    '5' => '⁵',
+                    '6' => '⁶',
+                    '7' => '⁷',
+                    '8' => '⁸',
+                    '9' => '⁹',
+                    _ => character
+                });
+        }
+
+        return builder.ToString();
+    }
+
+    private static int CountNumericDigits(
+        string text)
+    {
+        int count =
+            0;
+
+        foreach (char character
+                 in text)
+        {
+            if (char.IsDigit(
+                    character))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static string NormalizeNumberForParsing(
+        string text)
+    {
+        return text
+            .Replace(
+                ",",
+                string.Empty)
+            .Replace(
+                "E",
+                "e",
+                StringComparison.Ordinal);
+    }
+
+    private static bool IsScientificCodeNotation(
+        string text)
+    {
+        return text.Contains(
+            'e');
+    }
+
+    private static bool IsCompleteScientificCodeNumber(
+        string text)
+    {
+        int exponentIndex =
+            text.IndexOf(
+                'e');
+
+        if (exponentIndex <= 0 ||
+            exponentIndex !=
+            text.LastIndexOf(
+                'e') ||
+            exponentIndex ==
+            text.Length - 1)
+        {
+            return false;
+        }
+
+        string mantissa =
+            text[..exponentIndex];
+
+        string exponent =
+            text[(exponentIndex + 1)..];
+
+        if (!decimal.TryParse(
+                mantissa,
+                NumberStyles.AllowLeadingSign |
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out _))
+        {
+            return false;
+        }
+
+        return int.TryParse(
+            exponent,
+            NumberStyles.AllowLeadingSign,
+            CultureInfo.InvariantCulture,
+            out _);
+    }
+
     private void OnClearClicked(object sender, EventArgs e)
     {
+        _entryScientificCodeValues.Clear();
+
         FirstNumberEntry.Text = string.Empty;
         SecondNumberEntry.Text = string.Empty;
 
@@ -1081,11 +1601,128 @@ public partial class CalculationPage : ContentPage
 
         // Xóa dữ liệu cũ để tránh số đang nhập không phù hợp
         // với loại số vừa được chọn.
+        _entryScientificCodeValues.Clear();
+
         FirstNumberEntry.Text = string.Empty;
         SecondNumberEntry.Text = string.Empty;
 
         HideMessages();
         FirstNumberEntry.Focus();
+    }
+
+    private string? GetEntryInputText(
+        Entry entry)
+    {
+        if (_entryScientificCodeValues.TryGetValue(
+                entry,
+                out string scientificCode))
+        {
+            return scientificCode;
+        }
+
+        return entry.Text;
+    }
+
+    private void OnNumberEntryFocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry ||
+            !_entryScientificCodeValues.TryGetValue(
+                entry,
+                out string scientificCode) ||
+            !decimal.TryParse(
+                scientificCode,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out decimal number))
+        {
+            return;
+        }
+
+        _entryScientificCodeValues.Remove(
+            entry);
+
+        SetEntryTextWithoutValidation(
+            entry,
+            FormatNumber(
+                number));
+    }
+
+    private void OnNumberEntryUnfocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string currentText =
+            entry.Text ??
+            string.Empty;
+
+        if (string.IsNullOrWhiteSpace(
+                currentText))
+        {
+            return;
+        }
+
+        string normalizedText =
+            NormalizeNumberForParsing(
+                currentText);
+
+        if (!decimal.TryParse(
+                normalizedText,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out decimal number))
+        {
+            return;
+        }
+
+        string standardText =
+            FormatNumber(
+                number);
+
+        if (CountNumericDigits(
+                standardText) <=
+            ScientificDisplayDigitThreshold)
+        {
+            _entryScientificCodeValues.Remove(
+                entry);
+
+            return;
+        }
+
+        _entryScientificCodeValues[entry] =
+            FormatScientificForCode(
+                number);
+
+        SetEntryTextWithoutValidation(
+            entry,
+            FormatScientificForDisplay(
+                number));
+    }
+
+    private void SetEntryTextWithoutValidation(
+        Entry entry,
+        string text)
+    {
+        _isUpdatingNumberText =
+            true;
+
+        entry.Text =
+            text;
+
+        entry.CursorPosition =
+            text.Length;
+
+        entry.SelectionLength =
+            0;
+
+        _isUpdatingNumberText =
+            false;
     }
 
     private void OnNumberEntryTextChanged(
@@ -1101,6 +1738,9 @@ public partial class CalculationPage : ContentPage
         {
             return;
         }
+
+        _entryScientificCodeValues.Remove(
+            entry);
 
         string newText =
             e.NewTextValue ??
@@ -1617,9 +2257,7 @@ public partial class CalculationPage : ContentPage
             _longDivisionDrawable.Result =
                 divisionResult;
 
-            LongDivisionGraphicsView.HeightRequest =
-                CalculateLongDivisionHeight(
-                    divisionResult);
+            UpdateLongDivisionHeight();
 
             LongDivisionBorder.IsVisible =
                 true;
@@ -1634,42 +2272,24 @@ public partial class CalculationPage : ContentPage
         }
     }
 
-    private static double CalculateLongDivisionHeight(LongDivisionResult result)
+    private void UpdateLongDivisionHeight()
     {
-        const double minimumHeight = 180;
-        const double topAreaHeight = 90;
-        const double rowHeight = 38;
+        double availableWidth =
+            LongDivisionGraphicsView.Width;
 
-        if (result.Steps.Count == 0)
+        if (availableWidth <= 0)
         {
-            return minimumHeight;
+            // Lần hiển thị đầu tiên GraphicsView có thể chưa được measure.
+            // Dùng chiều rộng trang làm giá trị dự phòng.
+            availableWidth =
+                Math.Max(
+                    320,
+                    Width - 96);
         }
 
-        int visibleRows = 1;
-
-        for (int index = 0;
-             index < result.Steps.Count;
-             index++)
-        {
-            // Dòng tích cần trừ.
-            visibleRows++;
-
-            // Từ bước thứ hai trở đi có dòng số sau khi hạ xuống.
-            if (index > 0)
-            {
-                visibleRows++;
-            }
-        }
-
-        // Dòng số dư cuối cùng.
-        visibleRows++;
-
-        double calculatedHeight =
-            topAreaHeight + visibleRows * rowHeight;
-
-        return Math.Max(
-            minimumHeight,
-            calculatedHeight);
+        LongDivisionGraphicsView.HeightRequest =
+            _longDivisionDrawable.GetPreferredHeight(
+                availableWidth);
     }
     private void HideLongDivision()
     {
@@ -1759,13 +2379,13 @@ public partial class CalculationPage : ContentPage
     decimal result)
     {
         string dividendText =
-            FormatNumber(dividend);
+            FormatNumberForDisplay(dividend);
 
         string divisorText =
-            FormatNumber(divisor);
+            FormatNumberForDisplay(divisor);
 
         string resultText =
-            FormatNumber(result);
+            FormatNumberForDisplay(result);
 
         int divisorDecimalPlaces =
             GetDecimalPlaces(divisor);
@@ -1797,8 +2417,8 @@ public partial class CalculationPage : ContentPage
             $"Ta chuyển dấu phẩy của cả số bị chia và số chia " +
             $"sang phải {divisorDecimalPlaces} chữ số:\n\n" +
             $"{dividendText} ÷ {divisorText}\n" +
-            $"= {FormatNumber(normalizedDividend)} ÷ " +
-            $"{FormatNumber(normalizedDivisor)}.\n\n" +
+            $"= {FormatNumberForDisplay(normalizedDividend)} ÷ " +
+            $"{FormatNumberForDisplay(normalizedDivisor)}.\n\n" +
             "Sau đó thực hiện phép chia đặt tính như chia số tự nhiên.\n\n" +
             $"{dividendText} ÷ {divisorText} = {resultText}.\n\n" +
             $"Vậy kết quả là {resultText}.";
@@ -1939,9 +2559,7 @@ public partial class CalculationPage : ContentPage
             _longDivisionDrawable.Result =
                 divisionResult;
 
-            LongDivisionGraphicsView.HeightRequest =
-                CalculateLongDivisionHeight(
-                    divisionResult);
+            UpdateLongDivisionHeight();
 
             LongDivisionBorder.IsVisible =
                 true;

@@ -10,7 +10,44 @@ public sealed class LongDivisionDrawable : IDrawable
     private const float DefaultRowHeight = 38f;
     private const float DefaultFontSize = 27f;
 
+    // Giới hạn nhỏ nhất chỉ dùng khi phép chia có nhiều chữ số.
+    // Kích thước chữ thực tế còn được điều chỉnh theo digitWidth.
+    private const float MinimumContentScale = 0.34f;
+    private const float MinimumFontSize = 8f;
+
+    // Giới hạn chiều dọc để phép chia dài không tạo ra một vùng
+    // GraphicsView quá cao và có nhiều khoảng trống ở phía dưới.
+    private const float MinimumRowHeight = 13f;
+    private const float MinimumPreferredHeight = 180f;
+
     public LongDivisionResult? Result { get; set; }
+
+    /// <summary>
+    /// Trả về chiều cao phù hợp với đúng scale mà Drawable sẽ sử dụng.
+    /// Nhờ vậy GraphicsView không còn tính chiều cao theo rowHeight cố định
+    /// trong khi phần vẽ đã thu nhỏ theo chiều ngang.
+    /// </summary>
+    public double GetPreferredHeight(
+        double availableWidth)
+    {
+        if (Result is null)
+        {
+            return MinimumPreferredHeight;
+        }
+
+        float safeWidth =
+            (float)Math.Max(
+                280d,
+                availableWidth);
+
+        var metrics =
+            CalculateLayoutMetrics(
+                safeWidth,
+                Result);
+
+        return Math.Ceiling(
+            metrics.PreferredHeight);
+    }
 
     public void Draw(
         ICanvas canvas,
@@ -51,64 +88,45 @@ public sealed class LongDivisionDrawable : IDrawable
         RectF bounds,
         LongDivisionResult result)
     {
-        float scale =
-            CalculateScale(bounds.Width);
+        var metrics =
+            CalculateLayoutMetrics(
+                bounds.Width,
+                result);
 
-        float digitWidth =
-            DefaultDigitWidth * scale;
-
-        float rowHeight =
-            DefaultRowHeight * scale;
-
-        float fontSize =
-            DefaultFontSize * scale;
-
-        float padding =
-            18f * scale;
-
-        string dividendText =
-            result.NormalizedDividendText;
-
-        string divisorText =
-            result.NormalizedDivisorText;
-
-        string quotientText =
-            result.QuotientText;
-
-        int dividendColumnCount =
-            CountVisualColumns(dividendText);
-
-        int rightColumnCount =
-            Math.Max(
-                CountVisualColumns(divisorText),
-                CountVisualColumns(quotientText));
-
-        float dividerGap =
-            12f * scale;
-
-        float contentWidth =
-            dividendColumnCount * digitWidth +
-            dividerGap +
-            rightColumnCount * digitWidth +
-            padding * 2;
+        float drawingWidth =
+            metrics.TotalColumnCount *
+            metrics.DigitWidth +
+            metrics.DividerGap +
+            metrics.RightTextInset;
 
         float originX =
             Math.Max(
-                padding,
-                (bounds.Width - contentWidth) / 2f);
+                metrics.Padding,
+                (bounds.Width -
+                 drawingWidth) /
+                2f);
 
+        // Nếu bên ngoài vẫn đang giữ HeightRequest cũ quá lớn,
+        // căn giữa nội dung theo chiều dọc thay vì dồn toàn bộ lên trên
+        // và để một khoảng trắng rất lớn ở phía dưới.
         float originY =
-            padding;
+            Math.Max(
+                metrics.Padding,
+                (bounds.Height -
+                 metrics.PreferredHeight) /
+                2f +
+                metrics.Padding);
 
         float dividerX =
             originX +
-            dividendColumnCount * digitWidth +
-            dividerGap;
+            metrics.DividendColumnCount *
+            metrics.DigitWidth +
+            metrics.DividerGap;
 
         ConfigureCanvas(
             canvas,
-            fontSize,
-            scale);
+            metrics.FontSize,
+            metrics.Scale);
 
         DrawTopArea(
             canvas,
@@ -116,18 +134,20 @@ public sealed class LongDivisionDrawable : IDrawable
             originX,
             originY,
             dividerX,
-            digitWidth,
-            rowHeight,
-            scale);
+            metrics.DigitWidth,
+            metrics.RowHeight,
+            metrics.RightTextInset,
+            metrics.Scale);
 
         DrawSteps(
             canvas,
             result,
             originX,
             originY,
-            digitWidth,
-            rowHeight,
-            scale);
+            metrics.DigitWidth,
+            metrics.RowHeight,
+            metrics.StepGap,
+            metrics.Scale);
     }
 
     private static void DrawTopArea(
@@ -138,6 +158,7 @@ public sealed class LongDivisionDrawable : IDrawable
         float dividerX,
         float digitWidth,
         float rowHeight,
+        float rightTextInset,
         float scale)
     {
         DrawTextByColumns(
@@ -149,7 +170,8 @@ public sealed class LongDivisionDrawable : IDrawable
             rowHeight);
 
         float rightX =
-            dividerX + 12f * scale;
+            dividerX +
+            rightTextInset;
 
         DrawTextByColumns(
             canvas,
@@ -171,7 +193,9 @@ public sealed class LongDivisionDrawable : IDrawable
             digitWidth;
 
         canvas.StrokeSize =
-            2.5f * scale;
+            Math.Max(
+                1.2f,
+                2.5f * scale);
 
         canvas.DrawLine(
             dividerX,
@@ -202,6 +226,7 @@ public sealed class LongDivisionDrawable : IDrawable
         float originY,
         float digitWidth,
         float rowHeight,
+        float stepGap,
         float scale)
     {
         if (result.Steps.Count == 0)
@@ -212,7 +237,7 @@ public sealed class LongDivisionDrawable : IDrawable
         float currentY =
             originY +
             rowHeight +
-            12f * scale;
+            stepGap;
 
         for (int index = 0;
              index < result.Steps.Count;
@@ -229,11 +254,13 @@ public sealed class LongDivisionDrawable : IDrawable
 
             int partialStartColumn =
                 step.EndColumn -
-                partialText.Length + 1;
+                CountVisualColumns(
+                    partialText) + 1;
 
             int productStartColumn =
                 step.EndColumn -
-                productText.Length + 1;
+                CountVisualColumns(
+                    productText) + 1;
 
             if (index > 0)
             {
@@ -273,7 +300,9 @@ public sealed class LongDivisionDrawable : IDrawable
             float lineY =
                 currentY +
                 rowHeight -
-                5f * scale;
+                Math.Max(
+                    2f,
+                    rowHeight * 0.14f);
 
             canvas.DrawLine(
                 lineStartX,
@@ -294,7 +323,8 @@ public sealed class LongDivisionDrawable : IDrawable
 
                 int remainderStartColumn =
                     step.EndColumn -
-                    remainderText.Length + 1;
+                    CountVisualColumns(
+                        remainderText) + 1;
 
                 DrawDigitsAtColumn(
                     canvas,
@@ -373,20 +403,41 @@ public sealed class LongDivisionDrawable : IDrawable
         float digitWidth,
         float rowHeight)
     {
-        for (int index = 0;
-             index < text.Length;
-             index++)
+        int visualColumn =
+            0;
+
+        foreach (char character
+                 in text)
         {
+            if (character is '.' or ',')
+            {
+                DrawDecimalSeparator(
+                    canvas,
+                    originX +
+                    (startColumn +
+                     visualColumn) *
+                    digitWidth -
+                    digitWidth * 0.14f,
+                    y,
+                    digitWidth,
+                    rowHeight);
+
+                continue;
+            }
+
             canvas.DrawString(
-                text[index].ToString(),
+                character.ToString(),
                 originX +
-                (startColumn + index) *
+                (startColumn +
+                 visualColumn) *
                 digitWidth,
                 y,
                 digitWidth,
                 rowHeight,
                 HorizontalAlignment.Center,
                 VerticalAlignment.Center);
+
+            visualColumn++;
         }
     }
 
@@ -397,6 +448,204 @@ public sealed class LongDivisionDrawable : IDrawable
             character =>
                 character != '.' &&
                 character != ',');
+    }
+
+    private static (
+        float Scale,
+        float Padding,
+        float DividerGap,
+        float RightTextInset,
+        float DigitWidth,
+        float FontSize,
+        float RowHeight,
+        float StepGap,
+        float PreferredHeight,
+        int DividendColumnCount,
+        int RightColumnCount,
+        int TotalColumnCount)
+        CalculateLayoutMetrics(
+            float availableWidth,
+            LongDivisionResult result)
+    {
+        string dividendText =
+            result.NormalizedDividendText;
+
+        string divisorText =
+            result.NormalizedDivisorText;
+
+        string quotientText =
+            result.QuotientText;
+
+        int dividendColumnCount =
+            CountVisualColumns(
+                dividendText);
+
+        int rightColumnCount =
+            Math.Max(
+                CountVisualColumns(
+                    divisorText),
+                CountVisualColumns(
+                    quotientText));
+
+        int totalColumnCount =
+            Math.Max(
+                1,
+                dividendColumnCount +
+                rightColumnCount);
+
+        float scale =
+            CalculateScale(
+                availableWidth,
+                dividendColumnCount,
+                rightColumnCount);
+
+        float padding =
+            Math.Max(
+                6f,
+                18f * scale);
+
+        float dividerGap =
+            Math.Max(
+                5f,
+                12f * scale);
+
+        float rightTextInset =
+            Math.Max(
+                4f,
+                8f * scale);
+
+        float availableDigitArea =
+            Math.Max(
+                1f,
+                availableWidth -
+                padding * 2f -
+                dividerGap -
+                rightTextInset);
+
+        float maximumDigitWidth =
+            availableDigitArea /
+            totalColumnCount;
+
+        float digitWidth =
+            Math.Clamp(
+                Math.Min(
+                    DefaultDigitWidth * scale,
+                    maximumDigitWidth),
+                6f,
+                DefaultDigitWidth);
+
+        float horizontalFontSize =
+            Math.Clamp(
+                Math.Min(
+                    DefaultFontSize * scale,
+                    digitWidth * 0.92f),
+                MinimumFontSize,
+                DefaultFontSize);
+
+        int stepRowCount =
+            CalculateVisibleStepRowCount(
+                result);
+
+        int totalRowUnits =
+            Math.Max(
+                1,
+                1 + stepRowCount);
+
+        float stepGap =
+            Math.Max(
+                4f,
+                10f * scale);
+
+        float maximumPreferredHeight =
+            availableWidth switch
+            {
+                < 420f => 360f,
+                < 700f => 430f,
+                _ => 520f
+            };
+
+        float availableRowsHeight =
+            Math.Max(
+                MinimumRowHeight *
+                totalRowUnits,
+                maximumPreferredHeight -
+                padding * 2f -
+                stepGap);
+
+        float heightLimitedRowHeight =
+            availableRowsHeight /
+            totalRowUnits;
+
+        float naturalRowHeight =
+            Math.Max(
+                horizontalFontSize * 1.38f,
+                DefaultRowHeight * scale);
+
+        // Với nhiều bước chia, thu hẹp khoảng cách dọc nhưng vẫn giữ
+        // chiều cao tối thiểu đủ để đọc số và đường gạch.
+        float rowHeight =
+            Math.Max(
+                MinimumRowHeight,
+                Math.Min(
+                    naturalRowHeight,
+                    heightLimitedRowHeight));
+
+        float fontSize =
+            Math.Clamp(
+                Math.Min(
+                    horizontalFontSize,
+                    rowHeight * 0.72f),
+                MinimumFontSize,
+                DefaultFontSize);
+
+        float preferredHeight =
+            padding * 2f +
+            stepGap +
+            totalRowUnits *
+            rowHeight;
+
+        preferredHeight =
+            Math.Max(
+                MinimumPreferredHeight,
+                preferredHeight);
+
+        return (
+            scale,
+            padding,
+            dividerGap,
+            rightTextInset,
+            digitWidth,
+            fontSize,
+            rowHeight,
+            stepGap,
+            preferredHeight,
+            dividendColumnCount,
+            rightColumnCount,
+            totalColumnCount);
+    }
+
+    private static int CalculateVisibleStepRowCount(
+        LongDivisionResult result)
+    {
+        if (result.Steps.Count == 0)
+        {
+            return 0;
+        }
+
+        // Mỗi bước có một dòng tích cần trừ.
+        int rowCount =
+            result.Steps.Count;
+
+        // Từ bước thứ hai có thêm dòng số sau khi hạ xuống.
+        rowCount +=
+            Math.Max(
+                0,
+                result.Steps.Count - 1);
+
+        // Dòng số dư cuối cùng.
+        rowCount++;
+
+        return rowCount;
     }
 
     private static void ConfigureCanvas(
@@ -422,7 +671,9 @@ public sealed class LongDivisionDrawable : IDrawable
             primaryText;
 
         canvas.StrokeSize =
-            2.2f * scale;
+            Math.Max(
+                1.1f,
+                2.2f * scale);
     }
 
     private static void DrawEmptyMessage(
@@ -444,18 +695,45 @@ public sealed class LongDivisionDrawable : IDrawable
     }
 
     private static float CalculateScale(
-        float width)
+        float width,
+        int dividendColumnCount,
+        int rightColumnCount)
     {
-        if (width < 420)
-        {
-            return 0.72f;
-        }
+        float viewportScale =
+            width switch
+            {
+                < 420f => 0.72f,
+                < 700f => 0.86f,
+                _ => 1f
+            };
 
-        if (width < 700)
-        {
-            return 0.86f;
-        }
+        int totalColumnCount =
+            Math.Max(
+                1,
+                dividendColumnCount +
+                rightColumnCount);
 
-        return 1f;
+        // Kích thước ước tính ở scale 1, gồm:
+        // padding hai bên + khoảng tới vạch chia + khoảng từ vạch
+        // chia tới số chia/thương.
+        float estimatedWidthAtScaleOne =
+            totalColumnCount *
+            DefaultDigitWidth +
+            18f * 2f +
+            12f +
+            8f;
+
+        float fitScale =
+            width /
+            Math.Max(
+                1f,
+                estimatedWidthAtScaleOne);
+
+        return Math.Clamp(
+            Math.Min(
+                viewportScale,
+                fitScale),
+            MinimumContentScale,
+            1f);
     }
 }

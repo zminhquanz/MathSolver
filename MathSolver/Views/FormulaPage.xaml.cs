@@ -267,13 +267,19 @@ public partial class FormulaPage : ContentPage
 
         // Chừa khoảng trống cho scrollbar, sai số làm tròn và mép phải.
         const double rightSafetySpace =
-            28;
+            20;
 
         int columnCount =
             availableWidth switch
             {
-                >= 740 => 3,
-                >= 500 => 2,
+                // Ba cột khi vùng nội dung đủ rộng để công thức
+                // và chú thích không bị ép xuống quá nhiều dòng.
+                >= 1040 => 3,
+
+                // Tablet hoặc cửa sổ Windows cỡ vừa.
+                >= 680 => 2,
+
+                // Điện thoại hoặc cửa sổ hẹp.
                 _ => 1
             };
 
@@ -293,9 +299,10 @@ public partial class FormulaPage : ContentPage
             borderPaddingAndStroke;
 
         requestedWidth =
-            Math.Max(
+            Math.Clamp(
+                requestedWidth,
                 190,
-                requestedWidth);
+                380);
 
         bool sizeChanged =
             false;

@@ -3,11 +3,32 @@ using MathSolver.Services;
 using System.Collections.ObjectModel;
 using System.Numerics;
 
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+
 namespace MathSolver.Views;
 
 public partial class FractionView : ContentView
 {
     private bool _isCompact;
+
+    // Giá trị chính xác của Entry được lưu ở dạng khoa học dùng chữ e.
+    // Ví dụ: 1.234567890123456789e18.
+    private readonly Dictionary<Entry, string>
+        _entryScientificCodeValues =
+            [];
+
+    private const int ScientificDisplayDigitThreshold =
+        18;
+
+    private const int ScientificDisplaySignificantDigits =
+        12;
+
+    private static readonly Regex LargeIntegerRegex =
+        new(
+            @"(?<!\d)(?<value>[-−]?\d{19,})(?!\d)",
+            RegexOptions.Compiled);
 
     public ObservableCollection<FractionSolutionStep> SolutionSteps { get; } = [];
 
@@ -17,7 +38,25 @@ public partial class FractionView : ContentView
     {
         InitializeComponent();
 
-        SelectOperation(FractionOperation.Add);
+        Entry[] fractionEntries =
+        [
+            FirstNumeratorEntry,
+        FirstDenominatorEntry,
+        SecondNumeratorEntry,
+        SecondDenominatorEntry
+        ];
+
+        foreach (Entry entry in fractionEntries)
+        {
+            entry.Focused +=
+                OnFractionEntryFocused;
+
+            entry.Unfocused +=
+                OnFractionEntryUnfocused;
+        }
+
+        SelectOperation(
+            FractionOperation.Add);
     }
 
     private void SelectOperation(
@@ -127,63 +166,92 @@ public partial class FractionView : ContentView
     }
 
     private void OnCalculateClicked(
-        object? sender,
-        EventArgs e)
+    object? sender,
+    EventArgs e)
     {
         ResetOutput();
 
         if (!TryReadInteger(
-                FirstNumeratorEntry.Text,
+                GetEntryInputText(
+                    FirstNumeratorEntry),
                 "Tử số của phân số thứ nhất",
                 out BigInteger numerator1) ||
             !TryReadInteger(
-                FirstDenominatorEntry.Text,
+                GetEntryInputText(
+                    FirstDenominatorEntry),
                 "Mẫu số của phân số thứ nhất",
                 out BigInteger denominator1) ||
             !TryReadInteger(
-                SecondNumeratorEntry.Text,
+                GetEntryInputText(
+                    SecondNumeratorEntry),
                 "Tử số của phân số thứ hai",
                 out BigInteger numerator2) ||
             !TryReadInteger(
-                SecondDenominatorEntry.Text,
+                GetEntryInputText(
+                    SecondDenominatorEntry),
                 "Mẫu số của phân số thứ hai",
                 out BigInteger denominator2))
         {
             return;
         }
 
+        ApplyEntryDisplayValue(
+            FirstNumeratorEntry,
+            numerator1);
+
+        ApplyEntryDisplayValue(
+            FirstDenominatorEntry,
+            denominator1);
+
+        ApplyEntryDisplayValue(
+            SecondNumeratorEntry,
+            numerator2);
+
+        ApplyEntryDisplayValue(
+            SecondDenominatorEntry,
+            denominator2);
+
         FractionCalculationResult result =
-    FractionCalculator.Calculate(
-        numerator1,
-        denominator1,
-        numerator2,
-        denominator2,
-        _selectedOperation);
+            FractionCalculator.Calculate(
+                numerator1,
+                denominator1,
+                numerator2,
+                denominator2,
+                _selectedOperation);
 
         if (!result.IsSuccess)
         {
-            ShowError(result.ErrorMessage);
+            ShowError(
+                result.ErrorMessage);
+
             return;
         }
 
         FullExpressionMathView.Expression =
-        result.FullExpression;
+            FormatLargeIntegersForDisplay(
+                result.FullExpression);
 
         AnswerMathView.Expression =
-            result.ResultExpression;
+            FormatLargeIntegersForDisplay(
+                result.ResultExpression);
 
-        foreach (FractionSolutionStep step in result.Steps)
+        foreach (FractionSolutionStep step
+                 in result.Steps)
         {
-            SolutionSteps.Add(step);
+            SolutionSteps.Add(
+                CreateDisplayStep(
+                    step));
         }
 
-        ResultBorder.IsVisible = true;
+        ResultBorder.IsVisible =
+            true;
     }
 
     private void OnClearClicked(
         object? sender,
         EventArgs e)
     {
+        _entryScientificCodeValues.Clear();
         FirstNumeratorEntry.Text = string.Empty;
         FirstDenominatorEntry.Text = string.Empty;
         SecondNumeratorEntry.Text = string.Empty;
@@ -194,26 +262,32 @@ public partial class FractionView : ContentView
     }
 
     private bool TryReadInteger(
-        string? text,
-        string fieldName,
-        out BigInteger value)
+    string? text,
+    string fieldName,
+    out BigInteger value)
     {
         string normalized =
-            (text ?? string.Empty).Trim();
+            NormalizeIntegerInput(
+                text);
 
         if (normalized.Length == 0)
         {
-            value = BigInteger.Zero;
-            ShowError($"Vui lòng nhập {fieldName}.");
+            value =
+                BigInteger.Zero;
+
+            ShowError(
+                $"Vui lòng nhập {fieldName}.");
+
             return false;
         }
 
-        if (!BigInteger.TryParse(
+        if (!TryParseBigIntegerInput(
                 normalized,
                 out value))
         {
             ShowError(
                 $"{fieldName} phải là một số nguyên hợp lệ.");
+
             return false;
         }
 
@@ -251,6 +325,479 @@ public partial class FractionView : ContentView
             string.Empty;
 
         SolutionSteps.Clear();
+    }
+
+    private string? GetEntryInputText(
+    Entry entry)
+    {
+        return _entryScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode)
+            ? scientificCode
+            : entry.Text;
+    }
+
+    private void OnFractionEntryFocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry ||
+            !_entryScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode) ||
+            !TryParseBigIntegerInput(
+                scientificCode,
+                out BigInteger value))
+        {
+            return;
+        }
+
+        _entryScientificCodeValues.Remove(
+            entry);
+
+        SetEntryText(
+            entry,
+            FormatIntegerForEditing(
+                value));
+    }
+
+    private void OnFractionEntryUnfocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string normalized =
+            NormalizeIntegerInput(
+                entry.Text);
+
+        if (!TryParseBigIntegerInput(
+                normalized,
+                out BigInteger value))
+        {
+            return;
+        }
+
+        ApplyEntryDisplayValue(
+            entry,
+            value);
+    }
+
+    private void ApplyEntryDisplayValue(
+        Entry entry,
+        BigInteger value)
+    {
+        if (CountIntegerDigits(value) <=
+            ScientificDisplayDigitThreshold)
+        {
+            _entryScientificCodeValues.Remove(
+                entry);
+
+            SetEntryText(
+                entry,
+                FormatIntegerForEditing(
+                    value));
+
+            return;
+        }
+
+        _entryScientificCodeValues[entry] =
+            FormatScientificForCode(
+                value);
+
+        SetEntryText(
+            entry,
+            FormatBigIntegerForDisplay(
+                value));
+    }
+
+    private static void SetEntryText(
+        Entry entry,
+        string text)
+    {
+        entry.Text =
+            text;
+
+        entry.CursorPosition =
+            text.Length;
+
+        entry.SelectionLength =
+            0;
+    }
+
+    private static string NormalizeIntegerInput(
+        string? text)
+    {
+        return
+            (text ?? string.Empty)
+            .Trim()
+            .Replace(
+                ",",
+                string.Empty)
+            .Replace(
+                '−',
+                '-')
+            .Replace(
+                "E",
+                "e",
+                StringComparison.Ordinal);
+    }
+
+    private static bool TryParseBigIntegerInput(
+        string text,
+        out BigInteger value)
+    {
+        value =
+            BigInteger.Zero;
+
+        int exponentIndex =
+            text.IndexOf('e');
+
+        if (exponentIndex < 0)
+        {
+            return BigInteger.TryParse(
+                text,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out value);
+        }
+
+        if (exponentIndex == 0 ||
+            exponentIndex !=
+            text.LastIndexOf('e') ||
+            exponentIndex ==
+            text.Length - 1)
+        {
+            return false;
+        }
+
+        string mantissaText =
+            text[..exponentIndex];
+
+        string exponentText =
+            text[(exponentIndex + 1)..];
+
+        if (!int.TryParse(
+                exponentText,
+                NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out int exponent))
+        {
+            return false;
+        }
+
+        bool isNegative =
+            mantissaText.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        if (isNegative)
+        {
+            mantissaText =
+                mantissaText[1..];
+        }
+
+        int decimalPointIndex =
+            mantissaText.IndexOf('.');
+
+        if (decimalPointIndex !=
+            mantissaText.LastIndexOf('.'))
+        {
+            return false;
+        }
+
+        int decimalPlaces =
+            decimalPointIndex >= 0
+                ? mantissaText.Length -
+                  decimalPointIndex -
+                  1
+                : 0;
+
+        string coefficientText =
+            mantissaText.Replace(
+                ".",
+                string.Empty);
+
+        if (coefficientText.Length == 0 ||
+            !coefficientText.All(
+                char.IsDigit) ||
+            !BigInteger.TryParse(
+                coefficientText,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out BigInteger coefficient))
+        {
+            return false;
+        }
+
+        int power =
+            exponent -
+            decimalPlaces;
+
+        if (power >= 0)
+        {
+            value =
+                coefficient *
+                BigInteger.Pow(
+                    10,
+                    power);
+        }
+        else
+        {
+            BigInteger divisor =
+                BigInteger.Pow(
+                    10,
+                    -power);
+
+            value =
+                BigInteger.DivRem(
+                    coefficient,
+                    divisor,
+                    out BigInteger remainder);
+
+            if (!remainder.IsZero)
+            {
+                value =
+                    BigInteger.Zero;
+
+                return false;
+            }
+        }
+
+        if (isNegative)
+        {
+            value =
+                BigInteger.Negate(
+                    value);
+        }
+
+        return true;
+    }
+
+    private static FractionSolutionStep CreateDisplayStep(
+        FractionSolutionStep source)
+    {
+        var displayStep =
+            new FractionSolutionStep
+            {
+                Title =
+                    source.Title,
+
+                Description =
+                    FormatLargeIntegersForDisplay(
+                        source.Description),
+
+                IsImportant =
+                    source.IsImportant
+            };
+
+        foreach (string mathLine
+                 in source.MathLines)
+        {
+            displayStep.MathLines.Add(
+                FormatLargeIntegersForDisplay(
+                    mathLine));
+        }
+
+        return displayStep;
+    }
+
+    private static string FormatLargeIntegersForDisplay(
+        string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        return LargeIntegerRegex.Replace(
+            text,
+            match =>
+            {
+                string normalized =
+                    match.Groups["value"]
+                    .Value
+                    .Replace(
+                        '−',
+                        '-');
+
+                return BigInteger.TryParse(
+                        normalized,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out BigInteger value)
+                    ? FormatBigIntegerForDisplay(
+                        value)
+                    : match.Value;
+            });
+    }
+
+    private static string FormatIntegerForEditing(
+        BigInteger value)
+    {
+        return value.ToString(
+            "#,##0",
+            CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatBigIntegerForDisplay(
+        BigInteger value)
+    {
+        if (CountIntegerDigits(value) <=
+            ScientificDisplayDigitThreshold)
+        {
+            return FormatIntegerForEditing(
+                value);
+        }
+
+        bool isNegative =
+            value.Sign < 0;
+
+        string digits =
+            BigInteger.Abs(value)
+            .ToString(
+                CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length -
+            1;
+
+        int keptDigitCount =
+            Math.Min(
+                ScientificDisplaySignificantDigits,
+                digits.Length);
+
+        string keptDigits =
+            digits[..keptDigitCount];
+
+        bool wasShortened =
+            digits.Length >
+            keptDigitCount &&
+            digits[keptDigitCount..]
+            .Any(
+                character =>
+                    character != '0');
+
+        string mantissa =
+            BuildMantissaText(
+                keptDigits);
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        string approximation =
+            wasShortened
+                ? "≈"
+                : string.Empty;
+
+        if (mantissa == "1")
+        {
+            return
+                $"{approximation}{sign}10" +
+                ToSuperscript(
+                    exponent);
+        }
+
+        return
+            $"{approximation}{sign}{mantissa}×10" +
+            ToSuperscript(
+                exponent);
+    }
+
+    private static string FormatScientificForCode(
+        BigInteger value)
+    {
+        if (value.IsZero)
+        {
+            return "0e0";
+        }
+
+        string sign =
+            value.Sign < 0
+                ? "-"
+                : string.Empty;
+
+        string digits =
+            BigInteger.Abs(value)
+            .ToString(
+                CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length -
+            1;
+
+        string mantissa =
+            digits.Length == 1
+                ? digits
+                : $"{digits[0]}.{digits[1..]}"
+                    .TrimEnd('0')
+                    .TrimEnd('.');
+
+        return
+            $"{sign}{mantissa}e{exponent}";
+    }
+
+    private static int CountIntegerDigits(
+        BigInteger value)
+    {
+        return BigInteger.Abs(value)
+            .ToString(
+                CultureInfo.InvariantCulture)
+            .Length;
+    }
+
+    private static string BuildMantissaText(
+        string digits)
+    {
+        if (digits.Length == 1)
+        {
+            return digits;
+        }
+
+        return
+            $"{digits[0]}.{digits[1..]}"
+            .TrimEnd('0')
+            .TrimEnd('.');
+    }
+
+    private static string ToSuperscript(
+        int exponent)
+    {
+        string exponentText =
+            exponent.ToString(
+                CultureInfo.InvariantCulture);
+
+        var builder =
+            new StringBuilder(
+                exponentText.Length);
+
+        foreach (char character
+                 in exponentText)
+        {
+            builder.Append(
+                character switch
+                {
+                    '-' => '⁻',
+                    '0' => '⁰',
+                    '1' => '¹',
+                    '2' => '²',
+                    '3' => '³',
+                    '4' => '⁴',
+                    '5' => '⁵',
+                    '6' => '⁶',
+                    '7' => '⁷',
+                    '8' => '⁸',
+                    '9' => '⁹',
+                    _ => character
+                });
+        }
+
+        return builder.ToString();
     }
 
     protected override void OnSizeAllocated(

@@ -826,7 +826,7 @@
                                 
                                 <Button
                                 Grid.Column="0"
-                                Text="Tính kết quả và trình bày lời giải"
+                                Text="Tính kết quả"
                                 FontSize="17"
                                 FontAttributes="Bold"
                                 HeightRequest="54"

@@ -1,137 +1,274 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-
 <ContentPage
     x:Class="MathSolver.Views.MultiplicationTablePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="{DynamicResource PageBackgroundColor}">
+    Title="Cửu chương"
+    BackgroundColor="{AppThemeBinding Light=#F4F7FB, Dark=#06142A}">
 
-    <Grid RowDefinitions="Auto,*">
+    <ContentPage.Resources>
+        <Style x:Key="SectionBorderStyle" TargetType="Border">
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="StrokeThickness" Value="1.2" />
+            <Setter Property="Stroke" Value="{AppThemeBinding Light=#D6DFEC, Dark=#233755}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#0D1C35}" />
+            <Setter Property="Padding" Value="18" />
+        </Style>
 
-        <!-- Thanh chọn loại bảng -->
-        <Border
-            Grid.Row="0"
-            Margin="14,14,14,8"
-            Padding="14"
-            BackgroundColor="{DynamicResource SurfaceColor}"
-            Stroke="{DynamicResource BorderBrush}"
-            StrokeThickness="1">
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+            <Setter Property="StrokeThickness" Value="1.2" />
+            <Setter Property="Stroke" Value="{AppThemeBinding Light=#D6DFEC, Dark=#233755}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#0D1C35}" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
 
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="14" />
-            </Border.StrokeShape>
+        <Style x:Key="TitleLabelStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+        </Style>
 
-            <VerticalStackLayout Spacing="12">
+        <Style x:Key="SubLabelStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+        </Style>
 
-                <VerticalStackLayout Spacing="3">
+        <Style x:Key="TableLineStyle" TargetType="Label">
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="VerticalTextAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#24334D, Dark=#F3F6FF}" />
+        </Style>
+    </ContentPage.Resources>
 
-                    <Label
-                        Text="BẢNG CỬU CHƯƠNG"
-                        FontSize="25"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                    <Label
-                        Text="Hiển thị đầy đủ từ bảng 1 đến bảng 10"
-                        FontSize="14"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-
-                </VerticalStackLayout>
-
-                <Grid
-                    ColumnDefinitions="*,*"
-                    ColumnSpacing="10">
-
-                    <Button
-                        x:Name="MultiplicationButton"
-                        Grid.Column="0"
-                        Text="×  Bảng nhân"
-                        HeightRequest="46"
-                        FontSize="16"
-                        FontAttributes="Bold"
-                        CornerRadius="12"
-                        BackgroundColor="{DynamicResource PrimaryColor}"
-                        TextColor="{DynamicResource OnPrimaryColor}"
-                        Clicked="OnMultiplicationClicked" />
-
-                    <Button
-                        x:Name="DivisionButton"
-                        Grid.Column="1"
-                        Text="÷  Bảng chia"
-                        HeightRequest="46"
-                        FontSize="16"
-                        FontAttributes="Bold"
-                        CornerRadius="12"
-                        BackgroundColor="{DynamicResource SurfaceAltColor}"
-                        TextColor="{DynamicResource TextPrimaryColor}"
-                        Clicked="OnDivisionClicked" />
-
-                </Grid>
-
-            </VerticalStackLayout>
-
-        </Border>
-
-        <!-- Danh sách toàn bộ bảng -->
+    <Grid Padding="24,18">
         <CollectionView
-        x:Name="TablesCollectionView"
-        Grid.Row="1"
-        Margin="14,0,14,14"
-        SelectionMode="None">
+            x:Name="TablesCollectionView"
+            ItemsSource="{Binding TableCards}"
+            SelectionMode="None"
+            BackgroundColor="Transparent">
+
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="18">
+
+                    <!-- Hero -->
+                    <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                        <Label
+                            Text="×  ÷"
+                            FontSize="34"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            TextColor="#18B65A" />
+
+                        <Label
+                            Text="BẢNG CỬU CHƯƠNG"
+                            FontSize="30"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+
+                        <Label
+                            Text="Bảng nhân và bảng chia từ 1 đến 20"
+                            FontSize="15"
+                            HorizontalTextAlignment="Center"
+                            TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                    </VerticalStackLayout>
+
+                    <!-- Control panel -->
+                    <Border Style="{StaticResource SectionBorderStyle}">
+                        <VerticalStackLayout Spacing="18">
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+                                <!-- Chọn loại bảng -->
+                                <VerticalStackLayout Grid.Column="0" Spacing="10">
+                                    <Label
+                                        Text="1. Chọn loại bảng"
+                                        Style="{StaticResource TitleLabelStyle}" />
+
+                                    <Label
+                                        Text="Chọn bảng nhân hoặc bảng chia."
+                                        Style="{StaticResource SubLabelStyle}" />
+
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <Button
+                                            x:Name="MultiplyButton"
+                                            Grid.Column="0"
+                                            HeightRequest="52"
+                                            CornerRadius="16"
+                                            Clicked="OnMultiplyClicked"
+                                            FontAttributes="Bold"
+                                            FontSize="18"
+                                            Text="× Bảng nhân" />
+
+                                        <Button
+                                            x:Name="DivideButton"
+                                            Grid.Column="1"
+                                            HeightRequest="52"
+                                            CornerRadius="16"
+                                            Clicked="OnDivideClicked"
+                                            FontAttributes="Bold"
+                                            FontSize="18"
+                                            Text="÷ Bảng chia" />
+                                    </Grid>
+                                </VerticalStackLayout>
+
+                                <!-- Chọn phạm vi -->
+                                <VerticalStackLayout Grid.Column="1" Spacing="10">
+                                    <Label
+                                        Text="2. Phạm vi hiển thị"
+                                        Style="{StaticResource TitleLabelStyle}" />
+
+                                    <Label
+                                        Text="Chọn nhóm cơ bản, nâng cao hoặc toàn bộ."
+                                        Style="{StaticResource SubLabelStyle}" />
+
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                        <Border
+                                            x:Name="Range1To10Border"
+                                            Grid.Column="0"
+                                            Style="{StaticResource CardBorderStyle}"
+                                            Padding="14,12">
+                                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                                                <RadioButton
+                                                    x:Name="Range1To10Radio"
+                                                    GroupName="RangeGroup"
+                                                    CheckedChanged="OnRangeChanged" />
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label
+                                                        Text="Bảng 1 – 10"
+                                                        FontSize="14"
+                                                        FontAttributes="Bold"
+                                                        TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+                                                    <Label
+                                                        Text="10 bảng cơ bản"
+                                                        FontSize="12"
+                                                        TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                                                </VerticalStackLayout>
+                                            </HorizontalStackLayout>
+                                        </Border>
+
+                                        <Border
+                                            x:Name="Range11To20Border"
+                                            Grid.Column="1"
+                                            Style="{StaticResource CardBorderStyle}"
+                                            Padding="14,12">
+                                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                                                <RadioButton
+                                                    x:Name="Range11To20Radio"
+                                                    GroupName="RangeGroup"
+                                                    CheckedChanged="OnRangeChanged" />
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label
+                                                        Text="Bảng 11 – 20"
+                                                        FontSize="14"
+                                                        FontAttributes="Bold"
+                                                        TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+                                                    <Label
+                                                        Text="10 bảng nâng cao"
+                                                        FontSize="12"
+                                                        TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                                                </VerticalStackLayout>
+                                            </HorizontalStackLayout>
+                                        </Border>
+
+                                        <Border
+                                            x:Name="RangeAllBorder"
+                                            Grid.Column="2"
+                                            Style="{StaticResource CardBorderStyle}"
+                                            Padding="14,12">
+                                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                                                <RadioButton
+                                                    x:Name="RangeAllRadio"
+                                                    GroupName="RangeGroup"
+                                                    CheckedChanged="OnRangeChanged" />
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label
+                                                        Text="Tất cả 1 – 20"
+                                                        FontSize="14"
+                                                        FontAttributes="Bold"
+                                                        TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+                                                    <Label
+                                                        Text="Hiển thị đầy đủ 20 bảng"
+                                                        FontSize="12"
+                                                        TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                                                </VerticalStackLayout>
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Border
+                                x:Name="StatusBorder"
+                                StrokeShape="RoundRectangle 16"
+                                StrokeThickness="1"
+                                Stroke="#1FA95E"
+                                BackgroundColor="{AppThemeBinding Light=#ECF9F1, Dark=#0F4332}"
+                                Padding="14,10">
+                                <Label
+                                    x:Name="StatusLabel"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
+                                    TextColor="#18B65A" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Title list -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label
+                            Text="3. Danh sách bảng cửu chương"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+
+                        <Label
+                            Text="Mỗi ô hiển thị đầy đủ 10 phép tính."
+                            FontSize="13"
+                            TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </CollectionView.Header>
 
             <CollectionView.ItemsLayout>
-
                 <GridItemsLayout
-                Orientation="Vertical"
-                Span="5"
-                HorizontalItemSpacing="10"
-                VerticalItemSpacing="10" />
-
+                    Orientation="Vertical"
+                    Span="5"
+                    HorizontalItemSpacing="16"
+                    VerticalItemSpacing="16" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border
-                    Padding="10"
-                    BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource BorderBrush}"
-                    StrokeThickness="1">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="8">
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <VerticalStackLayout Spacing="12">
                             <Label
-                        Text="{Binding Title}"
-                        FontSize="17"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        TextColor="{DynamicResource PrimaryColor}" />
+                                Text="{Binding Title}"
+                                HorizontalTextAlignment="Center"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                TextColor="#18B65A" />
+
                             <BoxView
-                        HeightRequest="1"
-                        BackgroundColor="{DynamicResource DividerColor}" />
+                                HeightRequest="1"
+                                Color="{AppThemeBinding Light=#E3EAF5, Dark=#243854}" />
+
                             <VerticalStackLayout
-                        BindableLayout.ItemsSource="{Binding Rows}"
-                        Spacing="4">
+                                Spacing="8"
+                                BindableLayout.ItemsSource="{Binding Lines}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate>
                                         <Border
-                                    Padding="5,4"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource DividerBrush}"
-                                    StrokeThickness="1">
-
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="6" />
-                                            </Border.StrokeShape>
-
+                                            StrokeShape="RoundRectangle 12"
+                                            StrokeThickness="1"
+                                            Stroke="{AppThemeBinding Light=#D7E0EE, Dark=#253A57}"
+                                            BackgroundColor="{AppThemeBinding Light=#F8FAFD, Dark=#152744}"
+                                            Padding="10,8">
                                             <Label
-                                        Text="{Binding}"
-                                        FontSize="13"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        LineBreakMode="NoWrap"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                                Style="{StaticResource TableLineStyle}"
+                                                Text="{Binding .}" />
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>

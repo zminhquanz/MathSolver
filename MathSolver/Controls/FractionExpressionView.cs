@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Globalization;
 
 namespace MathSolver.Controls;
 
@@ -325,22 +326,15 @@ public sealed class FractionExpressionView : ContentView
                 return false;
             }
 
-            // Cho phép cả dấu âm Unicode và dấu trừ thông thường.
-            string parsableFactor =
-                factorText.Replace(
-                    '−',
-                    '-');
+            if (!TryFormatMathFactor(
+            factorText,
+            out string formattedFactor))
+                {
+                    return false;
+                }
 
-            if (!BigInteger.TryParse(
-                    parsableFactor,
-                    out BigInteger value))
-            {
-                return false;
-            }
-
-            displayFactors.Add(
-                FormatIntegerForDisplay(
-                    value));
+                displayFactors.Add(
+                    formattedFactor);
         }
 
         displayText =
@@ -349,6 +343,138 @@ public sealed class FractionExpressionView : ContentView
                 displayFactors);
 
         return true;
+    }
+
+    private static bool TryFormatMathFactor(
+    string text,
+    out string displayText)
+    {
+        displayText =
+            string.Empty;
+
+        bool isApproximate =
+            text.StartsWith(
+                "≈",
+                StringComparison.Ordinal);
+
+        string valueText =
+            isApproximate
+                ? text[1..]
+                : text;
+
+        bool isNegative =
+            valueText.StartsWith(
+                "−",
+                StringComparison.Ordinal) ||
+            valueText.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        string unsignedText =
+            isNegative
+                ? valueText[1..]
+                : valueText;
+
+        string parsableText =
+            valueText.Replace(
+                '−',
+                '-');
+
+        if (BigInteger.TryParse(
+                parsableText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out BigInteger integerValue))
+        {
+            displayText =
+                isApproximate
+                    ? $"≈{FormatIntegerForDisplay(integerValue)}"
+                    : FormatIntegerForDisplay(integerValue);
+
+            return true;
+        }
+
+        if (decimal.TryParse(
+                parsableText,
+                NumberStyles.AllowLeadingSign |
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out _))
+        {
+            displayText =
+                text.Replace(
+                    '-',
+                    '−');
+
+            return true;
+        }
+
+        if (!IsPowerOfTenToken(
+                unsignedText))
+        {
+            return false;
+        }
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        string approximation =
+            isApproximate
+                ? "≈"
+                : string.Empty;
+
+        displayText =
+            $"{approximation}{sign}{unsignedText}";
+
+        return true;
+    }
+
+    private static bool IsPowerOfTenToken(
+        string text)
+    {
+        if (!text.StartsWith(
+                "10",
+                StringComparison.Ordinal) ||
+            text.Length <= 2)
+        {
+            return false;
+        }
+
+        string exponentText =
+            text[2..];
+
+        bool hasExponentDigit =
+            false;
+
+        for (int index = 0;
+             index < exponentText.Length;
+             index++)
+        {
+            char character =
+                exponentText[index];
+
+            if (character == '⁻' &&
+                index == 0)
+            {
+                continue;
+            }
+
+            if (character is
+                '⁰' or '¹' or '²' or '³' or '⁴' or
+                '⁵' or '⁶' or '⁷' or '⁸' or '⁹')
+            {
+                hasExponentDigit =
+                    true;
+
+                continue;
+            }
+
+            return false;
+        }
+
+        return hasExponentDigit;
     }
 
     private static string RemoveOuterParentheses(
