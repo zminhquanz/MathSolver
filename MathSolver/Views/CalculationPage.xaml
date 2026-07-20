@@ -835,91 +835,12 @@
             </Grid>
 
             <!-- Tab tìm x -->
-            <ScrollView
+            <Grid
                 x:Name="FindXTabContent"
                 IsVisible="False">
+                <views:FindXView />
 
-                <VerticalStackLayout
-                    Padding="14,4,14,18"
-                    Spacing="12"
-                    HorizontalOptions="Center"
-                    MaximumWidthRequest="1000">
-
-                    <VerticalStackLayout Spacing="3">
-
-                        <Label
-                            Text="TÌM X"
-                            FontSize="25"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                            Text="Tìm thành phần chưa biết trong phép tính"
-                            FontSize="14"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
-
-                    </VerticalStackLayout>
-
-                    <Border
-                        Padding="22"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout
-                            Spacing="12"
-                            HorizontalOptions="Center">
-
-                            <Label
-                                Text="x = ?"
-                                FontSize="44"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <Label
-                                Text="Chức năng tìm x"
-                                FontSize="20"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
-
-                            <Label
-                                Text="Khu vực này sẽ hỗ trợ tìm số hạng, số bị trừ, số trừ, thừa số, số bị chia và số chia chưa biết."
-                                FontSize="14"
-                                LineHeight="1.25"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
-
-                            <Border
-                                Padding="10,6"
-                                BackgroundColor="{DynamicResource PrimarySoftColor}"
-                                Stroke="{DynamicResource PrimaryBorderBrush}"
-                                StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Label
-                                    Text="Đang phát triển"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
-
-                            </Border>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                </VerticalStackLayout>
-
-            </ScrollView>
+            </Grid>
 
             <!-- Tab hình học -->
             <ScrollView
