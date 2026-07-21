@@ -80,125 +80,160 @@
                     <Border Style="{StaticResource SectionBorderStyle}">
                         <VerticalStackLayout Spacing="18">
 
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="18">
-                                <!-- Chọn loại bảng -->
-                                <VerticalStackLayout Grid.Column="0" Spacing="10">
-                                    <Label
-                                        Text="1. Chọn loại bảng"
-                                        Style="{StaticResource TitleLabelStyle}" />
+                            <!-- 1. Chọn loại bảng -->
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    Text="1. Chọn loại bảng"
+                                    Style="{StaticResource TitleLabelStyle}" />
 
-                                    <Label
-                                        Text="Chọn bảng nhân hoặc bảng chia."
-                                        Style="{StaticResource SubLabelStyle}" />
+                                <Label
+                                    Text="Chọn bảng nhân hoặc bảng chia."
+                                    Style="{StaticResource SubLabelStyle}" />
 
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                        <Button
-                                            x:Name="MultiplyButton"
-                                            Grid.Column="0"
-                                            HeightRequest="71"
-                                            CornerRadius="16"
-                                            Clicked="OnMultiplyClicked"
-                                            FontAttributes="Bold"
-                                            FontSize="18"
-                                            Text="× Bảng nhân" />
+                                <Grid
+                                    ColumnDefinitions="*,*"
+                                    ColumnSpacing="12">
 
-                                        <Button
-                                            x:Name="DivideButton"
-                                            Grid.Column="1"
-                                            HeightRequest="71"
-                                            CornerRadius="16"
-                                            Clicked="OnDivideClicked"
-                                            FontAttributes="Bold"
-                                            FontSize="18"
-                                            Text="÷ Bảng chia" />
-                                    </Grid>
-                                </VerticalStackLayout>
+                                    <Button
+                                        x:Name="MultiplyButton"
+                                        Grid.Column="0"
+                                        HeightRequest="56"
+                                        CornerRadius="14"
+                                        Clicked="OnMultiplyClicked"
+                                        FontAttributes="Bold"
+                                        FontSize="17"
+                                        Text="×  Bảng nhân" />
 
-                                <!-- Chọn phạm vi -->
-                                <VerticalStackLayout Grid.Column="1" Spacing="10">
-                                    <Label
-                                        Text="2. Phạm vi hiển thị"
-                                        Style="{StaticResource TitleLabelStyle}" />
+                                    <Button
+                                        x:Name="DivideButton"
+                                        Grid.Column="1"
+                                        HeightRequest="56"
+                                        CornerRadius="14"
+                                        Clicked="OnDivideClicked"
+                                        FontAttributes="Bold"
+                                        FontSize="17"
+                                        Text="÷  Bảng chia" />
 
-                                    <Label
-                                        Text="Chọn nhóm cơ bản, nâng cao hoặc toàn bộ."
-                                        Style="{StaticResource SubLabelStyle}" />
+                                </Grid>
+                            </VerticalStackLayout>
 
-                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                                        <Border
-                                            x:Name="Range1To10Border"
-                                            Grid.Column="0"
-                                            Style="{StaticResource CardBorderStyle}"
-                                            Padding="14,12">
-                                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                                                <RadioButton
-                                                    x:Name="Range1To10Radio"
-                                                    GroupName="RangeGroup"
-                                                    CheckedChanged="OnRangeChanged" />
-                                                <VerticalStackLayout Spacing="2">
-                                                    <Label
-                                                        Text="Bảng 1 – 10"
-                                                        FontSize="14"
-                                                        FontAttributes="Bold"
-                                                        TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
-                                                    <Label
-                                                        Text="10 bảng cơ bản"
-                                                        FontSize="12"
-                                                        TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
-                                                </VerticalStackLayout>
-                                            </HorizontalStackLayout>
-                                        </Border>
+                            <BoxView
+                                Margin="0,2"
+                                HeightRequest="1"
+                                BackgroundColor="{AppThemeBinding Light=#E3EAF5, Dark=#243854}" />
 
-                                        <Border
-                                            x:Name="Range11To20Border"
-                                            Grid.Column="1"
-                                            Style="{StaticResource CardBorderStyle}"
-                                            Padding="14,12">
-                                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                                                <RadioButton
-                                                    x:Name="Range11To20Radio"
-                                                    GroupName="RangeGroup"
-                                                    CheckedChanged="OnRangeChanged" />
-                                                <VerticalStackLayout Spacing="2">
-                                                    <Label
-                                                        Text="Bảng 11 – 20"
-                                                        FontSize="14"
-                                                        FontAttributes="Bold"
-                                                        TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
-                                                    <Label
-                                                        Text="10 bảng nâng cao"
-                                                        FontSize="12"
-                                                        TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
-                                                </VerticalStackLayout>
-                                            </HorizontalStackLayout>
-                                        </Border>
+                            <!-- 2. Chọn phạm vi -->
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    Text="2. Phạm vi hiển thị"
+                                    Style="{StaticResource TitleLabelStyle}" />
 
-                                        <Border
-                                            x:Name="RangeAllBorder"
-                                            Grid.Column="2"
-                                            Style="{StaticResource CardBorderStyle}"
-                                            Padding="14,12">
-                                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                                                <RadioButton
-                                                    x:Name="RangeAllRadio"
-                                                    GroupName="RangeGroup"
-                                                    CheckedChanged="OnRangeChanged" />
-                                                <VerticalStackLayout Spacing="2">
-                                                    <Label
-                                                        Text="Tất cả 1 – 20"
-                                                        FontSize="14"
-                                                        FontAttributes="Bold"
-                                                        TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
-                                                    <Label
-                                                        Text="Hiển thị đầy đủ 20 bảng"
-                                                        FontSize="12"
-                                                        TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
-                                                </VerticalStackLayout>
-                                            </HorizontalStackLayout>
-                                        </Border>
-                                    </Grid>
-                                </VerticalStackLayout>
-                            </Grid>
+                                <Label
+                                    Text="Chọn nhóm cơ bản, nâng cao hoặc hiển thị toàn bộ."
+                                    Style="{StaticResource SubLabelStyle}" />
+
+                                <Grid
+                                    ColumnDefinitions="*,*,*"
+                                    ColumnSpacing="12">
+
+                                    <Border
+                                        x:Name="Range1To10Border"
+                                        Grid.Column="0"
+                                        Style="{StaticResource CardBorderStyle}"
+                                        Padding="14,12">
+
+                                        <HorizontalStackLayout
+                                            Spacing="10"
+                                            VerticalOptions="Center">
+
+                                            <RadioButton
+                                                x:Name="Range1To10Radio"
+                                                GroupName="RangeGroup"
+                                                CheckedChanged="OnRangeChanged"
+                                                VerticalOptions="Center" />
+
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label
+                                                    Text="Bảng 1 – 10"
+                                                    FontSize="14"
+                                                    FontAttributes="Bold"
+                                                    TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+
+                                                <Label
+                                                    Text="10 bảng cơ bản"
+                                                    FontSize="12"
+                                                    TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                                            </VerticalStackLayout>
+
+                                        </HorizontalStackLayout>
+                                    </Border>
+
+                                    <Border
+                                        x:Name="Range11To20Border"
+                                        Grid.Column="1"
+                                        Style="{StaticResource CardBorderStyle}"
+                                        Padding="14,12">
+
+                                        <HorizontalStackLayout
+                                            Spacing="10"
+                                            VerticalOptions="Center">
+
+                                            <RadioButton
+                                                x:Name="Range11To20Radio"
+                                                GroupName="RangeGroup"
+                                                CheckedChanged="OnRangeChanged"
+                                                VerticalOptions="Center" />
+
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label
+                                                    Text="Bảng 11 – 20"
+                                                    FontSize="14"
+                                                    FontAttributes="Bold"
+                                                    TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+
+                                                <Label
+                                                    Text="10 bảng nâng cao"
+                                                    FontSize="12"
+                                                    TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                                            </VerticalStackLayout>
+
+                                        </HorizontalStackLayout>
+                                    </Border>
+
+                                    <Border
+                                        x:Name="RangeAllBorder"
+                                        Grid.Column="2"
+                                        Style="{StaticResource CardBorderStyle}"
+                                        Padding="14,12">
+
+                                        <HorizontalStackLayout
+                                            Spacing="10"
+                                            VerticalOptions="Center">
+
+                                            <RadioButton
+                                                x:Name="RangeAllRadio"
+                                                GroupName="RangeGroup"
+                                                CheckedChanged="OnRangeChanged"
+                                                VerticalOptions="Center" />
+
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label
+                                                    Text="Tất cả 1 – 20"
+                                                    FontSize="14"
+                                                    FontAttributes="Bold"
+                                                    TextColor="{AppThemeBinding Light=#22324A, Dark=#F4F7FF}" />
+
+                                                <Label
+                                                    Text="Hiển thị đầy đủ 20 bảng"
+                                                    FontSize="12"
+                                                    TextColor="{AppThemeBinding Light=#6B7A93, Dark=#A7B5CF}" />
+                                            </VerticalStackLayout>
+
+                                        </HorizontalStackLayout>
+                                    </Border>
+
+                                </Grid>
+                            </VerticalStackLayout>
 
                             <Border
                                 x:Name="StatusBorder"
