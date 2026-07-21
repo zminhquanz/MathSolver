@@ -47,7 +47,8 @@ public partial class CalculationPage : ContentPage
     {
         InitializeComponent();
 
-        LongDivisionGraphicsView.Drawable = _longDivisionDrawable;
+        LongDivisionGraphicsView.Drawable =
+            _longDivisionDrawable;
 
         FirstNumberEntry.Focused +=
             OnNumberEntryFocused;
@@ -61,16 +62,23 @@ public partial class CalculationPage : ContentPage
         SecondNumberEntry.Unfocused +=
             OnNumberEntryUnfocused;
 
-        SelectOperation(ArithmeticOperation.Add);
+        SelectNumberType(
+            NumberInputType.Integer,
+            clearInputs: false);
 
-        SelectSubTab(CalculationSubTab.Basic);
+        SelectOperation(
+            ArithmeticOperation.Add);
+
+        SelectSubTab(
+            CalculationSubTab.Basic);
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
 
-        // Drawable đọc màu từ theme ở mỗi lần vẽ.
+        UpdateNumberTypeButtonStyles();
+
         LongDivisionGraphicsView.Invalidate();
     }
 
@@ -1568,46 +1576,120 @@ public partial class CalculationPage : ContentPage
         HideLongDivision();
     }
 
-    private void OnNumberTypeChanged(object sender, CheckedChangedEventArgs e)
+    private void OnIntegerTypeClicked(
+    object? sender,
+    EventArgs e)
     {
-        if (!e.Value)
+        SelectNumberType(
+            NumberInputType.Integer);
+    }
+
+    private void OnDecimalTypeClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectNumberType(
+            NumberInputType.Decimal);
+    }
+
+    private void SelectNumberType(
+        NumberInputType numberType,
+        bool clearInputs = true)
+    {
+        bool typeChanged =
+            _selectedNumberType !=
+            numberType;
+
+        _selectedNumberType =
+            numberType;
+
+        UpdateNumberTypeButtonStyles();
+
+        if (numberType ==
+            NumberInputType.Integer)
+        {
+            NumberTypeDescriptionLabel.Text =
+                "Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn " +
+                "được thêm tự động, ví dụ: 1,000 hoặc -25,000.";
+
+            FirstNumberEntry.Placeholder =
+                "Ví dụ: 100,000";
+
+            SecondNumberEntry.Placeholder =
+                "Ví dụ: 25,000";
+        }
+        else
+        {
+            NumberTypeDescriptionLabel.Text =
+                $"Dùng dấu chấm cho phần thập phân, tối đa " +
+                $"{MaxDecimalPlaces} chữ số sau dấu chấm; " +
+                "dấu phẩy phân nhóm hàng nghìn được thêm tự động, " +
+                "ví dụ: 2,500.75.";
+
+            FirstNumberEntry.Placeholder =
+                "Ví dụ: 2,500.75";
+
+            SecondNumberEntry.Placeholder =
+                "Ví dụ: 1,250.5";
+        }
+
+        // Nhấn lại đúng loại số đang chọn thì không xóa dữ liệu.
+        if (!clearInputs ||
+            !typeChanged)
         {
             return;
         }
 
-        if (IntegerRadioButton.IsChecked)
-        {
-            _selectedNumberType = NumberInputType.Integer;
-
-            NumberTypeDescriptionLabel.Text =
-                "Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn được thêm tự động, " +
-                "ví dụ: 1,000 hoặc -25,000.";
-
-            FirstNumberEntry.Placeholder = "Ví dụ: 100,000";
-            SecondNumberEntry.Placeholder = "Ví dụ: 25,000";
-        }
-        else
-        {
-            _selectedNumberType = NumberInputType.Decimal;
-
-            NumberTypeDescriptionLabel.Text =
-                $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm; dấu phẩy phân nhóm " +
-                "hàng nghìn được thêm tự động, ví dụ: 2,500.75.";
-
-            FirstNumberEntry.Placeholder = "Ví dụ: 2,500.75";
-            SecondNumberEntry.Placeholder = "Ví dụ: 1,250.5";
-        }
-
-        // Xóa dữ liệu cũ để tránh số đang nhập không phù hợp
-        // với loại số vừa được chọn.
         _entryScientificCodeValues.Clear();
 
-        FirstNumberEntry.Text = string.Empty;
-        SecondNumberEntry.Text = string.Empty;
+        FirstNumberEntry.Text =
+            string.Empty;
+
+        SecondNumberEntry.Text =
+            string.Empty;
 
         HideMessages();
+
         FirstNumberEntry.Focus();
+    }
+
+    private void UpdateNumberTypeButtonStyles()
+    {
+        ResetNumberTypeButtonStyles();
+
+        Button selectedButton =
+            _selectedNumberType ==
+            NumberInputType.Integer
+                ? IntegerTypeButton
+                : DecimalTypeButton;
+
+        selectedButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+
+        selectedButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
+    }
+
+    private void ResetNumberTypeButtonStyles()
+    {
+        Button[] buttons =
+        [
+            IntegerTypeButton,
+        DecimalTypeButton
+        ];
+
+        foreach (Button button in buttons)
+        {
+            button.SetDynamicResource(
+                Button.BackgroundColorProperty,
+                "SurfaceAltColor");
+
+            button.SetDynamicResource(
+                Button.TextColorProperty,
+                "TextPrimaryColor");
+        }
     }
 
     private string? GetEntryInputText(

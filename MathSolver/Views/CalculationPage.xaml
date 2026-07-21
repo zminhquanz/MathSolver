@@ -116,62 +116,6 @@
 
                     </VerticalStackLayout>
 
-                    <!-- Chọn loại số -->
-                    <Border
-                    Padding="12"
-                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                    Stroke="{DynamicResource BorderBrush}"
-                    StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label
-                            Text="1. Chọn loại số"
-                            FontSize="18"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
-
-                            <Label
-                            Text="Loại số được phép nhập"
-                            FontSize="14"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
-
-                            <Grid
-                            ColumnDefinitions="*,*"
-                            ColumnSpacing="12">
-
-                                <RadioButton
-                                x:Name="IntegerRadioButton"
-                                Grid.Column="0"
-                                Content="Số nguyên"
-                                GroupName="NumberType"
-                                IsChecked="True"
-                                CheckedChanged="OnNumberTypeChanged"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                <RadioButton
-                                x:Name="DecimalRadioButton"
-                                Grid.Column="1"
-                                Content="Số thập phân"
-                                GroupName="NumberType"
-                                CheckedChanged="OnNumberTypeChanged"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
-
-                            </Grid>
-
-                            <Label
-                            x:Name="NumberTypeDescriptionLabel"
-                            Text="Chỉ được nhập số nguyên, ví dụ: 12, 50 hoặc -8."
-                            FontSize="13"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
                     <!-- Khung chọn phép tính -->
                     <Border
                     Padding="14"
@@ -186,7 +130,7 @@
                         <VerticalStackLayout Spacing="14">
 
                             <Label
-                            Text="2. Chọn phép tính"
+                            Text="1. Chọn phép tính"
                             FontSize="18"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
@@ -255,11 +199,12 @@
                     </Border>
 
                     <!-- Khung nhập số -->
+                    <!-- Khung nhập số và chọn loại số -->
                     <Border
-                    Padding="14"
-                    BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource BorderBrush}"
-                    StrokeThickness="1">
+    Padding="14"
+    BackgroundColor="{DynamicResource SurfaceColor}"
+    Stroke="{DynamicResource BorderBrush}"
+    StrokeThickness="1">
 
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
@@ -268,140 +213,178 @@
                         <VerticalStackLayout Spacing="14">
 
                             <Label
-                             Text="3. Nhập các số"
-                             FontSize="18"
-                             FontAttributes="Bold"
-                             TextColor="{DynamicResource TextPrimaryColor}" />
+            Text="2. Nhập các số"
+            FontSize="18"
+            FontAttributes="Bold"
+            TextColor="{DynamicResource TextPrimaryColor}" />
 
+                            <!-- Chọn số nguyên hoặc số thập phân -->
                             <Grid
-                            x:Name="NumberInputGrid"
-                            ColumnDefinitions="*,Auto,*"
-                            RowDefinitions="Auto,Auto"
-                            ColumnSpacing="12"
-                            RowSpacing="6">
+            x:Name="NumberTypeButtonsGrid"
+            ColumnDefinitions="*,*"
+            ColumnSpacing="10">
 
-                                <!-- Nhãn số thứ nhất -->
+                                <Button
+                x:Name="IntegerTypeButton"
+                Grid.Column="0"
+                Text="Số nguyên"
+                HeightRequest="48"
+                Padding="8,0"
+                CornerRadius="12"
+                FontSize="15"
+                FontAttributes="Bold"
+                BackgroundColor="{DynamicResource PrimaryColor}"
+                TextColor="{DynamicResource OnPrimaryColor}"
+                Clicked="OnIntegerTypeClicked" />
+
+                                <Button
+                x:Name="DecimalTypeButton"
+                Grid.Column="1"
+                Text="Số thập phân"
+                HeightRequest="48"
+                Padding="8,0"
+                CornerRadius="12"
+                FontSize="15"
+                FontAttributes="Bold"
+                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                TextColor="{DynamicResource TextPrimaryColor}"
+                Clicked="OnDecimalTypeClicked" />
+
+                            </Grid>
+
+                            <Label
+            x:Name="NumberTypeDescriptionLabel"
+            Text="Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn được thêm tự động, ví dụ: 1,000 hoặc -25,000."
+            FontSize="13"
+            LineBreakMode="WordWrap"
+            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            <!-- Hai ô nhập số -->
+                            <Grid
+            x:Name="NumberInputGrid"
+            ColumnDefinitions="*,Auto,*"
+            RowDefinitions="Auto,Auto"
+            ColumnSpacing="12"
+            RowSpacing="6">
+
                                 <Label
-                                x:Name="FirstNumberLabel"
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                Text="Số thứ nhất"
-                                FontSize="14"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                x:Name="FirstNumberLabel"
+                Grid.Row="0"
+                Grid.Column="0"
+                Text="Số thứ nhất"
+                FontSize="14"
+                TextColor="{DynamicResource TextSecondaryColor}" />
 
-                                <!-- Ô số thứ nhất -->
                                 <Border
-                                x:Name="FirstNumberBorder"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                HeightRequest="46"
-                                Padding="10,0"
-                                BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
+                x:Name="FirstNumberBorder"
+                Grid.Row="1"
+                Grid.Column="0"
+                HeightRequest="48"
+                Padding="10,0"
+                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
 
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
                                     <controls:BorderlessEntry
-                                    x:Name="FirstNumberEntry"
-                                    Placeholder="Ví dụ: 25"
-                                    Keyboard="Numeric"
-                                    FontSize="17"
-                                    VerticalTextAlignment="Center"
-                                    BackgroundColor="Transparent"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    ClearButtonVisibility="WhileEditing"
-                                    TextChanged="OnNumberEntryTextChanged" />
+                    x:Name="FirstNumberEntry"
+                    Placeholder="Ví dụ: 25"
+                    Keyboard="Numeric"
+                    FontSize="17"
+                    VerticalTextAlignment="Center"
+                    BackgroundColor="Transparent"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill"
+                    TextColor="{DynamicResource TextPrimaryColor}"
+                    ClearButtonVisibility="WhileEditing"
+                    TextChanged="OnNumberEntryTextChanged" />
 
                                 </Border>
 
-                                <!-- Dấu phép tính -->
                                 <Label
-                                x:Name="OperatorLabel"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                WidthRequest="40"
-                                Text="+"
-                                FontSize="25"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                VerticalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                x:Name="OperatorLabel"
+                Grid.Row="1"
+                Grid.Column="1"
+                WidthRequest="40"
+                Text="+"
+                FontSize="25"
+                FontAttributes="Bold"
+                HorizontalTextAlignment="Center"
+                VerticalTextAlignment="Center"
+                TextColor="{DynamicResource PrimaryColor}" />
 
-                                <!-- Nhãn số thứ hai -->
                                 <Label
-                                x:Name="SecondNumberLabel"
-                                Grid.Row="0"
-                                Grid.Column="2"
-                                Text="Số thứ hai"
-                                FontSize="14"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                x:Name="SecondNumberLabel"
+                Grid.Row="0"
+                Grid.Column="2"
+                Text="Số thứ hai"
+                FontSize="14"
+                TextColor="{DynamicResource TextSecondaryColor}" />
 
-                                <!-- Ô số thứ hai -->
                                 <Border
-                                x:Name="SecondNumberBorder"
-                                Grid.Row="1"
-                                Grid.Column="2"
-                                HeightRequest="46"
-                                Padding="10,0"
-                                BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
+                x:Name="SecondNumberBorder"
+                Grid.Row="1"
+                Grid.Column="2"
+                HeightRequest="48"
+                Padding="10,0"
+                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
 
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
                                     <controls:BorderlessEntry
-                                    x:Name="SecondNumberEntry"
-                                    Placeholder="Ví dụ: 15"
-                                    Keyboard="Numeric"
-                                    FontSize="17"
-                                    VerticalTextAlignment="Center"
-                                    BackgroundColor="Transparent"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    ClearButtonVisibility="WhileEditing"
-                                    TextChanged="OnNumberEntryTextChanged" />
+                    x:Name="SecondNumberEntry"
+                    Placeholder="Ví dụ: 15"
+                    Keyboard="Numeric"
+                    FontSize="17"
+                    VerticalTextAlignment="Center"
+                    BackgroundColor="Transparent"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill"
+                    TextColor="{DynamicResource TextPrimaryColor}"
+                    ClearButtonVisibility="WhileEditing"
+                    TextChanged="OnNumberEntryTextChanged" />
 
                                 </Border>
+
                             </Grid>
 
                             <Grid
-                            Margin="0,8,0,0"
-                            ColumnDefinitions="*,*"
-                            ColumnSpacing="12">
-                                
-                                <Button
-                                Grid.Column="0"
-                                Text="Tính kết quả"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                HeightRequest="54"
-                                CornerRadius="14"
-                                BackgroundColor="{DynamicResource PrimaryColor}"
-                                TextColor="{DynamicResource OnPrimaryColor}"
-                                Clicked="OnCalculateClicked" />
+            Margin="0,8,0,0"
+            ColumnDefinitions="*,*"
+            ColumnSpacing="12">
 
                                 <Button
-                                Grid.Column="1"
-                                Text="Xóa"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                HeightRequest="54"
-                                CornerRadius="14"
-                                BackgroundColor="{DynamicResource DividerColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
-                                Clicked="OnClearClicked" />
+                Grid.Column="0"
+                Text="Tính kết quả"
+                FontSize="17"
+                FontAttributes="Bold"
+                HeightRequest="54"
+                CornerRadius="14"
+                BackgroundColor="{DynamicResource PrimaryColor}"
+                TextColor="{DynamicResource OnPrimaryColor}"
+                Clicked="OnCalculateClicked" />
+
+                                <Button
+                Grid.Column="1"
+                Text="Xóa"
+                FontSize="17"
+                FontAttributes="Bold"
+                HeightRequest="54"
+                CornerRadius="14"
+                BackgroundColor="{DynamicResource DividerColor}"
+                TextColor="{DynamicResource TextPrimaryColor}"
+                Clicked="OnClearClicked" />
 
                             </Grid>
+
                         </VerticalStackLayout>
-
                     </Border>
 
                     <!-- Thông báo lỗi -->
@@ -440,7 +423,7 @@
                         <VerticalStackLayout Spacing="10">
 
                             <Label
-                            Text="4. Kết quả"
+                            Text="3. Kết quả"
                             FontSize="17"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
