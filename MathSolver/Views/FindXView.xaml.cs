@@ -13,17 +13,195 @@ public partial class FindXView : ContentView
     private FindXUnknownPosition _findXUnknownPosition = FindXUnknownPosition.Left;
     private FindXNumberInputType _findXNumberType = FindXNumberInputType.Integer;
     private bool _isUpdatingFindXNumberText;
+    // Responsive bằng code-behind; không dùng VisualStateManager trong XAML.
+    private bool? _isCompactInputLayout;
+
+    // Đồng bộ chiều rộng nội dung với tab Cơ bản và tab Phân số.
+    // MaximumWidthRequest trong XAML chỉ giới hạn chiều rộng tối đa,
+    // không bắt layout phải mở rộng đến đúng kích thước này.
+    private const double FindXMaximumContentWidth = 1120d;
+
+    private const int ScientificDisplayDigitThreshold = 18;
+    private const int ScientificDisplaySignificantDigits = 12;
+
+    // Giá trị chính xác của Entry được giữ ở dạng khoa học dùng chữ e
+    // khi giao diện đang hiển thị dạng rút gọn, ví dụ 1.234e18.
+    private readonly Dictionary<Entry, string>
+        _findXScientificCodeValues =
+            [];
 
     public FindXView()
     {
         InitializeComponent();
+
+        FindXContent.WidthRequest =
+            FindXMaximumContentWidth;
+
+        ConfigureExpandedInputLayout();
+        _isCompactInputLayout =
+            false;
+
         InitializeFindXTab();
+    }
+
+    protected override void OnSizeAllocated(
+        double width,
+        double height)
+    {
+        base.OnSizeAllocated(
+            width,
+            height);
+
+        if (width <= 0)
+        {
+            return;
+        }
+
+        UpdateFindXContentWidth(
+            width);
+
+        bool useCompactLayout =
+            width < 700;
+
+        if (_isCompactInputLayout ==
+            useCompactLayout)
+        {
+            return;
+        }
+
+        _isCompactInputLayout =
+            useCompactLayout;
+
+        if (useCompactLayout)
+        {
+            ConfigureCompactInputLayout();
+        }
+        else
+        {
+            ConfigureExpandedInputLayout();
+        }
+    }
+
+    private void UpdateFindXContentWidth(
+        double availableWidth)
+    {
+        double targetWidth =
+            Math.Min(
+                FindXMaximumContentWidth,
+                availableWidth);
+
+        if (targetWidth <= 0 ||
+            Math.Abs(
+                FindXContent.WidthRequest -
+                targetWidth) <
+            0.5)
+        {
+            return;
+        }
+
+        FindXContent.WidthRequest =
+            targetWidth;
+    }
+
+    private void ConfigureCompactInputLayout()
+    {
+        FindXValueInputGrid.ColumnDefinitions.Clear();
+        FindXValueInputGrid.RowDefinitions.Clear();
+
+        FindXValueInputGrid.ColumnDefinitions.Add(
+            new ColumnDefinition(
+                GridLength.Star));
+
+        FindXValueInputGrid.RowDefinitions.Add(
+            new RowDefinition(
+                GridLength.Auto));
+
+        FindXValueInputGrid.RowDefinitions.Add(
+            new RowDefinition(
+                GridLength.Auto));
+
+        Grid.SetRow(
+            FindXKnownInputPanel,
+            0);
+
+        Grid.SetColumn(
+            FindXKnownInputPanel,
+            0);
+
+        Grid.SetRow(
+            FindXResultInputPanel,
+            1);
+
+        Grid.SetColumn(
+            FindXResultInputPanel,
+            0);
+
+        FindXValueInputGrid.ColumnSpacing =
+            0;
+
+        FindXValueInputGrid.RowSpacing =
+            10;
+    }
+
+    private void ConfigureExpandedInputLayout()
+    {
+        FindXValueInputGrid.ColumnDefinitions.Clear();
+        FindXValueInputGrid.RowDefinitions.Clear();
+
+        FindXValueInputGrid.ColumnDefinitions.Add(
+            new ColumnDefinition(
+                GridLength.Star));
+
+        FindXValueInputGrid.ColumnDefinitions.Add(
+            new ColumnDefinition(
+                GridLength.Star));
+
+        FindXValueInputGrid.RowDefinitions.Add(
+            new RowDefinition(
+                GridLength.Auto));
+
+        Grid.SetRow(
+            FindXKnownInputPanel,
+            0);
+
+        Grid.SetColumn(
+            FindXKnownInputPanel,
+            0);
+
+        Grid.SetRow(
+            FindXResultInputPanel,
+            0);
+
+        Grid.SetColumn(
+            FindXResultInputPanel,
+            1);
+
+        FindXValueInputGrid.ColumnSpacing =
+            12;
+
+        FindXValueInputGrid.RowSpacing =
+            0;
     }
 
     #region Find X
 
     private void InitializeFindXTab()
     {
+        Entry[] findXEntries =
+        [
+            FindXKnownValueEntry,
+            FindXResultValueEntry
+        ];
+
+        foreach (Entry entry in findXEntries)
+        {
+            entry.Focused +=
+                OnFindXEntryFocused;
+
+            entry.Unfocused +=
+                OnFindXEntryUnfocused;
+        }
+
         SelectFindXOperation(
             FindXOperation.Add);
 
@@ -276,6 +454,8 @@ public partial class FindXView : ContentView
 
         if (clearInputs)
         {
+            _findXScientificCodeValues.Clear();
+
             SetFindXEntryTextWithoutValidation(
                 FindXKnownValueEntry,
                 string.Empty);
@@ -432,6 +612,9 @@ public partial class FindXView : ContentView
         {
             return;
         }
+
+        _findXScientificCodeValues.Remove(
+            entry);
 
         string newText =
             e.NewTextValue ??
@@ -606,6 +789,111 @@ public partial class FindXView : ContentView
             false;
     }
 
+    private void OnFindXEntryFocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry ||
+            !_findXScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode) ||
+            !FindXRational.TryParse(
+                scientificCode,
+                out FindXRational value))
+        {
+            return;
+        }
+
+        _findXScientificCodeValues.Remove(
+            entry);
+
+        SetFindXEntryTextWithoutValidation(
+            entry,
+            FormatFindXValueForEditing(
+                value));
+
+        UpdateFindXEquationPreview();
+    }
+
+    private void OnFindXEntryUnfocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string normalizedText =
+            NormalizeFindXInputText(
+                entry.Text);
+
+        if (!IsCompleteValidFindXNumber(
+                normalizedText) ||
+            !FindXRational.TryParse(
+                normalizedText,
+                out FindXRational value))
+        {
+            return;
+        }
+
+        ApplyFindXEntryDisplayValue(
+            entry,
+            value);
+
+        UpdateFindXEquationPreview();
+    }
+
+    private void ApplyFindXEntryDisplayValue(
+        Entry entry,
+        FindXRational value)
+    {
+        if (!ShouldUseFindXScientificDisplay(
+                value))
+        {
+            _findXScientificCodeValues.Remove(
+                entry);
+
+            SetFindXEntryTextWithoutValidation(
+                entry,
+                FormatFindXValueForEditing(
+                    value));
+
+            return;
+        }
+
+        _findXScientificCodeValues[entry] =
+            FormatFindXScientificForCode(
+                value);
+
+        SetFindXEntryTextWithoutValidation(
+            entry,
+            FormatFindXScientificForDisplay(
+                value));
+    }
+
+    private static string FormatFindXValueForEditing(
+        FindXRational value)
+    {
+        if (value.Denominator.IsOne)
+        {
+            return value.Numerator.ToString(
+                "#,##0",
+                CultureInfo.InvariantCulture);
+        }
+
+        if (TryFormatTerminatingFindXDecimal(
+                value,
+                out string decimalText))
+        {
+            return decimalText;
+        }
+
+        return
+            $"{value.Numerator.ToString("#,##0", CultureInfo.InvariantCulture)}/" +
+            $"{value.Denominator.ToString("#,##0", CultureInfo.InvariantCulture)}";
+    }
+
     private void OnFindXCalculateClicked(
         object? sender,
         EventArgs e)
@@ -631,6 +919,16 @@ public partial class FindXView : ContentView
             return;
         }
 
+        ApplyFindXEntryDisplayValue(
+            FindXKnownValueEntry,
+            knownValue);
+
+        ApplyFindXEntryDisplayValue(
+            FindXResultValueEntry,
+            resultValue);
+
+        UpdateFindXEquationPreview();
+
         FindXSolution solution =
             SolveFindX(
                 knownValue,
@@ -650,9 +948,16 @@ public partial class FindXView : ContentView
         value =
             FindXRational.Zero;
 
+        bool usesStoredScientificCode =
+            _findXScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode);
+
         string text =
-            entry.Text ??
-            string.Empty;
+            usesStoredScientificCode
+                ? scientificCode!
+                : entry.Text ??
+                  string.Empty;
 
         if (string.IsNullOrWhiteSpace(
                 text))
@@ -664,17 +969,12 @@ public partial class FindXView : ContentView
         }
 
         string normalizedText =
-            text
-                .Trim()
-                .Replace(
-                    ",",
-                    string.Empty)
-                .Replace(
-                    '−',
-                    '-');
+            NormalizeFindXInputText(
+                text);
 
-        if (!IsCompleteValidFindXNumber(
-                normalizedText) ||
+        if ((!usesStoredScientificCode &&
+             !IsCompleteValidFindXNumber(
+                 normalizedText)) ||
             !FindXRational.TryParse(
                 normalizedText,
                 out value))
@@ -686,6 +986,24 @@ public partial class FindXView : ContentView
         }
 
         return true;
+    }
+
+    private static string NormalizeFindXInputText(
+        string? text)
+    {
+        return
+            (text ?? string.Empty)
+            .Trim()
+            .Replace(
+                ",",
+                string.Empty)
+            .Replace(
+                '−',
+                '-')
+            .Replace(
+                "E",
+                "e",
+                StringComparison.Ordinal);
     }
 
     private bool IsCompleteValidFindXNumber(
@@ -1167,7 +1485,7 @@ public partial class FindXView : ContentView
     {
         if (value.Denominator.IsOne)
         {
-            return FormatFindXInteger(
+            return FormatFindXIntegerForDisplay(
                 value.Numerator);
         }
 
@@ -1175,20 +1493,377 @@ public partial class FindXView : ContentView
                 value,
                 out string decimalText))
         {
-            return decimalText;
+            return ShouldUseFindXScientificDisplay(
+                    value)
+                ? FormatFindXScientificForDisplay(
+                    value)
+                : decimalText;
         }
 
         return
-            $"{FormatFindXInteger(value.Numerator)}/" +
-            $"{FormatFindXInteger(value.Denominator)}";
+            $"{FormatFindXIntegerForDisplay(value.Numerator)}/" +
+            $"{FormatFindXIntegerForDisplay(value.Denominator)}";
     }
 
-    private static string FormatFindXInteger(
+    private static bool ShouldUseFindXScientificDisplay(
+        FindXRational value)
+    {
+        if (value.Denominator.IsOne)
+        {
+            return CountBigIntegerDigits(
+                       value.Numerator) >
+                   ScientificDisplayDigitThreshold;
+        }
+
+        if (!TryGetFindXPlainNumberText(
+                value,
+                out string plainText))
+        {
+            return false;
+        }
+
+        return CountSignificantDigits(
+                   plainText) >
+               ScientificDisplayDigitThreshold;
+    }
+
+    private static string FormatFindXIntegerForDisplay(
         BigInteger value)
     {
-        return value.ToString(
-            "#,##0",
-            CultureInfo.InvariantCulture);
+        if (CountBigIntegerDigits(
+                value) <=
+            ScientificDisplayDigitThreshold)
+        {
+            return value.ToString(
+                "#,##0",
+                CultureInfo.InvariantCulture);
+        }
+
+        return FormatPlainNumberAsScientificDisplay(
+            value.ToString(
+                CultureInfo.InvariantCulture));
+    }
+
+    private static string FormatFindXScientificForDisplay(
+        FindXRational value)
+    {
+        if (!TryGetFindXPlainNumberText(
+                value,
+                out string plainText))
+        {
+            return FormatFindXValueForEditing(
+                value);
+        }
+
+        return FormatPlainNumberAsScientificDisplay(
+            plainText);
+    }
+
+    private static string FormatFindXScientificForCode(
+        FindXRational value)
+    {
+        if (!TryGetFindXPlainNumberText(
+                value,
+                out string plainText) ||
+            !TryBuildScientificParts(
+                plainText,
+                out bool isNegative,
+                out string significantDigits,
+                out int exponent))
+        {
+            return "0e0";
+        }
+
+        if (significantDigits == "0")
+        {
+            return "0e0";
+        }
+
+        string mantissa =
+            significantDigits.Length == 1
+                ? significantDigits
+                : $"{significantDigits[0]}.{significantDigits[1..]}";
+
+        return
+            $"{(isNegative ? "-" : string.Empty)}" +
+            $"{mantissa}e{exponent}";
+    }
+
+    private static string FormatPlainNumberAsScientificDisplay(
+        string plainText)
+    {
+        if (!TryBuildScientificParts(
+                plainText,
+                out bool isNegative,
+                out string significantDigits,
+                out int exponent))
+        {
+            return plainText;
+        }
+
+        if (significantDigits == "0")
+        {
+            return "0";
+        }
+
+        int keptDigitCount =
+            Math.Min(
+                ScientificDisplaySignificantDigits,
+                significantDigits.Length);
+
+        string keptDigits =
+            significantDigits[..keptDigitCount];
+
+        bool wasShortened =
+            significantDigits.Length >
+            keptDigitCount &&
+            significantDigits[keptDigitCount..]
+            .Any(
+                character =>
+                    character != '0');
+
+        string mantissa =
+            keptDigits.Length == 1
+                ? keptDigits
+                : $"{keptDigits[0]}.{keptDigits[1..]}"
+                    .TrimEnd('0')
+                    .TrimEnd('.');
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        string approximation =
+            wasShortened
+                ? "≈"
+                : string.Empty;
+
+        if (mantissa == "1")
+        {
+            return
+                $"{approximation}{sign}10" +
+                ToSuperscript(
+                    exponent);
+        }
+
+        return
+            $"{approximation}{sign}{mantissa} × 10" +
+            ToSuperscript(
+                exponent);
+    }
+
+    private static bool TryGetFindXPlainNumberText(
+        FindXRational value,
+        out string plainText)
+    {
+        plainText =
+            string.Empty;
+
+        if (value.Denominator.IsOne)
+        {
+            plainText =
+                value.Numerator.ToString(
+                    CultureInfo.InvariantCulture);
+
+            return true;
+        }
+
+        if (!TryFormatTerminatingFindXDecimal(
+                value,
+                out string decimalText))
+        {
+            return false;
+        }
+
+        plainText =
+            decimalText
+            .Replace(
+                ",",
+                string.Empty)
+            .Replace(
+                '−',
+                '-');
+
+        return true;
+    }
+
+    private static bool TryBuildScientificParts(
+        string plainText,
+        out bool isNegative,
+        out string significantDigits,
+        out int exponent)
+    {
+        isNegative =
+            false;
+
+        significantDigits =
+            "0";
+
+        exponent =
+            0;
+
+        string normalizedText =
+            plainText
+            .Trim()
+            .Replace(
+                ",",
+                string.Empty)
+            .Replace(
+                '−',
+                '-');
+
+        if (normalizedText.Length == 0)
+        {
+            return false;
+        }
+
+        isNegative =
+            normalizedText[0] == '-';
+
+        if (isNegative)
+        {
+            normalizedText =
+                normalizedText[1..];
+        }
+
+        int decimalPointIndex =
+            normalizedText.IndexOf('.');
+
+        if (decimalPointIndex !=
+            normalizedText.LastIndexOf('.'))
+        {
+            return false;
+        }
+
+        string integerPart =
+            decimalPointIndex < 0
+                ? normalizedText
+                : normalizedText[..decimalPointIndex];
+
+        string decimalPart =
+            decimalPointIndex < 0
+                ? string.Empty
+                : normalizedText[(decimalPointIndex + 1)..];
+
+        if ((integerPart.Length == 0 &&
+             decimalPart.Length == 0) ||
+            !integerPart.All(
+                char.IsDigit) ||
+            !decimalPart.All(
+                char.IsDigit))
+        {
+            return false;
+        }
+
+        string allDigits =
+            integerPart +
+            decimalPart;
+
+        int firstNonZeroIndex =
+            -1;
+
+        for (int index = 0;
+             index < allDigits.Length;
+             index++)
+        {
+            if (allDigits[index] != '0')
+            {
+                firstNonZeroIndex =
+                    index;
+
+                break;
+            }
+        }
+
+        if (firstNonZeroIndex < 0)
+        {
+            significantDigits =
+                "0";
+
+            return true;
+        }
+
+        significantDigits =
+            allDigits[firstNonZeroIndex..]
+            .TrimEnd('0');
+
+        if (significantDigits.Length == 0)
+        {
+            significantDigits =
+                "0";
+
+            return true;
+        }
+
+        exponent =
+            integerPart.Length -
+            firstNonZeroIndex -
+            1;
+
+        return true;
+    }
+
+    private static int CountSignificantDigits(
+        string plainText)
+    {
+        if (!TryBuildScientificParts(
+                plainText,
+                out _,
+                out string significantDigits,
+                out _))
+        {
+            return 0;
+        }
+
+        return significantDigits == "0"
+            ? 1
+            : significantDigits.Length;
+    }
+
+    private static int CountBigIntegerDigits(
+        BigInteger value)
+    {
+        return BigInteger.Abs(
+                value)
+            .ToString(
+                CultureInfo.InvariantCulture)
+            .Length;
+    }
+
+    private static string ToSuperscript(
+        int exponent)
+    {
+        string exponentText =
+            exponent.ToString(
+                CultureInfo.InvariantCulture);
+
+        var builder =
+            new StringBuilder(
+                exponentText.Length);
+
+        foreach (char character
+                 in exponentText)
+        {
+            builder.Append(
+                character switch
+                {
+                    '-' => '⁻',
+                    '0' => '⁰',
+                    '1' => '¹',
+                    '2' => '²',
+                    '3' => '³',
+                    '4' => '⁴',
+                    '5' => '⁵',
+                    '6' => '⁶',
+                    '7' => '⁷',
+                    '8' => '⁸',
+                    '9' => '⁹',
+                    _ => character
+                });
+        }
+
+        return builder.ToString();
     }
 
     private static bool TryFormatTerminatingFindXDecimal(
@@ -1338,6 +2013,8 @@ public partial class FindXView : ContentView
         object? sender,
         EventArgs e)
     {
+        _findXScientificCodeValues.Clear();
+
         SetFindXEntryTextWithoutValidation(
             FindXKnownValueEntry,
             string.Empty);
@@ -1479,11 +2156,23 @@ public partial class FindXView : ContentView
                         string.Empty)
                     .Replace(
                         '−',
-                        '-');
+                        '-')
+                    .Replace(
+                        "E",
+                        "e",
+                        StringComparison.Ordinal);
 
             if (normalizedText.Length == 0)
             {
                 return false;
+            }
+
+            if (normalizedText.Contains(
+                    'e'))
+            {
+                return TryParseScientific(
+                    normalizedText,
+                    out value);
             }
 
             bool isNegative =
@@ -1544,6 +2233,129 @@ public partial class FindXView : ContentView
                     : BigInteger.Pow(
                         10,
                         decimalPlaces);
+
+            value =
+                new FindXRational(
+                    numerator,
+                    denominator);
+
+            return true;
+        }
+
+        private static bool TryParseScientific(
+            string text,
+            out FindXRational value)
+        {
+            value =
+                Zero;
+
+            int exponentIndex =
+                text.IndexOf(
+                    'e');
+
+            if (exponentIndex <= 0 ||
+                exponentIndex !=
+                text.LastIndexOf(
+                    'e') ||
+                exponentIndex >=
+                text.Length - 1)
+            {
+                return false;
+            }
+
+            string mantissaText =
+                text[..exponentIndex];
+
+            string exponentText =
+                text[(exponentIndex + 1)..];
+
+            if (!int.TryParse(
+                    exponentText,
+                    NumberStyles.AllowLeadingSign,
+                    CultureInfo.InvariantCulture,
+                    out int exponent))
+            {
+                return false;
+            }
+
+            bool isNegative =
+                mantissaText.StartsWith(
+                    "-",
+                    StringComparison.Ordinal);
+
+            if (isNegative)
+            {
+                mantissaText =
+                    mantissaText[1..];
+            }
+
+            if (mantissaText.Length == 0 ||
+                mantissaText.Count(
+                    character =>
+                        character == '.') >
+                1)
+            {
+                return false;
+            }
+
+            int decimalPointIndex =
+                mantissaText.IndexOf('.');
+
+            int decimalPlaces =
+                decimalPointIndex < 0
+                    ? 0
+                    : mantissaText.Length -
+                      decimalPointIndex -
+                      1;
+
+            string coefficientText =
+                mantissaText.Replace(
+                    ".",
+                    string.Empty);
+
+            if (coefficientText.Length == 0 ||
+                !coefficientText.All(
+                    char.IsDigit) ||
+                !BigInteger.TryParse(
+                    coefficientText,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out BigInteger coefficient))
+            {
+                return false;
+            }
+
+            if (isNegative)
+            {
+                coefficient =
+                    BigInteger.Negate(
+                        coefficient);
+            }
+
+            int power =
+                exponent -
+                decimalPlaces;
+
+            BigInteger numerator =
+                coefficient;
+
+            BigInteger denominator =
+                BigInteger.One;
+
+            if (power >= 0)
+            {
+                numerator *=
+                    BigInteger.Pow(
+                        10,
+                        power);
+            }
+            else
+            {
+                denominator =
+                    BigInteger.Pow(
+                        10,
+                        -power);
+            }
 
             value =
                 new FindXRational(

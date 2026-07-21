@@ -216,6 +216,7 @@
 
                                     <controls:BorderlessEntry
                                         x:Name="FirstNumeratorEntry"
+                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Tử số"
                                         Keyboard="Numeric"
                                         FontSize="17"
@@ -244,6 +245,7 @@
 
                                     <controls:BorderlessEntry
                                         x:Name="FirstDenominatorEntry"
+                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
                                         FontSize="17"
@@ -307,6 +309,7 @@
                                     <controls:BorderlessEntry
                                         x:Name="SecondNumeratorEntry"
                                         Placeholder="Tử số"
+                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Keyboard="Numeric"
                                         FontSize="17"
                                         HorizontalTextAlignment="Center"
@@ -334,6 +337,7 @@
 
                                     <controls:BorderlessEntry
                                         x:Name="SecondDenominatorEntry"
+                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
                                         FontSize="17"

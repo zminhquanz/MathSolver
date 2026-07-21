@@ -49,30 +49,50 @@ public static class AppFontCatalog
             Alias: "OpenSansRegular"),
 
         new(
-            Key: "OpenSansSemibold",
+            Key: "OpenSansSemiBold",
             DisplayName: "Open Sans SemiBold",
-            FileName: "OpenSans-Semibold.ttf",
-            Alias: "OpenSansSemibold"),
+            FileName: "OpenSans-SemiBold.ttf",
+            Alias: "OpenSansSemiBold"),
         new(
             Key:"RobotoRegular",
             DisplayName: "Roboto",
             FileName: "Roboto-Regular.ttf",
             Alias: "RobotoRegular"),
         new(
-            Key:"RobotoItalic",
-            DisplayName: "Roboto Italic",
-            FileName: "Roboto-Italic.ttf",
-            Alias: "RobotoItalic"),
+            Key:"RobotoBold",
+            DisplayName: "Roboto Bold",
+            FileName: "Roboto-Bold.ttf",
+            Alias: "RobotoBold"),
+        new(
+            Key:"RobotoSemiBold",
+            DisplayName: "Roboto SemiBold",
+            FileName: "Roboto-SemiBold.ttf",
+            Alias: "RobotoSemiBold"),
         new(
             Key:"GoogleSans-Regular",
             DisplayName: "Google Sans",
             FileName: "GoogleSans-Regular.ttf",
             Alias: "GoogleSans-Regular"),
         new(
-            Key:"GoogleSans-Italic",
-            DisplayName: "Google Sans Italic",
-            FileName: "GoogleSans-Italic.ttf",
-            Alias: "GoogleSans-Italic")
+            Key:"GoogleSans-Bold",
+            DisplayName: "Google Sans Bold",
+            FileName: "GoogleSans-Bold.ttf",
+            Alias: "GoogleSans-Bold"),
+        new(
+            Key:"GoogleSans-SemiBold",
+            DisplayName: "Google Sans SemiBold",
+            FileName: "GoogleSans-SemiBold.ttf",
+            Alias: "GoogleSans-SemiBold"),
+        new(
+            Key:"SamsungSans-Regular",
+            DisplayName: "Samsung Sans",
+            FileName: "SamsungSans-Regular.ttf",
+            Alias: "SamsungSans-Regular"),
+        new(
+            Key:"SamsungSans-Bold",
+            DisplayName: "Samsung Sans Bold",
+            FileName: "SamsungSans-Bold.ttf",
+            Alias: "SamsungSans-Bold")
 
         // Ví dụ thêm font mới:
         //
