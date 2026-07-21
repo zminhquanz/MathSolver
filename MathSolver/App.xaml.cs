@@ -8,6 +8,8 @@ public partial class App : Application
     {
         InitializeComponent();
 
+        AppLanguageManager.Initialize();
+        LocalizationService.Initialize();
         AppThemeManager.Initialize(this);
         AppFontManager.Initialize(this);
     }

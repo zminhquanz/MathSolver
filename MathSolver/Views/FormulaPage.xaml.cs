@@ -1,4 +1,5 @@
-﻿using MathSolver.Graphics;
+﻿using MathSolver.Services;
+using MathSolver.Graphics;
 using MathSolver.Models;
 using System.Collections.ObjectModel;
 
@@ -16,6 +17,12 @@ public partial class FormulaPage : ContentPage
     {
         InitializeComponent();
 
+        LocalizationService.Attach(
+            this);
+
+        AppLanguageManager.LanguageChanged +=
+            OnLanguageChanged;
+
         BindingContext =
             this;
 
@@ -29,6 +36,10 @@ public partial class FormulaPage : ContentPage
 
         SelectFormulaSubTab(
             FormulaSubTab.UnknownComponent);
+
+        Dispatcher.Dispatch(
+            () => LocalizationService.Attach(
+                this));
     }
 
     protected override void OnAppearing()
@@ -68,6 +79,9 @@ public partial class FormulaPage : ContentPage
                     {
                         UpdateUnknownComponentCardWidths(
                             UnknownComponentFlexLayout.Width);
+
+                        LocalizationService.Attach(
+                            this);
                     });
             });
     }
@@ -95,6 +109,9 @@ public partial class FormulaPage : ContentPage
                     {
                         UpdateGeometryCardWidths(
                             GeometryFlexLayout.Width);
+
+                        LocalizationService.Attach(
+                            this);
                     });
             });
     }
@@ -346,6 +363,38 @@ public partial class FormulaPage : ContentPage
         }
     }
 
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                CreateUnknownComponentItems();
+                CreateGeometryItems();
+
+                if (_selectedSubTab ==
+                    FormulaSubTab.UnknownComponent)
+                {
+                    RefreshUnknownComponentLayout();
+                }
+                else
+                {
+                    RefreshGeometryLayout();
+                }
+
+                LocalizationService.Attach(
+                    this);
+            });
+    }
+
+    private static string T(
+        string text)
+    {
+        return LocalizationService.Translate(
+            text);
+    }
+
     private void CreateUnknownComponentItems()
     {
         UnknownComponentItems.Clear();
@@ -354,132 +403,132 @@ public partial class FormulaPage : ContentPage
             new UnknownComponentItem
             {
                 Title =
-                    "Tìm số hạng chưa biết",
+                    T("Tìm số hạng chưa biết"),
 
                 OperationSymbol =
-                    "+",
+                    T("+"),
 
                 Structure =
-                    "x + b = c",
+                    T("x + b = c"),
 
                 Rule =
-                    "Muốn tìm một số hạng, lấy tổng trừ đi số hạng đã biết.",
+                    T("Muốn tìm một số hạng, lấy tổng trừ đi số hạng đã biết."),
 
                 Example =
-                    "x + 8 = 15",
+                    T("x + 8 = 15"),
 
                 ExampleSolution =
-                    "x = 15 − 8\nx = 7"
+                    T("x = 15 − 8\nx = 7")
             });
 
         UnknownComponentItems.Add(
             new UnknownComponentItem
             {
                 Title =
-                    "Tìm số bị trừ",
+                    T("Tìm số bị trừ"),
 
                 OperationSymbol =
-                    "−",
+                    T("−"),
 
                 Structure =
-                    "x − b = c",
+                    T("x − b = c"),
 
                 Rule =
-                    "Muốn tìm số bị trừ, lấy hiệu cộng với số trừ.",
+                    T("Muốn tìm số bị trừ, lấy hiệu cộng với số trừ."),
 
                 Example =
-                    "x − 6 = 10",
+                    T("x − 6 = 10"),
 
                 ExampleSolution =
-                    "x = 10 + 6\nx = 16"
+                    T("x = 10 + 6\nx = 16")
             });
 
         UnknownComponentItems.Add(
             new UnknownComponentItem
             {
                 Title =
-                    "Tìm số trừ",
+                    T("Tìm số trừ"),
 
                 OperationSymbol =
-                    "−",
+                    T("−"),
 
                 Structure =
-                    "a − x = c",
+                    T("a − x = c"),
 
                 Rule =
-                    "Muốn tìm số trừ, lấy số bị trừ trừ đi hiệu.",
+                    T("Muốn tìm số trừ, lấy số bị trừ trừ đi hiệu."),
 
                 Example =
-                    "18 − x = 7",
+                    T("18 − x = 7"),
 
                 ExampleSolution =
-                    "x = 18 − 7\nx = 11"
+                    T("x = 18 − 7\nx = 11")
             });
 
         UnknownComponentItems.Add(
             new UnknownComponentItem
             {
                 Title =
-                    "Tìm thừa số chưa biết",
+                    T("Tìm thừa số chưa biết"),
 
                 OperationSymbol =
-                    "×",
+                    T("×"),
 
                 Structure =
-                    "x × b = c",
+                    T("x × b = c"),
 
                 Rule =
-                    "Muốn tìm một thừa số, lấy tích chia cho thừa số đã biết.",
+                    T("Muốn tìm một thừa số, lấy tích chia cho thừa số đã biết."),
 
                 Example =
-                    "x × 4 = 28",
+                    T("x × 4 = 28"),
 
                 ExampleSolution =
-                    "x = 28 ÷ 4\nx = 7"
+                    T("x = 28 ÷ 4\nx = 7")
             });
 
         UnknownComponentItems.Add(
             new UnknownComponentItem
             {
                 Title =
-                    "Tìm số bị chia",
+                    T("Tìm số bị chia"),
 
                 OperationSymbol =
-                    "÷",
+                    T("÷"),
 
                 Structure =
-                    "x ÷ b = c",
+                    T("x ÷ b = c"),
 
                 Rule =
-                    "Muốn tìm số bị chia, lấy thương nhân với số chia.",
+                    T("Muốn tìm số bị chia, lấy thương nhân với số chia."),
 
                 Example =
-                    "x ÷ 5 = 9",
+                    T("x ÷ 5 = 9"),
 
                 ExampleSolution =
-                    "x = 9 × 5\nx = 45"
+                    T("x = 9 × 5\nx = 45")
             });
 
         UnknownComponentItems.Add(
             new UnknownComponentItem
             {
                 Title =
-                    "Tìm số chia",
+                    T("Tìm số chia"),
 
                 OperationSymbol =
-                    "÷",
+                    T("÷"),
 
                 Structure =
-                    "a ÷ x = c",
+                    T("a ÷ x = c"),
 
                 Rule =
-                    "Muốn tìm số chia, lấy số bị chia chia cho thương.",
+                    T("Muốn tìm số chia, lấy số bị chia chia cho thương."),
 
                 Example =
-                    "42 ÷ x = 6",
+                    T("42 ÷ x = 6"),
 
                 ExampleSolution =
-                    "x = 42 ÷ 6\nx = 7"
+                    T("x = 42 ÷ 6\nx = 7")
             });
     }
 
@@ -491,7 +540,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình vuông",
+                    T("Hình vuông"),
                 CardHeight = 500,
 
                 Diagram =
@@ -499,13 +548,13 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: P = a × 4",
-                    "Diện tích: S = a × a"
+                    T("Chu vi: P = a × 4"),
+                    T("Diện tích: S = a × a")
                 },
 
                 Symbols =
                 {
-                    "a: độ dài một cạnh"
+                    T("a: độ dài một cạnh")
                 }
             });
 
@@ -513,7 +562,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình chữ nhật",
+                    T("Hình chữ nhật"),
                 CardHeight = 500,
 
                 Diagram =
@@ -521,14 +570,14 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: P = (a + b) × 2",
-                    "Diện tích: S = a × b"
+                    T("Chu vi: P = (a + b) × 2"),
+                    T("Diện tích: S = a × b")
                 },
 
                 Symbols =
                 {
-                    "a: chiều dài",
-                    "b: chiều rộng"
+                    T("a: chiều dài"),
+                    T("b: chiều rộng")
                 }
             });
 
@@ -536,7 +585,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình tam giác",
+                    T("Hình tam giác"),
                 CardHeight = 520,
 
                 Diagram =
@@ -544,15 +593,15 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: P = a + b + c",
-                    "Diện tích: S = (a × h) ÷ 2"
+                    T("Chu vi: P = a + b + c"),
+                    T("Diện tích: S = (a × h) ÷ 2")
                 },
 
                 Symbols =
                 {
-                    "a: độ dài đáy",
-                    "b, c: hai cạnh còn lại",
-                    "h: chiều cao tương ứng với đáy a"
+                    T("a: độ dài đáy"),
+                    T("b, c: hai cạnh còn lại"),
+                    T("h: chiều cao tương ứng với đáy a")
                 }
             });
 
@@ -560,7 +609,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình tròn",
+                    T("Hình tròn"),
                 CardHeight = 530,
 
                 Diagram =
@@ -568,16 +617,16 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: C = 2 × π × r",
-                    "Hoặc: C = π × d",
-                    "Diện tích: S = π × r × r"
+                    T("Chu vi: C = 2 × π × r"),
+                    T("Hoặc: C = π × d"),
+                    T("Diện tích: S = π × r × r")
                 },
 
                 Symbols =
                 {
-                    "r: bán kính",
-                    "d: đường kính, d = 2 × r",
-                    "π ≈ 3,14"
+                    T("r: bán kính"),
+                    T("d: đường kính, d = 2 × r"),
+                    T("π ≈ 3,14")
                 }
             });
 
@@ -585,7 +634,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình thang",
+                    T("Hình thang"),
                 CardHeight = 530,
 
                 Diagram =
@@ -593,15 +642,15 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: P = a + b + c + d",
-                    "Diện tích: S = ((a + b) × h) ÷ 2"
+                    T("Chu vi: P = a + b + c + d"),
+                    T("Diện tích: S = ((a + b) × h) ÷ 2")
                 },
 
                 Symbols =
                 {
-                    "a, b: hai đáy song song",
-                    "c, d: hai cạnh bên",
-                    "h: chiều cao"
+                    T("a, b: hai đáy song song"),
+                    T("c, d: hai cạnh bên"),
+                    T("h: chiều cao")
                 }
             });
 
@@ -609,7 +658,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình thoi",
+                    T("Hình thoi"),
                 CardHeight = 550,
 
                 Diagram =
@@ -617,16 +666,16 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: P = a × 4",
-                    "Diện tích: S = (d₁ × d₂) ÷ 2",
-                    "Hoặc: S = a × h"
+                    T("Chu vi: P = a × 4"),
+                    T("Diện tích: S = (d₁ × d₂) ÷ 2"),
+                    T("Hoặc: S = a × h")
                 },
 
                 Symbols =
                 {
-                    "a: độ dài một cạnh",
-                    "d₁, d₂: hai đường chéo",
-                    "h: chiều cao"
+                    T("a: độ dài một cạnh"),
+                    T("d₁, d₂: hai đường chéo"),
+                    T("h: chiều cao")
                 }
             });
 
@@ -634,7 +683,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình bình hành",
+                    T("Hình bình hành"),
                 CardHeight = 530,
 
                 Diagram =
@@ -642,15 +691,15 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Chu vi: P = (a + b) × 2",
-                    "Diện tích: S = a × h"
+                    T("Chu vi: P = (a + b) × 2"),
+                    T("Diện tích: S = a × h")
                 },
 
                 Symbols =
                 {
-                    "a: độ dài đáy",
-                    "b: độ dài cạnh bên",
-                    "h: chiều cao tương ứng với đáy a"
+                    T("a: độ dài đáy"),
+                    T("b: độ dài cạnh bên"),
+                    T("h: chiều cao tương ứng với đáy a")
                 }
             });
 
@@ -658,7 +707,7 @@ public partial class FormulaPage : ContentPage
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình lập phương",
+                    T("Hình lập phương"),
                 CardHeight = 550,
 
                 Diagram =
@@ -666,23 +715,23 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Diện tích xung quanh: Sxq = 4 x a x a = 4a²",
-                    "Diện tích toàn phần: Stp = 6 x a x a = 6a²",
-                    "Thể tích: V = a x a x a = a³"
+                    T("Diện tích xung quanh: Sxq = 4 x a x a = 4a²"),
+                    T("Diện tích toàn phần: Stp = 6 x a x a = 6a²"),
+                    T("Thể tích: V = a x a x a = a³")
                 },
 
                 Symbols =
                 {
-                    "a: độ dài một cạnh",
-                    "Có 6 mặt là các hình vuông bằng nhau",
-                    "Sxq gồm 4 mặt bên; Stp gồm cả 6 mặt"
+                    T("a: độ dài một cạnh"),
+                    T("Có 6 mặt là các hình vuông bằng nhau"),
+                    T("Sxq gồm 4 mặt bên; Stp gồm cả 6 mặt")
                 }
             });
         GeometryItems.Add(
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình hộp chữ nhật",
+                    T("Hình hộp chữ nhật"),
                 CardHeight = 570,
 
                 Diagram =
@@ -690,23 +739,23 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Diện tích xung quanh: Sxq = 2 × (a + b) × h",
-                    "Diện tích toàn phần: Stp = 2 × (a × b + a × h + b × h)",
-                    "Thể tích: V = a × b × h"
+                    T("Diện tích xung quanh: Sxq = 2 × (a + b) × h"),
+                    T("Diện tích toàn phần: Stp = 2 × (a × b + a × h + b × h)"),
+                    T("Thể tích: V = a × b × h")
                 },
 
                 Symbols =
                 {
-                    "a: chiều dài",
-                    "b: chiều rộng",
-                    "h: chiều cao"
+                    T("a: chiều dài"),
+                    T("b: chiều rộng"),
+                    T("h: chiều cao")
                 }
             });
         GeometryItems.Add(
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình cầu",
+                    T("Hình cầu"),
                 CardHeight = 520,
 
                 Diagram =
@@ -714,21 +763,21 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Diện tích mặt cầu: S = 4 × π × r²",
-                    "Thể tích: V = (4 × π × r³) ÷ 3"
+                    T("Diện tích mặt cầu: S = 4 × π × r²"),
+                    T("Thể tích: V = (4 × π × r³) ÷ 3")
                 },
 
                 Symbols =
                 {
-                    "r: bán kính hình cầu",
-                    "π ≈ 3,14"
+                    T("r: bán kính hình cầu"),
+                    T("π ≈ 3,14")
                 }
             });
         GeometryItems.Add(
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình trụ",
+                    T("Hình trụ"),
                 CardHeight = 590,
 
                 Diagram =
@@ -736,24 +785,24 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Diện tích đáy: Sđ = π × r²",
-                    "Diện tích xung quanh: Sxq = 2 × π × r × h",
-                    "Diện tích toàn phần: Stp = 2 × π × r × (r + h)",
-                    "Thể tích: V = π × r² × h"
+                    T("Diện tích đáy: Sđ = π × r²"),
+                    T("Diện tích xung quanh: Sxq = 2 × π × r × h"),
+                    T("Diện tích toàn phần: Stp = 2 × π × r × (r + h)"),
+                    T("Thể tích: V = π × r² × h")
                 },
 
                 Symbols =
                 {
-                    "r: bán kính đáy",
-                    "h: chiều cao",
-                    "π ≈ 3,14"
+                    T("r: bán kính đáy"),
+                    T("h: chiều cao"),
+                    T("π ≈ 3,14")
                 }
             });
         GeometryItems.Add(
             new GeometryFormulaItem
             {
                 Name =
-                    "Hình nón",
+                    T("Hình nón"),
                 CardHeight = 610,
 
                 Diagram =
@@ -761,18 +810,18 @@ public partial class FormulaPage : ContentPage
 
                 Formulas =
                 {
-                    "Diện tích đáy: Sđ = π × r²",
-                    "Diện tích xung quanh: Sxq = π × r × l",
-                    "Diện tích toàn phần: Stp = π × r × (r + l)",
-                    "Thể tích: V = (π × r² × h) ÷ 3"
+                    T("Diện tích đáy: Sđ = π × r²"),
+                    T("Diện tích xung quanh: Sxq = π × r × l"),
+                    T("Diện tích toàn phần: Stp = π × r × (r + l)"),
+                    T("Thể tích: V = (π × r² × h) ÷ 3")
                 },
 
                 Symbols =
                 {
-                    "r: bán kính đáy",
-                    "h: chiều cao",
-                    "l: đường sinh",
-                    "π ≈ 3,14"
+                    T("r: bán kính đáy"),
+                    T("h: chiều cao"),
+                    T("l: đường sinh"),
+                    T("π ≈ 3,14")
                 }
             });
     }

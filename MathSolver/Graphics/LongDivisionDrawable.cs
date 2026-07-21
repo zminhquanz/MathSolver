@@ -688,7 +688,8 @@ public sealed class LongDivisionDrawable : IDrawable
         canvas.FontSize = 14;
 
         canvas.DrawString(
-            "Chưa có phép chia để hiển thị.",
+            LocalizationService.Translate(
+                "Chưa có phép chia để hiển thị."),
             bounds,
             HorizontalAlignment.Center,
             VerticalAlignment.Center);

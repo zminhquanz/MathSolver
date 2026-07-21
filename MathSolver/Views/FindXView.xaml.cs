@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using MathSolver.Services;
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 
@@ -33,6 +34,9 @@ public partial class FindXView : ContentView
     public FindXView()
     {
         InitializeComponent();
+
+        LocalizationService.Attach(
+            this);
 
         FindXContent.WidthRequest =
             FindXMaximumContentWidth;

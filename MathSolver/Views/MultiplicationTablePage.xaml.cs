@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using MathSolver.Services;
+using System.Collections.ObjectModel;
 
 namespace MathSolver.Views;
 
@@ -12,6 +13,13 @@ public partial class MultiplicationTablePage : ContentPage
     public MultiplicationTablePage()
     {
         InitializeComponent();
+
+        LocalizationService.Attach(
+            this);
+
+        AppLanguageManager.LanguageChanged +=
+            OnLanguageChanged;
+
         BindingContext = this;
 
         Range1To10Radio.IsChecked = true;
@@ -26,6 +34,19 @@ public partial class MultiplicationTablePage : ContentPage
         base.OnAppearing();
         UpdateOperationButtons();
         UpdateRangeCards();
+    }
+
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                BuildTables();
+                LocalizationService.Attach(
+                    this);
+            });
     }
 
     private void OnMultiplyClicked(object sender, EventArgs e)
@@ -83,9 +104,10 @@ public partial class MultiplicationTablePage : ContentPage
 
             TableCards.Add(new TableCardModel
             {
-                Title = _currentMode == TableMode.Multiply
-                    ? $"Bảng nhân {i}"
-                    : $"Bảng chia {i}",
+                Title = LocalizationService.Translate(
+                    _currentMode == TableMode.Multiply
+                        ? $"Bảng nhân {i}"
+                        : $"Bảng chia {i}"),
                 Lines = lines
             });
         }
@@ -105,10 +127,17 @@ public partial class MultiplicationTablePage : ContentPage
 
     private void UpdateStatusText(int start, int end)
     {
-        string modeText = _currentMode == TableMode.Multiply ? "bảng nhân" : "bảng chia";
-        int count = end - start + 1;
+        string modeText =
+            _currentMode == TableMode.Multiply
+                ? "bảng nhân"
+                : "bảng chia";
 
-        StatusLabel.Text = $"Đang hiển thị {modeText} từ {start} đến {end} • {count} bảng";
+        int count =
+            end - start + 1;
+
+        StatusLabel.Text =
+            LocalizationService.Translate(
+                $"Đang hiển thị {modeText} từ {start} đến {end} • {count} bảng");
     }
 
     private void UpdateOperationButtons()

@@ -17,6 +17,9 @@ public partial class SettingsPage : ContentPage
     {
         InitializeComponent();
 
+        LocalizationService.Attach(
+            this);
+
         // Settings là một màn hình riêng, không hiển thị ba tab chính.
         Shell.SetTabBarIsVisible(this, false);
         Shell.SetNavBarIsVisible(this, true);
@@ -33,6 +36,7 @@ public partial class SettingsPage : ContentPage
 
         AppThemeManager.ThemeChanged += OnThemeChanged;
         AppFontManager.FontChanged += OnFontChanged;
+        AppLanguageManager.LanguageChanged += OnLanguageChanged;
 
         LoadCurrentSettings();
     }
@@ -41,6 +45,7 @@ public partial class SettingsPage : ContentPage
     {
         AppThemeManager.ThemeChanged -= OnThemeChanged;
         AppFontManager.FontChanged -= OnFontChanged;
+        AppLanguageManager.LanguageChanged -= OnLanguageChanged;
 
         base.OnDisappearing();
     }
@@ -55,6 +60,38 @@ public partial class SettingsPage : ContentPage
         EventArgs e)
     {
         LoadFontSettings();
+    }
+
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs e)
+    {
+        FontPicker.ItemsSource =
+            null;
+
+        FontPicker.ItemsSource =
+            _fontOptions;
+
+        LoadCurrentSettings();
+        LocalizationService.RefreshAll();
+    }
+
+    private void OnVietnameseLanguageClicked(
+        object sender,
+        EventArgs e)
+    {
+        AppLanguageManager.SetLanguage(
+            AppLanguage.Vietnamese);
+        UpdateLanguageButtons();
+    }
+
+    private void OnEnglishLanguageClicked(
+        object sender,
+        EventArgs e)
+    {
+        AppLanguageManager.SetLanguage(
+            AppLanguage.English);
+        UpdateLanguageButtons();
     }
 
     private void OnSystemThemeClicked(object sender, EventArgs e)
@@ -120,6 +157,7 @@ public partial class SettingsPage : ContentPage
     {
         AppThemeManager.ResetToDefault();
         AppFontManager.ResetToDefault();
+        AppLanguageManager.ResetToDefault();
 
         LoadCurrentSettings();
     }
@@ -151,6 +189,7 @@ public partial class SettingsPage : ContentPage
             AppThemeManager.CurrentAccentHex);
 
         UpdateThemeModeButtons();
+        UpdateLanguageButtons();
         LoadFontSettings();
     }
 
@@ -307,6 +346,19 @@ public partial class SettingsPage : ContentPage
         button.BorderWidth = 1;
         button.CornerRadius = 10;
         button.FontAttributes = FontAttributes.Bold;
+    }
+
+    private void UpdateLanguageButtons()
+    {
+        UpdateThemeModeButton(
+            VietnameseLanguageButton,
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.Vietnamese);
+
+        UpdateThemeModeButton(
+            EnglishLanguageButton,
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English);
     }
 
     private void ShowValidationMessage(string message)

@@ -1,4 +1,5 @@
 ﻿using MathSolver.Views;
+using MathSolver.Services;
 using System.ComponentModel;
 
 namespace MathSolver;
@@ -11,6 +12,21 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
+
+        LocalizationService.Attach(
+            this);
+
+        LocalizationService.Attach(
+            CalculationShellContent);
+
+        LocalizationService.Attach(
+            FormulaShellContent);
+
+        LocalizationService.Attach(
+            MultiplicationShellContent);
+
+        AppLanguageManager.LanguageChanged +=
+            OnLanguageChanged;
 
         Routing.RegisterRoute(
             nameof(SettingsPage),
@@ -26,6 +42,8 @@ public partial class AppShell : Shell
 
         Navigated +=
             OnShellNavigated;
+
+        UpdateSettingsAccessibilityText();
     }
 
     private async void OnSettingsClicked(
@@ -44,20 +62,44 @@ public partial class AppShell : Shell
 
         try
         {
-            if (IsSettingsOpen())
+            if (Navigation.ModalStack.LastOrDefault()
+                is SettingsMenuPage)
             {
-                await CloseSettingsAsync();
+                await Navigation.PopModalAsync(
+                    animated: false);
                 return;
             }
 
-            await Shell.Current.GoToAsync(
-                nameof(SettingsPage));
+            await Navigation.PushModalAsync(
+                new SettingsMenuPage(),
+                animated: false);
         }
         finally
         {
             SettingsButton.IsEnabled = true;
             _openingSettings = false;
         }
+    }
+
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs e)
+    {
+        LocalizationService.RefreshAll();
+        UpdateSettingsAccessibilityText();
+    }
+
+    private void UpdateSettingsAccessibilityText()
+    {
+        ToolTipProperties.SetText(
+            SettingsButton,
+            LocalizationService.Translate(
+                "Cài đặt giao diện"));
+
+        AutomationProperties.SetName(
+            SettingsButton,
+            LocalizationService.Translate(
+                "Mở cài đặt giao diện"));
     }
 
     private void OnMainTabBarPropertyChanged(
@@ -131,13 +173,7 @@ public partial class AppShell : Shell
             !settingsOpen;
 
 
-        ToolTipProperties.SetText(
-            SettingsButton,
-            "Cài đặt giao diện");
-
-        AutomationProperties.SetName(
-            SettingsButton,
-            "Mở cài đặt giao diện");
+        UpdateSettingsAccessibilityText();
     }
 
     public async Task CloseSettingsAsync()

@@ -47,6 +47,12 @@ public partial class FractionView : ContentView
     {
         InitializeComponent();
 
+        LocalizationService.Attach(
+            this);
+
+        AppLanguageManager.LanguageChanged +=
+            OnLanguageChanged;
+
         Entry[] fractionEntries =
         [
             FirstNumeratorEntry,
@@ -66,6 +72,25 @@ public partial class FractionView : ContentView
 
         SelectOperation(
             FractionOperation.Add);
+    }
+
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                LocalizationService.Attach(
+                    this);
+
+                if (ResultBorder.IsVisible)
+                {
+                    OnCalculateClicked(
+                        this,
+                        EventArgs.Empty);
+                }
+            });
     }
 
     private void SelectOperation(
@@ -237,12 +262,14 @@ public partial class FractionView : ContentView
         }
 
         FullExpressionMathView.Expression =
-            FormatLargeIntegersForDisplay(
-                result.FullExpression);
+            LocalizationService.Translate(
+                FormatLargeIntegersForDisplay(
+                    result.FullExpression));
 
         AnswerMathView.Expression =
-            FormatLargeIntegersForDisplay(
-                result.ResultExpression);
+            LocalizationService.Translate(
+                FormatLargeIntegersForDisplay(
+                    result.ResultExpression));
 
         foreach (FractionSolutionStep step
                  in result.Steps)
@@ -713,11 +740,13 @@ public partial class FractionView : ContentView
             new FractionSolutionStep
             {
                 Title =
-                    source.Title,
+                    LocalizationService.Translate(
+                        source.Title),
 
                 Description =
-                    FormatLargeIntegersForDisplay(
-                        source.Description),
+                    LocalizationService.Translate(
+                        FormatLargeIntegersForDisplay(
+                            source.Description)),
 
                 IsImportant =
                     source.IsImportant
@@ -727,8 +756,9 @@ public partial class FractionView : ContentView
                  in source.MathLines)
         {
             displayStep.MathLines.Add(
-                FormatLargeIntegersForDisplay(
-                    mathLine));
+                LocalizationService.Translate(
+                    FormatLargeIntegersForDisplay(
+                        mathLine)));
         }
 
         return displayStep;

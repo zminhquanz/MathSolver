@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MathSolver.Views.SettingsMenuPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    BackgroundColor="Transparent">
+
+    <Grid x:Name="OverlayRoot">
+        <BoxView BackgroundColor="#66000000">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnOutsideTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <Border
+            x:Name="MenuPanel"
+            Margin="0,12,18,12"
+            Padding="0"
+            WidthRequest="390"
+            MaximumHeightRequest="760"
+            HorizontalOptions="End"
+            VerticalOptions="Start"
+            BackgroundColor="{DynamicResource SurfaceColor}"
+            Stroke="{DynamicResource BorderBrush}"
+            StrokeThickness="1">
+
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="18" />
+            </Border.StrokeShape>
+
+            <Border.Shadow>
+                <Shadow
+                    Brush="#66000000"
+                    Offset="0,8"
+                    Radius="22"
+                    Opacity="0.42" />
+            </Border.Shadow>
+
+            <Grid RowDefinitions="Auto,*">
+                <Grid
+                    Grid.Row="0"
+                    Padding="18,14"
+                    ColumnDefinitions="*,Auto"
+                    BackgroundColor="{DynamicResource SurfaceAltColor}">
+
+                    <VerticalStackLayout Grid.Column="0" Spacing="1">
+                        <Label
+                            Text="Cài đặt"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            Text="Tùy chỉnh nhanh Math Solver"
+                            FontSize="12"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                    </VerticalStackLayout>
+
+                    <Button
+                        Grid.Column="1"
+                        Text="×"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        Padding="0"
+                        CornerRadius="20"
+                        FontSize="22"
+                        BackgroundColor="Transparent"
+                        TextColor="{DynamicResource TextPrimaryColor}"
+                        Clicked="OnCloseClicked" />
+                </Grid>
+
+                <ScrollView Grid.Row="1">
+                    <VerticalStackLayout Padding="10,8,10,12" Spacing="4">
+
+                        <!-- Theme -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="◐" Style="{StaticResource ThemeMenuIconStyle}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label x:Name="ThemeSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Label x:Name="ThemeChevronLabel" Grid.Column="2" Text="›" Style="{StaticResource ThemeMenuChevronStyle}" />
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnThemeRowTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            x:Name="ThemeOptionsBorder"
+                            IsVisible="False"
+                            Margin="54,0,4,4"
+                            Padding="8"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                                <Button x:Name="SystemThemeButton" Grid.Column="0" Text="Hệ thống" Clicked="OnSystemThemeClicked" />
+                                <Button x:Name="LightThemeButton" Grid.Column="1" Text="Sáng" Clicked="OnLightThemeClicked" />
+                                <Button x:Name="DarkThemeButton" Grid.Column="2" Text="Tối" Clicked="OnDarkThemeClicked" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Accent color -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="●" Style="{StaticResource ThemeMenuIconStyle}" TextColor="{DynamicResource PrimaryColor}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Màu chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label x:Name="AccentSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Label x:Name="AccentChevronLabel" Grid.Column="2" Text="›" Style="{StaticResource ThemeMenuChevronStyle}" />
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAccentRowTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            x:Name="AccentOptionsBorder"
+                            IsVisible="False"
+                            Margin="54,0,4,4"
+                            Padding="10"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="10">
+                                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                                    <Button Text="" CommandParameter="#6D28D9" BackgroundColor="#6D28D9" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
+                                    <Button Text="" CommandParameter="#2563EB" BackgroundColor="#2563EB" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
+                                    <Button Text="" CommandParameter="#0891B2" BackgroundColor="#0891B2" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
+                                    <Button Text="" CommandParameter="#16A34A" BackgroundColor="#16A34A" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
+                                    <Button Text="" CommandParameter="#EA580C" BackgroundColor="#EA580C" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
+                                    <Button Text="" CommandParameter="#DB2777" BackgroundColor="#DB2777" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
+                                </FlexLayout>
+
+                                <Button
+                                    Text="Tùy chỉnh màu…"
+                                    BackgroundColor="Transparent"
+                                    BorderColor="{DynamicResource BorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnAdvancedColorClicked" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Font -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="Aa" Style="{StaticResource ThemeMenuIconStyle}" FontSize="18" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Phông chữ" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label x:Name="FontSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Label x:Name="FontChevronLabel" Grid.Column="2" Text="›" Style="{StaticResource ThemeMenuChevronStyle}" />
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnFontRowTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            x:Name="FontOptionsBorder"
+                            IsVisible="False"
+                            Margin="54,0,4,4"
+                            Padding="8"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout x:Name="FontOptionsLayout" Spacing="4" />
+                        </Border>
+
+                        <!-- Language -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="文A" Style="{StaticResource ThemeMenuIconStyle}" FontSize="17" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Ngôn ngữ" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label x:Name="LanguageSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Label x:Name="LanguageChevronLabel" Grid.Column="2" Text="›" Style="{StaticResource ThemeMenuChevronStyle}" />
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLanguageRowTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            x:Name="LanguageOptionsBorder"
+                            IsVisible="False"
+                            Margin="54,0,4,4"
+                            Padding="8"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                                <Button x:Name="VietnameseLanguageButton" Grid.Column="0" Text="Tiếng Việt" Clicked="OnVietnameseClicked" />
+                                <Button x:Name="EnglishLanguageButton" Grid.Column="1" Text="Tiếng Anh" Clicked="OnEnglishClicked" />
+                            </Grid>
+                        </Border>
+
+                        <BoxView Margin="12,6" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
+
+                        <!-- Reset -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="↶" Style="{StaticResource ThemeMenuIconStyle}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Đặt lại" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label Text="Khôi phục cài đặt mặc định" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnResetTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
+                        <!-- Advanced -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="⚙" Style="{StaticResource ThemeMenuIconStyle}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Cài đặt nâng cao" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label Text="Màu HEX, RGB và xem trước" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="2" Text="›" Style="{StaticResource ThemeMenuChevronStyle}" />
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAdvancedSettingsTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

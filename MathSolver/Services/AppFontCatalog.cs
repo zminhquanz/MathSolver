@@ -18,6 +18,13 @@ public sealed record AppFontOption(
 
     public string FontFamily =>
         Alias ?? string.Empty;
+
+    public string LocalizedDisplayName =>
+        LocalizationService.Translate(
+            DisplayName);
+
+    public override string ToString() =>
+        LocalizedDisplayName;
 }
 
 public static class AppFontCatalog

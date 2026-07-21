@@ -64,18 +64,21 @@
         Shell.TabBarUnselectedColor="{DynamicResource ShellUnselectedColor}">
 
         <ShellContent
+            x:Name="CalculationShellContent"
             Title="Giải toán"
             Route="CalculationPage"
             Icon="calculate.png"
             ContentTemplate="{DataTemplate views:CalculationPage}" />
 
         <ShellContent
+            x:Name="FormulaShellContent"
             Title="Công thức"
             Route="FormulaPage"
             Icon="function.png"
             ContentTemplate="{DataTemplate views:FormulaPage}" />
 
         <ShellContent
+            x:Name="MultiplicationShellContent"
             Title="Cửu chương"
             Route="MultiplicationTablePage"
             Icon="grid_on.png"

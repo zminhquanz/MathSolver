@@ -380,7 +380,7 @@
                                 x:Name="FontPicker"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
-                                ItemDisplayBinding="{Binding DisplayName}"
+                                ItemDisplayBinding="{Binding LocalizedDisplayName}"
                                 Margin="12,0,0,0"
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Fill"
@@ -463,6 +463,36 @@
                         </VerticalStackLayout>
                     </Border>
 
+                </VerticalStackLayout>
+            </Border>
+
+
+            <Border Style="{StaticResource ThemeCardStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="Ngôn ngữ"
+                        FontSize="19"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Label
+                        Text="Chọn ngôn ngữ dùng cho toàn bộ giao diện và lời giải."
+                        FontSize="13"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            x:Name="VietnameseLanguageButton"
+                            Grid.Column="0"
+                            Text="Tiếng Việt"
+                            Clicked="OnVietnameseLanguageClicked" />
+
+                        <Button
+                            x:Name="EnglishLanguageButton"
+                            Grid.Column="1"
+                            Text="Tiếng Anh"
+                            Clicked="OnEnglishLanguageClicked" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 

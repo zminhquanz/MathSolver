@@ -47,6 +47,9 @@ public partial class CalculationPage : ContentPage
     {
         InitializeComponent();
 
+        LocalizationService.Attach(
+            this);
+
         LongDivisionGraphicsView.Drawable =
             _longDivisionDrawable;
 
