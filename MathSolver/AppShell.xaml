@@ -38,19 +38,16 @@
                 HorizontalOptions="End"
                 VerticalOptions="Center">
 
-                <ImageButton
+                <Button
                     x:Name="SettingsButton"
-                    Source="settings.png"
-                    Aspect="AspectFit"
+                    Text="⚙"
+                    FontSize="21"
                     WidthRequest="42"
                     HeightRequest="42"
                     Padding="10"
-                    CornerRadius="21"
-                    BorderWidth="1"
                     AutomationProperties.Name="Mở cài đặt giao diện"
                     ToolTipProperties.Text="Cài đặt giao diện"
-                    BackgroundColor="{DynamicResource PrimaryColor}"
-                    BorderColor="{DynamicResource PrimaryBorderColor}"
+                    BackgroundColor="Transparent"
                     Clicked="OnSettingsClicked" />
             </HorizontalStackLayout>
         </Grid>
