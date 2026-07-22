@@ -1,9 +1,7 @@
-﻿using MathSolver.Graphics;
+using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Services;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -18,6 +16,8 @@ public partial class CalculationPage : ContentPage
     private NumberInputType _selectedNumberType = NumberInputType.Integer;
 
     private bool _isUpdatingNumberText;
+
+    private bool _isUpdatingLongDivisionMode;
 
     // Khi Entry mất focus và số quá dài, giá trị chính xác được giữ
     // bằng dạng khoa học dùng chữ e, ví dụ: 1e18.
@@ -188,64 +188,66 @@ public partial class CalculationPage : ContentPage
             CalculateIntegerValues();
             return;
         }
-
-        if (!TryReadNumber(
-                GetEntryInputText(
-                    FirstNumberEntry),
-                "Vui lòng nhập số thứ nhất.",
-                out decimal firstNumber))
+        else
         {
-            FirstNumberEntry.Focus();
-            return;
-        }
-
-        if (!TryReadNumber(
-                GetEntryInputText(
-                    SecondNumberEntry),
-                "Vui lòng nhập số thứ hai.",
-                out decimal secondNumber))
-        {
-            SecondNumberEntry.Focus();
-            return;
-        }
-
-        if (_selectedOperation ==
-            ArithmeticOperation.Divide)
-        {
-            if (secondNumber == 0)
+            if (!TryReadNumber(
+                    GetEntryInputText(
+                        FirstNumberEntry),
+                    "Vui lòng nhập số thứ nhất.",
+                    out decimal firstNumber))
             {
-                ShowDivisionByZeroError(
-                    firstNumber);
+                FirstNumberEntry.Focus();
+                return;
+            }
 
+            if (!TryReadNumber(
+                    GetEntryInputText(
+                        SecondNumberEntry),
+                    "Vui lòng nhập số thứ hai.",
+                    out decimal secondNumber))
+            {
                 SecondNumberEntry.Focus();
                 return;
             }
 
-            _currentDivisionDividend =
-                firstNumber;
+            if (_selectedOperation ==
+                ArithmeticOperation.Divide)
+            {
+                if (secondNumber == 0)
+                {
+                    ShowDivisionByZeroError(
+                        firstNumber);
 
-            _currentDivisionDivisor =
-                secondNumber;
+                    SecondNumberEntry.Focus();
+                    return;
+                }
 
-            ShowDecimalDivisionResult(
-                firstNumber,
-                secondNumber);
+                _currentDivisionDividend =
+                    firstNumber;
 
-            return;
-        }
+                _currentDivisionDivisor =
+                    secondNumber;
 
-        if (!TryCalculateSafely(
+                ShowDecimalDivisionResult(
+                    firstNumber,
+                    secondNumber);
+
+                return;
+            }
+
+            if (!TryCalculateSafely(
+                    firstNumber,
+                    secondNumber,
+                    out decimal result))
+            {
+                return;
+            }
+
+            ShowResult(
                 firstNumber,
                 secondNumber,
-                out decimal result))
-        {
-            return;
+                result);
         }
-
-        ShowResult(
-            firstNumber,
-            secondNumber,
-            result);
     }
 
     private void CalculateIntegerValues()
@@ -508,6 +510,8 @@ public partial class CalculationPage : ContentPage
                 divisorInteger,
                 quotient);
 
+        PreferElementaryLongDivisionMode();
+
         if (CanRenderLongDivision(
                 dividend,
                 divisor))
@@ -707,8 +711,18 @@ public partial class CalculationPage : ContentPage
 
         DivisionDetailBorder.IsVisible = false;
         ResultBorder.IsVisible = true;
-        ShowLongDivision(dividend, divisor);
-        AdditionalLabel.Text = CreateAdditional(dividend, divisor, result);
+
+        PreferElementaryLongDivisionMode();
+
+        ShowLongDivision(
+            dividend,
+            divisor);
+
+        AdditionalLabel.Text =
+            CreateAdditional(
+                dividend,
+                divisor,
+                result);
     }
 
     private bool TryReadIntegerInput(
@@ -2945,11 +2959,17 @@ public partial class CalculationPage : ContentPage
 
         try
         {
+            int maximumDecimalPlaces =
+                _longDivisionDisplayMode ==
+                LongDivisionDisplayMode.Elementary
+                    ? 0
+                    : 8;
+
             LongDivisionResult divisionResult =
                 LongDivisionCalculator.Calculate(
                     dividend,
                     divisor,
-                    maximumDecimalPlaces: 8);
+                    maximumDecimalPlaces);
 
             if (!divisionResult.IsLongDivisionSupported)
             {
@@ -3018,6 +3038,12 @@ public partial class CalculationPage : ContentPage
         SelectSubTab(CalculationSubTab.FindX);
     }
 
+    private void OnQuadraticTabClicked(object sender, EventArgs e)
+    {
+        SelectSubTab(
+            CalculationSubTab.Quadratic);
+    }
+
     private void OnGeometryTabClicked(object sender, EventArgs e)
     {
         SelectSubTab(CalculationSubTab.Geometry);
@@ -3031,9 +3057,17 @@ public partial class CalculationPage : ContentPage
 
         FractionTabContent.IsVisible = selectedTab == CalculationSubTab.Fraction;
 
-        FindXTabContent.IsVisible = selectedTab == CalculationSubTab.FindX;
+        FindXTabContent.IsVisible =
+            selectedTab ==
+            CalculationSubTab.FindX;
 
-        GeometryTabContent.IsVisible = selectedTab == CalculationSubTab.Geometry;
+        QuadraticTabContent.IsVisible =
+            selectedTab ==
+            CalculationSubTab.Quadratic;
+
+        GeometryTabContent.IsVisible =
+            selectedTab ==
+            CalculationSubTab.Geometry;
 
 
         UpdateSubTabButtonStyles();
@@ -3044,6 +3078,7 @@ public partial class CalculationPage : ContentPage
         ResetSubTabButton(BasicTabButton);
         ResetSubTabButton(FractionTabButton);
         ResetSubTabButton(FindXTabButton);
+        ResetSubTabButton(QuadraticTabButton);
         ResetSubTabButton(GeometryTabButton);
 
         Button selectedButton =
@@ -3052,6 +3087,7 @@ public partial class CalculationPage : ContentPage
                 CalculationSubTab.Basic => BasicTabButton,
                 CalculationSubTab.Fraction => FractionTabButton,
                 CalculationSubTab.FindX => FindXTabButton,
+                CalculationSubTab.Quadratic => QuadraticTabButton,
                 CalculationSubTab.Geometry => GeometryTabButton,
                 _ => BasicTabButton
             };
@@ -3160,9 +3196,35 @@ public partial class CalculationPage : ContentPage
         return result;
     }
 
+    private void PreferElementaryLongDivisionMode()
+    {
+        _isUpdatingLongDivisionMode =
+            true;
+
+        try
+        {
+            _longDivisionDisplayMode =
+                LongDivisionDisplayMode.Elementary;
+
+            if (!ElementaryDivisionModeRadioButton.IsChecked)
+            {
+                ElementaryDivisionModeRadioButton.IsChecked =
+                    true;
+            }
+
+            UpdateLongDivisionModeStyles();
+        }
+        finally
+        {
+            _isUpdatingLongDivisionMode =
+                false;
+        }
+    }
+
     private void OnLongDivisionDisplayModeChanged(object sender, CheckedChangedEventArgs e)
     {
-        if (!e.Value)
+        if (_isUpdatingLongDivisionMode ||
+            !e.Value)
         {
             return;
         }
@@ -3300,6 +3362,7 @@ public enum CalculationSubTab
     Basic,
     Fraction,
     FindX,
+    Quadratic,
     Geometry
 }
 public enum LongDivisionDisplayMode

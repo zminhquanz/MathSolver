@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentPage
     x:Class="MathSolver.Views.CalculationPage"
@@ -25,7 +25,7 @@
 
             <Grid
                 x:Name="CalculationSubTabGrid"
-                ColumnDefinitions="*,*,*,*"
+                ColumnDefinitions="*,*,*,*,*"
                 ColumnSpacing="6">
 
                 <Button
@@ -66,8 +66,20 @@
                     Clicked="OnFindXTabClicked" />
 
                 <Button
-                    x:Name="GeometryTabButton"
+                    x:Name="QuadraticTabButton"
                     Grid.Column="3"
+                    Text="x² Phương trình bậc 2"
+                    HeightRequest="44"
+                    Padding="6,0"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    TextColor="{DynamicResource TextSecondaryColor}"
+                    Clicked="OnQuadraticTabClicked" />
+
+                <Button
+                    x:Name="GeometryTabButton"
+                    Grid.Column="4"
                     Text="△ Hình học"
                     HeightRequest="44"
                     Padding="8,0"
@@ -820,6 +832,13 @@
                 IsVisible="False">
                 <views:FindXView />
 
+            </Grid>
+
+            <!-- Tab phương trình bậc hai -->
+            <Grid
+                x:Name="QuadraticTabContent"
+                IsVisible="False">
+                <views:QuadraticEquationView />
             </Grid>
 
             <!-- Tab hình học -->
