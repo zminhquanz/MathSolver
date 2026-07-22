@@ -438,25 +438,6 @@
 
                     </Border>
 
-                    <Border
-                        Padding="10,8"
-                        BackgroundColor="{DynamicResource SurfaceAltColor}"
-                        Stroke="{DynamicResource BorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
-
-                        <Label
-                            x:Name="CalculationPathLabel"
-                            FontSize="12"
-                            HorizontalTextAlignment="Center"
-                            LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
-
-                    </Border>
-
                 </VerticalStackLayout>
 
             </Border>
@@ -604,38 +585,53 @@
 
             </Border>
 
-            <!-- Ghi chú kỹ thuật -->
+            <!-- Lưu ý khi sử dụng -->
             <Border
-                Padding="12"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
+Padding="16"
+BackgroundColor="{DynamicResource WarningSoftColor}"
+Stroke="{DynamicResource WarningBorderBrush}"
+StrokeThickness="1">
 
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="12" />
+                    <RoundRectangle CornerRadius="14" />
                 </Border.StrokeShape>
 
                 <Grid
-                    ColumnDefinitions="Auto,*"
-                    ColumnSpacing="8">
+    ColumnDefinitions="Auto,*"
+    ColumnSpacing="12">
 
                     <Label
-                        Grid.Column="0"
-                        Text="ⓘ"
-                        FontSize="16"
-                        VerticalTextAlignment="Start"
-                        TextColor="{DynamicResource PrimaryColor}" />
+        Grid.Column="0"
+        Text="⚠"
+        FontSize="24"
+        VerticalOptions="Start"
+        TextColor="{DynamicResource WarningColor}" />
 
-                    <Label
-                        Grid.Column="1"
-                        Text="FMA3 được dùng để tính Δ trên CPU x86/64 có hỗ trợ; các thiết bị còn lại tự động dùng nhánh scalar."
-                        FontSize="13"
-                        LineHeight="1.2"
-                        LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                    <VerticalStackLayout
+        Grid.Column="1"
+        Spacing="6">
 
+                        <Label
+            Text="Lưu ý khi sử dụng"
+            FontSize="16"
+            FontAttributes="Bold"
+            TextColor="{DynamicResource WarningColor}" />
+
+                        <Label
+            Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
+            FontSize="14"
+            LineHeight="1.25"
+            TextColor="{DynamicResource WarningColor}" />
+
+                        <Label
+            Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
+            FontSize="14"
+            FontAttributes="Italic"
+            LineHeight="1.25"
+            TextColor="{DynamicResource WarningColor}" />
+
+                    </VerticalStackLayout>
                 </Grid>
-
             </Border>
 
         </VerticalStackLayout>

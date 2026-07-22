@@ -1,7 +1,5 @@
 using MathSolver.Services;
 using System.Globalization;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace MathSolver.Views;
@@ -334,15 +332,12 @@ public partial class QuadraticEquationView : ContentView
             FormatInputInteger(
                 c));
 
-        DeltaCalculation deltaCalculation =
-            CalculateDelta(
-                a,
-                b,
-                c);
-
         double delta =
             NormalizeDeltaNearZero(
-                deltaCalculation.Value,
+                CalculateDelta(
+                    a,
+                    b,
+                    c),
                 a,
                 b,
                 c);
@@ -360,8 +355,7 @@ public partial class QuadraticEquationView : ContentView
             a,
             b,
             c,
-            delta,
-            deltaCalculation.UsedFma3);
+            delta);
     }
 
     private void OnClearClicked(
@@ -595,7 +589,7 @@ public partial class QuadraticEquationView : ContentView
                 StringComparison.Ordinal);
     }
 
-    private static DeltaCalculation CalculateDelta(
+    private static double CalculateDelta(
         double a,
         double b,
         double c)
@@ -603,30 +597,12 @@ public partial class QuadraticEquationView : ContentView
         double bSquared =
             b * b;
 
-        if (Fma.IsSupported)
-        {
-            Vector128<double> result =
-                Fma.MultiplyAddScalar(
-                    Vector128.Create(
-                        -4d * a),
-                    Vector128.Create(
-                        c),
-                    Vector128.Create(
-                        bSquared));
-
-            return new DeltaCalculation(
-                result.GetElement(
-                    0),
-                usedFma3: true);
-        }
-
-        double scalarDelta =
-            bSquared -
-            4d * a * c;
-
-        return new DeltaCalculation(
-            scalarDelta,
-            usedFma3: false);
+        // API scalar đa nền tảng. .NET tự chọn cách triển khai
+        // phù hợp cho x86/x64, ARM64 hoặc fallback phần mềm.
+        return Math.FusedMultiplyAdd(
+            -4d * a,
+            c,
+            bSquared);
     }
 
     private static double NormalizeDeltaNearZero(
@@ -666,8 +642,7 @@ public partial class QuadraticEquationView : ContentView
         double a,
         double b,
         double c,
-        double delta,
-        bool usedFma3)
+        double delta)
     {
         string aText =
             FormatNumber(
@@ -696,12 +671,6 @@ public partial class QuadraticEquationView : ContentView
 
         DeltaValueLabel.Text =
             $"Δ = {deltaText}";
-
-        CalculationPathLabel.Text =
-            usedFma3
-                ? "Δ được tính bằng nhánh FMA3 của CPU x86/64."
-                : "CPU không hỗ trợ FMA3 hoặc không chạy trên x86/64; " +
-                  "Δ được tính bằng nhánh scalar.";
 
         Step1TitleLabel.Text =
             "Bước 1. Xác định các hệ số";
@@ -1210,21 +1179,4 @@ public partial class QuadraticEquationView : ContentView
                    value);
     }
 
-    private readonly struct DeltaCalculation
-    {
-        public DeltaCalculation(
-            double value,
-            bool usedFma3)
-        {
-            Value =
-                value;
-
-            UsedFma3 =
-                usedFma3;
-        }
-
-        public double Value { get; }
-
-        public bool UsedFma3 { get; }
-    }
 }
