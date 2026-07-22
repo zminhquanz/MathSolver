@@ -7,7 +7,8 @@ namespace MathSolver.Views;
 
 public partial class FindXView : ContentView
 {
-    private const int MaxInputSignificantDigits = 28;
+    private const int MaxIntegerInputDigits = 38;
+    private const int MaxDecimalInputSignificantDigits = 28;
     private const int MaxDecimalPlaces = 10;
 
     private FindXOperation _findXOperation = FindXOperation.Add;
@@ -432,9 +433,9 @@ public partial class FindXView : ContentView
             FindXNumberInputType.Integer)
         {
             FindXNumberTypeDescriptionLabel.Text =
-                "Nhập các giá trị đã biết bằng số nguyên. " +
-                "Nếu x không phải số nguyên, ứng dụng vẫn giữ kết quả " +
-                "chính xác dưới dạng phân số.";
+                $"Nhập số nguyên tối đa {MaxIntegerInputDigits} chữ số " +
+                "bằng Int128. Kết quả dùng BigInteger; nếu x không phải " +
+                "số nguyên, ứng dụng hiển thị phân số chính xác.";
 
             FindXKnownValueEntry.Placeholder =
                 "Ví dụ: 8";
@@ -446,8 +447,9 @@ public partial class FindXView : ContentView
         {
             FindXNumberTypeDescriptionLabel.Text =
                 $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm. " +
-                "Kết quả được xử lý chính xác bằng phân số nội bộ.";
+                $"{MaxDecimalPlaces} chữ số sau dấu chấm và " +
+                $"{MaxDecimalInputSignificantDigits} chữ số có nghĩa. " +
+                "Đầu vào và kết quả được xử lý bằng decimal.";
 
             FindXKnownValueEntry.Placeholder =
                 "Ví dụ: 2.5";
@@ -636,7 +638,7 @@ public partial class FindXView : ContentView
                 _findXNumberType ==
                 FindXNumberInputType.Integer
                     ? $"Chỉ được nhập số nguyên, tối đa " +
-                      $"{MaxInputSignificantDigits} chữ số; " +
+                      $"{MaxIntegerInputDigits} chữ số; " +
                       "không được nhập dấu chấm hoặc ký tự khác."
                     : $"Chỉ được nhập số, một dấu âm ở đầu và " +
                       $"một dấu chấm; tối đa {MaxDecimalPlaces} " +
@@ -699,10 +701,16 @@ public partial class FindXView : ContentView
                     '−',
                     '-');
 
+        int maximumDigitCount =
+            _findXNumberType ==
+            FindXNumberInputType.Integer
+                ? MaxIntegerInputDigits
+                : MaxDecimalInputSignificantDigits;
+
         if (normalizedText.Length == 0 ||
             CountDigits(
                 normalizedText) >
-            MaxInputSignificantDigits)
+            maximumDigitCount)
         {
             return false;
         }
@@ -800,10 +808,39 @@ public partial class FindXView : ContentView
         if (sender is not Entry entry ||
             !_findXScientificCodeValues.TryGetValue(
                 entry,
-                out string? scientificCode) ||
-            !FindXRational.TryParse(
+                out string? scientificCode))
+        {
+            return;
+        }
+
+        if (_findXNumberType ==
+            FindXNumberInputType.Integer)
+        {
+            if (!TryParseFindXInt128(
+                    scientificCode,
+                    out Int128 integerValue))
+            {
+                return;
+            }
+
+            _findXScientificCodeValues.Remove(
+                entry);
+
+            SetFindXEntryTextWithoutValidation(
+                entry,
+                ((BigInteger)integerValue).ToString(
+                    "#,##0",
+                    CultureInfo.InvariantCulture));
+
+            UpdateFindXEquationPreview();
+            return;
+        }
+
+        if (!decimal.TryParse(
                 scientificCode,
-                out FindXRational value))
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out decimal decimalValue))
         {
             return;
         }
@@ -813,8 +850,8 @@ public partial class FindXView : ContentView
 
         SetFindXEntryTextWithoutValidation(
             entry,
-            FormatFindXValueForEditing(
-                value));
+            FormatFindXDecimalForEditing(
+                decimalValue));
 
         UpdateFindXEquationPreview();
     }
@@ -832,48 +869,192 @@ public partial class FindXView : ContentView
             NormalizeFindXInputText(
                 entry.Text);
 
-        if (!IsCompleteValidFindXNumber(
-                normalizedText) ||
-            !FindXRational.TryParse(
-                normalizedText,
-                out FindXRational value))
+        if (_findXNumberType ==
+            FindXNumberInputType.Integer)
         {
-            return;
-        }
+            if (!TryParseFindXInt128(
+                    normalizedText,
+                    out Int128 integerValue))
+            {
+                return;
+            }
 
-        ApplyFindXEntryDisplayValue(
-            entry,
-            value);
+            ApplyFindXIntegerEntryDisplayValue(
+                entry,
+                integerValue);
+        }
+        else
+        {
+            if (!decimal.TryParse(
+                    normalizedText,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out decimal decimalValue))
+            {
+                return;
+            }
+
+            ApplyFindXDecimalEntryDisplayValue(
+                entry,
+                decimalValue);
+        }
 
         UpdateFindXEquationPreview();
     }
 
-    private void ApplyFindXEntryDisplayValue(
+    private void ApplyFindXIntegerEntryDisplayValue(
         Entry entry,
-        FindXRational value)
+        Int128 value)
     {
-        if (!ShouldUseFindXScientificDisplay(
-                value))
+        BigInteger bigValue =
+            (BigInteger)value;
+
+        if (CountBigIntegerDigits(
+                bigValue) <=
+            ScientificDisplayDigitThreshold)
         {
             _findXScientificCodeValues.Remove(
                 entry);
 
             SetFindXEntryTextWithoutValidation(
                 entry,
-                FormatFindXValueForEditing(
-                    value));
+                bigValue.ToString(
+                    "#,##0",
+                    CultureInfo.InvariantCulture));
 
             return;
         }
 
         _findXScientificCodeValues[entry] =
-            FormatFindXScientificForCode(
+            FormatFindXIntegerScientificForCode(
+                bigValue);
+
+        SetFindXEntryTextWithoutValidation(
+            entry,
+            FormatFindXIntegerForDisplay(
+                bigValue));
+    }
+
+    private void ApplyFindXDecimalEntryDisplayValue(
+        Entry entry,
+        decimal value)
+    {
+        string plainText =
+            FormatFindXDecimalForEditing(
+                value);
+
+        if (CountSignificantDigits(
+                plainText) <=
+            ScientificDisplayDigitThreshold)
+        {
+            _findXScientificCodeValues.Remove(
+                entry);
+
+            SetFindXEntryTextWithoutValidation(
+                entry,
+                plainText);
+
+            return;
+        }
+
+        _findXScientificCodeValues[entry] =
+            FormatFindXDecimalScientificForCode(
                 value);
 
         SetFindXEntryTextWithoutValidation(
             entry,
-            FormatFindXScientificForDisplay(
-                value));
+            FormatPlainNumberAsScientificDisplay(
+                value.ToString(
+                    "0.############################",
+                    CultureInfo.InvariantCulture)));
+    }
+
+    private static string FormatFindXIntegerScientificForCode(
+        BigInteger value)
+    {
+        if (value.IsZero)
+        {
+            return "0e0";
+        }
+
+        string sign =
+            value.Sign < 0
+                ? "-"
+                : string.Empty;
+
+        string digits =
+            BigInteger.Abs(
+                value)
+            .ToString(
+                CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length -
+            1;
+
+        string mantissa =
+            digits.Length == 1
+                ? digits
+                : $"{digits[0]}.{digits[1..]}"
+                    .TrimEnd('0')
+                    .TrimEnd('.');
+
+        return
+            $"{sign}{mantissa}e{exponent}";
+    }
+
+    private static string FormatFindXDecimalForEditing(
+        decimal value)
+    {
+        return value.ToString(
+            "#,##0.##########",
+            CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatFindXDecimalForDisplay(
+        decimal value)
+    {
+        string plainText =
+            FormatFindXDecimalForEditing(
+                value);
+
+        return CountSignificantDigits(
+                   plainText) >
+               ScientificDisplayDigitThreshold
+            ? FormatPlainNumberAsScientificDisplay(
+                value.ToString(
+                    "0.############################",
+                    CultureInfo.InvariantCulture))
+            : plainText;
+    }
+
+    private static string FormatFindXDecimalScientificForCode(
+        decimal value)
+    {
+        if (value == 0)
+        {
+            return "0e0";
+        }
+
+        string scientificText =
+            value.ToString(
+                "0.############################E+0",
+                CultureInfo.InvariantCulture);
+
+        int exponentIndex =
+            scientificText.IndexOf(
+                'E');
+
+        string mantissa =
+            scientificText[..exponentIndex];
+
+        string exponent =
+            scientificText[(exponentIndex + 1)..]
+                .TrimStart(
+                    '+');
+
+        return
+            $"{mantissa}e{exponent}";
     }
 
     private static string FormatFindXValueForEditing(
@@ -905,33 +1086,55 @@ public partial class FindXView : ContentView
         FindXErrorBorder.IsVisible =
             false;
 
-        if (!TryReadFindXValue(
+        if (_findXNumberType ==
+            FindXNumberInputType.Integer)
+        {
+            CalculateFindXInteger();
+            return;
+        }
+
+        CalculateFindXDecimal();
+    }
+
+    private void CalculateFindXInteger()
+    {
+        if (!TryReadFindXIntegerValue(
                 FindXKnownValueEntry,
                 GetFindXKnownValueName(),
-                out FindXRational knownValue))
+                out Int128 knownInput))
         {
             FindXKnownValueEntry.Focus();
             return;
         }
 
-        if (!TryReadFindXValue(
+        if (!TryReadFindXIntegerValue(
                 FindXResultValueEntry,
                 GetFindXResultValueName(),
-                out FindXRational resultValue))
+                out Int128 resultInput))
         {
             FindXResultValueEntry.Focus();
             return;
         }
 
-        ApplyFindXEntryDisplayValue(
+        ApplyFindXIntegerEntryDisplayValue(
             FindXKnownValueEntry,
-            knownValue);
+            knownInput);
 
-        ApplyFindXEntryDisplayValue(
+        ApplyFindXIntegerEntryDisplayValue(
             FindXResultValueEntry,
-            resultValue);
+            resultInput);
 
         UpdateFindXEquationPreview();
+
+        FindXRational knownValue =
+            new(
+                (BigInteger)knownInput,
+                BigInteger.One);
+
+        FindXRational resultValue =
+            new(
+                (BigInteger)resultInput,
+                BigInteger.One);
 
         FindXSolution solution =
             SolveFindX(
@@ -944,13 +1147,62 @@ public partial class FindXView : ContentView
             solution);
     }
 
-    private bool TryReadFindXValue(
+    private void CalculateFindXDecimal()
+    {
+        if (!TryReadFindXDecimalValue(
+                FindXKnownValueEntry,
+                GetFindXKnownValueName(),
+                out decimal knownValue))
+        {
+            FindXKnownValueEntry.Focus();
+            return;
+        }
+
+        if (!TryReadFindXDecimalValue(
+                FindXResultValueEntry,
+                GetFindXResultValueName(),
+                out decimal resultValue))
+        {
+            FindXResultValueEntry.Focus();
+            return;
+        }
+
+        ApplyFindXDecimalEntryDisplayValue(
+            FindXKnownValueEntry,
+            knownValue);
+
+        ApplyFindXDecimalEntryDisplayValue(
+            FindXResultValueEntry,
+            resultValue);
+
+        UpdateFindXEquationPreview();
+
+        try
+        {
+            FindXDecimalSolution solution =
+                SolveFindXDecimal(
+                    knownValue,
+                    resultValue);
+
+            ShowFindXDecimalSolution(
+                knownValue,
+                resultValue,
+                solution);
+        }
+        catch (OverflowException)
+        {
+            ShowFindXError(
+                "Kết quả vượt quá phạm vi của kiểu decimal.");
+        }
+    }
+
+    private bool TryReadFindXIntegerValue(
         Entry entry,
         string fieldName,
-        out FindXRational value)
+        out Int128 value)
     {
         value =
-            FindXRational.Zero;
+            Int128.Zero;
 
         bool usesStoredScientificCode =
             _findXScientificCodeValues.TryGetValue(
@@ -979,17 +1231,247 @@ public partial class FindXView : ContentView
         if ((!usesStoredScientificCode &&
              !IsCompleteValidFindXNumber(
                  normalizedText)) ||
-            !FindXRational.TryParse(
+            !TryParseFindXInt128(
                 normalizedText,
                 out value))
         {
             ShowFindXError(
-                $"{fieldName} không phải là một số hợp lệ.");
+                $"{fieldName} phải là số nguyên hợp lệ, " +
+                $"tối đa {MaxIntegerInputDigits} chữ số.");
 
             return false;
         }
 
         return true;
+    }
+
+    private bool TryReadFindXDecimalValue(
+        Entry entry,
+        string fieldName,
+        out decimal value)
+    {
+        value =
+            0m;
+
+        bool usesStoredScientificCode =
+            _findXScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode);
+
+        string text =
+            usesStoredScientificCode
+                ? scientificCode!
+                : entry.Text ??
+                  string.Empty;
+
+        if (string.IsNullOrWhiteSpace(
+                text))
+        {
+            ShowFindXError(
+                $"Vui lòng nhập {fieldName.ToLowerInvariant()}.");
+
+            return false;
+        }
+
+        string normalizedText =
+            NormalizeFindXInputText(
+                text);
+
+        if ((!usesStoredScientificCode &&
+             !IsCompleteValidFindXNumber(
+                 normalizedText)) ||
+            !decimal.TryParse(
+                normalizedText,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out value))
+        {
+            ShowFindXError(
+                $"{fieldName} không phải là số thập phân hợp lệ.");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryParseFindXInt128(
+        string text,
+        out Int128 value)
+    {
+        value =
+            Int128.Zero;
+
+        if (!text.Contains(
+                'e'))
+        {
+            if (!Int128.TryParse(
+                    text,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out value))
+            {
+                return false;
+            }
+
+            return CountFindXInt128Digits(
+                       value) <=
+                   MaxIntegerInputDigits;
+        }
+
+        if (!TryParseFindXScientificInteger(
+                text,
+                out BigInteger bigValue) ||
+            bigValue <
+                (BigInteger)Int128.MinValue ||
+            bigValue >
+                (BigInteger)Int128.MaxValue)
+        {
+            return false;
+        }
+
+        value =
+            (Int128)bigValue;
+
+        return CountFindXInt128Digits(
+                   value) <=
+               MaxIntegerInputDigits;
+    }
+
+    private static bool TryParseFindXScientificInteger(
+        string text,
+        out BigInteger value)
+    {
+        value =
+            BigInteger.Zero;
+
+        int exponentIndex =
+            text.IndexOf(
+                'e');
+
+        if (exponentIndex <= 0 ||
+            exponentIndex !=
+            text.LastIndexOf(
+                'e') ||
+            exponentIndex >=
+            text.Length - 1)
+        {
+            return false;
+        }
+
+        string mantissaText =
+            text[..exponentIndex];
+
+        string exponentText =
+            text[(exponentIndex + 1)..];
+
+        if (!int.TryParse(
+                exponentText,
+                NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out int exponent))
+        {
+            return false;
+        }
+
+        bool isNegative =
+            mantissaText.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        if (isNegative)
+        {
+            mantissaText =
+                mantissaText[1..];
+        }
+
+        int decimalPointIndex =
+            mantissaText.IndexOf(
+                '.');
+
+        if (decimalPointIndex !=
+            mantissaText.LastIndexOf(
+                '.'))
+        {
+            return false;
+        }
+
+        int decimalPlaces =
+            decimalPointIndex < 0
+                ? 0
+                : mantissaText.Length -
+                  decimalPointIndex -
+                  1;
+
+        string coefficientText =
+            mantissaText.Replace(
+                ".",
+                string.Empty);
+
+        if (coefficientText.Length == 0 ||
+            !coefficientText.All(
+                char.IsDigit) ||
+            !BigInteger.TryParse(
+                coefficientText,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out BigInteger coefficient))
+        {
+            return false;
+        }
+
+        int power =
+            exponent -
+            decimalPlaces;
+
+        if (power >= 0)
+        {
+            value =
+                coefficient *
+                BigInteger.Pow(
+                    10,
+                    power);
+        }
+        else
+        {
+            BigInteger divisor =
+                BigInteger.Pow(
+                    10,
+                    -power);
+
+            value =
+                BigInteger.DivRem(
+                    coefficient,
+                    divisor,
+                    out BigInteger remainder);
+
+            if (!remainder.IsZero)
+            {
+                value =
+                    BigInteger.Zero;
+
+                return false;
+            }
+        }
+
+        if (isNegative)
+        {
+            value =
+                BigInteger.Negate(
+                    value);
+        }
+
+        return true;
+    }
+
+    private static int CountFindXInt128Digits(
+        Int128 value)
+    {
+        return BigInteger.Abs(
+                (BigInteger)value)
+            .ToString(
+                CultureInfo.InvariantCulture)
+            .Length;
     }
 
     private static string NormalizeFindXInputText(
@@ -1020,9 +1502,15 @@ public partial class FindXView : ContentView
             return false;
         }
 
+        int maximumDigitCount =
+            _findXNumberType ==
+            FindXNumberInputType.Integer
+                ? MaxIntegerInputDigits
+                : MaxDecimalInputSignificantDigits;
+
         if (CountDigits(
                 text) >
-            MaxInputSignificantDigits)
+            maximumDigitCount)
         {
             return false;
         }
@@ -1082,6 +1570,393 @@ public partial class FindXView : ContentView
         }
 
         return digitCount > 0;
+    }
+
+    private FindXDecimalSolution SolveFindXDecimal(
+        decimal knownValue,
+        decimal resultValue)
+    {
+        string knownText =
+            FormatFindXDecimalForDisplay(
+                knownValue);
+
+        string resultText =
+            FormatFindXDecimalForDisplay(
+                resultValue);
+
+        switch (_findXOperation)
+        {
+            case FindXOperation.Add:
+                {
+                    decimal x =
+                        checked(
+                            resultValue -
+                            knownValue);
+
+                    return CreateUniqueFindXDecimalSolution(
+                        x,
+                        knownValue,
+                        resultValue,
+                        "Muốn tìm một số hạng chưa biết, ta lấy tổng " +
+                        "trừ đi số hạng đã biết.",
+                        $"x = {resultText} − {knownText}\n" +
+                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                }
+
+            case FindXOperation.Subtract
+                when _findXUnknownPosition ==
+                     FindXUnknownPosition.Left:
+                {
+                    decimal x =
+                        checked(
+                            resultValue +
+                            knownValue);
+
+                    return CreateUniqueFindXDecimalSolution(
+                        x,
+                        knownValue,
+                        resultValue,
+                        "Muốn tìm số bị trừ, ta lấy hiệu cộng với số trừ.",
+                        $"x = {resultText} + {knownText}\n" +
+                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                }
+
+            case FindXOperation.Subtract:
+                {
+                    decimal x =
+                        checked(
+                            knownValue -
+                            resultValue);
+
+                    return CreateUniqueFindXDecimalSolution(
+                        x,
+                        knownValue,
+                        resultValue,
+                        "Muốn tìm số trừ, ta lấy số bị trừ trừ đi hiệu.",
+                        $"x = {knownText} − {resultText}\n" +
+                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                }
+
+            case FindXOperation.Multiply:
+                {
+                    if (knownValue == 0)
+                    {
+                        if (resultValue == 0)
+                        {
+                            return new FindXDecimalSolution(
+                                FindXSolutionKind.InfiniteSolutions,
+                                0m,
+                                "Vô số nghiệm",
+                                "Khi một thừa số bằng 0, tích luôn bằng 0.",
+                                "Phương trình trở thành 0 × x = 0.\n" +
+                                "Đẳng thức đúng với mọi giá trị của x.",
+                                string.Empty);
+                        }
+
+                        return new FindXDecimalSolution(
+                            FindXSolutionKind.NoSolution,
+                            0m,
+                            "Không có nghiệm",
+                            "Không có số nào nhân với 0 mà cho kết quả khác 0.",
+                            $"Phương trình trở thành 0 × x = {resultText}.\n" +
+                            "Vế trái luôn bằng 0 nên không thể bằng vế phải.",
+                            string.Empty);
+                    }
+
+                    decimal x =
+                        checked(
+                            resultValue /
+                            knownValue);
+
+                    return CreateUniqueFindXDecimalSolution(
+                        x,
+                        knownValue,
+                        resultValue,
+                        "Muốn tìm một thừa số chưa biết, ta lấy tích " +
+                        "chia cho thừa số đã biết.",
+                        $"x = {resultText} ÷ {knownText}\n" +
+                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                }
+
+            case FindXOperation.Divide
+                when _findXUnknownPosition ==
+                     FindXUnknownPosition.Left:
+                {
+                    if (knownValue == 0)
+                    {
+                        return new FindXDecimalSolution(
+                            FindXSolutionKind.NoSolution,
+                            0m,
+                            "Phép tính không xác định",
+                            "Số chia phải khác 0.",
+                            "Phương trình có dạng x ÷ 0 nên phép chia " +
+                            "không được xác định.",
+                            string.Empty);
+                    }
+
+                    decimal x =
+                        checked(
+                            resultValue *
+                            knownValue);
+
+                    return CreateUniqueFindXDecimalSolution(
+                        x,
+                        knownValue,
+                        resultValue,
+                        "Muốn tìm số bị chia, ta lấy thương nhân với số chia.",
+                        $"x = {resultText} × {knownText}\n" +
+                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                }
+
+            case FindXOperation.Divide:
+                {
+                    if (resultValue == 0)
+                    {
+                        if (knownValue == 0)
+                        {
+                            return new FindXDecimalSolution(
+                                FindXSolutionKind.InfiniteSolutions,
+                                0m,
+                                "Vô số nghiệm với x ≠ 0",
+                                "0 chia cho mọi số khác 0 đều bằng 0.",
+                                "Phương trình 0 ÷ x = 0 đúng với mọi x khác 0.",
+                                string.Empty);
+                        }
+
+                        return new FindXDecimalSolution(
+                            FindXSolutionKind.NoSolution,
+                            0m,
+                            "Không có nghiệm",
+                            "Một số khác 0 chia cho một số hữu hạn khác 0 " +
+                            "không thể bằng 0.",
+                            $"{knownText} ÷ x = 0 không có giá trị x hợp lệ.",
+                            string.Empty);
+                    }
+
+                    if (knownValue == 0)
+                    {
+                        return new FindXDecimalSolution(
+                            FindXSolutionKind.NoSolution,
+                            0m,
+                            "Không có nghiệm",
+                            "Số chia x phải khác 0.",
+                            $"Từ 0 ÷ x = {resultText}, phép biến đổi hình thức " +
+                            "cho x = 0 nhưng x = 0 lại làm phép chia không xác định.",
+                            string.Empty);
+                    }
+
+                    decimal x =
+                        checked(
+                            knownValue /
+                            resultValue);
+
+                    return CreateUniqueFindXDecimalSolution(
+                        x,
+                        knownValue,
+                        resultValue,
+                        "Muốn tìm số chia, ta lấy số bị chia chia cho thương; " +
+                        "đồng thời số chia phải khác 0.",
+                        $"x = {knownText} ÷ {resultText}\n" +
+                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                }
+
+            default:
+                return new FindXDecimalSolution(
+                    FindXSolutionKind.NoSolution,
+                    0m,
+                    "Không thể giải",
+                    string.Empty,
+                    string.Empty,
+                    string.Empty);
+        }
+    }
+
+    private FindXDecimalSolution CreateUniqueFindXDecimalSolution(
+        decimal x,
+        decimal knownValue,
+        decimal resultValue,
+        string rule,
+        string transformation)
+    {
+        string xText =
+            FormatFindXDecimalForDisplay(
+                x);
+
+        string verification =
+            BuildFindXDecimalVerification(
+                x,
+                knownValue,
+                resultValue);
+
+        return new FindXDecimalSolution(
+            FindXSolutionKind.Unique,
+            x,
+            "Nghiệm duy nhất",
+            rule,
+            $"Bước 1. Xác định thành phần chưa biết và áp dụng quy tắc.\n\n" +
+            $"Bước 2. Thay các giá trị đã biết:\n" +
+            $"{transformation}\n\n" +
+            $"Vậy x = {xText}.",
+            verification);
+    }
+
+    private string BuildFindXDecimalVerification(
+        decimal x,
+        decimal knownValue,
+        decimal resultValue)
+    {
+        decimal leftValue =
+            EvaluateFindXDecimalLeftSide(
+                x,
+                knownValue);
+
+        string xText =
+            FormatFindXDecimalForDisplay(
+                x);
+
+        string knownText =
+            FormatFindXDecimalForDisplay(
+                knownValue);
+
+        string resultText =
+            FormatFindXDecimalForDisplay(
+                resultValue);
+
+        string leftText =
+            FormatFindXDecimalForDisplay(
+                leftValue);
+
+        bool isExact =
+            leftValue ==
+            resultValue;
+
+        return
+            $"Thay x = {xText} vào phép tính ban đầu:\n" +
+            $"{BuildFindXEquation(knownText, resultText).Replace("x", xText, StringComparison.Ordinal)}\n\n" +
+            (isExact
+                ? $"Vế trái = {leftText}; vế phải = {resultText}.\n" +
+                  "Hai vế bằng nhau nên kết quả tìm được là đúng."
+                : $"Vế trái ≈ {leftText}; vế phải = {resultText}.\n" +
+                  "Sai khác nhỏ xuất hiện do giới hạn làm tròn của decimal.");
+    }
+
+    private decimal EvaluateFindXDecimalLeftSide(
+        decimal x,
+        decimal knownValue)
+    {
+        return (_findXOperation,
+                _findXUnknownPosition) switch
+        {
+            (FindXOperation.Add, FindXUnknownPosition.Left) =>
+                checked(x + knownValue),
+
+            (FindXOperation.Add, FindXUnknownPosition.Right) =>
+                checked(knownValue + x),
+
+            (FindXOperation.Subtract, FindXUnknownPosition.Left) =>
+                checked(x - knownValue),
+
+            (FindXOperation.Subtract, FindXUnknownPosition.Right) =>
+                checked(knownValue - x),
+
+            (FindXOperation.Multiply, FindXUnknownPosition.Left) =>
+                checked(x * knownValue),
+
+            (FindXOperation.Multiply, FindXUnknownPosition.Right) =>
+                checked(knownValue * x),
+
+            (FindXOperation.Divide, FindXUnknownPosition.Left) =>
+                checked(x / knownValue),
+
+            (FindXOperation.Divide, FindXUnknownPosition.Right) =>
+                checked(knownValue / x),
+
+            _ =>
+                0m
+        };
+    }
+
+    private void ShowFindXDecimalSolution(
+        decimal knownValue,
+        decimal resultValue,
+        FindXDecimalSolution solution)
+    {
+        string knownText =
+            FormatFindXDecimalForDisplay(
+                knownValue);
+
+        string resultText =
+            FormatFindXDecimalForDisplay(
+                resultValue);
+
+        FindXResultEquationLabel.Text =
+            BuildFindXEquation(
+                knownText,
+                resultText);
+
+        FindXStatusLabel.Text =
+            solution.StatusText;
+
+        FindXRuleLabel.Text =
+            solution.RuleText;
+
+        FindXSolutionStepsLabel.Text =
+            solution.StepsText;
+
+        FindXApproximationLabel.IsVisible =
+            false;
+
+        switch (solution.Kind)
+        {
+            case FindXSolutionKind.Unique:
+                FindXAnswerLabel.Text =
+                    $"x = {FormatFindXDecimalForDisplay(solution.Value)}";
+
+                FindXStatusLabel.SetDynamicResource(
+                    Label.TextColorProperty,
+                    "SuccessColor");
+
+                FindXVerificationLabel.Text =
+                    solution.VerificationText;
+
+                FindXVerificationBorder.IsVisible =
+                    true;
+                break;
+
+            case FindXSolutionKind.InfiniteSolutions:
+                FindXAnswerLabel.Text =
+                    solution.StatusText.Contains(
+                        "x ≠ 0",
+                        StringComparison.Ordinal)
+                        ? "Mọi x khác 0"
+                        : "Mọi giá trị của x";
+
+                FindXStatusLabel.SetDynamicResource(
+                    Label.TextColorProperty,
+                    "WarningColor");
+
+                FindXVerificationBorder.IsVisible =
+                    false;
+                break;
+
+            default:
+                FindXAnswerLabel.Text =
+                    "Không tồn tại giá trị x phù hợp";
+
+                FindXStatusLabel.SetDynamicResource(
+                    Label.TextColorProperty,
+                    "DangerColor");
+
+                FindXVerificationBorder.IsVisible =
+                    false;
+                break;
+        }
+
+        FindXErrorBorder.IsVisible =
+            false;
+
+        FindXResultBorder.IsVisible =
+            true;
     }
 
     private FindXSolution SolveFindX(
@@ -2084,6 +2959,14 @@ public partial class FindXView : ContentView
         string StepsText,
         string VerificationText);
 
+    private sealed record FindXDecimalSolution(
+        FindXSolutionKind Kind,
+        decimal Value,
+        string StatusText,
+        string RuleText,
+        string StepsText,
+        string VerificationText);
+
     private readonly struct FindXRational
     {
         public BigInteger Numerator { get; }
@@ -2143,230 +3026,6 @@ public partial class FindXView : ContentView
             Denominator =
                 denominator /
                 greatestCommonDivisor;
-        }
-
-        public static bool TryParse(
-            string text,
-            out FindXRational value)
-        {
-            value =
-                Zero;
-
-            string normalizedText =
-                text
-                    .Trim()
-                    .Replace(
-                        ",",
-                        string.Empty)
-                    .Replace(
-                        '−',
-                        '-')
-                    .Replace(
-                        "E",
-                        "e",
-                        StringComparison.Ordinal);
-
-            if (normalizedText.Length == 0)
-            {
-                return false;
-            }
-
-            if (normalizedText.Contains(
-                    'e'))
-            {
-                return TryParseScientific(
-                    normalizedText,
-                    out value);
-            }
-
-            bool isNegative =
-                normalizedText[0] == '-';
-
-            if (isNegative)
-            {
-                normalizedText =
-                    normalizedText[1..];
-            }
-
-            if (normalizedText.Length == 0 ||
-                normalizedText.Count(
-                    character =>
-                        character == '.') >
-                1)
-            {
-                return false;
-            }
-
-            int decimalPointIndex =
-                normalizedText.IndexOf('.');
-
-            int decimalPlaces =
-                decimalPointIndex < 0
-                    ? 0
-                    : normalizedText.Length -
-                      decimalPointIndex -
-                      1;
-
-            string coefficientText =
-                normalizedText.Replace(
-                    ".",
-                    string.Empty);
-
-            if (coefficientText.Length == 0 ||
-                !coefficientText.All(
-                    char.IsDigit) ||
-                !BigInteger.TryParse(
-                    coefficientText,
-                    NumberStyles.None,
-                    CultureInfo.InvariantCulture,
-                    out BigInteger numerator))
-            {
-                return false;
-            }
-
-            if (isNegative)
-            {
-                numerator =
-                    BigInteger.Negate(
-                        numerator);
-            }
-
-            BigInteger denominator =
-                decimalPlaces == 0
-                    ? BigInteger.One
-                    : BigInteger.Pow(
-                        10,
-                        decimalPlaces);
-
-            value =
-                new FindXRational(
-                    numerator,
-                    denominator);
-
-            return true;
-        }
-
-        private static bool TryParseScientific(
-            string text,
-            out FindXRational value)
-        {
-            value =
-                Zero;
-
-            int exponentIndex =
-                text.IndexOf(
-                    'e');
-
-            if (exponentIndex <= 0 ||
-                exponentIndex !=
-                text.LastIndexOf(
-                    'e') ||
-                exponentIndex >=
-                text.Length - 1)
-            {
-                return false;
-            }
-
-            string mantissaText =
-                text[..exponentIndex];
-
-            string exponentText =
-                text[(exponentIndex + 1)..];
-
-            if (!int.TryParse(
-                    exponentText,
-                    NumberStyles.AllowLeadingSign,
-                    CultureInfo.InvariantCulture,
-                    out int exponent))
-            {
-                return false;
-            }
-
-            bool isNegative =
-                mantissaText.StartsWith(
-                    "-",
-                    StringComparison.Ordinal);
-
-            if (isNegative)
-            {
-                mantissaText =
-                    mantissaText[1..];
-            }
-
-            if (mantissaText.Length == 0 ||
-                mantissaText.Count(
-                    character =>
-                        character == '.') >
-                1)
-            {
-                return false;
-            }
-
-            int decimalPointIndex =
-                mantissaText.IndexOf('.');
-
-            int decimalPlaces =
-                decimalPointIndex < 0
-                    ? 0
-                    : mantissaText.Length -
-                      decimalPointIndex -
-                      1;
-
-            string coefficientText =
-                mantissaText.Replace(
-                    ".",
-                    string.Empty);
-
-            if (coefficientText.Length == 0 ||
-                !coefficientText.All(
-                    char.IsDigit) ||
-                !BigInteger.TryParse(
-                    coefficientText,
-                    NumberStyles.None,
-                    CultureInfo.InvariantCulture,
-                    out BigInteger coefficient))
-            {
-                return false;
-            }
-
-            if (isNegative)
-            {
-                coefficient =
-                    BigInteger.Negate(
-                        coefficient);
-            }
-
-            int power =
-                exponent -
-                decimalPlaces;
-
-            BigInteger numerator =
-                coefficient;
-
-            BigInteger denominator =
-                BigInteger.One;
-
-            if (power >= 0)
-            {
-                numerator *=
-                    BigInteger.Pow(
-                        10,
-                        power);
-            }
-            else
-            {
-                denominator =
-                    BigInteger.Pow(
-                        10,
-                        -power);
-            }
-
-            value =
-                new FindXRational(
-                    numerator,
-                    denominator);
-
-            return true;
         }
 
         public static FindXRational operator +(

@@ -168,7 +168,7 @@
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Label
-                        Text="Tử số và mẫu số phải là số nguyên; mẫu số phải khác 0."
+                        Text="Tử số và mẫu số tối đa 38 chữ số; kết quả được tính bằng BigInteger và mẫu số phải khác 0."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 

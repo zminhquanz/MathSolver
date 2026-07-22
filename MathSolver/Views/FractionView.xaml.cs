@@ -18,8 +18,11 @@ public partial class FractionView : ContentView
         _pendingRestoredEntryTexts =
             [];
 
+    private const int MaxIntegerInputDigits =
+        38;
+
     private const string IntegerTypingErrorMessage =
-        "Tử số và mẫu số chỉ được nhập số nguyên; " +
+        "Tử số và mẫu số chỉ được nhập số nguyên, tối đa 38 chữ số; " +
         "không được dùng dấu chấm (.) hoặc dấu phẩy (,).";
 
     // Giá trị chính xác của Entry được lưu ở dạng khoa học dùng chữ e.
@@ -200,8 +203,8 @@ public partial class FractionView : ContentView
     }
 
     private void OnCalculateClicked(
-    object? sender,
-    EventArgs e)
+        object? sender,
+        EventArgs e)
     {
         ResetOutput();
 
@@ -209,41 +212,55 @@ public partial class FractionView : ContentView
                 GetEntryInputText(
                     FirstNumeratorEntry),
                 "Tử số của phân số thứ nhất",
-                out BigInteger numerator1) ||
+                out Int128 numerator1Input) ||
             !TryReadInteger(
                 GetEntryInputText(
                     FirstDenominatorEntry),
                 "Mẫu số của phân số thứ nhất",
-                out BigInteger denominator1) ||
+                out Int128 denominator1Input) ||
             !TryReadInteger(
                 GetEntryInputText(
                     SecondNumeratorEntry),
                 "Tử số của phân số thứ hai",
-                out BigInteger numerator2) ||
+                out Int128 numerator2Input) ||
             !TryReadInteger(
                 GetEntryInputText(
                     SecondDenominatorEntry),
                 "Mẫu số của phân số thứ hai",
-                out BigInteger denominator2))
+                out Int128 denominator2Input))
         {
             return;
         }
 
         ApplyEntryDisplayValue(
             FirstNumeratorEntry,
-            numerator1);
+            numerator1Input);
 
         ApplyEntryDisplayValue(
             FirstDenominatorEntry,
-            denominator1);
+            denominator1Input);
 
         ApplyEntryDisplayValue(
             SecondNumeratorEntry,
-            numerator2);
+            numerator2Input);
 
         ApplyEntryDisplayValue(
             SecondDenominatorEntry,
-            denominator2);
+            denominator2Input);
+
+        // Đầu vào được giới hạn bằng Int128; chuyển sang BigInteger
+        // trước khi nhân chéo để kết quả không bị overflow.
+        BigInteger numerator1 =
+            (BigInteger)numerator1Input;
+
+        BigInteger denominator1 =
+            (BigInteger)denominator1Input;
+
+        BigInteger numerator2 =
+            (BigInteger)numerator2Input;
+
+        BigInteger denominator2 =
+            (BigInteger)denominator2Input;
 
         FractionCalculationResult result =
             FractionCalculator.Calculate(
@@ -300,9 +317,9 @@ public partial class FractionView : ContentView
     }
 
     private bool TryReadInteger(
-    string? text,
-    string fieldName,
-    out BigInteger value)
+        string? text,
+        string fieldName,
+        out Int128 value)
     {
         string normalized =
             NormalizeIntegerInput(
@@ -311,7 +328,7 @@ public partial class FractionView : ContentView
         if (normalized.Length == 0)
         {
             value =
-                BigInteger.Zero;
+                Int128.Zero;
 
             ShowError(
                 $"Vui lòng nhập {fieldName}.");
@@ -319,12 +336,13 @@ public partial class FractionView : ContentView
             return false;
         }
 
-        if (!TryParseBigIntegerInput(
+        if (!TryParseInt128Input(
                 normalized,
                 out value))
         {
             ShowError(
-                $"{fieldName} phải là một số nguyên hợp lệ.");
+                $"{fieldName} phải là số nguyên hợp lệ, " +
+                $"tối đa {MaxIntegerInputDigits} chữ số.");
 
             return false;
         }
@@ -464,17 +482,29 @@ public partial class FractionView : ContentView
             return true;
         }
 
+        int digitCount =
+            0;
+
         for (int index = firstDigitIndex;
              index < text.Length;
              index++)
         {
-            if (!char.IsDigit(text[index]))
+            if (!char.IsDigit(
+                    text[index]))
+            {
+                return false;
+            }
+
+            digitCount++;
+
+            if (digitCount >
+                MaxIntegerInputDigits)
             {
                 return false;
             }
         }
 
-        return true;
+        return digitCount > 0;
     }
 
     private void OnFractionEntryFocused(
@@ -491,25 +521,26 @@ public partial class FractionView : ContentView
                 entry,
                 out string? scientificCode)
                 ? scientificCode
-                : entry.Text ?? string.Empty;
+                : entry.Text ??
+                  string.Empty;
 
         string normalized =
-            NormalizeIntegerInput(sourceText);
+            NormalizeIntegerInput(
+                sourceText);
 
-        if (!TryParseBigIntegerInput(
+        if (!TryParseInt128Input(
                 normalized,
-                out BigInteger value))
+                out Int128 value))
         {
             return;
         }
 
-        _entryScientificCodeValues.Remove(entry);
+        _entryScientificCodeValues.Remove(
+            entry);
 
-        // Khi đang nhập chỉ hiển thị dấu âm và chữ số, không giữ
-        // dấu phân cách hàng nghìn để TextChanged kiểm tra đúng.
         SetEntryText(
             entry,
-            value.ToString(
+            ((BigInteger)value).ToString(
                 CultureInfo.InvariantCulture));
     }
 
@@ -526,9 +557,9 @@ public partial class FractionView : ContentView
             NormalizeIntegerInput(
                 entry.Text);
 
-        if (!TryParseBigIntegerInput(
+        if (!TryParseInt128Input(
                 normalized,
-                out BigInteger value))
+                out Int128 value))
         {
             return;
         }
@@ -540,9 +571,13 @@ public partial class FractionView : ContentView
 
     private void ApplyEntryDisplayValue(
         Entry entry,
-        BigInteger value)
+        Int128 value)
     {
-        if (CountIntegerDigits(value) <=
+        BigInteger bigValue =
+            (BigInteger)value;
+
+        if (CountIntegerDigits(
+                bigValue) <=
             ScientificDisplayDigitThreshold)
         {
             _entryScientificCodeValues.Remove(
@@ -551,19 +586,19 @@ public partial class FractionView : ContentView
             SetEntryText(
                 entry,
                 FormatIntegerForEditing(
-                    value));
+                    bigValue));
 
             return;
         }
 
         _entryScientificCodeValues[entry] =
             FormatScientificForCode(
-                value);
+                bigValue);
 
         SetEntryText(
             entry,
             FormatBigIntegerForDisplay(
-                value));
+                bigValue));
     }
 
     private void SetEntryText(
@@ -600,6 +635,62 @@ public partial class FractionView : ContentView
                 "E",
                 "e",
                 StringComparison.Ordinal);
+    }
+
+    private static bool TryParseInt128Input(
+        string text,
+        out Int128 value)
+    {
+        value =
+            Int128.Zero;
+
+        // Nội dung người dùng nhập trực tiếp được parse bằng Int128.
+        if (!text.Contains(
+                'e'))
+        {
+            if (!Int128.TryParse(
+                    text,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out value))
+            {
+                return false;
+            }
+
+            return CountInt128Digits(
+                       value) <=
+                   MaxIntegerInputDigits;
+        }
+
+        // BigInteger chỉ được dùng tạm để khôi phục chuỗi khoa học
+        // do ứng dụng tự lưu khi Entry hiển thị rút gọn trên 18 chữ số.
+        if (!TryParseBigIntegerInput(
+                text,
+                out BigInteger bigValue) ||
+            bigValue <
+                (BigInteger)Int128.MinValue ||
+            bigValue >
+                (BigInteger)Int128.MaxValue)
+        {
+            return false;
+        }
+
+        value =
+            (Int128)bigValue;
+
+        return CountInt128Digits(
+                   value) <=
+               MaxIntegerInputDigits;
+    }
+
+    private static int CountInt128Digits(
+        Int128 value)
+    {
+        return BigInteger.Abs(
+                (BigInteger)value)
+            .ToString(
+                CultureInfo.InvariantCulture)
+            .Length;
     }
 
     private static bool TryParseBigIntegerInput(

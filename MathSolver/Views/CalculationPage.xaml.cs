@@ -28,9 +28,13 @@ public partial class CalculationPage : ContentPage
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
 
+    // Số nguyên được nhập bằng Int128. Giới hạn 38 chữ số bảo đảm
+    // mọi giá trị nhập luôn nằm an toàn trong phạm vi Int128.
+    private const int MaxIntegerInputDigits = 38;
+
     // decimal hỗ trợ khoảng 28–29 chữ số có nghĩa.
-    // Dùng 28 để mọi giá trị nhập đều nằm trong vùng an toàn.
-    private const int MaxInputSignificantDigits = 28;
+    // Dùng 28 để mọi giá trị thập phân nhập đều nằm trong vùng an toàn.
+    private const int MaxDecimalInputSignificantDigits = 28;
 
     // Chỉ cho phép tối đa 10 chữ số sau dấu chấm.
     // Dấu phẩy chỉ dùng để phân nhóm hàng nghìn.
@@ -178,6 +182,13 @@ public partial class CalculationPage : ContentPage
     {
         HideMessages();
 
+        if (_selectedNumberType ==
+            NumberInputType.Integer)
+        {
+            CalculateIntegerValues();
+            return;
+        }
+
         if (!TryReadNumber(
                 GetEntryInputText(
                     FirstNumberEntry),
@@ -198,94 +209,224 @@ public partial class CalculationPage : ContentPage
             return;
         }
 
-        if (_selectedOperation == ArithmeticOperation.Divide)
+        if (_selectedOperation ==
+            ArithmeticOperation.Divide)
         {
             if (secondNumber == 0)
             {
-                ShowDivisionByZeroError(firstNumber);
+                ShowDivisionByZeroError(
+                    firstNumber);
+
                 SecondNumberEntry.Focus();
                 return;
             }
 
-            _currentDivisionDividend = firstNumber;
-            _currentDivisionDivisor = secondNumber;
+            _currentDivisionDividend =
+                firstNumber;
 
-            //Phép chia thì sẽ có thêm phép chia đặt tính nên tạo ra hai hàm riêng biệt dành cho số nguyên và số thập phân để hiển thị kết quả
-            if (_selectedNumberType == NumberInputType.Integer)
-            {
-                ShowElementaryDivisionResult(firstNumber, secondNumber);
-            }
-            else
-            {
-                ShowDecimalDivisionResult(
-                    firstNumber,
-                    secondNumber);
-            }
+            _currentDivisionDivisor =
+                secondNumber;
 
-            // Không gọi RefreshLongDivision() thêm lần nữa ở đây.
-            // Hai hàm Show...DivisionResult đã tự kiểm tra phạm vi Int64
-            // trước khi gửi dữ liệu vào LongDivisionCalculator.
+            ShowDecimalDivisionResult(
+                firstNumber,
+                secondNumber);
+
+            return;
         }
-        else
+
+        if (!TryCalculateSafely(
+                firstNumber,
+                secondNumber,
+                out decimal result))
         {
-            // Cộng, trừ và nhân phải kiểm tra tràn trước khi hiển thị.
-            if (!TryCalculateSafely(
-                    firstNumber,
-                    secondNumber,
-                    out decimal result))
+            return;
+        }
+
+        ShowResult(
+            firstNumber,
+            secondNumber,
+            result);
+    }
+
+    private void CalculateIntegerValues()
+    {
+        if (!TryReadIntegerInput(
+                GetEntryInputText(
+                    FirstNumberEntry),
+                "Vui lòng nhập số thứ nhất.",
+                out Int128 firstNumber))
+        {
+            FirstNumberEntry.Focus();
+            return;
+        }
+
+        if (!TryReadIntegerInput(
+                GetEntryInputText(
+                    SecondNumberEntry),
+                "Vui lòng nhập số thứ hai.",
+                out Int128 secondNumber))
+        {
+            SecondNumberEntry.Focus();
+            return;
+        }
+
+        ApplyIntegerEntryDisplayValue(
+            FirstNumberEntry,
+            firstNumber);
+
+        ApplyIntegerEntryDisplayValue(
+            SecondNumberEntry,
+            secondNumber);
+
+        if (_selectedOperation ==
+            ArithmeticOperation.Divide)
+        {
+            if (secondNumber == Int128.Zero)
             {
+                ShowDivisionByZeroError(
+                    firstNumber);
+
+                SecondNumberEntry.Focus();
                 return;
             }
 
-            ShowResult(
+            ShowIntegerDivisionResult(
                 firstNumber,
-                secondNumber,
-                result);
+                secondNumber);
+
+            return;
         }
+
+        BigInteger first =
+            (BigInteger)firstNumber;
+
+        BigInteger second =
+            (BigInteger)secondNumber;
+
+        BigInteger result =
+            _selectedOperation switch
+            {
+                ArithmeticOperation.Add =>
+                    first + second,
+
+                ArithmeticOperation.Subtract =>
+                    first - second,
+
+                ArithmeticOperation.Multiply =>
+                    first * second,
+
+                _ =>
+                    BigInteger.Zero
+            };
+
+        ShowIntegerResult(
+            first,
+            second,
+            result);
     }
 
-    private void ShowDivisionByZeroError(decimal firstNumber)
+    private void ShowDivisionByZeroError(
+        Int128 firstNumber)
     {
-        string firstText = FormatNumberForDisplay(firstNumber);
+        string firstText =
+            FormatIntegerForDisplay(
+                (BigInteger)firstNumber);
 
-        ErrorLabel.Text = "Bạn không thể chia cho 0.";
-        ErrorBorder.IsVisible = true;
+        ErrorLabel.Text =
+            "Bạn không thể chia cho 0.";
 
-        ExpressionLabel.Text = $"{firstText} ÷ 0";
-        ResultLabel.Text = "Không xác định";
+        ErrorBorder.IsVisible =
+            true;
+
+        ExpressionLabel.Text =
+            $"{firstText} ÷ 0";
+
+        ResultLabel.Text =
+            "Không xác định";
 
         ExplanationLabel.Text =
             $"Không thể thực hiện phép tính {firstText} ÷ 0.\n" +
             "Trong toán học, phép chia cho 0 không được xác định.\n" +
             "Bạn không thể chia một số cho 0.";
 
-        ResultBorder.IsVisible = true;
+        ResultBorder.IsVisible =
+            true;
+
+        DivisionDetailBorder.IsVisible =
+            false;
+
+        _currentDivisionDividend =
+            0;
+
+        _currentDivisionDivisor =
+            0;
 
         HideLongDivision();
     }
 
-    private void ShowElementaryDivisionResult(
-        decimal dividend,
-        decimal divisor)
+    private void ShowIntegerResult(
+        BigInteger firstNumber,
+        BigInteger secondNumber,
+        BigInteger result)
     {
-        if (!IsWholeNumber(dividend) ||
-            !IsWholeNumber(divisor))
-        {
-            ShowDecimalDivisionResult(
-                dividend,
-                divisor);
+        string firstText =
+            FormatIntegerForDisplay(
+                firstNumber);
 
-            return;
-        }
+        string secondText =
+            FormatIntegerForDisplay(
+                secondNumber);
 
-        // Không chuyển sang long vì long chỉ chứa tối đa khoảng 19 chữ số.
-        // decimal của ứng dụng có thể nhận tới 28 chữ số, nên dùng BigInteger
-        // để thực hiện phép chia số nguyên chính xác và không bị overflow.
+        string resultText =
+            FormatIntegerForDisplay(
+                result);
+
+        string operationSymbol =
+            GetOperationSymbol();
+
+        ExpressionLabel.Text =
+            $"{firstText} {operationSymbol} " +
+            $"{secondText} = {resultText}";
+
+        ResultLabel.Text =
+            resultText;
+
+        ExplanationLabel.Text =
+            CreateIntegerExplanation(
+                firstText,
+                secondText,
+                resultText);
+
+        AdditionalLabel.Text =
+            CreateIntegerAdditional(
+                firstNumber,
+                secondNumber,
+                result);
+
+        DivisionDetailBorder.IsVisible =
+            false;
+
+        ResultBorder.IsVisible =
+            true;
+
+        _currentDivisionDividend =
+            0;
+
+        _currentDivisionDivisor =
+            0;
+
+        HideLongDivision();
+    }
+
+    private void ShowIntegerDivisionResult(
+        Int128 dividend,
+        Int128 divisor)
+    {
         BigInteger dividendInteger =
-            new(dividend);
+            (BigInteger)dividend;
 
         BigInteger divisorInteger =
-            new(divisor);
+            (BigInteger)divisor;
 
         BigInteger quotient =
             BigInteger.DivRem(
@@ -361,34 +502,149 @@ public partial class CalculationPage : ContentPage
                 $"{remainderText}.";
         }
 
-        // Drawable đặt tính hiện tại chỉ nên nhận dữ liệu trong vùng Int64.
-        // Với số lớn hơn, vẫn hiện kết quả và lời giải nhưng ẩn hình đặt tính
-        // để tránh overflow ở tầng LongDivisionCalculator/Drawable.
+        AdditionalLabel.Text =
+            CreateIntegerAdditional(
+                dividendInteger,
+                divisorInteger,
+                quotient);
+
         if (CanRenderLongDivision(
                 dividend,
                 divisor))
         {
+            _currentDivisionDividend =
+                (long)dividend;
+
+            _currentDivisionDivisor =
+                (long)divisor;
+
             ShowLongDivision(
-                dividend,
-                divisor);
+                _currentDivisionDividend,
+                _currentDivisionDivisor);
         }
         else
         {
+            _currentDivisionDividend =
+                0;
+
+            _currentDivisionDivisor =
+                0;
+
             HideLongDivision();
         }
-
-        decimal quotientDecimal =
-            (decimal)quotient;
-
-        AdditionalLabel.Text =
-            CreateAdditional(
-                dividend,
-                divisor,
-                quotientDecimal);
     }
-    private static bool IsWholeNumber(decimal number)
+
+    private string CreateIntegerExplanation(
+        string firstNumber,
+        string secondNumber,
+        string result)
     {
-        return decimal.Truncate(number) == number;
+        return _selectedOperation switch
+        {
+            ArithmeticOperation.Add =>
+                $"Ta lấy {firstNumber} cộng với {secondNumber}.\n" +
+                $"{firstNumber} + {secondNumber} = {result}.\n" +
+                $"Vậy kết quả là {result}.",
+
+            ArithmeticOperation.Subtract =>
+                $"Ta lấy {firstNumber} trừ đi {secondNumber}.\n" +
+                $"{firstNumber} − {secondNumber} = {result}.\n" +
+                $"Vậy kết quả là {result}.",
+
+            ArithmeticOperation.Multiply =>
+                $"Ta lấy {firstNumber} nhân với {secondNumber}.\n" +
+                $"{firstNumber} × {secondNumber} = {result}.\n" +
+                $"Vậy kết quả là {result}.",
+
+            _ =>
+                string.Empty
+        };
+    }
+
+    private string CreateIntegerAdditional(
+        BigInteger firstNumber,
+        BigInteger secondNumber,
+        BigInteger result)
+    {
+        string firstText =
+            FormatIntegerForDisplay(
+                firstNumber);
+
+        string secondText =
+            FormatIntegerForDisplay(
+                secondNumber);
+
+        string resultText =
+            FormatIntegerForDisplay(
+                result);
+
+        return _selectedOperation switch
+        {
+            ArithmeticOperation.Add =>
+                BuildAdditionalText(
+                    "Phép cộng có tính giao hoán và kết hợp.",
+                    secondNumber.IsZero
+                        ? "Đang cộng với 0 nên giá trị không thay đổi."
+                        : "Hai số nguyên được cộng theo đúng giá trị hàng.",
+                    "Cộng các chữ số cùng hàng từ phải sang trái và nhớ sang hàng kế tiếp khi cần.",
+                    $"{firstText} + {secondText} = {resultText}"),
+
+            ArithmeticOperation.Subtract =>
+                BuildAdditionalText(
+                    "Phép trừ là phép toán ngược của phép cộng.",
+                    secondNumber.IsZero
+                        ? "Đang trừ đi 0 nên giá trị không thay đổi."
+                        : "Lấy số bị trừ bớt đi số trừ.",
+                    "Trừ các chữ số cùng hàng từ phải sang trái và mượn ở hàng kế tiếp khi cần.",
+                    $"{firstText} − {secondText} = {resultText}"),
+
+            ArithmeticOperation.Multiply =>
+                BuildAdditionalText(
+                    "Phép nhân có tính giao hoán, kết hợp và phân phối đối với phép cộng.",
+                    firstNumber.IsZero ||
+                    secondNumber.IsZero
+                        ? "Có một thừa số bằng 0 nên tích bằng 0."
+                        : firstNumber.IsOne ||
+                          secondNumber.IsOne
+                            ? "Có một thừa số bằng 1 nên tích bằng thừa số còn lại."
+                            : "Tích được tạo bởi phép cộng lặp lại theo các hàng.",
+                    "Nhân lần lượt từng chữ số rồi cộng các tích riêng đã dịch đúng vị trí.",
+                    $"{firstText} × {secondText} = {resultText}"),
+
+            ArithmeticOperation.Divide =>
+                BuildAdditionalText(
+                    "Phép chia là phép toán ngược của phép nhân.",
+                    "Số bị chia được tách thành thương và số dư.",
+                    "Số dư luôn có giá trị tuyệt đối nhỏ hơn số chia.",
+                    $"{firstText} ÷ {secondText} = {resultText}"),
+
+            _ =>
+                string.Empty
+        };
+    }
+
+    private void ShowDivisionByZeroError(decimal firstNumber)
+    {
+        string firstText = FormatNumberForDisplay(firstNumber);
+
+        ErrorLabel.Text = "Bạn không thể chia cho 0.";
+        ErrorBorder.IsVisible = true;
+
+        ExpressionLabel.Text = $"{firstText} ÷ 0";
+        ResultLabel.Text = "Không xác định";
+
+        ExplanationLabel.Text =
+            $"Không thể thực hiện phép tính {firstText} ÷ 0.\n" +
+            "Trong toán học, phép chia cho 0 không được xác định.\n" +
+            "Bạn không thể chia một số cho 0.";
+
+        ResultBorder.IsVisible = true;
+        DivisionDetailBorder.IsVisible = false;
+
+        _currentDivisionDividend = 0;
+        _currentDivisionDivisor = 0;
+
+        HideLongDivision();
     }
 
     private void ShowDecimalDivisionResult(
@@ -453,6 +709,225 @@ public partial class CalculationPage : ContentPage
         ResultBorder.IsVisible = true;
         ShowLongDivision(dividend, divisor);
         AdditionalLabel.Text = CreateAdditional(dividend, divisor, result);
+    }
+
+    private bool TryReadIntegerInput(
+        string? input,
+        string emptyMessage,
+        out Int128 number)
+    {
+        number =
+            Int128.Zero;
+
+        if (string.IsNullOrWhiteSpace(
+                input))
+        {
+            ShowError(
+                emptyMessage);
+
+            return false;
+        }
+
+        string normalizedInput =
+            NormalizeNumberForParsing(
+                input.Trim());
+
+        if (!TryParseInt128Input(
+                normalizedInput,
+                out number))
+        {
+            ShowError(
+                $"Giá trị \"{input}\" không phải là số nguyên hợp lệ " +
+                $"trong giới hạn {MaxIntegerInputDigits} chữ số.");
+
+            return false;
+        }
+
+        int digitCount =
+            CountIntegerDigits(
+                number);
+
+        if (digitCount >
+            MaxIntegerInputDigits)
+        {
+            ShowError(
+                $"Số nguyên chỉ được nhập tối đa " +
+                $"{MaxIntegerInputDigits} chữ số.");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryParseInt128Input(
+        string text,
+        out Int128 value)
+    {
+        value =
+            Int128.Zero;
+
+        if (!text.Contains(
+                'e'))
+        {
+            return Int128.TryParse(
+                text,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out value);
+        }
+
+        if (!TryParseScientificInteger(
+                text,
+                out BigInteger bigValue) ||
+            bigValue <
+                (BigInteger)Int128.MinValue ||
+            bigValue >
+                (BigInteger)Int128.MaxValue)
+        {
+            return false;
+        }
+
+        value =
+            (Int128)bigValue;
+
+        return true;
+    }
+
+    private static bool TryParseScientificInteger(
+        string text,
+        out BigInteger value)
+    {
+        value =
+            BigInteger.Zero;
+
+        int exponentIndex =
+            text.IndexOf(
+                'e');
+
+        if (exponentIndex <= 0 ||
+            exponentIndex !=
+            text.LastIndexOf(
+                'e') ||
+            exponentIndex >=
+            text.Length - 1)
+        {
+            return false;
+        }
+
+        string mantissaText =
+            text[..exponentIndex];
+
+        string exponentText =
+            text[(exponentIndex + 1)..];
+
+        if (!int.TryParse(
+                exponentText,
+                NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out int exponent))
+        {
+            return false;
+        }
+
+        bool isNegative =
+            mantissaText.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        if (isNegative)
+        {
+            mantissaText =
+                mantissaText[1..];
+        }
+
+        int decimalPointIndex =
+            mantissaText.IndexOf(
+                '.');
+
+        if (decimalPointIndex !=
+            mantissaText.LastIndexOf(
+                '.'))
+        {
+            return false;
+        }
+
+        int decimalPlaces =
+            decimalPointIndex < 0
+                ? 0
+                : mantissaText.Length -
+                  decimalPointIndex -
+                  1;
+
+        string coefficientText =
+            mantissaText.Replace(
+                ".",
+                string.Empty);
+
+        if (coefficientText.Length == 0 ||
+            !coefficientText.All(
+                char.IsDigit) ||
+            !BigInteger.TryParse(
+                coefficientText,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out BigInteger coefficient))
+        {
+            return false;
+        }
+
+        int power =
+            exponent -
+            decimalPlaces;
+
+        if (power >= 0)
+        {
+            value =
+                coefficient *
+                BigInteger.Pow(
+                    10,
+                    power);
+        }
+        else
+        {
+            BigInteger divisor =
+                BigInteger.Pow(
+                    10,
+                    -power);
+
+            value =
+                BigInteger.DivRem(
+                    coefficient,
+                    divisor,
+                    out BigInteger remainder);
+
+            if (!remainder.IsZero)
+            {
+                value =
+                    BigInteger.Zero;
+
+                return false;
+            }
+        }
+
+        if (isNegative)
+        {
+            value =
+                BigInteger.Negate(
+                    value);
+        }
+
+        return true;
+    }
+
+    private static int CountIntegerDigits(
+        Int128 value)
+    {
+        return BigInteger.Abs(
+                (BigInteger)value)
+            .ToString(
+                CultureInfo.InvariantCulture)
+            .Length;
     }
 
     private bool TryReadNumber(
@@ -706,6 +1181,9 @@ public partial class CalculationPage : ContentPage
             resultText);
 
         AdditionalLabel.Text = CreateAdditional(firstNumber, secondNumber, result);
+
+        _currentDivisionDividend = 0;
+        _currentDivisionDivisor = 0;
 
         ResultBorder.IsVisible = true;
     }
@@ -1612,8 +2090,9 @@ public partial class CalculationPage : ContentPage
             NumberInputType.Integer)
         {
             NumberTypeDescriptionLabel.Text =
-                "Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn " +
-                "được thêm tự động, ví dụ: 1,000 hoặc -25,000.";
+                $"Nhập số nguyên tối đa {MaxIntegerInputDigits} chữ số; " +
+                "dấu phẩy phân nhóm hàng nghìn được thêm tự động. " +
+                "Kết quả được tính bằng BigInteger.";
 
             FirstNumberEntry.Placeholder =
                 "Ví dụ: 100,000";
@@ -1625,9 +2104,10 @@ public partial class CalculationPage : ContentPage
         {
             NumberTypeDescriptionLabel.Text =
                 $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm; " +
-                "dấu phẩy phân nhóm hàng nghìn được thêm tự động, " +
-                "ví dụ: 2,500.75.";
+                $"{MaxDecimalPlaces} chữ số sau dấu chấm và " +
+                $"{MaxDecimalInputSignificantDigits} chữ số có nghĩa; " +
+                "dấu phẩy phân nhóm hàng nghìn được thêm tự động. " +
+                "Đầu vào và kết quả được xử lý bằng decimal.";
 
             FirstNumberEntry.Placeholder =
                 "Ví dụ: 2,500.75";
@@ -1715,12 +2195,37 @@ public partial class CalculationPage : ContentPage
         if (sender is not Entry entry ||
             !_entryScientificCodeValues.TryGetValue(
                 entry,
-                out string scientificCode) ||
-            !decimal.TryParse(
+                out string scientificCode))
+        {
+            return;
+        }
+
+        if (_selectedNumberType ==
+            NumberInputType.Integer)
+        {
+            if (!TryParseInt128Input(
+                    scientificCode,
+                    out Int128 integerValue))
+            {
+                return;
+            }
+
+            _entryScientificCodeValues.Remove(
+                entry);
+
+            SetEntryTextWithoutValidation(
+                entry,
+                FormatInteger(
+                    (BigInteger)integerValue));
+
+            return;
+        }
+
+        if (!decimal.TryParse(
                 scientificCode,
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture,
-                out decimal number))
+                out decimal decimalValue))
         {
             return;
         }
@@ -1731,7 +2236,7 @@ public partial class CalculationPage : ContentPage
         SetEntryTextWithoutValidation(
             entry,
             FormatNumber(
-                number));
+                decimalValue));
     }
 
     private void OnNumberEntryUnfocused(
@@ -1757,18 +2262,35 @@ public partial class CalculationPage : ContentPage
             NormalizeNumberForParsing(
                 currentText);
 
+        if (_selectedNumberType ==
+            NumberInputType.Integer)
+        {
+            if (!TryParseInt128Input(
+                    normalizedText,
+                    out Int128 integerValue))
+            {
+                return;
+            }
+
+            ApplyIntegerEntryDisplayValue(
+                entry,
+                integerValue);
+
+            return;
+        }
+
         if (!decimal.TryParse(
                 normalizedText,
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture,
-                out decimal number))
+                out decimal decimalValue))
         {
             return;
         }
 
         string standardText =
             FormatNumber(
-                number);
+                decimalValue);
 
         if (CountNumericDigits(
                 standardText) <=
@@ -1777,17 +2299,87 @@ public partial class CalculationPage : ContentPage
             _entryScientificCodeValues.Remove(
                 entry);
 
+            SetEntryTextWithoutValidation(
+                entry,
+                standardText);
+
             return;
         }
 
         _entryScientificCodeValues[entry] =
             FormatScientificForCode(
-                number);
+                decimalValue);
 
         SetEntryTextWithoutValidation(
             entry,
             FormatScientificForDisplay(
-                number));
+                decimalValue));
+    }
+
+    private void ApplyIntegerEntryDisplayValue(
+        Entry entry,
+        Int128 value)
+    {
+        BigInteger bigValue =
+            (BigInteger)value;
+
+        if (CountIntegerDigits(
+                value) <=
+            ScientificDisplayDigitThreshold)
+        {
+            _entryScientificCodeValues.Remove(
+                entry);
+
+            SetEntryTextWithoutValidation(
+                entry,
+                FormatInteger(
+                    bigValue));
+
+            return;
+        }
+
+        _entryScientificCodeValues[entry] =
+            FormatIntegerScientificForCode(
+                bigValue);
+
+        SetEntryTextWithoutValidation(
+            entry,
+            FormatIntegerForDisplay(
+                bigValue));
+    }
+
+    private static string FormatIntegerScientificForCode(
+        BigInteger value)
+    {
+        if (value.IsZero)
+        {
+            return "0e0";
+        }
+
+        string sign =
+            value.Sign < 0
+                ? "-"
+                : string.Empty;
+
+        string digits =
+            BigInteger.Abs(
+                value)
+            .ToString(
+                CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length -
+            1;
+
+        string mantissa =
+            digits.Length == 1
+                ? digits
+                : $"{digits[0]}.{digits[1..]}"
+                    .TrimEnd('0')
+                    .TrimEnd('.');
+
+        return
+            $"{sign}{mantissa}e{exponent}";
     }
 
     private void SetEntryTextWithoutValidation(
@@ -2072,7 +2664,7 @@ public partial class CalculationPage : ContentPage
         {
             ErrorLabel.Text =
                 $"Số nguyên chỉ được chứa chữ số, một dấu âm ở đầu " +
-                $"và tối đa {MaxInputSignificantDigits} chữ số. " +
+                $"và tối đa {MaxIntegerInputDigits} chữ số. " +
                 "Dấu phẩy phân nhóm được ứng dụng thêm tự động.";
         }
         else
@@ -2080,7 +2672,7 @@ public partial class CalculationPage : ContentPage
             ErrorLabel.Text =
                 $"Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, " +
                 $"tối đa một dấu chấm, tối đa {MaxDecimalPlaces} chữ số " +
-                $"sau dấu chấm và tối đa {MaxInputSignificantDigits} chữ số " +
+                $"sau dấu chấm và tối đa {MaxDecimalInputSignificantDigits} chữ số " +
                 "tổng cộng; dấu phẩy được thêm tự động.";
         }
 
@@ -2107,8 +2699,14 @@ public partial class CalculationPage : ContentPage
             return false;
         }
 
+        int maximumDigitCount =
+            _selectedNumberType ==
+            NumberInputType.Integer
+                ? MaxIntegerInputDigits
+                : MaxDecimalInputSignificantDigits;
+
         if (CountDigits(normalizedText) >
-            MaxInputSignificantDigits)
+            maximumDigitCount)
         {
             return false;
         }
@@ -2215,8 +2813,14 @@ public partial class CalculationPage : ContentPage
             return false;
         }
 
+        int maximumDigitCount =
+            _selectedNumberType ==
+            NumberInputType.Integer
+                ? MaxIntegerInputDigits
+                : MaxDecimalInputSignificantDigits;
+
         if (CountDigits(normalizedText) >
-            MaxInputSignificantDigits)
+            maximumDigitCount)
         {
             return false;
         }
@@ -2301,6 +2905,20 @@ public partial class CalculationPage : ContentPage
         }
 
         return digitCount;
+    }
+
+    private static bool CanRenderLongDivision(
+        Int128 dividend,
+        Int128 divisor)
+    {
+        return dividend >=
+               (Int128)long.MinValue &&
+               dividend <=
+               (Int128)long.MaxValue &&
+               divisor >=
+               (Int128)long.MinValue &&
+               divisor <=
+               (Int128)long.MaxValue;
     }
 
     private static bool CanRenderLongDivision(

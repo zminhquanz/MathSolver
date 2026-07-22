@@ -718,6 +718,42 @@ public static class LocalizationService
             @"Ta chuyển dấu phẩy của cả số bị chia và số chia sang phải (?<places>\d+) chữ số:",
             "Move the decimal points of both the dividend and divisor ${places} places to the right:");
 
+        text = Regex.Replace(
+            text,
+            @"Giá trị ""(?<value>.+?)"" không phải là số nguyên hợp lệ trong giới hạn (?<digits>\d+) chữ số\.",
+            "The value \"${value}\" is not a valid integer within the ${digits}-digit limit.");
+
+        text = Regex.Replace(
+            text,
+            @"(?<field>[^.\n]+) phải là số nguyên hợp lệ, tối đa (?<digits>\d+) chữ số\.",
+            match =>
+                $"{TranslateFieldName(match.Groups["field"].Value)} must be a valid integer with at most {match.Groups["digits"].Value} digits.");
+
+        text = Regex.Replace(
+            text,
+            @"Nhập số nguyên tối đa (?<digits>\d+) chữ số bằng Int128\. Kết quả dùng BigInteger; nếu x không phải số nguyên, ứng dụng hiển thị phân số chính xác\.",
+            "Enter integers with at most ${digits} digits using Int128. Results use BigInteger; if x is not an integer, the app displays an exact fraction.");
+
+        text = Regex.Replace(
+            text,
+            @"Dùng dấu chấm cho phần thập phân, tối đa (?<places>\d+) chữ số sau dấu chấm và (?<digits>\d+) chữ số có nghĩa\. Đầu vào và kết quả được xử lý bằng decimal\.",
+            "Use a decimal point, with at most ${places} decimal places and ${digits} significant digits. Inputs and results are processed with decimal.");
+
+        text = Regex.Replace(
+            text,
+            @"Nhập số nguyên tối đa (?<digits>\d+) chữ số; dấu phẩy phân nhóm hàng nghìn được thêm tự động\. Kết quả được tính bằng BigInteger\.",
+            "Enter an integer with at most ${digits} digits; thousands separators are added automatically. Results are calculated with BigInteger.");
+
+        text = Regex.Replace(
+            text,
+            @"Dùng dấu chấm cho phần thập phân, tối đa (?<places>\d+) chữ số sau dấu chấm và (?<digits>\d+) chữ số có nghĩa; dấu phẩy phân nhóm hàng nghìn được thêm tự động\. Đầu vào và kết quả được xử lý bằng decimal\.",
+            "Use a decimal point, with at most ${places} decimal places and ${digits} significant digits; thousands separators are added automatically. Inputs and results are processed with decimal.");
+
+        text = Regex.Replace(
+            text,
+            @"Vế trái ≈ (?<left>.+?); vế phải = (?<right>.+?)\.",
+            "Left side ≈ ${left}; right side = ${right}.");
+
         return text;
     }
 
@@ -931,6 +967,11 @@ public static class LocalizationService
             ("Số chia x phải khác 0.", "The divisor x must not be 0."),
             ("Mẫu số chung nhỏ nhất là bội chung nhỏ nhất của hai mẫu số.", "The least common denominator is the least common multiple of the two denominators."),
             ("Vì phép tính có số thập phân nên kết quả được trình bày theo dạng số thập phân.", "Because the calculation contains decimals, the result is displayed as a decimal."),
+            ("Nhập số nguyên tối đa 38 chữ số; kết quả được tính bằng BigInteger.", "Enter an integer with at most 38 digits; results are calculated with BigInteger."),
+            ("Tử số và mẫu số tối đa 38 chữ số; kết quả được tính bằng BigInteger và mẫu số phải khác 0.", "Numerators and denominators have at most 38 digits; results are calculated with BigInteger, and denominators must not be 0."),
+            ("Tử số và mẫu số chỉ được nhập số nguyên, tối đa 38 chữ số; không được dùng dấu chấm (.) hoặc dấu phẩy (,).", "Numerators and denominators must be integers with at most 38 digits; decimal points and commas are not allowed."),
+            ("Kết quả vượt quá phạm vi của kiểu decimal.", "The result exceeds the range of the decimal type."),
+            ("Sai khác nhỏ xuất hiện do giới hạn làm tròn của decimal.", "The small difference is caused by decimal rounding limits."),
             ("Sau đó thực hiện phép chia đặt tính như chia số tự nhiên.", "Then perform long division as with whole numbers.")
         ];
 
@@ -948,6 +989,25 @@ public static class LocalizationService
     {
         (string Vietnamese, string English)[] pairs =
         [
+            ("Kết quả được tính bằng BigInteger.", "Results are calculated with BigInteger."),
+            ("Đầu vào và kết quả được xử lý bằng decimal.", "Inputs and results are processed with decimal."),
+            ("Nếu x không phải số nguyên, ứng dụng hiển thị phân số chính xác.", "If x is not an integer, the app displays an exact fraction."),
+            ("Phép cộng có tính giao hoán và kết hợp.", "Addition is commutative and associative."),
+            ("Hai số nguyên được cộng theo đúng giá trị hàng.", "The integers are added by matching place values."),
+            ("Đang cộng với 0 nên giá trị không thay đổi.", "Adding 0 leaves the value unchanged."),
+            ("Cộng các chữ số cùng hàng từ phải sang trái và nhớ sang hàng kế tiếp khi cần.", "Add matching digits from right to left and carry when necessary."),
+            ("Phép trừ là phép toán ngược của phép cộng.", "Subtraction is the inverse of addition."),
+            ("Đang trừ đi 0 nên giá trị không thay đổi.", "Subtracting 0 leaves the value unchanged."),
+            ("Lấy số bị trừ bớt đi số trừ.", "Subtract the subtrahend from the minuend."),
+            ("Trừ các chữ số cùng hàng từ phải sang trái và mượn ở hàng kế tiếp khi cần.", "Subtract matching digits from right to left and borrow when necessary."),
+            ("Phép nhân có tính giao hoán, kết hợp và phân phối đối với phép cộng.", "Multiplication is commutative, associative, and distributive over addition."),
+            ("Có một thừa số bằng 0 nên tích bằng 0.", "One factor is 0, so the product is 0."),
+            ("Có một thừa số bằng 1 nên tích bằng thừa số còn lại.", "One factor is 1, so the product equals the other factor."),
+            ("Tích được tạo bởi phép cộng lặp lại theo các hàng.", "The product is formed from repeated partial products by place value."),
+            ("Nhân lần lượt từng chữ số rồi cộng các tích riêng đã dịch đúng vị trí.", "Multiply by each digit, shift each partial product, and then add them."),
+            ("Phép chia là phép toán ngược của phép nhân.", "Division is the inverse of multiplication."),
+            ("Số bị chia được tách thành thương và số dư.", "The dividend is decomposed into a quotient and a remainder."),
+            ("Số dư luôn có giá trị tuyệt đối nhỏ hơn số chia.", "The absolute value of the remainder is always smaller than the divisor."),
             ("Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải.", "This software supports learning, result checking, and understanding calculation steps and solutions."),
             ("Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ.", "Do not use it to replace all your own work or copy answers without thinking."),
             ("Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu.", "Try the problem first, then use the software to check your work and review unfamiliar steps."),

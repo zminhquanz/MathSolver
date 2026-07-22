@@ -254,7 +254,7 @@
 
                             <Label
                                 x:Name="NumberTypeDescriptionLabel"
-                                Text="Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn được thêm tự động, ví dụ: 1,000 hoặc -25,000."
+                                Text="Nhập số nguyên tối đa 38 chữ số; kết quả được tính bằng BigInteger."
                                 FontSize="13"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
