@@ -597,7 +597,7 @@ public partial class QuadraticEquationView : ContentView
         double bSquared =
             b * b;
 
-        // API scalar đa nền tảng. .NET tự chọn cách triển khai
+        // API scalar đa nền tảng .NET tự chọn cách triển khai
         // phù hợp cho x86/x64, ARM64 hoặc fallback phần mềm.
         return Math.FusedMultiplyAdd(
             -4d * a,
