@@ -447,6 +447,9 @@
 
             </Border>
 
+
+            
+
             <!-- 3. Lời giải chi tiết -->
             <Border
                 x:Name="SolutionBorder"
@@ -589,6 +592,124 @@
                 </VerticalStackLayout>
 
             </Border>
+
+<!-- Đồ thị parabol sau khi có kết quả -->
+            <Border
+                x:Name="GraphBorder"
+                IsVisible="False"
+                Padding="14"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="10">
+
+                    <Grid
+                        ColumnDefinitions="*,Auto,Auto,Auto"
+                        ColumnSpacing="8">
+
+                        <VerticalStackLayout
+                            Grid.Column="0"
+                            Spacing="2"
+                            VerticalOptions="Center">
+
+                            <Label
+                                Text="Đồ thị parabol"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Label
+                                x:Name="GraphStatusLabel"
+                                FontSize="12"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        </VerticalStackLayout>
+
+                        <Button
+                            Grid.Column="1"
+                            Text="−"
+                            WidthRequest="46"
+                            HeightRequest="42"
+                            Padding="0"
+                            CornerRadius="10"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            AutomationProperties.Name="Thu nhỏ đồ thị"
+                            Clicked="OnGraphZoomOutClicked" />
+
+                        <Button
+                            x:Name="GraphResetZoomButton"
+                            Grid.Column="2"
+                            Text="100%"
+                            MinimumWidthRequest="74"
+                            HeightRequest="42"
+                            Padding="10,0"
+                            CornerRadius="10"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            TextColor="{DynamicResource PrimaryColor}"
+                            AutomationProperties.Name="Đặt lại mức thu phóng"
+                            Clicked="OnGraphResetZoomClicked" />
+
+                        <Button
+                            Grid.Column="3"
+                            Text="+"
+                            WidthRequest="46"
+                            HeightRequest="42"
+                            Padding="0"
+                            CornerRadius="10"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            AutomationProperties.Name="Phóng to đồ thị"
+                            Clicked="OnGraphZoomInClicked" />
+
+                    </Grid>
+
+                    <Border
+                        Padding="6"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        Stroke="{DynamicResource BorderBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+
+                        <GraphicsView
+                            x:Name="ParabolaGraphicsView"
+                            HeightRequest="460"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Fill"
+                            InputTransparent="False"
+                            StartInteraction="OnGraphStartInteraction"
+                            DragInteraction="OnGraphDragInteraction"
+                            EndInteraction="OnGraphEndInteraction"
+                            CancelInteraction="OnGraphCancelInteraction" />
+
+                    </Border>
+
+                    <Label
+                        Text="Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%."
+                        FontSize="12"
+                        HorizontalTextAlignment="Center"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                </VerticalStackLayout>
+
+            </Border>
+
 
             <!-- Lưu ý khi sử dụng -->
             <Border

@@ -1,3 +1,4 @@
+using MathSolver.Graphics;
 using MathSolver.Services;
 using System.Globalization;
 using System.Text;
@@ -36,12 +37,42 @@ public partial class QuadraticEquationView : ContentView
         _pendingRestoredEntryTexts =
             new();
 
+    private readonly ParabolaGraphDrawable
+        _parabolaGraphDrawable =
+            new();
+
+    private Microsoft.Maui.Graphics.PointF?
+        _lastGraphPointer;
+
+    private bool _isGraphThemeSubscribed;
+
+#if WINDOWS
+    private Microsoft.UI.Xaml.UIElement?
+        _windowsGraphElement;
+#endif
+
     public QuadraticEquationView()
     {
         InitializeComponent();
 
+        ParabolaGraphicsView.Drawable =
+            _parabolaGraphDrawable;
+
+        ParabolaGraphicsView.HandlerChanged +=
+            OnParabolaGraphicsViewHandlerChanged;
+
+        Loaded +=
+            OnQuadraticViewLoaded;
+
+        Unloaded +=
+            OnQuadraticViewUnloaded;
+
+        ApplyCurrentGraphTheme();
+
         LocalizationService.Attach(
             this);
+
+        UpdateGraphStatus();
 
         QuadraticContent.WidthRequest =
             QuadraticMaximumContentWidth;
@@ -53,6 +84,188 @@ public partial class QuadraticEquationView : ContentView
 
         UpdateEquationPreview();
     }
+
+    private void OnQuadraticViewLoaded(
+        object? sender,
+        EventArgs e)
+    {
+        SubscribeGraphThemeChanges();
+        ApplyCurrentGraphTheme();
+
+#if WINDOWS
+        AttachWindowsGraphMouseWheel();
+#endif
+    }
+
+    private void OnQuadraticViewUnloaded(
+        object? sender,
+        EventArgs e)
+    {
+        UnsubscribeGraphThemeChanges();
+
+#if WINDOWS
+        DetachWindowsGraphMouseWheel();
+#endif
+    }
+
+    private void SubscribeGraphThemeChanges()
+    {
+        if (_isGraphThemeSubscribed ||
+            Application.Current is not Application application)
+        {
+            return;
+        }
+
+        application.RequestedThemeChanged +=
+            OnRequestedThemeChanged;
+
+        _isGraphThemeSubscribed =
+            true;
+    }
+
+    private void UnsubscribeGraphThemeChanges()
+    {
+        if (!_isGraphThemeSubscribed ||
+            Application.Current is not Application application)
+        {
+            return;
+        }
+
+        application.RequestedThemeChanged -=
+            OnRequestedThemeChanged;
+
+        _isGraphThemeSubscribed =
+            false;
+    }
+
+    private void OnRequestedThemeChanged(
+        object? sender,
+        AppThemeChangedEventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                _parabolaGraphDrawable.SetDarkTheme(
+                    e.RequestedTheme ==
+                    AppTheme.Dark);
+
+                ParabolaGraphicsView.Invalidate();
+            });
+    }
+
+    private void ApplyCurrentGraphTheme()
+    {
+        AppTheme requestedTheme =
+            Application.Current?.RequestedTheme ??
+            AppTheme.Light;
+
+        _parabolaGraphDrawable.SetDarkTheme(
+            requestedTheme ==
+            AppTheme.Dark);
+    }
+
+    private void OnParabolaGraphicsViewHandlerChanged(
+        object? sender,
+        EventArgs e)
+    {
+#if WINDOWS
+        AttachWindowsGraphMouseWheel();
+#endif
+    }
+
+#if WINDOWS
+    private void AttachWindowsGraphMouseWheel()
+    {
+        Microsoft.UI.Xaml.UIElement?
+            currentElement =
+                ParabolaGraphicsView.Handler?.PlatformView
+                as Microsoft.UI.Xaml.UIElement;
+
+        if (ReferenceEquals(
+                currentElement,
+                _windowsGraphElement))
+        {
+            return;
+        }
+
+        DetachWindowsGraphMouseWheel();
+
+        _windowsGraphElement =
+            currentElement;
+
+        if (_windowsGraphElement is null)
+        {
+            return;
+        }
+
+        _windowsGraphElement.PointerWheelChanged +=
+            OnWindowsGraphPointerWheelChanged;
+    }
+
+    private void DetachWindowsGraphMouseWheel()
+    {
+        if (_windowsGraphElement is null)
+        {
+            return;
+        }
+
+        _windowsGraphElement.PointerWheelChanged -=
+            OnWindowsGraphPointerWheelChanged;
+
+        _windowsGraphElement =
+            null;
+    }
+
+    private void OnWindowsGraphPointerWheelChanged(
+        object sender,
+        Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (!_parabolaGraphDrawable.HasEquation ||
+            _windowsGraphElement is null)
+        {
+            return;
+        }
+
+        var pointerPoint =
+            e.GetCurrentPoint(
+                _windowsGraphElement);
+
+        if (pointerPoint.Properties.IsHorizontalMouseWheel)
+        {
+            return;
+        }
+
+        int wheelDelta =
+            pointerPoint.Properties.MouseWheelDelta;
+
+        if (wheelDelta == 0)
+        {
+            return;
+        }
+
+        bool zoomChanged =
+            _parabolaGraphDrawable.ZoomAtPixel(
+                (float)pointerPoint.Position.X,
+                (float)pointerPoint.Position.Y,
+                zoomIn:
+                    wheelDelta >
+                    0);
+
+        if (!zoomChanged)
+        {
+            return;
+        }
+
+        UpdateGraphStatus();
+
+        ParabolaGraphicsView.Invalidate();
+
+        // Không để ScrollView cha cuộn trang khi con trỏ đang nằm
+        // trên đồ thị và người dùng chủ động zoom bằng con lăn.
+        e.Handled =
+            true;
+    }
+#endif
 
     protected override void OnSizeAllocated(
         double width,
@@ -1066,6 +1279,11 @@ public partial class QuadraticEquationView : ContentView
                 $"x₂ = {secondRootText}";
         }
 
+        ShowParabolaGraph(
+            a,
+            b,
+            c);
+
         ErrorBorder.IsVisible =
             false;
 
@@ -1074,6 +1292,159 @@ public partial class QuadraticEquationView : ContentView
 
         SolutionBorder.IsVisible =
             true;
+    }
+
+    private void OnGraphStartInteraction(
+        object? sender,
+        TouchEventArgs e)
+    {
+        if (e.Touches.Length == 0)
+        {
+            _lastGraphPointer =
+                null;
+
+            return;
+        }
+
+        _lastGraphPointer =
+            e.Touches[0];
+    }
+
+    private void OnGraphDragInteraction(
+        object? sender,
+        TouchEventArgs e)
+    {
+        if (!_lastGraphPointer.HasValue ||
+            e.Touches.Length == 0)
+        {
+            return;
+        }
+
+        Microsoft.Maui.Graphics.PointF currentPoint =
+            e.Touches[0];
+
+        Microsoft.Maui.Graphics.PointF previousPoint =
+            _lastGraphPointer.Value;
+
+        float deltaX =
+            currentPoint.X -
+            previousPoint.X;
+
+        float deltaY =
+            currentPoint.Y -
+            previousPoint.Y;
+
+        _lastGraphPointer =
+            currentPoint;
+
+        if (_parabolaGraphDrawable.PanByPixels(
+                deltaX,
+                deltaY))
+        {
+            ParabolaGraphicsView.Invalidate();
+        }
+    }
+
+    private void OnGraphEndInteraction(
+        object? sender,
+        TouchEventArgs e)
+    {
+        _lastGraphPointer =
+            null;
+    }
+
+    private void OnGraphCancelInteraction(
+        object? sender,
+        EventArgs e)
+    {
+        _lastGraphPointer =
+            null;
+    }
+
+    private void ShowParabolaGraph(
+        decimal a,
+        decimal b,
+        decimal c)
+    {
+        _lastGraphPointer =
+            null;
+
+        _parabolaGraphDrawable.SetEquation(
+            a,
+            b,
+            c);
+
+        _parabolaGraphDrawable.ResetZoom();
+
+        GraphBorder.IsVisible =
+            true;
+
+        UpdateGraphStatus();
+
+        ParabolaGraphicsView.Invalidate();
+    }
+
+    private void OnGraphZoomInClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (!_parabolaGraphDrawable.HasEquation)
+        {
+            return;
+        }
+
+        _parabolaGraphDrawable.ZoomIn();
+
+        UpdateGraphStatus();
+
+        ParabolaGraphicsView.Invalidate();
+    }
+
+    private void OnGraphZoomOutClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (!_parabolaGraphDrawable.HasEquation)
+        {
+            return;
+        }
+
+        _parabolaGraphDrawable.ZoomOut();
+
+        UpdateGraphStatus();
+
+        ParabolaGraphicsView.Invalidate();
+    }
+
+    private void OnGraphResetZoomClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (!_parabolaGraphDrawable.HasEquation)
+        {
+            return;
+        }
+
+        _lastGraphPointer =
+            null;
+
+        _parabolaGraphDrawable.ResetZoom();
+
+        UpdateGraphStatus();
+
+        ParabolaGraphicsView.Invalidate();
+    }
+
+    private void UpdateGraphStatus()
+    {
+        int zoomPercent =
+            _parabolaGraphDrawable.ZoomPercent;
+
+        GraphStatusLabel.Text =
+            $"Zoom: {zoomPercent}%";
+
+        GraphResetZoomButton.Text =
+            $"{zoomPercent}%";
     }
 
     private void SetResultStateColors(
@@ -1343,6 +1714,9 @@ public partial class QuadraticEquationView : ContentView
 
         SolutionBorder.IsVisible =
             false;
+
+        GraphBorder.IsVisible =
+            false;
     }
 
     private void HideResultAndError()
@@ -1354,6 +1728,9 @@ public partial class QuadraticEquationView : ContentView
             false;
 
         SolutionBorder.IsVisible =
+            false;
+
+        GraphBorder.IsVisible =
             false;
     }
 
