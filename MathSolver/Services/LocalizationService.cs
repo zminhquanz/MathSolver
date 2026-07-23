@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -535,6 +535,40 @@ public static class LocalizationService
     {
         text = Regex.Replace(
             text,
+            @"Vui lòng nhập hệ số (?<name>[abc])\.",
+            "Please enter coefficient ${name}.",
+            RegexOptions.IgnoreCase);
+
+        text = Regex.Replace(
+            text,
+            @"hệ số (?<name>[abc]) phải là số nguyên hợp lệ\.",
+            "Coefficient ${name} must be a valid integer.",
+            RegexOptions.IgnoreCase);
+
+        text = Regex.Replace(
+            text,
+            @"hệ số (?<name>[abc]) chỉ được có tối đa (?<digits>\d+) chữ số\.",
+            "Coefficient ${name} may contain at most ${digits} digits.",
+            RegexOptions.IgnoreCase);
+
+        text = Regex.Replace(
+            text,
+            @"hệ số (?<name>[abc]) không nằm trong phạm vi số nguyên mà ứng dụng hỗ trợ\.",
+            "Coefficient ${name} is outside the integer range supported by the app.",
+            RegexOptions.IgnoreCase);
+
+        text = Regex.Replace(
+            text,
+            @"Vì Δ = (?<delta>.+?) < 0 nên √Δ không phải là một số thực\.",
+            "Because Δ = ${delta} < 0, √Δ is not a real number.");
+
+        text = Regex.Replace(
+            text,
+            @"Phương trình có nghiệm kép x₁ = x₂ = (?<root>.+?)\.",
+            "The equation has one repeated real root: x₁ = x₂ = ${root}.");
+
+        text = Regex.Replace(
+            text,
             @"Vui lòng nhập (?<field>[^.]+)\.",
             match =>
                 $"Please enter {TranslateFieldName(match.Groups["field"].Value)}.");
@@ -780,6 +814,9 @@ public static class LocalizationService
                 ["số bị chia"] = "the dividend",
                 ["số chia"] = "the divisor",
                 ["giá trị đã biết"] = "the known value",
+                ["hệ số a"] = "coefficient a",
+                ["hệ số b"] = "coefficient b",
+                ["hệ số c"] = "coefficient c",
                 ["tổng"] = "the sum",
                 ["hiệu"] = "the difference",
                 ["tích"] = "the product",
@@ -812,6 +849,36 @@ public static class LocalizationService
             ("½ Phân số", "½ Fractions"),
             ("𝑥 Tìm x", "𝑥 Find x"),
             ("△ Hình học", "△ Geometry"),
+            ("x² Phương trình bậc 2", "x² Quadratic Equation"),
+            ("PHƯƠNG TRÌNH BẬC HAI", "QUADRATIC EQUATION"),
+            ("Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết", "Compute the discriminant Δ • Determine the roots • Show detailed solution steps"),
+            ("1. Nhập các hệ số", "1. Enter the coefficients"),
+            ("Chỉ nhập số nguyên, tối đa 15 chữ số cho mỗi hệ số. Hệ số a phải khác 0.", "Enter integers only, with up to 15 digits per coefficient. Coefficient a must be nonzero."),
+            ("Hệ số a", "Coefficient a"),
+            ("Hệ số b", "Coefficient b"),
+            ("Hệ số c", "Coefficient c"),
+            ("Hệ số của x²", "Coefficient of x²"),
+            ("Hệ số của x", "Coefficient of x"),
+            ("Hệ số tự do", "Constant term"),
+            ("Tính nghiệm", "Solve"),
+            ("2. Kết quả", "2. Result"),
+            ("Biệt thức", "Discriminant"),
+            ("3. Lời giải chi tiết", "3. Detailed Solution"),
+            ("Bước 1. Xác định các hệ số", "Step 1. Identify the coefficients"),
+            ("Bước 2. Tính biệt thức Δ", "Step 2. Compute the discriminant Δ"),
+            ("Bước 3. Xét dấu của Δ", "Step 3. Determine the sign of Δ"),
+            ("Bước 3. Tính nghiệm kép", "Step 3. Compute the repeated root"),
+            ("Bước 3. Tính căn bậc hai của Δ", "Step 3. Compute √Δ"),
+            ("Bước 4. Tính hai nghiệm", "Step 4. Compute the two roots"),
+            ("Bước 4. Kết luận", "Step 4. Conclusion"),
+            ("Δ < 0: phương trình vô nghiệm trong tập số thực.", "Δ < 0: The equation has no real roots."),
+            ("Δ = 0: phương trình có nghiệm kép.", "Δ = 0: The equation has one repeated real root."),
+            ("Δ > 0: phương trình có hai nghiệm phân biệt.", "Δ > 0: The equation has two distinct real roots."),
+            ("Vô nghiệm", "No real roots"),
+            ("Phương trình vô nghiệm trong tập số thực ℝ.", "The equation has no real roots."),
+            ("Hệ số a phải khác 0. Khi a = 0, biểu thức không còn là phương trình bậc hai.", "Coefficient a must be nonzero. When a = 0, the expression is no longer a quadratic equation."),
+            ("Kết quả Δ vượt quá phạm vi mà ứng dụng hỗ trợ.", "The value of Δ exceeds the numeric range supported by the app."),
+            ("Nghiệm vượt quá phạm vi mà ứng dụng hỗ trợ.", "The root exceeds the numeric range supported by the app."),
             ("PHÉP TÍNH CƠ BẢN", "BASIC ARITHMETIC"),
             ("Cộng • Trừ • Nhân • Chia", "Add • Subtract • Multiply • Divide"),
             ("1. Chọn phép tính", "1. Choose an operation"),
@@ -989,6 +1056,9 @@ public static class LocalizationService
     {
         (string Vietnamese, string English)[] pairs =
         [
+            ("Phương trình có dạng ax² + bx + c = 0.", "The equation has the form ax² + bx + c = 0."),
+            ("Ta có:", "Given:"),
+            ("Phương trình:", "Equation:"),
             ("Kết quả được tính bằng BigInteger.", "Results are calculated with BigInteger."),
             ("Đầu vào và kết quả được xử lý bằng decimal.", "Inputs and results are processed with decimal."),
             ("Nếu x không phải số nguyên, ứng dụng hiển thị phân số chính xác.", "If x is not an integer, the app displays an exact fraction."),
