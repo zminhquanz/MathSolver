@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentView
     x:Class="MathSolver.Views.FractionView"
@@ -168,9 +168,15 @@
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Label
-                        Text="Tử số và mẫu số tối đa 38 chữ số; kết quả được tính bằng BigInteger và mẫu số phải khác 0."
+                        Text="Tử số và mẫu số phải nằm trong phạm vi Int128 từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; kết quả được tính bằng BigInteger và mẫu số phải khác 0."
                         FontSize="13"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource TextSecondaryColor}" 
+                        HorizontalOptions="Fill"
+                        HorizontalTextAlignment="Center"
+                        VerticalTextAlignment="Center"
+                        LineBreakMode="WordWrap"
+                        LineHeight="1.25"
+                        Margin="12,0,12,2"/>
 
                     <Grid
                         x:Name="FractionInputGrid"

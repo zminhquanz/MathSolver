@@ -1,4 +1,4 @@
-﻿using MathSolver.Services;
+using MathSolver.Services;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
@@ -7,14 +7,43 @@ namespace MathSolver.Views;
 
 public partial class FindXView : ContentView
 {
-    private const int MaxIntegerInputDigits = 38;
-    private const int MaxDecimalInputSignificantDigits = 28;
+    private const int MaxIntegerInputDigits = 39;
     private const int MaxDecimalPlaces = 10;
+
+    private const string Int128InputRangeText =
+        "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727";
+
+    private const string DecimalInputRangeText =
+        "−79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335";
+
+    private static readonly BigInteger MinInt128InputValue =
+        (BigInteger)Int128.MinValue;
+
+    private static readonly BigInteger MaxInt128InputValue =
+        (BigInteger)Int128.MaxValue;
+
+    private static readonly decimal MinDecimalInputValue =
+        decimal.MinValue;
+
+    private static readonly decimal MaxDecimalInputValue =
+        decimal.MaxValue;
+
+    private enum FindXInputValidationError
+    {
+        None,
+        InvalidFormat,
+        OutOfRange
+    }
 
     private FindXOperation _findXOperation = FindXOperation.Add;
     private FindXUnknownPosition _findXUnknownPosition = FindXUnknownPosition.Left;
     private FindXNumberInputType _findXNumberType = FindXNumberInputType.Integer;
     private bool _isUpdatingFindXNumberText;
+
+    private readonly Dictionary<Entry, string>
+        _pendingRestoredEntryTexts =
+            [];
+
     // Responsive bằng code-behind; không dùng VisualStateManager trong XAML.
     private bool? _isCompactInputLayout;
 
@@ -433,7 +462,7 @@ public partial class FindXView : ContentView
             FindXNumberInputType.Integer)
         {
             FindXNumberTypeDescriptionLabel.Text =
-                $"Nhập số nguyên tối đa {MaxIntegerInputDigits} chữ số " +
+                $"Nhập số nguyên trong phạm vi từ {Int128InputRangeText} " +
                 "bằng Int128. Kết quả dùng BigInteger; nếu x không phải " +
                 "số nguyên, ứng dụng hiển thị phân số chính xác.";
 
@@ -447,8 +476,8 @@ public partial class FindXView : ContentView
         {
             FindXNumberTypeDescriptionLabel.Text =
                 $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm và " +
-                $"{MaxDecimalInputSignificantDigits} chữ số có nghĩa. " +
+                $"{MaxDecimalPlaces} chữ số sau dấu chấm và phải nằm " +
+                $"trong phạm vi từ {DecimalInputRangeText}. " +
                 "Đầu vào và kết quả được xử lý bằng decimal.";
 
             FindXKnownValueEntry.Placeholder =
@@ -461,6 +490,7 @@ public partial class FindXView : ContentView
         if (clearInputs)
         {
             _findXScientificCodeValues.Clear();
+            _pendingRestoredEntryTexts.Clear();
 
             SetFindXEntryTextWithoutValidation(
                 FindXKnownValueEntry,
@@ -613,8 +643,32 @@ public partial class FindXView : ContentView
         object? sender,
         TextChangedEventArgs e)
     {
-        if (_isUpdatingFindXNumberText ||
-            sender is not Entry entry)
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string newText =
+            e.NewTextValue ??
+            string.Empty;
+
+        if (_pendingRestoredEntryTexts.TryGetValue(
+                entry,
+                out string? restoredText))
+        {
+            _pendingRestoredEntryTexts.Remove(
+                entry);
+
+            if (string.Equals(
+                    newText,
+                    restoredText,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        if (_isUpdatingFindXNumberText)
         {
             return;
         }
@@ -622,27 +676,49 @@ public partial class FindXView : ContentView
         _findXScientificCodeValues.Remove(
             entry);
 
-        string newText =
-            e.NewTextValue ??
-            string.Empty;
+        FindXInputValidationError validationError =
+            ValidateFindXInputWhileTyping(
+                newText);
 
-        if (!IsValidFindXInputWhileTyping(
-                newText))
+        if (validationError !=
+            FindXInputValidationError.None)
         {
-            SetFindXEntryTextWithoutValidation(
-                entry,
+            string oldText =
                 e.OldTextValue ??
-                string.Empty);
+                string.Empty;
+
+            string message;
+
+            if (validationError ==
+                FindXInputValidationError.OutOfRange)
+            {
+                message =
+                    _findXNumberType ==
+                    FindXNumberInputType.Integer
+                        ? $"Số nguyên phải nằm trong phạm vi từ {Int128InputRangeText}."
+                        : $"Số thập phân phải nằm trong phạm vi từ {DecimalInputRangeText}.";
+            }
+            else
+            {
+                message =
+                    _findXNumberType ==
+                    FindXNumberInputType.Integer
+                        ? "Chỉ được nhập số nguyên; không được nhập " +
+                          "dấu chấm hoặc ký tự khác."
+                        : $"Chỉ được nhập số, một dấu âm ở đầu và " +
+                          $"một dấu chấm; tối đa {MaxDecimalPlaces} " +
+                          "chữ số sau dấu chấm.";
+            }
 
             ShowFindXError(
-                _findXNumberType ==
-                FindXNumberInputType.Integer
-                    ? $"Chỉ được nhập số nguyên, tối đa " +
-                      $"{MaxIntegerInputDigits} chữ số; " +
-                      "không được nhập dấu chấm hoặc ký tự khác."
-                    : $"Chỉ được nhập số, một dấu âm ở đầu và " +
-                      $"một dấu chấm; tối đa {MaxDecimalPlaces} " +
-                      $"chữ số sau dấu chấm.");
+                message);
+
+            _pendingRestoredEntryTexts[entry] =
+                oldText;
+
+            SetFindXEntryTextWithoutValidation(
+                entry,
+                oldText);
 
             UpdateFindXEquationPreview();
             return;
@@ -676,20 +752,19 @@ public partial class FindXView : ContentView
                     logicalPosition));
         }
 
-        // Dữ liệu đã thay đổi nên kết quả cũ không còn hiệu lực.
         FindXResultBorder.IsVisible =
             false;
 
         UpdateFindXEquationPreview();
     }
 
-    private bool IsValidFindXInputWhileTyping(
+    private FindXInputValidationError ValidateFindXInputWhileTyping(
         string text)
     {
         if (string.IsNullOrEmpty(
                 text))
         {
-            return true;
+            return FindXInputValidationError.None;
         }
 
         string normalizedText =
@@ -701,18 +776,9 @@ public partial class FindXView : ContentView
                     '−',
                     '-');
 
-        int maximumDigitCount =
-            _findXNumberType ==
-            FindXNumberInputType.Integer
-                ? MaxIntegerInputDigits
-                : MaxDecimalInputSignificantDigits;
-
-        if (normalizedText.Length == 0 ||
-            CountDigits(
-                normalizedText) >
-            maximumDigitCount)
+        if (normalizedText.Length == 0)
         {
-            return false;
+            return FindXInputValidationError.InvalidFormat;
         }
 
         int startIndex =
@@ -725,14 +791,62 @@ public partial class FindXView : ContentView
 
             if (normalizedText.Length == 1)
             {
-                return true;
+                return FindXInputValidationError.None;
             }
+        }
+
+        if (_findXNumberType ==
+            FindXNumberInputType.Integer)
+        {
+            int digitCount =
+                0;
+
+            for (int index = startIndex;
+                 index < normalizedText.Length;
+                 index++)
+            {
+                char character =
+                    normalizedText[index];
+
+                if (character < '0' ||
+                    character > '9')
+                {
+                    return FindXInputValidationError.InvalidFormat;
+                }
+
+                digitCount++;
+
+                if (digitCount >
+                    MaxIntegerInputDigits)
+                {
+                    return FindXInputValidationError.OutOfRange;
+                }
+            }
+
+            if (!BigInteger.TryParse(
+                    normalizedText,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out BigInteger integerValue))
+            {
+                return FindXInputValidationError.InvalidFormat;
+            }
+
+            return integerValue <
+                       MinInt128InputValue ||
+                   integerValue >
+                       MaxInt128InputValue
+                ? FindXInputValidationError.OutOfRange
+                : FindXInputValidationError.None;
         }
 
         bool hasDecimalPoint =
             false;
 
         int decimalDigitCount =
+            0;
+
+        int totalDigitCount =
             0;
 
         for (int index = startIndex;
@@ -742,9 +856,11 @@ public partial class FindXView : ContentView
             char character =
                 normalizedText[index];
 
-            if (char.IsDigit(
-                    character))
+            if (character >= '0' &&
+                character <= '9')
             {
+                totalDigitCount++;
+
                 if (hasDecimalPoint)
                 {
                     decimalDigitCount++;
@@ -752,28 +868,52 @@ public partial class FindXView : ContentView
                     if (decimalDigitCount >
                         MaxDecimalPlaces)
                     {
-                        return false;
+                        return FindXInputValidationError.InvalidFormat;
                     }
                 }
 
                 continue;
             }
 
-            if (_findXNumberType ==
-                    FindXNumberInputType.Decimal &&
-                character == '.' &&
+            if (character == '.' &&
                 !hasDecimalPoint)
             {
                 hasDecimalPoint =
                     true;
-
                 continue;
             }
 
-            return false;
+            return FindXInputValidationError.InvalidFormat;
         }
 
-        return true;
+        if (totalDigitCount == 0)
+        {
+            return normalizedText is "." or "-."
+                ? FindXInputValidationError.None
+                : FindXInputValidationError.InvalidFormat;
+        }
+
+        string parseText =
+            normalizedText[^1] == '.'
+                ? normalizedText[..^1]
+                : normalizedText;
+
+        if (!decimal.TryParse(
+                parseText,
+                NumberStyles.AllowLeadingSign |
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out decimal decimalValue))
+        {
+            return FindXInputValidationError.OutOfRange;
+        }
+
+        return decimalValue <
+                   MinDecimalInputValue ||
+               decimalValue >
+                   MaxDecimalInputValue
+            ? FindXInputValidationError.OutOfRange
+            : FindXInputValidationError.None;
     }
 
     private void SetFindXEntryTextWithoutValidation(
@@ -1236,8 +1376,8 @@ public partial class FindXView : ContentView
                 out value))
         {
             ShowFindXError(
-                $"{fieldName} phải là số nguyên hợp lệ, " +
-                $"tối đa {MaxIntegerInputDigits} chữ số.");
+                $"{fieldName} phải là số nguyên hợp lệ trong phạm vi " +
+                $"từ {Int128InputRangeText}.");
 
             return false;
         }
@@ -1287,7 +1427,23 @@ public partial class FindXView : ContentView
                 out value))
         {
             ShowFindXError(
-                $"{fieldName} không phải là số thập phân hợp lệ.");
+                $"{fieldName} phải là số thập phân hợp lệ trong phạm vi " +
+                $"từ {DecimalInputRangeText}.");
+
+            return false;
+        }
+
+        if (value <
+                MinDecimalInputValue ||
+            value >
+                MaxDecimalInputValue)
+        {
+            ShowFindXError(
+                $"{fieldName} phải nằm trong phạm vi từ " +
+                $"{DecimalInputRangeText}.");
+
+            value =
+                0m;
 
             return false;
         }
@@ -1502,15 +1658,11 @@ public partial class FindXView : ContentView
             return false;
         }
 
-        int maximumDigitCount =
-            _findXNumberType ==
-            FindXNumberInputType.Integer
-                ? MaxIntegerInputDigits
-                : MaxDecimalInputSignificantDigits;
-
-        if (CountDigits(
+        if (_findXNumberType ==
+                FindXNumberInputType.Integer &&
+            CountDigits(
                 text) >
-            maximumDigitCount)
+            MaxIntegerInputDigits)
         {
             return false;
         }
@@ -1569,7 +1721,27 @@ public partial class FindXView : ContentView
             return false;
         }
 
-        return digitCount > 0;
+        if (digitCount == 0)
+        {
+            return false;
+        }
+
+        if (_findXNumberType ==
+            FindXNumberInputType.Decimal)
+        {
+            return decimal.TryParse(
+                text,
+                NumberStyles.AllowLeadingSign |
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out decimal decimalValue) &&
+                   decimalValue >=
+                   MinDecimalInputValue &&
+                   decimalValue <=
+                   MaxDecimalInputValue;
+        }
+
+        return true;
     }
 
     private FindXDecimalSolution SolveFindXDecimal(
@@ -2892,6 +3064,7 @@ public partial class FindXView : ContentView
         object? sender,
         EventArgs e)
     {
+        _pendingRestoredEntryTexts.Clear();
         _findXScientificCodeValues.Clear();
 
         SetFindXEntryTextWithoutValidation(

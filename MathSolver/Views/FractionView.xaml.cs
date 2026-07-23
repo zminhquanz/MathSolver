@@ -1,4 +1,4 @@
-﻿using MathSolver.Models;
+using MathSolver.Models;
 using MathSolver.Services;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -19,11 +19,21 @@ public partial class FractionView : ContentView
             [];
 
     private const int MaxIntegerInputDigits =
-        38;
+        39;
+
+    private const string Int128InputRangeText =
+        "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727";
+
+    private static readonly BigInteger MinInt128InputValue =
+        (BigInteger)Int128.MinValue;
+
+    private static readonly BigInteger MaxInt128InputValue =
+        (BigInteger)Int128.MaxValue;
 
     private const string IntegerTypingErrorMessage =
-        "Tử số và mẫu số chỉ được nhập số nguyên, tối đa 38 chữ số; " +
-        "không được dùng dấu chấm (.) hoặc dấu phẩy (,).";
+        "Tử số và mẫu số chỉ được nhập số nguyên trong phạm vi từ " +
+        Int128InputRangeText +
+        "; không được dùng dấu chấm (.) hoặc dấu phẩy (,).";
 
     // Giá trị chính xác của Entry được lưu ở dạng khoa học dùng chữ e.
     // Ví dụ: 1.234567890123456789e18.
@@ -341,8 +351,8 @@ public partial class FractionView : ContentView
                 out value))
         {
             ShowError(
-                $"{fieldName} phải là số nguyên hợp lệ, " +
-                $"tối đa {MaxIntegerInputDigits} chữ số.");
+                $"{fieldName} phải là số nguyên hợp lệ trong phạm vi " +
+                $"từ {Int128InputRangeText}.");
 
             return false;
         }
@@ -463,21 +473,24 @@ public partial class FractionView : ContentView
     private static bool IsValidInputWhileTyping(
         string text)
     {
-        // Cho phép xóa trắng Entry và cho phép nhập dấu âm trước,
-        // sau đó người dùng tiếp tục nhập các chữ số.
         if (text.Length == 0 ||
             text is "-" or "−")
         {
             return true;
         }
 
+        string normalizedText =
+            text.Replace(
+                '−',
+                '-');
+
         int firstDigitIndex =
-            text[0] is '-' or '−'
+            normalizedText[0] == '-'
                 ? 1
                 : 0;
 
-        if (firstDigitIndex == 1 &&
-            text.Length == 1)
+        if (firstDigitIndex ==
+            normalizedText.Length)
         {
             return true;
         }
@@ -486,11 +499,14 @@ public partial class FractionView : ContentView
             0;
 
         for (int index = firstDigitIndex;
-             index < text.Length;
+             index < normalizedText.Length;
              index++)
         {
-            if (!char.IsDigit(
-                    text[index]))
+            char character =
+                normalizedText[index];
+
+            if (character < '0' ||
+                character > '9')
             {
                 return false;
             }
@@ -504,7 +520,19 @@ public partial class FractionView : ContentView
             }
         }
 
-        return digitCount > 0;
+        if (!BigInteger.TryParse(
+                normalizedText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out BigInteger integerValue))
+        {
+            return false;
+        }
+
+        return integerValue >=
+                   MinInt128InputValue &&
+               integerValue <=
+                   MaxInt128InputValue;
     }
 
     private void OnFractionEntryFocused(

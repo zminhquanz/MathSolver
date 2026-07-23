@@ -23,22 +23,47 @@ public partial class CalculationPage : ContentPage
     // bằng dạng khoa học dùng chữ e, ví dụ: 1e18.
     private readonly Dictionary<Entry, string> _entryScientificCodeValues = new();
 
+    // Ghi nhớ TextChanged do chương trình khôi phục OldTextValue tạo ra,
+    // để thông báo lỗi phạm vi không bị ẩn ngay sau khi vừa hiển thị.
+    private readonly Dictionary<Entry, string> _pendingRestoredEntryTexts = new();
+
     // Trên giao diện, số có hơn 18 chữ số sẽ được rút gọn thành
     // dạng a × 10ⁿ để không làm vỡ bố cục.
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
 
-    // Số nguyên được nhập bằng Int128. Giới hạn 38 chữ số bảo đảm
-    // mọi giá trị nhập luôn nằm an toàn trong phạm vi Int128.
-    private const int MaxIntegerInputDigits = 38;
+    // Int128 có tối đa 39 chữ số và phải được kiểm tra theo đúng
+    // cận dưới/cận trên, không chỉ theo số lượng chữ số.
+    private const int MaxIntegerInputDigits = 39;
 
-    // decimal hỗ trợ khoảng 28–29 chữ số có nghĩa.
-    // Dùng 28 để mọi giá trị thập phân nhập đều nằm trong vùng an toàn.
-    private const int MaxDecimalInputSignificantDigits = 28;
+    private const string Int128InputRangeText =
+        "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727";
+
+    private const string DecimalInputRangeText =
+        "−79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335";
+
+    private static readonly BigInteger MinInt128InputValue =
+        (BigInteger)Int128.MinValue;
+
+    private static readonly BigInteger MaxInt128InputValue =
+        (BigInteger)Int128.MaxValue;
+
+    private static readonly decimal MinDecimalInputValue =
+        decimal.MinValue;
+
+    private static readonly decimal MaxDecimalInputValue =
+        decimal.MaxValue;
 
     // Chỉ cho phép tối đa 10 chữ số sau dấu chấm.
     // Dấu phẩy chỉ dùng để phân nhóm hàng nghìn.
     private const int MaxDecimalPlaces = 10;
+
+    private enum InputValidationError
+    {
+        None,
+        InvalidFormat,
+        OutOfRange
+    }
 
     private CalculationSubTab _selectedSubTab = CalculationSubTab.Basic;
 
@@ -751,22 +776,8 @@ public partial class CalculationPage : ContentPage
                 out number))
         {
             ShowError(
-                $"Giá trị \"{input}\" không phải là số nguyên hợp lệ " +
-                $"trong giới hạn {MaxIntegerInputDigits} chữ số.");
-
-            return false;
-        }
-
-        int digitCount =
-            CountIntegerDigits(
-                number);
-
-        if (digitCount >
-            MaxIntegerInputDigits)
-        {
-            ShowError(
-                $"Số nguyên chỉ được nhập tối đa " +
-                $"{MaxIntegerInputDigits} chữ số.");
+                $"Giá trị \"{input}\" phải là số nguyên hợp lệ " +
+                $"trong phạm vi từ {Int128InputRangeText}.");
 
             return false;
         }
@@ -997,10 +1008,13 @@ public partial class CalculationPage : ContentPage
                 CultureInfo.InvariantCulture,
                 out number);
 
-        if (!isValid)
+        if (!isValid ||
+            number < MinDecimalInputValue ||
+            number > MaxDecimalInputValue)
         {
             ShowError(
-                $"Giá trị \"{input}\" không phải là số hợp lệ.");
+                $"Giá trị \"{input}\" phải nằm trong phạm vi " +
+                $"decimal từ {DecimalInputRangeText}.");
 
             return false;
         }
@@ -2045,6 +2059,7 @@ public partial class CalculationPage : ContentPage
 
     private void OnClearClicked(object sender, EventArgs e)
     {
+        _pendingRestoredEntryTexts.Clear();
         _entryScientificCodeValues.Clear();
 
         FirstNumberEntry.Text = string.Empty;
@@ -2104,7 +2119,7 @@ public partial class CalculationPage : ContentPage
             NumberInputType.Integer)
         {
             NumberTypeDescriptionLabel.Text =
-                $"Nhập số nguyên tối đa {MaxIntegerInputDigits} chữ số; " +
+                $"Nhập số nguyên trong phạm vi từ {Int128InputRangeText}; " +
                 "dấu phẩy phân nhóm hàng nghìn được thêm tự động. " +
                 "Kết quả được tính bằng BigInteger.";
 
@@ -2118,8 +2133,8 @@ public partial class CalculationPage : ContentPage
         {
             NumberTypeDescriptionLabel.Text =
                 $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm và " +
-                $"{MaxDecimalInputSignificantDigits} chữ số có nghĩa; " +
+                $"{MaxDecimalPlaces} chữ số sau dấu chấm và phải nằm " +
+                $"trong phạm vi từ {DecimalInputRangeText}; " +
                 "dấu phẩy phân nhóm hàng nghìn được thêm tự động. " +
                 "Đầu vào và kết quả được xử lý bằng decimal.";
 
@@ -2138,6 +2153,7 @@ public partial class CalculationPage : ContentPage
         }
 
         _entryScientificCodeValues.Clear();
+        _pendingRestoredEntryTexts.Clear();
 
         FirstNumberEntry.Text =
             string.Empty;
@@ -2398,7 +2414,8 @@ public partial class CalculationPage : ContentPage
 
     private void SetEntryTextWithoutValidation(
         Entry entry,
-        string text)
+        string text,
+        int? cursorPosition = null)
     {
         _isUpdatingNumberText =
             true;
@@ -2407,7 +2424,11 @@ public partial class CalculationPage : ContentPage
             text;
 
         entry.CursorPosition =
-            text.Length;
+            Math.Clamp(
+                cursorPosition ??
+                text.Length,
+                0,
+                text.Length);
 
         entry.SelectionLength =
             0;
@@ -2420,12 +2441,34 @@ public partial class CalculationPage : ContentPage
         object sender,
         TextChangedEventArgs e)
     {
-        if (_isUpdatingNumberText)
+        if (sender is not Entry entry)
         {
             return;
         }
 
-        if (sender is not Entry entry)
+        string newText =
+            e.NewTextValue ??
+            string.Empty;
+
+        // SetEntryTextWithoutValidation có thể phát sinh thêm TextChanged.
+        // Bỏ qua đúng sự kiện khôi phục để ErrorBorder không biến mất.
+        if (_pendingRestoredEntryTexts.TryGetValue(
+                entry,
+                out string? restoredText))
+        {
+            _pendingRestoredEntryTexts.Remove(
+                entry);
+
+            if (string.Equals(
+                    newText,
+                    restoredText,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        if (_isUpdatingNumberText)
         {
             return;
         }
@@ -2433,28 +2476,34 @@ public partial class CalculationPage : ContentPage
         _entryScientificCodeValues.Remove(
             entry);
 
-        string newText =
-            e.NewTextValue ??
-            string.Empty;
+        InputValidationError validationError =
+            ValidateInputWhileTyping(
+                newText);
 
-        if (!IsValidInputWhileTyping(
-                newText))
+        if (validationError !=
+            InputValidationError.None)
         {
-            // Khôi phục nội dung hợp lệ trước đó.
-            _isUpdatingNumberText =
-                true;
-
-            entry.Text =
+            string oldText =
                 e.OldTextValue ??
                 string.Empty;
 
-            entry.CursorPosition =
-                entry.Text.Length;
+            if (validationError ==
+                InputValidationError.OutOfRange)
+            {
+                ShowInputRangeError();
+            }
+            else
+            {
+                ShowInputTypeError();
+            }
 
-            _isUpdatingNumberText =
-                false;
+            _pendingRestoredEntryTexts[entry] =
+                oldText;
 
-            ShowInputTypeError();
+            SetEntryTextWithoutValidation(
+                entry,
+                oldText);
+
             return;
         }
 
@@ -2478,22 +2527,12 @@ public partial class CalculationPage : ContentPage
                 newText,
                 oldCursorPosition);
 
-        _isUpdatingNumberText =
-            true;
-
-        entry.Text =
-            formattedText;
-
-        entry.CursorPosition =
+        SetEntryTextWithoutValidation(
+            entry,
+            formattedText,
             FindCursorPosition(
                 formattedText,
-                logicalPosition);
-
-        entry.SelectionLength =
-            0;
-
-        _isUpdatingNumberText =
-            false;
+                logicalPosition));
     }
 
     private static string FormatNumberWhileTyping(
@@ -2674,20 +2713,19 @@ public partial class CalculationPage : ContentPage
 
     private void ShowInputTypeError()
     {
-        if (_selectedNumberType == NumberInputType.Integer)
+        if (_selectedNumberType ==
+            NumberInputType.Integer)
         {
             ErrorLabel.Text =
-                $"Số nguyên chỉ được chứa chữ số, một dấu âm ở đầu " +
-                $"và tối đa {MaxIntegerInputDigits} chữ số. " +
+                "Số nguyên chỉ được chứa chữ số và một dấu âm ở đầu. " +
                 "Dấu phẩy phân nhóm được ứng dụng thêm tự động.";
         }
         else
         {
             ErrorLabel.Text =
                 $"Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, " +
-                $"tối đa một dấu chấm, tối đa {MaxDecimalPlaces} chữ số " +
-                $"sau dấu chấm và tối đa {MaxDecimalInputSignificantDigits} chữ số " +
-                "tổng cộng; dấu phẩy được thêm tự động.";
+                $"tối đa một dấu chấm và tối đa {MaxDecimalPlaces} chữ số " +
+                "sau dấu chấm; dấu phẩy được thêm tự động.";
         }
 
         ErrorBorder.IsVisible = true;
@@ -2695,40 +2733,45 @@ public partial class CalculationPage : ContentPage
         DivisionDetailBorder.IsVisible = false;
     }
 
-    private bool IsValidInputWhileTyping(
+    private void ShowInputRangeError()
+    {
+        ErrorLabel.Text =
+            _selectedNumberType ==
+            NumberInputType.Integer
+                ? $"Số nguyên phải nằm trong phạm vi từ {Int128InputRangeText}."
+                : $"Số thập phân phải nằm trong phạm vi từ {DecimalInputRangeText}.";
+
+        ErrorBorder.IsVisible = true;
+        ResultBorder.IsVisible = false;
+        DivisionDetailBorder.IsVisible = false;
+    }
+
+    private InputValidationError ValidateInputWhileTyping(
         string text)
     {
-        if (string.IsNullOrEmpty(text))
+        if (string.IsNullOrEmpty(
+                text))
         {
-            return true;
+            return InputValidationError.None;
         }
 
         string normalizedText =
-            text.Replace(
-                ",",
-                string.Empty);
+            text
+                .Replace(
+                    ",",
+                    string.Empty)
+                .Replace(
+                    '−',
+                    '-');
 
         if (normalizedText.Length == 0)
         {
-            return false;
-        }
-
-        int maximumDigitCount =
-            _selectedNumberType ==
-            NumberInputType.Integer
-                ? MaxIntegerInputDigits
-                : MaxDecimalInputSignificantDigits;
-
-        if (CountDigits(normalizedText) >
-            maximumDigitCount)
-        {
-            return false;
+            return InputValidationError.InvalidFormat;
         }
 
         int startIndex =
             0;
 
-        // Cho phép một dấu âm duy nhất ở đầu.
         if (normalizedText[0] == '-')
         {
             startIndex =
@@ -2736,31 +2779,62 @@ public partial class CalculationPage : ContentPage
 
             if (normalizedText.Length == 1)
             {
-                return true;
+                return InputValidationError.None;
             }
         }
 
         if (_selectedNumberType ==
             NumberInputType.Integer)
         {
+            int digitCount =
+                0;
+
             for (int index = startIndex;
                  index < normalizedText.Length;
                  index++)
             {
-                if (!char.IsDigit(
-                        normalizedText[index]))
+                char character =
+                    normalizedText[index];
+
+                if (character < '0' ||
+                    character > '9')
                 {
-                    return false;
+                    return InputValidationError.InvalidFormat;
+                }
+
+                digitCount++;
+
+                if (digitCount >
+                    MaxIntegerInputDigits)
+                {
+                    return InputValidationError.OutOfRange;
                 }
             }
 
-            return true;
+            if (!BigInteger.TryParse(
+                    normalizedText,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out BigInteger integerValue))
+            {
+                return InputValidationError.InvalidFormat;
+            }
+
+            return integerValue <
+                       MinInt128InputValue ||
+                   integerValue >
+                       MaxInt128InputValue
+                ? InputValidationError.OutOfRange
+                : InputValidationError.None;
         }
 
         bool hasDecimalPoint =
             false;
 
         int decimalDigitCount =
+            0;
+
+        int totalDigitCount =
             0;
 
         for (int index = startIndex;
@@ -2770,9 +2844,11 @@ public partial class CalculationPage : ContentPage
             char character =
                 normalizedText[index];
 
-            if (char.IsDigit(
-                    character))
+            if (character >= '0' &&
+                character <= '9')
             {
+                totalDigitCount++;
+
                 if (hasDecimalPoint)
                 {
                     decimalDigitCount++;
@@ -2780,30 +2856,53 @@ public partial class CalculationPage : ContentPage
                     if (decimalDigitCount >
                         MaxDecimalPlaces)
                     {
-                        return false;
+                        return InputValidationError.InvalidFormat;
                     }
                 }
 
                 continue;
             }
 
-            if (character == '.')
+            if (character == '.' &&
+                !hasDecimalPoint)
             {
-                if (hasDecimalPoint)
-                {
-                    return false;
-                }
-
                 hasDecimalPoint =
                     true;
-
                 continue;
             }
 
-            return false;
+            return InputValidationError.InvalidFormat;
         }
 
-        return true;
+        if (totalDigitCount == 0)
+        {
+            // Cho phép nhập tạm "." hoặc "-."; hàm format sẽ đổi thành 0.
+            return normalizedText is "." or "-."
+                ? InputValidationError.None
+                : InputValidationError.InvalidFormat;
+        }
+
+        string parseText =
+            normalizedText[^1] == '.'
+                ? normalizedText[..^1]
+                : normalizedText;
+
+        if (!decimal.TryParse(
+                parseText,
+                NumberStyles.AllowLeadingSign |
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out decimal decimalValue))
+        {
+            return InputValidationError.OutOfRange;
+        }
+
+        return decimalValue <
+                   MinDecimalInputValue ||
+               decimalValue >
+                   MaxDecimalInputValue
+            ? InputValidationError.OutOfRange
+            : InputValidationError.None;
     }
 
     private bool IsCompleteValidNumber(
@@ -2827,14 +2926,11 @@ public partial class CalculationPage : ContentPage
             return false;
         }
 
-        int maximumDigitCount =
-            _selectedNumberType ==
-            NumberInputType.Integer
-                ? MaxIntegerInputDigits
-                : MaxDecimalInputSignificantDigits;
-
-        if (CountDigits(normalizedText) >
-            maximumDigitCount)
+        if (_selectedNumberType ==
+                NumberInputType.Integer &&
+            CountDigits(
+                normalizedText) >
+            MaxIntegerInputDigits)
         {
             return false;
         }
@@ -2902,7 +2998,27 @@ public partial class CalculationPage : ContentPage
             return false;
         }
 
-        return digitCount > 0;
+        if (digitCount == 0)
+        {
+            return false;
+        }
+
+        if (_selectedNumberType ==
+            NumberInputType.Decimal)
+        {
+            return decimal.TryParse(
+                normalizedText,
+                NumberStyles.AllowLeadingSign |
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out decimal decimalValue) &&
+                   decimalValue >=
+                   MinDecimalInputValue &&
+                   decimalValue <=
+                   MaxDecimalInputValue;
+        }
+
+        return true;
     }
 
     private static int CountDigits(

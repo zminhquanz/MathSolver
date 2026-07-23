@@ -266,10 +266,16 @@
 
                             <Label
                                 x:Name="NumberTypeDescriptionLabel"
-                                Text="Nhập số nguyên tối đa 38 chữ số; kết quả được tính bằng BigInteger."
+                                Text="Nhập số nguyên trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; kết quả được tính bằng BigInteger."
                                 FontSize="13"
+                               
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource TextSecondaryColor}" 
+                                HorizontalOptions="Fill"
+                                HorizontalTextAlignment="Center"
+                                VerticalTextAlignment="Center"
+                                LineHeight="1.25"
+                                Margin="12,0,12,2"/>
 
                             <!-- Hai ô nhập số -->
                             <Grid
