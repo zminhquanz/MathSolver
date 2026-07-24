@@ -461,11 +461,6 @@ public partial class FindXView : ContentView
         if (numberType ==
             FindXNumberInputType.Integer)
         {
-            FindXNumberTypeDescriptionLabel.Text =
-                $"Nhập số nguyên trong phạm vi từ {Int128InputRangeText} " +
-                "bằng Int128. Kết quả dùng BigInteger; nếu x không phải " +
-                "số nguyên, ứng dụng hiển thị phân số chính xác.";
-
             FindXKnownValueEntry.Placeholder =
                 "Ví dụ: 8";
 
@@ -474,12 +469,6 @@ public partial class FindXView : ContentView
         }
         else
         {
-            FindXNumberTypeDescriptionLabel.Text =
-                $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm và phải nằm " +
-                $"trong phạm vi từ {DecimalInputRangeText}. " +
-                "Đầu vào và kết quả được xử lý bằng decimal.";
-
             FindXKnownValueEntry.Placeholder =
                 "Ví dụ: 2.5";
 

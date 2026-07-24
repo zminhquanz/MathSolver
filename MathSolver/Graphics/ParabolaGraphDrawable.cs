@@ -31,6 +31,17 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private const double WheelZoomStep =
         1.20d;
 
+    // Vùng vẽ chừa lề trái lớn hơn để có chỗ cho nhãn trục Y.
+    // Hai nhãn giá trị biên X vẫn phải cách mép GraphicsView đều nhau.
+    private const float PlotLeftPadding =
+        64f;
+
+    private const float PlotRightPadding =
+        28f;
+
+    private const float AxisEdgeLabelWidth =
+        90f;
+
     private Color _curveColor =
         Color.FromArgb(
             "#111827");
@@ -473,13 +484,14 @@ public sealed class ParabolaGraphDrawable : IDrawable
         RectF plotRect =
             new(
                 dirtyRect.X +
-                64f,
+                PlotLeftPadding,
                 dirtyRect.Y +
                 24f,
                 Math.Max(
                     30f,
                     dirtyRect.Width -
-                    92f),
+                    PlotLeftPadding -
+                    PlotRightPadding),
                 Math.Max(
                     30f,
                     dirtyRect.Height -
@@ -1800,13 +1812,21 @@ public sealed class ParabolaGraphDrawable : IDrawable
         canvas.FontSize =
             12f;
 
+        // plotRect chừa 64 px bên trái nhưng chỉ 28 px bên phải.
+        // Dời nhãn xMinimum sang trái đúng phần chênh lệch đó để
+        // hai nhãn biên cách mép ngoài của GraphicsView bằng nhau.
+        float leftEdgeLabelX =
+            plotRect.Left -
+            (PlotLeftPadding -
+             PlotRightPadding);
+
         canvas.DrawString(
             FormatAxisNumber(
                 xMinimum),
-            plotRect.Left,
+            leftEdgeLabelX,
             plotRect.Bottom +
             5f,
-            90f,
+            AxisEdgeLabelWidth,
             18f,
             HorizontalAlignment.Left,
             VerticalAlignment.Center);
@@ -1815,10 +1835,10 @@ public sealed class ParabolaGraphDrawable : IDrawable
             FormatAxisNumber(
                 xMaximum),
             plotRect.Right -
-            90f,
+            AxisEdgeLabelWidth,
             plotRect.Bottom +
             5f,
-            90f,
+            AxisEdgeLabelWidth,
             18f,
             HorizontalAlignment.Right,
             VerticalAlignment.Center);
@@ -2015,6 +2035,7 @@ public static class ParabolaSimdEvaluator
     {
         Avx2,
         Avx,
+        Sse42,
         Sse41,
         Sse3,
         Sse2,
@@ -2053,7 +2074,7 @@ public static class ParabolaSimdEvaluator
                     b,
                     c);
                 break;
-
+            case SimdPath.Sse42:
             case SimdPath.Sse41:
             case SimdPath.Sse3:
             case SimdPath.Sse2:
@@ -2089,6 +2110,11 @@ public static class ParabolaSimdEvaluator
         if (Avx.IsSupported)
         {
             return SimdPath.Avx;
+        }
+
+        if (Sse42.IsSupported)
+        {
+            return SimdPath.Sse42;
         }
 
         if (Sse41.IsSupported)

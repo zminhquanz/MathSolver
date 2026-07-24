@@ -67,17 +67,6 @@
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
-                        Text="Chỉ nhập số nguyên trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335. Hệ số a phải khác 0. Nghiệm thập phân hiển thị tối đa 10 chữ số sau dấu chấm."
-                        FontSize="13"
-                       
-                        LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" 
-                        HorizontalOptions="Fill"
-                        HorizontalTextAlignment="Center"
-                        VerticalTextAlignment="Center"
-                        LineHeight="1.25"
-                        Margin="12,0,12,2"/>
 
                     <Grid
                         x:Name="CoefficientGrid"

@@ -811,26 +811,6 @@ public static class LocalizationService
 
         text = Regex.Replace(
             text,
-            @"Nhập số nguyên tối đa (?<digits>\d+) chữ số bằng Int128\. Kết quả dùng BigInteger; nếu x không phải số nguyên, ứng dụng hiển thị phân số chính xác\.",
-            "Enter integers with at most ${digits} digits using Int128. Results use BigInteger; if x is not an integer, the app displays an exact fraction.");
-
-        text = Regex.Replace(
-            text,
-            @"Dùng dấu chấm cho phần thập phân, tối đa (?<places>\d+) chữ số sau dấu chấm và (?<digits>\d+) chữ số có nghĩa\. Đầu vào và kết quả được xử lý bằng decimal\.",
-            "Use a decimal point, with at most ${places} decimal places and ${digits} significant digits. Inputs and results are processed with decimal.");
-
-        text = Regex.Replace(
-            text,
-            @"Nhập số nguyên tối đa (?<digits>\d+) chữ số; dấu phẩy phân nhóm hàng nghìn được thêm tự động\. Kết quả được tính bằng BigInteger\.",
-            "Enter an integer with at most ${digits} digits; thousands separators are added automatically. Results are calculated with BigInteger.");
-
-        text = Regex.Replace(
-            text,
-            @"Dùng dấu chấm cho phần thập phân, tối đa (?<places>\d+) chữ số sau dấu chấm và (?<digits>\d+) chữ số có nghĩa; dấu phẩy phân nhóm hàng nghìn được thêm tự động\. Đầu vào và kết quả được xử lý bằng decimal\.",
-            "Use a decimal point, with at most ${places} decimal places and ${digits} significant digits; thousands separators are added automatically. Inputs and results are processed with decimal.");
-
-        text = Regex.Replace(
-            text,
             @"Vế trái ≈ (?<left>.+?); vế phải = (?<right>.+?)\.",
             "Left side ≈ ${left}; right side = ${right}.");
 
@@ -899,7 +879,6 @@ public static class LocalizationService
             ("PHƯƠNG TRÌNH BẬC HAI", "QUADRATIC EQUATION"),
             ("Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết", "Compute the discriminant Δ • Determine the roots • Show detailed solution steps"),
             ("1. Nhập các hệ số", "1. Enter the coefficients"),
-            ("Chỉ nhập số nguyên trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335. Hệ số a phải khác 0. Nghiệm thập phân hiển thị tối đa 10 chữ số sau dấu chấm.", "Enter integers only, from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335. Coefficient a must be nonzero. Decimal roots are displayed with up to 10 decimal places."),
             ("Hệ số a", "Coefficient a"),
             ("Hệ số b", "Coefficient b"),
             ("Hệ số c", "Coefficient c"),
@@ -936,10 +915,6 @@ public static class LocalizationService
             ("Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, tối đa một dấu chấm và tối đa 10 chữ số sau dấu chấm; dấu phẩy được thêm tự động.", "A decimal may contain only digits, one leading minus sign, at most one decimal point, and at most 10 decimal places. Thousands separators are added automatically."),
             ("Số nguyên phải nằm trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727.", "The integer must be within the range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727."),
             ("Số thập phân phải nằm trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335.", "The decimal must be within the range from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335."),
-            ("Nhập số nguyên trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; dấu phẩy phân nhóm hàng nghìn được thêm tự động. Kết quả được tính bằng BigInteger.", "Enter an integer within the range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727; thousands separators are added automatically. Results are calculated with BigInteger."),
-            ("Dùng dấu chấm cho phần thập phân, tối đa 10 chữ số sau dấu chấm và phải nằm trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335; dấu phẩy phân nhóm hàng nghìn được thêm tự động. Đầu vào và kết quả được xử lý bằng decimal.", "Use a decimal point, with at most 10 decimal places, and enter a value within the range from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335; thousands separators are added automatically. Inputs and results are processed with decimal."),
-            ("Nhập số nguyên trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727 bằng Int128. Kết quả dùng BigInteger; nếu x không phải số nguyên, ứng dụng hiển thị phân số chính xác.", "Enter an integer within the Int128 range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727. Results use BigInteger; if x is not an integer, the app displays an exact fraction."),
-            ("Dùng dấu chấm cho phần thập phân, tối đa 10 chữ số sau dấu chấm và phải nằm trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335. Đầu vào và kết quả được xử lý bằng decimal.", "Use a decimal point, with at most 10 decimal places, and enter a value within the range from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335. Inputs and results are processed with decimal."),
             ("PHÉP TÍNH CƠ BẢN", "BASIC ARITHMETIC"),
             ("Cộng • Trừ • Nhân • Chia", "Add • Subtract • Multiply • Divide"),
             ("1. Chọn phép tính", "1. Choose an operation"),
@@ -1095,8 +1070,6 @@ public static class LocalizationService
             ("Số chia x phải khác 0.", "The divisor x must not be 0."),
             ("Mẫu số chung nhỏ nhất là bội chung nhỏ nhất của hai mẫu số.", "The least common denominator is the least common multiple of the two denominators."),
             ("Vì phép tính có số thập phân nên kết quả được trình bày theo dạng số thập phân.", "Because the calculation contains decimals, the result is displayed as a decimal."),
-            ("Nhập số nguyên trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; kết quả được tính bằng BigInteger.", "Enter an integer within the range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727 using Int128; results are calculated with BigInteger."),
-            ("Tử số và mẫu số phải nằm trong phạm vi Int128 từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; kết quả được tính bằng BigInteger và mẫu số phải khác 0.", "Numerators and denominators must be within the Int128 range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727; results are calculated with BigInteger, and denominators must not be 0."),
             ("Tử số và mẫu số chỉ được nhập số nguyên trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; không được dùng dấu chấm (.) hoặc dấu phẩy (,).", "Numerators and denominators must be integers within the range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727; decimal points and commas are not allowed."),
             ("Kết quả vượt quá phạm vi của kiểu decimal.", "The result exceeds the range of the decimal type."),
             ("Sai khác nhỏ xuất hiện do giới hạn làm tròn của decimal.", "The small difference is caused by decimal rounding limits."),
@@ -1120,9 +1093,6 @@ public static class LocalizationService
             ("Phương trình có dạng ax² + bx + c = 0.", "The equation has the form ax² + bx + c = 0."),
             ("Ta có:", "Given:"),
             ("Phương trình:", "Equation:"),
-            ("Kết quả được tính bằng BigInteger.", "Results are calculated with BigInteger."),
-            ("Đầu vào và kết quả được xử lý bằng decimal.", "Inputs and results are processed with decimal."),
-            ("Nếu x không phải số nguyên, ứng dụng hiển thị phân số chính xác.", "If x is not an integer, the app displays an exact fraction."),
             ("Phép cộng có tính giao hoán và kết hợp.", "Addition is commutative and associative."),
             ("Hai số nguyên được cộng theo đúng giá trị hàng.", "The integers are added by matching place values."),
             ("Đang cộng với 0 nên giá trị không thay đổi.", "Adding 0 leaves the value unchanged."),
@@ -1145,8 +1115,6 @@ public static class LocalizationService
             ("Sau khi tìm được x, ứng dụng luôn thay x trở lại phép tính ban đầu để kiểm tra.", "After finding x, the app substitutes it back into the original equation to verify the answer."),
             ("Nếu phép chia có x ở mẫu số thì x phải khác 0.", "If x is a divisor, x must not equal 0."),
             ("Tử số và mẫu số phải là số nguyên; mẫu số phải khác 0.", "The numerator and denominator must be integers, and the denominator must not be 0."),
-            ("Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn được thêm tự động", "Enter an integer; thousands separators are added automatically"),
-            ("Dùng dấu chấm cho phần thập phân", "Use a decimal point for the fractional part"),
             ("Kết quả được xử lý chính xác bằng phân số nội bộ.", "The result is processed exactly using an internal rational representation."),
             ("Nếu x không phải số nguyên, ứng dụng vẫn giữ kết quả chính xác dưới dạng phân số.", "If x is not an integer, the app keeps the exact result as a fraction."),
             ("Chọn x là số hạng thứ nhất hoặc số hạng thứ hai.", "Choose whether x is the first or second addend."),

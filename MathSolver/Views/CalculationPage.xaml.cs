@@ -2118,10 +2118,6 @@ public partial class CalculationPage : ContentPage
         if (numberType ==
             NumberInputType.Integer)
         {
-            NumberTypeDescriptionLabel.Text =
-                $"Nhập số nguyên trong phạm vi từ {Int128InputRangeText}; " +
-                "dấu phẩy phân nhóm hàng nghìn được thêm tự động. " +
-                "Kết quả được tính bằng BigInteger.";
 
             FirstNumberEntry.Placeholder =
                 "Ví dụ: 100,000";
@@ -2131,12 +2127,6 @@ public partial class CalculationPage : ContentPage
         }
         else
         {
-            NumberTypeDescriptionLabel.Text =
-                $"Dùng dấu chấm cho phần thập phân, tối đa " +
-                $"{MaxDecimalPlaces} chữ số sau dấu chấm và phải nằm " +
-                $"trong phạm vi từ {DecimalInputRangeText}; " +
-                "dấu phẩy phân nhóm hàng nghìn được thêm tự động. " +
-                "Đầu vào và kết quả được xử lý bằng decimal.";
 
             FirstNumberEntry.Placeholder =
                 "Ví dụ: 2,500.75";
