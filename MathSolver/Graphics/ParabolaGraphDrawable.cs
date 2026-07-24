@@ -2,6 +2,7 @@ using Microsoft.Maui.Graphics;
 using System.Globalization;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Runtime.Intrinsics.Arm;
 
 namespace MathSolver.Graphics;
 
@@ -2039,6 +2040,7 @@ public static class ParabolaSimdEvaluator
         Sse41,
         Sse3,
         Sse2,
+        Neon,
         Scalar
     }
 
@@ -2078,7 +2080,8 @@ public static class ParabolaSimdEvaluator
             case SimdPath.Sse41:
             case SimdPath.Sse3:
             case SimdPath.Sse2:
-                EvaluateSse2(
+            case SimdPath.Neon:
+                EvaluateSseNeon(
                     xValues,
                     yValues,
                     count,
@@ -2130,6 +2133,11 @@ public static class ParabolaSimdEvaluator
         if (Sse2.IsSupported)
         {
             return SimdPath.Sse2;
+        }
+
+        if (AdvSimd.IsSupported)
+        {
+            return SimdPath.Neon;
         }
 
         return SimdPath.Scalar;
@@ -2200,7 +2208,7 @@ public static class ParabolaSimdEvaluator
             c);
     }
 
-    private static void EvaluateSse2(
+    private static void EvaluateSseNeon(
         double[] xValues,
         double[] yValues,
         int count,
