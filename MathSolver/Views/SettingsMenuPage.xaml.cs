@@ -135,9 +135,97 @@ public partial class SettingsMenuPage : ContentPage
                 button);
         }
     }
+    private void UpdateSettingsIconTint()
+    {
+        if (!TryGetThemeColor(
+                "TextPrimaryColor",
+                out Color tintColor))
+        {
+            return;
+        }
+
+        MoreSettingsIconTintBehavior.TintColor = tintColor;
+        FontIconTintBehavior.TintColor = tintColor;
+        LanguageIconTintBehavior.TintColor = tintColor;
+    }
+
+    private static bool TryGetThemeColor(
+        string resourceKey,
+        out Color color)
+    {
+        color =
+            Colors.Transparent;
+
+        if (Application.Current?.Resources is not
+            ResourceDictionary resources)
+        {
+            return false;
+        }
+
+        return TryGetThemeColorNextStep(
+            resources,
+            resourceKey,
+            out color);
+    }
+
+    private static bool TryGetThemeColorNextStep(
+        ResourceDictionary resources,
+        string resourceKey,
+        out Color color)
+    {
+        // Mỗi phương thức có tham số out phải gán giá trị trên mọi
+        // nhánh thoát, kể cả khi không tìm thấy resource.
+        color =
+            Colors.Transparent;
+
+        if (resources.TryGetValue(
+                resourceKey,
+                out object? resourceValue))
+        {
+            if (resourceValue is Color resourceColor)
+            {
+                color =
+                    resourceColor;
+
+                return true;
+            }
+
+            if (resourceValue is SolidColorBrush resourceBrush)
+            {
+                color =
+                    resourceBrush.Color;
+
+                return true;
+            }
+        }
+
+        // MergedDictionaries có kiểu ICollection<ResourceDictionary>,
+        // nên không thể truy cập trực tiếp bằng toán tử [index].
+        // Chép sang List để duyệt ngược theo đúng thứ tự ưu tiên.
+        var mergedDictionaries =
+            new List<ResourceDictionary>(
+                resources.MergedDictionaries);
+
+        for (int index =
+                 mergedDictionaries.Count - 1;
+             index >= 0;
+             index--)
+        {
+            if (TryGetThemeColorNextStep(
+                    mergedDictionaries[index],
+                    resourceKey,
+                    out color))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private void UpdateState()
     {
+        UpdateSettingsIconTint();
         ThemeSummaryLabel.Text =
             AppThemeManager.CurrentMode switch
             {
@@ -273,13 +361,27 @@ public partial class SettingsMenuPage : ContentPage
         VisualElement section,
         Label chevron)
     {
-        section.IsVisible =
+        bool isExpanded =
             !section.IsVisible;
 
+        section.IsVisible =
+            isExpanded;
+
+        // Giữ nguyên một glyph chevron rồi xoay nó, thay vì đổi sang
+        // ký tự ⌄ vốn có baseline thấp và hình dáng không cân đối.
         chevron.Text =
-            section.IsVisible
-                ? "⌄"
-                : "›";
+            "›";
+
+        chevron.Rotation =
+            isExpanded
+                ? 90d
+                : 0d;
+
+        chevron.SetDynamicResource(
+            Label.TextColorProperty,
+            isExpanded
+                ? "PrimaryColor"
+                : "TextSecondaryColor");
     }
 
     private void OnSystemThemeClicked(

@@ -9,6 +9,7 @@
     HorizontalOptions="Fill">
 
     <ScrollView
+        x:Name="QuadraticScrollView"
         HorizontalOptions="Fill"
         VerticalOptions="Fill">
 
@@ -301,6 +302,7 @@
                         ColumnSpacing="10">
 
                         <Button
+                            x:Name="CalculateQuadraticButton"
                             Grid.Column="0"
                             Text="Tính nghiệm"
                             HeightRequest="50"
@@ -677,7 +679,7 @@
 
                         <GraphicsView
                             x:Name="ParabolaGraphicsView"
-                            HeightRequest="460"
+                            HeightRequest="960"
                             HorizontalOptions="Fill"
                             VerticalOptions="Fill"
                             InputTransparent="False"

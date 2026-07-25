@@ -1,8 +1,9 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Shell
     x:Class="MathSolver.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:views="clr-namespace:MathSolver.Views"
     Shell.FlyoutBehavior="Disabled"
     Shell.NavBarIsVisible="True"
@@ -38,17 +39,26 @@
                 HorizontalOptions="End"
                 VerticalOptions="Center">
 
-                <Button
+                <ImageButton
                     x:Name="SettingsButton"
-                    Text="⚙"
-                    FontSize="21"
+                    Source="settings.png"
                     WidthRequest="42"
                     HeightRequest="42"
                     Padding="10"
+                    BorderWidth="1"
+                    CornerRadius="24"
                     AutomationProperties.Name="Mở cài đặt giao diện"
                     ToolTipProperties.Text="Cài đặt giao diện"
+                    VerticalOptions="Center"
                     BackgroundColor="Transparent"
-                    Clicked="OnSettingsClicked" />
+                    Clicked="OnSettingsClicked">
+                    
+                    <ImageButton.Behaviors>
+                        <toolkit:IconTintColorBehavior
+                            x:Name="SettingsIconTintBehavior" />
+                    </ImageButton.Behaviors>
+                    
+                </ImageButton>
             </HorizontalStackLayout>
         </Grid>
     </Shell.TitleView>

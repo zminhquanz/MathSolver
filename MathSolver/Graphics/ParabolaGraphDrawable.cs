@@ -1,8 +1,7 @@
-using Microsoft.Maui.Graphics;
 using System.Globalization;
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics.Arm;
+using System.Runtime.Intrinsics.X86;
 
 namespace MathSolver.Graphics;
 
@@ -15,7 +14,7 @@ namespace MathSolver.Graphics;
 public sealed class ParabolaGraphDrawable : IDrawable
 {
     private const int MinimumSampleCount =
-        256;
+        1024;
 
     private const int MaximumSampleCount =
         2048;
@@ -32,10 +31,10 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private const double WheelZoomStep =
         1.20d;
 
-    // Vùng vẽ chừa lề trái lớn hơn để có chỗ cho nhãn trục Y.
-    // Hai nhãn giá trị biên X vẫn phải cách mép GraphicsView đều nhau.
+    // Chừa lề ngang bằng nhau để vùng vẽ sát và cân đối ở hai bên.
+    // Nhãn trục Y sẽ tự chuyển sang bên phải khi trục nằm gần mép trái.
     private const float PlotLeftPadding =
-        64f;
+        28f;
 
     private const float PlotRightPadding =
         28f;
@@ -1813,18 +1812,12 @@ public sealed class ParabolaGraphDrawable : IDrawable
         canvas.FontSize =
             12f;
 
-        // plotRect chừa 64 px bên trái nhưng chỉ 28 px bên phải.
-        // Dời nhãn xMinimum sang trái đúng phần chênh lệch đó để
-        // hai nhãn biên cách mép ngoài của GraphicsView bằng nhau.
-        float leftEdgeLabelX =
-            plotRect.Left -
-            (PlotLeftPadding -
-             PlotRightPadding);
-
+        // Hai cạnh plotRect có cùng padding nên hai nhãn biên
+        // được neo trực tiếp vào mép trái và mép phải của vùng vẽ.
         canvas.DrawString(
             FormatAxisNumber(
                 xMinimum),
-            leftEdgeLabelX,
+            plotRect.Left,
             plotRect.Bottom +
             5f,
             AxisEdgeLabelWidth,

@@ -726,7 +726,7 @@
 
                                         <GraphicsView
                                         x:Name="LongDivisionGraphicsView"
-                                        HeightRequest="320"
+                                        HeightRequest="620"
                                         MinimumHeightRequest="180"
                                         HorizontalOptions="Fill"
                                         BackgroundColor="{DynamicResource SurfaceAltColor}" />

@@ -47,8 +47,11 @@ public partial class QuadraticEquationView : ContentView
     private bool _isGraphThemeSubscribed;
 
 #if WINDOWS
-    private Microsoft.UI.Xaml.UIElement?
+    private Microsoft.UI.Xaml.FrameworkElement?
         _windowsGraphElement;
+
+    private Microsoft.UI.Xaml.Controls.ScrollViewer?
+        _windowsQuadraticScrollViewer;
 #endif
 
     public QuadraticEquationView()
@@ -60,6 +63,20 @@ public partial class QuadraticEquationView : ContentView
 
         ParabolaGraphicsView.HandlerChanged +=
             OnParabolaGraphicsViewHandlerChanged;
+
+        QuadraticScrollView.HandlerChanged +=
+            OnQuadraticScrollViewHandlerChanged;
+
+#if WINDOWS
+        CoefficientAEntry.HandlerChanged +=
+            OnCoefficientEntryHandlerChanged;
+
+        CoefficientBEntry.HandlerChanged +=
+            OnCoefficientEntryHandlerChanged;
+
+        CoefficientCEntry.HandlerChanged +=
+            OnCoefficientEntryHandlerChanged;
+#endif
 
         Loaded +=
             OnQuadraticViewLoaded;
@@ -93,6 +110,8 @@ public partial class QuadraticEquationView : ContentView
         ApplyCurrentGraphTheme();
 
 #if WINDOWS
+        AttachWindowsQuadraticScrollViewer();
+        ConfigureWindowsCoefficientEntries();
         AttachWindowsGraphMouseWheel();
 #endif
     }
@@ -104,9 +123,208 @@ public partial class QuadraticEquationView : ContentView
         UnsubscribeGraphThemeChanges();
 
 #if WINDOWS
+        DetachWindowsQuadraticScrollViewer();
         DetachWindowsGraphMouseWheel();
 #endif
     }
+
+    private void OnQuadraticScrollViewHandlerChanged(
+        object? sender,
+        EventArgs e)
+    {
+#if WINDOWS
+        AttachWindowsQuadraticScrollViewer();
+#endif
+    }
+
+    private void ClearTransientFocus()
+    {
+        if (CoefficientAEntry.IsFocused)
+        {
+            CoefficientAEntry.Unfocus();
+        }
+
+        if (CoefficientBEntry.IsFocused)
+        {
+            CoefficientBEntry.Unfocus();
+        }
+
+        if (CoefficientCEntry.IsFocused)
+        {
+            CoefficientCEntry.Unfocus();
+        }
+
+        if (CalculateQuadraticButton.IsFocused)
+        {
+            CalculateQuadraticButton.Unfocus();
+        }
+
+        if (GraphResetZoomButton.IsFocused)
+        {
+            GraphResetZoomButton.Unfocus();
+        }
+    }
+
+#if WINDOWS
+    private void OnCoefficientEntryHandlerChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (sender is Entry entry)
+        {
+            ConfigureWindowsCoefficientEntry(
+                entry);
+        }
+    }
+
+    private void ConfigureWindowsCoefficientEntries()
+    {
+        ConfigureWindowsCoefficientEntry(
+            CoefficientAEntry);
+
+        ConfigureWindowsCoefficientEntry(
+            CoefficientBEntry);
+
+        ConfigureWindowsCoefficientEntry(
+            CoefficientCEntry);
+
+        ConfigureWindowsFocusableElement(
+            CalculateQuadraticButton);
+
+        ConfigureWindowsFocusableElement(
+            GraphResetZoomButton);
+    }
+
+    private void ConfigureWindowsFocusableElement(
+        VisualElement element)
+    {
+        if (element.Handler?.PlatformView is not
+            Microsoft.UI.Xaml.FrameworkElement frameworkElement)
+        {
+            return;
+        }
+
+        Microsoft.UI.Xaml.Controls.ScrollViewer
+            .SetBringIntoViewOnFocusChange(
+                frameworkElement,
+                false);
+
+        frameworkElement.BringIntoViewRequested -=
+            OnWindowsBringIntoViewRequested;
+
+        frameworkElement.BringIntoViewRequested +=
+            OnWindowsBringIntoViewRequested;
+    }
+
+    private void ConfigureWindowsCoefficientEntry(
+        Entry entry)
+    {
+        if (entry.Handler?.PlatformView is not
+            Microsoft.UI.Xaml.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        // Entry vẫn nhận focus bằng chuột và phím Tab, nhưng chính
+        // TextBox không được yêu cầu ScrollViewer đưa nó vào vùng nhìn
+        // khi Windows khôi phục focus sau Win key/minimize/restore.
+        textBox.AllowFocusOnInteraction =
+            true;
+
+        textBox.IsTabStop =
+            true;
+
+        Microsoft.UI.Xaml.Controls.ScrollViewer
+            .SetBringIntoViewOnFocusChange(
+                textBox,
+                false);
+
+        textBox.BringIntoViewRequested -=
+            OnWindowsBringIntoViewRequested;
+
+        textBox.BringIntoViewRequested +=
+            OnWindowsBringIntoViewRequested;
+    }
+
+    private void OnWindowsBringIntoViewRequested(
+        Microsoft.UI.Xaml.UIElement sender,
+        Microsoft.UI.Xaml.BringIntoViewRequestedEventArgs e)
+    {
+        // Chỉ chặn khi người dùng đang ở phần dưới của trang.
+        // Ở đầu trang, keyboard navigation và focus hoạt động bình thường.
+        if (_windowsQuadraticScrollViewer is not null &&
+            _windowsQuadraticScrollViewer.VerticalOffset > 0.5d)
+        {
+            e.Handled =
+                true;
+        }
+    }
+
+    private void AttachWindowsQuadraticScrollViewer()
+    {
+        Microsoft.UI.Xaml.Controls.ScrollViewer?
+            currentScrollViewer =
+                QuadraticScrollView.Handler?.PlatformView
+                as Microsoft.UI.Xaml.Controls.ScrollViewer;
+
+        if (ReferenceEquals(
+                currentScrollViewer,
+                _windowsQuadraticScrollViewer))
+        {
+            ConfigureWindowsQuadraticScrollViewer();
+
+            return;
+        }
+
+        DetachWindowsQuadraticScrollViewer();
+
+        _windowsQuadraticScrollViewer =
+            currentScrollViewer;
+
+        ConfigureWindowsQuadraticScrollViewer();
+    }
+
+    private void ConfigureWindowsQuadraticScrollViewer()
+    {
+        if (_windowsQuadraticScrollViewer is null)
+        {
+            return;
+        }
+
+        // Không cho WinUI tự BringIntoView khi Windows trả focus
+        // cho Entry, Button hoặc GraphicsView sau Alt+Tab, Win key,
+        // minimize/restore hay resize cửa sổ.
+        _windowsQuadraticScrollViewer
+            .BringIntoViewOnFocusChange =
+            false;
+
+        // ScrollViewer không nằm trong chuỗi Tab, nhưng Entry con vẫn
+        // được phép nhận focus trực tiếp bằng chuột.
+        _windowsQuadraticScrollViewer
+            .IsTabStop =
+            false;
+
+        _windowsQuadraticScrollViewer.BringIntoViewRequested -=
+            OnWindowsBringIntoViewRequested;
+
+        _windowsQuadraticScrollViewer.BringIntoViewRequested +=
+            OnWindowsBringIntoViewRequested;
+    }
+
+    private void DetachWindowsQuadraticScrollViewer()
+    {
+        if (_windowsQuadraticScrollViewer is null)
+        {
+            return;
+        }
+
+        _windowsQuadraticScrollViewer.BringIntoViewRequested -=
+            OnWindowsBringIntoViewRequested;
+
+        _windowsQuadraticScrollViewer =
+            null;
+    }
+#endif
 
     private void SubscribeGraphThemeChanges()
     {
@@ -176,10 +394,10 @@ public partial class QuadraticEquationView : ContentView
 #if WINDOWS
     private void AttachWindowsGraphMouseWheel()
     {
-        Microsoft.UI.Xaml.UIElement?
+        Microsoft.UI.Xaml.FrameworkElement?
             currentElement =
                 ParabolaGraphicsView.Handler?.PlatformView
-                as Microsoft.UI.Xaml.UIElement;
+                as Microsoft.UI.Xaml.FrameworkElement;
 
         if (ReferenceEquals(
                 currentElement,
@@ -198,6 +416,26 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
+        // GraphicsView chỉ nhận pointer để pan/zoom, không nhận keyboard
+        // focus. Nhờ đó WinUI không phát sinh StartBringIntoView ở lần
+        // rê chuột đầu tiên sau khi cửa sổ được kích hoạt lại.
+        _windowsGraphElement.AllowFocusOnInteraction =
+            false;
+
+        _windowsGraphElement.IsTabStop =
+            false;
+
+        Microsoft.UI.Xaml.Controls.ScrollViewer
+            .SetBringIntoViewOnFocusChange(
+                _windowsGraphElement,
+                false);
+
+        _windowsGraphElement.BringIntoViewRequested -=
+            OnWindowsBringIntoViewRequested;
+
+        _windowsGraphElement.BringIntoViewRequested +=
+            OnWindowsBringIntoViewRequested;
+
         _windowsGraphElement.PointerWheelChanged +=
             OnWindowsGraphPointerWheelChanged;
     }
@@ -208,6 +446,9 @@ public partial class QuadraticEquationView : ContentView
         {
             return;
         }
+
+        _windowsGraphElement.BringIntoViewRequested -=
+            OnWindowsBringIntoViewRequested;
 
         _windowsGraphElement.PointerWheelChanged -=
             OnWindowsGraphPointerWheelChanged;
@@ -672,6 +913,8 @@ public partial class QuadraticEquationView : ContentView
             b,
             c,
             delta);
+
+        ClearTransientFocus();
     }
 
     private void OnClearClicked(

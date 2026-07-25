@@ -1,5 +1,5 @@
-﻿using MathSolver.Views;
 using MathSolver.Services;
+using MathSolver.Views;
 using System.ComponentModel;
 
 namespace MathSolver;
@@ -28,6 +28,15 @@ public partial class AppShell : Shell
         AppLanguageManager.LanguageChanged +=
             OnLanguageChanged;
 
+        AppThemeManager.ThemeChanged +=
+            OnThemeChanged;
+
+        if (Application.Current is Application application)
+        {
+            application.RequestedThemeChanged +=
+                OnRequestedThemeChanged;
+        }
+
         Routing.RegisterRoute(
             nameof(SettingsPage),
             typeof(SettingsPage));
@@ -44,6 +53,7 @@ public partial class AppShell : Shell
             OnShellNavigated;
 
         UpdateSettingsAccessibilityText();
+        UpdateSettingsIconTint();
     }
 
     private async void OnSettingsClicked(
@@ -87,6 +97,115 @@ public partial class AppShell : Shell
     {
         LocalizationService.RefreshAll();
         UpdateSettingsAccessibilityText();
+    }
+
+    private void OnThemeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        RefreshSettingsIconTint();
+    }
+
+    private void OnRequestedThemeChanged(
+        object? sender,
+        AppThemeChangedEventArgs e)
+    {
+        RefreshSettingsIconTint();
+    }
+
+    private void RefreshSettingsIconTint()
+    {
+        // AppThemeManager thay ResourceDictionary trong cùng chu kỳ sự kiện.
+        // Đẩy việc đọc màu sang dispatcher để lấy đúng resource mới.
+        Dispatcher.Dispatch(
+            UpdateSettingsIconTint);
+    }
+
+    private void UpdateSettingsIconTint()
+    {
+        if (!TryGetThemeColor(
+                "TextPrimaryColor",
+                out Color tintColor))
+        {
+            return;
+        }
+
+        SettingsIconTintBehavior.TintColor =
+            tintColor;
+    }
+
+    private static bool TryGetThemeColor(
+        string resourceKey,
+        out Color color)
+    {
+        color =
+            Colors.Transparent;
+
+        if (Application.Current?.Resources is not
+            ResourceDictionary resources)
+        {
+            return false;
+        }
+
+        return TryGetThemeColorNextStep(
+            resources,
+            resourceKey,
+            out color);
+    }
+
+    private static bool TryGetThemeColorNextStep(
+        ResourceDictionary resources,
+        string resourceKey,
+        out Color color)
+    {
+        // Mỗi phương thức có tham số out phải gán giá trị trên mọi
+        // nhánh thoát, kể cả khi không tìm thấy resource.
+        color =
+            Colors.Transparent;
+
+        if (resources.TryGetValue(
+                resourceKey,
+                out object? resourceValue))
+        {
+            if (resourceValue is Color resourceColor)
+            {
+                color =
+                    resourceColor;
+
+                return true;
+            }
+
+            if (resourceValue is SolidColorBrush resourceBrush)
+            {
+                color =
+                    resourceBrush.Color;
+
+                return true;
+            }
+        }
+
+        // MergedDictionaries có kiểu ICollection<ResourceDictionary>,
+        // nên không thể truy cập trực tiếp bằng toán tử [index].
+        // Chép sang List để duyệt ngược theo đúng thứ tự ưu tiên.
+        var mergedDictionaries =
+            new List<ResourceDictionary>(
+                resources.MergedDictionaries);
+
+        for (int index =
+                 mergedDictionaries.Count - 1;
+             index >= 0;
+             index--)
+        {
+            if (TryGetThemeColorNextStep(
+                    mergedDictionaries[index],
+                    resourceKey,
+                    out color))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void UpdateSettingsAccessibilityText()

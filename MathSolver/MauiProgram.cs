@@ -1,4 +1,5 @@
-﻿using MathSolver.Services;
+﻿using CommunityToolkit.Maui;
+using MathSolver.Services;
 using Microsoft.Extensions.Logging;
 
 namespace MathSolver
@@ -10,6 +11,7 @@ namespace MathSolver
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     // Toàn bộ font được quản lý tại AppFontCatalog.
@@ -18,7 +20,7 @@ namespace MathSolver
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();
