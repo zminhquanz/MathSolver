@@ -1746,25 +1746,33 @@ public sealed class ParabolaGraphDrawable : IDrawable
                     xMinimum,
                     xMaximum);
 
-            float xAxisY =
-                yMinimum <= 0d &&
-                yMaximum >= 0d
-                    ? MapY(
-                        0d,
-                        plotRect,
-                        yMinimum,
-                        yMaximum)
-                    : plotRect.Bottom -
-                      18f;
+            const float symmetryLabelWidth =
+                104f;
+
+            const float symmetryLabelHeight =
+                26f;
+
+            // Hiển thị −b/(2a) ở đầu trên của trục đối xứng,
+            // thay vì đặt bên dưới trục Ox.
+            float symmetryLabelX =
+                Math.Clamp(
+                    vertexX -
+                    symmetryLabelWidth /
+                    2f,
+                    plotRect.Left,
+                    plotRect.Right -
+                    symmetryLabelWidth);
+
+            float symmetryLabelY =
+                plotRect.Top +
+                3f;
 
             canvas.DrawString(
                 "−b/(2a)",
-                vertexX -
-                44f,
-                xAxisY +
-                4f,
-                104f,
-                30f,
+                symmetryLabelX,
+                symmetryLabelY,
+                symmetryLabelWidth,
+                symmetryLabelHeight,
                 HorizontalAlignment.Center,
                 VerticalAlignment.Top);
         }
