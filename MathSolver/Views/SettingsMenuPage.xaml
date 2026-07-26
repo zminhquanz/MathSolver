@@ -9,7 +9,9 @@
     BackgroundColor="Transparent">
 
     <Grid x:Name="OverlayRoot">
-        <BoxView BackgroundColor="#66000000">
+        <BoxView
+            x:Name="OverlayScrim"
+            BackgroundColor="#66000000">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnOutsideTapped" />
             </BoxView.GestureRecognizers>
@@ -83,14 +85,17 @@
                                     <Label Text="Chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label x:Name="ThemeSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
-                                <Border
+
+                                <Image
+                                    x:Name="ThemeArrowImage"
                                     Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        x:Name="ThemeChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}" />
-                                </Border>
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    Source="arrow_forward.png">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="ThemeArrowForwardIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnThemeRowTapped" />
                                 </Grid.GestureRecognizers>
@@ -100,6 +105,7 @@
                         <Border
                             x:Name="ThemeOptionsBorder"
                             IsVisible="False"
+                            AnchorY="0"
                             Margin="54,0,4,4"
                             Padding="8"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -118,19 +124,22 @@
                         <!-- Accent color -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Label Grid.Column="0" Text="●" Style="{StaticResource ThemeMenuIconStyle}" TextColor="{DynamicResource PrimaryColor}" />
+                                <Label Grid.Column="0" Text="●" Style="{StaticResource ThemeMenuIconStyle}" TextColor="{DynamicResource PrimaryColor}" FontSize="30"/>
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Màu chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label x:Name="AccentSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
-                                <Border
+
+                                <Image
+                                    x:Name="AccentArrowImage"
                                     Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        x:Name="AccentChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}" />
-                                </Border>
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    Source="arrow_forward.png">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="ColorThemeArrowForwardIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnAccentRowTapped" />
                                 </Grid.GestureRecognizers>
@@ -140,6 +149,7 @@
                         <Border
                             x:Name="AccentOptionsBorder"
                             IsVisible="False"
+                            AnchorY="0"
                             Margin="54,0,4,4"
                             Padding="10"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -180,14 +190,16 @@
                                     <Label Text="Phông chữ" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label x:Name="FontSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
-                                <Border
+                                <Image
+                                    x:Name="FontArrowImage"
                                     Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        x:Name="FontChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}" />
-                                </Border>
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    Source="arrow_forward.png">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="FontArrowForwardIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnFontRowTapped" />
                                 </Grid.GestureRecognizers>
@@ -197,6 +209,7 @@
                         <Border
                             x:Name="FontOptionsBorder"
                             IsVisible="False"
+                            AnchorY="0"
                             Margin="54,0,4,4"
                             Padding="8"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -216,18 +229,20 @@
                                         <toolkit:IconTintColorBehavior x:Name="LanguageIconTintBehavior" />
                                     </Image.Behaviors>
                                 </Image>
-                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Ngôn ngữ" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label x:Name="LanguageSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
-                                <Border
+                                <Image
+                                    x:Name="LanguageArrowImage"
                                     Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        x:Name="LanguageChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}" />
-                                </Border>
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    Source="arrow_forward.png">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="LanguageArrowForwardIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnLanguageRowTapped" />
                                 </Grid.GestureRecognizers>
@@ -237,6 +252,7 @@
                         <Border
                             x:Name="LanguageOptionsBorder"
                             IsVisible="False"
+                            AnchorY="0"
                             Margin="54,0,4,4"
                             Padding="8"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -248,6 +264,34 @@
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
                                 <Button x:Name="VietnameseLanguageButton" Grid.Column="0" Text="Tiếng Việt" Clicked="OnVietnameseClicked" />
                                 <Button x:Name="EnglishLanguageButton" Grid.Column="1" Text="Tiếng Anh" Clicked="OnEnglishClicked" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Hardware and performance -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Image
+                                    Grid.Column="0" WidthRequest="24" HeightRequest="24"
+                                    Source="benchmark.png">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="BenchmarkIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="1"
+                                    VerticalOptions="Center">
+                                    <Label
+                                        Text="Đo sức mạnh"
+                                        Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label
+                                        Text="Phần cứng và hiệu năng tính toán"
+                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnHardwarePerformanceTapped" />
+                                </Grid.GestureRecognizers>
                             </Grid>
                         </Border>
 
@@ -270,7 +314,7 @@
                         <!-- Advanced -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Image Grid.Column="0" Source="more_settings.png" WidthRequest="24" HeightRequest="24">
+                                <Image Grid.Column="0" Source="settings.png" WidthRequest="24" HeightRequest="24">
                                     <Image.Behaviors>
                                         <toolkit:IconTintColorBehavior x:Name="MoreSettingsIconTintBehavior" />
                                     </Image.Behaviors>
@@ -279,13 +323,6 @@
                                     <Label Text="Cài đặt nâng cao" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label Text="Màu HEX, RGB và xem trước" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}" />
-                                </Border>
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnAdvancedSettingsTapped" />
                                 </Grid.GestureRecognizers>

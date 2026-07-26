@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MathSolver.Views.HardwarePerformancePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
+    Title="Đo sức mạnh"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Grid
+        x:Name="HardwarePageContentRoot"
+        RowDefinitions="Auto,*">
+        <Grid
+            Grid.Row="0"
+            Padding="18,12"
+            ColumnDefinitions="Auto,*,Auto"
+            ColumnSpacing="10"
+            BackgroundColor="{DynamicResource SurfaceAltColor}">
+
+            <Button
+                Grid.Column="0"
+                Text="‹"
+                WidthRequest="40"
+                HeightRequest="40"
+                Padding="0"
+                CornerRadius="20"
+                FontSize="28"
+                BackgroundColor="Transparent"
+                TextColor="{DynamicResource TextPrimaryColor}"
+                Clicked="OnCloseClicked" />
+
+            <VerticalStackLayout
+                Grid.Column="1"
+                Spacing="1"
+                VerticalOptions="Center">
+                <Label
+                    Text="Đo sức mạnh"
+                    FontSize="20"
+                    FontAttributes="Bold"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+                <Label
+                    Text="Thông tin phần cứng và hiệu năng tính toán"
+                    FontSize="12"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout
+                Padding="16"
+                Spacing="14"
+                MaximumWidthRequest="920"
+                HorizontalOptions="Center">
+
+                <Border Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label
+                            Text="Thông tin thiết bị"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Tên thiết bị" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="DeviceNameValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Mẫu thiết bị" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="DeviceModelValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Nhà sản xuất" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="ManufacturerValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Nền tảng" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="PlatformValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Phiên bản hệ điều hành" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="OsVersionValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Kiểu thiết bị" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="DeviceIdiomValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Môi trường thiết bị" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="DeviceTypeValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Màn hình" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="DisplayValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label
+                            Text="Bộ xử lý"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Kiến trúc CPU" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="CpuArchitectureValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Kiến trúc hệ điều hành" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="OsArchitectureValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Số luồng logic" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="LogicalProcessorsValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Tiến trình 64-bit" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="ProcessBitnessValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Tập lệnh SIMD" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="SimdValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Độ rộng vector" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="VectorWidthValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text="Bộ nhớ khả dụng cho tiến trình" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="AvailableMemoryValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label Text=".NET Runtime" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label x:Name="RuntimeValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="Tăng tốc tính toán"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                <Label
+                                    Text="Tăng tốc phần cứng"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Label
+                                    Text="Bật để dùng SIMD; tắt để dùng chế độ Scalar thông thường."
+                                    Style="{StaticResource HardwareDescriptionStyle}" />
+
+                                <Label
+                                    x:Name="AccelerationStatusLabel"
+                                    FontSize="12"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch
+                                x:Name="HardwareAccelerationSwitch"
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Toggled="OnHardwareAccelerationToggled" />
+                        </Grid>
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Label
+                                Text="Chế độ xử lý hiện tại"
+                                Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label
+                                x:Name="AccelerationModeValueLabel"
+                                Grid.Column="1"
+                                Style="{StaticResource HardwareInfoValueStyle}" />
+                        </Grid>
+
+                        <Label
+                            Text="SIMD chỉ được bật khi CPU và .NET Runtime của thiết bị hỗ trợ."
+                            Style="{StaticResource HardwareDescriptionStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="Đo hiệu năng phép tính"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <Label
+                            Text="Đo tốc độ xử lý số thực và số nguyên lớn trên thiết bị này."
+                            Style="{StaticResource HardwareDescriptionStyle}" />
+
+                        <Button
+                            x:Name="RunBenchmarkButton"
+                            Text="Chạy đo sức mạnh"
+                            HeightRequest="46"
+                            CornerRadius="12"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            FontAttributes="Bold"
+                            Clicked="OnRunBenchmarkClicked" />
+
+                        <ActivityIndicator
+                            x:Name="BenchmarkProgress"
+                            IsVisible="False"
+                            IsRunning="False"
+                            Color="{DynamicResource PrimaryColor}" />
+
+                        <Label
+                            x:Name="BenchmarkStatusLabel"
+                            Text="Chưa chạy đo sức mạnh."
+                            HorizontalTextAlignment="Center"
+                            Style="{StaticResource HardwareDescriptionStyle}" />
+
+                        <Border
+                            x:Name="BenchmarkResultsBorder"
+                            IsVisible="False"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label
+                                        Text="Điểm tham khảo"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="BenchmarkScoreValueLabel"
+                                        Grid.Column="1"
+                                        FontSize="22"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+                                </Grid>
+
+                                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                                <Label
+                                    x:Name="BenchmarkModeResultLabel"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="FloatingPointResultLabel"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="BigIntegerResultLabel"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="ElapsedResultLabel"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Label
+                            Text="Kết quả chỉ nên so sánh trong cùng phiên bản Math Solver."
+                            FontSize="11"
+                            FontAttributes="Italic"
+                            TextColor="{DynamicResource TextSecondaryColor}"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
+using MathSolver.Services;
 
 namespace MathSolver.Graphics;
 
@@ -2063,6 +2064,20 @@ public static class ParabolaSimdEvaluator
         {
             throw new ArgumentException(
                 "Mảng mẫu không đủ kích thước.");
+        }
+
+        if (!CalculationAccelerationManager.UseSimd)
+        {
+            EvaluateScalar(
+                xValues,
+                yValues,
+                0,
+                count,
+                a,
+                b,
+                c);
+
+            return;
         }
 
         switch (SelectedPath)

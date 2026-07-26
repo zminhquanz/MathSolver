@@ -8,6 +8,14 @@ public partial class SettingsMenuPage : ContentPage
         _fontButtons =
             new(StringComparer.Ordinal);
 
+    private bool _hasPlayedOpenAnimation;
+    private bool _isClosing;
+    private bool _isNavigating;
+
+    private readonly HashSet<VisualElement>
+        _animatingSections =
+            new();
+
     public SettingsMenuPage()
     {
         InitializeComponent();
@@ -24,6 +32,8 @@ public partial class SettingsMenuPage : ContentPage
         LocalizationService.Attach(
             this);
         UpdateState();
+
+        PrepareOpenAnimation();
     }
 
     protected override void OnAppearing()
@@ -42,6 +52,16 @@ public partial class SettingsMenuPage : ContentPage
         LocalizationService.Attach(
             this);
         UpdateState();
+
+        if (!_hasPlayedOpenAnimation)
+        {
+            _hasPlayedOpenAnimation =
+                true;
+
+            Dispatcher.Dispatch(
+                async () =>
+                    await PlayOpenAnimationAsync());
+        }
     }
 
     protected override void OnDisappearing()
@@ -83,6 +103,85 @@ public partial class SettingsMenuPage : ContentPage
     {
         _ = CloseAsync();
         return true;
+    }
+
+    private void PrepareOpenAnimation()
+    {
+        OverlayScrim.Opacity =
+            0d;
+
+        MenuPanel.Opacity =
+            0d;
+
+        MenuPanel.TranslationX =
+            56d;
+
+        MenuPanel.Scale =
+            0.985d;
+    }
+
+    private async Task PlayOpenAnimationAsync()
+    {
+        OverlayScrim.CancelAnimations();
+        MenuPanel.CancelAnimations();
+
+        await Task.WhenAll(
+            OverlayScrim.FadeToAsync(
+                1d,
+                170,
+                Easing.CubicOut),
+
+            MenuPanel.FadeToAsync(
+                1d,
+                150,
+                Easing.CubicOut),
+
+            MenuPanel.TranslateToAsync(
+                0d,
+                0d,
+                220,
+                Easing.CubicOut),
+
+            MenuPanel.ScaleToAsync(
+                1d,
+                220,
+                Easing.CubicOut));
+    }
+
+    private async Task PlayCloseAnimationAsync()
+    {
+        OverlayRoot.InputTransparent =
+            true;
+
+        OverlayScrim.CancelAnimations();
+        MenuPanel.CancelAnimations();
+
+        await Task.WhenAll(
+            OverlayScrim.FadeToAsync(
+                0d,
+                150,
+                Easing.CubicIn),
+
+            MenuPanel.FadeToAsync(
+                0d,
+                130,
+                Easing.CubicIn),
+
+            MenuPanel.TranslateToAsync(
+                48d,
+                0d,
+                165,
+                Easing.CubicIn),
+
+            MenuPanel.ScaleToAsync(
+                0.985d,
+                165,
+                Easing.CubicIn));
+    }
+
+    public Task CloseWithAnimationAsync()
+    {
+        return CloseAsync();
     }
 
     private void OnSettingsChanged(
@@ -147,6 +246,11 @@ public partial class SettingsMenuPage : ContentPage
         MoreSettingsIconTintBehavior.TintColor = tintColor;
         FontIconTintBehavior.TintColor = tintColor;
         LanguageIconTintBehavior.TintColor = tintColor;
+        ThemeArrowForwardIconTintBehavior.TintColor = tintColor;
+        ColorThemeArrowForwardIconTintBehavior.TintColor = tintColor;
+        FontArrowForwardIconTintBehavior.TintColor = tintColor;
+        LanguageArrowForwardIconTintBehavior.TintColor = tintColor;
+        BenchmarkIconTintBehavior.TintColor = tintColor;
     }
 
     private static bool TryGetThemeColor(
@@ -321,67 +425,147 @@ public partial class SettingsMenuPage : ContentPage
             9;
     }
 
-    private void OnThemeRowTapped(
+    private async void OnThemeRowTapped(
         object? sender,
         TappedEventArgs e)
     {
-        ToggleSection(
+        await ToggleSectionAsync(
             ThemeOptionsBorder,
-            ThemeChevronLabel);
+            ThemeArrowImage);
     }
 
-    private void OnAccentRowTapped(
+    private async void OnAccentRowTapped(
         object? sender,
         TappedEventArgs e)
     {
-        ToggleSection(
+        await ToggleSectionAsync(
             AccentOptionsBorder,
-            AccentChevronLabel);
+            AccentArrowImage);
     }
 
-    private void OnFontRowTapped(
+    private async void OnFontRowTapped(
         object? sender,
         TappedEventArgs e)
     {
-        ToggleSection(
+        await ToggleSectionAsync(
             FontOptionsBorder,
-            FontChevronLabel);
+            FontArrowImage);
     }
 
-    private void OnLanguageRowTapped(
+    private async void OnLanguageRowTapped(
         object? sender,
         TappedEventArgs e)
     {
-        ToggleSection(
+        await ToggleSectionAsync(
             LanguageOptionsBorder,
-            LanguageChevronLabel);
+            LanguageArrowImage);
     }
 
-    private static void ToggleSection(
+    private async Task ToggleSectionAsync(
         VisualElement section,
-        Label chevron)
+        VisualElement arrow)
     {
-        bool isExpanded =
+        if (!_animatingSections.Add(
+                section))
+        {
+            return;
+        }
+
+        bool isExpanding =
             !section.IsVisible;
 
-        section.IsVisible =
-            isExpanded;
+        section.InputTransparent =
+            true;
 
-        // Giữ nguyên một glyph chevron rồi xoay nó, thay vì đổi sang
-        // ký tự ⌄ vốn có baseline thấp và hình dáng không cân đối.
-        chevron.Text =
-            "›";
+        section.CancelAnimations();
+        arrow.CancelAnimations();
 
-        chevron.Rotation =
-            isExpanded
-                ? 90d
-                : 0d;
+        try
+        {
+            if (isExpanding)
+            {
+                section.IsVisible =
+                    true;
 
-        chevron.SetDynamicResource(
-            Label.TextColorProperty,
-            isExpanded
-                ? "PrimaryColor"
-                : "TextSecondaryColor");
+                section.Opacity =
+                    0d;
+
+                section.TranslationY =
+                    -10d;
+
+                section.ScaleY =
+                    0.82d;
+
+                await Task.Yield();
+
+                await Task.WhenAll(
+                    section.FadeToAsync(
+                        1d,
+                        150,
+                        Easing.CubicOut),
+
+                    section.TranslateToAsync(
+                        0d,
+                        0d,
+                        210,
+                        Easing.CubicOut),
+
+                    section.ScaleYToAsync(
+                        1d,
+                        210,
+                        Easing.CubicOut),
+
+                    arrow.RotateToAsync(
+                        90d,
+                        180,
+                        Easing.CubicOut));
+            }
+            else
+            {
+                await Task.WhenAll(
+                    section.FadeToAsync(
+                        0d,
+                        115,
+                        Easing.CubicIn),
+
+                    section.TranslateToAsync(
+                        0d,
+                        -8d,
+                        145,
+                        Easing.CubicIn),
+
+                    section.ScaleYToAsync(
+                        0.82d,
+                        145,
+                        Easing.CubicIn),
+
+                    arrow.RotateToAsync(
+                        0d,
+                        145,
+                        Easing.CubicIn));
+
+                section.IsVisible =
+                    false;
+
+                // Đặt lại để lần mở tiếp theo luôn bắt đầu ổn định.
+                section.Opacity =
+                    1d;
+
+                section.TranslationY =
+                    0d;
+
+                section.ScaleY =
+                    1d;
+            }
+        }
+        finally
+        {
+            section.InputTransparent =
+                false;
+
+            _animatingSections.Remove(
+                section);
+        }
     }
 
     private void OnSystemThemeClicked(
@@ -469,6 +653,44 @@ public partial class SettingsMenuPage : ContentPage
         UpdateState();
     }
 
+    private async void OnHardwarePerformanceTapped(
+        object? sender,
+        TappedEventArgs e)
+    {
+        await OpenHardwarePerformancePageAsync();
+    }
+
+    private async Task OpenHardwarePerformancePageAsync()
+    {
+        if (_isNavigating)
+        {
+            return;
+        }
+
+        _isNavigating =
+            true;
+
+        try
+        {
+            await CloseAsync();
+
+            if (Shell.Current is null)
+            {
+                return;
+            }
+
+            await Shell.Current.GoToAsync(
+                nameof(HardwarePerformancePage),
+                animate:
+                    false);
+        }
+        finally
+        {
+            _isNavigating =
+                false;
+        }
+    }
+
     private async void OnAdvancedColorClicked(
         object? sender,
         EventArgs e)
@@ -485,12 +707,32 @@ public partial class SettingsMenuPage : ContentPage
 
     private async Task OpenAdvancedSettingsAsync()
     {
-        await CloseAsync();
-
-        if (Shell.Current is not null)
+        if (_isNavigating)
         {
+            return;
+        }
+
+        _isNavigating =
+            true;
+
+        try
+        {
+            await CloseAsync();
+
+            if (Shell.Current is null)
+            {
+                return;
+            }
+
             await Shell.Current.GoToAsync(
-                nameof(SettingsPage));
+                nameof(SettingsPage),
+                animate:
+                    false);
+        }
+        finally
+        {
+            _isNavigating =
+                false;
         }
     }
 
@@ -510,11 +752,30 @@ public partial class SettingsMenuPage : ContentPage
 
     private async Task CloseAsync()
     {
-        if (Navigation.ModalStack.Contains(
-                this))
+        if (_isClosing)
         {
-            await Navigation.PopModalAsync(
-                animated: false);
+            return;
+        }
+
+        _isClosing =
+            true;
+
+        try
+        {
+            await PlayCloseAnimationAsync();
+
+            if (Navigation.ModalStack.Contains(
+                    this))
+            {
+                await Navigation.PopModalAsync(
+                    animated:
+                        false);
+            }
+        }
+        finally
+        {
+            _isClosing =
+                false;
         }
     }
 }

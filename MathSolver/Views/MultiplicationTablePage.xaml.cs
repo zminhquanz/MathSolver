@@ -1,4 +1,4 @@
-﻿using MathSolver.Services;
+using MathSolver.Services;
 using System.Collections.ObjectModel;
 
 namespace MathSolver.Views;
@@ -19,6 +19,9 @@ public partial class MultiplicationTablePage : ContentPage
 
         AppLanguageManager.LanguageChanged +=
             OnLanguageChanged;
+
+        AppThemeManager.ThemeChanged +=
+            OnThemeChanged;
 
         BindingContext = this;
 
@@ -46,6 +49,18 @@ public partial class MultiplicationTablePage : ContentPage
                 BuildTables();
                 LocalizationService.Attach(
                     this);
+            });
+    }
+
+    private void OnThemeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                UpdateOperationButtons();
+                UpdateRangeCards();
             });
     }
 
@@ -142,70 +157,84 @@ public partial class MultiplicationTablePage : ContentPage
 
     private void UpdateOperationButtons()
     {
-        bool isDark = Application.Current?.RequestedTheme != AppTheme.Light;
+        ApplyOperationButtonStyle(
+            MultiplyButton,
+            _currentMode ==
+            TableMode.Multiply);
 
-        ApplyOperationButtonStyle(MultiplyButton, _currentMode == TableMode.Multiply, isDark);
-        ApplyOperationButtonStyle(DivideButton, _currentMode == TableMode.Divide, isDark);
+        ApplyOperationButtonStyle(
+            DivideButton,
+            _currentMode ==
+            TableMode.Divide);
     }
 
-    private void ApplyOperationButtonStyle(Button button, bool isSelected, bool isDark)
+    private static void ApplyOperationButtonStyle(
+        Button button,
+        bool isSelected)
     {
-        button.BorderWidth = 1.5;
+        button.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            isSelected
+                ? "PrimaryColor"
+                : "SurfaceAltColor");
 
-        if (isSelected)
-        {
-            button.BackgroundColor = Color.FromArgb("#18B65A");
-            button.TextColor = Colors.White;
-            button.BorderColor = Color.FromArgb("#18B65A");
-        }
-        else
-        {
-            button.BackgroundColor = isDark
-                ? Color.FromArgb("#152744")
-                : Colors.White;
+        button.SetDynamicResource(
+            Button.TextColorProperty,
+            isSelected
+                ? "OnPrimaryColor"
+                : "TextPrimaryColor");
 
-            button.TextColor = isDark
-                ? Colors.White
-                : Color.FromArgb("#22324A");
+        button.SetDynamicResource(
+            Button.BorderColorProperty,
+            isSelected
+                ? "PrimaryColor"
+                : "BorderColor");
 
-            button.BorderColor = isDark
-                ? Color.FromArgb("#253A57")
-                : Color.FromArgb("#D6DFEC");
-        }
+        button.BorderWidth =
+            1;
+
+        button.CornerRadius =
+            12;
     }
 
     private void UpdateRangeCards()
     {
-        bool isDark = Application.Current?.RequestedTheme != AppTheme.Light;
+        ApplyRangeStyle(
+            Range1To10Border,
+            _currentRange ==
+            TableRange.OneToTen);
 
-        ApplyRangeStyle(Range1To10Border, _currentRange == TableRange.OneToTen, isDark);
-        ApplyRangeStyle(Range11To20Border, _currentRange == TableRange.ElevenToTwenty, isDark);
-        ApplyRangeStyle(RangeAllBorder, _currentRange == TableRange.All, isDark);
+        ApplyRangeStyle(
+            Range11To20Border,
+            _currentRange ==
+            TableRange.ElevenToTwenty);
+
+        ApplyRangeStyle(
+            RangeAllBorder,
+            _currentRange ==
+            TableRange.All);
     }
 
-    private void ApplyRangeStyle(Border border, bool isSelected, bool isDark)
+    private static void ApplyRangeStyle(
+        Border border,
+        bool isSelected)
     {
-        if (isSelected)
-        {
-            border.BackgroundColor = isDark
-                ? Color.FromArgb("#103D2F")
-                : Color.FromArgb("#ECF9F1");
+        border.SetDynamicResource(
+            Border.BackgroundColorProperty,
+            isSelected
+                ? "SurfaceAltColor"
+                : "SurfaceColor");
 
-            border.Stroke = Color.FromArgb("#1FA95E");
-            border.StrokeThickness = 1.4;
-        }
-        else
-        {
-            border.BackgroundColor = isDark
-                ? Color.FromArgb("#0D1C35")
-                : Colors.White;
+        border.SetDynamicResource(
+            Border.StrokeProperty,
+            isSelected
+                ? "PrimaryColor"
+                : "BorderBrush");
 
-            border.Stroke = isDark
-                ? Color.FromArgb("#233755")
-                : Color.FromArgb("#D6DFEC");
-
-            border.StrokeThickness = 1.2;
-        }
+        border.StrokeThickness =
+            isSelected
+                ? 1.6
+                : 1;
     }
 
     private enum TableMode

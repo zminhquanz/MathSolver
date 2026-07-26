@@ -1,6 +1,7 @@
-using MathSolver.Services;
 using MathSolver.Views;
+using MathSolver.Services;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace MathSolver;
 
@@ -41,8 +42,12 @@ public partial class AppShell : Shell
             nameof(SettingsPage),
             typeof(SettingsPage));
 
-        // SettingsPage là một route nằm ngoài cây giao diện Shell nên nó được
-        // đẩy lên navigation stack. Khi đổi tab, cần pop route này trước.
+        Routing.RegisterRoute(
+            nameof(HardwarePerformancePage),
+            typeof(HardwarePerformancePage));
+
+        // Các trang cài đặt là global route nằm ngoài cây Shell nên được
+        // đẩy lên navigation stack. Khi đổi tab, cần pop route trước.
         MainTabBar.PropertyChanged +=
             OnMainTabBarPropertyChanged;
 
@@ -72,23 +77,52 @@ public partial class AppShell : Shell
 
         try
         {
+            await AnimateSettingsButtonAsync();
+
             if (Navigation.ModalStack.LastOrDefault()
-                is SettingsMenuPage)
+                is SettingsMenuPage settingsMenu)
             {
-                await Navigation.PopModalAsync(
-                    animated: false);
+                await settingsMenu.CloseWithAnimationAsync();
                 return;
             }
 
             await Navigation.PushModalAsync(
                 new SettingsMenuPage(),
-                animated: false);
+                animated:
+                    false);
         }
         finally
         {
             SettingsButton.IsEnabled = true;
             _openingSettings = false;
         }
+    }
+
+    private async Task AnimateSettingsButtonAsync()
+    {
+        SettingsButton.CancelAnimations();
+
+        await Task.WhenAll(
+            SettingsButton.ScaleToAsync(
+                0.88d,
+                75,
+                Easing.CubicOut),
+
+            SettingsButton.RotateToAsync(
+                22d,
+                75,
+                Easing.CubicOut));
+
+        await Task.WhenAll(
+            SettingsButton.ScaleToAsync(
+                1d,
+                110,
+                Easing.CubicOut),
+
+            SettingsButton.RotateToAsync(
+                0d,
+                110,
+                Easing.CubicOut));
     }
 
     private void OnLanguageChanged(
@@ -147,13 +181,13 @@ public partial class AppShell : Shell
             return false;
         }
 
-        return TryGetThemeColorNextStep(
+        return TryGetThemeColor(
             resources,
             resourceKey,
             out color);
     }
 
-    private static bool TryGetThemeColorNextStep(
+    private static bool TryGetThemeColor(
         ResourceDictionary resources,
         string resourceKey,
         out Color color)
@@ -196,7 +230,7 @@ public partial class AppShell : Shell
              index >= 0;
              index--)
         {
-            if (TryGetThemeColorNextStep(
+            if (TryGetThemeColor(
                     mergedDictionaries[index],
                     resourceKey,
                     out color))
@@ -226,7 +260,7 @@ public partial class AppShell : Shell
         PropertyChangedEventArgs e)
     {
         if (e.PropertyName != "CurrentItem" ||
-            !IsSettingsOpen() ||
+            !IsSettingsRouteOpen() ||
             _returningFromSettings)
         {
             return;
@@ -243,7 +277,7 @@ public partial class AppShell : Shell
         ShellNavigatingEventArgs e)
     {
         if (_returningFromSettings ||
-            !IsSettingsOpen() ||
+            !IsSettingsRouteOpen() ||
             !e.CanCancel)
         {
             return;
@@ -260,8 +294,8 @@ public partial class AppShell : Shell
             return;
         }
 
-        // Route SettingsPage là global route. Nếu người dùng chọn một tab,
-        // hủy điều hướng mặc định, pop SettingsPage rồi đi tới route tab.
+        // Khi một global route cài đặt đang mở mà người dùng chọn tab,
+        // hủy điều hướng mặc định, pop route rồi đi tới tab đã chọn.
         e.Cancel();
 
         Dispatcher.Dispatch(
@@ -283,7 +317,7 @@ public partial class AppShell : Shell
         ShellNavigatedEventArgs e)
     {
         bool settingsOpen =
-            IsSettingsOpen();
+            IsSettingsRouteOpen();
 
         // Khi Settings đang mở, ẩn toàn bộ nhóm nút góc phải.
         // Khu vực này vẫn có thể chứa thêm nút trong tương lai, nhưng
@@ -299,7 +333,7 @@ public partial class AppShell : Shell
     {
         if (_returningFromSettings ||
             Shell.Current is null ||
-            !IsSettingsOpen())
+            !IsSettingsRouteOpen())
         {
             return;
         }
@@ -318,15 +352,18 @@ public partial class AppShell : Shell
         }
     }
 
-    private static bool IsSettingsOpen()
+    private static bool IsSettingsRouteOpen()
     {
         string location =
             Shell.Current?.CurrentState.Location.OriginalString ??
             string.Empty;
 
         return location.Contains(
-            nameof(SettingsPage),
-            StringComparison.OrdinalIgnoreCase);
+                   nameof(SettingsPage),
+                   StringComparison.OrdinalIgnoreCase) ||
+               location.Contains(
+                   nameof(HardwarePerformancePage),
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? GetMainRoute(

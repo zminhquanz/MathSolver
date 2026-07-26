@@ -1,4 +1,4 @@
-﻿using MathSolver.Services;
+using MathSolver.Services;
 
 namespace MathSolver.Views;
 
@@ -6,6 +6,8 @@ public partial class SettingsPage : ContentPage
 {
     private bool _updatingControls;
     private bool _updatingFontSelection;
+    private bool _hasPlayedEntryAnimation;
+    private bool _isClosing;
 
     // Picker.ItemsSource yêu cầu IList, trong khi AppFontCatalog.Options
     // được khai báo là IReadOnlyList. Tạo một List dùng chung để vừa
@@ -20,14 +22,38 @@ public partial class SettingsPage : ContentPage
         LocalizationService.Attach(
             this);
 
-        // Settings là một màn hình riêng, không hiển thị ba tab chính.
-        Shell.SetTabBarIsVisible(this, false);
-        Shell.SetNavBarIsVisible(this, true);
+        Shell.SetNavBarIsVisible(
+            this,
+            true);
+
+        Shell.SetBackButtonBehavior(
+            this,
+            new BackButtonBehavior
+            {
+                IsVisible =
+                    false,
+
+                IsEnabled =
+                    false
+            });
+
+        Shell.SetTabBarIsVisible(
+            this,
+            false);
 
         FontPicker.ItemsSource =
             _fontOptions;
 
         LoadCurrentSettings();
+        PreparePageEntryAnimation();
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        _ =
+            CloseAsync();
+
+        return true;
     }
 
     protected override void OnAppearing()
@@ -39,6 +65,16 @@ public partial class SettingsPage : ContentPage
         AppLanguageManager.LanguageChanged += OnLanguageChanged;
 
         LoadCurrentSettings();
+
+        if (!_hasPlayedEntryAnimation)
+        {
+            _hasPlayedEntryAnimation =
+                true;
+
+            Dispatcher.Dispatch(
+                async () =>
+                    await PlayPageEntryAnimationAsync());
+        }
     }
 
     protected override void OnDisappearing()
@@ -48,6 +84,62 @@ public partial class SettingsPage : ContentPage
         AppLanguageManager.LanguageChanged -= OnLanguageChanged;
 
         base.OnDisappearing();
+    }
+
+    private void PreparePageEntryAnimation()
+    {
+        SettingsPageContentRoot.Opacity =
+            0d;
+
+        SettingsPageContentRoot.TranslationX =
+            42d;
+
+        SettingsPageContentRoot.Scale =
+            0.995d;
+    }
+
+    private async Task PlayPageEntryAnimationAsync()
+    {
+        SettingsPageContentRoot.CancelAnimations();
+
+        await Task.WhenAll(
+            SettingsPageContentRoot.FadeToAsync(
+                1d,
+                190,
+                Easing.CubicOut),
+
+            SettingsPageContentRoot.TranslateToAsync(
+                0d,
+                0d,
+                240,
+                Easing.CubicOut),
+
+            SettingsPageContentRoot.ScaleToAsync(
+                1d,
+                240,
+                Easing.CubicOut));
+    }
+
+    private async Task PlayPageExitAnimationAsync()
+    {
+        SettingsPageContentRoot.CancelAnimations();
+
+        await Task.WhenAll(
+            SettingsPageContentRoot.FadeToAsync(
+                0d,
+                125,
+                Easing.CubicIn),
+
+            SettingsPageContentRoot.TranslateToAsync(
+                34d,
+                0d,
+                155,
+                Easing.CubicIn),
+
+            SettingsPageContentRoot.ScaleToAsync(
+                0.995d,
+                155,
+                Easing.CubicIn));
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)
@@ -359,6 +451,58 @@ public partial class SettingsPage : ContentPage
             EnglishLanguageButton,
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English);
+    }
+
+    private async void OnCloseClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await CloseAsync();
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_isClosing)
+        {
+            return;
+        }
+
+        _isClosing =
+            true;
+
+        try
+        {
+            await PlayPageExitAnimationAsync();
+
+            if (Shell.Current is AppShell appShell)
+            {
+                await appShell.CloseSettingsAsync();
+                return;
+            }
+
+            if (Shell.Current is not null)
+            {
+                await Shell.Current.GoToAsync(
+                    "..",
+                    animate:
+                        false);
+
+                return;
+            }
+
+            if (Navigation.NavigationStack.Contains(
+                    this))
+            {
+                await Navigation.PopAsync(
+                    animated:
+                        false);
+            }
+        }
+        finally
+        {
+            _isClosing =
+                false;
+        }
     }
 
     private void ShowValidationMessage(string message)

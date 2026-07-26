@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     x:Class="MathSolver.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -9,87 +9,123 @@
     Shell.NavBarIsVisible="True"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <ScrollView>
-        <VerticalStackLayout
+    <!-- Ẩn nút Back mặc định của Shell/Windows NavigationView. -->
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior
+            IsVisible="False"
+            IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
+    <!-- Thay tiêu đề Math Solver bằng tiêu đề riêng của trang Cài đặt. -->
+    <Shell.TitleView>
+        <Grid
+            Padding="0,0,8,0"
+            ColumnDefinitions="Auto,*"
+            ColumnSpacing="8">
+
+            <Button
+                x:Name="SettingsBackButton"
+                Grid.Column="0"
+                Text="‹"
+                WidthRequest="40"
+                HeightRequest="40"
+                MinimumWidthRequest="40"
+                MinimumHeightRequest="40"
+                Padding="0"
+                CornerRadius="20"
+                FontSize="28"
+                FontAttributes="Bold"
+                BackgroundColor="Transparent"
+                TextColor="{DynamicResource TextPrimaryColor}"
+                AutomationProperties.Name="Quay lại"
+                Clicked="OnCloseClicked" />
+
+            <VerticalStackLayout
+                Grid.Column="1"
+                Spacing="0"
+                VerticalOptions="Center">
+                <Label
+                    Text="CÀI ĐẶT GIAO DIỆN"
+                    FontSize="19"
+                    FontAttributes="Bold"
+                    LineBreakMode="NoWrap"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <Label
+                    Text="Chọn phong cách sáng, tối và bất kỳ màu chủ đề nào cho Math Solver"
+                    FontSize="11"
+                    LineBreakMode="TailTruncation"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
+    <ScrollView
+        x:Name="SettingsPageContentRoot">
+            <VerticalStackLayout
             Padding="18"
             Spacing="16"
             HorizontalOptions="Center"
             MaximumWidthRequest="900">
 
-            <VerticalStackLayout
-                Spacing="3"
-                HorizontalOptions="Fill">
-
-                <Label
-                    Text="CÀI ĐẶT GIAO DIỆN"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
-
-                <Label
-                    Text="Chọn phong cách sáng, tối và bất kỳ màu chủ đề nào cho Math Solver"
-                    FontSize="14"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
-            </VerticalStackLayout>
-
-            <Border Style="{StaticResource ThemeCardStyle}">
-                <VerticalStackLayout Spacing="13">
-                    <Label
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="13">
+                        <Label
                         Text="Phong cách hiển thị"
                         FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
+                        <Label
                         Text="Theo hệ thống sẽ tự chuyển sáng hoặc tối theo thiết bị."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                    <Grid
+                        <Grid
                         ColumnDefinitions="*,*,*"
                         ColumnSpacing="10">
 
-                        <Button
+                            <Button
                             x:Name="SystemThemeButton"
                             Grid.Column="0"
                             Text="Hệ thống"
                             Clicked="OnSystemThemeClicked" />
 
-                        <Button
+                            <Button
                             x:Name="LightThemeButton"
                             Grid.Column="1"
                             Text="Sáng"
                             Clicked="OnLightThemeClicked" />
 
-                        <Button
+                            <Button
                             x:Name="DarkThemeButton"
                             Grid.Column="2"
                             Text="Tối"
                             Clicked="OnDarkThemeClicked" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
 
-            <Border Style="{StaticResource ThemeCardStyle}">
-                <VerticalStackLayout Spacing="14">
-                    <Label
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label
                         Text="Màu chủ đề"
                         FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
+                        <Label
                         Text="Chọn màu có sẵn, nhập mã HEX hoặc điều chỉnh ba kênh RGB."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                    <FlexLayout
+                        <FlexLayout
                         Direction="Row"
                         Wrap="Wrap"
                         JustifyContent="Start"
                         AlignItems="Center">
 
-                        <Button
+                            <Button
                             Margin="0,0,10,10"
                             WidthRequest="44"
                             HeightRequest="44"
@@ -104,7 +140,7 @@
                             AutomationProperties.Name="Màu tím"
                             Clicked="OnPresetColorClicked" />
 
-                        <Button
+                            <Button
                             Margin="0,0,10,10"
                             WidthRequest="44"
                             HeightRequest="44"
@@ -119,7 +155,7 @@
                             AutomationProperties.Name="Màu xanh dương"
                             Clicked="OnPresetColorClicked" />
 
-                        <Button
+                            <Button
                             Margin="0,0,10,10"
                             WidthRequest="44"
                             HeightRequest="44"
@@ -134,7 +170,7 @@
                             AutomationProperties.Name="Màu xanh ngọc"
                             Clicked="OnPresetColorClicked" />
 
-                        <Button
+                            <Button
                             Margin="0,0,10,10"
                             WidthRequest="44"
                             HeightRequest="44"
@@ -149,7 +185,7 @@
                             AutomationProperties.Name="Màu xanh lá"
                             Clicked="OnPresetColorClicked" />
 
-                        <Button
+                            <Button
                             Margin="0,0,10,10"
                             WidthRequest="44"
                             HeightRequest="44"
@@ -164,7 +200,7 @@
                             AutomationProperties.Name="Màu cam"
                             Clicked="OnPresetColorClicked" />
 
-                        <Button
+                            <Button
                             Margin="0,0,10,10"
                             WidthRequest="44"
                             HeightRequest="44"
@@ -178,23 +214,23 @@
                             CommandParameter="#DB2777"
                             AutomationProperties.Name="Màu hồng"
                             Clicked="OnPresetColorClicked" />
-                    </FlexLayout>
+                        </FlexLayout>
 
-                    <Grid
+                        <Grid
                         ColumnDefinitions="*,Auto"
                         ColumnSpacing="10">
 
-                        <Border
+                            <Border
                             Grid.Column="0"
                             Padding="10,0"
                             BackgroundColor="{DynamicResource InputBackgroundColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="10" />
-                            </Border.StrokeShape>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
 
-                            <controls:BorderlessEntry
+                                <controls:BorderlessEntry
                                 x:Name="HexColorEntry"
                                 Placeholder="#6D28D9"
                                 MaxLength="7"
@@ -205,28 +241,28 @@
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Fill"
                                 Completed="OnApplyHexClicked" />
-                        </Border>
+                            </Border>
 
-                        <Button
+                            <Button
                             Grid.Column="1"
                             Text="Áp dụng"
                             Style="{StaticResource ThemePrimaryButtonStyle}"
                             Clicked="OnApplyHexClicked" />
-                    </Grid>
+                        </Grid>
 
-                    <Label
+                        <Label
                         x:Name="ValidationLabel"
                         IsVisible="False"
                         FontSize="13"
                         TextColor="{DynamicResource DangerColor}" />
 
-                    <Grid
+                        <Grid
                         RowDefinitions="Auto,Auto,Auto"
                         ColumnDefinitions="Auto,*,Auto"
                         RowSpacing="12"
                         ColumnSpacing="10">
 
-                        <Label
+                            <Label
                             Grid.Row="0"
                             Grid.Column="0"
                             Text="R"
@@ -234,7 +270,7 @@
                             TextColor="{DynamicResource TextPrimaryColor}"
                             VerticalTextAlignment="Center" />
 
-                        <Slider
+                            <Slider
                             x:Name="RedSlider"
                             Grid.Row="0"
                             Grid.Column="1"
@@ -245,7 +281,7 @@
                             MinimumTrackColor="{DynamicResource PrimaryColor}"
                             MaximumTrackColor="{DynamicResource BorderColor}" />
 
-                        <Label
+                            <Label
                             x:Name="RedValueLabel"
                             Grid.Row="0"
                             Grid.Column="2"
@@ -253,7 +289,7 @@
                             HorizontalTextAlignment="End"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
-                        <Label
+                            <Label
                             Grid.Row="1"
                             Grid.Column="0"
                             Text="G"
@@ -261,7 +297,7 @@
                             TextColor="{DynamicResource TextPrimaryColor}"
                             VerticalTextAlignment="Center" />
 
-                        <Slider
+                            <Slider
                             x:Name="GreenSlider"
                             Grid.Row="1"
                             Grid.Column="1"
@@ -272,7 +308,7 @@
                             MinimumTrackColor="{DynamicResource PrimaryColor}"
                             MaximumTrackColor="{DynamicResource BorderColor}" />
 
-                        <Label
+                            <Label
                             x:Name="GreenValueLabel"
                             Grid.Row="1"
                             Grid.Column="2"
@@ -280,7 +316,7 @@
                             HorizontalTextAlignment="End"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
-                        <Label
+                            <Label
                             Grid.Row="2"
                             Grid.Column="0"
                             Text="B"
@@ -288,7 +324,7 @@
                             TextColor="{DynamicResource TextPrimaryColor}"
                             VerticalTextAlignment="Center" />
 
-                        <Slider
+                            <Slider
                             x:Name="BlueSlider"
                             Grid.Row="2"
                             Grid.Column="1"
@@ -299,84 +335,84 @@
                             MinimumTrackColor="{DynamicResource PrimaryColor}"
                             MaximumTrackColor="{DynamicResource BorderColor}" />
 
-                        <Label
+                            <Label
                             x:Name="BlueValueLabel"
                             Grid.Row="2"
                             Grid.Column="2"
                             WidthRequest="36"
                             HorizontalTextAlignment="End"
                             TextColor="{DynamicResource TextSecondaryColor}" />
-                    </Grid>
+                        </Grid>
 
-                    <Border
+                        <Border
                         x:Name="ColorPreviewBorder"
                         Padding="16"
                         Stroke="{DynamicResource BorderBrush}"
                         StrokeThickness="1">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                        <Grid ColumnDefinitions="*,Auto">
-                            <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                <Label
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label
                                     x:Name="PreviewTitleLabel"
                                     Text="Xem trước màu chủ đề"
                                     FontAttributes="Bold" />
 
-                                <Label
+                                    <Label
                                     x:Name="PreviewHexLabel"
                                     FontSize="13" />
-                            </VerticalStackLayout>
+                                </VerticalStackLayout>
 
-                            <Label
+                                <Label
                                 x:Name="PreviewSampleLabel"
                                 Grid.Column="1"
                                 Text="Aa"
                                 FontSize="24"
                                 FontAttributes="Bold"
                                 VerticalTextAlignment="Center" />
-                        </Grid>
-                    </Border>
-                </VerticalStackLayout>
-            </Border>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
 
 
-            <!-- TÙY CHỈNH PHÔNG CHỮ -->
-            <Border Style="{StaticResource ThemeCardStyle}">
-                <VerticalStackLayout Spacing="13">
+                <!-- TÙY CHỈNH PHÔNG CHỮ -->
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="13">
 
-                    <Label
+                        <Label
                         Text="Phông chữ"
                         FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
+                        <Label
                         Text="Chọn phông chữ dùng cho toàn bộ giao diện Math Solver."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                    <Border
+                        <Border
                         Padding="0"
                         BackgroundColor="{DynamicResource InputBackgroundColor}"
                         Stroke="{DynamicResource BorderBrush}"
                         StrokeThickness="1">
 
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
 
-                        <Grid
+                            <Grid
                             HeightRequest="46"
                             ColumnDefinitions="*,44">
 
-                            <!--
+                                <!--
                                 Picker phủ toàn bộ chiều rộng để người dùng có thể
                                 bấm cả vùng mũi tên. Padding native bên phải được
                                 chừa trong BorderlessPicker.cs.
                             -->
-                            <controls:BorderlessPicker
+                                <controls:BorderlessPicker
                                 x:Name="FontPicker"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
@@ -390,8 +426,8 @@
                                 BackgroundColor="Transparent"
                                 SelectedIndexChanged="OnFontSelectionChanged" />
 
-                            <!-- Vạch phân cách nhẹ cho vùng nút xổ xuống. -->
-                            <BoxView
+                                <!-- Vạch phân cách nhẹ cho vùng nút xổ xuống. -->
+                                <BoxView
                                 Grid.Column="1"
                                 WidthRequest="1"
                                 Margin="0,9,0,9"
@@ -399,8 +435,8 @@
                                 BackgroundColor="{DynamicResource DividerColor}"
                                 InputTransparent="True" />
 
-                            <!-- Nút xổ xuống dạng pill nhỏ, cân giữa và đồng bộ theme. -->
-                            <Border
+                                <!-- Nút xổ xuống dạng pill nhỏ, cân giữa và đồng bộ theme. -->
+                                <Border
                                 Grid.Column="1"
                                 WidthRequest="30"
                                 HeightRequest="30"
@@ -413,110 +449,110 @@
                                 StrokeThickness="1"
                                 InputTransparent="True">
 
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
 
-                                <Label
+                                    <Label
                                     Text="▾"
                                     FontSize="13"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     VerticalTextAlignment="Center"
                                     TextColor="{DynamicResource PrimaryColor}" />
-                            </Border>
+                                </Border>
 
-                        </Grid>
-                    </Border>
+                            </Grid>
+                        </Border>
 
-                    <Border
+                        <Border
                         Padding="14"
                         BackgroundColor="{DynamicResource SurfaceColor}"
                         Stroke="{DynamicResource PrimaryBorderBrush}"
                         StrokeThickness="1">
 
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
 
-                        <VerticalStackLayout Spacing="7">
+                            <VerticalStackLayout Spacing="7">
 
-                            <Label
+                                <Label
                                 Text="Xem trước phông chữ"
                                 FontSize="13"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
-                            <Label
+                                <Label
                                 x:Name="FontPreviewLabel"
                                 Text="Aa Bb Cc — 0123456789 — Toán học"
                                 FontSize="23"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 
-                            <Label
+                                <Label
                                 x:Name="SelectedFontNameLabel"
                                 FontSize="13"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
-                        </VerticalStackLayout>
-                    </Border>
+                            </VerticalStackLayout>
+                        </Border>
 
-                </VerticalStackLayout>
-            </Border>
+                    </VerticalStackLayout>
+                </Border>
 
 
-            <Border Style="{StaticResource ThemeCardStyle}">
-                <VerticalStackLayout Spacing="12">
-                    <Label
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
                         Text="Ngôn ngữ"
                         FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
+                        <Label
                         Text="Chọn ngôn ngữ dùng cho toàn bộ giao diện và lời giải."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button
                             x:Name="VietnameseLanguageButton"
                             Grid.Column="0"
                             Text="Tiếng Việt"
                             Clicked="OnVietnameseLanguageClicked" />
 
-                        <Button
+                            <Button
                             x:Name="EnglishLanguageButton"
                             Grid.Column="1"
                             Text="Tiếng Anh"
                             Clicked="OnEnglishLanguageClicked" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
 
-            <Border Style="{StaticResource ThemeCardStyle}">
-                <VerticalStackLayout Spacing="10">
-                    <Label
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label
                         Text="Khôi phục mặc định"
                         FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
+                        <Label
                         Text="Đưa ứng dụng về màu tím, phông Open Sans và phong cách theo hệ thống."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                    <Button
+                        <Button
                         Text="Khôi phục"
                         Style="{StaticResource ThemeSecondaryButtonStyle}"
                         HorizontalOptions="Start"
                         Clicked="OnResetClicked" />
-                </VerticalStackLayout>
-            </Border>
+                    </VerticalStackLayout>
+                </Border>
 
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
 </ContentPage>
