@@ -1,11 +1,10 @@
+using MathSolver.Services;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
-using MathSolver.Services;
-using Microsoft.Maui.Devices;
 
 namespace MathSolver.Views;
 
@@ -337,6 +336,11 @@ public partial class HardwarePerformancePage : ContentPage
 
     private static string GetBestSimdName()
     {
+        if (Avx512BW.IsSupported || Avx512CD.IsSupported || Avx512DQ.IsSupported || Avx512F.IsSupported || Avx512Vbmi.IsSupported || Avx512Vbmi2.IsSupported)
+        {
+            return "AVX512";
+        }
+
         if (Avx2.IsSupported)
         {
             return "AVX2";
@@ -355,6 +359,11 @@ public partial class HardwarePerformancePage : ContentPage
         if (Sse41.IsSupported)
         {
             return "SSE4.1";
+        }
+
+        if (Ssse3.IsSupported)
+        {
+            return "SSSE3";
         }
 
         if (Sse3.IsSupported)

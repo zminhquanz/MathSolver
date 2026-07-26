@@ -1,8 +1,8 @@
+using MathSolver.Services;
 using System.Globalization;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
-using MathSolver.Services;
 
 namespace MathSolver.Graphics;
 
@@ -2040,6 +2040,7 @@ public static class ParabolaSimdEvaluator
         Avx,
         Sse42,
         Sse41,
+        Ssse3,
         Sse3,
         Sse2,
         Neon,
@@ -2094,6 +2095,7 @@ public static class ParabolaSimdEvaluator
                 break;
             case SimdPath.Sse42:
             case SimdPath.Sse41:
+            case SimdPath.Ssse3:
             case SimdPath.Sse3:
             case SimdPath.Sse2:
             case SimdPath.Neon:
@@ -2139,6 +2141,11 @@ public static class ParabolaSimdEvaluator
         if (Sse41.IsSupported)
         {
             return SimdPath.Sse41;
+        }
+
+        if (Ssse3.IsSupported)
+        {
+            return SimdPath.Ssse3;
         }
 
         if (Sse3.IsSupported)
