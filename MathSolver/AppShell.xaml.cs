@@ -10,9 +10,24 @@ public partial class AppShell : Shell
     private bool _openingSettings;
     private bool _returningFromSettings;
 
+    private string _activeMainRoute =
+        "CalculationPage";
+
+    // Một chuyển tab chỉ tạo đúng một "phiếu" animation. Phiếu được
+    // tạo trong Shell.Navigating (trước khi trang đích được vẽ) và được
+    // trang đích lấy đúng một lần trong OnAppearing.
+    private string? _pendingMainTabRoute;
+
+    private int _pendingMainTabDirection;
+
     public AppShell()
     {
         InitializeComponent();
+
+        // Ghi nhận tab ban đầu nhưng không chạy animation khi ứng dụng mở.
+        _activeMainRoute =
+            GetSelectedMainRoute() ??
+            "CalculationPage";
 
         LocalizationService.Attach(
             this);
@@ -266,8 +281,9 @@ public partial class AppShell : Shell
             return;
         }
 
-        // Tab đã được đổi ở phía sau SettingsPage. Pop SettingsPage để
-        // trang của tab vừa chọn xuất hiện ngay.
+        // PropertyChanged chỉ còn phục vụ việc đóng trang cài đặt đang phủ
+        // lên Shell. Không khởi chạy animation ở đây vì CurrentItem đổi sau
+        // khi trang đích có thể đã xuất hiện, dễ tạo cảm giác nháy hai lần.
         Dispatcher.Dispatch(
             async () => await CloseSettingsAsync());
     }
@@ -276,20 +292,26 @@ public partial class AppShell : Shell
         object? sender,
         ShellNavigatingEventArgs e)
     {
-        if (_returningFromSettings ||
-            !IsSettingsRouteOpen() ||
-            !e.CanCancel)
-        {
-            return;
-        }
-
         string targetLocation =
             e.Target.Location.OriginalString;
 
         string? targetMainRoute =
-            GetMainRoute(targetLocation);
+            GetMainRoute(
+                targetLocation);
 
-        if (targetMainRoute is null)
+        // Shell.Navigating xảy ra trước khi trang đích được hiển thị.
+        // Chỉ ghi nhận hướng chuyển ở đây; chính OnAppearing của trang đích
+        // sẽ chuẩn bị root ở trạng thái ẩn và phát animation đúng một lần.
+        if (targetMainRoute is not null)
+        {
+            PrepareMainTabTransition(
+                targetMainRoute);
+        }
+
+        if (_returningFromSettings ||
+            !IsSettingsRouteOpen() ||
+            !e.CanCancel ||
+            targetMainRoute is null)
         {
             return;
         }
@@ -319,14 +341,78 @@ public partial class AppShell : Shell
         bool settingsOpen =
             IsSettingsRouteOpen();
 
-        // Khi Settings đang mở, ẩn toàn bộ nhóm nút góc phải.
-        // Khu vực này vẫn có thể chứa thêm nút trong tương lai, nhưng
-        // chúng chỉ xuất hiện ở các màn hình chính.
         TitleActionButtons.IsVisible =
             !settingsOpen;
 
-
         UpdateSettingsAccessibilityText();
+
+        // Không chạy animation trong Navigated. Khi đến đây trang đích đã
+        // có thể được vẽ, reset Opacity về 0 lúc này sẽ tạo một lần nháy
+        // rồi mới chạy transition lần nữa.
+    }
+
+    private void PrepareMainTabTransition(
+        string targetRoute)
+    {
+        if (string.Equals(
+                _activeMainRoute,
+                targetRoute,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        int currentIndex =
+            GetMainRouteIndex(
+                _activeMainRoute);
+
+        int targetIndex =
+            GetMainRouteIndex(
+                targetRoute);
+
+        _pendingMainTabDirection =
+            targetIndex >= currentIndex
+                ? 1
+                : -1;
+
+        _pendingMainTabRoute =
+            targetRoute;
+
+        // Commit ngay để cùng một thao tác điều hướng lặp lại không tạo
+        // thêm phiếu animation thứ hai.
+        _activeMainRoute =
+            targetRoute;
+    }
+
+    public bool TryConsumeMainTabTransition(
+        string pageRoute,
+        out int direction)
+    {
+        if (!string.Equals(
+                _pendingMainTabRoute,
+                pageRoute,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            direction =
+                0;
+
+            return false;
+        }
+
+        direction =
+            _pendingMainTabDirection >= 0
+                ? 1
+                : -1;
+
+        // Xóa trước khi trang bắt đầu animation. Dù OnAppearing hoặc một
+        // callback khác bị gọi lại, phiếu này không thể được lấy lần hai.
+        _pendingMainTabRoute =
+            null;
+
+        _pendingMainTabDirection =
+            0;
+
+        return true;
     }
 
     public async Task CloseSettingsAsync()
@@ -364,6 +450,56 @@ public partial class AppShell : Shell
                location.Contains(
                    nameof(HardwarePerformancePage),
                    StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string? GetSelectedMainRoute()
+    {
+        ShellSection? selectedSection =
+            MainTabBar.CurrentItem;
+
+        ShellContent? selectedContent =
+            selectedSection?.CurrentItem;
+
+        if (ReferenceEquals(
+                selectedContent,
+                CalculationShellContent))
+        {
+            return "CalculationPage";
+        }
+
+        if (ReferenceEquals(
+                selectedContent,
+                FormulaShellContent))
+        {
+            return "FormulaPage";
+        }
+
+        if (ReferenceEquals(
+                selectedContent,
+                MultiplicationShellContent))
+        {
+            return "MultiplicationTablePage";
+        }
+
+        string candidateLocation =
+            selectedContent?.Route ??
+            selectedSection?.Route ??
+            CurrentState.Location.OriginalString;
+
+        return GetMainRoute(
+            candidateLocation);
+    }
+
+    private static int GetMainRouteIndex(
+        string route)
+    {
+        return route switch
+        {
+            "CalculationPage" => 0,
+            "FormulaPage" => 1,
+            "MultiplicationTablePage" => 2,
+            _ => 0
+        };
     }
 
     private static string? GetMainRoute(

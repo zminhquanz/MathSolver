@@ -51,7 +51,9 @@
         </Style>
     </ContentPage.Resources>
 
-    <Grid Padding="20,16">
+    <Grid
+        x:Name="MultiplicationPageContentRoot"
+        Padding="20,16">
         <CollectionView
             x:Name="TablesCollectionView"
             ItemsSource="{Binding TableCards}"

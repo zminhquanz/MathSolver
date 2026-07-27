@@ -64,7 +64,10 @@ public partial class HardwarePerformancePage : ContentPage
     private bool _isLoadingAccelerationState;
     private bool _hasPlayedEntryAnimation;
     private bool _isClosing;
+    private bool _isStopConfirmationVisible;
+    private bool _isPageDisappearing;
     private CancellationTokenSource? _benchmarkCancellationTokenSource;
+    private TaskCompletionSource<bool>? _benchmarkCompletionSource;
 
     private readonly List<SimdModeOption>
         _simdModeOptions =
@@ -94,6 +97,9 @@ public partial class HardwarePerformancePage : ContentPage
     {
         base.OnAppearing();
 
+        _isPageDisappearing =
+            false;
+
         AppLanguageManager.LanguageChanged +=
             OnLanguageChanged;
 
@@ -116,6 +122,11 @@ public partial class HardwarePerformancePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _isPageDisappearing =
+            true;
+
+        // Chỉ gửi yêu cầu dừng không phát sinh exception.
+        // CloseAsync sẽ chờ benchmark kết thúc khi điều hướng trong ứng dụng.
         _benchmarkCancellationTokenSource?.Cancel();
 
         AppLanguageManager.LanguageChanged -=
@@ -223,10 +234,6 @@ public partial class HardwarePerformancePage : ContentPage
             NormalizeText(
                 deviceInfo.VersionString);
 
-        DeviceIdiomValueLabel.Text =
-            GetDeviceIdiomText(
-                deviceInfo.Idiom);
-
         DeviceTypeValueLabel.Text =
             GetDeviceTypeText(
                 deviceInfo.DeviceType);
@@ -242,15 +249,23 @@ public partial class HardwarePerformancePage : ContentPage
                 displayInfo.Height,
                 displayInfo.Density);
 
+        ProcessorNameValueLabel.Text =
+            NormalizeText(
+                GetProcessorName());
+
+        ProcessorClockValueLabel.Text =
+            GetProcessorClockText();
+
         CpuArchitectureValueLabel.Text =
-            RuntimeInformation
-                .ProcessArchitecture
-                .ToString();
+            GetCpuArchitectureText();
 
         OsArchitectureValueLabel.Text =
-            RuntimeInformation
-                .OSArchitecture
-                .ToString();
+            Environment.Is64BitOperatingSystem
+                ? "64-bit"
+                : "32-bit";
+
+        PhysicalCoresValueLabel.Text =
+            GetPhysicalCoreCountText();
 
         LogicalProcessorsValueLabel.Text =
             Environment
@@ -259,16 +274,12 @@ public partial class HardwarePerformancePage : ContentPage
                     CultureInfo.CurrentCulture);
 
         ProcessBitnessValueLabel.Text =
-            LocalizationService.Translate(
-                Environment.Is64BitProcess
-                    ? "Có"
-                    : "Không");
-
-        string simdText =
-            GetBestSimdName();
+            Environment.Is64BitProcess
+                ? "64-bit"
+                : "32-bit";
 
         SimdValueLabel.Text =
-            simdText;
+            GetSupportedSimdInstructionSets();
 
         bool hasSimd =
             CalculationAccelerationManager.IsSimdAvailable;
@@ -299,11 +310,7 @@ public partial class HardwarePerformancePage : ContentPage
         UpdateAccelerationStateText();
 
         VectorWidthValueLabel.Text =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                "{0} bit",
-                CalculationAccelerationManager
-                    .SimdVectorWidthBits);
+            GetMaximumVectorWidthText();
 
         AvailableMemoryValueLabel.Text =
             GetAvailableMemoryText();
@@ -363,13 +370,6 @@ public partial class HardwarePerformancePage : ContentPage
         CalculationAccelerationManager
             .SetSelectedSimdMode(
                 option.Mode);
-
-        VectorWidthValueLabel.Text =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                "{0} bit",
-                CalculationAccelerationManager
-                    .SimdVectorWidthBits);
 
         UpdateAccelerationStateText();
     }
@@ -531,26 +531,6 @@ public partial class HardwarePerformancePage : ContentPage
             : value.Trim();
     }
 
-    private static string GetDeviceIdiomText(
-        DeviceIdiom idiom)
-    {
-        string source =
-            idiom == DeviceIdiom.Desktop
-                ? "Máy tính để bàn"
-                : idiom == DeviceIdiom.Phone
-                    ? "Điện thoại"
-                    : idiom == DeviceIdiom.Tablet
-                        ? "Máy tính bảng"
-                        : idiom == DeviceIdiom.TV
-                            ? "TV"
-                            : idiom == DeviceIdiom.Watch
-                                ? "Đồng hồ"
-                                : "Không xác định";
-
-        return LocalizationService.Translate(
-            source);
-    }
-
     private static string GetDeviceTypeText(
         DeviceType deviceType)
     {
@@ -560,57 +540,1065 @@ public partial class HardwarePerformancePage : ContentPage
                 : "Thiết bị ảo");
     }
 
-    private static string GetBestSimdName()
+    private static string GetCpuArchitectureText()
     {
-        if (CalculationAccelerationManager
-                .IsAvx512Available)
+        return RuntimeInformation.ProcessArchitecture switch
         {
-            return "AVX512";
-        }
+            Architecture.X86 or
+            Architecture.X64 =>
+                "x86",
 
-        if (System.Runtime.Intrinsics.X86.Avx2.IsSupported)
-        {
-            return "AVX2";
-        }
+            Architecture.Arm or
+            Architecture.Arm64 =>
+                "ARM",
 
-        if (System.Runtime.Intrinsics.X86.Avx.IsSupported)
-        {
-            return "AVX";
-        }
+            Architecture.Wasm =>
+                "WebAssembly",
 
-        if (System.Runtime.Intrinsics.X86.Sse42.IsSupported)
-        {
-            return "SSE4.2";
-        }
+            _ =>
+                RuntimeInformation
+                    .ProcessArchitecture
+                    .ToString()
+        };
+    }
 
-        if (System.Runtime.Intrinsics.X86.Sse41.IsSupported)
-        {
-            return "SSE4.1";
-        }
+    private static string GetSupportedSimdInstructionSets()
+    {
+        var supportedSets =
+            new List<string>();
 
-        if (System.Runtime.Intrinsics.X86.Ssse3.IsSupported)
+        if (System.Runtime.Intrinsics.X86.Sse2.IsSupported)
         {
-            return "SSSE3";
+            supportedSets.Add(
+                "SSE2");
         }
 
         if (System.Runtime.Intrinsics.X86.Sse3.IsSupported)
         {
-            return "SSE3";
+            supportedSets.Add(
+                "SSE3");
         }
 
-        if (System.Runtime.Intrinsics.X86.Sse2.IsSupported)
+        if (System.Runtime.Intrinsics.X86.Ssse3.IsSupported)
         {
-            return "SSE2";
+            supportedSets.Add(
+                "SSSE3");
+        }
+
+        if (System.Runtime.Intrinsics.X86.Sse41.IsSupported)
+        {
+            supportedSets.Add(
+                "SSE4.1");
+        }
+
+        if (System.Runtime.Intrinsics.X86.Sse42.IsSupported)
+        {
+            supportedSets.Add(
+                "SSE4.2");
+        }
+
+        if (System.Runtime.Intrinsics.X86.Avx.IsSupported)
+        {
+            supportedSets.Add(
+                "AVX");
+        }
+
+        if (System.Runtime.Intrinsics.X86.Avx2.IsSupported)
+        {
+            supportedSets.Add(
+                "AVX2");
+        }
+
+        if (System.Runtime.Intrinsics.X86.Fma.IsSupported)
+        {
+            supportedSets.Add(
+                "FMA3");
+        }
+
+        if (CalculationAccelerationManager
+                .IsAvx512Available ||
+            Vector512.IsHardwareAccelerated)
+        {
+            supportedSets.Add(
+                "AVX512");
         }
 
         if (System.Runtime.Intrinsics.Arm.AdvSimd.IsSupported)
         {
-            return "ARM NEON";
+            supportedSets.Add(
+                "ARM NEON");
         }
 
-        return LocalizationService.Translate(
-            "Không được hỗ trợ");
+        return supportedSets.Count >
+               0
+            ? string.Join(
+                ", ",
+                supportedSets)
+            : LocalizationService.Translate(
+                "Không được hỗ trợ");
     }
+
+    private static string GetMaximumVectorWidthText()
+    {
+        int maximumWidthBits =
+            GetMaximumVectorWidthBits();
+
+        return maximumWidthBits >
+               0
+            ? string.Format(
+                CultureInfo.CurrentCulture,
+                "{0} bit",
+                maximumWidthBits)
+            : LocalizationService.Translate(
+                "Không được hỗ trợ");
+    }
+
+    private static int GetMaximumVectorWidthBits()
+    {
+        if (CalculationAccelerationManager
+                .IsAvx512Available ||
+            Vector512.IsHardwareAccelerated)
+        {
+            return 512;
+        }
+
+        if (System.Runtime.Intrinsics.X86.Avx.IsSupported ||
+            Vector256.IsHardwareAccelerated)
+        {
+            return 256;
+        }
+
+        if (System.Runtime.Intrinsics.X86.Sse2.IsSupported ||
+            System.Runtime.Intrinsics.Arm.AdvSimd.IsSupported ||
+            Vector128.IsHardwareAccelerated)
+        {
+            return 128;
+        }
+
+        if (Vector.IsHardwareAccelerated)
+        {
+            return Vector<byte>.Count *
+                   8;
+        }
+
+        return 0;
+    }
+
+    private static string? GetProcessorName()
+    {
+#if WINDOWS
+        string? windowsName =
+            GetWindowsProcessorName();
+
+        if (!string.IsNullOrWhiteSpace(
+                windowsName))
+        {
+            return windowsName;
+        }
+#endif
+
+#if IOS || MACCATALYST || MACOS
+        string? appleName =
+            ReadAppleSysctlString(
+                "machdep.cpu.brand_string");
+
+        if (string.IsNullOrWhiteSpace(
+                appleName))
+        {
+            appleName =
+                ReadAppleSysctlString(
+                    "hw.model");
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                appleName))
+        {
+            return appleName;
+        }
+#endif
+
+        string? socName =
+            ReadFirstNonEmptyFile(
+                "/sys/devices/soc0/machine",
+                "/sys/devices/soc0/soc_id",
+                "/sys/devices/soc0/family");
+
+        if (!string.IsNullOrWhiteSpace(
+                socName))
+        {
+            return socName;
+        }
+
+        return ReadCpuInfoValue(
+            RuntimeInformation.ProcessArchitecture is
+                Architecture.Arm or
+                Architecture.Arm64
+                ? [
+                    "Hardware",
+                    "model name",
+                    "Processor",
+                    "CPU model"
+                ]
+                : [
+                    "model name",
+                    "Processor",
+                    "Hardware",
+                    "CPU model"
+                ]);
+    }
+
+    private static string GetProcessorClockText()
+    {
+        double? maximumMegahertz =
+            GetMaximumProcessorClockMegahertz();
+
+        if (!maximumMegahertz.HasValue ||
+            maximumMegahertz.Value <=
+            0d)
+        {
+            return LocalizationService.Translate(
+                "Không xác định");
+        }
+
+        return maximumMegahertz.Value >=
+               1000d
+            ? string.Format(
+                CultureInfo.CurrentCulture,
+                "{0:N2} GHz",
+                maximumMegahertz.Value /
+                1000d)
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                "{0:N0} MHz",
+                maximumMegahertz.Value);
+    }
+
+    private static double? GetMaximumProcessorClockMegahertz()
+    {
+#if WINDOWS
+        double? windowsClock =
+            GetWindowsProcessorClockMegahertz();
+
+        if (windowsClock.HasValue)
+        {
+            return windowsClock;
+        }
+#endif
+
+#if IOS || MACCATALYST || MACOS
+        ulong? appleFrequency =
+            ReadAppleSysctlUInt64(
+                "hw.cpufrequency_max");
+
+        if (!appleFrequency.HasValue)
+        {
+            appleFrequency =
+                ReadAppleSysctlUInt64(
+                    "hw.cpufrequency");
+        }
+
+        if (appleFrequency.HasValue &&
+            appleFrequency.Value >
+            0)
+        {
+            return appleFrequency.Value /
+                   1_000_000d;
+        }
+#endif
+
+        double? sysFsClock =
+            ReadMaximumLinuxClockMegahertz();
+
+        if (sysFsClock.HasValue)
+        {
+            return sysFsClock;
+        }
+
+        string? cpuMegahertzText =
+            ReadCpuInfoValue(
+                [
+                    "cpu MHz",
+                    "clock"
+                ]);
+
+        if (TryParseFrequencyMegahertz(
+                cpuMegahertzText,
+                out double cpuMegahertz))
+        {
+            return cpuMegahertz;
+        }
+
+        return null;
+    }
+
+    private static string GetPhysicalCoreCountText()
+    {
+        int physicalCoreCount =
+            GetPhysicalCoreCount();
+
+        return physicalCoreCount >
+               0
+            ? physicalCoreCount.ToString(
+                CultureInfo.CurrentCulture)
+            : LocalizationService.Translate(
+                "Không xác định");
+    }
+
+    private static int GetPhysicalCoreCount()
+    {
+#if WINDOWS
+        int windowsCoreCount =
+            GetWindowsPhysicalCoreCount();
+
+        if (windowsCoreCount >
+            0)
+        {
+            return windowsCoreCount;
+        }
+#endif
+
+#if IOS || MACCATALYST || MACOS
+        int? appleCoreCount =
+            ReadAppleSysctlInt32(
+                "hw.physicalcpu_max") ??
+            ReadAppleSysctlInt32(
+                "hw.physicalcpu");
+
+        if (appleCoreCount >
+            0)
+        {
+            return appleCoreCount.Value;
+        }
+#endif
+
+        int linuxCoreCount =
+            GetLinuxPhysicalCoreCount();
+
+        if (linuxCoreCount >
+            0)
+        {
+            return linuxCoreCount;
+        }
+
+        return Environment
+            .ProcessorCount;
+    }
+
+    private static string? ReadFirstNonEmptyFile(
+        params string[] paths)
+    {
+        foreach (string path
+                 in paths)
+        {
+            try
+            {
+                if (!File.Exists(
+                        path))
+                {
+                    continue;
+                }
+
+                string value =
+                    File.ReadAllText(
+                            path)
+                        .Trim();
+
+                if (!string.IsNullOrWhiteSpace(
+                        value))
+                {
+                    return value;
+                }
+            }
+            catch
+            {
+                // Một số hệ điều hành giới hạn quyền đọc sysfs.
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ReadCpuInfoValue(
+        IReadOnlyList<string> keys)
+    {
+        const string cpuInfoPath =
+            "/proc/cpuinfo";
+
+        try
+        {
+            if (!File.Exists(
+                    cpuInfoPath))
+            {
+                return null;
+            }
+
+            string[] lines =
+                File.ReadAllLines(
+                    cpuInfoPath);
+
+            foreach (string key
+                     in keys)
+            {
+                foreach (string line
+                         in lines)
+                {
+                    int separatorIndex =
+                        line.IndexOf(
+                            ':');
+
+                    if (separatorIndex <=
+                        0)
+                    {
+                        continue;
+                    }
+
+                    string currentKey =
+                        line[..separatorIndex]
+                            .Trim();
+
+                    if (!currentKey.Equals(
+                            key,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    string value =
+                        line[(separatorIndex +
+                              1)..]
+                            .Trim();
+
+                    if (!string.IsNullOrWhiteSpace(
+                            value))
+                    {
+                        return value;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // /proc có thể không tồn tại hoặc bị sandbox chặn.
+        }
+
+        return null;
+    }
+
+    private static double? ReadMaximumLinuxClockMegahertz()
+    {
+        double maximumMegahertz =
+            0d;
+
+        foreach (string candidateFile
+                 in EnumerateLinuxClockFiles())
+        {
+            try
+            {
+                string rawText =
+                    File.ReadAllText(
+                            candidateFile)
+                        .Trim();
+
+                if (!double.TryParse(
+                        rawText,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out double rawFrequency) ||
+                    rawFrequency <=
+                    0d)
+                {
+                    continue;
+                }
+
+                // sysfs thường dùng kHz. Một số hệ thống có thể trả MHz.
+                double megahertz =
+                    rawFrequency >
+                    100_000d
+                        ? rawFrequency /
+                          1000d
+                        : rawFrequency;
+
+                maximumMegahertz =
+                    Math.Max(
+                        maximumMegahertz,
+                        megahertz);
+            }
+            catch
+            {
+                // Android/Linux có thể giới hạn quyền đọc một số policy.
+            }
+        }
+
+        return maximumMegahertz >
+               0d
+            ? maximumMegahertz
+            : null;
+    }
+
+    private static IEnumerable<string> EnumerateLinuxClockFiles()
+    {
+        string policyRoot =
+            "/sys/devices/system/cpu/cpufreq";
+
+        if (Directory.Exists(
+                policyRoot))
+        {
+            IEnumerable<string> policyDirectories;
+
+            try
+            {
+                policyDirectories =
+                    Directory.EnumerateDirectories(
+                            policyRoot,
+                            "policy*",
+                            SearchOption.TopDirectoryOnly)
+                        .ToArray();
+            }
+            catch
+            {
+                policyDirectories =
+                    [];
+            }
+
+            foreach (string policyDirectory
+                     in policyDirectories)
+            {
+                foreach (string fileName
+                         in new[]
+                         {
+                             "cpuinfo_max_freq",
+                             "scaling_max_freq"
+                         })
+                {
+                    string candidate =
+                        Path.Combine(
+                            policyDirectory,
+                            fileName);
+
+                    if (File.Exists(
+                            candidate))
+                    {
+                        yield return candidate;
+                    }
+                }
+            }
+        }
+
+        string cpuRoot =
+            "/sys/devices/system/cpu";
+
+        if (!Directory.Exists(
+                cpuRoot))
+        {
+            yield break;
+        }
+
+        IEnumerable<string> cpuDirectories;
+
+        try
+        {
+            cpuDirectories =
+                Directory.EnumerateDirectories(
+                        cpuRoot,
+                        "cpu*",
+                        SearchOption.TopDirectoryOnly)
+                    .ToArray();
+        }
+        catch
+        {
+            yield break;
+        }
+
+        foreach (string cpuDirectory
+                 in cpuDirectories)
+        {
+            string cpuName =
+                Path.GetFileName(
+                    cpuDirectory);
+
+            if (cpuName.Length <=
+                3 ||
+                !int.TryParse(
+                    cpuName[3..],
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out _))
+            {
+                continue;
+            }
+
+            string frequencyDirectory =
+                Path.Combine(
+                    cpuDirectory,
+                    "cpufreq");
+
+            foreach (string fileName
+                     in new[]
+                     {
+                         "cpuinfo_max_freq",
+                         "scaling_max_freq"
+                     })
+            {
+                string candidate =
+                    Path.Combine(
+                        frequencyDirectory,
+                        fileName);
+
+                if (File.Exists(
+                        candidate))
+                {
+                    yield return candidate;
+                }
+            }
+        }
+    }
+
+    private static bool TryParseFrequencyMegahertz(
+        string? text,
+        out double megahertz)
+    {
+        megahertz =
+            0d;
+
+        if (string.IsNullOrWhiteSpace(
+                text))
+        {
+            return false;
+        }
+
+        string normalized =
+            text.Trim()
+                .Replace(
+                    "MHz",
+                    string.Empty,
+                    StringComparison.OrdinalIgnoreCase)
+                .Replace(
+                    "GHz",
+                    string.Empty,
+                    StringComparison.OrdinalIgnoreCase)
+                .Trim();
+
+        if (!double.TryParse(
+                normalized,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out double numericValue))
+        {
+            return false;
+        }
+
+        bool isGigahertz =
+            text.Contains(
+                "GHz",
+                StringComparison.OrdinalIgnoreCase);
+
+        megahertz =
+            isGigahertz
+                ? numericValue *
+                  1000d
+                : numericValue;
+
+        return megahertz >
+               0d;
+    }
+
+    private static int GetLinuxPhysicalCoreCount()
+    {
+        const string cpuRoot =
+            "/sys/devices/system/cpu";
+
+        try
+        {
+            if (!Directory.Exists(
+                    cpuRoot))
+            {
+                return 0;
+            }
+
+            var physicalCoreKeys =
+                new HashSet<string>(
+                    StringComparer.Ordinal);
+
+            int logicalCpuDirectoryCount =
+                0;
+
+            foreach (string cpuDirectory
+                     in Directory.EnumerateDirectories(
+                         cpuRoot,
+                         "cpu*",
+                         SearchOption.TopDirectoryOnly))
+            {
+                string cpuName =
+                    Path.GetFileName(
+                        cpuDirectory);
+
+                if (cpuName.Length <=
+                    3 ||
+                    !int.TryParse(
+                        cpuName[3..],
+                        NumberStyles.None,
+                        CultureInfo.InvariantCulture,
+                        out _))
+                {
+                    continue;
+                }
+
+                logicalCpuDirectoryCount++;
+
+                string topologyDirectory =
+                    Path.Combine(
+                        cpuDirectory,
+                        "topology");
+
+                string coreIdPath =
+                    Path.Combine(
+                        topologyDirectory,
+                        "core_id");
+
+                if (!File.Exists(
+                        coreIdPath))
+                {
+                    continue;
+                }
+
+                string coreId =
+                    File.ReadAllText(
+                            coreIdPath)
+                        .Trim();
+
+                string packageIdPath =
+                    Path.Combine(
+                        topologyDirectory,
+                        "physical_package_id");
+
+                string packageId =
+                    File.Exists(
+                        packageIdPath)
+                        ? File.ReadAllText(
+                                packageIdPath)
+                            .Trim()
+                        : "0";
+
+                if (!string.IsNullOrWhiteSpace(
+                        coreId))
+                {
+                    physicalCoreKeys.Add(
+                        $"{packageId}:{coreId}");
+                }
+            }
+
+            if (RuntimeInformation.ProcessArchitecture is
+                    Architecture.Arm or
+                    Architecture.Arm64)
+            {
+                // ARM mobile processors practically expose one hardware thread
+                // per physical core. Some kernels repeat core_id per cluster.
+                return Math.Max(
+                    physicalCoreKeys.Count,
+                    logicalCpuDirectoryCount);
+            }
+
+            return physicalCoreKeys.Count;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+#if WINDOWS
+    private static string? GetWindowsProcessorName()
+    {
+        try
+        {
+            return Microsoft.Win32.Registry.GetValue(
+                       @"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+                       "ProcessorNameString",
+                       null)
+                   as string;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static double? GetWindowsProcessorClockMegahertz()
+    {
+        try
+        {
+            object? registryValue =
+                Microsoft.Win32.Registry.GetValue(
+                    @"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+                    "~MHz",
+                    null);
+
+            return registryValue switch
+            {
+                int value when value >
+                               0 =>
+                    value,
+
+                long value when value >
+                                0 =>
+                    value,
+
+                string value
+                    when double.TryParse(
+                        value,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out double parsedValue) &&
+                         parsedValue >
+                         0d =>
+                    parsedValue,
+
+                _ =>
+                    null
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static int GetWindowsPhysicalCoreCount()
+    {
+        uint requiredLength =
+            0;
+
+        _ =
+            GetLogicalProcessorInformationEx(
+                RelationProcessorCore,
+                IntPtr.Zero,
+                ref requiredLength);
+
+        if (requiredLength ==
+            0)
+        {
+            return 0;
+        }
+
+        IntPtr buffer =
+            Marshal.AllocHGlobal(
+                checked(
+                    (int)requiredLength));
+
+        try
+        {
+            if (!GetLogicalProcessorInformationEx(
+                    RelationProcessorCore,
+                    buffer,
+                    ref requiredLength))
+            {
+                return 0;
+            }
+
+            int coreCount =
+                0;
+
+            long offset =
+                0;
+
+            while (offset <
+                   requiredLength)
+            {
+                IntPtr current =
+                    IntPtr.Add(
+                        buffer,
+                        checked(
+                            (int)offset));
+
+                int relationship =
+                    Marshal.ReadInt32(
+                        current,
+                        0);
+
+                int structureSize =
+                    Marshal.ReadInt32(
+                        current,
+                        4);
+
+                if (structureSize <=
+                    0)
+                {
+                    break;
+                }
+
+                if (relationship ==
+                    RelationProcessorCore)
+                {
+                    coreCount++;
+                }
+
+                offset +=
+                    structureSize;
+            }
+
+            return coreCount;
+        }
+        catch
+        {
+            return 0;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(
+                buffer);
+        }
+    }
+
+    private const int RelationProcessorCore =
+        0;
+
+    [DllImport(
+        "kernel32.dll",
+        SetLastError =
+            true)]
+    [return: MarshalAs(
+        UnmanagedType.Bool)]
+    private static extern bool GetLogicalProcessorInformationEx(
+        int relationshipType,
+        IntPtr buffer,
+        ref uint returnedLength);
+#endif
+
+#if IOS || MACCATALYST || MACOS
+    private static string? ReadAppleSysctlString(
+        string name)
+    {
+        nuint length =
+            0;
+
+        if (SysctlByName(
+                name,
+                IntPtr.Zero,
+                ref length,
+                IntPtr.Zero,
+                0) !=
+            0 ||
+            length ==
+            0)
+        {
+            return null;
+        }
+
+        IntPtr buffer =
+            Marshal.AllocHGlobal(
+                checked(
+                    (int)length));
+
+        try
+        {
+            if (SysctlByName(
+                    name,
+                    buffer,
+                    ref length,
+                    IntPtr.Zero,
+                    0) !=
+                0)
+            {
+                return null;
+            }
+
+            return Marshal.PtrToStringUTF8(
+                       buffer)
+                   ?.TrimEnd(
+                       '\0')
+                   .Trim();
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(
+                buffer);
+        }
+    }
+
+    private static int? ReadAppleSysctlInt32(
+        string name)
+    {
+        int value =
+            0;
+
+        nuint length =
+            (nuint)sizeof(int);
+
+        IntPtr buffer =
+            Marshal.AllocHGlobal(
+                sizeof(int));
+
+        try
+        {
+            if (SysctlByName(
+                    name,
+                    buffer,
+                    ref length,
+                    IntPtr.Zero,
+                    0) !=
+                0)
+            {
+                return null;
+            }
+
+            value =
+                Marshal.ReadInt32(
+                    buffer);
+
+            return value;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(
+                buffer);
+        }
+    }
+
+    private static ulong? ReadAppleSysctlUInt64(
+        string name)
+    {
+        nuint length =
+            (nuint)sizeof(ulong);
+
+        IntPtr buffer =
+            Marshal.AllocHGlobal(
+                sizeof(ulong));
+
+        try
+        {
+            if (SysctlByName(
+                    name,
+                    buffer,
+                    ref length,
+                    IntPtr.Zero,
+                    0) !=
+                0)
+            {
+                return null;
+            }
+
+            return unchecked(
+                (ulong)Marshal.ReadInt64(
+                    buffer));
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(
+                buffer);
+        }
+    }
+
+    [DllImport(
+        "/usr/lib/libSystem.dylib",
+        EntryPoint =
+            "sysctlbyname")]
+    private static extern int SysctlByName(
+        string name,
+        IntPtr oldValue,
+        ref nuint oldLength,
+        IntPtr newValue,
+        nuint newLength);
+#endif
 
     private static string GetAvailableMemoryText()
     {
@@ -643,16 +1631,56 @@ public partial class HardwarePerformancePage : ContentPage
     {
         if (_isBenchmarkRunning)
         {
+            if (_isStopConfirmationVisible)
+            {
+                return;
+            }
+
+            _isStopConfirmationVisible =
+                true;
+
+            bool shouldStop;
+
+            try
+            {
+                shouldStop =
+                    await DisplayAlert(
+                        LocalizationService.Translate(
+                            "Xác nhận dừng"),
+                        LocalizationService.Translate(
+                            "Bạn có muốn dừng trình đo sức mạnh không?"),
+                        LocalizationService.Translate(
+                            "Có"),
+                        LocalizationService.Translate(
+                            "Không"));
+            }
+            finally
+            {
+                _isStopConfirmationVisible =
+                    false;
+            }
+
+            if (!shouldStop ||
+                !_isBenchmarkRunning ||
+                _benchmarkCancellationTokenSource is null)
+            {
+                return;
+            }
+
             BenchmarkStatusLabel.Text =
                 LocalizationService.Translate(
                     "Đang dừng đo sức mạnh…");
 
-            _benchmarkCancellationTokenSource?.Cancel();
+            _benchmarkCancellationTokenSource.Cancel();
             return;
         }
 
         _isBenchmarkRunning =
             true;
+
+        _benchmarkCompletionSource =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
 
         SetBenchmarkButtonRunningState(
             true);
@@ -698,74 +1726,115 @@ public partial class HardwarePerformancePage : ContentPage
             bool useMultithreading =
                 CalculationThreadingManager.UseMultithreading;
 
-            _lastBenchmarkResult =
+            BenchmarkResult benchmarkResult =
                 await RunCalculationBenchmarkAsync(
                     useSimd,
                     simdMode,
                     useMultithreading,
                     cancellationToken);
 
-            BenchmarkStatusLabel.Text =
-                LocalizationService.Translate(
-                    "Đo sức mạnh hoàn tất.");
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _lastBenchmarkResult =
+                    null;
 
-            RenderBenchmarkResult();
+                if (!_isPageDisappearing)
+                {
+                    BenchmarkResultsBorder.IsVisible =
+                        false;
+
+                    BenchmarkStatusLabel.Text =
+                        LocalizationService.Translate(
+                            "Đã hủy đo sức mạnh.");
+                }
+
+                return;
+            }
+
+            _lastBenchmarkResult =
+                benchmarkResult;
+
+            if (!_isPageDisappearing)
+            {
+                BenchmarkStatusLabel.Text =
+                    LocalizationService.Translate(
+                        "Đo sức mạnh hoàn tất.");
+
+                RenderBenchmarkResult();
+            }
         }
         catch (OperationCanceledException)
         {
+            // Dự phòng cho các runtime có thể vẫn phát sinh cancellation
+            // từ tác vụ native/Parallel.For. Không cập nhật UI khi trang đang đóng.
             _lastBenchmarkResult =
                 null;
 
-            BenchmarkResultsBorder.IsVisible =
-                false;
+            if (!_isPageDisappearing)
+            {
+                BenchmarkResultsBorder.IsVisible =
+                    false;
 
-            BenchmarkStatusLabel.Text =
-                LocalizationService.Translate(
-                    "Đã hủy đo sức mạnh.");
+                BenchmarkStatusLabel.Text =
+                    LocalizationService.Translate(
+                        "Đã hủy đo sức mạnh.");
+            }
         }
         catch
         {
             _lastBenchmarkResult =
                 null;
 
-            BenchmarkResultsBorder.IsVisible =
-                false;
+            if (!_isPageDisappearing)
+            {
+                BenchmarkResultsBorder.IsVisible =
+                    false;
 
-            BenchmarkStatusLabel.Text =
-                LocalizationService.Translate(
-                    "Không thể chạy đo sức mạnh trên thiết bị này.");
+                BenchmarkStatusLabel.Text =
+                    LocalizationService.Translate(
+                        "Không thể chạy đo sức mạnh trên thiết bị này.");
+            }
         }
         finally
         {
             _isBenchmarkRunning =
                 false;
 
-            BenchmarkProgress.IsRunning =
-                false;
+            if (!_isPageDisappearing)
+            {
+                BenchmarkProgress.IsRunning =
+                    false;
 
-            BenchmarkProgress.IsVisible =
-                false;
+                BenchmarkProgress.IsVisible =
+                    false;
 
-            BenchmarkCountdownLabel.IsVisible =
-                false;
+                BenchmarkCountdownLabel.IsVisible =
+                    false;
 
-            BenchmarkCountdownLabel.Text =
-                string.Empty;
+                BenchmarkCountdownLabel.Text =
+                    string.Empty;
 
-            SetBenchmarkButtonRunningState(
-                false);
+                SetBenchmarkButtonRunningState(
+                    false);
 
-            HardwareAccelerationSwitch.IsEnabled =
-                CalculationAccelerationManager.IsSimdAvailable;
+                HardwareAccelerationSwitch.IsEnabled =
+                    CalculationAccelerationManager.IsSimdAvailable;
 
-            MultithreadingSwitch.IsEnabled =
-                CalculationThreadingManager.IsMultithreadingAvailable;
+                MultithreadingSwitch.IsEnabled =
+                    CalculationThreadingManager.IsMultithreadingAvailable;
 
-            UpdateSimdModeSelectorVisibility();
+                UpdateSimdModeSelectorVisibility();
+            }
 
             _benchmarkCancellationTokenSource?.Dispose();
 
             _benchmarkCancellationTokenSource =
+                null;
+
+            _benchmarkCompletionSource?.TrySetResult(
+                true);
+
+            _benchmarkCompletionSource =
                 null;
         }
     }
@@ -919,9 +1988,6 @@ public partial class HardwarePerformancePage : ContentPage
                     cancellationToken),
                 cancellationToken);
 
-        await RunBenchmarkRestAsync(
-            "Int64",
-            cancellationToken);
 
         TimedBenchmarkResult int64Result =
             await RunBenchmarkStageAsync(
@@ -933,9 +1999,6 @@ public partial class HardwarePerformancePage : ContentPage
                     cancellationToken),
                 cancellationToken);
 
-        await RunBenchmarkRestAsync(
-            "Float",
-            cancellationToken);
 
         TimedBenchmarkResult floatResult =
             await RunBenchmarkStageAsync(
@@ -949,9 +2012,6 @@ public partial class HardwarePerformancePage : ContentPage
                     cancellationToken),
                 cancellationToken);
 
-        await RunBenchmarkRestAsync(
-            "Double",
-            cancellationToken);
 
         TimedBenchmarkResult doubleResult =
             await RunBenchmarkStageAsync(
@@ -1037,12 +2097,21 @@ public partial class HardwarePerformancePage : ContentPage
         Func<IProgress<int>, TimedBenchmarkResult> benchmark,
         CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
 
         var progress =
             new Progress<int>(
                 remainingSeconds =>
                 {
+                    if (cancellationToken.IsCancellationRequested ||
+                        _isPageDisappearing)
+                    {
+                        return;
+                    }
+
                     BenchmarkCountdownLabel.Text =
                         string.Format(
                             CultureInfo.CurrentCulture,
@@ -1061,43 +2130,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         return await Task.Run(
             () => benchmark(
-                progress),
-            cancellationToken);
-    }
-
-    private async Task RunBenchmarkRestAsync(
-        string nextDataTypeName,
-        CancellationToken cancellationToken)
-    {
-        const int restSeconds =
-            3;
-
-        for (int remainingSeconds =
-                 restSeconds;
-             remainingSeconds >=
-             1;
-             remainingSeconds--)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            BenchmarkCountdownLabel.Text =
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    LocalizationService.Translate(
-                        "{0} giây"),
-                    remainingSeconds);
-
-            BenchmarkStatusLabel.Text =
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    LocalizationService.Translate(
-                        "Đang nghỉ trước bài đo {0}"),
-                    nextDataTypeName);
-
-            await Task.Delay(
-                1000,
-                cancellationToken);
-        }
+                progress));
     }
 
     private static TimedBenchmarkResult RunInt32Benchmark(
@@ -1208,7 +2241,10 @@ public partial class HardwarePerformancePage : ContentPage
         TimedWorker worker,
         CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
 
         long warmupDeadline =
             Stopwatch.GetTimestamp() +
@@ -1249,17 +2285,17 @@ public partial class HardwarePerformancePage : ContentPage
             new ParallelOptions
             {
                 MaxDegreeOfParallelism =
-                    workerCount,
-
-                CancellationToken =
-                    cancellationToken
+                    workerCount
             };
 
         for (int sampleIndex = 0;
              sampleIndex < sampleCount;
              sampleIndex++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
 
             countdownProgress.Report(
                 sampleCount -
@@ -1404,7 +2440,10 @@ public partial class HardwarePerformancePage : ContentPage
                 (long)iterationsPerBatch *
                 operationsPerIteration;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -1471,7 +2510,10 @@ public partial class HardwarePerformancePage : ContentPage
                 (long)iterationsPerBatch *
                 operationsPerIteration;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -1531,7 +2573,10 @@ public partial class HardwarePerformancePage : ContentPage
                 (long)iterationsPerBatch *
                 operationsPerIteration;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -1591,7 +2636,10 @@ public partial class HardwarePerformancePage : ContentPage
                 (long)iterationsPerBatch *
                 operationsPerIteration;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -1695,7 +2743,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -1800,7 +2851,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -1905,7 +2959,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -2010,7 +3067,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -2115,7 +3175,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -2220,7 +3283,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -2323,7 +3389,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -2436,7 +3505,10 @@ public partial class HardwarePerformancePage : ContentPage
                 laneCount *
                 operationsPerLane;
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
         while (Stopwatch.GetTimestamp() <
                deadlineTimestamp);
@@ -2461,8 +3533,6 @@ public partial class HardwarePerformancePage : ContentPage
         object? sender,
         EventArgs e)
     {
-        _benchmarkCancellationTokenSource?.Cancel();
-
         await CloseAsync();
     }
 
@@ -2478,6 +3548,18 @@ public partial class HardwarePerformancePage : ContentPage
 
         try
         {
+            // Dừng nhẹ nhàng và chờ toàn bộ worker thoát trước khi rời trang.
+            // Nhờ đó không còn worker cập nhật UI sau khi trang đã bị đóng.
+            Task? benchmarkCompletionTask =
+                _benchmarkCompletionSource?.Task;
+
+            _benchmarkCancellationTokenSource?.Cancel();
+
+            if (benchmarkCompletionTask is not null)
+            {
+                await benchmarkCompletionTask;
+            }
+
             await PlayPageExitAnimationAsync();
 
             // Hỗ trợ bản cũ từng mở trang bằng PushModalAsync.

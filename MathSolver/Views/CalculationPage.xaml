@@ -8,7 +8,9 @@
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid
+        x:Name="CalculationPageContentRoot"
+        RowDefinitions="Auto,*">
 
         <!-- Thanh tab con -->
         <Border

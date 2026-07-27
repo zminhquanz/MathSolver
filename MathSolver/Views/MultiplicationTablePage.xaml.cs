@@ -5,6 +5,12 @@ namespace MathSolver.Views;
 
 public partial class MultiplicationTablePage : ContentPage
 {
+    private int _mainTabAnimationVersion;
+
+    // RadioButton.CheckedChanged có thể chạy ngay khi constructor gán
+    // IsChecked = true. Khóa này bảo đảm danh sách chỉ được dựng một lần.
+    private bool _isInitializing = true;
+
     public ObservableCollection<TableCardModel> TableCards { get; } = new();
 
     private TableMode _currentMode = TableMode.Multiply;
@@ -27,16 +33,181 @@ public partial class MultiplicationTablePage : ContentPage
 
         Range1To10Radio.IsChecked = true;
 
+        // Dựng trạng thái và CollectionView đúng một lần. Sự kiện
+        // CheckedChanged phát sinh trong lúc gán IsChecked sẽ bị bỏ qua.
         UpdateOperationButtons();
         UpdateRangeCards();
         BuildTables();
+
+        _isInitializing = false;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        // Ổn định trạng thái hiển thị trước khi root được chuẩn bị cho
+        // animation, tránh style/range thay đổi giữa lúc fade-in.
         UpdateOperationButtons();
         UpdateRangeCards();
+
+        BeginMainTabTransitionIfPending();
+    }
+
+    protected override void OnDisappearing()
+    {
+        // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
+        // một phiếu mới sẽ tạo một animation mới thay vì nối tiếp animation cũ.
+        _mainTabAnimationVersion++;
+
+        MultiplicationPageContentRoot.CancelAnimations();
+        ResetMainTabRoot();
+
+        base.OnDisappearing();
+    }
+
+    private void BeginMainTabTransitionIfPending()
+    {
+        if (Shell.Current is not AppShell appShell ||
+            !appShell.TryConsumeMainTabTransition(
+                "MultiplicationTablePage",
+                out int direction))
+        {
+            return;
+        }
+
+        int animationVersion =
+            ++_mainTabAnimationVersion;
+
+        direction =
+            direction >= 0
+                ? 1
+                : -1;
+
+        // Chuẩn bị ngay trong OnAppearing, trước frame đầu tiên của trang.
+        // Không để trang hiện hoàn chỉnh rồi mới reset Opacity về 0.
+        MultiplicationPageContentRoot.CancelAnimations();
+
+        MultiplicationPageContentRoot.Opacity =
+            0d;
+
+        MultiplicationPageContentRoot.TranslationX =
+            direction *
+            44d;
+
+        MultiplicationPageContentRoot.Scale =
+            0.985d;
+
+        Dispatcher.Dispatch(
+            async () =>
+                await PlayPreparedMainTabTransitionAsync(
+                    animationVersion));
+    }
+
+    private async Task PlayPreparedMainTabTransitionAsync(
+        int animationVersion)
+    {
+        // CollectionView dựng cell theo cơ chế ảo hóa. Giữ toàn bộ root ở
+        // trạng thái ẩn cho tới khi layout và nhóm cell đầu tiên ổn định,
+        // nếu không phần header hiện trước rồi danh sách hiện sau sẽ trông
+        // như animation chạy hai lần.
+        bool layoutReady =
+            await WaitForTableLayoutAsync(
+                animationVersion);
+
+        if (!layoutReady ||
+            animationVersion !=
+            _mainTabAnimationVersion)
+        {
+            return;
+        }
+
+        try
+        {
+            await Task.WhenAll(
+                MultiplicationPageContentRoot.FadeToAsync(
+                    1d,
+                    175,
+                    Easing.CubicOut),
+
+                MultiplicationPageContentRoot.TranslateToAsync(
+                    0d,
+                    0d,
+                    250,
+                    Easing.CubicOut),
+
+                MultiplicationPageContentRoot.ScaleToAsync(
+                    1d,
+                    250,
+                    Easing.CubicOut));
+        }
+        finally
+        {
+            if (animationVersion ==
+                _mainTabAnimationVersion)
+            {
+                ResetMainTabRoot();
+            }
+        }
+    }
+
+    private async Task<bool> WaitForTableLayoutAsync(
+        int animationVersion)
+    {
+        const int maximumLayoutFrames =
+            8;
+
+        for (int frame = 0;
+             frame < maximumLayoutFrames;
+             frame++)
+        {
+            await Task.Yield();
+
+            if (animationVersion !=
+                _mainTabAnimationVersion)
+            {
+                return false;
+            }
+
+            bool collectionReady =
+                TableCards.Count > 0 &&
+                TablesCollectionView.Handler is not null &&
+                TablesCollectionView.Width > 0d &&
+                TablesCollectionView.Height > 0d;
+
+            if (collectionReady)
+            {
+                // Cho CollectionView thêm một frame để hiện thực hóa các
+                // item đầu tiên. Root vẫn Opacity = 0 nên không gây nháy.
+                await Task.Delay(
+                    16);
+
+                await Task.Yield();
+
+                return animationVersion ==
+                       _mainTabAnimationVersion;
+            }
+
+            await Task.Delay(
+                16);
+        }
+
+        // Không giữ trang ẩn vô thời hạn nếu một nền tảng báo kích thước
+        // chậm; sau giới hạn này vẫn chạy transition bình thường.
+        return animationVersion ==
+               _mainTabAnimationVersion;
+    }
+
+    private void ResetMainTabRoot()
+    {
+        MultiplicationPageContentRoot.Opacity =
+            1d;
+
+        MultiplicationPageContentRoot.TranslationX =
+            0d;
+
+        MultiplicationPageContentRoot.Scale =
+            1d;
     }
 
     private void OnLanguageChanged(
@@ -80,8 +251,11 @@ public partial class MultiplicationTablePage : ContentPage
 
     private void OnRangeChanged(object sender, CheckedChangedEventArgs e)
     {
-        if (!e.Value)
+        if (_isInitializing ||
+            !e.Value)
+        {
             return;
+        }
 
         if (sender == Range1To10Radio)
             _currentRange = TableRange.OneToTen;

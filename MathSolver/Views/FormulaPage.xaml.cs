@@ -1,4 +1,4 @@
-﻿using MathSolver.Services;
+using MathSolver.Services;
 using MathSolver.Graphics;
 using MathSolver.Models;
 using System.Collections.ObjectModel;
@@ -7,7 +7,11 @@ namespace MathSolver.Views;
 
 public partial class FormulaPage : ContentPage
 {
+    private int _mainTabAnimationVersion;
+
     private FormulaSubTab _selectedSubTab = FormulaSubTab.UnknownComponent;
+
+    private bool _isSubTabTransitioning;
 
     public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } = [];
 
@@ -46,6 +50,8 @@ public partial class FormulaPage : ContentPage
     {
         base.OnAppearing();
 
+        BeginMainTabTransitionIfPending();
+
         if (_selectedSubTab ==
             FormulaSubTab.UnknownComponent)
         {
@@ -56,6 +62,110 @@ public partial class FormulaPage : ContentPage
             // Tạo lại các card để GraphicsView nhận màu theme hiện tại.
             RefreshGeometryLayout();
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
+        // một phiếu mới sẽ tạo một animation mới thay vì nối tiếp animation cũ.
+        _mainTabAnimationVersion++;
+
+        FormulaPageContentRoot.CancelAnimations();
+        ResetMainTabRoot();
+
+        base.OnDisappearing();
+    }
+
+    private void BeginMainTabTransitionIfPending()
+    {
+        if (Shell.Current is not AppShell appShell ||
+            !appShell.TryConsumeMainTabTransition(
+                "FormulaPage",
+                out int direction))
+        {
+            return;
+        }
+
+        int animationVersion =
+            ++_mainTabAnimationVersion;
+
+        direction =
+            direction >= 0
+                ? 1
+                : -1;
+
+        // Chuẩn bị ngay trong OnAppearing, trước frame đầu tiên của trang.
+        // Không để trang hiện hoàn chỉnh rồi mới reset Opacity về 0.
+        FormulaPageContentRoot.CancelAnimations();
+
+        FormulaPageContentRoot.Opacity =
+            0d;
+
+        FormulaPageContentRoot.TranslationX =
+            direction *
+            44d;
+
+        FormulaPageContentRoot.Scale =
+            0.985d;
+
+        Dispatcher.Dispatch(
+            async () =>
+                await PlayPreparedMainTabTransitionAsync(
+                    animationVersion));
+    }
+
+    private async Task PlayPreparedMainTabTransitionAsync(
+        int animationVersion)
+    {
+        // Nhường đúng một lượt cho layout nhưng root vẫn đang ẩn. Vì vậy
+        // không có frame UI hoàn chỉnh xuất hiện trước transition.
+        await Task.Yield();
+
+        if (animationVersion !=
+            _mainTabAnimationVersion)
+        {
+            return;
+        }
+
+        try
+        {
+            await Task.WhenAll(
+                FormulaPageContentRoot.FadeToAsync(
+                    1d,
+                    175,
+                    Easing.CubicOut),
+
+                FormulaPageContentRoot.TranslateToAsync(
+                    0d,
+                    0d,
+                    250,
+                    Easing.CubicOut),
+
+                FormulaPageContentRoot.ScaleToAsync(
+                    1d,
+                    250,
+                    Easing.CubicOut));
+        }
+        finally
+        {
+            if (animationVersion ==
+                _mainTabAnimationVersion)
+            {
+                ResetMainTabRoot();
+            }
+        }
+    }
+
+    private void ResetMainTabRoot()
+    {
+        FormulaPageContentRoot.Opacity =
+            1d;
+
+        FormulaPageContentRoot.TranslationX =
+            0d;
+
+        FormulaPageContentRoot.Scale =
+            1d;
     }
 
     private void RefreshUnknownComponentLayout()
@@ -116,39 +226,179 @@ public partial class FormulaPage : ContentPage
             });
     }
 
-    private void OnUnknownComponentTabClicked(object? sender, EventArgs e)
+    private async void OnUnknownComponentTabClicked(
+        object? sender,
+        EventArgs e)
     {
-        SelectFormulaSubTab(FormulaSubTab.UnknownComponent);
+        await SwitchFormulaSubTabAsync(
+            FormulaSubTab.UnknownComponent);
     }
 
-    private void OnGeometryTabClicked(object? sender, EventArgs e)
+    private async void OnGeometryTabClicked(
+        object? sender,
+        EventArgs e)
     {
-        SelectFormulaSubTab(FormulaSubTab.Geometry);
+        await SwitchFormulaSubTabAsync(
+            FormulaSubTab.Geometry);
     }
 
-    private void SelectFormulaSubTab(FormulaSubTab selectedTab)
+    private async Task SwitchFormulaSubTabAsync(
+        FormulaSubTab selectedTab)
     {
-        _selectedSubTab = selectedTab;
+        if (_isSubTabTransitioning)
+        {
+            return;
+        }
 
-        bool showUnknownComponent = selectedTab == FormulaSubTab.UnknownComponent;
+        Button selectedButton =
+            GetFormulaSubTabButton(
+                selectedTab);
 
-        // Hiển thị đúng vùng nội dung theo tab đang chọn.
-        UnknownComponentContent.IsVisible = showUnknownComponent;
+        if (_selectedSubTab ==
+            selectedTab)
+        {
+            await AnimateFormulaSubTabButtonAsync(
+                selectedButton);
 
-        GeometryContent.IsVisible = !showUnknownComponent;
+            return;
+        }
+
+        _isSubTabTransitioning =
+            true;
+
+        try
+        {
+            FormulaSubTab previousTab =
+                _selectedSubTab;
+
+            VisualElement outgoingContent =
+                GetFormulaSubTabContent(
+                    previousTab);
+
+            VisualElement incomingContent =
+                GetFormulaSubTabContent(
+                    selectedTab);
+
+            int direction =
+                (int)selectedTab >
+                (int)previousTab
+                    ? 1
+                    : -1;
+
+            PrepareFormulaSubTabContent(
+                selectedTab);
+
+            outgoingContent.CancelAnimations();
+            incomingContent.CancelAnimations();
+
+            _selectedSubTab =
+                selectedTab;
+
+            UpdateSubTabButtonStyles();
+
+            incomingContent.IsVisible =
+                true;
+
+            incomingContent.Opacity =
+                0d;
+
+            incomingContent.TranslationX =
+                direction *
+                28d;
+
+            incomingContent.Scale =
+                0.995d;
+
+            // Cho BindableLayout của tab đích tạo children trước khi
+            // bắt đầu fade/slide để hình học không xuất hiện trễ.
+            await Task.Yield();
+
+            await Task.WhenAll(
+                outgoingContent.FadeToAsync(
+                    0d,
+                    85,
+                    Easing.CubicIn),
+
+                outgoingContent.TranslateToAsync(
+                    direction *
+                    -18d,
+                    0d,
+                    85,
+                    Easing.CubicIn));
+
+            outgoingContent.IsVisible =
+                false;
+
+            ResetTransitionTransform(
+                outgoingContent);
+
+            await Task.WhenAll(
+                incomingContent.FadeToAsync(
+                    1d,
+                    150,
+                    Easing.CubicOut),
+
+                incomingContent.TranslateToAsync(
+                    0d,
+                    0d,
+                    190,
+                    Easing.CubicOut),
+
+                incomingContent.ScaleToAsync(
+                    1d,
+                    190,
+                    Easing.CubicOut),
+
+                AnimateFormulaSubTabButtonAsync(
+                    selectedButton));
+
+            RefreshSelectedFormulaSubTabLayout();
+        }
+        finally
+        {
+            _isSubTabTransitioning =
+                false;
+        }
+    }
+
+    private void SelectFormulaSubTab(
+        FormulaSubTab selectedTab)
+    {
+        _selectedSubTab =
+            selectedTab;
+
+        UnknownComponentContent.IsVisible =
+            selectedTab ==
+            FormulaSubTab.UnknownComponent;
+
+        GeometryContent.IsVisible =
+            selectedTab ==
+            FormulaSubTab.Geometry;
+
+        ResetTransitionTransform(
+            UnknownComponentContent);
+
+        ResetTransitionTransform(
+            GeometryContent);
 
         UpdateSubTabButtonStyles();
 
-        if (showUnknownComponent)
+        PrepareFormulaSubTabContent(
+            selectedTab);
+    }
+
+    private void PrepareFormulaSubTabContent(
+        FormulaSubTab selectedTab)
+    {
+        if (selectedTab ==
+            FormulaSubTab.UnknownComponent)
         {
-            // Không tạo lại danh sách mỗi lần đổi tab.
             if (UnknownComponentItems.Count == 0)
             {
                 CreateUnknownComponentItems();
             }
 
             RefreshUnknownComponentLayout();
-
             return;
         }
 
@@ -161,6 +411,80 @@ public partial class FormulaPage : ContentPage
         // Grid trong XAML dùng hàng Auto nên card có nhiều công thức
         // hoặc chú thích sẽ tự mở rộng theo nội dung.
         RefreshGeometryLayout();
+    }
+
+    private void RefreshSelectedFormulaSubTabLayout()
+    {
+        if (_selectedSubTab ==
+            FormulaSubTab.UnknownComponent)
+        {
+            RefreshUnknownComponentLayout();
+        }
+        else
+        {
+            RefreshGeometryLayout();
+        }
+    }
+
+    private VisualElement GetFormulaSubTabContent(
+        FormulaSubTab tab)
+    {
+        return tab switch
+        {
+            FormulaSubTab.UnknownComponent =>
+                UnknownComponentContent,
+
+            FormulaSubTab.Geometry =>
+                GeometryContent,
+
+            _ =>
+                UnknownComponentContent
+        };
+    }
+
+    private Button GetFormulaSubTabButton(
+        FormulaSubTab tab)
+    {
+        return tab switch
+        {
+            FormulaSubTab.UnknownComponent =>
+                UnknownComponentTabButton,
+
+            FormulaSubTab.Geometry =>
+                GeometryTabButton,
+
+            _ =>
+                UnknownComponentTabButton
+        };
+    }
+
+    private static async Task AnimateFormulaSubTabButtonAsync(
+        Button button)
+    {
+        button.CancelAnimations();
+
+        await button.ScaleToAsync(
+            0.94d,
+            65,
+            Easing.CubicOut);
+
+        await button.ScaleToAsync(
+            1d,
+            105,
+            Easing.CubicOut);
+    }
+
+    private static void ResetTransitionTransform(
+        VisualElement content)
+    {
+        content.Opacity =
+            1d;
+
+        content.TranslationX =
+            0d;
+
+        content.Scale =
+            1d;
     }
 
     private void UpdateSubTabButtonStyles()

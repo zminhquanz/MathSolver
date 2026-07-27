@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentPage
     x:Class="MathSolver.Views.FormulaPage"
@@ -7,7 +7,9 @@
     xmlns:models="clr-namespace:MathSolver.Models"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid
+        x:Name="FormulaPageContentRoot"
+        RowDefinitions="Auto,*">
 
 
         <!-- Thanh tab con: đồng bộ với CalculationPage -->

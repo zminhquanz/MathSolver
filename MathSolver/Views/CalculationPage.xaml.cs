@@ -9,6 +9,8 @@ namespace MathSolver.Views;
 
 public partial class CalculationPage : ContentPage
 {
+    private int _mainTabAnimationVersion;
+
     private readonly LongDivisionDrawable _longDivisionDrawable = new();
 
     private ArithmeticOperation _selectedOperation = ArithmeticOperation.Add;
@@ -67,6 +69,8 @@ public partial class CalculationPage : ContentPage
 
     private CalculationSubTab _selectedSubTab = CalculationSubTab.Basic;
 
+    private bool _isSubTabTransitioning;
+
     private LongDivisionDisplayMode _longDivisionDisplayMode = LongDivisionDisplayMode.Elementary;
 
     private decimal _currentDivisionDividend;
@@ -109,9 +113,115 @@ public partial class CalculationPage : ContentPage
     {
         base.OnAppearing();
 
+        BeginMainTabTransitionIfPending();
+
         UpdateNumberTypeButtonStyles();
 
         LongDivisionGraphicsView.Invalidate();
+    }
+
+    protected override void OnDisappearing()
+    {
+        // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
+        // một phiếu mới sẽ tạo một animation mới thay vì nối tiếp animation cũ.
+        _mainTabAnimationVersion++;
+
+        CalculationPageContentRoot.CancelAnimations();
+        ResetMainTabRoot();
+
+        base.OnDisappearing();
+    }
+
+    private void BeginMainTabTransitionIfPending()
+    {
+        if (Shell.Current is not AppShell appShell ||
+            !appShell.TryConsumeMainTabTransition(
+                "CalculationPage",
+                out int direction))
+        {
+            return;
+        }
+
+        int animationVersion =
+            ++_mainTabAnimationVersion;
+
+        direction =
+            direction >= 0
+                ? 1
+                : -1;
+
+        // Chuẩn bị ngay trong OnAppearing, trước frame đầu tiên của trang.
+        // Không để trang hiện hoàn chỉnh rồi mới reset Opacity về 0.
+        CalculationPageContentRoot.CancelAnimations();
+
+        CalculationPageContentRoot.Opacity =
+            0d;
+
+        CalculationPageContentRoot.TranslationX =
+            direction *
+            44d;
+
+        CalculationPageContentRoot.Scale =
+            0.985d;
+
+        Dispatcher.Dispatch(
+            async () =>
+                await PlayPreparedMainTabTransitionAsync(
+                    animationVersion));
+    }
+
+    private async Task PlayPreparedMainTabTransitionAsync(
+        int animationVersion)
+    {
+        // Nhường đúng một lượt cho layout nhưng root vẫn đang ẩn. Vì vậy
+        // không có frame UI hoàn chỉnh xuất hiện trước transition.
+        await Task.Yield();
+
+        if (animationVersion !=
+            _mainTabAnimationVersion)
+        {
+            return;
+        }
+
+        try
+        {
+            await Task.WhenAll(
+                CalculationPageContentRoot.FadeToAsync(
+                    1d,
+                    175,
+                    Easing.CubicOut),
+
+                CalculationPageContentRoot.TranslateToAsync(
+                    0d,
+                    0d,
+                    250,
+                    Easing.CubicOut),
+
+                CalculationPageContentRoot.ScaleToAsync(
+                    1d,
+                    250,
+                    Easing.CubicOut));
+        }
+        finally
+        {
+            if (animationVersion ==
+                _mainTabAnimationVersion)
+            {
+                ResetMainTabRoot();
+            }
+        }
+    }
+
+    private void ResetMainTabRoot()
+    {
+        CalculationPageContentRoot.Opacity =
+            1d;
+
+        CalculationPageContentRoot.TranslationX =
+            0d;
+
+        CalculationPageContentRoot.Scale =
+            1d;
     }
 
     private void OnAddClicked(object sender, EventArgs e)
@@ -3129,30 +3239,203 @@ public partial class CalculationPage : ContentPage
         LongDivisionGraphicsView.Invalidate();
     }
 
-    private void OnBasicTabClicked(object sender, EventArgs e)
+    private async void OnBasicTabClicked(
+        object sender,
+        EventArgs e)
     {
-        SelectSubTab(CalculationSubTab.Basic);
+        await SwitchSubTabAsync(
+            CalculationSubTab.Basic);
     }
 
-    private void OnFractionTabClicked(object sender, EventArgs e)
+    private async void OnFractionTabClicked(
+        object sender,
+        EventArgs e)
     {
-        SelectSubTab(CalculationSubTab.Fraction);
+        await SwitchSubTabAsync(
+            CalculationSubTab.Fraction);
     }
 
-    private void OnFindXTabClicked(object sender, EventArgs e)
+    private async void OnFindXTabClicked(
+        object sender,
+        EventArgs e)
     {
-        SelectSubTab(CalculationSubTab.FindX);
+        await SwitchSubTabAsync(
+            CalculationSubTab.FindX);
     }
 
-    private void OnQuadraticTabClicked(object sender, EventArgs e)
+    private async void OnQuadraticTabClicked(
+        object sender,
+        EventArgs e)
     {
-        SelectSubTab(
+        await SwitchSubTabAsync(
             CalculationSubTab.Quadratic);
     }
 
-    private void OnGeometryTabClicked(object sender, EventArgs e)
+    private async void OnGeometryTabClicked(
+        object sender,
+        EventArgs e)
     {
-        SelectSubTab(CalculationSubTab.Geometry);
+        await SwitchSubTabAsync(
+            CalculationSubTab.Geometry);
+    }
+
+    private async Task SwitchSubTabAsync(
+        CalculationSubTab selectedTab)
+    {
+        if (_isSubTabTransitioning)
+        {
+            return;
+        }
+
+        Button selectedButton =
+            GetSubTabButton(
+                selectedTab);
+
+        if (_selectedSubTab == selectedTab)
+        {
+            await AnimateSubTabButtonAsync(
+                selectedButton);
+
+            return;
+        }
+
+        _isSubTabTransitioning =
+            true;
+
+        try
+        {
+            CalculationSubTab previousTab =
+                _selectedSubTab;
+
+            VisualElement outgoingContent =
+                GetSubTabContent(
+                    previousTab);
+
+            VisualElement incomingContent =
+                GetSubTabContent(
+                    selectedTab);
+
+            int direction =
+                (int)selectedTab >
+                (int)previousTab
+                    ? 1
+                    : -1;
+
+            outgoingContent.CancelAnimations();
+            incomingContent.CancelAnimations();
+
+            _selectedSubTab =
+                selectedTab;
+
+            UpdateSubTabButtonStyles();
+
+            incomingContent.IsVisible =
+                true;
+
+            incomingContent.Opacity =
+                0d;
+
+            incomingContent.TranslationX =
+                direction *
+                28d;
+
+            incomingContent.Scale =
+                0.995d;
+
+            await Task.WhenAll(
+                outgoingContent.FadeToAsync(
+                    0d,
+                    85,
+                    Easing.CubicIn),
+
+                outgoingContent.TranslateToAsync(
+                    direction *
+                    -18d,
+                    0d,
+                    85,
+                    Easing.CubicIn));
+
+            outgoingContent.IsVisible =
+                false;
+
+            outgoingContent.Opacity =
+                1d;
+
+            outgoingContent.TranslationX =
+                0d;
+
+            outgoingContent.Scale =
+                1d;
+
+            await Task.WhenAll(
+                incomingContent.FadeToAsync(
+                    1d,
+                    150,
+                    Easing.CubicOut),
+
+                incomingContent.TranslateToAsync(
+                    0d,
+                    0d,
+                    190,
+                    Easing.CubicOut),
+
+                incomingContent.ScaleToAsync(
+                    1d,
+                    190,
+                    Easing.CubicOut),
+
+                AnimateSubTabButtonAsync(
+                    selectedButton));
+        }
+        finally
+        {
+            _isSubTabTransitioning =
+                false;
+        }
+    }
+
+    private VisualElement GetSubTabContent(
+        CalculationSubTab tab)
+    {
+        return tab switch
+        {
+            CalculationSubTab.Basic => BasicTabContent,
+            CalculationSubTab.Fraction => FractionTabContent,
+            CalculationSubTab.FindX => FindXTabContent,
+            CalculationSubTab.Quadratic => QuadraticTabContent,
+            CalculationSubTab.Geometry => GeometryTabContent,
+            _ => BasicTabContent
+        };
+    }
+
+    private Button GetSubTabButton(
+        CalculationSubTab tab)
+    {
+        return tab switch
+        {
+            CalculationSubTab.Basic => BasicTabButton,
+            CalculationSubTab.Fraction => FractionTabButton,
+            CalculationSubTab.FindX => FindXTabButton,
+            CalculationSubTab.Quadratic => QuadraticTabButton,
+            CalculationSubTab.Geometry => GeometryTabButton,
+            _ => BasicTabButton
+        };
+    }
+
+    private static async Task AnimateSubTabButtonAsync(
+        Button button)
+    {
+        button.CancelAnimations();
+
+        await button.ScaleToAsync(
+            0.94d,
+            65,
+            Easing.CubicOut);
+
+        await button.ScaleToAsync(
+            1d,
+            105,
+            Easing.CubicOut);
     }
 
     private void SelectSubTab(CalculationSubTab selectedTab)
