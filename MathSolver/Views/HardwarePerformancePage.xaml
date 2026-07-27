@@ -198,6 +198,41 @@
                                 Toggled="OnHardwareAccelerationToggled" />
                         </Grid>
 
+                        <VerticalStackLayout
+                            x:Name="SimdModeSelectorContainer"
+                            IsVisible="False"
+                            Spacing="6"
+                            Margin="0,2,0,0">
+
+                            <Label
+                                Text="Tập lệnh SIMD benchmark"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Border
+                                Padding="10,2"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+
+                                <Picker
+                                    x:Name="SimdModePicker"
+                                    Title="Chọn tập lệnh SIMD"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TitleColor="{DynamicResource TextSecondaryColor}"
+                                    SelectedIndexChanged="OnSimdModeSelectionChanged" />
+                            </Border>
+
+                            <Label
+                                Text="Chỉ các tập lệnh CPU đang hỗ trợ mới được hiển thị."
+                                FontSize="11"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+                        </VerticalStackLayout>
+
                         <BoxView Style="{StaticResource HardwareDividerStyle}" />
 
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
@@ -259,7 +294,7 @@
                             Style="{StaticResource HardwareSectionTitleStyle}" />
 
                         <Label
-                            Text="Mỗi kiểu Int32, Int64, Float và Double được đo trong 10 giây; kết quả cao nhất của từng kiểu được dùng để tính điểm tổng thể."
+                            Text="Mỗi kiểu được đo trong 10 giây, nghỉ 3 giây giữa các bài test và lấy kết quả cao nhất. Float/Double hiển thị MFLOPS/GFLOPS; Int32/Int64 hiển thị MOPS/GOPS."
                             Style="{StaticResource HardwareDescriptionStyle}" />
 
                         <Button
@@ -277,6 +312,14 @@
                             IsVisible="False"
                             IsRunning="False"
                             Color="{DynamicResource PrimaryColor}" />
+
+                        <Label
+                            x:Name="BenchmarkCountdownLabel"
+                            IsVisible="False"
+                            FontSize="30"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            TextColor="{DynamicResource PrimaryColor}" />
 
                         <Label
                             x:Name="BenchmarkStatusLabel"

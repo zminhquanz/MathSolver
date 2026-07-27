@@ -3,6 +3,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Linq;
 
 namespace MathSolver.Views;
 
@@ -15,6 +18,16 @@ public partial class HardwarePerformancePage : ContentPage
     private readonly record struct WorkerResult(
         long OperationCount,
         double Checksum);
+
+    private sealed class SimdModeOption
+    {
+        public required CalculationSimdMode Mode { get; init; }
+
+        public required string DisplayName { get; init; }
+
+        public override string ToString() =>
+            DisplayName;
+    }
 
     private delegate WorkerResult TimedWorker(
         int workerIndex,
@@ -37,6 +50,8 @@ public partial class HardwarePerformancePage : ContentPage
 
         public required bool UsedSimd { get; init; }
 
+        public required CalculationSimdMode UsedSimdMode { get; init; }
+
         public required bool UsedMultithreading { get; init; }
 
         public required int WorkerCount { get; init; }
@@ -50,6 +65,10 @@ public partial class HardwarePerformancePage : ContentPage
     private bool _hasPlayedEntryAnimation;
     private bool _isClosing;
     private CancellationTokenSource? _benchmarkCancellationTokenSource;
+
+    private readonly List<SimdModeOption>
+        _simdModeOptions =
+            [];
 
     public HardwarePerformancePage()
     {
@@ -176,6 +195,8 @@ public partial class HardwarePerformancePage : ContentPage
         LocalizationService.RefreshAll();
         LoadHardwareInformation();
         RenderBenchmarkResult();
+        SetBenchmarkButtonRunningState(
+            _isBenchmarkRunning);
     }
 
     private void LoadHardwareInformation()
@@ -264,6 +285,8 @@ public partial class HardwarePerformancePage : ContentPage
         HardwareAccelerationSwitch.IsToggled =
             CalculationAccelerationManager.UseSimd;
 
+        LoadSimdModeOptions();
+
         MultithreadingSwitch.IsEnabled =
             hasMultipleThreads;
 
@@ -279,14 +302,87 @@ public partial class HardwarePerformancePage : ContentPage
             string.Format(
                 CultureInfo.CurrentCulture,
                 "{0} bit",
-                Vector<byte>.Count *
-                8);
+                CalculationAccelerationManager
+                    .SimdVectorWidthBits);
 
         AvailableMemoryValueLabel.Text =
             GetAvailableMemoryText();
 
         RuntimeValueLabel.Text =
             RuntimeInformation.FrameworkDescription;
+    }
+
+    private void LoadSimdModeOptions()
+    {
+        _simdModeOptions.Clear();
+
+        foreach (CalculationSimdMode mode
+                 in CalculationAccelerationManager
+                     .AvailableSelectableModes)
+        {
+            _simdModeOptions.Add(
+                new SimdModeOption
+                {
+                    Mode =
+                        mode,
+
+                    DisplayName =
+                        CalculationAccelerationManager
+                            .GetModeDisplayName(
+                                mode)
+                });
+        }
+
+        SimdModePicker.ItemsSource =
+            _simdModeOptions;
+
+        CalculationSimdMode selectedMode =
+            CalculationAccelerationManager
+                .SelectedSimdMode;
+
+        SimdModePicker.SelectedItem =
+            _simdModeOptions.FirstOrDefault(
+                option =>
+                    option.Mode ==
+                    selectedMode);
+
+        UpdateSimdModeSelectorVisibility();
+    }
+
+    private void OnSimdModeSelectionChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isLoadingAccelerationState ||
+            SimdModePicker.SelectedItem
+                is not SimdModeOption option)
+        {
+            return;
+        }
+
+        CalculationAccelerationManager
+            .SetSelectedSimdMode(
+                option.Mode);
+
+        VectorWidthValueLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                "{0} bit",
+                CalculationAccelerationManager
+                    .SimdVectorWidthBits);
+
+        UpdateAccelerationStateText();
+    }
+
+    private void UpdateSimdModeSelectorVisibility()
+    {
+        SimdModeSelectorContainer.IsVisible =
+            HardwareAccelerationSwitch.IsToggled &&
+            _simdModeOptions.Count >
+            0;
+
+        SimdModePicker.IsEnabled =
+            !_isBenchmarkRunning;
     }
 
     private void OnHardwareAccelerationToggled(
@@ -301,6 +397,7 @@ public partial class HardwarePerformancePage : ContentPage
         CalculationAccelerationManager.SetUseSimd(
             e.Value);
 
+        UpdateSimdModeSelectorVisibility();
         UpdateAccelerationStateText();
     }
 
@@ -338,30 +435,36 @@ public partial class HardwarePerformancePage : ContentPage
                 ? CalculationThreadingManager.RecommendedWorkerCount
                 : 1;
 
-        string floatingMode =
+        CalculationSimdMode selectedMode =
+            CalculationAccelerationManager
+                .SelectedSimdMode;
+
+        FloatingPointModeValueLabel.Text =
             BuildFloatingPointModeText(
                 useSimd,
+                selectedMode,
                 useMultithreading,
                 workerCount);
 
-        string integerMode =
+        IntegerModeValueLabel.Text =
             BuildIntegerModeText(
                 useMultithreading,
                 workerCount);
 
-        FloatingPointModeValueLabel.Text =
-            floatingMode;
-
-        IntegerModeValueLabel.Text =
-            integerMode;
-
         AccelerationStatusLabel.Text =
-            LocalizationService.Translate(
-                !hasSimd
-                    ? "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar."
-                    : useSimd
-                        ? "Float và Double đang dùng SIMD."
-                        : "Float và Double đang dùng Scalar.");
+            !hasSimd
+                ? LocalizationService.Translate(
+                    "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar.")
+                : useSimd
+                    ? string.Format(
+                        CultureInfo.CurrentCulture,
+                        LocalizationService.Translate(
+                            "Float và Double đang dùng {0}."),
+                        CalculationAccelerationManager
+                            .GetModeDisplayName(
+                                selectedMode))
+                    : LocalizationService.Translate(
+                        "Float và Double đang dùng Scalar.");
 
         MultithreadingStatusLabel.Text =
             !hasMultipleThreads
@@ -379,12 +482,15 @@ public partial class HardwarePerformancePage : ContentPage
 
     private static string BuildFloatingPointModeText(
         bool useSimd,
+        CalculationSimdMode simdMode,
         bool useMultithreading,
         int workerCount)
     {
         string processingMode =
             useSimd
-                ? "SIMD"
+                ? CalculationAccelerationManager
+                    .GetModeDisplayName(
+                        simdMode)
                 : "Scalar";
 
         return useMultithreading
@@ -456,7 +562,8 @@ public partial class HardwarePerformancePage : ContentPage
 
     private static string GetBestSimdName()
     {
-        if (System.Runtime.Intrinsics.X86.Avx512BW.IsSupported || System.Runtime.Intrinsics.X86.Avx512CD.IsSupported || System.Runtime.Intrinsics.X86.Avx512DQ.IsSupported || System.Runtime.Intrinsics.X86.Avx512F.IsSupported || System.Runtime.Intrinsics.X86.Avx512Vbmi.IsSupported || System.Runtime.Intrinsics.X86.Avx512Vbmi2.IsSupported)
+        if (CalculationAccelerationManager
+                .IsAvx512Available)
         {
             return "AVX512";
         }
@@ -536,16 +643,24 @@ public partial class HardwarePerformancePage : ContentPage
     {
         if (_isBenchmarkRunning)
         {
+            BenchmarkStatusLabel.Text =
+                LocalizationService.Translate(
+                    "Đang dừng đo sức mạnh…");
+
+            _benchmarkCancellationTokenSource?.Cancel();
             return;
         }
 
         _isBenchmarkRunning =
             true;
 
-        RunBenchmarkButton.IsEnabled =
-            false;
+        SetBenchmarkButtonRunningState(
+            true);
 
         HardwareAccelerationSwitch.IsEnabled =
+            false;
+
+        SimdModePicker.IsEnabled =
             false;
 
         MultithreadingSwitch.IsEnabled =
@@ -555,6 +670,9 @@ public partial class HardwarePerformancePage : ContentPage
             true;
 
         BenchmarkProgress.IsRunning =
+            true;
+
+        BenchmarkCountdownLabel.IsVisible =
             true;
 
         BenchmarkResultsBorder.IsVisible =
@@ -573,12 +691,17 @@ public partial class HardwarePerformancePage : ContentPage
             bool useSimd =
                 CalculationAccelerationManager.UseSimd;
 
+            CalculationSimdMode simdMode =
+                CalculationAccelerationManager
+                    .SelectedSimdMode;
+
             bool useMultithreading =
                 CalculationThreadingManager.UseMultithreading;
 
             _lastBenchmarkResult =
                 await RunCalculationBenchmarkAsync(
                     useSimd,
+                    simdMode,
                     useMultithreading,
                     cancellationToken);
 
@@ -614,14 +737,23 @@ public partial class HardwarePerformancePage : ContentPage
         }
         finally
         {
+            _isBenchmarkRunning =
+                false;
+
             BenchmarkProgress.IsRunning =
                 false;
 
             BenchmarkProgress.IsVisible =
                 false;
 
-            RunBenchmarkButton.IsEnabled =
-                true;
+            BenchmarkCountdownLabel.IsVisible =
+                false;
+
+            BenchmarkCountdownLabel.Text =
+                string.Empty;
+
+            SetBenchmarkButtonRunningState(
+                false);
 
             HardwareAccelerationSwitch.IsEnabled =
                 CalculationAccelerationManager.IsSimdAvailable;
@@ -629,13 +761,35 @@ public partial class HardwarePerformancePage : ContentPage
             MultithreadingSwitch.IsEnabled =
                 CalculationThreadingManager.IsMultithreadingAvailable;
 
+            UpdateSimdModeSelectorVisibility();
+
             _benchmarkCancellationTokenSource?.Dispose();
 
             _benchmarkCancellationTokenSource =
                 null;
+        }
+    }
 
-            _isBenchmarkRunning =
-                false;
+    private void SetBenchmarkButtonRunningState(
+        bool isRunning)
+    {
+        RunBenchmarkButton.Text =
+            LocalizationService.Translate(
+                isRunning
+                    ? "Dừng đo sức mạnh"
+                    : "Chạy đo sức mạnh");
+
+        if (isRunning)
+        {
+            RunBenchmarkButton.BackgroundColor =
+                Color.FromArgb(
+                    "#DC2626");
+        }
+        else
+        {
+            RunBenchmarkButton.SetDynamicResource(
+                Button.BackgroundColorProperty,
+                "PrimaryColor");
         }
     }
 
@@ -673,6 +827,7 @@ public partial class HardwarePerformancePage : ContentPage
                     "Float / Double: {0}"),
                 BuildFloatingPointModeText(
                     _lastBenchmarkResult.UsedSimd,
+                    _lastBenchmarkResult.UsedSimdMode,
                     _lastBenchmarkResult.UsedMultithreading,
                     _lastBenchmarkResult.WorkerCount));
 
@@ -689,29 +844,37 @@ public partial class HardwarePerformancePage : ContentPage
             string.Format(
                 CultureInfo.CurrentCulture,
                 LocalizationService.Translate(
-                    "Int32: {0:N1} triệu phép tính/giây"),
-                _lastBenchmarkResult.Int32Mops);
+                    "Int32: {0:N1} MOPS • {1:N3} GOPS"),
+                _lastBenchmarkResult.Int32Mops,
+                _lastBenchmarkResult.Int32Mops /
+                1000d);
 
         Int64ResultLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
                 LocalizationService.Translate(
-                    "Int64: {0:N1} triệu phép tính/giây"),
-                _lastBenchmarkResult.Int64Mops);
+                    "Int64: {0:N1} MOPS • {1:N3} GOPS"),
+                _lastBenchmarkResult.Int64Mops,
+                _lastBenchmarkResult.Int64Mops /
+                1000d);
 
         FloatResultLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
                 LocalizationService.Translate(
-                    "Float: {0:N1} triệu phép tính/giây"),
-                _lastBenchmarkResult.FloatMops);
+                    "Float: {0:N1} MFLOPS • {1:N3} GFLOPS"),
+                _lastBenchmarkResult.FloatMops,
+                _lastBenchmarkResult.FloatMops /
+                1000d);
 
         DoubleResultLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
                 LocalizationService.Translate(
-                    "Double: {0:N1} triệu phép tính/giây"),
-                _lastBenchmarkResult.DoubleMops);
+                    "Double: {0:N1} MFLOPS • {1:N3} GFLOPS"),
+                _lastBenchmarkResult.DoubleMops,
+                _lastBenchmarkResult.DoubleMops /
+                1000d);
 
         ElapsedResultLabel.Text =
             string.Format(
@@ -724,12 +887,15 @@ public partial class HardwarePerformancePage : ContentPage
 
     private async Task<BenchmarkResult> RunCalculationBenchmarkAsync(
         bool useSimd,
+        CalculationSimdMode simdMode,
         bool useMultithreading,
         CancellationToken cancellationToken)
     {
         bool actualUseSimd =
             useSimd &&
-            CalculationAccelerationManager.IsSimdAvailable;
+            CalculationAccelerationManager.IsSimdAvailable &&
+            CalculationAccelerationManager.IsModeAvailable(
+                simdMode);
 
         bool actualUseMultithreading =
             useMultithreading &&
@@ -747,43 +913,61 @@ public partial class HardwarePerformancePage : ContentPage
             await RunBenchmarkStageAsync(
                 "Int32",
                 1,
-                () => RunInt32Benchmark(
+                progress => RunInt32Benchmark(
                     workerCount,
+                    progress,
                     cancellationToken),
                 cancellationToken);
+
+        await RunBenchmarkRestAsync(
+            "Int64",
+            cancellationToken);
 
         TimedBenchmarkResult int64Result =
             await RunBenchmarkStageAsync(
                 "Int64",
                 2,
-                () => RunInt64Benchmark(
+                progress => RunInt64Benchmark(
                     workerCount,
+                    progress,
                     cancellationToken),
                 cancellationToken);
+
+        await RunBenchmarkRestAsync(
+            "Float",
+            cancellationToken);
 
         TimedBenchmarkResult floatResult =
             await RunBenchmarkStageAsync(
                 "Float",
                 3,
-                () => RunFloatBenchmark(
+                progress => RunFloatBenchmark(
                     actualUseSimd,
+                    simdMode,
                     workerCount,
+                    progress,
                     cancellationToken),
                 cancellationToken);
+
+        await RunBenchmarkRestAsync(
+            "Double",
+            cancellationToken);
 
         TimedBenchmarkResult doubleResult =
             await RunBenchmarkStageAsync(
                 "Double",
                 4,
-                () => RunDoubleBenchmark(
+                progress => RunDoubleBenchmark(
                     actualUseSimd,
+                    simdMode,
                     workerCount,
+                    progress,
                     cancellationToken),
                 cancellationToken);
 
         totalStopwatch.Stop();
 
-        // Dùng trung bình nhân để một kiểu dữ liệu quá nhanh không che lấp
+        // Trung bình nhân giúp một kiểu dữ liệu quá nhanh không che lấp
         // hoàn toàn một kiểu dữ liệu chậm hơn.
         double score =
             Math.Exp(
@@ -830,6 +1014,9 @@ public partial class HardwarePerformancePage : ContentPage
             UsedSimd =
                 actualUseSimd,
 
+            UsedSimdMode =
+                simdMode,
+
             UsedMultithreading =
                 actualUseMultithreading,
 
@@ -847,28 +1034,75 @@ public partial class HardwarePerformancePage : ContentPage
     private async Task<TimedBenchmarkResult> RunBenchmarkStageAsync(
         string dataTypeName,
         int stageNumber,
-        Func<TimedBenchmarkResult> benchmark,
+        Func<IProgress<int>, TimedBenchmarkResult> benchmark,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        BenchmarkStatusLabel.Text =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                LocalizationService.Translate(
-                    "Đang đo {0} ({1}/4) • 10 giây…"),
-                dataTypeName,
-                stageNumber);
+        var progress =
+            new Progress<int>(
+                remainingSeconds =>
+                {
+                    BenchmarkCountdownLabel.Text =
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            LocalizationService.Translate(
+                                "{0} giây"),
+                            remainingSeconds);
 
-        await Task.Yield();
+                    BenchmarkStatusLabel.Text =
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            LocalizationService.Translate(
+                                "Đang đo {0} ({1}/4)"),
+                            dataTypeName,
+                            stageNumber);
+                });
 
         return await Task.Run(
-            benchmark,
+            () => benchmark(
+                progress),
             cancellationToken);
+    }
+
+    private async Task RunBenchmarkRestAsync(
+        string nextDataTypeName,
+        CancellationToken cancellationToken)
+    {
+        const int restSeconds =
+            3;
+
+        for (int remainingSeconds =
+                 restSeconds;
+             remainingSeconds >=
+             1;
+             remainingSeconds--)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            BenchmarkCountdownLabel.Text =
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    LocalizationService.Translate(
+                        "{0} giây"),
+                    remainingSeconds);
+
+            BenchmarkStatusLabel.Text =
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    LocalizationService.Translate(
+                        "Đang nghỉ trước bài đo {0}"),
+                    nextDataTypeName);
+
+            await Task.Delay(
+                1000,
+                cancellationToken);
+        }
     }
 
     private static TimedBenchmarkResult RunInt32Benchmark(
         int workerCount,
+        IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
         WarmUpWorker(
@@ -878,11 +1112,13 @@ public partial class HardwarePerformancePage : ContentPage
         return RunTenSecondBenchmark(
             workerCount,
             RunInt32Worker,
+            countdownProgress,
             cancellationToken);
     }
 
     private static TimedBenchmarkResult RunInt64Benchmark(
         int workerCount,
+        IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
         WarmUpWorker(
@@ -892,18 +1128,34 @@ public partial class HardwarePerformancePage : ContentPage
         return RunTenSecondBenchmark(
             workerCount,
             RunInt64Worker,
+            countdownProgress,
             cancellationToken);
     }
 
     private static TimedBenchmarkResult RunFloatBenchmark(
         bool useSimd,
+        CalculationSimdMode simdMode,
         int workerCount,
+        IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
         TimedWorker worker =
-            useSimd
-                ? RunFloatSimdWorker
-                : RunFloatScalarWorker;
+            !useSimd
+                ? RunFloatScalarWorker
+                : simdMode switch
+                {
+                    CalculationSimdMode.Avx512 =>
+                        RunFloatAvx512Worker,
+
+                    CalculationSimdMode.AvxAvx2 =>
+                        RunFloatAvxWorker,
+
+                    CalculationSimdMode.Sse =>
+                        RunFloatSseWorker,
+
+                    _ =>
+                        RunFloatPortableSimdWorker
+                };
 
         WarmUpWorker(
             worker,
@@ -912,18 +1164,34 @@ public partial class HardwarePerformancePage : ContentPage
         return RunTenSecondBenchmark(
             workerCount,
             worker,
+            countdownProgress,
             cancellationToken);
     }
 
     private static TimedBenchmarkResult RunDoubleBenchmark(
         bool useSimd,
+        CalculationSimdMode simdMode,
         int workerCount,
+        IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
         TimedWorker worker =
-            useSimd
-                ? RunDoubleSimdWorker
-                : RunDoubleScalarWorker;
+            !useSimd
+                ? RunDoubleScalarWorker
+                : simdMode switch
+                {
+                    CalculationSimdMode.Avx512 =>
+                        RunDoubleAvx512Worker,
+
+                    CalculationSimdMode.AvxAvx2 =>
+                        RunDoubleAvxWorker,
+
+                    CalculationSimdMode.Sse =>
+                        RunDoubleSseWorker,
+
+                    _ =>
+                        RunDoublePortableSimdWorker
+                };
 
         WarmUpWorker(
             worker,
@@ -932,6 +1200,7 @@ public partial class HardwarePerformancePage : ContentPage
         return RunTenSecondBenchmark(
             workerCount,
             worker,
+            countdownProgress,
             cancellationToken);
     }
 
@@ -958,6 +1227,7 @@ public partial class HardwarePerformancePage : ContentPage
     private static TimedBenchmarkResult RunTenSecondBenchmark(
         int requestedWorkerCount,
         TimedWorker worker,
+        IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
         const int sampleCount =
@@ -990,6 +1260,10 @@ public partial class HardwarePerformancePage : ContentPage
              sampleIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            countdownProgress.Report(
+                sampleCount -
+                sampleIndex);
 
             WorkerResult[] workerResults =
                 new WorkerResult[workerCount];
@@ -1327,12 +1601,643 @@ public partial class HardwarePerformancePage : ContentPage
             value);
     }
 
-    private static WorkerResult RunFloatSimdWorker(
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunFloatAvx512Worker(
         int workerIndex,
         long deadlineTimestamp,
         CancellationToken cancellationToken)
     {
-        if (!CalculationAccelerationManager.IsSimdAvailable)
+        if (!CalculationAccelerationManager.IsAvx512Available)
+        {
+            return RunFloatPortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector512<float>.Count;
+
+        Vector512<float> value =
+            Vector512.Create(
+                0.125f +
+                workerIndex *
+                0.0001f);
+
+        Vector512<float> multiplierA =
+            Vector512.Create(
+                1.000001f);
+
+        Vector512<float> addA =
+            Vector512.Create(
+                0.0001f);
+
+        Vector512<float> multiplierB =
+            Vector512.Create(
+                0.999999f);
+
+        Vector512<float> subtractB =
+            Vector512.Create(
+                0.00005f);
+
+        Vector512<float> smallScale =
+            Vector512.Create(
+                0.00001f);
+
+        Vector512<float> multiplierC =
+            Vector512.Create(
+                0.99999f);
+
+        Vector512<float> addC =
+            Vector512.Create(
+                0.00001f);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    value *
+                    multiplierA +
+                    addA;
+
+                value =
+                    value *
+                    multiplierB -
+                    subtractB;
+
+                value =
+                    value +
+                    value *
+                    smallScale;
+
+                value =
+                    value *
+                    multiplierC +
+                    addC;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector512.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunDoubleAvx512Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvx512Available)
+        {
+            return RunDoublePortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector512<double>.Count;
+
+        Vector512<double> value =
+            Vector512.Create(
+                0.125d +
+                workerIndex *
+                0.0001d);
+
+        Vector512<double> multiplierA =
+            Vector512.Create(
+                1.0000001192092896d);
+
+        Vector512<double> addA =
+            Vector512.Create(
+                0.0001d);
+
+        Vector512<double> multiplierB =
+            Vector512.Create(
+                0.9999998807907104d);
+
+        Vector512<double> subtractB =
+            Vector512.Create(
+                0.00005d);
+
+        Vector512<double> smallScale =
+            Vector512.Create(
+                0.00001d);
+
+        Vector512<double> multiplierC =
+            Vector512.Create(
+                0.99999d);
+
+        Vector512<double> addC =
+            Vector512.Create(
+                0.00001d);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    value *
+                    multiplierA +
+                    addA;
+
+                value =
+                    value *
+                    multiplierB -
+                    subtractB;
+
+                value =
+                    value +
+                    value *
+                    smallScale;
+
+                value =
+                    value *
+                    multiplierC +
+                    addC;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector512.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunFloatAvxWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvxAvx2Available)
+        {
+            return RunFloatPortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector256<float>.Count;
+
+        Vector256<float> value =
+            Vector256.Create(
+                0.125f +
+                workerIndex *
+                0.0001f);
+
+        Vector256<float> multiplierA =
+            Vector256.Create(
+                1.000001f);
+
+        Vector256<float> addA =
+            Vector256.Create(
+                0.0001f);
+
+        Vector256<float> multiplierB =
+            Vector256.Create(
+                0.999999f);
+
+        Vector256<float> subtractB =
+            Vector256.Create(
+                0.00005f);
+
+        Vector256<float> smallScale =
+            Vector256.Create(
+                0.00001f);
+
+        Vector256<float> multiplierC =
+            Vector256.Create(
+                0.99999f);
+
+        Vector256<float> addC =
+            Vector256.Create(
+                0.00001f);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    value *
+                    multiplierA +
+                    addA;
+
+                value =
+                    value *
+                    multiplierB -
+                    subtractB;
+
+                value =
+                    value +
+                    value *
+                    smallScale;
+
+                value =
+                    value *
+                    multiplierC +
+                    addC;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector256.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunDoubleAvxWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvxAvx2Available)
+        {
+            return RunDoublePortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector256<double>.Count;
+
+        Vector256<double> value =
+            Vector256.Create(
+                0.125d +
+                workerIndex *
+                0.0001d);
+
+        Vector256<double> multiplierA =
+            Vector256.Create(
+                1.0000001192092896d);
+
+        Vector256<double> addA =
+            Vector256.Create(
+                0.0001d);
+
+        Vector256<double> multiplierB =
+            Vector256.Create(
+                0.9999998807907104d);
+
+        Vector256<double> subtractB =
+            Vector256.Create(
+                0.00005d);
+
+        Vector256<double> smallScale =
+            Vector256.Create(
+                0.00001d);
+
+        Vector256<double> multiplierC =
+            Vector256.Create(
+                0.99999d);
+
+        Vector256<double> addC =
+            Vector256.Create(
+                0.00001d);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    value *
+                    multiplierA +
+                    addA;
+
+                value =
+                    value *
+                    multiplierB -
+                    subtractB;
+
+                value =
+                    value +
+                    value *
+                    smallScale;
+
+                value =
+                    value *
+                    multiplierC +
+                    addC;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector256.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunFloatSseWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsSseAvailable)
+        {
+            return RunFloatPortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector128<float>.Count;
+
+        Vector128<float> value =
+            Vector128.Create(
+                0.125f +
+                workerIndex *
+                0.0001f);
+
+        Vector128<float> multiplierA =
+            Vector128.Create(
+                1.000001f);
+
+        Vector128<float> addA =
+            Vector128.Create(
+                0.0001f);
+
+        Vector128<float> multiplierB =
+            Vector128.Create(
+                0.999999f);
+
+        Vector128<float> subtractB =
+            Vector128.Create(
+                0.00005f);
+
+        Vector128<float> smallScale =
+            Vector128.Create(
+                0.00001f);
+
+        Vector128<float> multiplierC =
+            Vector128.Create(
+                0.99999f);
+
+        Vector128<float> addC =
+            Vector128.Create(
+                0.00001f);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    value *
+                    multiplierA +
+                    addA;
+
+                value =
+                    value *
+                    multiplierB -
+                    subtractB;
+
+                value =
+                    value +
+                    value *
+                    smallScale;
+
+                value =
+                    value *
+                    multiplierC +
+                    addC;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunDoubleSseWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsSseAvailable)
+        {
+            return RunDoublePortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector128<double>.Count;
+
+        Vector128<double> value =
+            Vector128.Create(
+                0.125d +
+                workerIndex *
+                0.0001d);
+
+        Vector128<double> multiplierA =
+            Vector128.Create(
+                1.0000001192092896d);
+
+        Vector128<double> addA =
+            Vector128.Create(
+                0.0001d);
+
+        Vector128<double> multiplierB =
+            Vector128.Create(
+                0.9999998807907104d);
+
+        Vector128<double> subtractB =
+            Vector128.Create(
+                0.00005d);
+
+        Vector128<double> smallScale =
+            Vector128.Create(
+                0.00001d);
+
+        Vector128<double> multiplierC =
+            Vector128.Create(
+                0.99999d);
+
+        Vector128<double> addC =
+            Vector128.Create(
+                0.00001d);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    value *
+                    multiplierA +
+                    addA;
+
+                value =
+                    value *
+                    multiplierB -
+                    subtractB;
+
+                value =
+                    value +
+                    value *
+                    smallScale;
+
+                value =
+                    value *
+                    multiplierC +
+                    addC;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(
+                value));
+    }
+
+    private static WorkerResult RunFloatPortableSimdWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsPortableSimdAvailable &&
+            !CalculationAccelerationManager.IsArmNeonAvailable)
         {
             return RunFloatScalarWorker(
                 workerIndex,
@@ -1439,12 +2344,13 @@ public partial class HardwarePerformancePage : ContentPage
             checksum);
     }
 
-    private static WorkerResult RunDoubleSimdWorker(
+    private static WorkerResult RunDoublePortableSimdWorker(
         int workerIndex,
         long deadlineTimestamp,
         CancellationToken cancellationToken)
     {
-        if (!CalculationAccelerationManager.IsSimdAvailable)
+        if (!CalculationAccelerationManager.IsPortableSimdAvailable &&
+            !CalculationAccelerationManager.IsArmNeonAvailable)
         {
             return RunDoubleScalarWorker(
                 workerIndex,
