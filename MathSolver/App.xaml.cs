@@ -1,4 +1,5 @@
 ﻿using MathSolver.Services;
+using MathSolver.Views;
 
 namespace MathSolver;
 
@@ -14,10 +15,22 @@ public partial class App : Application
         AppFontManager.Initialize(this);
     }
 
-    protected override Window CreateWindow(
-        IActivationState? activationState)
+    protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(
-            new AppShell());
+        var splashPage = new SplashPage();
+
+        var window = new Window(splashPage)
+        {
+            Title = "Math Solver"
+        };
+
+        splashPage.Loaded += async (_, _) =>
+        {
+            await Task.Delay(500);
+
+            window.Page = new AppShell();
+        };
+
+        return window;
     }
 }

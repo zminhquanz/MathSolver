@@ -156,11 +156,6 @@
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                            <Label Text="Kiến trúc tiến trình" Style="{StaticResource HardwareInfoNameStyle}" />
-                            <Label x:Name="ProcessBitnessValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
-                        </Grid>
-
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                             <Label Text="Tập lệnh SIMD" Style="{StaticResource HardwareInfoNameStyle}" />
                             <Label
                                 x:Name="SimdValueLabel"

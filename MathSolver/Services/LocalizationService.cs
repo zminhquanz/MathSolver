@@ -1033,7 +1033,6 @@ public static class LocalizationService
             ("Kiến trúc hệ điều hành", "Operating system architecture"),
             ("Số lõi vật lý", "Physical cores"),
             ("Số luồng logic", "Logical processors"),
-            ("Kiến trúc tiến trình", "Process architecture"),
             ("Tập lệnh SIMD", "SIMD instruction set"),
             ("Độ rộng vector", "Vector width"),
             ("Bộ nhớ khả dụng cho tiến trình", "Memory available to the process"),

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MathSolver.Views.SplashPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Shell.NavBarIsVisible="False"
+    Shell.BackgroundColor="{DynamicResource ShellBackgroundColor}">
+
+    <Grid>
+        <Image
+            Source="splashicon.png"
+            WidthRequest="200"
+            HeightRequest="200"
+            Aspect="AspectFit"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+
+</ContentPage>

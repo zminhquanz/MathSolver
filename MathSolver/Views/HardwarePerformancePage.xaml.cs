@@ -2,10 +2,9 @@ using MathSolver.Services;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using System.Linq;
 
 namespace MathSolver.Views;
 
@@ -272,11 +271,6 @@ public partial class HardwarePerformancePage : ContentPage
                 .ProcessorCount
                 .ToString(
                     CultureInfo.CurrentCulture);
-
-        ProcessBitnessValueLabel.Text =
-            Environment.Is64BitProcess
-                ? "64-bit"
-                : "32-bit";
 
         SimdValueLabel.Text =
             GetSupportedSimdInstructionSets();

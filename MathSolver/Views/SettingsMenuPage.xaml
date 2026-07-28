@@ -159,7 +159,7 @@
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="10">
-                                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center" HeightRequest="50">
                                     <Button Text="" CommandParameter="#6D28D9" BackgroundColor="#6D28D9" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
                                     <Button Text="" CommandParameter="#2563EB" BackgroundColor="#2563EB" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
                                     <Button Text="" CommandParameter="#0891B2" BackgroundColor="#0891B2" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
