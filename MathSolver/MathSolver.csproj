@@ -59,6 +59,9 @@
     <!-- Splash Screen-->
      <MauiSplashScreen Include="Resources\Splash\splashicon.png" BaseSize="128,128" />
 
+    <!-- For SplashPage.xaml on Windows -->
+    <MauiImage Include="Resources\Splash\splashicon.png" />
+
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
 		
