@@ -21,6 +21,19 @@ public partial class QuadraticEquationView : ContentView
     private const int MaxResultDecimalPlaces =
         10;
 
+    // Giống các tab nhập số khác: từ 19 chữ số trở lên, giao diện
+    // rút gọn sang dạng khoa học nhưng vẫn giữ giá trị decimal chính xác.
+    private const int ScientificDisplayDigitThreshold =
+        18;
+
+    private const int ScientificDisplaySignificantDigits =
+        12;
+
+    // Lưu biểu diễn dạng code, ví dụ 1e19, khi Entry đang hiển thị 10¹⁹.
+    private readonly Dictionary<Entry, string>
+        _coefficientScientificCodeValues =
+            new();
+
     // Đồng bộ chiều rộng nội dung với tab Cơ bản, Phân số và Tìm x.
     private const double QuadraticMaximumContentWidth =
         1120d;
@@ -698,6 +711,11 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
+        // Khi người dùng bắt đầu sửa, giá trị đang nhập trực tiếp trở thành
+        // nguồn dữ liệu mới; bỏ bản mã khoa học cũ của Entry.
+        _coefficientScientificCodeValues.Remove(
+            entry);
+
         string fieldName =
             GetCoefficientFieldName(
                 entry);
@@ -798,6 +816,29 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
+        if (_coefficientScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode) &&
+            decimal.TryParse(
+                scientificCode,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out decimal exactValue))
+        {
+            _coefficientScientificCodeValues.Remove(
+                entry);
+
+            // Khi focus, trả về chuỗi số nguyên đầy đủ, không có dấu phẩy,
+            // để người dùng có thể sửa trực tiếp từng chữ số.
+            SetEntryText(
+                entry,
+                exactValue.ToString(
+                    "0",
+                    CultureInfo.InvariantCulture));
+
+            return;
+        }
+
         string normalized =
             NormalizeIntegerText(
                 entry.Text);
@@ -822,16 +863,16 @@ public partial class QuadraticEquationView : ContentView
         }
 
         if (!TryParseCoefficientText(
-                entry.Text,
+                GetCoefficientInputText(
+                    entry),
                 out decimal value))
         {
             return;
         }
 
-        SetEntryText(
+        ApplyCoefficientEntryDisplayValue(
             entry,
-            FormatInputInteger(
-                value));
+            value);
 
         UpdateEquationPreview();
     }
@@ -879,20 +920,17 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
-        SetEntryText(
+        ApplyCoefficientEntryDisplayValue(
             CoefficientAEntry,
-            FormatInputInteger(
-                a));
+            a);
 
-        SetEntryText(
+        ApplyCoefficientEntryDisplayValue(
             CoefficientBEntry,
-            FormatInputInteger(
-                b));
+            b);
 
-        SetEntryText(
+        ApplyCoefficientEntryDisplayValue(
             CoefficientCEntry,
-            FormatInputInteger(
-                c));
+            c);
 
         if (!TryCalculateDelta(
                 a,
@@ -922,6 +960,7 @@ public partial class QuadraticEquationView : ContentView
         EventArgs e)
     {
         _pendingRestoredEntryTexts.Clear();
+        _coefficientScientificCodeValues.Clear();
 
         SetEntryText(
             CoefficientAEntry,
@@ -951,7 +990,8 @@ public partial class QuadraticEquationView : ContentView
 
         string normalized =
             NormalizeIntegerText(
-                entry.Text);
+                GetCoefficientInputText(
+                    entry));
 
         if (normalized.Length == 0 ||
             normalized == "-")
@@ -962,16 +1002,9 @@ public partial class QuadraticEquationView : ContentView
             return false;
         }
 
-        if (!IsCompleteIntegerText(
-                normalized) ||
-            !decimal.TryParse(
+        if (!TryParseCoefficientValue(
                 normalized,
-                NumberStyles.AllowLeadingSign,
-                CultureInfo.InvariantCulture,
-                out value) ||
-            decimal.Truncate(
-                value) !=
-            value)
+                out value))
         {
             ShowError(
                 $"{fieldName} phải là số nguyên hợp lệ.");
@@ -998,7 +1031,31 @@ public partial class QuadraticEquationView : ContentView
         return true;
     }
 
+    private string? GetCoefficientInputText(
+        Entry entry)
+    {
+        if (_coefficientScientificCodeValues.TryGetValue(
+                entry,
+                out string? scientificCode))
+        {
+            return scientificCode;
+        }
+
+        return entry.Text;
+    }
+
     private static bool TryParseCoefficientText(
+        string? text,
+        out decimal value)
+    {
+        return TryParseCoefficientValue(
+                   text,
+                   out value) &&
+               IsWithinSupportedDecimalRange(
+                   value);
+    }
+
+    private static bool TryParseCoefficientValue(
         string? text,
         out decimal value)
     {
@@ -1009,18 +1066,27 @@ public partial class QuadraticEquationView : ContentView
             NormalizeIntegerText(
                 text);
 
-        return IsCompleteIntegerText(
-                   normalized) &&
-               decimal.TryParse(
+        if (normalized.Length == 0 ||
+            normalized == "-")
+        {
+            return false;
+        }
+
+        NumberStyles styles =
+            normalized.Contains(
+                "e",
+                StringComparison.OrdinalIgnoreCase)
+                ? NumberStyles.Float
+                : NumberStyles.AllowLeadingSign;
+
+        return decimal.TryParse(
                    normalized,
-                   NumberStyles.AllowLeadingSign,
+                   styles,
                    CultureInfo.InvariantCulture,
                    out value) &&
                decimal.Truncate(
                    value) ==
-               value &&
-               IsWithinSupportedDecimalRange(
-                   value);
+               value;
     }
 
     private static bool IsValidIntegerWhileTyping(
@@ -1133,21 +1199,35 @@ public partial class QuadraticEquationView : ContentView
             $"({aText})x² + ({bText})x + ({cText}) = 0";
     }
 
-    private static string GetPreviewCoefficientText(
+    private string GetPreviewCoefficientText(
         Entry entry,
         string fallback)
     {
         string normalized =
             NormalizeIntegerText(
-                entry.Text);
+                GetCoefficientInputText(
+                    entry));
 
-        return normalized.Length == 0 ||
-               normalized == "-"
-            ? fallback
-            : normalized.Replace(
-                "-",
-                "−",
-                StringComparison.Ordinal);
+        if (normalized.Length == 0 ||
+            normalized == "-")
+        {
+            return fallback;
+        }
+
+        if (decimal.TryParse(
+                normalized,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out decimal value))
+        {
+            return FormatNumber(
+                value);
+        }
+
+        return normalized.Replace(
+            "-",
+            "−",
+            StringComparison.Ordinal);
     }
 
     private static bool TryCalculateDelta(
@@ -1619,12 +1699,41 @@ public partial class QuadraticEquationView : ContentView
 
         _parabolaGraphDrawable.ResetZoom();
 
+        UpdateGraphPrecisionWarning();
+
         GraphBorder.IsVisible =
             true;
 
         UpdateGraphStatus();
 
         ParabolaGraphicsView.Invalidate();
+    }
+
+    private void UpdateGraphPrecisionWarning()
+    {
+        bool hasWarning =
+            _parabolaGraphDrawable.HasReducedPrecision;
+
+        GraphPrecisionWarningBorder.IsVisible =
+            hasWarning;
+
+        if (!hasWarning)
+        {
+            GraphPrecisionWarningLabel.Text =
+                string.Empty;
+
+            return;
+        }
+
+        GraphPrecisionWarningLabel.Text =
+            $"Đồ thị dùng kiểu double, chỉ bảo đảm tối đa khoảng " +
+            $"{ParabolaGraphDrawable.GuaranteedSignificantDigits} chữ số có nghĩa. " +
+            $"Hệ số lớn nhất có " +
+            $"{_parabolaGraphDrawable.MaximumCoefficientSignificantDigits} chữ số " +
+            $"nên khi chuyển sang double, phần vượt quá " +
+            $"{ParabolaGraphDrawable.GuaranteedSignificantDigits} chữ số có thể " +
+            $"bị làm tròn và hình vẽ parabol có thể giảm độ chính xác. " +
+            $"Kết quả giải phương trình vẫn được tính bằng decimal.";
     }
 
     private void OnGraphZoomInClicked(
@@ -1806,6 +1915,38 @@ public partial class QuadraticEquationView : ContentView
             variable);
     }
 
+    private void ApplyCoefficientEntryDisplayValue(
+        Entry entry,
+        decimal value)
+    {
+        string standardText =
+            FormatInputInteger(
+                value);
+
+        if (CountNumericDigits(
+                standardText) <=
+            ScientificDisplayDigitThreshold)
+        {
+            _coefficientScientificCodeValues.Remove(
+                entry);
+
+            SetEntryText(
+                entry,
+                standardText);
+
+            return;
+        }
+
+        _coefficientScientificCodeValues[entry] =
+            FormatScientificForCode(
+                value);
+
+        SetEntryText(
+            entry,
+            FormatScientificForDisplay(
+                value));
+    }
+
     private static string FormatInputInteger(
         decimal value)
     {
@@ -1829,14 +1970,152 @@ public partial class QuadraticEquationView : ContentView
                 0m;
         }
 
-        return rounded
-            .ToString(
+        string standardText =
+            rounded.ToString(
                 "#,##0.##########",
-                CultureInfo.InvariantCulture)
-            .Replace(
+                CultureInfo.InvariantCulture);
+
+        if (CountNumericDigits(
+                standardText) >
+            ScientificDisplayDigitThreshold)
+        {
+            return FormatScientificForDisplay(
+                rounded);
+        }
+
+        return standardText.Replace(
+            "-",
+            "−",
+            StringComparison.Ordinal);
+    }
+
+    private static int CountNumericDigits(
+        string text)
+    {
+        int count =
+            0;
+
+        foreach (char character in text)
+        {
+            if (character >= '0' &&
+                character <= '9')
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static string FormatScientificForDisplay(
+        decimal value)
+    {
+        string code =
+            FormatScientificForCode(
+                value);
+
+        int exponentSeparatorIndex =
+            code.IndexOf(
+                'e');
+
+        string exactMantissaText =
+            code[..exponentSeparatorIndex];
+
+        int exponent =
+            int.Parse(
+                code[(exponentSeparatorIndex + 1)..],
+                CultureInfo.InvariantCulture);
+
+        decimal exactMantissa =
+            decimal.Parse(
+                exactMantissaText,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture);
+
+        int mantissaDecimalPlaces =
+            Math.Max(
+                0,
+                ScientificDisplaySignificantDigits - 1);
+
+        decimal roundedMantissa =
+            Math.Round(
+                exactMantissa,
+                mantissaDecimalPlaces,
+                MidpointRounding.AwayFromZero);
+
+        if (Math.Abs(
+                roundedMantissa) >=
+            10m)
+        {
+            roundedMantissa /=
+                10m;
+
+            exponent++;
+        }
+
+        bool wasRounded =
+            roundedMantissa !=
+            exactMantissa;
+
+        string mantissaText =
+            roundedMantissa.ToString(
+                "0.###########",
+                CultureInfo.InvariantCulture);
+
+        string approximation =
+            wasRounded
+                ? "≈ "
+                : string.Empty;
+
+        if (mantissaText == "1")
+        {
+            return
+                $"{approximation}10{ToSuperscript(exponent)}";
+        }
+
+        if (mantissaText == "-1")
+        {
+            return
+                $"{approximation}−10{ToSuperscript(exponent)}";
+        }
+
+        mantissaText =
+            mantissaText.Replace(
                 "-",
                 "−",
                 StringComparison.Ordinal);
+
+        return
+            $"{approximation}{mantissaText} × " +
+            $"10{ToSuperscript(exponent)}";
+    }
+
+    private static string FormatScientificForCode(
+        decimal value)
+    {
+        if (value == 0m)
+        {
+            return "0e0";
+        }
+
+        string scientificText =
+            value.ToString(
+                "0.############################E+0",
+                CultureInfo.InvariantCulture);
+
+        int exponentIndex =
+            scientificText.IndexOf(
+                'E');
+
+        string mantissa =
+            scientificText[..exponentIndex];
+
+        string exponent =
+            scientificText[(exponentIndex + 1)..]
+                .TrimStart('+');
+
+        return
+            $"{mantissa}e{exponent}";
     }
 
     private static string GroupIntegerDigits(
@@ -1960,6 +2239,9 @@ public partial class QuadraticEquationView : ContentView
 
         GraphBorder.IsVisible =
             false;
+
+        GraphPrecisionWarningBorder.IsVisible =
+            false;
     }
 
     private void HideResultAndError()
@@ -1974,6 +2256,9 @@ public partial class QuadraticEquationView : ContentView
             false;
 
         GraphBorder.IsVisible =
+            false;
+
+        GraphPrecisionWarningBorder.IsVisible =
             false;
     }
 

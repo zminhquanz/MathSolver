@@ -9,9 +9,18 @@ public partial class FormulaPage : ContentPage
 {
     private int _mainTabAnimationVersion;
 
+    private bool _isMainTabTransitioning;
+
     private FormulaSubTab _selectedSubTab = FormulaSubTab.UnknownComponent;
 
     private bool _isSubTabTransitioning;
+
+    // GeometryFlexLayout và các GraphicsView chỉ được khởi tạo một lần.
+    // Khi rời rồi quay lại tab Công thức, không gán lại ItemsSource nên
+    // các GraphicsView cũ được giữ nguyên, tránh vẽ lại và nháy giao diện.
+    private bool _isGeometryLayoutInitialized;
+
+    private double _lastGeometryLayoutWidth = -1d;
 
     public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } = [];
 
@@ -50,75 +59,143 @@ public partial class FormulaPage : ContentPage
     {
         base.OnAppearing();
 
-        BeginMainTabTransitionIfPending();
+        // Chuẩn bị nội dung đang chọn trước. Riêng Hình học đã khởi tạo
+        // thì tuyệt đối không gắn lại ItemsSource hay ép đo lại toàn bộ
+        // GraphicsView khi quay lại tab Công thức.
+        PrepareSelectedSubTabForMainAppearance();
 
-        if (_selectedSubTab ==
-            FormulaSubTab.UnknownComponent)
-        {
-            RefreshUnknownComponentLayout();
-        }
-        else
-        {
-            // Tạo lại các card để GraphicsView nhận màu theme hiện tại.
-            RefreshGeometryLayout();
-        }
+        BeginMainTabTransitionIfPending();
     }
 
     protected override void OnDisappearing()
     {
-        // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
-        // một phiếu mới sẽ tạo một animation mới thay vì nối tiếp animation cũ.
         _mainTabAnimationVersion++;
+        _isMainTabTransitioning =
+            false;
 
-        FormulaPageContentRoot.CancelAnimations();
-        ResetMainTabRoot();
+        CancelMainTabAnimations();
+
+        // GraphicsView trong tab Hình học có lớp render riêng trên một số
+        // nền tảng. Ẩn trực tiếp vùng Hình học khi rời trang để lớp vẽ cũ
+        // không nằm đè lên animation của trang Giải toán/Cửu chương.
+        if (_selectedSubTab ==
+            FormulaSubTab.Geometry)
+        {
+            GeometryContent.Opacity =
+                0d;
+
+            GeometryContent.TranslationX =
+                0d;
+
+            GeometryContent.Scale =
+                1d;
+        }
+        else
+        {
+            ResetTransitionTransform(
+                GeometryContent);
+        }
+
+        ResetTransitionTransform(
+            UnknownComponentContent);
+
+        ResetTransitionTransform(
+            FormulaSubTabBar);
+
+        // Root không còn là animation host. Giữ root ở trạng thái chuẩn để
+        // GraphicsView không phải đi qua transform của toàn bộ trang.
+        FormulaPageContentRoot.Opacity =
+            1d;
+
+        FormulaPageContentRoot.TranslationX =
+            0d;
+
+        FormulaPageContentRoot.Scale =
+            1d;
 
         base.OnDisappearing();
     }
 
+    private void PrepareSelectedSubTabForMainAppearance()
+    {
+        if (_selectedSubTab ==
+            FormulaSubTab.UnknownComponent)
+        {
+            if (UnknownComponentItems.Count == 0)
+            {
+                CreateUnknownComponentItems();
+            }
+
+            RefreshUnknownComponentLayout();
+            return;
+        }
+
+        EnsureGeometryLayoutInitialized();
+
+        // Không gọi UpdateGeometryCardWidthsIfNeeded ở mỗi OnAppearing.
+        // Width đã được lưu và chỉ cập nhật khi SizeChanged thật sự xảy ra.
+    }
+
     private void BeginMainTabTransitionIfPending()
     {
+        VisualElement activeContent =
+            GetFormulaSubTabContent(
+                _selectedSubTab);
+
         if (Shell.Current is not AppShell appShell ||
             !appShell.TryConsumeMainTabTransition(
                 "FormulaPage",
                 out int direction))
         {
+            // Trường hợp quay lại từ Settings hoặc lần xuất hiện không phải
+            // đổi tab chính: khôi phục vùng Hình học đã được ẩn khi rời trang.
+            ResetTransitionTransform(
+                FormulaSubTabBar);
+
+            ResetTransitionTransform(
+                activeContent);
+
             return;
         }
 
         int animationVersion =
             ++_mainTabAnimationVersion;
 
+        _isMainTabTransitioning =
+            true;
+
         direction =
             direction >= 0
                 ? 1
                 : -1;
 
-        // Chuẩn bị ngay trong OnAppearing, trước frame đầu tiên của trang.
-        // Không để trang hiện hoàn chỉnh rồi mới reset Opacity về 0.
-        FormulaPageContentRoot.CancelAnimations();
+        CancelMainTabAnimations();
 
-        FormulaPageContentRoot.Opacity =
-            0d;
+        // Không animate FormulaPageContentRoot. Khi Hình học đang hiện,
+        // GraphicsView có thể không đi cùng transform/opacity của root trên
+        // mọi handler. Animate trực tiếp thanh tab con và vùng nội dung đang
+        // hiện — đây cũng chính là host đã hoạt động ổn khi đổi tab con.
+        PrepareMainTabAnimationHost(
+            FormulaSubTabBar,
+            direction);
 
-        FormulaPageContentRoot.TranslationX =
-            direction *
-            44d;
-
-        FormulaPageContentRoot.Scale =
-            0.985d;
+        PrepareMainTabAnimationHost(
+            activeContent,
+            direction);
 
         Dispatcher.Dispatch(
             async () =>
                 await PlayPreparedMainTabTransitionAsync(
-                    animationVersion));
+                    animationVersion,
+                    activeContent));
     }
 
     private async Task PlayPreparedMainTabTransitionAsync(
-        int animationVersion)
+        int animationVersion,
+        VisualElement activeContent)
     {
-        // Nhường đúng một lượt cho layout nhưng root vẫn đang ẩn. Vì vậy
-        // không có frame UI hoàn chỉnh xuất hiện trước transition.
+        // Nhường một lượt để Shell gắn trang đích. Hai host vẫn đang ẩn nên
+        // không có frame UI hoàn chỉnh xuất hiện trước animation.
         await Task.Yield();
 
         if (animationVersion !=
@@ -130,42 +207,76 @@ public partial class FormulaPage : ContentPage
         try
         {
             await Task.WhenAll(
-                FormulaPageContentRoot.FadeToAsync(
-                    1d,
-                    175,
-                    Easing.CubicOut),
+                AnimatePreparedMainTabHostAsync(
+                    FormulaSubTabBar),
 
-                FormulaPageContentRoot.TranslateToAsync(
-                    0d,
-                    0d,
-                    250,
-                    Easing.CubicOut),
-
-                FormulaPageContentRoot.ScaleToAsync(
-                    1d,
-                    250,
-                    Easing.CubicOut));
+                AnimatePreparedMainTabHostAsync(
+                    activeContent));
         }
         finally
         {
             if (animationVersion ==
                 _mainTabAnimationVersion)
             {
-                ResetMainTabRoot();
+                ResetTransitionTransform(
+                    FormulaSubTabBar);
+
+                ResetTransitionTransform(
+                    activeContent);
+
+                _isMainTabTransitioning =
+                    false;
+
+                // Chỉ kiểm tra lại kích thước sau animation. Không tái tạo
+                // GeometryItems và không làm GraphicsView vẽ lại.
+                RefreshSelectedFormulaSubTabLayout();
             }
         }
     }
 
-    private void ResetMainTabRoot()
+    private static void PrepareMainTabAnimationHost(
+        VisualElement host,
+        int direction)
     {
-        FormulaPageContentRoot.Opacity =
-            1d;
+        host.CancelAnimations();
 
-        FormulaPageContentRoot.TranslationX =
+        host.Opacity =
             0d;
 
-        FormulaPageContentRoot.Scale =
-            1d;
+        host.TranslationX =
+            direction *
+            44d;
+
+        host.Scale =
+            0.985d;
+    }
+
+    private static Task AnimatePreparedMainTabHostAsync(
+        VisualElement host)
+    {
+        return Task.WhenAll(
+            host.FadeToAsync(
+                1d,
+                175,
+                Easing.CubicOut),
+
+            host.TranslateToAsync(
+                0d,
+                0d,
+                250,
+                Easing.CubicOut),
+
+            host.ScaleToAsync(
+                1d,
+                250,
+                Easing.CubicOut));
+    }
+
+    private void CancelMainTabAnimations()
+    {
+        FormulaSubTabBar.CancelAnimations();
+        UnknownComponentContent.CancelAnimations();
+        GeometryContent.CancelAnimations();
     }
 
     private void RefreshUnknownComponentLayout()
@@ -196,34 +307,68 @@ public partial class FormulaPage : ContentPage
             });
     }
 
-    private void RefreshGeometryLayout()
+    private void EnsureGeometryLayoutInitialized()
     {
-        BindableLayout.SetItemsSource(
-            GeometryFlexLayout,
-            null);
+        if (_isGeometryLayoutInitialized)
+        {
+            return;
+        }
 
-        BindableLayout.SetItemsSource(
-            GeometryFlexLayout,
-            GeometryItems);
+        if (GeometryItems.Count == 0)
+        {
+            CreateGeometryItems();
+        }
+
+        // ItemsSource đã được gắn một lần trong constructor. Không gán null
+        // rồi gắn lại vì thao tác đó hủy toàn bộ card và tạo GraphicsView mới.
+        _isGeometryLayoutInitialized =
+            true;
 
         Dispatcher.Dispatch(
             () =>
             {
-                UpdateGeometryCardWidths(
-                    GeometryFlexLayout.Width);
+                UpdateGeometryCardWidthsIfNeeded(
+                    force: true);
 
-                // BindableLayout có thể vừa mới tạo xong children.
-                // Gọi lại một lần sau khi layout đầu tiên hoàn tất.
+                // Lần đầu BindableLayout có thể vừa mới tạo children. Chỉ
+                // đo lại kích thước, không thay ItemsSource và không tái tạo
+                // GraphicsView.
                 Dispatcher.Dispatch(
                     () =>
                     {
-                        UpdateGeometryCardWidths(
-                            GeometryFlexLayout.Width);
+                        UpdateGeometryCardWidthsIfNeeded(
+                            force: true);
 
                         LocalizationService.Attach(
                             this);
                     });
             });
+    }
+
+    private void UpdateGeometryCardWidthsIfNeeded(
+        bool force = false)
+    {
+        double availableWidth =
+            GeometryFlexLayout.Width;
+
+        if (availableWidth <= 0)
+        {
+            return;
+        }
+
+        if (!force &&
+            Math.Abs(
+                availableWidth -
+                _lastGeometryLayoutWidth) < 0.5d)
+        {
+            return;
+        }
+
+        _lastGeometryLayoutWidth =
+            availableWidth;
+
+        UpdateGeometryCardWidths(
+            availableWidth);
     }
 
     private async void OnUnknownComponentTabClicked(
@@ -245,7 +390,8 @@ public partial class FormulaPage : ContentPage
     private async Task SwitchFormulaSubTabAsync(
         FormulaSubTab selectedTab)
     {
-        if (_isSubTabTransitioning)
+        if (_isSubTabTransitioning ||
+            _isMainTabTransitioning)
         {
             return;
         }
@@ -402,15 +548,9 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        if (GeometryItems.Count == 0)
-        {
-            CreateGeometryItems();
-        }
-
-        // CardHeight của từng hình chỉ là chiều cao tối thiểu.
-        // Grid trong XAML dùng hàng Auto nên card có nhiều công thức
-        // hoặc chú thích sẽ tự mở rộng theo nội dung.
-        RefreshGeometryLayout();
+        // Chỉ tạo card và GraphicsView ở lần mở tab Hình học đầu tiên.
+        // Những lần chuyển tab sau chỉ đổi IsVisible và chạy animation.
+        EnsureGeometryLayoutInitialized();
     }
 
     private void RefreshSelectedFormulaSubTabLayout()
@@ -422,7 +562,7 @@ public partial class FormulaPage : ContentPage
         }
         else
         {
-            RefreshGeometryLayout();
+            UpdateGeometryCardWidthsIfNeeded();
         }
     }
 
@@ -544,8 +684,7 @@ public partial class FormulaPage : ContentPage
                 }
                 else
                 {
-                    UpdateGeometryCardWidths(
-                        GeometryFlexLayout.Width);
+                    UpdateGeometryCardWidthsIfNeeded();
                 }
             });
     }
@@ -573,11 +712,12 @@ public partial class FormulaPage : ContentPage
         object? sender,
         EventArgs e)
     {
-        if (sender is FlexLayout layout)
+        if (!_isGeometryLayoutInitialized)
         {
-            UpdateGeometryCardWidths(
-                layout.Width);
+            return;
         }
+
+        UpdateGeometryCardWidthsIfNeeded();
     }
 
     private void UpdateGeometryCardWidths(
@@ -695,7 +835,16 @@ public partial class FormulaPage : ContentPage
             () =>
             {
                 CreateUnknownComponentItems();
-                CreateGeometryItems();
+
+                // Đổi ngôn ngữ là trường hợp duy nhất cần tạo lại dữ liệu
+                // hình học vì các chuỗi công thức đã thay đổi. ItemsSource
+                // vẫn giữ nguyên nên không có thao tác tháo/gắn lại layout.
+                if (_isGeometryLayoutInitialized)
+                {
+                    CreateGeometryItems();
+                    _lastGeometryLayoutWidth =
+                        -1d;
+                }
 
                 if (_selectedSubTab ==
                     FormulaSubTab.UnknownComponent)
@@ -704,7 +853,9 @@ public partial class FormulaPage : ContentPage
                 }
                 else
                 {
-                    RefreshGeometryLayout();
+                    EnsureGeometryLayoutInitialized();
+                    UpdateGeometryCardWidthsIfNeeded(
+                        force: true);
                 }
 
                 LocalizationService.Attach(

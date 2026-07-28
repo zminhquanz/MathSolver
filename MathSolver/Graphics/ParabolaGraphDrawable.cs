@@ -14,6 +14,13 @@ namespace MathSolver.Graphics;
 /// </summary>
 public sealed class ParabolaGraphDrawable : IDrawable
 {
+    public const int GuaranteedSignificantDigits =
+        17;
+
+    public bool HasReducedPrecision { get; private set; }
+
+    public int MaximumCoefficientSignificantDigits { get; private set; }
+
     private const int MinimumSampleCount =
         1024;
 
@@ -194,6 +201,20 @@ public sealed class ParabolaGraphDrawable : IDrawable
         decimal b,
         decimal c)
     {
+        MaximumCoefficientSignificantDigits =
+            Math.Max(
+                CountIntegerDigits(
+                    a),
+                Math.Max(
+                    CountIntegerDigits(
+                        b),
+                    CountIntegerDigits(
+                        c)));
+
+        HasReducedPrecision =
+            MaximumCoefficientSignificantDigits >
+            GuaranteedSignificantDigits;
+
         double rawA =
             (double)a;
 
@@ -814,11 +835,12 @@ public sealed class ParabolaGraphDrawable : IDrawable
             null;
 
         double discriminant =
-            _b *
-            _b -
-            4d *
-            _a *
-            _c;
+            Math.FusedMultiplyAdd(
+                -4d *
+                _a,
+                _c,
+                _b *
+                _b);
 
         if (!double.IsFinite(
                 discriminant) ||
@@ -1914,12 +1936,30 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private double EvaluateScalar(
         double x)
     {
-        return
-            (_a *
-             x +
-             _b) *
-            x +
-            _c;
+        // Horner với hai phép FMA: mỗi bước chỉ làm tròn một lần.
+        return Math.FusedMultiplyAdd(
+            Math.FusedMultiplyAdd(
+                _a,
+                x,
+                _b),
+            x,
+            _c);
+    }
+
+    private static int CountIntegerDigits(
+        decimal value)
+    {
+        string text =
+            decimal.Abs(
+                value)
+            .ToString(
+                "0",
+                CultureInfo.InvariantCulture)
+            .TrimStart('0');
+
+        return text.Length == 0
+            ? 1
+            : text.Length;
     }
 
     private static double GetSafeHalfRange(
@@ -2036,6 +2076,7 @@ public static class ParabolaSimdEvaluator
 {
     private enum SimdPath
     {
+        Avx2Fma,
         Avx2,
         Avx,
         Sse42,
@@ -2083,6 +2124,16 @@ public static class ParabolaSimdEvaluator
 
         switch (SelectedPath)
         {
+            case SimdPath.Avx2Fma:
+                EvaluateAvxFma(
+                    xValues,
+                    yValues,
+                    count,
+                    a,
+                    b,
+                    c);
+                break;
+
             case SimdPath.Avx2:
             case SimdPath.Avx:
                 EvaluateAvx(
@@ -2123,6 +2174,12 @@ public static class ParabolaSimdEvaluator
 
     private static SimdPath DetectBestPath()
     {
+        if (Avx2.IsSupported &&
+            Fma.IsSupported)
+        {
+            return SimdPath.Avx2Fma;
+        }
+
         if (Avx2.IsSupported)
         {
             return SimdPath.Avx2;
@@ -2158,12 +2215,77 @@ public static class ParabolaSimdEvaluator
             return SimdPath.Sse2;
         }
 
-        if (AdvSimd.IsSupported)
+        if (AdvSimd.Arm64.IsSupported)
         {
             return SimdPath.Neon;
         }
 
         return SimdPath.Scalar;
+    }
+
+    private static void EvaluateAvxFma(
+        double[] xValues,
+        double[] yValues,
+        int count,
+        double a,
+        double b,
+        double c)
+    {
+        Vector256<double> aVector =
+            Vector256.Create(
+                a);
+
+        Vector256<double> bVector =
+            Vector256.Create(
+                b);
+
+        Vector256<double> cVector =
+            Vector256.Create(
+                c);
+
+        int index =
+            0;
+
+        int vectorizedCount =
+            count -
+            count %
+            Vector256<double>.Count;
+
+        for (;
+             index < vectorizedCount;
+             index +=
+                 Vector256<double>.Count)
+        {
+            Vector256<double> xVector =
+                Vector256.LoadUnsafe(
+                    ref xValues[index]);
+
+            // Horner với FMA3:
+            // y = fma(fma(a, x, b), x, c)
+            Vector256<double> axPlusB =
+                Fma.MultiplyAdd(
+                    aVector,
+                    xVector,
+                    bVector);
+
+            Vector256<double> yVector =
+                Fma.MultiplyAdd(
+                    axPlusB,
+                    xVector,
+                    cVector);
+
+            yVector.StoreUnsafe(
+                ref yValues[index]);
+        }
+
+        EvaluateScalar(
+            xValues,
+            yValues,
+            index,
+            count,
+            a,
+            b,
+            c);
     }
 
     private static void EvaluateAvx(
@@ -2268,16 +2390,38 @@ public static class ParabolaSimdEvaluator
                 Vector128.LoadUnsafe(
                     ref xValues[index]);
 
-            Vector128<double> yVector =
-                Sse2.Add(
-                    Sse2.Multiply(
-                        Sse2.Add(
-                            Sse2.Multiply(
-                                aVector,
-                                xVector),
-                            bVector),
-                        xVector),
-                    cVector);
+            Vector128<double> yVector;
+
+            if (SelectedPath ==
+                SimdPath.Neon)
+            {
+                // ARM64 NEON có FMA cho double. Thứ tự API là
+                // addend + left * right.
+                Vector128<double> axPlusB =
+                    AdvSimd.Arm64.FusedMultiplyAdd(
+                        bVector,
+                        aVector,
+                        xVector);
+
+                yVector =
+                    AdvSimd.Arm64.FusedMultiplyAdd(
+                        cVector,
+                        axPlusB,
+                        xVector);
+            }
+            else
+            {
+                yVector =
+                    Sse2.Add(
+                        Sse2.Multiply(
+                            Sse2.Add(
+                                Sse2.Multiply(
+                                    aVector,
+                                    xVector),
+                                bVector),
+                            xVector),
+                        cVector);
+            }
 
             yVector.StoreUnsafe(
                 ref yValues[index]);
@@ -2310,11 +2454,13 @@ public static class ParabolaSimdEvaluator
                 xValues[index];
 
             yValues[index] =
-                (a *
-                 x +
-                 b) *
-                x +
-                c;
+                Math.FusedMultiplyAdd(
+                    Math.FusedMultiplyAdd(
+                        a,
+                        x,
+                        b),
+                    x,
+                    c);
         }
     }
 }

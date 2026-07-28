@@ -668,6 +668,52 @@
                     </Grid>
 
                     <Border
+                        x:Name="GraphPrecisionWarningBorder"
+                        IsVisible="False"
+                        Padding="12"
+                        BackgroundColor="{DynamicResource WarningSoftColor}"
+                        Stroke="{DynamicResource WarningBorderBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+
+                        <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="10">
+
+                            <Label
+                                Grid.Column="0"
+                                Text="⚠"
+                                FontSize="20"
+                                VerticalOptions="Start"
+                                TextColor="{DynamicResource WarningColor}" />
+
+                            <VerticalStackLayout
+                                Grid.Column="1"
+                                Spacing="3">
+
+                                <Label
+                                    Text="Cảnh báo độ chính xác đồ thị"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WarningColor}" />
+
+                                <Label
+                                    x:Name="GraphPrecisionWarningLabel"
+                                    FontSize="13"
+                                    LineHeight="1.25"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WarningColor}" />
+
+                            </VerticalStackLayout>
+
+                        </Grid>
+
+                    </Border>
+
+                    <Border
                         Padding="6"
                         BackgroundColor="{DynamicResource SurfaceAltColor}"
                         Stroke="{DynamicResource BorderBrush}"

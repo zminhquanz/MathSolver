@@ -13,12 +13,6 @@ public partial class AppShell : Shell
     private string _activeMainRoute =
         "CalculationPage";
 
-    // Một chuyển tab chỉ tạo đúng một "phiếu" animation. Phiếu được
-    // tạo trong Shell.Navigating (trước khi trang đích được vẽ) và được
-    // trang đích lấy đúng một lần trong OnAppearing.
-    private string? _pendingMainTabRoute;
-
-    private int _pendingMainTabDirection;
 
     public AppShell()
     {
@@ -299,15 +293,6 @@ public partial class AppShell : Shell
             GetMainRoute(
                 targetLocation);
 
-        // Shell.Navigating xảy ra trước khi trang đích được hiển thị.
-        // Chỉ ghi nhận hướng chuyển ở đây; chính OnAppearing của trang đích
-        // sẽ chuẩn bị root ở trạng thái ẩn và phát animation đúng một lần.
-        if (targetMainRoute is not null)
-        {
-            PrepareMainTabTransition(
-                targetMainRoute);
-        }
-
         if (_returningFromSettings ||
             !IsSettingsRouteOpen() ||
             !e.CanCancel ||
@@ -346,71 +331,46 @@ public partial class AppShell : Shell
 
         UpdateSettingsAccessibilityText();
 
-        // Không chạy animation trong Navigated. Khi đến đây trang đích đã
-        // có thể được vẽ, reset Opacity về 0 lúc này sẽ tạo một lần nháy
-        // rồi mới chạy transition lần nữa.
-    }
-
-    private void PrepareMainTabTransition(
-        string targetRoute)
-    {
-        if (string.Equals(
-                _activeMainRoute,
-                targetRoute,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        int currentIndex =
-            GetMainRouteIndex(
-                _activeMainRoute);
-
-        int targetIndex =
-            GetMainRouteIndex(
-                targetRoute);
-
-        _pendingMainTabDirection =
-            targetIndex >= currentIndex
-                ? 1
-                : -1;
-
-        _pendingMainTabRoute =
-            targetRoute;
-
-        // Commit ngay để cùng một thao tác điều hướng lặp lại không tạo
-        // thêm phiếu animation thứ hai.
-        _activeMainRoute =
-            targetRoute;
+        // Không chạy animation trong Navigated. Mỗi trang tự quyết định
+        // transition đúng một lần trong OnAppearing bằng route cuối đã hiển thị.
     }
 
     public bool TryConsumeMainTabTransition(
         string pageRoute,
         out int direction)
     {
-        if (!string.Equals(
-                _pendingMainTabRoute,
+        direction =
+            0;
+
+        int targetIndex =
+            GetMainRouteIndex(
+                pageRoute);
+
+        if (targetIndex < 0 ||
+            string.Equals(
+                _activeMainRoute,
                 pageRoute,
                 StringComparison.OrdinalIgnoreCase))
         {
-            direction =
-                0;
-
             return false;
         }
 
+        int currentIndex =
+            GetMainRouteIndex(
+                _activeMainRoute);
+
+        // OnAppearing của chính trang đích là nguồn sự thật duy nhất.
+        // Không phụ thuộc Shell.Navigating/CurrentItem vì hai sự kiện đó
+        // có thể không phát theo cùng thứ tự trên Windows và Android.
         direction =
-            _pendingMainTabDirection >= 0
+            targetIndex >= currentIndex
                 ? 1
                 : -1;
 
-        // Xóa trước khi trang bắt đầu animation. Dù OnAppearing hoặc một
-        // callback khác bị gọi lại, phiếu này không thể được lấy lần hai.
-        _pendingMainTabRoute =
-            null;
-
-        _pendingMainTabDirection =
-            0;
+        // Commit trước khi trả về. Dù OnAppearing bị gọi lặp, cùng route
+        // không thể nhận animation lần thứ hai.
+        _activeMainRoute =
+            pageRoute;
 
         return true;
     }
@@ -498,7 +458,7 @@ public partial class AppShell : Shell
             "CalculationPage" => 0,
             "FormulaPage" => 1,
             "MultiplicationTablePage" => 2,
-            _ => 0
+            _ => -1
         };
     }
 
