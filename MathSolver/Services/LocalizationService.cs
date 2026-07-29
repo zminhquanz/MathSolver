@@ -581,11 +581,6 @@ public static class LocalizationService
 
         text = Regex.Replace(
             text,
-            @"Đồ thị dùng kiểu double, chỉ bảo đảm tối đa khoảng 17 chữ số có nghĩa\. Hệ số lớn nhất có (?<digits>\d+) chữ số nên khi chuyển sang double, phần vượt quá 17 chữ số có thể bị làm tròn và hình vẽ parabol có thể giảm độ chính xác\. Kết quả giải phương trình vẫn được tính bằng decimal\.",
-            "The graph uses double precision, which preserves at most about 17 significant digits. The largest coefficient has ${digits} digits, so digits beyond 17 can be rounded when converted to double and the parabola drawing may lose precision. The equation result is still calculated with decimal.");
-
-        text = Regex.Replace(
-            text,
             @"(?<field>[^.\n]+) phải là số nguyên hợp lệ trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727\.",
             match =>
                 $"{TranslateFieldName(match.Groups["field"].Value)} must be a valid integer within the range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727.");
@@ -895,7 +890,6 @@ public static class LocalizationService
             ("Biệt thức", "Discriminant"),
             ("3. Lời giải chi tiết", "3. Detailed Solution"),
             ("Đồ thị parabol", "Parabola Graph"),
-            ("Cảnh báo độ chính xác đồ thị", "Graph precision warning"),
             ("Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%.", "The graph follows a textbook-style layout with coordinate axes, an axis of symmetry, the vertex, and real roots. Drag with the mouse to pan; scroll the wheel up to zoom in and down to zoom out; or use −, +, and 100%."),
             ("Chưa có dữ liệu đồ thị.", "No graph data is available."),
             ("Bước 1. Xác định các hệ số", "Step 1. Identify the coefficients"),
@@ -915,8 +909,8 @@ public static class LocalizationService
             ("Nghiệm vượt quá phạm vi mà ứng dụng hỗ trợ.", "The root exceeds the numeric range supported by the app."),
             ("Chỉ được nhập số nguyên; không được nhập dấu chấm hoặc ký tự khác.", "Enter integers only; decimal points and other characters are not allowed."),
             ("Chỉ được nhập số nguyên trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335.", "Enter integers only, from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335."),
-            ("Kết quả Δ nằm ngoài phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335. Ứng dụng không thể tiếp tục tính toán.", "The value of Δ is outside the range from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335. The app cannot continue the calculation."),
-            ("Nghiệm nằm ngoài phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335. Ứng dụng không thể tiếp tục tính toán.", "The root is outside the range from −79,228,162,514,264,337,593,543,950,335 to 79,228,162,514,264,337,593,543,950,335. The app cannot continue the calculation."),
+            ("Kết quả Δ không thể biểu diễn hữu hạn bằng độ chính xác Double Double. Ứng dụng không thể tiếp tục tính toán.", "The value of Δ cannot be represented as a finite Double Double value. The app cannot continue the calculation."),
+            ("Nghiệm không thể biểu diễn hữu hạn bằng độ chính xác Double Double. Ứng dụng không thể tiếp tục tính toán.", "The root cannot be represented as a finite Double Double value. The app cannot continue the calculation."),
             ("Số nguyên chỉ được chứa chữ số và một dấu âm ở đầu. Dấu phẩy phân nhóm được ứng dụng thêm tự động.", "An integer may contain only digits and one leading minus sign. Thousands separators are added automatically."),
             ("Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, tối đa một dấu chấm và tối đa 10 chữ số sau dấu chấm; dấu phẩy được thêm tự động.", "A decimal may contain only digits, one leading minus sign, at most one decimal point, and at most 10 decimal places. Thousands separators are added automatically."),
             ("Số nguyên phải nằm trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727.", "The integer must be within the range from −170,141,183,460,469,231,731,687,303,715,884,105,728 to 170,141,183,460,469,231,731,687,303,715,884,105,727."),

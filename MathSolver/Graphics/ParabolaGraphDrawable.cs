@@ -1,4 +1,5 @@
 using MathSolver.Services;
+using MathSolver.Numerics;
 using System.Globalization;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
@@ -10,17 +11,12 @@ namespace MathSolver.Graphics;
 /// Vẽ parabol theo dạng minh họa SGK:
 /// trục Ox, Oy có mũi tên; trục đối xứng nét đứt;
 /// đỉnh, nghiệm thực và nhãn -b/(2a).
-/// Phần giải phương trình vẫn dùng decimal; double chỉ dùng để vẽ.
+/// Hệ số đầu vào vẫn là decimal, còn toàn bộ phép tính hình học của parabol
+/// dùng Double Double khoảng 32 chữ số có nghĩa và Math.FusedMultiplyAdd.
+/// Chỉ bước chiếu cuối cùng sang tọa độ màn hình mới chuyển về double.
 /// </summary>
 public sealed class ParabolaGraphDrawable : IDrawable
 {
-    public const int GuaranteedSignificantDigits =
-        17;
-
-    public bool HasReducedPrecision { get; private set; }
-
-    public int MaximumCoefficientSignificantDigits { get; private set; }
-
     private const int MinimumSampleCount =
         1024;
 
@@ -82,9 +78,9 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private double[] _ySamples =
         [];
 
-    private double _a;
-    private double _b;
-    private double _c;
+    private DoubleDouble _a;
+    private DoubleDouble _b;
+    private DoubleDouble _c;
 
     private double _baseCenterX;
     private double _baseHalfRangeX =
@@ -201,43 +197,33 @@ public sealed class ParabolaGraphDrawable : IDrawable
         decimal b,
         decimal c)
     {
-        MaximumCoefficientSignificantDigits =
-            Math.Max(
-                CountIntegerDigits(
-                    a),
-                Math.Max(
-                    CountIntegerDigits(
-                        b),
-                    CountIntegerDigits(
-                        c)));
+        DoubleDouble rawA =
+            DoubleDouble.FromDecimal(
+                a);
 
-        HasReducedPrecision =
-            MaximumCoefficientSignificantDigits >
-            GuaranteedSignificantDigits;
+        DoubleDouble rawB =
+            DoubleDouble.FromDecimal(
+                b);
 
-        double rawA =
-            (double)a;
+        DoubleDouble rawC =
+            DoubleDouble.FromDecimal(
+                c);
 
-        double rawB =
-            (double)b;
-
-        double rawC =
-            (double)c;
-
-        double coefficientScale =
-            Math.Max(
-                1d,
-                Math.Max(
-                    Math.Abs(
+        DoubleDouble coefficientScale =
+            DoubleDouble.Max(
+                DoubleDouble.One,
+                DoubleDouble.Max(
+                    DoubleDouble.Abs(
                         rawA),
-                    Math.Max(
-                        Math.Abs(
+                    DoubleDouble.Max(
+                        DoubleDouble.Abs(
                             rawB),
-                        Math.Abs(
+                        DoubleDouble.Abs(
                             rawC))));
 
-        // Chuẩn hóa cùng một hệ số chỉ ở lớp vẽ.
-        // Nghiệm và vị trí đỉnh theo trục x không thay đổi.
+        // Chuẩn hóa cả ba hệ số bằng cùng một Double Double. Việc này giữ
+        // nguyên nghiệm và hoành độ đỉnh, đồng thời tránh viewport bị phóng
+        // theo độ lớn tuyệt đối của a, b, c.
         _a =
             rawA /
             coefficientScale;
@@ -251,13 +237,10 @@ public sealed class ParabolaGraphDrawable : IDrawable
             coefficientScale;
 
         HasEquation =
-            double.IsFinite(
-                _a) &&
-            double.IsFinite(
-                _b) &&
-            double.IsFinite(
-                _c) &&
-            _a != 0d;
+            _a.IsFinite &&
+            _b.IsFinite &&
+            _c.IsFinite &&
+            !_a.IsZero;
 
         _panX =
             0d;
@@ -273,9 +256,13 @@ public sealed class ParabolaGraphDrawable : IDrawable
             return;
         }
 
-        _vertexX =
+        DoubleDouble vertexX =
             -_b /
-            (2d * _a);
+            (2d *
+             _a);
+
+        _vertexX =
+            vertexX.ToDouble();
 
         _vertexY =
             EvaluateScalar(
@@ -834,52 +821,58 @@ public sealed class ParabolaGraphDrawable : IDrawable
         _secondRoot =
             null;
 
-        double discriminant =
-            Math.FusedMultiplyAdd(
+        DoubleDouble discriminant =
+            DoubleDouble.FusedMultiplyAdd(
                 -4d *
                 _a,
                 _c,
                 _b *
                 _b);
 
-        if (!double.IsFinite(
-                discriminant) ||
-            discriminant < 0d)
+        if (!discriminant.IsFinite ||
+            discriminant <
+            DoubleDouble.Zero)
         {
             return;
         }
 
-        if (discriminant == 0d)
+        if (discriminant.IsZero)
         {
-            double root =
+            DoubleDouble root =
                 -_b /
-                (2d * _a);
+                (2d *
+                 _a);
 
-            if (double.IsFinite(
-                    root))
+            double projectedRoot =
+                root.ToDouble();
+
+            if (root.IsFinite &&
+                double.IsFinite(
+                    projectedRoot))
             {
                 _firstRoot =
-                    root;
+                    projectedRoot;
             }
 
             return;
         }
 
-        double squareRoot =
-            Math.Sqrt(
+        DoubleDouble squareRoot =
+            DoubleDouble.Sqrt(
                 discriminant);
 
-        double q =
+        // Công thức q tránh triệt tiêu số khi |b| gần √Δ.
+        DoubleDouble q =
             -0.5d *
             (_b +
-             Math.CopySign(
+             DoubleDouble.CopySign(
                  squareRoot,
                  _b));
 
-        double firstRoot;
-        double secondRoot;
+        DoubleDouble firstRoot;
+        DoubleDouble secondRoot;
 
-        if (q != 0d)
+        if (!q.IsZero)
         {
             firstRoot =
                 q /
@@ -894,26 +887,36 @@ public sealed class ParabolaGraphDrawable : IDrawable
             firstRoot =
                 (-_b +
                  squareRoot) /
-                (2d * _a);
+                (2d *
+                 _a);
 
             secondRoot =
                 (-_b -
                  squareRoot) /
-                (2d * _a);
+                (2d *
+                 _a);
         }
 
-        if (double.IsFinite(
-                firstRoot))
+        double projectedFirstRoot =
+            firstRoot.ToDouble();
+
+        double projectedSecondRoot =
+            secondRoot.ToDouble();
+
+        if (firstRoot.IsFinite &&
+            double.IsFinite(
+                projectedFirstRoot))
         {
             _firstRoot =
-                firstRoot;
+                projectedFirstRoot;
         }
 
-        if (double.IsFinite(
-                secondRoot))
+        if (secondRoot.IsFinite &&
+            double.IsFinite(
+                projectedSecondRoot))
         {
             _secondRoot =
-                secondRoot;
+                projectedSecondRoot;
         }
     }
 
@@ -1936,30 +1939,22 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private double EvaluateScalar(
         double x)
     {
-        // Horner với hai phép FMA: mỗi bước chỉ làm tròn một lần.
-        return Math.FusedMultiplyAdd(
-            Math.FusedMultiplyAdd(
-                _a,
-                x,
-                _b),
-            x,
-            _c);
-    }
+        DoubleDouble preciseX =
+            new(
+                x);
 
-    private static int CountIntegerDigits(
-        decimal value)
-    {
-        string text =
-            decimal.Abs(
-                value)
-            .ToString(
-                "0",
-                CultureInfo.InvariantCulture)
-            .TrimStart('0');
+        // Horner Double Double. Mỗi phép nhân lấy phần sai số bằng
+        // Math.FusedMultiplyAdd bên trong DoubleDouble.
+        DoubleDouble result =
+            DoubleDouble.FusedMultiplyAdd(
+                DoubleDouble.FusedMultiplyAdd(
+                    _a,
+                    preciseX,
+                    _b),
+                preciseX,
+                _c);
 
-        return text.Length == 0
-            ? 1
-            : text.Length;
+        return result.ToDouble();
     }
 
     private static double GetSafeHalfRange(
@@ -2090,6 +2085,48 @@ public static class ParabolaSimdEvaluator
 
     private static readonly SimdPath SelectedPath =
         DetectBestPath();
+
+    public static void Evaluate(
+        double[] xValues,
+        double[] yValues,
+        int count,
+        DoubleDouble a,
+        DoubleDouble b,
+        DoubleDouble c)
+    {
+        if (xValues.Length <
+                count ||
+            yValues.Length <
+                count)
+        {
+            throw new ArgumentException(
+                "Mảng mẫu không đủ kích thước.");
+        }
+
+        // Double Double không thể dùng trực tiếp với Vector128/Vector256.
+        // 1.024-2.048 mẫu vẫn đủ nhẹ để tính scalar chính xác mở rộng.
+        // Mỗi điểm dùng Horner và Math.FusedMultiplyAdd ở tầng DoubleDouble.
+        for (int index = 0;
+             index < count;
+             index++)
+        {
+            DoubleDouble x =
+                new(
+                    xValues[index]);
+
+            DoubleDouble y =
+                DoubleDouble.FusedMultiplyAdd(
+                    DoubleDouble.FusedMultiplyAdd(
+                        a,
+                        x,
+                        b),
+                    x,
+                    c);
+
+            yValues[index] =
+                y.ToDouble();
+        }
+    }
 
     public static void Evaluate(
         double[] xValues,

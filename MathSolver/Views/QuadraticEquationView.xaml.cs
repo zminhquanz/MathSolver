@@ -1,4 +1,5 @@
 using MathSolver.Graphics;
+using MathSolver.Numerics;
 using MathSolver.Services;
 using System.Globalization;
 using System.Text;
@@ -20,6 +21,9 @@ public partial class QuadraticEquationView : ContentView
 
     private const int MaxResultDecimalPlaces =
         10;
+
+    private const int DoubleDoubleDisplaySignificantDigits =
+        DoubleDouble.SignificantDigits;
 
     // Giống các tab nhập số khác: từ 19 chữ số trở lên, giao diện
     // rút gọn sang dạng khoa học nhưng vẫn giữ giá trị decimal chính xác.
@@ -904,11 +908,11 @@ public partial class QuadraticEquationView : ContentView
                 a,
                 b,
                 c,
-                out decimal delta))
+                out DoubleDouble delta))
         {
             ShowError(
-                $"Kết quả Δ nằm ngoài phạm vi từ " +
-                $"{SupportedDecimalRangeText}. " +
+                "Kết quả Δ không thể biểu diễn hữu hạn bằng " +
+                "độ chính xác Double Double. " +
                 "Ứng dụng không thể tiếp tục tính toán.");
 
             return;
@@ -1202,195 +1206,134 @@ public partial class QuadraticEquationView : ContentView
         decimal a,
         decimal b,
         decimal c,
-        out decimal delta)
+        out DoubleDouble delta)
     {
+        DoubleDouble preciseA =
+            DoubleDouble.FromDecimal(
+                a);
+
+        DoubleDouble preciseB =
+            DoubleDouble.FromDecimal(
+                b);
+
+        DoubleDouble preciseC =
+            DoubleDouble.FromDecimal(
+                c);
+
+        // Δ = b² − 4ac. DoubleDouble.FusedMultiplyAdd dùng FMA để lấy
+        // phần sai số của tích, nâng độ chính xác lên khoảng 32 chữ số.
         delta =
-            0m;
+            DoubleDouble.FusedMultiplyAdd(
+                -4d *
+                preciseA,
+                preciseC,
+                preciseB *
+                preciseB);
 
-        try
-        {
-            // Scalar decimal thông thường:
-            // Δ = b² − 4ac
-            decimal bSquared =
-                checked(
-                    b * b);
-
-            decimal fourAc =
-                checked(
-                    checked(
-                        4m * a) *
-                    c);
-
-            delta =
-                checked(
-                    bSquared -
-                    fourAc);
-
-            return IsWithinSupportedDecimalRange(
-                delta);
-        }
-        catch (OverflowException)
-        {
-            delta =
-                0m;
-
-            return false;
-        }
+        return delta.IsFinite;
     }
 
     private static bool TryCalculateDoubleRoot(
         decimal a,
         decimal b,
-        out decimal root)
+        out DoubleDouble root)
     {
+        DoubleDouble preciseA =
+            DoubleDouble.FromDecimal(
+                a);
+
+        DoubleDouble preciseB =
+            DoubleDouble.FromDecimal(
+                b);
+
         root =
-            0m;
+            -preciseB /
+            (2d *
+             preciseA);
 
-        try
-        {
-            // Chia b cho 2 trước để tránh lấy đối của
-            // decimal.MinValue và không tạo 2a bị tràn.
-            root =
-                checked(
-                    -checked(
-                        checked(
-                            b / 2m) /
-                        a));
-
-            return IsWithinSupportedDecimalRange(
-                root);
-        }
-        catch (OverflowException)
-        {
-            root =
-                0m;
-
-            return false;
-        }
+        return root.IsFinite;
     }
 
     private static bool TryCalculateDistinctRoots(
         decimal a,
         decimal b,
-        decimal delta,
-        out decimal squareRootDelta,
-        out decimal firstRoot,
-        out decimal secondRoot)
+        decimal c,
+        DoubleDouble delta,
+        out DoubleDouble squareRootDelta,
+        out DoubleDouble firstRoot,
+        out DoubleDouble secondRoot)
     {
+        DoubleDouble preciseA =
+            DoubleDouble.FromDecimal(
+                a);
+
+        DoubleDouble preciseB =
+            DoubleDouble.FromDecimal(
+                b);
+
+        DoubleDouble preciseC =
+            DoubleDouble.FromDecimal(
+                c);
+
         squareRootDelta =
-            0m;
+            DoubleDouble.Sqrt(
+                delta);
 
         firstRoot =
-            0m;
+            DoubleDouble.NaN;
 
         secondRoot =
-            0m;
+            DoubleDouble.NaN;
 
-        try
+        if (!squareRootDelta.IsFinite)
         {
-            squareRootDelta =
-                CalculateDecimalSquareRoot(
-                    delta);
-
-            // Chia cho 2 trước để không tạo 2a bị tràn
-            // và tránh lấy đối trực tiếp của decimal.MinValue.
-            decimal center =
-                checked(
-                    -checked(
-                        checked(
-                            b / 2m) /
-                        a));
-
-            decimal offset =
-                checked(
-                    checked(
-                        squareRootDelta / 2m) /
-                    a);
-
-            firstRoot =
-                checked(
-                    center +
-                    offset);
-
-            secondRoot =
-                checked(
-                    center -
-                    offset);
-
-            return IsWithinSupportedDecimalRange(
-                       firstRoot) &&
-                   IsWithinSupportedDecimalRange(
-                       secondRoot);
-        }
-        catch (OverflowException)
-        {
-            squareRootDelta =
-                0m;
-
-            firstRoot =
-                0m;
-
-            secondRoot =
-                0m;
-
             return false;
         }
-    }
 
-    private static decimal CalculateDecimalSquareRoot(
-        decimal value)
-    {
-        if (value < 0m)
+        // Công thức q hạn chế triệt tiêu số khi b và √Δ gần bằng nhau.
+        DoubleDouble q =
+            -0.5d *
+            (preciseB +
+             DoubleDouble.CopySign(
+                 squareRootDelta,
+                 preciseB));
+
+        if (!q.IsZero)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(value));
+            firstRoot =
+                q /
+                preciseA;
+
+            secondRoot =
+                preciseC /
+                q;
+        }
+        else
+        {
+            DoubleDouble denominator =
+                2d *
+                preciseA;
+
+            firstRoot =
+                (-preciseB +
+                 squareRootDelta) /
+                denominator;
+
+            secondRoot =
+                (-preciseB -
+                 squareRootDelta) /
+                denominator;
         }
 
-        if (value == 0m)
-        {
-            return 0m;
-        }
-
-        decimal current =
-            value >= 1m
-                ? value / 2m
-                : 1m;
-
-        for (int iteration = 0;
-             iteration < 128;
-             iteration++)
-        {
-            decimal next =
-                checked(
-                    (current +
-                     value / current) /
-                    2m);
-
-            if (next == current ||
-                decimal.Round(
-                    next,
-                    MaxResultDecimalPlaces + 2,
-                    MidpointRounding.ToEven) ==
-                decimal.Round(
-                    current,
-                    MaxResultDecimalPlaces + 2,
-                    MidpointRounding.ToEven))
-            {
-                return next;
-            }
-
-            current =
-                next;
-        }
-
-        return current;
+        return firstRoot.IsFinite &&
+               secondRoot.IsFinite;
     }
 
     private void ShowSolution(
         decimal a,
         decimal b,
         decimal c,
-        decimal delta)
+        DoubleDouble delta)
     {
         string aText =
             FormatNumber(
@@ -1405,7 +1348,7 @@ public partial class QuadraticEquationView : ContentView
                 c);
 
         string deltaText =
-            FormatNumber(
+            FormatDoubleDouble(
                 delta);
 
         string equation =
@@ -1442,7 +1385,7 @@ public partial class QuadraticEquationView : ContentView
         Step4Border.IsVisible =
             true;
 
-        if (delta < 0m)
+        if (delta < DoubleDouble.Zero)
         {
             SetResultStateColors(
                 hasRealRoots: false);
@@ -1466,16 +1409,16 @@ public partial class QuadraticEquationView : ContentView
             Step4BodyLabel.Text =
                 "Phương trình vô nghiệm trong tập số thực ℝ.";
         }
-        else if (delta == 0m)
+        else if (delta.IsZero)
         {
             if (!TryCalculateDoubleRoot(
                     a,
                     b,
-                    out decimal doubleRoot))
+                    out DoubleDouble doubleRoot))
             {
                 ShowError(
-                    $"Nghiệm nằm ngoài phạm vi từ " +
-                    $"{SupportedDecimalRangeText}. " +
+                    "Nghiệm không thể biểu diễn hữu hạn bằng " +
+                    "độ chính xác Double Double. " +
                     "Ứng dụng không thể tiếp tục tính toán.");
 
                 return;
@@ -1485,7 +1428,7 @@ public partial class QuadraticEquationView : ContentView
                 hasRealRoots: true);
 
             string rootText =
-                FormatNumber(
+                FormatDoubleDouble(
                     doubleRoot);
 
             ClassificationLabel.Text =
@@ -1515,14 +1458,15 @@ public partial class QuadraticEquationView : ContentView
             if (!TryCalculateDistinctRoots(
                     a,
                     b,
+                    c,
                     delta,
-                    out decimal squareRootDelta,
-                    out decimal firstRoot,
-                    out decimal secondRoot))
+                    out DoubleDouble squareRootDelta,
+                    out DoubleDouble firstRoot,
+                    out DoubleDouble secondRoot))
             {
                 ShowError(
-                    $"Nghiệm nằm ngoài phạm vi từ " +
-                    $"{SupportedDecimalRangeText}. " +
+                    "Nghiệm không thể biểu diễn hữu hạn bằng " +
+                    "độ chính xác Double Double. " +
                     "Ứng dụng không thể tiếp tục tính toán.");
 
                 return;
@@ -1532,15 +1476,15 @@ public partial class QuadraticEquationView : ContentView
                 hasRealRoots: true);
 
             string squareRootText =
-                FormatNumber(
+                FormatDoubleDouble(
                     squareRootDelta);
 
             string firstRootText =
-                FormatNumber(
+                FormatDoubleDouble(
                     firstRoot);
 
             string secondRootText =
-                FormatNumber(
+                FormatDoubleDouble(
                     secondRoot);
 
             ClassificationLabel.Text =
@@ -1667,41 +1611,12 @@ public partial class QuadraticEquationView : ContentView
 
         _parabolaGraphDrawable.ResetZoom();
 
-        UpdateGraphPrecisionWarning();
-
         GraphBorder.IsVisible =
             true;
 
         UpdateGraphStatus();
 
         ParabolaGraphicsView.Invalidate();
-    }
-
-    private void UpdateGraphPrecisionWarning()
-    {
-        bool hasWarning =
-            _parabolaGraphDrawable.HasReducedPrecision;
-
-        GraphPrecisionWarningBorder.IsVisible =
-            hasWarning;
-
-        if (!hasWarning)
-        {
-            GraphPrecisionWarningLabel.Text =
-                string.Empty;
-
-            return;
-        }
-
-        GraphPrecisionWarningLabel.Text =
-            $"Đồ thị dùng kiểu double, chỉ bảo đảm tối đa khoảng " +
-            $"{ParabolaGraphDrawable.GuaranteedSignificantDigits} chữ số có nghĩa. " +
-            $"Hệ số lớn nhất có " +
-            $"{_parabolaGraphDrawable.MaximumCoefficientSignificantDigits} chữ số " +
-            $"nên khi chuyển sang double, phần vượt quá " +
-            $"{ParabolaGraphDrawable.GuaranteedSignificantDigits} chữ số có thể " +
-            $"bị làm tròn và hình vẽ parabol có thể giảm độ chính xác. " +
-            $"Kết quả giải phương trình vẫn được tính bằng decimal.";
     }
 
     private void OnGraphZoomInClicked(
@@ -1921,6 +1836,286 @@ public partial class QuadraticEquationView : ContentView
         return value.ToString(
             "#,##0",
             CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatDoubleDouble(
+        DoubleDouble value)
+    {
+        // Double Double vẫn giữ khoảng 32 chữ số có nghĩa trong toàn bộ
+        // quá trình tính toán. Chỉ bước trình bày cuối cùng mới làm tròn,
+        // giới hạn tối đa 10 chữ số sau dấu thập phân.
+        string text =
+            value.ToGeneralString(
+                DoubleDoubleDisplaySignificantDigits,
+                scientificUpperExponent:
+                ScientificDisplayDigitThreshold,
+                scientificLowerExponent:
+                -10);
+
+        int exponentSeparatorIndex =
+            text.IndexOf(
+                'e');
+
+        if (exponentSeparatorIndex >= 0)
+        {
+            string mantissaText =
+                RoundDecimalText(
+                    text[..exponentSeparatorIndex],
+                    MaxResultDecimalPlaces);
+
+            int exponent =
+                int.Parse(
+                    text[(exponentSeparatorIndex + 1)..],
+                    CultureInfo.InvariantCulture);
+
+            // 9.99999999996 làm tròn thành 10. Khi đó chuẩn hóa lại
+            // thành 1 × 10^(n + 1) để dạng khoa học luôn đúng.
+            if (mantissaText == "10")
+            {
+                mantissaText =
+                    "1";
+
+                exponent++;
+            }
+            else if (mantissaText == "-10")
+            {
+                mantissaText =
+                    "-1";
+
+                exponent++;
+            }
+
+            if (mantissaText == "1")
+            {
+                return
+                    $"10{ToSuperscript(exponent)}";
+            }
+
+            if (mantissaText == "-1")
+            {
+                return
+                    $"−10{ToSuperscript(exponent)}";
+            }
+
+            mantissaText =
+                mantissaText.Replace(
+                    "-",
+                    "−",
+                    StringComparison.Ordinal);
+
+            return
+                $"{mantissaText} × " +
+                $"10{ToSuperscript(exponent)}";
+        }
+
+        text =
+            RoundDecimalText(
+                text,
+                MaxResultDecimalPlaces);
+
+        bool isNegative =
+            text.StartsWith(
+                '-');
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalSeparatorIndex =
+            unsignedText.IndexOf(
+                '.');
+
+        string integerPart =
+            decimalSeparatorIndex >= 0
+                ? unsignedText[..decimalSeparatorIndex]
+                : unsignedText;
+
+        string fractionPart =
+            decimalSeparatorIndex >= 0
+                ? unsignedText[decimalSeparatorIndex..]
+                : string.Empty;
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        return
+            sign +
+            GroupIntegerDigits(
+                integerPart) +
+            fractionPart;
+    }
+
+    /// <summary>
+    /// Làm tròn chuỗi thập phân theo MidpointRounding.AwayFromZero mà không
+    /// chuyển ngược về double/decimal. Nhờ vậy phép tính vẫn tận dụng đủ
+    /// độ chính xác Double Double và chỉ kết quả hiển thị bị giới hạn.
+    /// </summary>
+    private static string RoundDecimalText(
+        string text,
+        int maximumDecimalPlaces)
+    {
+        maximumDecimalPlaces =
+            Math.Max(
+                0,
+                maximumDecimalPlaces);
+
+        if (string.IsNullOrEmpty(
+                text))
+        {
+            return
+                "0";
+        }
+
+        bool isNegative =
+            text[0] ==
+            '-';
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalSeparatorIndex =
+            unsignedText.IndexOf(
+                '.');
+
+        if (decimalSeparatorIndex < 0)
+        {
+            return
+                text;
+        }
+
+        string integerPart =
+            unsignedText[..decimalSeparatorIndex];
+
+        string fractionPart =
+            unsignedText[(decimalSeparatorIndex + 1)..];
+
+        bool mustRoundUp =
+            fractionPart.Length >
+                maximumDecimalPlaces &&
+            fractionPart[maximumDecimalPlaces] >=
+                '5';
+
+        string keptFraction =
+            fractionPart.Length <=
+                maximumDecimalPlaces
+                ? fractionPart
+                : fractionPart[..maximumDecimalPlaces];
+
+        var keptDigits =
+            new StringBuilder(
+                integerPart.Length +
+                keptFraction.Length +
+                1);
+
+        keptDigits.Append(
+            integerPart);
+
+        keptDigits.Append(
+            keptFraction);
+
+        if (keptDigits.Length == 0)
+        {
+            keptDigits.Append(
+                '0');
+        }
+
+        if (mustRoundUp)
+        {
+            int index =
+                keptDigits.Length -
+                1;
+
+            while (index >= 0 &&
+                   keptDigits[index] ==
+                   '9')
+            {
+                keptDigits[index] =
+                    '0';
+
+                index--;
+            }
+
+            if (index >= 0)
+            {
+                keptDigits[index]++;
+            }
+            else
+            {
+                keptDigits.Insert(
+                    0,
+                    '1');
+            }
+        }
+
+        int keptFractionLength =
+            keptFraction.Length;
+
+        int integerLength =
+            keptDigits.Length -
+            keptFractionLength;
+
+        if (integerLength <= 0)
+        {
+            keptDigits.Insert(
+                0,
+                "0",
+                1 -
+                integerLength);
+
+            integerLength =
+                1;
+        }
+
+        string roundedIntegerPart =
+            keptDigits.ToString(
+                0,
+                integerLength);
+
+        string roundedFractionPart =
+            keptFractionLength > 0
+                ? keptDigits.ToString(
+                    integerLength,
+                    keptDigits.Length -
+                    integerLength)
+                : string.Empty;
+
+        roundedFractionPart =
+            roundedFractionPart.TrimEnd(
+                '0');
+
+        bool isZero =
+            roundedIntegerPart.All(
+                character =>
+                    character ==
+                    '0') &&
+            roundedFractionPart.All(
+                character =>
+                    character ==
+                    '0');
+
+        string sign =
+            isNegative &&
+            !isZero
+                ? "-"
+                : string.Empty;
+
+        if (roundedFractionPart.Length == 0)
+        {
+            return
+                sign +
+                roundedIntegerPart;
+        }
+
+        return
+            sign +
+            roundedIntegerPart +
+            "." +
+            roundedFractionPart;
     }
 
     private static string FormatNumber(
@@ -2208,8 +2403,6 @@ public partial class QuadraticEquationView : ContentView
         GraphBorder.IsVisible =
             false;
 
-        GraphPrecisionWarningBorder.IsVisible =
-            false;
     }
 
     private void HideResultAndError()
@@ -2226,8 +2419,6 @@ public partial class QuadraticEquationView : ContentView
         GraphBorder.IsVisible =
             false;
 
-        GraphPrecisionWarningBorder.IsVisible =
-            false;
     }
 
     private static bool IsWithinSupportedDecimalRange(
