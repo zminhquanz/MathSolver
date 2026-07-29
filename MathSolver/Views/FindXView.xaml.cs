@@ -47,11 +47,6 @@ public partial class FindXView : ContentView
     // Responsive bằng code-behind; không dùng VisualStateManager trong XAML.
     private bool? _isCompactInputLayout;
 
-    // Đồng bộ chiều rộng nội dung với tab Cơ bản và tab Phân số.
-    // MaximumWidthRequest trong XAML chỉ giới hạn chiều rộng tối đa,
-    // không bắt layout phải mở rộng đến đúng kích thước này.
-    private const double FindXMaximumContentWidth = 1120d;
-
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
 
@@ -67,9 +62,6 @@ public partial class FindXView : ContentView
 
         LocalizationService.Attach(
             this);
-
-        FindXContent.WidthRequest =
-            FindXMaximumContentWidth;
 
         ConfigureExpandedInputLayout();
         _isCompactInputLayout =
@@ -91,9 +83,6 @@ public partial class FindXView : ContentView
             return;
         }
 
-        UpdateFindXContentWidth(
-            width);
-
         bool useCompactLayout =
             width < 700;
 
@@ -114,27 +103,6 @@ public partial class FindXView : ContentView
         {
             ConfigureExpandedInputLayout();
         }
-    }
-
-    private void UpdateFindXContentWidth(
-        double availableWidth)
-    {
-        double targetWidth =
-            Math.Min(
-                FindXMaximumContentWidth,
-                availableWidth);
-
-        if (targetWidth <= 0 ||
-            Math.Abs(
-                FindXContent.WidthRequest -
-                targetWidth) <
-            0.5)
-        {
-            return;
-        }
-
-        FindXContent.WidthRequest =
-            targetWidth;
     }
 
     private void ConfigureCompactInputLayout()

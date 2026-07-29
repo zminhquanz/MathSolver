@@ -34,11 +34,6 @@ public partial class QuadraticEquationView : ContentView
         _coefficientScientificCodeValues =
             new();
 
-    // Đồng bộ chiều rộng nội dung với tab Cơ bản, Phân số và Tìm x.
-    private const double QuadraticMaximumContentWidth =
-        1120d;
-
-
     private bool _isUpdatingText;
     private bool? _isCompactLayout;
 
@@ -103,9 +98,6 @@ public partial class QuadraticEquationView : ContentView
             this);
 
         UpdateGraphStatus();
-
-        QuadraticContent.WidthRequest =
-            QuadraticMaximumContentWidth;
 
         ConfigureExpandedLayout();
 
@@ -534,9 +526,6 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
-        UpdateQuadraticContentWidth(
-            width);
-
         bool useCompactLayout =
             width < 700;
 
@@ -557,27 +546,6 @@ public partial class QuadraticEquationView : ContentView
         {
             ConfigureExpandedLayout();
         }
-    }
-
-    private void UpdateQuadraticContentWidth(
-        double availableWidth)
-    {
-        double targetWidth =
-            Math.Min(
-                QuadraticMaximumContentWidth,
-                availableWidth);
-
-        if (targetWidth <= 0 ||
-            Math.Abs(
-                QuadraticContent.WidthRequest -
-                targetWidth) <
-            0.5)
-        {
-            return;
-        }
-
-        QuadraticContent.WidthRequest =
-            targetWidth;
     }
 
     private void ConfigureCompactLayout()

@@ -904,23 +904,21 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        // Mỗi Border có Margin="6" ở cả hai bên.
+        // Mỗi Border có Margin="6" ở cả hai bên. WidthRequest của Border
+        // đã bao gồm padding và stroke, vì vậy không được trừ thêm phần đó.
         const double horizontalMarginPerCard =
             12;
 
-        // WidthRequest của Border cần chừa thêm phần padding và stroke.
-        const double borderPaddingAndStroke =
-            30;
-
-        // Chừa khoảng trống cho scrollbar, sai số làm tròn và mép phải.
+        // Chừa một khoảng nhỏ cho scrollbar và sai số làm tròn. Nội dung vẫn
+        // mở rộng gần sát hai cạnh như bố cục của tab Cửu chương.
         const double rightSafetySpace =
-            20;
+            8;
 
         int columnCount =
             availableWidth switch
             {
-                // Ba cột khi vùng nội dung đủ rộng để công thức
-                // và chú thích không bị ép xuống quá nhiều dòng.
+                // Giữ ba thẻ mỗi hàng trên desktop nhưng cho mỗi thẻ giãn đều
+                // để sử dụng toàn bộ chiều rộng cửa sổ.
                 >= 1040 => 3,
 
                 // Tablet hoặc cửa sổ Windows cỡ vừa.
@@ -934,22 +932,19 @@ public partial class FormulaPage : ContentPage
             columnCount *
             horizontalMarginPerCard;
 
-        double outerWidthPerCard =
+        double requestedWidth =
             Math.Floor(
                 (availableWidth -
                  totalMargins -
                  rightSafetySpace) /
                 columnCount);
 
-        double requestedWidth =
-            outerWidthPerCard -
-            borderPaddingAndStroke;
-
+        // Không giới hạn tối đa 380 như trước. Giới hạn đó là nguyên nhân làm
+        // bố cục co vào giữa và để trống rất nhiều diện tích hai bên.
         requestedWidth =
-            Math.Clamp(
-                requestedWidth,
+            Math.Max(
                 190,
-                380);
+                requestedWidth);
 
         bool sizeChanged =
             false;

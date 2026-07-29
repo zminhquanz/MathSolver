@@ -16,7 +16,7 @@
         <Border
             x:Name="FormulaSubTabBar"
             Grid.Row="0"
-            Margin="14,12,14,8"
+            Margin="20,12,20,8"
             Padding="6"
             BackgroundColor="{DynamicResource SurfaceColor}"
             Stroke="{DynamicResource PrimaryBorderBrush}"
@@ -83,10 +83,9 @@
 
                     <VerticalStackLayout
                         x:Name="UnknownComponentPageContent"
-                        Padding="16"
+                        Padding="20,16"
                         Spacing="14"
-                        HorizontalOptions="Center"
-                        MaximumWidthRequest="1280">
+                        HorizontalOptions="Fill">
 
                         <VerticalStackLayout
                             Margin="0,4,0,6"
@@ -316,10 +315,9 @@
 
                     <VerticalStackLayout
                         x:Name="GeometryPageContent"
-                        Padding="16"
+                        Padding="20,16"
                         Spacing="14"
-                        HorizontalOptions="Center"
-                        MaximumWidthRequest="1280">
+                        HorizontalOptions="Fill">
 
                         <VerticalStackLayout
                             Margin="0,4,0,6"

@@ -7,17 +7,19 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:models="clr-namespace:MathSolver.Models"
     xmlns:controls="clr-namespace:MathSolver.Controls"
-    BackgroundColor="Transparent">
+    BackgroundColor="Transparent"
+    HorizontalOptions="Fill">
 
     <!-- FractionView tự quản lý vùng cuộn.
          Không bọc thêm ScrollView tại CalculationPage. -->
-    <ScrollView>
+    <ScrollView
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill">
         <VerticalStackLayout
             x:Name="FractionContent"
-            Padding="16"
+            Padding="20,16"
             Spacing="14"
-            HorizontalOptions="Center"
-            MaximumWidthRequest="1120">
+            HorizontalOptions="Fill">
 
             <!-- Tiêu đề đồng bộ với tab Cơ bản -->
             <VerticalStackLayout

@@ -15,7 +15,7 @@
         <!-- Thanh tab con -->
         <Border
             Grid.Row="0"
-            Margin="14,12,14,8"
+            Margin="20,12,20,8"
             Padding="6"
             BackgroundColor="{DynamicResource SurfaceColor}"
             Stroke="{DynamicResource PrimaryBorderBrush}"
@@ -96,13 +96,14 @@
         </Border>
 
         <Grid Grid.Row="1">
-            <ScrollView>
+            <ScrollView
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill">
                 <VerticalStackLayout
-                x:Name="BasicTabContent"
-                Padding="16"
-                Spacing="14"
-                HorizontalOptions="Center"
-                MaximumWidthRequest="1120">
+                    x:Name="BasicTabContent"
+                    Padding="20,16"
+                    Spacing="14"
+                    HorizontalOptions="Fill">
 
                     <!-- Tiêu đề -->
                     <VerticalStackLayout Spacing="2" Margin="0,4,0,6">
@@ -840,13 +841,14 @@
             <!-- Tab hình học -->
             <ScrollView
                 x:Name="GeometryTabContent"
-                IsVisible="False">
+                IsVisible="False"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill">
 
                 <VerticalStackLayout
-                    Padding="14,4,14,18"
+                    Padding="20,16,20,18"
                     Spacing="12"
-                    HorizontalOptions="Center"
-                    MaximumWidthRequest="1000">
+                    HorizontalOptions="Fill">
 
                     <VerticalStackLayout Spacing="3">
 

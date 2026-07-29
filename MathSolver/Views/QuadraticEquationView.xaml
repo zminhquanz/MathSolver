@@ -15,10 +15,9 @@
 
         <VerticalStackLayout
             x:Name="QuadraticContent"
-            Padding="16"
+            Padding="20,16"
             Spacing="14"
-            HorizontalOptions="Center"
-            MaximumWidthRequest="1120">
+            HorizontalOptions="Fill">
 
             <!-- Tiêu đề đồng bộ với Cơ bản, Phân số và Tìm x -->
             <VerticalStackLayout

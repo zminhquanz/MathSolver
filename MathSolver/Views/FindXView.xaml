@@ -14,10 +14,9 @@
 
         <VerticalStackLayout
             x:Name="FindXContent"
-            Padding="16"
+            Padding="20,16"
             Spacing="14"
-            HorizontalOptions="Center"
-            MaximumWidthRequest="1120">
+            HorizontalOptions="Fill">
             <!-- Tiêu đề -->
             <VerticalStackLayout
                 Margin="0,4,0,6"
