@@ -118,10 +118,11 @@
                             x:Name="UnknownComponentFlexLayout"
                             Direction="Row"
                             Wrap="Wrap"
-                            JustifyContent="Center"
+                            JustifyContent="Start"
                             AlignItems="Start"
                             AlignContent="Start"
                             HorizontalOptions="Fill"
+                            VerticalOptions="Start"
                             SizeChanged="OnUnknownComponentFlexLayoutSizeChanged"
                             BindableLayout.ItemsSource="{Binding UnknownComponentItems}">
 
@@ -129,9 +130,11 @@
                                 <DataTemplate x:DataType="models:UnknownComponentItem">
 
                                     <Border
-                                        Margin="6"
-                                        WidthRequest="220"
-                                        Padding="14"
+                                        Margin="7"
+                                        WidthRequest="280"
+                                        MinimumHeightRequest="330"
+                                        FlexLayout.Shrink="0"
+                                        Padding="18"
                                         BackgroundColor="{DynamicResource SurfaceColor}"
                                         Stroke="{DynamicResource BorderBrush}"
                                         StrokeThickness="1"
@@ -143,13 +146,13 @@
                                         </Border.StrokeShape>
 
                                         <VerticalStackLayout
-                                            Spacing="10"
+                                            Spacing="13"
                                             VerticalOptions="Start">
 
                                             <!-- Tiêu đề thẻ -->
                                             <Grid
-                                                ColumnDefinitions="40,*"
-                                                ColumnSpacing="10">
+                                                ColumnDefinitions="48,*"
+                                                ColumnSpacing="12">
 
                                                 <Border
                                                     Grid.Column="0"
@@ -164,7 +167,7 @@
 
                                                     <Label
                                                         Text="{Binding OperationSymbol}"
-                                                        FontSize="20"
+                                                        FontSize="24"
                                                         FontAttributes="Bold"
                                                         HorizontalTextAlignment="Center"
                                                         VerticalTextAlignment="Center"
@@ -175,7 +178,7 @@
                                                 <Label
                                                     Grid.Column="1"
                                                     Text="{Binding Title}"
-                                                    FontSize="16"
+                                                    FontSize="18"
                                                     FontAttributes="Bold"
                                                     VerticalTextAlignment="Center"
                                                     LineBreakMode="WordWrap"
@@ -185,7 +188,7 @@
 
                                             <!-- Dạng tổng quát -->
                                             <Border
-                                                Padding="9,7"
+                                                Padding="12,9"
                                                 BackgroundColor="{DynamicResource SurfaceAltColor}"
                                                 Stroke="{DynamicResource PrimaryBorderBrush}"
                                                 StrokeThickness="1">
@@ -201,7 +204,7 @@
                                                     <Label
                                                         Grid.Column="0"
                                                         Text="Dạng:"
-                                                        FontSize="12"
+                                                        FontSize="14"
                                                         FontAttributes="Bold"
                                                         VerticalTextAlignment="Center"
                                                         TextColor="{DynamicResource TextSecondaryColor}" />
@@ -209,7 +212,7 @@
                                                     <Label
                                                         Grid.Column="1"
                                                         Text="{Binding Structure}"
-                                                        FontSize="16"
+                                                        FontSize="18"
                                                         FontAttributes="Bold"
                                                         HorizontalTextAlignment="Center"
                                                         LineBreakMode="WordWrap"
@@ -221,18 +224,18 @@
 
                                             <!-- Quy tắc -->
                                             <VerticalStackLayout
-                                                Spacing="3"
-                                                MinimumHeightRequest="48">
+                                                Spacing="5"
+                                                MinimumHeightRequest="66">
 
                                                 <Label
                                                     Text="Quy tắc"
-                                                    FontSize="12"
+                                                    FontSize="14"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
                                                 <Label
                                                     Text="{Binding Rule}"
-                                                    FontSize="13"
+                                                    FontSize="15"
                                                     FontAttributes="Bold"
                                                     LineHeight="1.1"
                                                     LineBreakMode="WordWrap"
@@ -242,7 +245,7 @@
 
                                             <!-- Ví dụ -->
                                             <Border
-                                                Padding="10"
+                                                Padding="13"
                                                 BackgroundColor="{DynamicResource PrimarySoftColor}"
                                                 Stroke="{DynamicResource PrimaryBorderBrush}"
                                                 StrokeThickness="1">
@@ -258,7 +261,7 @@
                                                     <Label
                                                         Grid.Column="0"
                                                         Text="Ví dụ : "
-                                                        FontSize="15"
+                                                        FontSize="16"
                                                         FontAttributes="Bold"
                                                         TextColor="{DynamicResource PrimaryColor}" />
 
@@ -268,14 +271,14 @@
 
                                                         <Label
                                                             Text="{Binding Example}"
-                                                            FontSize="14"
+                                                            FontSize="15"
                                                             LineHeight="1.4"
                                                             LineBreakMode="WordWrap"
                                                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                         <Label
                                                             Text="{Binding ExampleSolution}"
-                                                            FontSize="14"
+                                                            FontSize="15"
                                                             LineBreakMode="WordWrap"
                                                             TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -291,6 +294,284 @@
                             </BindableLayout.ItemTemplate>
 
                         </FlexLayout>
+
+                        <!-- Ghi nhớ tính chất bốn phép tính -->
+                        <Border
+                            Margin="7,10,7,20"
+                            Padding="20"
+                            BackgroundColor="{DynamicResource SurfaceColor}"
+                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            StrokeThickness="1"
+                            HorizontalOptions="Fill">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="14">
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label
+                                        Text="LƯU Ý VỀ TÍNH CHẤT BỐN PHÉP TÍNH"
+                                        FontSize="22"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+
+                                    <Label
+                                        Text="Khi tìm thành phần chưa biết, cần xác định đúng vai trò của x, dùng phép tính ngược phù hợp và luôn kiểm tra lại kết quả trong phép tính ban đầu."
+                                        FontSize="15"
+                                        LineHeight="1.25"
+                                        HorizontalTextAlignment="Center"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                </VerticalStackLayout>
+
+                                <!-- Phép cộng -->
+                                <Border
+                                    Padding="16"
+                                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="7">
+                                        <Label
+                                            Text="+  PHÉP CỘNG"
+                                            FontSize="18"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                        <Label
+                                            Text="• Giao hoán: a + b = b + a. Đổi chỗ hai số hạng thì tổng không thay đổi."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Kết hợp: (a + b) + c = a + (b + c). Có thể nhóm các số hạng theo cách thuận tiện."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Phần tử trung hòa: a + 0 = 0 + a = a."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Tìm số hạng chưa biết: x + b = c thì x = c − b."
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="Ví dụ: x + 18 = 45 ⇒ x = 45 − 18 = 27. Kiểm tra: 27 + 18 = 45."
+                                            FontSize="15"
+                                            FontAttributes="Italic"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <!-- Phép trừ -->
+                                <Border
+                                    Padding="16"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource BorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="7">
+                                        <Label
+                                            Text="−  PHÉP TRỪ"
+                                            FontSize="18"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                        <Label
+                                            Text="• Không giao hoán: a − b thường khác b − a. Vì vậy không được tự ý đổi chỗ số bị trừ và số trừ."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Không kết hợp: (a − b) − c thường khác a − (b − c). Cần thực hiện đúng thứ tự."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Tính chất cơ bản: a − 0 = a và a − a = 0."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Tìm số bị trừ: x − b = c thì x = c + b. Tìm số trừ: a − x = c thì x = a − c."
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="Ví dụ: 52 − x = 19 ⇒ x = 52 − 19 = 33. Kiểm tra: 52 − 33 = 19."
+                                            FontSize="15"
+                                            FontAttributes="Italic"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <!-- Phép nhân -->
+                                <Border
+                                    Padding="16"
+                                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="7">
+                                        <Label
+                                            Text="×  PHÉP NHÂN"
+                                            FontSize="18"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                        <Label
+                                            Text="• Giao hoán: a × b = b × a. Đổi chỗ hai thừa số thì tích không thay đổi."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Kết hợp: (a × b) × c = a × (b × c). Có thể nhóm các thừa số theo cách thuận tiện."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Phần tử đơn vị và phần tử hấp thụ: a × 1 = a; a × 0 = 0."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Tìm thừa số chưa biết: x × b = c thì x = c ÷ b, với b ≠ 0."
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="Ví dụ: x × 7 = 56 ⇒ x = 56 ÷ 7 = 8. Kiểm tra: 8 × 7 = 56."
+                                            FontSize="15"
+                                            FontAttributes="Italic"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <!-- Phép chia -->
+                                <Border
+                                    Padding="16"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource BorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="7">
+                                        <Label
+                                            Text="÷  PHÉP CHIA"
+                                            FontSize="18"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                        <Label
+                                            Text="• Không giao hoán: a ÷ b thường khác b ÷ a. Phép chia cũng không có tính kết hợp."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Tính chất cơ bản: a ÷ 1 = a; a ÷ a = 1 với a ≠ 0; 0 ÷ a = 0 với a ≠ 0."
+                                            FontSize="15"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="• Không bao giờ được chia cho 0. Mọi giá trị làm số chia hoặc mẫu số bằng 0 đều không hợp lệ."
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource ErrorColor}" />
+
+                                        <Label
+                                            Text="• Tìm số bị chia: x ÷ b = c thì x = c × b, với b ≠ 0. Tìm số chia trong dạng cơ bản a ÷ x = c thì x = a ÷ c, đồng thời x ≠ 0 và c ≠ 0."
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <Label
+                                            Text="Ví dụ: 72 ÷ x = 9 ⇒ x = 72 ÷ 9 = 8. Kiểm tra: 72 ÷ 8 = 9."
+                                            FontSize="15"
+                                            FontAttributes="Italic"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <Border
+                                    Padding="14"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="11" />
+                                    </Border.StrokeShape>
+
+                                    <Label
+                                        Text="Ghi nhớ: Phép cộng và phép trừ là hai phép tính ngược nhau; phép nhân và phép chia cũng là hai phép tính ngược nhau. Sau khi tìm được x, luôn thay x vào phép tính ban đầu để kiểm tra và loại mọi giá trị vi phạm điều kiện chia cho 0."
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        LineHeight="1.25"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+                                </Border>
+
+                            </VerticalStackLayout>
+                        </Border>
                     </VerticalStackLayout>
                 </ScrollView>
             </Grid>
@@ -350,7 +631,7 @@
                             x:Name="GeometryFlexLayout"
                             Direction="Row"
                             Wrap="Wrap"
-                            JustifyContent="Center"
+                            JustifyContent="Start"
                             AlignItems="Start"
                             AlignContent="Start"
                             HorizontalOptions="Fill"
@@ -366,9 +647,9 @@
                                         tự mở rộng theo công thức và chú thích.
                                     -->
                                     <Border
-                                        Margin="6"
-                                        WidthRequest="220"
-                                        Padding="14"
+                                        Margin="5"
+                                        WidthRequest="180"
+                                        Padding="12"
                                         BackgroundColor="{DynamicResource SurfaceColor}"
                                         Stroke="{DynamicResource BorderBrush}"
                                         StrokeThickness="1"
@@ -380,8 +661,8 @@
                                         </Border.StrokeShape>
 
                                         <Grid
-                                            RowDefinitions="Auto,190,1,Auto,Auto"
-                                            RowSpacing="10">
+                                            RowDefinitions="Auto,Auto,1,Auto,Auto"
+                                            RowSpacing="9">
 
                                             <Label
                                                 Grid.Row="0"
@@ -395,7 +676,7 @@
                                             <GraphicsView
                                                 Grid.Row="1"
                                                 Drawable="{Binding Diagram}"
-                                                HeightRequest="190"
+                                                HeightRequest="170"
                                                 HorizontalOptions="Fill"
                                                 VerticalOptions="Fill"
                                                 BackgroundColor="Transparent" />

@@ -2,6 +2,7 @@ using MathSolver.Services;
 using MathSolver.Graphics;
 using MathSolver.Models;
 using System.Collections.ObjectModel;
+using Microsoft.Maui.Devices;
 
 namespace MathSolver.Views;
 
@@ -14,6 +15,14 @@ public partial class FormulaPage : ContentPage
     private FormulaSubTab _selectedSubTab = FormulaSubTab.UnknownComponent;
 
     private bool _isSubTabTransitioning;
+
+    // BindableLayout của Tìm thành phần chưa biết cũng chỉ được tạo một lần.
+    // Không tháo/gắn lại ItemsSource khi chuyển tab vì thao tác đó tạo ra một
+    // frame tạm nơi sáu card bị co vào cùng một hàng rồi mới giãn lại.
+    private bool _isUnknownComponentLayoutInitialized;
+
+    private double _lastUnknownComponentLayoutWidth =
+        -1d;
 
     // GeometryFlexLayout và các GraphicsView chỉ được khởi tạo một lần.
     // Khi rời rồi quay lại tab Công thức, không gán lại ItemsSource nên
@@ -285,7 +294,8 @@ public partial class FormulaPage : ContentPage
                 CreateUnknownComponentItems();
             }
 
-            RefreshUnknownComponentLayout();
+            RefreshUnknownComponentLayout(
+                force: true);
             return;
         }
 
@@ -361,6 +371,23 @@ public partial class FormulaPage : ContentPage
             _mainTabAnimationVersion)
         {
             return;
+        }
+
+        if (_selectedSubTab ==
+            FormulaSubTab.UnknownComponent)
+        {
+            UpdateUnknownComponentCardWidthsIfNeeded(
+                force: true);
+
+            // Content vẫn Opacity = 0 ở thời điểm này. Chờ layout hoàn tất
+            // rồi mới bắt đầu fade/slide để không lộ frame card bị co nhỏ.
+            await Task.Yield();
+
+            if (animationVersion !=
+                _mainTabAnimationVersion)
+            {
+                return;
+            }
         }
 
         try
@@ -445,32 +472,71 @@ public partial class FormulaPage : ContentPage
         GeometryContent.CancelAnimations();
     }
 
-    private void RefreshUnknownComponentLayout()
+    private void RefreshUnknownComponentLayout(
+        bool force = false)
     {
-        BindableLayout.SetItemsSource(
-            UnknownComponentFlexLayout,
-            null);
+        if (UnknownComponentItems.Count == 0)
+        {
+            CreateUnknownComponentItems();
+        }
 
-        BindableLayout.SetItemsSource(
-            UnknownComponentFlexLayout,
-            UnknownComponentItems);
+        _isUnknownComponentLayoutInitialized =
+            true;
+
+        // Cập nhật ngay nếu layout đã có Width, trước khi animation làm nội
+        // dung hiện ra. Các lượt Dispatch chỉ hoàn thiện phép đo, tuyệt đối
+        // không tạo lại card hoặc tháo/gắn lại ItemsSource.
+        UpdateUnknownComponentCardWidthsIfNeeded(
+            force);
 
         Dispatcher.Dispatch(
             () =>
             {
-                UpdateUnknownComponentCardWidths(
-                    UnknownComponentFlexLayout.Width);
+                UpdateUnknownComponentCardWidthsIfNeeded(
+                    force: true);
 
                 Dispatcher.Dispatch(
                     () =>
                     {
-                        UpdateUnknownComponentCardWidths(
-                            UnknownComponentFlexLayout.Width);
+                        UpdateUnknownComponentCardWidthsIfNeeded(
+                            force: true);
 
                         LocalizationService.Attach(
                             this);
                     });
             });
+    }
+
+    private void UpdateUnknownComponentCardWidthsIfNeeded(
+        bool force = false)
+    {
+        if (!_isUnknownComponentLayoutInitialized)
+        {
+            return;
+        }
+
+        double availableWidth =
+            UnknownComponentFlexLayout.Width;
+
+        if (availableWidth <= 0d)
+        {
+            return;
+        }
+
+        if (!force &&
+            UnknownComponentFlexLayout.Children.Count > 0 &&
+            Math.Abs(
+                availableWidth -
+                _lastUnknownComponentLayoutWidth) < 0.5d)
+        {
+            return;
+        }
+
+        _lastUnknownComponentLayoutWidth =
+            availableWidth;
+
+        UpdateUnknownComponentCardWidths(
+            availableWidth);
     }
 
     private void EnsureGeometryLayoutInitialized()
@@ -625,6 +691,17 @@ public partial class FormulaPage : ContentPage
             // bắt đầu fade/slide để hình học không xuất hiện trễ.
             await Task.Yield();
 
+            if (selectedTab ==
+                FormulaSubTab.UnknownComponent)
+            {
+                UpdateUnknownComponentCardWidthsIfNeeded(
+                    force: true);
+
+                // Vẫn giữ incomingContent ẩn cho đến khi card đã về đúng
+                // ba cột, tránh hiện thoáng qua sáu card bị co trên một hàng.
+                await Task.Yield();
+            }
+
             await Task.WhenAll(
                 outgoingContent.FadeToAsync(
                     0d,
@@ -710,7 +787,8 @@ public partial class FormulaPage : ContentPage
                 CreateUnknownComponentItems();
             }
 
-            RefreshUnknownComponentLayout();
+            RefreshUnknownComponentLayout(
+                force: true);
             return;
         }
 
@@ -724,7 +802,7 @@ public partial class FormulaPage : ContentPage
         if (_selectedSubTab ==
             FormulaSubTab.UnknownComponent)
         {
-            RefreshUnknownComponentLayout();
+            UpdateUnknownComponentCardWidthsIfNeeded();
         }
         else
         {
@@ -845,8 +923,7 @@ public partial class FormulaPage : ContentPage
                 if (_selectedSubTab ==
                     FormulaSubTab.UnknownComponent)
                 {
-                    UpdateUnknownComponentCardWidths(
-                        UnknownComponentFlexLayout.Width);
+                    UpdateUnknownComponentCardWidthsIfNeeded();
                 }
                 else
                 {
@@ -859,19 +936,143 @@ public partial class FormulaPage : ContentPage
         object? sender,
         EventArgs e)
     {
-        if (sender is FlexLayout layout)
+        if (!_isUnknownComponentLayoutInitialized ||
+            sender is not FlexLayout)
         {
-            UpdateUnknownComponentCardWidths(
-                layout.Width);
+            return;
         }
+
+        UpdateUnknownComponentCardWidthsIfNeeded();
     }
 
     private void UpdateUnknownComponentCardWidths(
         double availableWidth)
     {
+        if (availableWidth <= 0)
+        {
+            return;
+        }
+
+        // Giữ đúng ba thẻ mỗi hàng trên desktop. Khi cửa sổ thật sự hẹp mới
+        // hạ xuống hai hoặc một cột để nội dung không bị ép và mất khả năng đọc.
+        int columnCount =
+            availableWidth switch
+            {
+                >= 900d => 3,
+                >= 580d => 2,
+                _ => 1
+            };
+
         UpdateFlexCardWidths(
             UnknownComponentFlexLayout,
-            availableWidth);
+            availableWidth,
+            columnCount,
+            horizontalMarginPerCard: 14d,
+            minimumCardWidth: 250d);
+
+        ScheduleUnknownComponentFlexHeightUpdate(
+            columnCount);
+    }
+
+    private void ScheduleUnknownComponentFlexHeightUpdate(
+        int columnCount)
+    {
+        if (columnCount <= 0 ||
+            UnknownComponentFlexLayout.Children.Count == 0)
+        {
+            return;
+        }
+
+        // Lượt đầu dùng kích thước hiện có; lượt sau chạy khi các card đã được
+        // đo lại theo WidthRequest mới. Nhờ vậy phần lưu ý bám sát hàng card cuối.
+        Dispatcher.Dispatch(
+            () =>
+            {
+                UpdateUnknownComponentFlexHeight(
+                    columnCount);
+
+                Dispatcher.Dispatch(
+                    () => UpdateUnknownComponentFlexHeight(
+                        columnCount));
+            });
+    }
+
+    private void UpdateUnknownComponentFlexHeight(
+        int columnCount)
+    {
+        int childCount =
+            UnknownComponentFlexLayout.Children.Count;
+
+        if (childCount == 0 ||
+            columnCount <= 0)
+        {
+            return;
+        }
+
+        const double verticalMarginPerCard =
+            14d;
+
+        const double fallbackCardHeight =
+            330d;
+
+        double maximumCardHeight =
+            fallbackCardHeight;
+
+        foreach (IView childView
+                 in UnknownComponentFlexLayout.Children)
+        {
+            if (childView is not VisualElement card)
+            {
+                continue;
+            }
+
+            double measuredHeight =
+                card.Height;
+
+            if (!double.IsFinite(
+                    measuredHeight) ||
+                measuredHeight <= 0d)
+            {
+                measuredHeight =
+                    Math.Max(
+                        fallbackCardHeight,
+                        card.MinimumHeightRequest);
+            }
+
+            maximumCardHeight =
+                Math.Max(
+                    maximumCardHeight,
+                    measuredHeight);
+        }
+
+        int rowCount =
+            (int)Math.Ceiling(
+                childCount /
+                (double)columnCount);
+
+        double requestedHeight =
+            Math.Ceiling(
+                rowCount *
+                (maximumCardHeight +
+                 verticalMarginPerCard));
+
+        if (Math.Abs(
+                UnknownComponentFlexLayout.HeightRequest -
+                requestedHeight) < 1d)
+        {
+            return;
+        }
+
+        UnknownComponentFlexLayout.HeightRequest =
+            requestedHeight;
+
+        UnknownComponentFlexLayout.InvalidateMeasure();
+
+        if (UnknownComponentFlexLayout.Parent
+            is VisualElement parent)
+        {
+            parent.InvalidateMeasure();
+        }
     }
 
     private void OnGeometryFlexLayoutSizeChanged(
@@ -889,44 +1090,81 @@ public partial class FormulaPage : ContentPage
     private void UpdateGeometryCardWidths(
         double availableWidth)
     {
-        UpdateFlexCardWidths(
-            GeometryFlexLayout,
-            availableWidth);
-    }
-
-    private static void UpdateFlexCardWidths(
-        FlexLayout layout,
-        double availableWidth)
-    {
-        if (availableWidth <= 0 ||
-            layout.Children.Count == 0)
+        if (availableWidth <= 0)
         {
             return;
         }
 
-        // Mỗi Border có Margin="6" ở cả hai bên. WidthRequest của Border
-        // đã bao gồm padding và stroke, vì vậy không được trừ thêm phần đó.
-        const double horizontalMarginPerCard =
-            12;
-
-        // Chừa một khoảng nhỏ cho scrollbar và sai số làm tròn. Nội dung vẫn
-        // mở rộng gần sát hai cạnh như bố cục của tab Cửu chương.
-        const double rightSafetySpace =
-            8;
-
         int columnCount =
-            availableWidth switch
-            {
-                // Giữ ba thẻ mỗi hàng trên desktop nhưng cho mỗi thẻ giãn đều
-                // để sử dụng toàn bộ chiều rộng cửa sổ.
-                >= 1040 => 3,
+            GetGeometryColumnCount(
+                availableWidth);
 
-                // Tablet hoặc cửa sổ Windows cỡ vừa.
-                >= 680 => 2,
+        double requestedWidth =
+            UpdateFlexCardWidths(
+                GeometryFlexLayout,
+                availableWidth,
+                columnCount,
+                horizontalMarginPerCard: 10d,
+                minimumCardWidth: 112d);
 
-                // Điện thoại hoặc cửa sổ hẹp.
-                _ => 1
-            };
+        if (requestedWidth <= 0)
+        {
+            return;
+        }
+
+        UpdateGeometryCardVisualSizes(
+            requestedWidth);
+    }
+
+    private static int GetGeometryColumnCount(
+        double availableWidth)
+    {
+        // Điện thoại luôn dùng hai cột, kể cả khi xoay ngang.
+        if (DeviceInfo.Idiom ==
+            DeviceIdiom.Phone)
+        {
+            return 2;
+        }
+
+        // Cửa sổ quá hẹp cũng dùng hai cột để tránh card bị bóp nhỏ.
+        if (availableWidth < 600d)
+        {
+            return 2;
+        }
+
+        // Desktop rộng: 5 card. Laptop và tablet lớn: 4 card.
+        // Tablet 10 inch trở xuống: 3 card.
+        if (DeviceInfo.Idiom ==
+                DeviceIdiom.Desktop &&
+            availableWidth >= 1500d)
+        {
+            return 5;
+        }
+
+        if (availableWidth >= 950d)
+        {
+            return 4;
+        }
+
+        return 3;
+    }
+
+    private static double UpdateFlexCardWidths(
+        FlexLayout layout,
+        double availableWidth,
+        int columnCount,
+        double horizontalMarginPerCard,
+        double minimumCardWidth)
+    {
+        if (availableWidth <= 0 ||
+            layout.Children.Count == 0 ||
+            columnCount <= 0)
+        {
+            return 0d;
+        }
+
+        const double rightSafetySpace =
+            6d;
 
         double totalMargins =
             columnCount *
@@ -939,11 +1177,9 @@ public partial class FormulaPage : ContentPage
                  rightSafetySpace) /
                 columnCount);
 
-        // Không giới hạn tối đa 380 như trước. Giới hạn đó là nguyên nhân làm
-        // bố cục co vào giữa và để trống rất nhiều diện tích hai bên.
         requestedWidth =
             Math.Max(
-                190,
+                minimumCardWidth,
                 requestedWidth);
 
         bool sizeChanged =
@@ -959,13 +1195,13 @@ public partial class FormulaPage : ContentPage
 
             if (Math.Abs(
                     element.WidthRequest -
-                    requestedWidth) < 1)
+                    requestedWidth) < 1d)
             {
                 continue;
             }
 
             element.MinimumWidthRequest =
-                0;
+                0d;
 
             element.WidthRequest =
                 requestedWidth;
@@ -974,17 +1210,58 @@ public partial class FormulaPage : ContentPage
                 true;
         }
 
-        if (!sizeChanged)
+        if (sizeChanged)
         {
-            return;
+            layout.InvalidateMeasure();
+
+            if (layout.Parent
+                is VisualElement parent)
+            {
+                parent.InvalidateMeasure();
+            }
         }
 
-        layout.InvalidateMeasure();
+        return requestedWidth;
+    }
 
-        if (layout.Parent
-            is VisualElement parent)
+    private void UpdateGeometryCardVisualSizes(
+        double cardWidth)
+    {
+        // Ở điện thoại, mỗi hàng vẫn có hai card nên hình minh họa phải co theo
+        // chiều rộng card. Trên tablet/laptop/desktop giữ tối đa 190 để tránh
+        // card cao quá mức.
+        double graphHeight =
+            Math.Clamp(
+                cardWidth *
+                0.72d,
+                112d,
+                190d);
+
+        foreach (IView cardView
+                 in GeometryFlexLayout.Children)
         {
-            parent.InvalidateMeasure();
+            if (cardView is not Border card ||
+                card.Content is not Grid cardGrid)
+            {
+                continue;
+            }
+
+            card.Padding =
+                cardWidth < 180d
+                    ? new Thickness(
+                        9d)
+                    : new Thickness(
+                        12d);
+
+            foreach (IView childView
+                     in cardGrid.Children)
+            {
+                if (childView is GraphicsView graphicsView)
+                {
+                    graphicsView.HeightRequest =
+                        graphHeight;
+                }
+            }
         }
     }
 
@@ -1010,7 +1287,11 @@ public partial class FormulaPage : ContentPage
                 if (_selectedSubTab ==
                     FormulaSubTab.UnknownComponent)
                 {
-                    RefreshUnknownComponentLayout();
+                    _isUnknownComponentLayoutInitialized =
+                        true;
+
+                    RefreshUnknownComponentLayout(
+                        force: true);
                 }
                 else
                 {
@@ -1033,6 +1314,9 @@ public partial class FormulaPage : ContentPage
 
     private void CreateUnknownComponentItems()
     {
+        _lastUnknownComponentLayoutWidth =
+            -1d;
+
         UnknownComponentItems.Clear();
 
         UnknownComponentItems.Add(
