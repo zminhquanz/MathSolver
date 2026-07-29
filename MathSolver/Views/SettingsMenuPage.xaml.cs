@@ -4,6 +4,11 @@ namespace MathSolver.Views;
 
 public partial class SettingsMenuPage : ContentPage
 {
+    // Được bật ngay từ constructor, trước khi PushModalAsync làm trang bên
+    // dưới nhận OnDisappearing. FormulaPage dùng cờ này để biết rằng nó chỉ
+    // đang bị một overlay trong suốt che lên và không được tự ẩn nội dung.
+    internal static bool IsTransparentOverlayActive { get; private set; }
+
     private readonly Dictionary<string, Button>
         _fontButtons =
             new(StringComparer.Ordinal);
@@ -18,6 +23,9 @@ public partial class SettingsMenuPage : ContentPage
 
     public SettingsMenuPage()
     {
+        IsTransparentOverlayActive =
+            true;
+
         InitializeComponent();
 
         Shell.SetNavBarIsVisible(
@@ -39,6 +47,9 @@ public partial class SettingsMenuPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        IsTransparentOverlayActive =
+            true;
 
         AppThemeManager.ThemeChanged +=
             OnSettingsChanged;
@@ -66,6 +77,9 @@ public partial class SettingsMenuPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        IsTransparentOverlayActive =
+            false;
+
         AppThemeManager.ThemeChanged -=
             OnSettingsChanged;
 

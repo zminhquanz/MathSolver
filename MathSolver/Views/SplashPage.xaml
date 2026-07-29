@@ -9,8 +9,8 @@
     <Grid>
         <Image
             Source="splashicon.png"
-            WidthRequest="200"
-            HeightRequest="200"
+            WidthRequest="256"
+            HeightRequest="256"
             Aspect="AspectFit"
             HorizontalOptions="Center"
             VerticalOptions="Center" />

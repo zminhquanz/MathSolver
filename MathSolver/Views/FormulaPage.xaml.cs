@@ -22,6 +22,11 @@ public partial class FormulaPage : ContentPage
 
     private double _lastGeometryLayoutWidth = -1d;
 
+    // Được bật khi trang Hình học bị che hoặc rời khỏi visual tree, ví dụ
+    // khi mở SettingsMenuPage. Khi quay lại cần khôi phục layout và yêu cầu
+    // từng GraphicsView vẽ lại lớp native của nó.
+    private bool _geometryNeedsVisualRestore;
+
     public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } = [];
 
     public ObservableCollection<UnknownComponentItem> UnknownComponentItems { get; } = [];
@@ -59,12 +64,21 @@ public partial class FormulaPage : ContentPage
     {
         base.OnAppearing();
 
-        // Chuẩn bị nội dung đang chọn trước. Riêng Hình học đã khởi tạo
-        // thì tuyệt đối không gắn lại ItemsSource hay ép đo lại toàn bộ
-        // GraphicsView khi quay lại tab Công thức.
+        // OnDisappearing có thể đã ẩn GeometryContent để lớp native của
+        // GraphicsView không đè lên trang khác. Khôi phục trạng thái hiển thị
+        // ngay khi quay lại, kể cả khi trang đích trước đó là SettingsMenuPage.
+        RestoreSelectedSubTabVisualState();
+
+        // Chuẩn bị nội dung đang chọn trước. Không tạo lại GeometryItems nếu
+        // visual tree cũ vẫn còn; phần redraw GraphicsView được xử lý riêng.
         PrepareSelectedSubTabForMainAppearance();
 
         BeginMainTabTransitionIfPending();
+
+        if (_selectedSubTab == FormulaSubTab.Geometry)
+        {
+            ScheduleGeometryVisualRestore();
+        }
     }
 
     protected override void OnDisappearing()
@@ -75,20 +89,44 @@ public partial class FormulaPage : ContentPage
 
         CancelMainTabAnimations();
 
-        // GraphicsView trong tab Hình học có lớp render riêng trên một số
-        // nền tảng. Ẩn trực tiếp vùng Hình học khi rời trang để lớp vẽ cũ
-        // không nằm đè lên animation của trang Giải toán/Cửu chương.
+        // SettingsMenuPage là modal trong suốt. Khi mở nó, FormulaPage vẫn là
+        // phần nền đang được nhìn qua lớp scrim, vì vậy tuyệt đối không đặt
+        // GeometryContent.Opacity = 0. Chỉ ẩn Hình học khi thật sự rời tab
+        // Công thức để chuyển sang một trang/tab chính khác.
+        bool keepGeometryVisibleBehindSettings =
+            SettingsMenuPage.IsTransparentOverlayActive;
+
         if (_selectedSubTab ==
             FormulaSubTab.Geometry)
         {
-            GeometryContent.Opacity =
-                0d;
+            if (keepGeometryVisibleBehindSettings)
+            {
+                _geometryNeedsVisualRestore =
+                    false;
 
-            GeometryContent.TranslationX =
-                0d;
+                GeometryContent.IsVisible =
+                    true;
 
-            GeometryContent.Scale =
-                1d;
+                ResetTransitionTransform(
+                    GeometryContent);
+
+                // Giữ lớp native của GraphicsView hoạt động phía dưới scrim.
+                InvalidateGeometryGraphicsViews();
+            }
+            else
+            {
+                _geometryNeedsVisualRestore =
+                    true;
+
+                GeometryContent.Opacity =
+                    0d;
+
+                GeometryContent.TranslationX =
+                    0d;
+
+                GeometryContent.Scale =
+                    1d;
+            }
         }
         else
         {
@@ -114,6 +152,127 @@ public partial class FormulaPage : ContentPage
             1d;
 
         base.OnDisappearing();
+    }
+
+    private void RestoreSelectedSubTabVisualState()
+    {
+        bool showGeometry =
+            _selectedSubTab ==
+            FormulaSubTab.Geometry;
+
+        UnknownComponentContent.IsVisible =
+            !showGeometry;
+
+        GeometryContent.IsVisible =
+            showGeometry;
+
+        ResetTransitionTransform(
+            FormulaSubTabBar);
+
+        ResetTransitionTransform(
+            showGeometry
+                ? GeometryContent
+                : UnknownComponentContent);
+
+        UpdateSubTabButtonStyles();
+    }
+
+    private void ScheduleGeometryVisualRestore()
+    {
+        if (!_isGeometryLayoutInitialized ||
+            _selectedSubTab !=
+            FormulaSubTab.Geometry ||
+            _isMainTabTransitioning)
+        {
+            return;
+        }
+
+        // Khi trang xuất hiện lần đầu cờ có thể chưa bật, nhưng invalidate vẫn
+        // an toàn. Khi quay lại từ Settings, cờ này xác nhận visual native đã
+        // từng bị ẩn và cần khôi phục đầy đủ.
+        bool requiresFullRestore =
+            _geometryNeedsVisualRestore;
+
+        // Đợi MAUI gắn lại trang vào Window/Shell. Sau đó ép layout và
+        // invalidate từng GraphicsView. Lượt Dispatch thứ hai xử lý trường hợp
+        // WinUI vừa tạo lại composition surface sau khi đóng SettingsMenuPage.
+        Dispatcher.Dispatch(
+            () =>
+            {
+                RestoreGeometryVisualTree(
+                    requiresFullRestore);
+
+                Dispatcher.Dispatch(
+                    () => RestoreGeometryVisualTree(
+                        requiresFullRestore));
+            });
+    }
+
+    private void RestoreGeometryVisualTree(
+        bool requiresFullRestore)
+    {
+        if (_selectedSubTab !=
+            FormulaSubTab.Geometry)
+        {
+            return;
+        }
+
+        GeometryContent.IsVisible =
+            true;
+
+        ResetTransitionTransform(
+            GeometryContent);
+
+        // Fallback hiếm: nếu nền tảng đã bỏ visual children khi mở Settings,
+        // chỉ lúc đó mới gắn lại ItemsSource để tạo lại các card.
+        if (requiresFullRestore &&
+            GeometryItems.Count > 0 &&
+            GeometryFlexLayout.Children.Count == 0)
+        {
+            BindableLayout.SetItemsSource(
+                GeometryFlexLayout,
+                null);
+
+            BindableLayout.SetItemsSource(
+                GeometryFlexLayout,
+                GeometryItems);
+        }
+
+        _lastGeometryLayoutWidth =
+            -1d;
+
+        UpdateGeometryCardWidthsIfNeeded(
+            force: true);
+
+        GeometryFlexLayout.InvalidateMeasure();
+        GeometryContent.InvalidateMeasure();
+
+        InvalidateGeometryGraphicsViews();
+
+        _geometryNeedsVisualRestore =
+            false;
+    }
+
+    private void InvalidateGeometryGraphicsViews()
+    {
+        foreach (IView cardView
+                 in GeometryFlexLayout.Children)
+        {
+            if (cardView is not Border card ||
+                card.Content is not Grid cardGrid)
+            {
+                continue;
+            }
+
+            foreach (IView childView
+                     in cardGrid.Children)
+            {
+                if (childView is GraphicsView graphicsView)
+                {
+                    graphicsView.Invalidate();
+                }
+            }
+        }
     }
 
     private void PrepareSelectedSubTabForMainAppearance()
@@ -228,8 +387,15 @@ public partial class FormulaPage : ContentPage
                     false;
 
                 // Chỉ kiểm tra lại kích thước sau animation. Không tái tạo
-                // GeometryItems và không làm GraphicsView vẽ lại.
+                // GeometryItems. Riêng tab Hình học sẽ invalidate GraphicsView
+                // sau khi animation đã kết thúc để không làm mất hiệu ứng.
                 RefreshSelectedFormulaSubTabLayout();
+
+                if (_selectedSubTab ==
+                    FormulaSubTab.Geometry)
+                {
+                    ScheduleGeometryVisualRestore();
+                }
             }
         }
     }
