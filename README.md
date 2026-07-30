@@ -1,5 +1,22 @@
 # Math Solver
 
+<p align="center">
+  <img src="Resources/AppIcon/appicon.png"
+       alt="Math Solver App Icon"
+       width="150">
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/YOUR_KO_FI_USERNAME">
+    <img src="https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white"
+         alt="Support Math Solver on Ko-fi">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg"
+         alt="MIT License">
+  </a>
+</p>
+
 Math Solver is an offline-first mathematics learning and problem-solving application built with .NET MAUI. It provides step-by-step calculations, reusable formula references, responsive layouts, and high-precision numeric processing for students and anyone who wants to review essential mathematics.
 
 The project is designed for cross-platform development, with the current implementation focused on Windows and Android.
@@ -112,6 +129,19 @@ Math Solver includes:
 
 The main calculation features work entirely offline. No internet connection or cloud-based AI service is required for standard arithmetic, fractions, equations, multiplication tables, formulas, or geometry calculations.
 
+## Technology
+
+- C#
+- .NET MAUI
+- XAML
+- `GraphicsView` and custom `IDrawable` implementations
+- `Int128`
+- `BigInteger`
+- `Decimal`
+- Custom Double-Double arithmetic
+- `Math.FusedMultiplyAdd`
+- Responsive `Grid`, `FlexLayout`, and reusable `ContentView` components
+
 ## Project Structure
 
 ```text
@@ -180,6 +210,31 @@ Math Solver is developed with the following goals:
 ## Educational Notice
 
 Math Solver is intended to support learning, checking results, and understanding calculation steps. It should not replace independent practice or the guidance of a teacher.
+
+## Support the Project
+
+Math Solver is free to use, and all core features remain available without payment. Donations are completely optional and do not unlock additional features, subscriptions, or extra software rights.
+
+If Math Solver is useful to you and you would like to support its continued development, you can leave a one-time tip on Ko-fi:
+
+<p align="center">
+  <a href="https://ko-fi.com/YOUR_KO_FI_USERNAME">
+    <img src="https://img.shields.io/badge/Support_Math_Solver_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white"
+         alt="Support Math Solver on Ko-fi">
+  </a>
+</p>
+
+Thank you for supporting the development, testing, documentation, and continued improvement of Math Solver.
+
+> Replace `YOUR_KO_FI_USERNAME` in this file with your actual Ko-fi page name before publishing.
+
+## License
+
+The Math Solver source code is licensed under the [MIT License](LICENSE).
+
+Copyright © 2026 Quan Vu.
+
+The Math Solver name, application icon, logo, and original branding assets are not granted for reuse under the MIT License unless permission is provided separately.
 
 ## Status
 
