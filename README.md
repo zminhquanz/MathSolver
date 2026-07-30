@@ -205,8 +205,6 @@ If Math Solver is useful to you and you would like to support its continued deve
 
 Thank you for supporting the development, testing, documentation, and continued improvement of Math Solver.
 
-> Replace `quanvu96` in this file with your actual Ko-fi page name before publishing.
-
 ## License
 
 The Math Solver source code is licensed under the [MIT License](LICENSE).
