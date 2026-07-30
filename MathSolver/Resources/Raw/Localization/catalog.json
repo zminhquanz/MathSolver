@@ -1,0 +1,3953 @@
+{
+  "schemaVersion": 1,
+  "sourceCulture": "vi-VN",
+  "entries": [
+    {
+      "key": "legacy.exact.giai.toan.5725d6d4",
+      "source": "Giải toán",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cong.thuc.924f4099",
+      "source": "Công thức",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cuu.chuong.13672d29",
+      "source": "Cửu chương",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cai.dat.giao.dien.46d56c26",
+      "source": "Cài đặt giao diện",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mo.cai.dat.giao.dien.e0784dde",
+      "source": "Mở cài đặt giao diện",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.co.ban.ae422695",
+      "source": "+ Cơ bản",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.1.2.phan.so.dff350e6",
+      "source": "½ Phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.x.tim.x.952ce7c4",
+      "source": "𝑥 Tìm x",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.46c89939",
+      "source": "△ Hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.x2.phuong.trinh.bac.2.b1467f9c",
+      "source": "x² Phương trình bậc 2",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phuong.trinh.bac.hai.ca9c2762",
+      "source": "PHƯƠNG TRÌNH BẬC HAI",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.biet.thuc.xet.so.nghiem.trinh.bay.loi.95a5ca01",
+      "source": "Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.1.nhap.cac.he.so.67f47ab8",
+      "source": "1. Nhập các hệ số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.a.62d111a6",
+      "source": "Hệ số a",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.b.f7ed8835",
+      "source": "Hệ số b",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.c.a73537bb",
+      "source": "Hệ số c",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.cua.x2.5a69dcdb",
+      "source": "Hệ số của x²",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.cua.x.e35e9a34",
+      "source": "Hệ số của x",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.tu.do.3f733472",
+      "source": "Hệ số tự do",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.nghiem.9238a7f3",
+      "source": "Tính nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.2.ket.qua.f9126b38",
+      "source": "2. Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.biet.thuc.9e70a849",
+      "source": "Biệt thức",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.3.loi.giai.chi.tiet.9ee79412",
+      "source": "3. Lời giải chi tiết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.thi.parabol.a23dd732",
+      "source": "Đồ thị parabol",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.thi.trinh.bay.theo.dang.sgk.co.truc.toa.28109244",
+      "source": "Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chua.co.du.lieu.do.thi.0f0b376c",
+      "source": "Chưa có dữ liệu đồ thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.1.xac.dinh.cac.he.so.e1b104c6",
+      "source": "Bước 1. Xác định các hệ số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.2.tinh.biet.thuc.79c99dd5",
+      "source": "Bước 2. Tính biệt thức Δ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.3.xet.dau.cua.ba4f0dd4",
+      "source": "Bước 3. Xét dấu của Δ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.3.tinh.nghiem.kep.2441e2bd",
+      "source": "Bước 3. Tính nghiệm kép",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.3.tinh.can.bac.hai.cua.88281d71",
+      "source": "Bước 3. Tính căn bậc hai của Δ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.4.tinh.hai.nghiem.a613d6fb",
+      "source": "Bước 4. Tính hai nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.buoc.4.ket.luan.1716ec6c",
+      "source": "Bước 4. Kết luận",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.phuong.trinh.vo.nghiem.trong.tap.so.thuc.1dfe31be",
+      "source": "Δ < 0: phương trình vô nghiệm trong tập số thực.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.phuong.trinh.co.nghiem.kep.5032eb67",
+      "source": "Δ = 0: phương trình có nghiệm kép.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.phuong.trinh.co.hai.nghiem.phan.biet.30f2cbea",
+      "source": "Δ > 0: phương trình có hai nghiệm phân biệt.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vo.nghiem.da4bd863",
+      "source": "Vô nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phuong.trinh.vo.nghiem.trong.tap.so.thuc.r.06fa122b",
+      "source": "Phương trình vô nghiệm trong tập số thực ℝ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.so.a.phai.khac.0.khi.a.0.bieu.thuc.khon.bd50400a",
+      "source": "Hệ số a phải khác 0. Khi a = 0, biểu thức không còn là phương trình bậc hai.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.qua.vuot.qua.pham.vi.ma.ung.dung.ho.tr.55e51dd0",
+      "source": "Kết quả Δ vượt quá phạm vi mà ứng dụng hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nghiem.vuot.qua.pham.vi.ma.ung.dung.ho.tro.ae865247",
+      "source": "Nghiệm vượt quá phạm vi mà ứng dụng hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chi.duoc.nhap.so.nguyen.khong.duoc.nhap.da.c07aa3a9",
+      "source": "Chỉ được nhập số nguyên; không được nhập dấu chấm hoặc ký tự khác.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chi.duoc.nhap.so.nguyen.trong.pham.vi.tu.7.92fc9aca",
+      "source": "Chỉ được nhập số nguyên trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.qua.khong.the.bieu.dien.huu.han.bang.d.8774085a",
+      "source": "Kết quả Δ không thể biểu diễn hữu hạn bằng độ chính xác Double Double. Ứng dụng không thể tiếp tục tính toán.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nghiem.khong.the.bieu.dien.huu.han.bang.do.83f6ff57",
+      "source": "Nghiệm không thể biểu diễn hữu hạn bằng độ chính xác Double Double. Ứng dụng không thể tiếp tục tính toán.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.chi.duoc.chua.chu.so.va.mot.dau.1d5388c8",
+      "source": "Số nguyên chỉ được chứa chữ số và một dấu âm ở đầu. Dấu phẩy phân nhóm được ứng dụng thêm tự động.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thap.phan.chi.duoc.chua.chu.so.mot.dau.06f01426",
+      "source": "Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, tối đa một dấu chấm và tối đa 10 chữ số sau dấu chấm; dấu phẩy được thêm tự động.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.phai.nam.trong.pham.vi.tu.170.14.5ae2f1fa",
+      "source": "Số nguyên phải nằm trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thap.phan.phai.nam.trong.pham.vi.tu.79.2d5db6ae",
+      "source": "Số thập phân phải nằm trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.tinh.co.ban.8cb08984",
+      "source": "PHÉP TÍNH CƠ BẢN",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cong.tru.nhan.chia.cc41fa35",
+      "source": "Cộng • Trừ • Nhân • Chia",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.1.chon.phep.tinh.cd0003d5",
+      "source": "1. Chọn phép tính",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.2.nhap.cac.so.a1d43506",
+      "source": "2. Nhập các số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.3cf7633a",
+      "source": "Số nguyên",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thap.phan.fa0a6265",
+      "source": "Số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thu.nhat.7277150c",
+      "source": "Số thứ nhất",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thu.hai.1ef232be",
+      "source": "Số thứ hai",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.ket.qua.46bc0766",
+      "source": "Tính kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.xoa.aa1d94fc",
+      "source": "Xóa",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.3.ket.qua.ff8f531b",
+      "source": "3. Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dap.so.f1a3bb26",
+      "source": "Đáp số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thuong.a29a1467",
+      "source": "Thương",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.du.b0c03381",
+      "source": "Số dư",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.loi.giai.d277d7e1",
+      "source": "Lời giải",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.loi.giai.chi.tiet.14888dc0",
+      "source": "Lời giải chi tiết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.chia.dat.tinh.0d98d78d",
+      "source": "Phép chia đặt tính",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chua.co.phep.chia.de.hien.thi.120b761b",
+      "source": "Chưa có phép chia để hiển thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cac.buoc.thuc.hien.phep.chia.theo.cach.tri.18fc5dcc",
+      "source": "Các bước thực hiện phép chia theo cách trình bày ở tiểu học.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hien.thi.phep.chia.cfea8cd9",
+      "source": "Hiển thị phép chia",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.theo.chuong.trinh.tieu.hoc.9b09f544",
+      "source": "Theo chương trình Tiểu học",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thuong.va.so.du.2c353fb4",
+      "source": "Thương và số dư",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.theo.so.thap.phan.e613f295",
+      "source": "Theo số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tiep.tuc.chia.den.ket.qua.thap.phan.da9a92be",
+      "source": "Tiếp tục chia đến kết quả thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thong.tin.them.77900f97",
+      "source": "Thông tin thêm",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.luu.y.khi.su.dung.e450d835",
+      "source": "Lưu ý khi sử dụng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.55aac5e2",
+      "source": "HÌNH HỌC",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.chu.vi.va.dien.tich.cac.hinh.21212d4c",
+      "source": "Tính chu vi và diện tích các hình",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.chu.vi.dien.tich.dien.tich.be.mat.va.0144baa8",
+      "source": "Tính chu vi, diện tích, diện tích bề mặt và thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.1.chon.loai.hinh.hoc.c3fe45c7",
+      "source": "1. Chọn loại hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.mat.phang.25817c53",
+      "source": "Hình học mặt phẳng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.khong.gian.a01cf0cf",
+      "source": "Hình học không gian",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.2.chon.hinh.a409b7ec",
+      "source": "2. Chọn hình",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.hinh.3860b5ed",
+      "source": "Chọn hình",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.mot.hinh.de.xem.cong.thuc.va.nhap.du.6b3d1d3c",
+      "source": "Chọn một hình để xem công thức và nhập dữ liệu.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cong.thuc.va.hinh.minh.hoa.80999bff",
+      "source": "Công thức và hình minh họa",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.3.chon.kieu.so.85bf2edb",
+      "source": "3. Chọn kiểu số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.4.nhap.kich.thuoc.d249cb07",
+      "source": "4. Nhập kích thước",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tat.ca.kich.thuoc.phai.lon.hon.0.a906e789",
+      "source": "Tất cả kích thước phải lớn hơn 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.toan.b615d4a2",
+      "source": "Tính toán",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.du.lieu.khong.hop.le.e021b6bf",
+      "source": "Dữ liệu không hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.qua.c9f95514",
+      "source": "Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cach.tinh.e43fe70f",
+      "source": "Cách tính",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dau.vao.va.ket.qua.dung.decimal.phan.hien.5d79f77c",
+      "source": "Đầu vào và kết quả dùng Decimal. Phần hiển thị được làm tròn tối đa 10 chữ số sau dấu chấm.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vui.long.chon.mot.hinh.hoc.de0b007b",
+      "source": "Vui lòng chọn một hình học.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.loai.hinh.hoc.chua.duoc.ho.tro.00d41a26",
+      "source": "Loại hình học chưa được hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.mat.phang.nay.chua.co.bo.tinh.toa.979f33bd",
+      "source": "Hình học mặt phẳng này chưa có bộ tính toán.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.khong.gian.nay.chua.co.bo.tinh.to.e03bc285",
+      "source": "Hình học không gian này chưa có bộ tính toán.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ba.canh.khong.tao.thanh.tam.giac.hop.le.67401360",
+      "source": "Ba cạnh không tạo thành tam giác hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ba.canh.khong.thoa.man.dinh.ly.pythagore.a.02e5bd1d",
+      "source": "Ba cạnh không thỏa mãn định lý Pythagore a² + b² = c².",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.qua.thap.phan.vuot.qua.pham.vi.decimal.3f64617e",
+      "source": "Kết quả thập phân vượt quá phạm vi Decimal mà ứng dụng hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vui.long.nhap.0.ba852a02",
+      "source": "Vui lòng nhập {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.phai.la.so.nguyen.hop.le.trong.pham.vi.t.a67ea3a8",
+      "source": "{0} phải là số nguyên hợp lệ trong phạm vi từ {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.phai.la.so.thap.phan.hop.le.trong.pham.v.830b6e53",
+      "source": "{0} phải là số thập phân hợp lệ trong phạm vi từ {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.phai.lon.hon.0.ca5babbc",
+      "source": "{0} phải lớn hơn 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.chi.duoc.co.toi.da.10.chu.so.sau.dau.cha.8c37774c",
+      "source": "{0} chỉ được có tối đa 10 chữ số sau dấu chấm.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.chi.duoc.chua.chu.so.mot.dau.am.15ecea1f",
+      "source": "Số nguyên chỉ được chứa chữ số, một dấu âm ở đầu và tối đa 39 chữ số.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thap.phan.chi.duoc.chua.chu.so.mot.dau.d7c304f8",
+      "source": "Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, một dấu chấm và tối đa 10 chữ số sau dấu chấm.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.12.4475e42c",
+      "source": "Ví dụ: 12",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.12.5.55b2bd61",
+      "source": "Ví dụ: 12.5",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chu.vi.bdcf35f9",
+      "source": "Chu vi",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.143224db",
+      "source": "Diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.theo.duong.cheo.f5d9cec3",
+      "source": "Diện tích theo đường chéo",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.theo.day.va.chieu.cao.45d79ff1",
+      "source": "Diện tích theo đáy và chiều cao",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.day.dbc3a0ae",
+      "source": "Diện tích đáy",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.xung.quanh.9e3560a9",
+      "source": "Diện tích xung quanh",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.toan.phan.1604b319",
+      "source": "Diện tích toàn phần",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.tich.mat.cau.da33f9d6",
+      "source": "Diện tích mặt cầu",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.the.tich.71f5c07a",
+      "source": "Thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.dai.canh.a.7436c2a3",
+      "source": "Độ dài cạnh a",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chieu.dai.a.d54e8692",
+      "source": "Chiều dài a",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chieu.rong.b.37d5dc56",
+      "source": "Chiều rộng b",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.dai.day.a.57c73510",
+      "source": "Độ dài đáy a",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.dai.canh.b.757284cc",
+      "source": "Độ dài cạnh b",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.dai.canh.c.038f7170",
+      "source": "Độ dài cạnh c",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chieu.cao.h.ce161684",
+      "source": "Chiều cao h",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.canh.goc.vuong.a.56515200",
+      "source": "Cạnh góc vuông a",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.canh.goc.vuong.b.366cc4ca",
+      "source": "Cạnh góc vuông b",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.canh.huyen.c.7d21f3ac",
+      "source": "Cạnh huyền c",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ban.kinh.r.df150853",
+      "source": "Bán kính r",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.day.a.1d240622",
+      "source": "Đáy a",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.day.b.974ea28d",
+      "source": "Đáy b",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.canh.ben.c.c215a985",
+      "source": "Cạnh bên c",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.canh.ben.d.1a105ab5",
+      "source": "Cạnh bên d",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.duong.cheo.d1.c91f29a1",
+      "source": "Đường chéo d₁",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.duong.cheo.d2.39b01365",
+      "source": "Đường chéo d₂",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.dai.canh.ben.b.83e5d4c2",
+      "source": "Độ dài cạnh bên b",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ban.kinh.day.r.530f9b02",
+      "source": "Bán kính đáy r",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.duong.sinh.l.5de0233a",
+      "source": "Đường sinh l",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chu.vi.va.dien.tich.1f935be6",
+      "source": "Chu vi và diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.phat.trien.c312c54b",
+      "source": "Đang phát triển",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.thanh.phan.chua.biet.32d2f35e",
+      "source": "TÌM THÀNH PHẦN CHƯA BIẾT",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.hang.so.bi.tru.so.tru.thua.so.so.bi.chi.99954c8d",
+      "source": "Số hạng • Số bị trừ • Số trừ • Thừa số • Số bị chia • Số chia",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.tri.cua.x.93a15ebd",
+      "source": "Vị trí của x",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.2.nhap.cac.gia.tri.da.biet.0ef80824",
+      "source": "2. Nhập các giá trị đã biết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.hang.da.biet.f16fa4af",
+      "source": "Số hạng đã biết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tong.de995d83",
+      "source": "Tổng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phuong.trinh.dang.nhap.32984582",
+      "source": "Phương trình đang nhập",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.x.7283c7a7",
+      "source": "Tìm x",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nghiem.duy.nhat.24c6f892",
+      "source": "Nghiệm duy nhất",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.quy.tac.ap.dung.d21dcbb1",
+      "source": "Quy tắc áp dụng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.kiem.tra.lai.e65dbc7f",
+      "source": "Kiểm tra lại",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ghi.nho.9f4319ae",
+      "source": "Ghi nhớ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.x.tim.thanh.phan.chua.biet.6f81b172",
+      "source": "𝑥  Tìm thành phần chưa biết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.c99f0b97",
+      "source": "△  Hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.tong.quat.quy.tac.vi.du.minh.hoa.80fbfa74",
+      "source": "Dạng tổng quát • Quy tắc • Ví dụ minh họa",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.fc4320d8",
+      "source": "Dạng:",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.quy.tac.17e139b1",
+      "source": "Quy tắc",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.a67df13d",
+      "source": "Ví dụ : ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chu.vi.dien.tich.va.the.tich.ac6b23a8",
+      "source": "CHU VI, DIỆN TÍCH VÀ THỂ TÍCH",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.minh.hoa.ky.hieu.cong.thuc.thuong.dun.edc63c9f",
+      "source": "Hình minh họa • Ký hiệu • Công thức thường dùng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.mat.phang.hinh.hoc.khong.gian.con.05fa0d4f",
+      "source": "Hình học mặt phẳng • Hình học không gian • Công thức thường dùng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.mat.phang.639f0521",
+      "source": "HÌNH HỌC MẶT PHẲNG",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cac.hinh.hai.chieu.chu.vi.va.dien.tich.86e1b5cd",
+      "source": "Các hình hai chiều • Chu vi và diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hoc.khong.gian.dc1373f1",
+      "source": "HÌNH HỌC KHÔNG GIAN",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cac.khoi.ba.chieu.dien.tich.va.the.tich.45d6914c",
+      "source": "Các khối ba chiều • Diện tích và thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.luu.y.ve.tinh.chat.bon.phep.tinh.be35c5fe",
+      "source": "LƯU Ý VỀ TÍNH CHẤT BỐN PHÉP TÍNH",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khi.tim.thanh.phan.chua.biet.can.xac.dinh.13e4ac3a",
+      "source": "Khi tìm thành phần chưa biết, cần xác định đúng vai trò của x, dùng phép tính ngược phù hợp và luôn kiểm tra lại kết quả trong phép tính ban đầu.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.cong.bf23a0ed",
+      "source": "+  PHÉP CỘNG",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.giao.hoan.a.b.b.a.doi.cho.hai.so.hang.thi.f1956b25",
+      "source": "• Giao hoán: a + b = b + a. Đổi chỗ hai số hạng thì tổng không thay đổi.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.hop.a.b.c.a.b.c.co.the.nhom.cac.so.han.5444cf0e",
+      "source": "• Kết hợp: (a + b) + c = a + (b + c). Có thể nhóm các số hạng theo cách thuận tiện.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phan.tu.trung.hoa.a.0.0.a.a.765082db",
+      "source": "• Phần tử trung hòa: a + 0 = 0 + a = a.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.hang.chua.biet.x.b.c.thi.x.c.b.34da3457",
+      "source": "• Tìm số hạng chưa biết: x + b = c thì x = c − b.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.x.18.45.x.45.18.27.kiem.tra.27.18.45.30b98416",
+      "source": "Ví dụ: x + 18 = 45 ⇒ x = 45 − 18 = 27. Kiểm tra: 27 + 18 = 45.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.tru.4fdd01cd",
+      "source": "−  PHÉP TRỪ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.giao.hoan.a.b.thuong.khac.b.a.vi.vay.c05b084c",
+      "source": "• Không giao hoán: a − b thường khác b − a. Vì vậy không được tự ý đổi chỗ số bị trừ và số trừ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.ket.hop.a.b.c.thuong.khac.a.b.c.can.c3d9a90d",
+      "source": "• Không kết hợp: (a − b) − c thường khác a − (b − c). Cần thực hiện đúng thứ tự.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.chat.co.ban.a.0.a.va.a.a.0.4d4d22ee",
+      "source": "• Tính chất cơ bản: a − 0 = a và a − a = 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.bi.tru.x.b.c.thi.x.c.b.tim.so.tru.a.2e4b6868",
+      "source": "• Tìm số bị trừ: x − b = c thì x = c + b. Tìm số trừ: a − x = c thì x = a − c.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.52.x.19.x.52.19.33.kiem.tra.52.33.19.af6e4731",
+      "source": "Ví dụ: 52 − x = 19 ⇒ x = 52 − 19 = 33. Kiểm tra: 52 − 33 = 19.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.nhan.f7df79cd",
+      "source": "×  PHÉP NHÂN",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.giao.hoan.a.b.b.a.doi.cho.hai.thua.so.thi.9a748825",
+      "source": "• Giao hoán: a × b = b × a. Đổi chỗ hai thừa số thì tích không thay đổi.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.hop.a.b.c.a.b.c.co.the.nhom.cac.thua.s.1e850bb8",
+      "source": "• Kết hợp: (a × b) × c = a × (b × c). Có thể nhóm các thừa số theo cách thuận tiện.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phan.tu.don.vi.va.phan.tu.hap.thu.a.1.a.a.03663116",
+      "source": "• Phần tử đơn vị và phần tử hấp thụ: a × 1 = a; a × 0 = 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.thua.so.chua.biet.x.b.c.thi.x.c.b.voi.01cb206d",
+      "source": "• Tìm thừa số chưa biết: x × b = c thì x = c ÷ b, với b ≠ 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.x.7.56.x.56.7.8.kiem.tra.8.7.56.061d04d2",
+      "source": "Ví dụ: x × 7 = 56 ⇒ x = 56 ÷ 7 = 8. Kiểm tra: 8 × 7 = 56.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.chia.c764f672",
+      "source": "÷  PHÉP CHIA",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.giao.hoan.a.b.thuong.khac.b.a.phep.c.48c18ed0",
+      "source": "• Không giao hoán: a ÷ b thường khác b ÷ a. Phép chia cũng không có tính kết hợp.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tinh.chat.co.ban.a.1.a.a.a.1.voi.a.0.0.a.0.06dc6837",
+      "source": "• Tính chất cơ bản: a ÷ 1 = a; a ÷ a = 1 với a ≠ 0; 0 ÷ a = 0 với a ≠ 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.bao.gio.duoc.chia.cho.0.moi.gia.tri.015135c9",
+      "source": "• Không bao giờ được chia cho 0. Mọi giá trị làm số chia hoặc mẫu số bằng 0 đều không hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.bi.chia.x.b.c.thi.x.c.b.voi.b.0.tim.1152fb29",
+      "source": "• Tìm số bị chia: x ÷ b = c thì x = c × b, với b ≠ 0. Tìm số chia trong dạng cơ bản a ÷ x = c thì x = a ÷ c, đồng thời x ≠ 0 và c ≠ 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.du.72.x.9.x.72.9.8.kiem.tra.72.8.9.db0efb0b",
+      "source": "Ví dụ: 72 ÷ x = 9 ⇒ x = 72 ÷ 9 = 8. Kiểm tra: 72 ÷ 8 = 9.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ghi.nho.phep.cong.va.phep.tru.la.hai.phep.8a8fe171",
+      "source": "Ghi nhớ: Phép cộng và phép trừ là hai phép tính ngược nhau; phép nhân và phép chia cũng là hai phép tính ngược nhau. Sau khi tìm được x, luôn thay x vào phép tính ban đầu để kiểm tra và loại mọi giá trị vi phạm điều kiện chia cho 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.tinh.phan.so.46a6e954",
+      "source": "PHÉP TÍNH PHÂN SỐ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cong.tru.nhan.chia.quy.dong.7c80a6ba",
+      "source": "Cộng • Trừ • Nhân • Chia • Quy đồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.quy.dong.a1b07194",
+      "source": "Quy đồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.2.nhap.cac.phan.so.b05f7f0f",
+      "source": "2. Nhập các phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phan.so.thu.nhat.3d1e2715",
+      "source": "Phân số thứ nhất",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phan.so.thu.hai.13190a9f",
+      "source": "Phân số thứ hai",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tu.so.0f01d4ee",
+      "source": "Tử số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.so.bedc8810",
+      "source": "Mẫu số",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.va.b82d48f0",
+      "source": "Và",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tu.so.va.mau.so.chi.duoc.nhap.so.nguyen.kh.c8ef17e5",
+      "source": "Tử số và mẫu số chỉ được nhập số nguyên; không được dùng dấu chấm (.) hoặc dấu phẩy (,).",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bang.cuu.chuong.9a5eedcb",
+      "source": "BẢNG CỬU CHƯƠNG",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bang.nhan.va.bang.chia.tu.1.den.20.99db068f",
+      "source": "Bảng nhân và bảng chia từ 1 đến 20",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.1.chon.loai.bang.20efd2cb",
+      "source": "1. Chọn loại bảng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.bang.nhan.hoac.bang.chia.b26ee238",
+      "source": "Chọn bảng nhân hoặc bảng chia.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bang.nhan.61336d5c",
+      "source": "×  Bảng nhân",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bang.chia.72501aae",
+      "source": "÷  Bảng chia",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.2.pham.vi.hien.thi.0dd2ba3f",
+      "source": "2. Phạm vi hiển thị",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.nhom.co.ban.nang.cao.hoac.hien.thi.to.0a73fb66",
+      "source": "Chọn nhóm cơ bản, nâng cao hoặc hiển thị toàn bộ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bang.1.10.6e7bf967",
+      "source": "Bảng 1 – 10",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.10.bang.co.ban.77dbbea8",
+      "source": "10 bảng cơ bản",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bang.11.20.1d65b5b1",
+      "source": "Bảng 11 – 20",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.10.bang.nang.cao.2255d8e1",
+      "source": "10 bảng nâng cao",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tat.ca.1.20.5ee03423",
+      "source": "Tất cả 1 – 20",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hien.thi.day.du.20.bang.7200bb12",
+      "source": "Hiển thị đầy đủ 20 bảng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.3.danh.sach.bang.cuu.chuong.1a077dde",
+      "source": "3. Danh sách bảng cửu chương",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.moi.o.hien.thi.day.du.10.phep.tinh.c3f26165",
+      "source": "Mỗi ô hiển thị đầy đủ 10 phép tính.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cai.dat.giao.dien.43bd0abd",
+      "source": "CÀI ĐẶT GIAO DIỆN",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phong.cach.hien.thi.1c1bb9d8",
+      "source": "Phong cách hiển thị",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.theo.he.thong.se.tu.chuyen.sang.hoac.toi.t.26cb8166",
+      "source": "Theo hệ thống sẽ tự chuyển sáng hoặc tối theo thiết bị.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.he.thong.d90f70ae",
+      "source": "Hệ thống",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.sang.55942c05",
+      "source": "Sáng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.toi.ca1dd55d",
+      "source": "Tối",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.chu.de.288fc6d0",
+      "source": "Màu chủ đề",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ap.dung.1e948c59",
+      "source": "Áp dụng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.xem.truoc.mau.chu.de.f8e9fa07",
+      "source": "Xem trước màu chủ đề",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phong.chu.409e6270",
+      "source": "Phông chữ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.xem.truoc.phong.chu.f14ece48",
+      "source": "Xem trước phông chữ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.aa.bb.cc.0123456789.toan.hoc.2bd496ed",
+      "source": "Aa Bb Cc — 0123456789 — Toán học",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khoi.phuc.mac.dinh.cecc185f",
+      "source": "Khôi phục mặc định",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khoi.phuc.0bc3b5fc",
+      "source": "Khôi phục",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ngon.ngu.65074a85",
+      "source": "Ngôn ngữ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tieng.viet.4993440c",
+      "source": "Tiếng Việt",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tieng.anh.b5332d81",
+      "source": "Tiếng Anh",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tuy.chinh.mau.d0bb0ccb",
+      "source": "Tùy chỉnh màu…",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.suc.manh.f43fbbba",
+      "source": "Đo sức mạnh",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phan.cung.va.hieu.nang.tinh.toan.8d5a4827",
+      "source": "Phần cứng và hiệu năng tính toán",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thong.tin.phan.cung.va.hieu.nang.tinh.toan.c23bbe0f",
+      "source": "Thông tin phần cứng và hiệu năng tính toán",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thong.tin.thiet.bi.dbc16554",
+      "source": "Thông tin thiết bị",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ten.thiet.bi.95724464",
+      "source": "Tên thiết bị",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.thiet.bi.f0d6e861",
+      "source": "Mẫu thiết bị",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nha.san.xuat.f323a0f2",
+      "source": "Nhà sản xuất",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nen.tang.4676be0d",
+      "source": "Nền tảng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phien.ban.he.dieu.hanh.e518982a",
+      "source": "Phiên bản hệ điều hành",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.moi.truong.thiet.bi.9691cdf1",
+      "source": "Môi trường thiết bị",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.man.hinh.6ecd4327",
+      "source": "Màn hình",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bo.xu.ly.0d46ecde",
+      "source": "Bộ xử lý",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ten.bo.vi.xu.ly.684de047",
+      "source": "Tên bộ vi xử lý",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.xung.nhip.cpu.874c008d",
+      "source": "Xung nhịp CPU",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.kien.truc.cpu.cc64acde",
+      "source": "Kiến trúc CPU",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.kien.truc.he.dieu.hanh.ad2672de",
+      "source": "Kiến trúc hệ điều hành",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.loi.vat.ly.47b96483",
+      "source": "Số lõi vật lý",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.luong.logic.e49958f7",
+      "source": "Số luồng logic",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tap.lenh.simd.85599f26",
+      "source": "Tập lệnh SIMD",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.rong.vector.8dc069a0",
+      "source": "Độ rộng vector",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bo.nho.kha.dung.cho.tien.trinh.83d067b1",
+      "source": "Bộ nhớ khả dụng cho tiến trình",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tang.toc.tinh.toan.b07129b1",
+      "source": "Tăng tốc tính toán",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tang.toc.phan.cung.8ff648a3",
+      "source": "Tăng tốc phần cứng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bat.de.dung.simd.tat.de.dung.che.do.scalar.2890076e",
+      "source": "Bật để dùng SIMD; tắt để dùng chế độ Scalar thông thường.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.che.do.xu.ly.hien.tai.5fa81710",
+      "source": "Chế độ xử lý hiện tại",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.simd.chi.duoc.bat.khi.cpu.va.net.runtime.c.6bc70066",
+      "source": "SIMD chỉ được bật khi CPU và .NET Runtime của thiết bị hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.dung.simd.ce349a4b",
+      "source": "Đang dùng SIMD.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.dung.scalar.07557026",
+      "source": "Đang dùng Scalar.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thiet.bi.khong.ho.tro.simd.ung.dung.se.dun.39d1dadf",
+      "source": "Thiết bị không hỗ trợ SIMD. Ứng dụng sẽ dùng Scalar.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.che.do.xu.ly.0.4a4b9bdd",
+      "source": "Chế độ xử lý: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.duoc.ho.tro.17056dd5",
+      "source": "Không được hỗ trợ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.da.luong.bded8040",
+      "source": "Đa luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bat.de.biginteger.va.cac.tac.vu.doc.lap.su.c793296c",
+      "source": "Bật để BigInteger và các tác vụ độc lập sử dụng nhiều luồng CPU.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.che.do.so.thuc.527dcd9a",
+      "source": "Chế độ số thực",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.che.do.biginteger.24aaa9b8",
+      "source": "Chế độ BigInteger",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thuc.luon.chay.mot.luong.de.so.sanh.sim.68f4abb3",
+      "source": "Số thực luôn chạy một luồng để so sánh SIMD và Scalar công bằng. BigInteger không dùng SIMD.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.simd.1.luong.4e651dd6",
+      "source": "SIMD • 1 luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.scalar.1.luong.cac9e272",
+      "source": "Scalar • 1 luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.da.luong.0.luong.deeb16a4",
+      "source": "Đa luồng ({0} luồng)",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.don.luong.ee91fa19",
+      "source": "Đơn luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.dung.0.luong.cpu.12d57c22",
+      "source": "Đang dùng {0} luồng CPU.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.dung.mot.luong.cpu.f089dd82",
+      "source": "Đang dùng một luồng CPU.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thiet.bi.chi.co.mot.luong.logic.658e8d63",
+      "source": "Thiết bị chỉ có một luồng logic.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.simd.hoac.scalar.tren.so.thuc.mot.luong.83d594fb",
+      "source": "Đo SIMD hoặc Scalar trên số thực một luồng và đo BigInteger đơn luồng hoặc đa luồng.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thuc.0.1.luong.9bcff938",
+      "source": "Số thực: {0} • 1 luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.biginteger.0.eb1391ce",
+      "source": "BigInteger: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thuc.0.n1.trieu.phep.tinh.giay.1.n0.ms.cf9ddde1",
+      "source": "Số thực: {0:N1} triệu phép tính/giây ({1:N0} ms)",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.lon.0.n0.phep.tinh.giay.1.n0.ms.5620fe1d",
+      "source": "Số nguyên lớn: {0:N0} phép tính/giây ({1:N0} ms)",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.suc.manh.96b7b72f",
+      "source": "ĐO SỨC MẠNH",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.hieu.nang.int32.int64.float.va.double.d256e2d2",
+      "source": "Đo hiệu năng Int32, Int64, Float và Double",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bat.de.float.va.double.dung.simd.trong.ben.40e82758",
+      "source": "Bật để Float và Double dùng SIMD trong benchmark.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bat.de.benchmark.float.double.int32.va.int.790daa1a",
+      "source": "Bật để benchmark Float, Double, Int32 và Int64 sử dụng nhiều luồng CPU.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.che.do.float.double.02a957c1",
+      "source": "Chế độ Float / Double",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.che.do.int32.int64.e6e5cd59",
+      "source": "Chế độ Int32 / Int64",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.va.double.dung.simd.khi.bat.int32.va.947d976a",
+      "source": "Float và Double dùng SIMD khi bật. Int32 và Int64 luôn dùng Scalar. Đa luồng chỉ áp dụng cho benchmark.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.moi.kieu.int32.int64.float.va.double.duoc.89b7f917",
+      "source": "Mỗi kiểu Int32, Int64, Float và Double được đo trong 10 giây; kết quả cao nhất của từng kiểu được dùng để tính điểm tổng thể.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.bai.do.keo.dai.khoang.40.giay.chua.tinh.th.26aedcaa",
+      "source": "Bài đo kéo dài khoảng 40 giây, chưa tính thời gian khởi động ngắn giữa các kiểu dữ liệu.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thiet.bi.khong.ho.tro.simd.float.va.double.764d9eb5",
+      "source": "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.va.double.dang.dung.simd.0715cc02",
+      "source": "Float và Double đang dùng SIMD.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.va.double.dang.dung.scalar.4c2f4fd6",
+      "source": "Float và Double đang dùng Scalar.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.benchmark.dang.dung.0.luong.cpu.839b4ec6",
+      "source": "Benchmark đang dùng {0} luồng CPU.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.benchmark.dang.dung.mot.luong.cpu.06d3478e",
+      "source": "Benchmark đang dùng một luồng CPU.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.da.luong.1.luong.69bf34c0",
+      "source": "{0} + đa luồng ({1} luồng)",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.don.luong.fc0dfd7f",
+      "source": "{0} + đơn luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.scalar.da.luong.0.luong.e80d9929",
+      "source": "Scalar + đa luồng ({0} luồng)",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.scalar.don.luong.aa984ba9",
+      "source": "Scalar + đơn luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.do.0.1.4.10.giay.aed71ba8",
+      "source": "Đang đo {0} ({1}/4) • 10 giây…",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.da.huy.do.suc.manh.49795baa",
+      "source": "Đã hủy đo sức mạnh.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.double.0.b5c7ac00",
+      "source": "Float / Double: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.int32.int64.0.5693d13d",
+      "source": "Int32 / Int64: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.int32.0.n1.trieu.phep.tinh.giay.f4e679f7",
+      "source": "Int32: {0:N1} triệu phép tính/giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.int64.0.n1.trieu.phep.tinh.giay.b6ee9205",
+      "source": "Int64: {0:N1} triệu phép tính/giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.0.n1.trieu.phep.tinh.giay.ba2bee7a",
+      "source": "Float: {0:N1} triệu phép tính/giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.double.0.n1.trieu.phep.tinh.giay.a8fcb948",
+      "source": "Double: {0:N1} triệu phép tính/giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tong.thoi.gian.0.n1.giay.7911701a",
+      "source": "Tổng thời gian: {0:N1} giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tap.lenh.simd.benchmark.06948649",
+      "source": "Tập lệnh SIMD benchmark",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chi.cac.tap.lenh.cpu.dang.ho.tro.moi.duoc.2d9c581d",
+      "source": "Chỉ các tập lệnh CPU đang hỗ trợ mới được hiển thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.va.double.dang.dung.0.55de6232",
+      "source": "Float và Double đang dùng {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dung.do.suc.manh.d9c47b2e",
+      "source": "Dừng đo sức mạnh",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.xac.nhan.dung.25de68be",
+      "source": "Xác nhận dừng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ban.co.muon.dung.trinh.do.suc.manh.khong.9d60ccc1",
+      "source": "Bạn có muốn dừng trình đo sức mạnh không?",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.dung.do.suc.manh.847aac4a",
+      "source": "Đang dừng đo sức mạnh…",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.giay.fa32ea49",
+      "source": "{0} giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.do.0.1.4.2143dd69",
+      "source": "Đang đo {0} ({1}/4)",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.moi.kieu.duoc.do.lien.tiep.trong.10.giay.v.2004d0dc",
+      "source": "Mỗi kiểu được đo liên tiếp trong 10 giây và lấy kết quả cao nhất. Float/Double hiển thị MFLOPS/GFLOPS; Int32/Int64 hiển thị MOPS/GOPS.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.int32.0.n1.mops.1.n3.gops.44a4428d",
+      "source": "Int32: {0:N1} MOPS • {1:N3} GOPS",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.int64.0.n1.mops.1.n3.gops.65a13f00",
+      "source": "Int64: {0:N1} MOPS • {1:N3} GOPS",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.float.0.n1.mflops.1.n3.gflops.10aa441c",
+      "source": "Float: {0:N1} MFLOPS • {1:N3} GFLOPS",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.double.0.n1.mflops.1.n3.gflops.6669c952",
+      "source": "Double: {0:N1} MFLOPS • {1:N3} GFLOPS",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.hieu.nang.phep.tinh.e02790da",
+      "source": "Đo hiệu năng phép tính",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.toc.do.xu.ly.so.thuc.va.so.nguyen.lon.t.068dd63c",
+      "source": "Đo tốc độ xử lý số thực và số nguyên lớn trên thiết bị này.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chay.do.suc.manh.68e5cb28",
+      "source": "Chạy đo sức mạnh",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chua.chay.do.suc.manh.de55964d",
+      "source": "Chưa chạy đo sức mạnh.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.do.suc.manh.xu.ly.73cad092",
+      "source": "Đang đo sức mạnh xử lý…",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.do.suc.manh.hoan.tat.e0d736e0",
+      "source": "Đo sức mạnh hoàn tất.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.the.chay.do.suc.manh.tren.thiet.bi.n.ee91151d",
+      "source": "Không thể chạy đo sức mạnh trên thiết bị này.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.diem.tham.khao.f99f3183",
+      "source": "Điểm tham khảo",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thuc.38b88d32",
+      "source": "Số thực",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.lon.a1e84506",
+      "source": "Số nguyên lớn",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tong.thoi.gian.b260c550",
+      "source": "Tổng thời gian",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.thuc.0.n1.trieu.phep.tinh.giay.6f79eedf",
+      "source": "Số thực: {0:N1} triệu phép tính/giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.nguyen.lon.0.n0.phep.tinh.giay.136e1936",
+      "source": "Số nguyên lớn: {0:N0} phép tính/giây",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tong.thoi.gian.0.n0.ms.a4922a08",
+      "source": "Tổng thời gian: {0:N0} ms",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.qua.chi.nen.so.sanh.trong.cung.phien.b.605044ac",
+      "source": "Kết quả chỉ nên so sánh trong cùng phiên bản Math Solver.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.may.tinh.de.ban.a5a4a7ff",
+      "source": "Máy tính để bàn",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dien.thoai.08fc3ada",
+      "source": "Điện thoại",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.may.tinh.bang.9c528e41",
+      "source": "Máy tính bảng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dong.ho.5f53d765",
+      "source": "Đồng hồ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thiet.bi.that.48012fa4",
+      "source": "Thiết bị thật",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.thiet.bi.ao.7d20dc09",
+      "source": "Thiết bị ảo",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.co.05828b8a",
+      "source": "Có",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.3b4a527f",
+      "source": "Không",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cai.dat.nang.cao.8e48eaa8",
+      "source": "Cài đặt nâng cao",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dat.lai.38f5bb9b",
+      "source": "Đặt lại",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dong.d2b73ab2",
+      "source": "Đóng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chu.de.95f74557",
+      "source": "Chủ đề",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mac.dinh.he.thong.16e1a41a",
+      "source": "Mặc định hệ thống",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.vuong.82c49c4e",
+      "source": "Hình vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.chu.nhat.14c9e088",
+      "source": "Hình chữ nhật",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.tam.giac.9c874711",
+      "source": "Hình tam giác",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.tam.giac.vuong.d9d861da",
+      "source": "Hình tam giác vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.tam.giac.deu.b5212b0f",
+      "source": "Hình tam giác đều",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.tron.e1d7282a",
+      "source": "Hình tròn",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.thang.abd35f69",
+      "source": "Hình thang",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.thang.can.ccd59eb3",
+      "source": "Hình thang cân",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.thang.vuong.d278a579",
+      "source": "Hình thang vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.thoi.332daac7",
+      "source": "Hình thoi",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.binh.hanh.472c2391",
+      "source": "Hình bình hành",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.lap.phuong.03b207a0",
+      "source": "Hình lập phương",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.hop.chu.nhat.3f5fbb46",
+      "source": "Hình hộp chữ nhật",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.cau.326ad71e",
+      "source": "Hình cầu",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.tru.ad57a00e",
+      "source": "Hình trụ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.hinh.non.3eb3a2f2",
+      "source": "Hình nón",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vo.so.nghiem.7cf32635",
+      "source": "Vô số nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.co.nghiem.a4cda906",
+      "source": "Không có nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.the.giai.6225ef52",
+      "source": "Không thể giải",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phep.tinh.khong.xac.dinh.d5fe8dc4",
+      "source": "Phép tính không xác định",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.cai.dat.01f3f39f",
+      "source": "Cài đặt",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tuy.chinh.nhanh.math.solver.7e151c00",
+      "source": "Tùy chỉnh nhanh Math Solver",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khoi.phuc.cai.dat.mac.dinh.6b3c1a29",
+      "source": "Khôi phục cài đặt mặc định",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.hex.rgb.va.xem.truoc.1153e957",
+      "source": "Màu HEX, RGB và xem trước",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.phong.cach.sang.toi.va.bat.ky.mau.chu.330df036",
+      "source": "Chọn phong cách sáng, tối và bất kỳ màu chủ đề nào cho Math Solver",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.mau.co.san.nhap.ma.hex.hoac.dieu.chin.7872846c",
+      "source": "Chọn màu có sẵn, nhập mã HEX hoặc điều chỉnh ba kênh RGB.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.phong.chu.dung.cho.toan.bo.giao.dien.1bfaf4d3",
+      "source": "Chọn phông chữ dùng cho toàn bộ giao diện Math Solver.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.chon.ngon.ngu.dung.cho.toan.bo.giao.dien.v.228295f1",
+      "source": "Chọn ngôn ngữ dùng cho toàn bộ giao diện và lời giải.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dua.ung.dung.ve.mau.tim.phong.open.sans.va.bf9602a3",
+      "source": "Đưa ứng dụng về màu tím, phông Open Sans và phong cách theo hệ thống.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.tim.15f40550",
+      "source": "Màu tím",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.xanh.duong.d48783f6",
+      "source": "Màu xanh dương",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.xanh.ngoc.6d26123d",
+      "source": "Màu xanh ngọc",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.xanh.la.a8dcd288",
+      "source": "Màu xanh lá",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.cam.1a87032b",
+      "source": "Màu cam",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.hong.7e474ba7",
+      "source": "Màu hồng",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nhap.so.nguyen.dau.phay.phan.nhom.hang.ngh.76de4552",
+      "source": "Nhập số nguyên; dấu phẩy phân nhóm hàng nghìn được thêm tự động, ví dụ: 1,000 hoặc -25,000.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khu.vuc.nay.se.ho.tro.hinh.vuong.hinh.chu.97f37f94",
+      "source": "Khu vực này sẽ hỗ trợ hình vuông, hình chữ nhật, tam giác, hình tròn, hình thang và các hình học khác.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.hang.chua.biet.d725c705",
+      "source": "Tìm số hạng chưa biết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.bi.tru.a7690ab0",
+      "source": "Tìm số bị trừ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.tru.876e7cfc",
+      "source": "Tìm số trừ",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.thua.so.chua.biet.bedea7d0",
+      "source": "Tìm thừa số chưa biết",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.bi.chia.eda13a3d",
+      "source": "Tìm số bị chia",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tim.so.chia.adbe9e47",
+      "source": "Tìm số chia",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ban.dang.chon.che.do.so.nguyen.1b634c67",
+      "source": "Bạn đang chọn chế độ số nguyên.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.khong.hop.le.hay.nhap.dang.rrggbb.vi.d.5b29e600",
+      "source": "Màu không hợp lệ. Hãy nhập dạng #RRGGBB, ví dụ #6D28D9.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.a.0.voi.a.0.8b80d6b5",
+      "source": "0 ÷ a = 0, với a ≠ 0",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.a.a.1.voi.a.0.41eedbd7",
+      "source": "a ÷ a = 1, với a ≠ 0",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.nhap.cac.gia.tri.da.biet.bang.so.nguyen.ne.a9d6580d",
+      "source": "Nhập các giá trị đã biết bằng số nguyên. Nếu x không phải số nguyên, ứng dụng vẫn giữ kết quả chính xác dưới dạng phân số.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khi.mot.thua.so.bang.0.tich.luon.bang.0.3369550f",
+      "source": "Khi một thừa số bằng 0, tích luôn bằng 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.dang.thuc.dung.voi.moi.gia.tri.cua.x.ebd13598",
+      "source": "Đẳng thức đúng với mọi giá trị của x.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.khong.co.so.nao.nhan.voi.0.ma.cho.ket.qua.c805ba89",
+      "source": "Không có số nào nhân với 0 mà cho kết quả khác 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ve.trai.luon.bang.0.nen.khong.the.bang.ve.6e2448ba",
+      "source": "Vế trái luôn bằng 0 nên không thể bằng vế phải.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phuong.trinh.co.dang.x.0.nen.phep.chia.kho.8f41da65",
+      "source": "Phương trình có dạng x ÷ 0 nên phép chia không được xác định.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.0.chia.cho.moi.so.khac.0.deu.bang.0.d12a15aa",
+      "source": "0 chia cho mọi số khác 0 đều bằng 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.phuong.trinh.0.x.0.dung.voi.moi.x.khac.0.3ffd699f",
+      "source": "Phương trình 0 ÷ x = 0 đúng với mọi x khác 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mot.so.khac.0.chia.cho.mot.so.huu.han.khac.65b216b5",
+      "source": "Một số khác 0 chia cho một số hữu hạn khác 0 không thể bằng 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.so.chia.x.phai.khac.0.034b83c4",
+      "source": "Số chia x phải khác 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.mau.so.chung.nho.nhat.la.boi.chung.nho.nha.9776180c",
+      "source": "Mẫu số chung nhỏ nhất là bội chung nhỏ nhất của hai mẫu số.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.vi.phep.tinh.co.so.thap.phan.nen.ket.qua.d.d1011f01",
+      "source": "Vì phép tính có số thập phân nên kết quả được trình bày theo dạng số thập phân.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.tu.so.va.mau.so.chi.duoc.nhap.so.nguyen.tr.9233799b",
+      "source": "Tử số và mẫu số chỉ được nhập số nguyên trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727; không được dùng dấu chấm (.) hoặc dấu phẩy (,).",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.ket.qua.vuot.qua.pham.vi.cua.kieu.decimal.46d41546",
+      "source": "Kết quả vượt quá phạm vi của kiểu decimal.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.sai.khac.nho.xuat.hien.do.gioi.han.lam.tro.811ee830",
+      "source": "Sai khác nhỏ xuất hiện do giới hạn làm tròn của decimal.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.exact.sau.do.thuc.hien.phep.chia.dat.tinh.nhu.ch.62f27fbb",
+      "source": "Sau đó thực hiện phép chia đặt tính như chia số tự nhiên.",
+      "mode": "exact"
+    },
+    {
+      "key": "legacy.phrase.phuong.trinh.co.dang.ax2.bx.c.0.bfa8f6ce",
+      "source": "Phương trình có dạng ax² + bx + c = 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.co.6a2cbdde",
+      "source": "Ta có:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phuong.trinh.e7bd42d6",
+      "source": "Phương trình:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.cong.co.tinh.giao.hoan.va.ket.hop.68aca753",
+      "source": "Phép cộng có tính giao hoán và kết hợp.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.so.nguyen.duoc.cong.theo.dung.gia.tri.91da1db9",
+      "source": "Hai số nguyên được cộng theo đúng giá trị hàng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dang.cong.voi.0.nen.gia.tri.khong.thay.doi.f102015d",
+      "source": "Đang cộng với 0 nên giá trị không thay đổi.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.cong.cac.chu.so.cung.hang.tu.phai.sang.tra.e430882c",
+      "source": "Cộng các chữ số cùng hàng từ phải sang trái và nhớ sang hàng kế tiếp khi cần.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.tru.la.phep.toan.nguoc.cua.phep.cong.27fe4050",
+      "source": "Phép trừ là phép toán ngược của phép cộng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dang.tru.di.0.nen.gia.tri.khong.thay.doi.fd5e2410",
+      "source": "Đang trừ đi 0 nên giá trị không thay đổi.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.lay.so.bi.tru.bot.di.so.tru.2f973d2b",
+      "source": "Lấy số bị trừ bớt đi số trừ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tru.cac.chu.so.cung.hang.tu.phai.sang.trai.5b6dbf4d",
+      "source": "Trừ các chữ số cùng hàng từ phải sang trái và mượn ở hàng kế tiếp khi cần.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.nhan.co.tinh.giao.hoan.ket.hop.va.pha.d0b3aef1",
+      "source": "Phép nhân có tính giao hoán, kết hợp và phân phối đối với phép cộng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.co.mot.thua.so.bang.0.nen.tich.bang.0.ccc41891",
+      "source": "Có một thừa số bằng 0 nên tích bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.co.mot.thua.so.bang.1.nen.tich.bang.thua.s.8124c396",
+      "source": "Có một thừa số bằng 1 nên tích bằng thừa số còn lại.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tich.duoc.tao.boi.phep.cong.lap.lai.theo.c.1b0ef403",
+      "source": "Tích được tạo bởi phép cộng lặp lại theo các hàng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.nhan.lan.luot.tung.chu.so.roi.cong.cac.tic.e4360bcd",
+      "source": "Nhân lần lượt từng chữ số rồi cộng các tích riêng đã dịch đúng vị trí.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.chia.la.phep.toan.nguoc.cua.phep.nhan.8879d34b",
+      "source": "Phép chia là phép toán ngược của phép nhân.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.bi.chia.duoc.tach.thanh.thuong.va.so.du.d7b65329",
+      "source": "Số bị chia được tách thành thương và số dư.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.du.luon.co.gia.tri.tuyet.doi.nho.hon.so.301af1df",
+      "source": "Số dư luôn có giá trị tuyệt đối nhỏ hơn số chia.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phan.mem.duoc.tao.ra.nham.ho.tro.hoc.tap.k.e89f993d",
+      "source": "Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.nen.lam.dung.phan.mem.de.lam.thay.to.7bb73957",
+      "source": "Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hay.tu.lam.bai.truoc.sau.do.su.dung.phan.m.3aa6ae16",
+      "source": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.sau.khi.tim.duoc.x.ung.dung.luon.thay.x.tr.f2c344ad",
+      "source": "Sau khi tìm được x, ứng dụng luôn thay x trở lại phép tính ban đầu để kiểm tra.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.neu.phep.chia.co.x.o.mau.so.thi.x.phai.kha.e7a04e64",
+      "source": "Nếu phép chia có x ở mẫu số thì x phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tu.so.va.mau.so.phai.la.so.nguyen.mau.so.p.d3acc338",
+      "source": "Tử số và mẫu số phải là số nguyên; mẫu số phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ket.qua.duoc.xu.ly.chinh.xac.bang.phan.so.03a92828",
+      "source": "Kết quả được xử lý chính xác bằng phân số nội bộ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.neu.x.khong.phai.so.nguyen.ung.dung.van.gi.f15fe7f9",
+      "source": "Nếu x không phải số nguyên, ứng dụng vẫn giữ kết quả chính xác dưới dạng phân số.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chon.x.la.so.hang.thu.nhat.hoac.so.hang.th.140e1e98",
+      "source": "Chọn x là số hạng thứ nhất hoặc số hạng thứ hai.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.tri.cua.x.quyet.dinh.x.la.so.bi.tru.hay.9dc227ea",
+      "source": "Vị trí của x quyết định x là số bị trừ hay số trừ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chon.x.la.thua.so.thu.nhat.hoac.thua.so.th.9889190c",
+      "source": "Chọn x là thừa số thứ nhất hoặc thừa số thứ hai.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.tri.cua.x.quyet.dinh.x.la.so.bi.chia.ha.f3dde5d0",
+      "source": "Vị trí của x quyết định x là số bị chia hay số chia.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.mot.so.hang.chua.biet.ta.lay.tong.9f1aa0e2",
+      "source": "Muốn tìm một số hạng chưa biết, ta lấy tổng trừ đi số hạng đã biết.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.mot.so.hang.lay.tong.tru.di.so.ha.b42c18f5",
+      "source": "Muốn tìm một số hạng, lấy tổng trừ đi số hạng đã biết.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.bi.tru.ta.lay.hieu.cong.voi.so.095d15b3",
+      "source": "Muốn tìm số bị trừ, ta lấy hiệu cộng với số trừ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.bi.tru.lay.hieu.cong.voi.so.tr.ca860b48",
+      "source": "Muốn tìm số bị trừ, lấy hiệu cộng với số trừ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.tru.ta.lay.so.bi.tru.tru.di.hi.d4efe5ba",
+      "source": "Muốn tìm số trừ, ta lấy số bị trừ trừ đi hiệu.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.tru.lay.so.bi.tru.tru.di.hieu.1d0c2578",
+      "source": "Muốn tìm số trừ, lấy số bị trừ trừ đi hiệu.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.mot.thua.so.chua.biet.ta.lay.tich.05c904e9",
+      "source": "Muốn tìm một thừa số chưa biết, ta lấy tích chia cho thừa số đã biết.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.mot.thua.so.lay.tich.chia.cho.thu.54641674",
+      "source": "Muốn tìm một thừa số, lấy tích chia cho thừa số đã biết.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.bi.chia.ta.lay.thuong.nhan.voi.c1304533",
+      "source": "Muốn tìm số bị chia, ta lấy thương nhân với số chia.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.bi.chia.lay.thuong.nhan.voi.so.7956875e",
+      "source": "Muốn tìm số bị chia, lấy thương nhân với số chia.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.chia.ta.lay.so.bi.chia.chia.ch.cc1b1def",
+      "source": "Muốn tìm số chia, ta lấy số bị chia chia cho thương",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.muon.tim.so.chia.lay.so.bi.chia.chia.cho.t.6d5b06b5",
+      "source": "Muốn tìm số chia, lấy số bị chia chia cho thương.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.buoc.1.xac.dinh.thanh.phan.chua.biet.va.ap.b9865b0c",
+      "source": "Bước 1. Xác định thành phần chưa biết và áp dụng quy tắc.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.buoc.2.thay.cac.gia.tri.da.biet.9f7b9a44",
+      "source": "Bước 2. Thay các giá trị đã biết:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.thay.x.8bc55dca",
+      "source": "Thay x =",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vao.phep.tinh.ban.dau.ae79f11e",
+      "source": "vào phép tính ban đầu:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.ve.bang.nhau.nen.ket.qua.tim.duoc.la.d.c93be58a",
+      "source": "Hai vế bằng nhau nên kết quả tìm được là đúng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ve.trai.7e9557ed",
+      "source": "Vế trái =",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ve.phai.b42ae950",
+      "source": "vế phải =",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vay.x.a28fc63a",
+      "source": "Vậy x =",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.ton.tai.gia.tri.x.phu.hop.b9f2f59f",
+      "source": "Không tồn tại giá trị x phù hợp",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.moi.x.khac.0.fb38a9a8",
+      "source": "Mọi x khác 0",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.moi.gia.tri.cua.x.852a42d6",
+      "source": "Mọi giá trị của x",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.gia.tri.gan.dung.3667bdc7",
+      "source": "Giá trị gần đúng:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mau.so.khong.duoc.bang.0.442dc5ce",
+      "source": "Mẫu số không được bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.chia.phai.khac.0.31969d8b",
+      "source": "Số chia phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ban.khong.the.chia.cho.0.a05a8b47",
+      "source": "Bạn không thể chia cho 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.trong.toan.hoc.phep.chia.cho.0.khong.duoc.28ef99a3",
+      "source": "Trong toán học, phép chia cho 0 không được xác định.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ban.khong.the.chia.mot.so.cho.0.9b486751",
+      "source": "Bạn không thể chia một số cho 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.day.la.phep.chia.het.a4d5abb6",
+      "source": "Đây là phép chia hết",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.day.la.phep.chia.co.du.48a02eed",
+      "source": "Đây là phép chia có dư",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.so.du.bang.0.nen.day.la.phep.chia.het.9bf20143",
+      "source": "Vì số dư bằng 0 nên đây là phép chia hết.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.kiem.tra.71ad3628",
+      "source": "Ta kiểm tra:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.thuc.hien.phep.chia.58955957",
+      "source": "Ta thực hiện phép chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.lay.0b2946f5",
+      "source": "Ta lấy",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vay.ket.qua.la.e26dd6bf",
+      "source": "Vậy kết quả là",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vay.thuong.la.063c516e",
+      "source": "Vậy thương là",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.va.so.du.la.652c163b",
+      "source": "và số dư là",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.thuong.la.ef8cddda",
+      "source": "Thương là",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.phep.tinh.co.so.thap.phan.nen.ket.qua.d.d1011f01",
+      "source": "Vì phép tính có số thập phân nên kết quả được trình bày theo dạng số thập phân.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.cong.co.tinh.chat.giao.hoan.va.ket.ho.336d74cf",
+      "source": "Phép cộng có tính chất giao hoán và kết hợp.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.0.la.phan.tu.trung.hoa.cua.phep.cong.42ac0e57",
+      "source": "Số 0 là phần tử trung hòa của phép cộng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.tru.khong.co.tinh.chat.giao.hoan.bc9e17f7",
+      "source": "Phép trừ không có tính chất giao hoán.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.tru.cung.khong.co.tinh.chat.ket.hop.36d0c353",
+      "source": "Phép trừ cũng không có tính chất kết hợp.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.nhan.co.tinh.chat.giao.hoan.ket.hop.v.98b25f44",
+      "source": "Phép nhân có tính chất giao hoán, kết hợp và phân phối.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.1.la.phan.tu.don.vi.so.0.la.phan.tu.hap.b270f7f3",
+      "source": "Số 1 là phần tử đơn vị; số 0 là phần tử hấp thụ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.chia.khong.co.tinh.chat.giao.hoan.247ac3c5",
+      "source": "Phép chia không có tính chất giao hoán.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.chia.cung.khong.co.tinh.chat.ket.hop.c2d0f7d6",
+      "source": "Phép chia cũng không có tính chất kết hợp.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.moi.quy.tac.chi.ap.dung.khi.so.chia.khac.0.acd75c22",
+      "source": "Mọi quy tắc chỉ áp dụng khi số chia khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tinh.chat.chung.ea67cae1",
+      "source": "Tính chất chung",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.truong.hop.dang.ap.dung.2d888a03",
+      "source": "Trường hợp đang áp dụng",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.minh.hoa.30e55111",
+      "source": "Minh họa",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.quy.tac.39dc60d4",
+      "source": "Quy tắc:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ca.hai.so.hang.deu.bang.0.76f43806",
+      "source": "Cả hai số hạng đều bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.day.la.truong.hop.cong.voi.so.0.78982ebb",
+      "source": "Đây là trường hợp cộng với số 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.so.hang.bang.nhau.a5efbabd",
+      "source": "Hai số hạng bằng nhau.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ap.dung.tinh.chat.giao.hoan.76e72819",
+      "source": "Áp dụng tính chất giao hoán.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.day.la.truong.hop.tru.di.so.0.1b2482ea",
+      "source": "Đây là trường hợp trừ đi số 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mot.so.tru.chinh.no.luon.bang.0.47276b70",
+      "source": "Một số trừ chính nó luôn bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.lay.0.tru.mot.so.se.duoc.so.doi.cua.so.do.92e6144d",
+      "source": "Lấy 0 trừ một số sẽ được số đối của số đó.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.co.the.kiem.tra.phep.tru.bang.phep.cong.b53b530b",
+      "source": "Có thể kiểm tra phép trừ bằng phép cộng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hieu.so.tru.so.bi.tru.eef48db3",
+      "source": "Hiệu + số trừ = số bị trừ",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.day.la.truong.hop.nhan.voi.so.0.b88a4a35",
+      "source": "Đây là trường hợp nhân với số 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.day.la.truong.hop.nhan.voi.so.1.299fda91",
+      "source": "Đây là trường hợp nhân với số 1.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.nhan.voi.1.se.doi.mot.so.thanh.so.doi.cua.debc9c1d",
+      "source": "Nhân với −1 sẽ đổi một số thành số đối của nó.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.thua.so.bang.nhau.nen.day.la.mot.binh.2b8ef14e",
+      "source": "Hai thừa số bằng nhau nên đây là một bình phương.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.0.chia.cho.mot.so.khac.0.luon.bang.0.680f633c",
+      "source": "Số 0 chia cho một số khác 0 luôn bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mot.so.chia.cho.1.van.giu.nguyen.4df4c8b9",
+      "source": "Một số chia cho 1 vẫn giữ nguyên.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mot.so.khac.0.chia.cho.chinh.no.luon.bang.84ec995c",
+      "source": "Một số khác 0 chia cho chính nó luôn bằng 1.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chia.cho.1.se.doi.mot.so.thanh.so.doi.cua.481fc18d",
+      "source": "Chia cho −1 sẽ đổi một số thành số đối của nó.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.co.the.kiem.tra.phep.chia.bang.phep.nhan.df719f1e",
+      "source": "Có thể kiểm tra phép chia bằng phép nhân.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.thuong.so.chia.so.bi.chia.51a8249a",
+      "source": "Thương × số chia = số bị chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phan.so.thu.nhat.la.0.0.nen.khong.xac.dinh.1fa66f0c",
+      "source": "Phân số thứ nhất là 0/0 nên không xác định.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mau.so.cua.phan.so.thu.nhat.phai.khac.0.d738019d",
+      "source": "Mẫu số của phân số thứ nhất phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phan.so.thu.hai.la.0.0.nen.khong.xac.dinh.ffd3aeb2",
+      "source": "Phân số thứ hai là 0/0 nên không xác định.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mau.so.cua.phan.so.thu.hai.phai.khac.0.ef1344c0",
+      "source": "Mẫu số của phân số thứ hai phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.toan.khong.duoc.ho.tro.15987a53",
+      "source": "Phép toán không được hỗ trợ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.tinh.ban.dau.b1dc9a0b",
+      "source": "Phép tính ban đầu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.kiem.tra.mau.so.add8cb50",
+      "source": "Kiểm tra mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tim.mau.so.chung.nho.nhat.3a190ea1",
+      "source": "Tìm mẫu số chung nhỏ nhất",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mau.so.chung.nho.nhat.la.boi.chung.nho.nha.9776180c",
+      "source": "Mẫu số chung nhỏ nhất là bội chung nhỏ nhất của hai mẫu số.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.quy.dong.phan.so.thu.nhat.510868c7",
+      "source": "Quy đồng phân số thứ nhất",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.quy.dong.phan.so.thu.hai.ebd1ad14",
+      "source": "Quy đồng phân số thứ hai",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ket.qua.sau.khi.quy.dong.c8e75d33",
+      "source": "Kết quả sau khi quy đồng",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.phan.so.luc.nay.da.co.cung.mau.so.3af8fc6f",
+      "source": "Hai phân số lúc này đã có cùng mẫu số.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tru.hai.phan.so.2d00c04d",
+      "source": "Trừ hai phân số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.cong.hai.phan.so.7b8ab1e1",
+      "source": "Cộng hai phân số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tru.hai.tu.so.df9f506e",
+      "source": "Trừ hai tử số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.cong.hai.tu.so.4cc6a4e7",
+      "source": "Cộng hai tử số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.giu.nguyen.mau.so.91d95edd",
+      "source": "Giữ nguyên mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.thuc.hien.phep.nhan.bd68d71c",
+      "source": "Thực hiện phép nhân",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.nhan.tu.voi.tu.mau.voi.mau.ff844739",
+      "source": "Nhân tử với tử, mẫu với mẫu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ket.qua.phep.nhan.8ad05d34",
+      "source": "Kết quả phép nhân",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dao.phan.so.chia.74c5d426",
+      "source": "Đảo phân số chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ket.qua.phep.chia.aa8599a2",
+      "source": "Kết quả phép chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.doi.phep.chia.thanh.phep.nhan.voi.phan.so.adb66dea",
+      "source": "Đổi phép chia thành phép nhân với phân số nghịch đảo:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.phan.so.ban.dau.40b4c0d7",
+      "source": "Hai phân số ban đầu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.quy.dong.mau.so.371176bd",
+      "source": "Quy đồng mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ket.qua.quy.dong.a162c1cd",
+      "source": "Kết quả quy đồng",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.phan.so.sau.khi.quy.dong.la.85af9958",
+      "source": "Hai phân số sau khi quy đồng là:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phan.so.co.tu.so.bang.0.nen.ket.qua.bang.0.594a93fe",
+      "source": "Phân số có tử số bằng 0 nên kết quả bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.rut.gon.phan.so.516781b3",
+      "source": "Rút gọn phân số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chia.ca.tu.va.mau.cho.1a0c905b",
+      "source": "Chia cả tử và mẫu cho",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phan.so.da.o.dang.toi.gian.a2ea446d",
+      "source": "Phân số đã ở dạng tối giản.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.bcnn.4da650b3",
+      "source": "BCNN",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ucln.405d4334",
+      "source": "ƯCLN",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chu.vi.3f239fb4",
+      "source": "Chu vi:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.quan.he.canh.42d18c12",
+      "source": "Quan hệ cạnh:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dien.tich.xung.quanh.b9a990f7",
+      "source": "Diện tích xung quanh:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dien.tich.toan.phan.d5c82f43",
+      "source": "Diện tích toàn phần:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dien.tich.mat.cau.db431fa0",
+      "source": "Diện tích mặt cầu:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dien.tich.day.1c880993",
+      "source": "Diện tích đáy:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dien.tich.bb6da86e",
+      "source": "Diện tích:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.the.tich.ed3c701f",
+      "source": "Thể tích:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hoac.28b033d6",
+      "source": "Hoặc:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.do.dai.mot.canh.ef14b311",
+      "source": "độ dài một cạnh",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chieu.dai.37653c9d",
+      "source": "chiều dài",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chieu.rong.749a52f0",
+      "source": "chiều rộng",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.do.dai.day.4e64d089",
+      "source": "độ dài đáy",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.do.dai.moi.canh.981a6ac8",
+      "source": "độ dài mỗi cạnh",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.canh.con.lai.94822be4",
+      "source": "hai cạnh còn lại",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.canh.goc.vuong.c7b327fa",
+      "source": "hai cạnh góc vuông",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.canh.huyen.0b6e7141",
+      "source": "cạnh huyền",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.goc.giua.a.va.b.bang.90.5f4e4a65",
+      "source": "Góc giữa a và b bằng 90°",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ba.canh.bang.nhau.ba.goc.deu.bang.60.49296239",
+      "source": "Ba cạnh bằng nhau; ba góc đều bằng 60°",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chieu.cao.tuong.ung.voi.day.df3866fb",
+      "source": "chiều cao tương ứng với đáy",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ban.kinh.hinh.cau.d34e0bfb",
+      "source": "bán kính hình cầu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ban.kinh.day.1aaabc8a",
+      "source": "bán kính đáy",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ban.kinh.b0eccf94",
+      "source": "bán kính",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.duong.kinh.32d9945a",
+      "source": "đường kính",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.day.song.song.2a250201",
+      "source": "hai đáy song song",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.canh.ben.bang.nhau.c10a3fcf",
+      "source": "hai cạnh bên bằng nhau",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.canh.ben.vuong.goc.voi.hai.day.dong.thoi.l.d49dc661",
+      "source": "cạnh bên vuông góc với hai đáy, đồng thời là chiều cao",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.canh.ben.con.lai.359f7cdd",
+      "source": "cạnh bên còn lại",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.canh.ben.17d1e09e",
+      "source": "hai cạnh bên",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.duong.cheo.2d0fe61b",
+      "source": "hai đường chéo",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.do.dai.canh.ben.4ba0110d",
+      "source": "độ dài cạnh bên",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chieu.cao.cdbb5f35",
+      "source": "chiều cao",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.duong.sinh.94dbbcee",
+      "source": "đường sinh",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.co.6.mat.la.cac.hinh.vuong.bang.nhau.34b2b8bc",
+      "source": "Có 6 mặt là các hình vuông bằng nhau",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.sxq.gom.4.mat.ben.stp.gom.ca.6.mat.f9c9d6ad",
+      "source": "Sxq gồm 4 mặt bên; Stp gồm cả 6 mặt",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.du.e8ef2310",
+      "source": "Ví dụ:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.nhap.cac.gia.tri.da.biet.bang.so.nguyen.c5c1e47d",
+      "source": "Nhập các giá trị đã biết bằng số nguyên.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chi.duoc.nhap.so.nguyen.76872186",
+      "source": "Chỉ được nhập số nguyên",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chi.duoc.nhap.so.mot.dau.am.o.dau.va.mot.d.464bf488",
+      "source": "Chỉ được nhập số, một dấu âm ở đầu và một dấu chấm",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khi.mot.thua.so.bang.0.tich.luon.bang.0.3369550f",
+      "source": "Khi một thừa số bằng 0, tích luôn bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phuong.trinh.tro.thanh.93aa2062",
+      "source": "Phương trình trở thành",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dang.thuc.dung.voi.moi.gia.tri.cua.x.ebd13598",
+      "source": "Đẳng thức đúng với mọi giá trị của x.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.co.so.nao.nhan.voi.0.ma.cho.ket.qua.c805ba89",
+      "source": "Không có số nào nhân với 0 mà cho kết quả khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ve.trai.luon.bang.0.nen.khong.the.bang.ve.6e2448ba",
+      "source": "Vế trái luôn bằng 0 nên không thể bằng vế phải.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.0.chia.cho.moi.so.khac.0.deu.bang.0.d12a15aa",
+      "source": "0 chia cho mọi số khác 0 đều bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phuong.trinh.0.x.0.dung.voi.moi.x.khac.0.3ffd699f",
+      "source": "Phương trình 0 ÷ x = 0 đúng với mọi x khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mot.so.khac.0.chia.cho.mot.so.huu.han.khac.65b216b5",
+      "source": "Một số khác 0 chia cho một số hữu hạn khác 0 không thể bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.co.gia.tri.x.hop.le.55f3bacc",
+      "source": "không có giá trị x hợp lệ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.chia.x.phai.khac.0.034b83c4",
+      "source": "Số chia x phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dong.thoi.so.chia.phai.khac.0.a9111c20",
+      "source": "đồng thời số chia phải khác 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.the.thuc.hien.phep.tinh.fb9cdde2",
+      "source": "Không thể thực hiện phép tính",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vuot.qua.pham.vi.so.ma.ung.dung.dang.ho.tr.23361f87",
+      "source": "vượt quá phạm vi số mà ứng dụng đang hỗ trợ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.cho.ket.qua.can.nhieu.hon.110f5e48",
+      "source": "cho kết quả cần nhiều hơn",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chu.so.sau.dau.cham.e3c59b55",
+      "source": "chữ số sau dấu chấm",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.the.bieu.dien.chinh.xac.trong.gioi.h.3527d2c9",
+      "source": "không thể biểu diễn chính xác trong giới hạn hiện tại",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ung.dung.khong.lam.tron.ket.qua.de.tranh.s.25d205a6",
+      "source": "Ứng dụng không làm tròn kết quả để tránh sai lệch.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.toi.da.aecd235a",
+      "source": "tối đa",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dau.phay.phan.nhom.hang.nghin.duoc.them.tu.22de7546",
+      "source": "dấu phẩy phân nhóm hàng nghìn được thêm tự động",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dau.phay.phan.nhom.duoc.ung.dung.them.tu.d.1f074cda",
+      "source": "Dấu phẩy phân nhóm được ứng dụng thêm tự động.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khi.chia.den.phan.thap.phan.cua.so.bi.chia.ef4235f1",
+      "source": "Khi chia đến phần thập phân của số bị chia, ta viết dấu phẩy vào thương rồi tiếp tục chia.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.chuyen.dau.phay.cua.ca.so.bi.chia.va.so.2958ba48",
+      "source": "Ta chuyển dấu phẩy của cả số bị chia và số chia sang phải",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.sau.do.thuc.hien.phep.chia.dat.tinh.nhu.ch.62f27fbb",
+      "source": "Sau đó thực hiện phép chia đặt tính như chia số tự nhiên.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.thuc.hien.7d1ee2fd",
+      "source": "Ta thực hiện",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.phan.so.da.co.cung.mau.so.f6afcf28",
+      "source": "Hai phân số đã có cùng mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.nen.khong.can.quy.dong.4b6f02e2",
+      "source": "nên không cần quy đồng.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.de.doi.mau.so.3579345a",
+      "source": "Để đổi mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ta.nhan.ca.tu.va.mau.b527a62f",
+      "source": "ta nhân cả tử và mẫu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.tu.so.12a64bc6",
+      "source": "hai tử số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mau.so.chung.nho.nhat.63d18259",
+      "source": "Mẫu số chung nhỏ nhất",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.boi.chung.nho.nhat.cua.hai.mau.so.25680064",
+      "source": "bội chung nhỏ nhất của hai mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.thu.nhat.c16f9ea3",
+      "source": "số thứ nhất",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.thu.hai.80f0bbc4",
+      "source": "số thứ hai",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.gia.tri.670afec9",
+      "source": "Giá trị",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.phai.la.so.nguyen.hop.le.0192f1c6",
+      "source": "không phải là số nguyên hợp lệ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.phai.la.so.thap.phan.hop.le.1cbc457d",
+      "source": "không phải là số thập phân hợp lệ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.phai.la.so.hop.le.1caeeacc",
+      "source": "không phải là số hợp lệ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.nhap.so.nguyen.1ffcd06d",
+      "source": "Nhập số nguyên;",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.nguyen.chi.duoc.chua.chu.so.mot.dau.am.389f5059",
+      "source": "Số nguyên chỉ được chứa chữ số, một dấu âm ở đầu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.thap.phan.chi.duoc.chua.chu.so.mot.dau.38541dfd",
+      "source": "Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.mot.dau.cham.7af61fa8",
+      "source": "một dấu chấm",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chu.so.tong.cong.acdecf1b",
+      "source": "chữ số tổng cộng",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dau.phay.duoc.them.tu.dong.dcc617b7",
+      "source": "dấu phẩy được thêm tự động",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.du.3b1b4e51",
+      "source": "ví dụ:",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phan.thap.phan.06606c00",
+      "source": "phần thập phân",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.chu.so.o.phan.thap.phan.22dc2329",
+      "source": "chữ số ở phần thập phân",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.sang.phai.d5de0f5e",
+      "source": "sang phải",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tu.0.x.7fa002b4",
+      "source": "Từ 0 ÷ x",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.bien.doi.hinh.thuc.66ba13cb",
+      "source": "phép biến đổi hình thức",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.cho.x.0.nhung.x.0.lai.lam.phep.chia.khong.11a0bd75",
+      "source": "cho x = 0 nhưng x = 0 lại làm phép chia không xác định.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.dong.thoi.f50fcf0e",
+      "source": "đồng thời",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phai.khac.0.69dec9a4",
+      "source": "phải khác 0",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hai.phan.so.c5ac752e",
+      "source": "hai phân số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tu.va.mau.eef7d8ec",
+      "source": "tử và mẫu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.cua.hai.mau.so.dec810c9",
+      "source": "của hai mẫu số",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vui.long.nhap.add0e9fa",
+      "source": "Vui lòng nhập",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.phai.la.mot.so.nguyen.hop.le.566763c6",
+      "source": "không phải là một số nguyên hợp lệ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.phai.la.mot.so.hop.le.834b306c",
+      "source": "không phải là một số hợp lệ.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.the.chia.cho.6996a360",
+      "source": "Không thể chia cho",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vi.phan.so.nay.bang.0.cf04b3a7",
+      "source": "vì phân số này bằng 0.",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.xac.dinh.124547b8",
+      "source": "không xác định",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.khong.xac.dinh.5a75426c",
+      "source": "Không xác định",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.ket.qua.c9f95514",
+      "source": "Kết quả",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.tinh.81bc1ef3",
+      "source": "Phép tính",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.bi.tru.0077fbf3",
+      "source": "Số bị trừ",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.tru.f1fc731d",
+      "source": "Số trừ",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.thua.so.da.biet.37661ac3",
+      "source": "Thừa số đã biết",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.bi.chia.f1f3e9ee",
+      "source": "Số bị chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.so.chia.67037ecc",
+      "source": "Số chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.gia.tri.da.biet.8088e315",
+      "source": "Giá trị đã biết",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.hieu.060b260e",
+      "source": "Hiệu",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.tich.f966425b",
+      "source": "Tích",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.cong.3f8ca064",
+      "source": "phép cộng",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.tru.9503748f",
+      "source": "phép trừ",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.nhan.ab051880",
+      "source": "phép nhân",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.phep.chia.78ff9274",
+      "source": "phép chia",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.va.a72340e8",
+      "source": " và ",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.du.7056c289",
+      "source": " dư ",
+      "mode": "phrase"
+    },
+    {
+      "key": "legacy.phrase.vay.8ac37e7f",
+      "source": "Vậy ",
+      "mode": "phrase"
+    },
+    {
+      "key": "App.Title",
+      "source": "Math Solver",
+      "mode": "exact"
+    },
+    {
+      "key": "Tabs.Solve",
+      "source": "Giải toán",
+      "mode": "exact"
+    },
+    {
+      "key": "Tabs.Formulas",
+      "source": "Công thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Tabs.TimesTables",
+      "source": "Cửu chương",
+      "mode": "exact"
+    },
+    {
+      "key": "Settings.Language",
+      "source": "Ngôn ngữ",
+      "mode": "exact"
+    },
+    {
+      "key": "Language.Vietnamese",
+      "source": "Tiếng Việt",
+      "mode": "exact"
+    },
+    {
+      "key": "Language.English",
+      "source": "Tiếng Anh",
+      "mode": "exact"
+    },
+    {
+      "key": "Actions.Calculate",
+      "source": "Tính toán",
+      "mode": "exact"
+    },
+    {
+      "key": "Actions.Clear",
+      "source": "Xóa",
+      "mode": "exact"
+    },
+    {
+      "key": "Common.Result",
+      "source": "Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "Common.Example",
+      "source": "Ví dụ:",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Title",
+      "source": "HÌNH HỌC",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Plane",
+      "source": "Hình học mặt phẳng",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Solid",
+      "source": "Hình học không gian",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Perimeter",
+      "source": "Chu vi",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Area",
+      "source": "Diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Volume",
+      "source": "Thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Numbers.Integer",
+      "source": "Số nguyên",
+      "mode": "exact"
+    },
+    {
+      "key": "Numbers.Decimal",
+      "source": "Số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Validation.InvalidData",
+      "source": "Dữ liệu không hợp lệ",
+      "mode": "exact"
+    }
+  ],
+  "capturedTerms": [
+    {
+      "key": "captured.term.so.thu.nhat.c16f9ea3",
+      "source": "số thứ nhất"
+    },
+    {
+      "key": "captured.term.so.thu.hai.80f0bbc4",
+      "source": "số thứ hai"
+    },
+    {
+      "key": "captured.term.tu.so.cua.phan.so.thu.nhat.1d8bf40f",
+      "source": "tử số của phân số thứ nhất"
+    },
+    {
+      "key": "captured.term.mau.so.cua.phan.so.thu.nhat.99f7639d",
+      "source": "mẫu số của phân số thứ nhất"
+    },
+    {
+      "key": "captured.term.tu.so.cua.phan.so.thu.hai.8856d32d",
+      "source": "tử số của phân số thứ hai"
+    },
+    {
+      "key": "captured.term.mau.so.cua.phan.so.thu.hai.07dc75c3",
+      "source": "mẫu số của phân số thứ hai"
+    },
+    {
+      "key": "captured.term.so.hang.da.biet.8e3093a3",
+      "source": "số hạng đã biết"
+    },
+    {
+      "key": "captured.term.so.bi.tru.e4dc092c",
+      "source": "số bị trừ"
+    },
+    {
+      "key": "captured.term.so.tru.61a389f0",
+      "source": "số trừ"
+    },
+    {
+      "key": "captured.term.thua.so.da.biet.5bc56610",
+      "source": "thừa số đã biết"
+    },
+    {
+      "key": "captured.term.so.bi.chia.9b8fb562",
+      "source": "số bị chia"
+    },
+    {
+      "key": "captured.term.so.chia.2f6cfcaa",
+      "source": "số chia"
+    },
+    {
+      "key": "captured.term.gia.tri.da.biet.4662a16e",
+      "source": "giá trị đã biết"
+    },
+    {
+      "key": "captured.term.he.so.a.0b658283",
+      "source": "hệ số a"
+    },
+    {
+      "key": "captured.term.he.so.b.9456f4e8",
+      "source": "hệ số b"
+    },
+    {
+      "key": "captured.term.he.so.c.25c1e14e",
+      "source": "hệ số c"
+    },
+    {
+      "key": "captured.term.do.dai.canh.a.0e8baab6",
+      "source": "độ dài cạnh a"
+    },
+    {
+      "key": "captured.term.chieu.dai.a.8a1ec3f5",
+      "source": "chiều dài a"
+    },
+    {
+      "key": "captured.term.chieu.rong.b.6b9cf406",
+      "source": "chiều rộng b"
+    },
+    {
+      "key": "captured.term.do.dai.day.a.cb6fe243",
+      "source": "độ dài đáy a"
+    },
+    {
+      "key": "captured.term.do.dai.canh.b.acd62e1d",
+      "source": "độ dài cạnh b"
+    },
+    {
+      "key": "captured.term.do.dai.canh.c.61b8956d",
+      "source": "độ dài cạnh c"
+    },
+    {
+      "key": "captured.term.chieu.cao.h.8f86a731",
+      "source": "chiều cao h"
+    },
+    {
+      "key": "captured.term.canh.goc.vuong.a.a5dc434e",
+      "source": "cạnh góc vuông a"
+    },
+    {
+      "key": "captured.term.canh.goc.vuong.b.bac46350",
+      "source": "cạnh góc vuông b"
+    },
+    {
+      "key": "captured.term.canh.huyen.c.ab81b0c3",
+      "source": "cạnh huyền c"
+    },
+    {
+      "key": "captured.term.ban.kinh.r.4014ef8c",
+      "source": "bán kính r"
+    },
+    {
+      "key": "captured.term.day.a.b0ad7564",
+      "source": "đáy a"
+    },
+    {
+      "key": "captured.term.day.b.7804355d",
+      "source": "đáy b"
+    },
+    {
+      "key": "captured.term.canh.ben.c.963bec07",
+      "source": "cạnh bên c"
+    },
+    {
+      "key": "captured.term.canh.ben.d.e7741baa",
+      "source": "cạnh bên d"
+    },
+    {
+      "key": "captured.term.duong.cheo.d1.96539747",
+      "source": "đường chéo d₁"
+    },
+    {
+      "key": "captured.term.duong.cheo.d2.231adbec",
+      "source": "đường chéo d₂"
+    },
+    {
+      "key": "captured.term.do.dai.canh.ben.b.7e089c6a",
+      "source": "độ dài cạnh bên b"
+    },
+    {
+      "key": "captured.term.ban.kinh.day.r.4bf488ba",
+      "source": "bán kính đáy r"
+    },
+    {
+      "key": "captured.term.duong.sinh.l.2b2d409d",
+      "source": "đường sinh l"
+    },
+    {
+      "key": "captured.term.tong.6f655bdb",
+      "source": "tổng"
+    },
+    {
+      "key": "captured.term.hieu.0246741e",
+      "source": "hiệu"
+    },
+    {
+      "key": "captured.term.tich.fb2b35d8",
+      "source": "tích"
+    },
+    {
+      "key": "captured.term.thuong.5c76da3b",
+      "source": "thương"
+    },
+    {
+      "key": "captured.term.ket.qua.9f8a522d",
+      "source": "kết quả"
+    }
+  ],
+  "dynamicRules": [
+    {
+      "id": "times_table_multiplication_word",
+      "pattern": "\\bBảng nhân\\s+(?<number>\\d+)\\b",
+      "templateKey": "dynamic.times_table_multiplication_word",
+      "ignoreCase": false
+    },
+    {
+      "id": "times_table_division_word",
+      "pattern": "\\bBảng chia\\s+(?<number>\\d+)\\b",
+      "templateKey": "dynamic.times_table_division_word",
+      "ignoreCase": false
+    },
+    {
+      "id": "times_table_showing_multiplication",
+      "pattern": "Đang hiển thị bảng nhân từ (?<first>\\d+) đến (?<last>\\d+) • (?<count>\\d+) bảng",
+      "templateKey": "dynamic.times_table_showing_multiplication",
+      "ignoreCase": false
+    },
+    {
+      "id": "times_table_showing_division",
+      "pattern": "Đang hiển thị bảng chia từ (?<first>\\d+) đến (?<last>\\d+) • (?<count>\\d+) bảng",
+      "templateKey": "dynamic.times_table_showing_division",
+      "ignoreCase": false
+    },
+    {
+      "id": "coefficient_required",
+      "pattern": "Vui lòng nhập hệ số (?<name>[abc])\\.",
+      "templateKey": "dynamic.coefficient_required",
+      "ignoreCase": true
+    },
+    {
+      "id": "coefficient_integer_valid",
+      "pattern": "hệ số (?<name>[abc]) phải là số nguyên hợp lệ\\.",
+      "templateKey": "dynamic.coefficient_integer_valid",
+      "ignoreCase": true
+    },
+    {
+      "id": "coefficient_max_digits",
+      "pattern": "hệ số (?<name>[abc]) chỉ được có tối đa (?<digits>\\d+) chữ số\\.",
+      "templateKey": "dynamic.coefficient_max_digits",
+      "ignoreCase": true
+    },
+    {
+      "id": "coefficient_integer_range_unsupported",
+      "pattern": "hệ số (?<name>[abc]) không nằm trong phạm vi số nguyên mà ứng dụng hỗ trợ\\.",
+      "templateKey": "dynamic.coefficient_integer_range_unsupported",
+      "ignoreCase": true
+    },
+    {
+      "id": "coefficient_integer_characters",
+      "pattern": "Hệ số (?<name>[abc]) chỉ được nhập số nguyên; không được dùng dấu chấm \\(\\.\\) hoặc dấu phẩy \\(,\\), chữ cái hay ký tự khác\\.",
+      "templateKey": "dynamic.coefficient_integer_characters",
+      "ignoreCase": true
+    },
+    {
+      "id": "coefficient_decimal_range",
+      "pattern": "hệ số (?<name>[abc]) phải nằm trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335\\.",
+      "templateKey": "dynamic.coefficient_decimal_range",
+      "ignoreCase": true
+    },
+    {
+      "id": "quadratic_negative_delta",
+      "pattern": "Vì Δ = (?<delta>.+?) < 0 nên √Δ không phải là một số thực\\.",
+      "templateKey": "dynamic.quadratic_negative_delta",
+      "ignoreCase": false
+    },
+    {
+      "id": "quadratic_repeated_root",
+      "pattern": "Phương trình có nghiệm kép x₁ = x₂ = (?<root>.+?)\\.",
+      "templateKey": "dynamic.quadratic_repeated_root",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_int128_valid_range",
+      "pattern": "(?<field>[^.\\n]+) phải là số nguyên hợp lệ trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727\\.",
+      "templateKey": "dynamic.field_int128_valid_range",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_int128_range",
+      "pattern": "(?<field>[^.\\n]+) phải nằm trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727\\.",
+      "templateKey": "dynamic.field_int128_range",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_decimal_valid_range",
+      "pattern": "(?<field>[^.\\n]+) phải là số thập phân hợp lệ trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335\\.",
+      "templateKey": "dynamic.field_decimal_valid_range",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_decimal_range",
+      "pattern": "(?<field>[^.\\n]+) phải nằm trong phạm vi từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335\\.",
+      "templateKey": "dynamic.field_decimal_range",
+      "ignoreCase": false
+    },
+    {
+      "id": "quoted_value_int128_range",
+      "pattern": "Giá trị \"(?<value>[^\"]+)\" phải là số nguyên hợp lệ trong phạm vi từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727\\.",
+      "templateKey": "dynamic.quoted_value_int128_range",
+      "ignoreCase": false
+    },
+    {
+      "id": "quoted_value_decimal_range",
+      "pattern": "Giá trị \"(?<value>[^\"]+)\" phải nằm trong phạm vi decimal từ −79,228,162,514,264,337,593,543,950,335 đến 79,228,162,514,264,337,593,543,950,335\\.",
+      "templateKey": "dynamic.quoted_value_decimal_range",
+      "ignoreCase": false
+    },
+    {
+      "id": "required_field",
+      "pattern": "Vui lòng nhập (?<field>[^.]+)\\.",
+      "templateKey": "dynamic.required_field",
+      "ignoreCase": false
+    },
+    {
+      "id": "quoted_invalid_integer",
+      "pattern": "Giá trị \"(?<value>[^\"]+)\" không phải là số nguyên hợp lệ\\.",
+      "templateKey": "dynamic.quoted_invalid_integer",
+      "ignoreCase": false
+    },
+    {
+      "id": "quoted_invalid_decimal",
+      "pattern": "Giá trị \"(?<value>[^\"]+)\" không phải là số thập phân hợp lệ\\.",
+      "templateKey": "dynamic.quoted_invalid_decimal",
+      "ignoreCase": false
+    },
+    {
+      "id": "quoted_invalid_number",
+      "pattern": "Giá trị \"(?<value>[^\"]+)\" không phải là số hợp lệ\\.",
+      "templateKey": "dynamic.quoted_invalid_number",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_invalid_number",
+      "pattern": "(?<field>[^.\\n]+) không phải là một số hợp lệ\\.",
+      "templateKey": "dynamic.field_invalid_number",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_invalid_integer",
+      "pattern": "(?<field>[^.\\n]+) phải là một số nguyên hợp lệ\\.",
+      "templateKey": "dynamic.field_invalid_integer",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_add",
+      "pattern": "Ta lấy (?<first>.+?) cộng với (?<second>.+?)\\.",
+      "templateKey": "dynamic.calculation_add",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_subtract",
+      "pattern": "Ta lấy (?<first>.+?) trừ đi (?<second>.+?)\\.",
+      "templateKey": "dynamic.calculation_subtract",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_multiply",
+      "pattern": "Ta lấy (?<first>.+?) nhân với (?<second>.+?)\\.",
+      "templateKey": "dynamic.calculation_multiply",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_divide",
+      "pattern": "Ta lấy (?<first>.+?) chia cho (?<second>.+?)\\.",
+      "templateKey": "dynamic.calculation_divide",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_perform_division",
+      "pattern": "Ta thực hiện phép chia (?<first>.+?) cho (?<second>.+?)\\.",
+      "templateKey": "dynamic.calculation_perform_division",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_result",
+      "pattern": "Vậy kết quả là (?<result>.+?)\\.",
+      "templateKey": "dynamic.calculation_result",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_quotient",
+      "pattern": "Thương là (?<result>.+?)\\.",
+      "templateKey": "dynamic.calculation_quotient",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_quotient_remainder",
+      "pattern": "Vậy thương là (?<quotient>.+?) và số dư là (?<remainder>.+?)\\.",
+      "templateKey": "dynamic.calculation_quotient_remainder",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_same_denominator_no_conversion",
+      "pattern": "Hai phân số đã có cùng mẫu số (?<denominator>[^,.\\n]+),?\\s*nên không cần quy đồng\\.",
+      "templateKey": "dynamic.fraction_same_denominator_no_conversion",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_change_denominator",
+      "pattern": "Để đổi mẫu số (?<old>\\S+) thành (?<new>\\S+), ta nhân cả tử và mẫu với (?<factor>\\S+)\\.",
+      "templateKey": "dynamic.fraction_change_denominator",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_same_denominator_add",
+      "pattern": "Hai phân số đã có cùng mẫu số (?<denominator>\\S+)\\. Ta giữ nguyên mẫu số và cộng hai tử số\\.",
+      "templateKey": "dynamic.fraction_same_denominator_add",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_same_denominator_subtract",
+      "pattern": "Hai phân số đã có cùng mẫu số (?<denominator>\\S+)\\. Ta giữ nguyên mẫu số và trừ hai tử số\\.",
+      "templateKey": "dynamic.fraction_same_denominator_subtract",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_keep_denominator",
+      "pattern": "Giữ nguyên mẫu số (?<denominator>\\S+)\\.",
+      "templateKey": "dynamic.fraction_keep_denominator",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_divide_by_zero",
+      "pattern": "Không thể chia cho (?<fraction>[^,]+), vì phân số này bằng 0\\.",
+      "templateKey": "dynamic.fraction_divide_by_zero",
+      "ignoreCase": false
+    },
+    {
+      "id": "divisor_decimal_places",
+      "pattern": "Số chia (?<divisor>.+?) có (?<places>\\d+) chữ số ở phần thập phân\\.",
+      "templateKey": "dynamic.divisor_decimal_places",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_perform_addition",
+      "pattern": "Ta thực hiện phép cộng hai phân số\\.",
+      "templateKey": "dynamic.fraction_perform_addition",
+      "ignoreCase": false
+    },
+    {
+      "id": "fraction_perform_subtraction",
+      "pattern": "Ta thực hiện phép trừ hai phân số\\.",
+      "templateKey": "dynamic.fraction_perform_subtraction",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_result_overflow",
+      "pattern": "(?<resultName>Tổng|Hiệu|Tích|Thương|Kết quả) của phép tính (?<expression>.+?) vượt quá phạm vi số mà ứng dụng đang hỗ trợ\\.",
+      "templateKey": "dynamic.calculation_result_overflow",
+      "ignoreCase": false
+    },
+    {
+      "id": "calculation_decimal_precision_limit",
+      "pattern": "Phép tính (?<expression>.+?) cho kết quả cần nhiều hơn (?<places>\\d+) chữ số sau dấu chấm hoặc không thể biểu diễn chính xác trong giới hạn hiện tại\\. Ứng dụng không làm tròn kết quả để tránh sai lệch\\.",
+      "templateKey": "dynamic.calculation_decimal_precision_limit",
+      "ignoreCase": false
+    },
+    {
+      "id": "integer_input_digits",
+      "pattern": "Số nguyên chỉ được chứa chữ số, một dấu âm ở đầu và tối đa (?<digits>\\d+) chữ số\\. Dấu phẩy phân nhóm được ứng dụng thêm tự động\\.",
+      "templateKey": "dynamic.integer_input_digits",
+      "ignoreCase": false
+    },
+    {
+      "id": "decimal_input_limits",
+      "pattern": "Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, tối đa một dấu chấm, tối đa (?<places>\\d+) chữ số sau dấu chấm và tối đa (?<digits>\\d+) chữ số tổng cộng; dấu phẩy được thêm tự động\\.",
+      "templateKey": "dynamic.decimal_input_limits",
+      "ignoreCase": false
+    },
+    {
+      "id": "decimal_point_instruction",
+      "pattern": "Dùng dấu chấm cho phần thập phân, tối đa (?<places>\\d+) chữ số sau dấu chấm; dấu phẩy phân nhóm hàng nghìn được thêm tự động, ví dụ: (?<example>.+?)\\.",
+      "templateKey": "dynamic.decimal_point_instruction",
+      "ignoreCase": false
+    },
+    {
+      "id": "integer_input_max_digits",
+      "pattern": "Chỉ được nhập số nguyên, tối đa (?<digits>\\d+) chữ số; không được nhập dấu chấm hoặc ký tự khác\\.",
+      "templateKey": "dynamic.integer_input_max_digits",
+      "ignoreCase": false
+    },
+    {
+      "id": "decimal_input_max_places",
+      "pattern": "Chỉ được nhập số, một dấu âm ở đầu và một dấu chấm; tối đa (?<places>\\d+) chữ số sau dấu chấm\\.",
+      "templateKey": "dynamic.decimal_input_max_places",
+      "ignoreCase": false
+    },
+    {
+      "id": "find_x_zero_division_formal",
+      "pattern": "Từ 0 ÷ x = (?<result>.+?), phép biến đổi hình thức cho x = 0 nhưng x = 0 lại làm phép chia không xác định\\.",
+      "templateKey": "dynamic.find_x_zero_division_formal",
+      "ignoreCase": false
+    },
+    {
+      "id": "find_divisor_rule",
+      "pattern": "Muốn tìm số chia, ta lấy số bị chia chia cho thương; đồng thời số chia phải khác 0\\.",
+      "templateKey": "dynamic.find_divisor_rule",
+      "ignoreCase": false
+    },
+    {
+      "id": "long_division_move_decimal",
+      "pattern": "Ta chuyển dấu phẩy của cả số bị chia và số chia sang phải (?<places>\\d+) chữ số:",
+      "templateKey": "dynamic.long_division_move_decimal",
+      "ignoreCase": false
+    },
+    {
+      "id": "quoted_integer_digit_limit",
+      "pattern": "Giá trị \"(?<value>.+?)\" không phải là số nguyên hợp lệ trong giới hạn (?<digits>\\d+) chữ số\\.",
+      "templateKey": "dynamic.quoted_integer_digit_limit",
+      "ignoreCase": false
+    },
+    {
+      "id": "field_integer_digit_limit",
+      "pattern": "(?<field>[^.\\n]+) phải là số nguyên hợp lệ, tối đa (?<digits>\\d+) chữ số\\.",
+      "templateKey": "dynamic.field_integer_digit_limit",
+      "ignoreCase": false
+    },
+    {
+      "id": "equation_side_comparison",
+      "pattern": "Vế trái ≈ (?<left>.+?); vế phải = (?<right>.+?)\\.",
+      "templateKey": "dynamic.equation_side_comparison",
+      "ignoreCase": false
+    }
+  ]
+}

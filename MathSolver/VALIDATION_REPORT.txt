@@ -1,0 +1,19 @@
+MathSolver JSON Localization Refactor - Validation Report
+
+Exact legacy entries: 416
+Phrase legacy entries: 255
+Captured field/result terms: 41
+Semantic stable keys: 20
+Total string keys: 732
+Dynamic rules/templates: 54
+
+Checks:
+- All JSON files parsed successfully.
+- vi-VN contains every catalog string key.
+- en-US contains every catalog string key.
+- vi-VN contains every dynamic template key.
+- en-US contains every dynamic template key.
+- C# brace counts are balanced.
+- Original LocalizationService is stored as .txt and will not compile.
+
+Full .NET MAUI compilation was not run because the build environment does not contain the .NET MAUI SDK.

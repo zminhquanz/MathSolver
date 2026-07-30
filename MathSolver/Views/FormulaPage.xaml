@@ -722,7 +722,7 @@
                             Spacing="2">
 
                             <Label
-                                Text="□  △  ○  ◇"
+                                Text="□  △  ○"
                                 FontSize="40"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource PrimaryColor}" />

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Math Solver Language Pack",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "culture",
+    "languageName",
+    "nativeName",
+    "strings",
+    "templates"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "culture": {
+      "type": "string",
+      "minLength": 2
+    },
+    "languageName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nativeName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string"
+    },
+    "appVersion": {
+      "type": "string"
+    },
+    "strings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

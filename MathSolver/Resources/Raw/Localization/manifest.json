@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "defaultCulture": "vi-VN",
+  "languages": [
+    {
+      "culture": "vi-VN",
+      "file": "vi-VN.json",
+      "builtIn": true
+    },
+    {
+      "culture": "en-US",
+      "file": "en-US.json",
+      "builtIn": true
+    }
+  ]
+}

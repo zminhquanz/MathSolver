@@ -25,7 +25,7 @@
                 Spacing="2">
 
                 <Label
-                    Text="□  △  ○  ◇"
+                    Text="□  △  ○"
                     FontSize="40"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
