@@ -1,0 +1,63 @@
+# GitHub automatically generated release notes configuration.
+# Pull requests are grouped by their labels when "Generate release notes" is used.
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - internal
+    authors:
+      - dependabot[bot]
+
+  categories:
+    - title: "🚨 Breaking Changes"
+      labels:
+        - breaking-change
+        - semver-major
+
+    - title: "✨ New Features"
+      labels:
+        - enhancement
+        - feature
+        - semver-minor
+
+    - title: "🧮 Mathematics and Calculation"
+      labels:
+        - mathematics
+        - calculation
+        - geometry
+        - numerics
+
+    - title: "🎨 User Interface"
+      labels:
+        - ui
+        - ux
+        - design
+        - accessibility
+
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bug
+        - fix
+        - semver-patch
+
+    - title: "⚡ Performance"
+      labels:
+        - performance
+        - optimization
+
+    - title: "📚 Documentation"
+      labels:
+        - documentation
+        - readme
+
+    - title: "🔧 Maintenance"
+      labels:
+        - maintenance
+        - refactor
+        - build
+        - dependencies
+
+    - title: "📦 Other Changes"
+      labels:
+        - "*"
