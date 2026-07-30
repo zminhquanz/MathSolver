@@ -112,19 +112,6 @@ Math Solver includes:
 
 The main calculation features work entirely offline. No internet connection or cloud-based AI service is required for standard arithmetic, fractions, equations, multiplication tables, formulas, or geometry calculations.
 
-## Technology
-
-- C#
-- .NET MAUI
-- XAML
-- `GraphicsView` and custom `IDrawable` implementations
-- `Int128`
-- `BigInteger`
-- `Decimal`
-- Custom Double-Double arithmetic
-- `Math.FusedMultiplyAdd`
-- Responsive `Grid`, `FlexLayout`, and reusable `ContentView` components
-
 ## Project Structure
 
 ```text
