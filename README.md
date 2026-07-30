@@ -1,13 +1,13 @@
 # Math Solver
 
 <p align="center">
-  <img src="Resources/AppIcon/appicon.png"
+  <img src="MathSolver/Resources/AppIcon/appicon.png"
        alt="Math Solver App Icon"
        width="150">
 </p>
 
 <p align="center">
-  <a href="https://ko-fi.com/YOUR_KO_FI_USERNAME">
+  <a href="https://ko-fi.com/quanvu96">
     <img src="https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white"
          alt="Support Math Solver on Ko-fi">
   </a>
@@ -70,19 +70,7 @@ The calculator can determine values such as:
 - Total surface area
 - Volume
 
-Input and result handling:
-
-- Integer input uses `Int128`
-- Integer calculations and results use `BigInteger`
-- Decimal input and results use `Decimal`
-- Decimal input supports up to 10 digits after the decimal point
-- Input values are validated against the limits of `Int128` and `Decimal`
-- Decimal overflow is detected and reported
-- Values containing more than 18 digits are displayed in scientific notation
-
 ### Quadratic Equations
-
-The quadratic equation solver keeps coefficients in `decimal` form for accurate input and display.
 
 Internal calculations use a custom Double-Double numeric structure for approximately 32 significant digits of precision. This improves the calculation of:
 
@@ -91,8 +79,6 @@ Internal calculations use a custom Double-Double numeric structure for approxima
 - Real roots
 - Parabola vertex
 - Parabola sampling points
-
-`Math.FusedMultiplyAdd` is used where appropriate to reduce intermediate rounding error. Displayed decimal results are limited to 10 digits after the decimal point.
 
 ### Formula Reference
 
@@ -134,13 +120,6 @@ The main calculation features work entirely offline. No internet connection or c
 - C#
 - .NET MAUI
 - XAML
-- `GraphicsView` and custom `IDrawable` implementations
-- `Int128`
-- `BigInteger`
-- `Decimal`
-- Custom Double-Double arithmetic
-- `Math.FusedMultiplyAdd`
-- Responsive `Grid`, `FlexLayout`, and reusable `ContentView` components
 
 ## Project Structure
 
@@ -218,7 +197,7 @@ Math Solver is free to use, and all core features remain available without payme
 If Math Solver is useful to you and you would like to support its continued development, you can leave a one-time tip on Ko-fi:
 
 <p align="center">
-  <a href="https://ko-fi.com/YOUR_KO_FI_USERNAME">
+  <a href="https://ko-fi.com/quanvu96">
     <img src="https://img.shields.io/badge/Support_Math_Solver_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white"
          alt="Support Math Solver on Ko-fi">
   </a>
@@ -226,7 +205,7 @@ If Math Solver is useful to you and you would like to support its continued deve
 
 Thank you for supporting the development, testing, documentation, and continued improvement of Math Solver.
 
-> Replace `YOUR_KO_FI_USERNAME` in this file with your actual Ko-fi page name before publishing.
+> Replace `quanvu96` in this file with your actual Ko-fi page name before publishing.
 
 ## License
 
