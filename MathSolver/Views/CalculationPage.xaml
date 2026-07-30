@@ -839,90 +839,13 @@
             </Grid>
 
             <!-- Tab hình học -->
-            <ScrollView
+            <Grid
                 x:Name="GeometryTabContent"
-                IsVisible="False"
-                HorizontalOptions="Fill"
-                VerticalOptions="Fill">
+                IsVisible="False">
 
-                <VerticalStackLayout
-                    Padding="20,16,20,18"
-                    Spacing="12"
-                    HorizontalOptions="Fill">
+                <views:GeometryCalculatorView />
 
-                    <VerticalStackLayout Spacing="3">
-
-                        <Label
-                            Text="HÌNH HỌC"
-                            FontSize="25"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                            Text="Tính chu vi và diện tích các hình"
-                            FontSize="16"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
-
-                    </VerticalStackLayout>
-
-                    <Border
-                        Padding="22"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout
-                            Spacing="12"
-                            HorizontalOptions="Center">
-
-                            <Label
-                                Text="□  △  ○"
-                                FontSize="40"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <Label
-                                Text="Chu vi và diện tích"
-                                FontSize="22"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
-
-                            <Label
-                                Text="Khu vực này sẽ hỗ trợ hình vuông, hình chữ nhật, tam giác, hình tròn, hình thang và các hình học khác."
-                                FontSize="16"
-                                LineHeight="1.25"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
-
-                            <Border
-                                Padding="10,6"
-                                BackgroundColor="{DynamicResource PrimarySoftColor}"
-                                Stroke="{DynamicResource PrimaryBorderBrush}"
-                                StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Label
-                                    Text="Đang phát triển"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
-
-                            </Border>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                </VerticalStackLayout>
-            </ScrollView>
+            </Grid>
         </Grid>
     </Grid>
 </ContentPage>
