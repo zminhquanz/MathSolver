@@ -8,8 +8,12 @@ public enum GeometryShapeType
     Square,
     Rectangle,
     Triangle,
+    RightTriangle,
+    EquilateralTriangle,
     Circle,
     Trapezoid,
+    IsoscelesTrapezoid,
+    RightTrapezoid,
     Rhombus,
     Parallelogram,
     Cube,
@@ -64,12 +68,28 @@ public sealed class GeometryShapeDrawable : IDrawable
                     DrawTriangle(canvas, dirtyRect);
                     break;
 
+                case GeometryShapeType.RightTriangle:
+                    DrawRightTriangle(canvas, dirtyRect);
+                    break;
+
+                case GeometryShapeType.EquilateralTriangle:
+                    DrawEquilateralTriangle(canvas, dirtyRect);
+                    break;
+
                 case GeometryShapeType.Circle:
                     DrawCircle(canvas, dirtyRect);
                     break;
 
                 case GeometryShapeType.Trapezoid:
                     DrawTrapezoid(canvas, dirtyRect);
+                    break;
+
+                case GeometryShapeType.IsoscelesTrapezoid:
+                    DrawIsoscelesTrapezoid(canvas, dirtyRect);
+                    break;
+
+                case GeometryShapeType.RightTrapezoid:
+                    DrawRightTrapezoid(canvas, dirtyRect);
                     break;
 
                 case GeometryShapeType.Rhombus:
@@ -202,6 +222,186 @@ public sealed class GeometryShapeDrawable : IDrawable
             bottom - top);
     }
 
+    private static void DrawRightTriangle(
+        ICanvas canvas,
+        RectF bounds)
+    {
+        float left =
+            bounds.Width * 0.22f;
+
+        float right =
+            bounds.Width * 0.80f;
+
+        float top =
+            bounds.Height * 0.18f;
+
+        float bottom =
+            bounds.Height * 0.78f;
+
+        PathF path =
+            new();
+
+        path.MoveTo(
+            left,
+            bottom);
+
+        path.LineTo(
+            right,
+            bottom);
+
+        path.LineTo(
+            left,
+            top);
+
+        path.Close();
+
+        canvas.DrawPath(
+            path);
+
+        DrawHorizontalLabel(
+            canvas,
+            "a",
+            left,
+            bottom + 2f,
+            right - left);
+
+        DrawVerticalLabel(
+            canvas,
+            "b",
+            left - 30f,
+            top,
+            bottom - top);
+
+        canvas.DrawString(
+            "c",
+            (left + right) / 2f + 8f,
+            (top + bottom) / 2f - 22f,
+            30f,
+            24f,
+            HorizontalAlignment.Center,
+            VerticalAlignment.Center);
+
+        DrawRightAngleMarker(
+            canvas,
+            left,
+            bottom,
+            horizontalDirection: 1f,
+            verticalDirection: -1f,
+            size: MathF.Min(
+                17f,
+                bounds.Width * 0.065f));
+    }
+
+    private static void DrawEquilateralTriangle(
+        ICanvas canvas,
+        RectF bounds)
+    {
+        float left =
+            bounds.Width * 0.20f;
+
+        float right =
+            bounds.Width * 0.80f;
+
+        float top =
+            bounds.Height * 0.16f;
+
+        float bottom =
+            bounds.Height * 0.80f;
+
+        float centerX =
+            bounds.Center.X;
+
+        PathF path =
+            new();
+
+        path.MoveTo(
+            left,
+            bottom);
+
+        path.LineTo(
+            right,
+            bottom);
+
+        path.LineTo(
+            centerX,
+            top);
+
+        path.Close();
+
+        canvas.DrawPath(
+            path);
+
+        DrawHorizontalLabel(
+            canvas,
+            "a",
+            left,
+            bottom + 2f,
+            right - left);
+
+        canvas.DrawString(
+            "a",
+            left + (centerX - left) * 0.34f - 26f,
+            top + (bottom - top) * 0.48f - 12f,
+            30f,
+            24f,
+            HorizontalAlignment.Center,
+            VerticalAlignment.Center);
+
+        canvas.DrawString(
+            "a",
+            centerX + (right - centerX) * 0.56f + 2f,
+            top + (bottom - top) * 0.48f - 12f,
+            30f,
+            24f,
+            HorizontalAlignment.Center,
+            VerticalAlignment.Center);
+
+        DrawDashedLine(
+            canvas,
+            centerX,
+            top,
+            centerX,
+            bottom);
+
+        DrawVerticalLabel(
+            canvas,
+            "h",
+            centerX + 5f,
+            top,
+            bottom - top);
+
+        DrawRightAngleMarker(
+            canvas,
+            centerX,
+            bottom,
+            horizontalDirection: -1f,
+            verticalDirection: -1f,
+            size: MathF.Min(
+                15f,
+                bounds.Width * 0.055f));
+
+        DrawSegmentTick(
+            canvas,
+            left,
+            bottom,
+            right,
+            bottom);
+
+        DrawSegmentTick(
+            canvas,
+            left,
+            bottom,
+            centerX,
+            top);
+
+        DrawSegmentTick(
+            canvas,
+            centerX,
+            top,
+            right,
+            bottom);
+    }
+
     private static void DrawCircle(ICanvas canvas, RectF bounds)
     {
         float diameter = Math.Min(
@@ -276,6 +476,218 @@ public sealed class GeometryShapeDrawable : IDrawable
             topLeft - 30,
             topY,
             bottomY - topY);
+    }
+
+    private static void DrawIsoscelesTrapezoid(
+        ICanvas canvas,
+        RectF bounds)
+    {
+        float topLeft =
+            bounds.Width * 0.34f;
+
+        float topRight =
+            bounds.Width * 0.66f;
+
+        float bottomLeft =
+            bounds.Width * 0.15f;
+
+        float bottomRight =
+            bounds.Width * 0.85f;
+
+        float topY =
+            bounds.Height * 0.24f;
+
+        float bottomY =
+            bounds.Height * 0.76f;
+
+        PathF path =
+            new();
+
+        path.MoveTo(
+            topLeft,
+            topY);
+
+        path.LineTo(
+            topRight,
+            topY);
+
+        path.LineTo(
+            bottomRight,
+            bottomY);
+
+        path.LineTo(
+            bottomLeft,
+            bottomY);
+
+        path.Close();
+
+        canvas.DrawPath(
+            path);
+
+        DrawHorizontalLabel(
+            canvas,
+            "a",
+            topLeft,
+            topY - 25f,
+            topRight - topLeft);
+
+        DrawHorizontalLabel(
+            canvas,
+            "b",
+            bottomLeft,
+            bottomY + 2f,
+            bottomRight - bottomLeft);
+
+        DrawDashedLine(
+            canvas,
+            topLeft,
+            topY,
+            topLeft,
+            bottomY);
+
+        DrawVerticalLabel(
+            canvas,
+            "h",
+            topLeft - 31f,
+            topY,
+            bottomY - topY);
+
+        canvas.DrawString(
+            "c",
+            bottomLeft + (topLeft - bottomLeft) * 0.45f - 28f,
+            topY + (bottomY - topY) * 0.45f - 10f,
+            28f,
+            24f,
+            HorizontalAlignment.Center,
+            VerticalAlignment.Center);
+
+        canvas.DrawString(
+            "c",
+            topRight + (bottomRight - topRight) * 0.55f + 2f,
+            topY + (bottomY - topY) * 0.45f - 10f,
+            28f,
+            24f,
+            HorizontalAlignment.Center,
+            VerticalAlignment.Center);
+
+        DrawSegmentTick(
+            canvas,
+            bottomLeft,
+            bottomY,
+            topLeft,
+            topY);
+
+        DrawSegmentTick(
+            canvas,
+            topRight,
+            topY,
+            bottomRight,
+            bottomY);
+
+        DrawRightAngleMarker(
+            canvas,
+            topLeft,
+            bottomY,
+            horizontalDirection: -1f,
+            verticalDirection: -1f,
+            size: MathF.Min(
+                15f,
+                bounds.Width * 0.055f));
+    }
+
+    private static void DrawRightTrapezoid(
+        ICanvas canvas,
+        RectF bounds)
+    {
+        float left =
+            bounds.Width * 0.20f;
+
+        float topRight =
+            bounds.Width * 0.66f;
+
+        float bottomRight =
+            bounds.Width * 0.85f;
+
+        float topY =
+            bounds.Height * 0.24f;
+
+        float bottomY =
+            bounds.Height * 0.76f;
+
+        PathF path =
+            new();
+
+        path.MoveTo(
+            left,
+            topY);
+
+        path.LineTo(
+            topRight,
+            topY);
+
+        path.LineTo(
+            bottomRight,
+            bottomY);
+
+        path.LineTo(
+            left,
+            bottomY);
+
+        path.Close();
+
+        canvas.DrawPath(
+            path);
+
+        DrawHorizontalLabel(
+            canvas,
+            "a",
+            left,
+            topY - 25f,
+            topRight - left);
+
+        DrawHorizontalLabel(
+            canvas,
+            "b",
+            left,
+            bottomY + 2f,
+            bottomRight - left);
+
+        DrawVerticalLabel(
+            canvas,
+            "h",
+            left - 31f,
+            topY,
+            bottomY - topY);
+
+        canvas.DrawString(
+            "c",
+            topRight + (bottomRight - topRight) * 0.55f + 3f,
+            topY + (bottomY - topY) * 0.45f - 10f,
+            28f,
+            24f,
+            HorizontalAlignment.Center,
+            VerticalAlignment.Center);
+
+        float markerSize =
+            MathF.Min(
+                15f,
+                bounds.Width * 0.055f);
+
+        DrawRightAngleMarker(
+            canvas,
+            left,
+            topY,
+            horizontalDirection: 1f,
+            verticalDirection: 1f,
+            size: markerSize);
+
+        DrawRightAngleMarker(
+            canvas,
+            left,
+            bottomY,
+            horizontalDirection: 1f,
+            verticalDirection: -1f,
+            size: markerSize);
     }
 
     private static void DrawRhombus(ICanvas canvas, RectF bounds)
@@ -442,6 +854,119 @@ public sealed class GeometryShapeDrawable : IDrawable
             y1,
             x2,
             y2);
+
+        canvas.RestoreState();
+    }
+
+    private static void DrawRightAngleMarker(
+        ICanvas canvas,
+        float cornerX,
+        float cornerY,
+        float horizontalDirection,
+        float verticalDirection,
+        float size)
+    {
+        canvas.SaveState();
+
+        canvas.StrokeColor =
+            AuxiliaryColor;
+
+        canvas.StrokeSize =
+            1.8f;
+
+        float innerX =
+            cornerX +
+            horizontalDirection *
+            size;
+
+        float innerY =
+            cornerY +
+            verticalDirection *
+            size;
+
+        canvas.DrawLine(
+            cornerX,
+            innerY,
+            innerX,
+            innerY);
+
+        canvas.DrawLine(
+            innerX,
+            innerY,
+            innerX,
+            cornerY);
+
+        canvas.RestoreState();
+    }
+
+    private static void DrawSegmentTick(
+        ICanvas canvas,
+        float x1,
+        float y1,
+        float x2,
+        float y2)
+    {
+        float deltaX =
+            x2 -
+            x1;
+
+        float deltaY =
+            y2 -
+            y1;
+
+        float length =
+            MathF.Sqrt(
+                deltaX *
+                deltaX +
+                deltaY *
+                deltaY);
+
+        if (length <=
+            0.001f)
+        {
+            return;
+        }
+
+        float centerX =
+            (x1 +
+             x2) /
+            2f;
+
+        float centerY =
+            (y1 +
+             y2) /
+            2f;
+
+        float halfTickLength =
+            5.5f;
+
+        float normalX =
+            -deltaY /
+            length *
+            halfTickLength;
+
+        float normalY =
+            deltaX /
+            length *
+            halfTickLength;
+
+        canvas.SaveState();
+
+        canvas.StrokeColor =
+            AuxiliaryColor;
+
+        canvas.StrokeSize =
+            1.8f;
+
+        canvas.DrawLine(
+            centerX -
+            normalX,
+            centerY -
+            normalY,
+            centerX +
+            normalX,
+            centerY +
+            normalY);
 
         canvas.RestoreState();
     }

@@ -29,14 +29,20 @@ public partial class FormulaPage : ContentPage
     // các GraphicsView cũ được giữ nguyên, tránh vẽ lại và nháy giao diện.
     private bool _isGeometryLayoutInitialized;
 
-    private double _lastGeometryLayoutWidth = -1d;
+    private double _lastPlaneGeometryLayoutWidth =
+        -1d;
+
+    private double _lastSolidGeometryLayoutWidth =
+        -1d;
 
     // Được bật khi trang Hình học bị che hoặc rời khỏi visual tree, ví dụ
     // khi mở SettingsMenuPage. Khi quay lại cần khôi phục layout và yêu cầu
     // từng GraphicsView vẽ lại lớp native của nó.
     private bool _geometryNeedsVisualRestore;
 
-    public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } = [];
+    public ObservableCollection<GeometryFormulaItem> PlaneGeometryItems { get; } = [];
+
+    public ObservableCollection<GeometryFormulaItem> SolidGeometryItems { get; } = [];
 
     public ObservableCollection<UnknownComponentItem> UnknownComponentItems { get; } = [];
 
@@ -58,8 +64,12 @@ public partial class FormulaPage : ContentPage
             UnknownComponentItems);
 
         BindableLayout.SetItemsSource(
-            GeometryFlexLayout,
-            GeometryItems);
+            PlaneGeometryFlexLayout,
+            PlaneGeometryItems);
+
+        BindableLayout.SetItemsSource(
+            SolidGeometryFlexLayout,
+            SolidGeometryItems);
 
         SelectFormulaSubTab(
             FormulaSubTab.UnknownComponent);
@@ -232,28 +242,31 @@ public partial class FormulaPage : ContentPage
         ResetTransitionTransform(
             GeometryContent);
 
-        // Fallback hiếm: nếu nền tảng đã bỏ visual children khi mở Settings,
-        // chỉ lúc đó mới gắn lại ItemsSource để tạo lại các card.
-        if (requiresFullRestore &&
-            GeometryItems.Count > 0 &&
-            GeometryFlexLayout.Children.Count == 0)
+        // Fallback hiếm: chỉ gắn lại ItemsSource của nhóm bị mất visual tree.
+        // Mỗi nhóm được giữ độc lập để hình phẳng và hình không gian không làm
+        // tạo lại GraphicsView của nhau.
+        if (requiresFullRestore)
         {
-            BindableLayout.SetItemsSource(
-                GeometryFlexLayout,
-                null);
+            RestoreGeometryLayoutItemsIfNeeded(
+                PlaneGeometryFlexLayout,
+                PlaneGeometryItems);
 
-            BindableLayout.SetItemsSource(
-                GeometryFlexLayout,
-                GeometryItems);
+            RestoreGeometryLayoutItemsIfNeeded(
+                SolidGeometryFlexLayout,
+                SolidGeometryItems);
         }
 
-        _lastGeometryLayoutWidth =
+        _lastPlaneGeometryLayoutWidth =
+            -1d;
+
+        _lastSolidGeometryLayoutWidth =
             -1d;
 
         UpdateGeometryCardWidthsIfNeeded(
             force: true);
 
-        GeometryFlexLayout.InvalidateMeasure();
+        PlaneGeometryFlexLayout.InvalidateMeasure();
+        SolidGeometryFlexLayout.InvalidateMeasure();
         GeometryContent.InvalidateMeasure();
 
         InvalidateGeometryGraphicsViews();
@@ -262,10 +275,40 @@ public partial class FormulaPage : ContentPage
             false;
     }
 
+    private static void RestoreGeometryLayoutItemsIfNeeded(
+        FlexLayout layout,
+        ObservableCollection<GeometryFormulaItem> items)
+    {
+        if (items.Count == 0 ||
+            layout.Children.Count > 0)
+        {
+            return;
+        }
+
+        BindableLayout.SetItemsSource(
+            layout,
+            null);
+
+        BindableLayout.SetItemsSource(
+            layout,
+            items);
+    }
+
+
     private void InvalidateGeometryGraphicsViews()
     {
+        InvalidateGeometryGraphicsViews(
+            PlaneGeometryFlexLayout);
+
+        InvalidateGeometryGraphicsViews(
+            SolidGeometryFlexLayout);
+    }
+
+    private static void InvalidateGeometryGraphicsViews(
+        FlexLayout layout)
+    {
         foreach (IView cardView
-                 in GeometryFlexLayout.Children)
+                 in layout.Children)
         {
             if (cardView is not Border card ||
                 card.Content is not Grid cardGrid)
@@ -283,6 +326,7 @@ public partial class FormulaPage : ContentPage
             }
         }
     }
+
 
     private void PrepareSelectedSubTabForMainAppearance()
     {
@@ -546,13 +590,14 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        if (GeometryItems.Count == 0)
+        if (PlaneGeometryItems.Count == 0 &&
+            SolidGeometryItems.Count == 0)
         {
             CreateGeometryItems();
         }
 
-        // ItemsSource đã được gắn một lần trong constructor. Không gán null
-        // rồi gắn lại vì thao tác đó hủy toàn bộ card và tạo GraphicsView mới.
+        // Hai ItemsSource đã được gắn một lần trong constructor. Không tháo/gắn
+        // lại khi đổi tab để giữ nguyên toàn bộ GraphicsView đã được tạo.
         _isGeometryLayoutInitialized =
             true;
 
@@ -562,9 +607,6 @@ public partial class FormulaPage : ContentPage
                 UpdateGeometryCardWidthsIfNeeded(
                     force: true);
 
-                // Lần đầu BindableLayout có thể vừa mới tạo children. Chỉ
-                // đo lại kích thước, không thay ItemsSource và không tái tạo
-                // GraphicsView.
                 Dispatcher.Dispatch(
                     () =>
                     {
@@ -577,13 +619,30 @@ public partial class FormulaPage : ContentPage
             });
     }
 
+
     private void UpdateGeometryCardWidthsIfNeeded(
         bool force = false)
     {
-        double availableWidth =
-            GeometryFlexLayout.Width;
+        UpdateGeometryCardWidthsIfNeeded(
+            PlaneGeometryFlexLayout,
+            ref _lastPlaneGeometryLayoutWidth,
+            force);
 
-        if (availableWidth <= 0)
+        UpdateGeometryCardWidthsIfNeeded(
+            SolidGeometryFlexLayout,
+            ref _lastSolidGeometryLayoutWidth,
+            force);
+    }
+
+    private void UpdateGeometryCardWidthsIfNeeded(
+        FlexLayout layout,
+        ref double lastLayoutWidth,
+        bool force)
+    {
+        double availableWidth =
+            layout.Width;
+
+        if (availableWidth <= 0d)
         {
             return;
         }
@@ -591,17 +650,19 @@ public partial class FormulaPage : ContentPage
         if (!force &&
             Math.Abs(
                 availableWidth -
-                _lastGeometryLayoutWidth) < 0.5d)
+                lastLayoutWidth) < 0.5d)
         {
             return;
         }
 
-        _lastGeometryLayoutWidth =
+        lastLayoutWidth =
             availableWidth;
 
         UpdateGeometryCardWidths(
+            layout,
             availableWidth);
     }
+
 
     private async void OnUnknownComponentTabClicked(
         object? sender,
@@ -1079,18 +1140,38 @@ public partial class FormulaPage : ContentPage
         object? sender,
         EventArgs e)
     {
-        if (!_isGeometryLayoutInitialized)
+        if (!_isGeometryLayoutInitialized ||
+            sender is not FlexLayout layout)
         {
             return;
         }
 
-        UpdateGeometryCardWidthsIfNeeded();
+        if (ReferenceEquals(
+                layout,
+                PlaneGeometryFlexLayout))
+        {
+            UpdateGeometryCardWidthsIfNeeded(
+                layout,
+                ref _lastPlaneGeometryLayoutWidth,
+                force: false);
+        }
+        else if (ReferenceEquals(
+                     layout,
+                     SolidGeometryFlexLayout))
+        {
+            UpdateGeometryCardWidthsIfNeeded(
+                layout,
+                ref _lastSolidGeometryLayoutWidth,
+                force: false);
+        }
     }
 
+
     private void UpdateGeometryCardWidths(
+        FlexLayout layout,
         double availableWidth)
     {
-        if (availableWidth <= 0)
+        if (availableWidth <= 0d)
         {
             return;
         }
@@ -1101,20 +1182,150 @@ public partial class FormulaPage : ContentPage
 
         double requestedWidth =
             UpdateFlexCardWidths(
-                GeometryFlexLayout,
+                layout,
                 availableWidth,
                 columnCount,
                 horizontalMarginPerCard: 10d,
                 minimumCardWidth: 112d);
 
-        if (requestedWidth <= 0)
+        if (requestedWidth <= 0d)
         {
             return;
         }
 
         UpdateGeometryCardVisualSizes(
+            layout,
             requestedWidth);
+
+        ScheduleGeometryFlexHeightUpdate(
+            layout,
+            columnCount);
     }
+
+
+    private void ScheduleGeometryFlexHeightUpdate(
+        FlexLayout layout,
+        int columnCount)
+    {
+        if (columnCount <= 0 ||
+            layout.Children.Count == 0)
+        {
+            return;
+        }
+
+        // WidthRequest và chiều cao GraphicsView vừa thay đổi. Đo hai lượt:
+        // lượt đầu sau layout hiện tại, lượt sau khi card đã có Height cuối cùng.
+        Dispatcher.Dispatch(
+            () =>
+            {
+                UpdateGeometryFlexHeight(
+                    layout,
+                    columnCount);
+
+                Dispatcher.Dispatch(
+                    () => UpdateGeometryFlexHeight(
+                        layout,
+                        columnCount));
+            });
+    }
+
+
+    private static void UpdateGeometryFlexHeight(
+        FlexLayout layout,
+        int columnCount)
+    {
+        int childCount =
+            layout.Children.Count;
+
+        if (childCount == 0 ||
+            columnCount <= 0)
+        {
+            return;
+        }
+
+        int rowCount =
+            (int)Math.Ceiling(
+                childCount /
+                (double)columnCount);
+
+        double[] rowHeights =
+            new double[rowCount];
+
+        bool hasUnmeasuredRow =
+            false;
+
+        for (int childIndex = 0;
+             childIndex < childCount;
+             childIndex++)
+        {
+            if (layout.Children[childIndex]
+                is not VisualElement card)
+            {
+                continue;
+            }
+
+            double measuredHeight =
+                card.Height;
+
+            if (!double.IsFinite(
+                    measuredHeight) ||
+                measuredHeight <= 0d)
+            {
+                hasUnmeasuredRow =
+                    true;
+
+                continue;
+            }
+
+            int rowIndex =
+                childIndex /
+                columnCount;
+
+            rowHeights[rowIndex] =
+                Math.Max(
+                    rowHeights[rowIndex],
+                    measuredHeight);
+        }
+
+        // Không đặt HeightRequest bằng một giá trị ước lượng khi card vẫn chưa
+        // được đo, vì điều đó có thể cắt nội dung trong frame đầu.
+        if (hasUnmeasuredRow ||
+            rowHeights.Any(
+                height => height <= 0d))
+        {
+            return;
+        }
+
+        // GeometryCardTemplate dùng Margin="5": mỗi hàng cần thêm 5 phía trên
+        // và 5 phía dưới ngoài chiều cao thực của card.
+        const double verticalMarginPerRow =
+            10d;
+
+        double requestedHeight =
+            Math.Ceiling(
+                rowHeights.Sum() +
+                rowCount *
+                verticalMarginPerRow);
+
+        if (Math.Abs(
+                layout.HeightRequest -
+                requestedHeight) < 1d)
+        {
+            return;
+        }
+
+        layout.HeightRequest =
+            requestedHeight;
+
+        layout.InvalidateMeasure();
+
+        if (layout.Parent
+            is VisualElement parent)
+        {
+            parent.InvalidateMeasure();
+        }
+    }
+
 
     private static int GetGeometryColumnCount(
         double availableWidth)
@@ -1224,7 +1435,8 @@ public partial class FormulaPage : ContentPage
         return requestedWidth;
     }
 
-    private void UpdateGeometryCardVisualSizes(
+    private static void UpdateGeometryCardVisualSizes(
+        FlexLayout layout,
         double cardWidth)
     {
         // Ở điện thoại, mỗi hàng vẫn có hai card nên hình minh họa phải co theo
@@ -1238,7 +1450,7 @@ public partial class FormulaPage : ContentPage
                 190d);
 
         foreach (IView cardView
-                 in GeometryFlexLayout.Children)
+                 in layout.Children)
         {
             if (cardView is not Border card ||
                 card.Content is not Grid cardGrid)
@@ -1265,6 +1477,7 @@ public partial class FormulaPage : ContentPage
         }
     }
 
+
     private void OnLanguageChanged(
         object? sender,
         EventArgs e)
@@ -1274,13 +1487,16 @@ public partial class FormulaPage : ContentPage
             {
                 CreateUnknownComponentItems();
 
-                // Đổi ngôn ngữ là trường hợp duy nhất cần tạo lại dữ liệu
-                // hình học vì các chuỗi công thức đã thay đổi. ItemsSource
-                // vẫn giữ nguyên nên không có thao tác tháo/gắn lại layout.
+                // Đổi ngôn ngữ là trường hợp duy nhất cần tạo lại catalog
+                // đã bản địa hóa. Hai ItemsSource vẫn được giữ nguyên.
                 if (_isGeometryLayoutInitialized)
                 {
                     CreateGeometryItems();
-                    _lastGeometryLayoutWidth =
+
+                    _lastPlaneGeometryLayoutWidth =
+                        -1d;
+
+                    _lastSolidGeometryLayoutWidth =
                         -1d;
                 }
 
@@ -1454,387 +1670,40 @@ public partial class FormulaPage : ContentPage
 
     private void CreateGeometryItems()
     {
-        GeometryItems.Clear();
+        IReadOnlyList<GeometryFormulaItem> allItems =
+            GeometryFormulaCatalog.CreateAll(
+                T);
 
-        GeometryItems.Add(
-            new GeometryFormulaItem
+        PlaneGeometryItems.Clear();
+        SolidGeometryItems.Clear();
+
+        foreach (GeometryFormulaItem item
+                 in allItems)
+        {
+            if (item.Category ==
+                GeometryCategory.Plane)
             {
-                Name =
-                    T("Hình vuông"),
-                CardHeight = 500,
-
-                Diagram =
-                    GeometryDrawableCache.Square,
-
-                Formulas =
-                {
-                    T("Chu vi: P = a × 4"),
-                    T("Diện tích: S = a × a")
-                },
-
-                Symbols =
-                {
-                    T("a: độ dài một cạnh")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
+                PlaneGeometryItems.Add(
+                    item);
+            }
+            else
             {
-                Name =
-                    T("Hình chữ nhật"),
-                CardHeight = 500,
+                SolidGeometryItems.Add(
+                    item);
+            }
+        }
 
-                Diagram =
-                    GeometryDrawableCache.Rectangle,
+        _lastPlaneGeometryLayoutWidth =
+            -1d;
 
-                Formulas =
-                {
-                    T("Chu vi: P = (a + b) × 2"),
-                    T("Diện tích: S = a × b")
-                },
-
-                Symbols =
-                {
-                    T("a: chiều dài"),
-                    T("b: chiều rộng")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình tam giác"),
-                CardHeight = 520,
-
-                Diagram =
-                    GeometryDrawableCache.Triangle,
-
-                Formulas =
-                {
-                    T("Chu vi: P = a + b + c"),
-                    T("Diện tích: S = (a × h) ÷ 2")
-                },
-
-                Symbols =
-                {
-                    T("a: độ dài đáy"),
-                    T("b, c: hai cạnh còn lại"),
-                    T("h: chiều cao tương ứng với đáy a")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình tròn"),
-                CardHeight = 530,
-
-                Diagram =
-                    GeometryDrawableCache.Circle,
-
-                Formulas =
-                {
-                    T("Chu vi: C = 2 × π × r"),
-                    T("Hoặc: C = π × d"),
-                    T("Diện tích: S = π × r × r")
-                },
-
-                Symbols =
-                {
-                    T("r: bán kính"),
-                    T("d: đường kính, d = 2 × r"),
-                    T("π ≈ 3,14")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình thang"),
-                CardHeight = 530,
-
-                Diagram =
-                    GeometryDrawableCache.Trapezoid,
-
-                Formulas =
-                {
-                    T("Chu vi: P = a + b + c + d"),
-                    T("Diện tích: S = ((a + b) × h) ÷ 2")
-                },
-
-                Symbols =
-                {
-                    T("a, b: hai đáy song song"),
-                    T("c, d: hai cạnh bên"),
-                    T("h: chiều cao")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình thoi"),
-                CardHeight = 550,
-
-                Diagram =
-                    GeometryDrawableCache.Rhombus,
-
-                Formulas =
-                {
-                    T("Chu vi: P = a × 4"),
-                    T("Diện tích: S = (d₁ × d₂) ÷ 2"),
-                    T("Hoặc: S = a × h")
-                },
-
-                Symbols =
-                {
-                    T("a: độ dài một cạnh"),
-                    T("d₁, d₂: hai đường chéo"),
-                    T("h: chiều cao")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình bình hành"),
-                CardHeight = 530,
-
-                Diagram =
-                    GeometryDrawableCache.Parallelogram,
-
-                Formulas =
-                {
-                    T("Chu vi: P = (a + b) × 2"),
-                    T("Diện tích: S = a × h")
-                },
-
-                Symbols =
-                {
-                    T("a: độ dài đáy"),
-                    T("b: độ dài cạnh bên"),
-                    T("h: chiều cao tương ứng với đáy a")
-                }
-            });
-
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình lập phương"),
-                CardHeight = 550,
-
-                Diagram =
-                    GeometryDrawableCache.Cube,
-
-                Formulas =
-                {
-                    T("Diện tích xung quanh: Sxq = 4 x a x a = 4a²"),
-                    T("Diện tích toàn phần: Stp = 6 x a x a = 6a²"),
-                    T("Thể tích: V = a x a x a = a³")
-                },
-
-                Symbols =
-                {
-                    T("a: độ dài một cạnh"),
-                    T("Có 6 mặt là các hình vuông bằng nhau"),
-                    T("Sxq gồm 4 mặt bên; Stp gồm cả 6 mặt")
-                }
-            });
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình hộp chữ nhật"),
-                CardHeight = 570,
-
-                Diagram =
-                    GeometryDrawableCache.RectangularPrism,
-
-                Formulas =
-                {
-                    T("Diện tích xung quanh: Sxq = 2 × (a + b) × h"),
-                    T("Diện tích toàn phần: Stp = 2 × (a × b + a × h + b × h)"),
-                    T("Thể tích: V = a × b × h")
-                },
-
-                Symbols =
-                {
-                    T("a: chiều dài"),
-                    T("b: chiều rộng"),
-                    T("h: chiều cao")
-                }
-            });
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình cầu"),
-                CardHeight = 520,
-
-                Diagram =
-                    GeometryDrawableCache.Sphere,
-
-                Formulas =
-                {
-                    T("Diện tích mặt cầu: S = 4 × π × r²"),
-                    T("Thể tích: V = (4 × π × r³) ÷ 3")
-                },
-
-                Symbols =
-                {
-                    T("r: bán kính hình cầu"),
-                    T("π ≈ 3,14")
-                }
-            });
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình trụ"),
-                CardHeight = 590,
-
-                Diagram =
-                    GeometryDrawableCache.Cylinder,
-
-                Formulas =
-                {
-                    T("Diện tích đáy: Sđ = π × r²"),
-                    T("Diện tích xung quanh: Sxq = 2 × π × r × h"),
-                    T("Diện tích toàn phần: Stp = 2 × π × r × (r + h)"),
-                    T("Thể tích: V = π × r² × h")
-                },
-
-                Symbols =
-                {
-                    T("r: bán kính đáy"),
-                    T("h: chiều cao"),
-                    T("π ≈ 3,14")
-                }
-            });
-        GeometryItems.Add(
-            new GeometryFormulaItem
-            {
-                Name =
-                    T("Hình nón"),
-                CardHeight = 610,
-
-                Diagram =
-                    GeometryDrawableCache.Cone,
-
-                Formulas =
-                {
-                    T("Diện tích đáy: Sđ = π × r²"),
-                    T("Diện tích xung quanh: Sxq = π × r × l"),
-                    T("Diện tích toàn phần: Stp = π × r × (r + l)"),
-                    T("Thể tích: V = (π × r² × h) ÷ 3")
-                },
-
-                Symbols =
-                {
-                    T("r: bán kính đáy"),
-                    T("h: chiều cao"),
-                    T("l: đường sinh"),
-                    T("π ≈ 3,14")
-                }
-            });
+        _lastSolidGeometryLayoutWidth =
+            -1d;
     }
+
 
     private enum FormulaSubTab
     {
         UnknownComponent,
         Geometry
     }
-}
-
-internal static class GeometryDrawableCache
-{
-    public static GeometryShapeDrawable Square { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Square
-        };
-
-    public static GeometryShapeDrawable Rectangle { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Rectangle
-        };
-
-    public static GeometryShapeDrawable Triangle { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Triangle
-        };
-
-    public static GeometryShapeDrawable Circle { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Circle
-        };
-
-    public static GeometryShapeDrawable Trapezoid { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Trapezoid
-        };
-
-    public static GeometryShapeDrawable Rhombus { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Rhombus
-        };
-
-    public static GeometryShapeDrawable Parallelogram { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Parallelogram
-        };
-
-    public static GeometryShapeDrawable Cube { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Cube
-        };
-    public static GeometryShapeDrawable RectangularPrism { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.RectangularPrism
-        };
-
-    public static GeometryShapeDrawable Sphere { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Sphere
-        };
-
-    public static GeometryShapeDrawable Cylinder { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Cylinder
-        };
-
-    public static GeometryShapeDrawable Cone { get; } =
-        new()
-        {
-            ShapeType =
-                GeometryShapeType.Cone
-        };
 }
