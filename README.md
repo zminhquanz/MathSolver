@@ -64,20 +64,6 @@ The calculator can determine values such as:
 - Total surface area
 - Volume
 
-Input and result handling:
-
-- Integer input uses `Int128`
-- Integer calculations and results use `BigInteger`
-- Decimal input and results use `Decimal`
-- Decimal input supports up to 10 digits after the decimal point
-- Input values are validated against the limits of `Int128` and `Decimal`
-- Decimal overflow is detected and reported
-- Values containing more than 18 digits are displayed in scientific notation
-
-### Quadratic Equations
-
-The quadratic equation solver keeps coefficients in `decimal` form for accurate input and display.
-
 Internal calculations use a custom Double-Double numeric structure for approximately 32 significant digits of precision. This improves the calculation of:
 
 - Discriminant
@@ -85,8 +71,6 @@ Internal calculations use a custom Double-Double numeric structure for approxima
 - Real roots
 - Parabola vertex
 - Parabola sampling points
-
-`Math.FusedMultiplyAdd` is used where appropriate to reduce intermediate rounding error. Displayed decimal results are limited to 10 digits after the decimal point.
 
 ### Formula Reference
 
