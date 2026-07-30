@@ -24,13 +24,28 @@
             ColumnDefinitions="*,Auto"
             ColumnSpacing="10">
 
-            <Label
+            <HorizontalStackLayout
                 Grid.Column="0"
-                Text="Math Solver"
-                FontSize="20"
-                FontAttributes="Bold"
-                VerticalTextAlignment="Center"
-                TextColor="{DynamicResource ShellForegroundColor}" />
+                Spacing="8"
+                HorizontalOptions="Start"
+                VerticalOptions="Center">
+
+                <Image
+                    Source="splashicon.png"
+                    WidthRequest="26"
+                    HeightRequest="26"
+                    Aspect="AspectFit"
+                    VerticalOptions="Center"
+                    AutomationProperties.Name="Biểu tượng Math Solver" />
+
+                <Label
+                    Text="Math Solver"
+                    FontSize="20"
+                    FontAttributes="Bold"
+                    VerticalTextAlignment="Center"
+                    VerticalOptions="Center"
+                    TextColor="{DynamicResource ShellForegroundColor}" />
+            </HorizontalStackLayout>
 
             <HorizontalStackLayout
                 x:Name="TitleActionButtons"

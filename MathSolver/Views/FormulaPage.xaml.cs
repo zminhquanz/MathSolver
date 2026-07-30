@@ -1074,7 +1074,7 @@ public partial class FormulaPage : ContentPage
             14d;
 
         const double fallbackCardHeight =
-            330d;
+            360d;
 
         double maximumCardHeight =
             fallbackCardHeight;

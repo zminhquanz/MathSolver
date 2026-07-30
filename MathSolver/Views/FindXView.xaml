@@ -40,7 +40,7 @@
                 <Label
                     x:Name="FindXPageSubtitle"
                     Text="Số hạng • Số bị trừ • Số trừ • Thừa số • Số bị chia • Số chia"
-                    FontSize="15"
+                    FontSize="17"
                     LineBreakMode="WordWrap"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -62,7 +62,7 @@
 
                     <Label
                         Text="1. Chọn phép tính"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -76,7 +76,7 @@
                             Text="+"
                             HeightRequest="48"
                             Padding="8,0"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -89,7 +89,7 @@
                             Text="−"
                             HeightRequest="48"
                             Padding="8,0"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -102,7 +102,7 @@
                             Text="×"
                             HeightRequest="48"
                             Padding="8,0"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -115,7 +115,7 @@
                             Text="÷"
                             HeightRequest="48"
                             Padding="8,0"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -133,13 +133,13 @@
 
                         <Label
                             Text="Vị trí của x"
-                            FontSize="15"
+                            FontSize="17"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="FindXPositionDescriptionLabel"
-                            FontSize="13"
+                            FontSize="15"
                             LineHeight="1.2"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -155,7 +155,7 @@
                             Text="x + a = b"
                             HeightRequest="48"
                             Padding="8,0"
-                            FontSize="17"
+                            FontSize="19"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -168,7 +168,7 @@
                             Text="a + x = b"
                             HeightRequest="48"
                             Padding="8,0"
-                            FontSize="17"
+                            FontSize="19"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -195,7 +195,7 @@
 
                     <Label
                         Text="2. Nhập các giá trị đã biết"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -208,7 +208,7 @@
                             Grid.Column="0"
                             Text="Số nguyên"
                             HeightRequest="48"
-                            FontSize="14"
+                            FontSize="16"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -220,7 +220,7 @@
                             Grid.Column="1"
                             Text="Số thập phân"
                             HeightRequest="48"
-                            FontSize="14"
+                            FontSize="16"
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -246,7 +246,7 @@
                             <Label
                                 x:Name="FindXKnownValueLabel"
                                 Text="Số hạng đã biết"
-                                FontSize="14"
+                                FontSize="16"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Border
@@ -265,7 +265,7 @@
                                     Placeholder="Ví dụ: 8"
                                     PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                     Keyboard="Numeric"
-                                    FontSize="17"
+                                    FontSize="19"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
                                     HorizontalOptions="Fill"
@@ -286,7 +286,7 @@
                             <Label
                                 x:Name="FindXResultValueLabel"
                                 Text="Tổng"
-                                FontSize="14"
+                                FontSize="16"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Border
@@ -306,7 +306,7 @@
 
                                     PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                     Keyboard="Numeric"
-                                    FontSize="17"
+                                    FontSize="19"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
                                     HorizontalOptions="Fill"
@@ -335,14 +335,14 @@
 
                             <Label
                                 Text="Phương trình đang nhập"
-                                FontSize="13"
+                                FontSize="15"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Label
                                 x:Name="FindXEquationPreviewLabel"
                                 Text="x + a = b"
-                                FontSize="21"
+                                FontSize="23"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
@@ -360,7 +360,7 @@
                             Grid.Column="0"
                             Text="Tìm x"
                             HeightRequest="54"
-                            FontSize="17"
+                            FontSize="19"
                             FontAttributes="Bold"
                             CornerRadius="14"
                             BackgroundColor="{DynamicResource PrimaryColor}"
@@ -371,7 +371,7 @@
                             Grid.Column="1"
                             Text="Xóa"
                             HeightRequest="54"
-                            FontSize="17"
+                            FontSize="19"
                             FontAttributes="Bold"
                             CornerRadius="14"
                             BackgroundColor="{DynamicResource DividerColor}"
@@ -402,14 +402,14 @@
                     <Label
                         Grid.Column="0"
                         Text="!"
-                        FontSize="20"
+                        FontSize="22"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource DangerColor}" />
 
                     <Label
                         x:Name="FindXErrorLabel"
                         Grid.Column="1"
-                        FontSize="15"
+                        FontSize="17"
                         LineHeight="1.2"
                         TextColor="{DynamicResource DangerColor}" />
 
@@ -433,13 +433,13 @@
 
                     <Label
                         Text="3. Kết quả"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Label
                         x:Name="FindXResultEquationLabel"
-                        FontSize="20"
+                        FontSize="22"
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
                         LineBreakMode="WordWrap"
@@ -460,7 +460,7 @@
                             <Label
                                 x:Name="FindXStatusLabel"
                                 Text="Nghiệm duy nhất"
-                                FontSize="14"
+                                FontSize="16"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource SuccessColor}" />
@@ -468,7 +468,7 @@
                             <Label
                                 x:Name="FindXAnswerLabel"
                                 Text="x = 0"
-                                FontSize="32"
+                                FontSize="34"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
@@ -477,7 +477,7 @@
                             <Label
                                 x:Name="FindXApproximationLabel"
                                 IsVisible="False"
-                                FontSize="14"
+                                FontSize="16"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -498,13 +498,13 @@
 
                             <Label
                                 Text="Quy tắc áp dụng"
-                                FontSize="16"
+                                FontSize="18"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryDarkColor}" />
 
                             <Label
                                 x:Name="FindXRuleLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 LineHeight="1.25"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -525,13 +525,13 @@
 
                             <Label
                                 Text="Lời giải chi tiết"
-                                FontSize="16"
+                                FontSize="18"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Label
                                 x:Name="FindXSolutionStepsLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 LineHeight="1.3"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -553,13 +553,13 @@
 
                             <Label
                                 Text="Kiểm tra lại"
-                                FontSize="16"
+                                FontSize="18"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource SuccessColor}" />
 
                             <Label
                                 x:Name="FindXVerificationLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 LineHeight="1.25"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -586,7 +586,7 @@
                     <Label
                         Grid.Column="0"
                         Text="💡"
-                        FontSize="22"
+                        FontSize="24"
                         VerticalOptions="Start" />
 
                     <VerticalStackLayout
@@ -595,13 +595,13 @@
 
                         <Label
                             Text="Ghi nhớ"
-                            FontSize="15"
+                            FontSize="17"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource WarningColor}" />
 
                         <Label
                             Text="Sau khi tìm được x, ứng dụng luôn thay x trở lại phép tính ban đầu để kiểm tra. Nếu phép chia có x ở mẫu số thì x phải khác 0."
-                            FontSize="14"
+                            FontSize="16"
                             LineHeight="1.25"
                             TextColor="{DynamicResource WarningColor}" />
 
@@ -627,7 +627,7 @@
                                     <Label
                         Grid.Column="0"
                         Text="⚠"
-                        FontSize="24"
+                        FontSize="26"
                         VerticalOptions="Start"
                         TextColor="{DynamicResource WarningColor}" />
 
@@ -637,19 +637,19 @@
 
                                         <Label
                             Text="Lưu ý khi sử dụng"
-                            FontSize="16"
+                            FontSize="18"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource WarningColor}" />
 
                                         <Label
                             Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
-                            FontSize="14"
+                            FontSize="16"
                             LineHeight="1.25"
                             TextColor="{DynamicResource WarningColor}" />
 
                                         <Label
                             Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
-                            FontSize="14"
+                            FontSize="16"
                             FontAttributes="Italic"
                             LineHeight="1.25"
                             TextColor="{DynamicResource WarningColor}" />

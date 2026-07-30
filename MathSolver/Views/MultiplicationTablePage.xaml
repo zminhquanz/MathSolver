@@ -32,20 +32,20 @@
         </Style>
 
         <Style x:Key="TitleLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         </Style>
 
         <Style x:Key="SubLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="15" />
             <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
         </Style>
 
         <Style x:Key="TableLineStyle" TargetType="Label">
             <Setter Property="HorizontalTextAlignment" Value="Center" />
             <Setter Property="VerticalTextAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         </Style>
@@ -81,7 +81,7 @@
 
                         <Label
                             Text="Bảng nhân và bảng chia từ 1 đến 20"
-                            FontSize="15"
+                            FontSize="17"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
@@ -111,7 +111,7 @@
                                         CornerRadius="12"
                                         Clicked="OnMultiplyClicked"
                                         FontAttributes="Bold"
-                                        FontSize="16"
+                                        FontSize="18"
                                         Text="×  Bảng nhân" 
                                         BackgroundColor="{DynamicResource PrimaryColor}"
                                         TextColor="{DynamicResource OnPrimaryColor}" />
@@ -123,7 +123,7 @@
                                         CornerRadius="12"
                                         Clicked="OnDivideClicked"
                                         FontAttributes="Bold"
-                                        FontSize="16"
+                                        FontSize="18"
                                         Text="÷  Bảng chia"
                                         BackgroundColor="{DynamicResource PrimaryColor}"
                                         TextColor="{DynamicResource OnPrimaryColor}" />
@@ -169,13 +169,13 @@
                                             <VerticalStackLayout Spacing="2">
                                                 <Label
                                                     Text="Bảng 1 – 10"
-                                                    FontSize="14"
+                                                    FontSize="16"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                 <Label
                                                     Text="10 bảng cơ bản"
-                                                    FontSize="12"
+                                                    FontSize="14"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
                                             </VerticalStackLayout>
 
@@ -201,13 +201,13 @@
                                             <VerticalStackLayout Spacing="2">
                                                 <Label
                                                     Text="Bảng 11 – 20"
-                                                    FontSize="14"
+                                                    FontSize="16"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                 <Label
                                                     Text="10 bảng nâng cao"
-                                                    FontSize="12"
+                                                    FontSize="14"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
                                             </VerticalStackLayout>
 
@@ -233,13 +233,13 @@
                                             <VerticalStackLayout Spacing="2">
                                                 <Label
                                                     Text="Tất cả 1 – 20"
-                                                    FontSize="14"
+                                                    FontSize="16"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                 <Label
                                                     Text="Hiển thị đầy đủ 20 bảng"
-                                                    FontSize="12"
+                                                    FontSize="14"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
                                             </VerticalStackLayout>
 
@@ -258,7 +258,7 @@
                                 Padding="14,10">
                                 <Label
                                     x:Name="StatusLabel"
-                                    FontSize="14"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource PrimaryColor}" />
                             </Border>
@@ -269,13 +269,13 @@
                     <VerticalStackLayout Spacing="4">
                         <Label
                             Text="3. Danh sách bảng cửu chương"
-                            FontSize="16"
+                            FontSize="18"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             Text="Mỗi ô hiển thị đầy đủ 10 phép tính."
-                            FontSize="13"
+                            FontSize="15"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
@@ -296,7 +296,7 @@
                             <Label
                                 Text="{Binding Title}"
                                 HorizontalTextAlignment="Center"
-                                FontSize="18"
+                                FontSize="20"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 

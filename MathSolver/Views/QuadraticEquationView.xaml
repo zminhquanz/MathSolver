@@ -41,7 +41,7 @@
 
                 <Label
                     Text="Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết"
-                    FontSize="15"
+                    FontSize="17"
                     HorizontalTextAlignment="Center"
                     LineBreakMode="WordWrap"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -63,7 +63,7 @@
 
                     <Label
                         Text="1. Nhập các hệ số"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -94,14 +94,14 @@
 
                                 <Label
                                     Text="Hệ số a"
-                                    FontSize="14"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
                                     Text="Hệ số của x²"
-                                    FontSize="12"
+                                    FontSize="14"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -122,7 +122,7 @@
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Keyboard="Text"
                                         MaxLength="40"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -156,14 +156,14 @@
 
                                 <Label
                                     Text="Hệ số b"
-                                    FontSize="14"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
                                     Text="Hệ số của x"
-                                    FontSize="12"
+                                    FontSize="14"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -184,7 +184,7 @@
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Keyboard="Text"
                                         MaxLength="40"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -218,14 +218,14 @@
 
                                 <Label
                                     Text="Hệ số c"
-                                    FontSize="14"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
                                     Text="Hệ số tự do"
-                                    FontSize="12"
+                                    FontSize="14"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -246,7 +246,7 @@
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Keyboard="Text"
                                         MaxLength="40"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -278,7 +278,7 @@
 
                             <Label
                                 Text="Phương trình đang nhập"
-                                FontSize="13"
+                                FontSize="15"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource PrimaryDarkColor}" />
@@ -286,7 +286,7 @@
                             <Label
                                 x:Name="EquationPreviewLabel"
                                 Text="ax² + bx + c = 0"
-                                FontSize="23"
+                                FontSize="25"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
@@ -307,7 +307,7 @@
                             HeightRequest="50"
                             Padding="10,0"
                             CornerRadius="12"
-                            FontSize="16"
+                            FontSize="18"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource PrimaryColor}"
                             TextColor="{DynamicResource OnPrimaryColor}"
@@ -319,7 +319,7 @@
                             HeightRequest="50"
                             Padding="10,0"
                             CornerRadius="12"
-                            FontSize="16"
+                            FontSize="18"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
@@ -346,7 +346,7 @@
 
                 <Label
                     x:Name="ErrorLabel"
-                    FontSize="15"
+                    FontSize="17"
                     TextColor="{DynamicResource DangerColor}"
                     LineBreakMode="WordWrap" />
 
@@ -369,13 +369,13 @@
 
                     <Label
                         Text="2. Kết quả"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <Label
                         x:Name="ResultEquationLabel"
-                        FontSize="21"
+                        FontSize="23"
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
                         LineBreakMode="WordWrap"
@@ -395,14 +395,14 @@
 
                             <Label
                                 Text="Biệt thức"
-                                FontSize="13"
+                                FontSize="15"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
                             <Label
                                 x:Name="DeltaValueLabel"
                                 Text="Δ = 0"
-                                FontSize="25"
+                                FontSize="27"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
@@ -415,7 +415,7 @@
 
                             <Label
                                 x:Name="ClassificationLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
@@ -423,7 +423,7 @@
 
                             <Label
                                 x:Name="RootsLabel"
-                                FontSize="30"
+                                FontSize="32"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
@@ -457,7 +457,7 @@
 
                     <Label
                         Text="3. Lời giải chi tiết"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -475,13 +475,13 @@
 
                             <Label
                                 x:Name="Step1TitleLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 x:Name="Step1BodyLabel"
-                                FontSize="14"
+                                FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
@@ -504,13 +504,13 @@
 
                             <Label
                                 x:Name="Step2TitleLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 x:Name="Step2BodyLabel"
-                                FontSize="14"
+                                FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
@@ -534,13 +534,13 @@
 
                             <Label
                                 x:Name="Step3TitleLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 x:Name="Step3BodyLabel"
-                                FontSize="14"
+                                FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
@@ -564,13 +564,13 @@
 
                             <Label
                                 x:Name="Step4TitleLabel"
-                                FontSize="15"
+                                FontSize="17"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 x:Name="Step4BodyLabel"
-                                FontSize="14"
+                                FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
@@ -609,13 +609,13 @@
 
                             <Label
                                 Text="Đồ thị parabol"
-                                FontSize="18"
+                                FontSize="20"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 
                             <Label
                                 x:Name="GraphStatusLabel"
-                                FontSize="12"
+                                FontSize="14"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -628,7 +628,7 @@
                             HeightRequest="42"
                             Padding="0"
                             CornerRadius="10"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
@@ -643,7 +643,7 @@
                             HeightRequest="42"
                             Padding="10,0"
                             CornerRadius="10"
-                            FontSize="13"
+                            FontSize="15"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource PrimarySoftColor}"
                             TextColor="{DynamicResource PrimaryColor}"
@@ -657,7 +657,7 @@
                             HeightRequest="42"
                             Padding="0"
                             CornerRadius="10"
-                            FontSize="20"
+                            FontSize="22"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
@@ -691,7 +691,7 @@
 
                     <Label
                         Text="Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%."
-                        FontSize="12"
+                        FontSize="14"
                         HorizontalTextAlignment="Center"
                         LineBreakMode="WordWrap"
                         TextColor="{DynamicResource TextSecondaryColor}" />
@@ -719,7 +719,7 @@ StrokeThickness="1">
                     <Label
         Grid.Column="0"
         Text="⚠"
-        FontSize="24"
+        FontSize="26"
         VerticalOptions="Start"
         TextColor="{DynamicResource WarningColor}" />
 
@@ -729,19 +729,19 @@ StrokeThickness="1">
 
                         <Label
             Text="Lưu ý khi sử dụng"
-            FontSize="16"
+            FontSize="18"
             FontAttributes="Bold"
             TextColor="{DynamicResource WarningColor}" />
 
                         <Label
             Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
-            FontSize="14"
+            FontSize="16"
             LineHeight="1.25"
             TextColor="{DynamicResource WarningColor}" />
 
                         <Label
             Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
-            FontSize="14"
+            FontSize="16"
             FontAttributes="Italic"
             LineHeight="1.25"
             TextColor="{DynamicResource WarningColor}" />

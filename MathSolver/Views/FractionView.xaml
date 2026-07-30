@@ -43,7 +43,7 @@
                 <Label
                     x:Name="FractionPageSubtitle"
                     Text="Cộng • Trừ • Nhân • Chia • Quy đồng"
-                    FontSize="15"
+                    FontSize="17"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -64,7 +64,7 @@
 
                     <Label
                         Text="1. Chọn phép tính"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -80,7 +80,7 @@
                             Grid.Row="0"
                             Grid.Column="0"
                             Text="+"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             HeightRequest="48"
                             Padding="8,0"
@@ -94,7 +94,7 @@
                             Grid.Row="0"
                             Grid.Column="1"
                             Text="−"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             HeightRequest="48"
                             Padding="8,0"
@@ -108,7 +108,7 @@
                             Grid.Row="0"
                             Grid.Column="2"
                             Text="×"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             HeightRequest="48"
                             Padding="8,0"
@@ -122,7 +122,7 @@
                             Grid.Row="0"
                             Grid.Column="3"
                             Text="÷"
-                            FontSize="22"
+                            FontSize="24"
                             FontAttributes="Bold"
                             HeightRequest="48"
                             Padding="8,0"
@@ -136,7 +136,7 @@
                             Grid.Row="0"
                             Grid.Column="4"
                             Text="Quy đồng"
-                            FontSize="14"
+                            FontSize="16"
                             FontAttributes="Bold"
                             HeightRequest="48"
                             Padding="10,0"
@@ -165,7 +165,7 @@
 
                     <Label
                         Text="2. Nhập các phân số"
-                        FontSize="18"
+                        FontSize="20"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -196,7 +196,7 @@
 
                                 <Label
                                     Text="Phân số thứ nhất"
-                                    FontSize="14"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
@@ -217,7 +217,7 @@
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Tử số"
                                         Keyboard="Numeric"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -246,7 +246,7 @@
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -263,7 +263,7 @@
                             Grid.Row="0"
                             Grid.Column="1"
                             Text="+"
-                            FontSize="30"
+                            FontSize="32"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             VerticalTextAlignment="Center"
@@ -288,7 +288,7 @@
 
                                 <Label
                                     Text="Phân số thứ hai"
-                                    FontSize="14"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
@@ -309,7 +309,7 @@
                                         Placeholder="Tử số"
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Keyboard="Numeric"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -338,7 +338,7 @@
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
-                                        FontSize="17"
+                                        FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
@@ -404,7 +404,7 @@
 
                 <Label
                     x:Name="ErrorLabel"
-                    FontSize="15"
+                    FontSize="17"
                     TextColor="{DynamicResource DangerColor}"
                     LineBreakMode="WordWrap" />
             </Border>
@@ -426,13 +426,13 @@
 
                     <Label
                         Text="3. Kết quả"
-                        FontSize="17"
+                        FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                     <controls:FractionExpressionView
                         x:Name="FullExpressionMathView"
-                        MathFontSize="21"
+                        MathFontSize="23"
                         MathColor="{DynamicResource PrimaryColor}"
                         HorizontalOptions="Center" />
 
@@ -442,13 +442,13 @@
 
                     <Label
                         Text="Đáp số"
-                        FontSize="13"
+                        FontSize="15"
                         HorizontalTextAlignment="Center"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                     <controls:FractionExpressionView
                         x:Name="AnswerMathView"
-                        MathFontSize="30"
+                        MathFontSize="32"
                         MathColor="{DynamicResource TextPrimaryColor}"
                         HorizontalOptions="Center" />
 
@@ -467,7 +467,7 @@
 
                             <Label
                                 Text="Lời giải"
-                                FontSize="16"
+                                FontSize="18"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryDarkColor}" />
 
@@ -492,13 +492,13 @@
 
                                                 <Label
                                                     Text="{Binding Title}"
-                                                    FontSize="15"
+                                                    FontSize="17"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource PrimaryColor}" />
 
                                                 <Label
                                                     Text="{Binding Description}"
-                                                    FontSize="14"
+                                                    FontSize="16"
                                                     LineHeight="1.25"
                                                     LineBreakMode="WordWrap"
                                                     TextColor="{DynamicResource TextPrimaryColor}">
@@ -523,7 +523,7 @@
                                                         <DataTemplate x:DataType="x:String">
                                                             <controls:FractionExpressionView
                                                                 Expression="{Binding .}"
-                                                                MathFontSize="17"
+                                                                MathFontSize="19"
                                                                 MathColor="{DynamicResource TextPrimaryColor}"
                                                                 HorizontalOptions="Start" />
                                                         </DataTemplate>
@@ -561,7 +561,7 @@
                     <Label
                         Grid.Column="0"
                         Text="⚠"
-                        FontSize="24"
+                        FontSize="26"
                         VerticalOptions="Start"
                         TextColor="{DynamicResource WarningColor}" />
 
@@ -571,19 +571,19 @@
 
                         <Label
                             Text="Lưu ý khi sử dụng"
-                            FontSize="16"
+                            FontSize="18"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource WarningColor}" />
 
                         <Label
                             Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
-                            FontSize="14"
+                            FontSize="16"
                             LineHeight="1.25"
                             TextColor="{DynamicResource WarningColor}" />
 
                         <Label
                             Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
-                            FontSize="14"
+                            FontSize="16"
                             FontAttributes="Italic"
                             LineHeight="1.25"
                             TextColor="{DynamicResource WarningColor}" />
