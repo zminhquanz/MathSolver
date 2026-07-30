@@ -1,5 +1,16 @@
 # Math Solver
 
+<p align="center">
+  <img src="MathSolver/Resources/AppIcon/appicon.png"
+       alt="Math Solver App Icon"
+       width="160"
+       height="160">
+</p>
+
+<p align="center">
+  An offline-first mathematics learning and problem-solving application built with .NET MAUI.
+</p>
+
 Math Solver is an offline-first mathematics learning and problem-solving application built with .NET MAUI. It provides step-by-step calculations, reusable formula references, responsive layouts, and high-precision numeric processing for students and anyone who wants to review essential mathematics.
 
 The project is designed for cross-platform development, with the current implementation focused on Windows and Android.
