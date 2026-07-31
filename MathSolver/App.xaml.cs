@@ -1,5 +1,9 @@
-﻿using MathSolver.Services;
+using MathSolver.Services;
 using MathSolver.Views;
+
+#if WINDOWS
+using MathSolver.Platforms.Windows;
+#endif
 
 namespace MathSolver;
 
@@ -23,6 +27,10 @@ public partial class App : Application
         {
             Title = "Math Solver"
         };
+
+#if WINDOWS
+    MathSolver.Platforms.Windows.WindowStateManager.Attach(window);
+#endif
 
         splashPage.Loaded += async (_, _) =>
         {

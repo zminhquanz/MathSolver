@@ -262,8 +262,8 @@
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
-                                <Button x:Name="VietnameseLanguageButton" Grid.Column="0" Text="Tiếng Việt" Clicked="OnVietnameseClicked" />
-                                <Button x:Name="EnglishLanguageButton" Grid.Column="1" Text="Tiếng Anh" Clicked="OnEnglishClicked" />
+                                <Button x:Name="EnglishLanguageButton" Grid.Column="0" Text="Tiếng Anh" Clicked="OnEnglishClicked" />
+                                <Button x:Name="VietnameseLanguageButton" Grid.Column="1" Text="Tiếng Việt" Clicked="OnVietnameseClicked" />
                             </Grid>
                         </Border>
 

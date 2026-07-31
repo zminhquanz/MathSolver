@@ -61,10 +61,22 @@ public sealed class LocalizationManager :
     public string CurrentCulture =>
         _currentPack?.Culture ??
         _fallbackPack?.Culture ??
-        "vi-VN";
+        DefaultCulture;
 
+    /// <summary>
+    /// Culture selected when the application has never stored a user choice.
+    /// This is intentionally separate from SourceCulture.
+    /// </summary>
     public string DefaultCulture =>
         _manifest?.DefaultCulture ??
+        "en-US";
+
+    /// <summary>
+    /// Culture used by the literal source text in the current XAML/codebase.
+    /// The compatibility translator must return source text unchanged only
+    /// for this culture, not for the startup default culture.
+    /// </summary>
+    public string SourceCulture =>
         _catalog?.SourceCulture ??
         "vi-VN";
 
@@ -103,7 +115,7 @@ public sealed class LocalizationManager :
                 _fallbackPack =
                     await _provider
                         .LoadLanguagePackAsync(
-                            _manifest.DefaultCulture,
+                            _catalog.SourceCulture,
                             cancellationToken)
                         .ConfigureAwait(false);
 
@@ -310,7 +322,7 @@ public sealed class LocalizationManager :
 
         if (string.Equals(
                 CurrentCulture,
-                DefaultCulture,
+                SourceCulture,
                 StringComparison.OrdinalIgnoreCase))
         {
             return source;

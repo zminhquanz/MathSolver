@@ -16,7 +16,7 @@ public static class AppLanguageManager
     public static event EventHandler? LanguageChanged;
 
     public static AppLanguage CurrentLanguage { get; private set; } =
-        AppLanguage.Vietnamese;
+        AppLanguage.English;
 
     public static void Initialize()
     {
@@ -30,7 +30,7 @@ public static class AppLanguageManager
         string storedValue =
             Preferences.Default.Get(
                 LanguagePreferenceKey,
-                AppLanguage.Vietnamese.ToString());
+                AppLanguage.English.ToString());
 
         if (!Enum.TryParse(
                 storedValue,
@@ -38,7 +38,7 @@ public static class AppLanguageManager
                 out AppLanguage language))
         {
             language =
-                AppLanguage.Vietnamese;
+                AppLanguage.English;
         }
 
         CurrentLanguage =
@@ -72,6 +72,6 @@ public static class AppLanguageManager
     public static void ResetToDefault()
     {
         SetLanguage(
-            AppLanguage.Vietnamese);
+            AppLanguage.English);
     }
 }

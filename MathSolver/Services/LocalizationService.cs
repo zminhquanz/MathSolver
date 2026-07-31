@@ -282,7 +282,7 @@ public static class LocalizationService
                 "vi-VN",
 
             _ =>
-                "vi-VN"
+                "en-US"
         };
     }
 

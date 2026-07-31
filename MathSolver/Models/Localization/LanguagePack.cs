@@ -77,7 +77,7 @@ public sealed class LocalizationManifest
 {
     public int SchemaVersion { get; init; } = 1;
 
-    public string DefaultCulture { get; init; } = "vi-VN";
+    public string DefaultCulture { get; init; } = "en-US";
 
     public List<LanguageManifestEntry> Languages { get; init; } =
         [];

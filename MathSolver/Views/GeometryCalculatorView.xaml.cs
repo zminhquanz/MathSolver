@@ -1026,14 +1026,6 @@ public partial class GeometryCalculatorView : ContentView
             return false;
         }
 
-        ResultEngineLabel.Text =
-            usesDecimalResult
-                ? T(
-                    "Đầu vào được kiểm tra bằng Int128. " +
-                    "Kết quả nguyên dùng BigInteger; kết quả có phần thập phân dùng Decimal.")
-                : T(
-                    "Đầu vào được kiểm tra bằng Int128 và kết quả dùng BigInteger.");
-
         CalculationExplanationLabel.Text =
             BuildExplanation();
 
@@ -1688,11 +1680,6 @@ public partial class GeometryCalculatorView : ContentView
 
             return false;
         }
-
-        ResultEngineLabel.Text =
-            T(
-                "Đầu vào và kết quả dùng Decimal. " +
-                "Phần hiển thị được làm tròn tối đa 10 chữ số sau dấu chấm.");
 
         CalculationExplanationLabel.Text =
             BuildExplanation();
@@ -2795,9 +2782,6 @@ public partial class GeometryCalculatorView : ContentView
         Results.Clear();
 
         ResultShapeLabel.Text =
-            string.Empty;
-
-        ResultEngineLabel.Text =
             string.Empty;
 
         CalculationExplanationLabel.Text =

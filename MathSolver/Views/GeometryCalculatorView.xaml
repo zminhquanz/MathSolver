@@ -597,12 +597,6 @@
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                    <Label
-                        x:Name="ResultEngineLabel"
-                        FontSize="15"
-                        LineHeight="1.25"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-
                     <VerticalStackLayout
                         Spacing="8"
                         BindableLayout.ItemsSource="{Binding Results}">
