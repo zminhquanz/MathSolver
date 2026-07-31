@@ -169,7 +169,7 @@ public partial class SettingsPage : ContentPage
     }
 
     private void OnVietnameseLanguageClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         AppLanguageManager.SetLanguage(
@@ -178,7 +178,7 @@ public partial class SettingsPage : ContentPage
     }
 
     private void OnEnglishLanguageClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         AppLanguageManager.SetLanguage(
@@ -186,25 +186,25 @@ public partial class SettingsPage : ContentPage
         UpdateLanguageButtons();
     }
 
-    private void OnSystemThemeClicked(object sender, EventArgs e)
+    private void OnSystemThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.System);
         UpdateThemeModeButtons();
     }
 
-    private void OnLightThemeClicked(object sender, EventArgs e)
+    private void OnLightThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.Light);
         UpdateThemeModeButtons();
     }
 
-    private void OnDarkThemeClicked(object sender, EventArgs e)
+    private void OnDarkThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.Dark);
         UpdateThemeModeButtons();
     }
 
-    private void OnPresetColorClicked(object sender, EventArgs e)
+    private void OnPresetColorClicked(object? sender, EventArgs e)
     {
         if (sender is not Button button ||
             button.CommandParameter is not string hexColor)
@@ -215,12 +215,12 @@ public partial class SettingsPage : ContentPage
         ApplyHexColor(hexColor);
     }
 
-    private void OnApplyHexClicked(object sender, EventArgs e)
+    private void OnApplyHexClicked(object? sender, EventArgs e)
     {
         ApplyHexColor(HexColorEntry.Text);
     }
 
-    private void OnRgbValueChanged(object sender, ValueChangedEventArgs e)
+    private void OnRgbValueChanged(object? sender, ValueChangedEventArgs e)
     {
         if (_updatingControls)
         {
@@ -235,7 +235,7 @@ public partial class SettingsPage : ContentPage
         HideValidationMessage();
     }
 
-    private void OnRgbDragCompleted(object sender, EventArgs e)
+    private void OnRgbDragCompleted(object? sender, EventArgs e)
     {
         if (_updatingControls)
         {
@@ -245,7 +245,7 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.SetAccentColor(GetSliderColor());
     }
 
-    private void OnResetClicked(object sender, EventArgs e)
+    private void OnResetClicked(object? sender, EventArgs e)
     {
         AppThemeManager.ResetToDefault();
         AppFontManager.ResetToDefault();
@@ -307,7 +307,7 @@ public partial class SettingsPage : ContentPage
     }
 
     private void OnFontSelectionChanged(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         if (_updatingFontSelection ||

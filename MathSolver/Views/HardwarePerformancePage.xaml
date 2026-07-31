@@ -36,7 +36,7 @@
                 FontAttributes="Bold"
                 BackgroundColor="Transparent"
                 TextColor="{DynamicResource TextPrimaryColor}"
-                AutomationProperties.Name="Quay lại"
+                SemanticProperties.Description="Quay lại"
                 Clicked="OnCloseClicked" />
 
             <VerticalStackLayout

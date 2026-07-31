@@ -224,22 +224,22 @@ public partial class CalculationPage : ContentPage
             1d;
     }
 
-    private void OnAddClicked(object sender, EventArgs e)
+    private void OnAddClicked(object? sender, EventArgs e)
     {
         SelectOperation(ArithmeticOperation.Add);
     }
 
-    private void OnSubtractClicked(object sender, EventArgs e)
+    private void OnSubtractClicked(object? sender, EventArgs e)
     {
         SelectOperation(ArithmeticOperation.Subtract);
     }
 
-    private void OnMultiplyClicked(object sender, EventArgs e)
+    private void OnMultiplyClicked(object? sender, EventArgs e)
     {
         SelectOperation(ArithmeticOperation.Multiply);
     }
 
-    private void OnDivideClicked(object sender, EventArgs e)
+    private void OnDivideClicked(object? sender, EventArgs e)
     {
         SelectOperation(ArithmeticOperation.Divide);
     }
@@ -313,7 +313,7 @@ public partial class CalculationPage : ContentPage
         }
     }
 
-    private void OnCalculateClicked(object sender, EventArgs e)
+    private void OnCalculateClicked(object? sender, EventArgs e)
     {
         HideMessages();
 
@@ -2167,7 +2167,7 @@ public partial class CalculationPage : ContentPage
             out _);
     }
 
-    private void OnClearClicked(object sender, EventArgs e)
+    private void OnClearClicked(object? sender, EventArgs e)
     {
         _pendingRestoredEntryTexts.Clear();
         _entryScientificCodeValues.Clear();
@@ -2310,7 +2310,9 @@ public partial class CalculationPage : ContentPage
     {
         if (_entryScientificCodeValues.TryGetValue(
                 entry,
-                out string scientificCode))
+                out string? scientificCode) &&
+            !string.IsNullOrEmpty(
+                scientificCode))
         {
             return scientificCode;
         }
@@ -2325,7 +2327,9 @@ public partial class CalculationPage : ContentPage
         if (sender is not Entry entry ||
             !_entryScientificCodeValues.TryGetValue(
                 entry,
-                out string scientificCode))
+                out string? scientificCode) ||
+            string.IsNullOrEmpty(
+                scientificCode))
         {
             return;
         }
@@ -2538,7 +2542,7 @@ public partial class CalculationPage : ContentPage
     }
 
     private void OnNumberEntryTextChanged(
-        object sender,
+        object? sender,
         TextChangedEventArgs e)
     {
         if (sender is not Entry entry)
@@ -3240,7 +3244,7 @@ public partial class CalculationPage : ContentPage
     }
 
     private async void OnBasicTabClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         await SwitchSubTabAsync(
@@ -3248,7 +3252,7 @@ public partial class CalculationPage : ContentPage
     }
 
     private async void OnFractionTabClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         await SwitchSubTabAsync(
@@ -3256,7 +3260,7 @@ public partial class CalculationPage : ContentPage
     }
 
     private async void OnFindXTabClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         await SwitchSubTabAsync(
@@ -3264,7 +3268,7 @@ public partial class CalculationPage : ContentPage
     }
 
     private async void OnQuadraticTabClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         await SwitchSubTabAsync(
@@ -3272,7 +3276,7 @@ public partial class CalculationPage : ContentPage
     }
 
     private async void OnGeometryTabClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         await SwitchSubTabAsync(
@@ -3610,7 +3614,7 @@ public partial class CalculationPage : ContentPage
         }
     }
 
-    private void OnLongDivisionDisplayModeChanged(object sender, CheckedChangedEventArgs e)
+    private void OnLongDivisionDisplayModeChanged(object? sender, CheckedChangedEventArgs e)
     {
         if (_isUpdatingLongDivisionMode ||
             !e.Value)

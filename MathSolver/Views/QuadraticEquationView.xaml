@@ -632,7 +632,7 @@
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
-                            AutomationProperties.Name="Thu nhỏ đồ thị"
+                            SemanticProperties.Description="Thu nhỏ đồ thị"
                             Clicked="OnGraphZoomOutClicked" />
 
                         <Button
@@ -647,7 +647,7 @@
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource PrimarySoftColor}"
                             TextColor="{DynamicResource PrimaryColor}"
-                            AutomationProperties.Name="Đặt lại mức thu phóng"
+                            SemanticProperties.Description="Đặt lại mức thu phóng"
                             Clicked="OnGraphResetZoomClicked" />
 
                         <Button
@@ -661,7 +661,7 @@
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
-                            AutomationProperties.Name="Phóng to đồ thị"
+                            SemanticProperties.Description="Phóng to đồ thị"
                             Clicked="OnGraphZoomInClicked" />
 
                     </Grid>

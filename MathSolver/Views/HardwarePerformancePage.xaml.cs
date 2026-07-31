@@ -1638,7 +1638,7 @@ public partial class HardwarePerformancePage : ContentPage
             try
             {
                 shouldStop =
-                    await DisplayAlert(
+                    await DisplayAlertAsync(
                         LocalizationService.Translate(
                             "Xác nhận dừng"),
                         LocalizationService.Translate(

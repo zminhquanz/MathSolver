@@ -71,7 +71,7 @@ public partial class AppShell : Shell
     }
 
     private async void OnSettingsClicked(
-        object sender,
+        object? sender,
         EventArgs e)
     {
         if (_openingSettings ||
@@ -258,7 +258,7 @@ public partial class AppShell : Shell
             LocalizationService.Translate(
                 "Cài đặt giao diện"));
 
-        AutomationProperties.SetName(
+        SemanticProperties.SetDescription(
             SettingsButton,
             LocalizationService.Translate(
                 "Mở cài đặt giao diện"));

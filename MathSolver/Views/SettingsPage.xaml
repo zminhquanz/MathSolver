@@ -37,7 +37,7 @@
                 FontAttributes="Bold"
                 BackgroundColor="Transparent"
                 TextColor="{DynamicResource TextPrimaryColor}"
-                AutomationProperties.Name="Quay lại"
+                SemanticProperties.Description="Quay lại"
                 Clicked="OnCloseClicked" />
 
             <VerticalStackLayout
@@ -137,7 +137,7 @@
                             BorderColor="{DynamicResource BorderColor}"
                             BorderWidth="2"
                             CommandParameter="#6D28D9"
-                            AutomationProperties.Name="Màu tím"
+                            SemanticProperties.Description="Màu tím"
                             Clicked="OnPresetColorClicked" />
 
                             <Button
@@ -152,7 +152,7 @@
                             BorderColor="{DynamicResource BorderColor}"
                             BorderWidth="2"
                             CommandParameter="#2563EB"
-                            AutomationProperties.Name="Màu xanh dương"
+                            SemanticProperties.Description="Màu xanh dương"
                             Clicked="OnPresetColorClicked" />
 
                             <Button
@@ -167,7 +167,7 @@
                             BorderColor="{DynamicResource BorderColor}"
                             BorderWidth="2"
                             CommandParameter="#0891B2"
-                            AutomationProperties.Name="Màu xanh ngọc"
+                            SemanticProperties.Description="Màu xanh ngọc"
                             Clicked="OnPresetColorClicked" />
 
                             <Button
@@ -182,7 +182,7 @@
                             BorderColor="{DynamicResource BorderColor}"
                             BorderWidth="2"
                             CommandParameter="#16A34A"
-                            AutomationProperties.Name="Màu xanh lá"
+                            SemanticProperties.Description="Màu xanh lá"
                             Clicked="OnPresetColorClicked" />
 
                             <Button
@@ -197,7 +197,7 @@
                             BorderColor="{DynamicResource BorderColor}"
                             BorderWidth="2"
                             CommandParameter="#EA580C"
-                            AutomationProperties.Name="Màu cam"
+                            SemanticProperties.Description="Màu cam"
                             Clicked="OnPresetColorClicked" />
 
                             <Button
@@ -212,7 +212,7 @@
                             BorderColor="{DynamicResource BorderColor}"
                             BorderWidth="2"
                             CommandParameter="#DB2777"
-                            AutomationProperties.Name="Màu hồng"
+                            SemanticProperties.Description="Màu hồng"
                             Clicked="OnPresetColorClicked" />
                         </FlexLayout>
 

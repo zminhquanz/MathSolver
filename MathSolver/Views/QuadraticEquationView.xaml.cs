@@ -467,7 +467,7 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private void OnWindowsGraphPointerWheelChanged(
-        object sender,
+        object? sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         if (!_parabolaGraphDrawable.HasEquation ||

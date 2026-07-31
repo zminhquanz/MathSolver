@@ -235,21 +235,21 @@ public partial class MultiplicationTablePage : ContentPage
             });
     }
 
-    private void OnMultiplyClicked(object sender, EventArgs e)
+    private void OnMultiplyClicked(object? sender, EventArgs e)
     {
         _currentMode = TableMode.Multiply;
         UpdateOperationButtons();
         BuildTables();
     }
 
-    private void OnDivideClicked(object sender, EventArgs e)
+    private void OnDivideClicked(object? sender, EventArgs e)
     {
         _currentMode = TableMode.Divide;
         UpdateOperationButtons();
         BuildTables();
     }
 
-    private void OnRangeChanged(object sender, CheckedChangedEventArgs e)
+    private void OnRangeChanged(object? sender, CheckedChangedEventArgs e)
     {
         if (_isInitializing ||
             !e.Value)
