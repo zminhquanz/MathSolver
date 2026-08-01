@@ -143,36 +143,23 @@
                                 Text="Chọn một hình để xem công thức và nhập dữ liệu."
                                 FontSize="16"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
-                            <Border
-                                x:Name="FirstNumberBorder"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                HeightRequest="63"
-                                Padding="10,0"
-                                BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
 
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="10" />
-                                    </Border.StrokeShape>
-                                <Picker
-                                    x:Name="GeometryShapePicker"
-                                    HeightRequest="62"
-                                    FontSize="18"
-                                    FontAttributes="Bold"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    ItemsSource="{Binding GeometryItems}"
-                                    SelectedIndexChanged="OnGeometryShapeSelected">
+                            <Picker
+                                x:Name="GeometryShapePicker"
+                                HeightRequest="62"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                ItemsSource="{Binding GeometryItems}"
+                                SelectedIndexChanged="OnGeometryShapeSelected">
 
-                                        <Picker.ItemDisplayBinding>
-                                            <Binding Path="Name" />
-                                        </Picker.ItemDisplayBinding>
+                            <Picker.ItemDisplayBinding>
+                                <Binding Path="Name" />
+                            </Picker.ItemDisplayBinding>
 
-                                    </Picker>
-                            </Border>
+                            </Picker>
                         </VerticalStackLayout>
                     </Border>
 

@@ -20,10 +20,20 @@ public partial class MultiplicationTablePage : ContentPage
     {
         InitializeComponent();
 
-        LocalizationService.Attach(
+        // This page uses stable-key bindings for static text and rebuilds
+        // dynamic card text itself. Keep the legacy visual-tree translator
+        // away from CollectionView cells because cell recycling can otherwise
+        // overwrite a bound title with text from another card.
+        LocalizationService.ExcludeSubtreeFromLegacyTracking(
             this);
 
-        AppLanguageManager.LanguageChanged +=
+        // Initialize the JSON localization system before building the
+        // dynamic table-card models.
+        LocalizationService.Initialize();
+
+        // Rebuild dynamic text only after the active language pack has
+        // actually finished changing.
+        LocalizationService.CultureChanged +=
             OnLanguageChanged;
 
         AppThemeManager.ThemeChanged +=
@@ -215,12 +225,7 @@ public partial class MultiplicationTablePage : ContentPage
         EventArgs e)
     {
         Dispatcher.Dispatch(
-            () =>
-            {
-                BuildTables();
-                LocalizationService.Attach(
-                    this);
-            });
+            BuildTables);
     }
 
     private void OnThemeChanged(
@@ -274,6 +279,11 @@ public partial class MultiplicationTablePage : ContentPage
 
         var (start, end) = GetRangeBounds();
 
+        string titleKey =
+            _currentMode == TableMode.Multiply
+                ? "dynamic.times_table_multiplication_word"
+                : "dynamic.times_table_division_word";
+
         for (int i = start; i <= end; i++)
         {
             var lines = new List<string>();
@@ -282,23 +292,37 @@ public partial class MultiplicationTablePage : ContentPage
             {
                 if (_currentMode == TableMode.Multiply)
                 {
-                    lines.Add($"{i} × {j} = {i * j}");
+                    lines.Add(
+                        $"{i} × {j} = {i * j}");
                 }
                 else
                 {
-                    int dividend = i * j;
-                    lines.Add($"{dividend} ÷ {i} = {j}");
+                    int dividend =
+                        i * j;
+
+                    lines.Add(
+                        $"{dividend} ÷ {i} = {j}");
                 }
             }
 
-            TableCards.Add(new TableCardModel
-            {
-                Title = LocalizationService.Translate(
-                    _currentMode == TableMode.Multiply
-                        ? $"Bảng nhân {i}"
-                        : $"Bảng chia {i}"),
-                Lines = lines
-            });
+            string title =
+                LocalizationService.FormatTemplate(
+                    titleKey,
+                    new Dictionary<string, object?>
+                    {
+                        ["number"] =
+                            i
+                    });
+
+            TableCards.Add(
+                new TableCardModel
+                {
+                    Title =
+                        title,
+
+                    Lines =
+                        lines
+                });
         }
 
         UpdateStatusText(start, end);
@@ -314,19 +338,32 @@ public partial class MultiplicationTablePage : ContentPage
         };
     }
 
-    private void UpdateStatusText(int start, int end)
+    private void UpdateStatusText(
+        int start,
+        int end)
     {
-        string modeText =
+        string statusKey =
             _currentMode == TableMode.Multiply
-                ? "bảng nhân"
-                : "bảng chia";
+                ? "dynamic.times_table_showing_multiplication"
+                : "dynamic.times_table_showing_division";
 
         int count =
             end - start + 1;
 
         StatusLabel.Text =
-            LocalizationService.Translate(
-                $"Đang hiển thị {modeText} từ {start} đến {end} • {count} bảng");
+            LocalizationService.FormatTemplate(
+                statusKey,
+                new Dictionary<string, object?>
+                {
+                    ["first"] =
+                        start,
+
+                    ["last"] =
+                        end,
+
+                    ["count"] =
+                        count
+                });
     }
 
     private void UpdateOperationButtons()

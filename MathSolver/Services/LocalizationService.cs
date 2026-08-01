@@ -32,8 +32,16 @@ public static class LocalizationService
             [];
     }
 
+    private sealed class LegacyTrackingExclusion
+    {
+    }
+
     private static readonly ConditionalWeakTable<BindableObject, TrackedObject>
         TrackedObjects =
+            new();
+
+    private static readonly ConditionalWeakTable<Element, LegacyTrackingExclusion>
+        LegacyTrackingExclusions =
             new();
 
     private static readonly List<WeakReference<BindableObject>>
@@ -73,6 +81,54 @@ public static class LocalizationService
             true;
     }
 
+    /// <summary>
+    /// Raised after the active JSON language pack has finished changing.
+    /// Dynamic view models should rebuild translated text from this event,
+    /// rather than from AppLanguageManager.LanguageChanged.
+    /// </summary>
+    public static event EventHandler? CultureChanged
+    {
+        add
+        {
+            Initialize();
+
+            LocalizationManager.Instance.CultureChanged +=
+                value;
+        }
+
+        remove
+        {
+            if (!_initialized)
+            {
+                return;
+            }
+
+            LocalizationManager.Instance.CultureChanged -=
+                value;
+        }
+    }
+
+    /// <summary>
+    /// Prevents the legacy visual-tree translator from rewriting a subtree.
+    /// Use this for pages that localize static text with stable-key bindings
+    /// and dynamic text through their view model/code-behind.
+    /// </summary>
+    public static void ExcludeSubtreeFromLegacyTracking(
+        Element root)
+    {
+        ArgumentNullException.ThrowIfNull(
+            root);
+
+        if (!LegacyTrackingExclusions.TryGetValue(
+                root,
+                out _))
+        {
+            LegacyTrackingExclusions.Add(
+                root,
+                new LegacyTrackingExclusion());
+        }
+    }
+
     public static string Translate(
         string? source)
     {
@@ -102,6 +158,18 @@ public static class LocalizationService
         return LocalizationManager.Instance
             .FormatKey(
                 key,
+                values);
+    }
+
+    public static string FormatTemplate(
+        string templateKey,
+        IReadOnlyDictionary<string, object?> values)
+    {
+        Initialize();
+
+        return LocalizationManager.Instance
+            .FormatTemplate(
+                templateKey,
                 values);
     }
 
@@ -282,7 +350,7 @@ public static class LocalizationService
                 "vi-VN",
 
             _ =>
-                "en-US"
+                "vi-VN"
         };
     }
 
@@ -290,6 +358,13 @@ public static class LocalizationService
         Element element,
         HashSet<Element> visited)
     {
+        if (LegacyTrackingExclusions.TryGetValue(
+                element,
+                out _))
+        {
+            return;
+        }
+
         if (!visited.Add(
                 element))
         {
@@ -311,6 +386,25 @@ public static class LocalizationService
                         visited);
                 }
             }
+        }
+
+        // CollectionView.Header, Footer, and EmptyView are object
+        // properties and are not guaranteed to appear in GetVisualChildren()
+        // when localization is first attached. Traverse them explicitly so
+        // static text inside a CollectionView header is translated as well.
+        if (element is CollectionView collectionView)
+        {
+            AttachOptionalElement(
+                collectionView.Header,
+                visited);
+
+            AttachOptionalElement(
+                collectionView.Footer,
+                visited);
+
+            AttachOptionalElement(
+                collectionView.EmptyView,
+                visited);
         }
 
         if (element is Shell shell)
@@ -344,6 +438,18 @@ public static class LocalizationService
                     content,
                     visited);
             }
+        }
+    }
+
+    private static void AttachOptionalElement(
+        object? value,
+        HashSet<Element> visited)
+    {
+        if (value is Element childElement)
+        {
+            AttachRecursive(
+                childElement,
+                visited);
         }
     }
 

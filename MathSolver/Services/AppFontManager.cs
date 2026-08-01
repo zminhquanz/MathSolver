@@ -1,4 +1,4 @@
-﻿namespace MathSolver.Services;
+namespace MathSolver.Services;
 
 public static class AppFontManager
 {
@@ -58,6 +58,11 @@ public static class AppFontManager
         if (option.Key ==
             CurrentFontKey)
         {
+            // Re-apply anyway. This is useful after a published Windows
+            // build recreates handlers or pages.
+            ApplyCurrentFont(
+                savePreference: false);
+
             return false;
         }
 
@@ -79,6 +84,18 @@ public static class AppFontManager
             savePreference: true);
     }
 
+    /// <summary>
+    /// Reapplies the selected font to every currently realized MAUI text
+    /// control. The app still uses DynamicResource AppFontFamily, but this
+    /// explicit pass makes font switching reliable in published Windows
+    /// Release builds as well.
+    /// </summary>
+    public static void RefreshVisibleFont()
+    {
+        ApplyCurrentFont(
+            savePreference: false);
+    }
+
     private static void ApplyCurrentFont(
         bool savePreference)
     {
@@ -96,14 +113,26 @@ public static class AppFontManager
             AppFontOption font =
                 CurrentFont;
 
-            // Styles.xaml dùng DynamicResource AppFontFamily.
-            // Khi key này thay đổi, Label, Button, Entry, Picker...
-            // sẽ cập nhật FontFamily ngay trong lúc ứng dụng đang chạy.
             application.Resources["AppFontFamily"] =
                 font.FontFamily;
 
             application.Resources["AppFontDisplayName"] =
                 font.DisplayName;
+
+            // DynamicResource normally updates these controls itself.
+            // A direct visual-tree refresh avoids the Release-publish case
+            // where existing Windows handlers keep the old native font.
+            foreach (Window window
+                     in application.Windows)
+            {
+                if (window.Page is Element root)
+                {
+                    ApplyFontToTree(
+                        root,
+                        font.FontFamily,
+                        new HashSet<Element>());
+                }
+            }
 
             if (savePreference)
             {
@@ -123,7 +152,100 @@ public static class AppFontManager
         }
         else
         {
-            MainThread.BeginInvokeOnMainThread(Apply);
+            MainThread.BeginInvokeOnMainThread(
+                Apply);
+        }
+    }
+
+    private static void ApplyFontToTree(
+        Element element,
+        string fontFamily,
+        HashSet<Element> visited)
+    {
+        if (!visited.Add(
+                element))
+        {
+            return;
+        }
+
+        ApplyFontToElement(
+            element,
+            fontFamily);
+
+        if (element is not
+            IVisualTreeElement visualTreeElement)
+        {
+            return;
+        }
+
+        foreach (IVisualTreeElement child
+                 in visualTreeElement.GetVisualChildren())
+        {
+            if (child is Element childElement)
+            {
+                ApplyFontToTree(
+                    childElement,
+                    fontFamily,
+                    visited);
+            }
+        }
+    }
+
+    private static void ApplyFontToElement(
+        Element element,
+        string fontFamily)
+    {
+        switch (element)
+        {
+            case Label label:
+                label.FontFamily =
+                    fontFamily;
+                break;
+
+            case Button button:
+                button.FontFamily =
+                    fontFamily;
+                break;
+
+            case Entry entry:
+                entry.FontFamily =
+                    fontFamily;
+                break;
+
+            case Editor editor:
+                editor.FontFamily =
+                    fontFamily;
+                break;
+
+            case Picker picker:
+                picker.FontFamily =
+                    fontFamily;
+                break;
+
+            case SearchBar searchBar:
+                searchBar.FontFamily =
+                    fontFamily;
+                break;
+
+            case RadioButton radioButton:
+                radioButton.FontFamily =
+                    fontFamily;
+                break;
+
+            case DatePicker datePicker:
+                datePicker.FontFamily =
+                    fontFamily;
+                break;
+
+            case TimePicker timePicker:
+                timePicker.FontFamily =
+                    fontFamily;
+                break;
+
+            case Span span:
+                span.FontFamily =
+                    fontFamily;
+                break;
         }
     }
 }

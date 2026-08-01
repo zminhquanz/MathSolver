@@ -3,7 +3,8 @@
     x:Class="MathSolver.Views.MultiplicationTablePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Cửu chương"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    Title="{localization:Translate Tabs.TimesTables}"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <ContentPage.Resources>
@@ -73,14 +74,14 @@
                             TextColor="{DynamicResource PrimaryColor}" />
 
                         <Label
-                            Text="BẢNG CỬU CHƯƠNG"
+                            Text="{localization:Translate TimesTables.Title}"
                             FontSize="30"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
-                            Text="Bảng nhân và bảng chia từ 1 đến 20"
+                            Text="{localization:Translate TimesTables.Subtitle}"
                             FontSize="17"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextSecondaryColor}" />
@@ -93,11 +94,11 @@
                             <!-- 1. Chọn loại bảng -->
                             <VerticalStackLayout Spacing="10">
                                 <Label
-                                    Text="1. Chọn loại bảng"
+                                    Text="{localization:Translate TimesTables.ChooseTypeTitle}"
                                     Style="{StaticResource TitleLabelStyle}" />
 
                                 <Label
-                                    Text="Chọn bảng nhân hoặc bảng chia."
+                                    Text="{localization:Translate TimesTables.ChooseTypeDescription}"
                                     Style="{StaticResource SubLabelStyle}" />
 
                                 <Grid
@@ -112,7 +113,7 @@
                                         Clicked="OnMultiplyClicked"
                                         FontAttributes="Bold"
                                         FontSize="18"
-                                        Text="×  Bảng nhân" 
+                                        Text="{localization:Translate TimesTables.MultiplyButton}" 
                                         BackgroundColor="{DynamicResource PrimaryColor}"
                                         TextColor="{DynamicResource OnPrimaryColor}" />
 
@@ -124,7 +125,7 @@
                                         Clicked="OnDivideClicked"
                                         FontAttributes="Bold"
                                         FontSize="18"
-                                        Text="÷  Bảng chia"
+                                        Text="{localization:Translate TimesTables.DivideButton}"
                                         BackgroundColor="{DynamicResource PrimaryColor}"
                                         TextColor="{DynamicResource OnPrimaryColor}" />
 
@@ -139,11 +140,11 @@
                             <!-- 2. Chọn phạm vi -->
                             <VerticalStackLayout Spacing="10">
                                 <Label
-                                    Text="2. Phạm vi hiển thị"
+                                    Text="{localization:Translate TimesTables.RangeTitle}"
                                     Style="{StaticResource TitleLabelStyle}" />
 
                                 <Label
-                                    Text="Chọn nhóm cơ bản, nâng cao hoặc hiển thị toàn bộ."
+                                    Text="{localization:Translate TimesTables.RangeDescription}"
                                     Style="{StaticResource SubLabelStyle}" />
 
                                 <Grid
@@ -168,13 +169,13 @@
 
                                             <VerticalStackLayout Spacing="2">
                                                 <Label
-                                                    Text="Bảng 1 – 10"
+                                                    Text="{localization:Translate TimesTables.Range1To10Title}"
                                                     FontSize="16"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                 <Label
-                                                    Text="10 bảng cơ bản"
+                                                    Text="{localization:Translate TimesTables.Range1To10Subtitle}"
                                                     FontSize="14"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
                                             </VerticalStackLayout>
@@ -200,13 +201,13 @@
 
                                             <VerticalStackLayout Spacing="2">
                                                 <Label
-                                                    Text="Bảng 11 – 20"
+                                                    Text="{localization:Translate TimesTables.Range11To20Title}"
                                                     FontSize="16"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                 <Label
-                                                    Text="10 bảng nâng cao"
+                                                    Text="{localization:Translate TimesTables.Range11To20Subtitle}"
                                                     FontSize="14"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
                                             </VerticalStackLayout>
@@ -232,13 +233,13 @@
 
                                             <VerticalStackLayout Spacing="2">
                                                 <Label
-                                                    Text="Tất cả 1 – 20"
+                                                    Text="{localization:Translate TimesTables.RangeAllTitle}"
                                                     FontSize="16"
                                                     FontAttributes="Bold"
                                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                 <Label
-                                                    Text="Hiển thị đầy đủ 20 bảng"
+                                                    Text="{localization:Translate TimesTables.RangeAllSubtitle}"
                                                     FontSize="14"
                                                     TextColor="{DynamicResource TextSecondaryColor}" />
                                             </VerticalStackLayout>
@@ -268,13 +269,13 @@
                     <!-- Title list -->
                     <VerticalStackLayout Spacing="4">
                         <Label
-                            Text="3. Danh sách bảng cửu chương"
+                            Text="{localization:Translate TimesTables.ListTitle}"
                             FontSize="18"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
-                            Text="Mỗi ô hiển thị đầy đủ 10 phép tính."
+                            Text="{localization:Translate TimesTables.ListDescription}"
                             FontSize="15"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
