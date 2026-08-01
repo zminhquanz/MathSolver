@@ -12,8 +12,8 @@
          alt="Support Math Solver on Ko-fi">
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg"
-         alt="MIT License">
+    <img src="https://img.shields.io/badge/License-GPL_v3-blue.svg"
+         alt="GNU GPL v3 License">
   </a>
 </p>
 
@@ -207,11 +207,23 @@ Thank you for supporting the development, testing, documentation, and continued 
 
 ## License
 
-The Math Solver source code is licensed under the [MIT License](LICENSE).
+The Math Solver source code is free software licensed under the
+[GNU General Public License version 3](LICENSE), version 3 only
+(`GPL-3.0-only`).
+
+You may use, study, modify, and redistribute the GPL-covered source code.
+If you distribute a modified version or a compiled binary based on Math Solver,
+you must also make the complete corresponding source code available under the
+same GNU GPL v3 license.
 
 Copyright © 2026 Quan Vu.
 
-The Math Solver name, application icon, logo, and original branding assets are not granted for reuse under the MIT License unless permission is provided separately.
+The **Math Solver** name, application icon, logo, screenshots, and original
+branding assets are not licensed for independent reuse or for branding modified
+distributions. Forks and modified distributions must use their own name and
+branding unless separate written permission is granted by the project author.
+This branding restriction does not limit the rights granted for the
+GPL-covered source code.
 
 ## Status
 
