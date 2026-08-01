@@ -19,9 +19,16 @@
 
 Math Solver is an offline-first mathematics learning and problem-solving application built with .NET MAUI. It provides step-by-step calculations, reusable formula references, responsive layouts, and high-precision numeric processing for students and anyone who wants to review essential mathematics.
 
+## Current Release
+
+The current stable release is **Math Solver v0.1**.
+
 The current public builds are available for Windows x64.
 
 Android, macOS, and iOS releases are planned but are not available yet.
+
+Download the latest version from the
+[GitHub Releases](../../releases/latest) page.
 
 ## Features
 
