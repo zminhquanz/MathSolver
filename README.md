@@ -208,8 +208,7 @@ Thank you for supporting the development, testing, documentation, and continued 
 ## License
 
 The Math Solver source code is free software licensed under the
-[GNU General Public License version 3](LICENSE), version 3 only
-(`GPL-3.0-only`).
+[GNU General Public License version 3](LICENSE)
 
 You may use, study, modify, and redistribute the GPL-covered source code.
 If you distribute a modified version or a compiled binary based on Math Solver,
