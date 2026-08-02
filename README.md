@@ -21,7 +21,7 @@ Math Solver is an offline-first mathematics learning and problem-solving applica
 
 ## Current Release
 
-The current stable release is **Math Solver v0.1**.
+The current stable release is **Math Solver v0.1.1**.
 
 The current public builds are available for Windows x64.
 
@@ -103,7 +103,7 @@ The **Formulas** tab includes:
 
 The **Multiplication Tables** tab provides:
 
-- Multiplication tables from 1 to 10
+- Multiplication tables from 1 to 20
 - Division tables
 - Responsive layouts for desktop and mobile screens
 
@@ -134,15 +134,19 @@ The main calculation features work entirely offline. No internet connection or c
 
 ```text
 MathSolver/
-├── Controls/       Custom reusable controls
-├── Graphics/       Shape, graph, and calculation drawables
-├── Models/         Shared models and formula catalogs
-├── Numerics/       High-precision numeric structures
-├── Resources/      Images, icons, fonts, styles, and app resources
-├── Services/       Localization, settings, and application services
-├── Views/          Pages and reusable content views
+├── Controls/             Custom reusable controls
+├── Graphics/             Shape, graph, and calculation drawables
+├── MarkupExtensions/     Markup Extensions
+├── Models/               Shared models and formula catalogs
+├── Numerics/             High-precision numeric structures
+├── Platforms/            Platforms support
+├── Resources/            Images, icons, fonts, styles, and app resources
+├── Services/             Localization, settings, and application services
+├── Views/                Pages and reusable content views
 ├── App.xaml
+├── App.xaml.cs
 ├── AppShell.xaml
+├── AppShell.xaml.cs
 └── MauiProgram.cs
 ```
 
