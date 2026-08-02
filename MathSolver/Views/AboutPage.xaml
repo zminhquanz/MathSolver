@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MathSolver.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Giới thiệu"
+    Shell.NavBarIsVisible="True"
+    Shell.TabBarIsVisible="False"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <!-- Ẩn nút Back mặc định để dùng cùng thanh tiêu đề tùy chỉnh
+         với HardwarePerformancePage. -->
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior
+            IsVisible="False"
+            IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
+    <!-- Thanh tiêu đề riêng nên không hiển thị nút Settings bên phải. -->
+    <Shell.TitleView>
+        <Grid
+            Padding="0,0,8,0"
+            ColumnDefinitions="Auto,*"
+            ColumnSpacing="8">
+
+            <Button
+                x:Name="AboutBackButton"
+                Grid.Column="0"
+                Text="‹"
+                WidthRequest="40"
+                HeightRequest="40"
+                MinimumWidthRequest="40"
+                MinimumHeightRequest="40"
+                Padding="0"
+                CornerRadius="20"
+                FontSize="28"
+                FontAttributes="Bold"
+                BackgroundColor="Transparent"
+                TextColor="{DynamicResource TextPrimaryColor}"
+                SemanticProperties.Description="Quay lại"
+                Clicked="OnCloseClicked" />
+
+            <VerticalStackLayout
+                Grid.Column="1"
+                Spacing="0"
+                VerticalOptions="Center">
+
+                <Label
+                    x:Name="AboutTitleLabel"
+                    Text="GIỚI THIỆU"
+                    FontSize="19"
+                    FontAttributes="Bold"
+                    LineBreakMode="NoWrap"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <Label
+                    x:Name="AboutSubtitleLabel"
+                    Text="Thông tin ứng dụng, tác giả và phiên bản"
+                    FontSize="11"
+                    LineBreakMode="TailTruncation"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
+    <Grid x:Name="AboutPageContentRoot">
+        <ScrollView>
+            <VerticalStackLayout
+            Padding="20,22,20,30"
+            Spacing="16"
+            MaximumWidthRequest="760"
+            HorizontalOptions="Center">
+
+            <!-- App identity -->
+            <Border
+                Padding="22"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22" />
+                </Border.StrokeShape>
+
+                <Grid
+                    ColumnDefinitions="Auto,*"
+                    ColumnSpacing="20">
+
+                    <Image
+                        Grid.Column="0"
+                        Source="splashicon.png"
+                        WidthRequest="96"
+                        HeightRequest="96"
+                        Aspect="AspectFit"
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="Math Solver app icon" />
+
+                    <VerticalStackLayout
+                        Grid.Column="1"
+                        Spacing="5"
+                        VerticalOptions="Center">
+
+                        <Label
+                            x:Name="AppNameLabel"
+                            Text="Math Solver"
+                            FontSize="30"
+                            FontAttributes="Bold"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="VersionHeaderLabel"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource PrimaryColor}" />
+
+                        <Label
+                            x:Name="AppDescriptionLabel"
+                            FontSize="14"
+                            LineHeight="1.25"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Application information -->
+            <Border
+                Padding="18"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="18" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="14">
+                    <Label
+                        x:Name="InformationTitleLabel"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Grid
+                        RowDefinitions="Auto,Auto,Auto,Auto"
+                        ColumnDefinitions="150,*"
+                        RowSpacing="12"
+                        ColumnSpacing="16">
+
+                        <Label
+                            x:Name="AuthorCaptionLabel"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Text="Quan Vu"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="VersionCaptionLabel"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Label
+                            x:Name="VersionValueLabel"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="CopyrightCaptionLabel"
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Label
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Text="Copyright © 2026 Quan Vu"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="LicenseCaptionLabel"
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Label
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            Text="GNU GPL v3"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Project links -->
+            <Border
+                Padding="18"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="18" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+                    <!-- Canh trái giống tiêu đề Thông tin ứng dụng. -->
+                    <Label
+                        x:Name="LinksTitleLabel"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Start"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <!-- Hai biểu tượng vẫn nằm giữa card. -->
+                    <HorizontalStackLayout
+                        Spacing="16"
+                        HorizontalOptions="Center">
+
+                        <ImageButton
+                            x:Name="GitHubButton"
+                            WidthRequest="64"
+                            HeightRequest="64"
+                            Padding="5"
+                            BackgroundColor="Transparent"
+                            Source="github_black_clearspace.png"
+                            SemanticProperties.Description="Mở GitHub"
+                            Clicked="OnGitHubClicked" />
+
+                        <ImageButton
+                            x:Name="KoFiButton"
+                            WidthRequest="64"
+                            HeightRequest="64"
+                            Padding="5"
+                            BackgroundColor="Transparent"
+                            Source="kofi_symbol.png"
+                            SemanticProperties.Description="Mở Ko-fi"
+                            Clicked="OnKoFiClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

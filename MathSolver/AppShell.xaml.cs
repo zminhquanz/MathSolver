@@ -55,6 +55,10 @@ public partial class AppShell : Shell
             nameof(HardwarePerformancePage),
             typeof(HardwarePerformancePage));
 
+        Routing.RegisterRoute(
+            nameof(AboutPage),
+            typeof(AboutPage));
+
         // Các trang cài đặt là global route nằm ngoài cây Shell nên được
         // đẩy lên navigation stack. Khi đổi tab, cần pop route trước.
         MainTabBar.PropertyChanged +=

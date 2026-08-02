@@ -143,23 +143,78 @@
                                 Text="Chọn một hình để xem công thức và nhập dữ liệu."
                                 FontSize="16"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
+                            <Border
+                                Padding="0"
+                                BackgroundColor="{DynamicResource InputBackgroundColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
 
-                            <Picker
-                                x:Name="GeometryShapePicker"
-                                HeightRequest="62"
-                                FontSize="18"
-                                FontAttributes="Bold"
-                                HorizontalOptions="Fill"
-                                VerticalOptions="Fill"
-                                TextColor="{DynamicResource TextPrimaryColor}"
-                                ItemsSource="{Binding GeometryItems}"
-                                SelectedIndexChanged="OnGeometryShapeSelected">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
 
-                            <Picker.ItemDisplayBinding>
-                                <Binding Path="Name" />
-                            </Picker.ItemDisplayBinding>
+                                <Grid
+                                    HeightRequest="46"
+                                    ColumnDefinitions="*,44">
 
-                            </Picker>
+                                    <!--
+                                    Picker phủ toàn bộ chiều rộng để người dùng có thể
+                                    bấm cả vùng mũi tên. Padding native bên phải được
+                                    chừa trong BorderlessPicker.cs.
+                                    -->
+                                    <controls:BorderlessPicker
+                                        x:Name="GeometryShapePicker"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="2"
+                                        Margin="12,0,0,0"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TitleColor="{DynamicResource TextSecondaryColor}"
+                                        BackgroundColor="Transparent"
+                                        ItemsSource="{Binding GeometryItems}"
+                                        SelectedIndexChanged="OnGeometryShapeSelected"
+                                        ItemDisplayBinding="{Binding Path=Name}" />
+
+                                    <!-- Vạch phân cách nhẹ cho vùng nút xổ xuống. -->
+                                    <BoxView
+                                        Grid.Column="1"
+                                        WidthRequest="1"
+                                        Margin="0,9,0,9"
+                                        HorizontalOptions="Start"
+                                        BackgroundColor="{DynamicResource DividerColor}"
+                                        InputTransparent="True" />
+
+                                    <!-- Nút xổ xuống dạng pill giống phần Cài đặt giao diện. -->
+                                    <Border
+                                        Grid.Column="1"
+                                        WidthRequest="30"
+                                        HeightRequest="30"
+                                        Margin="6"
+                                        Padding="0"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1"
+                                        InputTransparent="True">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="8" />
+                                        </Border.StrokeShape>
+
+                                        <Label
+                                            Text="▾"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </Border>
+                                </Grid>
+                            </Border>
                         </VerticalStackLayout>
                     </Border>
 

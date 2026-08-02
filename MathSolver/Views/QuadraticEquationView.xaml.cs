@@ -22,8 +22,8 @@ public partial class QuadraticEquationView : ContentView
     private const int MaxResultDecimalPlaces =
         10;
 
-    private const int DoubleDoubleDisplaySignificantDigits =
-        DoubleDouble.SignificantDigits;
+    private const int QuadDoubleDisplaySignificantDigits =
+        QuadDouble.SignificantDigits;
 
     // Giống các tab nhập số khác: từ 19 chữ số trở lên, giao diện
     // rút gọn sang dạng khoa học nhưng vẫn giữ giá trị decimal chính xác.
@@ -908,11 +908,11 @@ public partial class QuadraticEquationView : ContentView
                 a,
                 b,
                 c,
-                out DoubleDouble delta))
+                out QuadDouble delta))
         {
             ShowError(
                 "Kết quả Δ không thể biểu diễn hữu hạn bằng " +
-                "độ chính xác Double Double. " +
+                "độ chính xác Quad Double. " +
                 "Ứng dụng không thể tiếp tục tính toán.");
 
             return;
@@ -1206,24 +1206,24 @@ public partial class QuadraticEquationView : ContentView
         decimal a,
         decimal b,
         decimal c,
-        out DoubleDouble delta)
+        out QuadDouble delta)
     {
-        DoubleDouble preciseA =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseA =
+            QuadDouble.FromDecimal(
                 a);
 
-        DoubleDouble preciseB =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseB =
+            QuadDouble.FromDecimal(
                 b);
 
-        DoubleDouble preciseC =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseC =
+            QuadDouble.FromDecimal(
                 c);
 
-        // Δ = b² − 4ac. DoubleDouble.FusedMultiplyAdd dùng FMA để lấy
-        // phần sai số của tích, nâng độ chính xác lên khoảng 32 chữ số.
+        // Δ = b² − 4ac. QuadDouble.FusedMultiplyAdd gom chính xác các
+        // tích riêng phần bằng FMA rồi chỉ làm tròn về bốn thành phần ở cuối.
         delta =
-            DoubleDouble.FusedMultiplyAdd(
+            QuadDouble.FusedMultiplyAdd(
                 -4d *
                 preciseA,
                 preciseC,
@@ -1236,14 +1236,14 @@ public partial class QuadraticEquationView : ContentView
     private static bool TryCalculateDoubleRoot(
         decimal a,
         decimal b,
-        out DoubleDouble root)
+        out QuadDouble root)
     {
-        DoubleDouble preciseA =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseA =
+            QuadDouble.FromDecimal(
                 a);
 
-        DoubleDouble preciseB =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseB =
+            QuadDouble.FromDecimal(
                 b);
 
         root =
@@ -1258,32 +1258,32 @@ public partial class QuadraticEquationView : ContentView
         decimal a,
         decimal b,
         decimal c,
-        DoubleDouble delta,
-        out DoubleDouble squareRootDelta,
-        out DoubleDouble firstRoot,
-        out DoubleDouble secondRoot)
+        QuadDouble delta,
+        out QuadDouble squareRootDelta,
+        out QuadDouble firstRoot,
+        out QuadDouble secondRoot)
     {
-        DoubleDouble preciseA =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseA =
+            QuadDouble.FromDecimal(
                 a);
 
-        DoubleDouble preciseB =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseB =
+            QuadDouble.FromDecimal(
                 b);
 
-        DoubleDouble preciseC =
-            DoubleDouble.FromDecimal(
+        QuadDouble preciseC =
+            QuadDouble.FromDecimal(
                 c);
 
         squareRootDelta =
-            DoubleDouble.Sqrt(
+            QuadDouble.Sqrt(
                 delta);
 
         firstRoot =
-            DoubleDouble.NaN;
+            QuadDouble.NaN;
 
         secondRoot =
-            DoubleDouble.NaN;
+            QuadDouble.NaN;
 
         if (!squareRootDelta.IsFinite)
         {
@@ -1291,10 +1291,10 @@ public partial class QuadraticEquationView : ContentView
         }
 
         // Công thức q hạn chế triệt tiêu số khi b và √Δ gần bằng nhau.
-        DoubleDouble q =
+        QuadDouble q =
             -0.5d *
             (preciseB +
-             DoubleDouble.CopySign(
+             QuadDouble.CopySign(
                  squareRootDelta,
                  preciseB));
 
@@ -1310,7 +1310,7 @@ public partial class QuadraticEquationView : ContentView
         }
         else
         {
-            DoubleDouble denominator =
+            QuadDouble denominator =
                 2d *
                 preciseA;
 
@@ -1333,7 +1333,7 @@ public partial class QuadraticEquationView : ContentView
         decimal a,
         decimal b,
         decimal c,
-        DoubleDouble delta)
+        QuadDouble delta)
     {
         string aText =
             FormatNumber(
@@ -1348,7 +1348,7 @@ public partial class QuadraticEquationView : ContentView
                 c);
 
         string deltaText =
-            FormatDoubleDouble(
+            FormatQuadDouble(
                 delta);
 
         string equation =
@@ -1385,7 +1385,7 @@ public partial class QuadraticEquationView : ContentView
         Step4Border.IsVisible =
             true;
 
-        if (delta < DoubleDouble.Zero)
+        if (delta < QuadDouble.Zero)
         {
             SetResultStateColors(
                 hasRealRoots: false);
@@ -1414,11 +1414,11 @@ public partial class QuadraticEquationView : ContentView
             if (!TryCalculateDoubleRoot(
                     a,
                     b,
-                    out DoubleDouble doubleRoot))
+                    out QuadDouble doubleRoot))
             {
                 ShowError(
                     "Nghiệm không thể biểu diễn hữu hạn bằng " +
-                    "độ chính xác Double Double. " +
+                    "độ chính xác Quad Double. " +
                     "Ứng dụng không thể tiếp tục tính toán.");
 
                 return;
@@ -1428,7 +1428,7 @@ public partial class QuadraticEquationView : ContentView
                 hasRealRoots: true);
 
             string rootText =
-                FormatDoubleDouble(
+                FormatQuadDouble(
                     doubleRoot);
 
             ClassificationLabel.Text =
@@ -1460,13 +1460,13 @@ public partial class QuadraticEquationView : ContentView
                     b,
                     c,
                     delta,
-                    out DoubleDouble squareRootDelta,
-                    out DoubleDouble firstRoot,
-                    out DoubleDouble secondRoot))
+                    out QuadDouble squareRootDelta,
+                    out QuadDouble firstRoot,
+                    out QuadDouble secondRoot))
             {
                 ShowError(
                     "Nghiệm không thể biểu diễn hữu hạn bằng " +
-                    "độ chính xác Double Double. " +
+                    "độ chính xác Quad Double. " +
                     "Ứng dụng không thể tiếp tục tính toán.");
 
                 return;
@@ -1476,15 +1476,15 @@ public partial class QuadraticEquationView : ContentView
                 hasRealRoots: true);
 
             string squareRootText =
-                FormatDoubleDouble(
+                FormatQuadDouble(
                     squareRootDelta);
 
             string firstRootText =
-                FormatDoubleDouble(
+                FormatQuadDouble(
                     firstRoot);
 
             string secondRootText =
-                FormatDoubleDouble(
+                FormatQuadDouble(
                     secondRoot);
 
             ClassificationLabel.Text =
@@ -1838,15 +1838,15 @@ public partial class QuadraticEquationView : ContentView
             CultureInfo.InvariantCulture);
     }
 
-    private static string FormatDoubleDouble(
-        DoubleDouble value)
+    private static string FormatQuadDouble(
+        QuadDouble value)
     {
-        // Double Double vẫn giữ khoảng 32 chữ số có nghĩa trong toàn bộ
+        // Quad Double giữ khoảng 63-64 chữ số có nghĩa trong toàn bộ
         // quá trình tính toán. Chỉ bước trình bày cuối cùng mới làm tròn,
         // giới hạn tối đa 10 chữ số sau dấu thập phân.
         string text =
             value.ToGeneralString(
-                DoubleDoubleDisplaySignificantDigits,
+                QuadDoubleDisplaySignificantDigits,
                 scientificUpperExponent:
                 ScientificDisplayDigitThreshold,
                 scientificLowerExponent:
@@ -1951,7 +1951,7 @@ public partial class QuadraticEquationView : ContentView
     /// <summary>
     /// Làm tròn chuỗi thập phân theo MidpointRounding.AwayFromZero mà không
     /// chuyển ngược về double/decimal. Nhờ vậy phép tính vẫn tận dụng đủ
-    /// độ chính xác Double Double và chỉ kết quả hiển thị bị giới hạn.
+    /// độ chính xác Quad Double và chỉ kết quả hiển thị bị giới hạn.
     /// </summary>
     private static string RoundDecimalText(
         string text,

@@ -295,6 +295,39 @@
                             </Grid>
                         </Border>
 
+                        <!-- About -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Image
+                                    Grid.Column="0" WidthRequest="24" HeightRequest="24"
+                                    Source="info.png">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="AboutIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="1"
+                                    VerticalOptions="Center">
+
+                                    <Label
+                                        x:Name="AboutMenuTitleLabel"
+                                        Text="Giới thiệu"
+                                        Style="{StaticResource ThemeMenuTitleStyle}" />
+
+                                    <Label
+                                        x:Name="AboutMenuSummaryLabel"
+                                        Text="Thông tin ứng dụng, tác giả và phiên bản"
+                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAboutTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
                         <BoxView Margin="12,6" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
                         <!-- Reset -->

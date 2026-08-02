@@ -48,6 +48,14 @@ public static class WindowStateManager
 
     private static bool _isRestoring;
 
+    // The active page can install one asynchronous close guard.
+    // This manager owns the native AppWindow.Closing subscription from
+    // application startup, so X and Alt+F4 are intercepted reliably.
+    private static object? _closeGuardOwner;
+    private static Func<Task<bool>>? _closeGuardAsync;
+    private static bool _isCloseGuardRunning;
+    private static bool _allowCloseOnce;
+
     public static void Attach(
         MauiWindow window)
     {
@@ -80,6 +88,51 @@ public static class WindowStateManager
 
         TryAttachNativeWindow(
             window);
+    }
+
+    /// <summary>
+    /// Installs an asynchronous guard for native Windows close requests.
+    /// The callback returns true to continue closing, or false to keep the
+    /// application open.
+    /// </summary>
+    public static void SetCloseGuard(
+        object owner,
+        Func<Task<bool>> closeGuardAsync)
+    {
+        ArgumentNullException.ThrowIfNull(
+            owner);
+
+        ArgumentNullException.ThrowIfNull(
+            closeGuardAsync);
+
+        _closeGuardOwner =
+            owner;
+
+        _closeGuardAsync =
+            closeGuardAsync;
+    }
+
+    /// <summary>
+    /// Removes the close guard only when it belongs to the supplied owner.
+    /// </summary>
+    public static void ClearCloseGuard(
+        object owner)
+    {
+        ArgumentNullException.ThrowIfNull(
+            owner);
+
+        if (!ReferenceEquals(
+                _closeGuardOwner,
+                owner))
+        {
+            return;
+        }
+
+        _closeGuardOwner =
+            null;
+
+        _closeGuardAsync =
+            null;
     }
 
     private static void OnWindowHandlerChanged(
@@ -239,12 +292,89 @@ public static class WindowStateManager
         }
     }
 
-    private static void OnAppWindowClosing(
+    private static async void OnAppWindowClosing(
         AppWindow sender,
         AppWindowClosingEventArgs args)
     {
-        SaveCurrentWindowState(
-            sender);
+        // This is the second close request issued after the user confirmed.
+        // Let it continue without displaying the dialog again.
+        if (_allowCloseOnce)
+        {
+            _allowCloseOnce =
+                false;
+
+            SaveCurrentWindowState(
+                sender);
+
+            return;
+        }
+
+        Func<Task<bool>>? closeGuard =
+            _closeGuardAsync;
+
+        if (closeGuard is null)
+        {
+            SaveCurrentWindowState(
+                sender);
+
+            return;
+        }
+
+        // AppWindow.Closing is synchronous. Cancel the current X / Alt+F4
+        // request before awaiting the confirmation dialog.
+        args.Cancel =
+            true;
+
+        // Repeated X / Alt+F4 presses while the dialog is visible remain
+        // cancelled and cannot open duplicate dialogs.
+        if (_isCloseGuardRunning)
+        {
+            return;
+        }
+
+        _isCloseGuardRunning =
+            true;
+
+        try
+        {
+            bool allowClose =
+                await closeGuard();
+
+            if (!allowClose)
+            {
+                return;
+            }
+
+            // Reissue the close request only after the page has stopped and
+            // awaited every benchmark worker.
+            _allowCloseOnce =
+                true;
+
+            MauiWindow? windowToClose =
+                _mauiWindow;
+
+            if (Application.Current is Application application &&
+                windowToClose is not null)
+            {
+                application.CloseWindow(
+                    windowToClose);
+            }
+            else
+            {
+                sender.Destroy();
+            }
+        }
+        catch
+        {
+            // A failed confirmation must never close the application.
+            _allowCloseOnce =
+                false;
+        }
+        finally
+        {
+            _isCloseGuardRunning =
+                false;
+        }
     }
 
     private static void OnWindowDestroying(
@@ -538,6 +668,12 @@ public static class WindowStateManager
 
         _appWindow =
             null;
+
+        _allowCloseOnce =
+            false;
+
+        _isCloseGuardRunning =
+            false;
     }
 
     private enum PersistedWindowState

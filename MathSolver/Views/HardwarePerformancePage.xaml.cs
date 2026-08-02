@@ -6,6 +6,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
+#if WINDOWS
+using MathSolver.Platforms.Windows;
+#endif
+
 namespace MathSolver.Views;
 
 public partial class HardwarePerformancePage : ContentPage
@@ -108,6 +112,12 @@ public partial class HardwarePerformancePage : ContentPage
         LoadHardwareInformation();
         RenderBenchmarkResult();
 
+#if WINDOWS
+        MathSolver.Platforms.Windows.WindowStateManager.SetCloseGuard(
+            this,
+            ConfirmWindowsWindowCloseAsync);
+#endif
+
         if (!_hasPlayedEntryAnimation)
         {
             _hasPlayedEntryAnimation =
@@ -128,6 +138,11 @@ public partial class HardwarePerformancePage : ContentPage
         // CloseAsync sẽ chờ benchmark kết thúc khi điều hướng trong ứng dụng.
         _benchmarkCancellationTokenSource?.Cancel();
 
+#if WINDOWS
+        MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
+            this);
+#endif
+
         AppLanguageManager.LanguageChanged -=
             OnLanguageChanged;
 
@@ -141,6 +156,32 @@ public partial class HardwarePerformancePage : ContentPage
 
         return true;
     }
+
+#if WINDOWS
+    private async Task<bool> ConfirmWindowsWindowCloseAsync()
+    {
+        // When no benchmark is active, X and Alt+F4 close immediately.
+        if (!_isBenchmarkRunning)
+        {
+            return true;
+        }
+
+        bool shouldStop =
+            await ConfirmStopBenchmarkAsync();
+
+        if (!shouldStop)
+        {
+            // Keep the app open and let the benchmark continue.
+            return false;
+        }
+
+        // The application can close only after every benchmark worker has
+        // observed cancellation and the benchmark task has completed.
+        await StopBenchmarkAndWaitAsync();
+
+        return true;
+    }
+#endif
 
     private void PreparePageEntryAnimation()
     {
@@ -1625,47 +1666,17 @@ public partial class HardwarePerformancePage : ContentPage
     {
         if (_isBenchmarkRunning)
         {
-            if (_isStopConfirmationVisible)
-            {
-                return;
-            }
-
-            _isStopConfirmationVisible =
-                true;
-
-            bool shouldStop;
-
-            try
-            {
-                shouldStop =
-                    await DisplayAlertAsync(
-                        LocalizationService.Translate(
-                            "Xác nhận dừng"),
-                        LocalizationService.Translate(
-                            "Bạn có muốn dừng trình đo sức mạnh không?"),
-                        LocalizationService.Translate(
-                            "Có"),
-                        LocalizationService.Translate(
-                            "Không"));
-            }
-            finally
-            {
-                _isStopConfirmationVisible =
-                    false;
-            }
+            bool shouldStop =
+                await ConfirmStopBenchmarkAsync();
 
             if (!shouldStop ||
-                !_isBenchmarkRunning ||
-                _benchmarkCancellationTokenSource is null)
+                !_isBenchmarkRunning)
             {
                 return;
             }
 
-            BenchmarkStatusLabel.Text =
-                LocalizationService.Translate(
-                    "Đang dừng đo sức mạnh…");
+            RequestBenchmarkStop();
 
-            _benchmarkCancellationTokenSource.Cancel();
             return;
         }
 
@@ -1833,6 +1844,62 @@ public partial class HardwarePerformancePage : ContentPage
         }
     }
 
+    private async Task<bool> ConfirmStopBenchmarkAsync()
+    {
+        if (_isStopConfirmationVisible)
+        {
+            return false;
+        }
+
+        _isStopConfirmationVisible =
+            true;
+
+        try
+        {
+            return await DisplayAlertAsync(
+                LocalizationService.Translate(
+                    "Xác nhận dừng"),
+                LocalizationService.Translate(
+                    "Bạn có muốn dừng trình đo sức mạnh không?"),
+                LocalizationService.Translate(
+                    "Có"),
+                LocalizationService.Translate(
+                    "Không"));
+        }
+        finally
+        {
+            _isStopConfirmationVisible =
+                false;
+        }
+    }
+
+    private void RequestBenchmarkStop()
+    {
+        if (!_isBenchmarkRunning)
+        {
+            return;
+        }
+
+        BenchmarkStatusLabel.Text =
+            LocalizationService.Translate(
+                "Đang dừng đo sức mạnh…");
+
+        _benchmarkCancellationTokenSource?.Cancel();
+    }
+
+    private async Task StopBenchmarkAndWaitAsync()
+    {
+        Task? benchmarkCompletionTask =
+            _benchmarkCompletionSource?.Task;
+
+        RequestBenchmarkStop();
+
+        if (benchmarkCompletionTask is not null)
+        {
+            await benchmarkCompletionTask;
+        }
+    }
+
     private void SetBenchmarkButtonRunningState(
         bool isRunning)
     {
@@ -1974,7 +2041,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         TimedBenchmarkResult int32Result =
             await RunBenchmarkStageAsync(
-                "Int32",
+                "Int",
                 1,
                 progress => RunInt32Benchmark(
                     workerCount,
@@ -1985,7 +2052,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         TimedBenchmarkResult int64Result =
             await RunBenchmarkStageAsync(
-                "Int64",
+                "Long",
                 2,
                 progress => RunInt64Benchmark(
                     workerCount,
@@ -3542,17 +3609,20 @@ public partial class HardwarePerformancePage : ContentPage
 
         try
         {
-            // Dừng nhẹ nhàng và chờ toàn bộ worker thoát trước khi rời trang.
-            // Nhờ đó không còn worker cập nhật UI sau khi trang đã bị đóng.
-            Task? benchmarkCompletionTask =
-                _benchmarkCompletionSource?.Task;
-
-            _benchmarkCancellationTokenSource?.Cancel();
-
-            if (benchmarkCompletionTask is not null)
+            if (_isBenchmarkRunning)
             {
-                await benchmarkCompletionTask;
+                bool shouldStop =
+                    await ConfirmStopBenchmarkAsync();
+
+                if (!shouldStop)
+                {
+                    return;
+                }
             }
+
+            // Sau khi người dùng xác nhận, dừng nhẹ nhàng và chờ toàn bộ
+            // worker thoát trước khi trở về màn hình chính.
+            await StopBenchmarkAndWaitAsync();
 
             await PlayPageExitAnimationAsync();
 

@@ -265,6 +265,7 @@ public partial class SettingsMenuPage : ContentPage
         FontArrowForwardIconTintBehavior.TintColor = tintColor;
         LanguageArrowForwardIconTintBehavior.TintColor = tintColor;
         BenchmarkIconTintBehavior.TintColor = tintColor;
+        AboutIconTintBehavior.TintColor = tintColor;
     }
 
     private static bool TryGetThemeColor(
@@ -371,6 +372,20 @@ public partial class SettingsMenuPage : ContentPage
             AppLanguage.English
                 ? "Tiếng Anh"
                 : "Tiếng Việt";
+
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        AboutMenuTitleLabel.Text =
+            useEnglish
+                ? "About"
+                : "Giới thiệu";
+
+        AboutMenuSummaryLabel.Text =
+            useEnglish
+                ? "Application, author, and version information"
+                : "Thông tin ứng dụng, tác giả và phiên bản";
 
         UpdateChoiceButton(
             SystemThemeButton,
@@ -695,6 +710,44 @@ public partial class SettingsMenuPage : ContentPage
 
             await Shell.Current.GoToAsync(
                 nameof(HardwarePerformancePage),
+                animate:
+                    false);
+        }
+        finally
+        {
+            _isNavigating =
+                false;
+        }
+    }
+
+    private async void OnAboutTapped(
+        object? sender,
+        TappedEventArgs e)
+    {
+        await OpenAboutPageAsync();
+    }
+
+    private async Task OpenAboutPageAsync()
+    {
+        if (_isNavigating)
+        {
+            return;
+        }
+
+        _isNavigating =
+            true;
+
+        try
+        {
+            await CloseAsync();
+
+            if (Shell.Current is null)
+            {
+                return;
+            }
+
+            await Shell.Current.GoToAsync(
+                nameof(AboutPage),
                 animate:
                     false);
         }

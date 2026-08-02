@@ -12,7 +12,7 @@ namespace MathSolver.Graphics;
 /// trục Ox, Oy có mũi tên; trục đối xứng nét đứt;
 /// đỉnh, nghiệm thực và nhãn -b/(2a).
 /// Hệ số đầu vào vẫn là decimal, còn toàn bộ phép tính hình học của parabol
-/// dùng Double Double khoảng 32 chữ số có nghĩa và Math.FusedMultiplyAdd.
+/// dùng Quad Double khoảng 63-64 chữ số có nghĩa và Math.FusedMultiplyAdd.
 /// Chỉ bước chiếu cuối cùng sang tọa độ màn hình mới chuyển về double.
 /// </summary>
 public sealed class ParabolaGraphDrawable : IDrawable
@@ -78,9 +78,9 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private double[] _ySamples =
         [];
 
-    private DoubleDouble _a;
-    private DoubleDouble _b;
-    private DoubleDouble _c;
+    private QuadDouble _a;
+    private QuadDouble _b;
+    private QuadDouble _c;
 
     private double _baseCenterX;
     private double _baseHalfRangeX =
@@ -197,31 +197,31 @@ public sealed class ParabolaGraphDrawable : IDrawable
         decimal b,
         decimal c)
     {
-        DoubleDouble rawA =
-            DoubleDouble.FromDecimal(
+        QuadDouble rawA =
+            QuadDouble.FromDecimal(
                 a);
 
-        DoubleDouble rawB =
-            DoubleDouble.FromDecimal(
+        QuadDouble rawB =
+            QuadDouble.FromDecimal(
                 b);
 
-        DoubleDouble rawC =
-            DoubleDouble.FromDecimal(
+        QuadDouble rawC =
+            QuadDouble.FromDecimal(
                 c);
 
-        DoubleDouble coefficientScale =
-            DoubleDouble.Max(
-                DoubleDouble.One,
-                DoubleDouble.Max(
-                    DoubleDouble.Abs(
+        QuadDouble coefficientScale =
+            QuadDouble.Max(
+                QuadDouble.One,
+                QuadDouble.Max(
+                    QuadDouble.Abs(
                         rawA),
-                    DoubleDouble.Max(
-                        DoubleDouble.Abs(
+                    QuadDouble.Max(
+                        QuadDouble.Abs(
                             rawB),
-                        DoubleDouble.Abs(
+                        QuadDouble.Abs(
                             rawC))));
 
-        // Chuẩn hóa cả ba hệ số bằng cùng một Double Double. Việc này giữ
+        // Chuẩn hóa cả ba hệ số bằng cùng một Quad Double. Việc này giữ
         // nguyên nghiệm và hoành độ đỉnh, đồng thời tránh viewport bị phóng
         // theo độ lớn tuyệt đối của a, b, c.
         _a =
@@ -256,17 +256,21 @@ public sealed class ParabolaGraphDrawable : IDrawable
             return;
         }
 
-        DoubleDouble vertexX =
+        QuadDouble vertexX =
             -_b /
             (2d *
              _a);
 
+        QuadDouble vertexY =
+            EvaluatePrecise(
+                vertexX);
+
+        // Chỉ chiếu sang double khi đưa tọa độ toán học lên màn hình.
         _vertexX =
             vertexX.ToDouble();
 
         _vertexY =
-            EvaluateScalar(
-                _vertexX);
+            vertexY.ToDouble();
 
         CalculateRootMarkers();
         ConfigureInitialViewport();
@@ -821,8 +825,8 @@ public sealed class ParabolaGraphDrawable : IDrawable
         _secondRoot =
             null;
 
-        DoubleDouble discriminant =
-            DoubleDouble.FusedMultiplyAdd(
+        QuadDouble discriminant =
+            QuadDouble.FusedMultiplyAdd(
                 -4d *
                 _a,
                 _c,
@@ -831,14 +835,14 @@ public sealed class ParabolaGraphDrawable : IDrawable
 
         if (!discriminant.IsFinite ||
             discriminant <
-            DoubleDouble.Zero)
+            QuadDouble.Zero)
         {
             return;
         }
 
         if (discriminant.IsZero)
         {
-            DoubleDouble root =
+            QuadDouble root =
                 -_b /
                 (2d *
                  _a);
@@ -857,20 +861,20 @@ public sealed class ParabolaGraphDrawable : IDrawable
             return;
         }
 
-        DoubleDouble squareRoot =
-            DoubleDouble.Sqrt(
+        QuadDouble squareRoot =
+            QuadDouble.Sqrt(
                 discriminant);
 
         // Công thức q tránh triệt tiêu số khi |b| gần √Δ.
-        DoubleDouble q =
+        QuadDouble q =
             -0.5d *
             (_b +
-             DoubleDouble.CopySign(
+             QuadDouble.CopySign(
                  squareRoot,
                  _b));
 
-        DoubleDouble firstRoot;
-        DoubleDouble secondRoot;
+        QuadDouble firstRoot;
+        QuadDouble secondRoot;
 
         if (!q.IsZero)
         {
@@ -1936,24 +1940,30 @@ public sealed class ParabolaGraphDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
+    private QuadDouble EvaluatePrecise(
+        QuadDouble x)
+    {
+        // Horner Quad Double. FMA gom tích và số hạng cộng trước khi
+        // kết quả được làm tròn về bốn thành phần.
+        return QuadDouble.FusedMultiplyAdd(
+            QuadDouble.FusedMultiplyAdd(
+                _a,
+                x,
+                _b),
+            x,
+            _c);
+    }
+
     private double EvaluateScalar(
         double x)
     {
-        DoubleDouble preciseX =
-            new(
-                x);
+        QuadDouble result =
+            EvaluatePrecise(
+                new QuadDouble(
+                    x));
 
-        // Horner Double Double. Mỗi phép nhân lấy phần sai số bằng
-        // Math.FusedMultiplyAdd bên trong DoubleDouble.
-        DoubleDouble result =
-            DoubleDouble.FusedMultiplyAdd(
-                DoubleDouble.FusedMultiplyAdd(
-                    _a,
-                    preciseX,
-                    _b),
-                preciseX,
-                _c);
-
+        // GraphicsView và phép ánh xạ pixel dùng double; đây là bước chiếu
+        // cuối cùng sau khi giá trị parabol đã được tính bằng Quad Double.
         return result.ToDouble();
     }
 
@@ -2090,9 +2100,9 @@ public static class ParabolaSimdEvaluator
         double[] xValues,
         double[] yValues,
         int count,
-        DoubleDouble a,
-        DoubleDouble b,
-        DoubleDouble c)
+        QuadDouble a,
+        QuadDouble b,
+        QuadDouble c)
     {
         if (xValues.Length <
                 count ||
@@ -2103,20 +2113,20 @@ public static class ParabolaSimdEvaluator
                 "Mảng mẫu không đủ kích thước.");
         }
 
-        // Double Double không thể dùng trực tiếp với Vector128/Vector256.
-        // 1.024-2.048 mẫu vẫn đủ nhẹ để tính scalar chính xác mở rộng.
-        // Mỗi điểm dùng Horner và Math.FusedMultiplyAdd ở tầng DoubleDouble.
+        // Quad Double không thể dùng trực tiếp với Vector128/Vector256.
+        // Mỗi điểm được tính bằng Horner Quad Double; chỉ kết quả cuối
+        // mới chiếu về double để GraphicsView vẽ lên tọa độ pixel.
         for (int index = 0;
              index < count;
              index++)
         {
-            DoubleDouble x =
+            QuadDouble x =
                 new(
                     xValues[index]);
 
-            DoubleDouble y =
-                DoubleDouble.FusedMultiplyAdd(
-                    DoubleDouble.FusedMultiplyAdd(
+            QuadDouble y =
+                QuadDouble.FusedMultiplyAdd(
+                    QuadDouble.FusedMultiplyAdd(
                         a,
                         x,
                         b),
