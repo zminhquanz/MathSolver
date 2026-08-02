@@ -28,8 +28,12 @@ public partial class AboutPage : ContentPage
             this,
             false);
 
+        LocalizationService.ExcludeSubtreeFromLegacyTracking(
+            this);
+
+        LocalizationService.Initialize();
+
         UpdateAppInformation();
-        UpdateLocalizedText();
         PreparePageEntryAnimation();
     }
 
@@ -37,11 +41,7 @@ public partial class AboutPage : ContentPage
     {
         base.OnAppearing();
 
-        AppLanguageManager.LanguageChanged +=
-            OnLanguageChanged;
-
         UpdateAppInformation();
-        UpdateLocalizedText();
 
         if (!_hasPlayedEntryAnimation)
         {
@@ -52,14 +52,6 @@ public partial class AboutPage : ContentPage
                 async () =>
                     await PlayPageEntryAnimationAsync());
         }
-    }
-
-    protected override void OnDisappearing()
-    {
-        AppLanguageManager.LanguageChanged -=
-            OnLanguageChanged;
-
-        base.OnDisappearing();
     }
 
     protected override bool OnBackButtonPressed()
@@ -126,21 +118,10 @@ public partial class AboutPage : ContentPage
                 Easing.CubicIn));
     }
 
-    private void OnLanguageChanged(
-        object? sender,
-        EventArgs e)
-    {
-        Dispatcher.Dispatch(
-            UpdateLocalizedText);
-    }
-
     private void UpdateAppInformation()
     {
         string displayVersion =
             GetDisplayVersion();
-
-        AppNameLabel.Text =
-            "Math Solver";
 
         VersionHeaderLabel.Text =
             $"v{displayVersion}";
@@ -192,79 +173,6 @@ public partial class AboutPage : ContentPage
                 '.',
                 parts)
             : FallbackDisplayVersion;
-    }
-
-    private void UpdateLocalizedText()
-    {
-        bool useEnglish =
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English;
-
-        Title =
-            useEnglish
-                ? "About"
-                : "Giới thiệu";
-
-        AboutTitleLabel.Text =
-            useEnglish
-                ? "ABOUT"
-                : "GIỚI THIỆU";
-
-        AboutSubtitleLabel.Text =
-            useEnglish
-                ? "Application, author, and version information"
-                : "Thông tin ứng dụng, tác giả và phiên bản";
-
-        SemanticProperties.SetDescription(
-            AboutBackButton,
-            useEnglish
-                ? "Go back"
-                : "Quay lại");
-
-        AppDescriptionLabel.Text =
-            useEnglish
-                ? "An offline-first mathematics learning and problem-solving application built with .NET MAUI."
-                : "Ứng dụng học tập và giải toán ưu tiên hoạt động ngoại tuyến, được xây dựng bằng .NET MAUI.";
-
-        InformationTitleLabel.Text =
-            useEnglish
-                ? "Application information"
-                : "Thông tin ứng dụng";
-
-        AuthorCaptionLabel.Text =
-            useEnglish
-                ? "Author"
-                : "Tác giả";
-
-        VersionCaptionLabel.Text =
-            useEnglish
-                ? "Version"
-                : "Phiên bản";
-
-        CopyrightCaptionLabel.Text =
-            "Copyright";
-
-        LicenseCaptionLabel.Text =
-            useEnglish
-                ? "License"
-                : "Giấy phép";
-
-        LinksTitleLabel.Text =
-            useEnglish
-                ? "Project and support"
-                : "Dự án và ủng hộ";
-
-        SemanticProperties.SetDescription(
-            GitHubButton,
-            useEnglish
-                ? "Open the Math Solver GitHub repository"
-                : "Mở kho mã nguồn GitHub của Math Solver");
-
-        SemanticProperties.SetDescription(
-            KoFiButton,
-            useEnglish
-                ? "Support Math Solver on Ko-fi"
-                : "Ủng hộ Math Solver qua Ko-fi");
     }
 
     private async void OnCloseClicked(
@@ -369,19 +277,14 @@ public partial class AboutPage : ContentPage
             // Hiển thị thông báo thân thiện bên dưới.
         }
 
-        bool useEnglish =
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English;
-
         await DisplayAlertAsync(
-            useEnglish
-                ? "Unable to open link"
-                : "Không thể mở liên kết",
+            LocalizationService.TranslateKey(
+                "About.LinkErrorTitle"),
 
-            useEnglish
-                ? "Please check the default web browser and try again."
-                : "Hãy kiểm tra trình duyệt web mặc định rồi thử lại.",
+            LocalizationService.TranslateKey(
+                "About.LinkErrorMessage"),
 
-            "OK");
+            LocalizationService.TranslateKey(
+                "Common.OK"));
     }
 }

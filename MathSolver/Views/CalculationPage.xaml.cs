@@ -1,5 +1,6 @@
 using MathSolver.Graphics;
 using MathSolver.Models;
+using MathSolver.Numerics;
 using MathSolver.Services;
 using System.Globalization;
 using System.Numerics;
@@ -370,13 +371,10 @@ public partial class CalculationPage : ContentPage
                 return;
             }
 
-            if (!TryCalculateSafely(
+            QuadDouble result =
+                CalculateDecimalResult(
                     firstNumber,
-                    secondNumber,
-                    out decimal result))
-            {
-                return;
-            }
+                    secondNumber);
 
             ShowResult(
                 firstNumber,
@@ -790,36 +788,11 @@ public partial class CalculationPage : ContentPage
         decimal dividend,
         decimal divisor)
     {
-        decimal result;
-
-        try
-        {
-            result =
-                checked(
-                    dividend /
-                    divisor);
-        }
-        catch (OverflowException)
-        {
-            ShowOverflowError(
-                "Thương",
-                dividend,
+        QuadDouble result =
+            QuadDouble.FromDecimal(
+                dividend) /
+            QuadDouble.FromDecimal(
                 divisor);
-
-            return;
-        }
-
-        if (!IsSupportedDecimalDivisionResult(
-                dividend,
-                divisor,
-                result))
-        {
-            ShowResultPrecisionError(
-                dividend,
-                divisor);
-
-            return;
-        }
 
         string dividendText =
             FormatNumberForDisplay(
@@ -1144,149 +1117,41 @@ public partial class CalculationPage : ContentPage
         return true;
     }
 
-    private bool TryCalculateSafely(
-        decimal firstNumber,
-        decimal secondNumber,
-        out decimal result)
-    {
-        result = 0;
-
-        if (_selectedOperation == ArithmeticOperation.Add &&
-            WillAdditionOverflow(firstNumber, secondNumber))
-        {
-            ShowOverflowError(
-                "Tổng",
-                firstNumber,
-                secondNumber);
-
-            return false;
-        }
-
-        if (_selectedOperation == ArithmeticOperation.Multiply &&
-            WillMultiplicationOverflow(firstNumber, secondNumber))
-        {
-            ShowOverflowError(
-                "Tích",
-                firstNumber,
-                secondNumber);
-
-            return false;
-        }
-
-        try
-        {
-            result =
-                _selectedOperation switch
-                {
-                    ArithmeticOperation.Add =>
-                        checked(firstNumber + secondNumber),
-
-                    ArithmeticOperation.Subtract =>
-                        checked(firstNumber - secondNumber),
-
-                    ArithmeticOperation.Multiply =>
-                        checked(firstNumber * secondNumber),
-
-                    ArithmeticOperation.Divide =>
-                        checked(firstNumber / secondNumber),
-
-                    _ => 0
-                };
-
-            if (_selectedNumberType ==
-                    NumberInputType.Decimal &&
-                GetEffectiveDecimalPlaces(
-                    result) >
-                MaxDecimalPlaces)
-            {
-                ShowResultPrecisionError(
-                    firstNumber,
-                    secondNumber);
-
-                return false;
-            }
-
-            return true;
-        }
-        catch (OverflowException)
-        {
-            ShowOverflowError(
-                "Kết quả",
-                firstNumber,
-                secondNumber);
-
-            return false;
-        }
-    }
-
-    private static bool WillAdditionOverflow(
+    private QuadDouble CalculateDecimalResult(
         decimal firstNumber,
         decimal secondNumber)
     {
-        if (secondNumber > 0)
+        QuadDouble firstValue =
+            QuadDouble.FromDecimal(
+                firstNumber);
+
+        QuadDouble secondValue =
+            QuadDouble.FromDecimal(
+                secondNumber);
+
+        return _selectedOperation switch
         {
-            return firstNumber >
-                   decimal.MaxValue -
-                   secondNumber;
-        }
+            ArithmeticOperation.Add =>
+                firstValue + secondValue,
 
-        if (secondNumber < 0)
-        {
-            return firstNumber <
-                   decimal.MinValue -
-                   secondNumber;
-        }
+            ArithmeticOperation.Subtract =>
+                firstValue - secondValue,
 
-        return false;
-    }
+            ArithmeticOperation.Multiply =>
+                firstValue * secondValue,
 
-    private static bool WillMultiplicationOverflow(
-        decimal firstNumber,
-        decimal secondNumber)
-    {
-        if (firstNumber == 0 ||
-            secondNumber == 0)
-        {
-            return false;
-        }
+            ArithmeticOperation.Divide =>
+                firstValue / secondValue,
 
-        decimal absoluteFirst =
-            Math.Abs(firstNumber);
-
-        decimal absoluteSecond =
-            Math.Abs(secondNumber);
-
-        return absoluteFirst >
-               decimal.MaxValue /
-               absoluteSecond;
-    }
-
-    private void ShowOverflowError(
-        string resultName,
-        decimal firstNumber,
-        decimal secondNumber)
-    {
-        string operationSymbol =
-            GetOperationSymbol();
-
-        ErrorLabel.Text =
-            $"{resultName} của phép tính " +
-            $"{FormatNumberForDisplay(firstNumber)} " +
-            $"{operationSymbol} " +
-            $"{FormatNumberForDisplay(secondNumber)} " +
-            "vượt quá phạm vi số mà ứng dụng đang hỗ trợ.";
-
-        ErrorBorder.IsVisible = true;
-        ResultBorder.IsVisible = false;
-        DivisionDetailBorder.IsVisible = false;
-
-        HideLongDivision();
+            _ =>
+                QuadDouble.Zero
+        };
     }
 
     private void ShowResult(
         decimal firstNumber,
         decimal secondNumber,
-        decimal result)
+        QuadDouble result)
     {
         string firstText =
             FormatNumberForDisplay(
@@ -1355,7 +1220,7 @@ public partial class CalculationPage : ContentPage
     private string CreateAdditional(
         decimal firstNumber,
         decimal secondNumber,
-        decimal result)
+        QuadDouble result)
     {
         string firstText =
             FormatNumberForDisplay(
@@ -1665,7 +1530,7 @@ public partial class CalculationPage : ContentPage
     private string FormatOperationResult(
         decimal firstNumber,
         decimal secondNumber,
-        decimal result)
+        QuadDouble result)
     {
         int firstScale =
             GetDecimalScale(
@@ -1691,8 +1556,7 @@ public partial class CalculationPage : ContentPage
                         secondScale),
 
                 _ =>
-                    GetEffectiveDecimalPlaces(
-                        result)
+                    MaxDecimalPlaces
             };
 
         displayDecimalPlaces =
@@ -1701,35 +1565,150 @@ public partial class CalculationPage : ContentPage
                 0,
                 MaxDecimalPlaces);
 
-        string standardText;
+        return FormatQuadDoubleForDisplay(
+            result,
+            displayDecimalPlaces);
+    }
 
-        if (displayDecimalPlaces == 0)
-        {
-            standardText =
-                result.ToString(
-                    "#,##0",
-                    CultureInfo.InvariantCulture);
-        }
-        else
-        {
-            string format =
-                "#,##0." +
-                new string(
-                    '0',
-                    displayDecimalPlaces);
+    private static string FormatNumberForDisplay(
+        QuadDouble number)
+    {
+        return FormatQuadDoubleForDisplay(
+            number);
+    }
 
-            standardText =
-                result.ToString(
-                    format,
-                    CultureInfo.InvariantCulture);
+    private static string FormatQuadDoubleForDisplay(
+        QuadDouble number,
+        int? fixedDecimalPlaces = null)
+    {
+        if (!number.IsFinite)
+        {
+            return number.ToGeneralString();
         }
 
-        return CountNumericDigits(
-                   standardText) >
-               ScientificDisplayDigitThreshold
-            ? FormatScientificForDisplay(
-                result)
-            : standardText;
+        if (number.IsZero)
+        {
+            return fixedDecimalPlaces > 0
+                ? "0." +
+                  new string(
+                      '0',
+                      fixedDecimalPlaces.Value)
+                : "0";
+        }
+
+        double approximateValue =
+            Math.Abs(
+                number.ToDouble());
+
+        int exponent =
+            (int)Math.Floor(
+                Math.Log10(
+                    approximateValue));
+
+        bool useScientificNotation =
+            exponent >=
+                ScientificDisplayDigitThreshold ||
+            exponent <=
+                -MaxDecimalPlaces;
+
+        int decimalPlaces =
+            fixedDecimalPlaces ??
+            MaxDecimalPlaces;
+
+        int significantDigits =
+            useScientificNotation
+                ? ScientificDisplaySignificantDigits
+                : Math.Clamp(
+                    exponent +
+                    1 +
+                    decimalPlaces,
+                    1,
+                    QuadDouble.SignificantDigits);
+
+        string text =
+            number.ToGeneralString(
+                significantDigits,
+                ScientificDisplayDigitThreshold,
+                -MaxDecimalPlaces);
+
+        int exponentSeparatorIndex =
+            text.IndexOfAny(
+                new[] { 'e', 'E' });
+
+        if (exponentSeparatorIndex >= 0)
+        {
+            string mantissa =
+                text[..exponentSeparatorIndex]
+                    .Replace(
+                        "-",
+                        "−",
+                        StringComparison.Ordinal);
+
+            if (int.TryParse(
+                    text[(exponentSeparatorIndex + 1)..],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int scientificExponent))
+            {
+                return
+                    $"{mantissa} × " +
+                    $"10{ToSuperscript(scientificExponent)}";
+            }
+        }
+
+        bool isNegative =
+            text.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalPointIndex =
+            unsignedText.IndexOf(
+                '.',
+                StringComparison.Ordinal);
+
+        string integerPart =
+            decimalPointIndex >= 0
+                ? unsignedText[..decimalPointIndex]
+                : unsignedText;
+
+        string fractionPart =
+            decimalPointIndex >= 0
+                ? unsignedText[(decimalPointIndex + 1)..]
+                : string.Empty;
+
+        if (fixedDecimalPlaces.HasValue)
+        {
+            fractionPart =
+                fractionPart.PadRight(
+                    fixedDecimalPlaces.Value,
+                    '0');
+
+            if (fractionPart.Length >
+                fixedDecimalPlaces.Value)
+            {
+                fractionPart =
+                    fractionPart[..fixedDecimalPlaces.Value];
+            }
+        }
+
+        integerPart =
+            AddThousandsSeparators(
+                integerPart);
+
+        string decimalPart =
+            fractionPart.Length > 0
+                ? $".{fractionPart}"
+                : string.Empty;
+
+        return
+            (isNegative ? "−" : string.Empty) +
+            integerPart +
+            decimalPart;
     }
 
     private static int GetDecimalScale(
@@ -1742,100 +1721,6 @@ public partial class CalculationPage : ContentPage
         return
             (bits[3] >> 16) &
             0x7F;
-    }
-
-    private static int GetEffectiveDecimalPlaces(
-        decimal number)
-    {
-        int[] bits =
-            decimal.GetBits(
-                number);
-
-        int scale =
-            (bits[3] >> 16) &
-            0x7F;
-
-        if (scale == 0)
-        {
-            return 0;
-        }
-
-        BigInteger unscaledValue =
-            (uint)bits[0];
-
-        unscaledValue |=
-            (BigInteger)(uint)bits[1] <<
-            32;
-
-        unscaledValue |=
-            (BigInteger)(uint)bits[2] <<
-            64;
-
-        while (scale > 0 &&
-               !unscaledValue.IsZero &&
-               unscaledValue % 10 == 0)
-        {
-            unscaledValue /=
-                10;
-
-            scale--;
-        }
-
-        return scale;
-    }
-
-    private static bool IsSupportedDecimalDivisionResult(
-        decimal dividend,
-        decimal divisor,
-        decimal result)
-    {
-        if (GetEffectiveDecimalPlaces(
-                result) >
-            MaxDecimalPlaces)
-        {
-            return false;
-        }
-
-        try
-        {
-            // Nếu nhân ngược không trở lại đúng số bị chia,
-            // thương decimal đã được làm tròn nội bộ.
-            return checked(
-                       result *
-                       divisor) ==
-                   dividend;
-        }
-        catch (OverflowException)
-        {
-            return false;
-        }
-    }
-
-    private void ShowResultPrecisionError(
-        decimal firstNumber,
-        decimal secondNumber)
-    {
-        string operationSymbol =
-            GetOperationSymbol();
-
-        ErrorLabel.Text =
-            $"Phép tính {FormatNumberForDisplay(firstNumber)} " +
-            $"{operationSymbol} {FormatNumberForDisplay(secondNumber)} " +
-            $"cho kết quả cần nhiều hơn {MaxDecimalPlaces} chữ số " +
-            "sau dấu chấm hoặc không thể biểu diễn chính xác trong " +
-            "giới hạn hiện tại. Ứng dụng không làm tròn kết quả để " +
-            "tránh sai lệch.";
-
-        ErrorBorder.IsVisible =
-            true;
-
-        ResultBorder.IsVisible =
-            false;
-
-        DivisionDetailBorder.IsVisible =
-            false;
-
-        HideLongDivision();
     }
 
     private static string FormatNumber(

@@ -1,4 +1,5 @@
 using MathSolver.Models;
+using MathSolver.Numerics;
 using MathSolver.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -19,19 +20,27 @@ public partial class GeometryCalculatorView : ContentView
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
 
+    // OctoDouble vẫn tính nội bộ với khoảng 127-128 chữ số có nghĩa,
+    // nhưng giao diện chỉ hiển thị tối đa 10 chữ số sau dấu thập phân.
+    private const int OctoDoubleScientificSignificantDigits =
+        MaxDecimalPlaces + 1;
+
     private const string Int128RangeText =
         "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến " +
         "170,141,183,460,469,231,731,687,303,715,884,105,727";
 
+    // Thiết kế số nguyên:
+    // - Kích thước người dùng nhập phải nằm trong phạm vi Int128.
+    // - Sau khi parse thành công, hệ số mới được chuyển sang BigInteger.
+    // - Chỉ kết quả tính toán nguyên dùng BigInteger để không tràn Int128.
     private const string DecimalRangeText =
         "−79,228,162,514,264,337,593,543,950,335 đến " +
         "79,228,162,514,264,337,593,543,950,335";
 
-    private const decimal Pi =
-        3.1415926535897932384626433833m;
-
-    private const decimal SquareRootOfThree =
-        1.7320508075688772935274463415m;
+    // OctoDouble giữ khoảng 127-128 chữ số có nghĩa. Hằng số π và √3
+    // được cung cấp trực tiếp bởi MathSolver.Numerics.OctoDouble.
+    private static readonly OctoDouble OctoComparisonTolerance =
+        OctoDouble.Parse("1e-100");
 
     private GeometryCategory _selectedCategory =
         GeometryCategory.Plane;
@@ -42,7 +51,7 @@ public partial class GeometryCalculatorView : ContentView
     private GeometryFormulaItem? _selectedGeometry;
 
     private bool _isUpdatingEntryText;
-    private bool _isLanguageSubscribed;
+    private bool _isCultureSubscribed;
     private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
 
@@ -90,7 +99,7 @@ public partial class GeometryCalculatorView : ContentView
         LocalizationService.Attach(
             this);
 
-        SubscribeLanguageChanged();
+        SubscribeCultureChanged();
 
         SelectCategory(
             GeometryCategory.Plane);
@@ -104,7 +113,12 @@ public partial class GeometryCalculatorView : ContentView
         object? sender,
         EventArgs e)
     {
-        SubscribeLanguageChanged();
+        SubscribeCultureChanged();
+
+        // The view can be unloaded while the user changes language from
+        // another tab. Rebuild all dynamic geometry text when it becomes
+        // visible again so it always matches the active language pack.
+        RefreshLocalizedContent();
 
         GeometryDiagramView.Invalidate();
 
@@ -129,77 +143,93 @@ public partial class GeometryCalculatorView : ContentView
         object? sender,
         EventArgs e)
     {
-        UnsubscribeLanguageChanged();
+        UnsubscribeCultureChanged();
     }
 
-    private void SubscribeLanguageChanged()
+    private void SubscribeCultureChanged()
     {
-        if (_isLanguageSubscribed)
+        if (_isCultureSubscribed)
         {
             return;
         }
 
-        AppLanguageManager.LanguageChanged +=
-            OnLanguageChanged;
+        LocalizationService.CultureChanged +=
+            OnCultureChanged;
 
-        _isLanguageSubscribed =
+        _isCultureSubscribed =
             true;
     }
 
-    private void UnsubscribeLanguageChanged()
+    private void UnsubscribeCultureChanged()
     {
-        if (!_isLanguageSubscribed)
+        if (!_isCultureSubscribed)
         {
             return;
         }
 
-        AppLanguageManager.LanguageChanged -=
-            OnLanguageChanged;
+        LocalizationService.CultureChanged -=
+            OnCultureChanged;
 
-        _isLanguageSubscribed =
+        _isCultureSubscribed =
             false;
     }
 
-    private void OnLanguageChanged(
+    private void OnCultureChanged(
         object? sender,
         EventArgs e)
     {
         Dispatcher.Dispatch(
-            () =>
+            RefreshLocalizedContent);
+    }
+
+    private void RefreshLocalizedContent()
+    {
+        string? selectedId =
+            SelectedGeometry?.Id;
+
+        Dictionary<string, string> currentInputs =
+            InputFields.ToDictionary(
+                field => field.Key,
+                field => field.RawText,
+                StringComparer.Ordinal);
+
+        bool shouldRestoreResults =
+            ResultBorder.IsVisible &&
+            Results.Count > 0;
+
+        // Refresh the static visual tree after the JSON language pack has
+        // changed, then recreate catalog/input objects whose translated text
+        // was captured when they were constructed.
+        LocalizationService.Attach(
+            this);
+
+        SelectCategory(
+            _selectedCategory,
+            selectedId);
+
+        foreach (GeometryInputField field
+                 in InputFields)
+        {
+            if (!currentInputs.TryGetValue(
+                    field.Key,
+                    out string? rawText))
             {
-                string? selectedId =
-                    SelectedGeometry?.Id;
+                continue;
+            }
 
-                Dictionary<string, string> currentInputs =
-                    InputFields.ToDictionary(
-                        field => field.Key,
-                        field => field.RawText,
-                        StringComparer.Ordinal);
+            field.RawText =
+                rawText;
 
-                SelectCategory(
-                    _selectedCategory,
-                    selectedId);
+            field.Text =
+                rawText;
+        }
 
-                foreach (GeometryInputField field
-                         in InputFields)
-                {
-                    if (!currentInputs.TryGetValue(
-                            field.Key,
-                            out string? rawText))
-                    {
-                        continue;
-                    }
-
-                    field.RawText =
-                        rawText;
-
-                    field.Text =
-                        rawText;
-                }
-
-                LocalizationService.Attach(
-                    this);
-            });
+        if (shouldRestoreResults)
+        {
+            OnCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
     }
 
     private static string T(
@@ -636,6 +666,30 @@ public partial class GeometryCalculatorView : ContentView
         {
             BuildInputFields(
                 SelectedGeometry.Id);
+
+            /*
+             * BuildInputFields tạo lại toàn bộ BindableLayout children.
+             * Ngay tại thời điểm này, các card mới vẫn đang dùng WidthRequest
+             * mặc định từ DataTemplate và chưa được đo theo chiều rộng thật
+             * của GeometryInputFlexLayout.
+             *
+             * Đợi hai lượt UI layout giống OnGeometryShapeSelected, rồi tính
+             * lại WidthRequest và HeightRequest. Điều này giữ kích thước card
+             * ổn định khi đổi qua lại giữa Số nguyên và Số thập phân.
+             */
+            Dispatcher.Dispatch(
+                () =>
+                {
+                    UpdateInputFieldWidths();
+                    ScheduleInputFlexHeightUpdate();
+
+                    Dispatcher.Dispatch(
+                        () =>
+                        {
+                            UpdateInputFieldWidths();
+                            ScheduleInputFlexHeightUpdate();
+                        });
+                });
         }
 
         ClearOutput();
@@ -853,18 +907,25 @@ public partial class GeometryCalculatorView : ContentView
         if (_selectedNumberType ==
             GeometryNumberType.Integer)
         {
-            if (!BigInteger.TryParse(
+            if (!Int128.TryParse(
                     rawText,
                     NumberStyles.Integer,
                     CultureInfo.InvariantCulture,
-                    out BigInteger integerValue))
+                    out Int128 integerValue))
             {
+                ShowError(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        T("{0} phải là số nguyên hợp lệ trong phạm vi Int128 từ {1}."),
+                        field.Label,
+                        Int128RangeText));
+
                 return;
             }
 
             formattedText =
                 FormatBigIntegerForDisplay(
-                    integerValue);
+                    (BigInteger)integerValue);
         }
         else
         {
@@ -985,45 +1046,36 @@ public partial class GeometryCalculatorView : ContentView
         bool usesDecimalResult =
             false;
 
-        try
+        switch (geometry.Category)
         {
-            switch (geometry.Category)
-            {
-                case GeometryCategory.Plane:
-                    if (!CalculatePlaneInteger(
-                            geometry.Id,
-                            values,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    break;
-
-                case GeometryCategory.Solid:
-                    if (!CalculateSolidInteger(
-                            geometry.Id,
-                            values,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    break;
-
-                default:
-                    ShowError(
-                        T(
-                            "Loại hình học chưa được hỗ trợ."));
-
+            case GeometryCategory.Plane:
+                if (!CalculatePlaneInteger(
+                        geometry.Id,
+                        values,
+                        ref usesDecimalResult))
+                {
                     return false;
-            }
-        }
-        catch (OverflowException)
-        {
-            ShowDecimalOverflow();
+                }
 
-            return false;
+                break;
+
+            case GeometryCategory.Solid:
+                if (!CalculateSolidInteger(
+                        geometry.Id,
+                        values,
+                        ref usesDecimalResult))
+                {
+                    return false;
+                }
+
+                break;
+
+            default:
+                ShowError(
+                    T(
+                        "Loại hình học chưa được hỗ trợ."));
+
+                return false;
         }
 
         CalculationExplanationLabel.Text =
@@ -1041,314 +1093,156 @@ public partial class GeometryCalculatorView : ContentView
         {
             case "square":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
 
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a × 4",
-                        a * 4);
-
-                    AddIntegerResult(
-                        "Diện tích",
-                        "S = a × a",
-                        a * a);
-
+                    AddIntegerResult("Chu vi", "P = a × 4", a * 4);
+                    AddIntegerResult("Diện tích", "S = a × a", a * a);
                     return true;
                 }
 
             case "rectangle":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = (a + b) × 2",
-                        (a + b) * 2);
-
-                    AddIntegerResult(
-                        "Diện tích",
-                        "S = a × b",
-                        a * b);
-
+                    AddIntegerResult("Chu vi", "P = (a + b) × 2", (a + b) * 2);
+                    AddIntegerResult("Diện tích", "S = a × b", a * b);
                     return true;
                 }
 
             case "triangle":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger c = value["c"];
+                    BigInteger h = value["h"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger c =
-                        value["c"];
-
-                    BigInteger h =
-                        value["h"];
-
-                    if (!IsValidTriangle(
-                            a,
-                            b,
-                            c))
+                    if (!IsValidTriangle(a, b, c))
                     {
-                        ShowError(
-                            T(
-                                "Ba cạnh không tạo thành tam giác hợp lệ."));
-
+                        ShowError(T("Ba cạnh không tạo thành tam giác hợp lệ."));
                         return false;
                     }
 
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a + b + c",
-                        a + b + c);
-
-                    if (!AddRationalIntegerResult(
-                            "Diện tích",
-                            "S = (a × h) ÷ 2",
-                            a * h,
-                            2,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    AddIntegerResult("Chu vi", "P = a + b + c", a + b + c);
+                    return AddRationalIntegerResult(
+                        "Diện tích",
+                        "S = (a × h) ÷ 2",
+                        a * h,
+                        2,
+                        ref usesDecimalResult);
                 }
 
             case "right_triangle":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger c = value["c"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger c =
-                        value["c"];
-
-                    if (a * a +
-                        b * b !=
-                        c * c)
+                    if (a * a + b * b != c * c)
                     {
-                        ShowError(
-                            T(
-                                "Ba cạnh không thỏa mãn định lý Pythagore a² + b² = c²."));
-
+                        ShowError(T("Ba cạnh không thỏa mãn định lý Pythagore a² + b² = c²."));
                         return false;
                     }
 
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a + b + c",
-                        a + b + c);
-
-                    if (!AddRationalIntegerResult(
-                            "Diện tích",
-                            "S = (a × b) ÷ 2",
-                            a * b,
-                            2,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    AddIntegerResult("Chu vi", "P = a + b + c", a + b + c);
+                    return AddRationalIntegerResult(
+                        "Diện tích",
+                        "S = (a × b) ÷ 2",
+                        a * b,
+                        2,
+                        ref usesDecimalResult);
                 }
 
             case "equilateral_triangle":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger integerA = value["a"];
+                    OctoDouble a = OctoDouble.FromBigInteger(integerA);
 
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a × 3",
-                        a * 3);
-
-                    if (!TryBigIntegerToDecimal(
-                            a,
-                            out decimal decimalA))
-                    {
-                        ShowDecimalOverflow();
-
-                        return false;
-                    }
-
-                    decimal area =
-                        checked(
-                            decimalA *
-                            decimalA *
-                            SquareRootOfThree /
-                            4m);
-
-                    AddDecimalResult(
+                    AddIntegerResult("Chu vi", "P = a × 3", integerA * 3);
+                    AddOctoDoubleResult(
                         "Diện tích",
                         "S = (a² × √3) ÷ 4",
-                        area);
+                        a * a * OctoDouble.SqrtThree / 4d);
 
-                    usesDecimalResult =
-                        true;
-
+                    usesDecimalResult = true;
                     return true;
                 }
 
             case "circle":
                 {
-                    if (!TryBigIntegerToDecimal(
-                            value["r"],
-                            out decimal r))
-                    {
-                        ShowDecimalOverflow();
+                    OctoDouble r = OctoDouble.FromBigInteger(value["r"]);
 
-                        return false;
-                    }
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult(
                         "Chu vi",
                         "C = 2 × π × r",
-                        checked(
-                            2m *
-                            Pi *
-                            r));
+                        2d * OctoDouble.Pi * r);
 
-                    AddDecimalResult(
+                    AddOctoDoubleResult(
                         "Diện tích",
                         "S = π × r²",
-                        checked(
-                            Pi *
-                            r *
-                            r));
+                        OctoDouble.Pi * r * r);
 
-                    usesDecimalResult =
-                        true;
-
+                    usesDecimalResult = true;
                     return true;
                 }
 
             case "trapezoid":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger c = value["c"];
+                    BigInteger d = value["d"];
+                    BigInteger h = value["h"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger c =
-                        value["c"];
-
-                    BigInteger d =
-                        value["d"];
-
-                    BigInteger h =
-                        value["h"];
-
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a + b + c + d",
-                        a + b + c + d);
-
-                    if (!AddRationalIntegerResult(
-                            "Diện tích",
-                            "S = ((a + b) × h) ÷ 2",
-                            (a + b) * h,
-                            2,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    AddIntegerResult("Chu vi", "P = a + b + c + d", a + b + c + d);
+                    return AddRationalIntegerResult(
+                        "Diện tích",
+                        "S = ((a + b) × h) ÷ 2",
+                        (a + b) * h,
+                        2,
+                        ref usesDecimalResult);
                 }
 
             case "isosceles_trapezoid":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger c = value["c"];
+                    BigInteger h = value["h"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger c =
-                        value["c"];
-
-                    BigInteger h =
-                        value["h"];
-
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a + b + 2c",
-                        a + b + 2 * c);
-
-                    if (!AddRationalIntegerResult(
-                            "Diện tích",
-                            "S = ((a + b) × h) ÷ 2",
-                            (a + b) * h,
-                            2,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    AddIntegerResult("Chu vi", "P = a + b + 2c", a + b + 2 * c);
+                    return AddRationalIntegerResult(
+                        "Diện tích",
+                        "S = ((a + b) × h) ÷ 2",
+                        (a + b) * h,
+                        2,
+                        ref usesDecimalResult);
                 }
 
             case "right_trapezoid":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger c = value["c"];
+                    BigInteger h = value["h"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger c =
-                        value["c"];
-
-                    BigInteger h =
-                        value["h"];
-
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a + b + c + h",
-                        a + b + c + h);
-
-                    if (!AddRationalIntegerResult(
-                            "Diện tích",
-                            "S = ((a + b) × h) ÷ 2",
-                            (a + b) * h,
-                            2,
-                            ref usesDecimalResult))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    AddIntegerResult("Chu vi", "P = a + b + c + h", a + b + c + h);
+                    return AddRationalIntegerResult(
+                        "Diện tích",
+                        "S = ((a + b) × h) ÷ 2",
+                        (a + b) * h,
+                        2,
+                        ref usesDecimalResult);
                 }
 
             case "rhombus":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger d1 = value["d1"];
+                    BigInteger d2 = value["d2"];
+                    BigInteger h = value["h"];
 
-                    BigInteger d1 =
-                        value["d1"];
-
-                    BigInteger d2 =
-                        value["d2"];
-
-                    BigInteger h =
-                        value["h"];
-
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = a × 4",
-                        a * 4);
+                    AddIntegerResult("Chu vi", "P = a × 4", a * 4);
 
                     if (!AddRationalIntegerResult(
                             "Diện tích theo đường chéo",
@@ -1370,33 +1264,17 @@ public partial class GeometryCalculatorView : ContentView
 
             case "parallelogram":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger h = value["h"];
 
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger h =
-                        value["h"];
-
-                    AddIntegerResult(
-                        "Chu vi",
-                        "P = (a + b) × 2",
-                        (a + b) * 2);
-
-                    AddIntegerResult(
-                        "Diện tích",
-                        "S = a × h",
-                        a * h);
-
+                    AddIntegerResult("Chu vi", "P = (a + b) × 2", (a + b) * 2);
+                    AddIntegerResult("Diện tích", "S = a × h", a * h);
                     return true;
                 }
 
             default:
-                ShowError(
-                    T(
-                        "Hình học mặt phẳng này chưa có bộ tính toán."));
-
+                ShowError(T("Hình học mặt phẳng này chưa có bộ tính toán."));
                 return false;
         }
     }
@@ -1410,222 +1288,102 @@ public partial class GeometryCalculatorView : ContentView
         {
             case "cube":
                 {
-                    BigInteger a =
-                        value["a"];
+                    BigInteger a = value["a"];
+                    BigInteger square = a * a;
 
-                    BigInteger square =
-                        a * a;
-
-                    AddIntegerResult(
-                        "Diện tích xung quanh",
-                        "Sxq = 4 × a²",
-                        4 * square);
-
-                    AddIntegerResult(
-                        "Diện tích toàn phần",
-                        "Stp = 6 × a²",
-                        6 * square);
-
-                    AddIntegerResult(
-                        "Thể tích",
-                        "V = a³",
-                        square * a);
-
+                    AddIntegerResult("Diện tích xung quanh", "Sxq = 4 × a²", 4 * square);
+                    AddIntegerResult("Diện tích toàn phần", "Stp = 6 × a²", 6 * square);
+                    AddIntegerResult("Thể tích", "V = a³", square * a);
                     return true;
                 }
 
             case "rectangular_prism":
                 {
-                    BigInteger a =
-                        value["a"];
-
-                    BigInteger b =
-                        value["b"];
-
-                    BigInteger h =
-                        value["h"];
+                    BigInteger a = value["a"];
+                    BigInteger b = value["b"];
+                    BigInteger h = value["h"];
 
                     AddIntegerResult(
                         "Diện tích xung quanh",
                         "Sxq = 2 × (a + b) × h",
-                        2 *
-                        (a + b) *
-                        h);
+                        2 * (a + b) * h);
 
                     AddIntegerResult(
                         "Diện tích toàn phần",
                         "Stp = 2 × (a × b + a × h + b × h)",
-                        2 *
-                        (a * b +
-                         a * h +
-                         b * h));
+                        2 * (a * b + a * h + b * h));
 
-                    AddIntegerResult(
-                        "Thể tích",
-                        "V = a × b × h",
-                        a *
-                        b *
-                        h);
-
+                    AddIntegerResult("Thể tích", "V = a × b × h", a * b * h);
                     return true;
                 }
 
             case "sphere":
                 {
-                    if (!TryBigIntegerToDecimal(
-                            value["r"],
-                            out decimal r))
-                    {
-                        ShowDecimalOverflow();
+                    OctoDouble r = OctoDouble.FromBigInteger(value["r"]);
+                    OctoDouble square = r * r;
 
-                        return false;
-                    }
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult(
                         "Diện tích mặt cầu",
                         "S = 4 × π × r²",
-                        checked(
-                            4m *
-                            Pi *
-                            r *
-                            r));
+                        4d * OctoDouble.Pi * square);
 
-                    AddDecimalResult(
+                    AddOctoDoubleResult(
                         "Thể tích",
                         "V = (4 × π × r³) ÷ 3",
-                        checked(
-                            4m *
-                            Pi *
-                            r *
-                            r *
-                            r /
-                            3m));
+                        4d * OctoDouble.Pi * square * r / 3d);
 
-                    usesDecimalResult =
-                        true;
-
+                    usesDecimalResult = true;
                     return true;
                 }
 
             case "cylinder":
                 {
-                    if (!TryBigIntegerToDecimal(
-                            value["r"],
-                            out decimal r) ||
-                        !TryBigIntegerToDecimal(
-                            value["h"],
-                            out decimal h))
-                    {
-                        ShowDecimalOverflow();
+                    OctoDouble r = OctoDouble.FromBigInteger(value["r"]);
+                    OctoDouble h = OctoDouble.FromBigInteger(value["h"]);
+                    OctoDouble baseArea = OctoDouble.Pi * r * r;
 
-                        return false;
-                    }
-
-                    decimal baseArea =
-                        checked(
-                            Pi *
-                            r *
-                            r);
-
-                    AddDecimalResult(
-                        "Diện tích đáy",
-                        "Sđ = π × r²",
-                        baseArea);
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult("Diện tích đáy", "Sđ = π × r²", baseArea);
+                    AddOctoDoubleResult(
                         "Diện tích xung quanh",
                         "Sxq = 2 × π × r × h",
-                        checked(
-                            2m *
-                            Pi *
-                            r *
-                            h));
-
-                    AddDecimalResult(
+                        2d * OctoDouble.Pi * r * h);
+                    AddOctoDoubleResult(
                         "Diện tích toàn phần",
                         "Stp = 2 × π × r × (r + h)",
-                        checked(
-                            2m *
-                            Pi *
-                            r *
-                            (r + h)));
+                        2d * OctoDouble.Pi * r * (r + h));
+                    AddOctoDoubleResult("Thể tích", "V = π × r² × h", baseArea * h);
 
-                    AddDecimalResult(
-                        "Thể tích",
-                        "V = π × r² × h",
-                        checked(
-                            baseArea *
-                            h));
-
-                    usesDecimalResult =
-                        true;
-
+                    usesDecimalResult = true;
                     return true;
                 }
 
             case "cone":
                 {
-                    if (!TryBigIntegerToDecimal(
-                            value["r"],
-                            out decimal r) ||
-                        !TryBigIntegerToDecimal(
-                            value["h"],
-                            out decimal h) ||
-                        !TryBigIntegerToDecimal(
-                            value["l"],
-                            out decimal l))
-                    {
-                        ShowDecimalOverflow();
+                    OctoDouble r = OctoDouble.FromBigInteger(value["r"]);
+                    OctoDouble h = OctoDouble.FromBigInteger(value["h"]);
+                    OctoDouble l = OctoDouble.FromBigInteger(value["l"]);
+                    OctoDouble baseArea = OctoDouble.Pi * r * r;
 
-                        return false;
-                    }
-
-                    decimal baseArea =
-                        checked(
-                            Pi *
-                            r *
-                            r);
-
-                    AddDecimalResult(
-                        "Diện tích đáy",
-                        "Sđ = π × r²",
-                        baseArea);
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult("Diện tích đáy", "Sđ = π × r²", baseArea);
+                    AddOctoDoubleResult(
                         "Diện tích xung quanh",
                         "Sxq = π × r × l",
-                        checked(
-                            Pi *
-                            r *
-                            l));
-
-                    AddDecimalResult(
+                        OctoDouble.Pi * r * l);
+                    AddOctoDoubleResult(
                         "Diện tích toàn phần",
                         "Stp = π × r × (r + l)",
-                        checked(
-                            Pi *
-                            r *
-                            (r + l)));
-
-                    AddDecimalResult(
+                        OctoDouble.Pi * r * (r + l));
+                    AddOctoDoubleResult(
                         "Thể tích",
                         "V = (π × r² × h) ÷ 3",
-                        checked(
-                            baseArea *
-                            h /
-                            3m));
+                        baseArea * h / 3d);
 
-                    usesDecimalResult =
-                        true;
-
+                    usesDecimalResult = true;
                     return true;
                 }
 
             default:
-                ShowError(
-                    T(
-                        "Hình học không gian này chưa có bộ tính toán."));
-
+                ShowError(T("Hình học không gian này chưa có bộ tính toán."));
                 return false;
         }
     }
@@ -1633,52 +1391,52 @@ public partial class GeometryCalculatorView : ContentView
     private bool CalculateDecimalGeometry(
         GeometryFormulaItem geometry)
     {
+        /*
+         * Ranh giới kiểu dữ liệu của chế độ Số thập phân:
+         *
+         * 1. Người dùng vẫn nhập và được kiểm tra bằng Decimal.
+         * 2. Ngay sau khi toàn bộ kích thước hợp lệ, chuyển chúng sang
+         *    OctoDouble đúng một lần.
+         * 3. Từ đây trở đi, mọi công thức và kết quả đều dùng OctoDouble.
+         *
+         * Vì vậy kết quả không còn bị giới hạn bởi phạm vi Decimal,
+         * trong khi quy tắc nhập liệu Decimal vẫn được giữ nguyên.
+         */
         if (!TryReadDecimalInputs(
-                out Dictionary<string, decimal> value))
+                out Dictionary<string, decimal> decimalInputs))
         {
             return false;
         }
 
-        try
+        Dictionary<string, OctoDouble> values =
+            ConvertDecimalInputsToOctoDouble(
+                decimalInputs);
+
+        switch (geometry.Category)
         {
-            checked
-            {
-                switch (geometry.Category)
+            case GeometryCategory.Plane:
+                if (!CalculatePlaneDecimal(
+                        geometry.Id,
+                        values))
                 {
-                    case GeometryCategory.Plane:
-                        if (!CalculatePlaneDecimal(
-                                geometry.Id,
-                                value))
-                        {
-                            return false;
-                        }
-
-                        break;
-
-                    case GeometryCategory.Solid:
-                        if (!CalculateSolidDecimal(
-                                geometry.Id,
-                                value))
-                        {
-                            return false;
-                        }
-
-                        break;
-
-                    default:
-                        ShowError(
-                            T(
-                                "Loại hình học chưa được hỗ trợ."));
-
-                        return false;
+                    return false;
                 }
-            }
-        }
-        catch (OverflowException)
-        {
-            ShowDecimalOverflow();
 
-            return false;
+                break;
+
+            case GeometryCategory.Solid:
+                if (!CalculateSolidDecimal(
+                        geometry.Id,
+                        values))
+                {
+                    return false;
+                }
+
+                break;
+
+            default:
+                ShowError(T("Loại hình học chưa được hỗ trợ."));
+                return false;
         }
 
         CalculationExplanationLabel.Text =
@@ -1687,520 +1445,259 @@ public partial class GeometryCalculatorView : ContentView
         return Results.Count > 0;
     }
 
+    private static Dictionary<string, OctoDouble>
+        ConvertDecimalInputsToOctoDouble(
+            IReadOnlyDictionary<string, decimal> decimalInputs)
+    {
+        var values =
+            new Dictionary<string, OctoDouble>(
+                decimalInputs.Count,
+                StringComparer.Ordinal);
+
+        foreach (KeyValuePair<string, decimal> input
+                 in decimalInputs)
+        {
+            values[input.Key] =
+                OctoDouble.FromDecimal(
+                    input.Value);
+        }
+
+        return values;
+    }
+
     private bool CalculatePlaneDecimal(
         string geometryId,
-        IReadOnlyDictionary<string, decimal> value)
+        IReadOnlyDictionary<string, OctoDouble> value)
     {
         switch (geometryId)
         {
             case "square":
                 {
-                    decimal a =
-                        value["a"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a × 4",
-                        a * 4m);
-
-                    AddDecimalResult(
-                        "Diện tích",
-                        "S = a × a",
-                        a * a);
-
+                    OctoDouble a = value["a"];
+                    AddOctoDoubleResult("Chu vi", "P = a × 4", a * 4d);
+                    AddOctoDoubleResult("Diện tích", "S = a × a", a * a);
                     return true;
                 }
 
             case "rectangle":
                 {
-                    decimal a =
-                        value["a"];
-
-                    decimal b =
-                        value["b"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = (a + b) × 2",
-                        (a + b) * 2m);
-
-                    AddDecimalResult(
-                        "Diện tích",
-                        "S = a × b",
-                        a * b);
-
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    AddOctoDoubleResult("Chu vi", "P = (a + b) × 2", (a + b) * 2d);
+                    AddOctoDoubleResult("Diện tích", "S = a × b", a * b);
                     return true;
                 }
 
             case "triangle":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble c = value["c"];
+                    OctoDouble h = value["h"];
 
-                    decimal b =
-                        value["b"];
-
-                    decimal c =
-                        value["c"];
-
-                    decimal h =
-                        value["h"];
-
-                    if (!IsValidTriangle(
-                            a,
-                            b,
-                            c))
+                    if (!IsValidTriangle(a, b, c))
                     {
-                        ShowError(
-                            T(
-                                "Ba cạnh không tạo thành tam giác hợp lệ."));
-
+                        ShowError(T("Ba cạnh không tạo thành tam giác hợp lệ."));
                         return false;
                     }
 
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a + b + c",
-                        a + b + c);
-
-                    AddDecimalResult(
-                        "Diện tích",
-                        "S = (a × h) ÷ 2",
-                        a * h / 2m);
-
+                    AddOctoDoubleResult("Chu vi", "P = a + b + c", a + b + c);
+                    AddOctoDoubleResult("Diện tích", "S = (a × h) ÷ 2", a * h / 2d);
                     return true;
                 }
 
             case "right_triangle":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble c = value["c"];
+                    OctoDouble left = a * a + b * b;
+                    OctoDouble right = c * c;
 
-                    decimal b =
-                        value["b"];
-
-                    decimal c =
-                        value["c"];
-
-                    decimal left =
-                        a * a +
-                        b * b;
-
-                    decimal right =
-                        c * c;
-
-                    if (!ApproximatelyEqual(
-                            left,
-                            right))
+                    if (!ApproximatelyEqual(left, right))
                     {
-                        ShowError(
-                            T(
-                                "Ba cạnh không thỏa mãn định lý Pythagore a² + b² = c²."));
-
+                        ShowError(T("Ba cạnh không thỏa mãn định lý Pythagore a² + b² = c²."));
                         return false;
                     }
 
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a + b + c",
-                        a + b + c);
-
-                    AddDecimalResult(
-                        "Diện tích",
-                        "S = (a × b) ÷ 2",
-                        a * b / 2m);
-
+                    AddOctoDoubleResult("Chu vi", "P = a + b + c", a + b + c);
+                    AddOctoDoubleResult("Diện tích", "S = (a × b) ÷ 2", a * b / 2d);
                     return true;
                 }
 
             case "equilateral_triangle":
                 {
-                    decimal a =
-                        value["a"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a × 3",
-                        a * 3m);
-
-                    AddDecimalResult(
+                    OctoDouble a = value["a"];
+                    AddOctoDoubleResult("Chu vi", "P = a × 3", a * 3d);
+                    AddOctoDoubleResult(
                         "Diện tích",
                         "S = (a² × √3) ÷ 4",
-                        a *
-                        a *
-                        SquareRootOfThree /
-                        4m);
-
+                        a * a * OctoDouble.SqrtThree / 4d);
                     return true;
                 }
 
             case "circle":
                 {
-                    decimal r =
-                        value["r"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "C = 2 × π × r",
-                        2m *
-                        Pi *
-                        r);
-
-                    AddDecimalResult(
-                        "Diện tích",
-                        "S = π × r²",
-                        Pi *
-                        r *
-                        r);
-
+                    OctoDouble r = value["r"];
+                    AddOctoDoubleResult("Chu vi", "C = 2 × π × r", 2d * OctoDouble.Pi * r);
+                    AddOctoDoubleResult("Diện tích", "S = π × r²", OctoDouble.Pi * r * r);
                     return true;
                 }
 
             case "trapezoid":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble c = value["c"];
+                    OctoDouble d = value["d"];
+                    OctoDouble h = value["h"];
 
-                    decimal b =
-                        value["b"];
-
-                    decimal c =
-                        value["c"];
-
-                    decimal d =
-                        value["d"];
-
-                    decimal h =
-                        value["h"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a + b + c + d",
-                        a + b + c + d);
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult("Chu vi", "P = a + b + c + d", a + b + c + d);
+                    AddOctoDoubleResult(
                         "Diện tích",
                         "S = ((a + b) × h) ÷ 2",
-                        (a + b) *
-                        h /
-                        2m);
-
+                        (a + b) * h / 2d);
                     return true;
                 }
 
             case "isosceles_trapezoid":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble c = value["c"];
+                    OctoDouble h = value["h"];
 
-                    decimal b =
-                        value["b"];
-
-                    decimal c =
-                        value["c"];
-
-                    decimal h =
-                        value["h"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a + b + 2c",
-                        a + b + 2m * c);
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult("Chu vi", "P = a + b + 2c", a + b + 2d * c);
+                    AddOctoDoubleResult(
                         "Diện tích",
                         "S = ((a + b) × h) ÷ 2",
-                        (a + b) *
-                        h /
-                        2m);
-
+                        (a + b) * h / 2d);
                     return true;
                 }
 
             case "right_trapezoid":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble c = value["c"];
+                    OctoDouble h = value["h"];
 
-                    decimal b =
-                        value["b"];
-
-                    decimal c =
-                        value["c"];
-
-                    decimal h =
-                        value["h"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a + b + c + h",
-                        a + b + c + h);
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult("Chu vi", "P = a + b + c + h", a + b + c + h);
+                    AddOctoDoubleResult(
                         "Diện tích",
                         "S = ((a + b) × h) ÷ 2",
-                        (a + b) *
-                        h /
-                        2m);
-
+                        (a + b) * h / 2d);
                     return true;
                 }
 
             case "rhombus":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble d1 = value["d1"];
+                    OctoDouble d2 = value["d2"];
+                    OctoDouble h = value["h"];
 
-                    decimal d1 =
-                        value["d1"];
-
-                    decimal d2 =
-                        value["d2"];
-
-                    decimal h =
-                        value["h"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = a × 4",
-                        a * 4m);
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult("Chu vi", "P = a × 4", a * 4d);
+                    AddOctoDoubleResult(
                         "Diện tích theo đường chéo",
                         "S = (d₁ × d₂) ÷ 2",
-                        d1 *
-                        d2 /
-                        2m);
-
-                    AddDecimalResult(
+                        d1 * d2 / 2d);
+                    AddOctoDoubleResult(
                         "Diện tích theo đáy và chiều cao",
                         "S = a × h",
-                        a *
-                        h);
-
+                        a * h);
                     return true;
                 }
 
             case "parallelogram":
                 {
-                    decimal a =
-                        value["a"];
-
-                    decimal b =
-                        value["b"];
-
-                    decimal h =
-                        value["h"];
-
-                    AddDecimalResult(
-                        "Chu vi",
-                        "P = (a + b) × 2",
-                        (a + b) * 2m);
-
-                    AddDecimalResult(
-                        "Diện tích",
-                        "S = a × h",
-                        a * h);
-
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble h = value["h"];
+                    AddOctoDoubleResult("Chu vi", "P = (a + b) × 2", (a + b) * 2d);
+                    AddOctoDoubleResult("Diện tích", "S = a × h", a * h);
                     return true;
                 }
 
             default:
-                ShowError(
-                    T(
-                        "Hình học mặt phẳng này chưa có bộ tính toán."));
-
+                ShowError(T("Hình học mặt phẳng này chưa có bộ tính toán."));
                 return false;
         }
     }
 
     private bool CalculateSolidDecimal(
         string geometryId,
-        IReadOnlyDictionary<string, decimal> value)
+        IReadOnlyDictionary<string, OctoDouble> value)
     {
         switch (geometryId)
         {
             case "cube":
                 {
-                    decimal a =
-                        value["a"];
-
-                    decimal square =
-                        a * a;
-
-                    AddDecimalResult(
-                        "Diện tích xung quanh",
-                        "Sxq = 4 × a²",
-                        4m * square);
-
-                    AddDecimalResult(
-                        "Diện tích toàn phần",
-                        "Stp = 6 × a²",
-                        6m * square);
-
-                    AddDecimalResult(
-                        "Thể tích",
-                        "V = a³",
-                        square * a);
-
+                    OctoDouble a = value["a"];
+                    OctoDouble square = a * a;
+                    AddOctoDoubleResult("Diện tích xung quanh", "Sxq = 4 × a²", 4d * square);
+                    AddOctoDoubleResult("Diện tích toàn phần", "Stp = 6 × a²", 6d * square);
+                    AddOctoDoubleResult("Thể tích", "V = a³", square * a);
                     return true;
                 }
 
             case "rectangular_prism":
                 {
-                    decimal a =
-                        value["a"];
+                    OctoDouble a = value["a"];
+                    OctoDouble b = value["b"];
+                    OctoDouble h = value["h"];
 
-                    decimal b =
-                        value["b"];
-
-                    decimal h =
-                        value["h"];
-
-                    AddDecimalResult(
+                    AddOctoDoubleResult(
                         "Diện tích xung quanh",
                         "Sxq = 2 × (a + b) × h",
-                        2m *
-                        (a + b) *
-                        h);
-
-                    AddDecimalResult(
+                        2d * (a + b) * h);
+                    AddOctoDoubleResult(
                         "Diện tích toàn phần",
                         "Stp = 2 × (a × b + a × h + b × h)",
-                        2m *
-                        (a * b +
-                         a * h +
-                         b * h));
-
-                    AddDecimalResult(
-                        "Thể tích",
-                        "V = a × b × h",
-                        a *
-                        b *
-                        h);
-
+                        2d * (a * b + a * h + b * h));
+                    AddOctoDoubleResult("Thể tích", "V = a × b × h", a * b * h);
                     return true;
                 }
 
             case "sphere":
                 {
-                    decimal r =
-                        value["r"];
-
-                    AddDecimalResult(
-                        "Diện tích mặt cầu",
-                        "S = 4 × π × r²",
-                        4m *
-                        Pi *
-                        r *
-                        r);
-
-                    AddDecimalResult(
+                    OctoDouble r = value["r"];
+                    OctoDouble square = r * r;
+                    AddOctoDoubleResult("Diện tích mặt cầu", "S = 4 × π × r²", 4d * OctoDouble.Pi * square);
+                    AddOctoDoubleResult(
                         "Thể tích",
                         "V = (4 × π × r³) ÷ 3",
-                        4m *
-                        Pi *
-                        r *
-                        r *
-                        r /
-                        3m);
-
+                        4d * OctoDouble.Pi * square * r / 3d);
                     return true;
                 }
 
             case "cylinder":
                 {
-                    decimal r =
-                        value["r"];
-
-                    decimal h =
-                        value["h"];
-
-                    decimal baseArea =
-                        Pi *
-                        r *
-                        r;
-
-                    AddDecimalResult(
-                        "Diện tích đáy",
-                        "Sđ = π × r²",
-                        baseArea);
-
-                    AddDecimalResult(
-                        "Diện tích xung quanh",
-                        "Sxq = 2 × π × r × h",
-                        2m *
-                        Pi *
-                        r *
-                        h);
-
-                    AddDecimalResult(
-                        "Diện tích toàn phần",
-                        "Stp = 2 × π × r × (r + h)",
-                        2m *
-                        Pi *
-                        r *
-                        (r + h));
-
-                    AddDecimalResult(
-                        "Thể tích",
-                        "V = π × r² × h",
-                        baseArea *
-                        h);
-
+                    OctoDouble r = value["r"];
+                    OctoDouble h = value["h"];
+                    OctoDouble baseArea = OctoDouble.Pi * r * r;
+                    AddOctoDoubleResult("Diện tích đáy", "Sđ = π × r²", baseArea);
+                    AddOctoDoubleResult("Diện tích xung quanh", "Sxq = 2 × π × r × h", 2d * OctoDouble.Pi * r * h);
+                    AddOctoDoubleResult("Diện tích toàn phần", "Stp = 2 × π × r × (r + h)", 2d * OctoDouble.Pi * r * (r + h));
+                    AddOctoDoubleResult("Thể tích", "V = π × r² × h", baseArea * h);
                     return true;
                 }
 
             case "cone":
                 {
-                    decimal r =
-                        value["r"];
-
-                    decimal h =
-                        value["h"];
-
-                    decimal l =
-                        value["l"];
-
-                    decimal baseArea =
-                        Pi *
-                        r *
-                        r;
-
-                    AddDecimalResult(
-                        "Diện tích đáy",
-                        "Sđ = π × r²",
-                        baseArea);
-
-                    AddDecimalResult(
-                        "Diện tích xung quanh",
-                        "Sxq = π × r × l",
-                        Pi *
-                        r *
-                        l);
-
-                    AddDecimalResult(
-                        "Diện tích toàn phần",
-                        "Stp = π × r × (r + l)",
-                        Pi *
-                        r *
-                        (r + l));
-
-                    AddDecimalResult(
-                        "Thể tích",
-                        "V = (π × r² × h) ÷ 3",
-                        baseArea *
-                        h /
-                        3m);
-
+                    OctoDouble r = value["r"];
+                    OctoDouble h = value["h"];
+                    OctoDouble l = value["l"];
+                    OctoDouble baseArea = OctoDouble.Pi * r * r;
+                    AddOctoDoubleResult("Diện tích đáy", "Sđ = π × r²", baseArea);
+                    AddOctoDoubleResult("Diện tích xung quanh", "Sxq = π × r × l", OctoDouble.Pi * r * l);
+                    AddOctoDoubleResult("Diện tích toàn phần", "Stp = π × r × (r + l)", OctoDouble.Pi * r * (r + l));
+                    AddOctoDoubleResult("Thể tích", "V = (π × r² × h) ÷ 3", baseArea * h / 3d);
                     return true;
                 }
 
             default:
-                ShowError(
-                    T(
-                        "Hình học không gian này chưa có bộ tính toán."));
-
+                ShowError(T("Hình học không gian này chưa có bộ tính toán."));
                 return false;
         }
     }
@@ -2259,6 +1756,9 @@ public partial class GeometryCalculatorView : ContentView
                 return false;
             }
 
+            // Hệ số vẫn bị giới hạn bởi Int128. Chỉ sau khi đã
+            // hợp lệ mới nâng sang BigInteger để công thức và kết quả
+            // nguyên không bị tràn phạm vi Int128.
             values[field.Key] =
                 (BigInteger)parsedValue;
         }
@@ -2266,6 +1766,8 @@ public partial class GeometryCalculatorView : ContentView
         return true;
     }
 
+    // Chỉ phần nhập kích thước dùng Decimal. Thông báo phạm vi Decimal
+    // ở đây chỉ dành cho dữ liệu đầu vào, không áp dụng cho kết quả.
     private bool TryReadDecimalInputs(
         out Dictionary<string, decimal> values)
     {
@@ -2355,6 +1857,8 @@ public partial class GeometryCalculatorView : ContentView
               1;
     }
 
+    // Kết quả nguyên được giữ bằng BigInteger. Hàm này không kiểm tra
+    // giới hạn Int128 vì giới hạn đó chỉ áp dụng cho hệ số đầu vào.
     private void AddIntegerResult(
         string title,
         string formula,
@@ -2393,59 +1897,31 @@ public partial class GeometryCalculatorView : ContentView
 
         if (remainder.IsZero)
         {
-            AddIntegerResult(
-                title,
-                formula,
-                quotient);
-
+            AddIntegerResult(title, formula, quotient);
             return true;
         }
 
-        if (!TryBigIntegerToDecimal(
-                numerator,
-                out decimal decimalNumerator))
-        {
-            ShowDecimalOverflow();
-
-            return false;
-        }
-
-        decimal decimalResult =
-            checked(
-                decimalNumerator /
-                denominator);
-
-        AddDecimalResult(
+        AddOctoDoubleResult(
             title,
             formula,
-            decimalResult);
+            OctoDouble.FromRational(numerator, denominator));
 
-        usesDecimalResult =
-            true;
-
+        usesDecimalResult = true;
         return true;
     }
 
-    private void AddDecimalResult(
+    private void AddOctoDoubleResult(
         string title,
         string formula,
-        decimal value)
+        OctoDouble value)
     {
         Results.Add(
             new GeometryResultLine
             {
-                Title =
-                    T(title),
-
-                Formula =
-                    formula,
-
-                Value =
-                    FormatDecimalForDisplay(
-                        value),
-
-                IsDecimal =
-                    true
+                Title = T(title),
+                Formula = formula,
+                Value = FormatOctoDoubleForDisplay(value),
+                IsDecimal = true
             });
     }
 
@@ -2485,25 +1961,180 @@ public partial class GeometryCalculatorView : ContentView
         return builder.ToString();
     }
 
-    private static bool TryBigIntegerToDecimal(
-        BigInteger value,
-        out decimal result)
+    private static string FormatOctoDoubleForDisplay(
+        OctoDouble value)
     {
-        if (value <
-                (BigInteger)decimal.MinValue ||
-            value >
-                (BigInteger)decimal.MaxValue)
-        {
-            result =
-                0m;
+        /*
+         * OctoDouble chỉ được làm tròn ở bước hiển thị. Mọi phép tính trước
+         * đó vẫn giữ đầy đủ khoảng 127-128 chữ số có nghĩa.
+         *
+         * Dạng thường:
+         * - Số chữ số có nghĩa = số chữ số phần nguyên + 10.
+         * - Vì vậy kết quả có tối đa 10 chữ số sau dấu thập phân.
+         *
+         * Dạng khoa học:
+         * - Một chữ số trước dấu chấm và tối đa 10 chữ số phía sau.
+         * - Tổng cộng tối đa 11 chữ số có nghĩa ở phần định trị.
+         */
+        int displaySignificantDigits =
+            GetOctoDoubleDisplaySignificantDigits(
+                value);
 
-            return false;
+        string text =
+            value.ToGeneralString(
+                displaySignificantDigits,
+                ScientificDisplayDigitThreshold,
+                -MaxDecimalPlaces);
+
+        int exponentMarker =
+            text.IndexOfAny(new[] { 'e', 'E' });
+
+        if (exponentMarker >= 0)
+        {
+            string mantissa =
+                text[..exponentMarker]
+                    .Replace(
+                        "-",
+                        "−",
+                        StringComparison.Ordinal);
+
+            if (int.TryParse(
+                    text[(exponentMarker + 1)..],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int exponent))
+            {
+                return $"{mantissa} × 10{ToSuperscript(exponent)}";
+            }
         }
 
-        result =
-            (decimal)value;
+        bool negative =
+            text.StartsWith(
+                "-",
+                StringComparison.Ordinal);
 
-        return true;
+        string unsignedText =
+            negative
+                ? text[1..]
+                : text;
+
+        int decimalPoint =
+            unsignedText.IndexOf(
+                ".",
+                StringComparison.Ordinal);
+
+        string integerPart =
+            decimalPoint >= 0
+                ? unsignedText[..decimalPoint]
+                : unsignedText;
+
+        string fractionPart =
+            decimalPoint >= 0
+                ? unsignedText[decimalPoint..]
+                : string.Empty;
+
+        if (integerPart.Length <=
+            ScientificDisplayDigitThreshold)
+        {
+            integerPart =
+                AddThousandsSeparators(
+                    integerPart);
+        }
+
+        return (negative ? "−" : string.Empty) +
+               integerPart +
+               fractionPart;
+    }
+
+    private static int GetOctoDoubleDisplaySignificantDigits(
+        OctoDouble value)
+    {
+        if (!value.IsFinite ||
+            value.IsZero)
+        {
+            return 1;
+        }
+
+        double approximateValue =
+            Math.Abs(
+                value.ToDouble());
+
+        if (approximateValue == 0d ||
+            double.IsNaN(
+                approximateValue) ||
+            double.IsInfinity(
+                approximateValue))
+        {
+            return OctoDoubleScientificSignificantDigits;
+        }
+
+        int exponent =
+            (int)Math.Floor(
+                Math.Log10(
+                    approximateValue));
+
+        if (exponent >=
+                ScientificDisplayDigitThreshold ||
+            exponent <=
+                -MaxDecimalPlaces)
+        {
+            return OctoDoubleScientificSignificantDigits;
+        }
+
+        /*
+         * Ví dụ:
+         * 12.345... có exponent = 1:
+         * 2 chữ số phần nguyên + 10 chữ số thập phân = 12 chữ số có nghĩa.
+         *
+         * 0.001234... có exponent = -3:
+         * cần 8 chữ số có nghĩa để làm tròn đúng tại chữ số thập phân thứ 10.
+         */
+        return Math.Clamp(
+            exponent +
+            1 +
+            MaxDecimalPlaces,
+            1,
+            OctoDouble.SignificantDigits);
+    }
+
+    private static string AddThousandsSeparators(
+        string digits)
+    {
+        if (digits.Length <= 3)
+        {
+            return digits;
+        }
+
+        int firstGroupLength =
+            digits.Length % 3;
+
+        if (firstGroupLength == 0)
+        {
+            firstGroupLength = 3;
+        }
+
+        var builder =
+            new StringBuilder(
+                digits.Length +
+                digits.Length / 3);
+
+        builder.Append(
+            digits.AsSpan(
+                0,
+                firstGroupLength));
+
+        for (int index = firstGroupLength;
+             index < digits.Length;
+             index += 3)
+        {
+            builder.Append(',');
+            builder.Append(
+                digits.AsSpan(
+                    index,
+                    3));
+        }
+
+        return builder.ToString();
     }
 
     private static bool IsValidTriangle(
@@ -2517,9 +2148,9 @@ public partial class GeometryCalculatorView : ContentView
     }
 
     private static bool IsValidTriangle(
-        decimal a,
-        decimal b,
-        decimal c)
+        OctoDouble a,
+        OctoDouble b,
+        OctoDouble c)
     {
         return a + b > c &&
                a + c > b &&
@@ -2527,29 +2158,24 @@ public partial class GeometryCalculatorView : ContentView
     }
 
     private static bool ApproximatelyEqual(
-        decimal first,
-        decimal second)
+        OctoDouble first,
+        OctoDouble second)
     {
-        decimal difference =
-            decimal.Abs(
-                first -
-                second);
+        OctoDouble difference =
+            OctoDouble.Abs(
+                first - second);
 
-        decimal magnitude =
-            Math.Max(
-                decimal.Abs(
-                    first),
-                decimal.Abs(
-                    second));
+        OctoDouble magnitude =
+            OctoDouble.Max(
+                OctoDouble.Abs(first),
+                OctoDouble.Abs(second));
 
-        decimal tolerance =
-            Math.Max(
-                0.0000000001m,
-                magnitude *
-                0.0000000001m);
+        OctoDouble tolerance =
+            OctoDouble.Max(
+                OctoComparisonTolerance,
+                magnitude * OctoComparisonTolerance);
 
-        return difference <=
-               tolerance;
+        return difference <= tolerance;
     }
 
     private static string FormatBigIntegerForDisplay(
@@ -2802,13 +2428,6 @@ public partial class GeometryCalculatorView : ContentView
 
         ResultBorder.IsVisible =
             false;
-    }
-
-    private void ShowDecimalOverflow()
-    {
-        ShowError(
-            T(
-                "Kết quả thập phân vượt quá phạm vi Decimal mà ứng dụng hỗ trợ."));
     }
 
     private void HideError()

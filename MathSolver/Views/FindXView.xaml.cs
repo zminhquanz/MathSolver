@@ -1,3 +1,4 @@
+using MathSolver.Numerics;
 using MathSolver.Services;
 using System.Globalization;
 using System.Numerics;
@@ -1040,7 +1041,7 @@ public partial class FindXView : ContentView
             FormatFindXDecimalForEditing(
                 value);
 
-        if (CountSignificantDigits(
+        if (CountIntegerDigits(
                 plainText) <=
             ScientificDisplayDigitThreshold)
         {
@@ -1115,7 +1116,7 @@ public partial class FindXView : ContentView
             FormatFindXDecimalForEditing(
                 value);
 
-        return CountSignificantDigits(
+        return CountIntegerDigits(
                    plainText) >
                ScientificDisplayDigitThreshold
             ? FormatPlainNumberAsScientificDisplay(
@@ -1123,6 +1124,112 @@ public partial class FindXView : ContentView
                     "0.############################",
                     CultureInfo.InvariantCulture))
             : plainText;
+    }
+
+    private static string FormatFindXQuadDoubleForDisplay(
+        QuadDouble value)
+    {
+        if (!value.IsFinite)
+        {
+            return value.ToGeneralString();
+        }
+
+        if (value.IsZero)
+        {
+            return "0";
+        }
+
+        double approximateValue =
+            Math.Abs(
+                value.ToDouble());
+
+        int exponent =
+            (int)Math.Floor(
+                Math.Log10(
+                    approximateValue));
+
+        bool useScientificNotation =
+            exponent >=
+                ScientificDisplayDigitThreshold ||
+            exponent <=
+                -MaxDecimalPlaces;
+
+        int significantDigits =
+            useScientificNotation
+                ? ScientificDisplaySignificantDigits
+                : Math.Clamp(
+                    exponent +
+                    1 +
+                    MaxDecimalPlaces,
+                    1,
+                    QuadDouble.SignificantDigits);
+
+        string text =
+            value.ToGeneralString(
+                significantDigits,
+                ScientificDisplayDigitThreshold,
+                -MaxDecimalPlaces);
+
+        int exponentSeparatorIndex =
+            text.IndexOfAny(
+                new[] { 'e', 'E' });
+
+        if (exponentSeparatorIndex >= 0)
+        {
+            string mantissa =
+                text[..exponentSeparatorIndex]
+                    .Replace(
+                        "-",
+                        "−",
+                        StringComparison.Ordinal);
+
+            if (int.TryParse(
+                    text[(exponentSeparatorIndex + 1)..],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int scientificExponent))
+            {
+                return
+                    $"{mantissa} × " +
+                    $"10{ToSuperscript(scientificExponent)}";
+            }
+        }
+
+        bool isNegative =
+            text.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalPointIndex =
+            unsignedText.IndexOf(
+                '.',
+                StringComparison.Ordinal);
+
+        string integerPart =
+            decimalPointIndex >= 0
+                ? unsignedText[..decimalPointIndex]
+                : unsignedText;
+
+        string fractionPart =
+            decimalPointIndex >= 0
+                ? unsignedText[(decimalPointIndex + 1)..]
+                : string.Empty;
+
+        integerPart =
+            AddThousandsSeparators(
+                integerPart);
+
+        return
+            (isNegative ? "−" : string.Empty) +
+            integerPart +
+            (fractionPart.Length > 0
+                ? $".{fractionPart}"
+                : string.Empty);
     }
 
     private static string FormatFindXDecimalScientificForCode(
@@ -1274,23 +1381,15 @@ public partial class FindXView : ContentView
 
         UpdateFindXEquationPreview();
 
-        try
-        {
-            FindXDecimalSolution solution =
-                SolveFindXDecimal(
-                    knownValue,
-                    resultValue);
-
-            ShowFindXDecimalSolution(
+        FindXDecimalSolution solution =
+            SolveFindXDecimal(
                 knownValue,
-                resultValue,
-                solution);
-        }
-        catch (OverflowException)
-        {
-            ShowFindXError(
-                "Kết quả vượt quá phạm vi của kiểu decimal.");
-        }
+                resultValue);
+
+        ShowFindXDecimalSolution(
+            knownValue,
+            resultValue,
+            solution);
     }
 
     private bool TryReadFindXIntegerValue(
@@ -1705,6 +1804,14 @@ public partial class FindXView : ContentView
         decimal knownValue,
         decimal resultValue)
     {
+        QuadDouble knownQuadValue =
+            QuadDouble.FromDecimal(
+                knownValue);
+
+        QuadDouble resultQuadValue =
+            QuadDouble.FromDecimal(
+                resultValue);
+
         string knownText =
             FormatFindXDecimalForDisplay(
                 knownValue);
@@ -1717,10 +1824,9 @@ public partial class FindXView : ContentView
         {
             case FindXOperation.Add:
                 {
-                    decimal x =
-                        checked(
-                            resultValue -
-                            knownValue);
+                    QuadDouble x =
+                        resultQuadValue -
+                        knownQuadValue;
 
                     return CreateUniqueFindXDecimalSolution(
                         x,
@@ -1729,17 +1835,16 @@ public partial class FindXView : ContentView
                         "Muốn tìm một số hạng chưa biết, ta lấy tổng " +
                         "trừ đi số hạng đã biết.",
                         $"x = {resultText} − {knownText}\n" +
-                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                        $"x = {FormatFindXQuadDoubleForDisplay(x)}");
                 }
 
             case FindXOperation.Subtract
                 when _findXUnknownPosition ==
                      FindXUnknownPosition.Left:
                 {
-                    decimal x =
-                        checked(
-                            resultValue +
-                            knownValue);
+                    QuadDouble x =
+                        resultQuadValue +
+                        knownQuadValue;
 
                     return CreateUniqueFindXDecimalSolution(
                         x,
@@ -1747,15 +1852,14 @@ public partial class FindXView : ContentView
                         resultValue,
                         "Muốn tìm số bị trừ, ta lấy hiệu cộng với số trừ.",
                         $"x = {resultText} + {knownText}\n" +
-                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                        $"x = {FormatFindXQuadDoubleForDisplay(x)}");
                 }
 
             case FindXOperation.Subtract:
                 {
-                    decimal x =
-                        checked(
-                            knownValue -
-                            resultValue);
+                    QuadDouble x =
+                        knownQuadValue -
+                        resultQuadValue;
 
                     return CreateUniqueFindXDecimalSolution(
                         x,
@@ -1763,7 +1867,7 @@ public partial class FindXView : ContentView
                         resultValue,
                         "Muốn tìm số trừ, ta lấy số bị trừ trừ đi hiệu.",
                         $"x = {knownText} − {resultText}\n" +
-                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                        $"x = {FormatFindXQuadDoubleForDisplay(x)}");
                 }
 
             case FindXOperation.Multiply:
@@ -1774,7 +1878,7 @@ public partial class FindXView : ContentView
                         {
                             return new FindXDecimalSolution(
                                 FindXSolutionKind.InfiniteSolutions,
-                                0m,
+                                QuadDouble.Zero,
                                 "Vô số nghiệm",
                                 "Khi một thừa số bằng 0, tích luôn bằng 0.",
                                 "Phương trình trở thành 0 × x = 0.\n" +
@@ -1784,7 +1888,7 @@ public partial class FindXView : ContentView
 
                         return new FindXDecimalSolution(
                             FindXSolutionKind.NoSolution,
-                            0m,
+                            QuadDouble.Zero,
                             "Không có nghiệm",
                             "Không có số nào nhân với 0 mà cho kết quả khác 0.",
                             $"Phương trình trở thành 0 × x = {resultText}.\n" +
@@ -1792,10 +1896,9 @@ public partial class FindXView : ContentView
                             string.Empty);
                     }
 
-                    decimal x =
-                        checked(
-                            resultValue /
-                            knownValue);
+                    QuadDouble x =
+                        resultQuadValue /
+                        knownQuadValue;
 
                     return CreateUniqueFindXDecimalSolution(
                         x,
@@ -1804,7 +1907,7 @@ public partial class FindXView : ContentView
                         "Muốn tìm một thừa số chưa biết, ta lấy tích " +
                         "chia cho thừa số đã biết.",
                         $"x = {resultText} ÷ {knownText}\n" +
-                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                        $"x = {FormatFindXQuadDoubleForDisplay(x)}");
                 }
 
             case FindXOperation.Divide
@@ -1815,7 +1918,7 @@ public partial class FindXView : ContentView
                     {
                         return new FindXDecimalSolution(
                             FindXSolutionKind.NoSolution,
-                            0m,
+                            QuadDouble.Zero,
                             "Phép tính không xác định",
                             "Số chia phải khác 0.",
                             "Phương trình có dạng x ÷ 0 nên phép chia " +
@@ -1823,10 +1926,9 @@ public partial class FindXView : ContentView
                             string.Empty);
                     }
 
-                    decimal x =
-                        checked(
-                            resultValue *
-                            knownValue);
+                    QuadDouble x =
+                        resultQuadValue *
+                        knownQuadValue;
 
                     return CreateUniqueFindXDecimalSolution(
                         x,
@@ -1834,7 +1936,7 @@ public partial class FindXView : ContentView
                         resultValue,
                         "Muốn tìm số bị chia, ta lấy thương nhân với số chia.",
                         $"x = {resultText} × {knownText}\n" +
-                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                        $"x = {FormatFindXQuadDoubleForDisplay(x)}");
                 }
 
             case FindXOperation.Divide:
@@ -1845,7 +1947,7 @@ public partial class FindXView : ContentView
                         {
                             return new FindXDecimalSolution(
                                 FindXSolutionKind.InfiniteSolutions,
-                                0m,
+                                QuadDouble.Zero,
                                 "Vô số nghiệm với x ≠ 0",
                                 "0 chia cho mọi số khác 0 đều bằng 0.",
                                 "Phương trình 0 ÷ x = 0 đúng với mọi x khác 0.",
@@ -1854,7 +1956,7 @@ public partial class FindXView : ContentView
 
                         return new FindXDecimalSolution(
                             FindXSolutionKind.NoSolution,
-                            0m,
+                            QuadDouble.Zero,
                             "Không có nghiệm",
                             "Một số khác 0 chia cho một số hữu hạn khác 0 " +
                             "không thể bằng 0.",
@@ -1866,7 +1968,7 @@ public partial class FindXView : ContentView
                     {
                         return new FindXDecimalSolution(
                             FindXSolutionKind.NoSolution,
-                            0m,
+                            QuadDouble.Zero,
                             "Không có nghiệm",
                             "Số chia x phải khác 0.",
                             $"Từ 0 ÷ x = {resultText}, phép biến đổi hình thức " +
@@ -1874,10 +1976,9 @@ public partial class FindXView : ContentView
                             string.Empty);
                     }
 
-                    decimal x =
-                        checked(
-                            knownValue /
-                            resultValue);
+                    QuadDouble x =
+                        knownQuadValue /
+                        resultQuadValue;
 
                     return CreateUniqueFindXDecimalSolution(
                         x,
@@ -1886,13 +1987,13 @@ public partial class FindXView : ContentView
                         "Muốn tìm số chia, ta lấy số bị chia chia cho thương; " +
                         "đồng thời số chia phải khác 0.",
                         $"x = {knownText} ÷ {resultText}\n" +
-                        $"x = {FormatFindXDecimalForDisplay(x)}");
+                        $"x = {FormatFindXQuadDoubleForDisplay(x)}");
                 }
 
             default:
                 return new FindXDecimalSolution(
                     FindXSolutionKind.NoSolution,
-                    0m,
+                    QuadDouble.Zero,
                     "Không thể giải",
                     string.Empty,
                     string.Empty,
@@ -1901,14 +2002,14 @@ public partial class FindXView : ContentView
     }
 
     private FindXDecimalSolution CreateUniqueFindXDecimalSolution(
-        decimal x,
+        QuadDouble x,
         decimal knownValue,
         decimal resultValue,
         string rule,
         string transformation)
     {
         string xText =
-            FormatFindXDecimalForDisplay(
+            FormatFindXQuadDoubleForDisplay(
                 x);
 
         string verification =
@@ -1930,17 +2031,21 @@ public partial class FindXView : ContentView
     }
 
     private string BuildFindXDecimalVerification(
-        decimal x,
+        QuadDouble x,
         decimal knownValue,
         decimal resultValue)
     {
-        decimal leftValue =
+        QuadDouble leftValue =
             EvaluateFindXDecimalLeftSide(
                 x,
                 knownValue);
 
+        QuadDouble resultQuadValue =
+            QuadDouble.FromDecimal(
+                resultValue);
+
         string xText =
-            FormatFindXDecimalForDisplay(
+            FormatFindXQuadDoubleForDisplay(
                 x);
 
         string knownText =
@@ -1952,12 +2057,12 @@ public partial class FindXView : ContentView
                 resultValue);
 
         string leftText =
-            FormatFindXDecimalForDisplay(
+            FormatFindXQuadDoubleForDisplay(
                 leftValue);
 
         bool isExact =
             leftValue ==
-            resultValue;
+            resultQuadValue;
 
         return
             $"Thay x = {xText} vào phép tính ban đầu:\n" +
@@ -1966,42 +2071,46 @@ public partial class FindXView : ContentView
                 ? $"Vế trái = {leftText}; vế phải = {resultText}.\n" +
                   "Hai vế bằng nhau nên kết quả tìm được là đúng."
                 : $"Vế trái ≈ {leftText}; vế phải = {resultText}.\n" +
-                  "Sai khác nhỏ xuất hiện do giới hạn làm tròn của decimal.");
+                  "Sai khác nhỏ xuất hiện do giới hạn làm tròn của Quad Double.");
     }
 
-    private decimal EvaluateFindXDecimalLeftSide(
-        decimal x,
+    private QuadDouble EvaluateFindXDecimalLeftSide(
+        QuadDouble x,
         decimal knownValue)
     {
+        QuadDouble knownQuadValue =
+            QuadDouble.FromDecimal(
+                knownValue);
+
         return (_findXOperation,
                 _findXUnknownPosition) switch
         {
             (FindXOperation.Add, FindXUnknownPosition.Left) =>
-                checked(x + knownValue),
+                x + knownQuadValue,
 
             (FindXOperation.Add, FindXUnknownPosition.Right) =>
-                checked(knownValue + x),
+                knownQuadValue + x,
 
             (FindXOperation.Subtract, FindXUnknownPosition.Left) =>
-                checked(x - knownValue),
+                x - knownQuadValue,
 
             (FindXOperation.Subtract, FindXUnknownPosition.Right) =>
-                checked(knownValue - x),
+                knownQuadValue - x,
 
             (FindXOperation.Multiply, FindXUnknownPosition.Left) =>
-                checked(x * knownValue),
+                x * knownQuadValue,
 
             (FindXOperation.Multiply, FindXUnknownPosition.Right) =>
-                checked(knownValue * x),
+                knownQuadValue * x,
 
             (FindXOperation.Divide, FindXUnknownPosition.Left) =>
-                checked(x / knownValue),
+                x / knownQuadValue,
 
             (FindXOperation.Divide, FindXUnknownPosition.Right) =>
-                checked(knownValue / x),
+                knownQuadValue / x,
 
             _ =>
-                0m
+                QuadDouble.Zero
         };
     }
 
@@ -2039,7 +2148,7 @@ public partial class FindXView : ContentView
         {
             case FindXSolutionKind.Unique:
                 FindXAnswerLabel.Text =
-                    $"x = {FormatFindXDecimalForDisplay(solution.Value)}";
+                    $"x = {FormatFindXQuadDoubleForDisplay(solution.Value)}";
 
                 FindXStatusLabel.SetDynamicResource(
                     Label.TextColorProperty,
@@ -2829,6 +2938,43 @@ public partial class FindXView : ContentView
             : significantDigits.Length;
     }
 
+    private static int CountIntegerDigits(
+        string plainText)
+    {
+        string normalizedText =
+            plainText
+            .Trim()
+            .Replace(
+                ",",
+                string.Empty)
+            .Replace(
+                '−',
+                '-');
+
+        if (normalizedText.StartsWith(
+                "-",
+                StringComparison.Ordinal))
+        {
+            normalizedText =
+                normalizedText[1..];
+        }
+
+        int decimalPointIndex =
+            normalizedText.IndexOf('.');
+
+        string integerPart =
+            decimalPointIndex >= 0
+                ? normalizedText[..decimalPointIndex]
+                : normalizedText;
+
+        integerPart =
+            integerPart.TrimStart('0');
+
+        return integerPart.Length == 0
+            ? 1
+            : integerPart.Length;
+    }
+
     private static int CountBigIntegerDigits(
         BigInteger value)
     {
@@ -3091,7 +3237,7 @@ public partial class FindXView : ContentView
 
     private sealed record FindXDecimalSolution(
         FindXSolutionKind Kind,
-        decimal Value,
+        QuadDouble Value,
         string StatusText,
         string RuleText,
         string StepsText,

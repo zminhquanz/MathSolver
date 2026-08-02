@@ -11,8 +11,8 @@ namespace MathSolver.Graphics;
 /// Vẽ parabol theo dạng minh họa SGK:
 /// trục Ox, Oy có mũi tên; trục đối xứng nét đứt;
 /// đỉnh, nghiệm thực và nhãn -b/(2a).
-/// Hệ số đầu vào vẫn là decimal, còn toàn bộ phép tính hình học của parabol
-/// dùng Quad Double khoảng 63-64 chữ số có nghĩa và Math.FusedMultiplyAdd.
+/// Hệ số đầu vào là Int128, còn toàn bộ phép tính hình học của parabol
+/// dùng Quad Double khoảng 127-128 chữ số có nghĩa và Math.FusedMultiplyAdd.
 /// Chỉ bước chiếu cuối cùng sang tọa độ màn hình mới chuyển về double.
 /// </summary>
 public sealed class ParabolaGraphDrawable : IDrawable
@@ -78,9 +78,9 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private double[] _ySamples =
         [];
 
-    private QuadDouble _a;
-    private QuadDouble _b;
-    private QuadDouble _c;
+    private OctoDouble _a;
+    private OctoDouble _b;
+    private OctoDouble _c;
 
     private double _baseCenterX;
     private double _baseHalfRangeX =
@@ -193,32 +193,32 @@ public sealed class ParabolaGraphDrawable : IDrawable
     }
 
     public void SetEquation(
-        decimal a,
-        decimal b,
-        decimal c)
+        Int128 a,
+        Int128 b,
+        Int128 c)
     {
-        QuadDouble rawA =
-            QuadDouble.FromDecimal(
+        OctoDouble rawA =
+            OctoDouble.FromInt128(
                 a);
 
-        QuadDouble rawB =
-            QuadDouble.FromDecimal(
+        OctoDouble rawB =
+            OctoDouble.FromInt128(
                 b);
 
-        QuadDouble rawC =
-            QuadDouble.FromDecimal(
+        OctoDouble rawC =
+            OctoDouble.FromInt128(
                 c);
 
-        QuadDouble coefficientScale =
-            QuadDouble.Max(
-                QuadDouble.One,
-                QuadDouble.Max(
-                    QuadDouble.Abs(
+        OctoDouble coefficientScale =
+            OctoDouble.Max(
+                OctoDouble.One,
+                OctoDouble.Max(
+                    OctoDouble.Abs(
                         rawA),
-                    QuadDouble.Max(
-                        QuadDouble.Abs(
+                    OctoDouble.Max(
+                        OctoDouble.Abs(
                             rawB),
-                        QuadDouble.Abs(
+                        OctoDouble.Abs(
                             rawC))));
 
         // Chuẩn hóa cả ba hệ số bằng cùng một Quad Double. Việc này giữ
@@ -256,12 +256,12 @@ public sealed class ParabolaGraphDrawable : IDrawable
             return;
         }
 
-        QuadDouble vertexX =
+        OctoDouble vertexX =
             -_b /
             (2d *
              _a);
 
-        QuadDouble vertexY =
+        OctoDouble vertexY =
             EvaluatePrecise(
                 vertexX);
 
@@ -825,8 +825,8 @@ public sealed class ParabolaGraphDrawable : IDrawable
         _secondRoot =
             null;
 
-        QuadDouble discriminant =
-            QuadDouble.FusedMultiplyAdd(
+        OctoDouble discriminant =
+            OctoDouble.FusedMultiplyAdd(
                 -4d *
                 _a,
                 _c,
@@ -835,14 +835,14 @@ public sealed class ParabolaGraphDrawable : IDrawable
 
         if (!discriminant.IsFinite ||
             discriminant <
-            QuadDouble.Zero)
+            OctoDouble.Zero)
         {
             return;
         }
 
         if (discriminant.IsZero)
         {
-            QuadDouble root =
+            OctoDouble root =
                 -_b /
                 (2d *
                  _a);
@@ -861,20 +861,20 @@ public sealed class ParabolaGraphDrawable : IDrawable
             return;
         }
 
-        QuadDouble squareRoot =
-            QuadDouble.Sqrt(
+        OctoDouble squareRoot =
+            OctoDouble.Sqrt(
                 discriminant);
 
         // Công thức q tránh triệt tiêu số khi |b| gần √Δ.
-        QuadDouble q =
+        OctoDouble q =
             -0.5d *
             (_b +
-             QuadDouble.CopySign(
+             OctoDouble.CopySign(
                  squareRoot,
                  _b));
 
-        QuadDouble firstRoot;
-        QuadDouble secondRoot;
+        OctoDouble firstRoot;
+        OctoDouble secondRoot;
 
         if (!q.IsZero)
         {
@@ -1940,13 +1940,13 @@ public sealed class ParabolaGraphDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
-    private QuadDouble EvaluatePrecise(
-        QuadDouble x)
+    private OctoDouble EvaluatePrecise(
+        OctoDouble x)
     {
         // Horner Quad Double. FMA gom tích và số hạng cộng trước khi
-        // kết quả được làm tròn về bốn thành phần.
-        return QuadDouble.FusedMultiplyAdd(
-            QuadDouble.FusedMultiplyAdd(
+        // kết quả được làm tròn về tám thành phần.
+        return OctoDouble.FusedMultiplyAdd(
+            OctoDouble.FusedMultiplyAdd(
                 _a,
                 x,
                 _b),
@@ -1957,9 +1957,9 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private double EvaluateScalar(
         double x)
     {
-        QuadDouble result =
+        OctoDouble result =
             EvaluatePrecise(
-                new QuadDouble(
+                new OctoDouble(
                     x));
 
         // GraphicsView và phép ánh xạ pixel dùng double; đây là bước chiếu
@@ -2100,9 +2100,9 @@ public static class ParabolaSimdEvaluator
         double[] xValues,
         double[] yValues,
         int count,
-        QuadDouble a,
-        QuadDouble b,
-        QuadDouble c)
+        OctoDouble a,
+        OctoDouble b,
+        OctoDouble c)
     {
         if (xValues.Length <
                 count ||
@@ -2120,13 +2120,13 @@ public static class ParabolaSimdEvaluator
              index < count;
              index++)
         {
-            QuadDouble x =
+            OctoDouble x =
                 new(
                     xValues[index]);
 
-            QuadDouble y =
-                QuadDouble.FusedMultiplyAdd(
-                    QuadDouble.FusedMultiplyAdd(
+            OctoDouble y =
+                OctoDouble.FusedMultiplyAdd(
+                    OctoDouble.FusedMultiplyAdd(
                         a,
                         x,
                         b),

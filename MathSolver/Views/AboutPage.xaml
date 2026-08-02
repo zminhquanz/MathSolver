@@ -3,7 +3,8 @@
     x:Class="MathSolver.Views.AboutPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Giới thiệu"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    Title="{localization:Translate About.PageTitle}"
     Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
@@ -37,7 +38,7 @@
                 FontAttributes="Bold"
                 BackgroundColor="Transparent"
                 TextColor="{DynamicResource TextPrimaryColor}"
-                SemanticProperties.Description="Quay lại"
+                SemanticProperties.Description="{localization:Translate About.Back.Accessibility}"
                 Clicked="OnCloseClicked" />
 
             <VerticalStackLayout
@@ -47,7 +48,7 @@
 
                 <Label
                     x:Name="AboutTitleLabel"
-                    Text="GIỚI THIỆU"
+                    Text="{localization:Translate About.HeaderTitle}"
                     FontSize="19"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
@@ -55,7 +56,7 @@
 
                 <Label
                     x:Name="AboutSubtitleLabel"
-                    Text="Thông tin ứng dụng, tác giả và phiên bản"
+                    Text="{localization:Translate About.Subtitle}"
                     FontSize="11"
                     LineBreakMode="TailTruncation"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -93,7 +94,7 @@
                         HeightRequest="96"
                         Aspect="AspectFit"
                         VerticalOptions="Center"
-                        SemanticProperties.Description="Math Solver app icon" />
+                        SemanticProperties.Description="{localization:Translate About.AppIcon.Accessibility}" />
 
                     <VerticalStackLayout
                         Grid.Column="1"
@@ -102,7 +103,7 @@
 
                         <Label
                             x:Name="AppNameLabel"
-                            Text="Math Solver"
+                            Text="{localization:Translate App.Title}"
                             FontSize="30"
                             FontAttributes="Bold"
                             LineBreakMode="WordWrap"
@@ -116,6 +117,7 @@
 
                         <Label
                             x:Name="AppDescriptionLabel"
+                            Text="{localization:Translate About.Description}"
                             FontSize="14"
                             LineHeight="1.25"
                             LineBreakMode="WordWrap"
@@ -138,6 +140,7 @@
                 <VerticalStackLayout Spacing="14">
                     <Label
                         x:Name="InformationTitleLabel"
+                        Text="{localization:Translate About.InformationTitle}"
                         FontSize="18"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
@@ -150,6 +153,7 @@
 
                         <Label
                             x:Name="AuthorCaptionLabel"
+                            Text="{localization:Translate About.AuthorLabel}"
                             Grid.Row="0"
                             Grid.Column="0"
                             FontAttributes="Bold"
@@ -158,11 +162,12 @@
                         <Label
                             Grid.Row="0"
                             Grid.Column="1"
-                            Text="Quan Vu"
+                            Text="{localization:Translate About.AuthorValue}"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="VersionCaptionLabel"
+                            Text="{localization:Translate About.VersionLabel}"
                             Grid.Row="1"
                             Grid.Column="0"
                             FontAttributes="Bold"
@@ -176,6 +181,7 @@
 
                         <Label
                             x:Name="CopyrightCaptionLabel"
+                            Text="{localization:Translate About.CopyrightLabel}"
                             Grid.Row="2"
                             Grid.Column="0"
                             FontAttributes="Bold"
@@ -184,12 +190,13 @@
                         <Label
                             Grid.Row="2"
                             Grid.Column="1"
-                            Text="Copyright © 2026 Quan Vu"
+                            Text="{localization:Translate About.CopyrightValue}"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="LicenseCaptionLabel"
+                            Text="{localization:Translate About.LicenseLabel}"
                             Grid.Row="3"
                             Grid.Column="0"
                             FontAttributes="Bold"
@@ -198,7 +205,7 @@
                         <Label
                             Grid.Row="3"
                             Grid.Column="1"
-                            Text="GNU GPL v3"
+                            Text="{localization:Translate About.LicenseValue}"
                             TextColor="{DynamicResource TextPrimaryColor}" />
                     </Grid>
                 </VerticalStackLayout>
@@ -219,6 +226,7 @@
                     <!-- Canh trái giống tiêu đề Thông tin ứng dụng. -->
                     <Label
                         x:Name="LinksTitleLabel"
+                        Text="{localization:Translate About.LinksTitle}"
                         FontSize="18"
                         FontAttributes="Bold"
                         HorizontalOptions="Start"
@@ -236,7 +244,8 @@
                             Padding="5"
                             BackgroundColor="Transparent"
                             Source="github_black_clearspace.png"
-                            SemanticProperties.Description="Mở GitHub"
+                            SemanticProperties.Description="{localization:Translate About.GitHub.Accessibility}"
+                            ToolTipProperties.Text="{localization:Translate About.GitHub.Accessibility}"
                             Clicked="OnGitHubClicked" />
 
                         <ImageButton
@@ -246,7 +255,8 @@
                             Padding="5"
                             BackgroundColor="Transparent"
                             Source="kofi_symbol.png"
-                            SemanticProperties.Description="Mở Ko-fi"
+                            SemanticProperties.Description="{localization:Translate About.KoFi.Accessibility}"
+                            ToolTipProperties.Text="{localization:Translate About.KoFi.Accessibility}"
                             Clicked="OnKoFiClicked" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>

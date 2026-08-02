@@ -2,40 +2,34 @@ using MathSolver.Graphics;
 using MathSolver.Numerics;
 using MathSolver.Services;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 
 namespace MathSolver.Views;
 
 public partial class QuadraticEquationView : ContentView
 {
-    // Phạm vi đầy đủ của kiểu decimal.
-    private const decimal MinSupportedValue =
-        -79_228_162_514_264_337_593_543_950_335m;
-
-    private const decimal MaxSupportedValue =
-        79_228_162_514_264_337_593_543_950_335m;
-
-    private const string SupportedDecimalRangeText =
-        "−79,228,162,514,264,337,593,543,950,335 đến " +
-        "79,228,162,514,264,337,593,543,950,335";
+    private const string Int128RangeText =
+        "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến " +
+        "170,141,183,460,469,231,731,687,303,715,884,105,727";
 
     private const int MaxResultDecimalPlaces =
         10;
 
-    private const int QuadDoubleDisplaySignificantDigits =
-        QuadDouble.SignificantDigits;
+    private const int OctoDoubleDisplaySignificantDigits =
+        OctoDouble.SignificantDigits;
 
-    // Giống các tab nhập số khác: từ 19 chữ số trở lên, giao diện
-    // rút gọn sang dạng khoa học nhưng vẫn giữ giá trị decimal chính xác.
+    // Từ 19 chữ số trở lên, giao diện rút gọn sang dạng khoa học.
+    // Dictionary vẫn giữ chuỗi Int128 đầy đủ để khi focus hoặc tính toán,
+    // ứng dụng không phải đọc ngược giá trị đã làm tròn trên giao diện.
     private const int ScientificDisplayDigitThreshold =
         18;
 
     private const int ScientificDisplaySignificantDigits =
         12;
 
-    // Lưu biểu diễn dạng code, ví dụ 1e19, khi Entry đang hiển thị 10¹⁹.
     private readonly Dictionary<Entry, string>
-        _coefficientScientificCodeValues =
+        _coefficientExactIntegerValues =
             new();
 
     private bool _isUpdatingText;
@@ -685,7 +679,7 @@ public partial class QuadraticEquationView : ContentView
 
         // Khi người dùng bắt đầu sửa, giá trị đang nhập trực tiếp trở thành
         // nguồn dữ liệu mới; bỏ bản mã khoa học cũ của Entry.
-        _coefficientScientificCodeValues.Remove(
+        _coefficientExactIntegerValues.Remove(
             entry);
 
         string fieldName =
@@ -700,9 +694,11 @@ public partial class QuadraticEquationView : ContentView
             RejectCoefficientInput(
                 entry,
                 e.OldTextValue,
-                $"{fieldName} chỉ được nhập số nguyên; " +
-                "không được dùng dấu chấm (.) hoặc dấu phẩy (,), " +
-                "chữ cái hay ký tự khác.");
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    LocalizationService.TranslateKey(
+                        "Quadratic.IntegerOnly"),
+                    fieldName));
 
             return;
         }
@@ -713,19 +709,21 @@ public partial class QuadraticEquationView : ContentView
 
         if (IsCompleteIntegerText(
                 normalized) &&
-            (!decimal.TryParse(
-                 normalized,
-                 NumberStyles.AllowLeadingSign,
-                 CultureInfo.InvariantCulture,
-                 out decimal typedValue) ||
-             !IsWithinSupportedDecimalRange(
-                 typedValue)))
+            !Int128.TryParse(
+                normalized,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out _))
         {
             RejectCoefficientInput(
                 entry,
                 e.OldTextValue,
-                $"{fieldName} phải nằm trong phạm vi từ " +
-                $"{SupportedDecimalRangeText}.");
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    LocalizationService.TranslateKey(
+                        "Quadratic.Int128Range"),
+                    fieldName,
+                    Int128RangeText));
 
             return;
         }
@@ -766,17 +764,20 @@ public partial class QuadraticEquationView : ContentView
                 entry,
                 CoefficientAEntry))
         {
-            return "Hệ số a";
+            return LocalizationService.TranslateKey(
+                "Quadratic.CoefficientA");
         }
 
         if (ReferenceEquals(
                 entry,
                 CoefficientBEntry))
         {
-            return "Hệ số b";
+            return LocalizationService.TranslateKey(
+                "Quadratic.CoefficientB");
         }
 
-        return "Hệ số c";
+        return LocalizationService.TranslateKey(
+            "Quadratic.CoefficientC");
     }
 
     private void OnCoefficientEntryFocused(
@@ -788,24 +789,23 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
-        if (_coefficientScientificCodeValues.TryGetValue(
+        if (_coefficientExactIntegerValues.TryGetValue(
                 entry,
-                out string? scientificCode) &&
-            decimal.TryParse(
-                scientificCode,
-                NumberStyles.Float,
+                out string? exactIntegerText) &&
+            Int128.TryParse(
+                exactIntegerText,
+                NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
-                out decimal exactValue))
+                out Int128 exactValue))
         {
-            _coefficientScientificCodeValues.Remove(
+            _coefficientExactIntegerValues.Remove(
                 entry);
 
-            // Khi focus, trả về chuỗi số nguyên đầy đủ, không có dấu phẩy,
+            // Khi focus, trả về chuỗi Int128 đầy đủ, không có dấu phẩy,
             // để người dùng có thể sửa trực tiếp từng chữ số.
             SetEntryText(
                 entry,
                 exactValue.ToString(
-                    "0",
                     CultureInfo.InvariantCulture));
 
             return;
@@ -837,7 +837,7 @@ public partial class QuadraticEquationView : ContentView
         if (!TryParseCoefficientText(
                 GetCoefficientInputText(
                     entry),
-                out decimal value))
+                out Int128 value))
         {
             return;
         }
@@ -857,8 +857,9 @@ public partial class QuadraticEquationView : ContentView
 
         if (!TryReadCoefficient(
                 CoefficientAEntry,
-                "hệ số a",
-                out decimal a))
+                GetCoefficientFieldName(
+                    CoefficientAEntry),
+                out Int128 a))
         {
             CoefficientAEntry.Focus();
             return;
@@ -866,8 +867,9 @@ public partial class QuadraticEquationView : ContentView
 
         if (!TryReadCoefficient(
                 CoefficientBEntry,
-                "hệ số b",
-                out decimal b))
+                GetCoefficientFieldName(
+                    CoefficientBEntry),
+                out Int128 b))
         {
             CoefficientBEntry.Focus();
             return;
@@ -875,18 +877,19 @@ public partial class QuadraticEquationView : ContentView
 
         if (!TryReadCoefficient(
                 CoefficientCEntry,
-                "hệ số c",
-                out decimal c))
+                GetCoefficientFieldName(
+                    CoefficientCEntry),
+                out Int128 c))
         {
             CoefficientCEntry.Focus();
             return;
         }
 
-        if (a == 0m)
+        if (a == Int128.Zero)
         {
             ShowError(
-                "Hệ số a phải khác 0. Khi a = 0, " +
-                "biểu thức không còn là phương trình bậc hai.");
+                LocalizationService.TranslateKey(
+                    "Quadratic.ANonZero"));
 
             CoefficientAEntry.Focus();
             return;
@@ -908,11 +911,11 @@ public partial class QuadraticEquationView : ContentView
                 a,
                 b,
                 c,
-                out QuadDouble delta))
+                out OctoDouble delta))
         {
             ShowError(
                 "Kết quả Δ không thể biểu diễn hữu hạn bằng " +
-                "độ chính xác Quad Double. " +
+                "độ chính xác Octo Double. " +
                 "Ứng dụng không thể tiếp tục tính toán.");
 
             return;
@@ -932,7 +935,7 @@ public partial class QuadraticEquationView : ContentView
         EventArgs e)
     {
         _pendingRestoredEntryTexts.Clear();
-        _coefficientScientificCodeValues.Clear();
+        _coefficientExactIntegerValues.Clear();
 
         SetEntryText(
             CoefficientAEntry,
@@ -955,10 +958,10 @@ public partial class QuadraticEquationView : ContentView
     private bool TryReadCoefficient(
         Entry entry,
         string fieldName,
-        out decimal value)
+        out Int128 value)
     {
         value =
-            0m;
+            Int128.Zero;
 
         string normalized =
             NormalizeIntegerText(
@@ -969,7 +972,11 @@ public partial class QuadraticEquationView : ContentView
             normalized == "-")
         {
             ShowError(
-                $"Vui lòng nhập {fieldName}.");
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    LocalizationService.TranslateKey(
+                        "Quadratic.RequiredCoefficient"),
+                    fieldName));
 
             return false;
         }
@@ -979,23 +986,15 @@ public partial class QuadraticEquationView : ContentView
                 out value))
         {
             ShowError(
-                $"{fieldName} phải là số nguyên hợp lệ.");
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    LocalizationService.TranslateKey(
+                        "Quadratic.Int128Range"),
+                    fieldName,
+                    Int128RangeText));
 
             value =
-                0m;
-
-            return false;
-        }
-
-        if (!IsWithinSupportedDecimalRange(
-                value))
-        {
-            ShowError(
-                $"{fieldName} phải nằm trong phạm vi từ " +
-                $"{SupportedDecimalRangeText}.");
-
-            value =
-                0m;
+                Int128.Zero;
 
             return false;
         }
@@ -1006,7 +1005,7 @@ public partial class QuadraticEquationView : ContentView
     private string? GetCoefficientInputText(
         Entry entry)
     {
-        if (_coefficientScientificCodeValues.TryGetValue(
+        if (_coefficientExactIntegerValues.TryGetValue(
                 entry,
                 out string? scientificCode))
         {
@@ -1018,21 +1017,19 @@ public partial class QuadraticEquationView : ContentView
 
     private static bool TryParseCoefficientText(
         string? text,
-        out decimal value)
+        out Int128 value)
     {
         return TryParseCoefficientValue(
-                   text,
-                   out value) &&
-               IsWithinSupportedDecimalRange(
-                   value);
+            text,
+            out value);
     }
 
     private static bool TryParseCoefficientValue(
         string? text,
-        out decimal value)
+        out Int128 value)
     {
         value =
-            0m;
+            Int128.Zero;
 
         string normalized =
             NormalizeIntegerText(
@@ -1044,21 +1041,11 @@ public partial class QuadraticEquationView : ContentView
             return false;
         }
 
-        NumberStyles styles =
-            normalized.Contains(
-                "e",
-                StringComparison.OrdinalIgnoreCase)
-                ? NumberStyles.Float
-                : NumberStyles.AllowLeadingSign;
-
-        return decimal.TryParse(
-                   normalized,
-                   styles,
-                   CultureInfo.InvariantCulture,
-                   out value) &&
-               decimal.Truncate(
-                   value) ==
-               value;
+        return Int128.TryParse(
+            normalized,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out value);
     }
 
     private static bool IsValidIntegerWhileTyping(
@@ -1186,11 +1173,11 @@ public partial class QuadraticEquationView : ContentView
             return fallback;
         }
 
-        if (decimal.TryParse(
+        if (Int128.TryParse(
                 normalized,
-                NumberStyles.Float,
+                NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
-                out decimal value))
+                out Int128 value))
         {
             return FormatNumber(
                 value);
@@ -1203,27 +1190,27 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static bool TryCalculateDelta(
-        decimal a,
-        decimal b,
-        decimal c,
-        out QuadDouble delta)
+        Int128 a,
+        Int128 b,
+        Int128 c,
+        out OctoDouble delta)
     {
-        QuadDouble preciseA =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseA =
+            OctoDouble.FromInt128(
                 a);
 
-        QuadDouble preciseB =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseB =
+            OctoDouble.FromInt128(
                 b);
 
-        QuadDouble preciseC =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseC =
+            OctoDouble.FromInt128(
                 c);
 
-        // Δ = b² − 4ac. QuadDouble.FusedMultiplyAdd gom chính xác các
-        // tích riêng phần bằng FMA rồi chỉ làm tròn về bốn thành phần ở cuối.
+        // Δ = b² − 4ac. OctoDouble.FusedMultiplyAdd gom chính xác các
+        // tích riêng phần bằng FMA rồi chỉ làm tròn về tám thành phần ở cuối.
         delta =
-            QuadDouble.FusedMultiplyAdd(
+            OctoDouble.FusedMultiplyAdd(
                 -4d *
                 preciseA,
                 preciseC,
@@ -1234,16 +1221,16 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static bool TryCalculateDoubleRoot(
-        decimal a,
-        decimal b,
-        out QuadDouble root)
+        Int128 a,
+        Int128 b,
+        out OctoDouble root)
     {
-        QuadDouble preciseA =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseA =
+            OctoDouble.FromInt128(
                 a);
 
-        QuadDouble preciseB =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseB =
+            OctoDouble.FromInt128(
                 b);
 
         root =
@@ -1255,35 +1242,35 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static bool TryCalculateDistinctRoots(
-        decimal a,
-        decimal b,
-        decimal c,
-        QuadDouble delta,
-        out QuadDouble squareRootDelta,
-        out QuadDouble firstRoot,
-        out QuadDouble secondRoot)
+        Int128 a,
+        Int128 b,
+        Int128 c,
+        OctoDouble delta,
+        out OctoDouble squareRootDelta,
+        out OctoDouble firstRoot,
+        out OctoDouble secondRoot)
     {
-        QuadDouble preciseA =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseA =
+            OctoDouble.FromInt128(
                 a);
 
-        QuadDouble preciseB =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseB =
+            OctoDouble.FromInt128(
                 b);
 
-        QuadDouble preciseC =
-            QuadDouble.FromDecimal(
+        OctoDouble preciseC =
+            OctoDouble.FromInt128(
                 c);
 
         squareRootDelta =
-            QuadDouble.Sqrt(
+            OctoDouble.Sqrt(
                 delta);
 
         firstRoot =
-            QuadDouble.NaN;
+            OctoDouble.NaN;
 
         secondRoot =
-            QuadDouble.NaN;
+            OctoDouble.NaN;
 
         if (!squareRootDelta.IsFinite)
         {
@@ -1291,10 +1278,10 @@ public partial class QuadraticEquationView : ContentView
         }
 
         // Công thức q hạn chế triệt tiêu số khi b và √Δ gần bằng nhau.
-        QuadDouble q =
+        OctoDouble q =
             -0.5d *
             (preciseB +
-             QuadDouble.CopySign(
+             OctoDouble.CopySign(
                  squareRootDelta,
                  preciseB));
 
@@ -1310,7 +1297,7 @@ public partial class QuadraticEquationView : ContentView
         }
         else
         {
-            QuadDouble denominator =
+            OctoDouble denominator =
                 2d *
                 preciseA;
 
@@ -1330,10 +1317,10 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private void ShowSolution(
-        decimal a,
-        decimal b,
-        decimal c,
-        QuadDouble delta)
+        Int128 a,
+        Int128 b,
+        Int128 c,
+        OctoDouble delta)
     {
         string aText =
             FormatNumber(
@@ -1348,7 +1335,7 @@ public partial class QuadraticEquationView : ContentView
                 c);
 
         string deltaText =
-            FormatQuadDouble(
+            FormatOctoDouble(
                 delta);
 
         string equation =
@@ -1385,7 +1372,7 @@ public partial class QuadraticEquationView : ContentView
         Step4Border.IsVisible =
             true;
 
-        if (delta < QuadDouble.Zero)
+        if (delta < OctoDouble.Zero)
         {
             SetResultStateColors(
                 hasRealRoots: false);
@@ -1414,12 +1401,11 @@ public partial class QuadraticEquationView : ContentView
             if (!TryCalculateDoubleRoot(
                     a,
                     b,
-                    out QuadDouble doubleRoot))
+                    out OctoDouble doubleRoot))
             {
                 ShowError(
-                    "Nghiệm không thể biểu diễn hữu hạn bằng " +
-                    "độ chính xác Quad Double. " +
-                    "Ứng dụng không thể tiếp tục tính toán.");
+                    LocalizationService.TranslateKey(
+                        "Quadratic.RootNotFiniteOctoDouble"));
 
                 return;
             }
@@ -1428,7 +1414,7 @@ public partial class QuadraticEquationView : ContentView
                 hasRealRoots: true);
 
             string rootText =
-                FormatQuadDouble(
+                FormatOctoDouble(
                     doubleRoot);
 
             ClassificationLabel.Text =
@@ -1460,14 +1446,13 @@ public partial class QuadraticEquationView : ContentView
                     b,
                     c,
                     delta,
-                    out QuadDouble squareRootDelta,
-                    out QuadDouble firstRoot,
-                    out QuadDouble secondRoot))
+                    out OctoDouble squareRootDelta,
+                    out OctoDouble firstRoot,
+                    out OctoDouble secondRoot))
             {
                 ShowError(
-                    "Nghiệm không thể biểu diễn hữu hạn bằng " +
-                    "độ chính xác Quad Double. " +
-                    "Ứng dụng không thể tiếp tục tính toán.");
+                    LocalizationService.TranslateKey(
+                        "Quadratic.RootNotFiniteOctoDouble"));
 
                 return;
             }
@@ -1476,15 +1461,15 @@ public partial class QuadraticEquationView : ContentView
                 hasRealRoots: true);
 
             string squareRootText =
-                FormatQuadDouble(
+                FormatOctoDouble(
                     squareRootDelta);
 
             string firstRootText =
-                FormatQuadDouble(
+                FormatOctoDouble(
                     firstRoot);
 
             string secondRootText =
-                FormatQuadDouble(
+                FormatOctoDouble(
                     secondRoot);
 
             ClassificationLabel.Text =
@@ -1597,9 +1582,9 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private void ShowParabolaGraph(
-        decimal a,
-        decimal b,
-        decimal c)
+        Int128 a,
+        Int128 b,
+        Int128 c)
     {
         _lastGraphPointer =
             null;
@@ -1702,9 +1687,9 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static string BuildEquationText(
-        decimal a,
-        decimal b,
-        decimal c)
+        Int128 a,
+        Int128 b,
+        Int128 c)
     {
         var builder =
             new StringBuilder();
@@ -1732,7 +1717,7 @@ public partial class QuadraticEquationView : ContentView
 
     private static void AppendLeadingTerm(
         StringBuilder builder,
-        decimal coefficient,
+        Int128 coefficient,
         string variable)
     {
         if (coefficient == -1 &&
@@ -1766,7 +1751,7 @@ public partial class QuadraticEquationView : ContentView
 
     private static void AppendFollowingTerm(
         StringBuilder builder,
-        decimal coefficient,
+        Int128 coefficient,
         string variable)
     {
         if (coefficient == 0)
@@ -1782,15 +1767,15 @@ public partial class QuadraticEquationView : ContentView
                 ? " − "
                 : " + ");
 
-        decimal absoluteCoefficient =
-            Math.Abs(
-                coefficient);
+        BigInteger absoluteCoefficient =
+            BigInteger.Abs(
+                (BigInteger)coefficient);
 
-        if (absoluteCoefficient != 1 ||
+        if (absoluteCoefficient != BigInteger.One ||
             variable.Length == 0)
         {
             builder.Append(
-                FormatNumber(
+                FormatIntegerForDisplay(
                     absoluteCoefficient));
         }
 
@@ -1800,7 +1785,7 @@ public partial class QuadraticEquationView : ContentView
 
     private void ApplyCoefficientEntryDisplayValue(
         Entry entry,
-        decimal value)
+        Int128 value)
     {
         string standardText =
             FormatInputInteger(
@@ -1810,7 +1795,7 @@ public partial class QuadraticEquationView : ContentView
                 standardText) <=
             ScientificDisplayDigitThreshold)
         {
-            _coefficientScientificCodeValues.Remove(
+            _coefficientExactIntegerValues.Remove(
                 entry);
 
             SetEntryText(
@@ -1820,9 +1805,9 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
-        _coefficientScientificCodeValues[entry] =
-            FormatScientificForCode(
-                value);
+        _coefficientExactIntegerValues[entry] =
+            value.ToString(
+                CultureInfo.InvariantCulture);
 
         SetEntryText(
             entry,
@@ -1831,22 +1816,22 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static string FormatInputInteger(
-        decimal value)
+        Int128 value)
     {
-        return value.ToString(
-            "#,##0",
+        return ((BigInteger)value).ToString(
+            "N0",
             CultureInfo.InvariantCulture);
     }
 
-    private static string FormatQuadDouble(
-        QuadDouble value)
+    private static string FormatOctoDouble(
+        OctoDouble value)
     {
-        // Quad Double giữ khoảng 63-64 chữ số có nghĩa trong toàn bộ
+        // Octo Double giữ khoảng 127-128 chữ số có nghĩa trong toàn bộ
         // quá trình tính toán. Chỉ bước trình bày cuối cùng mới làm tròn,
         // giới hạn tối đa 10 chữ số sau dấu thập phân.
         string text =
             value.ToGeneralString(
-                QuadDoubleDisplaySignificantDigits,
+                OctoDoubleDisplaySignificantDigits,
                 scientificUpperExponent:
                 ScientificDisplayDigitThreshold,
                 scientificLowerExponent:
@@ -1951,7 +1936,7 @@ public partial class QuadraticEquationView : ContentView
     /// <summary>
     /// Làm tròn chuỗi thập phân theo MidpointRounding.AwayFromZero mà không
     /// chuyển ngược về double/decimal. Nhờ vậy phép tính vẫn tận dụng đủ
-    /// độ chính xác Quad Double và chỉ kết quả hiển thị bị giới hạn.
+    /// độ chính xác Octo Double và chỉ kết quả hiển thị bị giới hạn.
     /// </summary>
     private static string RoundDecimalText(
         string text,
@@ -2119,37 +2104,35 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static string FormatNumber(
-        decimal value)
+        Int128 value)
     {
-        decimal rounded =
-            decimal.Round(
-                value,
-                MaxResultDecimalPlaces,
-                MidpointRounding.AwayFromZero);
+        return FormatIntegerForDisplay(
+            (BigInteger)value);
+    }
 
-        if (rounded == 0m)
-        {
-            rounded =
-                0m;
-        }
+    private static string FormatIntegerForDisplay(
+        BigInteger value)
+    {
+        string digits =
+            BigInteger.Abs(
+                    value)
+                .ToString(
+                    CultureInfo.InvariantCulture);
 
-        string standardText =
-            rounded.ToString(
-                "#,##0.##########",
-                CultureInfo.InvariantCulture);
-
-        if (CountNumericDigits(
-                standardText) >
+        if (digits.Length >
             ScientificDisplayDigitThreshold)
         {
             return FormatScientificForDisplay(
-                rounded);
+                value);
         }
 
-        return standardText.Replace(
-            "-",
-            "−",
-            StringComparison.Ordinal);
+        return value.ToString(
+                "N0",
+                CultureInfo.InvariantCulture)
+            .Replace(
+                "-",
+                "−",
+                StringComparison.Ordinal);
     }
 
     private static int CountNumericDigits(
@@ -2171,114 +2154,108 @@ public partial class QuadraticEquationView : ContentView
     }
 
     private static string FormatScientificForDisplay(
-        decimal value)
+        Int128 value)
     {
-        string code =
-            FormatScientificForCode(
-                value);
+        return FormatScientificForDisplay(
+            (BigInteger)value);
+    }
 
-        int exponentSeparatorIndex =
-            code.IndexOf(
-                'e');
-
-        string exactMantissaText =
-            code[..exponentSeparatorIndex];
-
-        int exponent =
-            int.Parse(
-                code[(exponentSeparatorIndex + 1)..],
-                CultureInfo.InvariantCulture);
-
-        decimal exactMantissa =
-            decimal.Parse(
-                exactMantissaText,
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture);
-
-        int mantissaDecimalPlaces =
-            Math.Max(
-                0,
-                ScientificDisplaySignificantDigits - 1);
-
-        decimal roundedMantissa =
-            Math.Round(
-                exactMantissa,
-                mantissaDecimalPlaces,
-                MidpointRounding.AwayFromZero);
-
-        if (Math.Abs(
-                roundedMantissa) >=
-            10m)
+    private static string FormatScientificForDisplay(
+        BigInteger value)
+    {
+        if (value.IsZero)
         {
-            roundedMantissa /=
-                10m;
-
-            exponent++;
+            return "0";
         }
 
-        bool wasRounded =
-            roundedMantissa !=
-            exactMantissa;
+        bool isNegative =
+            value.Sign < 0;
 
-        string mantissaText =
-            roundedMantissa.ToString(
-                "0.###########",
-                CultureInfo.InvariantCulture);
+        string digits =
+            BigInteger.Abs(
+                    value)
+                .ToString(
+                    CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length -
+            1;
+
+        int keptDigits =
+            Math.Min(
+                ScientificDisplaySignificantDigits,
+                digits.Length);
+
+        string mantissaDigits =
+            digits[..keptDigits];
+
+        bool mustRoundUp =
+            digits.Length >
+                keptDigits &&
+            digits[keptDigits] >=
+                '5';
+
+        if (mustRoundUp)
+        {
+            BigInteger rounded =
+                BigInteger.Parse(
+                    mantissaDigits,
+                    CultureInfo.InvariantCulture) +
+                BigInteger.One;
+
+            mantissaDigits =
+                rounded.ToString(
+                    CultureInfo.InvariantCulture);
+
+            if (mantissaDigits.Length >
+                keptDigits)
+            {
+                exponent++;
+                mantissaDigits =
+                    mantissaDigits[..keptDigits];
+            }
+            else
+            {
+                mantissaDigits =
+                    mantissaDigits.PadLeft(
+                        keptDigits,
+                        '0');
+            }
+        }
+
+        string mantissa =
+            mantissaDigits.Length == 1
+                ? mantissaDigits
+                : mantissaDigits[0] +
+                  "." +
+                  mantissaDigits[1..]
+                      .TrimEnd(
+                          '0');
+
+        mantissa =
+            mantissa.TrimEnd(
+                '.');
 
         string approximation =
-            wasRounded
+            digits.Length >
+                keptDigits
                 ? "≈ "
                 : string.Empty;
 
-        if (mantissaText == "1")
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        if (mantissa == "1")
         {
             return
-                $"{approximation}10{ToSuperscript(exponent)}";
+                $"{approximation}{sign}10{ToSuperscript(exponent)}";
         }
-
-        if (mantissaText == "-1")
-        {
-            return
-                $"{approximation}−10{ToSuperscript(exponent)}";
-        }
-
-        mantissaText =
-            mantissaText.Replace(
-                "-",
-                "−",
-                StringComparison.Ordinal);
 
         return
-            $"{approximation}{mantissaText} × " +
+            $"{approximation}{sign}{mantissa} × " +
             $"10{ToSuperscript(exponent)}";
-    }
-
-    private static string FormatScientificForCode(
-        decimal value)
-    {
-        if (value == 0m)
-        {
-            return "0e0";
-        }
-
-        string scientificText =
-            value.ToString(
-                "0.############################E+0",
-                CultureInfo.InvariantCulture);
-
-        int exponentIndex =
-            scientificText.IndexOf(
-                'E');
-
-        string mantissa =
-            scientificText[..exponentIndex];
-
-        string exponent =
-            scientificText[(exponentIndex + 1)..]
-                .TrimStart('+');
-
-        return
-            $"{mantissa}e{exponent}";
     }
 
     private static string GroupIntegerDigits(
@@ -2421,13 +2398,5 @@ public partial class QuadraticEquationView : ContentView
 
     }
 
-    private static bool IsWithinSupportedDecimalRange(
-        decimal value)
-    {
-        return value >=
-               MinSupportedValue &&
-               value <=
-               MaxSupportedValue;
-    }
 
 }
