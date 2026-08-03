@@ -72,6 +72,9 @@ public partial class CalculationPage : ContentPage
 
     private bool _isSubTabTransitioning;
 
+    private const double CalculationSubTabSpacing =
+        6d;
+
     private LongDivisionDisplayMode _longDivisionDisplayMode = LongDivisionDisplayMode.Elementary;
 
     private decimal _currentDivisionDividend;
@@ -99,6 +102,9 @@ public partial class CalculationPage : ContentPage
         SecondNumberEntry.Unfocused +=
             OnNumberEntryUnfocused;
 
+        CalculationSubTabScrollView.SizeChanged +=
+            OnCalculationSubTabScrollViewSizeChanged;
+
         SelectNumberType(
             NumberInputType.Integer,
             clearInputs: false);
@@ -113,6 +119,10 @@ public partial class CalculationPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        OnCalculationSubTabScrollViewSizeChanged(
+            CalculationSubTabScrollView,
+            EventArgs.Empty);
 
         BeginMainTabTransitionIfPending();
 
@@ -3136,6 +3146,14 @@ public partial class CalculationPage : ContentPage
             CalculationSubTab.Basic);
     }
 
+    private async void OnAverageTabClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await SwitchSubTabAsync(
+            CalculationSubTab.Average);
+    }
+
     private async void OnFractionTabClicked(
         object? sender,
         EventArgs e)
@@ -3183,6 +3201,9 @@ public partial class CalculationPage : ContentPage
         if (_selectedSubTab == selectedTab)
         {
             await AnimateSubTabButtonAsync(
+                selectedButton);
+
+            await ScrollSubTabIntoViewAsync(
                 selectedButton);
 
             return;
@@ -3275,11 +3296,83 @@ public partial class CalculationPage : ContentPage
 
                 AnimateSubTabButtonAsync(
                     selectedButton));
+
+            await ScrollSubTabIntoViewAsync(
+                selectedButton);
         }
         finally
         {
             _isSubTabTransitioning =
                 false;
+        }
+    }
+
+    private void OnCalculationSubTabScrollViewSizeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        double availableWidth =
+            CalculationSubTabScrollView.Width;
+
+        if (availableWidth <= 0)
+        {
+            return;
+        }
+
+        Button[] buttons =
+        [
+            BasicTabButton,
+            AverageTabButton,
+            FractionTabButton,
+            FindXTabButton,
+            QuadraticTabButton,
+            GeometryTabButton
+        ];
+
+        double minimumButtonsWidth =
+            buttons.Sum(
+                button =>
+                    button.MinimumWidthRequest);
+
+        double totalSpacing =
+            CalculationSubTabSpacing *
+            (buttons.Length - 1);
+
+        double extraWidthPerButton =
+            Math.Max(
+                0d,
+                (availableWidth -
+                 minimumButtonsWidth -
+                 totalSpacing) /
+                buttons.Length);
+
+        foreach (Button button in buttons)
+        {
+            button.WidthRequest =
+                button.MinimumWidthRequest +
+                extraWidthPerButton;
+        }
+
+        CalculationSubTabGrid.WidthRequest =
+            Math.Max(
+                availableWidth,
+                minimumButtonsWidth +
+                totalSpacing);
+    }
+
+    private async Task ScrollSubTabIntoViewAsync(
+        Button selectedButton)
+    {
+        try
+        {
+            await CalculationSubTabScrollView.ScrollToAsync(
+                selectedButton,
+                ScrollToPosition.Center,
+                true);
+        }
+        catch (InvalidOperationException)
+        {
+            // View có thể vừa bị gỡ khỏi visual tree khi đổi tab chính.
         }
     }
 
@@ -3289,6 +3382,7 @@ public partial class CalculationPage : ContentPage
         return tab switch
         {
             CalculationSubTab.Basic => BasicTabContent,
+            CalculationSubTab.Average => AverageTabContent,
             CalculationSubTab.Fraction => FractionTabContent,
             CalculationSubTab.FindX => FindXTabContent,
             CalculationSubTab.Quadratic => QuadraticTabContent,
@@ -3303,6 +3397,7 @@ public partial class CalculationPage : ContentPage
         return tab switch
         {
             CalculationSubTab.Basic => BasicTabButton,
+            CalculationSubTab.Average => AverageTabButton,
             CalculationSubTab.Fraction => FractionTabButton,
             CalculationSubTab.FindX => FindXTabButton,
             CalculationSubTab.Quadratic => QuadraticTabButton,
@@ -3333,6 +3428,10 @@ public partial class CalculationPage : ContentPage
 
         BasicTabContent.IsVisible = selectedTab == CalculationSubTab.Basic;
 
+        AverageTabContent.IsVisible =
+            selectedTab ==
+            CalculationSubTab.Average;
+
         FractionTabContent.IsVisible = selectedTab == CalculationSubTab.Fraction;
 
         FindXTabContent.IsVisible =
@@ -3354,6 +3453,7 @@ public partial class CalculationPage : ContentPage
     private void UpdateSubTabButtonStyles()
     {
         ResetSubTabButton(BasicTabButton);
+        ResetSubTabButton(AverageTabButton);
         ResetSubTabButton(FractionTabButton);
         ResetSubTabButton(FindXTabButton);
         ResetSubTabButton(QuadraticTabButton);
@@ -3363,6 +3463,7 @@ public partial class CalculationPage : ContentPage
             _selectedSubTab switch
             {
                 CalculationSubTab.Basic => BasicTabButton,
+                CalculationSubTab.Average => AverageTabButton,
                 CalculationSubTab.Fraction => FractionTabButton,
                 CalculationSubTab.FindX => FindXTabButton,
                 CalculationSubTab.Quadratic => QuadraticTabButton,
@@ -3638,6 +3739,7 @@ public enum NumberInputType
 public enum CalculationSubTab
 {
     Basic,
+    Average,
     Fraction,
     FindX,
     Quadratic,

@@ -25,15 +25,20 @@
                 <RoundRectangle CornerRadius="14" />
             </Border.StrokeShape>
 
-            <Grid
-                x:Name="CalculationSubTabGrid"
-                ColumnDefinitions="*,*,*,*,*"
-                ColumnSpacing="6">
+            <ScrollView
+                x:Name="CalculationSubTabScrollView"
+                Orientation="Horizontal"
+                HorizontalOptions="Fill"
+                HorizontalScrollBarVisibility="Never">
+
+                <HorizontalStackLayout
+                    x:Name="CalculationSubTabGrid"
+                    Spacing="6">
 
                 <Button
                     x:Name="BasicTabButton"
-                    Grid.Column="0"
                     Text="+ Cơ bản"
+                    MinimumWidthRequest="120"
                     HeightRequest="44"
                     Padding="8,0"
                     FontSize="16"
@@ -44,9 +49,21 @@
                     Clicked="OnBasicTabClicked" />
 
                 <Button
+                    x:Name="AverageTabButton"
+                    Text="x̄ Trung bình cộng"
+                    MinimumWidthRequest="168"
+                    HeightRequest="44"
+                    Padding="8,0"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    TextColor="{DynamicResource TextSecondaryColor}"
+                    Clicked="OnAverageTabClicked" />
+
+                <Button
                     x:Name="FractionTabButton"
-                    Grid.Column="1"
                     Text="½ Phân số"
+                    MinimumWidthRequest="120"
                     HeightRequest="44"
                     Padding="8,0"
                     FontSize="16"
@@ -57,8 +74,8 @@
 
                 <Button
                     x:Name="FindXTabButton"
-                    Grid.Column="2"
                     Text="𝑥 Tìm x"
+                    MinimumWidthRequest="120"
                     HeightRequest="44"
                     Padding="8,0"
                     FontSize="16"
@@ -69,8 +86,8 @@
 
                 <Button
                     x:Name="QuadraticTabButton"
-                    Grid.Column="3"
                     Text="x² Phương trình bậc 2"
+                    MinimumWidthRequest="190"
                     HeightRequest="44"
                     Padding="6,0"
                     FontSize="15"
@@ -81,8 +98,8 @@
 
                 <Button
                     x:Name="GeometryTabButton"
-                    Grid.Column="4"
                     Text="△ Hình học"
+                    MinimumWidthRequest="130"
                     HeightRequest="44"
                     Padding="8,0"
                     FontSize="16"
@@ -91,7 +108,9 @@
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 
-            </Grid>
+                </HorizontalStackLayout>
+
+            </ScrollView>
 
         </Border>
 
@@ -816,6 +835,13 @@
                     </Border>
                 </VerticalStackLayout>
             </ScrollView>
+            <!-- Tab trung bình cộng -->
+            <Grid
+                x:Name="AverageTabContent"
+                IsVisible="False">
+                <views:AverageView />
+            </Grid>
+
             <!-- Tab Phân số -->
             <Grid
                 x:Name="FractionTabContent"

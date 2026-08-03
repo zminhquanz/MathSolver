@@ -51,7 +51,7 @@ public partial class GeometryCalculatorView : ContentView
     private GeometryFormulaItem? _selectedGeometry;
 
     private bool _isUpdatingEntryText;
-    private bool _isCultureSubscribed;
+    private bool _isLanguageSubscribed;
     private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
 
@@ -99,7 +99,7 @@ public partial class GeometryCalculatorView : ContentView
         LocalizationService.Attach(
             this);
 
-        SubscribeCultureChanged();
+        SubscribeLanguageChanged();
 
         SelectCategory(
             GeometryCategory.Plane);
@@ -113,12 +113,7 @@ public partial class GeometryCalculatorView : ContentView
         object? sender,
         EventArgs e)
     {
-        SubscribeCultureChanged();
-
-        // The view can be unloaded while the user changes language from
-        // another tab. Rebuild all dynamic geometry text when it becomes
-        // visible again so it always matches the active language pack.
-        RefreshLocalizedContent();
+        SubscribeLanguageChanged();
 
         GeometryDiagramView.Invalidate();
 
@@ -143,93 +138,77 @@ public partial class GeometryCalculatorView : ContentView
         object? sender,
         EventArgs e)
     {
-        UnsubscribeCultureChanged();
+        UnsubscribeLanguageChanged();
     }
 
-    private void SubscribeCultureChanged()
+    private void SubscribeLanguageChanged()
     {
-        if (_isCultureSubscribed)
+        if (_isLanguageSubscribed)
         {
             return;
         }
 
-        LocalizationService.CultureChanged +=
-            OnCultureChanged;
+        AppLanguageManager.LanguageChanged +=
+            OnLanguageChanged;
 
-        _isCultureSubscribed =
+        _isLanguageSubscribed =
             true;
     }
 
-    private void UnsubscribeCultureChanged()
+    private void UnsubscribeLanguageChanged()
     {
-        if (!_isCultureSubscribed)
+        if (!_isLanguageSubscribed)
         {
             return;
         }
 
-        LocalizationService.CultureChanged -=
-            OnCultureChanged;
+        AppLanguageManager.LanguageChanged -=
+            OnLanguageChanged;
 
-        _isCultureSubscribed =
+        _isLanguageSubscribed =
             false;
     }
 
-    private void OnCultureChanged(
+    private void OnLanguageChanged(
         object? sender,
         EventArgs e)
     {
         Dispatcher.Dispatch(
-            RefreshLocalizedContent);
-    }
-
-    private void RefreshLocalizedContent()
-    {
-        string? selectedId =
-            SelectedGeometry?.Id;
-
-        Dictionary<string, string> currentInputs =
-            InputFields.ToDictionary(
-                field => field.Key,
-                field => field.RawText,
-                StringComparer.Ordinal);
-
-        bool shouldRestoreResults =
-            ResultBorder.IsVisible &&
-            Results.Count > 0;
-
-        // Refresh the static visual tree after the JSON language pack has
-        // changed, then recreate catalog/input objects whose translated text
-        // was captured when they were constructed.
-        LocalizationService.Attach(
-            this);
-
-        SelectCategory(
-            _selectedCategory,
-            selectedId);
-
-        foreach (GeometryInputField field
-                 in InputFields)
-        {
-            if (!currentInputs.TryGetValue(
-                    field.Key,
-                    out string? rawText))
+            () =>
             {
-                continue;
-            }
+                string? selectedId =
+                    SelectedGeometry?.Id;
 
-            field.RawText =
-                rawText;
+                Dictionary<string, string> currentInputs =
+                    InputFields.ToDictionary(
+                        field => field.Key,
+                        field => field.RawText,
+                        StringComparer.Ordinal);
 
-            field.Text =
-                rawText;
-        }
+                SelectCategory(
+                    _selectedCategory,
+                    selectedId);
 
-        if (shouldRestoreResults)
-        {
-            OnCalculateClicked(
-                this,
-                EventArgs.Empty);
-        }
+                foreach (GeometryInputField field
+                         in InputFields)
+                {
+                    if (!currentInputs.TryGetValue(
+                            field.Key,
+                            out string? rawText))
+                    {
+                        continue;
+                    }
+
+                    field.RawText =
+                        rawText;
+
+                    field.Text =
+                        rawText;
+                }
+
+                LocalizationService.Attach(
+                    this);
+            });
     }
 
     private static string T(

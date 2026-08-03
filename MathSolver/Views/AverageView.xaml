@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentView
+    x:Class="MathSolver.Views.AverageView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    BackgroundColor="Transparent"
+    HorizontalOptions="Fill">
+
+    <ScrollView
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill">
+
+        <VerticalStackLayout
+            Padding="20,16"
+            Spacing="14"
+            HorizontalOptions="Fill">
+
+            <VerticalStackLayout
+                Margin="0,4,0,6"
+                Spacing="2">
+
+                <Label
+                    Text="x̄ = ∑x ÷ n"
+                    FontSize="40"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource PrimaryColor}" />
+
+                <Label
+                    Text="{localization:Translate Average.Title}"
+                    FontSize="27"
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <Label
+                    Text="{localization:Translate Average.Subtitle}"
+                    FontSize="17"
+                    LineBreakMode="WordWrap"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+            </VerticalStackLayout>
+
+            <Border
+                Padding="14"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="14">
+
+                    <Label
+                        Text="{localization:Translate Average.InputTitle}"
+                        FontSize="20"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10">
+
+                        <Button
+                            x:Name="IntegerTypeButton"
+                            Grid.Column="0"
+                            Text="{localization:Translate Numbers.Integer}"
+                            HeightRequest="48"
+                            Padding="8,0"
+                            CornerRadius="12"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Clicked="OnIntegerTypeClicked" />
+
+                        <Button
+                            x:Name="DecimalTypeButton"
+                            Grid.Column="1"
+                            Text="{localization:Translate Numbers.Decimal}"
+                            HeightRequest="48"
+                            Padding="8,0"
+                            CornerRadius="12"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            Clicked="OnDecimalTypeClicked" />
+
+                    </Grid>
+
+                    <Label
+                        Text="{localization:Translate Average.InputHelp}"
+                        FontSize="15"
+                        LineHeight="1.2"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                    <Border
+                        Padding="12,8"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+
+                        <Editor
+                            x:Name="ValuesEditor"
+                            Placeholder="{localization:Translate Average.InputPlaceholder}"
+                            AutoSize="TextChanges"
+                            MinimumHeightRequest="132"
+                            FontSize="18"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                            BackgroundColor="Transparent"
+                            TextChanged="OnValuesTextChanged" />
+
+                    </Border>
+
+                    <Label
+                        Text="{localization:Translate Average.SeparatorsHint}"
+                        FontSize="14"
+                        FontAttributes="Italic"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                    <Border
+                        x:Name="ErrorBorder"
+                        IsVisible="False"
+                        Padding="12,10"
+                        BackgroundColor="{DynamicResource DangerSoftColor}"
+                        Stroke="{DynamicResource DangerBorderBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+
+                        <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="10">
+
+                            <Label
+                                Text="⚠"
+                                FontSize="22"
+                                TextColor="{DynamicResource DangerColor}" />
+
+                            <Label
+                                x:Name="ErrorLabel"
+                                Grid.Column="1"
+                                FontSize="15"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource DangerColor}" />
+
+                        </Grid>
+
+                    </Border>
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10">
+
+                        <Button
+                            Grid.Column="0"
+                            Text="{localization:Translate Actions.Calculate}"
+                            HeightRequest="50"
+                            CornerRadius="12"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Clicked="OnCalculateClicked" />
+
+                        <Button
+                            Grid.Column="1"
+                            Text="{localization:Translate Actions.Clear}"
+                            HeightRequest="50"
+                            CornerRadius="12"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            Clicked="OnClearClicked" />
+
+                    </Grid>
+
+                </VerticalStackLayout>
+
+            </Border>
+
+            <Border
+                x:Name="ResultBorder"
+                IsVisible="False"
+                Padding="16"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource PrimaryBorderBrush}"
+                StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="14">
+
+                    <Label
+                        Text="{localization:Translate Average.ResultTitle}"
+                        FontSize="20"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Border
+                        Padding="14"
+                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                        StrokeThickness="0">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="4">
+
+                            <Label
+                                Text="x̄ ="
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="AverageResultLabel"
+                                FontSize="24"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10">
+
+                        <Border
+                            Grid.Column="0"
+                            Padding="12"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="3">
+                                <Label
+                                    Text="{localization:Translate Average.CountLabel}"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                <Label
+                                    x:Name="CountValueLabel"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Padding="12"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="3">
+                                <Label
+                                    Text="{localization:Translate Average.SumLabel}"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                <Label
+                                    x:Name="SumValueLabel"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                    </Grid>
+
+                    <BoxView
+                        HeightRequest="1"
+                        BackgroundColor="{DynamicResource DividerColor}" />
+
+                    <Label
+                        Text="{localization:Translate Average.SolutionTitle}"
+                        FontSize="19"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <VerticalStackLayout Spacing="10">
+
+                        <Label
+                            x:Name="NumbersStepLabel"
+                            FontSize="16"
+                            LineHeight="1.25"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="CountStepLabel"
+                            FontSize="16"
+                            LineHeight="1.25"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="SumStepLabel"
+                            FontSize="16"
+                            LineHeight="1.25"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="AverageStepLabel"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            LineHeight="1.25"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource PrimaryColor}" />
+
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+
+            </Border>
+
+            <!-- Lưu ý khi sử dụng -->
+            <Border
+Padding="16"
+BackgroundColor="{DynamicResource WarningSoftColor}"
+Stroke="{DynamicResource WarningBorderBrush}"
+StrokeThickness="1">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <Grid
+    ColumnDefinitions="Auto,*"
+    ColumnSpacing="12">
+
+                    <Label
+        Grid.Column="0"
+        Text="⚠"
+        FontSize="26"
+        VerticalOptions="Start"
+        TextColor="{DynamicResource WarningColor}" />
+
+                    <VerticalStackLayout
+        Grid.Column="1"
+        Spacing="6">
+
+                        <Label
+            Text="Lưu ý khi sử dụng"
+            FontSize="18"
+            FontAttributes="Bold"
+            TextColor="{DynamicResource WarningColor}" />
+
+                        <Label
+            Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
+            FontSize="16"
+            LineHeight="1.25"
+            TextColor="{DynamicResource WarningColor}" />
+
+                        <Label
+            Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
+            FontSize="16"
+            FontAttributes="Italic"
+            LineHeight="1.25"
+            TextColor="{DynamicResource WarningColor}" />
+
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+        </VerticalStackLayout>
+
+    </ScrollView>
+
+</ContentView>
