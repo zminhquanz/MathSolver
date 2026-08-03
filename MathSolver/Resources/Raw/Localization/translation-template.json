@@ -4,7 +4,7 @@
   "languageName": "Your language in English",
   "nativeName": "Your language in its native form",
   "author": "Your name",
-  "appVersion": "0.1.0",
+  "appVersion": "0.2.0",
   "strings": {
     "Actions.Calculate": "Tính toán",
     "Actions.Clear": "Xóa",

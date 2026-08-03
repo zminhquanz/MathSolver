@@ -4,7 +4,7 @@
   "languageName": "English",
   "nativeName": "English",
   "author": "Math Solver",
-  "appVersion": "0.1.1",
+  "appVersion": "0.2.0",
   "strings": {
     "Actions.Calculate": "Calculate",
     "Actions.Clear": "Clear",

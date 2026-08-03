@@ -349,48 +349,48 @@
 
             <!-- Lưu ý khi sử dụng -->
             <Border
-Padding="16"
-BackgroundColor="{DynamicResource WarningSoftColor}"
-Stroke="{DynamicResource WarningBorderBrush}"
-StrokeThickness="1">
+                Padding="16"
+                BackgroundColor="{DynamicResource WarningSoftColor}"
+                Stroke="{DynamicResource WarningBorderBrush}"
+                StrokeThickness="1">
 
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
                 </Border.StrokeShape>
 
                 <Grid
-    ColumnDefinitions="Auto,*"
-    ColumnSpacing="12">
+                    ColumnDefinitions="Auto,*"
+                    ColumnSpacing="12">
 
                     <Label
-        Grid.Column="0"
-        Text="⚠"
-        FontSize="26"
-        VerticalOptions="Start"
-        TextColor="{DynamicResource WarningColor}" />
+                        Grid.Column="0"
+                        Text="⚠"
+                        FontSize="26"
+                        VerticalOptions="Start"
+                        TextColor="{DynamicResource WarningColor}" />
 
                     <VerticalStackLayout
-        Grid.Column="1"
-        Spacing="6">
+                        Grid.Column="1"
+                        Spacing="6">
 
                         <Label
-            Text="Lưu ý khi sử dụng"
-            FontSize="18"
-            FontAttributes="Bold"
-            TextColor="{DynamicResource WarningColor}" />
+                            Text="Lưu ý khi sử dụng"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WarningColor}" />
 
                         <Label
-            Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
-            FontSize="16"
-            LineHeight="1.25"
-            TextColor="{DynamicResource WarningColor}" />
+                            Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
+                            FontSize="16"
+                            LineHeight="1.25"
+                            TextColor="{DynamicResource WarningColor}" />
 
                         <Label
-            Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
-            FontSize="16"
-            FontAttributes="Italic"
-            LineHeight="1.25"
-            TextColor="{DynamicResource WarningColor}" />
+                            Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
+                            FontSize="16"
+                            FontAttributes="Italic"
+                            LineHeight="1.25"
+                            TextColor="{DynamicResource WarningColor}" />
 
                     </VerticalStackLayout>
                 </Grid>

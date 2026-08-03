@@ -4,7 +4,7 @@
   "languageName": "Vietnamese",
   "nativeName": "Tiếng Việt",
   "author": "Math Solver",
-  "appVersion": "0.1.1",
+  "appVersion": "0.2.0",
   "strings": {
     "Actions.Calculate": "Tính toán",
     "Actions.Clear": "Xóa",

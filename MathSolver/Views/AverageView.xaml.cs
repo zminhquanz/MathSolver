@@ -33,7 +33,7 @@ public partial class AverageView : ContentView
 
         // Toàn bộ chuỗi tĩnh dùng stable localization key. Không để bộ dịch
         // legacy ghi đè các binding hoặc phần lời giải được dựng bằng code.
-        LocalizationService.ExcludeSubtreeFromLegacyTracking(
+        LocalizationService.Attach(
             this);
 
         Loaded +=
