@@ -1,6 +1,7 @@
 using MathSolver.Models;
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Views.Base;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -14,7 +15,7 @@ namespace MathSolver.Views;
 /// Công thức và hình minh họa được lấy trực tiếp từ GeometryFormulaItem.
 /// Phần tính toán được tách riêng theo GeometryCategory.Plane/Solid.
 /// </summary>
-public partial class GeometryCalculatorView : ContentView
+public partial class GeometryCalculatorView : LocalizedSolverView
 {
     private const int MaxDecimalPlaces = 10;
     private const int ScientificDisplayDigitThreshold = 18;
@@ -51,7 +52,6 @@ public partial class GeometryCalculatorView : ContentView
     private GeometryFormulaItem? _selectedGeometry;
 
     private bool _isUpdatingEntryText;
-    private bool _isLanguageSubscribed;
     private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
 
@@ -90,16 +90,7 @@ public partial class GeometryCalculatorView : ContentView
         BindingContext =
             this;
 
-        Loaded +=
-            OnLoaded;
-
-        Unloaded +=
-            OnUnloaded;
-
-        LocalizationService.Attach(
-            this);
-
-        SubscribeLanguageChanged();
+        InitializeLocalization();
 
         SelectCategory(
             GeometryCategory.Plane);
@@ -109,12 +100,8 @@ public partial class GeometryCalculatorView : ContentView
             clearInputs: false);
     }
 
-    private void OnLoaded(
-        object? sender,
-        EventArgs e)
+    protected override void OnSolverLoaded()
     {
-        SubscribeLanguageChanged();
-
         GeometryDiagramView.Invalidate();
 
         Dispatcher.Dispatch(
@@ -134,81 +121,39 @@ public partial class GeometryCalculatorView : ContentView
             });
     }
 
-    private void OnUnloaded(
-        object? sender,
-        EventArgs e)
+    protected override void RefreshLocalizedContent()
     {
-        UnsubscribeLanguageChanged();
-    }
+        base.RefreshLocalizedContent();
 
-    private void SubscribeLanguageChanged()
-    {
-        if (_isLanguageSubscribed)
+        string? selectedId =
+            SelectedGeometry?.Id;
+
+        Dictionary<string, string> currentInputs =
+            InputFields.ToDictionary(
+                field => field.Key,
+                field => field.RawText,
+                StringComparer.Ordinal);
+
+        SelectCategory(
+            _selectedCategory,
+            selectedId);
+
+        foreach (GeometryInputField field
+                 in InputFields)
         {
-            return;
-        }
-
-        AppLanguageManager.LanguageChanged +=
-            OnLanguageChanged;
-
-        _isLanguageSubscribed =
-            true;
-    }
-
-    private void UnsubscribeLanguageChanged()
-    {
-        if (!_isLanguageSubscribed)
-        {
-            return;
-        }
-
-        AppLanguageManager.LanguageChanged -=
-            OnLanguageChanged;
-
-        _isLanguageSubscribed =
-            false;
-    }
-
-    private void OnLanguageChanged(
-        object? sender,
-        EventArgs e)
-    {
-        Dispatcher.Dispatch(
-            () =>
+            if (!currentInputs.TryGetValue(
+                    field.Key,
+                    out string? rawText))
             {
-                string? selectedId =
-                    SelectedGeometry?.Id;
+                continue;
+            }
 
-                Dictionary<string, string> currentInputs =
-                    InputFields.ToDictionary(
-                        field => field.Key,
-                        field => field.RawText,
-                        StringComparer.Ordinal);
+            field.RawText =
+                rawText;
 
-                SelectCategory(
-                    _selectedCategory,
-                    selectedId);
-
-                foreach (GeometryInputField field
-                         in InputFields)
-                {
-                    if (!currentInputs.TryGetValue(
-                            field.Key,
-                            out string? rawText))
-                    {
-                        continue;
-                    }
-
-                    field.RawText =
-                        rawText;
-
-                    field.Text =
-                        rawText;
-                }
-
-                LocalizationService.Attach(
-                    this);
-            });
+            field.Text =
+                rawText;
+        }
     }
 
     private static string T(

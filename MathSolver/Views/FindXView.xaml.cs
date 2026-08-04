@@ -1,12 +1,14 @@
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Views.Base;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
+using FindXRational = MathSolver.Numerics.BigRational;
 
 namespace MathSolver.Views;
 
-public partial class FindXView : ContentView
+public partial class FindXView : LocalizedSolverView
 {
     private const int MaxIntegerInputDigits = 39;
     private const int MaxDecimalPlaces = 10;
@@ -61,8 +63,7 @@ public partial class FindXView : ContentView
     {
         InitializeComponent();
 
-        LocalizationService.Attach(
-            this);
+        InitializeLocalization();
 
         ConfigureExpandedInputLayout();
         _isCompactInputLayout =
@@ -254,8 +255,6 @@ public partial class FindXView : ContentView
         _findXOperation =
             operation;
 
-        ResetFindXOperationButtonStyles();
-
         Button selectedButton =
             operation switch
             {
@@ -275,38 +274,15 @@ public partial class FindXView : ContentView
                     FindXAddButton
             };
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-
-        UpdateFindXForm();
-        HideFindXMessages();
-    }
-
-    private void ResetFindXOperationButtonStyles()
-    {
-        Button[] buttons =
-        [
+        SelectionButtonStyler.Select(
+            selectedButton,
             FindXAddButton,
             FindXSubtractButton,
             FindXMultiplyButton,
-            FindXDivideButton
-        ];
+            FindXDivideButton);
 
-        foreach (Button button in buttons)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
+        UpdateFindXForm();
+        HideFindXMessages();
     }
 
     private void OnFindXUnknownLeftClicked(
@@ -331,44 +307,19 @@ public partial class FindXView : ContentView
         _findXUnknownPosition =
             position;
 
-        ResetFindXPositionButtonStyles();
-
         Button selectedButton =
             position ==
             FindXUnknownPosition.Left
                 ? FindXUnknownLeftButton
                 : FindXUnknownRightButton;
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
+        SelectionButtonStyler.Select(
+            selectedButton,
+            FindXUnknownLeftButton,
+            FindXUnknownRightButton);
 
         UpdateFindXForm();
         HideFindXMessages();
-    }
-
-    private void ResetFindXPositionButtonStyles()
-    {
-        Button[] buttons =
-        [
-            FindXUnknownLeftButton,
-            FindXUnknownRightButton
-        ];
-
-        foreach (Button button in buttons)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
     }
 
     private void OnFindXIntegerTypeClicked(
@@ -396,36 +347,16 @@ public partial class FindXView : ContentView
         _findXNumberType =
             numberType;
 
-        Button[] buttons =
-        [
-            FindXIntegerTypeButton,
-            FindXDecimalTypeButton
-        ];
-
-        foreach (Button button in buttons)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
-
         Button selectedButton =
             numberType ==
             FindXNumberInputType.Integer
                 ? FindXIntegerTypeButton
                 : FindXDecimalTypeButton;
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
+        SelectionButtonStyler.Select(
+            selectedButton,
+            FindXIntegerTypeButton,
+            FindXDecimalTypeButton);
 
         if (numberType ==
             FindXNumberInputType.Integer)
@@ -683,8 +614,9 @@ public partial class FindXView : ContentView
         }
 
         string formattedText =
-            FormatNumberWhileTyping(
-                newText);
+            IntegerInputFormatter.FormatWhileTyping(
+                newText,
+                allowDecimal: true);
 
         if (!string.Equals(
                 formattedText,
@@ -697,17 +629,17 @@ public partial class FindXView : ContentView
                     0,
                     newText.Length);
 
-            int logicalPosition =
-                CountLogicalCharacters(
-                    newText,
-                    oldCursorPosition);
+        int logicalPosition =
+            IntegerInputFormatter.CountLogicalCharacters(
+                newText,
+                oldCursorPosition);
 
             SetFindXEntryTextWithoutValidation(
                 entry,
                 formattedText,
-                FindCursorPosition(
-                    formattedText,
-                    logicalPosition));
+            IntegerInputFormatter.FindCursorPosition(
+                formattedText,
+                logicalPosition));
         }
 
         FindXResultBorder.IsVisible =
@@ -1221,7 +1153,7 @@ public partial class FindXView : ContentView
                 : string.Empty;
 
         integerPart =
-            AddThousandsSeparators(
+            IntegerInputFormatter.AddThousandsSeparators(
                 integerPart);
 
         return
@@ -3100,8 +3032,8 @@ public partial class FindXView : ContentView
         {
             text =
                 value.Numerator.Sign < 0
-                    ? $"−{AddThousandsSeparators(digits)}"
-                    : AddThousandsSeparators(digits);
+                    ? $"−{IntegerInputFormatter.AddThousandsSeparators(digits)}"
+                    : IntegerInputFormatter.AddThousandsSeparators(digits);
 
             return true;
         }
@@ -3125,8 +3057,8 @@ public partial class FindXView : ContentView
 
         text =
             decimalPart.Length == 0
-                ? $"{sign}{AddThousandsSeparators(integerPart)}"
-                : $"{sign}{AddThousandsSeparators(integerPart)}.{decimalPart}";
+                ? $"{sign}{IntegerInputFormatter.AddThousandsSeparators(integerPart)}"
+                : $"{sign}{IntegerInputFormatter.AddThousandsSeparators(integerPart)}.{decimalPart}";
 
         return true;
     }
@@ -3242,336 +3174,6 @@ public partial class FindXView : ContentView
         string RuleText,
         string StepsText,
         string VerificationText);
-
-    private readonly struct FindXRational
-    {
-        public BigInteger Numerator { get; }
-
-        public BigInteger Denominator { get; }
-
-        public bool IsZero =>
-            Numerator.IsZero;
-
-        public static FindXRational Zero =>
-            new(
-                BigInteger.Zero,
-                BigInteger.One);
-
-        public FindXRational(
-            BigInteger numerator,
-            BigInteger denominator)
-        {
-            if (denominator.IsZero)
-            {
-                throw new DivideByZeroException(
-                    "Mẫu số không được bằng 0.");
-            }
-
-            if (denominator.Sign < 0)
-            {
-                numerator =
-                    BigInteger.Negate(
-                        numerator);
-
-                denominator =
-                    BigInteger.Negate(
-                        denominator);
-            }
-
-            if (numerator.IsZero)
-            {
-                Numerator =
-                    BigInteger.Zero;
-
-                Denominator =
-                    BigInteger.One;
-
-                return;
-            }
-
-            BigInteger greatestCommonDivisor =
-                BigInteger.GreatestCommonDivisor(
-                    BigInteger.Abs(
-                        numerator),
-                    denominator);
-
-            Numerator =
-                numerator /
-                greatestCommonDivisor;
-
-            Denominator =
-                denominator /
-                greatestCommonDivisor;
-        }
-
-        public static FindXRational operator +(
-            FindXRational left,
-            FindXRational right)
-        {
-            BigInteger greatestCommonDivisor =
-                BigInteger.GreatestCommonDivisor(
-                    left.Denominator,
-                    right.Denominator);
-
-            BigInteger leftScale =
-                right.Denominator /
-                greatestCommonDivisor;
-
-            BigInteger rightScale =
-                left.Denominator /
-                greatestCommonDivisor;
-
-            return new FindXRational(
-                left.Numerator *
-                leftScale +
-                right.Numerator *
-                rightScale,
-                left.Denominator *
-                leftScale);
-        }
-
-        public static FindXRational operator -(
-            FindXRational left,
-            FindXRational right)
-        {
-            return left +
-                   new FindXRational(
-                       BigInteger.Negate(
-                           right.Numerator),
-                       right.Denominator);
-        }
-
-        public static FindXRational operator *(
-            FindXRational left,
-            FindXRational right)
-        {
-            BigInteger firstCancellation =
-                BigInteger.GreatestCommonDivisor(
-                    BigInteger.Abs(
-                        left.Numerator),
-                    right.Denominator);
-
-            BigInteger secondCancellation =
-                BigInteger.GreatestCommonDivisor(
-                    BigInteger.Abs(
-                        right.Numerator),
-                    left.Denominator);
-
-            BigInteger leftNumerator =
-                left.Numerator /
-                firstCancellation;
-
-            BigInteger rightDenominator =
-                right.Denominator /
-                firstCancellation;
-
-            BigInteger rightNumerator =
-                right.Numerator /
-                secondCancellation;
-
-            BigInteger leftDenominator =
-                left.Denominator /
-                secondCancellation;
-
-            return new FindXRational(
-                leftNumerator *
-                rightNumerator,
-                leftDenominator *
-                rightDenominator);
-        }
-
-        public static FindXRational operator /(
-            FindXRational left,
-            FindXRational right)
-        {
-            if (right.Numerator.IsZero)
-            {
-                throw new DivideByZeroException(
-                    "Không thể chia cho 0.");
-            }
-
-            return left *
-                   new FindXRational(
-                       right.Denominator,
-                       right.Numerator);
-        }
-    }
-
-    private static string FormatNumberWhileTyping(
-        string text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        // Bỏ các dấu phẩy cũ rồi tạo lại đúng theo từng nhóm 3 chữ số.
-        string normalizedText =
-            text.Replace(
-                ",",
-                string.Empty);
-
-        if (normalizedText == "-")
-        {
-            return normalizedText;
-        }
-
-        bool isNegative =
-            normalizedText.StartsWith(
-                '-');
-
-        string unsignedText =
-            isNegative
-                ? normalizedText[1..]
-                : normalizedText;
-
-        int decimalPointIndex =
-            unsignedText.IndexOf('.');
-
-        bool hasDecimalPoint =
-            decimalPointIndex >= 0;
-
-        string integerPart =
-            hasDecimalPoint
-                ? unsignedText[..decimalPointIndex]
-                : unsignedText;
-
-        string decimalPart =
-            hasDecimalPoint
-                ? unsignedText[(decimalPointIndex + 1)..]
-                : string.Empty;
-
-        // Khi người dùng bắt đầu bằng dấu chấm, tự hiển thị thành 0.
-        if (integerPart.Length == 0)
-        {
-            integerPart =
-                "0";
-        }
-        else
-        {
-            // Tránh hiển thị kiểu 0,001 khi người dùng nhập 0001.
-            integerPart =
-                integerPart.TrimStart('0');
-
-            if (integerPart.Length == 0)
-            {
-                integerPart =
-                    "0";
-            }
-        }
-
-        string groupedIntegerPart =
-            AddThousandsSeparators(
-                integerPart);
-
-        string sign =
-            isNegative
-                ? "-"
-                : string.Empty;
-
-        return hasDecimalPoint
-            ? $"{sign}{groupedIntegerPart}.{decimalPart}"
-            : $"{sign}{groupedIntegerPart}";
-    }
-
-    private static string AddThousandsSeparators(
-        string digits)
-    {
-        if (digits.Length <= 3)
-        {
-            return digits;
-        }
-
-        var builder =
-            new StringBuilder(
-                digits.Length +
-                digits.Length / 3);
-
-        int firstGroupLength =
-            digits.Length % 3;
-
-        if (firstGroupLength == 0)
-        {
-            firstGroupLength =
-                3;
-        }
-
-        builder.Append(
-            digits,
-            0,
-            firstGroupLength);
-
-        for (int index = firstGroupLength;
-             index < digits.Length;
-             index += 3)
-        {
-            builder.Append(',');
-            builder.Append(
-                digits,
-                index,
-                3);
-        }
-
-        return builder.ToString();
-    }
-
-    private static int CountLogicalCharacters(
-        string text,
-        int cursorPosition)
-    {
-        int logicalCount =
-            0;
-
-        int characterCount =
-            Math.Min(
-                cursorPosition,
-                text.Length);
-
-        for (int index = 0;
-             index < characterCount;
-             index++)
-        {
-            if (text[index] != ',')
-            {
-                logicalCount++;
-            }
-        }
-
-        return logicalCount;
-    }
-
-    private static int FindCursorPosition(
-        string formattedText,
-        int logicalPosition)
-    {
-        if (logicalPosition <= 0)
-        {
-            return 0;
-        }
-
-        int logicalCount =
-            0;
-
-        for (int index = 0;
-             index < formattedText.Length;
-             index++)
-        {
-            if (formattedText[index] == ',')
-            {
-                continue;
-            }
-
-            logicalCount++;
-
-            if (logicalCount >=
-                logicalPosition)
-            {
-                return index + 1;
-            }
-        }
-
-        return formattedText.Length;
-    }
 
     private static int CountDigits(
         string text)

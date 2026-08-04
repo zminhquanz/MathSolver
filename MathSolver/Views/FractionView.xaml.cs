@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services;
+using MathSolver.Views.Base;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Numerics;
@@ -8,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace MathSolver.Views;
 
-public partial class FractionView : ContentView
+public partial class FractionView : LocalizedSolverView
 {
     private bool _isCompact;
     private bool _isUpdatingNumberText;
@@ -60,11 +61,7 @@ public partial class FractionView : ContentView
     {
         InitializeComponent();
 
-        LocalizationService.Attach(
-            this);
-
-        AppLanguageManager.LanguageChanged +=
-            OnLanguageChanged;
+        InitializeLocalization();
 
         Entry[] fractionEntries =
         [
@@ -87,31 +84,20 @@ public partial class FractionView : ContentView
             FractionOperation.Add);
     }
 
-    private void OnLanguageChanged(
-        object? sender,
-        EventArgs e)
+    protected override void RefreshLocalizedContent()
     {
-        Dispatcher.Dispatch(
-            () =>
-            {
-                LocalizationService.Attach(
-                    this);
+        base.RefreshLocalizedContent();
 
-                if (ResultBorder.IsVisible)
-                {
-                    OnCalculateClicked(
-                        this,
-                        EventArgs.Empty);
-                }
-            });
+        if (ResultBorder.IsVisible)
+        {
+            OnCalculateClicked(this, EventArgs.Empty);
+        }
     }
 
     private void SelectOperation(
     FractionOperation operation)
     {
         _selectedOperation = operation;
-
-        ResetOperationButtonStyles();
 
         Button selectedButton;
 
@@ -161,13 +147,13 @@ public partial class FractionView : ContentView
                 break;
         }
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
+        SelectionButtonStyler.Select(
+            selectedButton,
+            AddButton,
+            SubtractButton,
+            MultiplyButton,
+            DivideButton,
+            CommonDenominatorButton);
 
         ResetOutput();
     }
@@ -1461,26 +1447,4 @@ public partial class FractionView : ContentView
             0;
     }
 
-    private void ResetOperationButtonStyles()
-    {
-        Button[] buttons =
-        [
-            AddButton,
-            SubtractButton,
-            MultiplyButton,
-            DivideButton,
-            CommonDenominatorButton
-        ];
-
-        foreach (Button button in buttons)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
-    }
 }

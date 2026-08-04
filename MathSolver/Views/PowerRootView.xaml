@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<ContentView
+<base:LocalizedSolverView
     x:Class="MathSolver.Views.PowerRootView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     BackgroundColor="Transparent"
@@ -14,52 +15,33 @@
         VerticalOptions="Fill">
 
         <VerticalStackLayout
-            Padding="20,16"
-            Spacing="14"
-            HorizontalOptions="Fill">
+            Style="{StaticResource SolverContentStyle}">
 
             <VerticalStackLayout
-                Margin="0,4,0,6"
-                Spacing="2">
+                Style="{StaticResource SolverHeroStyle}">
 
                 <Label
                     Text="aⁿ  ⁿ√a"
-                    FontSize="40"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    Style="{StaticResource SolverHeroSymbolStyle}" />
 
                 <Label
                     Text="{localization:Translate PowerRoot.Title}"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource SolverHeroTitleStyle}" />
 
                 <Label
                     Text="{localization:Translate PowerRoot.Subtitle}"
-                    FontSize="17"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
 
             <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                Style="{StaticResource SolverCardStyle}">
 
                 <VerticalStackLayout Spacing="14">
 
                     <Label
                         Text="{localization:Translate PowerRoot.ChooseMode}"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        Style="{StaticResource SolverSectionTitleStyle}" />
 
                     <Grid
                         ColumnDefinitions="*,*"
@@ -69,11 +51,7 @@
                             x:Name="PowerModeButton"
                             Grid.Column="0"
                             Text="{localization:Translate PowerRoot.PowerMode}"
-                            HeightRequest="50"
-                            Padding="8,0"
-                            CornerRadius="12"
-                            FontSize="17"
-                            FontAttributes="Bold"
+                            Style="{StaticResource SolverChoiceButtonStyle}"
                             BackgroundColor="{DynamicResource PrimaryColor}"
                             TextColor="{DynamicResource OnPrimaryColor}"
                             Clicked="OnPowerModeClicked" />
@@ -82,11 +60,7 @@
                             x:Name="RootModeButton"
                             Grid.Column="1"
                             Text="{localization:Translate PowerRoot.RootMode}"
-                            HeightRequest="50"
-                            Padding="8,0"
-                            CornerRadius="12"
-                            FontSize="17"
-                            FontAttributes="Bold"
+                            Style="{StaticResource SolverChoiceButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnRootModeClicked" />
@@ -245,24 +219,14 @@
                                 x:Name="CalculateButton"
                                 Grid.Column="0"
                                 Text="{localization:Translate Actions.Calculate}"
-                                HeightRequest="50"
-                                CornerRadius="12"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource PrimaryColor}"
-                                TextColor="{DynamicResource OnPrimaryColor}"
+                                Style="{StaticResource SolverPrimaryActionStyle}"
                                 Clicked="OnCalculateClicked" />
 
                             <Button
                                 x:Name="ClearButton"
                                 Grid.Column="1"
                                 Text="{localization:Translate Actions.Clear}"
-                                HeightRequest="50"
-                                CornerRadius="12"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                Style="{StaticResource SolverSecondaryActionStyle}"
                                 Clicked="OnClearClicked" />
 
                         </Grid>
@@ -601,4 +565,4 @@
 
     </ScrollView>
 
-</ContentView>
+</base:LocalizedSolverView>

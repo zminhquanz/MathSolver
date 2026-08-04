@@ -1,13 +1,14 @@
 using MathSolver.Graphics;
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Views.Base;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
 
 namespace MathSolver.Views;
 
-public partial class QuadraticEquationView : ContentView
+public partial class QuadraticEquationView : LocalizedSolverView
 {
     private const string Int128RangeText =
         "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến " +
@@ -84,16 +85,9 @@ public partial class QuadraticEquationView : ContentView
             OnCoefficientEntryHandlerChanged;
 #endif
 
-        Loaded +=
-            OnQuadraticViewLoaded;
-
-        Unloaded +=
-            OnQuadraticViewUnloaded;
-
         ApplyCurrentGraphTheme();
 
-        LocalizationService.Attach(
-            this);
+        InitializeLocalization();
 
         UpdateGraphStatus();
 
@@ -105,9 +99,7 @@ public partial class QuadraticEquationView : ContentView
         UpdateEquationPreview();
     }
 
-    private void OnQuadraticViewLoaded(
-        object? sender,
-        EventArgs e)
+    protected override void OnSolverLoaded()
     {
         SubscribeGraphThemeChanges();
         ApplyCurrentGraphTheme();
@@ -119,9 +111,7 @@ public partial class QuadraticEquationView : ContentView
 #endif
     }
 
-    private void OnQuadraticViewUnloaded(
-        object? sender,
-        EventArgs e)
+    protected override void OnSolverUnloaded()
     {
         UnsubscribeGraphThemeChanges();
 

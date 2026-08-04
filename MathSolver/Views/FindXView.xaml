@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<ContentView
+<base:LocalizedSolverView
     x:Class="MathSolver.Views.FindXView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
@@ -14,57 +15,37 @@
 
         <VerticalStackLayout
             x:Name="FindXContent"
-            Padding="20,16"
-            Spacing="14"
-            HorizontalOptions="Fill">
+            Style="{StaticResource SolverContentStyle}">
             <!-- Tiêu đề -->
             <VerticalStackLayout
-                Margin="0,4,0,6"
-                Spacing="2">
+                Style="{StaticResource SolverHeroStyle}">
 
                 <Label
                     x:Name="FindXHeroLabel"
                     Text="𝑥 = ?"
-                    FontSize="40"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    Style="{StaticResource SolverHeroSymbolStyle}" />
 
                 <Label
                     x:Name="FindXPageTitle"
                     Text="TÌM THÀNH PHẦN CHƯA BIẾT"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource SolverHeroTitleStyle}" />
 
                 <Label
                     x:Name="FindXPageSubtitle"
                     Text="Số hạng • Số bị trừ • Số trừ • Thừa số • Số bị chia • Số chia"
-                    FontSize="17"
-                    LineBreakMode="WordWrap"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
 
             <!-- 1. Chọn phép tính và vị trí của x -->
             <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                Style="{StaticResource SolverCardStyle}">
 
                 <VerticalStackLayout Spacing="14">
 
                     <Label
                         Text="1. Chọn phép tính"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        Style="{StaticResource SolverSectionTitleStyle}" />
 
                     <Grid
                         ColumnDefinitions="*,*,*,*"
@@ -74,11 +55,7 @@
                             x:Name="FindXAddButton"
                             Grid.Column="0"
                             Text="+"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXAddClicked" />
@@ -87,11 +64,7 @@
                             x:Name="FindXSubtractButton"
                             Grid.Column="1"
                             Text="−"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXSubtractClicked" />
@@ -100,11 +73,7 @@
                             x:Name="FindXMultiplyButton"
                             Grid.Column="2"
                             Text="×"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXMultiplyClicked" />
@@ -113,11 +82,7 @@
                             x:Name="FindXDivideButton"
                             Grid.Column="3"
                             Text="÷"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXDivideClicked" />
@@ -359,23 +324,14 @@
                         <Button
                             Grid.Column="0"
                             Text="Tìm x"
-                            HeightRequest="54"
-                            FontSize="19"
-                            FontAttributes="Bold"
-                            CornerRadius="14"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnFindXCalculateClicked" />
 
                         <Button
                             Grid.Column="1"
                             Text="Xóa"
-                            HeightRequest="54"
-                            FontSize="19"
-                            FontAttributes="Bold"
-                            CornerRadius="14"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXClearClicked" />
 
                     </Grid>
@@ -660,4 +616,4 @@
         </VerticalStackLayout>
     </ScrollView>
 
-</ContentView>
+</base:LocalizedSolverView>

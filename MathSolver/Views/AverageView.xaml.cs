@@ -1,5 +1,6 @@
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Views.Base;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
@@ -7,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace MathSolver.Views;
 
-public partial class AverageView : ContentView
+public partial class AverageView : LocalizedSolverView
 {
     private const int ResultSignificantDigits =
         OctoDouble.SignificantDigits;
@@ -22,7 +23,6 @@ public partial class AverageView : ContentView
         AverageNumberType.Integer;
 
     private AverageSolutionState? _solutionState;
-    private bool _isCultureSubscribed;
     private bool _isUpdatingValuesText;
     private bool _isShowingCompactValues;
     private string _editableValuesText = string.Empty;
@@ -33,14 +33,7 @@ public partial class AverageView : ContentView
 
         // Toàn bộ chuỗi tĩnh dùng stable localization key. Không để bộ dịch
         // legacy ghi đè các binding hoặc phần lời giải được dựng bằng code.
-        LocalizationService.Attach(
-            this);
-
-        Loaded +=
-            OnLoaded;
-
-        Unloaded +=
-            OnUnloaded;
+        InitializeLocalization();
 
         ValuesEditor.Focused +=
             OnValuesEditorFocused;
@@ -53,44 +46,10 @@ public partial class AverageView : ContentView
             clearInput: false);
     }
 
-    private void OnLoaded(
-        object? sender,
-        EventArgs e)
+    protected override void RefreshLocalizedContent()
     {
-        if (!_isCultureSubscribed)
-        {
-            LocalizationService.CultureChanged +=
-                OnCultureChanged;
-
-            _isCultureSubscribed =
-                true;
-        }
-
+        base.RefreshLocalizedContent();
         RefreshLocalizedSolution();
-    }
-
-    private void OnUnloaded(
-        object? sender,
-        EventArgs e)
-    {
-        if (!_isCultureSubscribed)
-        {
-            return;
-        }
-
-        LocalizationService.CultureChanged -=
-            OnCultureChanged;
-
-        _isCultureSubscribed =
-            false;
-    }
-
-    private void OnCultureChanged(
-        object? sender,
-        EventArgs e)
-    {
-        Dispatcher.Dispatch(
-            RefreshLocalizedSolution);
     }
 
     private void OnIntegerTypeClicked(
@@ -118,41 +77,20 @@ public partial class AverageView : ContentView
         _numberType =
             numberType;
 
-        ResetNumberTypeButton(
-            IntegerTypeButton);
-
-        ResetNumberTypeButton(
-            DecimalTypeButton);
-
         Button selectedButton =
             numberType == AverageNumberType.Integer
                 ? IntegerTypeButton
                 : DecimalTypeButton;
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
+        SelectionButtonStyler.Select(
+            selectedButton,
+            IntegerTypeButton,
+            DecimalTypeButton);
 
         if (clearInput)
         {
             ClearAll();
         }
-    }
-
-    private static void ResetNumberTypeButton(
-        Button button)
-    {
-        button.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "SurfaceAltColor");
-
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            "TextPrimaryColor");
     }
 
     private void OnValuesTextChanged(

@@ -5,7 +5,8 @@ namespace MathSolver.Services;
 internal static class IntegerInputFormatter
 {
     public static string FormatWhileTyping(
-        string? text)
+        string? text,
+        bool allowDecimal = false)
     {
         string normalizedText =
             (text ?? string.Empty)
@@ -26,10 +27,27 @@ internal static class IntegerInputFormatter
         bool isNegative =
             normalizedText[0] == '-';
 
-        string digits =
+        string unsignedText =
             isNegative
                 ? normalizedText[1..]
                 : normalizedText;
+
+        int decimalPointIndex =
+            allowDecimal
+                ? unsignedText.IndexOf('.')
+                : -1;
+
+        bool hasDecimalPoint = decimalPointIndex >= 0;
+
+        string digits =
+            hasDecimalPoint
+                ? unsignedText[..decimalPointIndex]
+                : unsignedText;
+
+        string decimalPart =
+            hasDecimalPoint
+                ? unsignedText[(decimalPointIndex + 1)..]
+                : string.Empty;
 
         digits =
             digits.TrimStart('0');
@@ -44,9 +62,11 @@ internal static class IntegerInputFormatter
             AddThousandsSeparators(
                 digits);
 
-        return isNegative
-            ? $"-{groupedDigits}"
-            : groupedDigits;
+        string sign = isNegative ? "-" : string.Empty;
+
+        return hasDecimalPoint
+            ? $"{sign}{groupedDigits}.{decimalPart}"
+            : $"{sign}{groupedDigits}";
     }
 
     public static int CountLogicalCharacters(
@@ -109,7 +129,7 @@ internal static class IntegerInputFormatter
         return formattedText.Length;
     }
 
-    private static string AddThousandsSeparators(
+    public static string AddThousandsSeparators(
         string digits)
     {
         if (digits.Length <= 3)

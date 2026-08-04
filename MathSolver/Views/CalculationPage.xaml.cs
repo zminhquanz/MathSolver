@@ -259,8 +259,6 @@ public partial class CalculationPage : ContentPage
     {
         _selectedOperation = operation;
 
-        ResetOperationButtonStyles();
-
         Button selectedButton;
 
         switch (operation)
@@ -291,37 +289,14 @@ public partial class CalculationPage : ContentPage
                 break;
         }
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-
-        HideMessages();
-    }
-
-    private void ResetOperationButtonStyles()
-    {
-        Button[] buttons =
-        [
+        SelectionButtonStyler.Select(
+            selectedButton,
             AddButton,
             SubtractButton,
             MultiplyButton,
-            DivideButton
-        ];
+            DivideButton);
 
-        foreach (Button button in buttons)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
+        HideMessages();
     }
 
     private void OnCalculateClicked(object? sender, EventArgs e)
@@ -1707,7 +1682,7 @@ public partial class CalculationPage : ContentPage
         }
 
         integerPart =
-            AddThousandsSeparators(
+            IntegerInputFormatter.AddThousandsSeparators(
                 integerPart);
 
         string decimalPart =
@@ -2163,41 +2138,16 @@ public partial class CalculationPage : ContentPage
 
     private void UpdateNumberTypeButtonStyles()
     {
-        ResetNumberTypeButtonStyles();
-
         Button selectedButton =
             _selectedNumberType ==
             NumberInputType.Integer
                 ? IntegerTypeButton
                 : DecimalTypeButton;
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-    }
-
-    private void ResetNumberTypeButtonStyles()
-    {
-        Button[] buttons =
-        [
+        SelectionButtonStyler.Select(
+            selectedButton,
             IntegerTypeButton,
-        DecimalTypeButton
-        ];
-
-        foreach (Button button in buttons)
-        {
-            button.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-
-            button.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
+            DecimalTypeButton);
     }
 
     private string? GetEntryInputText(
@@ -2507,8 +2457,9 @@ public partial class CalculationPage : ContentPage
         }
 
         string formattedText =
-            FormatNumberWhileTyping(
-                newText);
+            IntegerInputFormatter.FormatWhileTyping(
+                newText,
+                allowDecimal: true);
 
         if (formattedText == newText)
         {
@@ -2522,192 +2473,16 @@ public partial class CalculationPage : ContentPage
                 newText.Length);
 
         int logicalPosition =
-            CountLogicalCharacters(
+            IntegerInputFormatter.CountLogicalCharacters(
                 newText,
                 oldCursorPosition);
 
         SetEntryTextWithoutValidation(
             entry,
             formattedText,
-            FindCursorPosition(
+            IntegerInputFormatter.FindCursorPosition(
                 formattedText,
                 logicalPosition));
-    }
-
-    private static string FormatNumberWhileTyping(
-        string text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        // Bỏ các dấu phẩy cũ rồi tạo lại đúng theo từng nhóm 3 chữ số.
-        string normalizedText =
-            text.Replace(
-                ",",
-                string.Empty);
-
-        if (normalizedText == "-")
-        {
-            return normalizedText;
-        }
-
-        bool isNegative =
-            normalizedText.StartsWith(
-                '-');
-
-        string unsignedText =
-            isNegative
-                ? normalizedText[1..]
-                : normalizedText;
-
-        int decimalPointIndex =
-            unsignedText.IndexOf('.');
-
-        bool hasDecimalPoint =
-            decimalPointIndex >= 0;
-
-        string integerPart =
-            hasDecimalPoint
-                ? unsignedText[..decimalPointIndex]
-                : unsignedText;
-
-        string decimalPart =
-            hasDecimalPoint
-                ? unsignedText[(decimalPointIndex + 1)..]
-                : string.Empty;
-
-        // Khi người dùng bắt đầu bằng dấu chấm, tự hiển thị thành 0.
-        if (integerPart.Length == 0)
-        {
-            integerPart =
-                "0";
-        }
-        else
-        {
-            // Tránh hiển thị kiểu 0,001 khi người dùng nhập 0001.
-            integerPart =
-                integerPart.TrimStart('0');
-
-            if (integerPart.Length == 0)
-            {
-                integerPart =
-                    "0";
-            }
-        }
-
-        string groupedIntegerPart =
-            AddThousandsSeparators(
-                integerPart);
-
-        string sign =
-            isNegative
-                ? "-"
-                : string.Empty;
-
-        return hasDecimalPoint
-            ? $"{sign}{groupedIntegerPart}.{decimalPart}"
-            : $"{sign}{groupedIntegerPart}";
-    }
-
-    private static string AddThousandsSeparators(
-        string digits)
-    {
-        if (digits.Length <= 3)
-        {
-            return digits;
-        }
-
-        var builder =
-            new StringBuilder(
-                digits.Length +
-                digits.Length / 3);
-
-        int firstGroupLength =
-            digits.Length % 3;
-
-        if (firstGroupLength == 0)
-        {
-            firstGroupLength =
-                3;
-        }
-
-        builder.Append(
-            digits,
-            0,
-            firstGroupLength);
-
-        for (int index = firstGroupLength;
-             index < digits.Length;
-             index += 3)
-        {
-            builder.Append(',');
-            builder.Append(
-                digits,
-                index,
-                3);
-        }
-
-        return builder.ToString();
-    }
-
-    private static int CountLogicalCharacters(
-        string text,
-        int cursorPosition)
-    {
-        int logicalCount =
-            0;
-
-        int characterCount =
-            Math.Min(
-                cursorPosition,
-                text.Length);
-
-        for (int index = 0;
-             index < characterCount;
-             index++)
-        {
-            if (text[index] != ',')
-            {
-                logicalCount++;
-            }
-        }
-
-        return logicalCount;
-    }
-
-    private static int FindCursorPosition(
-        string formattedText,
-        int logicalPosition)
-    {
-        if (logicalPosition <= 0)
-        {
-            return 0;
-        }
-
-        int logicalCount =
-            0;
-
-        for (int index = 0;
-             index < formattedText.Length;
-             index++)
-        {
-            if (formattedText[index] == ',')
-            {
-                continue;
-            }
-
-            logicalCount++;
-
-            if (logicalCount >=
-                logicalPosition)
-            {
-                return index + 1;
-            }
-        }
-
-        return formattedText.Length;
     }
 
     private void ShowInputTypeError()
@@ -3467,14 +3242,6 @@ public partial class CalculationPage : ContentPage
 
     private void UpdateSubTabButtonStyles()
     {
-        ResetSubTabButton(BasicTabButton);
-        ResetSubTabButton(AverageTabButton);
-        ResetSubTabButton(PowerRootTabButton);
-        ResetSubTabButton(FractionTabButton);
-        ResetSubTabButton(FindXTabButton);
-        ResetSubTabButton(QuadraticTabButton);
-        ResetSubTabButton(GeometryTabButton);
-
         Button selectedButton =
             _selectedSubTab switch
             {
@@ -3488,24 +3255,15 @@ public partial class CalculationPage : ContentPage
                 _ => BasicTabButton
             };
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-    }
-
-    private static void ResetSubTabButton(Button button)
-    {
-        button.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "SurfaceAltColor");
-
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            "TextPrimaryColor");
+        SelectionButtonStyler.Select(
+            selectedButton,
+            BasicTabButton,
+            AverageTabButton,
+            PowerRootTabButton,
+            FractionTabButton,
+            FindXTabButton,
+            QuadraticTabButton,
+            GeometryTabButton);
     }
 
     private static string CreateDecimalDivisionExplanation(

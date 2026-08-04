@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Storage;
 using MathSolver.Services;
+using MathSolver.Views.Base;
 using Microsoft.Maui.ApplicationModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -8,7 +9,7 @@ using System.Text;
 
 namespace MathSolver.Views;
 
-public partial class PowerRootView : ContentView
+public partial class PowerRootView : LocalizedSolverView
 {
     private const long MaxBaseMagnitude =
         1_000_000_000_000_000_000L;
@@ -48,7 +49,6 @@ public partial class PowerRootView : ContentView
     private CancellationTokenSource? _calculationCancellation;
     private CancellationTokenSource? _exportCancellation;
     private PowerCalculationState? _calculationState;
-    private bool _isCultureSubscribed;
     private bool _isCalculating;
     private bool _isExporting;
     private bool _isPowerMode = true;
@@ -65,19 +65,10 @@ public partial class PowerRootView : ContentView
     {
         InitializeComponent();
 
-        LocalizationService.Attach(
-            this);
+        InitializeLocalization();
 
         _availableWorkerCount =
-            Math.Max(
-                1,
-                Environment.ProcessorCount);
-
-        Loaded +=
-            OnLoaded;
-
-        Unloaded +=
-            OnUnloaded;
+            CalculationThreadingManager.RecommendedWorkerCount;
 
         SelectMode(
             powerMode: true);
@@ -85,45 +76,16 @@ public partial class PowerRootView : ContentView
         RefreshLocalizedDynamicText();
     }
 
-    private void OnLoaded(
-        object? sender,
-        EventArgs e)
+    protected override void RefreshLocalizedContent()
     {
-        if (!_isCultureSubscribed)
-        {
-            LocalizationService.CultureChanged +=
-                OnCultureChanged;
-
-            _isCultureSubscribed =
-                true;
-        }
-
+        base.RefreshLocalizedContent();
         RefreshLocalizedDynamicText();
     }
 
-    private void OnUnloaded(
-        object? sender,
-        EventArgs e)
+    protected override void OnSolverUnloaded()
     {
-        if (_isCultureSubscribed)
-        {
-            LocalizationService.CultureChanged -=
-                OnCultureChanged;
-
-            _isCultureSubscribed =
-                false;
-        }
-
         _calculationCancellation?.Cancel();
         _exportCancellation?.Cancel();
-    }
-
-    private void OnCultureChanged(
-        object? sender,
-        EventArgs e)
-    {
-        Dispatcher.Dispatch(
-            RefreshLocalizedDynamicText);
     }
 
     private void OnPowerModeClicked(
@@ -153,42 +115,21 @@ public partial class PowerRootView : ContentView
         _isPowerMode =
             powerMode;
 
-        ResetModeButton(
-            PowerModeButton);
-
-        ResetModeButton(
-            RootModeButton);
-
         Button selectedButton =
             powerMode
                 ? PowerModeButton
                 : RootModeButton;
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
+        SelectionButtonStyler.Select(
+            selectedButton,
+            PowerModeButton,
+            RootModeButton);
 
         PowerContent.IsVisible =
             powerMode;
 
         RootComingSoonBorder.IsVisible =
             !powerMode;
-    }
-
-    private static void ResetModeButton(
-        Button button)
-    {
-        button.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "SurfaceAltColor");
-
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            "TextPrimaryColor");
     }
 
     private void OnInputTextChanged(

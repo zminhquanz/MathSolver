@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<ContentView
+<base:LocalizedSolverView
     x:Class="MathSolver.Views.FractionView"
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:models="clr-namespace:MathSolver.Models"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
@@ -17,56 +18,37 @@
         VerticalOptions="Fill">
         <VerticalStackLayout
             x:Name="FractionContent"
-            Padding="20,16"
-            Spacing="14"
-            HorizontalOptions="Fill">
+            Style="{StaticResource SolverContentStyle}">
 
             <!-- Tiêu đề đồng bộ với tab Cơ bản -->
             <VerticalStackLayout
-                Margin="0,4,0,6"
-                Spacing="2">
+                Style="{StaticResource SolverHeroStyle}">
 
                 <Label
                     Text="½  + − × ÷"
-                    FontSize="40"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    Style="{StaticResource SolverHeroSymbolStyle}" />
 
                 <Label
                     x:Name="FractionPageTitle"
                     Text="PHÉP TÍNH PHÂN SỐ"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource SolverHeroTitleStyle}" />
 
                 <Label
                     x:Name="FractionPageSubtitle"
                     Text="Cộng • Trừ • Nhân • Chia • Quy đồng"
-                    FontSize="17"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
 
             <!-- 1. Chọn phép tính -->
             <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                Style="{StaticResource SolverCardStyle}">
 
                 <VerticalStackLayout Spacing="14">
 
                     <Label
                         Text="1. Chọn phép tính"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        Style="{StaticResource SolverSectionTitleStyle}" />
 
                     <Grid
                         x:Name="OperationButtonsGrid"
@@ -80,11 +62,7 @@
                             Grid.Row="0"
                             Grid.Column="0"
                             Text="+"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnAddClicked" />
@@ -94,11 +72,7 @@
                             Grid.Row="0"
                             Grid.Column="1"
                             Text="−"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnSubtractClicked" />
@@ -108,11 +82,7 @@
                             Grid.Row="0"
                             Grid.Column="2"
                             Text="×"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnMultiplyClicked" />
@@ -122,11 +92,7 @@
                             Grid.Row="0"
                             Grid.Column="3"
                             Text="÷"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            HeightRequest="48"
-                            Padding="8,0"
-                            CornerRadius="12"
+                            Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnDivideClicked" />
@@ -363,12 +329,7 @@
                             Grid.Row="0"
                             Grid.Column="0"
                             Text="Tính toán"
-                            HeightRequest="54"
-                            Padding="10,0"
-                            CornerRadius="14"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
@@ -376,10 +337,7 @@
                             Grid.Row="0"
                             Grid.Column="1"
                             Text="Xóa"
-                            HeightRequest="54"
-                            Padding="10,0"
-                            CornerRadius="14"
-                            FontAttributes="Bold"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnClearClicked" />
@@ -594,4 +552,4 @@
 
         </VerticalStackLayout>
     </ScrollView>
-</ContentView>
+</base:LocalizedSolverView>

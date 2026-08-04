@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<ContentView
+<base:LocalizedSolverView
     x:Class="MathSolver.Views.QuadraticEquationView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
@@ -15,57 +16,38 @@
 
         <VerticalStackLayout
             x:Name="QuadraticContent"
-            Padding="20,16"
-            Spacing="14"
-            HorizontalOptions="Fill">
+            Style="{StaticResource SolverContentStyle}">
 
             <!-- Tiêu đề đồng bộ với Cơ bản, Phân số và Tìm x -->
             <VerticalStackLayout
-                Margin="0,4,0,6"
-                Spacing="2">
+                Style="{StaticResource SolverHeroStyle}">
 
                 <Label
                     Text="ax² + bx + c = 0"
-                    FontSize="40"
+                    Style="{StaticResource SolverHeroSymbolStyle}"
                     FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
                     LineBreakMode="NoWrap"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    />
 
                 <Label
                     Text="PHƯƠNG TRÌNH BẬC HAI"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource SolverHeroTitleStyle}" />
 
                 <Label
                     Text="Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết"
-                    FontSize="17"
-                    HorizontalTextAlignment="Center"
-                    LineBreakMode="WordWrap"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
 
             <!-- 1. Nhập hệ số -->
             <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                Style="{StaticResource SolverCardStyle}">
 
                 <VerticalStackLayout Spacing="14">
 
                     <Label
                         Text="1. Nhập các hệ số"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        Style="{StaticResource SolverSectionTitleStyle}" />
 
 
                     <Grid
@@ -304,25 +286,13 @@
                             x:Name="CalculateQuadraticButton"
                             Grid.Column="0"
                             Text="Tính nghiệm"
-                            HeightRequest="50"
-                            Padding="10,0"
-                            CornerRadius="12"
-                            FontSize="18"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
                             Grid.Column="1"
                             Text="Xóa"
-                            HeightRequest="50"
-                            Padding="10,0"
-                            CornerRadius="12"
-                            FontSize="18"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
                             Clicked="OnClearClicked" />
 
                     </Grid>
@@ -754,4 +724,4 @@
 
     </ScrollView>
 
-</ContentView>
+</base:LocalizedSolverView>

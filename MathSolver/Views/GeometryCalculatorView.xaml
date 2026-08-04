@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<ContentView
+<base:LocalizedSolverView
     x:Class="MathSolver.Views.GeometryCalculatorView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill"
@@ -15,35 +16,25 @@
         VerticalScrollBarVisibility="Default">
 
         <VerticalStackLayout
-            Padding="20,16,20,20"
-            Spacing="14"
-            HorizontalOptions="Fill">
+            Style="{StaticResource SolverContentStyle}">
 
             <!-- Tiêu đề -->
             <VerticalStackLayout
-                Margin="0,4,0,6"
-                Spacing="2">
+                Style="{StaticResource SolverHeroStyle}">
 
                 <Label
                     Text="□  △  ○"
-                    FontSize="40"
+                    Style="{StaticResource SolverHeroSymbolStyle}"
                     FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    />
 
                 <Label
                     Text="HÌNH HỌC"
-                    FontSize="27"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource SolverHeroTitleStyle}" />
 
                 <Label
                     Text="Tính chu vi, diện tích, diện tích bề mặt và thể tích"
-                    FontSize="18"
-                    HorizontalTextAlignment="Center"
-                    LineBreakMode="WordWrap"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
 
@@ -72,22 +63,13 @@
 
                     <!-- 1. Phân loại hình học -->
                     <Border
-                        Padding="16"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource BorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
+                        Style="{StaticResource SolverCardStyle}">
 
                         <VerticalStackLayout Spacing="12">
 
                             <Label
                                 Text="1. Chọn loại hình học"
-                                FontSize="20"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <Grid
                                 ColumnDefinitions="*,*"
@@ -97,22 +79,14 @@
                                     x:Name="PlaneGeometryButton"
                                     Grid.Column="0"
                                     Text="Hình học mặt phẳng"
-                                    HeightRequest="56"
-                                    Padding="10,0"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    CornerRadius="11"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnPlaneGeometryClicked" />
 
                                 <Button
                                     x:Name="SolidGeometryButton"
                                     Grid.Column="1"
                                     Text="Hình học không gian"
-                                    HeightRequest="56"
-                                    Padding="10,0"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    CornerRadius="11"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnSolidGeometryClicked" />
 
                             </Grid>
@@ -555,23 +529,14 @@
                         <Button
                             Grid.Column="0"
                             Text="Tính toán"
-                            HeightRequest="50"
-                            FontSize="18"
-                            FontAttributes="Bold"
-                            CornerRadius="11"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
                             Grid.Column="1"
                             Text="Xóa"
-                            HeightRequest="50"
-                            FontSize="18"
-                            FontAttributes="Bold"
-                            CornerRadius="11"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnClearClicked" />
 
                     </Grid>
@@ -793,4 +758,4 @@
 
         </VerticalStackLayout>
     </ScrollView>
-</ContentView>
+</base:LocalizedSolverView>
