@@ -113,6 +113,276 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.Tab",
+      "source": "aⁿ Lũy thừa - Căn bậc",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.Title",
+      "source": "LŨY THỪA - CĂN BẬC",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.Subtitle",
+      "source": "Tính số lớn chính xác bằng BigInteger",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ChooseMode",
+      "source": "1. Chọn phép tính",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.PowerMode",
+      "source": "aⁿ Lũy thừa",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootMode",
+      "source": "ⁿ√a Căn bậc",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InputTitle",
+      "source": "2. Nhập dữ liệu lũy thừa",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.BaseLabel",
+      "source": "Cơ số a",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.BaseHint",
+      "source": "Số nguyên từ −1,000,000,000 đến 1,000,000,000.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExponentLabel",
+      "source": "Số mũ n",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExponentHint",
+      "source": "Số nguyên không âm, tối đa 1,000,000.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.WorkerRecommendation",
+      "source": "CPU có {0} nhân vật lý • kết quả tối đa 100.000 chữ số dùng 1 luồng; lớn hơn dùng tối đa {1} luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.Stop",
+      "source": "Dừng tính toán",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ResultTitle",
+      "source": "3. Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.CompactHint",
+      "source": "Kết quả trên giao diện đã được rút gọn sang dạng khoa học.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.CopyCompact",
+      "source": "Sao chép kết quả rút gọn",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.CopyResult",
+      "source": "Sao chép kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportTxt",
+      "source": "Xuất kết quả TXT",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportStop",
+      "source": "Dừng tạo TXT",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportStopping",
+      "source": "Đang dừng tạo TXT…",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.SolutionTitle",
+      "source": "Lời giải chi tiết",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootComingSoon",
+      "source": "Logic tính căn bậc sẽ được bổ sung ở bước tiếp theo.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.BaseRangeError",
+      "source": "Cơ số phải là số nguyên trong phạm vi từ −1,000,000,000 đến 1,000,000,000.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExponentRangeError",
+      "source": "Số mũ phải là số nguyên không âm từ 0 đến 1,000,000.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ZeroPowerZeroError",
+      "source": "0⁰ không được xác định trong chế độ tính này. Hãy đổi cơ số hoặc số mũ.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressTitle",
+      "source": "Đang tính {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressSteps",
+      "source": "Đã xử lý {0} / {1} bước",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressWorkers",
+      "source": "Sử dụng {0} luồng",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressCompleted",
+      "source": "Đã tính xong {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressStopped",
+      "source": "Đã dừng tính toán theo yêu cầu.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressStopping",
+      "source": "Đang dừng sau phép nhân BigInteger hiện tại…",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.CalculationError",
+      "source": "Không thể hoàn tất phép tính: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepGiven",
+      "source": "Bước 1. Phép tính đã cho: {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepZeroExponent",
+      "source": "Bước 2. Với cơ số khác 0, mọi số mũ 0 đều cho kết quả bằng 1: a⁰ = 1.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepSplit",
+      "source": "Bước 2. Dùng aᵐ⁺ⁿ = aᵐ × aⁿ và chia số mũ: {0} = {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepSquareMultiply",
+      "source": "Bước 3. {0} worker cùng tính các lũy thừa con bằng thuật toán bình phương–nhân; mỗi vòng giảm một nửa số mũ còn lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepCombine",
+      "source": "Bước 3. Ghép các kết quả theo cây nhân: {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepResult",
+      "source": "Kết quả: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoDigits",
+      "source": "• Số chữ số: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoRam",
+      "source": "• RAM sử dụng (ước tính): {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoThreads",
+      "source": "• Số luồng: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoTime",
+      "source": "• Thời gian: {0} giây",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.Copied",
+      "source": "Đã sao chép",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportPreparing",
+      "source": "Đang tạo TXT…",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportPreparingProgress",
+      "source": "Đang tạo dữ liệu TXT… {0}%",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportStepPreparing",
+      "source": "Đang tạo dữ liệu TXT • {0}% • chuẩn bị khối {1}/{2}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportStepSplitting",
+      "source": "Đang tạo dữ liệu TXT • {0}% • đang tách dữ liệu cho khối {1}/{2}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportStepWriting",
+      "source": "Đang tạo dữ liệu TXT • {0}% • đã ghi khối {1}/{2}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportStepFinalizing",
+      "source": "Đang tạo dữ liệu TXT • {0}% • hoàn tất file tạm",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportSavingProgress",
+      "source": "Đang lưu file TXT… {0}%",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportSuccess",
+      "source": "Đã lưu file TXT tại: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportCanceled",
+      "source": "Đã dừng tạo file TXT.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ExportError",
+      "source": "Không thể xuất file TXT: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.UnknownError",
+      "source": "Lỗi không xác định",
+      "mode": "exact"
+    },
+    {
       "key": "legacy.exact.giai.toan.5725d6d4",
       "source": "Giải toán",
       "mode": "exact"

@@ -61,6 +61,18 @@
                     Clicked="OnAverageTabClicked" />
 
                 <Button
+                    x:Name="PowerRootTabButton"
+                    Text="aⁿ Lũy thừa - Căn bậc"
+                    MinimumWidthRequest="205"
+                    HeightRequest="44"
+                    Padding="8,0"
+                    FontSize="15"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    TextColor="{DynamicResource TextSecondaryColor}"
+                    Clicked="OnPowerRootTabClicked" />
+
+                <Button
                     x:Name="FractionTabButton"
                     Text="½ Phân số"
                     MinimumWidthRequest="120"
@@ -840,6 +852,13 @@
                 x:Name="AverageTabContent"
                 IsVisible="False">
                 <views:AverageView />
+            </Grid>
+
+            <!-- Tab lũy thừa - căn bậc -->
+            <Grid
+                x:Name="PowerRootTabContent"
+                IsVisible="False">
+                <views:PowerRootView />
             </Grid>
 
             <!-- Tab Phân số -->

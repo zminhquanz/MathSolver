@@ -90,6 +90,9 @@
 	  <MauiXaml Update="Views\AverageView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\PowerRootView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\FindXView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

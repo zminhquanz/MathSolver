@@ -3154,6 +3154,14 @@ public partial class CalculationPage : ContentPage
             CalculationSubTab.Average);
     }
 
+    private async void OnPowerRootTabClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await SwitchSubTabAsync(
+            CalculationSubTab.PowerRoot);
+    }
+
     private async void OnFractionTabClicked(
         object? sender,
         EventArgs e)
@@ -3323,6 +3331,7 @@ public partial class CalculationPage : ContentPage
         [
             BasicTabButton,
             AverageTabButton,
+            PowerRootTabButton,
             FractionTabButton,
             FindXTabButton,
             QuadraticTabButton,
@@ -3383,6 +3392,7 @@ public partial class CalculationPage : ContentPage
         {
             CalculationSubTab.Basic => BasicTabContent,
             CalculationSubTab.Average => AverageTabContent,
+            CalculationSubTab.PowerRoot => PowerRootTabContent,
             CalculationSubTab.Fraction => FractionTabContent,
             CalculationSubTab.FindX => FindXTabContent,
             CalculationSubTab.Quadratic => QuadraticTabContent,
@@ -3398,6 +3408,7 @@ public partial class CalculationPage : ContentPage
         {
             CalculationSubTab.Basic => BasicTabButton,
             CalculationSubTab.Average => AverageTabButton,
+            CalculationSubTab.PowerRoot => PowerRootTabButton,
             CalculationSubTab.Fraction => FractionTabButton,
             CalculationSubTab.FindX => FindXTabButton,
             CalculationSubTab.Quadratic => QuadraticTabButton,
@@ -3432,6 +3443,10 @@ public partial class CalculationPage : ContentPage
             selectedTab ==
             CalculationSubTab.Average;
 
+        PowerRootTabContent.IsVisible =
+            selectedTab ==
+            CalculationSubTab.PowerRoot;
+
         FractionTabContent.IsVisible = selectedTab == CalculationSubTab.Fraction;
 
         FindXTabContent.IsVisible =
@@ -3454,6 +3469,7 @@ public partial class CalculationPage : ContentPage
     {
         ResetSubTabButton(BasicTabButton);
         ResetSubTabButton(AverageTabButton);
+        ResetSubTabButton(PowerRootTabButton);
         ResetSubTabButton(FractionTabButton);
         ResetSubTabButton(FindXTabButton);
         ResetSubTabButton(QuadraticTabButton);
@@ -3464,6 +3480,7 @@ public partial class CalculationPage : ContentPage
             {
                 CalculationSubTab.Basic => BasicTabButton,
                 CalculationSubTab.Average => AverageTabButton,
+                CalculationSubTab.PowerRoot => PowerRootTabButton,
                 CalculationSubTab.Fraction => FractionTabButton,
                 CalculationSubTab.FindX => FindXTabButton,
                 CalculationSubTab.Quadratic => QuadraticTabButton,
@@ -3740,6 +3757,7 @@ public enum CalculationSubTab
 {
     Basic,
     Average,
+    PowerRoot,
     Fraction,
     FindX,
     Quadratic,
