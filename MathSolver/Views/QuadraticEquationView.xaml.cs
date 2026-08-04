@@ -728,6 +728,28 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
+        string formattedText =
+            IntegerInputFormatter.FormatWhileTyping(
+                newText);
+
+        if (!string.Equals(
+                formattedText,
+                newText,
+                StringComparison.Ordinal))
+        {
+            int logicalPosition =
+                IntegerInputFormatter.CountLogicalCharacters(
+                    newText,
+                    entry.CursorPosition);
+
+            SetEntryText(
+                entry,
+                formattedText,
+                IntegerInputFormatter.FindCursorPosition(
+                    formattedText,
+                    logicalPosition));
+        }
+
         // Chỉ xóa lỗi khi đây là nội dung hợp lệ do người dùng
         // thực sự nhập, không phải TextChanged do khôi phục giá trị cũ.
         HideResultAndError();
@@ -801,12 +823,12 @@ public partial class QuadraticEquationView : ContentView
             _coefficientExactIntegerValues.Remove(
                 entry);
 
-            // Khi focus, trả về chuỗi Int128 đầy đủ, không có dấu phẩy,
-            // để người dùng có thể sửa trực tiếp từng chữ số.
+            // Khi focus, trả về chuỗi Int128 đầy đủ và vẫn giữ phân nhóm
+            // hàng nghìn để người dùng sửa trực tiếp mà không đổi cách nhìn.
             SetEntryText(
                 entry,
-                exactValue.ToString(
-                    CultureInfo.InvariantCulture));
+                FormatInputInteger(
+                    exactValue));
 
             return;
         }
@@ -820,9 +842,17 @@ public partial class QuadraticEquationView : ContentView
             return;
         }
 
-        SetEntryText(
-            entry,
-            normalized);
+        if (Int128.TryParse(
+                normalized,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out Int128 value))
+        {
+            SetEntryText(
+                entry,
+                FormatInputInteger(
+                    value));
+        }
     }
 
     private void OnCoefficientEntryUnfocused(
@@ -1051,31 +1081,38 @@ public partial class QuadraticEquationView : ContentView
     private static bool IsValidIntegerWhileTyping(
         string text)
     {
-        if (text.Length == 0 ||
-            text == "-" ||
-            text == "−")
+        string normalizedText =
+            text.Replace(
+                    ",",
+                    string.Empty,
+                    StringComparison.Ordinal)
+                .Replace(
+                    '−',
+                    '-');
+
+        if (normalizedText.Length == 0 ||
+            normalizedText == "-")
         {
             return true;
         }
 
         int startIndex =
-            text[0] == '-' ||
-            text[0] == '−'
+            normalizedText[0] == '-'
                 ? 1
                 : 0;
 
         if (startIndex ==
-            text.Length)
+            normalizedText.Length)
         {
             return false;
         }
 
         for (int index = startIndex;
-             index < text.Length;
+             index < normalizedText.Length;
              index++)
         {
             char character =
-                text[index];
+                normalizedText[index];
 
             // Chỉ nhận chữ số ASCII 0–9.
             if (character < '0' ||
@@ -2339,7 +2376,8 @@ public partial class QuadraticEquationView : ContentView
 
     private void SetEntryText(
         Entry entry,
-        string text)
+        string text,
+        int? cursorPosition = null)
     {
         _isUpdatingText =
             true;
@@ -2350,7 +2388,11 @@ public partial class QuadraticEquationView : ContentView
                 text;
 
             entry.CursorPosition =
-                text.Length;
+                Math.Clamp(
+                    cursorPosition ??
+                    text.Length,
+                    0,
+                    text.Length);
 
             entry.SelectionLength =
                 0;

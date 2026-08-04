@@ -84,6 +84,9 @@
 	  <Compile Update="Views\FormulaPage.xaml.cs">
 	    <DependentUpon>FormulaPage.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\PowerRootView.xaml.cs">
+	    <DependentUpon>PowerRootView.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>

@@ -362,7 +362,7 @@
                             x:Name="CalculateButton"
                             Grid.Row="0"
                             Grid.Column="0"
-                            Text="Tính kết quả"
+                            Text="Tính toán"
                             HeightRequest="54"
                             Padding="10,0"
                             CornerRadius="14"

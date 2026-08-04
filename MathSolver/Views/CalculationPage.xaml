@@ -401,7 +401,7 @@
 
                                 <Button
                                     Grid.Column="0"
-                                    Text="Tính kết quả"
+                                    Text="Tính toán"
                                     FontSize="19"
                                     FontAttributes="Bold"
                                     HeightRequest="54"

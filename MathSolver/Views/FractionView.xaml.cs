@@ -33,7 +33,7 @@ public partial class FractionView : ContentView
     private const string IntegerTypingErrorMessage =
         "Tử số và mẫu số chỉ được nhập số nguyên trong phạm vi từ " +
         Int128InputRangeText +
-        "; không được dùng dấu chấm (.) hoặc dấu phẩy (,).";
+        "; dấu phân cách hàng nghìn được thêm tự động.";
 
     // Giá trị chính xác của Entry được lưu ở dạng khoa học dùng chữ e.
     // Ví dụ: 1.234567890123456789e18.
@@ -439,6 +439,31 @@ public partial class FractionView : ContentView
 
         if (IsValidInputWhileTyping(newText))
         {
+            _entryScientificCodeValues.Remove(
+                entry);
+
+            string formattedText =
+                IntegerInputFormatter.FormatWhileTyping(
+                    newText);
+
+            if (!string.Equals(
+                    formattedText,
+                    newText,
+                    StringComparison.Ordinal))
+            {
+                int logicalPosition =
+                    IntegerInputFormatter.CountLogicalCharacters(
+                        newText,
+                        entry.CursorPosition);
+
+                SetEntryText(
+                    entry,
+                    formattedText,
+                    IntegerInputFormatter.FindCursorPosition(
+                        formattedText,
+                        logicalPosition));
+            }
+
             // Chỉ xóa lỗi khi người dùng thực sự nhập lại nội dung hợp lệ,
             // không phải khi chương trình đang khôi phục nội dung cũ.
             if (ErrorBorder.IsVisible &&
@@ -481,6 +506,10 @@ public partial class FractionView : ContentView
 
         string normalizedText =
             text.Replace(
+                ",",
+                string.Empty,
+                StringComparison.Ordinal)
+            .Replace(
                 '−',
                 '-');
 
@@ -568,8 +597,8 @@ public partial class FractionView : ContentView
 
         SetEntryText(
             entry,
-            ((BigInteger)value).ToString(
-                CultureInfo.InvariantCulture));
+            FormatIntegerForEditing(
+                (BigInteger)value));
     }
 
     private void OnFractionEntryUnfocused(
@@ -631,14 +660,20 @@ public partial class FractionView : ContentView
 
     private void SetEntryText(
         Entry entry,
-        string text)
+        string text,
+        int? cursorPosition = null)
     {
         _isUpdatingNumberText = true;
 
         try
         {
             entry.Text = text;
-            entry.CursorPosition = text.Length;
+            entry.CursorPosition =
+                Math.Clamp(
+                    cursorPosition ??
+                    text.Length,
+                    0,
+                    text.Length);
             entry.SelectionLength = 0;
         }
         finally

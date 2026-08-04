@@ -124,7 +124,7 @@
     },
     {
       "key": "PowerRoot.Subtitle",
-      "source": "Tính số lớn chính xác bằng BigInteger",
+      "source": "Tính toán số mũ và căn bậc",
       "mode": "exact"
     },
     {
@@ -154,7 +154,7 @@
     },
     {
       "key": "PowerRoot.BaseHint",
-      "source": "Số nguyên từ −1,000,000,000 đến 1,000,000,000.",
+      "source": "Số nguyên từ −1,000,000,000,000,000,000 đến 1,000,000,000,000,000,000.",
       "mode": "exact"
     },
     {
@@ -169,7 +169,7 @@
     },
     {
       "key": "PowerRoot.WorkerRecommendation",
-      "source": "CPU có {0} nhân vật lý • kết quả tối đa 100.000 chữ số dùng 1 luồng; lớn hơn dùng tối đa {1} luồng",
+      "source": "CPU có {0} luồng logic • kết quả tối đa 100.000 chữ số dùng 1 luồng; lớn hơn dùng tối đa toàn bộ {1} luồng",
       "mode": "exact"
     },
     {
@@ -224,7 +224,7 @@
     },
     {
       "key": "PowerRoot.BaseRangeError",
-      "source": "Cơ số phải là số nguyên trong phạm vi từ −1,000,000,000 đến 1,000,000,000.",
+      "source": "Cơ số phải là số nguyên trong phạm vi từ −1,000,000,000,000,000,000 đến 1,000,000,000,000,000,000.",
       "mode": "exact"
     },
     {
@@ -245,6 +245,36 @@
     {
       "key": "PowerRoot.ProgressSteps",
       "source": "Đã xử lý {0} / {1} bước",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressPhasePreparing",
+      "source": "Bước {0}/{1}: Chuẩn bị dữ liệu và chọn phương pháp tính.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressPhaseBitShift",
+      "source": "Bước {0}/{1}: Tính {3}ⁿ bằng cách dịch bit 1 sang trái {2} vị trí rồi áp dụng dấu theo cơ số và tính chẵn/lẻ của số mũ.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressPhaseComputing",
+      "source": "Bước {0}/{1}: Tính các lũy thừa con • đã xử lý {2}/{3} vòng bình phương–nhân.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressPhaseCombining",
+      "source": "Bước {0}/{1}: Ghép các kết quả • đã hoàn tất {2}/{3} phép nhân.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressPhaseFormatting",
+      "source": "Bước {0}/{1}: Đếm chữ số và chuẩn bị kết quả hiển thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ProgressPhaseCompleted",
+      "source": "Hoàn tất {0}/{1} bước.",
       "mode": "exact"
     },
     {
@@ -283,6 +313,11 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.StepBitShift",
+      "source": "Bước 2. Vì trị tuyệt đối của cơ số {1} bằng 2, dùng BigInteger.One << n để tạo độ lớn 2ⁿ, sau đó áp dụng dấu theo cơ số và tính chẵn/lẻ của số mũ. Dịch bit 1 sang trái {0} vị trí cho kết quả ngay mà không cần chia việc cho nhiều luồng.",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.StepSplit",
       "source": "Bước 2. Dùng aᵐ⁺ⁿ = aᵐ × aⁿ và chia số mũ: {0} = {1}.",
       "mode": "exact"
@@ -300,6 +335,16 @@
     {
       "key": "PowerRoot.StepResult",
       "source": "Kết quả: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoEngine",
+      "source": "• Engine: BigInteger",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoEngineBitShift",
+      "source": "• Engine: BigInteger + dịch bit",
       "mode": "exact"
     },
     {
@@ -339,17 +384,17 @@
     },
     {
       "key": "PowerRoot.ExportStepPreparing",
-      "source": "Đang tạo dữ liệu TXT • {0}% • chuẩn bị khối {1}/{2}",
+      "source": "Đang tạo dữ liệu TXT • {0}% • xử lý khối {1}/{2}",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.ExportStepSplitting",
-      "source": "Đang tạo dữ liệu TXT • {0}% • đang tách dữ liệu cho khối {1}/{2}",
+      "source": "Đang tạo dữ liệu TXT • {0}% • xử lý khối {1}/{2}",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.ExportStepWriting",
-      "source": "Đang tạo dữ liệu TXT • {0}% • đã ghi khối {1}/{2}",
+      "source": "Đang tạo dữ liệu TXT • {0}% • xử lý khối {1}/{2}",
       "mode": "exact"
     },
     {
@@ -669,7 +714,7 @@
     },
     {
       "key": "legacy.exact.tinh.ket.qua.46bc0766",
-      "source": "Tính kết quả",
+      "source": "Tính toán",
       "mode": "exact"
     },
     {
