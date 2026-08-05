@@ -258,8 +258,13 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.ProgressPhaseDecimalShift",
+      "source": "Bước {0}/{1}: Nhận diện ±10ᵏ và tạo biểu diễn trực tiếp bằng chữ số 1 cùng số lượng số 0 cần thiết.",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.ProgressPhaseComputing",
-      "source": "Bước {0}/{1}: Tính các lũy thừa con • đã xử lý {2}/{3} vòng bình phương–nhân.",
+      "source": "Bước {0}/{1}: Tính lũy thừa bằng engine đã chọn • đã hoàn tất {2}/{3} phép nhân lớn; không có pha ghép kết quả con ở cuối.",
       "mode": "exact"
     },
     {
@@ -318,6 +323,21 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.StepPowerOfTen",
+      "source": "Bước 2. Cơ số có dạng ±10ᵏ nên không cần tạo BigInteger hay ghép kết quả. Sinh trực tiếp chữ số 1 và {0} số 0; dấu âm chỉ được giữ khi cơ số âm và số mũ lẻ.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepDirectPow",
+      "source": "Bước 2. Dùng trực tiếp BigInteger.Pow trên một worker nền. Không chia số mũ thành các lũy thừa con nên không phát sinh pha nhân ghép khổng lồ.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepParallelNtt",
+      "source": "Bước 2. Dùng lũy thừa nhị phân; mỗi phép nhân số lớn được xử lý chính xác bằng NTT/CRT trên tối đa {0} luồng. Kết quả được chuẩn hóa ngay sau từng phép nhân nên không có pha ghép kết quả con ở cuối.",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.StepSplit",
       "source": "Bước 2. Dùng aᵐ⁺ⁿ = aᵐ × aⁿ và chia số mũ: {0} = {1}.",
       "mode": "exact"
@@ -339,12 +359,22 @@
     },
     {
       "key": "PowerRoot.InfoEngine",
-      "source": "• Engine: BigInteger",
+      "source": "• Engine: BigInteger.Pow thích nghi (không chia số mũ)",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoEngineParallelNtt",
+      "source": "• Engine: lũy thừa NTT/CRT chính xác đa luồng (không ghép cuối)",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.InfoEngineBitShift",
       "source": "• Engine: BigInteger + dịch bit",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoEnginePowerOfTen",
+      "source": "• Engine: sinh trực tiếp ±10ᵏ (không tạo BigInteger)",
       "mode": "exact"
     },
     {

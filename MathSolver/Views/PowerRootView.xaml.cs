@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Storage;
+using MathSolver.Numerics;
 using MathSolver.Services;
 using MathSolver.Views.Base;
 using Microsoft.Maui.ApplicationModel;
@@ -29,9 +30,6 @@ public partial class PowerRootView : LocalizedSolverView
     private const int ExportDigitThreshold =
         100_001;
 
-    private const int ParallelDigitThreshold =
-        100_000;
-
     private const int ProgressDigitThreshold =
         100_000;
 
@@ -44,7 +42,14 @@ public partial class PowerRootView : LocalizedSolverView
     private const int PreviewLeadingDigits =
         12;
 
-    private readonly int _availableWorkerCount;
+    // Decimal constants keep enough fractional precision to distinguish
+    // (10^18 - 1)^1,000,000 from 10^18,000,000. A double loses that distinction
+    // because its ULP is already much larger at an 18-million logarithm.
+    private const decimal NaturalLogarithmOfTwo =
+        0.6931471805599453094172321215m;
+
+    private const decimal NaturalLogarithmOfTen =
+        2.3025850929940456840179914557m;
 
     private CancellationTokenSource? _calculationCancellation;
     private CancellationTokenSource? _exportCancellation;
@@ -54,21 +59,15 @@ public partial class PowerRootView : LocalizedSolverView
     private bool _isPowerMode = true;
     private bool _isUpdatingInputText;
     private int _calculationVersion;
-    private int _completedWorkerSteps;
-    private int _completedCombineSteps;
     private CalculationProgressPhase _calculationProgressPhase;
     private int _calculationPhaseCompleted;
     private int _calculationPhaseTotal;
-    private bool _currentCalculationUsesBitShift;
 
     public PowerRootView()
     {
         InitializeComponent();
 
         InitializeLocalization();
-
-        _availableWorkerCount =
-            CalculationThreadingManager.RecommendedWorkerCount;
 
         SelectMode(
             powerMode: true);
@@ -453,50 +452,35 @@ public partial class PowerRootView : LocalizedSolverView
                 baseValue,
                 exponent);
 
-        bool usesBitShiftOptimization =
-            (baseValue == 2 ||
-             baseValue == -2) &&
-            exponent > 0;
+        PowerComputationStrategy strategy =
+            SelectComputationStrategy(
+                baseValue,
+                exponent,
+                out int decimalExponent);
+
+        int activeWorkerCount = 1;
+
+        if (strategy ==
+                PowerComputationStrategy.BigIntegerPow &&
+            estimatedDigitCount >=
+                ProgressDigitThreshold &&
+            CalculationThreadingManager.UseMultithreading)
+        {
+            activeWorkerCount =
+                CalculationThreadingManager.RecommendedWorkerCount;
+
+            strategy =
+                PowerComputationStrategy.ParallelNttPower;
+        }
 
         bool showCalculationProgress =
             estimatedDigitCount >=
             ProgressDigitThreshold;
 
-        int requestedWorkerCount =
-            !usesBitShiftOptimization &&
-            estimatedDigitCount >
-            ParallelDigitThreshold
-                ? _availableWorkerCount
-                : 1;
-
-        IReadOnlyList<int> exponentParts =
-            SplitExponent(
-                exponent,
-                requestedWorkerCount);
-
-        int activeWorkerCount =
-            exponent == 0
-                ? 1
-                : exponentParts.Count;
-
-        int workerStepCount =
-            GetWorkerStepCount(
-                exponentParts,
-                exponent);
-
-        int combineStepCount =
-            GetCombineStepCount(
-                exponentParts,
-                exponent);
-
-        _completedWorkerSteps = 0;
-        _completedCombineSteps = 0;
         _calculationProgressPhase =
             CalculationProgressPhase.Preparing;
         _calculationPhaseCompleted = 0;
         _calculationPhaseTotal = 1;
-        _currentCalculationUsesBitShift =
-            usesBitShiftOptimization;
         _isCalculating = true;
 
         SetInputEnabled(
@@ -525,29 +509,146 @@ public partial class PowerRootView : LocalizedSolverView
 
         try
         {
-            BigInteger result;
+            PowerCalculationState state;
 
-            if (usesBitShiftOptimization)
+            if (strategy ==
+                PowerComputationStrategy.DecimalPowerOfTen)
             {
                 SetCalculationProgress(
                     baseValue,
                     exponent,
-                    CalculationProgressPhase.BitShift,
+                    CalculationProgressPhase.DecimalShift,
                     0,
                     1);
 
-                // 2^n has one bit set at index n. Shifting zero would
-                // still produce zero, so the correct seed is BigInteger.One.
                 cancellationToken.ThrowIfCancellationRequested();
-                result =
-                    BigInteger.One << exponent;
 
-                if (baseValue < 0 &&
-                    (exponent & 1) != 0)
+                state =
+                    CreatePowerOfTenCalculationState(
+                        baseValue,
+                        exponent,
+                        decimalExponent,
+                        stopwatch.Elapsed);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                SetCalculationProgress(
+                    baseValue,
+                    exponent,
+                    CalculationProgressPhase.DecimalShift,
+                    1,
+                    1);
+            }
+            else if (strategy ==
+                     PowerComputationStrategy.ParallelNttPower)
+            {
+                SetCalculationProgress(
+                    baseValue,
+                    exponent,
+                    CalculationProgressPhase.Computing,
+                    0,
+                    1);
+
+                ParallelPowerResult parallelResult =
+                    await ComputeParallelPowerAsync(
+                        baseValue,
+                        exponent,
+                        activeWorkerCount,
+                        (completed, total) =>
+                            ReportCalculationPhase(
+                                baseValue,
+                                exponent,
+                                CalculationProgressPhase.Computing,
+                                completed,
+                                total,
+                                calculationVersion),
+                        cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                SetCalculationProgress(
+                    baseValue,
+                    exponent,
+                    CalculationProgressPhase.Formatting,
+                    0,
+                    1);
+
+                bool isNegative =
+                    baseValue < 0 &&
+                    (exponent & 1) != 0;
+
+                state =
+                    await Task.Run(
+                        () => CreateParallelCalculationState(
+                            baseValue,
+                            exponent,
+                            parallelResult.Magnitude,
+                            isNegative,
+                            activeWorkerCount,
+                            stopwatch.Elapsed,
+                            parallelResult.Diagnostics),
+                        cancellationToken);
+            }
+            else
+            {
+                BigInteger result;
+
+                if (strategy ==
+                    PowerComputationStrategy.BitShift)
                 {
+                    SetCalculationProgress(
+                        baseValue,
+                        exponent,
+                        CalculationProgressPhase.BitShift,
+                        0,
+                        1);
+
+                    // 2^n has one bit set at index n. Shifting zero would
+                    // still produce zero, so the correct seed is One.
+                    cancellationToken.ThrowIfCancellationRequested();
                     result =
-                        BigInteger.Negate(
-                            result);
+                        BigInteger.One << exponent;
+
+                    if (baseValue < 0 &&
+                        (exponent & 1) != 0)
+                    {
+                        result =
+                            BigInteger.Negate(
+                                result);
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    SetCalculationProgress(
+                        baseValue,
+                        exponent,
+                        CalculationProgressPhase.BitShift,
+                        1,
+                        1);
+                }
+                else
+                {
+                    SetCalculationProgress(
+                        baseValue,
+                        exponent,
+                        CalculationProgressPhase.Computing,
+                        0,
+                        1);
+
+                    result =
+                        await ComputeDirectPowerAsync(
+                            baseValue,
+                            exponent,
+                            cancellationToken);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    SetCalculationProgress(
+                        baseValue,
+                        exponent,
+                        CalculationProgressPhase.Computing,
+                        1,
+                        1);
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -555,50 +656,20 @@ public partial class PowerRootView : LocalizedSolverView
                 SetCalculationProgress(
                     baseValue,
                     exponent,
-                    CalculationProgressPhase.BitShift,
-                    1,
-                    1);
-            }
-            else
-            {
-                SetCalculationProgress(
-                    baseValue,
-                    exponent,
-                    CalculationProgressPhase.Computing,
+                    CalculationProgressPhase.Formatting,
                     0,
-                    workerStepCount);
+                    1);
 
-                result =
-                    await ComputePowerParallelAsync(
-                        baseValue,
-                        exponent,
-                        exponentParts,
-                        workerStepCount,
-                        combineStepCount,
-                        calculationVersion,
+                state =
+                    await Task.Run(
+                        () => CreateBigIntegerCalculationState(
+                            baseValue,
+                            exponent,
+                            result,
+                            strategy,
+                            stopwatch.Elapsed),
                         cancellationToken);
             }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            SetCalculationProgress(
-                baseValue,
-                exponent,
-                CalculationProgressPhase.Formatting,
-                0,
-                1);
-
-            PowerCalculationState state =
-                await Task.Run(
-                    () => CreateCalculationState(
-                        baseValue,
-                        exponent,
-                        result,
-                        exponentParts,
-                        activeWorkerCount,
-                        usesBitShiftOptimization,
-                        stopwatch.Elapsed),
-                    cancellationToken);
 
             stopwatch.Stop();
 
@@ -670,206 +741,6 @@ public partial class PowerRootView : LocalizedSolverView
         }
     }
 
-    private async Task<BigInteger> ComputePowerParallelAsync(
-        long baseValue,
-        int exponent,
-        IReadOnlyList<int> exponentParts,
-        int workerStepCount,
-        int combineStepCount,
-        int calculationVersion,
-        CancellationToken cancellationToken)
-    {
-        if (exponent == 0)
-        {
-            ReportWorkerStep(
-                baseValue,
-                exponent,
-                workerStepCount,
-                calculationVersion);
-
-            return BigInteger.One;
-        }
-
-        Task<BigInteger>[] workerTasks =
-            exponentParts
-                .Select(
-                    part =>
-                        Task.Factory.StartNew(
-                            () => ComputePowerChunk(
-                                baseValue,
-                                part,
-                                exponent,
-                                workerStepCount,
-                                calculationVersion,
-                                cancellationToken),
-                            cancellationToken,
-                            TaskCreationOptions.LongRunning,
-                            TaskScheduler.Default))
-                .ToArray();
-
-        BigInteger[] partialResults =
-            await Task.WhenAll(
-                workerTasks);
-
-        ReportCalculationPhase(
-            baseValue,
-            exponent,
-            CalculationProgressPhase.Combining,
-            0,
-            combineStepCount,
-            calculationVersion);
-
-        var currentLevel =
-            partialResults.ToList();
-
-        while (currentLevel.Count > 1)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var nextLevel =
-                new BigInteger[
-                    (currentLevel.Count + 1) / 2];
-
-            var combineTasks =
-                new List<Task>();
-
-            for (int index = 0;
-                 index < currentLevel.Count;
-                 index += 2)
-            {
-                int sourceIndex = index;
-                int targetIndex = index / 2;
-
-                if (sourceIndex + 1 >=
-                    currentLevel.Count)
-                {
-                    nextLevel[targetIndex] =
-                        currentLevel[sourceIndex];
-
-                    continue;
-                }
-
-                combineTasks.Add(
-                    Task.Run(
-                        () =>
-                        {
-                            cancellationToken.ThrowIfCancellationRequested();
-
-                            nextLevel[targetIndex] =
-                                currentLevel[sourceIndex] *
-                                currentLevel[sourceIndex + 1];
-
-                            cancellationToken.ThrowIfCancellationRequested();
-
-                            ReportCombineStep(
-                                baseValue,
-                                exponent,
-                                combineStepCount,
-                                calculationVersion);
-                        },
-                        cancellationToken));
-            }
-
-            await Task.WhenAll(
-                combineTasks);
-
-            currentLevel =
-                nextLevel.ToList();
-        }
-
-        return currentLevel[0];
-    }
-
-    private BigInteger ComputePowerChunk(
-        long baseValue,
-        int chunkExponent,
-        int fullExponent,
-        int workerStepCount,
-        int calculationVersion,
-        CancellationToken cancellationToken)
-    {
-        BigInteger result =
-            BigInteger.One;
-
-        BigInteger factor =
-            new(
-                baseValue);
-
-        int remainingExponent =
-            chunkExponent;
-
-        while (remainingExponent > 0)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if ((remainingExponent & 1) != 0)
-            {
-                result *=
-                    factor;
-            }
-
-            remainingExponent >>= 1;
-
-            if (remainingExponent > 0)
-            {
-                factor *=
-                    factor;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            ReportWorkerStep(
-                baseValue,
-                fullExponent,
-                workerStepCount,
-                calculationVersion);
-        }
-
-        return result;
-    }
-
-    private void ReportWorkerStep(
-        long baseValue,
-        int exponent,
-        int workerStepCount,
-        int calculationVersion)
-    {
-        int completedSteps =
-            Math.Min(
-                workerStepCount,
-                Interlocked.Increment(
-                    ref _completedWorkerSteps));
-
-        ReportCalculationPhase(
-            baseValue,
-            exponent,
-            CalculationProgressPhase.Computing,
-            completedSteps,
-            workerStepCount,
-            calculationVersion);
-    }
-
-    private void ReportCombineStep(
-        long baseValue,
-        int exponent,
-        int combineStepCount,
-        int calculationVersion)
-    {
-        int completedSteps =
-            Math.Min(
-                combineStepCount,
-                Interlocked.Increment(
-                    ref _completedCombineSteps));
-
-        ReportCalculationPhase(
-            baseValue,
-            exponent,
-            CalculationProgressPhase.Combining,
-            completedSteps,
-            combineStepCount,
-            calculationVersion);
-    }
-
     private void ReportCalculationPhase(
         long baseValue,
         int exponent,
@@ -937,12 +808,12 @@ public partial class PowerRootView : LocalizedSolverView
                 CalculationProgressPhase.BitShift =>
                     0.08d +
                     0.82d * phaseProgress,
+                CalculationProgressPhase.DecimalShift =>
+                    0.08d +
+                    0.82d * phaseProgress,
                 CalculationProgressPhase.Computing =>
                     0.08d +
-                    0.70d * phaseProgress,
-                CalculationProgressPhase.Combining =>
-                    0.78d +
-                    0.14d * phaseProgress,
+                    0.82d * phaseProgress,
                 CalculationProgressPhase.Formatting =>
                     0.95d,
                 CalculationProgressPhase.Completed =>
@@ -972,8 +843,7 @@ public partial class PowerRootView : LocalizedSolverView
                 baseValue,
                 exponent,
                 completedSteps,
-                totalSteps,
-                _currentCalculationUsesBitShift);
+                totalSteps);
     }
 
     private static string CreateCalculationPhaseText(
@@ -981,25 +851,18 @@ public partial class PowerRootView : LocalizedSolverView
         long baseValue,
         int exponent,
         int completedSteps,
-        int totalSteps,
-        bool usesBitShiftOptimization)
+        int totalSteps)
     {
-        int phaseCount =
-            usesBitShiftOptimization
-                ? 3
-                : 4;
+        const int phaseCount = 3;
 
         int phaseNumber =
             phase switch
             {
                 CalculationProgressPhase.Preparing => 1,
                 CalculationProgressPhase.BitShift => 2,
+                CalculationProgressPhase.DecimalShift => 2,
                 CalculationProgressPhase.Computing => 2,
-                CalculationProgressPhase.Combining => 3,
-                CalculationProgressPhase.Formatting =>
-                    usesBitShiftOptimization
-                        ? 3
-                        : 4,
+                CalculationProgressPhase.Formatting => 3,
                 CalculationProgressPhase.Completed => phaseCount,
                 _ => 1
             };
@@ -1022,20 +885,18 @@ public partial class PowerRootView : LocalizedSolverView
                     baseValue.ToString(
                         "N0",
                         CultureInfo.InvariantCulture)),
+            CalculationProgressPhase.DecimalShift =>
+                Format(
+                    "PowerRoot.ProgressPhaseDecimalShift",
+                    phaseNumber,
+                    phaseCount),
             CalculationProgressPhase.Computing =>
                 Format(
                     "PowerRoot.ProgressPhaseComputing",
                     phaseNumber,
                     phaseCount,
                     completedSteps,
-                    Math.Max(1, totalSteps)),
-            CalculationProgressPhase.Combining =>
-                Format(
-                    "PowerRoot.ProgressPhaseCombining",
-                    phaseNumber,
-                    phaseCount,
-                    completedSteps,
-                    Math.Max(0, totalSteps)),
+                    totalSteps),
             CalculationProgressPhase.Formatting =>
                 Format(
                     "PowerRoot.ProgressPhaseFormatting",
@@ -1051,91 +912,124 @@ public partial class PowerRootView : LocalizedSolverView
         };
     }
 
-    private static IReadOnlyList<int> SplitExponent(
+    private static PowerComputationStrategy SelectComputationStrategy(
+        long baseValue,
         int exponent,
-        int requestedWorkerCount)
+        out int decimalExponent)
     {
-        if (exponent == 0)
+        decimalExponent = 0;
+
+        if (exponent > 0 &&
+            TryGetPowerOfTenExponent(
+                baseValue,
+                out decimalExponent))
         {
-            return [0];
+            return PowerComputationStrategy.DecimalPowerOfTen;
         }
 
-        int workerCount =
-            Math.Clamp(
-                requestedWorkerCount,
-                1,
-                exponent);
-
-        int quotient =
-            exponent / workerCount;
-
-        int remainder =
-            exponent % workerCount;
-
-        var parts =
-            new int[workerCount];
-
-        for (int index = 0;
-             index < workerCount;
-             index++)
+        if ((baseValue == 2 ||
+             baseValue == -2) &&
+            exponent > 0)
         {
-            parts[index] =
-                quotient +
-                (index < remainder
-                    ? 1
-                    : 0);
+            return PowerComputationStrategy.BitShift;
         }
 
-        return parts;
+        return PowerComputationStrategy.BigIntegerPow;
     }
 
-    private static int GetWorkerStepCount(
-        IReadOnlyList<int> exponentParts,
-        int exponent)
+    private static Task<BigInteger> ComputeDirectPowerAsync(
+        long baseValue,
+        int exponent,
+        CancellationToken cancellationToken)
     {
-        if (exponent == 0)
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // LongRunning prevents a calculation lasting tens of seconds from
+        // occupying or waiting behind a shared ThreadPool worker. It does not
+        // turn BigInteger.Pow into a parallel operation: the actual worker
+        // count for this computation remains exactly one.
+        return Task.Factory.StartNew(
+            () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                BigInteger result =
+                    BigInteger.Pow(
+                        new BigInteger(
+                            baseValue),
+                        exponent);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                return result;
+            },
+            cancellationToken,
+            TaskCreationOptions.LongRunning |
+            TaskCreationOptions.DenyChildAttach,
+            TaskScheduler.Default);
+    }
+
+    private static Task<ParallelPowerResult> ComputeParallelPowerAsync(
+        long baseValue,
+        int exponent,
+        int workerCount,
+        Action<int, int> progress,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ulong magnitude =
+            (ulong)Math.Abs(
+                baseValue);
+
+        return Task.Factory.StartNew(
+            () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                return ParallelBigUnsigned.Pow(
+                    magnitude,
+                    exponent,
+                    workerCount,
+                    progress,
+                    cancellationToken);
+            },
+            cancellationToken,
+            TaskCreationOptions.LongRunning |
+            TaskCreationOptions.DenyChildAttach,
+            TaskScheduler.Default);
+    }
+
+    private static bool TryGetPowerOfTenExponent(
+        long baseValue,
+        out int decimalExponent)
+    {
+        decimalExponent = 0;
+
+        long magnitude =
+            Math.Abs(
+                baseValue);
+
+        // 10^k uses k >= 1. Values +/-1 are handled by BigInteger.Pow.
+        if (magnitude < 10)
         {
-            return 1;
+            return false;
         }
 
-        return Math.Max(
-            1,
-            exponentParts.Sum(
-                GetBinaryDigitCount));
-    }
-
-    private static int GetCombineStepCount(
-        IReadOnlyList<int> exponentParts,
-        int exponent)
-    {
-        return exponent == 0
-            ? 0
-            : Math.Max(
-                0,
-                exponentParts.Count - 1);
-    }
-
-    private static int GetBinaryDigitCount(
-        int value)
-    {
-        int count = 0;
-
-        while (value > 0)
+        while (magnitude % 10 == 0)
         {
-            count++;
-            value >>= 1;
+            magnitude /= 10;
+            decimalExponent++;
         }
 
-        return count;
+        return magnitude == 1;
     }
 
-    private static PowerCalculationState CreateCalculationState(
+    private static PowerCalculationState CreateBigIntegerCalculationState(
         long baseValue,
         int exponent,
         BigInteger result,
-        IReadOnlyList<int> exponentParts,
-        int activeWorkerCount,
-        bool usesBitShiftOptimization,
+        PowerComputationStrategy strategy,
         TimeSpan elapsed)
     {
         int estimatedDigitCount =
@@ -1164,7 +1058,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         string compactResult =
             CreateCompactResult(
-                result,
+                result.Sign < 0,
                 baseValue,
                 exponent,
                 digitCount,
@@ -1174,7 +1068,7 @@ public partial class PowerRootView : LocalizedSolverView
             EstimatePeakRamBytes(
                 result,
                 digitCount,
-                activeWorkerCount,
+                activeWorkerCount: 1,
                 exactResultText is not null);
 
         return new PowerCalculationState(
@@ -1183,11 +1077,146 @@ public partial class PowerRootView : LocalizedSolverView
             result,
             digitCount,
             compactResult,
-            exponentParts.ToArray(),
-            activeWorkerCount,
-            usesBitShiftOptimization,
-            estimatedPeakRamBytes,
-            elapsed);
+            ActiveWorkerCount: 1,
+            Strategy: strategy,
+            DecimalZeroCount: 0,
+            IsNegative: result.Sign < 0,
+            EstimatedPeakRamBytes: estimatedPeakRamBytes,
+            Elapsed: elapsed,
+            ParallelMagnitude: null,
+            ParallelDiagnostics: null);
+    }
+
+    private static PowerCalculationState CreateParallelCalculationState(
+        long baseValue,
+        int exponent,
+        ParallelBigUnsigned magnitude,
+        bool isNegative,
+        int activeWorkerCount,
+        TimeSpan elapsed,
+        ParallelPowerDiagnostics diagnostics)
+    {
+        int digitCount =
+            magnitude.DigitCount;
+
+        string? exactResultText =
+            null;
+
+        if (digitCount <=
+            ExactPreviewConversionLimit)
+        {
+            exactResultText =
+                magnitude.ToDecimalString();
+
+            if (isNegative)
+            {
+                exactResultText =
+                    $"-{exactResultText}";
+            }
+        }
+
+        string compactResult =
+            CreateCompactResult(
+                isNegative,
+                baseValue,
+                exponent,
+                digitCount,
+                exactResultText);
+
+        // Two transform buffers, two residue arrays, CRT coefficients and the
+        // normalized result dominate the peak. The estimate deliberately uses
+        // a conservative multiplier because the transform length is rounded
+        // up to the next power of two.
+        long estimatedPeakRamBytes =
+            checked(
+                magnitude.StorageBytes *
+                14L +
+                (exactResultText is not null
+                    ? (long)exactResultText.Length *
+                      sizeof(char)
+                    : 0L));
+
+        return new PowerCalculationState(
+            baseValue,
+            exponent,
+            BigInteger.Zero,
+            digitCount,
+            compactResult,
+            ActiveWorkerCount: activeWorkerCount,
+            Strategy: PowerComputationStrategy.ParallelNttPower,
+            DecimalZeroCount: 0,
+            IsNegative: isNegative,
+            EstimatedPeakRamBytes: estimatedPeakRamBytes,
+            Elapsed: elapsed,
+            ParallelMagnitude: magnitude,
+            ParallelDiagnostics: diagnostics);
+    }
+
+    private static PowerCalculationState CreatePowerOfTenCalculationState(
+        long baseValue,
+        int exponent,
+        int decimalExponent,
+        TimeSpan elapsed)
+    {
+        int zeroCount =
+            checked(
+                decimalExponent *
+                exponent);
+
+        int digitCount =
+            checked(
+                zeroCount + 1);
+
+        bool isNegative =
+            baseValue < 0 &&
+            (exponent & 1) != 0;
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        string compactResult;
+
+        if (digitCount <=
+            FullResultDigitThreshold)
+        {
+            string exactResult =
+                $"{(isNegative ? "-" : string.Empty)}1" +
+                new string(
+                    '0',
+                    zeroCount);
+
+            compactResult =
+                IntegerInputFormatter.FormatWhileTyping(
+                    exactResult);
+        }
+        else
+        {
+            compactResult =
+                $"{sign}1 × 10{ToSuperscript(zeroCount)}";
+        }
+
+        // The number is represented symbolically as sign + 1 + zero count.
+        // Only a fixed-size zero block is allocated later during TXT export.
+        long estimatedPeakRamBytes =
+            ExportLeafDigitCount *
+            sizeof(char);
+
+        return new PowerCalculationState(
+            baseValue,
+            exponent,
+            BigInteger.Zero,
+            digitCount,
+            compactResult,
+            ActiveWorkerCount: 1,
+            Strategy: PowerComputationStrategy.DecimalPowerOfTen,
+            DecimalZeroCount: zeroCount,
+            IsNegative: isNegative,
+            EstimatedPeakRamBytes: estimatedPeakRamBytes,
+            Elapsed: elapsed,
+            ParallelMagnitude: null,
+            ParallelDiagnostics: null);
     }
 
     private static int EstimateDecimalDigitCount(
@@ -1223,19 +1252,19 @@ public partial class PowerRootView : LocalizedSolverView
                 1);
         }
 
-        double logarithm =
-            exponent *
-            Math.Log10(
-                absoluteBase);
+        decimal logarithm =
+            ComputePowerLogarithmBaseTen(
+                absoluteBase,
+                exponent);
 
         return checked(
-            (int)Math.Floor(
+            (int)decimal.Floor(
                 logarithm) +
             1);
     }
 
     private static string CreateCompactResult(
-        BigInteger result,
+        bool isNegative,
         long baseValue,
         int exponent,
         int digitCount,
@@ -1244,13 +1273,17 @@ public partial class PowerRootView : LocalizedSolverView
         if (digitCount <=
             FullResultDigitThreshold)
         {
-            return result.ToString(
-                "N0",
-                CultureInfo.InvariantCulture);
-        }
+            string exactText =
+                exactResultText ??
+                BigInteger.Pow(
+                        new BigInteger(baseValue),
+                        exponent)
+                    .ToString(
+                        CultureInfo.InvariantCulture);
 
-        bool isNegative =
-            result.Sign < 0;
+            return IntegerInputFormatter.FormatWhileTyping(
+                exactText);
+        }
 
         string leadingDigits;
 
@@ -1290,39 +1323,173 @@ public partial class PowerRootView : LocalizedSolverView
         long baseValue,
         int exponent)
     {
-        double logarithm =
-            exponent *
-            Math.Log10(
+        decimal logarithm =
+            ComputePowerLogarithmBaseTen(
                 Math.Abs(
-                    baseValue));
+                    baseValue),
+                exponent);
 
-        double fractionalPart =
+        decimal fractionalPart =
             logarithm -
-            Math.Floor(
+            decimal.Floor(
                 logarithm);
 
+        decimal mantissa =
+            DecimalExp(
+                fractionalPart *
+                NaturalLogarithmOfTen);
+
+        decimal previewScale =
+            Pow10Decimal(
+                PreviewLeadingDigits - 1);
+
         long leadingValue =
-            (long)Math.Floor(
-                Math.Pow(
-                    10d,
-                    fractionalPart +
-                    PreviewLeadingDigits -
-                    1));
+            decimal.ToInt64(
+                decimal.Floor(
+                    mantissa *
+                    previewScale));
+
+        long lowerBound =
+            (long)previewScale;
 
         long upperBound =
-            (long)Math.Pow(
-                10d,
-                PreviewLeadingDigits);
+            checked(
+                lowerBound * 10L);
 
-        if (leadingValue >=
-            upperBound)
-        {
-            leadingValue /= 10;
-        }
+        leadingValue =
+            Math.Clamp(
+                leadingValue,
+                lowerBound,
+                upperBound - 1L);
 
         return leadingValue.ToString(
             $"D{PreviewLeadingDigits}",
             CultureInfo.InvariantCulture);
+    }
+
+    private static decimal ComputePowerLogarithmBaseTen(
+        long absoluteBase,
+        int exponent)
+    {
+        decimal normalizedBase =
+            absoluteBase;
+
+        int decimalScale = 0;
+        decimal divisor = 1m;
+
+        while (normalizedBase >=
+               divisor * 10m)
+        {
+            divisor *= 10m;
+            decimalScale++;
+        }
+
+        normalizedBase /=
+            divisor;
+
+        decimal baseLogarithm =
+            decimalScale +
+            NaturalLogarithm(
+                normalizedBase) /
+            NaturalLogarithmOfTen;
+
+        return baseLogarithm *
+               exponent;
+    }
+
+    private static decimal NaturalLogarithm(
+        decimal value)
+    {
+        int binaryScale = 0;
+
+        while (value >= 2m)
+        {
+            value /= 2m;
+            binaryScale++;
+        }
+
+        decimal ratio =
+            (value - 1m) /
+            (value + 1m);
+
+        decimal ratioSquared =
+            ratio * ratio;
+
+        decimal term =
+            ratio;
+
+        decimal sum = 0m;
+
+        for (int denominator = 1;
+             denominator <= 199;
+             denominator += 2)
+        {
+            decimal nextSum =
+                sum +
+                term /
+                denominator;
+
+            if (nextSum == sum)
+            {
+                break;
+            }
+
+            sum =
+                nextSum;
+
+            term *=
+                ratioSquared;
+        }
+
+        return 2m * sum +
+               binaryScale *
+               NaturalLogarithmOfTwo;
+    }
+
+    private static decimal DecimalExp(
+        decimal value)
+    {
+        decimal sum = 1m;
+        decimal term = 1m;
+
+        for (int divisor = 1;
+             divisor <= 199;
+             divisor++)
+        {
+            term =
+                term *
+                value /
+                divisor;
+
+            decimal nextSum =
+                sum +
+                term;
+
+            if (nextSum == sum)
+            {
+                break;
+            }
+
+            sum =
+                nextSum;
+        }
+
+        return sum;
+    }
+
+    private static decimal Pow10Decimal(
+        int exponent)
+    {
+        decimal result = 1m;
+
+        for (int index = 0;
+             index < exponent;
+             index++)
+        {
+            result *= 10m;
+        }
+
+        return result;
     }
 
     private static long EstimatePeakRamBytes(
@@ -1423,6 +1590,16 @@ public partial class PowerRootView : LocalizedSolverView
                 state.BaseValue,
                 state.Exponent);
 
+        string formattedBase =
+            state.BaseValue.ToString(
+                "N0",
+                CultureInfo.InvariantCulture);
+
+        string formattedExponent =
+            state.Exponent.ToString(
+                "N0",
+                CultureInfo.InvariantCulture);
+
         if (state.Exponent == 0)
         {
             return string.Join(
@@ -1438,7 +1615,7 @@ public partial class PowerRootView : LocalizedSolverView
                     state.CompactResult));
         }
 
-        if (state.UsesBitShiftOptimization)
+        if (state.BaseValue == 0)
         {
             return string.Join(
                 Environment.NewLine +
@@ -1447,76 +1624,265 @@ public partial class PowerRootView : LocalizedSolverView
                     "PowerRoot.StepGiven",
                     expression),
                 Format(
-                    "PowerRoot.StepBitShift",
-                    state.Exponent.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture),
-                    state.BaseValue.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture)),
+                    "PowerRoot.StepZeroBase",
+                    formattedExponent),
                 Format(
                     "PowerRoot.StepResult",
                     state.CompactResult));
         }
 
-        string exponentSplit =
-            string.Join(
-                " + ",
-                state.ExponentParts.Select(
-                    part =>
-                        part.ToString(
-                            "N0",
-                            CultureInfo.InvariantCulture)));
-
-        string compactFactors =
-            string.Join(
-                " × ",
-                state.ExponentParts.Select(
-                    part =>
-                        FormatDisplayExpression(
-                            state.BaseValue,
-                            part)));
-
-        const int MaximumFactorLineLength =
-            260;
-
-        if (compactFactors.Length >
-            MaximumFactorLineLength)
+        if (state.Exponent == 1)
         {
-            compactFactors =
-                compactFactors[..MaximumFactorLineLength] +
-                " …";
+            return string.Join(
+                Environment.NewLine +
+                Environment.NewLine,
+                Format(
+                    "PowerRoot.StepGiven",
+                    expression),
+                Format(
+                    "PowerRoot.StepFirstExponent",
+                    formattedBase),
+                Format(
+                    "PowerRoot.StepResult",
+                    state.CompactResult));
         }
+
+        if (state.BaseValue == 1 ||
+            state.BaseValue == -1)
+        {
+            string unitBaseRule;
+
+            if (state.BaseValue == 1)
+            {
+                unitBaseRule =
+                    Format(
+                        "PowerRoot.StepOneBase",
+                        formattedExponent,
+                        ToSuperscript(
+                            state.Exponent));
+            }
+            else
+            {
+                unitBaseRule =
+                    Format(
+                        state.Exponent % 2 == 0
+                            ? "PowerRoot.StepNegativeOneEven"
+                            : "PowerRoot.StepNegativeOneOdd",
+                        formattedExponent,
+                        ToSuperscript(
+                            state.Exponent));
+            }
+
+            return string.Join(
+                Environment.NewLine +
+                Environment.NewLine,
+                Format(
+                    "PowerRoot.StepGiven",
+                    expression),
+                unitBaseRule,
+                Format(
+                    "PowerRoot.StepResult",
+                    state.CompactResult));
+        }
+
+        var steps =
+            new List<string>
+            {
+                Format(
+                    "PowerRoot.StepGiven",
+                    expression),
+                Format(
+                    "PowerRoot.StepDefinition",
+                    formattedBase,
+                    formattedExponent),
+                CreateSignExplanation(
+                    state)
+            };
+
+        if (state.Strategy ==
+            PowerComputationStrategy.DecimalPowerOfTen)
+        {
+            int zerosPerFactor =
+                state.DecimalZeroCount /
+                state.Exponent;
+
+            steps.Add(
+                Format(
+                    "PowerRoot.StepDecimalPowerRule",
+                    zerosPerFactor.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    formattedExponent,
+                    state.DecimalZeroCount.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    ToSuperscript(
+                        zerosPerFactor),
+                    ToSuperscript(
+                        state.Exponent),
+                    ToSuperscript(
+                        state.DecimalZeroCount)));
+        }
+        else
+        {
+            steps.Add(
+                Translate(
+                    "PowerRoot.StepRepeatedSquaring"));
+
+            int[] selectedPowers =
+                GetSelectedBinaryPowers(
+                    state.Exponent);
+
+            if (selectedPowers.Length == 1)
+            {
+                steps.Add(
+                    Format(
+                        "PowerRoot.StepPowerOfTwoExponent",
+                        formattedExponent,
+                        ToSuperscript(
+                            state.Exponent)));
+            }
+            else
+            {
+                string decomposition =
+                    string.Join(
+                        " + ",
+                        selectedPowers.Select(
+                            power =>
+                                power.ToString(
+                                    "N0",
+                                    CultureInfo.InvariantCulture)));
+
+                string selectedProduct =
+                    string.Join(
+                        " × ",
+                        selectedPowers.Select(
+                            power =>
+                                $"a{ToSuperscript(power)}"));
+
+                steps.Add(
+                    Format(
+                        "PowerRoot.StepDecomposeExponent",
+                        formattedExponent,
+                        decomposition,
+                        selectedProduct,
+                        ToSuperscript(
+                            state.Exponent)));
+            }
+
+            int squaringCount =
+                GetHighestSetBitIndex(
+                    state.Exponent);
+
+            int selectedProductCount =
+                Math.Max(
+                    0,
+                    selectedPowers.Length - 1);
+
+            steps.Add(
+                Format(
+                    "PowerRoot.StepOperationCount",
+                    squaringCount.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    selectedProductCount.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    formattedExponent));
+        }
+
+        steps.Add(
+            Format(
+                "PowerRoot.StepResultWithDigits",
+                state.CompactResult,
+                state.DigitCount.ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture)));
 
         return string.Join(
             Environment.NewLine +
             Environment.NewLine,
-            Format(
-                "PowerRoot.StepGiven",
-                expression),
-            Format(
-                "PowerRoot.StepSplit",
-                state.Exponent.ToString(
-                    "N0",
-                    CultureInfo.InvariantCulture),
-                exponentSplit),
-            Format(
-                "PowerRoot.StepCombine",
-                compactFactors),
-            Format(
-                "PowerRoot.StepResult",
-                state.CompactResult));
+            steps);
+    }
+
+    private static string CreateSignExplanation(
+        PowerCalculationState state)
+    {
+        if (state.BaseValue > 0)
+        {
+            return Translate(
+                "PowerRoot.StepPositiveSign");
+        }
+
+        return Format(
+            state.Exponent % 2 == 0
+                ? "PowerRoot.StepNegativeEvenSign"
+                : "PowerRoot.StepNegativeOddSign",
+            state.Exponent.ToString(
+                "N0",
+                CultureInfo.InvariantCulture));
+    }
+
+    private static int[] GetSelectedBinaryPowers(
+        int exponent)
+    {
+        var selectedPowers =
+            new List<int>();
+
+        int power = 1;
+        int remaining = exponent;
+
+        while (remaining > 0)
+        {
+            if ((remaining & 1) != 0)
+            {
+                selectedPowers.Add(
+                    power);
+            }
+
+            remaining >>= 1;
+            power <<= 1;
+        }
+
+        selectedPowers.Reverse();
+
+        return selectedPowers.ToArray();
+    }
+
+    private static int GetHighestSetBitIndex(
+        int value)
+    {
+        int index = -1;
+
+        while (value > 0)
+        {
+            value >>= 1;
+            index++;
+        }
+
+        return Math.Max(
+            0,
+            index);
     }
 
     private string CreateLargeResultInformation(
         PowerCalculationState state)
     {
-        return string.Join(
-            Environment.NewLine,
+        var lines =
+            new List<string>
+            {
             Translate(
-                state.UsesBitShiftOptimization
-                    ? "PowerRoot.InfoEngineBitShift"
-                    : "PowerRoot.InfoEngine"),
+                state.Strategy switch
+                {
+                    PowerComputationStrategy.BitShift =>
+                        "PowerRoot.InfoEngineBitShift",
+                    PowerComputationStrategy.DecimalPowerOfTen =>
+                        "PowerRoot.InfoEnginePowerOfTen",
+                    PowerComputationStrategy.ParallelNttPower =>
+                        "PowerRoot.InfoEngineParallelNtt",
+                    _ =>
+                        "PowerRoot.InfoEngine"
+                }),
             Format(
                 "PowerRoot.InfoDigits",
                 state.DigitCount.ToString(
@@ -1533,7 +1899,56 @@ public partial class PowerRootView : LocalizedSolverView
                 "PowerRoot.InfoTime",
                 state.Elapsed.TotalSeconds.ToString(
                     "0.###",
-                    CultureInfo.InvariantCulture)));
+                    CultureInfo.InvariantCulture))
+            };
+
+        if (state.Strategy ==
+                PowerComputationStrategy.ParallelNttPower &&
+            state.ParallelDiagnostics is not null)
+        {
+            ParallelPowerDiagnostics diagnostics =
+                state.ParallelDiagnostics;
+
+            lines.Insert(
+                4,
+                Format(
+                    "PowerRoot.InfoWorkerBudget",
+                    diagnostics.WorkerCount,
+                    CalculationThreadingManager.LogicalProcessorCount));
+
+            lines.Add(
+                Format(
+                    "PowerRoot.InfoNttProfile",
+                    diagnostics.NttMultiplicationCount,
+                    FormatProfileSeconds(
+                        diagnostics.BitReversal),
+                    FormatProfileSeconds(
+                        diagnostics.ForwardTransform),
+                    FormatProfileSeconds(
+                        diagnostics.InverseTransform)));
+
+            lines.Add(
+                Format(
+                    "PowerRoot.InfoNttPostProfile",
+                    FormatProfileSeconds(
+                        diagnostics.Pointwise),
+                    FormatProfileSeconds(
+                        diagnostics.Crt),
+                    FormatProfileSeconds(
+                        diagnostics.Carry)));
+        }
+
+        return string.Join(
+            Environment.NewLine,
+            lines);
+    }
+
+    private static string FormatProfileSeconds(
+        TimeSpan elapsed)
+    {
+        return elapsed.TotalSeconds.ToString(
+            "0.###",
+            CultureInfo.InvariantCulture);
     }
 
     private async void OnStopClicked(
@@ -1845,8 +2260,23 @@ public partial class PowerRootView : LocalizedSolverView
         CancellationToken cancellationToken)
     {
         int totalBlocks =
-            CountDecimalLeafBlocks(
-                state.DigitCount);
+            state.Strategy switch
+            {
+                PowerComputationStrategy.DecimalPowerOfTen =>
+                    checked(
+                        1 +
+                        (state.DecimalZeroCount +
+                         ExportLeafDigitCount - 1) /
+                        ExportLeafDigitCount),
+                PowerComputationStrategy.ParallelNttPower =>
+                    checked(
+                        (state.DigitCount +
+                         ExportLeafDigitCount - 1) /
+                        ExportLeafDigitCount),
+                _ =>
+                    CountDecimalLeafBlocks(
+                        state.DigitCount)
+            };
 
         int completedBlocks = 0;
 
@@ -1875,7 +2305,13 @@ public partial class PowerRootView : LocalizedSolverView
             $"Expression: {FormatPlainExpression(state.BaseValue, state.Exponent)}");
 
         writer.WriteLine(
-            "Engine: BigInteger");
+            state.Strategy ==
+            PowerComputationStrategy.DecimalPowerOfTen
+                ? "Engine: direct decimal power-of-ten generation"
+                : state.Strategy ==
+                  PowerComputationStrategy.ParallelNttPower
+                    ? "Engine: parallel exact NTT/CRT power"
+                    : "Engine: BigInteger");
 
         writer.WriteLine(
             $"Digits: {state.DigitCount.ToString(CultureInfo.InvariantCulture)}");
@@ -1885,26 +2321,54 @@ public partial class PowerRootView : LocalizedSolverView
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        BigInteger unsignedResult =
-            BigInteger.Abs(
-                state.Result);
-
-        if (state.Result.Sign < 0)
+        if (state.Strategy ==
+            PowerComputationStrategy.DecimalPowerOfTen)
         {
-            writer.Write('-');
+            WritePowerOfTenDecimalBlocks(
+                writer,
+                state.DecimalZeroCount,
+                state.IsNegative,
+                ReportBlockWritten,
+                cancellationToken);
         }
+        else if (state.Strategy ==
+                 PowerComputationStrategy.ParallelNttPower &&
+                 state.ParallelMagnitude is not null)
+        {
+            if (state.IsNegative)
+            {
+                writer.Write('-');
+            }
 
-        var powersOfTen =
-            new Dictionary<int, BigInteger>();
+            state.ParallelMagnitude.WriteDecimalBlocks(
+                writer,
+                ExportLeafDigitCount,
+                ReportBlockWritten,
+                cancellationToken);
+        }
+        else
+        {
+            BigInteger unsignedResult =
+                BigInteger.Abs(
+                    state.Result);
 
-        WriteDecimalBlocks(
-            writer,
-            unsignedResult,
-            state.DigitCount,
-            padToWidth: false,
-            powersOfTen,
-            ReportBlockWritten,
-            cancellationToken);
+            if (state.Result.Sign < 0)
+            {
+                writer.Write('-');
+            }
+
+            var powersOfTen =
+                new Dictionary<int, BigInteger>();
+
+            WriteDecimalBlocks(
+                writer,
+                unsignedResult,
+                state.DigitCount,
+                padToWidth: false,
+                powersOfTen,
+                ReportBlockWritten,
+                cancellationToken);
+        }
 
         cancellationToken.ThrowIfCancellationRequested();
         writer.WriteLine();
@@ -1916,6 +2380,52 @@ public partial class PowerRootView : LocalizedSolverView
                 ExportFilePhase.Finalizing,
                 totalBlocks,
                 totalBlocks));
+    }
+
+    private static void WritePowerOfTenDecimalBlocks(
+        TextWriter writer,
+        int zeroCount,
+        bool isNegative,
+        Action reportBlockWritten,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (isNegative)
+        {
+            writer.Write('-');
+        }
+
+        writer.Write('1');
+        reportBlockWritten();
+
+        string zeroBlock =
+            new(
+                '0',
+                ExportLeafDigitCount);
+
+        int remainingZeros =
+            zeroCount;
+
+        while (remainingZeros > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int blockLength =
+                Math.Min(
+                    ExportLeafDigitCount,
+                    remainingZeros);
+
+            writer.Write(
+                zeroBlock.AsSpan(
+                    0,
+                    blockLength));
+
+            remainingZeros -=
+                blockLength;
+
+            reportBlockWritten();
+        }
     }
 
     private static void WriteDecimalBlocks(
@@ -2352,18 +2862,29 @@ public partial class PowerRootView : LocalizedSolverView
         BigInteger Result,
         int DigitCount,
         string CompactResult,
-        IReadOnlyList<int> ExponentParts,
         int ActiveWorkerCount,
-        bool UsesBitShiftOptimization,
+        PowerComputationStrategy Strategy,
+        int DecimalZeroCount,
+        bool IsNegative,
         long EstimatedPeakRamBytes,
-        TimeSpan Elapsed);
+        TimeSpan Elapsed,
+        ParallelBigUnsigned? ParallelMagnitude,
+        ParallelPowerDiagnostics? ParallelDiagnostics);
+
+    private enum PowerComputationStrategy
+    {
+        BigIntegerPow,
+        ParallelNttPower,
+        BitShift,
+        DecimalPowerOfTen
+    }
 
     private enum CalculationProgressPhase
     {
         Preparing,
         BitShift,
+        DecimalShift,
         Computing,
-        Combining,
         Formatting,
         Completed
     }

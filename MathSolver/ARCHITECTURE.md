@@ -21,3 +21,18 @@
 ## Ranh giới tái sử dụng
 
 Không gom các thuật toán khác bản chất vào một “calculator chung”. Phần dùng chung nên là kiểu số, validation, formatting, threading, localization và mô hình kết quả; thuật toán riêng của từng bài toán vẫn nằm trong module tương ứng để dễ kiểm thử và thay đổi độc lập.
+
+## Core lũy thừa đa luồng
+
+- `CalculationThreadingManager` là nguồn trạng thái duy nhất của công tắc **Đa luồng**. Trên Windows, manager đọc topology CPU và chọn số nhân vật lý làm ngân sách worker; không lấy thẳng toàn bộ luồng SMT.
+- Khi tắt đa luồng, cơ số thông thường dùng `BigInteger.Pow` trên một background worker.
+- Khi bật đa luồng và kết quả ước tính có ít nhất 100.000 chữ số, `ParallelBigUnsigned` dùng lũy thừa nhị phân. Không chia số mũ thành nhiều lũy thừa con.
+- `ParallelBigUnsigned` lưu magnitude theo little-endian, cơ số 10.000. Phép nhân nhỏ dùng schoolbook; phép nhân lớn dùng hai NTT chính xác, CRT song song và một lượt carry tuyến tính.
+- Một nhóm worker cố định được tạo một lần cho toàn phép lũy thừa và sống xuyên suốt mọi tầng butterfly. Các tầng chỉ đồng bộ qua barrier nội bộ; không dựng lại `Parallel.For` 23 lần cho mỗi transform.
+- Hai modulo được xử lý lần lượt để tránh tranh chấp cache/băng thông và khống chế peak RAM; bên trong từng modulo vẫn dùng toàn bộ ngân sách worker vật lý đã chụp.
+- NTT thuận dùng decimation-in-frequency (DIF), tạo dữ liệu bit-reversed. Nhân điểm giữ nguyên thứ tự đó và NTT nghịch dùng decimation-in-time (DIT) để trả thẳng về thứ tự tự nhiên. Vì vậy không còn lượt bit-reversal riêng.
+- Thông tin kết quả vẫn ghi thời gian hoán vị bit (phải bằng 0), NTT thuận/nghịch, pointwise, CRT và carry để benchmark A/B trên máy thật.
+- Kết quả được chuẩn hóa sau từng phép bình phương/nhân và dùng ngay ở bước kế tiếp. Không có pha ghép kết quả con cuối cùng.
+- `±2` vẫn dùng dịch bit; `±10^k` vẫn dùng biểu diễn ký hiệu và sinh thập phân trực tiếp khi xuất TXT.
+- Nhánh `BigInteger.Pow` đếm chữ số và tạo mantissa bằng logarithm `decimal` 28 chữ số thay cho `double`, tránh làm tròn `(10^18 - 1)^1.000.000` thành `10^18.000.000`.
+- Kết quả của engine song song đã ở cơ số thập phân 10.000, vì vậy xuất TXT theo block 4.096 chữ số mà không cần cây `BigInteger.DivRem`.

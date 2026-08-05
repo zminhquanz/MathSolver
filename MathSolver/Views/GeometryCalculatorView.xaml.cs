@@ -689,9 +689,43 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             return;
         }
 
+        string formattedText =
+            IntegerInputFormatter.FormatWhileTyping(
+                newText,
+                allowDecimal:
+                    _selectedNumberType ==
+                    GeometryNumberType.Decimal);
+
         field.RawText =
             NormalizeRawInput(
-                newText);
+                formattedText);
+
+        if (!string.Equals(
+                formattedText,
+                newText,
+                StringComparison.Ordinal))
+        {
+            int oldCursorPosition =
+                Math.Clamp(
+                    entry.CursorPosition,
+                    0,
+                    newText.Length);
+
+            int logicalPosition =
+                IntegerInputFormatter.CountLogicalCharacters(
+                    newText,
+                    oldCursorPosition);
+
+            SetEntryText(
+                entry,
+                field,
+                formattedText,
+                updateRawText: false,
+                cursorPosition:
+                    IntegerInputFormatter.FindCursorPosition(
+                        formattedText,
+                        logicalPosition));
+        }
 
         HideError();
         ClearResultsOnly();
@@ -797,11 +831,30 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             return;
         }
 
+        string rawText =
+            NormalizeRawInput(
+                field.RawText);
+
+        if (string.IsNullOrEmpty(
+                rawText))
+        {
+            return;
+        }
+
+        string formattedText =
+            IntegerInputFormatter.FormatWhileTyping(
+                rawText,
+                allowDecimal:
+                    _selectedNumberType ==
+                    GeometryNumberType.Decimal);
+
         SetEntryText(
             entry,
             field,
-            field.RawText,
-            updateRawText: false);
+            formattedText,
+            updateRawText: false,
+            cursorPosition:
+                formattedText.Length);
     }
 
     private void OnGeometryEntryUnfocused(
@@ -879,7 +932,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         Entry entry,
         GeometryInputField field,
         string text,
-        bool updateRawText)
+        bool updateRawText,
+        int? cursorPosition = null)
     {
         _isUpdatingEntryText =
             true;
@@ -898,6 +952,15 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
             entry.Text =
                 text;
+
+            if (cursorPosition.HasValue)
+            {
+                entry.CursorPosition =
+                    Math.Clamp(
+                        cursorPosition.Value,
+                        0,
+                        text.Length);
+            }
         }
         finally
         {

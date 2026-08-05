@@ -1,10 +1,14 @@
 using Microsoft.Maui.Storage;
+using System.Runtime.InteropServices;
 
 namespace MathSolver.Services;
 
 /// <summary>
-/// Lưu lựa chọn đa luồng dùng chung cho benchmark và các bài toán
-/// có thể chia thành nhiều tác vụ độc lập trong tương lai.
+/// Lưu lựa chọn đa luồng dùng chung cho benchmark và engine tính toán.
+/// Tab lũy thừa đọc thiết lập này khi bắt đầu mỗi phép tính lớn: tắt dùng
+/// BigInteger.Pow một luồng, bật dùng engine NTT/CRT có phép nhân nội bộ
+/// chạy song song với ngân sách theo nhân vật lý. Với workload NTT quét các
+/// buffer lớn, SMT thường làm tăng tranh chấp cache/băng thông thay vì tăng tốc.
 /// </summary>
 public static class CalculationThreadingManager
 {
@@ -14,17 +18,30 @@ public static class CalculationThreadingManager
     private static bool _initialized;
     private static bool _useMultithreading;
 
+    private static readonly Lazy<int> PhysicalCoreCountValue =
+        new(DetectPhysicalCoreCount);
+
     public static event EventHandler? ThreadingChanged;
 
     public static bool IsMultithreadingAvailable =>
         Environment.ProcessorCount >
         1;
 
+    public static int LogicalProcessorCount =>
+        Math.Max(
+            1,
+            Environment.ProcessorCount);
+
+    public static int PhysicalCoreCount =>
+        PhysicalCoreCountValue.Value;
+
     public static int RecommendedWorkerCount =>
         IsMultithreadingAvailable
             ? Math.Max(
                 1,
-                Environment.ProcessorCount)
+                Math.Min(
+                    PhysicalCoreCount,
+                    LogicalProcessorCount))
             : 1;
 
     public static bool UseMultithreading
@@ -107,4 +124,103 @@ public static class CalculationThreadingManager
         SetUseMultithreading(
             true);
     }
+
+    private static int DetectPhysicalCoreCount()
+    {
+        int logicalProcessorCount =
+            LogicalProcessorCount;
+
+        if (!OperatingSystem.IsWindows())
+        {
+            return logicalProcessorCount;
+        }
+
+        const int relationProcessorCore = 0;
+        uint bufferLength = 0;
+
+        _ = GetLogicalProcessorInformationEx(
+            relationProcessorCore,
+            IntPtr.Zero,
+            ref bufferLength);
+
+        if (bufferLength == 0)
+        {
+            return logicalProcessorCount;
+        }
+
+        IntPtr buffer =
+            Marshal.AllocHGlobal(
+                checked((int)bufferLength));
+
+        try
+        {
+            if (!GetLogicalProcessorInformationEx(
+                    relationProcessorCore,
+                    buffer,
+                    ref bufferLength))
+            {
+                return logicalProcessorCount;
+            }
+
+            int offset = 0;
+            int physicalCoreCount = 0;
+
+            while (offset < bufferLength)
+            {
+                IntPtr entry =
+                    IntPtr.Add(
+                        buffer,
+                        offset);
+
+                int relationship =
+                    Marshal.ReadInt32(
+                        entry,
+                        0);
+
+                int entrySize =
+                    Marshal.ReadInt32(
+                        entry,
+                        sizeof(int));
+
+                if (entrySize <
+                    sizeof(int) * 2)
+                {
+                    return logicalProcessorCount;
+                }
+
+                if (relationship ==
+                    relationProcessorCore)
+                {
+                    physicalCoreCount++;
+                }
+
+                offset =
+                    checked(
+                        offset +
+                        entrySize);
+            }
+
+            return physicalCoreCount > 0
+                ? physicalCoreCount
+                : logicalProcessorCount;
+        }
+        catch
+        {
+            return logicalProcessorCount;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(
+                buffer);
+        }
+    }
+
+    [DllImport(
+        "kernel32.dll",
+        SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetLogicalProcessorInformationEx(
+        int relationshipType,
+        IntPtr buffer,
+        ref uint returnedLength);
 }
