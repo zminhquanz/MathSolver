@@ -6,9 +6,10 @@ namespace MathSolver.Services;
 /// <summary>
 /// Lưu lựa chọn đa luồng dùng chung cho benchmark và engine tính toán.
 /// Tab lũy thừa đọc thiết lập này khi bắt đầu mỗi phép tính lớn: tắt dùng
-/// BigInteger.Pow một luồng, bật dùng engine NTT/CRT có phép nhân nội bộ
-/// chạy song song với ngân sách theo nhân vật lý. Với workload NTT quét các
-/// buffer lớn, SMT thường làm tăng tranh chấp cache/băng thông thay vì tăng tốc.
+/// lũy thừa nhanh BigInteger một luồng; bật dùng engine NTT/CRT khi kết quả
+/// vượt 100.000 chữ số, với phép nhân nội bộ chạy song song theo ngân sách
+/// nhân vật lý. Nhánh |a| = 2^k luôn dùng dịch bit trên một luồng. Với workload
+/// NTT quét các buffer lớn, SMT thường làm tăng tranh chấp cache/băng thông.
 /// </summary>
 public static class CalculationThreadingManager
 {

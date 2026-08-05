@@ -153,6 +153,9 @@ internal sealed class ParallelBigUnsigned
         int remainingExponent =
             exponent;
 
+        // This loop is intentionally retained only by the custom NTT/CRT
+        // engine: BigInteger.Pow cannot route its internal products through
+        // Multiply(), so replacing it here would disable the parallel path.
         while (remainingExponent > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
