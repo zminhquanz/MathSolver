@@ -21,6 +21,11 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
 
+    // Chiều cao tối thiểu của một card nhập liệu khi BindableLayout vừa tạo
+    // children và WinUI chưa kịp arrange hàng mới. Giá trị này chỉ là fallback;
+    // sau khi card được đo, chiều cao thực (kể cả label xuống dòng) vẫn được dùng.
+    private const double GeometryInputCardMinimumHeight = 116d;
+
     // OctoDouble vẫn tính nội bộ với khoảng 127-128 chữ số có nghĩa,
     // nhưng giao diện chỉ hiển thị tối đa 10 chữ số sau dấu thập phân.
     private const int OctoDoubleScientificSignificantDigits =
@@ -315,6 +320,12 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private void BuildInputFields(
         string geometryId)
     {
+        // Không giữ HeightRequest của hình trước. Nếu hình cũ chỉ có một hàng
+        // nhưng hình mới cần hai hàng, chiều cao cũ sẽ cắt hàng dưới trước khi
+        // WinUI kịp đo các card mới và tạo ra vòng lặp không thể tự mở rộng.
+        GeometryInputFlexLayout.HeightRequest =
+            -1d;
+
         InputFields.Clear();
 
         foreach (GeometryInputFieldDefinition definition
@@ -338,6 +349,9 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                             : T("Ví dụ: 12.5")
                 });
         }
+
+        GeometryInputFlexLayout.InvalidateMeasure();
+        ScheduleInputFlexHeightUpdate();
     }
 
     private static IReadOnlyList<GeometryInputFieldDefinition>
@@ -3029,9 +3043,6 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         double[] rowHeights =
             new double[rowCount];
 
-        bool hasUnmeasuredCard =
-            false;
-
         for (int index = 0;
              index < fieldCount;
              index++)
@@ -3049,10 +3060,18 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                     cardHeight) ||
                 cardHeight <= 0d)
             {
-                hasUnmeasuredCard =
-                    true;
-
-                continue;
+                // Card ở hàng mới có thể chưa được arrange vì HeightRequest
+                // trước đó chỉ đủ một hàng. Dùng chiều cao yêu cầu/tối thiểu
+                // để mở khung trước; lượt layout kế tiếp sẽ cập nhật bằng
+                // chiều cao thật nếu label cần xuống dòng.
+                cardHeight =
+                    double.IsFinite(
+                            card.HeightRequest) &&
+                        card.HeightRequest > 0d
+                            ? card.HeightRequest
+                            : Math.Max(
+                                GeometryInputCardMinimumHeight,
+                                card.MinimumHeightRequest);
             }
 
             int rowIndex =
@@ -3065,11 +3084,14 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                     cardHeight);
         }
 
-        if (hasUnmeasuredCard ||
-            rowHeights.Any(
-                height => height <= 0d))
+        for (int rowIndex = 0;
+             rowIndex < rowHeights.Length;
+             rowIndex++)
         {
-            return;
+            rowHeights[rowIndex] =
+                Math.Max(
+                    GeometryInputCardMinimumHeight,
+                    rowHeights[rowIndex]);
         }
 
         // Mỗi card dùng Margin="5", nên mỗi hàng cần thêm 10 px.

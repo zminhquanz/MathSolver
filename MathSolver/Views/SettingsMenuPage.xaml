@@ -282,7 +282,7 @@
                                     Spacing="1"
                                     VerticalOptions="Center">
                                     <Label
-                                        Text="Đo sức mạnh"
+                                        Text="Thông tin phần cứng"
                                         Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label
                                         Text="Phần cứng và hiệu năng tính toán"

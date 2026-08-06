@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MathSolver.Controls"
-    Title="Đo sức mạnh"
+    Title="Thông tin phần cứng"
     Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
@@ -45,7 +45,7 @@
                 VerticalOptions="Center">
 
                 <Label
-                    Text="ĐO SỨC MẠNH"
+                    Text="THÔNG TIN PHẦN CỨNG"
                     FontSize="19"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"

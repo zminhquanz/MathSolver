@@ -329,7 +329,7 @@
     },
     {
       "key": "PowerRoot.StepDirectPow",
-      "source": "Bước 2. Gọi trực tiếp BigInteger.Pow tối ưu của .NET trên một worker nền; app không tự viết vòng bình phương–nhân bằng toán tử BigInteger. Không chia số mũ thành các lũy thừa con nên không phát sinh pha nhân ghép khổng lồ.",
+      "source": "Bước 2. Dùng trực tiếp BigInteger.Pow trên một worker nền. Không chia số mũ thành các lũy thừa con nên không phát sinh pha nhân ghép khổng lồ.",
       "mode": "exact"
     },
     {
@@ -359,7 +359,7 @@
     },
     {
       "key": "PowerRoot.InfoEngine",
-      "source": "• Engine: BigInteger.Pow tối ưu của .NET (đơn luồng)",
+      "source": "• Engine: BigInteger.Pow thích nghi (không chia số mũ)",
       "mode": "exact"
     },
     {
@@ -1639,7 +1639,7 @@
     },
     {
       "key": "legacy.exact.do.suc.manh.f43fbbba",
-      "source": "Đo sức mạnh",
+      "source": "Thông tin phần cứng",
       "mode": "exact"
     },
     {
@@ -1879,7 +1879,7 @@
     },
     {
       "key": "legacy.exact.do.suc.manh.96b7b72f",
-      "source": "ĐO SỨC MẠNH",
+      "source": "THÔNG TIN PHẦN CỨNG",
       "mode": "exact"
     },
     {

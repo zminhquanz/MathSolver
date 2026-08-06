@@ -462,7 +462,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         if (strategy ==
                 PowerComputationStrategy.BigIntegerPow &&
-            estimatedDigitCount >
+            estimatedDigitCount >=
                 ProgressDigitThreshold &&
             CalculationThreadingManager.UseMultithreading)
         {
@@ -603,24 +603,11 @@ public partial class PowerRootView : LocalizedSolverView
                         0,
                         1);
 
-                    if (!TryGetPowerOfTwoExponent(
-                            baseValue,
-                            out int basePowerOfTwoExponent))
-                    {
-                        throw new InvalidOperationException(
-                            "The bit-shift strategy requires |base| = 2^k.");
-                    }
-
-                    int totalBitShift =
-                        checked(
-                            basePowerOfTwoExponent *
-                            exponent);
-
-                    // If |a| = 2^k, then |a|^n = 2^(k*n). BigInteger.One is
-                    // the required seed because shifting zero still gives zero.
+                    // 2^n has one bit set at index n. Shifting zero would
+                    // still produce zero, so the correct seed is One.
                     cancellationToken.ThrowIfCancellationRequested();
                     result =
-                        BigInteger.One << totalBitShift;
+                        BigInteger.One << exponent;
 
                     if (baseValue < 0 &&
                         (exponent & 1) != 0)
@@ -649,7 +636,7 @@ public partial class PowerRootView : LocalizedSolverView
                         1);
 
                     result =
-                        await ComputeBigIntegerPowAsync(
+                        await ComputeDirectPowerAsync(
                             baseValue,
                             exponent,
                             cancellationToken);
@@ -880,19 +867,6 @@ public partial class PowerRootView : LocalizedSolverView
                 _ => 1
             };
 
-        int totalBitShift = 0;
-
-        if (phase == CalculationProgressPhase.BitShift &&
-            TryGetPowerOfTwoExponent(
-                baseValue,
-                out int basePowerOfTwoExponent))
-        {
-            totalBitShift =
-                checked(
-                    basePowerOfTwoExponent *
-                    exponent);
-        }
-
         return phase switch
         {
             CalculationProgressPhase.Preparing =>
@@ -905,7 +879,7 @@ public partial class PowerRootView : LocalizedSolverView
                     "PowerRoot.ProgressPhaseBitShift",
                     phaseNumber,
                     phaseCount,
-                    totalBitShift.ToString(
+                    exponent.ToString(
                         "N0",
                         CultureInfo.InvariantCulture),
                     baseValue.ToString(
@@ -953,10 +927,9 @@ public partial class PowerRootView : LocalizedSolverView
             return PowerComputationStrategy.DecimalPowerOfTen;
         }
 
-        if (exponent > 0 &&
-            TryGetPowerOfTwoExponent(
-                baseValue,
-                out _))
+        if ((baseValue == 2 ||
+             baseValue == -2) &&
+            exponent > 0)
         {
             return PowerComputationStrategy.BitShift;
         }
@@ -964,16 +937,17 @@ public partial class PowerRootView : LocalizedSolverView
         return PowerComputationStrategy.BigIntegerPow;
     }
 
-    private static Task<BigInteger> ComputeBigIntegerPowAsync(
+    private static Task<BigInteger> ComputeDirectPowerAsync(
         long baseValue,
         int exponent,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // BigInteger.Pow uses the runtime's optimized binary-exponentiation
-        // implementation. LongRunning only gives that single-threaded work a
-        // dedicated background thread; it does not split the exponent.
+        // LongRunning prevents a calculation lasting tens of seconds from
+        // occupying or waiting behind a shared ThreadPool worker. It does not
+        // turn BigInteger.Pow into a parallel operation: the actual worker
+        // count for this computation remains exactly one.
         return Task.Factory.StartNew(
             () =>
             {
@@ -1036,7 +1010,7 @@ public partial class PowerRootView : LocalizedSolverView
             Math.Abs(
                 baseValue);
 
-        // 10^k uses k >= 1. Values +/-1 are handled by the power-of-two path.
+        // 10^k uses k >= 1. Values +/-1 are handled by BigInteger.Pow.
         if (magnitude < 10)
         {
             return false;
@@ -1049,30 +1023,6 @@ public partial class PowerRootView : LocalizedSolverView
         }
 
         return magnitude == 1;
-    }
-
-    private static bool TryGetPowerOfTwoExponent(
-        long baseValue,
-        out int powerOfTwoExponent)
-    {
-        powerOfTwoExponent = 0;
-
-        ulong magnitude =
-            baseValue < 0
-                ? unchecked((ulong)(-(baseValue + 1))) + 1UL
-                : (ulong)baseValue;
-
-        if (magnitude == 0 ||
-            (magnitude & (magnitude - 1UL)) != 0)
-        {
-            return false;
-        }
-
-        powerOfTwoExponent =
-            BitOperations.TrailingZeroCount(
-                magnitude);
-
-        return true;
     }
 
     private static PowerCalculationState CreateBigIntegerCalculationState(
@@ -1772,39 +1722,6 @@ public partial class PowerRootView : LocalizedSolverView
                         state.Exponent),
                     ToSuperscript(
                         state.DecimalZeroCount)));
-        }
-        else if (state.Strategy ==
-                 PowerComputationStrategy.BitShift)
-        {
-            if (!TryGetPowerOfTwoExponent(
-                    state.BaseValue,
-                    out int basePowerOfTwoExponent))
-            {
-                throw new InvalidOperationException(
-                    "The bit-shift strategy requires |base| = 2^k.");
-            }
-
-            int totalPowerOfTwoExponent =
-                checked(
-                    basePowerOfTwoExponent *
-                    state.Exponent);
-
-            steps.Add(
-                Format(
-                    "PowerRoot.StepPowerOfTwoBaseRule",
-                    basePowerOfTwoExponent.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture),
-                    formattedExponent,
-                    totalPowerOfTwoExponent.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture),
-                    ToSuperscript(
-                        basePowerOfTwoExponent),
-                    ToSuperscript(
-                        state.Exponent),
-                    ToSuperscript(
-                        totalPowerOfTwoExponent)));
         }
         else
         {

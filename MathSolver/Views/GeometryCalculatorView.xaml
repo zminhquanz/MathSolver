@@ -463,6 +463,7 @@
                                 <Border
                                     Margin="5"
                                     WidthRequest="260"
+                                    MinimumHeightRequest="116"
                                     FlexLayout.Shrink="0"
                                     Padding="12"
                                     BackgroundColor="{DynamicResource SurfaceAltColor}"
