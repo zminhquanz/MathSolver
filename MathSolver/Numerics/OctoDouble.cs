@@ -381,6 +381,108 @@ public readonly struct OctoDouble :
         return estimate;
     }
 
+    public static OctoDouble Cbrt(OctoDouble value)
+    {
+        if (!value.IsFinite)
+        {
+            return new OctoDouble(
+                Math.Cbrt(
+                    value.ToDouble()));
+        }
+
+        if (value.IsZero)
+        {
+            return Zero;
+        }
+
+        OctoDouble estimate =
+            new(
+                Math.Cbrt(
+                    value.ToDouble()));
+
+        // Newton: x(k+1) = (2x + a/x²) / 3.
+        // The Math.Cbrt seed supplies about 16 decimal digits; five
+        // refinements are enough to fill the OctoDouble expansion.
+        for (int iteration = 0;
+             iteration < 5;
+             iteration++)
+        {
+            estimate =
+                (Two * estimate +
+                 value / (estimate * estimate)) /
+                Three;
+        }
+
+        return estimate;
+    }
+
+    /// <summary>
+    /// Computes the positive nth root. Math.Pow supplies the fast initial
+    /// estimate, then Newton refinement restores OctoDouble precision.
+    /// </summary>
+    public static OctoDouble RootUsingPow(
+        OctoDouble value,
+        int degree)
+    {
+        if (degree < 2)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(degree));
+        }
+
+        if (!value.IsFinite ||
+            value.Sign < 0)
+        {
+            return NaN;
+        }
+
+        if (value.IsZero)
+        {
+            return Zero;
+        }
+
+        if (degree == 2)
+        {
+            return Sqrt(value);
+        }
+
+        if (degree == 3)
+        {
+            return Cbrt(value);
+        }
+
+        OctoDouble estimate =
+            new(
+                Math.Pow(
+                    value.ToDouble(),
+                    1d / degree));
+
+        OctoDouble degreeValue =
+            new(degree);
+
+        OctoDouble degreeMinusOne =
+            new(degree - 1);
+
+        // Newton for x^degree = value:
+        // x(k+1) = ((degree - 1)x + value/x^(degree - 1)) / degree.
+        for (int iteration = 0;
+             iteration < 7;
+             iteration++)
+        {
+            OctoDouble previousPower =
+                Pow(
+                    estimate,
+                    degree - 1);
+
+            estimate =
+                (degreeMinusOne * estimate +
+                 value / previousPower) /
+                degreeValue;
+        }
+
+        return estimate;
+    }
+
     public static OctoDouble Pow(OctoDouble value, int exponent)
     {
         if (exponent == 0)

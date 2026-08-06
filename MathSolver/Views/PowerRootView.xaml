@@ -159,7 +159,7 @@
 
                                     <controls:BorderlessEntry
                                         x:Name="ExponentEntry"
-                                        Placeholder="Ví dụ 1,000,000"
+                                        Placeholder="{localization:Translate PowerRoot.ExponentPlaceholder}"
                                         Keyboard="Numeric"
                                         FontSize="18"
                                         TextColor="{DynamicResource TextPrimaryColor}"
@@ -249,12 +249,30 @@
 
                     <VerticalStackLayout Spacing="12">
 
-                        <Label
-                            x:Name="ProgressTitleLabel"
-                            FontSize="18"
-                            FontAttributes="Bold"
-                            LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                        <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="10">
+
+                            <ActivityIndicator
+                                x:Name="CalculationActivityIndicator"
+                                Grid.Column="0"
+                                WidthRequest="24"
+                                HeightRequest="24"
+                                VerticalOptions="Center"
+                                IsRunning="False"
+                                IsVisible="False"
+                                Color="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="ProgressTitleLabel"
+                                Grid.Column="1"
+                                VerticalTextAlignment="Center"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        </Grid>
 
                         <Grid
                             ColumnDefinitions="*,Auto"
@@ -480,37 +498,296 @@
 
             </VerticalStackLayout>
 
-            <Border
-                x:Name="RootComingSoonBorder"
+            <VerticalStackLayout
+                x:Name="RootContent"
                 IsVisible="False"
-                Padding="20"
-                BackgroundColor="{DynamicResource WarningSoftColor}"
-                Stroke="{DynamicResource WarningBorderBrush}"
-                StrokeThickness="1">
+                Spacing="14">
 
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                <Border Style="{StaticResource SolverCardStyle}">
 
-                <VerticalStackLayout Spacing="8">
+                    <VerticalStackLayout Spacing="14">
 
-                    <Label
-                        Text="ⁿ√a"
-                        FontSize="42"
-                        HorizontalTextAlignment="Center"
-                        TextColor="{DynamicResource WarningColor}" />
+                        <Label
+                            Text="{localization:Translate PowerRoot.RootInputTitle}"
+                            Style="{StaticResource SolverSectionTitleStyle}" />
 
-                    <Label
-                        Text="{localization:Translate PowerRoot.RootComingSoon}"
-                        FontSize="18"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource WarningColor}" />
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="12">
 
-                </VerticalStackLayout>
+                            <VerticalStackLayout
+                                Grid.Column="0"
+                                Spacing="6">
 
-            </Border>
+                                <Label
+                                    Text="{localization:Translate PowerRoot.RadicandLabel}"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Border
+                                    Padding="12,4"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <controls:BorderlessEntry
+                                        x:Name="RootRadicandEntry"
+                                        Placeholder="{localization:Translate PowerRoot.RadicandPlaceholder}"
+                                        Keyboard="Numeric"
+                                        FontSize="18"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        Focused="OnRootRadicandFocused"
+                                        TextChanged="OnRootInputTextChanged"
+                                        Unfocused="OnRootRadicandUnfocused" />
+
+                                </Border>
+
+                                <Label
+                                    Text="{localization:Translate PowerRoot.RadicandHint}"
+                                    FontSize="13"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout
+                                Grid.Column="1"
+                                Spacing="6">
+
+                                <Label
+                                    Text="{localization:Translate PowerRoot.DegreeLabel}"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Border
+                                    Padding="12,4"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <controls:BorderlessEntry
+                                        x:Name="RootDegreeEntry"
+                                        Placeholder="{localization:Translate PowerRoot.DegreePlaceholder}"
+                                        Keyboard="Numeric"
+                                        MaxLength="3"
+                                        FontSize="18"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        TextChanged="OnRootInputTextChanged"
+                                        Unfocused="OnRootDegreeUnfocused" />
+
+                                </Border>
+
+                                <Label
+                                    Text="{localization:Translate PowerRoot.DegreeHint}"
+                                    FontSize="13"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            </VerticalStackLayout>
+
+                        </Grid>
+
+                        <Border
+                            x:Name="RootErrorBorder"
+                            IsVisible="False"
+                            Padding="12,10"
+                            BackgroundColor="{DynamicResource DangerSoftColor}"
+                            Stroke="{DynamicResource DangerBorderBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <Grid
+                                ColumnDefinitions="Auto,*"
+                                ColumnSpacing="10">
+
+                                <Label
+                                    Text="⚠"
+                                    FontSize="22"
+                                    TextColor="{DynamicResource DangerColor}" />
+
+                                <Label
+                                    x:Name="RootErrorLabel"
+                                    Grid.Column="1"
+                                    FontSize="15"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource DangerColor}" />
+
+                            </Grid>
+
+                        </Border>
+
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="10">
+
+                            <Button
+                                x:Name="RootCalculateButton"
+                                Grid.Column="0"
+                                Text="{localization:Translate Actions.Calculate}"
+                                Style="{StaticResource SolverPrimaryActionStyle}"
+                                Clicked="OnRootCalculateClicked" />
+
+                            <Button
+                                x:Name="RootClearButton"
+                                Grid.Column="1"
+                                Text="{localization:Translate Actions.Clear}"
+                                Style="{StaticResource SolverSecondaryActionStyle}"
+                                Clicked="OnRootClearClicked" />
+
+                        </Grid>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <Border
+                    x:Name="RootResultBorder"
+                    IsVisible="False"
+                    Padding="16"
+                    BackgroundColor="{DynamicResource SurfaceColor}"
+                    Stroke="{DynamicResource SuccessBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="14">
+
+                        <Label
+                            Text="{localization:Translate PowerRoot.RootResultTitle}"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SuccessSoftColor}"
+                            StrokeThickness="0">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="8">
+
+                                <!--
+                                    Trình bày dấu căn theo đúng quy ước sách giáo khoa:
+                                    căn bậc hai không có chỉ số; bậc 3–255 đặt
+                                    chỉ số nhỏ ở góc trên bên trái của dấu căn.
+                                -->
+                                <ScrollView
+                                    Orientation="Horizontal"
+                                    HorizontalScrollBarVisibility="Never"
+                                    HorizontalOptions="Center">
+
+                                    <Grid
+                                        ColumnDefinitions="Auto,18,Auto"
+                                        ColumnSpacing="0"
+                                        RowDefinitions="30"
+                                        RowSpacing="0"
+                                        HeightRequest="30"
+                                        HorizontalOptions="Center">
+
+                                        <!--
+                                            Dấu móc và gạch ngang được vẽ trong cùng
+                                            một path vector để nét luôn thẳng, đều và
+                                            nối liền ở mọi mức scale DPI.
+                                        -->
+                                        <controls:TextbookRadicalStrokeView
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Grid.ColumnSpan="2"
+                                            LineColor="{DynamicResource SuccessColor}"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill" />
+
+                                        <Label
+                                            x:Name="RootResultDegreeLabel"
+                                            Grid.Row="0"
+                                            Grid.Column="0"
+                                            Margin="0,0,-3,0"
+                                            FontSize="11"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="End"
+                                            VerticalOptions="Start"
+                                            TextColor="{DynamicResource SuccessColor}" />
+
+                                        <Label
+                                            x:Name="RootResultRadicandLabel"
+                                            Grid.Row="0"
+                                            Grid.Column="2"
+                                            Margin="0,4,4,0"
+                                            Padding="0"
+                                            FontSize="17"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Start"
+                                            VerticalOptions="Start"
+                                            LineBreakMode="NoWrap"
+                                            TextColor="{DynamicResource SuccessColor}" />
+
+                                    </Grid>
+
+                                </ScrollView>
+
+                                <Label
+                                    x:Name="RootResultValueLabel"
+                                    FontSize="23"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Label
+                                    x:Name="RootResultKindLabel"
+                                    FontSize="13"
+                                    FontAttributes="Italic"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                        <Button
+                            x:Name="RootCopyResultButton"
+                            Text="{localization:Translate PowerRoot.RootCopyResult}"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
+                            Clicked="OnRootCopyResultClicked" />
+
+                        <Label
+                            Text="{localization:Translate PowerRoot.SolutionTitle}"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="RootSolutionLabel"
+                            FontSize="16"
+                            LineHeight="1.3"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+            </VerticalStackLayout>
 
             <!-- Lưu ý khi sử dụng -->
             <Border

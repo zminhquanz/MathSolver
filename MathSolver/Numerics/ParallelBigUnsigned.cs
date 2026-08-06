@@ -16,14 +16,15 @@ internal sealed class ParallelBigUnsigned
     private const uint LimbBase = 10_000;
     private const int DigitsPerLimb = 4;
     private const int SchoolbookWorkLimit = 250_000;
-    private const int MaximumTransformLength = 1 << 23;
+    private const int MaximumTransformLength = 1 << 26;
 
-    // Both primes have primitive root 3. The first supports transforms up to
-    // 2^23 and the second up to 2^26. Their product is large enough to recover
-    // every base-10,000 convolution coefficient used by this module exactly.
-    private const uint FirstModulus = 998_244_353;
+    // Both primes support transforms through 2^26. Their product is large
+    // enough to recover every base-10,000 convolution coefficient required by
+    // an 18-digit base raised to the maximum exponent of 10,000,000.
+    private const uint FirstModulus = 2_013_265_921;
     private const uint SecondModulus = 469_762_049;
-    private const uint PrimitiveRoot = 3;
+    private const uint FirstPrimitiveRoot = 31;
+    private const uint SecondPrimitiveRoot = 3;
 
     private static readonly ulong FirstModulusInverseInSecond =
         ModInverse(
@@ -698,7 +699,7 @@ internal sealed class ParallelBigUnsigned
             MaximumTransformLength)
         {
             throw new InvalidOperationException(
-                "The exact parallel transform exceeds the supported 2^23 length.");
+                "The exact parallel transform exceeds the supported 2^26 length.");
         }
 
         bool isSquare =
@@ -715,6 +716,7 @@ internal sealed class ParallelBigUnsigned
                 coefficientCount,
                 transformLength,
                 FirstModulus,
+                FirstPrimitiveRoot,
                 isSquare,
                 workers,
                 diagnostics,
@@ -727,6 +729,7 @@ internal sealed class ParallelBigUnsigned
                 coefficientCount,
                 transformLength,
                 SecondModulus,
+                SecondPrimitiveRoot,
                 isSquare,
                 workers,
                 diagnostics,
@@ -790,6 +793,7 @@ internal sealed class ParallelBigUnsigned
         int coefficientCount,
         int transformLength,
         uint modulus,
+        uint primitiveRoot,
         bool isSquare,
         FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
@@ -806,6 +810,7 @@ internal sealed class ParallelBigUnsigned
         ForwardDifTransform(
             transformedLeft,
             modulus,
+            primitiveRoot,
             workers,
             diagnostics,
             cancellationToken);
@@ -852,6 +857,7 @@ internal sealed class ParallelBigUnsigned
             ForwardDifTransform(
                 transformedRight,
                 modulus,
+                primitiveRoot,
                 workers,
                 diagnostics,
                 cancellationToken);
@@ -884,6 +890,7 @@ internal sealed class ParallelBigUnsigned
         InverseDitTransform(
             transformedLeft,
             modulus,
+            primitiveRoot,
             workers,
             diagnostics,
             cancellationToken);
@@ -907,6 +914,7 @@ internal sealed class ParallelBigUnsigned
     private static void ForwardDifTransform(
         uint[] values,
         uint modulus,
+        uint primitiveRoot,
         FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
@@ -928,7 +936,7 @@ internal sealed class ParallelBigUnsigned
 
             uint root =
                 (uint)ModPow(
-                    PrimitiveRoot,
+                    primitiveRoot,
                     (modulus - 1u) /
                     (uint)stageLength,
                     modulus);
@@ -1041,6 +1049,7 @@ internal sealed class ParallelBigUnsigned
     private static void InverseDitTransform(
         uint[] values,
         uint modulus,
+        uint primitiveRoot,
         FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
@@ -1062,7 +1071,7 @@ internal sealed class ParallelBigUnsigned
 
             uint root =
                 (uint)ModPow(
-                    PrimitiveRoot,
+                    primitiveRoot,
                     (modulus - 1u) /
                     (uint)stageLength,
                     modulus);
@@ -1447,7 +1456,7 @@ internal sealed class ParallelBigUnsigned
     /// <summary>
     /// A fixed set of dedicated workers reused by every NTT stage in one power
     /// calculation. This avoids rebuilding and rescheduling a Parallel.For
-    /// graph at all 23 stages of every 2^23 transform.
+    /// graph at every stage of transforms as large as 2^26.
     /// </summary>
     private sealed class FixedWorkerTeam : IDisposable
     {
@@ -1726,6 +1735,7 @@ internal sealed class ParallelBigUnsigned
             }
         }
 
+        // A pure power of two is already optimal as one squaring chain.
         if (firstExponent == 0 ||
             secondExponent == 0)
         {
@@ -1742,10 +1752,33 @@ internal sealed class ParallelBigUnsigned
                 firstExponent,
                 secondExponent);
 
-        return (long)smallerExponent *
-               100L >=
-               (long)largerExponent *
-               35L;
+        if ((long)smallerExponent *
+            100L >=
+            (long)largerExponent *
+            35L)
+        {
+            return true;
+        }
+
+        // At large exponents, the highest set bit can dwarf all remaining
+        // bits (10,000,000 = 8,388,608 + 1,611,392). Keep the two SMT teams
+        // useful by switching to an exact near-half m+n split. Avoid equal
+        // exponents so the branches remain independently profileable.
+        firstExponent =
+            exponent / 2;
+
+        secondExponent =
+            exponent -
+            firstExponent;
+
+        if (firstExponent ==
+            secondExponent)
+        {
+            firstExponent++;
+            secondExponent--;
+        }
+
+        return secondExponent > 0;
     }
 
     private static ulong ModPow(

@@ -2935,18 +2935,17 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 availableWidth,
                 fieldCount);
 
-        const double marginPerCard =
+        // Khoảng cách chỉ nằm giữa hai card. Card đầu tiên và cuối cùng của
+        // mỗi hàng không có lề ngoài, nhờ đó cạnh trái/phải của vùng nhập
+        // trùng chính xác với hàng nút Tính toán / Xóa phía dưới.
+        const double columnSpacing =
             10d;
-
-        const double rightSafetySpace =
-            4d;
 
         double requestedWidth =
             Math.Floor(
                 (availableWidth -
-                 columnCount *
-                 marginPerCard -
-                 rightSafetySpace) /
+                 (columnCount - 1) *
+                 columnSpacing) /
                 columnCount);
 
         requestedWidth =
@@ -2954,13 +2953,30 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 150d,
                 requestedWidth);
 
-        foreach (IView child
-                 in GeometryInputFlexLayout.Children)
+        for (int index = 0;
+             index < fieldCount;
+             index++)
         {
-            if (child is not VisualElement element)
+            IView child =
+                GeometryInputFlexLayout.Children[index];
+
+            if (child is not Microsoft.Maui.Controls.View element)
             {
                 continue;
             }
+
+            bool isLastCardInRow =
+                (index + 1) % columnCount == 0 ||
+                index == fieldCount - 1;
+
+            element.Margin =
+                new Thickness(
+                    0d,
+                    5d,
+                    isLastCardInRow
+                        ? 0d
+                        : columnSpacing,
+                    5d);
 
             element.MinimumWidthRequest =
                 0d;
@@ -3094,7 +3110,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                     rowHeights[rowIndex]);
         }
 
-        // Mỗi card dùng Margin="5", nên mỗi hàng cần thêm 10 px.
+        // Mỗi card dùng lề dọc 5 px ở trên và dưới, nên mỗi hàng cần
+        // thêm tổng cộng 10 px vào chiều cao FlexLayout.
         const double verticalMarginPerRow =
             10d;
 

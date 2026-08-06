@@ -8,6 +8,12 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 
+#if WINDOWS
+using Microsoft.Maui.Platform;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
+#endif
+
 namespace MathSolver.Views;
 
 public partial class PowerRootView : LocalizedSolverView
@@ -19,10 +25,10 @@ public partial class PowerRootView : LocalizedSolverView
         19;
 
     private const int MaxExponent =
-        1_000_000;
+        10_000_000;
 
     private const int MaxExponentInputDigits =
-        7;
+        8;
 
     private const int FullResultDigitThreshold =
         18;
@@ -30,7 +36,7 @@ public partial class PowerRootView : LocalizedSolverView
     private const int ExportDigitThreshold =
         100_001;
 
-    private const int ProgressDigitThreshold =
+    private const int ParallelComputationDigitThreshold =
         100_000;
 
     private const int ExportLeafDigitCount =
@@ -42,9 +48,33 @@ public partial class PowerRootView : LocalizedSolverView
     private const int PreviewLeadingDigits =
         12;
 
+    private const int MaxRootInputDigits =
+        39;
+
+    private const int RootScientificDisplayDigitThreshold =
+        18;
+
+    private const int RootScientificDisplaySignificantDigits =
+        12;
+
+    private const byte MinRootDegree =
+        2;
+
+    private const byte MaxRootDegree =
+        byte.MaxValue;
+
+    private const int RootMaximumDecimalPlaces =
+        10;
+
+    private static readonly BigInteger MinRootRadicand =
+        (BigInteger)Int128.MinValue;
+
+    private static readonly BigInteger MaxRootRadicand =
+        (BigInteger)Int128.MaxValue;
+
     // Decimal constants keep enough fractional precision to distinguish
-    // (10^18 - 1)^1,000,000 from 10^18,000,000. A double loses that distinction
-    // because its ULP is already much larger at an 18-million logarithm.
+    // (10^18 - 1)^10,000,000 from 10^180,000,000. A double loses that
+    // distinction because its ULP is already much larger at this scale.
     private const decimal NaturalLogarithmOfTwo =
         0.6931471805599453094172321215m;
 
@@ -54,11 +84,15 @@ public partial class PowerRootView : LocalizedSolverView
     private CancellationTokenSource? _calculationCancellation;
     private CancellationTokenSource? _exportCancellation;
     private PowerCalculationState? _calculationState;
+    private RootCalculationState? _rootCalculationState;
     private bool _isCalculating;
     private bool _isExporting;
     private bool _isPowerMode = true;
     private bool _isUpdatingInputText;
+    private bool _isUpdatingRootInputText;
+    private readonly Dictionary<Entry, string> _rootExactInputValues = [];
     private int _calculationVersion;
+    private int _calculationActiveWorkerCount = 1;
     private CalculationProgressPhase _calculationProgressPhase;
     private int _calculationPhaseCompleted;
     private int _calculationPhaseTotal;
@@ -127,7 +161,7 @@ public partial class PowerRootView : LocalizedSolverView
         PowerContent.IsVisible =
             powerMode;
 
-        RootComingSoonBorder.IsVisible =
+        RootContent.IsVisible =
             !powerMode;
     }
 
@@ -432,6 +466,925 @@ public partial class PowerRootView : LocalizedSolverView
         return true;
     }
 
+    private void OnRootInputTextChanged(
+        object? sender,
+        TextChangedEventArgs e)
+    {
+        if (_isUpdatingRootInputText ||
+            sender is not Entry entry)
+        {
+            return;
+        }
+
+        string newText =
+            e.NewTextValue ??
+            string.Empty;
+
+        bool isRadicand =
+            ReferenceEquals(
+                entry,
+                RootRadicandEntry);
+
+        bool isValid =
+            isRadicand
+                ? IsValidRootRadicandWhileTyping(
+                    newText)
+                : IsValidRootDegreeWhileTyping(
+                    newText);
+
+        if (!isValid)
+        {
+            SetRootEntryText(
+                entry,
+                e.OldTextValue ??
+                string.Empty);
+
+            ShowRootError(
+                Translate(
+                    isRadicand
+                        ? "PowerRoot.RootRadicandRangeError"
+                        : "PowerRoot.RootDegreeRangeError"));
+
+            return;
+        }
+
+        if (isRadicand)
+        {
+            _rootExactInputValues.Remove(
+                entry);
+
+            string formattedText =
+                IntegerInputFormatter.FormatWhileTyping(
+                    newText);
+
+            if (!string.Equals(
+                    formattedText,
+                    newText,
+                    StringComparison.Ordinal))
+            {
+                int logicalPosition =
+                    IntegerInputFormatter.CountLogicalCharacters(
+                        newText,
+                        entry.CursorPosition);
+
+                SetRootEntryText(
+                    entry,
+                    formattedText,
+                    IntegerInputFormatter.FindCursorPosition(
+                        formattedText,
+                        logicalPosition));
+            }
+        }
+
+        HideRootError();
+        HideRootResult();
+    }
+
+    private static bool IsValidRootRadicandWhileTyping(
+        string text)
+    {
+        if (text.Length == 0 ||
+            text is "-" or "−")
+        {
+            return true;
+        }
+
+        string normalized =
+            RemoveGroupSeparators(
+                text);
+
+        int firstDigitIndex =
+            normalized.Length > 0 &&
+            normalized[0] == '-'
+                ? 1
+                : 0;
+
+        if (firstDigitIndex ==
+            normalized.Length)
+        {
+            return true;
+        }
+
+        int digitCount = 0;
+
+        for (int index = firstDigitIndex;
+             index < normalized.Length;
+             index++)
+        {
+            if (!char.IsAsciiDigit(
+                    normalized[index]))
+            {
+                return false;
+            }
+
+            digitCount++;
+
+            if (digitCount >
+                MaxRootInputDigits)
+            {
+                return false;
+            }
+        }
+
+        return BigInteger.TryParse(
+                   normalized,
+                   NumberStyles.Integer,
+                   CultureInfo.InvariantCulture,
+                   out BigInteger value) &&
+               value >= MinRootRadicand &&
+               value <= MaxRootRadicand;
+    }
+
+    private static bool IsValidRootDegreeWhileTyping(
+        string text)
+    {
+        string normalized =
+            RemoveGroupSeparators(
+                text);
+
+        if (normalized.Length == 0)
+        {
+            return true;
+        }
+
+        if (normalized.Length > 3 ||
+            normalized.Any(
+                character =>
+                    !char.IsAsciiDigit(
+                        character)))
+        {
+            return false;
+        }
+
+        return byte.TryParse(
+            normalized,
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out _);
+    }
+
+    private void OnRootRadicandFocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry ||
+            !_rootExactInputValues.TryGetValue(
+                entry,
+                out string? exactText) ||
+            !BigInteger.TryParse(
+                exactText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out BigInteger value))
+        {
+            return;
+        }
+
+        _rootExactInputValues.Remove(
+            entry);
+
+        SetRootEntryText(
+            entry,
+            value.ToString(
+                "N0",
+                CultureInfo.InvariantCulture));
+    }
+
+    private void OnRootRadicandUnfocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string normalized =
+            RemoveGroupSeparators(
+                entry.Text);
+
+        if (!Int128.TryParse(
+                normalized,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out Int128 value))
+        {
+            return;
+        }
+
+        BigInteger bigValue =
+            (BigInteger)value;
+
+        string exactText =
+            bigValue.ToString(
+                CultureInfo.InvariantCulture);
+
+        int digitCount =
+            BigInteger.Abs(
+                    bigValue)
+                .ToString(
+                    CultureInfo.InvariantCulture)
+                .Length;
+
+        if (digitCount >
+            RootScientificDisplayDigitThreshold)
+        {
+            _rootExactInputValues[entry] =
+                exactText;
+
+            SetRootEntryText(
+                entry,
+                FormatRootScientificInput(
+                    bigValue));
+        }
+        else
+        {
+            _rootExactInputValues.Remove(
+                entry);
+
+            SetRootEntryText(
+                entry,
+                bigValue.ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture));
+        }
+    }
+
+    private void OnRootDegreeUnfocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string normalized =
+            RemoveGroupSeparators(
+                entry.Text);
+
+        if (byte.TryParse(
+                normalized,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out byte degree))
+        {
+            SetRootEntryText(
+                entry,
+                degree.ToString(
+                    CultureInfo.InvariantCulture));
+        }
+    }
+
+    private void SetRootEntryText(
+        Entry entry,
+        string text,
+        int? cursorPosition = null)
+    {
+        _isUpdatingRootInputText = true;
+
+        try
+        {
+            entry.Text = text;
+            entry.CursorPosition =
+                Math.Clamp(
+                    cursorPosition ??
+                    text.Length,
+                    0,
+                    text.Length);
+            entry.SelectionLength = 0;
+        }
+        finally
+        {
+            _isUpdatingRootInputText = false;
+        }
+    }
+
+    private void OnRootCalculateClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isCalculating ||
+            _isPowerMode)
+        {
+            return;
+        }
+
+        HideRootError();
+        HideRootResult();
+
+        if (!TryReadRootInputs(
+                out Int128 radicand,
+                out byte degree))
+        {
+            return;
+        }
+
+        try
+        {
+            RootCalculationMethod method =
+                degree switch
+                {
+                    2 => RootCalculationMethod.Sqrt,
+                    3 => RootCalculationMethod.Cbrt,
+                    _ => RootCalculationMethod.Pow
+                };
+
+            bool isComplex =
+                radicand < 0 &&
+                degree % 2 == 0;
+
+            DoubleDouble realResult =
+                DoubleDouble.Zero;
+
+            Complex complexResult =
+                Complex.Zero;
+
+            string resultText;
+
+            if (isComplex)
+            {
+                complexResult =
+                    degree == 2
+                        ? Complex.Sqrt(
+                            new Complex(
+                                (double)radicand,
+                                0d))
+                        : Complex.Pow(
+                            new Complex(
+                                (double)radicand,
+                                0d),
+                            1d / degree);
+
+                resultText =
+                    FormatRootComplex(
+                        complexResult);
+            }
+            else
+            {
+                DoubleDouble magnitude =
+                    DoubleDouble.Abs(
+                        DoubleDouble.FromInt128(
+                            radicand));
+
+                realResult =
+                    method switch
+                    {
+                        RootCalculationMethod.Sqrt =>
+                            DoubleDouble.Sqrt(
+                                magnitude),
+                        RootCalculationMethod.Cbrt =>
+                            DoubleDouble.Cbrt(
+                                magnitude),
+                        _ =>
+                            DoubleDouble.RootUsingPow(
+                                magnitude,
+                                degree)
+                    };
+
+                if (radicand < 0)
+                {
+                    realResult =
+                        -realResult;
+                }
+
+                if (!realResult.IsFinite)
+                {
+                    ShowRootError(
+                        Translate(
+                            "PowerRoot.RootNotFinite"));
+                    return;
+                }
+
+                resultText =
+                    FormatRootReal(
+                        realResult);
+            }
+
+            _rootCalculationState =
+                new RootCalculationState(
+                    radicand,
+                    degree,
+                    isComplex,
+                    realResult,
+                    complexResult,
+                    resultText,
+                    method);
+
+            ShowRootResult(
+                _rootCalculationState);
+        }
+        catch (Exception exception)
+        {
+            ShowRootError(
+                Format(
+                    "PowerRoot.RootCalculationError",
+                    exception.Message));
+        }
+    }
+
+    private bool TryReadRootInputs(
+        out Int128 radicand,
+        out byte degree)
+    {
+        radicand = Int128.Zero;
+        degree = 0;
+
+        string radicandText =
+            _rootExactInputValues.TryGetValue(
+                RootRadicandEntry,
+                out string? exactText)
+                ? exactText
+                : RemoveGroupSeparators(
+                    RootRadicandEntry.Text);
+
+        if (!Int128.TryParse(
+                radicandText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out radicand))
+        {
+            ShowRootError(
+                Translate(
+                    "PowerRoot.RootRadicandRangeError"));
+
+            RootRadicandEntry.Focus();
+            return false;
+        }
+
+        string degreeText =
+            RemoveGroupSeparators(
+                RootDegreeEntry.Text);
+
+        if (!byte.TryParse(
+                degreeText,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out degree) ||
+            degree < MinRootDegree ||
+            degree > MaxRootDegree)
+        {
+            ShowRootError(
+                Translate(
+                    "PowerRoot.RootDegreeRangeError"));
+
+            RootDegreeEntry.Focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ShowRootResult(
+        RootCalculationState state)
+    {
+        ShowTextbookRootExpression(
+            state.Radicand,
+            state.Degree);
+
+        RootResultValueLabel.Text =
+            state.ResultText;
+
+        RootResultKindLabel.Text =
+            Translate(
+                state.IsComplex
+                    ? "PowerRoot.RootResultComplex"
+                    : "PowerRoot.RootResultReal");
+
+        RootSolutionLabel.Text =
+            CreateRootSolution(
+                state);
+
+        RootResultBorder.IsVisible =
+            true;
+    }
+
+    private void ShowTextbookRootExpression(
+        Int128 radicand,
+        byte degree)
+    {
+        RootResultDegreeLabel.Text =
+            degree == 2
+                ? string.Empty
+                : degree.ToString(
+                    CultureInfo.InvariantCulture);
+
+        RootResultDegreeLabel.IsVisible =
+            degree != 2;
+
+        string radicandText =
+            ((BigInteger)radicand)
+            .ToString(
+                "N0",
+                CultureInfo.InvariantCulture)
+            .Replace(
+                '-',
+                '−');
+
+        RootResultRadicandLabel.Text =
+            radicand < 0
+                ? $"({radicandText})"
+                : radicandText;
+    }
+
+    private string CreateRootSolution(
+        RootCalculationState state)
+    {
+        string expression =
+            FormatRootExpression(
+                state.Radicand,
+                state.Degree);
+
+        string formattedRadicand =
+            ((BigInteger)state.Radicand)
+            .ToString(
+                "N0",
+                CultureInfo.InvariantCulture)
+            .Replace(
+                '-',
+                '−');
+
+        string formattedDegree =
+            state.Degree.ToString(
+                CultureInfo.InvariantCulture);
+
+        var steps =
+            new List<string>
+            {
+                Format(
+                    "PowerRoot.RootStepGiven",
+                    expression)
+            };
+
+        if (state.Radicand == 0)
+        {
+            steps.Add(
+                Format(
+                    "PowerRoot.RootStepZero",
+                    formattedDegree));
+        }
+        else if (state.IsComplex)
+        {
+            steps.Add(
+                Format(
+                    "PowerRoot.RootStepNegativeEven",
+                    formattedRadicand,
+                    formattedDegree));
+
+            steps.Add(
+                Format(
+                    state.Method ==
+                        RootCalculationMethod.Sqrt
+                        ? "PowerRoot.RootStepComplexSqrt"
+                        : "PowerRoot.RootStepComplexPow",
+                    BigInteger.Abs(
+                            (BigInteger)state.Radicand)
+                        .ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                    formattedDegree));
+        }
+        else
+        {
+            steps.Add(
+                Translate(
+                    state.Radicand < 0
+                        ? "PowerRoot.RootStepNegativeOdd"
+                        : "PowerRoot.RootStepRealDomain"));
+
+            steps.Add(
+                Format(
+                    state.Method switch
+                    {
+                        RootCalculationMethod.Sqrt =>
+                            "PowerRoot.RootStepMethodSqrt",
+                        RootCalculationMethod.Cbrt =>
+                            "PowerRoot.RootStepMethodCbrt",
+                        _ =>
+                            "PowerRoot.RootStepMethodPow"
+                    },
+                    formattedDegree));
+        }
+
+        steps.Add(
+            Format(
+                state.IsComplex
+                    ? "PowerRoot.RootStepComplexConclusion"
+                    : "PowerRoot.RootStepRealConclusion",
+                state.ResultText,
+                formattedDegree,
+                formattedRadicand));
+
+        return string.Join(
+            Environment.NewLine +
+            Environment.NewLine,
+            steps);
+    }
+
+    private static string FormatRootExpression(
+        Int128 radicand,
+        byte degree)
+    {
+        string radicandText =
+            ((BigInteger)radicand)
+            .ToString(
+                "N0",
+                CultureInfo.InvariantCulture)
+            .Replace(
+                '-',
+                '−');
+
+        if (radicand < 0)
+        {
+            radicandText =
+                $"({radicandText})";
+        }
+
+        return degree == 2
+            ? $"√{radicandText}"
+            : $"{ToSuperscript(degree)}√{radicandText}";
+    }
+
+    private static string FormatRootReal(
+        DoubleDouble value)
+    {
+        if (value.IsZero)
+        {
+            return "0";
+        }
+
+        double approximateMagnitude =
+            Math.Abs(
+                value.ToDouble());
+
+        int integerDigitCount =
+            Math.Max(
+                1,
+                (int)Math.Floor(
+                    Math.Log10(
+                        approximateMagnitude)) +
+                1);
+
+        int significantDigits =
+            Math.Clamp(
+                integerDigitCount +
+                RootMaximumDecimalPlaces,
+                1,
+                DoubleDouble.SignificantDigits);
+
+        string text =
+            value.ToGeneralString(
+                significantDigits,
+                scientificUpperExponent: 1000,
+                scientificLowerExponent: -1000);
+
+        return GroupRootNumber(
+            text);
+    }
+
+    private static string FormatRootComplex(
+        Complex value)
+    {
+        double real =
+            NormalizeDisplayedComplexComponent(
+                value.Real);
+
+        double imaginary =
+            NormalizeDisplayedComplexComponent(
+                value.Imaginary);
+
+        if (imaginary == 0d)
+        {
+            return FormatRootDouble(
+                real);
+        }
+
+        string imaginaryMagnitude =
+            FormatRootDouble(
+                Math.Abs(
+                    imaginary));
+
+        string imaginaryTerm =
+            imaginaryMagnitude == "1"
+                ? "i"
+                : $"{imaginaryMagnitude}i";
+
+        if (real == 0d)
+        {
+            return imaginary < 0d
+                ? $"−{imaginaryTerm}"
+                : imaginaryTerm;
+        }
+
+        return
+            $"{FormatRootDouble(real)} " +
+            $"{(imaginary < 0d ? '−' : '+')} " +
+            imaginaryTerm;
+    }
+
+    private static double NormalizeDisplayedComplexComponent(
+        double value)
+    {
+        const double HalfUnitAtLastDisplayedPlace =
+            0.00000000005d;
+
+        return Math.Abs(
+                   value) <
+               HalfUnitAtLastDisplayedPlace
+            ? 0d
+            : value;
+    }
+
+    private static string FormatRootDouble(
+        double value)
+    {
+        string text =
+            value.ToString(
+                "0.##########",
+                CultureInfo.InvariantCulture);
+
+        return GroupRootNumber(
+            text);
+    }
+
+    private static string GroupRootNumber(
+        string text)
+    {
+        bool isNegative =
+            text.Length > 0 &&
+            text[0] == '-';
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalPointIndex =
+            unsignedText.IndexOf(
+                '.',
+                StringComparison.Ordinal);
+
+        string integerPart =
+            decimalPointIndex >= 0
+                ? unsignedText[..decimalPointIndex]
+                : unsignedText;
+
+        string fractionalPart =
+            decimalPointIndex >= 0
+                ? unsignedText[decimalPointIndex..]
+                : string.Empty;
+
+        string groupedInteger =
+            IntegerInputFormatter.AddThousandsSeparators(
+                integerPart);
+
+        return
+            (isNegative ? "−" : string.Empty) +
+            groupedInteger +
+            fractionalPart;
+    }
+
+    private static string FormatRootScientificInput(
+        BigInteger value)
+    {
+        bool isNegative =
+            value.Sign < 0;
+
+        string digits =
+            BigInteger.Abs(
+                    value)
+                .ToString(
+                    CultureInfo.InvariantCulture);
+
+        int exponent =
+            digits.Length - 1;
+
+        int keptDigitCount =
+            Math.Min(
+                RootScientificDisplaySignificantDigits,
+                digits.Length);
+
+        string keptDigits =
+            digits[..keptDigitCount];
+
+        bool wasShortened =
+            digits.Length >
+                keptDigitCount &&
+            digits[keptDigitCount..]
+                .Any(
+                    character =>
+                        character != '0');
+
+        string mantissa =
+            keptDigits.Length == 1
+                ? keptDigits
+                : $"{keptDigits[0]}.{keptDigits[1..]}"
+                    .TrimEnd('0')
+                    .TrimEnd('.');
+
+        string sign =
+            isNegative
+                ? "−"
+                : string.Empty;
+
+        string approximation =
+            wasShortened
+                ? "≈"
+                : string.Empty;
+
+        if (mantissa == "1")
+        {
+            return
+                $"{approximation}{sign}10" +
+                ToSuperscript(
+                    exponent);
+        }
+
+        return
+            $"{approximation}{sign}{mantissa}×10" +
+            ToSuperscript(
+                exponent);
+    }
+
+    private void OnRootClearClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isCalculating)
+        {
+            return;
+        }
+
+        _rootExactInputValues.Clear();
+        _rootCalculationState = null;
+
+        SetRootEntryText(
+            RootRadicandEntry,
+            string.Empty);
+
+        SetRootEntryText(
+            RootDegreeEntry,
+            string.Empty);
+
+        HideRootError();
+        HideRootResult();
+
+        RootRadicandEntry.Focus();
+    }
+
+    private async void OnRootCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_rootCalculationState is null)
+        {
+            return;
+        }
+
+        await Clipboard.Default.SetTextAsync(
+            _rootCalculationState.ResultText);
+
+        RootCopyResultButton.Text =
+            Translate(
+                "PowerRoot.Copied");
+
+        await Task.Delay(
+            1200);
+
+        if (_rootCalculationState is not null)
+        {
+            RootCopyResultButton.Text =
+                Translate(
+                    "PowerRoot.RootCopyResult");
+        }
+    }
+
+    private void ShowRootError(
+        string message)
+    {
+        RootErrorLabel.Text =
+            message;
+
+        RootErrorBorder.IsVisible =
+            true;
+    }
+
+    private void HideRootError()
+    {
+        RootErrorBorder.IsVisible =
+            false;
+
+        RootErrorLabel.Text =
+            string.Empty;
+    }
+
+    private void HideRootResult()
+    {
+        _rootCalculationState = null;
+        RootResultBorder.IsVisible =
+            false;
+    }
+
     private async Task CalculatePowerAsync(
         long baseValue,
         int exponent)
@@ -461,9 +1414,9 @@ public partial class PowerRootView : LocalizedSolverView
         int activeWorkerCount = 1;
 
         if (strategy ==
-                PowerComputationStrategy.BigIntegerPow &&
+                PowerComputationStrategy.SingleThreadedBigIntegerPower &&
             estimatedDigitCount >=
-                ProgressDigitThreshold &&
+                ParallelComputationDigitThreshold &&
             CalculationThreadingManager.UseMultithreading)
         {
             activeWorkerCount =
@@ -473,10 +1426,8 @@ public partial class PowerRootView : LocalizedSolverView
                 PowerComputationStrategy.ParallelNttPower;
         }
 
-        bool showCalculationProgress =
-            estimatedDigitCount >=
-            ProgressDigitThreshold;
-
+        _calculationActiveWorkerCount =
+            activeWorkerCount;
         _calculationProgressPhase =
             CalculationProgressPhase.Preparing;
         _calculationPhaseCompleted = 0;
@@ -487,12 +1438,11 @@ public partial class PowerRootView : LocalizedSolverView
             enabled: false);
 
         ResultBorder.IsVisible = false;
-        ProgressBorder.IsVisible =
-            showCalculationProgress;
-        StopButton.IsVisible =
-            showCalculationProgress;
-        StopButton.IsEnabled =
-            showCalculationProgress;
+        ProgressBorder.IsVisible = true;
+        CalculationActivityIndicator.IsVisible = true;
+        CalculationActivityIndicator.IsRunning = true;
+        StopButton.IsVisible = true;
+        StopButton.IsEnabled = true;
 
         CalculationProgressBar.Progress = 0d;
         ProgressPercentLabel.Text = "0%";
@@ -603,19 +1553,25 @@ public partial class PowerRootView : LocalizedSolverView
                         0,
                         1);
 
-                    // 2^n has one bit set at index n. Shifting zero would
-                    // still produce zero, so the correct seed is One.
-                    cancellationToken.ThrowIfCancellationRequested();
-                    result =
-                        BigInteger.One << exponent;
-
-                    if (baseValue < 0 &&
-                        (exponent & 1) != 0)
+                    if (!TryGetPowerOfTwoExponent(
+                            baseValue,
+                            out int basePowerOfTwoExponent))
                     {
-                        result =
-                            BigInteger.Negate(
-                                result);
+                        throw new InvalidOperationException(
+                            "The bit-shift strategy requires |base| = 2^k.");
                     }
+
+                    int totalBitShift =
+                        checked(
+                            basePowerOfTwoExponent *
+                            exponent);
+
+                    result =
+                        await ComputeBitShiftPowerAsync(
+                            baseValue,
+                            exponent,
+                            totalBitShift,
+                            cancellationToken);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -628,17 +1584,31 @@ public partial class PowerRootView : LocalizedSolverView
                 }
                 else
                 {
+                    int multiplicationCount =
+                        CountPowerMultiplications(
+                            exponent);
+
                     SetCalculationProgress(
                         baseValue,
                         exponent,
                         CalculationProgressPhase.Computing,
                         0,
-                        1);
+                        Math.Max(
+                            1,
+                            multiplicationCount));
 
                     result =
-                        await ComputeDirectPowerAsync(
+                        await ComputeSingleThreadedPowerAsync(
                             baseValue,
                             exponent,
+                            (completed, total) =>
+                                ReportCalculationPhase(
+                                    baseValue,
+                                    exponent,
+                                    CalculationProgressPhase.Computing,
+                                    completed,
+                                    total,
+                                    calculationVersion),
                             cancellationToken);
 
                     cancellationToken.ThrowIfCancellationRequested();
@@ -647,8 +1617,12 @@ public partial class PowerRootView : LocalizedSolverView
                         baseValue,
                         exponent,
                         CalculationProgressPhase.Computing,
-                        1,
-                        1);
+                        Math.Max(
+                            1,
+                            multiplicationCount),
+                        Math.Max(
+                            1,
+                            multiplicationCount));
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -734,6 +1708,8 @@ public partial class PowerRootView : LocalizedSolverView
                 _calculationVersion)
             {
                 _isCalculating = false;
+                CalculationActivityIndicator.IsRunning = false;
+                CalculationActivityIndicator.IsVisible = false;
 
                 SetInputEnabled(
                     enabled: true);
@@ -843,7 +1819,8 @@ public partial class PowerRootView : LocalizedSolverView
                 baseValue,
                 exponent,
                 completedSteps,
-                totalSteps);
+                totalSteps,
+                _calculationActiveWorkerCount);
     }
 
     private static string CreateCalculationPhaseText(
@@ -851,7 +1828,8 @@ public partial class PowerRootView : LocalizedSolverView
         long baseValue,
         int exponent,
         int completedSteps,
-        int totalSteps)
+        int totalSteps,
+        int activeWorkerCount)
     {
         const int phaseCount = 3;
 
@@ -867,6 +1845,19 @@ public partial class PowerRootView : LocalizedSolverView
                 _ => 1
             };
 
+        int totalBitShift = exponent;
+
+        if (phase == CalculationProgressPhase.BitShift &&
+            TryGetPowerOfTwoExponent(
+                baseValue,
+                out int basePowerOfTwoExponent))
+        {
+            totalBitShift =
+                checked(
+                    basePowerOfTwoExponent *
+                    exponent);
+        }
+
         return phase switch
         {
             CalculationProgressPhase.Preparing =>
@@ -879,7 +1870,7 @@ public partial class PowerRootView : LocalizedSolverView
                     "PowerRoot.ProgressPhaseBitShift",
                     phaseNumber,
                     phaseCount,
-                    exponent.ToString(
+                    totalBitShift.ToString(
                         "N0",
                         CultureInfo.InvariantCulture),
                     baseValue.ToString(
@@ -891,12 +1882,17 @@ public partial class PowerRootView : LocalizedSolverView
                     phaseNumber,
                     phaseCount),
             CalculationProgressPhase.Computing =>
-                Format(
-                    "PowerRoot.ProgressPhaseComputing",
-                    phaseNumber,
-                    phaseCount,
-                    completedSteps,
-                    totalSteps),
+                string.Join(
+                    Environment.NewLine,
+                    Format(
+                        "PowerRoot.ProgressPhaseComputing",
+                        phaseNumber,
+                        phaseCount,
+                        completedSteps,
+                        totalSteps),
+                    Format(
+                        "PowerRoot.ProgressWorkers",
+                        activeWorkerCount)),
             CalculationProgressPhase.Formatting =>
                 Format(
                     "PowerRoot.ProgressPhaseFormatting",
@@ -927,37 +1923,45 @@ public partial class PowerRootView : LocalizedSolverView
             return PowerComputationStrategy.DecimalPowerOfTen;
         }
 
-        if ((baseValue == 2 ||
-             baseValue == -2) &&
-            exponent > 0)
+        if (exponent > 0 &&
+            TryGetPowerOfTwoExponent(
+                baseValue,
+                out _))
         {
             return PowerComputationStrategy.BitShift;
         }
 
-        return PowerComputationStrategy.BigIntegerPow;
+        return PowerComputationStrategy.SingleThreadedBigIntegerPower;
     }
 
-    private static Task<BigInteger> ComputeDirectPowerAsync(
+    private static Task<BigInteger> ComputeBitShiftPowerAsync(
         long baseValue,
         int exponent,
+        int totalBitShift,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // LongRunning prevents a calculation lasting tens of seconds from
-        // occupying or waiting behind a shared ThreadPool worker. It does not
-        // turn BigInteger.Pow into a parallel operation: the actual worker
-        // count for this computation remains exactly one.
+        // BigInteger's shift is intrinsically sequential. Run it on exactly
+        // one dedicated background worker so the MAUI UI stays responsive and
+        // this fast path never enters the NTT/CRT worker pool.
         return Task.Factory.StartNew(
             () =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // If |a| = 2^k, then |a|^n = 2^(k*n). Shifting zero
+                // would still produce zero, so the correct seed is One.
                 BigInteger result =
-                    BigInteger.Pow(
-                        new BigInteger(
-                            baseValue),
-                        exponent);
+                    BigInteger.One << totalBitShift;
+
+                if (baseValue < 0 &&
+                    (exponent & 1) != 0)
+                {
+                    result =
+                        BigInteger.Negate(
+                            result);
+                }
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -967,6 +1971,117 @@ public partial class PowerRootView : LocalizedSolverView
             TaskCreationOptions.LongRunning |
             TaskCreationOptions.DenyChildAttach,
             TaskScheduler.Default);
+    }
+
+    private static Task<BigInteger> ComputeSingleThreadedPowerAsync(
+        long baseValue,
+        int exponent,
+        Action<int, int> progress,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // LongRunning keeps the UI responsive without adding computation
+        // workers. Every multiplication is still executed sequentially on
+        // this one dedicated background thread, but is now observable so the
+        // same detailed progress UI can be used in both threading modes.
+        return Task.Factory.StartNew(
+            () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (exponent == 0)
+                {
+                    return BigInteger.One;
+                }
+
+                BigInteger factor =
+                    new(
+                        baseValue);
+
+                BigInteger result =
+                    BigInteger.One;
+
+                bool resultInitialized = false;
+                int remainingExponent = exponent;
+                int completedOperations = 0;
+                int totalOperations =
+                    CountPowerMultiplications(
+                        exponent);
+
+                while (remainingExponent > 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if ((remainingExponent & 1) != 0)
+                    {
+                        if (!resultInitialized)
+                        {
+                            result = factor;
+                            resultInitialized = true;
+                        }
+                        else
+                        {
+                            result *= factor;
+
+                            progress(
+                                ++completedOperations,
+                                totalOperations);
+                        }
+                    }
+
+                    remainingExponent >>= 1;
+
+                    if (remainingExponent > 0)
+                    {
+                        factor *= factor;
+
+                        progress(
+                            ++completedOperations,
+                            totalOperations);
+                    }
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                return result;
+            },
+            cancellationToken,
+            TaskCreationOptions.LongRunning |
+            TaskCreationOptions.DenyChildAttach,
+            TaskScheduler.Default);
+    }
+
+    private static int CountPowerMultiplications(
+        int exponent)
+    {
+        int operationCount = 0;
+        bool resultInitialized = false;
+        int remainingExponent = exponent;
+
+        while (remainingExponent > 0)
+        {
+            if ((remainingExponent & 1) != 0)
+            {
+                if (resultInitialized)
+                {
+                    operationCount++;
+                }
+                else
+                {
+                    resultInitialized = true;
+                }
+            }
+
+            remainingExponent >>= 1;
+
+            if (remainingExponent > 0)
+            {
+                operationCount++;
+            }
+        }
+
+        return operationCount;
     }
 
     private static Task<ParallelPowerResult> ComputeParallelPowerAsync(
@@ -1023,6 +2138,54 @@ public partial class PowerRootView : LocalizedSolverView
         }
 
         return magnitude == 1;
+    }
+
+    private static bool TryGetPowerOfTwoExponent(
+        long baseValue,
+        out int powerOfTwoExponent)
+    {
+        powerOfTwoExponent = 0;
+
+        // Convert to an unsigned magnitude without overflowing at long.MinValue.
+        // Negative powers of two keep the existing optimized path; their sign
+        // is applied after the magnitude has been created by the shift.
+        ulong magnitude =
+            baseValue < 0
+                ? unchecked((ulong)(-(baseValue + 1))) + 1UL
+                : (ulong)baseValue;
+
+        if (!IsPowerOfTwo(
+                magnitude))
+        {
+            return false;
+        }
+
+        powerOfTwoExponent =
+            GetBitShiftCount(
+                magnitude);
+
+        return true;
+    }
+
+    private static bool IsPowerOfTwo(
+        ulong value)
+    {
+        return value > 0UL &&
+               (value & (value - 1UL)) == 0UL;
+    }
+
+    private static int GetBitShiftCount(
+        ulong value)
+    {
+        int shiftCount = 0;
+
+        while ((value & 1UL) == 0UL)
+        {
+            value >>= 1;
+            shiftCount++;
+        }
+
+        return shiftCount;
     }
 
     private static PowerCalculationState CreateBigIntegerCalculationState(
@@ -1728,6 +2891,39 @@ public partial class PowerRootView : LocalizedSolverView
                     ToSuperscript(
                         state.DecimalZeroCount)));
         }
+        else if (state.Strategy ==
+                 PowerComputationStrategy.BitShift)
+        {
+            if (!TryGetPowerOfTwoExponent(
+                    state.BaseValue,
+                    out int basePowerOfTwoExponent))
+            {
+                throw new InvalidOperationException(
+                    "The bit-shift strategy requires |base| = 2^k.");
+            }
+
+            int totalPowerOfTwoExponent =
+                checked(
+                    basePowerOfTwoExponent *
+                    state.Exponent);
+
+            steps.Add(
+                Format(
+                    "PowerRoot.StepBitShift",
+                    basePowerOfTwoExponent.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    formattedExponent,
+                    totalPowerOfTwoExponent.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    ToSuperscript(
+                        basePowerOfTwoExponent),
+                    ToSuperscript(
+                        state.Exponent),
+                    ToSuperscript(
+                        totalPowerOfTwoExponent)));
+        }
         else
         {
             steps.Add(
@@ -1901,6 +3097,11 @@ public partial class PowerRootView : LocalizedSolverView
                 "PowerRoot.InfoRam",
                 FormatByteSize(
                     state.EstimatedPeakRamBytes)),
+            Format(
+                "PowerRoot.InfoTxtSize",
+                FormatByteSize(
+                    EstimateTxtFileSizeBytes(
+                        state))),
             Format(
                 "PowerRoot.InfoThreads",
                 state.ActiveWorkerCount),
@@ -2110,13 +3311,43 @@ public partial class PowerRootView : LocalizedSolverView
                     FileSystem.CacheDirectory,
                     $"{Guid.NewGuid():N}_{fileName}");
 
-            // Khong dung Progress<T> o day. Progress<T> chi dua callback vao
-            // hang doi UI, vi vay worker co the tao xong file truoc khi giao
-            // dien kip hien thi tung block. Callback dong bo nay dam bao moi
-            // block da ghi duoc UI nhan truoc khi worker xu ly block ke tiep.
+            int lastReportedCreationBlock =
+                0;
+
+            long lastCreationReportTimestamp =
+                Stopwatch.GetTimestamp();
+
+            // Cap nhat toi da khoang 400 moc tien trinh, hoac sau moi 100 ms.
+            // Neu dua ca hang chuc nghin block 4 KB vao UI dispatcher, Windows
+            // co the trong nhu bi treo du file van dang duoc ghi binh thuong.
             Action<ExportFileProgress> creationProgress =
                 update =>
                 {
+                    int minimumBlockDelta =
+                        Math.Max(
+                            1,
+                            update.TotalBlocks /
+                            400);
+
+                    bool isFinalUpdate =
+                        update.CompletedBlocks >=
+                        update.TotalBlocks;
+
+                    bool shouldReport =
+                        isFinalUpdate ||
+                        update.CompletedBlocks -
+                        lastReportedCreationBlock >=
+                        minimumBlockDelta ||
+                        Stopwatch.GetElapsedTime(
+                            lastCreationReportTimestamp) >=
+                        TimeSpan.FromMilliseconds(
+                            100d);
+
+                    if (!shouldReport)
+                    {
+                        return;
+                    }
+
                     double normalizedProgress =
                         Math.Clamp(
                             update.TotalBlocks > 0
@@ -2125,6 +3356,12 @@ public partial class PowerRootView : LocalizedSolverView
                                 : 0d,
                             0d,
                             1d);
+
+                    lastReportedCreationBlock =
+                        update.CompletedBlocks;
+
+                    lastCreationReportTimestamp =
+                        Stopwatch.GetTimestamp();
 
                     MainThread
                         .InvokeOnMainThreadAsync(
@@ -2150,6 +3387,11 @@ public partial class PowerRootView : LocalizedSolverView
 
             cancellationToken.ThrowIfCancellationRequested();
 
+            long fileSizeBytes =
+                new FileInfo(
+                    temporaryPath)
+                .Length;
+
             ShowExportStatus(
                 Format(
                     "PowerRoot.ExportSavingProgress",
@@ -2157,35 +3399,11 @@ public partial class PowerRootView : LocalizedSolverView
                 progress: 0d,
                 isBusy: true);
 
-            await using FileStream sourceStream =
-                File.OpenRead(
-                    temporaryPath);
-
-            var saveProgress =
-                new Progress<double>(
-                    progress =>
-                    {
-                        double normalizedProgress =
-                            Math.Clamp(
-                                progress,
-                                0d,
-                                1d);
-
-                        ShowExportStatus(
-                            Format(
-                                "PowerRoot.ExportSavingProgress",
-                                Math.Round(
-                                    normalizedProgress *
-                                    100d)),
-                            normalizedProgress,
-                            isBusy: true);
-                    });
-
-            FileSaverResult saveResult =
-                await FileSaver.Default.SaveAsync(
+            ExportSaveResult saveResult =
+                await SaveTemporaryFileAsync(
                     fileName,
-                    sourceStream,
-                    saveProgress,
+                    temporaryPath,
+                    fileSizeBytes,
                     cancellationToken);
 
             if (saveResult.IsSuccessful)
@@ -2199,11 +3417,14 @@ public partial class PowerRootView : LocalizedSolverView
                 ShowExportStatus(
                     Format(
                         "PowerRoot.ExportSuccess",
-                        savedPath),
+                        savedPath,
+                        FormatByteSize(
+                            fileSizeBytes)),
                     progress: 1d,
                     isBusy: false);
             }
-            else if (saveResult.Exception is
+            else if (saveResult.IsCanceled ||
+                     saveResult.Exception is
                      OperationCanceledException ||
                      cancellationToken.IsCancellationRequested)
             {
@@ -2287,6 +3508,260 @@ public partial class PowerRootView : LocalizedSolverView
             _exportCancellation = null;
         }
     }
+
+    private async Task<ExportSaveResult> SaveTemporaryFileAsync(
+        string fileName,
+        string temporaryPath,
+        long fileSizeBytes,
+        CancellationToken cancellationToken)
+    {
+#if WINDOWS
+        var picker =
+            new FileSavePicker
+            {
+                SuggestedStartLocation =
+                    PickerLocationId.DocumentsLibrary,
+                SuggestedFileName =
+                    Path.GetFileNameWithoutExtension(
+                        fileName)
+            };
+
+        picker.FileTypeChoices.Add(
+            "Text file",
+            [".txt"]);
+
+        MauiWinUIWindow nativeWindow =
+            Application.Current?
+                .Windows
+                .FirstOrDefault()?
+                .Handler?
+                .PlatformView as MauiWinUIWindow ??
+            throw new InvalidOperationException(
+                "The Windows application window is not ready.");
+
+        nint windowHandle =
+            WindowNative.GetWindowHandle(
+                nativeWindow);
+
+        InitializeWithWindow.Initialize(
+            picker,
+            windowHandle);
+
+        global::Windows.Storage.StorageFile? destinationFile =
+            await picker.PickSaveFileAsync();
+
+        if (destinationFile is null)
+        {
+            return ExportSaveResult.Canceled;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // PickSaveFileAsync only chooses the destination. Copy the bytes
+        // ourselves so large files do not keep the MAUI UI thread inside the
+        // toolkit saver after the file already exists on disk.
+        await ReportSaveProgressAsync(
+            0d);
+
+        await using Stream destinationStream =
+            await destinationFile
+                .OpenStreamForWriteAsync()
+                .ConfigureAwait(
+                    false);
+
+        destinationStream.SetLength(
+            0L);
+
+        if (destinationStream.CanSeek)
+        {
+            destinationStream.Position =
+                0L;
+        }
+
+        await CopyTemporaryFileAsync(
+                temporaryPath,
+                destinationStream,
+                fileSizeBytes,
+                cancellationToken)
+            .ConfigureAwait(
+                false);
+
+        string savedPath =
+            !string.IsNullOrWhiteSpace(
+                destinationFile.Path)
+                ? destinationFile.Path
+                : destinationFile.Name;
+
+        return ExportSaveResult.Success(
+            savedPath);
+#else
+        await using FileStream sourceStream =
+            File.OpenRead(
+                temporaryPath);
+
+        var saveProgress =
+            new Progress<double>(
+                progress =>
+                {
+                    double normalizedProgress =
+                        Math.Clamp(
+                            progress,
+                            0d,
+                            1d);
+
+                    ShowExportStatus(
+                        Format(
+                            "PowerRoot.ExportSavingProgress",
+                            Math.Floor(
+                                normalizedProgress *
+                                100d)),
+                        normalizedProgress,
+                        isBusy: true);
+                });
+
+        FileSaverResult toolkitResult =
+            await FileSaver.Default.SaveAsync(
+                fileName,
+                sourceStream,
+                saveProgress,
+                cancellationToken);
+
+        return new ExportSaveResult(
+            toolkitResult.IsSuccessful,
+            toolkitResult.Exception is OperationCanceledException,
+            toolkitResult.FilePath,
+            toolkitResult.Exception);
+#endif
+    }
+
+#if WINDOWS
+    private async Task CopyTemporaryFileAsync(
+        string temporaryPath,
+        Stream destinationStream,
+        long fileSizeBytes,
+        CancellationToken cancellationToken)
+    {
+        const int CopyBufferSize =
+            1024 * 1024;
+
+        byte[] buffer =
+            GC.AllocateUninitializedArray<byte>(
+                CopyBufferSize);
+
+        await using var sourceStream =
+            new FileStream(
+                temporaryPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                CopyBufferSize,
+                FileOptions.Asynchronous |
+                FileOptions.SequentialScan);
+
+        long copiedBytes =
+            0L;
+
+        double lastReportedProgress =
+            0d;
+
+        long lastReportTimestamp =
+            Stopwatch.GetTimestamp();
+
+        while (true)
+        {
+            int bytesRead =
+                await sourceStream.ReadAsync(
+                        buffer.AsMemory(),
+                        cancellationToken)
+                    .ConfigureAwait(
+                        false);
+
+            if (bytesRead == 0)
+            {
+                break;
+            }
+
+            await destinationStream.WriteAsync(
+                    buffer.AsMemory(
+                        0,
+                        bytesRead),
+                    cancellationToken)
+                .ConfigureAwait(
+                    false);
+
+            copiedBytes +=
+                bytesRead;
+
+            // Reserve 100% for FlushAsync: seeing 100% now guarantees that
+            // every byte has also been flushed and the save operation ended.
+            double normalizedProgress =
+                fileSizeBytes > 0L
+                    ? Math.Min(
+                        0.99d,
+                        (double)copiedBytes /
+                        fileSizeBytes)
+                    : 0.99d;
+
+            bool shouldReport =
+                normalizedProgress -
+                lastReportedProgress >=
+                0.0025d ||
+                Stopwatch.GetElapsedTime(
+                    lastReportTimestamp) >=
+                TimeSpan.FromMilliseconds(
+                    100d);
+
+            if (!shouldReport)
+            {
+                continue;
+            }
+
+            await ReportSaveProgressAsync(
+                    normalizedProgress)
+                .ConfigureAwait(
+                    false);
+
+            lastReportedProgress =
+                normalizedProgress;
+
+            lastReportTimestamp =
+                Stopwatch.GetTimestamp();
+        }
+
+        await destinationStream.FlushAsync(
+                cancellationToken)
+            .ConfigureAwait(
+                false);
+
+        await ReportSaveProgressAsync(
+                1d)
+            .ConfigureAwait(
+                false);
+    }
+
+    private Task ReportSaveProgressAsync(
+        double progress)
+    {
+        double normalizedProgress =
+            Math.Clamp(
+                progress,
+                0d,
+                1d);
+
+        return MainThread.InvokeOnMainThreadAsync(
+            () =>
+            {
+                ShowExportStatus(
+                    Format(
+                        "PowerRoot.ExportSavingProgress",
+                        Math.Floor(
+                            normalizedProgress *
+                            100d)),
+                    normalizedProgress,
+                    isBusy: true);
+            });
+    }
+#endif
 
     private static void WriteFullResultFile(
         string filePath,
@@ -2650,6 +4125,8 @@ public partial class PowerRootView : LocalizedSolverView
 
         ProgressBorder.IsVisible =
             false;
+        CalculationActivityIndicator.IsRunning = false;
+        CalculationActivityIndicator.IsVisible = false;
 
         BaseEntry.Focus();
     }
@@ -2683,6 +4160,12 @@ public partial class PowerRootView : LocalizedSolverView
         {
             ShowResult(
                 _calculationState);
+        }
+
+        if (_rootCalculationState is not null)
+        {
+            ShowRootResult(
+                _rootCalculationState);
         }
 
         if (_isExporting)
@@ -2727,6 +4210,11 @@ public partial class PowerRootView : LocalizedSolverView
         ExponentEntry.IsEnabled = enabled;
         CalculateButton.IsEnabled = enabled;
         ClearButton.IsEnabled = enabled;
+        RootRadicandEntry.IsEnabled = enabled;
+        RootDegreeEntry.IsEnabled = enabled;
+        RootCalculateButton.IsEnabled = enabled;
+        RootClearButton.IsEnabled = enabled;
+        RootCopyResultButton.IsEnabled = enabled;
         PowerModeButton.IsEnabled = enabled;
         RootModeButton.IsEnabled = enabled;
     }
@@ -2844,6 +4332,44 @@ public partial class PowerRootView : LocalizedSolverView
         return builder.ToString();
     }
 
+    private static long EstimateTxtFileSizeBytes(
+        PowerCalculationState state)
+    {
+        string engineText =
+            state.Strategy ==
+            PowerComputationStrategy.DecimalPowerOfTen
+                ? "Engine: direct decimal power-of-ten generation"
+                : state.Strategy ==
+                  PowerComputationStrategy.ParallelNttPower
+                    ? "Engine: parallel exact NTT/CRT power"
+                    : "Engine: BigInteger";
+
+        string header =
+            $"Expression: {FormatPlainExpression(state.BaseValue, state.Exponent)}" +
+            Environment.NewLine +
+            engineText +
+            Environment.NewLine +
+            $"Digits: {state.DigitCount.ToString(CultureInfo.InvariantCulture)}" +
+            Environment.NewLine +
+            Environment.NewLine +
+            "Result:" +
+            Environment.NewLine;
+
+        long signBytes =
+            state.IsNegative
+                ? 1L
+                : 0L;
+
+        return checked(
+            3L + // UTF-8 BOM emitted by WriteFullResultFile.
+            Encoding.UTF8.GetByteCount(
+                header) +
+            state.DigitCount +
+            signBytes +
+            Encoding.UTF8.GetByteCount(
+                Environment.NewLine));
+    }
+
     private static string FormatByteSize(
         long byteCount)
     {
@@ -2906,9 +4432,25 @@ public partial class PowerRootView : LocalizedSolverView
         ParallelBigUnsigned? ParallelMagnitude,
         ParallelPowerDiagnostics? ParallelDiagnostics);
 
+    private sealed record RootCalculationState(
+        Int128 Radicand,
+        byte Degree,
+        bool IsComplex,
+        DoubleDouble RealResult,
+        Complex ComplexResult,
+        string ResultText,
+        RootCalculationMethod Method);
+
+    private enum RootCalculationMethod
+    {
+        Sqrt,
+        Cbrt,
+        Pow
+    }
+
     private enum PowerComputationStrategy
     {
-        BigIntegerPow,
+        SingleThreadedBigIntegerPower,
         ParallelNttPower,
         BitShift,
         DecimalPowerOfTen
@@ -2936,4 +4478,28 @@ public partial class PowerRootView : LocalizedSolverView
         ExportFilePhase Phase,
         int CompletedBlocks,
         int TotalBlocks);
+
+    private sealed record ExportSaveResult(
+        bool IsSuccessful,
+        bool IsCanceled,
+        string? FilePath,
+        Exception? Exception)
+    {
+        public static ExportSaveResult Canceled { get; } =
+            new(
+                IsSuccessful: false,
+                IsCanceled: true,
+                FilePath: null,
+                Exception: null);
+
+        public static ExportSaveResult Success(
+            string filePath)
+        {
+            return new ExportSaveResult(
+                IsSuccessful: true,
+                IsCanceled: false,
+                FilePath: filePath,
+                Exception: null);
+        }
+    }
 }

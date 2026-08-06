@@ -461,7 +461,7 @@
                             <DataTemplate>
 
                                 <Border
-                                    Margin="5"
+                                    Margin="0,5"
                                     WidthRequest="260"
                                     MinimumHeightRequest="116"
                                     FlexLayout.Shrink="0"
@@ -523,17 +523,27 @@
 
                     </FlexLayout>
 
+                    <!--
+                        Hàng thao tác luôn chiếm toàn bộ bề rộng hữu dụng của
+                        khung nhập và chia đều 50:50, độc lập với số cột dữ kiện.
+                        FlexLayout phía trên tự tăng/giảm chiều cao theo số ô nên
+                        hàng nút luôn được đẩy xuống ngay sau hàng dữ kiện cuối.
+                    -->
                     <Grid
+                        x:Name="GeometryActionGrid"
+                        Margin="0,16,0,0"
                         ColumnDefinitions="*,*"
                         ColumnSpacing="10">
 
                         <Button
+                            x:Name="CalculateGeometryButton"
                             Grid.Column="0"
                             Text="Tính toán"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
+                            x:Name="ClearGeometryButton"
                             Grid.Column="1"
                             Text="Xóa"
                             Style="{StaticResource SolverSecondaryActionStyle}"
