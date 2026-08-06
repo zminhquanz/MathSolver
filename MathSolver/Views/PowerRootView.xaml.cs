@@ -1123,14 +1123,19 @@ public partial class PowerRootView : LocalizedSolverView
                 digitCount,
                 exactResultText);
 
-        // Two transform buffers, two residue arrays, CRT coefficients and the
-        // normalized result dominate the peak. The estimate deliberately uses
-        // a conservative multiplier because the transform length is rounded
-        // up to the next power of two.
+        // Transform buffers, residue arrays, CRT coefficients and normalized
+        // results dominate the peak. Split mode briefly keeps both partial
+        // powers alive before the final full-width multiplication, so it uses
+        // a slightly larger conservative multiplier.
+        long parallelStorageMultiplier =
+            diagnostics.UsedExponentSplit
+                ? 18L
+                : 14L;
+
         long estimatedPeakRamBytes =
             checked(
                 magnitude.StorageBytes *
-                14L +
+                parallelStorageMultiplier +
                 (exactResultText is not null
                     ? (long)exactResultText.Length *
                       sizeof(char)
@@ -1878,6 +1883,10 @@ public partial class PowerRootView : LocalizedSolverView
                         "PowerRoot.InfoEngineBitShift",
                     PowerComputationStrategy.DecimalPowerOfTen =>
                         "PowerRoot.InfoEnginePowerOfTen",
+                    PowerComputationStrategy.ParallelNttPower
+                        when state.ParallelDiagnostics?.UsedExponentSplit ==
+                             true =>
+                        "PowerRoot.InfoEngineParallelNttSplit",
                     PowerComputationStrategy.ParallelNttPower =>
                         "PowerRoot.InfoEngineParallelNtt",
                     _ =>
@@ -1915,6 +1924,32 @@ public partial class PowerRootView : LocalizedSolverView
                     "PowerRoot.InfoWorkerBudget",
                     diagnostics.WorkerCount,
                     CalculationThreadingManager.LogicalProcessorCount));
+
+            if (diagnostics.UsedExponentSplit)
+            {
+                lines.Insert(
+                    5,
+                    Format(
+                        "PowerRoot.InfoExponentSplit",
+                        diagnostics.FirstExponent.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        diagnostics.SecondExponent.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        diagnostics.FirstBranchWorkerCount,
+                        diagnostics.SecondBranchWorkerCount));
+
+                lines.Add(
+                    Format(
+                        "PowerRoot.InfoExponentSplitProfile",
+                        FormatProfileSeconds(
+                            diagnostics.FirstBranchElapsed),
+                        FormatProfileSeconds(
+                            diagnostics.SecondBranchElapsed),
+                        FormatProfileSeconds(
+                            diagnostics.FinalCombineElapsed)));
+            }
 
             lines.Add(
                 Format(

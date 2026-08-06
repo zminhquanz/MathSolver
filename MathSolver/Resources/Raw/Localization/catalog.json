@@ -264,7 +264,7 @@
     },
     {
       "key": "PowerRoot.ProgressPhaseComputing",
-      "source": "Bước {0}/{1}: Tính lũy thừa bằng engine đã chọn • đã hoàn tất {2}/{3} phép nhân lớn; không có pha ghép kết quả con ở cuối.",
+      "source": "Bước {0}/{1}: Tính lũy thừa bằng engine đã chọn • đã hoàn tất {2}/{3} phép nhân lớn.",
       "mode": "exact"
     },
     {
@@ -334,7 +334,7 @@
     },
     {
       "key": "PowerRoot.StepParallelNtt",
-      "source": "Bước 2. Dùng lũy thừa nhị phân; mỗi phép nhân số lớn được xử lý chính xác bằng NTT/CRT trên tối đa {0} luồng. Kết quả được chuẩn hóa ngay sau từng phép nhân nên không có pha ghép kết quả con ở cuối.",
+      "source": "Bước 2. Tách số mũ theo aᵐ⁺ⁿ = aᵐ × aⁿ, tính hai lũy thừa thành phần rồi nhân chúng để thu được kết quả chính xác. Tổng cộng sử dụng tối đa {0} luồng.",
       "mode": "exact"
     },
     {
@@ -364,7 +364,12 @@
     },
     {
       "key": "PowerRoot.InfoEngineParallelNtt",
-      "source": "• Engine: lũy thừa NTT/CRT chính xác đa luồng (không ghép cuối)",
+      "source": "• Engine: NTT/CRT chính xác đa luồng (DIF/DIT + nhóm worker cố định)",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoEngineParallelNttSplit",
+      "source": "• Engine: lũy thừa phân nhánh SMT + NTT/CRT chính xác (DIF/DIT)",
       "mode": "exact"
     },
     {
@@ -390,6 +395,31 @@
     {
       "key": "PowerRoot.InfoThreads",
       "source": "• Số luồng: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoWorkerBudget",
+      "source": "• Ngân sách worker: {0}/{1} bộ xử lý logic",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoExponentSplit",
+      "source": "• Tách số mũ: a^(m+n), m = {0}, n = {1} • hai nhóm worker: {2} + {3}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoExponentSplitProfile",
+      "source": "• Hồ sơ phân nhánh: nhánh m {0} giây; nhánh n {1} giây; nhân ghép cuối {2} giây",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoNttProfile",
+      "source": "• Hồ sơ NTT ({0} phép nhân lớn): hoán vị bit {1} giây (DIF/DIT = 0); biến đổi thuận {2} giây; biến đổi nghịch {3} giây",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoNttPostProfile",
+      "source": "• Hậu xử lý NTT: nhân điểm {0} giây; CRT {1} giây; carry {2} giây",
       "mode": "exact"
     },
     {

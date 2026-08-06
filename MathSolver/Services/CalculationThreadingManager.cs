@@ -7,8 +7,9 @@ namespace MathSolver.Services;
 /// Lưu lựa chọn đa luồng dùng chung cho benchmark và engine tính toán.
 /// Tab lũy thừa đọc thiết lập này khi bắt đầu mỗi phép tính lớn: tắt dùng
 /// BigInteger.Pow một luồng, bật dùng engine NTT/CRT có phép nhân nội bộ
-/// chạy song song với ngân sách theo nhân vật lý. Với workload NTT quét các
-/// buffer lớn, SMT thường làm tăng tranh chấp cache/băng thông thay vì tăng tốc.
+/// chạy song song với ngân sách theo toàn bộ bộ xử lý logic. Engine lũy thừa
+/// tự chia ngân sách này thành hai nhánh để tận dụng cả hai luồng SMT của mỗi
+/// nhân, rồi dùng lại toàn bộ ngân sách cho phép nhân ghép cuối.
 /// </summary>
 public static class CalculationThreadingManager
 {
@@ -37,11 +38,7 @@ public static class CalculationThreadingManager
 
     public static int RecommendedWorkerCount =>
         IsMultithreadingAvailable
-            ? Math.Max(
-                1,
-                Math.Min(
-                    PhysicalCoreCount,
-                    LogicalProcessorCount))
+            ? LogicalProcessorCount
             : 1;
 
     public static bool UseMultithreading

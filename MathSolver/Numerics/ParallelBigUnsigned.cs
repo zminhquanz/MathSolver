@@ -9,7 +9,7 @@ namespace MathSolver.Numerics;
 /// Digits are stored in base 10,000 so TXT export never needs a giant
 /// binary-to-decimal division tree. Large products use two exact NTTs and CRT;
 /// the butterfly work inside every transform is shared by the configured
-/// physical-core worker budget.
+/// logical-processor worker budget.
 /// </summary>
 internal sealed class ParallelBigUnsigned
 {
@@ -120,20 +120,276 @@ internal sealed class ParallelBigUnsigned
                 1,
                 workerCount);
 
-        using var workers =
-            new FixedWorkerTeam(
-                workerCount);
-
-        var diagnostics =
-            new PowerDiagnosticsCollector();
-
         if (exponent == 0)
         {
             return new ParallelPowerResult(
                 One,
-                diagnostics.CreateSnapshot(
+                new PowerDiagnosticsCollector().CreateSnapshot(
                     workerCount));
         }
+
+        if (TryCreateExponentSplit(
+                exponent,
+                workerCount,
+                out int firstExponent,
+                out int secondExponent))
+        {
+            return PowSplit(
+                baseValue,
+                exponent,
+                firstExponent,
+                secondExponent,
+                workerCount,
+                progress,
+                cancellationToken);
+        }
+
+        var diagnostics =
+            new PowerDiagnosticsCollector();
+
+        using var workers =
+            new FixedWorkerTeam(
+                workerCount);
+
+        ParallelBigUnsigned magnitude =
+            PowWithTeam(
+                baseValue,
+                exponent,
+                workers,
+                diagnostics,
+                progress,
+                cancellationToken);
+
+        return new ParallelPowerResult(
+            magnitude,
+            diagnostics.CreateSnapshot(
+                workers.WorkerCount));
+    }
+
+    private static ParallelPowerResult PowSplit(
+        ulong baseValue,
+        int originalExponent,
+        int firstExponent,
+        int secondExponent,
+        int workerCount,
+        Action<int, int>? progress,
+        CancellationToken cancellationToken)
+    {
+        int firstWorkerCount =
+            (workerCount + 1) /
+            2;
+
+        int secondWorkerCount =
+            workerCount -
+            firstWorkerCount;
+
+        int firstOperationCount =
+            CountMultiplications(
+                firstExponent);
+
+        int secondOperationCount =
+            CountMultiplications(
+                secondExponent);
+
+        int totalOperationCount =
+            checked(
+                firstOperationCount +
+                secondOperationCount +
+                1);
+
+        int firstCompleted = 0;
+        int secondCompleted = 0;
+
+        var progressGate =
+            new object();
+
+        void ReportBranchProgress(
+            bool isFirstBranch,
+            int completed)
+        {
+            lock (progressGate)
+            {
+                if (isFirstBranch)
+                {
+                    firstCompleted =
+                        Math.Max(
+                            firstCompleted,
+                            completed);
+                }
+                else
+                {
+                    secondCompleted =
+                        Math.Max(
+                            secondCompleted,
+                            completed);
+                }
+
+                progress?.Invoke(
+                    Math.Min(
+                        totalOperationCount - 1,
+                        firstCompleted +
+                        secondCompleted),
+                    totalOperationCount);
+            }
+        }
+
+        using var linkedCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken);
+
+        BranchPowerResult RunBranch(
+            int branchExponent,
+            int branchWorkerCount,
+            bool isFirstBranch)
+        {
+            var branchDiagnostics =
+                new PowerDiagnosticsCollector();
+
+            long branchStarted =
+                Stopwatch.GetTimestamp();
+
+            try
+            {
+                using var branchWorkers =
+                    new FixedWorkerTeam(
+                        branchWorkerCount);
+
+                ParallelBigUnsigned branchMagnitude =
+                    PowWithTeam(
+                        baseValue,
+                        branchExponent,
+                        branchWorkers,
+                        branchDiagnostics,
+                        (completed, _) =>
+                            ReportBranchProgress(
+                                isFirstBranch,
+                                completed),
+                        linkedCancellation.Token);
+
+                return new BranchPowerResult(
+                    branchMagnitude,
+                    branchDiagnostics,
+                    Stopwatch.GetTimestamp() -
+                    branchStarted);
+            }
+            catch
+            {
+                linkedCancellation.Cancel();
+                throw;
+            }
+        }
+
+        Task<BranchPowerResult> firstTask =
+            Task.Factory.StartNew(
+                () => RunBranch(
+                    firstExponent,
+                    firstWorkerCount,
+                    isFirstBranch: true),
+                linkedCancellation.Token,
+                TaskCreationOptions.LongRunning |
+                TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default);
+
+        Task<BranchPowerResult> secondTask =
+            Task.Factory.StartNew(
+                () => RunBranch(
+                    secondExponent,
+                    secondWorkerCount,
+                    isFirstBranch: false),
+                linkedCancellation.Token,
+                TaskCreationOptions.LongRunning |
+                TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default);
+
+        try
+        {
+            Task.WhenAll(
+                    firstTask,
+                    secondTask)
+                .GetAwaiter()
+                .GetResult();
+        }
+        catch
+        {
+            linkedCancellation.Cancel();
+
+            try
+            {
+                Task.WhenAll(
+                        firstTask,
+                        secondTask)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch
+            {
+                // Preserve the original exception after both worker teams
+                // have observed cancellation and released their buffers.
+            }
+
+            throw;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        BranchPowerResult firstResult =
+            firstTask.GetAwaiter().GetResult();
+
+        BranchPowerResult secondResult =
+            secondTask.GetAwaiter().GetResult();
+
+        PowerDiagnosticsCollector diagnostics =
+            PowerDiagnosticsCollector.CombineParallelBranches(
+                firstResult.Diagnostics,
+                secondResult.Diagnostics);
+
+        long finalCombineStarted =
+            Stopwatch.GetTimestamp();
+
+        ParallelBigUnsigned magnitude;
+
+        using (var finalWorkers =
+               new FixedWorkerTeam(
+                   workerCount))
+        {
+            magnitude =
+                Multiply(
+                    firstResult.Magnitude,
+                    secondResult.Magnitude,
+                    finalWorkers,
+                    diagnostics,
+                    cancellationToken);
+        }
+
+        diagnostics.ConfigureExponentSplit(
+            originalExponent,
+            firstExponent,
+            secondExponent,
+            firstWorkerCount,
+            secondWorkerCount,
+            firstResult.ElapsedTicks,
+            secondResult.ElapsedTicks,
+            Stopwatch.GetTimestamp() -
+            finalCombineStarted);
+
+        progress?.Invoke(
+            totalOperationCount,
+            totalOperationCount);
+
+        return new ParallelPowerResult(
+            magnitude,
+            diagnostics.CreateSnapshot(
+                workerCount));
+    }
+
+    private static ParallelBigUnsigned PowWithTeam(
+        ulong baseValue,
+        int exponent,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        Action<int, int>? progress,
+        CancellationToken cancellationToken)
+    {
 
         ParallelBigUnsigned factor =
             FromUInt64(
@@ -202,12 +458,9 @@ internal sealed class ParallelBigUnsigned
             totalOperations,
             totalOperations);
 
-        return new ParallelPowerResult(
-            resultInitialized
-                ? result
-                : One,
-            diagnostics.CreateSnapshot(
-                workers.WorkerCount));
+        return resultInitialized
+            ? result
+            : One;
     }
 
     public string ToDecimalString()
@@ -1059,6 +1312,82 @@ internal sealed class ParallelBigUnsigned
         public long CrtTicks;
         public long CarryTicks;
 
+        private bool _usedExponentSplit;
+        private int _firstExponent;
+        private int _secondExponent;
+        private int _firstBranchWorkerCount;
+        private int _secondBranchWorkerCount;
+        private long _firstBranchTicks;
+        private long _secondBranchTicks;
+        private long _finalCombineTicks;
+
+        public static PowerDiagnosticsCollector CombineParallelBranches(
+            PowerDiagnosticsCollector first,
+            PowerDiagnosticsCollector second)
+        {
+            // The two branches run at the same time. For each phase, the
+            // critical-path estimate is the slower branch rather than the sum
+            // of both CPU times; the final combine is added normally later.
+            return new PowerDiagnosticsCollector
+            {
+                NttMultiplicationCount =
+                    checked(
+                        first.NttMultiplicationCount +
+                        second.NttMultiplicationCount),
+                BitReversalTicks =
+                    Math.Max(
+                        first.BitReversalTicks,
+                        second.BitReversalTicks),
+                ForwardTransformTicks =
+                    Math.Max(
+                        first.ForwardTransformTicks,
+                        second.ForwardTransformTicks),
+                PointwiseTicks =
+                    Math.Max(
+                        first.PointwiseTicks,
+                        second.PointwiseTicks),
+                InverseTransformTicks =
+                    Math.Max(
+                        first.InverseTransformTicks,
+                        second.InverseTransformTicks),
+                CrtTicks =
+                    Math.Max(
+                        first.CrtTicks,
+                        second.CrtTicks),
+                CarryTicks =
+                    Math.Max(
+                        first.CarryTicks,
+                        second.CarryTicks)
+            };
+        }
+
+        public void ConfigureExponentSplit(
+            int originalExponent,
+            int firstExponent,
+            int secondExponent,
+            int firstBranchWorkerCount,
+            int secondBranchWorkerCount,
+            long firstBranchTicks,
+            long secondBranchTicks,
+            long finalCombineTicks)
+        {
+            Debug.Assert(
+                firstExponent +
+                secondExponent ==
+                originalExponent);
+
+            _usedExponentSplit = true;
+            _firstExponent = firstExponent;
+            _secondExponent = secondExponent;
+            _firstBranchWorkerCount =
+                firstBranchWorkerCount;
+            _secondBranchWorkerCount =
+                secondBranchWorkerCount;
+            _firstBranchTicks = firstBranchTicks;
+            _secondBranchTicks = secondBranchTicks;
+            _finalCombineTicks = finalCombineTicks;
+        }
+
         public ParallelPowerDiagnostics CreateSnapshot(
             int workerCount)
         {
@@ -1070,7 +1399,15 @@ internal sealed class ParallelBigUnsigned
                 ToTimeSpan(PointwiseTicks),
                 ToTimeSpan(InverseTransformTicks),
                 ToTimeSpan(CrtTicks),
-                ToTimeSpan(CarryTicks));
+                ToTimeSpan(CarryTicks),
+                _usedExponentSplit,
+                _firstExponent,
+                _secondExponent,
+                _firstBranchWorkerCount,
+                _secondBranchWorkerCount,
+                ToTimeSpan(_firstBranchTicks),
+                ToTimeSpan(_secondBranchTicks),
+                ToTimeSpan(_finalCombineTicks));
         }
 
         private static TimeSpan ToTimeSpan(
@@ -1346,6 +1683,71 @@ internal sealed class ParallelBigUnsigned
             operations);
     }
 
+    private static bool TryCreateExponentSplit(
+        int exponent,
+        int workerCount,
+        out int firstExponent,
+        out int secondExponent)
+    {
+        firstExponent = 0;
+        secondExponent = 0;
+
+        // Each branch needs at least two workers. Very unbalanced exponents
+        // are kept on the original single-chain engine because the smaller
+        // branch would finish early and leave half the SMT budget idle.
+        if (exponent < 3 ||
+            workerCount < 4)
+        {
+            return false;
+        }
+
+        for (int bitIndex = 30;
+             bitIndex >= 0;
+             bitIndex--)
+        {
+            int component =
+                1 << bitIndex;
+
+            if ((exponent & component) == 0)
+            {
+                continue;
+            }
+
+            if (firstExponent <=
+                secondExponent)
+            {
+                firstExponent +=
+                    component;
+            }
+            else
+            {
+                secondExponent +=
+                    component;
+            }
+        }
+
+        if (firstExponent == 0 ||
+            secondExponent == 0)
+        {
+            return false;
+        }
+
+        int smallerExponent =
+            Math.Min(
+                firstExponent,
+                secondExponent);
+
+        int largerExponent =
+            Math.Max(
+                firstExponent,
+                secondExponent);
+
+        return (long)smallerExponent *
+               100L >=
+               (long)largerExponent *
+               35L;
+    }
+
     private static ulong ModPow(
         uint value,
         uint exponent,
@@ -1430,6 +1832,11 @@ internal sealed class ParallelBigUnsigned
             (char)('0' +
                    limb % 10);
     }
+
+    private sealed record BranchPowerResult(
+        ParallelBigUnsigned Magnitude,
+        PowerDiagnosticsCollector Diagnostics,
+        long ElapsedTicks);
 }
 
 internal sealed record ParallelPowerResult(
@@ -1444,4 +1851,12 @@ internal sealed record ParallelPowerDiagnostics(
     TimeSpan Pointwise,
     TimeSpan InverseTransform,
     TimeSpan Crt,
-    TimeSpan Carry);
+    TimeSpan Carry,
+    bool UsedExponentSplit,
+    int FirstExponent,
+    int SecondExponent,
+    int FirstBranchWorkerCount,
+    int SecondBranchWorkerCount,
+    TimeSpan FirstBranchElapsed,
+    TimeSpan SecondBranchElapsed,
+    TimeSpan FinalCombineElapsed);
