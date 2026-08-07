@@ -27,6 +27,18 @@ internal sealed class ParallelBigUnsigned
     // small beside the multi-gigabyte NTT working set.
     private const int MaximumCachedTwiddleCount = 1 << 20;
 
+    // Cache-block size is selected from the logical-processor count.  This is
+    // deliberately a small heuristic rather than CPU-model detection: modern
+    // high-thread CPUs such as the 24-thread HX 370 keep the proven 4096-value
+    // (16 KiB) block, while 8-19 thread SMT CPUs such as a 12-thread i7-8700
+    // use 2048 values (8 KiB) to leave more shared L1D room per sibling thread.
+    // Very small worker budgets use a larger block to reduce block-dispatch
+    // overhead.  Every choice is a power of two so DIF/DIT stage boundaries
+    // remain exact.
+    private const int SmallSmtFusedNttBlockLength = 1 << 11; // 2048 = 8 KiB
+    private const int DefaultFusedNttBlockLength = 1 << 12;  // 4096 = 16 KiB
+    private const int LowThreadFusedNttBlockLength = 1 << 13; // 8192 = 32 KiB
+
     // Both primes support transforms through 2^26. Their product is large
     // enough to recover every base-10,000 convolution coefficient required by
     // an 18-digit base raised to the maximum exponent of 10,000,000.
@@ -832,6 +844,38 @@ internal sealed class ParallelBigUnsigned
             cancellationToken);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int SelectFusedNttBlockLength()
+    {
+        int logicalProcessorCount =
+            Math.Max(
+                1,
+                Environment.ProcessorCount);
+
+        // 20+ logical processors: keep the 4096-value block that benchmarks
+        // well on high-thread modern CPUs (for example 24-thread HX 370).
+        if (logicalProcessorCount >= 20)
+        {
+            return DefaultFusedNttBlockLength;
+        }
+
+        // 8-19 logical processors are commonly 4C/8T through 8C/16T SMT
+        // designs with a smaller private-cache budget per sibling.  2048
+        // values consume only 8 KiB per worker and are intentionally the
+        // conservative choice for a 6C/12T i7-8700-class CPU.
+        if (logicalProcessorCount >= 8)
+        {
+            return SmallSmtFusedNttBlockLength;
+        }
+
+        // With fewer workers, block-dispatch overhead matters more than SMT
+        // cache pressure.  Keep 4096 for 4-7 logical processors and use 8192
+        // only for very small 1-3 processor budgets.
+        return logicalProcessorCount >= 4
+            ? DefaultFusedNttBlockLength
+            : LowThreadFusedNttBlockLength;
+    }
+
     private static uint[] ConvolveModulus(
         uint[] left,
         uint[] right,
@@ -844,6 +888,9 @@ internal sealed class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        int fusedNttBlockLength =
+            SelectFusedNttBlockLength();
+
         var transformedLeft =
             new uint[transformLength];
 
@@ -866,6 +913,7 @@ internal sealed class ParallelBigUnsigned
             primitiveRoot,
             workers,
             twiddlePlan,
+            fusedNttBlockLength,
             true,
             diagnostics,
             cancellationToken);
@@ -915,6 +963,7 @@ internal sealed class ParallelBigUnsigned
                 primitiveRoot,
                 workers,
                 twiddlePlan,
+                fusedNttBlockLength,
                 false,
                 diagnostics,
                 cancellationToken);
@@ -950,6 +999,7 @@ internal sealed class ParallelBigUnsigned
             primitiveRoot,
             workers,
             twiddlePlan,
+            fusedNttBlockLength,
             diagnostics,
             cancellationToken);
 
@@ -976,6 +1026,7 @@ internal sealed class ParallelBigUnsigned
         uint primitiveRoot,
         FixedWorkerTeam workers,
         NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
         bool buildCachedTwiddles,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
@@ -994,6 +1045,35 @@ internal sealed class ParallelBigUnsigned
 
             int halfLength =
                 stageLength >> 1;
+
+            // From this point down, every remaining DIF stage operates only
+            // inside an independent adaptive fused block.  Fuse the tail
+            // so each worker keeps one block hot in L1/L2 rather than sweeping
+            // the entire transform once per stage.
+            if (length > fusedNttBlockLength &&
+                stageLength == fusedNttBlockLength)
+            {
+                if (buildCachedTwiddles)
+                {
+                    PrepareFusedTwiddleTables(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        fusedNttBlockLength,
+                        workers,
+                        cancellationToken);
+                }
+
+                ExecuteForwardFusedTail(
+                    values,
+                    modulus,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    cancellationToken);
+
+                break;
+            }
 
             // The length-2 stage contains only the twiddle 1.  It is also the
             // stage with the largest group count, so bypass the generic
@@ -1261,6 +1341,7 @@ internal sealed class ParallelBigUnsigned
         uint primitiveRoot,
         FixedWorkerTeam workers,
         NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
@@ -1280,7 +1361,27 @@ internal sealed class ParallelBigUnsigned
         bool inversePrimitiveRootReady =
             false;
 
-        for (int stageLength = 2;
+        int firstStageLength = 2;
+
+        // DIT starts with the smallest stages.  Those stages are independent
+        // inside adaptive fused blocks, so finish them locally before the
+        // first global stage.  The twiddles were prepared by the first forward
+        // transform and are reused here without rebuilding.
+        if (length > fusedNttBlockLength)
+        {
+            ExecuteInverseFusedHead(
+                values,
+                modulus,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                cancellationToken);
+
+            firstStageLength =
+                fusedNttBlockLength << 1;
+        }
+
+        for (int stageLength = firstStageLength;
              stageLength <= length;
              stageLength <<= 1)
         {
@@ -1589,6 +1690,372 @@ internal sealed class ParallelBigUnsigned
         diagnostics.InverseTransformTicks +=
             Stopwatch.GetTimestamp() -
             transformStarted;
+    }
+
+    private static void PrepareFusedTwiddleTables(
+        NttTwiddlePlan twiddlePlan,
+        uint primitiveRoot,
+        uint modulus,
+        int fusedNttBlockLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        for (int stageLength = fusedNttBlockLength;
+             stageLength >= 4;
+             stageLength >>= 1)
+        {
+            int halfLength =
+                stageLength >> 1;
+
+            uint root =
+                (uint)ModPow(
+                    primitiveRoot,
+                    (modulus - 1u) /
+                    (uint)stageLength,
+                    modulus);
+
+            BuildTwiddleTables(
+                twiddlePlan.ForwardTwiddles,
+                twiddlePlan.InverseTwiddles,
+                twiddlePlan.GetOffset(
+                    halfLength),
+                halfLength,
+                root,
+                modulus,
+                workers,
+                cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Completes the small DIF stages block-by-block.  Once stageLength has
+    /// reached the selected fused block length no butterfly can cross a block boundary, so
+    /// the remaining stages need no global barrier between them.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardFusedTail(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        CancellationToken cancellationToken)
+    {
+        int blockCount =
+            values.Length /
+            fusedNttBlockLength;
+
+        uint[] twiddles =
+            twiddlePlan.ForwardTwiddles;
+
+        ExecuteRanges(
+            blockCount,
+            workers,
+            cancellationToken,
+            (startBlock, endBlock) =>
+            {
+                for (int blockIndex = startBlock;
+                     blockIndex < endBlock;
+                     blockIndex++)
+                {
+                    int blockOffset =
+                        blockIndex *
+                        fusedNttBlockLength;
+
+                    int blockEnd =
+                        blockOffset +
+                        fusedNttBlockLength;
+
+                    for (int stageLength = fusedNttBlockLength;
+                         stageLength >= 4;
+                         stageLength >>= 1)
+                    {
+                        int halfLength =
+                            stageLength >> 1;
+
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(
+                                halfLength);
+
+                        for (int groupOffset = blockOffset;
+                             groupOffset < blockEnd;
+                             groupOffset += stageLength)
+                        {
+                            int rightBase =
+                                groupOffset +
+                                halfLength;
+
+                            uint leftValue =
+                                values[groupOffset];
+
+                            uint rightValue =
+                                values[rightBase];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[groupOffset] =
+                                sum;
+
+                            values[rightBase] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            int leftIndex =
+                                groupOffset + 1;
+
+                            int rightIndex =
+                                rightBase + 1;
+
+                            int butterflyEnd =
+                                groupOffset +
+                                halfLength;
+
+                            int butterfly = 1;
+
+                            for (;
+                                 leftIndex < butterflyEnd;
+                                 leftIndex++,
+                                 rightIndex++,
+                                 butterfly++)
+                            {
+                                leftValue =
+                                    values[leftIndex];
+
+                                rightValue =
+                                    values[rightIndex];
+
+                                sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                uint difference =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+
+                                values[leftIndex] =
+                                    sum;
+
+                                values[rightIndex] =
+                                    (uint)((ulong)difference *
+                                           twiddles[twiddleOffset + butterfly] %
+                                           modulus);
+                            }
+                        }
+                    }
+
+                    // Final DIF stage: twiddle is one for every adjacent pair.
+                    for (int leftIndex = blockOffset;
+                         leftIndex < blockEnd;
+                         leftIndex += 2)
+                    {
+                        uint leftValue =
+                            values[leftIndex];
+
+                        uint rightValue =
+                            values[leftIndex + 1];
+
+                        uint sum =
+                            leftValue +
+                            rightValue;
+
+                        if (sum >= modulus)
+                        {
+                            sum -= modulus;
+                        }
+
+                        values[leftIndex] =
+                            sum;
+
+                        values[leftIndex + 1] =
+                            leftValue >= rightValue
+                                ? leftValue - rightValue
+                                : leftValue + modulus - rightValue;
+                    }
+
+                    if ((blockIndex & 0x3F) == 0x3F)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
+    }
+
+    /// <summary>
+    /// Completes the small DIT stages block-by-block.  The transform remains
+    /// mathematically identical to the stage-at-a-time implementation, but the
+    /// values stay cache-resident throughout the first small stages.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseFusedHead(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        CancellationToken cancellationToken)
+    {
+        int blockCount =
+            values.Length /
+            fusedNttBlockLength;
+
+        uint[] twiddles =
+            twiddlePlan.InverseTwiddles;
+
+        ExecuteRanges(
+            blockCount,
+            workers,
+            cancellationToken,
+            (startBlock, endBlock) =>
+            {
+                for (int blockIndex = startBlock;
+                     blockIndex < endBlock;
+                     blockIndex++)
+                {
+                    int blockOffset =
+                        blockIndex *
+                        fusedNttBlockLength;
+
+                    int blockEnd =
+                        blockOffset +
+                        fusedNttBlockLength;
+
+                    // First DIT stage: adjacent pairs and twiddle 1 only.
+                    for (int leftIndex = blockOffset;
+                         leftIndex < blockEnd;
+                         leftIndex += 2)
+                    {
+                        uint leftValue =
+                            values[leftIndex];
+
+                        uint rightValue =
+                            values[leftIndex + 1];
+
+                        uint sum =
+                            leftValue +
+                            rightValue;
+
+                        if (sum >= modulus)
+                        {
+                            sum -= modulus;
+                        }
+
+                        values[leftIndex] =
+                            sum;
+
+                        values[leftIndex + 1] =
+                            leftValue >= rightValue
+                                ? leftValue - rightValue
+                                : leftValue + modulus - rightValue;
+                    }
+
+                    for (int stageLength = 4;
+                         stageLength <= fusedNttBlockLength;
+                         stageLength <<= 1)
+                    {
+                        int halfLength =
+                            stageLength >> 1;
+
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(
+                                halfLength);
+
+                        for (int groupOffset = blockOffset;
+                             groupOffset < blockEnd;
+                             groupOffset += stageLength)
+                        {
+                            int rightBase =
+                                groupOffset +
+                                halfLength;
+
+                            uint leftValue =
+                                values[groupOffset];
+
+                            uint rightValue =
+                                values[rightBase];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[groupOffset] =
+                                sum;
+
+                            values[rightBase] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            int leftIndex =
+                                groupOffset + 1;
+
+                            int rightIndex =
+                                rightBase + 1;
+
+                            int butterflyEnd =
+                                groupOffset +
+                                halfLength;
+
+                            int butterfly = 1;
+
+                            for (;
+                                 leftIndex < butterflyEnd;
+                                 leftIndex++,
+                                 rightIndex++,
+                                 butterfly++)
+                            {
+                                leftValue =
+                                    values[leftIndex];
+
+                                rightValue =
+                                    (uint)((ulong)values[rightIndex] *
+                                           twiddles[twiddleOffset + butterfly] %
+                                           modulus);
+
+                                sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                values[leftIndex] =
+                                    sum;
+
+                                values[rightIndex] =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+                            }
+                        }
+                    }
+
+                    if ((blockIndex & 0x3F) == 0x3F)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
