@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Storage;
+using MathSolver.Controls;
 using MathSolver.Numerics;
 using MathSolver.Services;
 using MathSolver.Views.Base;
@@ -951,9 +952,8 @@ public partial class PowerRootView : LocalizedSolverView
                     ? "PowerRoot.RootResultComplex"
                     : "PowerRoot.RootResultReal");
 
-        RootSolutionLabel.Text =
-            CreateRootSolution(
-                state);
+        RenderRootSolution(
+            state);
 
         RootResultBorder.IsVisible =
             true;
@@ -963,146 +963,537 @@ public partial class PowerRootView : LocalizedSolverView
         Int128 radicand,
         byte degree)
     {
-        RootResultDegreeLabel.Text =
-            degree == 2
-                ? string.Empty
-                : degree.ToString(
-                    CultureInfo.InvariantCulture);
+        RootResultExpressionView.Degree =
+            degree;
 
-        RootResultDegreeLabel.IsVisible =
-            degree != 2;
-
-        string radicandText =
-            ((BigInteger)radicand)
-            .ToString(
-                "N0",
-                CultureInfo.InvariantCulture)
-            .Replace(
-                '-',
-                '−');
-
-        RootResultRadicandLabel.Text =
-            radicand < 0
-                ? $"({radicandText})"
-                : radicandText;
+        RootResultExpressionView.RadicandText =
+            FormatTextbookRadicand(
+                (BigInteger)radicand);
     }
 
-    private string CreateRootSolution(
+    private void RenderRootSolution(
         RootCalculationState state)
     {
-        string expression =
-            FormatRootExpression(
-                state.Radicand,
-                state.Degree);
+        RootSolutionStack.Children.Clear();
 
         string formattedRadicand =
-            ((BigInteger)state.Radicand)
-            .ToString(
-                "N0",
-                CultureInfo.InvariantCulture)
-            .Replace(
-                '-',
-                '−');
+            FormatRootInteger(
+                (BigInteger)state.Radicand);
 
         string formattedDegree =
             state.Degree.ToString(
                 CultureInfo.InvariantCulture);
 
-        var steps =
-            new List<string>
-            {
-                Format(
-                    "PowerRoot.RootStepGiven",
-                    expression)
-            };
+        string unknownPower =
+            $"x{ToSuperscript(state.Degree)}";
+
+        BigInteger absoluteRadicand =
+            BigInteger.Abs(
+                (BigInteger)state.Radicand);
+
+        bool hasExactIntegerRoot =
+            TryGetExactIntegerRoot(
+                absoluteRadicand,
+                state.Degree,
+                out BigInteger exactMagnitude);
+
+        int stepNumber = 1;
+
+        AddRootVisualStep(
+            Format(
+                "PowerRoot.RootStepGivenVisual",
+                stepNumber++),
+            (BigInteger)state.Radicand,
+            state.Degree);
+
+        AddRootTextStep(
+            Format(
+                "PowerRoot.RootStepMeaning",
+                stepNumber++,
+                unknownPower,
+                formattedRadicand,
+                formattedDegree));
 
         if (state.Radicand == 0)
         {
-            steps.Add(
+            AddRootTextStep(
                 Format(
                     "PowerRoot.RootStepZero",
-                    formattedDegree));
-        }
-        else if (state.IsComplex)
-        {
-            steps.Add(
-                Format(
-                    "PowerRoot.RootStepNegativeEven",
-                    formattedRadicand,
+                    stepNumber++,
+                    $"0{ToSuperscript(state.Degree)}",
                     formattedDegree));
 
-            steps.Add(
+            AddRootConclusion(
+                Translate(
+                    "PowerRoot.RootStepRealExactConclusionVisual"),
+                BigInteger.Zero,
+                state.Degree,
+                "=",
+                "0");
+
+            return;
+        }
+
+        if (state.IsComplex)
+        {
+            AddRootTextStep(
                 Format(
-                    state.Method ==
-                        RootCalculationMethod.Sqrt
-                        ? "PowerRoot.RootStepComplexSqrt"
-                        : "PowerRoot.RootStepComplexPow",
-                    BigInteger.Abs(
-                            (BigInteger)state.Radicand)
-                        .ToString(
-                            "N0",
-                            CultureInfo.InvariantCulture),
-                    formattedDegree));
+                    "PowerRoot.RootStepNegativeEven",
+                    stepNumber++,
+                    formattedDegree,
+                    formattedRadicand));
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepComplexIntroduction",
+                    stepNumber++));
+
+            if (state.Degree == 2)
+            {
+                string magnitudeResult =
+                    hasExactIntegerRoot
+                        ? FormatRootInteger(
+                            exactMagnitude)
+                        : FormatRootDouble(
+                            Math.Abs(
+                                state.ComplexResult.Imaginary));
+
+                bool isExact =
+                    hasExactIntegerRoot;
+
+                var complexSquareRootStep =
+                    CreateRootSolutionGroup();
+
+                complexSquareRootStep.Children.Add(
+                    CreateRootSolutionLabel(
+                        Format(
+                            isExact
+                                ? "PowerRoot.RootStepComplexSqrtExactVisual"
+                                : "PowerRoot.RootStepComplexSqrtApproxVisual",
+                            stepNumber++)));
+
+                complexSquareRootStep.Children.Add(
+                    CreateRootEquation(
+                        absoluteRadicand,
+                        2,
+                        isExact
+                            ? "="
+                            : "≈",
+                        magnitudeResult));
+
+                complexSquareRootStep.Children.Add(
+                    CreateRootSolutionLabel(
+                        Translate(
+                            "PowerRoot.RootStepComplexSqrtAttachIVisual")));
+
+                complexSquareRootStep.Children.Add(
+                    CreateRootEquation(
+                        (BigInteger)state.Radicand,
+                        state.Degree,
+                        isExact
+                            ? "="
+                            : "≈",
+                        state.ResultText));
+
+                RootSolutionStack.Children.Add(
+                    complexSquareRootStep);
+            }
+            else
+            {
+                AddRootVisualStep(
+                    Format(
+                        "PowerRoot.RootStepComplexGeneralVisual",
+                        stepNumber++,
+                        formattedDegree),
+                    (BigInteger)state.Radicand,
+                    state.Degree,
+                    "≈",
+                    state.ResultText);
+            }
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepApproxCheck",
+                    stepNumber++,
+                    state.ResultText,
+                    ToSuperscript(
+                        state.Degree),
+                    formattedRadicand));
+
+            string complexRelation =
+                state.Degree == 2 &&
+                hasExactIntegerRoot
+                    ? "="
+                    : "≈";
+
+            AddRootConclusion(
+                Translate(
+                    "PowerRoot.RootStepComplexConclusionVisual"),
+                (BigInteger)state.Radicand,
+                state.Degree,
+                complexRelation,
+                state.ResultText);
+
+            return;
+        }
+
+        AddRootTextStep(
+            Format(
+                state.Radicand < 0
+                    ? "PowerRoot.RootStepNegativeOdd"
+                    : "PowerRoot.RootStepPositive",
+                stepNumber++,
+                formattedDegree));
+
+        if (hasExactIntegerRoot)
+        {
+            BigInteger exactRoot =
+                state.Radicand < 0
+                    ? -exactMagnitude
+                    : exactMagnitude;
+
+            string exactRootText =
+                FormatRootInteger(
+                    exactRoot);
+
+            string poweredBase =
+                exactRoot.Sign < 0
+                    ? $"({exactRootText})"
+                    : exactRootText;
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepExactCandidate",
+                    stepNumber++,
+                    exactRootText));
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepExactCheck",
+                    stepNumber++,
+                    $"{poweredBase}{ToSuperscript(state.Degree)}",
+                    formattedRadicand));
+
+            AddRootConclusion(
+                Translate(
+                    "PowerRoot.RootStepRealExactConclusionVisual"),
+                (BigInteger)state.Radicand,
+                state.Degree,
+                "=",
+                exactRootText);
         }
         else
         {
-            steps.Add(
-                Translate(
-                    state.Radicand < 0
-                        ? "PowerRoot.RootStepNegativeOdd"
-                        : "PowerRoot.RootStepRealDomain"));
-
-            steps.Add(
+            AddRootVisualStep(
                 Format(
-                    state.Method switch
-                    {
-                        RootCalculationMethod.Sqrt =>
-                            "PowerRoot.RootStepMethodSqrt",
-                        RootCalculationMethod.Cbrt =>
-                            "PowerRoot.RootStepMethodCbrt",
-                        _ =>
-                            "PowerRoot.RootStepMethodPow"
-                    },
-                    formattedDegree));
+                    "PowerRoot.RootStepApproxCalculationVisual",
+                    stepNumber++,
+                    formattedDegree,
+                    formattedRadicand),
+                (BigInteger)state.Radicand,
+                state.Degree,
+                "≈",
+                state.ResultText);
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepApproxCheck",
+                    stepNumber++,
+                    state.ResultText,
+                    ToSuperscript(
+                        state.Degree),
+                    formattedRadicand));
+
+            AddRootConclusion(
+                Translate(
+                    "PowerRoot.RootStepRealApproxConclusionVisual"),
+                (BigInteger)state.Radicand,
+                state.Degree,
+                "≈",
+                state.ResultText);
         }
-
-        steps.Add(
-            Format(
-                state.IsComplex
-                    ? "PowerRoot.RootStepComplexConclusion"
-                    : "PowerRoot.RootStepRealConclusion",
-                state.ResultText,
-                formattedDegree,
-                formattedRadicand));
-
-        return string.Join(
-            Environment.NewLine +
-            Environment.NewLine,
-            steps);
     }
 
-    private static string FormatRootExpression(
-        Int128 radicand,
-        byte degree)
+    private void AddRootTextStep(
+        string text)
+    {
+        RootSolutionStack.Children.Add(
+            CreateRootSolutionLabel(
+                text));
+    }
+
+    private void AddRootVisualStep(
+        string text,
+        BigInteger radicand,
+        byte degree,
+        string? relation = null,
+        string? result = null)
+    {
+        var group =
+            CreateRootSolutionGroup();
+
+        group.Children.Add(
+            CreateRootSolutionLabel(
+                text));
+
+        group.Children.Add(
+            CreateRootEquation(
+                radicand,
+                degree,
+                relation,
+                result));
+
+        RootSolutionStack.Children.Add(
+            group);
+    }
+
+    private void AddRootConclusion(
+        string text,
+        BigInteger radicand,
+        byte degree,
+        string relation,
+        string result)
+    {
+        var group =
+            CreateRootSolutionGroup();
+
+        group.Children.Add(
+            CreateRootSolutionLabel(
+                text,
+                isConclusion: true));
+
+        group.Children.Add(
+            CreateRootEquation(
+                radicand,
+                degree,
+                relation,
+                result,
+                isConclusion: true));
+
+        RootSolutionStack.Children.Add(
+            group);
+    }
+
+    private static VerticalStackLayout CreateRootSolutionGroup()
+    {
+        return new VerticalStackLayout
+        {
+            Spacing = 7
+        };
+    }
+
+    private static Label CreateRootSolutionLabel(
+        string text,
+        bool isConclusion = false)
+    {
+        var label =
+            new Label
+            {
+                Text = text,
+                FontSize = 16,
+                LineHeight = 1.3,
+                LineBreakMode = LineBreakMode.WordWrap,
+                FontAttributes =
+                    isConclusion
+                        ? FontAttributes.Bold
+                        : FontAttributes.None
+            };
+
+        label.SetDynamicResource(
+            Label.TextColorProperty,
+            "TextPrimaryColor");
+
+        return label;
+    }
+
+    private static View CreateRootEquation(
+        BigInteger radicand,
+        byte degree,
+        string? relation,
+        string? result,
+        bool isConclusion = false)
+    {
+        var radicalExpression =
+            new TextbookRadicalExpressionView
+            {
+                Degree = degree,
+                RadicandText =
+                    FormatTextbookRadicand(
+                        radicand),
+                FontSize =
+                    isConclusion
+                        ? 18
+                        : 17,
+                DegreeFontSize =
+                    isConclusion
+                        ? 12
+                        : 11,
+                FontAttributes = FontAttributes.Bold,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+        radicalExpression.SetDynamicResource(
+            TextbookRadicalExpressionView.LineColorProperty,
+            isConclusion
+                ? "SuccessColor"
+                : "TextPrimaryColor");
+
+        radicalExpression.SetDynamicResource(
+            TextbookRadicalExpressionView.TextColorProperty,
+            isConclusion
+                ? "SuccessColor"
+                : "TextPrimaryColor");
+
+        var equationLayout =
+            new HorizontalStackLayout
+            {
+                Spacing = 7,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+        equationLayout.Children.Add(
+            radicalExpression);
+
+        if (!string.IsNullOrWhiteSpace(
+                relation) &&
+            result is not null)
+        {
+            var resultLabel =
+                new Label
+                {
+                    Text = $"{relation} {result}",
+                    FontSize =
+                        isConclusion
+                            ? 19
+                            : 17,
+                    FontAttributes = FontAttributes.Bold,
+                    VerticalOptions = LayoutOptions.Center,
+                    LineBreakMode = LineBreakMode.NoWrap
+                };
+
+            resultLabel.SetDynamicResource(
+                Label.TextColorProperty,
+                isConclusion
+                    ? "SuccessColor"
+                    : "TextPrimaryColor");
+
+            equationLayout.Children.Add(
+                resultLabel);
+        }
+
+        return new ScrollView
+        {
+            Orientation = ScrollOrientation.Horizontal,
+            HorizontalScrollBarVisibility =
+                ScrollBarVisibility.Never,
+            HorizontalOptions = LayoutOptions.Fill,
+            Content = equationLayout
+        };
+    }
+
+    private static string FormatTextbookRadicand(
+        BigInteger radicand)
     {
         string radicandText =
-            ((BigInteger)radicand)
+            FormatRootInteger(
+                radicand);
+
+        return radicand.Sign < 0
+            ? $"({radicandText})"
+            : radicandText;
+    }
+
+    private static bool TryGetExactIntegerRoot(
+        BigInteger magnitude,
+        int degree,
+        out BigInteger root)
+    {
+        root =
+            BigInteger.Zero;
+
+        if (magnitude.Sign < 0 ||
+            degree < 1)
+        {
+            return false;
+        }
+
+        if (magnitude.IsZero ||
+            magnitude.IsOne)
+        {
+            root =
+                magnitude;
+            return true;
+        }
+
+        long bitLength =
+            magnitude.GetBitLength();
+
+        if (degree >= bitLength)
+        {
+            return false;
+        }
+
+        int upperRootBitCount =
+            checked(
+                (int)((bitLength + degree - 1L) /
+                      degree));
+
+        BigInteger lower =
+            new(2);
+
+        BigInteger upper =
+            BigInteger.One <<
+            upperRootBitCount;
+
+        while (lower <= upper)
+        {
+            BigInteger candidate =
+                (lower + upper) >> 1;
+
+            BigInteger candidatePower =
+                BigInteger.Pow(
+                    candidate,
+                    degree);
+
+            int comparison =
+                candidatePower.CompareTo(
+                    magnitude);
+
+            if (comparison == 0)
+            {
+                root =
+                    candidate;
+                return true;
+            }
+
+            if (comparison < 0)
+            {
+                lower =
+                    candidate +
+                    BigInteger.One;
+            }
+            else
+            {
+                upper =
+                    candidate -
+                    BigInteger.One;
+            }
+        }
+
+        return false;
+    }
+
+    private static string FormatRootInteger(
+        BigInteger value)
+    {
+        return value
             .ToString(
                 "N0",
                 CultureInfo.InvariantCulture)
             .Replace(
                 '-',
                 '−');
-
-        if (radicand < 0)
-        {
-            radicandText =
-                $"({radicandText})";
-        }
-
-        return degree == 2
-            ? $"√{radicandText}"
-            : $"{ToSuperscript(degree)}√{radicandText}";
     }
 
     private static string FormatRootReal(

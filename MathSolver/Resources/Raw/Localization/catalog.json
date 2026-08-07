@@ -273,16 +273,6 @@
       "mode": "exact"
     },
     {
-      "key": "PowerRoot.RootResultReal",
-      "source": "Kết quả số thực • DoubleDouble • tối đa 10 chữ số thập phân",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootResultComplex",
-      "source": "Căn phức chính • System.Numerics.Complex • tối đa 10 chữ số thập phân",
-      "mode": "exact"
-    },
-    {
       "key": "PowerRoot.RootRadicandRangeError",
       "source": "Số dưới dấu căn phải là số nguyên trong phạm vi Int128 từ −170,141,183,460,469,231,731,687,303,715,884,105,728 đến 170,141,183,460,469,231,731,687,303,715,884,105,727.",
       "mode": "exact"
@@ -293,73 +283,8 @@
       "mode": "exact"
     },
     {
-      "key": "PowerRoot.RootNotFinite",
-      "source": "Kết quả căn không thể biểu diễn hữu hạn bằng DoubleDouble.",
-      "mode": "exact"
-    },
-    {
       "key": "PowerRoot.RootCalculationError",
       "source": "Không thể hoàn tất phép tính căn bậc: {0}",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepGiven",
-      "source": "Bước 1. Phép tính đã cho: {0}.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepZero",
-      "source": "Bước 2. Số 0 có căn bậc {0} bằng 0 vì 0^{0} = 0.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepNegativeEven",
-      "source": "Bước 2. Số dưới dấu căn là {0} < 0 và bậc {1} là số chẵn, nên không có kết quả trong tập số thực. Ta chuyển sang tập số phức và lấy căn chính.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepComplexSqrt",
-      "source": "Bước 3. Với căn bậc 2, dùng Sqrt và quy tắc √(−a) = i√a: √(−{0}) = i√{0}.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepComplexPow",
-      "source": "Bước 3. Viết −{0} = {0}(cos π + i sin π). Dùng Complex.Pow với số mũ 1/{1}; căn chính có góc π/{1}.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepNegativeOdd",
-      "source": "Bước 2. Số dưới dấu căn âm nhưng bậc căn lẻ, nên tồn tại một căn thực âm: ⁿ√(−a) = −ⁿ√a.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepRealDomain",
-      "source": "Bước 2. Số dưới dấu căn không âm nên căn bậc này có kết quả thực không âm.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepMethodSqrt",
-      "source": "Bước 3. Vì bậc căn là {0}, dùng Sqrt để tính căn bậc hai với độ chính xác DoubleDouble.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepMethodCbrt",
-      "source": "Bước 3. Vì bậc căn là {0}, dùng Cbrt để tính căn bậc ba với độ chính xác DoubleDouble.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepMethodPow",
-      "source": "Bước 3. Với bậc {0}, áp dụng x = Pow(|a|, 1/{0}), sau đó tinh chỉnh x để x^{0} tiến sát |a| ở độ chính xác DoubleDouble.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepComplexConclusion",
-      "source": "Kết luận. Căn phức chính là {0}. Kiểm tra gần đúng: ({0})^{1} ≈ {2}.",
-      "mode": "exact"
-    },
-    {
-      "key": "PowerRoot.RootStepRealConclusion",
-      "source": "Kết luận. Kết quả là {0}. Kiểm tra gần đúng: ({0})^{1} ≈ {2}.",
       "mode": "exact"
     },
     {
@@ -4085,6 +4010,156 @@
     {
       "key": "Validation.InvalidData",
       "source": "Dữ liệu không hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootResultReal",
+      "source": "Kết quả trong tập số thực • hiển thị tối đa 10 chữ số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootResultComplex",
+      "source": "Kết quả trong tập số phức • hiển thị tối đa 10 chữ số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootDegreeHint",
+      "source": "Nhập số nguyên từ 2 đến 255.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootNotFinite",
+      "source": "Kết quả quá lớn hoặc không thể biểu diễn bằng dạng số hiện tại.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepGiven",
+      "source": "Bước {0}. Phép tính đã cho: {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepMeaning",
+      "source": "Bước {0}. Ý nghĩa của phép căn: ta cần tìm một số x sao cho {1} = {2}. Khi tìm được x, x chính là căn bậc {3} của {2}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepZero",
+      "source": "Bước {0}. Ta có {1} = 0. Vì vậy căn bậc {2} của 0 bằng 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepPositive",
+      "source": "Bước {0}. Số dưới dấu căn là số dương và bậc căn là {1}, nên kết quả thực cần tìm là một số dương.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeOdd",
+      "source": "Bước {0}. Bậc căn {1} là số lẻ. Một số âm khi nâng lên lũy thừa bậc lẻ vẫn cho kết quả âm, nên căn cần tìm là một số âm.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeEven",
+      "source": "Bước {0}. Bậc căn {1} là số chẵn. Mọi số thực khi nâng lên lũy thừa chẵn đều không âm, trong khi số dưới dấu căn là {2}. Vì vậy phép tính này không có kết quả trong tập số thực.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexIntroduction",
+      "source": "Bước {0}. Để vẫn biểu diễn được kết quả, ta mở rộng sang số phức. Trong đó i là số đặc biệt thỏa mãn i² = −1. Một số có thể có nhiều căn phức, nên ứng dụng chọn căn chính, tức giá trị chuẩn dùng để hiển thị một kết quả duy nhất.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexSqrtExact",
+      "source": "Bước {0}. Với căn bậc hai của số âm, ta tính căn của phần dương trước: √{1} = {2}. Sau đó gắn thêm i vì i² = −1, nên {3} = {4}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexSqrtApprox",
+      "source": "Bước {0}. Với căn bậc hai của số âm, ta tính gần đúng căn của phần dương trước: √{1} ≈ {2}. Sau đó gắn thêm i vì i² = −1, nên {3} ≈ {4}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexGeneral",
+      "source": "Bước {0}. Với căn bậc {1} của một số âm, có nhiều kết quả trong số phức. Sau khi chọn căn chính và tính toán, ta được {2} ≈ {3}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepExactCandidate",
+      "source": "Bước {0}. Ta nhận thấy số phù hợp là {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepExactCheck",
+      "source": "Bước {0}. Kiểm tra lại: {1} = {2}. Phép kiểm tra đúng, nên đây là kết quả chính xác.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepApproxCalculation",
+      "source": "Bước {0}. Không có số nguyên nào khi nâng lên lũy thừa bậc {1} cho đúng {2}, nên kết quả không phải là một số nguyên. Tính gần đúng được: {3} ≈ {4}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepApproxCheck",
+      "source": "Bước {0}. Kiểm tra gần đúng: ({1}){2} ≈ {3}. Giá trị thu được quay lại gần số ban đầu, nên kết quả phù hợp.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepRealExactConclusion",
+      "source": "Kết luận: {0} = {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepRealApproxConclusion",
+      "source": "Kết luận: {0} ≈ {1}. Dấu ≈ cho biết kết quả đã được làm tròn.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexConclusion",
+      "source": "Kết luận: phép tính không có kết quả thực; căn phức chính là {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepGivenVisual",
+      "source": "Bước {0}. Phép tính đã cho:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexSqrtExactVisual",
+      "source": "Bước {0}. Với căn bậc hai của số âm, ta tính căn của phần dương trước:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexSqrtApproxVisual",
+      "source": "Bước {0}. Với căn bậc hai của số âm, ta tính gần đúng căn của phần dương trước:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexSqrtAttachIVisual",
+      "source": "Sau đó gắn thêm i vì i² = −1:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexGeneralVisual",
+      "source": "Bước {0}. Với căn bậc {1} của một số âm, có nhiều kết quả trong số phức. Sau khi chọn căn chính và tính toán, ta được:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepApproxCalculationVisual",
+      "source": "Bước {0}. Không có số nguyên nào khi nâng lên lũy thừa bậc {1} cho đúng {2}, nên kết quả không phải là một số nguyên. Tính gần đúng được:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepRealExactConclusionVisual",
+      "source": "Kết luận:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepRealApproxConclusionVisual",
+      "source": "Kết luận (dấu ≈ cho biết kết quả đã được làm tròn):",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepComplexConclusionVisual",
+      "source": "Kết luận: phép tính không có kết quả thực; căn phức chính là:",
       "mode": "exact"
     }
   ],
