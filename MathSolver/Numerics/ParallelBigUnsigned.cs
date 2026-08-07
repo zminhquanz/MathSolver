@@ -27,17 +27,33 @@ internal sealed class ParallelBigUnsigned
     // small beside the multi-gigabyte NTT working set.
     private const int MaximumCachedTwiddleCount = 1 << 20;
 
-    // Cache-block size is selected from the logical-processor count.  This is
-    // deliberately a small heuristic rather than CPU-model detection: modern
-    // high-thread CPUs such as the 24-thread HX 370 keep the proven 4096-value
-    // (16 KiB) block, while 8-19 thread SMT CPUs such as a 12-thread i7-8700
-    // use 2048 values (8 KiB) to leave more shared L1D room per sibling thread.
-    // Very small worker budgets use a larger block to reduce block-dispatch
-    // overhead.  Every choice is a power of two so DIF/DIT stage boundaries
-    // remain exact.
+    // L1 fused-block size is selected from the logical-processor count.  This
+    // is deliberately a small heuristic rather than CPU-model detection:
+    // modern high-thread CPUs such as the 24-thread HX 370 keep the proven
+    // 4096-value (16 KiB) block, while 8-19 thread SMT CPUs such as a 12-thread
+    // i7-8700 use 2048 values (8 KiB) to leave more shared L1D room per sibling
+    // thread.  A second L2 tile level below keeps several fused blocks resident
+    // together so additional DIF/DIT stages avoid full-array memory sweeps.
+    // Every choice is a power of two so stage boundaries remain exact.
     private const int SmallSmtFusedNttBlockLength = 1 << 11; // 2048 = 8 KiB
     private const int DefaultFusedNttBlockLength = 1 << 12;  // 4096 = 16 KiB
     private const int LowThreadFusedNttBlockLength = 1 << 13; // 8192 = 32 KiB
+
+    // A second cache-blocking level keeps several L1-sized fused blocks inside
+    // one L2-resident tile.  The tile is deliberately sized per logical-thread
+    // class so two SMT siblings do not consume the whole private L2 with values
+    // plus the largest twiddle stage.
+    private const int SmallSmtL2NttTileLength = 1 << 14; // 16384 = 64 KiB values
+    private const int MidThreadL2NttTileLength = 1 << 15; // 32768 = 128 KiB values
+    private const int HighThreadL2NttTileLength = 1 << 16; // 65536 = 256 KiB values
+
+    // A third, last-level-cache tile removes several more full-array sweeps
+    // before work reaches the L2 tile.  Keep the tile conservative enough that
+    // all active SMT workers can retain useful L3 residency at the same time.
+    private const int SmallSmtL3NttTileLength = 1 << 17; // 131072 = 512 KiB values
+    private const int MidThreadL3NttTileLength = 1 << 18; // 262144 = 1 MiB values
+    private const int HighThreadL3NttTileLength = 1 << 18; // 262144 = 1 MiB values
+    private const int LowThreadL3NttTileLength = 1 << 19; // 524288 = 2 MiB values
 
     // Both primes support transforms through 2^26. Their product is large
     // enough to recover every base-10,000 convolution coefficient required by
@@ -876,6 +892,136 @@ internal sealed class ParallelBigUnsigned
             : LowThreadFusedNttBlockLength;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int SelectL2NttTileLength(
+        int fusedNttBlockLength)
+    {
+        int logicalProcessorCount =
+            Math.Max(
+                1,
+                Environment.ProcessorCount);
+
+        int tileLength;
+
+        if (logicalProcessorCount >= 20)
+        {
+            // 24-thread HX 370-class CPUs: 256 KiB of values per tile.  With
+            // the largest local twiddle stage this stays comfortably below a
+            // 1 MiB-class private L2 even with two SMT siblings active.
+            tileLength =
+                HighThreadL2NttTileLength;
+        }
+        else if (logicalProcessorCount >= 8)
+        {
+            // 12-thread Coffee Lake-class CPUs have only 256 KiB L2 per core.
+            // 64 KiB values + at most 32 KiB local twiddles per worker leaves
+            // useful headroom when both SMT siblings share that cache.
+            tileLength =
+                SmallSmtL2NttTileLength;
+        }
+        else if (logicalProcessorCount >= 4)
+        {
+            tileLength =
+                MidThreadL2NttTileLength;
+        }
+        else
+        {
+            tileLength =
+                HighThreadL2NttTileLength;
+        }
+
+        return Math.Max(
+            fusedNttBlockLength,
+            tileLength);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int SelectL3NttTileLength(
+        int l2NttTileLength)
+    {
+        int logicalProcessorCount =
+            Math.Max(
+                1,
+                Environment.ProcessorCount);
+
+        int tileLength;
+
+        if (logicalProcessorCount >= 20)
+        {
+            // High-thread modern CPUs usually pair a larger shared LLC with a
+            // larger private L2.  One MiB of values removes two global sweeps
+            // above the 256 KiB L2 tile used by the 24-thread HX 370 class.
+            tileLength =
+                HighThreadL3NttTileLength;
+        }
+        else if (logicalProcessorCount >= 8)
+        {
+            // A 6C/12T Coffee Lake-class CPU has a 12 MiB shared L3.  A 512
+            // KiB value tile per active logical worker leaves room for twiddles
+            // and the sibling power branch instead of trying to occupy all LLC.
+            tileLength =
+                SmallSmtL3NttTileLength;
+        }
+        else if (logicalProcessorCount >= 4)
+        {
+            tileLength =
+                MidThreadL3NttTileLength;
+        }
+        else
+        {
+            tileLength =
+                LowThreadL3NttTileLength;
+        }
+
+        return Math.Max(
+            l2NttTileLength,
+            tileLength);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanUseL2CacheBlocking(
+        int transformLength,
+        int l2NttTileLength,
+        int workerCount)
+    {
+        if (transformLength <= l2NttTileLength)
+        {
+            return false;
+        }
+
+        int tileCount =
+            transformLength /
+            l2NttTileLength;
+
+        // Keep at least one independent tile per worker.  Smaller transforms
+        // fall back to the proven L1-only v8 path rather than underutilizing
+        // the fixed worker team.
+        return tileCount >=
+               Math.Max(1, workerCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanUseL3CacheBlocking(
+        int transformLength,
+        int l3NttTileLength,
+        int workerCount)
+    {
+        if (transformLength <= l3NttTileLength)
+        {
+            return false;
+        }
+
+        int tileCount =
+            transformLength /
+            l3NttTileLength;
+
+        // As with the L2 path, never trade away parallel occupancy merely to
+        // gain locality.  Large power transforms expose hundreds of LLC tiles;
+        // small transforms simply stay on the proven v9 L2/L1 hierarchy.
+        return tileCount >=
+               Math.Max(1, workerCount);
+    }
+
     private static uint[] ConvolveModulus(
         uint[] left,
         uint[] right,
@@ -890,6 +1036,14 @@ internal sealed class ParallelBigUnsigned
     {
         int fusedNttBlockLength =
             SelectFusedNttBlockLength();
+
+        int l2NttTileLength =
+            SelectL2NttTileLength(
+                fusedNttBlockLength);
+
+        int l3NttTileLength =
+            SelectL3NttTileLength(
+                l2NttTileLength);
 
         var transformedLeft =
             new uint[transformLength];
@@ -914,6 +1068,8 @@ internal sealed class ParallelBigUnsigned
             workers,
             twiddlePlan,
             fusedNttBlockLength,
+            l2NttTileLength,
+            l3NttTileLength,
             true,
             diagnostics,
             cancellationToken);
@@ -964,6 +1120,8 @@ internal sealed class ParallelBigUnsigned
                 workers,
                 twiddlePlan,
                 fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
                 false,
                 diagnostics,
                 cancellationToken);
@@ -1000,6 +1158,8 @@ internal sealed class ParallelBigUnsigned
             workers,
             twiddlePlan,
             fusedNttBlockLength,
+            l2NttTileLength,
+            l3NttTileLength,
             diagnostics,
             cancellationToken);
 
@@ -1027,6 +1187,8 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         NttTwiddlePlan twiddlePlan,
         int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
         bool buildCachedTwiddles,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
@@ -1046,10 +1208,78 @@ internal sealed class ParallelBigUnsigned
             int halfLength =
                 stageLength >> 1;
 
+            // Enter the last-level-cache hierarchy first.  Once DIF reaches
+            // l3NttTileLength, all remaining butterflies are independent inside
+            // each LLC tile, so complete L3 -> L2 -> L1 locally and avoid the
+            // corresponding whole-array sweeps and inter-stage barriers.
+            if (stageLength == l3NttTileLength &&
+                CanUseL3CacheBlocking(
+                    length,
+                    l3NttTileLength,
+                    workers.WorkerCount))
+            {
+                if (buildCachedTwiddles)
+                {
+                    PrepareFusedTwiddleTables(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        l3NttTileLength,
+                        workers,
+                        cancellationToken);
+                }
+
+                ExecuteForwardL3CacheBlockedTail(
+                    values,
+                    modulus,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
+                    cancellationToken);
+
+                break;
+            }
+
+            // First cache-block at L2 granularity when the transform has
+            // enough independent tiles to keep the complete worker team busy.
+            // All stages from the tile length down to the L1 fused block then
+            // remain local to one tile, avoiding several full-array sweeps.
+            if (stageLength == l2NttTileLength &&
+                CanUseL2CacheBlocking(
+                    length,
+                    l2NttTileLength,
+                    workers.WorkerCount))
+            {
+                if (buildCachedTwiddles)
+                {
+                    PrepareFusedTwiddleTables(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        l2NttTileLength,
+                        workers,
+                        cancellationToken);
+                }
+
+                ExecuteForwardL2CacheBlockedTail(
+                    values,
+                    modulus,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    cancellationToken);
+
+                break;
+            }
+
             // From this point down, every remaining DIF stage operates only
             // inside an independent adaptive fused block.  Fuse the tail
             // so each worker keeps one block hot in L1/L2 rather than sweeping
-            // the entire transform once per stage.
+            // the entire transform once per stage.  This remains the fallback
+            // for transforms too small to expose enough L2 tiles.
             if (length > fusedNttBlockLength &&
                 stageLength == fusedNttBlockLength)
             {
@@ -1342,6 +1572,8 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         NttTwiddlePlan twiddlePlan,
         int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
@@ -1363,11 +1595,46 @@ internal sealed class ParallelBigUnsigned
 
         int firstStageLength = 2;
 
-        // DIT starts with the smallest stages.  Those stages are independent
-        // inside adaptive fused blocks, so finish them locally before the
-        // first global stage.  The twiddles were prepared by the first forward
-        // transform and are reused here without rebuilding.
-        if (length > fusedNttBlockLength)
+        // DIT starts with the smallest stages.  Prefer the deepest available
+        // cache hierarchy: complete L1 and L2 work inside each L3 tile, merge
+        // those subtiles through the LLC-local stages, then resume the global
+        // stages.  Smaller transforms retain the proven v9 L2/L1 fallbacks.
+        if (CanUseL3CacheBlocking(
+                length,
+                l3NttTileLength,
+                workers.WorkerCount))
+        {
+            ExecuteInverseL3CacheBlockedHead(
+                values,
+                modulus,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
+                cancellationToken);
+
+            firstStageLength =
+                l3NttTileLength << 1;
+        }
+        else if (CanUseL2CacheBlocking(
+                     length,
+                     l2NttTileLength,
+                     workers.WorkerCount))
+        {
+            ExecuteInverseL2CacheBlockedHead(
+                values,
+                modulus,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                cancellationToken);
+
+            firstStageLength =
+                l2NttTileLength << 1;
+        }
+        else if (length > fusedNttBlockLength)
         {
             ExecuteInverseFusedHead(
                 values,
@@ -1725,6 +1992,1359 @@ internal sealed class ParallelBigUnsigned
                 workers,
                 cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Three-level DIF tail. Once a stage reaches the selected last-level-cache
+    /// tile size, every later stage is independent inside that tile. Complete
+    /// the LLC-local stages, then each L2 tile, then each L1 block before moving
+    /// on. This removes additional full-transform sweeps without changing the
+    /// proven scalar modular arithmetic.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardL3CacheBlockedTail(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        CancellationToken cancellationToken)
+    {
+        int tileCount =
+            values.Length /
+            l3NttTileLength;
+
+        uint[] twiddles =
+            twiddlePlan.ForwardTwiddles;
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (startTile, endTile) =>
+            {
+                for (int tileIndex = startTile;
+                     tileIndex < endTile;
+                     tileIndex++)
+                {
+                    int tileOffset =
+                        tileIndex *
+                        l3NttTileLength;
+
+                    int tileEnd =
+                        tileOffset +
+                        l3NttTileLength;
+
+                    // LLC-local DIF stages. Stop before the L2 tile boundary;
+                    // each resulting L2 tile is independent afterwards.
+                    for (int stageLength = l3NttTileLength;
+                         stageLength > l2NttTileLength;
+                         stageLength >>= 1)
+                    {
+                        int halfLength =
+                            stageLength >> 1;
+
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(
+                                halfLength);
+
+                        for (int groupOffset = tileOffset;
+                             groupOffset < tileEnd;
+                             groupOffset += stageLength)
+                        {
+                            ExecuteForwardCachedDifGroup(
+                                values,
+                                modulus,
+                                twiddles,
+                                twiddleOffset,
+                                groupOffset,
+                                halfLength);
+                        }
+                    }
+
+                    // Complete each L2 tile through the existing L1 hierarchy
+                    // while the parent LLC tile is still resident.
+                    for (int l2TileOffset = tileOffset;
+                         l2TileOffset < tileEnd;
+                         l2TileOffset += l2NttTileLength)
+                    {
+                        ExecuteForwardL2TileSequential(
+                            values,
+                            modulus,
+                            twiddles,
+                            twiddlePlan,
+                            fusedNttBlockLength,
+                            l2NttTileLength,
+                            l2TileOffset);
+                    }
+
+                    if ((tileIndex & 0x07) == 0x07)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
+    }
+
+    /// <summary>
+    /// Three-level DIT head, inverse of ExecuteForwardL3CacheBlockedTail.
+    /// Complete each L2/L1 subtree first, merge those subtrees through the
+    /// LLC-local DIT stages, then return to the global transform.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseL3CacheBlockedHead(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        CancellationToken cancellationToken)
+    {
+        int tileCount =
+            values.Length /
+            l3NttTileLength;
+
+        uint[] twiddles =
+            twiddlePlan.InverseTwiddles;
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (startTile, endTile) =>
+            {
+                for (int tileIndex = startTile;
+                     tileIndex < endTile;
+                     tileIndex++)
+                {
+                    int tileOffset =
+                        tileIndex *
+                        l3NttTileLength;
+
+                    int tileEnd =
+                        tileOffset +
+                        l3NttTileLength;
+
+                    for (int l2TileOffset = tileOffset;
+                         l2TileOffset < tileEnd;
+                         l2TileOffset += l2NttTileLength)
+                    {
+                        ExecuteInverseL2TileSequential(
+                            values,
+                            modulus,
+                            twiddles,
+                            twiddlePlan,
+                            fusedNttBlockLength,
+                            l2NttTileLength,
+                            l2TileOffset);
+                    }
+
+                    // Merge the completed L2 tiles while their parent LLC tile
+                    // remains hot. These are exactly the DIT stages inverse to
+                    // the LLC-local DIF stages above.
+                    for (int stageLength = l2NttTileLength << 1;
+                         stageLength <= l3NttTileLength;
+                         stageLength <<= 1)
+                    {
+                        int halfLength =
+                            stageLength >> 1;
+
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(
+                                halfLength);
+
+                        for (int groupOffset = tileOffset;
+                             groupOffset < tileEnd;
+                             groupOffset += stageLength)
+                        {
+                            ExecuteInverseCachedDitGroup(
+                                values,
+                                modulus,
+                                twiddles,
+                                twiddleOffset,
+                                groupOffset,
+                                halfLength);
+                        }
+                    }
+
+                    if ((tileIndex & 0x07) == 0x07)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardL2TileSequential(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int tileOffset)
+    {
+        int tileEnd =
+            tileOffset +
+            l2NttTileLength;
+
+        // Keep this inner L2/L1 kernel expanded, matching the proven v9 hot
+        // loops.  Avoid a per-group helper call here: one 2^26 transform has
+        // tens of millions of small groups after blocking.
+        for (int stageLength = l2NttTileLength;
+             stageLength > fusedNttBlockLength;
+             stageLength >>= 1)
+        {
+            int halfLength =
+                stageLength >> 1;
+
+            int twiddleOffset =
+                twiddlePlan.GetOffset(
+                    halfLength);
+
+            for (int groupOffset = tileOffset;
+                 groupOffset < tileEnd;
+                 groupOffset += stageLength)
+            {
+                int rightBase =
+                    groupOffset +
+                    halfLength;
+
+                uint leftValue =
+                    values[groupOffset];
+
+                uint rightValue =
+                    values[rightBase];
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                values[groupOffset] =
+                    sum;
+
+                values[rightBase] =
+                    leftValue >= rightValue
+                        ? leftValue - rightValue
+                        : leftValue + modulus - rightValue;
+
+                int leftIndex =
+                    groupOffset + 1;
+
+                int rightIndex =
+                    rightBase + 1;
+
+                int butterflyEnd =
+                    groupOffset +
+                    halfLength;
+
+                int butterfly = 1;
+
+                for (;
+                     leftIndex < butterflyEnd;
+                     leftIndex++,
+                     rightIndex++,
+                     butterfly++)
+                {
+                    leftValue =
+                        values[leftIndex];
+
+                    rightValue =
+                        values[rightIndex];
+
+                    sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    uint difference =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    values[leftIndex] =
+                        sum;
+
+                    values[rightIndex] =
+                        (uint)((ulong)difference *
+                               twiddles[twiddleOffset + butterfly] %
+                               modulus);
+                }
+            }
+        }
+
+        for (int blockOffset = tileOffset;
+             blockOffset < tileEnd;
+             blockOffset += fusedNttBlockLength)
+        {
+            int blockEnd =
+                blockOffset +
+                fusedNttBlockLength;
+
+            for (int stageLength = fusedNttBlockLength;
+                 stageLength >= 4;
+                 stageLength >>= 1)
+            {
+                int halfLength =
+                    stageLength >> 1;
+
+                int twiddleOffset =
+                    twiddlePlan.GetOffset(
+                        halfLength);
+
+                for (int groupOffset = blockOffset;
+                     groupOffset < blockEnd;
+                     groupOffset += stageLength)
+                {
+                    int rightBase =
+                        groupOffset +
+                        halfLength;
+
+                    uint leftValue =
+                        values[groupOffset];
+
+                    uint rightValue =
+                        values[rightBase];
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    values[groupOffset] =
+                        sum;
+
+                    values[rightBase] =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    int leftIndex =
+                        groupOffset + 1;
+
+                    int rightIndex =
+                        rightBase + 1;
+
+                    int butterflyEnd =
+                        groupOffset +
+                        halfLength;
+
+                    int butterfly = 1;
+
+                    for (;
+                         leftIndex < butterflyEnd;
+                         leftIndex++,
+                         rightIndex++,
+                         butterfly++)
+                    {
+                        leftValue =
+                            values[leftIndex];
+
+                        rightValue =
+                            values[rightIndex];
+
+                        sum =
+                            leftValue +
+                            rightValue;
+
+                        if (sum >= modulus)
+                        {
+                            sum -= modulus;
+                        }
+
+                        uint difference =
+                            leftValue >= rightValue
+                                ? leftValue - rightValue
+                                : leftValue + modulus - rightValue;
+
+                        values[leftIndex] =
+                            sum;
+
+                        values[rightIndex] =
+                            (uint)((ulong)difference *
+                                   twiddles[twiddleOffset + butterfly] %
+                                   modulus);
+                    }
+                }
+            }
+
+            for (int leftIndex = blockOffset;
+                 leftIndex < blockEnd;
+                 leftIndex += 2)
+            {
+                uint leftValue =
+                    values[leftIndex];
+
+                uint rightValue =
+                    values[leftIndex + 1];
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                values[leftIndex] =
+                    sum;
+
+                values[leftIndex + 1] =
+                    leftValue >= rightValue
+                        ? leftValue - rightValue
+                        : leftValue + modulus - rightValue;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseL2TileSequential(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int tileOffset)
+    {
+        int tileEnd =
+            tileOffset +
+            l2NttTileLength;
+
+        // Same deliberately expanded inner kernel as v9; only the parent L3
+        // traversal is new in v10.
+        for (int blockOffset = tileOffset;
+             blockOffset < tileEnd;
+             blockOffset += fusedNttBlockLength)
+        {
+            int blockEnd =
+                blockOffset +
+                fusedNttBlockLength;
+
+            for (int leftIndex = blockOffset;
+                 leftIndex < blockEnd;
+                 leftIndex += 2)
+            {
+                uint leftValue =
+                    values[leftIndex];
+
+                uint rightValue =
+                    values[leftIndex + 1];
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                values[leftIndex] =
+                    sum;
+
+                values[leftIndex + 1] =
+                    leftValue >= rightValue
+                        ? leftValue - rightValue
+                        : leftValue + modulus - rightValue;
+            }
+
+            for (int stageLength = 4;
+                 stageLength <= fusedNttBlockLength;
+                 stageLength <<= 1)
+            {
+                int halfLength =
+                    stageLength >> 1;
+
+                int twiddleOffset =
+                    twiddlePlan.GetOffset(
+                        halfLength);
+
+                for (int groupOffset = blockOffset;
+                     groupOffset < blockEnd;
+                     groupOffset += stageLength)
+                {
+                    int rightBase =
+                        groupOffset +
+                        halfLength;
+
+                    uint leftValue =
+                        values[groupOffset];
+
+                    uint rightValue =
+                        values[rightBase];
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    values[groupOffset] =
+                        sum;
+
+                    values[rightBase] =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    int leftIndex =
+                        groupOffset + 1;
+
+                    int rightIndex =
+                        rightBase + 1;
+
+                    int butterflyEnd =
+                        groupOffset +
+                        halfLength;
+
+                    int butterfly = 1;
+
+                    for (;
+                         leftIndex < butterflyEnd;
+                         leftIndex++,
+                         rightIndex++,
+                         butterfly++)
+                    {
+                        leftValue =
+                            values[leftIndex];
+
+                        rightValue =
+                            (uint)((ulong)values[rightIndex] *
+                                   twiddles[twiddleOffset + butterfly] %
+                                   modulus);
+
+                        sum =
+                            leftValue +
+                            rightValue;
+
+                        if (sum >= modulus)
+                        {
+                            sum -= modulus;
+                        }
+
+                        values[leftIndex] =
+                            sum;
+
+                        values[rightIndex] =
+                            leftValue >= rightValue
+                                ? leftValue - rightValue
+                                : leftValue + modulus - rightValue;
+                    }
+                }
+            }
+        }
+
+        for (int stageLength = fusedNttBlockLength << 1;
+             stageLength <= l2NttTileLength;
+             stageLength <<= 1)
+        {
+            int halfLength =
+                stageLength >> 1;
+
+            int twiddleOffset =
+                twiddlePlan.GetOffset(
+                    halfLength);
+
+            for (int groupOffset = tileOffset;
+                 groupOffset < tileEnd;
+                 groupOffset += stageLength)
+            {
+                int rightBase =
+                    groupOffset +
+                    halfLength;
+
+                uint leftValue =
+                    values[groupOffset];
+
+                uint rightValue =
+                    values[rightBase];
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                values[groupOffset] =
+                    sum;
+
+                values[rightBase] =
+                    leftValue >= rightValue
+                        ? leftValue - rightValue
+                        : leftValue + modulus - rightValue;
+
+                int leftIndex =
+                    groupOffset + 1;
+
+                int rightIndex =
+                    rightBase + 1;
+
+                int butterflyEnd =
+                    groupOffset +
+                    halfLength;
+
+                int butterfly = 1;
+
+                for (;
+                     leftIndex < butterflyEnd;
+                     leftIndex++,
+                     rightIndex++,
+                     butterfly++)
+                {
+                    leftValue =
+                        values[leftIndex];
+
+                    rightValue =
+                        (uint)((ulong)values[rightIndex] *
+                               twiddles[twiddleOffset + butterfly] %
+                               modulus);
+
+                    sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    values[leftIndex] =
+                        sum;
+
+                    values[rightIndex] =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+                }
+            }
+        }
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteForwardCachedDifGroup(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int twiddleOffset,
+        int groupOffset,
+        int halfLength)
+    {
+        int rightBase =
+            groupOffset +
+            halfLength;
+
+        uint leftValue =
+            values[groupOffset];
+
+        uint rightValue =
+            values[rightBase];
+
+        uint sum =
+            leftValue +
+            rightValue;
+
+        if (sum >= modulus)
+        {
+            sum -= modulus;
+        }
+
+        values[groupOffset] =
+            sum;
+
+        values[rightBase] =
+            leftValue >= rightValue
+                ? leftValue - rightValue
+                : leftValue + modulus - rightValue;
+
+        int leftIndex =
+            groupOffset + 1;
+
+        int rightIndex =
+            rightBase + 1;
+
+        int butterflyEnd =
+            groupOffset +
+            halfLength;
+
+        int butterfly = 1;
+
+        for (;
+             leftIndex < butterflyEnd;
+             leftIndex++,
+             rightIndex++,
+             butterfly++)
+        {
+            leftValue =
+                values[leftIndex];
+
+            rightValue =
+                values[rightIndex];
+
+            sum =
+                leftValue +
+                rightValue;
+
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                leftValue >= rightValue
+                    ? leftValue - rightValue
+                    : leftValue + modulus - rightValue;
+
+            values[leftIndex] =
+                sum;
+
+            values[rightIndex] =
+                (uint)((ulong)difference *
+                       twiddles[twiddleOffset + butterfly] %
+                       modulus);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteInverseCachedDitGroup(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int twiddleOffset,
+        int groupOffset,
+        int halfLength)
+    {
+        int rightBase =
+            groupOffset +
+            halfLength;
+
+        uint leftValue =
+            values[groupOffset];
+
+        uint rightValue =
+            values[rightBase];
+
+        uint sum =
+            leftValue +
+            rightValue;
+
+        if (sum >= modulus)
+        {
+            sum -= modulus;
+        }
+
+        values[groupOffset] =
+            sum;
+
+        values[rightBase] =
+            leftValue >= rightValue
+                ? leftValue - rightValue
+                : leftValue + modulus - rightValue;
+
+        int leftIndex =
+            groupOffset + 1;
+
+        int rightIndex =
+            rightBase + 1;
+
+        int butterflyEnd =
+            groupOffset +
+            halfLength;
+
+        int butterfly = 1;
+
+        for (;
+             leftIndex < butterflyEnd;
+             leftIndex++,
+             rightIndex++,
+             butterfly++)
+        {
+            leftValue =
+                values[leftIndex];
+
+            rightValue =
+                (uint)((ulong)values[rightIndex] *
+                       twiddles[twiddleOffset + butterfly] %
+                       modulus);
+
+            sum =
+                leftValue +
+                rightValue;
+
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            values[leftIndex] =
+                sum;
+
+            values[rightIndex] =
+                leftValue >= rightValue
+                    ? leftValue - rightValue
+                    : leftValue + modulus - rightValue;
+        }
+    }
+
+    /// <summary>
+    /// Hierarchical DIF tail: keep one L2-sized tile resident while completing
+    /// the stages down to the L1 fused-block boundary, then finish each L1 block
+    /// before moving to the next tile.  Arithmetic is identical to the v8
+    /// scalar path; only traversal order changes.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardL2CacheBlockedTail(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        CancellationToken cancellationToken)
+    {
+        int tileCount =
+            values.Length /
+            l2NttTileLength;
+
+        uint[] twiddles =
+            twiddlePlan.ForwardTwiddles;
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (startTile, endTile) =>
+            {
+                for (int tileIndex = startTile;
+                     tileIndex < endTile;
+                     tileIndex++)
+                {
+                    int tileOffset =
+                        tileIndex *
+                        l2NttTileLength;
+
+                    int tileEnd =
+                        tileOffset +
+                        l2NttTileLength;
+
+                    // L2-local DIF stages.  Stop before fusedNttBlockLength;
+                    // each resulting L1-sized block is independent afterwards.
+                    for (int stageLength = l2NttTileLength;
+                         stageLength > fusedNttBlockLength;
+                         stageLength >>= 1)
+                    {
+                        int halfLength =
+                            stageLength >> 1;
+
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(
+                                halfLength);
+
+                        for (int groupOffset = tileOffset;
+                             groupOffset < tileEnd;
+                             groupOffset += stageLength)
+                        {
+                            int rightBase =
+                                groupOffset +
+                                halfLength;
+
+                            uint leftValue =
+                                values[groupOffset];
+
+                            uint rightValue =
+                                values[rightBase];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[groupOffset] =
+                                sum;
+
+                            values[rightBase] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            int leftIndex =
+                                groupOffset + 1;
+
+                            int rightIndex =
+                                rightBase + 1;
+
+                            int butterflyEnd =
+                                groupOffset +
+                                halfLength;
+
+                            int butterfly = 1;
+
+                            for (;
+                                 leftIndex < butterflyEnd;
+                                 leftIndex++,
+                                 rightIndex++,
+                                 butterfly++)
+                            {
+                                leftValue =
+                                    values[leftIndex];
+
+                                rightValue =
+                                    values[rightIndex];
+
+                                sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                uint difference =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+
+                                values[leftIndex] =
+                                    sum;
+
+                                values[rightIndex] =
+                                    (uint)((ulong)difference *
+                                           twiddles[twiddleOffset + butterfly] %
+                                           modulus);
+                            }
+                        }
+                    }
+
+                    // L1-local stages: complete each fused block while its
+                    // values and short twiddle rows are still hot.
+                    for (int blockOffset = tileOffset;
+                         blockOffset < tileEnd;
+                         blockOffset += fusedNttBlockLength)
+                    {
+                        int blockEnd =
+                            blockOffset +
+                            fusedNttBlockLength;
+
+                        for (int stageLength = fusedNttBlockLength;
+                             stageLength >= 4;
+                             stageLength >>= 1)
+                        {
+                            int halfLength =
+                                stageLength >> 1;
+
+                            int twiddleOffset =
+                                twiddlePlan.GetOffset(
+                                    halfLength);
+
+                            for (int groupOffset = blockOffset;
+                                 groupOffset < blockEnd;
+                                 groupOffset += stageLength)
+                            {
+                                int rightBase =
+                                    groupOffset +
+                                    halfLength;
+
+                                uint leftValue =
+                                    values[groupOffset];
+
+                                uint rightValue =
+                                    values[rightBase];
+
+                                uint sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                values[groupOffset] =
+                                    sum;
+
+                                values[rightBase] =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+
+                                int leftIndex =
+                                    groupOffset + 1;
+
+                                int rightIndex =
+                                    rightBase + 1;
+
+                                int butterflyEnd =
+                                    groupOffset +
+                                    halfLength;
+
+                                int butterfly = 1;
+
+                                for (;
+                                     leftIndex < butterflyEnd;
+                                     leftIndex++,
+                                     rightIndex++,
+                                     butterfly++)
+                                {
+                                    leftValue =
+                                        values[leftIndex];
+
+                                    rightValue =
+                                        values[rightIndex];
+
+                                    sum =
+                                        leftValue +
+                                        rightValue;
+
+                                    if (sum >= modulus)
+                                    {
+                                        sum -= modulus;
+                                    }
+
+                                    uint difference =
+                                        leftValue >= rightValue
+                                            ? leftValue - rightValue
+                                            : leftValue + modulus - rightValue;
+
+                                    values[leftIndex] =
+                                        sum;
+
+                                    values[rightIndex] =
+                                        (uint)((ulong)difference *
+                                               twiddles[twiddleOffset + butterfly] %
+                                               modulus);
+                                }
+                            }
+                        }
+
+                        for (int leftIndex = blockOffset;
+                             leftIndex < blockEnd;
+                             leftIndex += 2)
+                        {
+                            uint leftValue =
+                                values[leftIndex];
+
+                            uint rightValue =
+                                values[leftIndex + 1];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[leftIndex] =
+                                sum;
+
+                            values[leftIndex + 1] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+                        }
+                    }
+
+                    if ((tileIndex & 0x0F) == 0x0F)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
+    }
+
+    /// <summary>
+    /// Hierarchical DIT head, inverse of ExecuteForwardL2CacheBlockedTail.
+    /// Finish every L1 block first, then merge those blocks through the
+    /// L2-local stages while the complete tile remains cache-resident.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseL2CacheBlockedHead(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        CancellationToken cancellationToken)
+    {
+        int tileCount =
+            values.Length /
+            l2NttTileLength;
+
+        uint[] twiddles =
+            twiddlePlan.InverseTwiddles;
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (startTile, endTile) =>
+            {
+                for (int tileIndex = startTile;
+                     tileIndex < endTile;
+                     tileIndex++)
+                {
+                    int tileOffset =
+                        tileIndex *
+                        l2NttTileLength;
+
+                    int tileEnd =
+                        tileOffset +
+                        l2NttTileLength;
+
+                    // L1-local DIT stages for every fused block.
+                    for (int blockOffset = tileOffset;
+                         blockOffset < tileEnd;
+                         blockOffset += fusedNttBlockLength)
+                    {
+                        int blockEnd =
+                            blockOffset +
+                            fusedNttBlockLength;
+
+                        for (int leftIndex = blockOffset;
+                             leftIndex < blockEnd;
+                             leftIndex += 2)
+                        {
+                            uint leftValue =
+                                values[leftIndex];
+
+                            uint rightValue =
+                                values[leftIndex + 1];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[leftIndex] =
+                                sum;
+
+                            values[leftIndex + 1] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+                        }
+
+                        for (int stageLength = 4;
+                             stageLength <= fusedNttBlockLength;
+                             stageLength <<= 1)
+                        {
+                            int halfLength =
+                                stageLength >> 1;
+
+                            int twiddleOffset =
+                                twiddlePlan.GetOffset(
+                                    halfLength);
+
+                            for (int groupOffset = blockOffset;
+                                 groupOffset < blockEnd;
+                                 groupOffset += stageLength)
+                            {
+                                int rightBase =
+                                    groupOffset +
+                                    halfLength;
+
+                                uint leftValue =
+                                    values[groupOffset];
+
+                                uint rightValue =
+                                    values[rightBase];
+
+                                uint sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                values[groupOffset] =
+                                    sum;
+
+                                values[rightBase] =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+
+                                int leftIndex =
+                                    groupOffset + 1;
+
+                                int rightIndex =
+                                    rightBase + 1;
+
+                                int butterflyEnd =
+                                    groupOffset +
+                                    halfLength;
+
+                                int butterfly = 1;
+
+                                for (;
+                                     leftIndex < butterflyEnd;
+                                     leftIndex++,
+                                     rightIndex++,
+                                     butterfly++)
+                                {
+                                    leftValue =
+                                        values[leftIndex];
+
+                                    rightValue =
+                                        (uint)((ulong)values[rightIndex] *
+                                               twiddles[twiddleOffset + butterfly] %
+                                               modulus);
+
+                                    sum =
+                                        leftValue +
+                                        rightValue;
+
+                                    if (sum >= modulus)
+                                    {
+                                        sum -= modulus;
+                                    }
+
+                                    values[leftIndex] =
+                                        sum;
+
+                                    values[rightIndex] =
+                                        leftValue >= rightValue
+                                            ? leftValue - rightValue
+                                            : leftValue + modulus - rightValue;
+                                }
+                            }
+                        }
+                    }
+
+                    // L2-local DIT merge stages.
+                    for (int stageLength = fusedNttBlockLength << 1;
+                         stageLength <= l2NttTileLength;
+                         stageLength <<= 1)
+                    {
+                        int halfLength =
+                            stageLength >> 1;
+
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(
+                                halfLength);
+
+                        for (int groupOffset = tileOffset;
+                             groupOffset < tileEnd;
+                             groupOffset += stageLength)
+                        {
+                            int rightBase =
+                                groupOffset +
+                                halfLength;
+
+                            uint leftValue =
+                                values[groupOffset];
+
+                            uint rightValue =
+                                values[rightBase];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[groupOffset] =
+                                sum;
+
+                            values[rightBase] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            int leftIndex =
+                                groupOffset + 1;
+
+                            int rightIndex =
+                                rightBase + 1;
+
+                            int butterflyEnd =
+                                groupOffset +
+                                halfLength;
+
+                            int butterfly = 1;
+
+                            for (;
+                                 leftIndex < butterflyEnd;
+                                 leftIndex++,
+                                 rightIndex++,
+                                 butterfly++)
+                            {
+                                leftValue =
+                                    values[leftIndex];
+
+                                rightValue =
+                                    (uint)((ulong)values[rightIndex] *
+                                           twiddles[twiddleOffset + butterfly] %
+                                           modulus);
+
+                                sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                values[leftIndex] =
+                                    sum;
+
+                                values[rightIndex] =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+                            }
+                        }
+                    }
+
+                    if ((tileIndex & 0x0F) == 0x0F)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     /// <summary>
