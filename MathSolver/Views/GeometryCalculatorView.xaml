@@ -4,6 +4,7 @@
     x:Class="MathSolver.Views.GeometryCalculatorView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
@@ -685,6 +686,17 @@
                         </BindableLayout.ItemTemplate>
 
                     </VerticalStackLayout>
+
+                    <Button
+                        x:Name="GeometryCopyResultButton"
+                        Text="{localization:Translate PowerRoot.CopyResult}"
+                        HeightRequest="48"
+                        CornerRadius="12"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        TextColor="{DynamicResource TextPrimaryColor}"
+                        Clicked="OnGeometryCopyResultClicked" />
 
                     <Border
                         Padding="11"

@@ -206,6 +206,17 @@
 
                     </Border>
 
+                    <Button
+                        x:Name="AverageCopyResultButton"
+                        Text="{localization:Translate PowerRoot.CopyResult}"
+                        HeightRequest="48"
+                        CornerRadius="12"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        TextColor="{DynamicResource TextPrimaryColor}"
+                        Clicked="OnAverageCopyResultClicked" />
+
                     <Grid
                         ColumnDefinitions="*,*"
                         ColumnSpacing="10">

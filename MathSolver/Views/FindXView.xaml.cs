@@ -3095,6 +3095,28 @@ public partial class FindXView : LocalizedSolverView
             CultureInfo.InvariantCulture);
     }
 
+    private async void OnFindXCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        string resultText =
+            FindXAnswerLabel.Text ??
+            string.Empty;
+
+        if (FindXApproximationLabel.IsVisible &&
+            !string.IsNullOrWhiteSpace(
+                FindXApproximationLabel.Text))
+        {
+            resultText +=
+                Environment.NewLine +
+                FindXApproximationLabel.Text;
+        }
+
+        await ResultClipboardService.CopyAsync(
+            FindXCopyResultButton,
+            resultText);
+    }
+
     private void OnFindXClearClicked(
         object? sender,
         EventArgs e)

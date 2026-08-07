@@ -2037,6 +2037,15 @@ public partial class CalculationPage : ContentPage
             out _);
     }
 
+    private async void OnBasicCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await ResultClipboardService.CopyAsync(
+            BasicCopyResultButton,
+            ResultLabel.Text);
+    }
+
     private void OnClearClicked(object? sender, EventArgs e)
     {
         _pendingRestoredEntryTexts.Clear();

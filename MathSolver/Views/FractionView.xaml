@@ -5,6 +5,7 @@
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:models="clr-namespace:MathSolver.Models"
     xmlns:controls="clr-namespace:MathSolver.Controls"
@@ -409,6 +410,17 @@
                         MathFontSize="32"
                         MathColor="{DynamicResource TextPrimaryColor}"
                         HorizontalOptions="Center" />
+
+                    <Button
+                        x:Name="FractionCopyResultButton"
+                        Text="{localization:Translate PowerRoot.CopyResult}"
+                        HeightRequest="48"
+                        CornerRadius="12"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        TextColor="{DynamicResource TextPrimaryColor}"
+                        Clicked="OnFractionCopyResultClicked" />
 
                     <!-- Lời giải chi tiết -->
                     <Border

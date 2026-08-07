@@ -1301,6 +1301,15 @@ public partial class AverageView : LocalizedSolverView
             values);
     }
 
+    private async void OnAverageCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await ResultClipboardService.CopyAsync(
+            AverageCopyResultButton,
+            _solutionState?.ResultText);
+    }
+
     private void OnClearClicked(
         object? sender,
         EventArgs e)

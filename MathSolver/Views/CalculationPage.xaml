@@ -4,6 +4,7 @@
     x:Class="MathSolver.Views.CalculationPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:views="clr-namespace:MathSolver.Views"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
@@ -420,6 +421,17 @@
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Button
+                                x:Name="BasicCopyResultButton"
+                                Text="{localization:Translate PowerRoot.CopyResult}"
+                                HeightRequest="48"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                Clicked="OnBasicCopyResultClicked" />
 
                             <!-- Chi tiết phép chia -->
                             <Border

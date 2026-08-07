@@ -296,6 +296,15 @@ public partial class FractionView : LocalizedSolverView
             true;
     }
 
+    private async void OnFractionCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await ResultClipboardService.CopyAsync(
+            FractionCopyResultButton,
+            AnswerMathView.Expression);
+    }
+
     private void OnClearClicked(
         object? sender,
         EventArgs e)

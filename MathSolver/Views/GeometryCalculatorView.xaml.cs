@@ -2370,6 +2370,27 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         return builder.ToString();
     }
 
+    private async void OnGeometryCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        string resultText =
+            BuildExplanation();
+
+        if (!string.IsNullOrWhiteSpace(
+                ResultShapeLabel.Text))
+        {
+            resultText =
+                ResultShapeLabel.Text +
+                Environment.NewLine +
+                resultText;
+        }
+
+        await ResultClipboardService.CopyAsync(
+            GeometryCopyResultButton,
+            resultText);
+    }
+
     private void OnClearClicked(
         object? sender,
         EventArgs e)

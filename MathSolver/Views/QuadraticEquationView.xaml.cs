@@ -950,6 +950,30 @@ public partial class QuadraticEquationView : LocalizedSolverView
         ClearTransientFocus();
     }
 
+    private async void OnQuadraticCopyResultClicked(
+        object? sender,
+        EventArgs e)
+    {
+        string resultText =
+            string.Join(
+                Environment.NewLine,
+                new[]
+                {
+                    ResultEquationLabel.Text,
+                    DeltaValueLabel.Text,
+                    ClassificationLabel.Text,
+                    RootsLabel.Text
+                }
+                .Where(
+                    text =>
+                        !string.IsNullOrWhiteSpace(
+                            text)));
+
+        await ResultClipboardService.CopyAsync(
+            QuadraticCopyResultButton,
+            resultText);
+    }
+
     private void OnClearClicked(
         object? sender,
         EventArgs e)
