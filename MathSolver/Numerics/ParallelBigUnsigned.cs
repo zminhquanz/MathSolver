@@ -20,12 +20,13 @@ internal sealed class ParallelBigUnsigned
     private const int SchoolbookWorkLimit = 250_000;
     private const int MaximumTransformLength = 1 << 26;
 
-    // Cache only reusable twiddle stages whose largest half-stage is at most
-    // 1,048,576 values.  A per-convolution plan stores all cached forward and
-    // inverse stages in two compact pooled buffers (~16 MiB total at the cap).
-    // With two exponent branches the peak extra cache is about 32 MiB, still
-    // small beside the multi-gigabyte NTT working set.
-    private const int MaximumCachedTwiddleCount = 1 << 20;
+    // Persistent twiddle storage is adaptive.  Low-thread/smaller systems keep
+    // the proven 1,048,576-value cap.  CPUs with at least 8 logical processors
+    // cache one additional global NTT stage (2,097,152 values).  That stage is
+    // reused across many large products in exponentiation, trading a moderate
+    // amount of pooled RAM for fewer runtime twiddle modulo updates.
+    private const int DefaultMaximumCachedTwiddleCount = 1 << 20;
+    private const int LargePowerMaximumCachedTwiddleCount = 1 << 21;
 
     // L1 fused-block size is selected from the logical-processor count.  This
     // is deliberately a small heuristic rather than CPU-model detection:
@@ -861,6 +862,26 @@ internal sealed class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int SelectMaximumCachedTwiddleCount()
+    {
+        int logicalProcessorCount =
+            Math.Max(
+                1,
+                Environment.ProcessorCount);
+
+        // On 8+ logical processors the large power engine has enough parallel
+        // arithmetic throughput that repeatedly advancing an uncached twiddle
+        // becomes visible in the global stages.  Cache exactly one extra stage
+        // (8 MiB of active uint twiddles) and reuse it for the whole worker-team
+        // lifetime.  Avoid growing further: larger tables would compete too
+        // aggressively with the value buffers in LLC, especially on DDR4-era
+        // desktop CPUs.
+        return logicalProcessorCount >= 8
+            ? LargePowerMaximumCachedTwiddleCount
+            : DefaultMaximumCachedTwiddleCount;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int SelectFusedNttBlockLength()
     {
         int logicalProcessorCount =
@@ -1379,6 +1400,28 @@ internal sealed class ParallelBigUnsigned
                     groupCount,
                     workers.WorkerCount);
 
+            // Once there is at least one complete group per worker, keep the
+            // global-stage traversal group-native.  The generic segment mapper
+            // is valuable only while one huge group must be split across
+            // multiple workers; after that it adds divisions/branches around
+            // an otherwise contiguous memory walk.
+            if (useTwiddleCache &&
+                segmentsPerGroup == 1)
+            {
+                ExecuteForwardCachedStageByGroups(
+                    values,
+                    modulus,
+                    twiddlePlan.ForwardTwiddles,
+                    twiddleOffset,
+                    stageLength,
+                    halfLength,
+                    groupCount,
+                    workers,
+                    cancellationToken);
+
+                continue;
+            }
+
             ExecuteRanges(
                 checked(groupCount * segmentsPerGroup),
                 workers,
@@ -1734,6 +1777,23 @@ internal sealed class ParallelBigUnsigned
                     groupCount,
                     workers.WorkerCount);
 
+            if (useTwiddleCache &&
+                segmentsPerGroup == 1)
+            {
+                ExecuteInverseCachedStageByGroups(
+                    values,
+                    modulus,
+                    twiddlePlan.InverseTwiddles,
+                    twiddleOffset,
+                    stageLength,
+                    halfLength,
+                    groupCount,
+                    workers,
+                    cancellationToken);
+
+                continue;
+            }
+
             ExecuteRanges(
                 checked(groupCount * segmentsPerGroup),
                 workers,
@@ -1973,6 +2033,352 @@ internal sealed class ParallelBigUnsigned
         diagnostics.InverseTransformTicks +=
             Stopwatch.GetTimestamp() -
             transformStarted;
+    }
+
+    /// <summary>
+    /// Fast path for cached DIF stages once every NTT group can remain whole on
+    /// one worker.  This keeps each worker on a contiguous address range and
+    /// removes the generic segment-to-group mapping from the global hot path.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStageByGroups(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int twiddleOffset,
+        int stageLength,
+        int halfLength,
+        int groupCount,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        ExecuteRanges(
+            groupCount,
+            workers,
+            cancellationToken,
+            (groupStart, groupEnd) =>
+            {
+                for (int groupIndex = groupStart;
+                     groupIndex < groupEnd;
+                     groupIndex++)
+                {
+                    int groupOffset =
+                        groupIndex *
+                        stageLength;
+
+                    int rightBase =
+                        groupOffset +
+                        halfLength;
+
+                    uint leftValue =
+                        values[groupOffset];
+
+                    uint rightValue =
+                        values[rightBase];
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    values[groupOffset] =
+                        sum;
+
+                    values[rightBase] =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    int butterfly = 1;
+                    int leftIndex = groupOffset + 1;
+                    int rightIndex = rightBase + 1;
+                    int twiddleIndex = twiddleOffset + 1;
+
+                    // Keep the cancellation branch out of the per-butterfly
+                    // hot loop.  Two independent butterflies are issued per
+                    // iteration so the out-of-order core can overlap address,
+                    // ALU and integer-remainder work more effectively.
+                    while (butterfly < halfLength)
+                    {
+                        int chunkEnd =
+                            Math.Min(
+                                halfLength,
+                                butterfly + CancellationStride);
+
+                        for (;
+                             butterfly + 1 < chunkEnd;
+                             butterfly += 2,
+                             leftIndex += 2,
+                             rightIndex += 2,
+                             twiddleIndex += 2)
+                        {
+                            uint left0 =
+                                values[leftIndex];
+                            uint right0 =
+                                values[rightIndex];
+                            uint left1 =
+                                values[leftIndex + 1];
+                            uint right1 =
+                                values[rightIndex + 1];
+
+                            uint sum0 =
+                                left0 + right0;
+                            uint sum1 =
+                                left1 + right1;
+
+                            if (sum0 >= modulus)
+                            {
+                                sum0 -= modulus;
+                            }
+
+                            if (sum1 >= modulus)
+                            {
+                                sum1 -= modulus;
+                            }
+
+                            uint difference0 =
+                                left0 >= right0
+                                    ? left0 - right0
+                                    : left0 + modulus - right0;
+
+                            uint difference1 =
+                                left1 >= right1
+                                    ? left1 - right1
+                                    : left1 + modulus - right1;
+
+                            values[leftIndex] =
+                                sum0;
+                            values[leftIndex + 1] =
+                                sum1;
+
+                            values[rightIndex] =
+                                (uint)((ulong)difference0 *
+                                       twiddles[twiddleIndex] %
+                                       modulus);
+
+                            values[rightIndex + 1] =
+                                (uint)((ulong)difference1 *
+                                       twiddles[twiddleIndex + 1] %
+                                       modulus);
+                        }
+
+                        if (butterfly < chunkEnd)
+                        {
+                            leftValue =
+                                values[leftIndex];
+                            rightValue =
+                                values[rightIndex];
+
+                            sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            uint difference =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            values[leftIndex] =
+                                sum;
+
+                            values[rightIndex] =
+                                (uint)((ulong)difference *
+                                       twiddles[twiddleIndex] %
+                                       modulus);
+
+                            butterfly++;
+                            leftIndex++;
+                            rightIndex++;
+                            twiddleIndex++;
+                        }
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
+    }
+
+    /// <summary>
+    /// Cached DIT counterpart of ExecuteForwardCachedStageByGroups.  Group
+    /// ownership stays contiguous for the full stage, improving hardware
+    /// prefetch behavior and avoiding segment mapping after groupCount reaches
+    /// the worker budget.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStageByGroups(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int twiddleOffset,
+        int stageLength,
+        int halfLength,
+        int groupCount,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        // A cached stage requires groupCount >= 2, therefore it can never be
+        // the final DIT stage (stageLength == transform length).  Normalization
+        // is consequently impossible on this path, so keep that branch out of
+        // every butterfly and leave final-stage normalization to the generic
+        // uncached path where it belongs.
+        ExecuteRanges(
+            groupCount,
+            workers,
+            cancellationToken,
+            (groupStart, groupEnd) =>
+            {
+                for (int groupIndex = groupStart;
+                     groupIndex < groupEnd;
+                     groupIndex++)
+                {
+                    int groupOffset =
+                        groupIndex *
+                        stageLength;
+
+                    int rightBase =
+                        groupOffset +
+                        halfLength;
+
+                    uint leftValue =
+                        values[groupOffset];
+
+                    uint rightValue =
+                        values[rightBase];
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    values[groupOffset] =
+                        sum;
+
+                    values[rightBase] =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    int butterfly = 1;
+                    int leftIndex = groupOffset + 1;
+                    int rightIndex = rightBase + 1;
+                    int twiddleIndex = twiddleOffset + 1;
+
+                    while (butterfly < halfLength)
+                    {
+                        int chunkEnd =
+                            Math.Min(
+                                halfLength,
+                                butterfly + CancellationStride);
+
+                        for (;
+                             butterfly + 1 < chunkEnd;
+                             butterfly += 2,
+                             leftIndex += 2,
+                             rightIndex += 2,
+                             twiddleIndex += 2)
+                        {
+                            uint left0 =
+                                values[leftIndex];
+                            uint left1 =
+                                values[leftIndex + 1];
+
+                            uint right0 =
+                                (uint)((ulong)values[rightIndex] *
+                                       twiddles[twiddleIndex] %
+                                       modulus);
+
+                            uint right1 =
+                                (uint)((ulong)values[rightIndex + 1] *
+                                       twiddles[twiddleIndex + 1] %
+                                       modulus);
+
+                            uint sum0 =
+                                left0 + right0;
+                            uint sum1 =
+                                left1 + right1;
+
+                            if (sum0 >= modulus)
+                            {
+                                sum0 -= modulus;
+                            }
+
+                            if (sum1 >= modulus)
+                            {
+                                sum1 -= modulus;
+                            }
+
+                            values[leftIndex] =
+                                sum0;
+                            values[leftIndex + 1] =
+                                sum1;
+
+                            values[rightIndex] =
+                                left0 >= right0
+                                    ? left0 - right0
+                                    : left0 + modulus - right0;
+
+                            values[rightIndex + 1] =
+                                left1 >= right1
+                                    ? left1 - right1
+                                    : left1 + modulus - right1;
+                        }
+
+                        if (butterfly < chunkEnd)
+                        {
+                            leftValue =
+                                values[leftIndex];
+
+                            rightValue =
+                                (uint)((ulong)values[rightIndex] *
+                                       twiddles[twiddleIndex] %
+                                       modulus);
+
+                            sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            values[leftIndex] =
+                                sum;
+
+                            values[rightIndex] =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            butterfly++;
+                            leftIndex++;
+                            rightIndex++;
+                            twiddleIndex++;
+                        }
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     private static void PrepareFusedTwiddleTables(
@@ -3894,10 +4300,10 @@ internal sealed class ParallelBigUnsigned
         public NttTwiddlePlan()
         {
             // The plan is reused across all transform lengths handled by one
-            // worker team.  Allocate the capped table once; later transforms
-            // simply expose whichever stage lengths they actually need.
+            // worker team. Allocate the adaptive capped table once; later
+            // transforms simply expose whichever stage lengths they need.
             MaximumHalfLength =
-                MaximumCachedTwiddleCount;
+                SelectMaximumCachedTwiddleCount();
 
             int capacity =
                 checked(
