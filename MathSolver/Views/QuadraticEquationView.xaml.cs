@@ -1,4 +1,5 @@
 using MathSolver.Graphics;
+using MathSolver.Controls;
 using MathSolver.Numerics;
 using MathSolver.Services;
 using MathSolver.Views.Base;
@@ -1367,6 +1368,442 @@ public partial class QuadraticEquationView : LocalizedSolverView
                secondRoot.IsFinite;
     }
 
+
+    private void ResetStep4MathPresentation()
+    {
+        Step4BodyLabel.IsVisible =
+            true;
+
+        Step4MathLayout.Children.Clear();
+
+        Step4MathScrollView.IsVisible =
+            false;
+    }
+
+    private void ShowDistinctRootStep4Presentation(
+        Int128 a,
+        Int128 b,
+        OctoDouble delta,
+        OctoDouble squareRootDelta,
+        OctoDouble firstRoot,
+        OctoDouble secondRoot)
+    {
+        ResetStep4MathPresentation();
+
+        string aText =
+            FormatNumber(
+                a);
+
+        string bText =
+            FormatNumber(
+                b);
+
+        string deltaText =
+            FormatOctoDouble(
+                delta);
+
+        string squareRootText =
+            FormatOctoDouble(
+                squareRootDelta);
+
+        string firstRootText =
+            FormatOctoDouble(
+                firstRoot);
+
+        string secondRootText =
+            FormatOctoDouble(
+                secondRoot);
+
+        string denominatorText =
+            FormatOctoDouble(
+                2d *
+                OctoDouble.FromInt128(
+                    a));
+
+        Step4BodyLabel.Text =
+            "Ta áp dụng công thức nghiệm của phương trình bậc hai:";
+
+        Step4MathLayout.Children.Add(
+            CreateGeneralRootFormulaPairView());
+
+        Step4MathLayout.Children.Add(
+            CreateMathDescriptionLabel(
+                $"Thay a = {aText}, b = {bText}, Δ = {deltaText} vào công thức:"));
+
+        Step4MathLayout.Children.Add(
+            CreateRootComputationSection(
+                variableName: "x₁",
+                substitutionNumerator: CreateSubstitutedNumeratorView(
+                    bText,
+                    deltaText,
+                    usePlus: true),
+                simplifiedNumerator: CreateSimplifiedNumeratorView(
+                    bText,
+                    squareRootText,
+                    usePlus: true),
+                substitutionDenominatorText: $"2 × ({aText})",
+                simplifiedDenominatorText: denominatorText,
+                resultText: firstRootText));
+
+        Step4MathLayout.Children.Add(
+            CreateRootComputationSection(
+                variableName: "x₂",
+                substitutionNumerator: CreateSubstitutedNumeratorView(
+                    bText,
+                    deltaText,
+                    usePlus: false),
+                simplifiedNumerator: CreateSimplifiedNumeratorView(
+                    bText,
+                    squareRootText,
+                    usePlus: false),
+                substitutionDenominatorText: $"2 × ({aText})",
+                simplifiedDenominatorText: denominatorText,
+                resultText: secondRootText));
+
+        Step4MathScrollView.IsVisible =
+            true;
+    }
+
+    private View CreateGeneralRootFormulaPairView()
+    {
+        var formulaRow =
+            new HorizontalStackLayout
+            {
+                Spacing = 12,
+                HorizontalOptions = LayoutOptions.Start,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+        formulaRow.Children.Add(
+            CreateRootFractionEquationView(
+                variableName: "x₁",
+                numeratorView: CreateGeneralNumeratorView(
+                    usePlus: true),
+                denominatorView: CreateMathLabel(
+                    "2a",
+                    fontSize: 22)));
+
+        formulaRow.Children.Add(
+            CreateMathLabel(
+                "và",
+                fontSize: 19,
+                bold: false));
+
+        formulaRow.Children.Add(
+            CreateRootFractionEquationView(
+                variableName: "x₂",
+                numeratorView: CreateGeneralNumeratorView(
+                    usePlus: false),
+                denominatorView: CreateMathLabel(
+                    "2a",
+                    fontSize: 22)));
+
+        return formulaRow;
+    }
+
+    private View CreateRootComputationSection(
+        string variableName,
+        View substitutionNumerator,
+        View simplifiedNumerator,
+        string substitutionDenominatorText,
+        string simplifiedDenominatorText,
+        string resultText)
+    {
+        var sectionLayout =
+            new VerticalStackLayout
+            {
+                Spacing = 8,
+                HorizontalOptions = LayoutOptions.Start
+            };
+
+        sectionLayout.Children.Add(
+            CreateMathDescriptionLabel(
+                $"Tính {variableName}:"));
+
+        sectionLayout.Children.Add(
+            CreateRootFractionEquationView(
+                variableName,
+                substitutionNumerator,
+                CreateMathLabel(
+                    substitutionDenominatorText,
+                    fontSize: 21)));
+
+        sectionLayout.Children.Add(
+            CreateRootFractionEquationView(
+                variableName,
+                simplifiedNumerator,
+                CreateMathLabel(
+                    simplifiedDenominatorText,
+                    fontSize: 21)));
+
+        sectionLayout.Children.Add(
+            CreateRootResultView(
+                variableName,
+                resultText));
+
+        return sectionLayout;
+    }
+
+    private View CreateGeneralNumeratorView(
+        bool usePlus)
+    {
+        return CreateInlineMathLayout(
+            CreateMathLabel(
+                "−b",
+                fontSize: 22),
+            CreateMathLabel(
+                usePlus ? "+" : "−",
+                fontSize: 22),
+            CreateRadicalView(
+                radicandText: "Δ",
+                fontSize: 20,
+                degreeFontSize: 12));
+    }
+
+    private View CreateSubstitutedNumeratorView(
+        string bText,
+        string deltaText,
+        bool usePlus)
+    {
+        return CreateInlineMathLayout(
+            CreateMathLabel(
+                $"−({bText})",
+                fontSize: 21),
+            CreateMathLabel(
+                usePlus ? "+" : "−",
+                fontSize: 21),
+            CreateRadicalView(
+                radicandText: FormatRadicandForQuadratic(
+                    deltaText),
+                fontSize: 19,
+                degreeFontSize: 12));
+    }
+
+    private View CreateSimplifiedNumeratorView(
+        string bText,
+        string squareRootText,
+        bool usePlus)
+    {
+        return CreateInlineMathLayout(
+            CreateMathLabel(
+                $"−({bText})",
+                fontSize: 21),
+            CreateMathLabel(
+                usePlus ? "+" : "−",
+                fontSize: 21),
+            CreateMathLabel(
+                squareRootText,
+                fontSize: 21));
+    }
+
+    private View CreateRootFractionEquationView(
+        string variableName,
+        View numeratorView,
+        View denominatorView)
+    {
+        var equationLayout =
+            new HorizontalStackLayout
+            {
+                Spacing = 8,
+                HorizontalOptions = LayoutOptions.Start,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+        equationLayout.Children.Add(
+            CreateMathLabel(
+                $"{variableName} =",
+                fontSize: 22));
+
+        equationLayout.Children.Add(
+            CreateFractionLayout(
+                numeratorView,
+                denominatorView));
+
+        return equationLayout;
+    }
+
+    private View CreateRootResultView(
+        string variableName,
+        string resultText)
+    {
+        var resultLabel =
+            CreateMathLabel(
+                $"{variableName} = {resultText}",
+                fontSize: 22);
+
+        resultLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "SuccessColor");
+
+        return resultLabel;
+    }
+
+    private View CreateFractionLayout(
+        View numeratorView,
+        View denominatorView)
+    {
+        var fractionGrid =
+            new Grid
+            {
+                RowDefinitions =
+                {
+                    new RowDefinition(
+                        GridLength.Auto),
+                    new RowDefinition(
+                        new GridLength(2)),
+                    new RowDefinition(
+                        GridLength.Auto)
+                },
+                RowSpacing = 4,
+                ColumnSpacing = 0,
+                HorizontalOptions = LayoutOptions.Start,
+                VerticalOptions = LayoutOptions.Center,
+                MinimumWidthRequest = 78
+            };
+
+        numeratorView.HorizontalOptions =
+            LayoutOptions.Center;
+
+        denominatorView.HorizontalOptions =
+            LayoutOptions.Center;
+
+        var fractionBar =
+            new BoxView
+            {
+                HeightRequest = 2,
+                HorizontalOptions = LayoutOptions.Fill
+            };
+
+        fractionBar.SetDynamicResource(
+            BoxView.BackgroundColorProperty,
+            "TextPrimaryColor");
+
+        fractionGrid.Add(
+            numeratorView,
+            0,
+            0);
+
+        fractionGrid.Add(
+            fractionBar,
+            0,
+            1);
+
+        fractionGrid.Add(
+            denominatorView,
+            0,
+            2);
+
+        return fractionGrid;
+    }
+
+    private View CreateInlineMathLayout(
+        params View[] children)
+    {
+        var layout =
+            new HorizontalStackLayout
+            {
+                Spacing = 6,
+                HorizontalOptions = LayoutOptions.Start,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+        foreach (View child in children)
+        {
+            layout.Children.Add(
+                child);
+        }
+
+        return layout;
+    }
+
+    private Label CreateMathLabel(
+        string text,
+        double fontSize,
+        bool bold = true)
+    {
+        var label =
+            new Label
+            {
+                Text = text,
+                FontSize = fontSize,
+                FontAttributes =
+                    bold
+                        ? FontAttributes.Bold
+                        : FontAttributes.None,
+                VerticalTextAlignment = TextAlignment.Center,
+                HorizontalTextAlignment = TextAlignment.Start,
+                LineBreakMode = LineBreakMode.NoWrap
+            };
+
+        label.SetDynamicResource(
+            Label.TextColorProperty,
+            "TextPrimaryColor");
+
+        return label;
+    }
+
+    private Label CreateMathDescriptionLabel(
+        string text)
+    {
+        var label =
+            new Label
+            {
+                Text = text,
+                FontSize = 16,
+                LineHeight = 1.3,
+                LineBreakMode = LineBreakMode.WordWrap
+            };
+
+        label.SetDynamicResource(
+            Label.TextColorProperty,
+            "TextPrimaryColor");
+
+        return label;
+    }
+
+    private View CreateRadicalView(
+        string radicandText,
+        double fontSize,
+        double degreeFontSize)
+    {
+        var radicalView =
+            new TextbookRadicalExpressionView
+            {
+                Degree = 2,
+                RadicandText = radicandText,
+                FontSize = fontSize,
+                DegreeFontSize = degreeFontSize,
+                FontAttributes = FontAttributes.Bold,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+        radicalView.SetDynamicResource(
+            TextbookRadicalExpressionView.LineColorProperty,
+            "TextPrimaryColor");
+
+        radicalView.SetDynamicResource(
+            TextbookRadicalExpressionView.TextColorProperty,
+            "TextPrimaryColor");
+
+        return radicalView;
+    }
+
+    private static string FormatRadicandForQuadratic(
+        string radicandText)
+    {
+        if (string.IsNullOrWhiteSpace(
+                radicandText))
+        {
+            return string.Empty;
+        }
+
+        return radicandText.StartsWith(
+                "−",
+                StringComparison.Ordinal)
+            ? $"({radicandText})"
+            : radicandText;
+    }
+
     private void ShowSolution(
         Int128 a,
         Int128 b,
@@ -1422,6 +1859,8 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         Step4Border.IsVisible =
             true;
+
+        ResetStep4MathPresentation();
 
         if (delta < OctoDouble.Zero)
         {
@@ -1539,15 +1978,13 @@ public partial class QuadraticEquationView : LocalizedSolverView
             Step4TitleLabel.Text =
                 "Bước 4. Tính hai nghiệm";
 
-            Step4BodyLabel.Text =
-                $"x₁ = (−b + √Δ) / (2a)\n" +
-                $"x₁ = (−({bText}) + {squareRootText}) / " +
-                $"(2 × ({aText}))\n" +
-                $"x₁ = {firstRootText}\n\n" +
-                $"x₂ = (−b − √Δ) / (2a)\n" +
-                $"x₂ = (−({bText}) − {squareRootText}) / " +
-                $"(2 × ({aText}))\n" +
-                $"x₂ = {secondRootText}";
+            ShowDistinctRootStep4Presentation(
+                a,
+                b,
+                delta,
+                squareRootDelta,
+                firstRoot,
+                secondRoot);
         }
 
         ShowParabolaGraph(
