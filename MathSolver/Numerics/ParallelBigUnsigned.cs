@@ -1053,13 +1053,15 @@ internal sealed class ParallelBigUnsigned
             transformedLeft,
             left.Length);
 
-        // One compact plan is kept for the lifetime of this modulus
-        // convolution.  The first forward transform builds both the forward
-        // and inverse twiddle tables.  A second forward transform and the
-        // inverse transform reuse them without rebuilding the same powers.
-        using var twiddlePlan =
-            new NttTwiddlePlan(
-                transformLength);
+        // Reuse one twiddle plan for this modulus for the complete lifetime
+        // of the fixed worker team.  Exponentiation performs many NTT products
+        // at increasing transform lengths, but a twiddle stage depends only on
+        // (modulus, primitive root, stage length), not on the enclosing product.
+        // A stage is therefore built once on first use and reused by all later
+        // products in the same power branch.
+        NttTwiddlePlan twiddlePlan =
+            workers.GetTwiddlePlan(
+                modulus);
 
         ForwardDifTransform(
             transformedLeft,
@@ -1321,13 +1323,6 @@ internal sealed class ParallelBigUnsigned
                 continue;
             }
 
-            uint root =
-                (uint)ModPow(
-                    primitiveRoot,
-                    (modulus - 1u) /
-                    (uint)stageLength,
-                    modulus);
-
             int groupCount =
                 length /
                 stageLength;
@@ -1343,8 +1338,26 @@ internal sealed class ParallelBigUnsigned
                         halfLength)
                     : 0;
 
-            if (useTwiddleCache &&
-                buildCachedTwiddles)
+            bool needTwiddleBuild =
+                useTwiddleCache &&
+                buildCachedTwiddles &&
+                !twiddlePlan.IsStageReady(
+                    halfLength);
+
+            uint root = 0;
+
+            if (!useTwiddleCache ||
+                needTwiddleBuild)
+            {
+                root =
+                    (uint)ModPow(
+                        primitiveRoot,
+                        (modulus - 1u) /
+                        (uint)stageLength,
+                        modulus);
+            }
+
+            if (needTwiddleBuild)
             {
                 BuildTwiddleTables(
                     twiddlePlan.ForwardTwiddles,
@@ -1355,6 +1368,9 @@ internal sealed class ParallelBigUnsigned
                     modulus,
                     workers,
                     cancellationToken);
+
+                twiddlePlan.MarkStageReady(
+                    halfLength);
             }
 
             int segmentsPerGroup =
@@ -1974,6 +1990,12 @@ internal sealed class ParallelBigUnsigned
             int halfLength =
                 stageLength >> 1;
 
+            if (twiddlePlan.IsStageReady(
+                    halfLength))
+            {
+                continue;
+            }
+
             uint root =
                 (uint)ModPow(
                     primitiveRoot,
@@ -1991,6 +2013,9 @@ internal sealed class ParallelBigUnsigned
                 modulus,
                 workers,
                 cancellationToken);
+
+            twiddlePlan.MarkStageReady(
+                halfLength);
         }
     }
 
@@ -3863,18 +3888,16 @@ internal sealed class ParallelBigUnsigned
         private uint[]? _forwardTwiddles;
         private uint[]? _inverseTwiddles;
 
-        public NttTwiddlePlan(
-            int transformLength)
-        {
-            MaximumHalfLength =
-                Math.Min(
-                    transformLength >> 2,
-                    MaximumCachedTwiddleCount);
+        private readonly bool[] _readyStages =
+            new bool[32];
 
-            if (MaximumHalfLength < 2)
-            {
-                return;
-            }
+        public NttTwiddlePlan()
+        {
+            // The plan is reused across all transform lengths handled by one
+            // worker team.  Allocate the capped table once; later transforms
+            // simply expose whichever stage lengths they actually need.
+            MaximumHalfLength =
+                MaximumCachedTwiddleCount;
 
             int capacity =
                 checked(
@@ -3916,6 +3939,40 @@ internal sealed class ParallelBigUnsigned
         {
             return checked(
                 (MaximumHalfLength - halfLength) << 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsStageReady(
+            int halfLength)
+        {
+            return _readyStages[
+                GetStageIndex(
+                    halfLength)];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void MarkStageReady(
+            int halfLength)
+        {
+            _readyStages[
+                GetStageIndex(
+                    halfLength)] = true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int GetStageIndex(
+            int halfLength)
+        {
+            // halfLength is always a power of two for NTT stages.  This loop
+            // only runs on stage setup/cache checks, never per butterfly.
+            int index = 0;
+
+            while ((halfLength >>= 1) != 0)
+            {
+                index++;
+            }
+
+            return index;
         }
 
         public void Dispose()
@@ -4245,6 +4302,12 @@ internal sealed class ParallelBigUnsigned
         private int _itemCount;
         private bool _stopping;
 
+        // Twiddle stages are immutable after construction, so keep one plan per
+        // modulus for the lifetime of this worker team and reuse it across all
+        // NTT multiplications performed by the same exponent branch.
+        private NttTwiddlePlan? _firstTwiddlePlan;
+        private NttTwiddlePlan? _secondTwiddlePlan;
+
         public FixedWorkerTeam(
             int workerCount)
         {
@@ -4283,6 +4346,30 @@ internal sealed class ParallelBigUnsigned
         }
 
         public int WorkerCount { get; }
+
+        // FixedWorkerTeam itself is private to ParallelBigUnsigned, so this
+        // member cannot escape the enclosing type.  It must nevertheless be
+        // accessible to ConvolveModulus(), which lives on the enclosing class.
+        public NttTwiddlePlan GetTwiddlePlan(
+            uint modulus)
+        {
+            if (modulus == FirstModulus)
+            {
+                return _firstTwiddlePlan ??=
+                    new NttTwiddlePlan();
+            }
+
+            if (modulus == SecondModulus)
+            {
+                return _secondTwiddlePlan ??=
+                    new NttTwiddlePlan();
+            }
+
+            throw new ArgumentOutOfRangeException(
+                nameof(modulus),
+                modulus,
+                "Unsupported NTT modulus.");
+        }
 
         public void Execute(
             int itemCount,
@@ -4330,33 +4417,36 @@ internal sealed class ParallelBigUnsigned
 
         public void Dispose()
         {
-            if (_threads.Length == 0)
+            if (_threads.Length != 0)
             {
-                _completed.Dispose();
-                return;
-            }
-
-            lock (_gate)
-            {
-                if (_stopping)
+                lock (_gate)
                 {
-                    return;
+                    if (_stopping)
+                    {
+                        return;
+                    }
+
+                    _stopping =
+                        true;
+
+                    _generation++;
+
+                    Monitor.PulseAll(
+                        _gate);
                 }
 
-                _stopping =
-                    true;
-
-                _generation++;
-
-                Monitor.PulseAll(
-                    _gate);
+                foreach (Thread thread in
+                         _threads)
+                {
+                    thread.Join();
+                }
             }
 
-            foreach (Thread thread in
-                     _threads)
-            {
-                thread.Join();
-            }
+            _firstTwiddlePlan?.Dispose();
+            _secondTwiddlePlan?.Dispose();
+
+            _firstTwiddlePlan = null;
+            _secondTwiddlePlan = null;
 
             _completed.Dispose();
         }
