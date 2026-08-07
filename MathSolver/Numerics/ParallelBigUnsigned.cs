@@ -20,10 +20,11 @@ internal sealed class ParallelBigUnsigned
     private const int SchoolbookWorkLimit = 250_000;
     private const int MaximumTransformLength = 1 << 26;
 
-    // Cache only the reusable twiddle stages that remain small enough to sit
-    // comfortably in the shared cache.  1,048,576 uint values = 4 MiB.
-    // Two exponent branches therefore add at most about 8 MiB of reusable
-    // twiddle storage, negligible beside the multi-gigabyte NTT working set.
+    // Cache only reusable twiddle stages whose largest half-stage is at most
+    // 1,048,576 values.  A per-convolution plan stores all cached forward and
+    // inverse stages in two compact pooled buffers (~16 MiB total at the cap).
+    // With two exponent branches the peak extra cache is about 32 MiB, still
+    // small beside the multi-gigabyte NTT working set.
     private const int MaximumCachedTwiddleCount = 1 << 20;
 
     // Both primes support transforms through 2^26. Their product is large
@@ -851,11 +852,21 @@ internal sealed class ParallelBigUnsigned
             transformedLeft,
             left.Length);
 
+        // One compact plan is kept for the lifetime of this modulus
+        // convolution.  The first forward transform builds both the forward
+        // and inverse twiddle tables.  A second forward transform and the
+        // inverse transform reuse them without rebuilding the same powers.
+        using var twiddlePlan =
+            new NttTwiddlePlan(
+                transformLength);
+
         ForwardDifTransform(
             transformedLeft,
             modulus,
             primitiveRoot,
             workers,
+            twiddlePlan,
+            true,
             diagnostics,
             cancellationToken);
 
@@ -903,6 +914,8 @@ internal sealed class ParallelBigUnsigned
                 modulus,
                 primitiveRoot,
                 workers,
+                twiddlePlan,
+                false,
                 diagnostics,
                 cancellationToken);
 
@@ -936,6 +949,7 @@ internal sealed class ParallelBigUnsigned
             modulus,
             primitiveRoot,
             workers,
+            twiddlePlan,
             diagnostics,
             cancellationToken);
 
@@ -961,6 +975,8 @@ internal sealed class ParallelBigUnsigned
         uint modulus,
         uint primitiveRoot,
         FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        bool buildCachedTwiddles,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
@@ -970,105 +986,154 @@ internal sealed class ParallelBigUnsigned
         long transformStarted =
             Stopwatch.GetTimestamp();
 
-        uint[]? rentedTwiddles =
-            null;
-
-        int maximumCachedHalfLength =
-            Math.Min(
-                length >> 1,
-                MaximumCachedTwiddleCount);
-
-        if (maximumCachedHalfLength >= 2)
+        for (int stageLength = length;
+             stageLength >= 2;
+             stageLength >>= 1)
         {
-            rentedTwiddles =
-                ArrayPool<uint>.Shared.Rent(
-                    maximumCachedHalfLength);
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        try
-        {
-            for (int stageLength = length;
-                 stageLength >= 2;
-                 stageLength >>= 1)
+            int halfLength =
+                stageLength >> 1;
+
+            // The length-2 stage contains only the twiddle 1.  It is also the
+            // stage with the largest group count, so bypass the generic
+            // segment-to-group mapping completely and walk adjacent pairs.
+            if (stageLength == 2)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                int halfLength =
-                    stageLength >> 1;
-
-                uint root =
-                    (uint)ModPow(
-                        primitiveRoot,
-                        (modulus - 1u) /
-                        (uint)stageLength,
-                        modulus);
-
-                int groupCount =
-                    length /
-                    stageLength;
-
-                // For the small/medium stages the same twiddle sequence is
-                // reused by many groups.  Building it once removes the second
-                // modular multiply that previously advanced twiddle inside
-                // every group/butterfly.  Do not cache the very large stages:
-                // they have little reuse and the table would only add memory
-                // traffic and cache pressure.
-                bool useTwiddleCache =
-                    rentedTwiddles is not null &&
-                    halfLength >= 2 &&
-                    halfLength <= maximumCachedHalfLength &&
-                    groupCount >= 2;
-
-                if (useTwiddleCache)
-                {
-                    BuildTwiddleTable(
-                        rentedTwiddles!,
-                        halfLength,
-                        root,
-                        modulus,
-                        workers,
-                        cancellationToken);
-                }
-
-                int segmentsPerGroup =
-                    GetSegmentsPerGroup(
-                        halfLength,
-                        groupCount,
-                        workers.WorkerCount);
-
-                ExecuteRanges(
-                    checked(groupCount * segmentsPerGroup),
+                ExecuteLengthTwoButterflies(
+                    values,
+                    modulus,
+                    normalize: false,
+                    inverseLength: 0,
                     workers,
-                    cancellationToken,
-                    (segmentStart, segmentEnd) =>
+                    cancellationToken);
+
+                continue;
+            }
+
+            uint root =
+                (uint)ModPow(
+                    primitiveRoot,
+                    (modulus - 1u) /
+                    (uint)stageLength,
+                    modulus);
+
+            int groupCount =
+                length /
+                stageLength;
+
+            bool useTwiddleCache =
+                groupCount >= 2 &&
+                twiddlePlan.CanCache(
+                    halfLength);
+
+            int twiddleOffset =
+                useTwiddleCache
+                    ? twiddlePlan.GetOffset(
+                        halfLength)
+                    : 0;
+
+            if (useTwiddleCache &&
+                buildCachedTwiddles)
+            {
+                BuildTwiddleTables(
+                    twiddlePlan.ForwardTwiddles,
+                    twiddlePlan.InverseTwiddles,
+                    twiddleOffset,
+                    halfLength,
+                    root,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
+
+            int segmentsPerGroup =
+                GetSegmentsPerGroup(
+                    halfLength,
+                    groupCount,
+                    workers.WorkerCount);
+
+            ExecuteRanges(
+                checked(groupCount * segmentsPerGroup),
+                workers,
+                cancellationToken,
+                (segmentStart, segmentEnd) =>
+                {
+                    for (int segmentIndex = segmentStart;
+                         segmentIndex < segmentEnd;
+                         segmentIndex++)
                     {
-                        for (int segmentIndex = segmentStart;
-                             segmentIndex < segmentEnd;
-                             segmentIndex++)
+                        GetSegmentBounds(
+                            segmentIndex,
+                            segmentsPerGroup,
+                            halfLength,
+                            out int groupIndex,
+                            out int butterflyStart,
+                            out int butterflyEnd);
+
+                        int groupOffset =
+                            groupIndex *
+                            stageLength;
+
+                        int butterfly =
+                            butterflyStart;
+
+                        if (butterfly == 0 &&
+                            butterfly < butterflyEnd)
                         {
-                            GetSegmentBounds(
-                                segmentIndex,
-                                segmentsPerGroup,
-                                halfLength,
-                                out int groupIndex,
-                                out int butterflyStart,
-                                out int butterflyEnd);
+                            int leftIndex =
+                                groupOffset;
 
-                            int groupOffset =
-                                groupIndex *
-                                stageLength;
+                            int rightIndex =
+                                leftIndex +
+                                halfLength;
 
-                            int butterfly =
-                                butterflyStart;
+                            uint leftValue =
+                                values[leftIndex];
 
-                            // twiddle[0] is exactly one.  Multiplication by one
-                            // followed by % modulus was a surprisingly costly
-                            // operation because it occurs once in every group.
-                            if (butterfly == 0 &&
-                                butterfly < butterflyEnd)
+                            uint rightValue =
+                                values[rightIndex];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            uint difference =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            values[leftIndex] =
+                                sum;
+
+                            values[rightIndex] =
+                                difference;
+
+                            butterfly = 1;
+                        }
+
+                        if (butterfly >= butterflyEnd)
+                        {
+                            continue;
+                        }
+
+                        if (useTwiddleCache)
+                        {
+                            uint[] twiddles =
+                                twiddlePlan.ForwardTwiddles;
+
+                            for (;
+                                 butterfly < butterflyEnd;
+                                 butterfly++)
                             {
                                 int leftIndex =
-                                    groupOffset;
+                                    groupOffset +
+                                    butterfly;
 
                                 int rightIndex =
                                     leftIndex +
@@ -1098,149 +1163,85 @@ internal sealed class ParallelBigUnsigned
                                     sum;
 
                                 values[rightIndex] =
-                                    difference;
+                                    (uint)((ulong)difference *
+                                           twiddles[twiddleOffset + butterfly] %
+                                           modulus);
 
-                                butterfly = 1;
-                            }
-
-                            if (butterfly >= butterflyEnd)
-                            {
-                                continue;
-                            }
-
-                            if (useTwiddleCache)
-                            {
-                                uint[] twiddles =
-                                    rentedTwiddles!;
-
-                                for (;
-                                     butterfly < butterflyEnd;
-                                     butterfly++)
+                                if (((butterfly - butterflyStart) &
+                                     0x7FFF) == 0x7FFF)
                                 {
-                                    int leftIndex =
-                                        groupOffset +
-                                        butterfly;
-
-                                    int rightIndex =
-                                        leftIndex +
-                                        halfLength;
-
-                                    uint leftValue =
-                                        values[leftIndex];
-
-                                    uint rightValue =
-                                        values[rightIndex];
-
-                                    uint sum =
-                                        leftValue +
-                                        rightValue;
-
-                                    if (sum >= modulus)
-                                    {
-                                        sum -= modulus;
-                                    }
-
-                                    uint difference =
-                                        leftValue >= rightValue
-                                            ? leftValue - rightValue
-                                            : leftValue + modulus - rightValue;
-
-                                    values[leftIndex] =
-                                        sum;
-
-                                    values[rightIndex] =
-                                        (uint)((ulong)difference *
-                                               twiddles[butterfly] %
-                                               modulus);
-
-                                    if (((butterfly - butterflyStart) &
-                                         0x7FFF) == 0x7FFF)
-                                    {
-                                        cancellationToken.ThrowIfCancellationRequested();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                ulong twiddle =
-                                    butterfly == 1 &&
-                                    butterflyStart == 0
-                                        ? root
-                                        : ModPow(
-                                            root,
-                                            (uint)butterfly,
-                                            modulus);
-
-                                for (;
-                                     butterfly < butterflyEnd;
-                                     butterfly++)
-                                {
-                                    int leftIndex =
-                                        groupOffset +
-                                        butterfly;
-
-                                    int rightIndex =
-                                        leftIndex +
-                                        halfLength;
-
-                                    uint leftValue =
-                                        values[leftIndex];
-
-                                    uint rightValue =
-                                        values[rightIndex];
-
-                                    uint sum =
-                                        leftValue +
-                                        rightValue;
-
-                                    if (sum >= modulus)
-                                    {
-                                        sum -= modulus;
-                                    }
-
-                                    uint difference =
-                                        leftValue >= rightValue
-                                            ? leftValue - rightValue
-                                            : leftValue + modulus - rightValue;
-
-                                    values[leftIndex] =
-                                        sum;
-
-                                    values[rightIndex] =
-                                        (uint)((ulong)difference *
-                                               twiddle %
-                                               modulus);
-
-                                    // No next butterfly means the next
-                                    // twiddle value is never observed.  Avoid
-                                    // one modular multiply per worker segment.
-                                    if (butterfly + 1 < butterflyEnd)
-                                    {
-                                        twiddle =
-                                            twiddle *
-                                            root %
-                                            modulus;
-                                    }
-
-                                    if (((butterfly - butterflyStart) &
-                                         0x7FFF) == 0x7FFF)
-                                    {
-                                        cancellationToken.ThrowIfCancellationRequested();
-                                    }
+                                    cancellationToken.ThrowIfCancellationRequested();
                                 }
                             }
                         }
-                    });
-            }
-        }
-        finally
-        {
-            if (rentedTwiddles is not null)
-            {
-                ArrayPool<uint>.Shared.Return(
-                    rentedTwiddles,
-                    clearArray: false);
-            }
+                        else
+                        {
+                            ulong twiddle =
+                                butterfly == 1 &&
+                                butterflyStart == 0
+                                    ? root
+                                    : ModPow(
+                                        root,
+                                        (uint)butterfly,
+                                        modulus);
+
+                            for (;
+                                 butterfly < butterflyEnd;
+                                 butterfly++)
+                            {
+                                int leftIndex =
+                                    groupOffset +
+                                    butterfly;
+
+                                int rightIndex =
+                                    leftIndex +
+                                    halfLength;
+
+                                uint leftValue =
+                                    values[leftIndex];
+
+                                uint rightValue =
+                                    values[rightIndex];
+
+                                uint sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                uint difference =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+
+                                values[leftIndex] =
+                                    sum;
+
+                                values[rightIndex] =
+                                    (uint)((ulong)difference *
+                                           twiddle %
+                                           modulus);
+
+                                if (butterfly + 1 < butterflyEnd)
+                                {
+                                    twiddle =
+                                        twiddle *
+                                        root %
+                                        modulus;
+                                }
+
+                                if (((butterfly - butterflyStart) &
+                                     0x7FFF) == 0x7FFF)
+                                {
+                                    cancellationToken.ThrowIfCancellationRequested();
+                                }
+                            }
+                        }
+                    }
+                });
         }
 
         diagnostics.ForwardTransformTicks +=
@@ -1259,6 +1260,7 @@ internal sealed class ParallelBigUnsigned
         uint modulus,
         uint primitiveRoot,
         FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
@@ -1268,104 +1270,182 @@ internal sealed class ParallelBigUnsigned
         long transformStarted =
             Stopwatch.GetTimestamp();
 
-        uint[]? rentedTwiddles =
-            null;
+        uint inverseLength =
+            (uint)ModPow(
+                (uint)length,
+                modulus - 2u,
+                modulus);
 
-        int maximumCachedHalfLength =
-            Math.Min(
-                length >> 1,
-                MaximumCachedTwiddleCount);
+        uint inversePrimitiveRoot = 0;
+        bool inversePrimitiveRootReady =
+            false;
 
-        if (maximumCachedHalfLength >= 2)
+        for (int stageLength = 2;
+             stageLength <= length;
+             stageLength <<= 1)
         {
-            rentedTwiddles =
-                ArrayPool<uint>.Shared.Rent(
-                    maximumCachedHalfLength);
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        try
-        {
-            // Compute the inverse primitive root once per transform.  The old
-            // code inverted every stage root separately.
-            uint inversePrimitiveRoot =
-                (uint)ModPow(
-                    primitiveRoot,
-                    modulus - 2u,
-                    modulus);
+            int halfLength =
+                stageLength >> 1;
 
-            for (int stageLength = 2;
-                 stageLength <= length;
-                 stageLength <<= 1)
+            bool normalizeOutput =
+                stageLength == length;
+
+            if (stageLength == 2)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ExecuteLengthTwoButterflies(
+                    values,
+                    modulus,
+                    normalizeOutput,
+                    inverseLength,
+                    workers,
+                    cancellationToken);
 
-                int halfLength =
-                    stageLength >> 1;
+                continue;
+            }
 
-                uint root =
+            int groupCount =
+                length /
+                stageLength;
+
+            bool useTwiddleCache =
+                groupCount >= 2 &&
+                twiddlePlan.CanCache(
+                    halfLength);
+
+            int twiddleOffset =
+                useTwiddleCache
+                    ? twiddlePlan.GetOffset(
+                        halfLength)
+                    : 0;
+
+            uint root = 0;
+
+            if (!useTwiddleCache)
+            {
+                if (!inversePrimitiveRootReady)
+                {
+                    inversePrimitiveRoot =
+                        (uint)ModPow(
+                            primitiveRoot,
+                            modulus - 2u,
+                            modulus);
+
+                    inversePrimitiveRootReady =
+                        true;
+                }
+
+                root =
                     (uint)ModPow(
                         inversePrimitiveRoot,
                         (modulus - 1u) /
                         (uint)stageLength,
                         modulus);
+            }
 
-                int groupCount =
-                    length /
-                    stageLength;
+            int segmentsPerGroup =
+                GetSegmentsPerGroup(
+                    halfLength,
+                    groupCount,
+                    workers.WorkerCount);
 
-                bool useTwiddleCache =
-                    rentedTwiddles is not null &&
-                    halfLength >= 2 &&
-                    halfLength <= maximumCachedHalfLength &&
-                    groupCount >= 2;
-
-                if (useTwiddleCache)
+            ExecuteRanges(
+                checked(groupCount * segmentsPerGroup),
+                workers,
+                cancellationToken,
+                (segmentStart, segmentEnd) =>
                 {
-                    BuildTwiddleTable(
-                        rentedTwiddles!,
-                        halfLength,
-                        root,
-                        modulus,
-                        workers,
-                        cancellationToken);
-                }
-
-                int segmentsPerGroup =
-                    GetSegmentsPerGroup(
-                        halfLength,
-                        groupCount,
-                        workers.WorkerCount);
-
-                ExecuteRanges(
-                    checked(groupCount * segmentsPerGroup),
-                    workers,
-                    cancellationToken,
-                    (segmentStart, segmentEnd) =>
+                    for (int segmentIndex = segmentStart;
+                         segmentIndex < segmentEnd;
+                         segmentIndex++)
                     {
-                        for (int segmentIndex = segmentStart;
-                             segmentIndex < segmentEnd;
-                             segmentIndex++)
+                        GetSegmentBounds(
+                            segmentIndex,
+                            segmentsPerGroup,
+                            halfLength,
+                            out int groupIndex,
+                            out int butterflyStart,
+                            out int butterflyEnd);
+
+                        int groupOffset =
+                            groupIndex *
+                            stageLength;
+
+                        int butterfly =
+                            butterflyStart;
+
+                        if (butterfly == 0 &&
+                            butterfly < butterflyEnd)
                         {
-                            GetSegmentBounds(
-                                segmentIndex,
-                                segmentsPerGroup,
-                                halfLength,
-                                out int groupIndex,
-                                out int butterflyStart,
-                                out int butterflyEnd);
+                            int leftIndex =
+                                groupOffset;
 
-                            int groupOffset =
-                                groupIndex *
-                                stageLength;
+                            int rightIndex =
+                                leftIndex +
+                                halfLength;
 
-                            int butterfly =
-                                butterflyStart;
+                            uint leftValue =
+                                values[leftIndex];
 
-                            if (butterfly == 0 &&
-                                butterfly < butterflyEnd)
+                            uint rightValue =
+                                values[rightIndex];
+
+                            uint sum =
+                                leftValue +
+                                rightValue;
+
+                            if (sum >= modulus)
+                            {
+                                sum -= modulus;
+                            }
+
+                            uint difference =
+                                leftValue >= rightValue
+                                    ? leftValue - rightValue
+                                    : leftValue + modulus - rightValue;
+
+                            if (normalizeOutput)
+                            {
+                                values[leftIndex] =
+                                    (uint)((ulong)sum *
+                                           inverseLength %
+                                           modulus);
+
+                                values[rightIndex] =
+                                    (uint)((ulong)difference *
+                                           inverseLength %
+                                           modulus);
+                            }
+                            else
+                            {
+                                values[leftIndex] =
+                                    sum;
+
+                                values[rightIndex] =
+                                    difference;
+                            }
+
+                            butterfly = 1;
+                        }
+
+                        if (butterfly >= butterflyEnd)
+                        {
+                            continue;
+                        }
+
+                        if (useTwiddleCache)
+                        {
+                            uint[] twiddles =
+                                twiddlePlan.InverseTwiddles;
+
+                            for (;
+                                 butterfly < butterflyEnd;
+                                 butterfly++)
                             {
                                 int leftIndex =
-                                    groupOffset;
+                                    groupOffset +
+                                    butterfly;
 
                                 int rightIndex =
                                     leftIndex +
@@ -1375,7 +1455,9 @@ internal sealed class ParallelBigUnsigned
                                     values[leftIndex];
 
                                 uint rightValue =
-                                    values[rightIndex];
+                                    (uint)((ulong)values[rightIndex] *
+                                           twiddles[twiddleOffset + butterfly] %
+                                           modulus);
 
                                 uint sum =
                                     leftValue +
@@ -1391,173 +1473,117 @@ internal sealed class ParallelBigUnsigned
                                         ? leftValue - rightValue
                                         : leftValue + modulus - rightValue;
 
-                                values[leftIndex] =
-                                    sum;
-
-                                values[rightIndex] =
-                                    difference;
-
-                                butterfly = 1;
-                            }
-
-                            if (butterfly >= butterflyEnd)
-                            {
-                                continue;
-                            }
-
-                            if (useTwiddleCache)
-                            {
-                                uint[] twiddles =
-                                    rentedTwiddles!;
-
-                                for (;
-                                     butterfly < butterflyEnd;
-                                     butterfly++)
+                                if (normalizeOutput)
                                 {
-                                    int leftIndex =
-                                        groupOffset +
-                                        butterfly;
-
-                                    int rightIndex =
-                                        leftIndex +
-                                        halfLength;
-
-                                    uint leftValue =
-                                        values[leftIndex];
-
-                                    uint rightValue =
-                                        (uint)((ulong)values[rightIndex] *
-                                               twiddles[butterfly] %
+                                    values[leftIndex] =
+                                        (uint)((ulong)sum *
+                                               inverseLength %
                                                modulus);
 
-                                    uint sum =
-                                        leftValue +
-                                        rightValue;
-
-                                    if (sum >= modulus)
-                                    {
-                                        sum -= modulus;
-                                    }
-
-                                    uint difference =
-                                        leftValue >= rightValue
-                                            ? leftValue - rightValue
-                                            : leftValue + modulus - rightValue;
-
-                                    values[leftIndex] =
-                                        sum;
-
                                     values[rightIndex] =
-                                        difference;
-
-                                    if (((butterfly - butterflyStart) &
-                                         0x7FFF) == 0x7FFF)
-                                    {
-                                        cancellationToken.ThrowIfCancellationRequested();
-                                    }
+                                        (uint)((ulong)difference *
+                                               inverseLength %
+                                               modulus);
                                 }
-                            }
-                            else
-                            {
-                                ulong twiddle =
-                                    butterfly == 1 &&
-                                    butterflyStart == 0
-                                        ? root
-                                        : ModPow(
-                                            root,
-                                            (uint)butterfly,
-                                            modulus);
-
-                                for (;
-                                     butterfly < butterflyEnd;
-                                     butterfly++)
+                                else
                                 {
-                                    int leftIndex =
-                                        groupOffset +
-                                        butterfly;
-
-                                    int rightIndex =
-                                        leftIndex +
-                                        halfLength;
-
-                                    uint leftValue =
-                                        values[leftIndex];
-
-                                    uint rightValue =
-                                        (uint)((ulong)values[rightIndex] *
-                                               twiddle %
-                                               modulus);
-
-                                    uint sum =
-                                        leftValue +
-                                        rightValue;
-
-                                    if (sum >= modulus)
-                                    {
-                                        sum -= modulus;
-                                    }
-
-                                    uint difference =
-                                        leftValue >= rightValue
-                                            ? leftValue - rightValue
-                                            : leftValue + modulus - rightValue;
-
                                     values[leftIndex] =
                                         sum;
 
                                     values[rightIndex] =
                                         difference;
+                                }
 
-                                    if (butterfly + 1 < butterflyEnd)
-                                    {
-                                        twiddle =
-                                            twiddle *
-                                            root %
-                                            modulus;
-                                    }
-
-                                    if (((butterfly - butterflyStart) &
-                                         0x7FFF) == 0x7FFF)
-                                    {
-                                        cancellationToken.ThrowIfCancellationRequested();
-                                    }
+                                if (((butterfly - butterflyStart) &
+                                     0x7FFF) == 0x7FFF)
+                                {
+                                    cancellationToken.ThrowIfCancellationRequested();
                                 }
                             }
                         }
-                    });
-            }
+                        else
+                        {
+                            ulong twiddle =
+                                butterfly == 1 &&
+                                butterflyStart == 0
+                                    ? root
+                                    : ModPow(
+                                        root,
+                                        (uint)butterfly,
+                                        modulus);
 
-            uint inverseLength =
-                (uint)ModPow(
-                    (uint)length,
-                    modulus - 2u,
-                    modulus);
+                            for (;
+                                 butterfly < butterflyEnd;
+                                 butterfly++)
+                            {
+                                int leftIndex =
+                                    groupOffset +
+                                    butterfly;
 
-            ExecuteRanges(
-                length,
-                workers,
-                cancellationToken,
-                (start, end) =>
-                {
-                    for (int index = start;
-                         index < end;
-                         index++)
-                    {
-                        values[index] =
-                            (uint)((ulong)values[index] *
-                                   inverseLength %
-                                   modulus);
+                                int rightIndex =
+                                    leftIndex +
+                                    halfLength;
+
+                                uint leftValue =
+                                    values[leftIndex];
+
+                                uint rightValue =
+                                    (uint)((ulong)values[rightIndex] *
+                                           twiddle %
+                                           modulus);
+
+                                uint sum =
+                                    leftValue +
+                                    rightValue;
+
+                                if (sum >= modulus)
+                                {
+                                    sum -= modulus;
+                                }
+
+                                uint difference =
+                                    leftValue >= rightValue
+                                        ? leftValue - rightValue
+                                        : leftValue + modulus - rightValue;
+
+                                if (normalizeOutput)
+                                {
+                                    values[leftIndex] =
+                                        (uint)((ulong)sum *
+                                               inverseLength %
+                                               modulus);
+
+                                    values[rightIndex] =
+                                        (uint)((ulong)difference *
+                                               inverseLength %
+                                               modulus);
+                                }
+                                else
+                                {
+                                    values[leftIndex] =
+                                        sum;
+
+                                    values[rightIndex] =
+                                        difference;
+                                }
+
+                                if (butterfly + 1 < butterflyEnd)
+                                {
+                                    twiddle =
+                                        twiddle *
+                                        root %
+                                        modulus;
+                                }
+
+                                if (((butterfly - butterflyStart) &
+                                     0x7FFF) == 0x7FFF)
+                                {
+                                    cancellationToken.ThrowIfCancellationRequested();
+                                }
+                            }
+                        }
                     }
                 });
-        }
-        finally
-        {
-            if (rentedTwiddles is not null)
-            {
-                ArrayPool<uint>.Shared.Return(
-                    rentedTwiddles,
-                    clearArray: false);
-            }
         }
 
         diagnostics.InverseTransformTicks +=
@@ -1566,15 +1592,87 @@ internal sealed class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void BuildTwiddleTable(
-        uint[] twiddles,
+    private static void ExecuteLengthTwoButterflies(
+        uint[] values,
+        uint modulus,
+        bool normalize,
+        uint inverseLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int pairCount =
+            values.Length >> 1;
+
+        ExecuteRanges(
+            pairCount,
+            workers,
+            cancellationToken,
+            (start, end) =>
+            {
+                int leftIndex =
+                    start << 1;
+
+                for (int pairIndex = start;
+                     pairIndex < end;
+                     pairIndex++, leftIndex += 2)
+                {
+                    uint leftValue =
+                        values[leftIndex];
+
+                    uint rightValue =
+                        values[leftIndex + 1];
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    uint difference =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    if (normalize)
+                    {
+                        values[leftIndex] =
+                            (uint)((ulong)sum *
+                                   inverseLength %
+                                   modulus);
+
+                        values[leftIndex + 1] =
+                            (uint)((ulong)difference *
+                                   inverseLength %
+                                   modulus);
+                    }
+                    else
+                    {
+                        values[leftIndex] =
+                            sum;
+
+                        values[leftIndex + 1] =
+                            difference;
+                    }
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void BuildTwiddleTables(
+        uint[] forwardTwiddles,
+        uint[] inverseTwiddles,
+        int offset,
         int halfLength,
         uint root,
         uint modulus,
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        twiddles[0] = 1;
+        forwardTwiddles[offset] = 1;
+        inverseTwiddles[offset] = 1;
 
         if (halfLength <= 1)
         {
@@ -1594,8 +1692,20 @@ internal sealed class ParallelBigUnsigned
                  index < halfLength;
                  index++)
             {
-                twiddles[index] =
+                uint current =
                     (uint)twiddle;
+
+                forwardTwiddles[offset + index] =
+                    current;
+
+                // If w has order 2H, then w^-j = -w^(H-j).  Filling the
+                // inverse table while the forward power is already in a
+                // register avoids rebuilding an entire inverse twiddle chain.
+                inverseTwiddles[
+                    offset +
+                    halfLength -
+                    index] =
+                    modulus - current;
 
                 if (index + 1 < halfLength)
                 {
@@ -1614,9 +1724,6 @@ internal sealed class ParallelBigUnsigned
             return;
         }
 
-        // Each worker initializes its contiguous section with one ModPow and
-        // then advances locally.  The table is immutable once this barrier
-        // completes and can be reused by every group in the stage.
         ExecuteRanges(
             halfLength - 1,
             workers,
@@ -1641,8 +1748,17 @@ internal sealed class ParallelBigUnsigned
                      index < endIndex;
                      index++)
                 {
-                    twiddles[index] =
+                    uint current =
                         (uint)twiddle;
+
+                    forwardTwiddles[offset + index] =
+                        current;
+
+                    inverseTwiddles[
+                        offset +
+                        halfLength -
+                        index] =
+                        modulus - current;
 
                     if (index + 1 < endIndex)
                     {
@@ -1653,6 +1769,94 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+    private sealed class NttTwiddlePlan : IDisposable
+    {
+        private uint[]? _forwardTwiddles;
+        private uint[]? _inverseTwiddles;
+
+        public NttTwiddlePlan(
+            int transformLength)
+        {
+            MaximumHalfLength =
+                Math.Min(
+                    transformLength >> 2,
+                    MaximumCachedTwiddleCount);
+
+            if (MaximumHalfLength < 2)
+            {
+                return;
+            }
+
+            int capacity =
+                checked(
+                    MaximumHalfLength << 1);
+
+            _forwardTwiddles =
+                ArrayPool<uint>.Shared.Rent(
+                    capacity);
+
+            _inverseTwiddles =
+                ArrayPool<uint>.Shared.Rent(
+                    capacity);
+        }
+
+        public int MaximumHalfLength { get; }
+
+        public uint[] ForwardTwiddles =>
+            _forwardTwiddles ??
+            throw new InvalidOperationException(
+                "Twiddle cache is not available for this transform.");
+
+        public uint[] InverseTwiddles =>
+            _inverseTwiddles ??
+            throw new InvalidOperationException(
+                "Twiddle cache is not available for this transform.");
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool CanCache(
+            int halfLength)
+        {
+            return halfLength >= 2 &&
+                   halfLength <= MaximumHalfLength &&
+                   _forwardTwiddles is not null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetOffset(
+            int halfLength)
+        {
+            return checked(
+                (MaximumHalfLength - halfLength) << 1);
+        }
+
+        public void Dispose()
+        {
+            uint[]? forward =
+                Interlocked.Exchange(
+                    ref _forwardTwiddles,
+                    null);
+
+            uint[]? inverse =
+                Interlocked.Exchange(
+                    ref _inverseTwiddles,
+                    null);
+
+            if (forward is not null)
+            {
+                ArrayPool<uint>.Shared.Return(
+                    forward,
+                    clearArray: false);
+            }
+
+            if (inverse is not null)
+            {
+                ArrayPool<uint>.Shared.Return(
+                    inverse,
+                    clearArray: false);
+            }
+        }
     }
 
     private static int GetSegmentsPerGroup(
@@ -1668,6 +1872,7 @@ internal sealed class ParallelBigUnsigned
                 groupCount));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void GetSegmentBounds(
         int segmentIndex,
         int segmentsPerGroup,
@@ -1676,6 +1881,23 @@ internal sealed class ParallelBigUnsigned
         out int butterflyStart,
         out int butterflyEnd)
     {
+        // Once groupCount >= workerCount, segmentsPerGroup is one.  This is
+        // the common case for most late NTT stages and can represent tens of
+        // millions of groups.  Avoid two integer divisions for every group.
+        if (segmentsPerGroup == 1)
+        {
+            groupIndex =
+                segmentIndex;
+
+            butterflyStart =
+                0;
+
+            butterflyEnd =
+                halfLength;
+
+            return;
+        }
+
         groupIndex =
             segmentIndex /
             segmentsPerGroup;
