@@ -4,7 +4,6 @@ using MathSolver.Views.Base;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
-using FindXRational = MathSolver.Numerics.BigRational;
 
 namespace MathSolver.Views;
 
@@ -629,10 +628,10 @@ public partial class FindXView : LocalizedSolverView
                     0,
                     newText.Length);
 
-        int logicalPosition =
-            IntegerInputFormatter.CountLogicalCharacters(
-                newText,
-                oldCursorPosition);
+            int logicalPosition =
+                IntegerInputFormatter.CountLogicalCharacters(
+                    newText,
+                    oldCursorPosition);
 
             SetFindXEntryTextWithoutValidation(
                 entry,
@@ -1193,28 +1192,6 @@ public partial class FindXView : LocalizedSolverView
             $"{mantissa}e{exponent}";
     }
 
-    private static string FormatFindXValueForEditing(
-        FindXRational value)
-    {
-        if (value.Denominator.IsOne)
-        {
-            return value.Numerator.ToString(
-                "#,##0",
-                CultureInfo.InvariantCulture);
-        }
-
-        if (TryFormatTerminatingFindXDecimal(
-                value,
-                out string decimalText))
-        {
-            return decimalText;
-        }
-
-        return
-            $"{value.Numerator.ToString("#,##0", CultureInfo.InvariantCulture)}/" +
-            $"{value.Denominator.ToString("#,##0", CultureInfo.InvariantCulture)}";
-    }
-
     private void OnFindXCalculateClicked(
         object? sender,
         EventArgs e)
@@ -1262,22 +1239,18 @@ public partial class FindXView : LocalizedSolverView
 
         UpdateFindXEquationPreview();
 
-        FindXRational knownValue =
-            new(
-                (BigInteger)knownInput,
-                BigInteger.One);
+        BigInteger knownValue =
+            (BigInteger)knownInput;
 
-        FindXRational resultValue =
-            new(
-                (BigInteger)resultInput,
-                BigInteger.One);
+        BigInteger resultValue =
+            (BigInteger)resultInput;
 
         FindXSolution solution =
-            SolveFindX(
+            SolveFindXInteger(
                 knownValue,
                 resultValue);
 
-        ShowFindXSolution(
+        ShowFindXIntegerSolution(
             knownValue,
             resultValue,
             solution);
@@ -2002,8 +1975,7 @@ public partial class FindXView : LocalizedSolverView
             (isExact
                 ? $"Vế trái = {leftText}; vế phải = {resultText}.\n" +
                   "Hai vế bằng nhau nên kết quả tìm được là đúng."
-                : $"Vế trái ≈ {leftText}; vế phải = {resultText}.\n" +
-                  "Sai khác nhỏ xuất hiện do giới hạn làm tròn của Quad Double.");
+                : $"Vế trái ≈ {leftText}; vế phải = {resultText}.");
     }
 
     private QuadDouble EvaluateFindXDecimalLeftSide(
@@ -2129,66 +2101,69 @@ public partial class FindXView : LocalizedSolverView
             true;
     }
 
-    private FindXSolution SolveFindX(
-        FindXRational knownValue,
-        FindXRational resultValue)
+    private FindXSolution SolveFindXInteger(
+        BigInteger knownValue,
+        BigInteger resultValue)
     {
         string knownText =
-            FormatFindXValue(
+            FormatFindXIntegerForDisplay(
                 knownValue);
 
         string resultText =
-            FormatFindXValue(
+            FormatFindXIntegerForDisplay(
                 resultValue);
 
         switch (_findXOperation)
         {
             case FindXOperation.Add:
                 {
-                    FindXRational x =
+                    BigInteger x =
                         resultValue -
                         knownValue;
 
-                    return CreateUniqueFindXSolution(
+                    return CreateUniqueFindXIntegerSolution(
                         x,
+                        BigInteger.One,
                         knownValue,
                         resultValue,
                         "Muốn tìm một số hạng chưa biết, ta lấy tổng " +
                         "trừ đi số hạng đã biết.",
                         $"x = {resultText} − {knownText}\n" +
-                        $"x = {FormatFindXValue(x)}");
+                        $"x = {FormatFindXValue(x, BigInteger.One)}");
                 }
 
             case FindXOperation.Subtract
                 when _findXUnknownPosition ==
                      FindXUnknownPosition.Left:
                 {
-                    FindXRational x =
+                    BigInteger x =
                         resultValue +
                         knownValue;
 
-                    return CreateUniqueFindXSolution(
+                    return CreateUniqueFindXIntegerSolution(
                         x,
+                        BigInteger.One,
                         knownValue,
                         resultValue,
                         "Muốn tìm số bị trừ, ta lấy hiệu cộng với số trừ.",
                         $"x = {resultText} + {knownText}\n" +
-                        $"x = {FormatFindXValue(x)}");
+                        $"x = {FormatFindXValue(x, BigInteger.One)}");
                 }
 
             case FindXOperation.Subtract:
                 {
-                    FindXRational x =
+                    BigInteger x =
                         knownValue -
                         resultValue;
 
-                    return CreateUniqueFindXSolution(
+                    return CreateUniqueFindXIntegerSolution(
                         x,
+                        BigInteger.One,
                         knownValue,
                         resultValue,
                         "Muốn tìm số trừ, ta lấy số bị trừ trừ đi hiệu.",
                         $"x = {knownText} − {resultText}\n" +
-                        $"x = {FormatFindXValue(x)}");
+                        $"x = {FormatFindXValue(x, BigInteger.One)}");
                 }
 
             case FindXOperation.Multiply:
@@ -2199,7 +2174,8 @@ public partial class FindXView : LocalizedSolverView
                         {
                             return new FindXSolution(
                                 FindXSolutionKind.InfiniteSolutions,
-                                FindXRational.Zero,
+                                BigInteger.Zero,
+                                BigInteger.One,
                                 "Vô số nghiệm",
                                 "Khi một thừa số bằng 0, tích luôn bằng 0.",
                                 "Phương trình trở thành 0 × x = 0.\n" +
@@ -2209,7 +2185,8 @@ public partial class FindXView : LocalizedSolverView
 
                         return new FindXSolution(
                             FindXSolutionKind.NoSolution,
-                            FindXRational.Zero,
+                            BigInteger.Zero,
+                            BigInteger.One,
                             "Không có nghiệm",
                             "Không có số nào nhân với 0 mà cho kết quả khác 0.",
                             $"Phương trình trở thành 0 × x = {resultText}.\n" +
@@ -2217,18 +2194,15 @@ public partial class FindXView : LocalizedSolverView
                             string.Empty);
                     }
 
-                    FindXRational x =
-                        resultValue /
-                        knownValue;
-
-                    return CreateUniqueFindXSolution(
-                        x,
+                    return CreateUniqueFindXIntegerSolution(
+                        resultValue,
+                        knownValue,
                         knownValue,
                         resultValue,
                         "Muốn tìm một thừa số chưa biết, ta lấy tích " +
                         "chia cho thừa số đã biết.",
                         $"x = {resultText} ÷ {knownText}\n" +
-                        $"x = {FormatFindXValue(x)}");
+                        $"x = {FormatFindXValue(resultValue, knownValue)}");
                 }
 
             case FindXOperation.Divide
@@ -2239,7 +2213,8 @@ public partial class FindXView : LocalizedSolverView
                     {
                         return new FindXSolution(
                             FindXSolutionKind.NoSolution,
-                            FindXRational.Zero,
+                            BigInteger.Zero,
+                            BigInteger.One,
                             "Phép tính không xác định",
                             "Số chia phải khác 0.",
                             "Phương trình có dạng x ÷ 0 nên phép chia " +
@@ -2247,17 +2222,18 @@ public partial class FindXView : LocalizedSolverView
                             string.Empty);
                     }
 
-                    FindXRational x =
+                    BigInteger x =
                         resultValue *
                         knownValue;
 
-                    return CreateUniqueFindXSolution(
+                    return CreateUniqueFindXIntegerSolution(
                         x,
+                        BigInteger.One,
                         knownValue,
                         resultValue,
                         "Muốn tìm số bị chia, ta lấy thương nhân với số chia.",
                         $"x = {resultText} × {knownText}\n" +
-                        $"x = {FormatFindXValue(x)}");
+                        $"x = {FormatFindXValue(x, BigInteger.One)}");
                 }
 
             case FindXOperation.Divide:
@@ -2269,7 +2245,8 @@ public partial class FindXView : LocalizedSolverView
                         {
                             return new FindXSolution(
                                 FindXSolutionKind.InfiniteSolutions,
-                                FindXRational.Zero,
+                                BigInteger.Zero,
+                                BigInteger.One,
                                 "Vô số nghiệm với x ≠ 0",
                                 "0 chia cho mọi số khác 0 đều bằng 0.",
                                 "Phương trình 0 ÷ x = 0 đúng với mọi x khác 0.",
@@ -2278,7 +2255,8 @@ public partial class FindXView : LocalizedSolverView
 
                         return new FindXSolution(
                             FindXSolutionKind.NoSolution,
-                            FindXRational.Zero,
+                            BigInteger.Zero,
+                            BigInteger.One,
                             "Không có nghiệm",
                             "Một số khác 0 chia cho một số hữu hạn khác 0 " +
                             "không thể bằng 0.",
@@ -2290,7 +2268,8 @@ public partial class FindXView : LocalizedSolverView
                     {
                         return new FindXSolution(
                             FindXSolutionKind.NoSolution,
-                            FindXRational.Zero,
+                            BigInteger.Zero,
+                            BigInteger.One,
                             "Không có nghiệm",
                             "Số chia x phải khác 0.",
                             $"Từ 0 ÷ x = {resultText}, phép biến đổi hình thức " +
@@ -2298,24 +2277,22 @@ public partial class FindXView : LocalizedSolverView
                             string.Empty);
                     }
 
-                    FindXRational x =
-                        knownValue /
-                        resultValue;
-
-                    return CreateUniqueFindXSolution(
-                        x,
+                    return CreateUniqueFindXIntegerSolution(
+                        knownValue,
+                        resultValue,
                         knownValue,
                         resultValue,
                         "Muốn tìm số chia, ta lấy số bị chia chia cho thương; " +
                         "đồng thời số chia phải khác 0.",
                         $"x = {knownText} ÷ {resultText}\n" +
-                        $"x = {FormatFindXValue(x)}");
+                        $"x = {FormatFindXValue(knownValue, resultValue)}");
                 }
 
             default:
                 return new FindXSolution(
                     FindXSolutionKind.NoSolution,
-                    FindXRational.Zero,
+                    BigInteger.Zero,
+                    BigInteger.One,
                     "Không thể giải",
                     string.Empty,
                     string.Empty,
@@ -2323,26 +2300,35 @@ public partial class FindXView : LocalizedSolverView
         }
     }
 
-    private FindXSolution CreateUniqueFindXSolution(
-        FindXRational x,
-        FindXRational knownValue,
-        FindXRational resultValue,
+    private FindXSolution CreateUniqueFindXIntegerSolution(
+        BigInteger numerator,
+        BigInteger denominator,
+        BigInteger knownValue,
+        BigInteger resultValue,
         string rule,
         string transformation)
     {
+        (numerator, denominator) =
+            NormalizeFindXFraction(
+                numerator,
+                denominator);
+
         string xText =
             FormatFindXValue(
-                x);
+                numerator,
+                denominator);
 
         string verification =
-            BuildFindXVerification(
-                x,
+            BuildFindXIntegerVerification(
+                numerator,
+                denominator,
                 knownValue,
                 resultValue);
 
         return new FindXSolution(
             FindXSolutionKind.Unique,
-            x,
+            numerator,
+            denominator,
             "Nghiệm duy nhất",
             rule,
             $"Bước 1. Xác định thành phần chưa biết và áp dụng quy tắc.\n\n" +
@@ -2352,31 +2338,35 @@ public partial class FindXView : LocalizedSolverView
             verification);
     }
 
-    private string BuildFindXVerification(
-        FindXRational x,
-        FindXRational knownValue,
-        FindXRational resultValue)
+    private string BuildFindXIntegerVerification(
+        BigInteger numerator,
+        BigInteger denominator,
+        BigInteger knownValue,
+        BigInteger resultValue)
     {
-        FindXRational leftValue =
-            EvaluateFindXLeftSide(
-                x,
+        (BigInteger leftNumerator, BigInteger leftDenominator) =
+            EvaluateFindXIntegerLeftSide(
+                numerator,
+                denominator,
                 knownValue);
 
         string xText =
             FormatFindXValue(
-                x);
+                numerator,
+                denominator);
 
         string knownText =
-            FormatFindXValue(
+            FormatFindXIntegerForDisplay(
                 knownValue);
 
         string resultText =
-            FormatFindXValue(
+            FormatFindXIntegerForDisplay(
                 resultValue);
 
         string leftText =
             FormatFindXValue(
-                leftValue);
+                leftNumerator,
+                leftDenominator);
 
         return
             $"Thay x = {xText} vào phép tính ban đầu:\n" +
@@ -2385,53 +2375,87 @@ public partial class FindXView : LocalizedSolverView
             "Hai vế bằng nhau nên kết quả tìm được là đúng.";
     }
 
-    private FindXRational EvaluateFindXLeftSide(
-        FindXRational x,
-        FindXRational knownValue)
+    private (BigInteger Numerator, BigInteger Denominator)
+        EvaluateFindXIntegerLeftSide(
+            BigInteger numerator,
+            BigInteger denominator,
+            BigInteger knownValue)
     {
-        return (_findXOperation,
-                _findXUnknownPosition) switch
+        BigInteger leftNumerator;
+        BigInteger leftDenominator;
+
+        switch ((_findXOperation, _findXUnknownPosition))
         {
-            (FindXOperation.Add, FindXUnknownPosition.Left) =>
-                x + knownValue,
+            case (FindXOperation.Add, FindXUnknownPosition.Left):
+            case (FindXOperation.Add, FindXUnknownPosition.Right):
+                leftNumerator =
+                    numerator +
+                    knownValue * denominator;
+                leftDenominator =
+                    denominator;
+                break;
 
-            (FindXOperation.Add, FindXUnknownPosition.Right) =>
-                knownValue + x,
+            case (FindXOperation.Subtract, FindXUnknownPosition.Left):
+                leftNumerator =
+                    numerator -
+                    knownValue * denominator;
+                leftDenominator =
+                    denominator;
+                break;
 
-            (FindXOperation.Subtract, FindXUnknownPosition.Left) =>
-                x - knownValue,
+            case (FindXOperation.Subtract, FindXUnknownPosition.Right):
+                leftNumerator =
+                    knownValue * denominator -
+                    numerator;
+                leftDenominator =
+                    denominator;
+                break;
 
-            (FindXOperation.Subtract, FindXUnknownPosition.Right) =>
-                knownValue - x,
+            case (FindXOperation.Multiply, FindXUnknownPosition.Left):
+            case (FindXOperation.Multiply, FindXUnknownPosition.Right):
+                leftNumerator =
+                    numerator *
+                    knownValue;
+                leftDenominator =
+                    denominator;
+                break;
 
-            (FindXOperation.Multiply, FindXUnknownPosition.Left) =>
-                x * knownValue,
+            case (FindXOperation.Divide, FindXUnknownPosition.Left):
+                leftNumerator =
+                    numerator;
+                leftDenominator =
+                    denominator *
+                    knownValue;
+                break;
 
-            (FindXOperation.Multiply, FindXUnknownPosition.Right) =>
-                knownValue * x,
+            case (FindXOperation.Divide, FindXUnknownPosition.Right):
+                leftNumerator =
+                    knownValue *
+                    denominator;
+                leftDenominator =
+                    numerator;
+                break;
 
-            (FindXOperation.Divide, FindXUnknownPosition.Left) =>
-                x / knownValue,
+            default:
+                return (BigInteger.Zero, BigInteger.One);
+        }
 
-            (FindXOperation.Divide, FindXUnknownPosition.Right) =>
-                knownValue / x,
-
-            _ =>
-                FindXRational.Zero
-        };
+        return NormalizeFindXFraction(
+            leftNumerator,
+            leftDenominator);
     }
 
-    private void ShowFindXSolution(
-        FindXRational knownValue,
-        FindXRational resultValue,
+    private void ShowFindXIntegerSolution(
+        BigInteger knownValue,
+        BigInteger resultValue,
         FindXSolution solution)
     {
         string knownText =
-            FormatFindXValue(
+            FormatFindXIntegerForDisplay(
                 knownValue);
 
         string resultText =
-            FormatFindXValue(
+            FormatFindXIntegerForDisplay(
                 resultValue);
 
         FindXResultEquationLabel.Text =
@@ -2457,7 +2481,8 @@ public partial class FindXView : LocalizedSolverView
                 {
                     string xText =
                         FormatFindXValue(
-                            solution.Value);
+                            solution.Numerator,
+                            solution.Denominator);
 
                     FindXAnswerLabel.Text =
                         $"x = {xText}";
@@ -2474,7 +2499,8 @@ public partial class FindXView : LocalizedSolverView
 
                     string? approximation =
                         CreateFindXApproximation(
-                            solution.Value);
+                            solution.Numerator,
+                            solution.Denominator);
 
                     if (!string.IsNullOrEmpty(
                             approximation) &&
@@ -2530,42 +2556,53 @@ public partial class FindXView : LocalizedSolverView
     }
 
     private static string FormatFindXValue(
-        FindXRational value)
+        BigInteger numerator,
+        BigInteger denominator)
     {
-        if (value.Denominator.IsOne)
+        (numerator, denominator) =
+            NormalizeFindXFraction(
+                numerator,
+                denominator);
+
+        if (denominator.IsOne)
         {
             return FormatFindXIntegerForDisplay(
-                value.Numerator);
+                numerator);
         }
 
         if (TryFormatTerminatingFindXDecimal(
-                value,
+                numerator,
+                denominator,
                 out string decimalText))
         {
             return ShouldUseFindXScientificDisplay(
-                    value)
+                    numerator,
+                    denominator)
                 ? FormatFindXScientificForDisplay(
-                    value)
+                    numerator,
+                    denominator)
                 : decimalText;
         }
 
         return
-            $"{FormatFindXIntegerForDisplay(value.Numerator)}/" +
-            $"{FormatFindXIntegerForDisplay(value.Denominator)}";
+            $"{FormatFindXIntegerForDisplay(numerator)}/" +
+            $"{FormatFindXIntegerForDisplay(denominator)}";
     }
 
     private static bool ShouldUseFindXScientificDisplay(
-        FindXRational value)
+        BigInteger numerator,
+        BigInteger denominator)
     {
-        if (value.Denominator.IsOne)
+        if (denominator.IsOne)
         {
             return CountBigIntegerDigits(
-                       value.Numerator) >
+                       numerator) >
                    ScientificDisplayDigitThreshold;
         }
 
         if (!TryGetFindXPlainNumberText(
-                value,
+                numerator,
+                denominator,
                 out string plainText))
         {
             return false;
@@ -2594,48 +2631,21 @@ public partial class FindXView : LocalizedSolverView
     }
 
     private static string FormatFindXScientificForDisplay(
-        FindXRational value)
+        BigInteger numerator,
+        BigInteger denominator)
     {
         if (!TryGetFindXPlainNumberText(
-                value,
+                numerator,
+                denominator,
                 out string plainText))
         {
-            return FormatFindXValueForEditing(
-                value);
+            return
+                $"{FormatFindXIntegerForDisplay(numerator)}/" +
+                $"{FormatFindXIntegerForDisplay(denominator)}";
         }
 
         return FormatPlainNumberAsScientificDisplay(
             plainText);
-    }
-
-    private static string FormatFindXScientificForCode(
-        FindXRational value)
-    {
-        if (!TryGetFindXPlainNumberText(
-                value,
-                out string plainText) ||
-            !TryBuildScientificParts(
-                plainText,
-                out bool isNegative,
-                out string significantDigits,
-                out int exponent))
-        {
-            return "0e0";
-        }
-
-        if (significantDigits == "0")
-        {
-            return "0e0";
-        }
-
-        string mantissa =
-            significantDigits.Length == 1
-                ? significantDigits
-                : $"{significantDigits[0]}.{significantDigits[1..]}";
-
-        return
-            $"{(isNegative ? "-" : string.Empty)}" +
-            $"{mantissa}e{exponent}";
     }
 
     private static string FormatPlainNumberAsScientificDisplay(
@@ -2703,23 +2713,25 @@ public partial class FindXView : LocalizedSolverView
     }
 
     private static bool TryGetFindXPlainNumberText(
-        FindXRational value,
+        BigInteger numerator,
+        BigInteger denominator,
         out string plainText)
     {
         plainText =
             string.Empty;
 
-        if (value.Denominator.IsOne)
+        if (denominator.IsOne)
         {
             plainText =
-                value.Numerator.ToString(
+                numerator.ToString(
                     CultureInfo.InvariantCulture);
 
             return true;
         }
 
         if (!TryFormatTerminatingFindXDecimal(
-                value,
+                numerator,
+                denominator,
                 out string decimalText))
         {
             return false;
@@ -2952,15 +2964,56 @@ public partial class FindXView : LocalizedSolverView
         return builder.ToString();
     }
 
+    private static (BigInteger Numerator, BigInteger Denominator)
+        NormalizeFindXFraction(
+            BigInteger numerator,
+            BigInteger denominator)
+    {
+        if (denominator.IsZero)
+        {
+            throw new DivideByZeroException(
+                "Denominator cannot be zero.");
+        }
+
+        if (denominator.Sign < 0)
+        {
+            numerator =
+                BigInteger.Negate(
+                    numerator);
+
+            denominator =
+                BigInteger.Negate(
+                    denominator);
+        }
+
+        if (numerator.IsZero)
+        {
+            return (BigInteger.Zero, BigInteger.One);
+        }
+
+        BigInteger divisor =
+            BigInteger.GreatestCommonDivisor(
+                BigInteger.Abs(
+                    numerator),
+                denominator);
+
+        return (
+            numerator / divisor,
+            denominator / divisor);
+    }
+
     private static bool TryFormatTerminatingFindXDecimal(
-        FindXRational value,
+        BigInteger numerator,
+        BigInteger denominator,
         out string text)
     {
         text =
             string.Empty;
 
-        BigInteger denominator =
-            value.Denominator;
+        (numerator, denominator) =
+            NormalizeFindXFraction(
+                numerator,
+                denominator);
 
         int factorTwoCount =
             0;
@@ -3002,7 +3055,7 @@ public partial class FindXView : LocalizedSolverView
 
         BigInteger scaledNumerator =
             BigInteger.Abs(
-                value.Numerator);
+                numerator);
 
         if (scale >
             factorTwoCount)
@@ -3031,7 +3084,7 @@ public partial class FindXView : LocalizedSolverView
         if (scale == 0)
         {
             text =
-                value.Numerator.Sign < 0
+                numerator.Sign < 0
                     ? $"−{IntegerInputFormatter.AddThousandsSeparators(digits)}"
                     : IntegerInputFormatter.AddThousandsSeparators(digits);
 
@@ -3051,7 +3104,7 @@ public partial class FindXView : LocalizedSolverView
                 .TrimEnd('0');
 
         string sign =
-            value.Numerator.Sign < 0
+            numerator.Sign < 0
                 ? "−"
                 : string.Empty;
 
@@ -3064,35 +3117,92 @@ public partial class FindXView : LocalizedSolverView
     }
 
     private static string? CreateFindXApproximation(
-        FindXRational value)
+        BigInteger numerator,
+        BigInteger denominator)
     {
-        if (value.Denominator.IsOne ||
+        (numerator, denominator) =
+            NormalizeFindXFraction(
+                numerator,
+                denominator);
+
+        if (denominator.IsOne ||
             TryFormatTerminatingFindXDecimal(
-                value,
+                numerator,
+                denominator,
                 out _))
         {
             return null;
         }
 
-        double numerator =
-            (double)value.Numerator;
+        QuadDouble approximation =
+            ConvertFindXBigIntegerToQuadDouble(
+                numerator) /
+            ConvertFindXBigIntegerToQuadDouble(
+                denominator);
 
-        double denominator =
-            (double)value.Denominator;
+        return approximation.IsFinite
+            ? FormatFindXQuadDoubleForDisplay(
+                approximation)
+            : null;
+    }
 
-        double approximation =
-            numerator /
-            denominator;
-
-        if (!double.IsFinite(
-                approximation))
+    private static QuadDouble ConvertFindXBigIntegerToQuadDouble(
+        BigInteger value)
+    {
+        if (value.IsZero)
         {
-            return null;
+            return QuadDouble.Zero;
         }
 
-        return approximation.ToString(
-            "#,##0.##########",
-            CultureInfo.InvariantCulture);
+        bool isNegative =
+            value.Sign < 0;
+
+        BigInteger magnitude =
+            BigInteger.Abs(
+                value);
+
+        const uint ChunkBase =
+            1_000_000_000;
+
+        Span<uint> chunks =
+            stackalloc uint[16];
+
+        int chunkCount =
+            0;
+
+        while (!magnitude.IsZero)
+        {
+            magnitude =
+                BigInteger.DivRem(
+                    magnitude,
+                    ChunkBase,
+                    out BigInteger remainder);
+
+            chunks[chunkCount++] =
+                (uint)remainder;
+        }
+
+        QuadDouble result =
+            QuadDouble.Zero;
+
+        QuadDouble quadChunkBase =
+            new(
+                ChunkBase);
+
+        for (int index = chunkCount - 1;
+             index >= 0;
+             index--)
+        {
+            result =
+                result *
+                quadChunkBase +
+                new QuadDouble(
+                    chunks[index]);
+        }
+
+        return isNegative
+            ? -result
+            : result;
     }
 
     private async void OnFindXCopyResultClicked(
@@ -3183,7 +3293,8 @@ public partial class FindXView : LocalizedSolverView
 
     private sealed record FindXSolution(
         FindXSolutionKind Kind,
-        FindXRational Value,
+        BigInteger Numerator,
+        BigInteger Denominator,
         string StatusText,
         string RuleText,
         string StepsText,

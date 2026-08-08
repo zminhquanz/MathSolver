@@ -158,3 +158,8 @@ loop.
 The goal is lower final-inverse CPU time with essentially unchanged RAM. v33
 remains the fallback if repeated wall-clock benchmarks do not show a stable
 benefit.
+
+## Find X numeric pipeline update
+
+- `BigRational.cs` was removed. Find X integer mode keeps `Int128` input validation, promotes the parsed values to `BigInteger`, and only creates a normalized numerator/denominator pair for the final exact result when division requires a fraction. It does not carry a general-purpose rational type through intermediate operations.
+- Find X decimal mode intentionally keeps `decimal` for parsing/input bounds and converts the parsed values with `QuadDouble.FromDecimal()` for the solver. This preserves fast decimal input handling while retaining QuadDouble precision for arithmetic and the final result.

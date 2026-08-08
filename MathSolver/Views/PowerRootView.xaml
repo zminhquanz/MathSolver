@@ -349,21 +349,17 @@
 
                                 <Label
                                     x:Name="ResultExpressionLabel"
-                                    FontSize="16"
+                                    FontSize="17"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource SuccessColor}" />
 
-                                <Editor
+                                <Label
                                     x:Name="ResultPreviewEditor"
-                                    IsReadOnly="True"
-                                    AutoSize="TextChanges"
-                                    MinimumHeightRequest="64"
-                                    FontSize="21"
+                                    FontSize="23"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    BackgroundColor="Transparent" />
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
                                     x:Name="ResultCompactHintLabel"

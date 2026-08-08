@@ -369,11 +369,23 @@
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
                         </Border.StrokeShape>
-
-                        <Label
-                        x:Name="ErrorLabel"
-                        FontSize="17"
-                        TextColor="{DynamicResource DangerColor}" />
+                        <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="10">
+                            
+                            <Label
+                            Grid.Column="0"
+                            Text="!"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource DangerColor}" />
+                            
+                            <Label
+                            Grid.Column="1"
+                            x:Name="ErrorLabel"
+                            FontSize="17"
+                            TextColor="{DynamicResource DangerColor}" />
+                        </Grid>
 
                     </Border>
 

@@ -360,12 +360,26 @@
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
                 </Border.StrokeShape>
+                
+                <Grid
+                ColumnDefinitions="Auto,*"
+                ColumnSpacing="10">
+                    
+                    <Label
+                    Grid.Column="0"
+                    Text="!"
+                    FontSize="22"
+                    FontAttributes="Bold"
+                    TextColor="{DynamicResource DangerColor}" />
 
-                <Label
+                    <Label
+                    Grid.Column="1"
                     x:Name="ErrorLabel"
                     FontSize="17"
                     TextColor="{DynamicResource DangerColor}"
                     LineBreakMode="WordWrap" />
+                    
+                </Grid>
             </Border>
 
             <!-- 3. Kết quả -->

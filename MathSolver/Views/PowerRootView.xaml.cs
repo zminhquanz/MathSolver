@@ -3,7 +3,6 @@ using MathSolver.Controls;
 using MathSolver.Numerics;
 using MathSolver.Services;
 using MathSolver.Views.Base;
-using Microsoft.Maui.ApplicationModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
@@ -5190,7 +5189,7 @@ public partial class PowerRootView : LocalizedSolverView
                     CultureInfo.InvariantCulture);
 
         return
-            $"{formattedBase}{ToSuperscript(exponent)}";
+            $"{formattedBase}{ToSuperscript(exponent)}{"="}";
     }
 
     private static string ToSuperscript(
