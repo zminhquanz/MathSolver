@@ -84,10 +84,13 @@ public partial class PowerRootView : LocalizedSolverView
 
     private CancellationTokenSource? _calculationCancellation;
     private CancellationTokenSource? _exportCancellation;
+    private TaskCompletionSource<bool>? _calculationCompletionSource;
+    private TaskCompletionSource<bool>? _exportCompletionSource;
     private PowerCalculationState? _calculationState;
     private RootCalculationState? _rootCalculationState;
     private bool _isCalculating;
     private bool _isExporting;
+    private bool _isStopConfirmationVisible;
     private bool _isPowerMode = true;
     private bool _isUpdatingInputText;
     private bool _isUpdatingRootInputText;
@@ -118,6 +121,11 @@ public partial class PowerRootView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
+#if WINDOWS
+        MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
+            this);
+#endif
+
         _calculationCancellation?.Cancel();
         _exportCancellation?.Cancel();
     }
@@ -1823,7 +1831,16 @@ public partial class PowerRootView : LocalizedSolverView
             CalculationProgressPhase.Preparing;
         _calculationPhaseCompleted = 0;
         _calculationPhaseTotal = 1;
+
+        var calculationCompletionSource =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _calculationCompletionSource =
+            calculationCompletionSource;
+
         _isCalculating = true;
+        UpdateWindowsCloseGuard();
 
         SetInputEnabled(
             enabled: false);
@@ -2161,6 +2178,18 @@ public partial class PowerRootView : LocalizedSolverView
                 SetInputEnabled(
                     enabled: true);
             }
+
+            calculationCompletionSource.TrySetResult(
+                true);
+
+            if (ReferenceEquals(
+                    _calculationCompletionSource,
+                    calculationCompletionSource))
+            {
+                _calculationCompletionSource = null;
+            }
+
+            UpdateWindowsCloseGuard();
         }
     }
 
@@ -3669,7 +3698,87 @@ public partial class PowerRootView : LocalizedSolverView
         EventArgs e)
     {
         if (!_isCalculating ||
-            _calculationCancellation is null)
+            _calculationCancellation is null ||
+            _calculationCancellation.IsCancellationRequested)
+        {
+            return;
+        }
+
+        bool shouldStop =
+            await ConfirmStopCalculationAsync(
+                closingApplication: false);
+
+        if (!shouldStop ||
+            !_isCalculating)
+        {
+            return;
+        }
+
+        RequestCalculationStop();
+    }
+
+    private async Task<bool> ConfirmStopCalculationAsync(
+        bool closingApplication)
+    {
+        return await ConfirmStopOperationAsync(
+            closingApplication
+                ? "PowerRoot.ConfirmCloseCalculation"
+                : "PowerRoot.ConfirmStopCalculation");
+    }
+
+    private async Task<bool> ConfirmStopExportAsync(
+        bool closingApplication)
+    {
+        return await ConfirmStopOperationAsync(
+            closingApplication
+                ? "PowerRoot.ConfirmCloseExport"
+                : "PowerRoot.ConfirmStopExport");
+    }
+
+    private async Task<bool> ConfirmStopOperationAsync(
+        string messageKey)
+    {
+        if (_isStopConfirmationVisible)
+        {
+            return false;
+        }
+
+        Page? dialogPage =
+            Shell.Current;
+
+        dialogPage ??=
+            Application.Current?.Windows.FirstOrDefault()?.Page;
+
+        if (dialogPage is null)
+        {
+            return false;
+        }
+
+        _isStopConfirmationVisible = true;
+
+        try
+        {
+            return await dialogPage.DisplayAlertAsync(
+                Translate(
+                    "PowerRoot.ConfirmStopTitle"),
+                Translate(
+                    messageKey),
+                Translate(
+                    "PowerRoot.ConfirmYes"),
+                Translate(
+                    "PowerRoot.ConfirmNo"));
+        }
+        finally
+        {
+            _isStopConfirmationVisible = false;
+        }
+    }
+
+    private void RequestCalculationStop()
+    {
+        if (!_isCalculating ||
+            _calculationCancellation is null ||
+            _calculationCancellation.IsCancellationRequested)
         {
             return;
         }
@@ -3680,8 +3789,97 @@ public partial class PowerRootView : LocalizedSolverView
                 "PowerRoot.ProgressStopping");
 
         _calculationCancellation.Cancel();
+    }
 
-        await Task.CompletedTask;
+    private void RequestExportStop()
+    {
+        if (!_isExporting ||
+            _exportCancellation is null ||
+            _exportCancellation.IsCancellationRequested)
+        {
+            return;
+        }
+
+        _exportCancellation.Cancel();
+        ExportTextButton.IsEnabled = false;
+        ExportTextButton.Text =
+            Translate(
+                "PowerRoot.ExportStopping");
+
+        ShowExportStatus(
+            Translate(
+                "PowerRoot.ExportStopping"),
+            ExportProgressBar.Progress,
+            isBusy: true);
+    }
+
+#if WINDOWS
+    private async Task<bool> ConfirmWindowsWindowCloseAsync()
+    {
+        if (_isExporting)
+        {
+            bool shouldStopExport =
+                await ConfirmStopExportAsync(
+                    closingApplication: true);
+
+            if (!shouldStopExport)
+            {
+                return false;
+            }
+
+            Task? exportCompletionTask =
+                _exportCompletionSource?.Task;
+
+            RequestExportStop();
+
+            if (exportCompletionTask is not null)
+            {
+                await exportCompletionTask;
+            }
+        }
+
+        if (_isCalculating)
+        {
+            bool shouldStopCalculation =
+                await ConfirmStopCalculationAsync(
+                    closingApplication: true);
+
+            if (!shouldStopCalculation)
+            {
+                return false;
+            }
+
+            Task? calculationCompletionTask =
+                _calculationCompletionSource?.Task;
+
+            RequestCalculationStop();
+
+            if (calculationCompletionTask is not null)
+            {
+                await calculationCompletionTask;
+            }
+        }
+
+        return true;
+    }
+#endif
+
+    private void UpdateWindowsCloseGuard()
+    {
+#if WINDOWS
+        if (_isCalculating ||
+            _isExporting)
+        {
+            MathSolver.Platforms.Windows.WindowStateManager.SetCloseGuard(
+                this,
+                ConfirmWindowsWindowCloseAsync);
+        }
+        else
+        {
+            MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
+                this);
+        }
+#endif
     }
 
     private async void OnCopyResultClicked(
@@ -3719,22 +3917,23 @@ public partial class PowerRootView : LocalizedSolverView
     {
         if (_isExporting)
         {
-            if (_exportCancellation is not null &&
-                !_exportCancellation.IsCancellationRequested)
+            if (_exportCancellation is null ||
+                _exportCancellation.IsCancellationRequested)
             {
-                _exportCancellation.Cancel();
-                ExportTextButton.IsEnabled = false;
-                ExportTextButton.Text =
-                    Translate(
-                        "PowerRoot.ExportStopping");
-
-                ShowExportStatus(
-                    Translate(
-                        "PowerRoot.ExportStopping"),
-                    ExportProgressBar.Progress,
-                    isBusy: true);
+                return;
             }
 
+            bool shouldStop =
+                await ConfirmStopExportAsync(
+                    closingApplication: false);
+
+            if (!shouldStop ||
+                !_isExporting)
+            {
+                return;
+            }
+
+            RequestExportStop();
             return;
         }
 
@@ -3758,7 +3957,16 @@ public partial class PowerRootView : LocalizedSolverView
         CancellationToken cancellationToken =
             _exportCancellation.Token;
 
+        var exportCompletionSource =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _exportCompletionSource =
+            exportCompletionSource;
+
         _isExporting = true;
+        UpdateWindowsCloseGuard();
+
         SetInputEnabled(
             enabled: false);
 
@@ -3987,6 +4195,18 @@ public partial class PowerRootView : LocalizedSolverView
 
             _exportCancellation?.Dispose();
             _exportCancellation = null;
+
+            exportCompletionSource.TrySetResult(
+                true);
+
+            if (ReferenceEquals(
+                    _exportCompletionSource,
+                    exportCompletionSource))
+            {
+                _exportCompletionSource = null;
+            }
+
+            UpdateWindowsCloseGuard();
         }
     }
 

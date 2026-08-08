@@ -218,6 +218,41 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.ConfirmStopTitle",
+      "source": "Xác nhận dừng",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ConfirmStopCalculation",
+      "source": "Bạn có muốn dừng tính toán không?",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ConfirmStopExport",
+      "source": "Bạn có muốn dừng tạo file TXT không?",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ConfirmCloseCalculation",
+      "source": "Ứng dụng đang tính toán. Bạn có muốn dừng tính toán và thoát ứng dụng không?",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ConfirmCloseExport",
+      "source": "Ứng dụng đang tạo file TXT. Bạn có muốn dừng tạo file và thoát ứng dụng không?",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ConfirmYes",
+      "source": "Có",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.ConfirmNo",
+      "source": "Không",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.SolutionTitle",
       "source": "Lời giải chi tiết",
       "mode": "exact"
