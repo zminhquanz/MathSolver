@@ -21,7 +21,7 @@
                 Style="{StaticResource SolverHeroStyle}">
 
                 <Label
-                    Text="aⁿ  ⁿ√a"
+                    Text="aⁿ ⁿ√a"
                     Style="{StaticResource SolverHeroSymbolStyle}" />
 
                 <Label
