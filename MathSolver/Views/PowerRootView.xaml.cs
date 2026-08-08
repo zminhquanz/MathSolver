@@ -5189,7 +5189,7 @@ public partial class PowerRootView : LocalizedSolverView
                     CultureInfo.InvariantCulture);
 
         return
-            $"{formattedBase}{ToSuperscript(exponent)}{"="}";
+            $"{formattedBase}{ToSuperscript(exponent)}";
     }
 
     private static string ToSuperscript(
