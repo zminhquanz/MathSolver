@@ -579,6 +579,14 @@ internal sealed class ParallelBigUnsigned
                     workerCount));
         }
 
+        // One workspace pool lives for the complete exponentiation.  In the
+        // split-power path both branches and the final combine share it, so
+        // the largest temporary NTT arrays can be recycled across modulus
+        // passes and branch/final-combine boundaries instead of repeatedly
+        // allocating 100s of MiB on the LOH and waiting for GC.
+        using var nttBufferPool =
+            new NttBufferPool();
+
         if (TryCreateExponentSplit(
                 exponent,
                 workerCount,
@@ -591,6 +599,7 @@ internal sealed class ParallelBigUnsigned
                 firstExponent,
                 secondExponent,
                 workerCount,
+                nttBufferPool,
                 progress,
                 cancellationToken);
         }
@@ -600,7 +609,8 @@ internal sealed class ParallelBigUnsigned
 
         using var workers =
             new FixedWorkerTeam(
-                workerCount);
+                workerCount,
+                nttBufferPool);
 
         ParallelBigUnsigned magnitude =
             PowWithTeam(
@@ -623,6 +633,7 @@ internal sealed class ParallelBigUnsigned
         int firstExponent,
         int secondExponent,
         int workerCount,
+        NttBufferPool nttBufferPool,
         Action<int, int>? progress,
         CancellationToken cancellationToken)
     {
@@ -703,7 +714,8 @@ internal sealed class ParallelBigUnsigned
             {
                 using var branchWorkers =
                     new FixedWorkerTeam(
-                        branchWorkerCount);
+                        branchWorkerCount,
+                        nttBufferPool);
 
                 ParallelBigUnsigned branchMagnitude =
                     PowWithTeam(
@@ -801,7 +813,8 @@ internal sealed class ParallelBigUnsigned
 
         using (var finalWorkers =
                new FixedWorkerTeam(
-                   workerCount))
+                   workerCount,
+                   nttBufferPool))
         {
             magnitude =
                 Multiply(
@@ -1231,100 +1244,24 @@ internal sealed class ParallelBigUnsigned
                 diagnostics,
                 cancellationToken);
 
-        uint[] secondResidues =
-            ConvolveModulus(
-                left._limbs,
-                right._limbs,
-                coefficientCount,
-                transformLength,
-                SecondModulus,
-                SecondPrimitiveRoot,
-                isSquare,
-                workers,
-                diagnostics,
-                cancellationToken);
-
         var coefficients =
             new ulong[coefficientCount];
 
-        long crtStarted =
-            Stopwatch.GetTimestamp();
-
-        ExecuteRanges(
+        // The second modulus no longer allocates/copies a separate
+        // secondResidues[coefficientCount] array.  CRT consumes the inverse P2
+        // workspace directly while that pooled transform buffer is still
+        // leased, then the buffer is returned immediately afterwards.
+        ConvolveSecondModulusAndReconstructCrt(
+            left._limbs,
+            right._limbs,
+            firstResidues,
+            coefficients,
             coefficientCount,
+            transformLength,
+            isSquare,
             workers,
-            cancellationToken,
-            (start, end) =>
-            {
-                int count =
-                    end - start;
-
-                // Span is created once per worker range, not inside the hot
-                // coefficient loop.  This keeps the code memory-safe while
-                // still giving the JIT a simple contiguous range whose bounds
-                // checks can normally be hoisted/eliminated.
-                ReadOnlySpan<uint> firstSpan =
-                    firstResidues.AsSpan(
-                        start,
-                        count);
-
-                ReadOnlySpan<uint> secondSpan =
-                    secondResidues.AsSpan(
-                        start,
-                        count);
-
-                Span<ulong> coefficientSpan =
-                    coefficients.AsSpan(
-                        start,
-                        count);
-
-                for (int offset = 0;
-                     offset < count;
-                     offset++)
-                {
-                    uint first =
-                        firstSpan[offset];
-
-                    // first < FirstModulus and FirstModulus is only about
-                    // 4.29 * SecondModulus.  Four predictable conditional
-                    // subtractions are cheaper than an integer remainder here
-                    // and require no unsafe pointer or custom reciprocal helper.
-                    uint reducedFirst =
-                        first;
-
-                    if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                    if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                    if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                    if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-
-                    long difference =
-                        (long)secondSpan[offset] -
-                        reducedFirst;
-
-                    if (difference < 0)
-                    {
-                        difference +=
-                            SecondModulus;
-                    }
-
-                    // Keep the original scalar modulo expression.  The
-                    // previous generic Math.BigMul reciprocal reducer was much
-                    // slower in this workload despite looking cheaper on paper.
-                    ulong multiplier =
-                        (ulong)difference *
-                        FirstModulusInverseInSecond %
-                        SecondModulus;
-
-                    coefficientSpan[offset] =
-                        first +
-                        (ulong)FirstModulus *
-                        multiplier;
-                }
-            });
-
-        diagnostics.CrtTicks +=
-            Stopwatch.GetTimestamp() -
-            crtStarted;
+            diagnostics,
+            cancellationToken);
 
         return CreateFromCoefficients(
             coefficients,
@@ -1595,6 +1532,139 @@ internal sealed class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        var residues =
+            new uint[coefficientCount];
+
+        ConvolveModulusCore(
+            left,
+            right,
+            transformLength,
+            modulus,
+            primitiveRoot,
+            isSquare,
+            workers,
+            diagnostics,
+            cancellationToken,
+            transformed =>
+                Array.Copy(
+                    transformed,
+                    residues,
+                    coefficientCount));
+
+        return residues;
+    }
+
+    private static void ConvolveSecondModulusAndReconstructCrt(
+        uint[] left,
+        uint[] right,
+        uint[] firstResidues,
+        ulong[] coefficients,
+        int coefficientCount,
+        int transformLength,
+        bool isSquare,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        ConvolveModulusCore(
+            left,
+            right,
+            transformLength,
+            SecondModulus,
+            SecondPrimitiveRoot,
+            isSquare,
+            workers,
+            diagnostics,
+            cancellationToken,
+            transformedSecond =>
+            {
+                long crtStarted =
+                    Stopwatch.GetTimestamp();
+
+                ExecuteRanges(
+                    coefficientCount,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
+                    {
+                        int count =
+                            end - start;
+
+                        ReadOnlySpan<uint> firstSpan =
+                            firstResidues.AsSpan(
+                                start,
+                                count);
+
+                        // The inverse P2 transform is still a full power-of-two
+                        // workspace.  CRT only reads its valid convolution
+                        // prefix, avoiding a second coefficientCount-sized copy.
+                        ReadOnlySpan<uint> secondSpan =
+                            transformedSecond.AsSpan(
+                                start,
+                                count);
+
+                        Span<ulong> coefficientSpan =
+                            coefficients.AsSpan(
+                                start,
+                                count);
+
+                        for (int offset = 0;
+                             offset < count;
+                             offset++)
+                        {
+                            uint first =
+                                firstSpan[offset];
+
+                            uint reducedFirst =
+                                first;
+
+                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+
+                            long difference =
+                                (long)secondSpan[offset] -
+                                reducedFirst;
+
+                            if (difference < 0)
+                            {
+                                difference +=
+                                    SecondModulus;
+                            }
+
+                            // Preserve the scalar modulo expression that won
+                            // the previous benchmark experiments.
+                            ulong multiplier =
+                                (ulong)difference *
+                                FirstModulusInverseInSecond %
+                                SecondModulus;
+
+                            coefficientSpan[offset] =
+                                first +
+                                (ulong)FirstModulus *
+                                multiplier;
+                        }
+                    });
+
+                diagnostics.CrtTicks +=
+                    Stopwatch.GetTimestamp() -
+                    crtStarted;
+            });
+    }
+
+    private static void ConvolveModulusCore(
+        uint[] left,
+        uint[] right,
+        int transformLength,
+        uint modulus,
+        uint primitiveRoot,
+        bool isSquare,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken,
+        Action<uint[]> consumeInverseTransform)
+    {
         int fusedNttBlockLength =
             SelectFusedNttBlockLength();
 
@@ -1606,78 +1676,27 @@ internal sealed class ParallelBigUnsigned
             SelectL3NttTileLength(
                 l2NttTileLength);
 
-        var transformedLeft =
-            new uint[transformLength];
-
-        Array.Copy(
-            left,
-            transformedLeft,
-            left.Length);
-
-        // Reuse one twiddle plan for this modulus for the complete lifetime
-        // of the fixed worker team.  Exponentiation performs many NTT products
-        // at increasing transform lengths, but a twiddle stage depends only on
-        // (modulus, primitive root, stage length), not on the enclosing product.
-        // A stage is therefore built once on first use and reused by all later
-        // products in the same power branch.
-        NttTwiddlePlan twiddlePlan =
-            workers.GetTwiddlePlan(
-                modulus);
-
-        ForwardDifTransform(
-            transformedLeft,
-            modulus,
-            primitiveRoot,
-            workers,
-            twiddlePlan,
-            fusedNttBlockLength,
-            l2NttTileLength,
-            l3NttTileLength,
-            true,
-            diagnostics,
-            cancellationToken);
-
-        if (isSquare)
-        {
-            long pointwiseStarted =
-                Stopwatch.GetTimestamp();
-
-            ExecuteRanges(
+        uint[] transformedLeft =
+            workers.RentNttBuffer(
                 transformLength,
-                workers,
-                cancellationToken,
-                (start, end) =>
-                {
-                    for (int index = start;
-                         index < end;
-                         index++)
-                    {
-                        ulong value =
-                            transformedLeft[index];
+                out bool reusedLeft);
 
-                        transformedLeft[index] =
-                            (uint)(value *
-                                   value %
-                                   modulus);
-                    }
-                });
+        uint[]? transformedRight =
+            null;
 
-            diagnostics.PointwiseTicks +=
-                Stopwatch.GetTimestamp() -
-                pointwiseStarted;
-        }
-        else
+        try
         {
-            var transformedRight =
-                new uint[transformLength];
+            PrepareNttBuffer(
+                transformedLeft,
+                left,
+                reusedLeft);
 
-            Array.Copy(
-                right,
-                transformedRight,
-                right.Length);
+            NttTwiddlePlan twiddlePlan =
+                workers.GetTwiddlePlan(
+                    modulus);
 
             ForwardDifTransform(
-                transformedRight,
+                transformedLeft,
                 modulus,
                 primitiveRoot,
                 workers,
@@ -1685,56 +1704,160 @@ internal sealed class ParallelBigUnsigned
                 fusedNttBlockLength,
                 l2NttTileLength,
                 l3NttTileLength,
-                false,
+                true,
                 diagnostics,
                 cancellationToken);
 
-            long pointwiseStarted =
-                Stopwatch.GetTimestamp();
+            if (isSquare)
+            {
+                long pointwiseStarted =
+                    Stopwatch.GetTimestamp();
 
-            ExecuteRanges(
-                transformLength,
-                workers,
-                cancellationToken,
-                (start, end) =>
-                {
-                    for (int index = start;
-                         index < end;
-                         index++)
+                ExecuteRanges(
+                    transformLength,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
                     {
-                        transformedLeft[index] =
-                            (uint)((ulong)transformedLeft[index] *
-                                   transformedRight[index] %
-                                   modulus);
-                    }
-                });
+                        for (int index = start;
+                             index < end;
+                             index++)
+                        {
+                            ulong value =
+                                transformedLeft[index];
 
-            diagnostics.PointwiseTicks +=
-                Stopwatch.GetTimestamp() -
-                pointwiseStarted;
+                            transformedLeft[index] =
+                                (uint)(value *
+                                       value %
+                                       modulus);
+                        }
+                    });
+
+                diagnostics.PointwiseTicks +=
+                    Stopwatch.GetTimestamp() -
+                    pointwiseStarted;
+            }
+            else
+            {
+                uint[] rightTransform =
+                    workers.RentNttBuffer(
+                        transformLength,
+                        out bool reusedRight);
+
+                transformedRight =
+                    rightTransform;
+
+                PrepareNttBuffer(
+                    rightTransform,
+                    right,
+                    reusedRight);
+
+                ForwardDifTransform(
+                    rightTransform,
+                    modulus,
+                    primitiveRoot,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
+                    false,
+                    diagnostics,
+                    cancellationToken);
+
+                long pointwiseStarted =
+                    Stopwatch.GetTimestamp();
+
+                ExecuteRanges(
+                    transformLength,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
+                    {
+                        for (int index = start;
+                             index < end;
+                             index++)
+                        {
+                            transformedLeft[index] =
+                                (uint)((ulong)transformedLeft[index] *
+                                       rightTransform[index] %
+                                       modulus);
+                        }
+                    });
+
+                diagnostics.PointwiseTicks +=
+                    Stopwatch.GetTimestamp() -
+                    pointwiseStarted;
+
+                // Right is dead as soon as pointwise multiplication completes.
+                // Return it before the inverse transform to shorten its active
+                // lifetime and make it available to the other modulus/branch.
+                workers.ReturnNttBuffer(
+                    rightTransform);
+
+                transformedRight =
+                    null;
+            }
+
+            InverseDitTransform(
+                transformedLeft,
+                modulus,
+                primitiveRoot,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
+                diagnostics,
+                cancellationToken);
+
+            consumeInverseTransform(
+                transformedLeft);
+        }
+        finally
+        {
+            if (transformedRight is not null)
+            {
+                workers.ReturnNttBuffer(
+                    transformedRight);
+            }
+
+            workers.ReturnNttBuffer(
+                transformedLeft);
+        }
+    }
+
+    /// <summary>
+    /// Initializes a rented NTT workspace from a compact base-10,000 limb
+    /// array.  A fresh CLR array already has a zero tail; a reused workspace
+    /// does not, so only the tail that Array.Copy will not overwrite is
+    /// cleared.  This preserves the exact zero-padding required by convolution
+    /// without paying for a full-buffer clear on every rent.
+    /// </summary>
+    private static void PrepareNttBuffer(
+        uint[] destination,
+        uint[] source,
+        bool reused)
+    {
+        Debug.Assert(
+            destination.Length >=
+            source.Length);
+
+        if (reused &&
+            source.Length <
+            destination.Length)
+        {
+            Array.Clear(
+                destination,
+                source.Length,
+                destination.Length -
+                source.Length);
         }
 
-        InverseDitTransform(
-            transformedLeft,
-            modulus,
-            primitiveRoot,
-            workers,
-            twiddlePlan,
-            fusedNttBlockLength,
-            l2NttTileLength,
-            l3NttTileLength,
-            diagnostics,
-            cancellationToken);
-
-        var residues =
-            new uint[coefficientCount];
-
         Array.Copy(
-            transformedLeft,
-            residues,
-            coefficientCount);
-
-        return residues;
+            source,
+            destination,
+            source.Length);
     }
 
     /// <summary>
@@ -7080,6 +7203,125 @@ while (leftIndex + 1 < butterflyEnd)
     }
 
     /// <summary>
+    /// Reuses the two large temporary uint[] workspaces needed by an NTT
+    /// convolution.  Only arrays of the largest transform length observed so
+    /// far are retained, and at most two are cached because a non-square
+    /// convolution can have exactly two transforms live at once.
+    ///
+    /// The pool is shared by both PowSplit branches and the final combine.
+    /// That makes allocation lifetime explicit and prevents each modulus pass
+    /// from leaving 256 MiB-class arrays for the GC to discover later.
+    /// </summary>
+    private sealed class NttBufferPool : IDisposable
+    {
+        private const int MaximumRetainedBufferCount = 2;
+
+        private readonly object _gate =
+            new();
+
+        private readonly Stack<uint[]> _buffers =
+            new(MaximumRetainedBufferCount);
+
+        private int _retainedLength;
+        private bool _disposed;
+
+        public uint[] Rent(
+            int length,
+            out bool reused)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+                length);
+
+            lock (_gate)
+            {
+                ObjectDisposedException.ThrowIf(
+                    _disposed,
+                    this);
+
+                // Transform lengths grow by powers of two during exponentiation.
+                // Once a larger transform is requested, smaller cached arrays
+                // cannot satisfy it and only inflate the retained working set,
+                // so release their references immediately.
+                if (length >
+                    _retainedLength)
+                {
+                    _buffers.Clear();
+                    _retainedLength =
+                        length;
+                }
+
+                if (length ==
+                        _retainedLength &&
+                    _buffers.Count > 0)
+                {
+                    reused =
+                        true;
+
+                    return _buffers.Pop();
+                }
+            }
+
+            reused =
+                false;
+
+            return new uint[length];
+        }
+
+        public void Return(
+            uint[] buffer)
+        {
+            ArgumentNullException.ThrowIfNull(
+                buffer);
+
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                if (buffer.Length >
+                    _retainedLength)
+                {
+                    _buffers.Clear();
+                    _retainedLength =
+                        buffer.Length;
+                }
+
+                // Never keep a smaller stale workspace after a larger NTT has
+                // become the active size.  Also cap the cache to the exact two
+                // arrays useful to a non-square convolution.
+                if (buffer.Length ==
+                        _retainedLength &&
+                    _buffers.Count <
+                        MaximumRetainedBufferCount)
+                {
+                    _buffers.Push(
+                        buffer);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed =
+                    true;
+
+                _buffers.Clear();
+                _retainedLength =
+                    0;
+            }
+        }
+    }
+
+    /// <summary>
     /// A fixed set of dedicated workers reused by every NTT stage in one power
     /// calculation. This avoids rebuilding and rescheduling a Parallel.For
     /// graph at every stage of transforms as large as 2^26.
@@ -7104,9 +7346,20 @@ while (leftIndex + 1 < butterflyEnd)
         private NttTwiddlePlan? _firstTwiddlePlan;
         private NttTwiddlePlan? _secondTwiddlePlan;
 
+        // The temporary value arrays are owned by one pool for the complete
+        // Pow operation.  Split branches intentionally share the same pool;
+        // the pool itself is synchronized and caps retention to two arrays.
+        private readonly NttBufferPool _nttBufferPool;
+
         public FixedWorkerTeam(
-            int workerCount)
+            int workerCount,
+            NttBufferPool nttBufferPool)
         {
+            _nttBufferPool =
+                nttBufferPool ??
+                throw new ArgumentNullException(
+                    nameof(nttBufferPool));
+
             WorkerCount =
                 Math.Max(
                     1,
@@ -7142,6 +7395,22 @@ while (leftIndex + 1 < butterflyEnd)
         }
 
         public int WorkerCount { get; }
+
+        public uint[] RentNttBuffer(
+            int length,
+            out bool reused)
+        {
+            return _nttBufferPool.Rent(
+                length,
+                out reused);
+        }
+
+        public void ReturnNttBuffer(
+            uint[] buffer)
+        {
+            _nttBufferPool.Return(
+                buffer);
+        }
 
         // FixedWorkerTeam itself is private to ParallelBigUnsigned, so this
         // member cannot escape the enclosing type.  It must nevertheless be

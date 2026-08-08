@@ -22,3 +22,33 @@ The Power/Root tab now treats cancellation as an explicit user decision:
 - Choosing **No** cancels the close request and leaves the active calculation/export untouched.
 - Choosing **Yes** requests cancellation and awaits the active operation completion before Windows is allowed to close.
 - Task completion sources are used only for shutdown coordination; they do not change the NTT/CRT, bit-shift, base-10,000, SIMD, or export algorithms.
+
+## v28 - NTT Buffer Pool + Lifetime Reuse
+
+Large NTT value workspaces are no longer allocated with `new uint[transformLength]`
+for every modulus pass. One `NttBufferPool` is created for the complete `Pow`
+operation and is shared by both PowSplit branches and the final combine.
+
+Policy:
+
+- cache at most two `uint[]` workspaces, matching the maximum two live transforms
+  of a non-square convolution;
+- retain only buffers whose length equals the largest transform length seen so far;
+- release references to smaller cached workspaces as soon as a larger transform is
+  requested;
+- reuse the same workspaces between P1 and P2 and across later multiplications;
+- on reuse, overwrite the compact limb prefix and clear only the stale zero-padding
+  tail rather than clearing the whole array;
+- return the right transform immediately after pointwise multiplication because it
+  is dead before the inverse transform;
+- use `try/finally` so cancellation or an exception cannot leak a leased workspace.
+
+Lifetime reuse also removes the full `secondResidues[coefficientCount]` allocation.
+The inverse P2 workspace stays leased while CRT reads its valid coefficient prefix
+directly; CRT then returns that workspace to the pool. The first-modulus residue
+array remains compact because keeping a full power-of-two P1 transform alive would
+consume more RAM than the exact coefficient-length copy.
+
+This version deliberately does not yet fuse CRT with Carry or change PowSplit
+scheduling. Those remain separate future memory-optimization steps so RAM and
+performance effects can be benchmarked independently.
