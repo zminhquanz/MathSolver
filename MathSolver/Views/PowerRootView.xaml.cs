@@ -98,6 +98,7 @@ public partial class PowerRootView : LocalizedSolverView
     private bool _isCalculating;
     private bool _isExporting;
     private bool _isStopConfirmationVisible;
+    private bool _isDiagnosticsVisible;
     private bool _isPowerMode = true;
     private bool _isUpdatingInputText;
     private bool _isUpdatingRootInputText;
@@ -1852,6 +1853,14 @@ public partial class PowerRootView : LocalizedSolverView
         SetInputEnabled(
             enabled: false);
 
+        // Every new calculation starts with developer diagnostics collapsed.
+        _isDiagnosticsVisible = false;
+        DiagnosticsToggleButton.IsVisible = false;
+        LargeResultInfoBorder.IsVisible = false;
+        DiagnosticsToggleButton.Text =
+            Translate(
+                "PowerRoot.ShowDetails");
+
         ResultBorder.IsVisible = false;
         ProgressBorder.IsVisible = true;
         CalculationActivityIndicator.IsVisible = true;
@@ -3314,8 +3323,24 @@ public partial class PowerRootView : LocalizedSolverView
                 ? 1
                 : 2);
 
-        LargeResultInfoBorder.IsVisible =
+        DiagnosticsToggleButton.IsVisible =
             canExport;
+
+        if (!canExport)
+        {
+            _isDiagnosticsVisible =
+                false;
+        }
+
+        LargeResultInfoBorder.IsVisible =
+            canExport &&
+            _isDiagnosticsVisible;
+
+        DiagnosticsToggleButton.Text =
+            Translate(
+                _isDiagnosticsVisible
+                    ? "PowerRoot.HideDetails"
+                    : "PowerRoot.ShowDetails");
 
         if (canExport)
         {
@@ -3330,6 +3355,28 @@ public partial class PowerRootView : LocalizedSolverView
 
         ResultBorder.IsVisible =
             true;
+    }
+
+    private void OnDiagnosticsToggleClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (!DiagnosticsToggleButton.IsVisible)
+        {
+            return;
+        }
+
+        _isDiagnosticsVisible =
+            !_isDiagnosticsVisible;
+
+        LargeResultInfoBorder.IsVisible =
+            _isDiagnosticsVisible;
+
+        DiagnosticsToggleButton.Text =
+            Translate(
+                _isDiagnosticsVisible
+                    ? "PowerRoot.HideDetails"
+                    : "PowerRoot.ShowDetails");
     }
 
     private string CreateSolution(
@@ -5078,6 +5125,19 @@ public partial class PowerRootView : LocalizedSolverView
 
         ResultBorder.IsVisible =
             false;
+
+        _isDiagnosticsVisible =
+            false;
+
+        DiagnosticsToggleButton.IsVisible =
+            false;
+
+        LargeResultInfoBorder.IsVisible =
+            false;
+
+        DiagnosticsToggleButton.Text =
+            Translate(
+                "PowerRoot.ShowDetails");
 
         if (!_isExporting)
         {

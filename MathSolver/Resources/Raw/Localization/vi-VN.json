@@ -49,6 +49,8 @@
     "PowerRoot.CopyCompact": "Sao chép kết quả rút gọn",
     "PowerRoot.CopyResult": "Sao chép kết quả",
     "PowerRoot.ExportTxt": "Xuất kết quả TXT",
+    "PowerRoot.ShowDetails": "Hiện chi tiết",
+    "PowerRoot.HideDetails": "Ẩn chi tiết",
     "PowerRoot.ExportStop": "Dừng tạo TXT",
     "PowerRoot.ExportStopping": "Đang dừng tạo TXT…",
     "PowerRoot.ConfirmStopTitle": "Xác nhận dừng",

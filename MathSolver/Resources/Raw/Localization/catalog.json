@@ -208,6 +208,16 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.ShowDetails",
+      "source": "Hiện chi tiết",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.HideDetails",
+      "source": "Ẩn chi tiết",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.ExportStop",
       "source": "Dừng tạo TXT",
       "mode": "exact"

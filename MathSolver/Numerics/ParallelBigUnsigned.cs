@@ -3262,6 +3262,104 @@ internal sealed class ParallelBigUnsigned
             validOutputLength -
             halfLength;
 
+        // Small transforms keep the exact v33 scalar final-stage path. The
+        // four-lane kernel is intentionally enabled only at the same adaptive
+        // threshold that already proved worthwhile for the global NTT path.
+        if (halfLength < AdaptiveFourWayHalfLength)
+        {
+            ExecuteFinalInversePrefixScalar(
+                values,
+                output,
+                halfLength,
+                validRightCount,
+                modulus,
+                root,
+                inverseLength,
+                workers,
+                cancellationToken);
+
+            return;
+        }
+
+        // v34: the final inverse prefix has one monotonic boundary: below
+        // validRightCount both the left and right outputs are live; above it
+        // only the left output is externally observable. Split each worker's
+        // contiguous range at that boundary once instead of testing it inside
+        // every butterfly. Four independent twiddle lanes then advance by
+        // root^4, breaking the long scalar twiddle dependency chain while
+        // preserving exactly the same DIT arithmetic and worker partitioning.
+        uint rootSquared =
+            (uint)((ulong)root *
+                   root %
+                   modulus);
+
+        uint rootFourth =
+            (uint)((ulong)rootSquared *
+                   rootSquared %
+                   modulus);
+
+        ExecuteRanges(
+            halfLength,
+            workers,
+            cancellationToken,
+            (butterflyStart, butterflyEnd) =>
+            {
+                int bothEnd =
+                    Math.Min(
+                        butterflyEnd,
+                        validRightCount);
+
+                if (butterflyStart < bothEnd)
+                {
+                    ExecuteFinalInverseBothOutputsRange(
+                        values,
+                        output,
+                        halfLength,
+                        butterflyStart,
+                        bothEnd,
+                        modulus,
+                        root,
+                        rootSquared,
+                        rootFourth,
+                        inverseLength,
+                        cancellationToken);
+                }
+
+                int leftOnlyStart =
+                    Math.Max(
+                        butterflyStart,
+                        validRightCount);
+
+                if (leftOnlyStart < butterflyEnd)
+                {
+                    ExecuteFinalInverseLeftOnlyRange(
+                        values,
+                        output,
+                        halfLength,
+                        leftOnlyStart,
+                        butterflyEnd,
+                        modulus,
+                        root,
+                        rootSquared,
+                        rootFourth,
+                        inverseLength,
+                        cancellationToken);
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteFinalInversePrefixScalar(
+        uint[] values,
+        uint[] output,
+        int halfLength,
+        int validRightCount,
+        uint modulus,
+        uint root,
+        uint inverseLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
         ExecuteRanges(
             halfLength,
             workers,
@@ -3381,6 +3479,451 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteFinalInverseBothOutputsRange(
+        uint[] values,
+        uint[] output,
+        int halfLength,
+        int start,
+        int end,
+        uint modulus,
+        uint root,
+        uint rootSquared,
+        uint rootFourth,
+        uint inverseLength,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        int butterfly =
+            start;
+
+        ulong twiddle0 =
+            butterfly == 0
+                ? 1u
+                : ModPow(
+                    root,
+                    (uint)butterfly,
+                    modulus);
+
+        ulong twiddle1 =
+            twiddle0 *
+            root %
+            modulus;
+
+        ulong twiddle2 =
+            twiddle0 *
+            rootSquared %
+            modulus;
+
+        ulong twiddle3 =
+            twiddle2 *
+            root %
+            modulus;
+
+        while (butterfly < end)
+        {
+            int chunkEnd =
+                Math.Min(
+                    end,
+                    butterfly + CancellationStride);
+
+            for (;
+                 butterfly + 3 < chunkEnd;
+                 butterfly += 4)
+            {
+                int rightIndex0 =
+                    butterfly +
+                    halfLength;
+
+                uint left0 =
+                    values[butterfly];
+
+                uint left1 =
+                    values[butterfly + 1];
+
+                uint left2 =
+                    values[butterfly + 2];
+
+                uint left3 =
+                    values[butterfly + 3];
+
+                uint right0 =
+                    (uint)((ulong)values[rightIndex0] *
+                           twiddle0 %
+                           modulus);
+
+                uint right1 =
+                    (uint)((ulong)values[rightIndex0 + 1] *
+                           twiddle1 %
+                           modulus);
+
+                uint right2 =
+                    (uint)((ulong)values[rightIndex0 + 2] *
+                           twiddle2 %
+                           modulus);
+
+                uint right3 =
+                    (uint)((ulong)values[rightIndex0 + 3] *
+                           twiddle3 %
+                           modulus);
+
+                uint sum0 = left0 + right0;
+                uint sum1 = left1 + right1;
+                uint sum2 = left2 + right2;
+                uint sum3 = left3 + right3;
+
+                if (sum0 >= modulus) sum0 -= modulus;
+                if (sum1 >= modulus) sum1 -= modulus;
+                if (sum2 >= modulus) sum2 -= modulus;
+                if (sum3 >= modulus) sum3 -= modulus;
+
+                uint difference0 =
+                    left0 >= right0
+                        ? left0 - right0
+                        : left0 + modulus - right0;
+
+                uint difference1 =
+                    left1 >= right1
+                        ? left1 - right1
+                        : left1 + modulus - right1;
+
+                uint difference2 =
+                    left2 >= right2
+                        ? left2 - right2
+                        : left2 + modulus - right2;
+
+                uint difference3 =
+                    left3 >= right3
+                        ? left3 - right3
+                        : left3 + modulus - right3;
+
+                output[butterfly] =
+                    (uint)((ulong)sum0 *
+                           inverseLength %
+                           modulus);
+
+                output[butterfly + 1] =
+                    (uint)((ulong)sum1 *
+                           inverseLength %
+                           modulus);
+
+                output[butterfly + 2] =
+                    (uint)((ulong)sum2 *
+                           inverseLength %
+                           modulus);
+
+                output[butterfly + 3] =
+                    (uint)((ulong)sum3 *
+                           inverseLength %
+                           modulus);
+
+                output[rightIndex0] =
+                    (uint)((ulong)difference0 *
+                           inverseLength %
+                           modulus);
+
+                output[rightIndex0 + 1] =
+                    (uint)((ulong)difference1 *
+                           inverseLength %
+                           modulus);
+
+                output[rightIndex0 + 2] =
+                    (uint)((ulong)difference2 *
+                           inverseLength %
+                           modulus);
+
+                output[rightIndex0 + 3] =
+                    (uint)((ulong)difference3 *
+                           inverseLength %
+                           modulus);
+
+                twiddle0 =
+                    twiddle0 *
+                    rootFourth %
+                    modulus;
+
+                twiddle1 =
+                    twiddle1 *
+                    rootFourth %
+                    modulus;
+
+                twiddle2 =
+                    twiddle2 *
+                    rootFourth %
+                    modulus;
+
+                twiddle3 =
+                    twiddle3 *
+                    rootFourth %
+                    modulus;
+            }
+
+            for (;
+                 butterfly < chunkEnd;
+                 butterfly++)
+            {
+                int rightIndex =
+                    butterfly +
+                    halfLength;
+
+                uint leftValue =
+                    values[butterfly];
+
+                uint rightValue =
+                    (uint)((ulong)values[rightIndex] *
+                           twiddle0 %
+                           modulus);
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                uint difference =
+                    leftValue >= rightValue
+                        ? leftValue - rightValue
+                        : leftValue + modulus - rightValue;
+
+                output[butterfly] =
+                    (uint)((ulong)sum *
+                           inverseLength %
+                           modulus);
+
+                output[rightIndex] =
+                    (uint)((ulong)difference *
+                           inverseLength %
+                           modulus);
+
+                twiddle0 =
+                    twiddle0 *
+                    root %
+                    modulus;
+            }
+
+            // The four-way loop leaves twiddle0 at root^butterfly.  If the
+            // scalar cleanup ran, it advanced the same lane one step at a
+            // time, so the next cancellation chunk can continue directly.
+            twiddle1 =
+                twiddle0 *
+                root %
+                modulus;
+
+            twiddle2 =
+                twiddle0 *
+                rootSquared %
+                modulus;
+
+            twiddle3 =
+                twiddle2 *
+                root %
+                modulus;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteFinalInverseLeftOnlyRange(
+        uint[] values,
+        uint[] output,
+        int halfLength,
+        int start,
+        int end,
+        uint modulus,
+        uint root,
+        uint rootSquared,
+        uint rootFourth,
+        uint inverseLength,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        int butterfly =
+            start;
+
+        ulong twiddle0 =
+            butterfly == 0
+                ? 1u
+                : ModPow(
+                    root,
+                    (uint)butterfly,
+                    modulus);
+
+        ulong twiddle1 =
+            twiddle0 *
+            root %
+            modulus;
+
+        ulong twiddle2 =
+            twiddle0 *
+            rootSquared %
+            modulus;
+
+        ulong twiddle3 =
+            twiddle2 *
+            root %
+            modulus;
+
+        while (butterfly < end)
+        {
+            int chunkEnd =
+                Math.Min(
+                    end,
+                    butterfly + CancellationStride);
+
+            for (;
+                 butterfly + 3 < chunkEnd;
+                 butterfly += 4)
+            {
+                int rightIndex0 =
+                    butterfly +
+                    halfLength;
+
+                uint left0 =
+                    values[butterfly];
+
+                uint left1 =
+                    values[butterfly + 1];
+
+                uint left2 =
+                    values[butterfly + 2];
+
+                uint left3 =
+                    values[butterfly + 3];
+
+                uint right0 =
+                    (uint)((ulong)values[rightIndex0] *
+                           twiddle0 %
+                           modulus);
+
+                uint right1 =
+                    (uint)((ulong)values[rightIndex0 + 1] *
+                           twiddle1 %
+                           modulus);
+
+                uint right2 =
+                    (uint)((ulong)values[rightIndex0 + 2] *
+                           twiddle2 %
+                           modulus);
+
+                uint right3 =
+                    (uint)((ulong)values[rightIndex0 + 3] *
+                           twiddle3 %
+                           modulus);
+
+                uint sum0 = left0 + right0;
+                uint sum1 = left1 + right1;
+                uint sum2 = left2 + right2;
+                uint sum3 = left3 + right3;
+
+                if (sum0 >= modulus) sum0 -= modulus;
+                if (sum1 >= modulus) sum1 -= modulus;
+                if (sum2 >= modulus) sum2 -= modulus;
+                if (sum3 >= modulus) sum3 -= modulus;
+
+                output[butterfly] =
+                    (uint)((ulong)sum0 *
+                           inverseLength %
+                           modulus);
+
+                output[butterfly + 1] =
+                    (uint)((ulong)sum1 *
+                           inverseLength %
+                           modulus);
+
+                output[butterfly + 2] =
+                    (uint)((ulong)sum2 *
+                           inverseLength %
+                           modulus);
+
+                output[butterfly + 3] =
+                    (uint)((ulong)sum3 *
+                           inverseLength %
+                           modulus);
+
+                twiddle0 =
+                    twiddle0 *
+                    rootFourth %
+                    modulus;
+
+                twiddle1 =
+                    twiddle1 *
+                    rootFourth %
+                    modulus;
+
+                twiddle2 =
+                    twiddle2 *
+                    rootFourth %
+                    modulus;
+
+                twiddle3 =
+                    twiddle3 *
+                    rootFourth %
+                    modulus;
+            }
+
+            for (;
+                 butterfly < chunkEnd;
+                 butterfly++)
+            {
+                int rightIndex =
+                    butterfly +
+                    halfLength;
+
+                uint leftValue =
+                    values[butterfly];
+
+                uint rightValue =
+                    (uint)((ulong)values[rightIndex] *
+                           twiddle0 %
+                           modulus);
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                output[butterfly] =
+                    (uint)((ulong)sum *
+                           inverseLength %
+                           modulus);
+
+                twiddle0 =
+                    twiddle0 *
+                    root %
+                    modulus;
+            }
+
+            twiddle1 =
+                twiddle0 *
+                root %
+                modulus;
+
+            twiddle2 =
+                twiddle0 *
+                rootSquared %
+                modulus;
+
+            twiddle3 =
+                twiddle2 *
+                root %
+                modulus;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -458,6 +458,20 @@
 
                         </Border>
 
+                        <Button
+                            x:Name="DiagnosticsToggleButton"
+                            IsVisible="False"
+                            Text="{localization:Translate PowerRoot.ShowDetails}"
+                            HorizontalOptions="End"
+                            HeightRequest="34"
+                            Padding="12,4"
+                            CornerRadius="9"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            TextColor="{DynamicResource TextSecondaryColor}"
+                            Clicked="OnDiagnosticsToggleClicked" />
+
                         <Border
                             x:Name="LargeResultInfoBorder"
                             IsVisible="False"

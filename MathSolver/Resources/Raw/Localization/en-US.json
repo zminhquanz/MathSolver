@@ -49,6 +49,8 @@
     "PowerRoot.CopyCompact": "Copy shortened result",
     "PowerRoot.CopyResult": "Copy result",
     "PowerRoot.ExportTxt": "Export result as TXT",
+    "PowerRoot.ShowDetails": "Show details",
+    "PowerRoot.HideDetails": "Hide details",
     "PowerRoot.ExportStop": "Stop creating TXT",
     "PowerRoot.ExportStopping": "Stopping TXT creation…",
     "PowerRoot.ConfirmStopTitle": "Confirm stop",

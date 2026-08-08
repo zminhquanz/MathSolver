@@ -136,3 +136,25 @@ while memory traffic falls because the largest P1 residue copy disappears and
 P2 no longer writes a dead normalized suffix. The gain is intentionally
 benchmark-driven; v32 remains the fallback baseline if v33 does not improve or
 match its 48.5-48.7 s wall-clock range.
+
+## v34 - Final Inverse Split-Range ILP
+
+v34 is a deliberately narrow last-mile optimization on top of v33. It does not
+change DIF/DIT ordering, NTT primes, PowSplit/SMT scheduling, worker counts,
+CRT streaming, or buffer ownership.
+
+The final inverse-DIT prefix kernel now splits each worker's contiguous range at
+the single `validRightCount` boundary. The live-left/live-right region and the
+left-only dead-tail region therefore run as separate branch-free hot loops
+instead of testing `butterfly < validRightCount` for every butterfly.
+
+For final stages at or above the existing adaptive four-way threshold, both loops use four independent twiddle lanes; smaller transforms keep the exact v33 scalar path. The lanes advance by `root^4`,
+which preserves exactly the same twiddle sequence while removing the single
+long `twiddle = twiddle * root % modulus` dependency chain. Scalar cleanup is
+kept for the final 0-3 butterflies of each cancellation chunk. Cancellation is
+checked once per 32K-butterfly chunk rather than with a branch in the inner hot
+loop.
+
+The goal is lower final-inverse CPU time with essentially unchanged RAM. v33
+remains the fallback if repeated wall-clock benchmarks do not show a stable
+benefit.
