@@ -39,3 +39,13 @@ Không gom các thuật toán khác bản chất vào một “calculator chung�
 - Vùng tiến trình tính lũy thừa luôn xuất hiện ở cả bài nhỏ và lớn. `ActivityIndicator` chạy từ lúc chuẩn bị đến khi hoàn tất, còn số phép nhân và số worker được cập nhật theo engine thực tế.
 - Số mũ nhập tối đa `10.000.000`; với cơ số 18 chữ số, TXT có thể chứa xấp xỉ 180 triệu chữ số. Giao diện hiển thị dung lượng TXT ước tính và thông báo dung lượng thực sau khi lưu.
 - Kết quả của engine song song đã ở cơ số thập phân 10.000, vì vậy xuất TXT theo block 4.096 chữ số mà không cần cây `BigInteger.DivRem`.
+
+## v21 Global/RAM Adaptive 8-way experiment
+
+- Baseline: v19 Stage Fusion.
+- Adaptive 8-way scalar macro-unroll (4+4) is enabled only in cached Global/RAM Forward/Inverse stage kernels.
+- L3, L2 and L1 kernels are unchanged from v19.
+- Threshold by `Environment.ProcessorCount`: >=20T: halfLength 131072; 8-19T: 32768; 4-7T: 16384; 1-3T: 8192.
+- Stage Fusion, persistent twiddle cache, adaptive 4-way/2-way, and Carry quotient reuse remain unchanged.
+- This is intentionally an A/B benchmark experiment to isolate whether Global/RAM 8-way caused the v17 regression.
+

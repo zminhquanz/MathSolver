@@ -904,6 +904,39 @@ internal sealed class ParallelBigUnsigned
         SelectAdaptiveFourWayHalfLength();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int SelectGlobalAdaptiveEightWayHalfLength()
+    {
+        int logicalProcessorCount =
+            Math.Max(
+                1,
+                Environment.ProcessorCount);
+
+        // v21 experiment: eight-way is restricted to RAM/global cached stages.
+        // L3/L2/L1 stay on the proven v19 kernels.  Use a 4+4 macro-unroll so
+        // loop-control is halved without keeping eight butterflies live at once.
+        // The thresholds are deliberately conservative on high-thread SMT CPUs.
+        if (logicalProcessorCount >= 20)
+        {
+            return 1 << 17; // halfLength 131072 on 20T+ CPUs.
+        }
+
+        if (logicalProcessorCount >= 8)
+        {
+            return 1 << 15; // halfLength 32768 on 8-19T CPUs (i7-8700 = 12T).
+        }
+
+        if (logicalProcessorCount >= 4)
+        {
+            return 1 << 14; // halfLength 16384.
+        }
+
+        return 1 << 13;     // halfLength 8192 on 1-3T CPUs.
+    }
+
+    private static readonly int GlobalAdaptiveEightWayHalfLength =
+        SelectGlobalAdaptiveEightWayHalfLength();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int SelectMaximumCachedTwiddleCount()
     {
         int logicalProcessorCount =
@@ -2677,7 +2710,7 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Fast path for cached DIF stages once every NTT group can remain whole on
+    /// Fast path for cached global/RAM DIF stages once every NTT group can remain whole on
     /// one worker.  This keeps each worker on a contiguous address range and
     /// removes the generic segment-to-group mapping from the global hot path.
     /// </summary>
@@ -2752,6 +2785,158 @@ internal sealed class ParallelBigUnsigned
                             Math.Min(
                                 halfLength,
                                 butterfly + CancellationStride);
+
+
+                        if (halfLength >= GlobalAdaptiveEightWayHalfLength)
+                        {
+                            for (;
+                                 butterfly + 7 < chunkEnd;
+                                 butterfly += 8,
+                                 leftIndex += 8,
+                                 rightIndex += 8,
+                                 twiddleIndex += 8)
+                            {
+                                // Macro-unroll 8 as two four-butterfly batches.
+                                // The nested scopes shorten live ranges and
+                                // avoid the register pressure of a literal
+                                // eight-butterfly live set on x64.
+                                {
+                                    uint left0 = values[leftIndex];
+                                    uint right0 = values[rightIndex];
+                                    uint left1 = values[leftIndex + 1];
+                                    uint right1 = values[rightIndex + 1];
+                                    uint left2 = values[leftIndex + 2];
+                                    uint right2 = values[rightIndex + 2];
+                                    uint left3 = values[leftIndex + 3];
+                                    uint right3 = values[rightIndex + 3];
+
+                                    uint sum0 = left0 + right0;
+                                    uint sum1 = left1 + right1;
+                                    uint sum2 = left2 + right2;
+                                    uint sum3 = left3 + right3;
+
+                                    if (sum0 >= modulus) sum0 -= modulus;
+                                    if (sum1 >= modulus) sum1 -= modulus;
+                                    if (sum2 >= modulus) sum2 -= modulus;
+                                    if (sum3 >= modulus) sum3 -= modulus;
+
+                                    uint difference0 =
+                                        left0 >= right0
+                                            ? left0 - right0
+                                            : left0 + modulus - right0;
+
+                                    uint difference1 =
+                                        left1 >= right1
+                                            ? left1 - right1
+                                            : left1 + modulus - right1;
+
+                                    uint difference2 =
+                                        left2 >= right2
+                                            ? left2 - right2
+                                            : left2 + modulus - right2;
+
+                                    uint difference3 =
+                                        left3 >= right3
+                                            ? left3 - right3
+                                            : left3 + modulus - right3;
+
+                                    values[leftIndex] = sum0;
+                                    values[leftIndex + 1] = sum1;
+                                    values[leftIndex + 2] = sum2;
+                                    values[leftIndex + 3] = sum3;
+
+                                    values[rightIndex] =
+                                        (uint)((ulong)difference0 *
+                                               twiddles[twiddleIndex] %
+                                               modulus);
+
+                                    values[rightIndex + 1] =
+                                        (uint)((ulong)difference1 *
+                                               twiddles[twiddleIndex + 1] %
+                                               modulus);
+
+                                    values[rightIndex + 2] =
+                                        (uint)((ulong)difference2 *
+                                               twiddles[twiddleIndex + 2] %
+                                               modulus);
+
+                                    values[rightIndex + 3] =
+                                        (uint)((ulong)difference3 *
+                                               twiddles[twiddleIndex + 3] %
+                                               modulus);
+                                }
+
+                                {
+                                    int left4Index = leftIndex + 4;
+                                    int right4Index = rightIndex + 4;
+                                    int twiddle4Index = twiddleIndex + 4;
+
+                                    uint left4 = values[left4Index];
+                                    uint right4 = values[right4Index];
+                                    uint left5 = values[left4Index + 1];
+                                    uint right5 = values[right4Index + 1];
+                                    uint left6 = values[left4Index + 2];
+                                    uint right6 = values[right4Index + 2];
+                                    uint left7 = values[left4Index + 3];
+                                    uint right7 = values[right4Index + 3];
+
+                                    uint sum4 = left4 + right4;
+                                    uint sum5 = left5 + right5;
+                                    uint sum6 = left6 + right6;
+                                    uint sum7 = left7 + right7;
+
+                                    if (sum4 >= modulus) sum4 -= modulus;
+                                    if (sum5 >= modulus) sum5 -= modulus;
+                                    if (sum6 >= modulus) sum6 -= modulus;
+                                    if (sum7 >= modulus) sum7 -= modulus;
+
+                                    uint difference4 =
+                                        left4 >= right4
+                                            ? left4 - right4
+                                            : left4 + modulus - right4;
+
+                                    uint difference5 =
+                                        left5 >= right5
+                                            ? left5 - right5
+                                            : left5 + modulus - right5;
+
+                                    uint difference6 =
+                                        left6 >= right6
+                                            ? left6 - right6
+                                            : left6 + modulus - right6;
+
+                                    uint difference7 =
+                                        left7 >= right7
+                                            ? left7 - right7
+                                            : left7 + modulus - right7;
+
+                                    values[left4Index] = sum4;
+                                    values[left4Index + 1] = sum5;
+                                    values[left4Index + 2] = sum6;
+                                    values[left4Index + 3] = sum7;
+
+                                    values[right4Index] =
+                                        (uint)((ulong)difference4 *
+                                               twiddles[twiddle4Index] %
+                                               modulus);
+
+                                    values[right4Index + 1] =
+                                        (uint)((ulong)difference5 *
+                                               twiddles[twiddle4Index + 1] %
+                                               modulus);
+
+                                    values[right4Index + 2] =
+                                        (uint)((ulong)difference6 *
+                                               twiddles[twiddle4Index + 2] %
+                                               modulus);
+
+                                    values[right4Index + 3] =
+                                        (uint)((ulong)difference7 *
+                                               twiddles[twiddle4Index + 3] %
+                                               modulus);
+                                }
+                            }
+                        }
 
                         if (halfLength >= AdaptiveFourWayHalfLength)
                         {
@@ -2927,7 +3112,7 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Cached DIT counterpart of ExecuteForwardCachedStageByGroups.  Group
+    /// Cached global/RAM DIT counterpart of ExecuteForwardCachedStageByGroups.  Group
     /// ownership stays contiguous for the full stage, improving hardware
     /// prefetch behavior and avoiding segment mapping after groupCount reaches
     /// the worker budget.
@@ -3004,6 +3189,146 @@ internal sealed class ParallelBigUnsigned
                             Math.Min(
                                 halfLength,
                                 butterfly + CancellationStride);
+
+
+                        if (halfLength >= GlobalAdaptiveEightWayHalfLength)
+                        {
+                            for (;
+                                 butterfly + 7 < chunkEnd;
+                                 butterfly += 8,
+                                 leftIndex += 8,
+                                 rightIndex += 8,
+                                 twiddleIndex += 8)
+                            {
+                                {
+                                    uint left0 = values[leftIndex];
+                                    uint left1 = values[leftIndex + 1];
+                                    uint left2 = values[leftIndex + 2];
+                                    uint left3 = values[leftIndex + 3];
+
+                                    uint right0 =
+                                        (uint)((ulong)values[rightIndex] *
+                                               twiddles[twiddleIndex] %
+                                               modulus);
+
+                                    uint right1 =
+                                        (uint)((ulong)values[rightIndex + 1] *
+                                               twiddles[twiddleIndex + 1] %
+                                               modulus);
+
+                                    uint right2 =
+                                        (uint)((ulong)values[rightIndex + 2] *
+                                               twiddles[twiddleIndex + 2] %
+                                               modulus);
+
+                                    uint right3 =
+                                        (uint)((ulong)values[rightIndex + 3] *
+                                               twiddles[twiddleIndex + 3] %
+                                               modulus);
+
+                                    uint sum0 = left0 + right0;
+                                    uint sum1 = left1 + right1;
+                                    uint sum2 = left2 + right2;
+                                    uint sum3 = left3 + right3;
+
+                                    if (sum0 >= modulus) sum0 -= modulus;
+                                    if (sum1 >= modulus) sum1 -= modulus;
+                                    if (sum2 >= modulus) sum2 -= modulus;
+                                    if (sum3 >= modulus) sum3 -= modulus;
+
+                                    values[leftIndex] = sum0;
+                                    values[leftIndex + 1] = sum1;
+                                    values[leftIndex + 2] = sum2;
+                                    values[leftIndex + 3] = sum3;
+
+                                    values[rightIndex] =
+                                        left0 >= right0
+                                            ? left0 - right0
+                                            : left0 + modulus - right0;
+
+                                    values[rightIndex + 1] =
+                                        left1 >= right1
+                                            ? left1 - right1
+                                            : left1 + modulus - right1;
+
+                                    values[rightIndex + 2] =
+                                        left2 >= right2
+                                            ? left2 - right2
+                                            : left2 + modulus - right2;
+
+                                    values[rightIndex + 3] =
+                                        left3 >= right3
+                                            ? left3 - right3
+                                            : left3 + modulus - right3;
+                                }
+
+                                {
+                                    int left4Index = leftIndex + 4;
+                                    int right4Index = rightIndex + 4;
+                                    int twiddle4Index = twiddleIndex + 4;
+
+                                    uint left4 = values[left4Index];
+                                    uint left5 = values[left4Index + 1];
+                                    uint left6 = values[left4Index + 2];
+                                    uint left7 = values[left4Index + 3];
+
+                                    uint right4 =
+                                        (uint)((ulong)values[right4Index] *
+                                               twiddles[twiddle4Index] %
+                                               modulus);
+
+                                    uint right5 =
+                                        (uint)((ulong)values[right4Index + 1] *
+                                               twiddles[twiddle4Index + 1] %
+                                               modulus);
+
+                                    uint right6 =
+                                        (uint)((ulong)values[right4Index + 2] *
+                                               twiddles[twiddle4Index + 2] %
+                                               modulus);
+
+                                    uint right7 =
+                                        (uint)((ulong)values[right4Index + 3] *
+                                               twiddles[twiddle4Index + 3] %
+                                               modulus);
+
+                                    uint sum4 = left4 + right4;
+                                    uint sum5 = left5 + right5;
+                                    uint sum6 = left6 + right6;
+                                    uint sum7 = left7 + right7;
+
+                                    if (sum4 >= modulus) sum4 -= modulus;
+                                    if (sum5 >= modulus) sum5 -= modulus;
+                                    if (sum6 >= modulus) sum6 -= modulus;
+                                    if (sum7 >= modulus) sum7 -= modulus;
+
+                                    values[left4Index] = sum4;
+                                    values[left4Index + 1] = sum5;
+                                    values[left4Index + 2] = sum6;
+                                    values[left4Index + 3] = sum7;
+
+                                    values[right4Index] =
+                                        left4 >= right4
+                                            ? left4 - right4
+                                            : left4 + modulus - right4;
+
+                                    values[right4Index + 1] =
+                                        left5 >= right5
+                                            ? left5 - right5
+                                            : left5 + modulus - right5;
+
+                                    values[right4Index + 2] =
+                                        left6 >= right6
+                                            ? left6 - right6
+                                            : left6 + modulus - right6;
+
+                                    values[right4Index + 3] =
+                                        left7 >= right7
+                                            ? left7 - right7
+                                            : left7 + modulus - right7;
+                                }
+                            }
+                        }
 
                         if (halfLength >= AdaptiveFourWayHalfLength)
                         {
