@@ -2029,6 +2029,57 @@ public partial class PowerRootView : LocalizedSolverView
                     0,
                     1);
 
+                ParallelBigUnsigned? preparedBitShiftMagnitude =
+                    null;
+
+                if (strategy ==
+                        PowerComputationStrategy.BitShift &&
+                    estimatedDigitCount >=
+                        ExportDigitThreshold)
+                {
+                    // Keep the actual power calculation on the exact, very cheap
+                    // single-threaded BigInteger bit-shift path. Only phase 3 is
+                    // rebuilt through the same base-10,000 NTT/CRT engine used by
+                    // normal parallel powers. This removes the giant serial
+                    // BigInteger DivRem nodes from decimal preparation.
+                    int decimalPreparationWorkerCount =
+                        CalculationThreadingManager.UseMultithreading
+                            ? CalculationThreadingManager.RecommendedWorkerCount
+                            : 1;
+
+                    _calculationActiveWorkerCount =
+                        decimalPreparationWorkerCount;
+
+                    ulong unsignedBase =
+                        (ulong)Math.Abs(
+                            baseValue);
+
+                    ParallelPowerResult preparedDecimalResult =
+                        await Task.Run(
+                            () => ParallelBigUnsigned.Pow(
+                                unsignedBase,
+                                exponent,
+                                decimalPreparationWorkerCount,
+                                (completed, total) =>
+                                    ReportCalculationPhase(
+                                        baseValue,
+                                        exponent,
+                                        CalculationProgressPhase.Formatting,
+                                        completed,
+                                        total,
+                                        calculationVersion),
+                                cancellationToken),
+                            cancellationToken);
+
+                    preparedBitShiftMagnitude =
+                        preparedDecimalResult.Magnitude;
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // The worker budget above belongs only to phase 3.
+                    _calculationActiveWorkerCount = 1;
+                }
+
                 state =
                     await Task.Run(
                         () => CreateBigIntegerCalculationState(
@@ -2036,7 +2087,8 @@ public partial class PowerRootView : LocalizedSolverView
                             exponent,
                             result,
                             strategy,
-                            stopwatch.Elapsed),
+                            stopwatch.Elapsed,
+                            preparedBitShiftMagnitude),
                         cancellationToken);
             }
 
@@ -2186,7 +2238,8 @@ public partial class PowerRootView : LocalizedSolverView
                     0.08d +
                     0.82d * phaseProgress,
                 CalculationProgressPhase.Formatting =>
-                    0.95d,
+                    0.90d +
+                    0.09d * phaseProgress,
                 CalculationProgressPhase.Completed =>
                     1d,
                 _ =>
@@ -2289,10 +2342,20 @@ public partial class PowerRootView : LocalizedSolverView
                         "PowerRoot.ProgressWorkers",
                         activeWorkerCount)),
             CalculationProgressPhase.Formatting =>
-                Format(
-                    "PowerRoot.ProgressPhaseFormatting",
-                    phaseNumber,
-                    phaseCount),
+                activeWorkerCount > 1
+                    ? string.Join(
+                        Environment.NewLine,
+                        Format(
+                            "PowerRoot.ProgressPhaseFormatting",
+                            phaseNumber,
+                            phaseCount),
+                        Format(
+                            "PowerRoot.ProgressWorkers",
+                            activeWorkerCount))
+                    : Format(
+                        "PowerRoot.ProgressPhaseFormatting",
+                        phaseNumber,
+                        phaseCount),
             CalculationProgressPhase.Completed =>
                 Format(
                     "PowerRoot.ProgressPhaseCompleted",
@@ -2588,7 +2651,8 @@ public partial class PowerRootView : LocalizedSolverView
         int exponent,
         BigInteger result,
         PowerComputationStrategy strategy,
-        TimeSpan elapsed)
+        TimeSpan elapsed,
+        ParallelBigUnsigned? preparedBitShiftMagnitude)
     {
         int estimatedDigitCount =
             EstimateDecimalDigitCount(
@@ -2601,8 +2665,13 @@ public partial class PowerRootView : LocalizedSolverView
         int digitCount =
             estimatedDigitCount;
 
-        if (estimatedDigitCount <=
-            ExactPreviewConversionLimit)
+        if (preparedBitShiftMagnitude is not null)
+        {
+            digitCount =
+                preparedBitShiftMagnitude.DigitCount;
+        }
+        else if (estimatedDigitCount <=
+                 ExactPreviewConversionLimit)
         {
             exactResultText =
                 result.ToString(
@@ -2629,6 +2698,14 @@ public partial class PowerRootView : LocalizedSolverView
                 activeWorkerCount: 1,
                 exactResultText is not null);
 
+        if (preparedBitShiftMagnitude is not null)
+        {
+            estimatedPeakRamBytes =
+                checked(
+                    estimatedPeakRamBytes +
+                    preparedBitShiftMagnitude.StorageBytes);
+        }
+
         return new PowerCalculationState(
             baseValue,
             exponent,
@@ -2641,7 +2718,10 @@ public partial class PowerRootView : LocalizedSolverView
             IsNegative: result.Sign < 0,
             EstimatedPeakRamBytes: estimatedPeakRamBytes,
             Elapsed: elapsed,
-            ParallelMagnitude: null,
+            ParallelMagnitude:
+                strategy == PowerComputationStrategy.BitShift
+                    ? preparedBitShiftMagnitude
+                    : null,
             ParallelDiagnostics: null);
     }
 
@@ -4171,37 +4251,56 @@ public partial class PowerRootView : LocalizedSolverView
         CancellationToken cancellationToken,
         bool useSimdForExport)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ParallelBigUnsigned? exportMagnitude =
+            state.ParallelMagnitude;
+
         int totalBlocks =
-            state.Strategy switch
-            {
-                PowerComputationStrategy.DecimalPowerOfTen =>
-                    checked(
-                        1 +
-                        (state.DecimalZeroCount +
-                         ExportLeafDigitCount - 1) /
-                        ExportLeafDigitCount),
-                PowerComputationStrategy.ParallelNttPower =>
-                    checked(
-                        (state.DigitCount +
-                         ExportLeafDigitCount - 1) /
-                        ExportLeafDigitCount),
-                _ =>
-                    CountDecimalLeafBlocks(
-                        state.DigitCount)
-            };
+            state.Strategy ==
+                PowerComputationStrategy.DecimalPowerOfTen
+                ? checked(
+                    1 +
+                    (state.DecimalZeroCount +
+                     ExportLeafDigitCount - 1) /
+                    ExportLeafDigitCount)
+                : checked(
+                    (state.DigitCount +
+                     ExportLeafDigitCount - 1) /
+                    ExportLeafDigitCount);
 
         int completedBlocks = 0;
+        object progressGate =
+            new();
+
+        void ReportProgress(
+            ExportFilePhase phase,
+            int increment)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            lock (progressGate)
+            {
+                completedBlocks =
+                    Math.Min(
+                        totalBlocks,
+                        checked(
+                            completedBlocks +
+                            increment));
+
+                progress?.Invoke(
+                    new ExportFileProgress(
+                        phase,
+                        completedBlocks,
+                        totalBlocks));
+            }
+        }
 
         void ReportBlockWritten()
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            completedBlocks++;
-
-            progress?.Invoke(
-                new ExportFileProgress(
-                    ExportFilePhase.Writing,
-                    completedBlocks,
-                    totalBlocks));
+            ReportProgress(
+                ExportFilePhase.Writing,
+                1);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -4223,10 +4322,17 @@ public partial class PowerRootView : LocalizedSolverView
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
                     ? "Engine: parallel exact NTT/CRT power"
-                    : "Engine: BigInteger");
+                    : state.Strategy ==
+                      PowerComputationStrategy.BitShift
+                        ? "Engine: BigInteger bit shift + prepared base-10,000 export"
+                        : "Engine: BigInteger");
+
+        int exactExportDigitCount =
+            exportMagnitude?.DigitCount ??
+            state.DigitCount;
 
         writer.WriteLine(
-            $"Digits: {state.DigitCount.ToString(CultureInfo.InvariantCulture)}");
+            $"Digits: {exactExportDigitCount.ToString(CultureInfo.InvariantCulture)}");
 
         writer.WriteLine();
         writer.WriteLine("Result:");
@@ -4243,16 +4349,14 @@ public partial class PowerRootView : LocalizedSolverView
                 ReportBlockWritten,
                 cancellationToken);
         }
-        else if (state.Strategy ==
-                 PowerComputationStrategy.ParallelNttPower &&
-                 state.ParallelMagnitude is not null)
+        else if (exportMagnitude is not null)
         {
             if (state.IsNegative)
             {
                 writer.Write('-');
             }
 
-            state.ParallelMagnitude.WriteDecimalBlocks(
+            exportMagnitude.WriteDecimalBlocks(
                 writer,
                 ExportLeafDigitCount,
                 ReportBlockWritten,

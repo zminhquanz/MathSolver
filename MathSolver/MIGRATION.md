@@ -233,3 +233,20 @@ Delete bin and obj
 Clean Solution
 Rebuild Solution
 ```
+
+## v24 bit-shift TXT export
+
+No XAML or localization changes are required. Results with more than 100,000 digits already expose the TXT export button through `ExportDigitThreshold = 100_001`. For the `BitShift` strategy, the first export now converts `BigInteger` to cached base-10,000 limbs and then reuses the same SIMD/scalar decimal writer as the NTT/CRT path. Remove/ignore the separate v23 1,000,000-digit random-access exporter if migrating from that experiment.
+
+
+## v25 bit-shift export preparation
+
+For `BitShift` results at or above `ExportDigitThreshold`, remove the lazy `BigIntegerDecimalMagnitudeCache`/export-time import. After the bit shift completes, convert `BigInteger.Abs(result)` to `ParallelBigUnsigned` during calculation phase `Formatting` and store it in `PowerCalculationState.ParallelMagnitude`. `WriteFullResultFile` must only stream the already-prepared magnitude through `WriteDecimalBlocks`; it must not call `FromBigInteger`. Keep the direct decimal power-of-ten writer unchanged.
+
+## v26 BitShift decimal-preparation update
+
+- Keep the exact `BigInteger` bit-shift calculation unchanged.
+- Replace phase-3 `BigInteger -> base-10,000` recursive DivRem preparation with the existing parallel NTT/CRT power pipeline.
+- Use all configured logical workers for this phase when multithreading is enabled; use one worker when disabled.
+- Formatting progress displays the worker count while parallel preparation is active.
+- TXT export remains unified through `ParallelBigUnsigned.WriteDecimalBlocks()` and the SIMD formatter.

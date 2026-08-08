@@ -1,6 +1,8 @@
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
@@ -22,6 +24,14 @@ internal sealed class ParallelBigUnsigned
     private const int DigitsPerLimb = 4;
     private const int SchoolbookWorkLimit = 250_000;
     private const int MaximumTransformLength = 1 << 26;
+
+    // Binary BigInteger results (notably the |a| = 2^k bit-shift shortcut)
+    // are imported into the same base-10,000 representation used by NTT/CRT
+    // before TXT export.  A 1,024-limb leaf is exactly 4,096 decimal digits,
+    // matching the export block size and keeping each leaf conversion small.
+    private const int BigIntegerImportLeafLimbCount = 1 << 10; // 1024 limbs = 4096 digits
+    private const int BigIntegerImportParallelBranchLimbThreshold =
+        BigIntegerImportLeafLimbCount * 16;
 
     // Persistent twiddle storage is adaptive.  Low-thread/smaller systems keep
     // the proven 1,048,576-value cap.  CPUs with at least 8 logical processors
@@ -151,6 +161,399 @@ internal sealed class ParallelBigUnsigned
         return new ParallelBigUnsigned(
             limbs.ToArray(),
             takeOwnership: true);
+    }
+
+    /// <summary>
+    /// Converts a non-negative binary BigInteger into this type's base-10,000
+    /// limbs without allocating one giant decimal string.  The value is split
+    /// at powers of 10,000 on 1,024-limb boundaries; independent branches may
+    /// run concurrently, and each leaf formats at most 4,096 decimal digits
+    /// into a pooled buffer before parsing them directly into destination limbs.
+    /// </summary>
+    public static ParallelBigUnsigned FromBigInteger(
+        BigInteger value,
+        int estimatedDecimalDigitCount,
+        int workerCount,
+        Action<int, int>? progress,
+        CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+            estimatedDecimalDigitCount);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (value.Sign < 0)
+        {
+            value = BigInteger.Abs(
+                value);
+        }
+
+        if (value.IsZero)
+        {
+            progress?.Invoke(
+                1,
+                1);
+
+            return new ParallelBigUnsigned(
+                [0],
+                takeOwnership: true);
+        }
+
+        // One guard limb makes the importer safe even if the logarithmic digit
+        // estimate lands one digit below the exact result near a power of ten.
+        // Trim() removes the unused high limb after conversion.
+        int limbCapacity =
+            checked(
+                (estimatedDecimalDigitCount +
+                 DigitsPerLimb - 1) /
+                DigitsPerLimb +
+                1);
+
+        var limbs =
+            new uint[limbCapacity];
+
+        int totalLeaves =
+            GetBigIntegerImportLeafCountFromLimbCapacity(
+                limbCapacity);
+
+        int completedLeaves = 0;
+
+        void ReportLeaves(
+            int leafCount)
+        {
+            int completed =
+                Interlocked.Add(
+                    ref completedLeaves,
+                    leafCount);
+
+            progress?.Invoke(
+                Math.Min(
+                    completed,
+                    totalLeaves),
+                totalLeaves);
+        }
+
+        workerCount =
+            Math.Clamp(
+                workerCount,
+                1,
+                Math.Max(
+                    1,
+                    Environment.ProcessorCount));
+
+        var powersOfBase =
+            new ConcurrentDictionary<int, Lazy<BigInteger>>();
+
+        FillBigIntegerLimbsParallel(
+            value,
+            limbs,
+            0,
+            limbCapacity,
+            workerCount,
+            powersOfBase,
+            ReportLeaves,
+            cancellationToken);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return new ParallelBigUnsigned(
+            limbs,
+            takeOwnership: true);
+    }
+
+    public static int GetBigIntegerImportLeafCount(
+        int estimatedDecimalDigitCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+            estimatedDecimalDigitCount);
+
+        int limbCapacity =
+            checked(
+                (estimatedDecimalDigitCount +
+                 DigitsPerLimb - 1) /
+                DigitsPerLimb +
+                1);
+
+        return GetBigIntegerImportLeafCountFromLimbCapacity(
+            limbCapacity);
+    }
+
+    private static int GetBigIntegerImportLeafCountFromLimbCapacity(
+        int limbCapacity)
+    {
+        return checked(
+            (limbCapacity +
+             BigIntegerImportLeafLimbCount - 1) /
+            BigIntegerImportLeafLimbCount);
+    }
+
+    private static void FillBigIntegerLimbsParallel(
+        BigInteger value,
+        uint[] destination,
+        int destinationStart,
+        int limbCount,
+        int workerBudget,
+        ConcurrentDictionary<int, Lazy<BigInteger>> powersOfBase,
+        Action<int> reportLeaves,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (value.IsZero)
+        {
+            reportLeaves(
+                GetBigIntegerImportLeafCountFromLimbCapacity(
+                    limbCount));
+
+            return;
+        }
+
+        if (limbCount <=
+            BigIntegerImportLeafLimbCount)
+        {
+            FillBigIntegerLimbLeaf(
+                value,
+                destination,
+                destinationStart,
+                limbCount,
+                cancellationToken);
+
+            reportLeaves(
+                1);
+
+            return;
+        }
+
+        // Split on an exact 1,024-limb boundary.  This keeps every recursive
+        // range aligned to the same 4,096-digit leaf size used by TXT output,
+        // so progress accounting and cache locality remain predictable.
+        int approximateHalf =
+            limbCount / 2;
+
+        int lowLimbCount =
+            Math.Max(
+                BigIntegerImportLeafLimbCount,
+                approximateHalf /
+                BigIntegerImportLeafLimbCount *
+                BigIntegerImportLeafLimbCount);
+
+        if (lowLimbCount >=
+            limbCount)
+        {
+            lowLimbCount =
+                limbCount -
+                BigIntegerImportLeafLimbCount;
+        }
+
+        int highLimbCount =
+            limbCount -
+            lowLimbCount;
+
+        BigInteger divisor =
+            GetCachedPowerOfLimbBase(
+                powersOfBase,
+                lowLimbCount);
+
+        BigInteger highValue =
+            BigInteger.DivRem(
+                value,
+                divisor,
+                out BigInteger lowValue);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        int lowWorkerBudget =
+            workerBudget / 2;
+
+        int highWorkerBudget =
+            workerBudget -
+            lowWorkerBudget;
+
+        bool splitAcrossWorkers =
+            lowWorkerBudget > 0 &&
+            limbCount >=
+                BigIntegerImportParallelBranchLimbThreshold;
+
+        if (!splitAcrossWorkers)
+        {
+            FillBigIntegerLimbsParallel(
+                lowValue,
+                destination,
+                destinationStart,
+                lowLimbCount,
+                1,
+                powersOfBase,
+                reportLeaves,
+                cancellationToken);
+
+            FillBigIntegerLimbsParallel(
+                highValue,
+                destination,
+                checked(
+                    destinationStart +
+                    lowLimbCount),
+                highLimbCount,
+                1,
+                powersOfBase,
+                reportLeaves,
+                cancellationToken);
+
+            return;
+        }
+
+        Task lowTask =
+            Task.Factory.StartNew(
+                () => FillBigIntegerLimbsParallel(
+                    lowValue,
+                    destination,
+                    destinationStart,
+                    lowLimbCount,
+                    lowWorkerBudget,
+                    powersOfBase,
+                    reportLeaves,
+                    cancellationToken),
+                cancellationToken,
+                TaskCreationOptions.LongRunning |
+                TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default);
+
+        try
+        {
+            FillBigIntegerLimbsParallel(
+                highValue,
+                destination,
+                checked(
+                    destinationStart +
+                    lowLimbCount),
+                highLimbCount,
+                highWorkerBudget,
+                powersOfBase,
+                reportLeaves,
+                cancellationToken);
+        }
+        catch
+        {
+            try
+            {
+                lowTask.GetAwaiter()
+                    .GetResult();
+            }
+            catch
+            {
+                // Preserve the exception/cancellation from the current branch.
+            }
+
+            throw;
+        }
+
+        lowTask.GetAwaiter()
+            .GetResult();
+    }
+
+    private static BigInteger GetCachedPowerOfLimbBase(
+        ConcurrentDictionary<int, Lazy<BigInteger>> powersOfBase,
+        int exponent)
+    {
+        Lazy<BigInteger> lazyPower =
+            powersOfBase.GetOrAdd(
+                exponent,
+                static value =>
+                    new Lazy<BigInteger>(
+                        () => BigInteger.Pow(
+                            new BigInteger(LimbBase),
+                            value),
+                        LazyThreadSafetyMode.ExecutionAndPublication));
+
+        return lazyPower.Value;
+    }
+
+    private static void FillBigIntegerLimbLeaf(
+        BigInteger value,
+        uint[] destination,
+        int destinationStart,
+        int limbCount,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        int characterCapacity =
+            checked(
+                limbCount *
+                DigitsPerLimb);
+
+        char[] rentedCharacters =
+            ArrayPool<char>.Shared.Rent(
+                characterCapacity);
+
+        try
+        {
+            Span<char> characters =
+                rentedCharacters.AsSpan(
+                    0,
+                    characterCapacity);
+
+            if (!value.TryFormat(
+                    characters,
+                    out int charactersWritten,
+                    default,
+                    CultureInfo.InvariantCulture))
+            {
+                throw new InvalidOperationException(
+                    "BigInteger decimal leaf exceeded its assigned base-10,000 range.");
+            }
+
+            int sourceEnd =
+                charactersWritten;
+
+            int destinationIndex =
+                destinationStart;
+
+            int destinationEnd =
+                checked(
+                    destinationStart +
+                    limbCount);
+
+            while (sourceEnd > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (destinationIndex >=
+                    destinationEnd)
+                {
+                    throw new InvalidOperationException(
+                        "BigInteger decimal leaf produced more base-10,000 limbs than expected.");
+                }
+
+                int sourceStart =
+                    Math.Max(
+                        0,
+                        sourceEnd -
+                        DigitsPerLimb);
+
+                uint limb = 0;
+
+                for (int sourceIndex = sourceStart;
+                     sourceIndex < sourceEnd;
+                     sourceIndex++)
+                {
+                    limb =
+                        checked(
+                            limb * 10u +
+                            (uint)(characters[sourceIndex] - '0'));
+                }
+
+                destination[destinationIndex++] =
+                    limb;
+
+                sourceEnd =
+                    sourceStart;
+            }
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(
+                rentedCharacters);
+        }
     }
 
     public static ParallelPowerResult Pow(

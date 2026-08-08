@@ -61,3 +61,22 @@ Không gom các thuật toán khác bản chất vào một “calculator chung�
 - TXT export keeps the existing 4,096-digit progress/write blocks.  Formatting now fills those blocks in bulk instead of appending four characters per limb.
 - `HardwareAccelerationSwitch` controls this formatter through `CalculationAccelerationManager.UseSimd`; unsupported CPUs fall back to the scalar formatter.
 - The displayed NTT benchmark elapsed time intentionally remains computation-only because `PowerCalculationState.Elapsed` is captured before preview formatting.  v22 should therefore be benchmarked on preview/export formatting time separately from the ~49.x s NTT compute time.
+
+## v25 eager base-10,000 preparation for bit-shift powers
+
+- `ExportDigitThreshold` remains `100_001`: only results with more than 100,000 decimal digits expose TXT export.
+- The arithmetic shortcut is unchanged: `|a| = 2^k` still computes the exact binary result using `BigInteger.One << (k*n)` on one worker.
+- The important change is timing: binary `BigInteger -> base-10,000` conversion is now completed during calculation phase 3 (Formatting), before the result UI enables TXT export. Export never performs this conversion.
+- When multithreading is enabled, decimal preparation may use the bounded BigInteger-import worker budget; this does not change the single-threaded bit-shift arithmetic itself.
+- The prepared magnitude is stored directly in `PowerCalculationState.ParallelMagnitude`, exactly like the normalized magnitude produced by NTT/CRT. There is no lazy decimal cache and no separate bit-shift exporter.
+- Therefore TXT export for bit-shift and NTT/CRT now enters the same `ParallelBigUnsigned.WriteDecimalBlocks()` pipeline immediately. The AVX2 formatter from v22 is used when hardware acceleration is enabled.
+- `10^n` keeps its even faster direct `1 + zero blocks` path because no magnitude conversion is necessary.
+- Formatting progress now maps phase progress from 90% to 99%, so a large bit-shift decimal preparation does not look frozen.
+
+## v26 BitShift + parallel decimal preparation
+
+- `|a| = 2^k` keeps the exact single-threaded `BigInteger.One << (k*n)` arithmetic shortcut.
+- For results with at least `100_001` decimal digits, phase 3 no longer converts that giant binary `BigInteger` through the recursive decimal `DivRem` importer.
+- Phase 3 instead prepares the reusable base-10,000 magnitude through the same `ParallelBigUnsigned.Pow(|a|, n, workers, ...)` NTT/CRT/PowSplit pipeline used by normal parallel powers.
+- When multithreading is enabled, this preparation uses the configured logical worker budget; when disabled it uses one worker. The bit-shift arithmetic itself remains single-threaded.
+- TXT export still enters the common `ParallelMagnitude.WriteDecimalBlocks()` path immediately and retains the optional AVX2 decimal formatter from v22.
