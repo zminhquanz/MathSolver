@@ -2863,6 +2863,28 @@ public partial class PowerRootView : LocalizedSolverView
                       sizeof(char)
                     : 0L));
 
+        if (diagnostics.UsedExponentSplit)
+        {
+            // v31 shares one P1/P2 twiddle-plan set across both concurrent
+            // PowSplit branches. v30 held one identical set per branch. Each
+            // plan owns forward + inverse arrays, so the duplicate live set was
+            // ~64 MiB on 8T+ systems (2^21 cache) or ~32 MiB below that. Keep
+            // the existing conservative multiplier and subtract only this
+            // concrete storage reduction.
+            long sharedTwiddleSavingsBytes =
+                (Environment.ProcessorCount >= 8
+                    ? 64L
+                    : 32L) *
+                1024L *
+                1024L;
+
+            estimatedPeakRamBytes =
+                Math.Max(
+                    magnitude.StorageBytes,
+                    estimatedPeakRamBytes -
+                    sharedTwiddleSavingsBytes);
+        }
+
         return new PowerCalculationState(
             baseValue,
             exponent,

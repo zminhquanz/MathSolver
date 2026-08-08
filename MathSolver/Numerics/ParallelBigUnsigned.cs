@@ -639,6 +639,14 @@ internal sealed class ParallelBigUnsigned
         using var nttTwiddleBufferPool =
             new NttTwiddleBufferPool();
 
+        // v31: both PowSplit branches execute the same NTT moduli and therefore
+        // need identical immutable twiddle tables. Keep exactly one Pow-scoped
+        // plan per modulus and let every worker team share it instead of each
+        // branch owning another 64 MiB-class pair of forward/inverse tables.
+        using var sharedNttTwiddlePlans =
+            new SharedNttTwiddlePlans(
+                nttTwiddleBufferPool);
+
         if (TryCreateExponentSplit(
                 exponent,
                 workerCount,
@@ -652,7 +660,7 @@ internal sealed class ParallelBigUnsigned
                 secondExponent,
                 workerCount,
                 nttBufferPool,
-                nttTwiddleBufferPool,
+                sharedNttTwiddlePlans,
                 progress,
                 cancellationToken);
         }
@@ -667,7 +675,7 @@ internal sealed class ParallelBigUnsigned
                new FixedWorkerTeam(
                    workerCount,
                    nttBufferPool,
-                   nttTwiddleBufferPool))
+                   sharedNttTwiddlePlans))
         {
             actualWorkerCount =
                 workers.WorkerCount;
@@ -682,13 +690,18 @@ internal sealed class ParallelBigUnsigned
                     cancellationToken);
         }
 
-        // All transform leases and team-scoped twiddle tables are dead here.
-        // Capture pool telemetry, then drop the retained transform references
-        // before the final result leaves Pow().
+        // All transform leases and workers are dead here. Capture pool
+        // telemetry, then release both retained NTT workspaces and the shared
+        // Pow-scoped twiddle plans before the final result leaves Pow().
         diagnostics.ConfigureNttBufferPool(
             nttBufferPool.CreateStatisticsSnapshot());
 
         nttBufferPool.ReleaseCachedBuffers();
+
+        // No worker is using twiddles now. Return the four shared arrays to the
+        // small Pow-scoped pool and immediately drop those cached references so
+        // they cannot remain live while the final magnitude is handed to UI.
+        sharedNttTwiddlePlans.ReleasePlans();
         nttTwiddleBufferPool.ReleaseCachedBuffers();
 
         return new ParallelPowerResult(
@@ -704,7 +717,7 @@ internal sealed class ParallelBigUnsigned
         int secondExponent,
         int workerCount,
         NttBufferPool nttBufferPool,
-        NttTwiddleBufferPool nttTwiddleBufferPool,
+        SharedNttTwiddlePlans sharedNttTwiddlePlans,
         Action<int, int>? progress,
         CancellationToken cancellationToken)
     {
@@ -787,7 +800,7 @@ internal sealed class ParallelBigUnsigned
                     new FixedWorkerTeam(
                         branchWorkerCount,
                         nttBufferPool,
-                        nttTwiddleBufferPool);
+                        sharedNttTwiddlePlans);
 
                 ParallelBigUnsigned branchMagnitude =
                     PowWithTeam(
@@ -887,7 +900,7 @@ internal sealed class ParallelBigUnsigned
                new FixedWorkerTeam(
                    workerCount,
                    nttBufferPool,
-                   nttTwiddleBufferPool))
+                   sharedNttTwiddlePlans))
         {
             magnitude =
                 Multiply(
@@ -920,7 +933,13 @@ internal sealed class ParallelBigUnsigned
         // been disposed. Drop the two cached transform arrays now instead of
         // waiting for the enclosing using statement to leave Pow().
         nttBufferPool.ReleaseCachedBuffers();
-        nttTwiddleBufferPool.ReleaseCachedBuffers();
+        sharedNttTwiddlePlans.ReleasePlans();
+
+        // ReleasePlans() returns the shared forward/inverse tables to the
+        // Pow-scoped twiddle pool. That pool is owned by Pow(), so its using
+        // declaration disposes it immediately after PowSplit() returns and
+        // before the result is handed to the caller. Do not reference the
+        // Pow-local nttTwiddleBufferPool from this helper.
 
         return new ParallelPowerResult(
             magnitude,
@@ -1650,9 +1669,14 @@ internal sealed class ParallelBigUnsigned
         // coefficientCount normalized base-B digits. The explicit logical
         // length on ParallelBigUnsigned lets this capacity stay in place
         // without a full-array resize/copy.
-        var residues =
-            new uint[checked(
-                coefficientCount + 1)];
+        // Every logical residue slot is overwritten by the inverse-transform
+        // copy below, and the one spare carry slot is outside logical length
+        // until explicitly written. Avoid zero-filling this potentially ~180
+        // MiB array before immediately overwriting it.
+        uint[] residues =
+            GC.AllocateUninitializedArray<uint>(
+                checked(
+                    coefficientCount + 1));
 
         ConvolveModulusCore(
             left,
@@ -1902,7 +1926,7 @@ internal sealed class ParallelBigUnsigned
         uint[] transformedLeft =
             workers.RentNttBuffer(
                 transformLength,
-                out bool reusedLeft);
+                out _);
 
         uint[]? transformedRight =
             null;
@@ -1912,8 +1936,7 @@ internal sealed class ParallelBigUnsigned
             PrepareNttBuffer(
                 transformedLeft,
                 left,
-                leftLength,
-                reusedLeft);
+                leftLength);
 
             NttTwiddlePlan twiddlePlan =
                 workers.GetTwiddlePlan(
@@ -1966,7 +1989,7 @@ internal sealed class ParallelBigUnsigned
                 uint[] rightTransform =
                     workers.RentNttBuffer(
                         transformLength,
-                        out bool reusedRight);
+                        out _);
 
                 transformedRight =
                     rightTransform;
@@ -1974,8 +1997,7 @@ internal sealed class ParallelBigUnsigned
                 PrepareNttBuffer(
                     rightTransform,
                     right,
-                    rightLength,
-                    reusedRight);
+                    rightLength);
 
                 ForwardDifTransform(
                     rightTransform,
@@ -2053,17 +2075,16 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Initializes a rented NTT workspace from a compact base-10,000 limb
-    /// array.  A fresh CLR array already has a zero tail; a reused workspace
-    /// does not, so only the tail that Array.Copy will not overwrite is
-    /// cleared.  This preserves the exact zero-padding required by convolution
-    /// without paying for a full-buffer clear on every rent.
+    /// Initializes a rented NTT workspace from compact base-10,000 limbs. v31
+    /// allocates new transform arrays uninitialized, so both fresh and reused
+    /// buffers follow the same rule: clear only the zero-padding tail and then
+    /// overwrite the complete source prefix. This avoids a redundant CLR
+    /// zero-fill of the source prefix on 128-256 MiB fresh workspaces.
     /// </summary>
     private static void PrepareNttBuffer(
         uint[] destination,
         uint[] source,
-        int sourceLength,
-        bool reused)
+        int sourceLength)
     {
         Debug.Assert(
             sourceLength > 0 &&
@@ -2073,8 +2094,7 @@ internal sealed class ParallelBigUnsigned
             destination.Length >=
             sourceLength);
 
-        if (reused &&
-            sourceLength <
+        if (sourceLength <
             destination.Length)
         {
             Array.Clear(
@@ -7032,8 +7052,13 @@ while (leftIndex + 1 < butterflyEnd)
 
         private readonly NttTwiddleBufferPool _bufferPool;
 
-        private readonly bool[] _readyStages =
-            new bool[32];
+        // Shared by all worker teams in one Pow operation. Stage values are
+        // immutable once published. Two split branches are allowed to race
+        // while producing the same deterministic table; Volatile publication
+        // guarantees a branch that observes Ready also observes every table
+        // write from the branch that completed first.
+        private readonly int[] _readyStages =
+            new int[32];
 
         public NttTwiddlePlan(
             NttTwiddleBufferPool bufferPool)
@@ -7096,18 +7121,21 @@ while (leftIndex + 1 < butterflyEnd)
         public bool IsStageReady(
             int halfLength)
         {
-            return _readyStages[
-                GetStageIndex(
-                    halfLength)];
+            return Volatile.Read(
+                       ref _readyStages[
+                           GetStageIndex(
+                               halfLength)]) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void MarkStageReady(
             int halfLength)
         {
-            _readyStages[
-                GetStageIndex(
-                    halfLength)] = true;
+            Volatile.Write(
+                ref _readyStages[
+                    GetStageIndex(
+                        halfLength)],
+                1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -7467,10 +7495,106 @@ while (leftIndex + 1 < butterflyEnd)
     }
 
     /// <summary>
-    /// Small Pow-scoped pool for the persistent forward/inverse twiddle tables.
-    /// Two split branches may need up to eight arrays concurrently, but the
-    /// final-combine team can reuse at most four; retain only those four after
-    /// a branch finishes and drop the entire cache before Pow returns.
+    /// Owns exactly one immutable twiddle plan per NTT modulus for one complete
+    /// Pow operation. PowSplit worker teams share these plans concurrently.
+    /// This removes the duplicate forward/inverse table pairs that v30 kept in
+    /// each branch while preserving the same hot-loop array lookups.
+    /// </summary>
+    private sealed class SharedNttTwiddlePlans : IDisposable
+    {
+        private readonly object _gate =
+            new();
+
+        private readonly NttTwiddleBufferPool _bufferPool;
+
+        private NttTwiddlePlan? _firstPlan;
+        private NttTwiddlePlan? _secondPlan;
+        private bool _released;
+
+        public SharedNttTwiddlePlans(
+            NttTwiddleBufferPool bufferPool)
+        {
+            _bufferPool =
+                bufferPool ??
+                throw new ArgumentNullException(
+                    nameof(bufferPool));
+        }
+
+        public NttTwiddlePlan Get(
+            uint modulus)
+        {
+            lock (_gate)
+            {
+                ObjectDisposedException.ThrowIf(
+                    _released,
+                    this);
+
+                if (modulus == FirstModulus)
+                {
+                    return _firstPlan ??=
+                        new NttTwiddlePlan(
+                            _bufferPool);
+                }
+
+                if (modulus == SecondModulus)
+                {
+                    return _secondPlan ??=
+                        new NttTwiddlePlan(
+                            _bufferPool);
+                }
+
+                throw new ArgumentOutOfRangeException(
+                    nameof(modulus),
+                    modulus,
+                    "Unsupported NTT modulus.");
+            }
+        }
+
+        public void ReleasePlans()
+        {
+            NttTwiddlePlan? first;
+            NttTwiddlePlan? second;
+
+            lock (_gate)
+            {
+                if (_released)
+                {
+                    return;
+                }
+
+                _released =
+                    true;
+
+                first =
+                    _firstPlan;
+
+                second =
+                    _secondPlan;
+
+                _firstPlan =
+                    null;
+
+                _secondPlan =
+                    null;
+            }
+
+            // Dispose outside the plan gate: returning arrays takes the small
+            // twiddle-pool lock and there is no reason to nest those locks.
+            first?.Dispose();
+            second?.Dispose();
+        }
+
+        public void Dispose()
+        {
+            ReleasePlans();
+        }
+    }
+
+    /// <summary>
+    /// Small Pow-scoped backing pool for the shared forward/inverse twiddle
+    /// tables. v31 needs at most four arrays total (forward + inverse for each
+    /// modulus); after SharedNttTwiddlePlans releases them, the cache is dropped
+    /// immediately before Pow returns.
     /// </summary>
     private sealed class NttTwiddleBufferPool : IDisposable
     {
@@ -7657,8 +7781,12 @@ while (leftIndex + 1 < butterflyEnd)
                     reused =
                         false;
 
+                    // PrepareNttBuffer overwrites the source prefix and
+                    // explicitly clears only the required zero-padding tail.
+                    // Avoid zeroing the entire 128-256 MiB workspace here.
                     buffer =
-                        new uint[length];
+                        GC.AllocateUninitializedArray<uint>(
+                            length);
                 }
 
                 _rentCount++;
@@ -7801,11 +7929,12 @@ while (leftIndex + 1 < butterflyEnd)
         private int _itemCount;
         private bool _stopping;
 
-        // Twiddle stages are immutable after construction, so keep one plan per
-        // modulus for the lifetime of this worker team and reuse it across all
-        // NTT multiplications performed by the same exponent branch.
-        private NttTwiddlePlan? _firstTwiddlePlan;
-        private NttTwiddlePlan? _secondTwiddlePlan;
+        // v31: twiddle plans are Pow-scoped and shared by every worker team.
+        // The hot NTT kernels still receive the same NttTwiddlePlan object; only
+        // ownership/lifetime changed, so no butterfly arithmetic is affected.
+        private readonly SharedNttTwiddlePlans _sharedNttTwiddlePlans;
+        private NttTwiddlePlan? _firstTwiddlePlanRef;
+        private NttTwiddlePlan? _secondTwiddlePlanRef;
 
         // One bounded CRT/carry scratch block is retained by this team and
         // reused across every large multiplication it performs. Split branches
@@ -7817,22 +7946,21 @@ while (leftIndex + 1 < butterflyEnd)
         // Pow operation.  Split branches intentionally share the same pool;
         // the pool itself is synchronized and caps retention to two arrays.
         private readonly NttBufferPool _nttBufferPool;
-        private readonly NttTwiddleBufferPool _nttTwiddleBufferPool;
 
         public FixedWorkerTeam(
             int workerCount,
             NttBufferPool nttBufferPool,
-            NttTwiddleBufferPool nttTwiddleBufferPool)
+            SharedNttTwiddlePlans sharedNttTwiddlePlans)
         {
             _nttBufferPool =
                 nttBufferPool ??
                 throw new ArgumentNullException(
                     nameof(nttBufferPool));
 
-            _nttTwiddleBufferPool =
-                nttTwiddleBufferPool ??
+            _sharedNttTwiddlePlans =
+                sharedNttTwiddlePlans ??
                 throw new ArgumentNullException(
-                    nameof(nttTwiddleBufferPool));
+                    nameof(sharedNttTwiddlePlans));
 
             WorkerCount =
                 Math.Max(
@@ -7909,23 +8037,23 @@ while (leftIndex + 1 < butterflyEnd)
         }
 
         // FixedWorkerTeam itself is private to ParallelBigUnsigned, so this
-        // member cannot escape the enclosing type.  It must nevertheless be
-        // accessible to ConvolveModulus(), which lives on the enclosing class.
+        // member cannot escape the enclosing type. The returned plan is owned
+        // by the Pow-scoped SharedNttTwiddlePlans rather than by this team.
         public NttTwiddlePlan GetTwiddlePlan(
             uint modulus)
         {
             if (modulus == FirstModulus)
             {
-                return _firstTwiddlePlan ??=
-                    new NttTwiddlePlan(
-                        _nttTwiddleBufferPool);
+                return _firstTwiddlePlanRef ??=
+                    _sharedNttTwiddlePlans.Get(
+                        modulus);
             }
 
             if (modulus == SecondModulus)
             {
-                return _secondTwiddlePlan ??=
-                    new NttTwiddlePlan(
-                        _nttTwiddleBufferPool);
+                return _secondTwiddlePlanRef ??=
+                    _sharedNttTwiddlePlans.Get(
+                        modulus);
             }
 
             throw new ArgumentOutOfRangeException(
@@ -8002,11 +8130,11 @@ while (leftIndex + 1 < butterflyEnd)
                 thread.Join();
             }
 
-            _firstTwiddlePlan?.Dispose();
-            _secondTwiddlePlan?.Dispose();
-
-            _firstTwiddlePlan = null;
-            _secondTwiddlePlan = null;
+            // Shared twiddle plans outlive individual branch/final worker
+            // teams and are released once the complete Pow operation ends.
+            // Drop only this team's cheap cached references.
+            _firstTwiddlePlanRef = null;
+            _secondTwiddlePlanRef = null;
             _crtCarryScratch = null;
 
             // The last scheduled lambda can capture a very large transform
