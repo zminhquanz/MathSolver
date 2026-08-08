@@ -1273,6 +1273,57 @@ internal sealed class ParallelBigUnsigned
             int halfLength =
                 stageLength >> 1;
 
+            // Fuse two cached global DIF stages into one memory pass whenever
+            // the second stage still lies above the LLC blocking boundary.
+            // Four quarter streams are consumed together, so the second stage
+            // reuses values that are already in the core/cache instead of
+            // sweeping the complete transform again.  The actual butterfly
+            // arithmetic remains identical to the proven scalar v16 path.
+            int nextStageLength =
+                stageLength >> 1;
+
+            if (nextStageLength > l3NttTileLength &&
+                CanFuseForwardCachedStagePair(
+                    length,
+                    stageLength,
+                    twiddlePlan,
+                    workers.WorkerCount,
+                    buildCachedTwiddles))
+            {
+                int firstTwiddleOffset =
+                    EnsureCachedStageTwiddles(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        stageLength,
+                        workers,
+                        cancellationToken);
+
+                int secondTwiddleOffset =
+                    EnsureCachedStageTwiddles(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        nextStageLength,
+                        workers,
+                        cancellationToken);
+
+                ExecuteForwardCachedStagePairByGroups(
+                    values,
+                    modulus,
+                    twiddlePlan.ForwardTwiddles,
+                    firstTwiddleOffset,
+                    secondTwiddleOffset,
+                    stageLength,
+                    workers,
+                    cancellationToken);
+
+                // The for-loop update performs the second shift, thereby
+                // skipping the stage already completed by the fused kernel.
+                stageLength >>= 1;
+                continue;
+            }
+
             // Enter the last-level-cache hierarchy first.  Once DIF reaches
             // l3NttTileLength, all remaining butterflies are independent inside
             // each LLC tile, so complete L3 -> L2 -> L1 locally and avoid the
@@ -1761,6 +1812,38 @@ internal sealed class ParallelBigUnsigned
             bool normalizeOutput =
                 stageLength == length;
 
+            // DIT counterpart of the two-stage DIF fusion.  Only cached
+            // non-final global stages are paired, so normalization remains on
+            // the original final-stage path.  Completing S and 2S together
+            // cuts one whole-array pass and one worker-team barrier.
+            int nextStageLength =
+                stageLength << 1;
+
+            if (!normalizeOutput &&
+                nextStageLength < length &&
+                CanFuseInverseCachedStagePair(
+                    length,
+                    stageLength,
+                    twiddlePlan,
+                    workers.WorkerCount))
+            {
+                ExecuteInverseCachedStagePairByGroups(
+                    values,
+                    modulus,
+                    twiddlePlan.InverseTwiddles,
+                    twiddlePlan.GetOffset(
+                        halfLength),
+                    twiddlePlan.GetOffset(
+                        stageLength),
+                    stageLength,
+                    workers,
+                    cancellationToken);
+
+                // Skip the second stage consumed by the fused DIT kernel.
+                stageLength <<= 1;
+                continue;
+            }
+
             if (stageLength == 2)
             {
                 ExecuteLengthTwoButterflies(
@@ -2075,6 +2158,522 @@ internal sealed class ParallelBigUnsigned
         diagnostics.InverseTransformTicks +=
             Stopwatch.GetTimestamp() -
             transformStarted;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanFuseForwardCachedStagePair(
+        int transformLength,
+        int stageLength,
+        NttTwiddlePlan twiddlePlan,
+        int workerCount,
+        bool buildCachedTwiddles)
+    {
+        int halfLength =
+            stageLength >> 1;
+
+        int nextStageLength =
+            stageLength >> 1;
+
+        int nextHalfLength =
+            nextStageLength >> 1;
+
+        int groupCount =
+            transformLength /
+            stageLength;
+
+        int nextGroupCount =
+            transformLength /
+            nextStageLength;
+
+        if (groupCount < Math.Max(1, workerCount) ||
+            nextGroupCount < 2 ||
+            !twiddlePlan.CanCache(halfLength) ||
+            !twiddlePlan.CanCache(nextHalfLength))
+        {
+            return false;
+        }
+
+        // The first Forward transform is allowed to construct the two cached
+        // stages.  Later transforms only fuse when both immutable tables have
+        // already been published by that first pass.
+        return buildCachedTwiddles ||
+               (twiddlePlan.IsStageReady(halfLength) &&
+                twiddlePlan.IsStageReady(nextHalfLength));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanFuseInverseCachedStagePair(
+        int transformLength,
+        int stageLength,
+        NttTwiddlePlan twiddlePlan,
+        int workerCount)
+    {
+        int halfLength =
+            stageLength >> 1;
+
+        int nextStageLength =
+            stageLength << 1;
+
+        int nextHalfLength =
+            stageLength;
+
+        int groupCount =
+            transformLength /
+            stageLength;
+
+        int nextGroupCount =
+            transformLength /
+            nextStageLength;
+
+        return groupCount >= 2 &&
+               nextGroupCount >= Math.Max(1, workerCount) &&
+               twiddlePlan.CanCache(halfLength) &&
+               twiddlePlan.CanCache(nextHalfLength) &&
+               twiddlePlan.IsStageReady(halfLength) &&
+               twiddlePlan.IsStageReady(nextHalfLength);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int EnsureCachedStageTwiddles(
+        NttTwiddlePlan twiddlePlan,
+        uint primitiveRoot,
+        uint modulus,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength =
+            stageLength >> 1;
+
+        int twiddleOffset =
+            twiddlePlan.GetOffset(
+                halfLength);
+
+        if (twiddlePlan.IsStageReady(
+                halfLength))
+        {
+            return twiddleOffset;
+        }
+
+        uint root =
+            (uint)ModPow(
+                primitiveRoot,
+                (modulus - 1u) /
+                (uint)stageLength,
+                modulus);
+
+        BuildTwiddleTables(
+            twiddlePlan.ForwardTwiddles,
+            twiddlePlan.InverseTwiddles,
+            twiddleOffset,
+            halfLength,
+            root,
+            modulus,
+            workers,
+            cancellationToken);
+
+        twiddlePlan.MarkStageReady(
+            halfLength);
+
+        return twiddleOffset;
+    }
+
+    /// <summary>
+    /// Fuses two cached global DIF stages S and S/2.  For each butterfly index
+    /// one worker consumes the four corresponding quarter streams, performs
+    /// both stages while those values are live, and writes the final four
+    /// outputs once.  Arithmetic is unchanged; one complete memory sweep and
+    /// one stage barrier disappear.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairByGroups(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int quarterLength =
+            halfLength >> 1;
+
+        int groupCount =
+            values.Length /
+            stageLength;
+
+        ExecuteRanges(
+            groupCount,
+            workers,
+            cancellationToken,
+            (groupStart, groupEnd) =>
+            {
+                for (int groupIndex = groupStart;
+                     groupIndex < groupEnd;
+                     groupIndex++)
+                {
+                    int index0 =
+                        groupIndex *
+                        stageLength;
+
+                    int index1 =
+                        index0 +
+                        quarterLength;
+
+                    int index2 =
+                        index0 +
+                        halfLength;
+
+                    int index3 =
+                        index2 +
+                        quarterLength;
+
+                    int firstTwiddleIndex0 =
+                        firstTwiddleOffset;
+
+                    int firstTwiddleIndex1 =
+                        firstTwiddleOffset +
+                        quarterLength;
+
+                    int secondTwiddleIndex =
+                        secondTwiddleOffset;
+
+                    int remaining =
+                        quarterLength;
+
+                    while (remaining > 0)
+                    {
+                        int chunkLength =
+                            Math.Min(
+                                remaining,
+                                CancellationStride);
+
+                        int chunkEnd =
+                            index0 +
+                            chunkLength;
+
+                        for (;
+                             index0 < chunkEnd;
+                             index0++,
+                             index1++,
+                             index2++,
+                             index3++,
+                             firstTwiddleIndex0++,
+                             firstTwiddleIndex1++,
+                             secondTwiddleIndex++)
+                        {
+                            uint value0 =
+                                values[index0];
+
+                            uint value1 =
+                                values[index1];
+
+                            uint value2 =
+                                values[index2];
+
+                            uint value3 =
+                                values[index3];
+
+                            uint topSum0 =
+                                value0 + value2;
+
+                            uint topSum1 =
+                                value1 + value3;
+
+                            if (topSum0 >= modulus)
+                            {
+                                topSum0 -= modulus;
+                            }
+
+                            if (topSum1 >= modulus)
+                            {
+                                topSum1 -= modulus;
+                            }
+
+                            uint topDifference0 =
+                                value0 >= value2
+                                    ? value0 - value2
+                                    : value0 + modulus - value2;
+
+                            uint topDifference1 =
+                                value1 >= value3
+                                    ? value1 - value3
+                                    : value1 + modulus - value3;
+
+                            uint lower0 =
+                                (uint)((ulong)topDifference0 *
+                                       twiddles[firstTwiddleIndex0] %
+                                       modulus);
+
+                            uint lower1 =
+                                (uint)((ulong)topDifference1 *
+                                       twiddles[firstTwiddleIndex1] %
+                                       modulus);
+
+                            uint upperSum =
+                                topSum0 +
+                                topSum1;
+
+                            if (upperSum >= modulus)
+                            {
+                                upperSum -= modulus;
+                            }
+
+                            uint upperDifference =
+                                topSum0 >= topSum1
+                                    ? topSum0 - topSum1
+                                    : topSum0 + modulus - topSum1;
+
+                            uint lowerSum =
+                                lower0 +
+                                lower1;
+
+                            if (lowerSum >= modulus)
+                            {
+                                lowerSum -= modulus;
+                            }
+
+                            uint lowerDifference =
+                                lower0 >= lower1
+                                    ? lower0 - lower1
+                                    : lower0 + modulus - lower1;
+
+                            uint secondTwiddle =
+                                twiddles[secondTwiddleIndex];
+
+                            values[index0] =
+                                upperSum;
+
+                            values[index1] =
+                                (uint)((ulong)upperDifference *
+                                       secondTwiddle %
+                                       modulus);
+
+                            values[index2] =
+                                lowerSum;
+
+                            values[index3] =
+                                (uint)((ulong)lowerDifference *
+                                       secondTwiddle %
+                                       modulus);
+                        }
+
+                        remaining -=
+                            chunkLength;
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
+    }
+
+    /// <summary>
+    /// Fuses cached inverse DIT stages S and 2S.  Two adjacent S-sized groups
+    /// are completed and immediately merged while their four quarter streams
+    /// are hot, matching the forward pair fusion in reverse.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStagePairByGroups(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int parentLength =
+            stageLength << 1;
+
+        int parentCount =
+            values.Length /
+            parentLength;
+
+        ExecuteRanges(
+            parentCount,
+            workers,
+            cancellationToken,
+            (parentStart, parentEnd) =>
+            {
+                for (int parentIndex = parentStart;
+                     parentIndex < parentEnd;
+                     parentIndex++)
+                {
+                    int index0 =
+                        parentIndex *
+                        parentLength;
+
+                    int index1 =
+                        index0 +
+                        halfLength;
+
+                    int index2 =
+                        index0 +
+                        stageLength;
+
+                    int index3 =
+                        index2 +
+                        halfLength;
+
+                    int firstTwiddleIndex =
+                        firstTwiddleOffset;
+
+                    int secondTwiddleIndex0 =
+                        secondTwiddleOffset;
+
+                    int secondTwiddleIndex1 =
+                        secondTwiddleOffset +
+                        halfLength;
+
+                    int remaining =
+                        halfLength;
+
+                    while (remaining > 0)
+                    {
+                        int chunkLength =
+                            Math.Min(
+                                remaining,
+                                CancellationStride);
+
+                        int chunkEnd =
+                            index0 +
+                            chunkLength;
+
+                        for (;
+                             index0 < chunkEnd;
+                             index0++,
+                             index1++,
+                             index2++,
+                             index3++,
+                             firstTwiddleIndex++,
+                             secondTwiddleIndex0++,
+                             secondTwiddleIndex1++)
+                        {
+                            uint value0 =
+                                values[index0];
+
+                            uint value1 =
+                                values[index1];
+
+                            uint value2 =
+                                values[index2];
+
+                            uint value3 =
+                                values[index3];
+
+                            uint firstTwiddle =
+                                twiddles[firstTwiddleIndex];
+
+                            uint right0 =
+                                (uint)((ulong)value1 *
+                                       firstTwiddle %
+                                       modulus);
+
+                            uint right1 =
+                                (uint)((ulong)value3 *
+                                       firstTwiddle %
+                                       modulus);
+
+                            uint firstSum0 =
+                                value0 +
+                                right0;
+
+                            uint firstSum1 =
+                                value2 +
+                                right1;
+
+                            if (firstSum0 >= modulus)
+                            {
+                                firstSum0 -= modulus;
+                            }
+
+                            if (firstSum1 >= modulus)
+                            {
+                                firstSum1 -= modulus;
+                            }
+
+                            uint firstDifference0 =
+                                value0 >= right0
+                                    ? value0 - right0
+                                    : value0 + modulus - right0;
+
+                            uint firstDifference1 =
+                                value2 >= right1
+                                    ? value2 - right1
+                                    : value2 + modulus - right1;
+
+                            uint mergedRight0 =
+                                (uint)((ulong)firstSum1 *
+                                       twiddles[secondTwiddleIndex0] %
+                                       modulus);
+
+                            uint mergedRight1 =
+                                (uint)((ulong)firstDifference1 *
+                                       twiddles[secondTwiddleIndex1] %
+                                       modulus);
+
+                            uint finalSum0 =
+                                firstSum0 +
+                                mergedRight0;
+
+                            uint finalSum1 =
+                                firstDifference0 +
+                                mergedRight1;
+
+                            if (finalSum0 >= modulus)
+                            {
+                                finalSum0 -= modulus;
+                            }
+
+                            if (finalSum1 >= modulus)
+                            {
+                                finalSum1 -= modulus;
+                            }
+
+                            uint finalDifference0 =
+                                firstSum0 >= mergedRight0
+                                    ? firstSum0 - mergedRight0
+                                    : firstSum0 + modulus - mergedRight0;
+
+                            uint finalDifference1 =
+                                firstDifference0 >= mergedRight1
+                                    ? firstDifference0 - mergedRight1
+                                    : firstDifference0 + modulus - mergedRight1;
+
+                            values[index0] =
+                                finalSum0;
+
+                            values[index1] =
+                                finalSum1;
+
+                            values[index2] =
+                                finalDifference0;
+
+                            values[index3] =
+                                finalDifference1;
+                        }
+
+                        remaining -=
+                            chunkLength;
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     /// <summary>
