@@ -386,8 +386,9 @@
                                 CornerRadius="12"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                BackgroundColor="{DynamicResource DividerColor}"
                                 TextColor="{DynamicResource TextPrimaryColor}"
+                                ImageSource="content_copy.png"
                                 Clicked="OnCopyResultClicked" />
 
                             <Button
@@ -401,6 +402,7 @@
                                 FontAttributes="Bold"
                                 BackgroundColor="{DynamicResource PrimaryColor}"
                                 TextColor="{DynamicResource OnPrimaryColor}"
+                                ImageSource="file_export.png"
                                 Clicked="OnExportTextClicked" />
 
                         </Grid>
