@@ -489,7 +489,22 @@
     },
     {
       "key": "PowerRoot.InfoRam",
-      "source": "• RAM sử dụng (ước tính): {0}",
+      "source": "• Workspace thuật toán ước tính: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoProcessRam",
+      "source": "• RAM process hiện tại: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoProcessRamTrimmed",
+      "source": "• RAM process sau dọn workspace: {0} (trước dọn: {1})",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoNttBufferPool",
+      "source": "• NTT buffer pool: peak đang thuê {0}; cache tối đa {1}; tái sử dụng {2}/{3} lượt rent",
       "mode": "exact"
     },
     {

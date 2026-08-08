@@ -46,6 +46,13 @@ public partial class PowerRootView : LocalizedSolverView
     private const int ExactPreviewConversionLimit =
         100_100;
 
+    // Temporary NTT workspaces above this size are large enough that waiting
+    // for a later opportunistic Gen2 collection can leave gigabytes of dead
+    // LOH segments committed after the calculation. The cleanup runs only
+    // after the measured stopwatch has stopped.
+    private const long LargeCalculationMemoryCleanupThresholdBytes =
+        512L * 1024L * 1024L;
+
     private const int PreviewLeadingDigits =
         12;
 
@@ -2117,12 +2124,22 @@ public partial class PowerRootView : LocalizedSolverView
                 return;
             }
 
-            _calculationState =
+            long privateMemoryBeforeCleanup =
+                GetCurrentProcessPrivateMemoryBytes();
+
+            PowerCalculationState completedState =
                 state with
                 {
                     Elapsed =
-                        stopwatch.Elapsed
+                        stopwatch.Elapsed,
+                    ProcessPrivateMemoryBytes =
+                        privateMemoryBeforeCleanup,
+                    ProcessPrivateMemoryBeforeCleanupBytes =
+                        privateMemoryBeforeCleanup
                 };
+
+            _calculationState =
+                completedState;
 
             SetCalculationProgress(
                 baseValue,
@@ -2133,8 +2150,43 @@ public partial class PowerRootView : LocalizedSolverView
 
             StopButton.IsVisible = false;
 
+            // Show the completed result immediately. Memory cleanup is outside
+            // the measured calculation and only refreshes the diagnostic line.
             ShowResult(
-                _calculationState);
+                completedState);
+
+            // The measured calculation has already ended. Reclaim only very
+            // large dead NTT/LOH workspaces here so benchmark time remains
+            // apples-to-apples while process Private Bytes can fall promptly.
+            if (ShouldReleaseLargeTemporaryMemory(
+                    completedState))
+            {
+                long privateMemoryAfterCleanup =
+                    await ReleaseLargeTemporaryMemoryAsync();
+
+                if (calculationVersion !=
+                    _calculationVersion)
+                {
+                    return;
+                }
+
+                completedState =
+                    completedState with
+                    {
+                        ProcessPrivateMemoryBytes =
+                            privateMemoryAfterCleanup
+                    };
+
+                _calculationState =
+                    completedState;
+
+                if (LargeResultInfoBorder.IsVisible)
+                {
+                    LargeResultInfoLabel.Text =
+                        CreateLargeResultInformation(
+                            completedState);
+                }
+            }
         }
         catch (OperationCanceledException)
         {
@@ -3603,6 +3655,20 @@ public partial class PowerRootView : LocalizedSolverView
                 "PowerRoot.InfoRam",
                 FormatByteSize(
                     state.EstimatedPeakRamBytes)),
+            state.ProcessPrivateMemoryBytes > 0
+                ? state.ProcessPrivateMemoryBeforeCleanupBytes >
+                  state.ProcessPrivateMemoryBytes
+                    ? Format(
+                        "PowerRoot.InfoProcessRamTrimmed",
+                        FormatByteSize(
+                            state.ProcessPrivateMemoryBytes),
+                        FormatByteSize(
+                            state.ProcessPrivateMemoryBeforeCleanupBytes))
+                    : Format(
+                        "PowerRoot.InfoProcessRam",
+                        FormatByteSize(
+                            state.ProcessPrivateMemoryBytes))
+                : string.Empty,
             Format(
                 "PowerRoot.InfoTxtSize",
                 FormatByteSize(
@@ -3632,10 +3698,21 @@ public partial class PowerRootView : LocalizedSolverView
                     diagnostics.WorkerCount,
                     CalculationThreadingManager.LogicalProcessorCount));
 
+            lines.Insert(
+                5,
+                Format(
+                    "PowerRoot.InfoNttBufferPool",
+                    FormatByteSize(
+                        diagnostics.NttWorkspacePeakBytes),
+                    FormatByteSize(
+                        diagnostics.NttPoolPeakRetainedBytes),
+                    diagnostics.NttBufferReuseCount,
+                    diagnostics.NttBufferRentCount));
+
             if (diagnostics.UsedExponentSplit)
             {
                 lines.Insert(
-                    5,
+                    6,
                     Format(
                         "PowerRoot.InfoExponentSplit",
                         diagnostics.FirstExponent.ToString(
@@ -3679,6 +3756,11 @@ public partial class PowerRootView : LocalizedSolverView
                     FormatProfileSeconds(
                         diagnostics.Carry)));
         }
+
+        lines.RemoveAll(
+            static line =>
+                string.IsNullOrWhiteSpace(
+                    line));
 
         return string.Join(
             Environment.NewLine,
@@ -5097,6 +5179,55 @@ public partial class PowerRootView : LocalizedSolverView
                 Environment.NewLine));
     }
 
+    private static bool ShouldReleaseLargeTemporaryMemory(
+        PowerCalculationState state)
+    {
+        return state.ParallelMagnitude is not null &&
+               state.EstimatedPeakRamBytes >=
+               LargeCalculationMemoryCleanupThresholdBytes;
+    }
+
+    private static async Task<long> ReleaseLargeTemporaryMemoryAsync()
+    {
+        await Task.Run(
+            () =>
+            {
+                // NttBufferPool and FixedWorkerTeam are already disposed before
+                // ParallelBigUnsigned.Pow returns. A blocking Gen2 sweep is
+                // therefore sufficient to reclaim dead transform/twiddle LOH
+                // arrays. Do not compact the LOH here: moving the live final
+                // 100-200 MiB base-10,000 result would add unnecessary copying.
+                GC.Collect(
+                    GC.MaxGeneration,
+                    GCCollectionMode.Forced,
+                    blocking: true,
+                    compacting: false);
+            });
+
+        return GetCurrentProcessPrivateMemoryBytes();
+    }
+
+    private static long GetCurrentProcessPrivateMemoryBytes()
+    {
+        try
+        {
+            using Process process =
+                Process.GetCurrentProcess();
+
+            process.Refresh();
+
+            return Math.Max(
+                0L,
+                process.PrivateMemorySize64);
+        }
+        catch
+        {
+            // Process memory telemetry is diagnostic only; never fail a
+            // completed calculation if an OS/runtime cannot expose it.
+            return 0L;
+        }
+    }
+
     private static string FormatByteSize(
         long byteCount)
     {
@@ -5157,7 +5288,9 @@ public partial class PowerRootView : LocalizedSolverView
         long EstimatedPeakRamBytes,
         TimeSpan Elapsed,
         ParallelBigUnsigned? ParallelMagnitude,
-        ParallelPowerDiagnostics? ParallelDiagnostics);
+        ParallelPowerDiagnostics? ParallelDiagnostics,
+        long ProcessPrivateMemoryBytes = 0L,
+        long ProcessPrivateMemoryBeforeCleanupBytes = 0L);
 
     private sealed record RootCalculationState(
         Int128 Radicand,

@@ -114,3 +114,12 @@ A translator may:
 
 Add the new language to `manifest.json` only when it will be bundled with the
 application.
+
+## v29 memory diagnostics
+
+New/updated `PowerRoot` strings:
+
+- `PowerRoot.InfoRam`: estimated algorithm workspace.
+- `PowerRoot.InfoProcessRam`: current process Private Memory.
+- `PowerRoot.InfoProcessRamTrimmed`: process memory after cleanup plus the pre-cleanup value.
+- `PowerRoot.InfoNttBufferPool`: NTT pool peak leased/cache bytes and reuse/rent counts.

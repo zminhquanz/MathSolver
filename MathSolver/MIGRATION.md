@@ -23,3 +23,11 @@ workspace instead of allocating a separate second-residue array.
 
 Arithmetic, NTT primes, stage fusion, cache tiling, scalar unroll policies, Carry,
 SIMD TXT formatting, and cancellation semantics are unchanged.
+
+## v29 - Scoped NTT Pool + Aggressive Lifetime Release
+
+No public API migration is required.
+
+`NttBufferPool` is still scoped per `ParallelBigUnsigned.Pow()`, but v29 now drops cached transform references before returning the final result and reports pool peak/reuse telemetry. Worker-team twiddle arrays no longer enter `ArrayPool.Shared`; a Pow-scoped twiddle pool lets the final-combine team reuse branch tables and then releases the cache with the calculation, preventing large tables from being retained globally afterwards. For large NTT/base-10,000 results, one forced Gen2 sweep runs after the calculation stopwatch has stopped, so it can reclaim dead LOH workspaces without changing the benchmarked NTT time.
+
+Large-result diagnostics now distinguish estimated algorithm workspace from actual process Private Memory.

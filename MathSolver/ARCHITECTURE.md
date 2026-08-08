@@ -52,3 +52,17 @@ consume more RAM than the exact coefficient-length copy.
 This version deliberately does not yet fuse CRT with Carry or change PowSplit
 scheduling. Those remain separate future memory-optimization steps so RAM and
 performance effects can be benchmarked independently.
+
+## v29 - Scoped NTT Pool + Aggressive Lifetime Release
+
+v29 keeps the v28 NTT buffer-reuse architecture but makes the end-of-calculation lifetime explicit and observable:
+
+- PowSplit branches and final combine still share one `NttBufferPool` for exactly one `ParallelBigUnsigned.Pow()` call.
+- After every worker team is disposed, v29 records peak leased/cache bytes plus rent/reuse counts, then calls `ReleaseCachedBuffers()` before the final magnitude leaves `Pow()`.
+- `NttBufferPool.Dispose()` remains the cancellation/exception safety net.
+- `FixedWorkerTeam.Dispose()` explicitly drops the last scheduled delegate/failure references so lambdas cannot keep a transform array reachable after the team finishes.
+- Large twiddle tables now come from a small Pow-scoped `NttTwiddleBufferPool` instead of process-wide `ArrayPool.Shared`. Split branches may return tables to this local pool and the final-combine team can reuse up to four arrays; the whole twiddle pool is then released before `Pow()` returns. Fresh tables use `GC.AllocateUninitializedArray<uint>()` because each stage is fully initialized before its ready flag is published.
+- For large prepared base-10,000 results (estimated workspace >= 512 MiB), `PowerRootView` performs one blocking Gen2 sweep only after the displayed calculation stopwatch has stopped. LOH compaction is deliberately disabled so the live final magnitude is not copied merely to reclaim dead workspaces.
+- Result diagnostics now separate estimated algorithm workspace from current process Private Memory and expose NTT pool peak leased/cache bytes plus the reuse ratio.
+
+The NTT/CRT arithmetic, v19 stage fusion, v21 global adaptive 8-way, L3/L2/L1 cache kernels, PowSplit scheduling, Carry, and SIMD TXT formatting are unchanged.

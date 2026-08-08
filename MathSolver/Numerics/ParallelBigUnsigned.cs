@@ -587,6 +587,9 @@ internal sealed class ParallelBigUnsigned
         using var nttBufferPool =
             new NttBufferPool();
 
+        using var nttTwiddleBufferPool =
+            new NttTwiddleBufferPool();
+
         if (TryCreateExponentSplit(
                 exponent,
                 workerCount,
@@ -600,6 +603,7 @@ internal sealed class ParallelBigUnsigned
                 secondExponent,
                 workerCount,
                 nttBufferPool,
+                nttTwiddleBufferPool,
                 progress,
                 cancellationToken);
         }
@@ -607,24 +611,41 @@ internal sealed class ParallelBigUnsigned
         var diagnostics =
             new PowerDiagnosticsCollector();
 
-        using var workers =
-            new FixedWorkerTeam(
-                workerCount,
-                nttBufferPool);
+        ParallelBigUnsigned magnitude;
+        int actualWorkerCount;
 
-        ParallelBigUnsigned magnitude =
-            PowWithTeam(
-                baseValue,
-                exponent,
-                workers,
-                diagnostics,
-                progress,
-                cancellationToken);
+        using (var workers =
+               new FixedWorkerTeam(
+                   workerCount,
+                   nttBufferPool,
+                   nttTwiddleBufferPool))
+        {
+            actualWorkerCount =
+                workers.WorkerCount;
+
+            magnitude =
+                PowWithTeam(
+                    baseValue,
+                    exponent,
+                    workers,
+                    diagnostics,
+                    progress,
+                    cancellationToken);
+        }
+
+        // All transform leases and team-scoped twiddle tables are dead here.
+        // Capture pool telemetry, then drop the retained transform references
+        // before the final result leaves Pow().
+        diagnostics.ConfigureNttBufferPool(
+            nttBufferPool.CreateStatisticsSnapshot());
+
+        nttBufferPool.ReleaseCachedBuffers();
+        nttTwiddleBufferPool.ReleaseCachedBuffers();
 
         return new ParallelPowerResult(
             magnitude,
             diagnostics.CreateSnapshot(
-                workers.WorkerCount));
+                actualWorkerCount));
     }
 
     private static ParallelPowerResult PowSplit(
@@ -634,6 +655,7 @@ internal sealed class ParallelBigUnsigned
         int secondExponent,
         int workerCount,
         NttBufferPool nttBufferPool,
+        NttTwiddleBufferPool nttTwiddleBufferPool,
         Action<int, int>? progress,
         CancellationToken cancellationToken)
     {
@@ -715,7 +737,8 @@ internal sealed class ParallelBigUnsigned
                 using var branchWorkers =
                     new FixedWorkerTeam(
                         branchWorkerCount,
-                        nttBufferPool);
+                        nttBufferPool,
+                        nttTwiddleBufferPool);
 
                 ParallelBigUnsigned branchMagnitude =
                     PowWithTeam(
@@ -814,7 +837,8 @@ internal sealed class ParallelBigUnsigned
         using (var finalWorkers =
                new FixedWorkerTeam(
                    workerCount,
-                   nttBufferPool))
+                   nttBufferPool,
+                   nttTwiddleBufferPool))
         {
             magnitude =
                 Multiply(
@@ -839,6 +863,15 @@ internal sealed class ParallelBigUnsigned
         progress?.Invoke(
             totalOperationCount,
             totalOperationCount);
+
+        diagnostics.ConfigureNttBufferPool(
+            nttBufferPool.CreateStatisticsSnapshot());
+
+        // Both split branches and the final-combine worker team have already
+        // been disposed. Drop the two cached transform arrays now instead of
+        // waiting for the enclosing using statement to leave Pow().
+        nttBufferPool.ReleaseCachedBuffers();
+        nttTwiddleBufferPool.ReleaseCachedBuffers();
 
         return new ParallelPowerResult(
             magnitude,
@@ -6798,14 +6831,23 @@ while (leftIndex + 1 < butterflyEnd)
         private uint[]? _forwardTwiddles;
         private uint[]? _inverseTwiddles;
 
+        private readonly NttTwiddleBufferPool _bufferPool;
+
         private readonly bool[] _readyStages =
             new bool[32];
 
-        public NttTwiddlePlan()
+        public NttTwiddlePlan(
+            NttTwiddleBufferPool bufferPool)
         {
+            _bufferPool =
+                bufferPool ??
+                throw new ArgumentNullException(
+                    nameof(bufferPool));
+
             // The plan is reused across all transform lengths handled by one
-            // worker team. Allocate the adaptive capped table once; later
-            // transforms simply expose whichever stage lengths they need.
+            // worker team. The underlying arrays come from a Pow-scoped pool:
+            // branch teams can hand them to the final-combine team, but no
+            // multi-megabyte twiddle table survives the Pow lifetime.
             MaximumHalfLength =
                 SelectMaximumCachedTwiddleCount();
 
@@ -6814,11 +6856,11 @@ while (leftIndex + 1 < butterflyEnd)
                     MaximumHalfLength << 1);
 
             _forwardTwiddles =
-                ArrayPool<uint>.Shared.Rent(
+                _bufferPool.Rent(
                     capacity);
 
             _inverseTwiddles =
-                ArrayPool<uint>.Shared.Rent(
+                _bufferPool.Rent(
                     capacity);
         }
 
@@ -6899,16 +6941,14 @@ while (leftIndex + 1 < butterflyEnd)
 
             if (forward is not null)
             {
-                ArrayPool<uint>.Shared.Return(
-                    forward,
-                    clearArray: false);
+                _bufferPool.Return(
+                    forward);
             }
 
             if (inverse is not null)
             {
-                ArrayPool<uint>.Shared.Return(
-                    inverse,
-                    clearArray: false);
+                _bufferPool.Return(
+                    inverse);
             }
         }
     }
@@ -7070,6 +7110,11 @@ while (leftIndex + 1 < butterflyEnd)
         public long CrtTicks;
         public long CarryTicks;
 
+        private long _nttWorkspacePeakBytes;
+        private long _nttPoolPeakRetainedBytes;
+        private int _nttBufferRentCount;
+        private int _nttBufferReuseCount;
+
         private bool _usedExponentSplit;
         private int _firstExponent;
         private int _secondExponent;
@@ -7146,6 +7191,22 @@ while (leftIndex + 1 < butterflyEnd)
             _finalCombineTicks = finalCombineTicks;
         }
 
+        public void ConfigureNttBufferPool(
+            NttBufferPoolStatistics statistics)
+        {
+            _nttWorkspacePeakBytes =
+                statistics.PeakLeasedBytes;
+
+            _nttPoolPeakRetainedBytes =
+                statistics.PeakRetainedBytes;
+
+            _nttBufferRentCount =
+                statistics.RentCount;
+
+            _nttBufferReuseCount =
+                statistics.ReuseCount;
+        }
+
         public ParallelPowerDiagnostics CreateSnapshot(
             int workerCount)
         {
@@ -7165,7 +7226,11 @@ while (leftIndex + 1 < butterflyEnd)
                 _secondBranchWorkerCount,
                 ToTimeSpan(_firstBranchTicks),
                 ToTimeSpan(_secondBranchTicks),
-                ToTimeSpan(_finalCombineTicks));
+                ToTimeSpan(_finalCombineTicks),
+                _nttWorkspacePeakBytes,
+                _nttPoolPeakRetainedBytes,
+                _nttBufferRentCount,
+                _nttBufferReuseCount);
         }
 
         private static TimeSpan ToTimeSpan(
@@ -7203,18 +7268,14 @@ while (leftIndex + 1 < butterflyEnd)
     }
 
     /// <summary>
-    /// Reuses the two large temporary uint[] workspaces needed by an NTT
-    /// convolution.  Only arrays of the largest transform length observed so
-    /// far are retained, and at most two are cached because a non-square
-    /// convolution can have exactly two transforms live at once.
-    ///
-    /// The pool is shared by both PowSplit branches and the final combine.
-    /// That makes allocation lifetime explicit and prevents each modulus pass
-    /// from leaving 256 MiB-class arrays for the GC to discover later.
+    /// Small Pow-scoped pool for the persistent forward/inverse twiddle tables.
+    /// Two split branches may need up to eight arrays concurrently, but the
+    /// final-combine team can reuse at most four; retain only those four after
+    /// a branch finishes and drop the entire cache before Pow returns.
     /// </summary>
-    private sealed class NttBufferPool : IDisposable
+    private sealed class NttTwiddleBufferPool : IDisposable
     {
-        private const int MaximumRetainedBufferCount = 2;
+        private const int MaximumRetainedBufferCount = 4;
 
         private readonly object _gate =
             new();
@@ -7222,12 +7283,11 @@ while (leftIndex + 1 < butterflyEnd)
         private readonly Stack<uint[]> _buffers =
             new(MaximumRetainedBufferCount);
 
-        private int _retainedLength;
+        private int _bufferLength;
         private bool _disposed;
 
         public uint[] Rent(
-            int length,
-            out bool reused)
+            int length)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
                 length);
@@ -7238,33 +7298,25 @@ while (leftIndex + 1 < butterflyEnd)
                     _disposed,
                     this);
 
-                // Transform lengths grow by powers of two during exponentiation.
-                // Once a larger transform is requested, smaller cached arrays
-                // cannot satisfy it and only inflate the retained working set,
-                // so release their references immediately.
-                if (length >
-                    _retainedLength)
+                if (_bufferLength != 0 &&
+                    _bufferLength != length)
                 {
                     _buffers.Clear();
-                    _retainedLength =
-                        length;
                 }
 
-                if (length ==
-                        _retainedLength &&
-                    _buffers.Count > 0)
-                {
-                    reused =
-                        true;
+                _bufferLength =
+                    length;
 
+                if (_buffers.Count > 0)
+                {
                     return _buffers.Pop();
                 }
             }
 
-            reused =
-                false;
-
-            return new uint[length];
+            // Every stage is fully initialized before its ready flag is set, so
+            // unused table capacity does not need zero initialization.
+            return GC.AllocateUninitializedArray<uint>(
+                length);
         }
 
         public void Return(
@@ -7280,25 +7332,35 @@ while (leftIndex + 1 < butterflyEnd)
                     return;
                 }
 
-                if (buffer.Length >
-                    _retainedLength)
+                if (_bufferLength == 0)
                 {
-                    _buffers.Clear();
-                    _retainedLength =
+                    _bufferLength =
                         buffer.Length;
                 }
 
-                // Never keep a smaller stale workspace after a larger NTT has
-                // become the active size.  Also cap the cache to the exact two
-                // arrays useful to a non-square convolution.
                 if (buffer.Length ==
-                        _retainedLength &&
+                        _bufferLength &&
                     _buffers.Count <
                         MaximumRetainedBufferCount)
                 {
                     _buffers.Push(
                         buffer);
                 }
+            }
+        }
+
+        public void ReleaseCachedBuffers()
+        {
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _buffers.Clear();
+                _bufferLength =
+                    0;
             }
         }
 
@@ -7310,6 +7372,206 @@ while (leftIndex + 1 < butterflyEnd)
                 {
                     return;
                 }
+
+                _disposed =
+                    true;
+                _buffers.Clear();
+                _bufferLength =
+                    0;
+            }
+        }
+    }
+
+    private readonly record struct NttBufferPoolStatistics(
+        long PeakLeasedBytes,
+        long PeakRetainedBytes,
+        int RentCount,
+        int ReuseCount);
+
+    /// <summary>
+    /// Reuses the two large temporary uint[] workspaces needed by an NTT
+    /// convolution. Only arrays of the largest transform length observed so
+    /// far are retained, and at most two are cached because a non-square
+    /// convolution can have exactly two transforms live at once.
+    ///
+    /// The pool is scoped to exactly one Pow operation. Split branches and the
+    /// final combine share it while the calculation is active; Dispose then
+    /// drops every retained reference so 256 MiB-class workspaces become
+    /// collectible immediately instead of surviving with application lifetime.
+    /// </summary>
+    private sealed class NttBufferPool : IDisposable
+    {
+        private const int MaximumRetainedBufferCount = 2;
+
+        private readonly object _gate =
+            new();
+
+        private readonly Stack<uint[]> _buffers =
+            new(MaximumRetainedBufferCount);
+
+        private int _retainedLength;
+        private long _currentLeasedBytes;
+        private long _peakLeasedBytes;
+        private long _peakRetainedBytes;
+        private int _rentCount;
+        private int _reuseCount;
+        private int _leasedBufferCount;
+        private bool _disposed;
+
+        public uint[] Rent(
+            int length,
+            out bool reused)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+                length);
+
+            lock (_gate)
+            {
+                ObjectDisposedException.ThrowIf(
+                    _disposed,
+                    this);
+
+                if (length >
+                    _retainedLength)
+                {
+                    _buffers.Clear();
+                    _retainedLength =
+                        length;
+                }
+
+                uint[] buffer;
+
+                if (length ==
+                        _retainedLength &&
+                    _buffers.Count > 0)
+                {
+                    reused =
+                        true;
+
+                    buffer =
+                        _buffers.Pop();
+
+                    _reuseCount++;
+                }
+                else
+                {
+                    reused =
+                        false;
+
+                    buffer =
+                        new uint[length];
+                }
+
+                _rentCount++;
+                _leasedBufferCount++;
+
+                _currentLeasedBytes =
+                    checked(
+                        _currentLeasedBytes +
+                        (long)buffer.Length *
+                        sizeof(uint));
+
+                _peakLeasedBytes =
+                    Math.Max(
+                        _peakLeasedBytes,
+                        _currentLeasedBytes);
+
+                return buffer;
+            }
+        }
+
+        public void Return(
+            uint[] buffer)
+        {
+            ArgumentNullException.ThrowIfNull(
+                buffer);
+
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _leasedBufferCount =
+                    Math.Max(
+                        0,
+                        _leasedBufferCount - 1);
+
+                _currentLeasedBytes =
+                    Math.Max(
+                        0L,
+                        _currentLeasedBytes -
+                        (long)buffer.Length *
+                        sizeof(uint));
+
+                if (buffer.Length >
+                    _retainedLength)
+                {
+                    _buffers.Clear();
+                    _retainedLength =
+                        buffer.Length;
+                }
+
+                if (buffer.Length ==
+                        _retainedLength &&
+                    _buffers.Count <
+                        MaximumRetainedBufferCount)
+                {
+                    _buffers.Push(
+                        buffer);
+
+                    _peakRetainedBytes =
+                        Math.Max(
+                            _peakRetainedBytes,
+                            (long)_buffers.Count *
+                            _retainedLength *
+                            sizeof(uint));
+                }
+            }
+        }
+
+        public NttBufferPoolStatistics CreateStatisticsSnapshot()
+        {
+            lock (_gate)
+            {
+                return new NttBufferPoolStatistics(
+                    _peakLeasedBytes,
+                    _peakRetainedBytes,
+                    _rentCount,
+                    _reuseCount);
+            }
+        }
+
+        public void ReleaseCachedBuffers()
+        {
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                Debug.Assert(
+                    _leasedBufferCount == 0);
+
+                _buffers.Clear();
+                _retainedLength =
+                    0;
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                Debug.Assert(
+                    _leasedBufferCount == 0);
 
                 _disposed =
                     true;
@@ -7350,15 +7612,22 @@ while (leftIndex + 1 < butterflyEnd)
         // Pow operation.  Split branches intentionally share the same pool;
         // the pool itself is synchronized and caps retention to two arrays.
         private readonly NttBufferPool _nttBufferPool;
+        private readonly NttTwiddleBufferPool _nttTwiddleBufferPool;
 
         public FixedWorkerTeam(
             int workerCount,
-            NttBufferPool nttBufferPool)
+            NttBufferPool nttBufferPool,
+            NttTwiddleBufferPool nttTwiddleBufferPool)
         {
             _nttBufferPool =
                 nttBufferPool ??
                 throw new ArgumentNullException(
                     nameof(nttBufferPool));
+
+            _nttTwiddleBufferPool =
+                nttTwiddleBufferPool ??
+                throw new ArgumentNullException(
+                    nameof(nttTwiddleBufferPool));
 
             WorkerCount =
                 Math.Max(
@@ -7421,13 +7690,15 @@ while (leftIndex + 1 < butterflyEnd)
             if (modulus == FirstModulus)
             {
                 return _firstTwiddlePlan ??=
-                    new NttTwiddlePlan();
+                    new NttTwiddlePlan(
+                        _nttTwiddleBufferPool);
             }
 
             if (modulus == SecondModulus)
             {
                 return _secondTwiddlePlan ??=
-                    new NttTwiddlePlan();
+                    new NttTwiddlePlan(
+                        _nttTwiddleBufferPool);
             }
 
             throw new ArgumentOutOfRangeException(
@@ -7482,29 +7753,26 @@ while (leftIndex + 1 < butterflyEnd)
 
         public void Dispose()
         {
-            if (_threads.Length != 0)
+            lock (_gate)
             {
-                lock (_gate)
+                if (_stopping)
                 {
-                    if (_stopping)
-                    {
-                        return;
-                    }
-
-                    _stopping =
-                        true;
-
-                    _generation++;
-
-                    Monitor.PulseAll(
-                        _gate);
+                    return;
                 }
 
-                foreach (Thread thread in
-                         _threads)
-                {
-                    thread.Join();
-                }
+                _stopping =
+                    true;
+
+                _generation++;
+
+                Monitor.PulseAll(
+                    _gate);
+            }
+
+            foreach (Thread thread in
+                     _threads)
+            {
+                thread.Join();
             }
 
             _firstTwiddlePlan?.Dispose();
@@ -7512,6 +7780,13 @@ while (leftIndex + 1 < butterflyEnd)
 
             _firstTwiddlePlan = null;
             _secondTwiddlePlan = null;
+
+            // The last scheduled lambda can capture a very large transform
+            // buffer. Drop scheduler references explicitly before the Gen2/LOH
+            // sweep instead of waiting for this team object itself to die.
+            _body = null;
+            _failure = null;
+            _itemCount = 0;
 
             _completed.Dispose();
         }
@@ -8153,4 +8428,8 @@ internal sealed record ParallelPowerDiagnostics(
     int SecondBranchWorkerCount,
     TimeSpan FirstBranchElapsed,
     TimeSpan SecondBranchElapsed,
-    TimeSpan FinalCombineElapsed);
+    TimeSpan FinalCombineElapsed,
+    long NttWorkspacePeakBytes,
+    long NttPoolPeakRetainedBytes,
+    int NttBufferRentCount,
+    int NttBufferReuseCount);
