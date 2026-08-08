@@ -77,8 +77,9 @@ internal sealed class ParallelBigUnsigned
 
     // CRT is reconstructed in bounded blocks instead of materializing one
     // ulong coefficient for the complete convolution. 1,048,576 coefficients
-    // occupy 8 MiB, large enough to keep every worker busy while keeping the
-    // CRT/carry scratch footprint tiny compared with a 2^26 transform.
+    // occupy 8 MiB, large enough to keep every worker busy. v32 normally maps
+    // that scratch onto the dead tail of inverse P2; an 8 MiB team-local array
+    // is retained only as the fallback when the tail is too short.
     private const int CrtCarryStreamingBlockLength = 1 << 20;
 
     // Both primes support transforms through 2^26. Their product is large
@@ -1665,18 +1666,13 @@ internal sealed class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
-        // One extra slot is reserved for the only possible carry limb after
-        // coefficientCount normalized base-B digits. The explicit logical
-        // length on ParallelBigUnsigned lets this capacity stay in place
-        // without a full-array resize/copy.
-        // Every logical residue slot is overwritten by the inverse-transform
-        // copy below, and the one spare carry slot is outside logical length
-        // until explicitly written. Avoid zero-filling this potentially ~180
-        // MiB array before immediately overwriting it.
-        uint[] residues =
-            GC.AllocateUninitializedArray<uint>(
-                checked(
-                    coefficientCount + 1));
+        // v33 retains v32's late-allocation rule: the compact P1/result
+        // backing is not created while forward NTT can still have both left
+        // and right transform workspaces leased.  It is allocated only when
+        // inverse DIT reaches its final stage, then that stage writes the valid
+        // normalized prefix directly into the compact array.
+        uint[]? residues =
+            null;
 
         ConvolveModulusCore(
             left,
@@ -1687,16 +1683,25 @@ internal sealed class ParallelBigUnsigned
             modulus,
             primitiveRoot,
             isSquare,
+            true,
             workers,
             diagnostics,
             cancellationToken,
-            transformed =>
-                Array.Copy(
-                    transformed,
-                    residues,
-                    coefficientCount));
+            (_, compactOutput) =>
+            {
+                // v33: the final inverse DIT stage writes the valid P1 prefix
+                // directly into this compact result backing.  This preserves
+                // v32's late allocation boundary while removing the separate
+                // coefficientCount-sized Array.Copy pass after inverse NTT.
+                residues =
+                    compactOutput ??
+                    throw new InvalidOperationException(
+                        "The compact first-modulus inverse output was not produced.");
+            });
 
-        return residues;
+        return residues ??
+               throw new InvalidOperationException(
+                   "The first-modulus inverse transform did not produce residues.");
     }
 
     private static ulong ConvolveSecondModulusAndReconstructCarryStreaming(
@@ -1723,19 +1728,53 @@ internal sealed class ParallelBigUnsigned
             SecondModulus,
             SecondPrimitiveRoot,
             isSquare,
+            false,
             workers,
             diagnostics,
             cancellationToken,
-            transformedSecond =>
+            (transformedSecond, _) =>
             {
                 int scratchLength =
                     Math.Min(
                         coefficientCount,
                         CrtCarryStreamingBlockLength);
 
-                ulong[] crtScratch =
-                    workers.GetCrtCarryScratch(
-                        scratchLength);
+                // v32: after the inverse P2 transform, indices at and above
+                // coefficientCount are outside the valid linear-convolution
+                // prefix and will never be read again.  When that dead tail is
+                // large enough, reinterpret it as the bounded ulong CRT block
+                // scratch instead of allocating/retaining another 8 MiB array.
+                // Align to an even uint index so ulong elements start on an
+                // 8-byte boundary.  Exact/full transforms simply fall back to
+                // the team's reusable scratch array.
+                int inverseTailScratchStart =
+                    checked(
+                        (coefficientCount + 1) & ~1);
+
+                int requiredTailUIntCount =
+                    checked(
+                        scratchLength * 2);
+
+                bool useInverseTailScratch =
+                    inverseTailScratchStart <= transformedSecond.Length &&
+                    transformedSecond.Length - inverseTailScratchStart >=
+                    requiredTailUIntCount;
+
+                if (useInverseTailScratch)
+                {
+                    // A branch may have grown a fallback scratch during earlier
+                    // smaller transforms where the dead tail could not fit it.
+                    // Once the current inverse buffer supplies the scratch, drop
+                    // that stale team reference immediately rather than carrying
+                    // an otherwise-unused 8 MiB array through later NTT stages.
+                    workers.ReleaseCrtCarryScratch();
+                }
+
+                ulong[]? crtScratch =
+                    useInverseTailScratch
+                        ? null
+                        : workers.GetCrtCarryScratch(
+                            scratchLength);
 
                 ulong carry = 0;
                 long crtTicks = 0;
@@ -1785,10 +1824,26 @@ internal sealed class ParallelBigUnsigned
                                     sourceStart,
                                     count);
 
-                            Span<ulong> scratchSpan =
-                                crtScratch.AsSpan(
-                                    start,
-                                    count);
+                            Span<ulong> scratchSpan;
+
+                            if (useInverseTailScratch)
+                            {
+                                scratchSpan =
+                                    MemoryMarshal.Cast<uint, ulong>(
+                                        transformedSecond.AsSpan(
+                                            checked(
+                                                inverseTailScratchStart +
+                                                start * 2),
+                                            checked(
+                                                count * 2)));
+                            }
+                            else
+                            {
+                                scratchSpan =
+                                    crtScratch!.AsSpan(
+                                        start,
+                                        count);
+                            }
 
                             for (int offset = 0;
                                  offset < count;
@@ -1836,10 +1891,24 @@ internal sealed class ParallelBigUnsigned
                     long carryStarted =
                         Stopwatch.GetTimestamp();
 
-                    ReadOnlySpan<ulong> source =
-                        crtScratch.AsSpan(
-                            0,
-                            blockCount);
+                    ReadOnlySpan<ulong> source;
+
+                    if (useInverseTailScratch)
+                    {
+                        source =
+                            MemoryMarshal.Cast<uint, ulong>(
+                                transformedSecond.AsSpan(
+                                    inverseTailScratchStart,
+                                    checked(
+                                        blockCount * 2)));
+                    }
+                    else
+                    {
+                        source =
+                            crtScratch!.AsSpan(
+                                0,
+                                blockCount);
+                    }
 
                     // The CRT values for this block are now fully detached
                     // from P1. Reuse the corresponding P1 storage in place as
@@ -1907,10 +1976,11 @@ internal sealed class ParallelBigUnsigned
         uint modulus,
         uint primitiveRoot,
         bool isSquare,
+        bool compactFinalInverseOutput,
         FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken,
-        Action<uint[]> consumeInverseTransform)
+        Action<uint[], uint[]?> consumeInverseTransform)
     {
         int fusedNttBlockLength =
             SelectFusedNttBlockLength();
@@ -1927,9 +1997,6 @@ internal sealed class ParallelBigUnsigned
             workers.RentNttBuffer(
                 transformLength,
                 out _);
-
-        uint[]? transformedRight =
-            null;
 
         try
         {
@@ -1986,21 +2053,11 @@ internal sealed class ParallelBigUnsigned
             }
             else
             {
-                uint[] rightTransform =
-                    workers.RentNttBuffer(
-                        transformLength,
-                        out _);
-
-                transformedRight =
-                    rightTransform;
-
-                PrepareNttBuffer(
-                    rightTransform,
+                MultiplyForwardRightSpectrumInPlace(
+                    transformedLeft,
                     right,
-                    rightLength);
-
-                ForwardDifTransform(
-                    rightTransform,
+                    rightLength,
+                    transformLength,
                     modulus,
                     primitiveRoot,
                     workers,
@@ -2008,46 +2065,79 @@ internal sealed class ParallelBigUnsigned
                     fusedNttBlockLength,
                     l2NttTileLength,
                     l3NttTileLength,
-                    false,
+                    diagnostics,
+                    cancellationToken);
+            }
+
+            int validOutputLength =
+                checked(
+                    leftLength +
+                    rightLength -
+                    1);
+
+            uint[]? compactInverseOutput =
+                InverseDitTransform(
+                    transformedLeft,
+                    modulus,
+                    primitiveRoot,
+                    validOutputLength,
+                    compactFinalInverseOutput,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
                     diagnostics,
                     cancellationToken);
 
-                long pointwiseStarted =
-                    Stopwatch.GetTimestamp();
-
-                ExecuteRanges(
-                    transformLength,
-                    workers,
-                    cancellationToken,
-                    (start, end) =>
-                    {
-                        for (int index = start;
-                             index < end;
-                             index++)
-                        {
-                            transformedLeft[index] =
-                                (uint)((ulong)transformedLeft[index] *
-                                       rightTransform[index] %
-                                       modulus);
-                        }
-                    });
-
-                diagnostics.PointwiseTicks +=
-                    Stopwatch.GetTimestamp() -
-                    pointwiseStarted;
-
-                // Right is dead as soon as pointwise multiplication completes.
-                // Return it before the inverse transform to shorten its active
-                // lifetime and make it available to the other modulus/branch.
-                workers.ReturnNttBuffer(
-                    rightTransform);
-
-                transformedRight =
-                    null;
-            }
-
-            InverseDitTransform(
+            consumeInverseTransform(
                 transformedLeft,
+                compactInverseOutput);
+        }
+        finally
+        {
+            workers.ReturnNttBuffer(
+                transformedLeft);
+        }
+    }
+
+    /// <summary>
+    /// Builds the right-hand forward spectrum, multiplies it into the already
+    /// transformed left spectrum, and returns the right workspace before this
+    /// helper returns. Keeping that lease in a separate method makes its GC
+    /// lifetime structurally end before inverse DIT / CRT consumption rather
+    /// than relying on a nullable local in ConvolveModulusCore. Arithmetic and
+    /// worker scheduling are unchanged.
+    /// </summary>
+    private static void MultiplyForwardRightSpectrumInPlace(
+        uint[] transformedLeft,
+        uint[] right,
+        int rightLength,
+        int transformLength,
+        uint modulus,
+        uint primitiveRoot,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        uint[] rightTransform =
+            workers.RentNttBuffer(
+                transformLength,
+                out _);
+
+        try
+        {
+            PrepareNttBuffer(
+                rightTransform,
+                right,
+                rightLength);
+
+            ForwardDifTransform(
+                rightTransform,
                 modulus,
                 primitiveRoot,
                 workers,
@@ -2055,28 +2145,47 @@ internal sealed class ParallelBigUnsigned
                 fusedNttBlockLength,
                 l2NttTileLength,
                 l3NttTileLength,
+                false,
                 diagnostics,
                 cancellationToken);
 
-            consumeInverseTransform(
-                transformedLeft);
+            long pointwiseStarted =
+                Stopwatch.GetTimestamp();
+
+            ExecuteRanges(
+                transformLength,
+                workers,
+                cancellationToken,
+                (start, end) =>
+                {
+                    for (int index = start;
+                         index < end;
+                         index++)
+                    {
+                        transformedLeft[index] =
+                            (uint)((ulong)transformedLeft[index] *
+                                   rightTransform[index] %
+                                   modulus);
+                    }
+                });
+
+            diagnostics.PointwiseTicks +=
+                Stopwatch.GetTimestamp() -
+                pointwiseStarted;
         }
         finally
         {
-            if (transformedRight is not null)
-            {
-                workers.ReturnNttBuffer(
-                    transformedRight);
-            }
-
+            // Right is dead immediately after the pointwise pass. Return it
+            // before inverse DIT so another modulus/branch can reuse the same
+            // transform array while only transformedLeft remains leased here.
             workers.ReturnNttBuffer(
-                transformedLeft);
+                rightTransform);
         }
     }
 
     /// <summary>
-    /// Initializes a rented NTT workspace from compact base-10,000 limbs. v31
-    /// allocates new transform arrays uninitialized, so both fresh and reused
+    /// Initializes a rented NTT workspace from compact base-10,000 limbs. v32
+    /// keeps v31's uninitialized transform allocation, so both fresh and reused
     /// buffers follow the same rule: clear only the zero-padding tail and then
     /// overwrite the complete source prefix. This avoids a redundant CLR
     /// zero-fill of the source prefix on 128-256 MiB fresh workspaces.
@@ -2590,10 +2699,12 @@ internal sealed class ParallelBigUnsigned
     /// natural-order coefficients, again without a permutation pass.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void InverseDitTransform(
+    private static uint[]? InverseDitTransform(
         uint[] values,
         uint modulus,
         uint primitiveRoot,
+        int validOutputLength,
+        bool compactFinalOutput,
         FixedWorkerTeam workers,
         NttTwiddlePlan twiddlePlan,
         int fusedNttBlockLength,
@@ -2607,6 +2718,16 @@ internal sealed class ParallelBigUnsigned
 
         long transformStarted =
             Stopwatch.GetTimestamp();
+
+        Debug.Assert(
+            validOutputLength > 0 &&
+            validOutputLength <= length);
+
+        uint[]? compactOutput =
+            null;
+
+        long excludedAllocationTicks =
+            0;
 
         uint inverseLength =
             (uint)ModPow(
@@ -2714,6 +2835,77 @@ internal sealed class ParallelBigUnsigned
 
                 // Skip the second stage consumed by the fused DIT kernel.
                 stageLength <<= 1;
+                continue;
+            }
+
+            // v33: the last DIT stage is the only stage whose outputs are
+            // externally consumed.  Linear convolution needs only the
+            // [0, validOutputLength) prefix.  P1 writes that prefix directly
+            // into its compact result backing; P2 stays in-place but skips
+            // normalization/stores for the dead tail that CRT immediately
+            // reuses as scratch.  Worker partitioning and butterfly arithmetic
+            // for every valid coefficient are unchanged.
+            if (normalizeOutput &&
+                (compactFinalOutput ||
+                 validOutputLength < length))
+            {
+                uint[] finalOutput;
+
+                if (compactFinalOutput)
+                {
+                    long allocationStarted =
+                        Stopwatch.GetTimestamp();
+
+                    // One spare slot is reserved for the only possible final
+                    // base-10,000 carry.  The final DIT writes every logical
+                    // prefix element, so zero initialization is unnecessary.
+                    compactOutput =
+                        GC.AllocateUninitializedArray<uint>(
+                            checked(
+                                validOutputLength + 1));
+
+                    excludedAllocationTicks +=
+                        Stopwatch.GetTimestamp() -
+                        allocationStarted;
+
+                    finalOutput =
+                        compactOutput;
+                }
+                else
+                {
+                    finalOutput =
+                        values;
+                }
+
+                if (!inversePrimitiveRootReady)
+                {
+                    inversePrimitiveRoot =
+                        (uint)ModPow(
+                            primitiveRoot,
+                            modulus - 2u,
+                            modulus);
+
+                    inversePrimitiveRootReady =
+                        true;
+                }
+
+                uint finalRoot =
+                    (uint)ModPow(
+                        inversePrimitiveRoot,
+                        (modulus - 1u) /
+                        (uint)length,
+                        modulus);
+
+                ExecuteFinalInversePrefix(
+                    values,
+                    finalOutput,
+                    validOutputLength,
+                    modulus,
+                    finalRoot,
+                    inverseLength,
+                    workers,
+                    cancellationToken);
+
                 continue;
             }
 
@@ -3030,7 +3222,165 @@ internal sealed class ParallelBigUnsigned
 
         diagnostics.InverseTransformTicks +=
             Stopwatch.GetTimestamp() -
-            transformStarted;
+            transformStarted -
+            excludedAllocationTicks;
+
+        return compactOutput;
+    }
+
+    /// <summary>
+    /// Executes only the final inverse-DIT stage and materializes the valid
+    /// linear-convolution prefix.  The first half of the final stage is always
+    /// valid because transformLength is the smallest power of two that covers
+    /// coefficientCount; only the upper-half suffix can be dead.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteFinalInversePrefix(
+        uint[] values,
+        uint[] output,
+        int validOutputLength,
+        uint modulus,
+        uint root,
+        uint inverseLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int length =
+            values.Length;
+
+        int halfLength =
+            length >> 1;
+
+        Debug.Assert(
+            validOutputLength > halfLength &&
+            validOutputLength <= length);
+
+        Debug.Assert(
+            output.Length >= validOutputLength);
+
+        int validRightCount =
+            validOutputLength -
+            halfLength;
+
+        ExecuteRanges(
+            halfLength,
+            workers,
+            cancellationToken,
+            (butterflyStart, butterflyEnd) =>
+            {
+                int butterfly =
+                    butterflyStart;
+
+                if (butterfly == 0 &&
+                    butterfly < butterflyEnd)
+                {
+                    uint leftValue =
+                        values[0];
+
+                    uint rightValue =
+                        values[halfLength];
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    uint difference =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    output[0] =
+                        (uint)((ulong)sum *
+                               inverseLength %
+                               modulus);
+
+                    if (validRightCount > 0)
+                    {
+                        output[halfLength] =
+                            (uint)((ulong)difference *
+                                   inverseLength %
+                                   modulus);
+                    }
+
+                    butterfly = 1;
+                }
+
+                if (butterfly >= butterflyEnd)
+                {
+                    return;
+                }
+
+                ulong twiddle =
+                    butterfly == 1
+                        ? root
+                        : ModPow(
+                            root,
+                            (uint)butterfly,
+                            modulus);
+
+                for (;
+                     butterfly < butterflyEnd;
+                     butterfly++)
+                {
+                    int rightIndex =
+                        butterfly +
+                        halfLength;
+
+                    uint leftValue =
+                        values[butterfly];
+
+                    uint rightValue =
+                        (uint)((ulong)values[rightIndex] *
+                               twiddle %
+                               modulus);
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    output[butterfly] =
+                        (uint)((ulong)sum *
+                               inverseLength %
+                               modulus);
+
+                    if (butterfly < validRightCount)
+                    {
+                        uint difference =
+                            leftValue >= rightValue
+                                ? leftValue - rightValue
+                                : leftValue + modulus - rightValue;
+
+                        output[rightIndex] =
+                            (uint)((ulong)difference *
+                                   inverseLength %
+                                   modulus);
+                    }
+
+                    if (butterfly + 1 < butterflyEnd)
+                    {
+                        twiddle =
+                            twiddle *
+                            root %
+                            modulus;
+                    }
+
+                    if (((butterfly - butterflyStart) &
+                         0x7FFF) == 0x7FFF)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -7936,10 +8286,10 @@ while (leftIndex + 1 < butterflyEnd)
         private NttTwiddlePlan? _firstTwiddlePlanRef;
         private NttTwiddlePlan? _secondTwiddlePlanRef;
 
-        // One bounded CRT/carry scratch block is retained by this team and
-        // reused across every large multiplication it performs. Split branches
-        // therefore need at most one 8 MiB block each, with no shared LOH pool
-        // retaining these arrays beyond the worker-team lifetime.
+        // v32 normally reuses the dead tail of inverse P2 as CRT scratch. Keep
+        // one bounded team-local array only as a fallback for transforms whose
+        // unused tail is too short; no shared LOH pool retains it beyond this
+        // worker-team lifetime.
         private ulong[]? _crtCarryScratch;
 
         // The temporary value arrays are owned by one pool for the complete
@@ -8026,14 +8376,25 @@ while (leftIndex + 1 < butterflyEnd)
             if (scratch is null ||
                 scratch.Length < minimumLength)
             {
+                // Every CRT block overwrites the complete scratch prefix
+                // before carry reads it. Avoid an unnecessary LOH zero-fill
+                // when the inverse-transform tail is too small and a dedicated
+                // fallback scratch array is actually required.
                 scratch =
-                    new ulong[minimumLength];
+                    GC.AllocateUninitializedArray<ulong>(
+                        minimumLength);
 
                 _crtCarryScratch =
                     scratch;
             }
 
             return scratch;
+        }
+
+        public void ReleaseCrtCarryScratch()
+        {
+            _crtCarryScratch =
+                null;
         }
 
         // FixedWorkerTeam itself is private to ParallelBigUnsigned, so this
@@ -8103,7 +8464,24 @@ while (leftIndex + 1 < butterflyEnd)
             // still touch buffers that the caller is about to release.
             _completed.Wait();
 
-            _failure?.Throw();
+            // v32: every worker has finished touching the scheduled buffers at
+            // this point. Do not let the team field retain the last closure
+            // until the next NTT stage (or until Dispose), because that closure
+            // can capture 128-256 MiB transform arrays. Keep only a local
+            // exception reference long enough to rethrow it.
+            _body =
+                null;
+
+            _itemCount =
+                0;
+
+            ExceptionDispatchInfo? failure =
+                _failure;
+
+            _failure =
+                null;
+
+            failure?.Throw();
         }
 
         public void Dispose()
@@ -8211,6 +8589,14 @@ while (leftIndex + 1 < butterflyEnd)
                 }
                 finally
                 {
+                    // Release the per-thread delegate reference before the
+                    // completion signal tells the caller it may recycle the
+                    // captured NTT buffers. This complements clearing _body in
+                    // Execute() and makes the end of every scheduled range a
+                    // hard lifetime boundary for large array closures.
+                    body =
+                        null;
+
                     _completed.Signal();
                 }
             }

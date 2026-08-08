@@ -2845,10 +2845,11 @@ public partial class PowerRootView : LocalizedSolverView
                 exactResultText);
 
         // Transform buffers, compact P1 residues and the normalized result
-        // dominate the peak. CRT -> carry is now block-streamed and reuses the
-        // P1 residue array in place, so the old full-width ulong coefficient
-        // buffer no longer contributes to peak workspace. Split mode still
-        // keeps both partial powers alive before the final multiplication.
+        // dominate the peak. CRT -> carry is block-streamed and reuses the P1
+        // residue array in place. v32 additionally reuses a dead inverse-P2
+        // tail as CRT scratch when possible, but keep this estimate deliberately
+        // conservative rather than subtracting a workload-dependent few MiB.
+        // Split mode still keeps both partial powers alive before final combine.
         long parallelStorageMultiplier =
             diagnostics.UsedExponentSplit
                 ? 16L

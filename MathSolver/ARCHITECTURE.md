@@ -66,3 +66,73 @@ v29 keeps the v28 NTT buffer-reuse architecture but makes the end-of-calculation
 - Result diagnostics now separate estimated algorithm workspace from current process Private Memory and expose NTT pool peak leased/cache bytes plus the reuse ratio.
 
 The NTT/CRT arithmetic, v19 stage fusion, v21 global adaptive 8-way, L3/L2/L1 cache kernels, PowSplit scheduling, Carry, and SIMD TXT formatting are unchanged.
+
+## v30 - CRT -> Carry Streaming In Place
+
+v30 removes the full `ulong[coefficientCount]` CRT materialization. CRT is
+reconstructed in bounded blocks, carry consumes each block immediately, and the
+normalized base-10,000 limbs overwrite the no-longer-needed P1 residue array.
+The P2 inverse workspace is read directly, so no compact P2 residue array is
+created. DIF/DIT, primes, PowSplit scheduling and worker topology are unchanged.
+
+## v31 - Shared Pow-Scoped Twiddle Plans + Zero-Fill Elision
+
+v31 shares one immutable twiddle plan per modulus across both split branches and
+the final combine. Fresh NTT/twiddle arrays use uninitialized allocation where
+every element is guaranteed to be overwritten; `PrepareNttBuffer` clears only
+the required zero-padding tail and overwrites the source prefix. The NTT/CRT
+worker topology and arithmetic kernels are unchanged.
+
+## v32 - NTT Workspace Lifetime / Dead-Tail Reuse
+
+v32 keeps the v31.1 arithmetic and SMT topology intact and changes only storage
+lifetime/reuse:
+
+- the compact P1/result array is allocated only after inverse P1 has completed,
+  rather than while the forward pass may still have two transform workspaces
+  leased;
+- the non-square right transform lives in a dedicated helper and is returned to
+  the Pow-scoped NTT pool before inverse DIT begins, making that lifetime boundary
+  structural rather than dependent on a nullable local;
+- after each fixed-worker range completes, both the team field and every worker's
+  local delegate reference are cleared immediately so a completed closure cannot
+  keep 128-256 MiB transform arrays reachable until the next stage;
+- after inverse P2, the unused transform tail is reinterpreted as the bounded CRT
+  `ulong` scratch whenever at least one complete 1 Mi-coefficient block fits.
+  This reuses already-live transform storage and avoids a separate 8 MiB scratch
+  allocation for the common large-transform case; any fallback scratch retained
+  by earlier smaller transforms is dropped as soon as tail reuse becomes valid;
+- the dedicated CRT scratch fallback now uses uninitialized allocation because
+  every block is fully overwritten before carry reads it.
+
+No DIF/DIT stage order, modulus, primitive root, CRT formula, PowSplit scheduling,
+worker count, or SMT behavior is changed in v32.
+
+## v33 - Final Inverse Prefix Materialization
+
+v33 keeps the v32 SMT topology, DIF/DIT stage ordering, NTT primes, twiddle
+strategy, CRT streaming, and worker counts unchanged. The optimization is
+limited to the last inverse-DIT stage, where only the linear-convolution prefix
+is externally observable.
+
+- P1 no longer normalizes/stores the full inverse transform and then copies
+  `coefficientCount` residues into a compact array. The compact array is
+  allocated only when the final DIT stage is reached, and that stage writes the
+  valid normalized prefix directly into it. This removes one large
+  `Array.Copy` read/write pass per P1 convolution while preserving v32's late
+  allocation boundary.
+- P2 remains in-place, but the final DIT stage skips normalization and stores for
+  indices `>= coefficientCount`. That suffix is outside the exact linear
+  convolution and is dead; v32 already reuses part of it as CRT scratch.
+- The final-stage butterfly partition still uses the same fixed worker team and
+  the same contiguous per-worker ranges. No SMT scheduling, worker topology,
+  modulus, primitive root, or transform ordering is changed.
+- Compact P1 allocation time is excluded from the inverse-transform diagnostic
+  counter so timing remains comparable to the v32 arithmetic counters; total
+  wall-clock time still includes the allocation, as before.
+
+Expected effect: workspace size should remain approximately at the v32 level,
+while memory traffic falls because the largest P1 residue copy disappears and
+P2 no longer writes a dead normalized suffix. The gain is intentionally
+benchmark-driven; v32 remains the fallback baseline if v33 does not improve or
+match its 48.5-48.7 s wall-clock range.
