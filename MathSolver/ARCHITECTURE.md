@@ -49,3 +49,15 @@ Không gom các thuật toán khác bản chất vào một “calculator chung�
 - Stage Fusion, persistent twiddle cache, adaptive 4-way/2-way, and Carry quotient reuse remain unchanged.
 - This is intentionally an A/B benchmark experiment to isolate whether Global/RAM 8-way caused the v17 regression.
 
+
+
+## v22 SIMD decimal formatter
+
+- Baseline: v21 Global/RAM Adaptive 8-way + v19 Stage Fusion.
+- Forward/Inverse NTT, pointwise, CRT and Carry are unchanged; production NTT/CRT remains scalar.
+- After Carry, the magnitude is already normalized as independent base-10,000 limbs (`0..9999`).  This is the SIMD boundary.
+- On AVX2 x64, the formatter processes 16 limbs (64 UTF-16 decimal characters) per iteration.  It packs normalized limbs to `ushort`, performs exact `/10` with unsigned high multiply by `0xCCCD` plus shift, derives thousands/hundreds/tens/ones, interleaves them, and stores four 256-bit character vectors.
+- No floating-point conversion, no custom modulo-prime reduction, no `unsafe` pointer code, and no changes to NTT arithmetic.
+- TXT export keeps the existing 4,096-digit progress/write blocks.  Formatting now fills those blocks in bulk instead of appending four characters per limb.
+- `HardwareAccelerationSwitch` controls this formatter through `CalculationAccelerationManager.UseSimd`; unsupported CPUs fall back to the scalar formatter.
+- The displayed NTT benchmark elapsed time intentionally remains computation-only because `PowerCalculationState.Elapsed` is captured before preview formatting.  v22 should therefore be benchmarked on preview/export formatting time separately from the ~49.x s NTT compute time.

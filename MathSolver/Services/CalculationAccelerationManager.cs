@@ -17,7 +17,9 @@ public enum CalculationSimdMode
 /// <summary>
 /// Lưu trạng thái bật/tắt SIMD và tập lệnh benchmark đã chọn.
 /// Tùy chọn mode chỉ điều khiển benchmark. Các thuật toán khác vẫn có thể
-/// kiểm tra UseSimd như trước để tự chọn đường xử lý thích hợp.
+/// kiểm tra UseSimd để tự chọn đường xử lý thích hợp. Engine NTT/CRT lũy thừa
+/// giữ scalar; đường SIMD production hiện chỉ được dùng cho decimal formatting
+/// base-10,000 sau Carry khi phần tử đã hoàn toàn độc lập.
 /// </summary>
 public static class CalculationAccelerationManager
 {

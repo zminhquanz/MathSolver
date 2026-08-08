@@ -1918,6 +1918,9 @@ public partial class PowerRootView : LocalizedSolverView
                     baseValue < 0 &&
                     (exponent & 1) != 0;
 
+                bool useSimdForFormatting =
+                    CalculationAccelerationManager.UseSimd;
+
                 state =
                     await Task.Run(
                         () => CreateParallelCalculationState(
@@ -1927,7 +1930,8 @@ public partial class PowerRootView : LocalizedSolverView
                             isNegative,
                             activeWorkerCount,
                             stopwatch.Elapsed,
-                            parallelResult.Diagnostics),
+                            parallelResult.Diagnostics,
+                            useSimdForFormatting),
                         cancellationToken);
             }
             else
@@ -2648,7 +2652,8 @@ public partial class PowerRootView : LocalizedSolverView
         bool isNegative,
         int activeWorkerCount,
         TimeSpan elapsed,
-        ParallelPowerDiagnostics diagnostics)
+        ParallelPowerDiagnostics diagnostics,
+        bool useSimdForFormatting)
     {
         int digitCount =
             magnitude.DigitCount;
@@ -2660,7 +2665,8 @@ public partial class PowerRootView : LocalizedSolverView
             ExactPreviewConversionLimit)
         {
             exactResultText =
-                magnitude.ToDecimalString();
+                magnitude.ToDecimalString(
+                    useSimdForFormatting);
 
             if (isNegative)
             {
@@ -3768,12 +3774,16 @@ public partial class PowerRootView : LocalizedSolverView
                         .GetResult();
                 };
 
+            bool useSimdForExport =
+                CalculationAccelerationManager.UseSimd;
+
             await Task.Run(
                 () => WriteFullResultFile(
                     temporaryPath,
                     state,
                     creationProgress,
-                    cancellationToken),
+                    cancellationToken,
+                    useSimdForExport),
                 cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -4158,7 +4168,8 @@ public partial class PowerRootView : LocalizedSolverView
         string filePath,
         PowerCalculationState state,
         Action<ExportFileProgress>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool useSimdForExport)
     {
         int totalBlocks =
             state.Strategy switch
@@ -4245,7 +4256,8 @@ public partial class PowerRootView : LocalizedSolverView
                 writer,
                 ExportLeafDigitCount,
                 ReportBlockWritten,
-                cancellationToken);
+                cancellationToken,
+                useSimdForExport);
         }
         else
         {

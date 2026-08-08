@@ -3,6 +3,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace MathSolver.Numerics;
 
@@ -508,7 +511,8 @@ internal sealed class ParallelBigUnsigned
             : One;
     }
 
-    public string ToDecimalString()
+    public string ToDecimalString(
+        bool useSimd = false)
     {
         int digitCount =
             DigitCount;
@@ -531,18 +535,20 @@ internal sealed class ParallelBigUnsigned
         position +=
             highestText.Length;
 
-        for (int limbIndex =
-                 _limbs.Length - 2;
-             limbIndex >= 0;
-             limbIndex--)
-        {
-            WriteFixedLimb(
-                _limbs[limbIndex],
-                characters,
-                position);
+        int fixedLimbCount =
+            _limbs.Length - 1;
 
-            position +=
-                DigitsPerLimb;
+        if (fixedLimbCount > 0)
+        {
+            WriteFixedLimbsDescending(
+                _limbs,
+                _limbs.Length - 2,
+                fixedLimbCount,
+                characters.AsSpan(
+                    position,
+                    fixedLimbCount *
+                    DigitsPerLimb),
+                useSimd);
         }
 
         return new string(
@@ -553,23 +559,133 @@ internal sealed class ParallelBigUnsigned
         TextWriter writer,
         int blockDigitCount,
         Action reportBlockWritten,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool useSimd = false)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
             blockDigitCount);
 
+        // The NTT magnitude is already base 10,000.  Keep an extra limb of
+        // headroom so a SIMD batch may cross the 4,096-character write
+        // boundary without falling back to per-character bookkeeping.
         var buffer =
-            new char[blockDigitCount];
+            new char[checked(
+                blockDigitCount +
+                DigitsPerLimb)];
 
         int bufferedCharacters = 0;
 
-        void FlushBuffer()
+        void FlushFullBlock()
         {
-            if (bufferedCharacters == 0)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            writer.Write(
+                buffer,
+                0,
+                blockDigitCount);
+
+            int overflow =
+                bufferedCharacters -
+                blockDigitCount;
+
+            if (overflow > 0)
             {
-                return;
+                Array.Copy(
+                    buffer,
+                    blockDigitCount,
+                    buffer,
+                    0,
+                    overflow);
             }
 
+            bufferedCharacters =
+                overflow;
+
+            reportBlockWritten();
+        }
+
+        string highestText =
+            _limbs[^1].ToString(
+                CultureInfo.InvariantCulture);
+
+        highestText.CopyTo(
+            0,
+            buffer,
+            0,
+            highestText.Length);
+
+        bufferedCharacters =
+            highestText.Length;
+
+        int limbIndex =
+            _limbs.Length - 2;
+
+        int preferredBatchLimbCount =
+            Math.Max(
+                1,
+                blockDigitCount /
+                DigitsPerLimb);
+
+        while (limbIndex >= 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int batchLimbCount =
+                Math.Min(
+                    preferredBatchLimbCount,
+                    limbIndex + 1);
+
+            int batchCharacterCount =
+                checked(
+                    batchLimbCount *
+                    DigitsPerLimb);
+
+            // The normal export block is 4,096 digits (1,024 limbs), so the
+            // buffer can receive one complete vector-friendly batch.  For a
+            // custom tiny block size, limit the batch so the +4 headroom is
+            // still sufficient.
+            int maximumBatchCharacters =
+                buffer.Length -
+                bufferedCharacters;
+
+            if (batchCharacterCount >
+                maximumBatchCharacters)
+            {
+                batchLimbCount =
+                    Math.Max(
+                        1,
+                        maximumBatchCharacters /
+                        DigitsPerLimb);
+
+                batchCharacterCount =
+                    batchLimbCount *
+                    DigitsPerLimb;
+            }
+
+            WriteFixedLimbsDescending(
+                _limbs,
+                limbIndex,
+                batchLimbCount,
+                buffer.AsSpan(
+                    bufferedCharacters,
+                    batchCharacterCount),
+                useSimd);
+
+            limbIndex -=
+                batchLimbCount;
+
+            bufferedCharacters +=
+                batchCharacterCount;
+
+            if (bufferedCharacters >=
+                blockDigitCount)
+            {
+                FlushFullBlock();
+            }
+        }
+
+        if (bufferedCharacters > 0)
+        {
             cancellationToken.ThrowIfCancellationRequested();
 
             writer.Write(
@@ -577,62 +693,8 @@ internal sealed class ParallelBigUnsigned
                 0,
                 bufferedCharacters);
 
-            bufferedCharacters = 0;
             reportBlockWritten();
         }
-
-        void AppendCharacter(
-            char character)
-        {
-            buffer[bufferedCharacters++] =
-                character;
-
-            if (bufferedCharacters ==
-                buffer.Length)
-            {
-                FlushBuffer();
-            }
-        }
-
-        string highestText =
-            _limbs[^1].ToString(
-                CultureInfo.InvariantCulture);
-
-        foreach (char character in
-                 highestText)
-        {
-            AppendCharacter(
-                character);
-        }
-
-        for (int limbIndex =
-                 _limbs.Length - 2;
-             limbIndex >= 0;
-             limbIndex--)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            uint limb =
-                _limbs[limbIndex];
-
-            AppendCharacter(
-                (char)('0' +
-                       limb / 1_000));
-
-            AppendCharacter(
-                (char)('0' +
-                       limb / 100 % 10));
-
-            AppendCharacter(
-                (char)('0' +
-                       limb / 10 % 10));
-
-            AppendCharacter(
-                (char)('0' +
-                       limb % 10));
-        }
-
-        FlushBuffer();
     }
 
     private static ParallelBigUnsigned Multiply(
@@ -7038,9 +7100,342 @@ while (leftIndex + 1 < butterflyEnd)
         return limbs;
     }
 
+    private static readonly Vector256<int> ReverseUInt32LaneIndices =
+        Vector256.Create(
+            7, 6, 5, 4,
+            3, 2, 1, 0);
+
+    private static readonly Vector256<ushort> DivideBy10MagicU16 =
+        Vector256.Create(
+            (ushort)0xCCCD);
+
+    private static readonly Vector256<ushort> TenU16 =
+        Vector256.Create(
+            (ushort)10);
+
+    private static readonly Vector256<ushort> AsciiZeroU16 =
+        Vector256.Create(
+            (ushort)'0');
+
+    /// <summary>
+    /// Formats fixed-width base-10,000 limbs in most-significant-first order.
+    /// AVX2 processes 16 limbs -> 64 UTF-16 characters per iteration using
+    /// exact reciprocal /10 in 16-bit lanes.  There is no floating-point
+    /// conversion and no modulo-prime arithmetic in this path.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WriteFixedLimbsDescending(
+        uint[] source,
+        int highestSourceIndex,
+        int limbCount,
+        Span<char> destination,
+        bool useSimd)
+    {
+        if (limbCount <= 0)
+        {
+            return;
+        }
+
+        if (destination.Length <
+            checked(
+                limbCount *
+                DigitsPerLimb))
+        {
+            throw new ArgumentException(
+                "Destination is too small for decimal limb formatting.",
+                nameof(destination));
+        }
+
+        int destinationOffset = 0;
+        int remaining =
+            limbCount;
+        int sourceHigh =
+            highestSourceIndex;
+
+        if (useSimd &&
+            Avx2.IsSupported &&
+            remaining >= 16)
+        {
+            int vectorizedLimbCount =
+                remaining &
+                ~15;
+
+            WriteFixedLimbsDescendingAvx2(
+                source,
+                sourceHigh,
+                vectorizedLimbCount,
+                destination.Slice(
+                    destinationOffset,
+                    vectorizedLimbCount *
+                    DigitsPerLimb));
+
+            sourceHigh -=
+                vectorizedLimbCount;
+
+            remaining -=
+                vectorizedLimbCount;
+
+            destinationOffset +=
+                vectorizedLimbCount *
+                DigitsPerLimb;
+        }
+
+        while (remaining > 0)
+        {
+            WriteFixedLimb(
+                source[sourceHigh--],
+                destination,
+                destinationOffset);
+
+            destinationOffset +=
+                DigitsPerLimb;
+            remaining--;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WriteFixedLimbsDescendingAvx2(
+        uint[] source,
+        int highestSourceIndex,
+        int limbCount,
+        Span<char> destination)
+    {
+        ref uint sourceReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                source);
+
+        Span<ushort> outputCharacters =
+            MemoryMarshal.Cast<char, ushort>(
+                destination);
+
+        int sourceHigh =
+            highestSourceIndex;
+
+        int outputOffset = 0;
+
+        for (int processed = 0;
+             processed < limbCount;
+             processed += 16)
+        {
+            int sourceLow =
+                sourceHigh - 15;
+
+            Vector256<uint> lower =
+                Vector256.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)sourceLow);
+
+            Vector256<uint> upper =
+                Vector256.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)(sourceLow + 8));
+
+            // Limbs are little-endian. Reverse both contiguous 8-limb loads
+            // and place the upper block first so lanes become high -> low.
+            Vector256<uint> upperDescending =
+                Avx2.PermuteVar8x32(
+                        upper.AsInt32(),
+                        ReverseUInt32LaneIndices)
+                    .AsUInt32();
+
+            Vector256<uint> lowerDescending =
+                Avx2.PermuteVar8x32(
+                        lower.AsInt32(),
+                        ReverseUInt32LaneIndices)
+                    .AsUInt32();
+
+            // All normalized limbs are <= 9,999, so saturating 32 -> 16
+            // packing is exact. PACKUSDW is 128-bit-lane local; permute 64-bit
+            // chunks to restore [upperDescending, lowerDescending].
+            Vector256<ushort> values =
+                Avx2.PackUnsignedSaturate(
+                    upperDescending.AsInt32(),
+                    lowerDescending.AsInt32());
+
+            values =
+                Avx2.Permute4x64(
+                        values.AsInt64(),
+                        0xD8)
+                    .AsUInt16();
+
+            Vector256<ushort> q10 =
+                DivideBy10U16(
+                    values);
+
+            Vector256<ushort> q100 =
+                DivideBy10U16(
+                    q10);
+
+            Vector256<ushort> q1000 =
+                DivideBy10U16(
+                    q100);
+
+            Vector256<ushort> ones =
+                Avx2.Subtract(
+                    values,
+                    MultiplyBy10U16(
+                        q10));
+
+            Vector256<ushort> tens =
+                Avx2.Subtract(
+                    q10,
+                    MultiplyBy10U16(
+                        q100));
+
+            Vector256<ushort> hundreds =
+                Avx2.Subtract(
+                    q100,
+                    MultiplyBy10U16(
+                        q1000));
+
+            Vector256<ushort> thousands =
+                q1000;
+
+            thousands =
+                Avx2.Add(
+                    thousands,
+                    AsciiZeroU16);
+
+            hundreds =
+                Avx2.Add(
+                    hundreds,
+                    AsciiZeroU16);
+
+            tens =
+                Avx2.Add(
+                    tens,
+                    AsciiZeroU16);
+
+            ones =
+                Avx2.Add(
+                    ones,
+                    AsciiZeroU16);
+
+            // First interleave 16-bit digit pairs. Reinterpret those pairs as
+            // 32-bit values for the second unpack so each pair stays intact.
+            Vector256<ushort> firstPairLow =
+                Avx2.UnpackLow(
+                    thousands,
+                    hundreds);
+
+            Vector256<ushort> secondPairLow =
+                Avx2.UnpackLow(
+                    tens,
+                    ones);
+
+            Vector256<ushort> firstPairHigh =
+                Avx2.UnpackHigh(
+                    thousands,
+                    hundreds);
+
+            Vector256<ushort> secondPairHigh =
+                Avx2.UnpackHigh(
+                    tens,
+                    ones);
+
+            Vector256<ushort> limbs01And89 =
+                Avx2.UnpackLow(
+                        firstPairLow.AsUInt32(),
+                        secondPairLow.AsUInt32())
+                    .AsUInt16();
+
+            Vector256<ushort> limbs23And1011 =
+                Avx2.UnpackHigh(
+                        firstPairLow.AsUInt32(),
+                        secondPairLow.AsUInt32())
+                    .AsUInt16();
+
+            Vector256<ushort> limbs45And1213 =
+                Avx2.UnpackLow(
+                        firstPairHigh.AsUInt32(),
+                        secondPairHigh.AsUInt32())
+                    .AsUInt16();
+
+            Vector256<ushort> limbs67And1415 =
+                Avx2.UnpackHigh(
+                        firstPairHigh.AsUInt32(),
+                        secondPairHigh.AsUInt32())
+                    .AsUInt16();
+
+            Vector256<ushort> output0 =
+                Avx2.Permute2x128(
+                        limbs01And89.AsInt64(),
+                        limbs23And1011.AsInt64(),
+                        0x20)
+                    .AsUInt16();
+
+            Vector256<ushort> output1 =
+                Avx2.Permute2x128(
+                        limbs45And1213.AsInt64(),
+                        limbs67And1415.AsInt64(),
+                        0x20)
+                    .AsUInt16();
+
+            Vector256<ushort> output2 =
+                Avx2.Permute2x128(
+                        limbs01And89.AsInt64(),
+                        limbs23And1011.AsInt64(),
+                        0x31)
+                    .AsUInt16();
+
+            Vector256<ushort> output3 =
+                Avx2.Permute2x128(
+                        limbs45And1213.AsInt64(),
+                        limbs67And1415.AsInt64(),
+                        0x31)
+                    .AsUInt16();
+
+            output0.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset,
+                    16));
+
+            output1.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset + 16,
+                    16));
+
+            output2.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset + 32,
+                    16));
+
+            output3.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset + 48,
+                    16));
+
+            sourceHigh -= 16;
+            outputOffset += 64;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<ushort> DivideBy10U16(
+        Vector256<ushort> value)
+    {
+        // Exact for the full ushort range:
+        // floor(x / 10) = high16(x * 0xCCCD) >> 3.
+        return Avx2.ShiftRightLogical(
+            Avx2.MultiplyHigh(
+                value,
+                DivideBy10MagicU16),
+            3);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<ushort> MultiplyBy10U16(
+        Vector256<ushort> value)
+    {
+        return Avx2.MultiplyLow(
+                value.AsInt16(),
+                TenU16.AsInt16())
+            .AsUInt16();
+    }
+
     private static void WriteFixedLimb(
         uint limb,
-        char[] destination,
+        Span<char> destination,
         int offset)
     {
         destination[offset] =
