@@ -148,6 +148,7 @@
                             Grid.Column="1"
                             Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
+                            BackgroundColor="{DynamicResource DividerColor}"
                             Clicked="OnClearClicked" />
 
                     </Grid>

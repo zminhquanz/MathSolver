@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     Title="{localization:Translate About.PageTitle}"
     Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
@@ -237,7 +238,7 @@
                         Spacing="16"
                         HorizontalOptions="Center">
 
-                        <ImageButton
+                            <ImageButton
                             x:Name="GitHubButton"
                             WidthRequest="64"
                             HeightRequest="64"
@@ -245,10 +246,13 @@
                             BackgroundColor="Transparent"
                             Source="github_black_clearspace.png"
                             SemanticProperties.Description="{localization:Translate About.GitHub.Accessibility}"
-                            ToolTipProperties.Text="{localization:Translate About.GitHub.Accessibility}"
-                            Clicked="OnGitHubClicked" />
+                            ToolTipProperties.Text="{localization:Translate About.GitHub.Accessibility}">
+                                <ImageButton.Behaviors>
+                                    <toolkit:IconTintColorBehavior x:Name="GitHubIconTintBehavior" />
+                                </ImageButton.Behaviors>
+                            </ImageButton>
 
-                        <ImageButton
+                            <ImageButton
                             x:Name="KoFiButton"
                             WidthRequest="64"
                             HeightRequest="64"

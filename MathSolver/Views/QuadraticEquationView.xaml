@@ -294,6 +294,7 @@
                             Grid.Column="1"
                             Text="Xóa"
                             Style="{StaticResource SolverSecondaryActionStyle}"
+                            BackgroundColor="{DynamicResource DividerColor}"
                             Clicked="OnClearClicked" />
 
                     </Grid>
