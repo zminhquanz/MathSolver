@@ -75,6 +75,12 @@ internal sealed class ParallelBigUnsigned
     private const int HighThreadL3NttTileLength = 1 << 18; // 262144 = 1 MiB values
     private const int LowThreadL3NttTileLength = 1 << 19; // 524288 = 2 MiB values
 
+    // CRT is reconstructed in bounded blocks instead of materializing one
+    // ulong coefficient for the complete convolution. 1,048,576 coefficients
+    // occupy 8 MiB, large enough to keep every worker busy while keeping the
+    // CRT/carry scratch footprint tiny compared with a 2^26 transform.
+    private const int CrtCarryStreamingBlockLength = 1 << 20;
+
     // Both primes support transforms through 2^26. Their product is large
     // enough to recover every base-10,000 convolution coefficient required by
     // an 18-digit base raised to the maximum exponent of 10,000,000.
@@ -89,15 +95,58 @@ internal sealed class ParallelBigUnsigned
             SecondModulus);
 
     private readonly uint[] _limbs;
+    private readonly int _limbCount;
 
     private ParallelBigUnsigned(
         uint[] limbs,
-        bool takeOwnership)
+        bool takeOwnership,
+        int logicalLength = -1)
     {
-        _limbs =
+        ArgumentNullException.ThrowIfNull(
+            limbs);
+
+        uint[] ownedLimbs =
             takeOwnership
-                ? Trim(limbs)
-                : Trim((uint[])limbs.Clone());
+                ? limbs
+                : (uint[])limbs.Clone();
+
+        if (logicalLength < 0)
+        {
+            _limbs =
+                Trim(ownedLimbs);
+
+            _limbCount =
+                _limbs.Length;
+
+            return;
+        }
+
+        if (logicalLength <= 0 ||
+            logicalLength > ownedLimbs.Length)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(logicalLength));
+        }
+
+        int trimmedLength =
+            logicalLength;
+
+        while (trimmedLength > 1 &&
+               ownedLimbs[trimmedLength - 1] == 0)
+        {
+            trimmedLength--;
+        }
+
+        // The explicit logical-length path intentionally keeps spare backing
+        // capacity. CRT/carry uses one extra uint slot for the possible final
+        // carry, avoiding an enormous Array.Resize copy for full-width NTT
+        // products while every arithmetic/formatting path observes only the
+        // normalized logical limb count.
+        _limbs =
+            ownedLimbs;
+
+        _limbCount =
+            trimmedLength;
     }
 
     public int DigitCount
@@ -105,7 +154,7 @@ internal sealed class ParallelBigUnsigned
         get
         {
             uint highest =
-                _limbs[^1];
+                _limbs[_limbCount - 1];
 
             int highestDigits =
                 highest >= 1_000
@@ -117,18 +166,18 @@ internal sealed class ParallelBigUnsigned
                             : 1;
 
             return checked(
-                (_limbs.Length - 1) *
+                (_limbCount - 1) *
                 DigitsPerLimb +
                 highestDigits);
         }
     }
 
     public long StorageBytes =>
-        (long)_limbs.Length *
+        (long)_limbCount *
         sizeof(uint);
 
     public bool IsOne =>
-        _limbs.Length == 1 &&
+        _limbCount == 1 &&
         _limbs[0] == 1;
 
     public static ParallelBigUnsigned One { get; } =
@@ -972,7 +1021,7 @@ internal sealed class ParallelBigUnsigned
         int position = 0;
 
         string highestText =
-            _limbs[^1].ToString(
+            _limbs[_limbCount - 1].ToString(
                 CultureInfo.InvariantCulture);
 
         highestText.CopyTo(
@@ -985,13 +1034,13 @@ internal sealed class ParallelBigUnsigned
             highestText.Length;
 
         int fixedLimbCount =
-            _limbs.Length - 1;
+            _limbCount - 1;
 
         if (fixedLimbCount > 0)
         {
             WriteFixedLimbsDescending(
                 _limbs,
-                _limbs.Length - 2,
+                _limbCount - 2,
                 fixedLimbCount,
                 characters.AsSpan(
                     position,
@@ -1054,7 +1103,7 @@ internal sealed class ParallelBigUnsigned
         }
 
         string highestText =
-            _limbs[^1].ToString(
+            _limbs[_limbCount - 1].ToString(
                 CultureInfo.InvariantCulture);
 
         highestText.CopyTo(
@@ -1067,7 +1116,7 @@ internal sealed class ParallelBigUnsigned
             highestText.Length;
 
         int limbIndex =
-            _limbs.Length - 2;
+            _limbCount - 2;
 
         int preferredBatchLimbCount =
             Math.Max(
@@ -1166,8 +1215,8 @@ internal sealed class ParallelBigUnsigned
         }
 
         long schoolbookWork =
-            (long)left._limbs.Length *
-            right._limbs.Length;
+            (long)left._limbCount *
+            right._limbCount;
 
         if (schoolbookWork <=
             SchoolbookWorkLimit)
@@ -1195,15 +1244,15 @@ internal sealed class ParallelBigUnsigned
     {
         int coefficientCount =
             checked(
-                left._limbs.Length +
-                right._limbs.Length -
+                left._limbCount +
+                right._limbCount -
                 1);
 
         var coefficients =
             new ulong[coefficientCount];
 
         for (int leftIndex = 0;
-             leftIndex < left._limbs.Length;
+             leftIndex < left._limbCount;
              leftIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -1212,7 +1261,7 @@ internal sealed class ParallelBigUnsigned
                 left._limbs[leftIndex];
 
             for (int rightIndex = 0;
-                 rightIndex < right._limbs.Length;
+                 rightIndex < right._limbCount;
                  rightIndex++)
             {
                 coefficients[leftIndex + rightIndex] +=
@@ -1236,8 +1285,8 @@ internal sealed class ParallelBigUnsigned
     {
         int coefficientCount =
             checked(
-                left._limbs.Length +
-                right._limbs.Length -
+                left._limbCount +
+                right._limbCount -
                 1);
 
         int transformLength = 1;
@@ -1267,7 +1316,9 @@ internal sealed class ParallelBigUnsigned
         uint[] firstResidues =
             ConvolveModulus(
                 left._limbs,
+                left._limbCount,
                 right._limbs,
+                right._limbCount,
                 coefficientCount,
                 transformLength,
                 FirstModulus,
@@ -1277,29 +1328,57 @@ internal sealed class ParallelBigUnsigned
                 diagnostics,
                 cancellationToken);
 
-        var coefficients =
-            new ulong[coefficientCount];
+        // v30: fuse CRT -> carry in bounded blocks. The first-modulus residue
+        // array becomes the final base-10,000 limb array in place once each
+        // block has been reconstructed, so neither a full ulong[] coefficient
+        // array nor a second full uint[] result array is required.
+        ulong trailingCarry =
+            ConvolveSecondModulusAndReconstructCarryStreaming(
+                left._limbs,
+                left._limbCount,
+                right._limbs,
+                right._limbCount,
+                firstResidues,
+                coefficientCount,
+                transformLength,
+                isSquare,
+                workers,
+                diagnostics,
+                cancellationToken);
 
-        // The second modulus no longer allocates/copies a separate
-        // secondResidues[coefficientCount] array.  CRT consumes the inverse P2
-        // workspace directly while that pooled transform buffer is still
-        // leased, then the buffer is returned immediately afterwards.
-        ConvolveSecondModulusAndReconstructCrt(
-            left._limbs,
-            right._limbs,
+        // ConvolveModulus reserves one spare uint slot. Normal base-B
+        // multiplication can produce at most one limb beyond coefficientCount,
+        // so append the trailing carry without resizing/copying the full result.
+        int resultLimbCount =
+            coefficientCount;
+
+        if (trailingCarry > 0)
+        {
+            long carryStarted =
+                Stopwatch.GetTimestamp();
+
+            Debug.Assert(
+                trailingCarry <
+                LimbBase);
+
+            if (trailingCarry >= LimbBase)
+            {
+                throw new InvalidOperationException(
+                    "Normalized NTT carry exceeded one base-10,000 limb.");
+            }
+
+            firstResidues[resultLimbCount++] =
+                (uint)trailingCarry;
+
+            diagnostics.CarryTicks +=
+                Stopwatch.GetTimestamp() -
+                carryStarted;
+        }
+
+        return new ParallelBigUnsigned(
             firstResidues,
-            coefficients,
-            coefficientCount,
-            transformLength,
-            isSquare,
-            workers,
-            diagnostics,
-            cancellationToken);
-
-        return CreateFromCoefficients(
-            coefficients,
-            diagnostics,
-            cancellationToken);
+            takeOwnership: true,
+            logicalLength: resultLimbCount);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1555,7 +1634,9 @@ internal sealed class ParallelBigUnsigned
 
     private static uint[] ConvolveModulus(
         uint[] left,
+        int leftLength,
         uint[] right,
+        int rightLength,
         int coefficientCount,
         int transformLength,
         uint modulus,
@@ -1565,12 +1646,19 @@ internal sealed class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        // One extra slot is reserved for the only possible carry limb after
+        // coefficientCount normalized base-B digits. The explicit logical
+        // length on ParallelBigUnsigned lets this capacity stay in place
+        // without a full-array resize/copy.
         var residues =
-            new uint[coefficientCount];
+            new uint[checked(
+                coefficientCount + 1)];
 
         ConvolveModulusCore(
             left,
+            leftLength,
             right,
+            rightLength,
             transformLength,
             modulus,
             primitiveRoot,
@@ -1587,11 +1675,12 @@ internal sealed class ParallelBigUnsigned
         return residues;
     }
 
-    private static void ConvolveSecondModulusAndReconstructCrt(
+    private static ulong ConvolveSecondModulusAndReconstructCarryStreaming(
         uint[] left,
+        int leftLength,
         uint[] right,
+        int rightLength,
         uint[] firstResidues,
-        ulong[] coefficients,
         int coefficientCount,
         int transformLength,
         bool isSquare,
@@ -1599,9 +1688,13 @@ internal sealed class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        ulong trailingCarry = 0;
+
         ConvolveModulusCore(
             left,
+            leftLength,
             right,
+            rightLength,
             transformLength,
             SecondModulus,
             SecondPrimitiveRoot,
@@ -1611,84 +1704,181 @@ internal sealed class ParallelBigUnsigned
             cancellationToken,
             transformedSecond =>
             {
-                long crtStarted =
-                    Stopwatch.GetTimestamp();
+                int scratchLength =
+                    Math.Min(
+                        coefficientCount,
+                        CrtCarryStreamingBlockLength);
 
-                ExecuteRanges(
-                    coefficientCount,
-                    workers,
-                    cancellationToken,
-                    (start, end) =>
-                    {
-                        int count =
-                            end - start;
+                ulong[] crtScratch =
+                    workers.GetCrtCarryScratch(
+                        scratchLength);
 
-                        ReadOnlySpan<uint> firstSpan =
-                            firstResidues.AsSpan(
-                                start,
-                                count);
+                ulong carry = 0;
+                long crtTicks = 0;
+                long carryTicks = 0;
 
-                        // The inverse P2 transform is still a full power-of-two
-                        // workspace.  CRT only reads its valid convolution
-                        // prefix, avoiding a second coefficientCount-sized copy.
-                        ReadOnlySpan<uint> secondSpan =
-                            transformedSecond.AsSpan(
-                                start,
-                                count);
+                for (int blockStart = 0;
+                     blockStart < coefficientCount;
+                     blockStart += scratchLength)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                        Span<ulong> coefficientSpan =
-                            coefficients.AsSpan(
-                                start,
-                                count);
+                    int blockCount =
+                        Math.Min(
+                            scratchLength,
+                            coefficientCount -
+                            blockStart);
 
-                        for (int offset = 0;
-                             offset < count;
-                             offset++)
+                    long crtStarted =
+                        Stopwatch.GetTimestamp();
+
+                    // CRT stays parallel. Each worker writes only its own
+                    // range in the bounded scratch block, and the barrier at
+                    // ExecuteRanges completion guarantees the source residues
+                    // can then be overwritten safely by the sequential carry.
+                    ExecuteRanges(
+                        blockCount,
+                        workers,
+                        cancellationToken,
+                        (start, end) =>
                         {
-                            uint first =
-                                firstSpan[offset];
+                            int count =
+                                end - start;
 
-                            uint reducedFirst =
-                                first;
+                            int sourceStart =
+                                blockStart +
+                                start;
 
-                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                            ReadOnlySpan<uint> firstSpan =
+                                firstResidues.AsSpan(
+                                    sourceStart,
+                                    count);
 
-                            long difference =
-                                (long)secondSpan[offset] -
-                                reducedFirst;
+                            // The inverse P2 transform remains leased only
+                            // while its valid convolution prefix is consumed.
+                            ReadOnlySpan<uint> secondSpan =
+                                transformedSecond.AsSpan(
+                                    sourceStart,
+                                    count);
 
-                            if (difference < 0)
+                            Span<ulong> scratchSpan =
+                                crtScratch.AsSpan(
+                                    start,
+                                    count);
+
+                            for (int offset = 0;
+                                 offset < count;
+                                 offset++)
                             {
-                                difference +=
+                                uint first =
+                                    firstSpan[offset];
+
+                                uint reducedFirst =
+                                    first;
+
+                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+
+                                long difference =
+                                    (long)secondSpan[offset] -
+                                    reducedFirst;
+
+                                if (difference < 0)
+                                {
+                                    difference +=
+                                        SecondModulus;
+                                }
+
+                                // Preserve the scalar modulo expression that
+                                // won the previous benchmark experiments.
+                                ulong multiplier =
+                                    (ulong)difference *
+                                    FirstModulusInverseInSecond %
                                     SecondModulus;
+
+                                scratchSpan[offset] =
+                                    first +
+                                    (ulong)FirstModulus *
+                                    multiplier;
                             }
+                        });
 
-                            // Preserve the scalar modulo expression that won
-                            // the previous benchmark experiments.
-                            ulong multiplier =
-                                (ulong)difference *
-                                FirstModulusInverseInSecond %
-                                SecondModulus;
+                    crtTicks +=
+                        Stopwatch.GetTimestamp() -
+                        crtStarted;
 
-                            coefficientSpan[offset] =
-                                first +
-                                (ulong)FirstModulus *
-                                multiplier;
+                    long carryStarted =
+                        Stopwatch.GetTimestamp();
+
+                    ReadOnlySpan<ulong> source =
+                        crtScratch.AsSpan(
+                            0,
+                            blockCount);
+
+                    // The CRT values for this block are now fully detached
+                    // from P1. Reuse the corresponding P1 storage in place as
+                    // the normalized base-10,000 result, avoiding another
+                    // coefficientCount-sized uint[] allocation.
+                    Span<uint> destination =
+                        firstResidues.AsSpan(
+                            blockStart,
+                            blockCount);
+
+                    for (int offset = 0;
+                         offset < blockCount;
+                         offset++)
+                    {
+                        int coefficientIndex =
+                            blockStart +
+                            offset;
+
+                        if ((coefficientIndex & 0xFFFF) == 0)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
                         }
-                    });
+
+                        ulong value =
+                            source[offset] +
+                            carry;
+
+                        ulong quotient =
+                            value /
+                            LimbBase;
+
+                        destination[offset] =
+                            (uint)(value -
+                                   quotient *
+                                   LimbBase);
+
+                        carry =
+                            quotient;
+                    }
+
+                    carryTicks +=
+                        Stopwatch.GetTimestamp() -
+                        carryStarted;
+                }
+
+                trailingCarry =
+                    carry;
 
                 diagnostics.CrtTicks +=
-                    Stopwatch.GetTimestamp() -
-                    crtStarted;
+                    crtTicks;
+
+                diagnostics.CarryTicks +=
+                    carryTicks;
             });
+
+        return trailingCarry;
     }
 
     private static void ConvolveModulusCore(
         uint[] left,
+        int leftLength,
         uint[] right,
+        int rightLength,
         int transformLength,
         uint modulus,
         uint primitiveRoot,
@@ -1722,6 +1912,7 @@ internal sealed class ParallelBigUnsigned
             PrepareNttBuffer(
                 transformedLeft,
                 left,
+                leftLength,
                 reusedLeft);
 
             NttTwiddlePlan twiddlePlan =
@@ -1783,6 +1974,7 @@ internal sealed class ParallelBigUnsigned
                 PrepareNttBuffer(
                     rightTransform,
                     right,
+                    rightLength,
                     reusedRight);
 
                 ForwardDifTransform(
@@ -1870,27 +2062,34 @@ internal sealed class ParallelBigUnsigned
     private static void PrepareNttBuffer(
         uint[] destination,
         uint[] source,
+        int sourceLength,
         bool reused)
     {
         Debug.Assert(
+            sourceLength > 0 &&
+            sourceLength <= source.Length);
+
+        Debug.Assert(
             destination.Length >=
-            source.Length);
+            sourceLength);
 
         if (reused &&
-            source.Length <
+            sourceLength <
             destination.Length)
         {
             Array.Clear(
                 destination,
-                source.Length,
+                sourceLength,
                 destination.Length -
-                source.Length);
+                sourceLength);
         }
 
         Array.Copy(
             source,
+            0,
             destination,
-            source.Length);
+            0,
+            sourceLength);
     }
 
     /// <summary>
@@ -7608,6 +7807,12 @@ while (leftIndex + 1 < butterflyEnd)
         private NttTwiddlePlan? _firstTwiddlePlan;
         private NttTwiddlePlan? _secondTwiddlePlan;
 
+        // One bounded CRT/carry scratch block is retained by this team and
+        // reused across every large multiplication it performs. Split branches
+        // therefore need at most one 8 MiB block each, with no shared LOH pool
+        // retaining these arrays beyond the worker-team lifetime.
+        private ulong[]? _crtCarryScratch;
+
         // The temporary value arrays are owned by one pool for the complete
         // Pow operation.  Split branches intentionally share the same pool;
         // the pool itself is synchronized and caps retention to two arrays.
@@ -7679,6 +7884,28 @@ while (leftIndex + 1 < butterflyEnd)
         {
             _nttBufferPool.Return(
                 buffer);
+        }
+
+        public ulong[] GetCrtCarryScratch(
+            int minimumLength)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+                minimumLength);
+
+            ulong[]? scratch =
+                _crtCarryScratch;
+
+            if (scratch is null ||
+                scratch.Length < minimumLength)
+            {
+                scratch =
+                    new ulong[minimumLength];
+
+                _crtCarryScratch =
+                    scratch;
+            }
+
+            return scratch;
         }
 
         // FixedWorkerTeam itself is private to ParallelBigUnsigned, so this
@@ -7780,6 +8007,7 @@ while (leftIndex + 1 < butterflyEnd)
 
             _firstTwiddlePlan = null;
             _secondTwiddlePlan = null;
+            _crtCarryScratch = null;
 
             // The last scheduled lambda can capture a very large transform
             // buffer. Drop scheduler references explicitly before the Gen2/LOH

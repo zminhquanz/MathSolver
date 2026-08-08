@@ -2844,14 +2844,15 @@ public partial class PowerRootView : LocalizedSolverView
                 digitCount,
                 exactResultText);
 
-        // Transform buffers, residue arrays, CRT coefficients and normalized
-        // results dominate the peak. Split mode briefly keeps both partial
-        // powers alive before the final full-width multiplication, so it uses
-        // a slightly larger conservative multiplier.
+        // Transform buffers, compact P1 residues and the normalized result
+        // dominate the peak. CRT -> carry is now block-streamed and reuses the
+        // P1 residue array in place, so the old full-width ulong coefficient
+        // buffer no longer contributes to peak workspace. Split mode still
+        // keeps both partial powers alive before the final multiplication.
         long parallelStorageMultiplier =
             diagnostics.UsedExponentSplit
-                ? 18L
-                : 14L;
+                ? 16L
+                : 12L;
 
         long estimatedPeakRamBytes =
             checked(
