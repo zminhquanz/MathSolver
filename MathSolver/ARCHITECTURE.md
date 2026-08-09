@@ -1,165 +1,180 @@
-# v26 - BitShift + Parallel Decimal Preparation
+# Math Solver Architecture Reference
 
-The power-of-two shortcut keeps its arithmetic path unchanged:
+## Overview
 
-1. `|a| = 2^k` is detected.
-2. The exact result is produced by single-threaded `BigInteger.One << (k * n)`.
-3. For results below the TXT threshold, no parallel decimal preparation is performed.
-4. For results requiring TXT export (`>= 100001` digits), phase 3 prepares the reusable base-10,000 magnitude through the same `ParallelBigUnsigned.Pow(|a|, n, workers, ...)` NTT/CRT pipeline used by normal parallel powers.
-5. TXT export then reuses `ParallelMagnitude.WriteDecimalBlocks()` and the optional AVX2 decimal formatter.
+Math Solver is a cross-platform .NET MAUI desktop application providing arbitrary-precision arithmetic, scientific solvers, and educational math tools. The codebase is organized into layers: Numerics (core algorithms), Services (orchestration & utilities), Views (UI components), Models (data structures), and Platform-specific adapters for Windows/iOS/Android.
 
-This deliberately separates arithmetic from representation preparation: the calculation shortcut remains bit-shift based and single-threaded, while only the decimal/base-10,000 preparation phase uses the configured worker budget.
+---
+
+## Core Numerics Engine
+
+### Arbitrary-Precision Integers — `Numerics/ParallelBigUnsigned.cs`
+
+The heart of the application's computation engine:
+
+- **Base**: Digits are stored in base 10,000 so TXT export never needs a giant binary-to-decimal division tree.
+- **Multiplication**: Large products use two exact NTTs and CRT; butterfly work inside every transform is shared by the configured logical-processor worker budget.
+- **Bit-shift shortcut**: `|a| = 2^k` powers use `BigInteger.One << (k * n)` — single-threaded, exact result. Binary BigInteger intermediate results are imported into the same base-10,000 representation before TXT export. A 1,024-limb leaf is exactly 4,096 decimal digits, matching the export block size and keeping each leaf conversion small.
+- **TXT preparation**: For results requiring TXT export (`>= 100_001` digits), phase 3 prepares the reusable base-10,000 magnitude through the same `ParallelBigUnsigned.Pow(|a|, n, workers, ...)` NTT/CRT pipeline used by normal parallel powers.
+- **TXT export**: Unified through `ParallelBigUnsigned.WriteDecimalBlocks()` and the optional AVX2 decimal formatter.
 
 The old giant `BigInteger` binary-to-decimal `DivRem` import is no longer used by the bit-shift calculation path.
 
-## v27 - Confirmable cancellation and safe Windows close
+### Extended-Precision Floating Point — `Numerics/QuadDouble.cs` / `OctoDouble.cs` / `DoubleDouble.cs`
 
-The Power/Root tab now treats cancellation as an explicit user decision:
+Three non-IEEE floating-point types that expand precision beyond IEEE 754:
 
-- Pressing **Stop calculation** shows a Yes/No confirmation before cancelling the calculation token.
-- Pressing **Stop creating TXT** shows a Yes/No confirmation before cancelling the export token.
-- On Windows, **X** and **Alt+F4** are intercepted through `WindowStateManager` while either operation is active.
-- Choosing **No** cancels the close request and leaves the active calculation/export untouched.
-- Choosing **Yes** requests cancellation and awaits the active operation completion before Windows is allowed to close.
-- Task completion sources are used only for shutdown coordination; they do not change the NTT/CRT, bit-shift, base-10,000, SIMD, or export algorithms.
+| Type | Significant Bits | Typical Use |
+|------|------------------|-------------|
+| `DoubleDouble` | ~106 bits (32 digits) | Basic extended arithmetic, fallback paths |
+| `QuadDouble` | ~212 bits (64 digits) | Standard solver precision for power/root, quadratic, geometry |
+| `OctoDouble` | ~424 bits (128 digits) | Specialized high-precision solvers where extra guard digits matter |
 
-## v28 - NTT Buffer Pool + Lifetime Reuse
+All three use fused-multiply-add (`Math.FusedMultiplyAdd`) to capture rounding error in a separate component. Constants like `Pi`, `Sqrt(3)` are pre-parsed from string literals at static initialization.
 
-Large NTT value workspaces are no longer allocated with `new uint[transformLength]`
-for every modulus pass. One `NttBufferPool` is created for the complete `Pow`
-operation and is shared by both PowSplit branches and the final combine.
+---
 
-Policy:
+## Memory & Lifetime Management
 
-- cache at most two `uint[]` workspaces, matching the maximum two live transforms
-  of a non-square convolution;
-- retain only buffers whose length equals the largest transform length seen so far;
-- release references to smaller cached workspaces as soon as a larger transform is
-  requested;
-- reuse the same workspaces between P1 and P2 and across later multiplications;
-- on reuse, overwrite the compact limb prefix and clear only the stale zero-padding
-  tail rather than clearing the whole array;
-- return the right transform immediately after pointwise multiplication because it
-  is dead before the inverse transform;
-- use `try/finally` so cancellation or an exception cannot leak a leased workspace.
+### NTT Buffer Pool — v28–v34
 
-Lifetime reuse also removes the full `secondResidues[coefficientCount]` allocation.
-The inverse P2 workspace stays leased while CRT reads its valid coefficient prefix
-directly; CRT then returns that workspace to the pool. The first-modulus residue
-array remains compact because keeping a full power-of-two P1 transform alive would
-consume more RAM than the exact coefficient-length copy.
+Large NTT value workspaces (`uint[]`) were previously allocated with `new uint[transformLength]` for every modulus pass, wasting RAM and GC pressure. The architecture now:
 
-This version deliberately does not yet fuse CRT with Carry or change PowSplit
-scheduling. Those remain separate future memory-optimization steps so RAM and
-performance effects can be benchmarked independently.
+- Creates one `NttBufferPool` per complete `Pow()` operation.
+- P1/P2 branches and the final combine share this pool — buffers are rented/returned deterministically via `try/finally`.
+- **Policy**: cache at most two workspaces matching the maximum live transform length; release smaller cached buffers immediately when a larger one is requested.
+- On reuse, overwrite the compact limb prefix and clear only the stale zero-padding tail instead of clearing the whole array.
+- Return the right-transform workspace before inverse DIT begins (making that lifetime boundary structural, not dependent on nullable locals).
 
-## v29 - Scoped NTT Pool + Aggressive Lifetime Release
+### Twiddle Table Pool — v29
 
-v29 keeps the v28 NTT buffer-reuse architecture but makes the end-of-calculation lifetime explicit and observable:
+Fresh NTT/twiddle arrays use uninitialized allocation (`GC.AllocateUninitializedArray`) because every element is guaranteed to be overwritten before its ready flag is published. Split branches may return twiddle tables to a local pool and the final-combine team can reuse up to four arrays; the whole pool is then released before `Pow()` returns.
 
-- PowSplit branches and final combine still share one `NttBufferPool` for exactly one `ParallelBigUnsigned.Pow()` call.
-- After every worker team is disposed, v29 records peak leased/cache bytes plus rent/reuse counts, then calls `ReleaseCachedBuffers()` before the final magnitude leaves `Pow()`.
-- `NttBufferPool.Dispose()` remains the cancellation/exception safety net.
-- `FixedWorkerTeam.Dispose()` explicitly drops the last scheduled delegate/failure references so lambdas cannot keep a transform array reachable after the team finishes.
-- Large twiddle tables now come from a small Pow-scoped `NttTwiddleBufferPool` instead of process-wide `ArrayPool.Shared`. Split branches may return tables to this local pool and the final-combine team can reuse up to four arrays; the whole twiddle pool is then released before `Pow()` returns. Fresh tables use `GC.AllocateUninitializedArray<uint>()` because each stage is fully initialized before its ready flag is published.
-- For large prepared base-10,000 results (estimated workspace >= 512 MiB), `PowerRootView` performs one blocking Gen2 sweep only after the displayed calculation stopwatch has stopped. LOH compaction is deliberately disabled so the live final magnitude is not copied merely to reclaim dead workspaces.
-- Result diagnostics now separate estimated algorithm workspace from current process Private Memory and expose NTT pool peak leased/cache bytes plus the reuse ratio.
+### Large-Result GC Cleanup — v29
 
-The NTT/CRT arithmetic, v19 stage fusion, v21 global adaptive 8-way, L3/L2/L1 cache kernels, PowSplit scheduling, Carry, and SIMD TXT formatting are unchanged.
+For large prepared base-10,000 results (estimated workspace >= 512 MiB), a blocking Gen2 sweep runs only after the displayed calculation stopwatch has stopped. LOH compaction is deliberately disabled so the live final magnitude is not copied merely to reclaim dead workspaces.
 
-## v30 - CRT -> Carry Streaming In Place
+### CRT Streaming — v30
 
-v30 removes the full `ulong[coefficientCount]` CRT materialization. CRT is
-reconstructed in bounded blocks, carry consumes each block immediately, and the
-normalized base-10,000 limbs overwrite the no-longer-needed P1 residue array.
-The P2 inverse workspace is read directly, so no compact P2 residue array is
-created. DIF/DIT, primes, PowSplit scheduling and worker topology are unchanged.
+Removes full `ulong[coefficientCount]` materialization. CRT is reconstructed in bounded blocks, carry consumes each block immediately. The compact P1 residue array is overwritten by the normalized base-10,000 limbs (in place). P2 inverse workspace is read directly — no compact P2 residue array is created.
 
-## v31 - Shared Pow-Scoped Twiddle Plans + Zero-Fill Elision
+### Final Inverse Split-Range ILP — v34
 
-v31 shares one immutable twiddle plan per modulus across both split branches and
-the final combine. Fresh NTT/twiddle arrays use uninitialized allocation where
-every element is guaranteed to be overwritten; `PrepareNttBuffer` clears only
-the required zero-padding tail and overwrites the source prefix. The NTT/CRT
-worker topology and arithmetic kernels are unchanged.
+The final inverse-DIT prefix kernel splits each worker's contiguous range at `validRightCount`, running two branch-free hot loops instead of testing a condition per butterfly. For large stages, both loops use four independent twiddle lanes advancing by `root^4` to remove the long dependency chain on `twiddle = twiddle * root % modulus`.
 
-## v32 - NTT Workspace Lifetime / Dead-Tail Reuse
+---
 
-v32 keeps the v31.1 arithmetic and SMT topology intact and changes only storage
-lifetime/reuse:
+## Threading Model
 
-- the compact P1/result array is allocated only after inverse P1 has completed,
-  rather than while the forward pass may still have two transform workspaces
-  leased;
-- the non-square right transform lives in a dedicated helper and is returned to
-  the Pow-scoped NTT pool before inverse DIT begins, making that lifetime boundary
-  structural rather than dependent on a nullable local;
-- after each fixed-worker range completes, both the team field and every worker's
-  local delegate reference are cleared immediately so a completed closure cannot
-  keep 128-256 MiB transform arrays reachable until the next stage;
-- after inverse P2, the unused transform tail is reinterpreted as the bounded CRT
-  `ulong` scratch whenever at least one complete 1 Mi-coefficient block fits.
-  This reuses already-live transform storage and avoids a separate 8 MiB scratch
-  allocation for the common large-transform case; any fallback scratch retained
-  by earlier smaller transforms is dropped as soon as tail reuse becomes valid;
-- the dedicated CRT scratch fallback now uses uninitialized allocation because
-  every block is fully overwritten before carry reads it.
+### `Services/CalculationThreadingManager.cs`
 
-No DIF/DIT stage order, modulus, primitive root, CRT formula, PowSplit scheduling,
-worker count, or SMT behavior is changed in v32.
+- Reads user preference for multithreading via `Preferences.Default.Get()`.
+- Exposes: `IsMultithreadingAvailable`, `LogicalProcessorCount`, `PhysicalCoreCount`, `RecommendedWorkerCount`, `MaxDegreeOfParallelism`.
+- Default: 1 worker if no hardware threading detected; otherwise all logical processors.
 
-## v33 - Final Inverse Prefix Materialization
+### Worker Scheduling — `Numerics/ParallelBigUnsigned.cs`
 
-v33 keeps the v32 SMT topology, DIF/DIT stage ordering, NTT primes, twiddle
-strategy, CRT streaming, and worker counts unchanged. The optimization is
-limited to the last inverse-DIT stage, where only the linear-convolution prefix
-is externally observable.
+- **Small SMT**: 8–19 thread CPUs (e.g., i7-8700) use 2,048-value L1 fused blocks to leave room for sibling threads in shared L1D.
+- **Medium Thread**: 20+ threads use 4,096-value (16 KiB) fused blocks.
+- **Large SMT**: 24+ thread CPUs (e.g., HX 370) keep the proven 8,192-value (32 KiB) block.
 
-- P1 no longer normalizes/stores the full inverse transform and then copies
-  `coefficientCount` residues into a compact array. The compact array is
-  allocated only when the final DIT stage is reached, and that stage writes the
-  valid normalized prefix directly into it. This removes one large
-  `Array.Copy` read/write pass per P1 convolution while preserving v32's late
-  allocation boundary.
-- P2 remains in-place, but the final DIT stage skips normalization and stores for
-  indices `>= coefficientCount`. That suffix is outside the exact linear
-  convolution and is dead; v32 already reuses part of it as CRT scratch.
-- The final-stage butterfly partition still uses the same fixed worker team and
-  the same contiguous per-worker ranges. No SMT scheduling, worker topology,
-  modulus, primitive root, or transform ordering is changed.
-- Compact P1 allocation time is excluded from the inverse-transform diagnostic
-  counter so timing remains comparable to the v32 arithmetic counters; total
-  wall-clock time still includes the allocation, as before.
+- Second cache-blocking level keeps several L1-sized fused blocks inside one L2-resident tile sized per logical-thread class so two SMT siblings do not consume the whole private L2 with values plus the largest twiddle stage.
 
-Expected effect: workspace size should remain approximately at the v32 level,
-while memory traffic falls because the largest P1 residue copy disappears and
-P2 no longer writes a dead normalized suffix. The gain is intentionally
-benchmark-driven; v32 remains the fallback baseline if v33 does not improve or
-match its 48.5-48.7 s wall-clock range.
+- Third-level-cache tile removes more full-array sweeps before work reaches the L2 tile. Tile is conservative enough that all active SMT workers can retain useful L3 residency simultaneously.
 
-## v34 - Final Inverse Split-Range ILP
+---
 
-v34 is a deliberately narrow last-mile optimization on top of v33. It does not
-change DIF/DIT ordering, NTT primes, PowSplit/SMT scheduling, worker counts,
-CRT streaming, or buffer ownership.
+## SIMD Acceleration
 
-The final inverse-DIT prefix kernel now splits each worker's contiguous range at
-the single `validRightCount` boundary. The live-left/live-right region and the
-left-only dead-tail region therefore run as separate branch-free hot loops
-instead of testing `butterfly < validRightCount` for every butterfly.
+### `Services/CalculationAccelerationManager.cs`
 
-For final stages at or above the existing adaptive four-way threshold, both loops use four independent twiddle lanes; smaller transforms keep the exact v33 scalar path. The lanes advance by `root^4`,
-which preserves exactly the same twiddle sequence while removing the single
-long `twiddle = twiddle * root % modulus` dependency chain. Scalar cleanup is
-kept for the final 0-3 butterflies of each cancellation chunk. Cancellation is
-checked once per 32K-butterfly chunk rather than with a branch in the inner hot
-loop.
+Detects hardware capabilities and exposes:
 
-The goal is lower final-inverse CPU time with essentially unchanged RAM. v33
-remains the fallback if repeated wall-clock benchmarks do not show a stable
-benefit.
+| Mode | Hardware Requirement |
+|------|---------------------|
+| `Portable` | Any vector unit with count > 1 |
+| `Sse` | SSE2 + AVX (x86) |
+| `AvxAvx2` | AVX/AVX-512 support |
+| `Avx512` | AVX-512 + hardware acceleration |
 
-## Find X numeric pipeline update
+**Usage policy**: NTT/CRT arithmetic: **scalar only**. SIMD production path currently only used for decimal formatting after Carry normalization, where the base-10,000 limbs are fully independent. Benchmark mode selection is controlled via settings and does not alter runtime algorithm behavior.
 
-- `BigRational.cs` was removed. Find X integer mode keeps `Int128` input validation, promotes the parsed values to `BigInteger`, and only creates a normalized numerator/denominator pair for the final exact result when division requires a fraction. It does not carry a general-purpose rational type through intermediate operations.
-- Find X decimal mode intentionally keeps `decimal` for parsing/input bounds and converts the parsed values with `QuadDouble.FromDecimal()` for the solver. This preserves fast decimal input handling while retaining QuadDouble precision for arithmetic and the final result.
+---
+
+## UI Architecture
+
+### Shell & Navigation — `AppShell.cs` / `CalculationPage.cs`
+
+```
+App
+ └── AppShell
+      ├── MainTabBar  (Calculation, Settings, Hardware Performance, About)
+      │   ├── CalculationPage
+      │   │   ├── Basic tab (Add/Subtract/Multiply/Divide)
+      │   │   ├── Power/Root tab → PowerRootView
+      │   │   ├── QuadraticEquation tab → QuadraticEquationView
+      │   │   ├── Fraction tab → FractionView / FractionCalculator
+      │   │   ├── Geometry tab → GeometryCalculatorView
+      │   │   └── Long Division tab → LongDivisionCalculator + Drawable
+      │   └── SettingsPage (locale, theme, threading config)
+      └── AboutPage
+```
+
+`WindowStateManager` intercepts Windows X / Alt+F4 while calculations or TXT exports are active. Pressing Stop shows a Yes/No confirmation before cancelling the calculation token. Task completion sources coordinate with the OS close path.
+
+### Localization — `Services/LocalizationService.cs` / `TRANSLATING.md`
+
+Language packs are UTF-8 JSON files following `culture.json` format: metadata + strings + templates. Placeholders (`{field}`) are preserved in all template files for runtime interpolation.
+
+### Theming & Fonts — `Services/AppThemeManager.cs` / `Services/AppFontManager.cs`
+
+Theme toggles between light/dark and color schemes; applied via resource overrides and XAML stylesheets. Font catalog caches system fonts by weight/style per culture; `AppFontManager` applies the selected font family to all text elements.
+
+---
+
+## Services Layer
+
+| Class | Responsibility |
+|-------|----------------|
+| `CalculationThreadingManager` | Hardware threading detection, user preference persistence, worker budget calculation |
+| `CalculationAccelerationManager` | SIMD feature detection, benchmark mode selection, hardware capability flags |
+| `FractionCalculator` | Arbitrary-precision fraction arithmetic (Add/Subtract/Multiply/Divide/CommonDenominator) — all operations return a normalized result |
+| `LongDivisionCalculator` | Decimal long division with step-by-step output; supports integer or decimal input |
+| `ResultClipboardService` | Copies formatted calculation results to clipboard |
+| `SelectionButtonStyler` | Consistent button styling across all views |
+
+---
+
+## Power/Root Solver — `Views/PowerRootView.cs`
+
+The most performance-critical UI component:
+
+- **Power mode**: Base ^ Exponent → uses `ParallelBigUnsigned.Pow()` with full worker budget.
+- **Root mode**: Root(n, d) → solves x^d = n via binary search over QuadDouble range; precision controlled by `MaxRootDecimalPlaces`.
+- **Cancellation**: `CancellationTokenSource` shared across the entire power operation and any active TXT export token. Cancellation is confirmed with a dialog before terminating worker teams.
+- **TXT export**: For results >= 100,001 digits, the engine prepares base-10,000 magnitude through the parallel NTT/CRT pipeline, then streams decimal blocks via `ParallelBigUnsigned.WriteDecimalBlocks()`. A progress bar shows the worker count during preparation.
+
+Key thresholds:
+- `MaxBaseInputDigits = 19` (fits in Int64 magnitude check)
+- `MaxExponent = 10,000,000`
+- `ExportDigitThreshold = 100_001` → triggers parallel preparation
+- `FullResultDigitThreshold = 18` → below this, results are cached and displayed immediately without export
+
+---
+
+## Error Handling & Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| Division by zero (fractions) | Returns error with contextual message; no NaN produced |
+| Invalid input format | Entry-level validation in `IntegerInputFormatter`; error messages shown inline |
+| Overflow (Int128 range) | Input ranges are enforced via constants (`MaxIntegerInputDigits = 39`, `Min/MaxInt128InputValue`) |
+| Large results (>1 MiB workspace) | Triggered Gen2 GC sweep after stopwatch stops; LOH compaction disabled to avoid copying the live result |
+
+---
+
+## Build & Distribution
+
+- **SDK**: .NET MAUI (`Microsoft.Net.Sdk`) targeting Windows 10+, iOS, Android.
+- **Platforms**: Single project with conditional `TargetFrameworks` and platform-specific adapters (`Platforms/Windows`, `Platforms/iOS`, `Platforms/MacCatalyst`, `Platforms/Android`).
+- **Output type**: Native executable; no additional runtime dependencies beyond the .NET SDK.
