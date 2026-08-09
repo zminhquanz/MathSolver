@@ -186,24 +186,13 @@
                             <RoundRectangle CornerRadius="12" />
                         </Border.StrokeShape>
 
-                        <VerticalStackLayout Spacing="4">
-
-                            <Label
-                                Text="x̄ ="
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <Label
-                                x:Name="AverageResultLabel"
-                                FontSize="24"
-                                FontAttributes="Bold"
-                                LineBreakMode="WordWrap"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        </VerticalStackLayout>
+                        <Label
+                            x:Name="AverageResultLabel"
+                            FontSize="32"
+                            FontAttributes="Bold"
+                            LineBreakMode="WordWrap"
+                            HorizontalTextAlignment="Center"
+                            TextColor="{DynamicResource PrimaryColor}" />
 
                     </Border>
 

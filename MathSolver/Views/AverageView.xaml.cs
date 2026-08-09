@@ -471,8 +471,42 @@ public partial class AverageView : LocalizedSolverView
             return;
         }
 
-        AverageResultLabel.Text =
-            state.ResultText;
+        // Gán mới cả FormattedString thay vì chỉ thay Span.Text. Trên MAUI
+        // Windows, việc sửa một Span đã khai báo trong XAML đôi khi không làm
+        // Label invalidate nên vùng kết quả vẫn trắng dù dữ liệu đã có.
+        Span expressionSpan =
+            new()
+            {
+                Text = "X̄ = ",
+                FontSize = 32,
+                FontAttributes = FontAttributes.Bold
+            };
+
+        expressionSpan.SetDynamicResource(
+            Span.TextColorProperty,
+            "PrimaryColor");
+
+        Span valueSpan =
+            new()
+            {
+                Text = state.ResultText,
+                FontSize = 32,
+                FontAttributes = FontAttributes.Bold
+            };
+
+        valueSpan.SetDynamicResource(
+            Span.TextColorProperty,
+            "PrimaryColor");
+
+        AverageResultLabel.FormattedText =
+            new FormattedString
+            {
+                Spans =
+                {
+                    expressionSpan,
+                    valueSpan
+                }
+            };
 
         CountValueLabel.Text =
             state.Count.ToString(

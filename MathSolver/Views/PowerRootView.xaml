@@ -7,6 +7,7 @@
     xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
 
@@ -321,7 +322,7 @@
                     IsVisible="False"
                     Padding="16"
                     BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource SuccessBorderBrush}"
+                    Stroke="{DynamicResource PrimaryBorderBrush}"
                     StrokeThickness="1">
 
                     <Border.StrokeShape>
@@ -338,39 +339,20 @@
 
                         <Border
                             Padding="14"
-                            BackgroundColor="{DynamicResource SuccessSoftColor}"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
                             StrokeThickness="0">
 
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
 
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label
-                                    x:Name="ResultExpressionLabel"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource SuccessColor}" />
-
-                                <Label
-                                    x:Name="ResultPreviewEditor"
-                                    FontSize="23"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                <Label
-                                    x:Name="ResultCompactHintLabel"
-                                    IsVisible="False"
-                                    Text="{localization:Translate PowerRoot.CompactHint}"
-                                    FontSize="13"
-                                    FontAttributes="Italic"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
-
-                            </VerticalStackLayout>
+                            <Label
+                                x:Name="ResultExpressionLabel"
+                                FontSize="32"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
 
                         </Border>
 
@@ -378,18 +360,50 @@
                             ColumnDefinitions="*,*"
                             ColumnSpacing="10">
 
-                            <Button
-                                x:Name="CopyResultButton"
+                            <Grid
+                                x:Name="CopyResultButtonContainer"
                                 Grid.Column="0"
-                                Text="{localization:Translate PowerRoot.CopyCompact}"
-                                HeightRequest="48"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource DividerColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
-                                ImageSource="content_copy.png"
-                                Clicked="OnCopyResultClicked" />
+                                HeightRequest="48">
+
+                                <Button
+                                    x:Name="CopyResultButton"
+                                    Text="{localization:Translate PowerRoot.CopyCompact}"
+                                    CornerRadius="12"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource DividerColor}"
+                                    TextColor="Transparent"
+                                    Clicked="OnCopyResultClicked" />
+
+                                <HorizontalStackLayout
+                                    InputTransparent="True"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    Spacing="8">
+
+                                    <Image
+                                        Source="content_copy.png"
+                                        WidthRequest="20"
+                                        HeightRequest="20"
+                                        Aspect="AspectFit">
+
+                                        <Image.Behaviors>
+                                            <toolkit:IconTintColorBehavior
+                                                x:Name="CopyResultIconTintBehavior" />
+                                        </Image.Behaviors>
+
+                                    </Image>
+
+                                    <Label
+                                        Text="{Binding Text, Source={x:Reference CopyResultButton}}"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        VerticalTextAlignment="Center" />
+
+                                </HorizontalStackLayout>
+
+                            </Grid>
 
                             <Button
                                 x:Name="ExportTextButton"
@@ -673,7 +687,7 @@
                     IsVisible="False"
                     Padding="16"
                     BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource SuccessBorderBrush}"
+                    Stroke="{DynamicResource PrimaryBorderBrush}"
                     StrokeThickness="1">
 
                     <Border.StrokeShape>
@@ -690,7 +704,7 @@
 
                         <Border
                             Padding="14"
-                            BackgroundColor="{DynamicResource SuccessSoftColor}"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
                             StrokeThickness="0">
 
                             <Border.StrokeShape>
@@ -703,30 +717,44 @@
                                     Trình bày dấu căn theo đúng quy ước sách giáo khoa:
                                     căn bậc hai không có chỉ số; bậc 3–255 đặt
                                     chỉ số nhỏ ở góc trên bên trái của dấu căn.
+                                    Biểu thức, dấu bằng và kết quả nằm cùng dòng.
                                 -->
                                 <ScrollView
                                     Orientation="Horizontal"
                                     HorizontalScrollBarVisibility="Never"
                                     HorizontalOptions="Center">
 
-                                    <controls:TextbookRadicalExpressionView
-                                        x:Name="RootResultExpressionView"
-                                        FontSize="17"
-                                        DegreeFontSize="11"
-                                        FontAttributes="Bold"
-                                        LineColor="{DynamicResource SuccessColor}"
-                                        TextColor="{DynamicResource SuccessColor}"
-                                        HorizontalOptions="Center" />
+                                    <HorizontalStackLayout
+                                        Spacing="6"
+                                        VerticalOptions="Center">
+
+                                        <controls:TextbookRadicalExpressionView
+                                            x:Name="RootResultExpressionView"
+                                            FontSize="32"
+                                            DegreeFontSize="18"
+                                            FontAttributes="Bold"
+                                            LineColor="{DynamicResource PrimaryColor}"
+                                            TextColor="{DynamicResource PrimaryColor}"
+                                            HorizontalOptions="Center" />
+
+                                        <Label
+                                            Text="="
+                                            FontSize="32"
+                                            FontAttributes="Bold"
+                                            VerticalTextAlignment="Center"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                        <Label
+                                            x:Name="RootResultValueLabel"
+                                            FontSize="32"
+                                            FontAttributes="Bold"
+                                            VerticalTextAlignment="Center"
+                                            LineBreakMode="NoWrap"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                    </HorizontalStackLayout>
 
                                 </ScrollView>
-
-                                <Label
-                                    x:Name="RootResultValueLabel"
-                                    FontSize="23"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
                                     x:Name="RootResultKindLabel"

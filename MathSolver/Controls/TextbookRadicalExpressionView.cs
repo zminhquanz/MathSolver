@@ -258,6 +258,17 @@ public sealed class TextbookRadicalExpressionView : ContentView
                 30d,
                 FontSize + 13d);
 
+        // Giữ dấu căn cân đối với chữ ở mọi cỡ. Ở cỡ kết quả 32 DIP,
+        // móc căn và gạch ngang được phóng theo cùng tỷ lệ thay vì giữ
+        // kích thước cố định vốn chỉ phù hợp với chữ 17 DIP.
+        double radicalScale =
+            requestedHeight /
+            30d;
+
+        _expressionGrid.ColumnDefinitions[1].Width =
+            new GridLength(
+                18d * radicalScale);
+
         _expressionGrid.HeightRequest =
             requestedHeight;
 

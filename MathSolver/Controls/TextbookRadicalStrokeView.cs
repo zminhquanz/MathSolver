@@ -46,9 +46,6 @@ public sealed class TextbookRadicalStrokeView : GraphicsView
 
     private sealed class TextbookRadicalDrawable : IDrawable
     {
-        private const float LineThickness =
-            2.2f;
-
         public Color LineColor { get; set; } =
             Color.FromArgb("#16A34A");
 
@@ -62,13 +59,20 @@ public sealed class TextbookRadicalStrokeView : GraphicsView
                 return;
             }
 
+            float scale =
+                MathF.Max(
+                    1f,
+                    dirtyRect.Height /
+                    30f);
+
             float top =
-                3f;
+                3f *
+                scale;
 
             float bottom =
                 MathF.Min(
-                    dirtyRect.Height - 2f,
-                    27f);
+                    dirtyRect.Height - (2f * scale),
+                    27f * scale);
 
             float checkY =
                 top +
@@ -78,19 +82,19 @@ public sealed class TextbookRadicalStrokeView : GraphicsView
                 new PathF();
 
             radical.MoveTo(
-                1.25f,
+                1.25f * scale,
                 checkY);
 
             radical.LineTo(
-                4.25f,
+                4.25f * scale,
                 checkY);
 
             radical.LineTo(
-                8f,
+                8f * scale,
                 bottom);
 
             radical.LineTo(
-                15f,
+                15f * scale,
                 top);
 
             // Dấu móc và gạch ngang nằm trong cùng PathF nên luôn nối liền,
@@ -106,7 +110,8 @@ public sealed class TextbookRadicalStrokeView : GraphicsView
                 LineColor;
 
             canvas.StrokeSize =
-                LineThickness;
+                2.2f *
+                scale;
 
             canvas.StrokeLineCap =
                 LineCap.Round;

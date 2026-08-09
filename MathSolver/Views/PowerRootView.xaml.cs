@@ -120,6 +120,14 @@ public partial class PowerRootView : LocalizedSolverView
         RefreshLocalizedDynamicText();
     }
 
+    protected override void OnSolverLoaded()
+    {
+        AppThemeManager.ThemeChanged +=
+            OnPowerRootThemeChanged;
+
+        UpdateCopyResultIconTint();
+    }
+
     protected override void RefreshLocalizedContent()
     {
         base.RefreshLocalizedContent();
@@ -128,6 +136,9 @@ public partial class PowerRootView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
+        AppThemeManager.ThemeChanged -=
+            OnPowerRootThemeChanged;
+
 #if WINDOWS
         MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
             this);
@@ -135,6 +146,37 @@ public partial class PowerRootView : LocalizedSolverView
 
         _calculationCancellation?.Cancel();
         _exportCancellation?.Cancel();
+    }
+
+    private void OnPowerRootThemeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            UpdateCopyResultIconTint);
+    }
+
+    private void UpdateCopyResultIconTint()
+    {
+        AppTheme effectiveTheme =
+            AppThemeManager.CurrentMode switch
+            {
+                AppThemeMode.Light =>
+                    AppTheme.Light,
+
+                AppThemeMode.Dark =>
+                    AppTheme.Dark,
+
+                _ =>
+                    Application.Current?.RequestedTheme == AppTheme.Dark
+                        ? AppTheme.Dark
+                        : AppTheme.Light
+            };
+
+        CopyResultIconTintBehavior.TintColor =
+            effectiveTheme == AppTheme.Dark
+                ? Colors.White
+                : Colors.Black;
     }
 
     private void OnPowerModeClicked(
@@ -3288,20 +3330,60 @@ public partial class PowerRootView : LocalizedSolverView
     private void ShowResult(
         PowerCalculationState state)
     {
-        ResultExpressionLabel.Text =
-            FormatDisplayExpression(
-                state.BaseValue,
-                state.Exponent);
+        // Gán mới cả FormattedString để buộc MAUI Windows vẽ lại kết quả.
+        // Chỉ đổi Text trên Span được tạo từ XAML có thể không invalidate Label.
+        Span expressionSpan =
+            new()
+            {
+                Text = FormatDisplayExpression(
+                    state.BaseValue,
+                    state.Exponent),
+                FontSize = 32,
+                FontAttributes = FontAttributes.Bold
+            };
 
-        ResultPreviewEditor.Text =
-            state.CompactResult;
+        expressionSpan.SetDynamicResource(
+            Span.TextColorProperty,
+            "PrimaryColor");
+
+        Span equalsSpan =
+            new()
+            {
+                Text = " = ",
+                FontSize = 32,
+                FontAttributes = FontAttributes.Bold
+            };
+
+        equalsSpan.SetDynamicResource(
+            Span.TextColorProperty,
+            "PrimaryColor");
+
+        Span valueSpan =
+            new()
+            {
+                Text = state.CompactResult,
+                FontSize = 32,
+                FontAttributes = FontAttributes.Bold
+            };
+
+        valueSpan.SetDynamicResource(
+            Span.TextColorProperty,
+            "PrimaryColor");
+
+        ResultExpressionLabel.FormattedText =
+            new FormattedString
+            {
+                Spans =
+                {
+                    expressionSpan,
+                    equalsSpan,
+                    valueSpan
+                }
+            };
 
         bool isCompact =
             state.DigitCount >
             FullResultDigitThreshold;
-
-        ResultCompactHintLabel.IsVisible =
-            isCompact;
 
         CopyResultButton.Text =
             Translate(
@@ -3317,7 +3399,7 @@ public partial class PowerRootView : LocalizedSolverView
             canExport;
 
         Grid.SetColumnSpan(
-            CopyResultButton,
+            CopyResultButtonContainer,
             canExport
                 ? 1
                 : 2);
