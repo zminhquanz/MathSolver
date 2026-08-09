@@ -48,6 +48,12 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private static readonly OctoDouble OctoComparisonTolerance =
         OctoDouble.Parse("1e-100");
 
+    private static readonly BigInteger MinInt128InputValue =
+        (BigInteger)Int128.MinValue;
+
+    private static readonly BigInteger MaxInt128InputValue =
+        (BigInteger)Int128.MaxValue;
+
     private GeometryCategory _selectedCategory =
         GeometryCategory.Plane;
 
@@ -57,6 +63,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private GeometryFormulaItem? _selectedGeometry;
 
     private bool _isUpdatingEntryText;
+    private readonly Dictionary<Entry, string> _pendingRestoredEntryTexts = [];
     private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
 
@@ -326,6 +333,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         GeometryInputFlexLayout.HeightRequest =
             -1d;
 
+        _pendingRestoredEntryTexts.Clear();
         InputFields.Clear();
 
         foreach (GeometryInputFieldDefinition definition
@@ -665,8 +673,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         object? sender,
         TextChangedEventArgs e)
     {
-        if (_isUpdatingEntryText ||
-            sender is not Entry entry ||
+        if (sender is not Entry entry ||
             entry.BindingContext
             is not GeometryInputField field)
         {
@@ -677,28 +684,79 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             e.NewTextValue ??
             string.Empty;
 
-        if (!IsValidInputWhileTyping(
-                newText))
+        // Việc khôi phục OldTextValue có thể phát thêm TextChanged sau khi
+        // SetEntryText kết thúc. Bỏ qua đúng sự kiện đó để lỗi tràn vừa hiện
+        // không bị HideError xóa ngay.
+        if (_pendingRestoredEntryTexts.TryGetValue(
+                entry,
+                out string? restoredText))
+        {
+            _pendingRestoredEntryTexts.Remove(
+                entry);
+
+            if (string.Equals(
+                    newText,
+                    restoredText,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        if (_isUpdatingEntryText)
+        {
+            return;
+        }
+
+        GeometryInputValidationError validationError =
+            ValidateInputWhileTyping(
+                newText);
+
+        if (validationError !=
+            GeometryInputValidationError.None)
         {
             string oldText =
                 e.OldTextValue ??
                 string.Empty;
+
+            if (validationError ==
+                GeometryInputValidationError.OutOfRange)
+            {
+                ShowError(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        _selectedNumberType ==
+                            GeometryNumberType.Integer
+                            ? T("{0} phải là số nguyên hợp lệ trong phạm vi Int128 từ {1}.")
+                            : T("{0} phải là số thập phân hợp lệ trong phạm vi Decimal từ {1}."),
+                        field.Label,
+                        _selectedNumberType ==
+                            GeometryNumberType.Integer
+                            ? Int128RangeText
+                            : DecimalRangeText));
+            }
+            else
+            {
+                ShowError(
+                    _selectedNumberType ==
+                    GeometryNumberType.Integer
+                        ? T(
+                            "Số nguyên chỉ được chứa chữ số và một dấu âm ở đầu. " +
+                            "Dấu phẩy phân nhóm được ứng dụng thêm tự động.")
+                        : T(
+                            "Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, " +
+                            "tối đa một dấu chấm và tối đa 10 chữ số sau dấu chấm; " +
+                            "dấu phẩy được thêm tự động."));
+            }
+
+            _pendingRestoredEntryTexts[entry] =
+                oldText;
 
             SetEntryText(
                 entry,
                 field,
                 oldText,
                 updateRawText: true);
-
-            ShowError(
-                _selectedNumberType ==
-                GeometryNumberType.Integer
-                    ? T(
-                        "Số nguyên chỉ được chứa chữ số, một dấu âm ở đầu " +
-                        "và tối đa 39 chữ số.")
-                    : T(
-                        "Số thập phân chỉ được chứa chữ số, một dấu âm ở đầu, " +
-                        "một dấu chấm và tối đa 10 chữ số sau dấu chấm."));
 
             return;
         }
@@ -745,7 +803,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         ClearResultsOnly();
     }
 
-    private bool IsValidInputWhileTyping(
+    private GeometryInputValidationError ValidateInputWhileTyping(
         string text)
     {
         string normalized =
@@ -755,7 +813,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         if (normalized.Length == 0 ||
             normalized is "-" or "−")
         {
-            return true;
+            return GeometryInputValidationError.None;
         }
 
         int startIndex =
@@ -766,7 +824,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         if (startIndex ==
             normalized.Length)
         {
-            return true;
+            return GeometryInputValidationError.None;
         }
 
         int digitCount =
@@ -809,7 +867,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
                 if (decimalPointCount > 1)
                 {
-                    return false;
+                    return GeometryInputValidationError.InvalidFormat;
                 }
 
                 afterDecimalPoint =
@@ -818,20 +876,67 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 continue;
             }
 
-            return false;
+            return GeometryInputValidationError.InvalidFormat;
         }
 
         if (_selectedNumberType ==
             GeometryNumberType.Integer)
         {
-            return digitCount <=
-                   39;
+            if (digitCount >
+                39)
+            {
+                return GeometryInputValidationError.OutOfRange;
+            }
+
+            if (!BigInteger.TryParse(
+                    normalized,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out BigInteger integerValue))
+            {
+                return GeometryInputValidationError.InvalidFormat;
+            }
+
+            return integerValue <
+                       MinInt128InputValue ||
+                   integerValue >
+                       MaxInt128InputValue
+                ? GeometryInputValidationError.OutOfRange
+                : GeometryInputValidationError.None;
         }
 
-        return digitCount <=
-               29 &&
-               decimalPlaces <=
-               MaxDecimalPlaces;
+        if (decimalPlaces >
+            MaxDecimalPlaces)
+        {
+            return GeometryInputValidationError.InvalidFormat;
+        }
+
+        if (digitCount >
+            29)
+        {
+            return GeometryInputValidationError.OutOfRange;
+        }
+
+        if (digitCount == 0)
+        {
+            return normalized is "." or "-."
+                ? GeometryInputValidationError.None
+                : GeometryInputValidationError.InvalidFormat;
+        }
+
+        string parseText =
+            normalized[^1] == '.'
+                ? normalized[..^1]
+                : normalized;
+
+        return decimal.TryParse(
+            parseText,
+            NumberStyles.AllowLeadingSign |
+            NumberStyles.AllowDecimalPoint,
+            CultureInfo.InvariantCulture,
+            out _)
+                ? GeometryInputValidationError.None
+                : GeometryInputValidationError.OutOfRange;
     }
 
     private void OnGeometryEntryFocused(
@@ -2395,6 +2500,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
+        _pendingRestoredEntryTexts.Clear();
+
         _isUpdatingEntryText =
             true;
 
@@ -3200,6 +3307,13 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     {
         Integer,
         Decimal
+    }
+
+    private enum GeometryInputValidationError
+    {
+        None,
+        InvalidFormat,
+        OutOfRange
     }
 
     private readonly record struct GeometryInputFieldDefinition(

@@ -101,6 +101,7 @@ public partial class PowerRootView : LocalizedSolverView
     private bool _isPowerMode = true;
     private bool _isUpdatingInputText;
     private bool _isUpdatingRootInputText;
+    private readonly Dictionary<Entry, string> _pendingRestoredEntryTexts = [];
     private readonly Dictionary<Entry, string> _rootExactInputValues = [];
     private int _calculationVersion;
     private int _calculationActiveWorkerCount = 1;
@@ -227,21 +228,44 @@ public partial class PowerRootView : LocalizedSolverView
         object? sender,
         TextChangedEventArgs e)
     {
+        if (sender is not Entry entry)
+        {
+            return;
+        }
+
+        string newText =
+            e.NewTextValue ??
+            string.Empty;
+
+        // MAUI có thể phát TextChanged khôi phục sau khi cờ cập nhật đã được
+        // hạ xuống. Bỏ qua đúng sự kiện đó để thông báo vừa hiện không bị
+        // nhánh dữ liệu hợp lệ ẩn ngay lập tức.
+        if (_pendingRestoredEntryTexts.TryGetValue(
+                entry,
+                out string? restoredText))
+        {
+            _pendingRestoredEntryTexts.Remove(
+                entry);
+
+            if (string.Equals(
+                    newText,
+                    restoredText,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
         if (_isCalculating ||
             _isUpdatingInputText)
         {
             return;
         }
 
-        if (sender is Entry entry &&
-            IsInputOutsideAllowedRange(
+        if (IsInputOutsideAllowedRange(
                 entry,
-                e.NewTextValue))
+                newText))
         {
-            RestoreRejectedInput(
-                entry,
-                e.OldTextValue);
-
             ShowError(
                 Translate(
                     ReferenceEquals(
@@ -250,36 +274,37 @@ public partial class PowerRootView : LocalizedSolverView
                         ? "PowerRoot.BaseRangeError"
                         : "PowerRoot.ExponentRangeError"));
 
+            HideResult();
+            ProgressBorder.IsVisible =
+                false;
+
+            RestoreRejectedInput(
+                entry,
+                e.OldTextValue);
+
             return;
         }
 
-        if (sender is Entry validEntry)
+        string formattedText =
+            IntegerInputFormatter.FormatWhileTyping(
+                newText);
+
+        if (!string.Equals(
+                formattedText,
+                newText,
+                StringComparison.Ordinal))
         {
-            string newText =
-                e.NewTextValue ??
-                string.Empty;
-
-            string formattedText =
-                IntegerInputFormatter.FormatWhileTyping(
-                    newText);
-
-            if (!string.Equals(
-                    formattedText,
+            int logicalPosition =
+                IntegerInputFormatter.CountLogicalCharacters(
                     newText,
-                    StringComparison.Ordinal))
-            {
-                int logicalPosition =
-                    IntegerInputFormatter.CountLogicalCharacters(
-                        newText,
-                        validEntry.CursorPosition);
+                    entry.CursorPosition);
 
-                SetInputText(
-                    validEntry,
+            SetInputText(
+                entry,
+                formattedText,
+                IntegerInputFormatter.FindCursorPosition(
                     formattedText,
-                    IntegerInputFormatter.FindCursorPosition(
-                        formattedText,
-                        logicalPosition));
-            }
+                    logicalPosition));
         }
 
         HideError();
@@ -379,6 +404,9 @@ public partial class PowerRootView : LocalizedSolverView
         string restoredText =
             oldText ??
             string.Empty;
+
+        _pendingRestoredEntryTexts[entry] =
+            restoredText;
 
         SetInputText(
             entry,
@@ -528,8 +556,7 @@ public partial class PowerRootView : LocalizedSolverView
         object? sender,
         TextChangedEventArgs e)
     {
-        if (_isUpdatingRootInputText ||
-            sender is not Entry entry)
+        if (sender is not Entry entry)
         {
             return;
         }
@@ -537,6 +564,27 @@ public partial class PowerRootView : LocalizedSolverView
         string newText =
             e.NewTextValue ??
             string.Empty;
+
+        if (_pendingRestoredEntryTexts.TryGetValue(
+                entry,
+                out string? restoredText))
+        {
+            _pendingRestoredEntryTexts.Remove(
+                entry);
+
+            if (string.Equals(
+                    newText,
+                    restoredText,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        if (_isUpdatingRootInputText)
+        {
+            return;
+        }
 
         bool isRadicand =
             ReferenceEquals(
@@ -552,16 +600,24 @@ public partial class PowerRootView : LocalizedSolverView
 
         if (!isValid)
         {
-            SetRootEntryText(
-                entry,
-                e.OldTextValue ??
-                string.Empty);
-
             ShowRootError(
                 Translate(
                     isRadicand
                         ? "PowerRoot.RootRadicandRangeError"
                         : "PowerRoot.RootDegreeRangeError"));
+
+            HideRootResult();
+
+            string previousValidText =
+                e.OldTextValue ??
+                string.Empty;
+
+            _pendingRestoredEntryTexts[entry] =
+                previousValidText;
+
+            SetRootEntryText(
+                entry,
+                previousValidText);
 
             return;
         }
@@ -1544,6 +1600,19 @@ public partial class PowerRootView : LocalizedSolverView
     private static string FormatRootInteger(
         BigInteger value)
     {
+        string digits =
+            BigInteger.Abs(
+                    value)
+                .ToString(
+                    CultureInfo.InvariantCulture);
+
+        if (digits.Length >
+            RootScientificDisplayDigitThreshold)
+        {
+            return FormatScientificInteger(
+                value);
+        }
+
         return value
             .ToString(
                 "N0",
@@ -1574,19 +1643,23 @@ public partial class PowerRootView : LocalizedSolverView
                 1);
 
         int significantDigits =
-            Math.Clamp(
-                integerDigitCount +
-                RootMaximumDecimalPlaces,
-                1,
-                DoubleDouble.SignificantDigits);
+            integerDigitCount >
+                RootScientificDisplayDigitThreshold
+                ? RootScientificDisplaySignificantDigits
+                : Math.Clamp(
+                    integerDigitCount +
+                    RootMaximumDecimalPlaces,
+                    1,
+                    DoubleDouble.SignificantDigits);
 
         string text =
             value.ToGeneralString(
                 significantDigits,
-                scientificUpperExponent: 1000,
+                scientificUpperExponent:
+                    RootScientificDisplayDigitThreshold,
                 scientificLowerExponent: -1000);
 
-        return GroupRootNumber(
+        return FormatRootNumberForDisplay(
             text);
     }
 
@@ -1647,12 +1720,50 @@ public partial class PowerRootView : LocalizedSolverView
         double value)
     {
         string text =
-            value.ToString(
-                "0.##########",
-                CultureInfo.InvariantCulture);
+            Math.Abs(
+                value) >= 1e18d
+                ? value.ToString(
+                    "0.##########e+0",
+                    CultureInfo.InvariantCulture)
+                : value.ToString(
+                    "0.##########",
+                    CultureInfo.InvariantCulture);
 
-        return GroupRootNumber(
+        return FormatRootNumberForDisplay(
             text);
+    }
+
+    private static string FormatRootNumberForDisplay(
+        string text)
+    {
+        int exponentMarkerIndex =
+            text.IndexOfAny(
+                ['e', 'E']);
+
+        if (exponentMarkerIndex < 0)
+        {
+            return GroupRootNumber(
+                text);
+        }
+
+        string mantissa =
+            GroupRootNumber(
+                text[..exponentMarkerIndex]);
+
+        if (!int.TryParse(
+                text[(exponentMarkerIndex + 1)..],
+                NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out int exponent))
+        {
+            return text
+                .Replace(
+                    '-',
+                    '−');
+        }
+
+        return
+            $"{mantissa} × 10{ToSignedSuperscript(exponent)}";
     }
 
     private static string GroupRootNumber(
@@ -1693,6 +1804,13 @@ public partial class PowerRootView : LocalizedSolverView
     }
 
     private static string FormatRootScientificInput(
+        BigInteger value)
+    {
+        return FormatScientificInteger(
+            value);
+    }
+
+    private static string FormatScientificInteger(
         BigInteger value)
     {
         bool isNegative =
@@ -1749,7 +1867,7 @@ public partial class PowerRootView : LocalizedSolverView
         }
 
         return
-            $"{approximation}{sign}{mantissa}×10" +
+            $"{approximation}{sign}{mantissa} × 10" +
             ToSuperscript(
                 exponent);
     }
@@ -1764,6 +1882,10 @@ public partial class PowerRootView : LocalizedSolverView
         }
 
         _rootExactInputValues.Clear();
+        _pendingRestoredEntryTexts.Remove(
+            RootRadicandEntry);
+        _pendingRestoredEntryTexts.Remove(
+            RootDegreeEntry);
         _rootCalculationState = null;
 
         SetRootEntryText(
@@ -3469,9 +3591,9 @@ public partial class PowerRootView : LocalizedSolverView
                 state.Exponent);
 
         string formattedBase =
-            state.BaseValue.ToString(
-                "N0",
-                CultureInfo.InvariantCulture);
+            FormatCompactIntegerForDisplay(
+                new BigInteger(
+                    state.BaseValue));
 
         string formattedExponent =
             state.Exponent.ToString(
@@ -5074,6 +5196,10 @@ public partial class PowerRootView : LocalizedSolverView
         }
 
         _calculationState = null;
+        _pendingRestoredEntryTexts.Remove(
+            BaseEntry);
+        _pendingRestoredEntryTexts.Remove(
+            ExponentEntry);
 
         BaseEntry.Text =
             string.Empty;
@@ -5263,15 +5389,52 @@ public partial class PowerRootView : LocalizedSolverView
         long baseValue,
         int exponent)
     {
+        BigInteger integerBase =
+            new(baseValue);
+
         string formattedBase =
-            baseValue < 0
-                ? $"({baseValue.ToString("N0", CultureInfo.InvariantCulture)})"
-                : baseValue.ToString(
-                    "N0",
-                    CultureInfo.InvariantCulture);
+            FormatCompactIntegerForDisplay(
+                integerBase);
+
+        int baseDigitCount =
+            BigInteger.Abs(
+                    integerBase)
+                .ToString(
+                    CultureInfo.InvariantCulture)
+                .Length;
+
+        if (baseValue < 0 ||
+            baseDigitCount >
+                FullResultDigitThreshold)
+        {
+            formattedBase =
+                $"({formattedBase})";
+        }
 
         return
             $"{formattedBase}{ToSuperscript(exponent)}";
+    }
+
+    private static string FormatCompactIntegerForDisplay(
+        BigInteger value)
+    {
+        string digits =
+            BigInteger.Abs(
+                    value)
+                .ToString(
+                    CultureInfo.InvariantCulture);
+
+        return digits.Length >
+               FullResultDigitThreshold
+            ? FormatScientificInteger(
+                value)
+            : value
+                .ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture)
+                .Replace(
+                    '-',
+                    '−');
     }
 
     private static string ToSuperscript(
@@ -5304,6 +5467,15 @@ public partial class PowerRootView : LocalizedSolverView
         }
 
         return builder.ToString();
+    }
+
+    private static string ToSignedSuperscript(
+        int value)
+    {
+        return value < 0
+            ? $"⁻{ToSuperscript(-value)}"
+            : ToSuperscript(
+                value);
     }
 
     private static long EstimateTxtFileSizeBytes(

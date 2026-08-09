@@ -426,7 +426,7 @@
                         CornerRadius="12"
                         FontSize="15"
                         FontAttributes="Bold"
-                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        BackgroundColor="{DynamicResource DividerColor}"
                         TextColor="{DynamicResource TextPrimaryColor}"
                         Clicked="OnQuadraticCopyResultClicked" />
 

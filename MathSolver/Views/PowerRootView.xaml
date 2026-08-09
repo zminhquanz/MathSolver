@@ -130,12 +130,6 @@
 
                                 </Border>
 
-                                <Label
-                                    Text="{localization:Translate PowerRoot.BaseHint}"
-                                    FontSize="13"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
-
                             </VerticalStackLayout>
 
                             <VerticalStackLayout
@@ -169,12 +163,6 @@
                                         Unfocused="OnIntegerEntryUnfocused" />
 
                                 </Border>
-
-                                <Label
-                                    Text="{localization:Translate PowerRoot.ExponentHint}"
-                                    FontSize="13"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
 
                             </VerticalStackLayout>
 
@@ -575,12 +563,6 @@
 
                                 </Border>
 
-                                <Label
-                                    Text="{localization:Translate PowerRoot.RadicandHint}"
-                                    FontSize="13"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
-
                             </VerticalStackLayout>
 
                             <VerticalStackLayout
@@ -607,7 +589,6 @@
                                         x:Name="RootDegreeEntry"
                                         Placeholder="{localization:Translate PowerRoot.DegreePlaceholder}"
                                         Keyboard="Numeric"
-                                        MaxLength="3"
                                         FontSize="18"
                                         TextColor="{DynamicResource TextPrimaryColor}"
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
@@ -615,12 +596,6 @@
                                         Unfocused="OnRootDegreeUnfocused" />
 
                                 </Border>
-
-                                <Label
-                                    Text="{localization:Translate PowerRoot.DegreeHint}"
-                                    FontSize="13"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
 
                             </VerticalStackLayout>
 
@@ -771,6 +746,7 @@
                             x:Name="RootCopyResultButton"
                             Text="{localization:Translate PowerRoot.RootCopyResult}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
+                            BackgroundColor="{DynamicResource DividerColor}"
                             Clicked="OnRootCopyResultClicked" />
 
                         <Label
