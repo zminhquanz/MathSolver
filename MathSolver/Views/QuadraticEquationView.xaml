@@ -419,16 +419,39 @@
 
                     </Border>
 
-                    <Button
-                        x:Name="QuadraticCopyResultButton"
-                        Text="{localization:Translate PowerRoot.CopyResult}"
-                        HeightRequest="48"
-                        CornerRadius="12"
-                        FontSize="15"
-                        FontAttributes="Bold"
-                        BackgroundColor="{DynamicResource DividerColor}"
-                        TextColor="{DynamicResource TextPrimaryColor}"
-                        Clicked="OnQuadraticCopyResultClicked" />
+                    <Grid HeightRequest="48">
+
+                        <Button
+                            x:Name="QuadraticCopyResultButton"
+                            Text="{localization:Translate PowerRoot.CopyResult}"
+                            HeightRequest="48"
+                            CornerRadius="12"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource DividerColor}"
+                            TextColor="Transparent"
+                            Clicked="OnQuadraticCopyResultClicked" />
+
+                        <HorizontalStackLayout
+                            InputTransparent="True"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            Spacing="8">
+
+                            <controls:ThemedCopyIcon
+                                WidthRequest="20"
+                                HeightRequest="20" />
+
+                            <Label
+                                Text="{Binding Text, Source={x:Reference QuadraticCopyResultButton}}"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                VerticalTextAlignment="Center" />
+
+                        </HorizontalStackLayout>
+
+                    </Grid>
 
                 </VerticalStackLayout>
 

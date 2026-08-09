@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:base="clr-namespace:MathSolver.Views.Base"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
@@ -196,16 +197,39 @@
 
                     </Border>
 
-                    <Button
-                        x:Name="AverageCopyResultButton"
-                        Text="{localization:Translate PowerRoot.CopyResult}"
-                        HeightRequest="48"
-                        CornerRadius="12"
-                        FontSize="15"
-                        FontAttributes="Bold"
-                        BackgroundColor="{DynamicResource DividerColor}"
-                        TextColor="{DynamicResource TextPrimaryColor}"
-                        Clicked="OnAverageCopyResultClicked" />
+                    <Grid HeightRequest="48">
+
+                        <Button
+                            x:Name="AverageCopyResultButton"
+                            Text="{localization:Translate PowerRoot.CopyResult}"
+                            HeightRequest="48"
+                            CornerRadius="12"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource DividerColor}"
+                            TextColor="Transparent"
+                            Clicked="OnAverageCopyResultClicked" />
+
+                        <HorizontalStackLayout
+                            InputTransparent="True"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            Spacing="8">
+
+                            <controls:ThemedCopyIcon
+                                WidthRequest="20"
+                                HeightRequest="20" />
+
+                            <Label
+                                Text="{Binding Text, Source={x:Reference AverageCopyResultButton}}"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                VerticalTextAlignment="Center" />
+
+                        </HorizontalStackLayout>
+
+                    </Grid>
 
                     <Grid
                         ColumnDefinitions="*,*"

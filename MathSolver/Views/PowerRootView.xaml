@@ -7,7 +7,6 @@
     xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
 
@@ -369,18 +368,9 @@
                                     VerticalOptions="Center"
                                     Spacing="8">
 
-                                    <Image
-                                        Source="content_copy.png"
+                                    <controls:ThemedCopyIcon
                                         WidthRequest="20"
-                                        HeightRequest="20"
-                                        Aspect="AspectFit">
-
-                                        <Image.Behaviors>
-                                            <toolkit:IconTintColorBehavior
-                                                x:Name="CopyResultIconTintBehavior" />
-                                        </Image.Behaviors>
-
-                                    </Image>
+                                        HeightRequest="20" />
 
                                     <Label
                                         Text="{Binding Text, Source={x:Reference CopyResultButton}}"
@@ -742,12 +732,36 @@
 
                         </Border>
 
-                        <Button
-                            x:Name="RootCopyResultButton"
-                            Text="{localization:Translate PowerRoot.RootCopyResult}"
-                            Style="{StaticResource SolverSecondaryActionStyle}"
-                            BackgroundColor="{DynamicResource DividerColor}"
-                            Clicked="OnRootCopyResultClicked" />
+                        <Grid HeightRequest="48">
+
+                            <Button
+                                x:Name="RootCopyResultButton"
+                                Text="{localization:Translate PowerRoot.RootCopyResult}"
+                                Style="{StaticResource SolverSecondaryActionStyle}"
+                                BackgroundColor="{DynamicResource DividerColor}"
+                                TextColor="Transparent"
+                                Clicked="OnRootCopyResultClicked" />
+
+                            <HorizontalStackLayout
+                                InputTransparent="True"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                Spacing="8">
+
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+
+                                <Label
+                                    Text="{Binding Text, Source={x:Reference RootCopyResultButton}}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+
+                            </HorizontalStackLayout>
+
+                        </Grid>
 
                         <Label
                             Text="{localization:Translate PowerRoot.SolutionTitle}"

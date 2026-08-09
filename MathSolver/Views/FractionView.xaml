@@ -425,16 +425,39 @@
                         MathColor="{DynamicResource TextPrimaryColor}"
                         HorizontalOptions="Center" />
 
-                    <Button
-                        x:Name="FractionCopyResultButton"
-                        Text="{localization:Translate PowerRoot.CopyResult}"
-                        HeightRequest="48"
-                        CornerRadius="12"
-                        FontSize="15"
-                        FontAttributes="Bold"
-                        BackgroundColor="{DynamicResource DividerColor}"
-                        TextColor="{DynamicResource TextPrimaryColor}"
-                        Clicked="OnFractionCopyResultClicked" />
+                    <Grid HeightRequest="48">
+
+                        <Button
+                            x:Name="FractionCopyResultButton"
+                            Text="{localization:Translate PowerRoot.CopyResult}"
+                            HeightRequest="48"
+                            CornerRadius="12"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource DividerColor}"
+                            TextColor="Transparent"
+                            Clicked="OnFractionCopyResultClicked" />
+
+                        <HorizontalStackLayout
+                            InputTransparent="True"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            Spacing="8">
+
+                            <controls:ThemedCopyIcon
+                                WidthRequest="20"
+                                HeightRequest="20" />
+
+                            <Label
+                                Text="{Binding Text, Source={x:Reference FractionCopyResultButton}}"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                VerticalTextAlignment="Center" />
+
+                        </HorizontalStackLayout>
+
+                    </Grid>
 
                     <!-- Lời giải chi tiết -->
                     <Border

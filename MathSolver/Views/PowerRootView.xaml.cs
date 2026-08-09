@@ -121,14 +121,6 @@ public partial class PowerRootView : LocalizedSolverView
         RefreshLocalizedDynamicText();
     }
 
-    protected override void OnSolverLoaded()
-    {
-        AppThemeManager.ThemeChanged +=
-            OnPowerRootThemeChanged;
-
-        UpdateCopyResultIconTint();
-    }
-
     protected override void RefreshLocalizedContent()
     {
         base.RefreshLocalizedContent();
@@ -137,9 +129,6 @@ public partial class PowerRootView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
-        AppThemeManager.ThemeChanged -=
-            OnPowerRootThemeChanged;
-
 #if WINDOWS
         MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
             this);
@@ -147,37 +136,6 @@ public partial class PowerRootView : LocalizedSolverView
 
         _calculationCancellation?.Cancel();
         _exportCancellation?.Cancel();
-    }
-
-    private void OnPowerRootThemeChanged(
-        object? sender,
-        EventArgs e)
-    {
-        Dispatcher.Dispatch(
-            UpdateCopyResultIconTint);
-    }
-
-    private void UpdateCopyResultIconTint()
-    {
-        AppTheme effectiveTheme =
-            AppThemeManager.CurrentMode switch
-            {
-                AppThemeMode.Light =>
-                    AppTheme.Light,
-
-                AppThemeMode.Dark =>
-                    AppTheme.Dark,
-
-                _ =>
-                    Application.Current?.RequestedTheme == AppTheme.Dark
-                        ? AppTheme.Dark
-                        : AppTheme.Light
-            };
-
-        CopyResultIconTintBehavior.TintColor =
-            effectiveTheme == AppTheme.Dark
-                ? Colors.White
-                : Colors.Black;
     }
 
     private void OnPowerModeClicked(

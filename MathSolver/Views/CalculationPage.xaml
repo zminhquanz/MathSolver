@@ -435,16 +435,39 @@
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
-                            <Button
-                                x:Name="BasicCopyResultButton"
-                                Text="{localization:Translate PowerRoot.CopyResult}"
-                                HeightRequest="48"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource DividerColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
-                                Clicked="OnBasicCopyResultClicked" />
+                            <Grid HeightRequest="48">
+
+                                <Button
+                                    x:Name="BasicCopyResultButton"
+                                    Text="{localization:Translate PowerRoot.CopyResult}"
+                                    HeightRequest="48"
+                                    CornerRadius="12"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource DividerColor}"
+                                    TextColor="Transparent"
+                                    Clicked="OnBasicCopyResultClicked" />
+
+                                <HorizontalStackLayout
+                                    InputTransparent="True"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    Spacing="8">
+
+                                    <controls:ThemedCopyIcon
+                                        WidthRequest="20"
+                                        HeightRequest="20" />
+
+                                    <Label
+                                        Text="{Binding Text, Source={x:Reference BasicCopyResultButton}}"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        VerticalTextAlignment="Center" />
+
+                                </HorizontalStackLayout>
+
+                            </Grid>
 
                             <!-- Chi tiết phép chia -->
                             <Border
