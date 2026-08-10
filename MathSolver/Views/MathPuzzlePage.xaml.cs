@@ -12,6 +12,10 @@ public partial class MathPuzzlePage : ContentPage
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
     private readonly QuizLlmModelStore _llmModelStore = new();
+    private readonly Gemma4ModelDownloadService
+        _gemma4ModelDownloadService = new();
+    private readonly ModelFileLocationService
+        _modelFileLocationService = new();
 
     private ArithmeticQuizMode _selectedMode =
         ArithmeticQuizMode.TrueFalse;
@@ -25,6 +29,7 @@ public partial class MathPuzzlePage : ContentPage
     private bool _questionAnswered;
     private bool? _lastAnswerWasCorrect;
     private bool _isGeneratingWithLlm;
+    private bool _isDownloadingModel;
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
     private int _llmProgressVersion;
@@ -545,6 +550,245 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
+    private async void OnDownloadGemma4Clicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isDownloadingModel)
+        {
+            CancelLlmGeneration();
+            return;
+        }
+
+        if (_isGeneratingWithLlm)
+        {
+            return;
+        }
+
+        string e2BOption =
+            Translate("Quiz.DownloadE2BOption");
+        string e4BOption =
+            Translate("Quiz.DownloadE4BOption");
+
+        string? selection =
+            await DisplayActionSheetAsync(
+                Translate("Quiz.ChooseDownloadModelTitle"),
+                Translate("Quiz.Cancel"),
+                null,
+                e2BOption,
+                e4BOption);
+
+        Gemma4ModelDescriptor? model =
+            selection == e2BOption
+                ? Gemma4ModelDownloadService.E2B
+                : selection == e4BOption
+                    ? Gemma4ModelDownloadService.E4B
+                    : null;
+
+        if (model is null)
+        {
+            return;
+        }
+
+        bool confirmed =
+            await DisplayAlertAsync(
+                Translate("Quiz.DownloadConfirmTitle"),
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translate("Quiz.DownloadConfirmMessage"),
+                    model.DisplayName,
+                    FormatDownloadGigabytes(
+                        model.ApproximateSizeBytes)),
+                Translate("Quiz.DownloadAction"),
+                Translate("Quiz.Cancel"));
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        int progressVersion =
+            BeginLlmProgress(cancellation);
+
+        _isDownloadingModel = true;
+        LlmDownloadProgressBar.Progress = 0;
+        LlmDownloadProgressBar.IsVisible = true;
+        SetLlmBusy(true);
+        ShowLlmStatus(
+            string.Format(
+                CultureInfo.CurrentCulture,
+                Translate("Quiz.DownloadingModel"),
+                model.DisplayName),
+            isRunning: false);
+
+        try
+        {
+            var progress =
+                new Progress<Gemma4ModelDownloadProgress>(
+                    value =>
+                    {
+                        if (progressVersion !=
+                                Volatile.Read(ref _llmProgressVersion) ||
+                            cancellation.IsCancellationRequested ||
+                            !ReferenceEquals(
+                                _llmGenerationCancellation,
+                                cancellation))
+                        {
+                            return;
+                        }
+
+                        UpdateGemma4DownloadProgress(
+                            model,
+                            value);
+                    });
+
+            string? previousModelPath =
+                _llmModelPath;
+
+            string downloadedModelPath =
+                await _gemma4ModelDownloadService.DownloadAsync(
+                    model,
+                    progress,
+                    cancellation.Token);
+
+            if (!string.Equals(
+                    previousModelPath,
+                    downloadedModelPath,
+                    OperatingSystem.IsWindows()
+                        ? StringComparison.OrdinalIgnoreCase
+                        : StringComparison.Ordinal))
+            {
+                await _localLlmQuizGenerator.UnloadModelAsync(
+                    cancellation.Token);
+            }
+
+            cancellation.Token.ThrowIfCancellationRequested();
+
+            _llmModelPath = downloadedModelPath;
+            _llmModelStore.SaveModelPath(
+                downloadedModelPath);
+
+            CompleteLlmProgress(progressVersion);
+            PrepareLlmQuestionForGeneration(
+                cancelPending: false);
+            ShowLlmStatus(
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translate("Quiz.DownloadComplete"),
+                    model.DisplayName),
+                isRunning: false);
+        }
+        catch (OperationCanceledException)
+        {
+            CompleteLlmProgress(progressVersion);
+            ShowLlmStatus(
+                Translate("Quiz.DownloadCancelled"),
+                isRunning: false);
+        }
+        catch (QuizLlmModelTooLargeException)
+        {
+            CompleteLlmProgress(progressVersion);
+            ShowLlmStatus(
+                Translate("Quiz.ModelTooLarge"),
+                isRunning: false);
+        }
+        catch (InvalidDataException)
+        {
+            CompleteLlmProgress(progressVersion);
+            ShowLlmStatus(
+                Translate("Quiz.DownloadInvalid"),
+                isRunning: false);
+        }
+        catch (HttpRequestException exception)
+        {
+            CompleteLlmProgress(progressVersion);
+            System.Diagnostics.Debug.WriteLine(
+                $"Gemma 4 download failed: {exception}");
+
+            string key =
+                exception.StatusCode is
+                    System.Net.HttpStatusCode.Unauthorized or
+                    System.Net.HttpStatusCode.Forbidden
+                    ? "Quiz.DownloadAccessDenied"
+                    : "Quiz.DownloadFailed";
+
+            ShowLlmStatus(
+                Translate(key),
+                isRunning: false);
+        }
+        catch (Exception exception)
+        {
+            CompleteLlmProgress(progressVersion);
+            System.Diagnostics.Debug.WriteLine(
+                $"Gemma 4 download failed: {exception}");
+
+            ShowLlmStatus(
+                Translate("Quiz.DownloadFailed"),
+                isRunning: false);
+        }
+        finally
+        {
+            CompleteLlmProgress(progressVersion);
+            _isDownloadingModel = false;
+            LlmDownloadProgressBar.IsVisible = false;
+            LlmDownloadProgressBar.Progress = 0;
+
+            if (ReferenceEquals(
+                    _llmGenerationCancellation,
+                    cancellation))
+            {
+                _llmGenerationCancellation = null;
+                SetLlmBusy(false);
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    private void UpdateGemma4DownloadProgress(
+        Gemma4ModelDescriptor model,
+        Gemma4ModelDownloadProgress progress)
+    {
+        long totalBytes =
+            progress.TotalBytes is > 0
+                ? progress.TotalBytes.Value
+                : model.ApproximateSizeBytes;
+
+        double fraction =
+            totalBytes > 0
+                ? Math.Clamp(
+                    (double)progress.BytesReceived / totalBytes,
+                    0d,
+                    1d)
+                : 0d;
+
+        int percentage =
+            (int)Math.Round(
+                fraction * 100d,
+                MidpointRounding.AwayFromZero);
+
+        LlmDownloadProgressBar.Progress = fraction;
+        ShowLlmStatus(
+            string.Format(
+                CultureInfo.CurrentCulture,
+                Translate("Quiz.DownloadingModelProgress"),
+                model.DisplayName,
+                percentage,
+                FormatDownloadGigabytes(
+                    progress.BytesReceived),
+                FormatDownloadGigabytes(totalBytes)),
+            isRunning: false);
+    }
+
+    private static string FormatDownloadGigabytes(
+        long bytes)
+    {
+        return (bytes / 1_000_000_000d).ToString(
+            "0.00",
+            CultureInfo.CurrentCulture);
+    }
+
     private async void OnEjectLlmModelClicked(
         object? sender,
         EventArgs e)
@@ -615,6 +859,37 @@ public partial class MathPuzzlePage : ContentPage
 
             cancellation.Dispose();
         }
+    }
+
+    private async void OnOpenLlmModelFolderClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isGeneratingWithLlm ||
+            !QuizLlmModelStore.IsSupportedModelPath(
+                _llmModelPath))
+        {
+            UpdateLlmModelUi();
+            return;
+        }
+
+        string modelPath = _llmModelPath!;
+        bool opened =
+            await _modelFileLocationService
+                .TryOpenContainingFolderAsync(modelPath);
+
+        if (opened)
+        {
+            return;
+        }
+
+        await DisplayAlertAsync(
+            Translate("Quiz.ModelLocationTitle"),
+            string.Format(
+                CultureInfo.CurrentCulture,
+                Translate("Quiz.ModelLocationUnavailable"),
+                modelPath),
+            Translate("Common.OK"));
     }
 
     private async void OnCreateLlmQuestionClicked(
@@ -866,6 +1141,20 @@ public partial class MathPuzzlePage : ContentPage
         EjectLlmModelButton.IsEnabled =
             !_isGeneratingWithLlm &&
             _llmModelPath is not null;
+
+        OpenLlmModelFolderButton.IsEnabled =
+            !_isGeneratingWithLlm &&
+            _llmModelPath is not null;
+
+        DownloadGemma4Button.IsEnabled =
+            !_isGeneratingWithLlm ||
+            _isDownloadingModel;
+
+        DownloadGemma4Button.Text =
+            Translate(
+                _isDownloadingModel
+                    ? "Quiz.StopModelDownload"
+                    : "Quiz.DownloadGemma4");
     }
 
     private void SetLlmBusy(
@@ -873,7 +1162,18 @@ public partial class MathPuzzlePage : ContentPage
     {
         _isGeneratingWithLlm = isBusy;
         SelectLlmModelButton.IsEnabled = !isBusy;
+        DownloadGemma4Button.IsEnabled =
+            !isBusy ||
+            _isDownloadingModel;
+        DownloadGemma4Button.Text =
+            Translate(
+                _isDownloadingModel
+                    ? "Quiz.StopModelDownload"
+                    : "Quiz.DownloadGemma4");
         EjectLlmModelButton.IsEnabled =
+            !isBusy &&
+            _llmModelPath is not null;
+        OpenLlmModelFolderButton.IsEnabled =
             !isBusy &&
             _llmModelPath is not null;
         AlgorithmSourceButton.IsEnabled = !isBusy;

@@ -657,16 +657,10 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 ? "OnPrimaryColor"
                 : "TextPrimaryColor");
 
-        button.SetDynamicResource(
-            Button.BorderColorProperty,
-            selected
-                ? "PrimaryColor"
-                : "BorderColor");
-
+        // Bốn nút chọn loại hình học và kiểu số dùng màu nền để thể hiện
+        // trạng thái. Không vẽ thêm viền để bố cục liền lạc với các tab khác.
         button.BorderWidth =
-            selected
-                ? 1.5d
-                : 1d;
+            0d;
     }
 
     private void OnGeometryEntryTextChanged(

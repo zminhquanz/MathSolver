@@ -18,7 +18,15 @@ namespace MathSolver.Services;
 /// </summary>
 public sealed class LocalLlmQuizGenerator
 {
-    public const int CpuThreadCount = 4;
+    /// <summary>
+    /// Giữ 4 luồng trên CPU tối đa 8 logical threads; CPU lớn hơn dùng tối đa
+    /// 8 luồng để tăng tốc sinh đề mà vẫn chừa tài nguyên cho giao diện, hệ
+    /// điều hành và các tác vụ nền. Máy dưới 4 threads không bị oversubscribe.
+    /// </summary>
+    public static int CpuThreadCount { get; } =
+        Environment.ProcessorCount > 8
+            ? 8
+            : Math.Min(4, Environment.ProcessorCount);
     public const int MaximumAttempts = 3;
     public const int MaximumOutputTokens = 240;
     public const int ModelUnloadGracePeriodSeconds = 60;

@@ -103,6 +103,17 @@
                                         LineHeight="1.25"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
 
+                                    <Button
+                                        x:Name="DownloadGemma4Button"
+                                        Text="{localization:Translate Quiz.DownloadGemma4}"
+                                        HeightRequest="46"
+                                        CornerRadius="11"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource PrimaryColor}"
+                                        TextColor="{DynamicResource OnPrimaryColor}"
+                                        Clicked="OnDownloadGemma4Clicked" />
+
                                     <Grid
                                         ColumnDefinitions="*,*"
                                         ColumnSpacing="10">
@@ -151,6 +162,20 @@
                                         LineHeight="1.2"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
 
+                                    <Button
+                                        x:Name="OpenLlmModelFolderButton"
+                                        Text="{localization:Translate Quiz.OpenInFileExplorer}"
+                                        IsEnabled="False"
+                                        HeightRequest="44"
+                                        CornerRadius="11"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        BorderColor="{DynamicResource PrimaryBorderColor}"
+                                        BorderWidth="1"
+                                        TextColor="{DynamicResource PrimaryColor}"
+                                        Clicked="OnOpenLlmModelFolderClicked" />
+
                                     <Label
                                         Text="{localization:Translate Quiz.LlmResourceHint}"
                                         FontSize="13"
@@ -193,6 +218,13 @@
                                             TextColor="{DynamicResource TextSecondaryColor}" />
 
                                     </Grid>
+
+                                    <ProgressBar
+                                        x:Name="LlmDownloadProgressBar"
+                                        IsVisible="False"
+                                        Progress="0"
+                                        ProgressColor="{DynamicResource PrimaryColor}"
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}" />
 
                                 </VerticalStackLayout>
                             </Border>
