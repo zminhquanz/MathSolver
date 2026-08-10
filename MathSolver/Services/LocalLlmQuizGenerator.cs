@@ -150,8 +150,10 @@ public sealed class LocalLlmQuizGenerator
             // evaluated by LLamaSharp's chat-template bridge. The model
             // weights themselves are supported by the 0.27 backend, so use
             // Gemma 4's documented control-token format directly.
-            bool useManualGemma4Template =
-                LlmQuizPromptBuilder.IsGemma4Model(modelPath);
+            // QuizLlmModelStore đã xác nhận metadata kiến trúc Gemma 4 trước
+            // khi đến đây, nên luôn dùng control-token template tương ứng và
+            // không phụ thuộc vào cách người dùng đặt tên file.
+            const bool useManualGemma4Template = true;
 
             string systemPrompt =
                 LlmQuizPromptBuilder.BuildSystemPrompt(
@@ -552,12 +554,8 @@ public sealed class LocalLlmQuizGenerator
 
     private static bool IsValidModelPath(
         string? modelPath) =>
-        !string.IsNullOrWhiteSpace(modelPath) &&
-        File.Exists(modelPath) &&
-        string.Equals(
-            Path.GetExtension(modelPath),
-            ".gguf",
-            StringComparison.OrdinalIgnoreCase);
+        QuizLlmModelStore.IsSupportedModelPath(
+            modelPath);
 
     private ArithmeticQuizQuestion CreateNaturalLanguageContract(
         ArithmeticQuizMode mode,
@@ -608,20 +606,6 @@ public sealed class LocalLlmQuizGenerator
 
 internal static class LlmQuizPromptBuilder
 {
-    public static bool IsGemma4Model(
-        string modelPath)
-    {
-        string name =
-            Path.GetFileNameWithoutExtension(modelPath);
-
-        return name.Contains(
-                   "gemma-4",
-                   StringComparison.OrdinalIgnoreCase) ||
-               name.Contains(
-                   "gemma4",
-                   StringComparison.OrdinalIgnoreCase);
-    }
-
     public static string BuildSystemPrompt(
         AppLanguage language)
     {

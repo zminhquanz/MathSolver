@@ -80,10 +80,17 @@ public partial class MathPuzzlePage : ContentPage
 
         BeginMainTabTransitionIfPending();
 
-        if (_currentQuestion is null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion is null)
         {
-            GenerateAlgorithmQuestion();
+            if (_generationSource == QuizGenerationSource.Algorithm)
+            {
+                GenerateAlgorithmQuestion();
+            }
+            else
+            {
+                PrepareLlmQuestionForGeneration(
+                    cancelPending: false);
+            }
         }
         else
         {
@@ -116,6 +123,11 @@ public partial class MathPuzzlePage : ContentPage
         // giải phóng nếu người dùng không quay lại sau 60 giây.
         _localLlmQuizGenerator.ScheduleModelUnload(
             ClearLlmQuestionAfterDelayedUnloadAsync);
+
+        // Mỗi lần rời tab lớn Toán đố là kết thúc toàn bộ phiên luyện tập.
+        // Model đã chọn và weights cache vẫn tuân theo grace period 60 giây;
+        // chỉ câu hỏi, đáp án, phản hồi và điểm số được đưa về trạng thái đầu.
+        ResetQuizSessionState();
 
         _mainTabAnimationVersion++;
         MathPuzzlePageContentRoot.CancelAnimations();
@@ -211,6 +223,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         CancelLlmGeneration();
+        ResetQuizSessionState();
         _generationSource = source;
         UpdateGenerationSourceStyles();
 
@@ -513,6 +526,20 @@ public partial class MathPuzzlePage : ContentPage
                 Translate("Quiz.GenerationCancelled"),
                 isRunning: false);
         }
+        catch (QuizLlmModelTooLargeException)
+        {
+            CompleteLlmProgress(progressVersion);
+            ShowLlmStatus(
+                Translate("Quiz.ModelTooLarge"),
+                isRunning: false);
+        }
+        catch (UnsupportedQuizLlmModelException)
+        {
+            CompleteLlmProgress(progressVersion);
+            ShowLlmStatus(
+                Translate("Quiz.UnsupportedModelFamily"),
+                isRunning: false);
+        }
         catch (InvalidDataException)
         {
             CompleteLlmProgress(progressVersion);
@@ -546,7 +573,7 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
-    private async void OnRejectLlmModelClicked(
+    private async void OnEjectLlmModelClicked(
         object? sender,
         EventArgs e)
     {
@@ -576,12 +603,13 @@ public partial class MathPuzzlePage : ContentPage
 
             _llmModelStore.ClearSavedModelPath();
             _llmModelPath = null;
+            ResetQuizSessionCounters();
 
             CompleteLlmProgress(progressVersion);
             PrepareLlmQuestionForGeneration(
                 cancelPending: false);
             ShowLlmStatus(
-                Translate("Quiz.ModelRejected"),
+                Translate("Quiz.ModelEjected"),
                 isRunning: false);
         }
         catch (OperationCanceledException)
@@ -595,7 +623,7 @@ public partial class MathPuzzlePage : ContentPage
         {
             CompleteLlmProgress(progressVersion);
             System.Diagnostics.Debug.WriteLine(
-                $"Local LLM rejection failed: {exception}");
+                $"Local LLM ejection failed: {exception}");
 
             ShowLlmStatus(
                 Translate("Quiz.ModelRuntimeError"),
@@ -621,14 +649,8 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
-        // Nút Tạo đề chỉ tạo câu đầu tiên hoặc tạo lại sau một lần sinh lỗi.
-        // Khi đang có câu hỏi, người dùng phải trả lời rồi bấm Câu tiếp theo;
-        // không cho phép nút này thay câu hiện tại và làm nhảy bộ đếm.
-        if (_currentQuestion is not null)
-        {
-            return;
-        }
-
+        // Nút này vừa tạo câu đầu tiên vừa cho phép bỏ qua/tạo lại câu hiện
+        // tại. Tạo lại không tăng số câu và không tính là đúng hoặc sai.
         await GenerateLlmQuestionAsync(
             advanceQuestionNumber: false);
     }
@@ -639,16 +661,15 @@ public partial class MathPuzzlePage : ContentPage
         if (_isGeneratingWithLlm ||
             (advanceQuestionNumber &&
              (!_questionAnswered ||
-              _currentQuestion is null)) ||
-            (!advanceQuestionNumber &&
-             _currentQuestion is not null))
+              _currentQuestion is null)))
         {
             return;
         }
 
-        if (_llmModelPath is null ||
-            !File.Exists(_llmModelPath))
+        if (!QuizLlmModelStore.IsSupportedModelPath(
+                _llmModelPath))
         {
+            _llmModelStore.ClearSavedModelPath();
             _llmModelPath = null;
             UpdateLlmModelUi();
             PrepareLlmQuestionForGeneration();
@@ -670,6 +691,8 @@ public partial class MathPuzzlePage : ContentPage
         SolutionBorder.IsVisible = false;
         PresentedAnswerLabel.IsVisible = false;
         NextQuestionButton.IsEnabled = false;
+        ClearMultipleChoiceAnswers();
+        UpdateModeStyles();
         SetAnswerControlsEnabled(false);
         SetLlmBusy(true);
 
@@ -842,9 +865,10 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateLlmModelUi()
     {
-        if (_llmModelPath is null ||
-            !File.Exists(_llmModelPath))
+        if (!QuizLlmModelStore.IsSupportedModelPath(
+                _llmModelPath))
         {
+            _llmModelStore.ClearSavedModelPath();
             _llmModelPath = null;
             LlmModelNameLabel.Text =
                 Translate("Quiz.NoModelSelected");
@@ -865,10 +889,9 @@ public partial class MathPuzzlePage : ContentPage
 
         CreateLlmQuestionButton.IsEnabled =
             !_isGeneratingWithLlm &&
-            _llmModelPath is not null &&
-            _currentQuestion is null;
+            _llmModelPath is not null;
 
-        RejectLlmModelButton.IsEnabled =
+        EjectLlmModelButton.IsEnabled =
             !_isGeneratingWithLlm &&
             _llmModelPath is not null;
     }
@@ -878,7 +901,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         _isGeneratingWithLlm = isBusy;
         SelectLlmModelButton.IsEnabled = !isBusy;
-        RejectLlmModelButton.IsEnabled =
+        EjectLlmModelButton.IsEnabled =
             !isBusy &&
             _llmModelPath is not null;
         AlgorithmSourceButton.IsEnabled = !isBusy;
@@ -889,8 +912,7 @@ public partial class MathPuzzlePage : ContentPage
 
         CreateLlmQuestionButton.IsEnabled =
             !isBusy &&
-            _llmModelPath is not null &&
-            _currentQuestion is null;
+            _llmModelPath is not null;
     }
 
     private void ShowLlmStatus(
@@ -1311,13 +1333,38 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
-    private void OnResetScoreClicked(
-        object? sender,
-        EventArgs e)
+    private void ResetQuizSessionCounters()
     {
+        _questionCount = 0;
         _correctCount = 0;
         _incorrectCount = 0;
         UpdateScoreLabels();
+    }
+
+    private void ResetQuizSessionState()
+    {
+        _currentQuestion = null;
+        _questionAnswered = false;
+        _lastAnswerWasCorrect = null;
+
+        QuestionExpressionLabel.Text = string.Empty;
+        PresentedAnswerLabel.Text = string.Empty;
+        PresentedAnswerLabel.IsVisible = false;
+        FeedbackLabel.Text = string.Empty;
+        FeedbackBorder.IsVisible = false;
+        SolutionLabel.Text = string.Empty;
+        SolutionBorder.IsVisible = false;
+        NextQuestionButton.IsEnabled = false;
+
+        ClearMultipleChoiceAnswers();
+        SetAnswerControlsEnabled(false);
+        UpdateModeStyles();
+        ResetQuizSessionCounters();
+
+        LlmActivityIndicator.IsRunning = false;
+        LlmActivityIndicator.IsVisible = false;
+        LlmStatusLabel.Text = string.Empty;
+        LlmProgressGrid.IsVisible = false;
     }
 
     private void UpdateScoreLabels()
