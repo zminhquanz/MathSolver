@@ -36,7 +36,7 @@ All three use fused-multiply-add (`Math.FusedMultiplyAdd`) to capture rounding e
 
 ## Memory & Lifetime Management
 
-### NTT Buffer Pool — v28–v34
+### NTT Buffer Pool
 
 Large NTT value workspaces (`uint[]`) were previously allocated with `new uint[transformLength]` for every modulus pass, wasting RAM and GC pressure. The architecture now:
 
@@ -46,19 +46,19 @@ Large NTT value workspaces (`uint[]`) were previously allocated with `new uint[t
 - On reuse, overwrite the compact limb prefix and clear only the stale zero-padding tail instead of clearing the whole array.
 - Return the right-transform workspace before inverse DIT begins (making that lifetime boundary structural, not dependent on nullable locals).
 
-### Twiddle Table Pool — v29
+### Twiddle Table Pool
 
 Fresh NTT/twiddle arrays use uninitialized allocation (`GC.AllocateUninitializedArray`) because every element is guaranteed to be overwritten before its ready flag is published. Split branches may return twiddle tables to a local pool and the final-combine team can reuse up to four arrays; the whole pool is then released before `Pow()` returns.
 
-### Large-Result GC Cleanup — v29
+### Large-Result GC Cleanup
 
 For large prepared base-10,000 results (estimated workspace >= 512 MiB), a blocking Gen2 sweep runs only after the displayed calculation stopwatch has stopped. LOH compaction is deliberately disabled so the live final magnitude is not copied merely to reclaim dead workspaces.
 
-### CRT Streaming — v30
+### CRT Streaming
 
 Removes full `ulong[coefficientCount]` materialization. CRT is reconstructed in bounded blocks, carry consumes each block immediately. The compact P1 residue array is overwritten by the normalized base-10,000 limbs (in place). P2 inverse workspace is read directly — no compact P2 residue array is created.
 
-### Final Inverse Split-Range ILP — v34
+### Final Inverse Split-Range ILP
 
 The final inverse-DIT prefix kernel splits each worker's contiguous range at `validRightCount`, running two branch-free hot loops instead of testing a condition per butterfly. For large stages, both loops use four independent twiddle lanes advancing by `root^4` to remove the long dependency chain on `twiddle = twiddle * root % modulus`.
 

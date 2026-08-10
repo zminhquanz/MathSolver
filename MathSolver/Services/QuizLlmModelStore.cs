@@ -6,6 +6,14 @@ namespace MathSolver.Services;
 /// </summary>
 public sealed class QuizLlmModelStore
 {
+    private static readonly byte[] GgufMagic =
+    [
+        (byte)'G',
+        (byte)'G',
+        (byte)'U',
+        (byte)'F'
+    ];
+
     private const string ModelPathPreferenceKey =
         "quiz_llm_model_path";
 
@@ -43,11 +51,14 @@ public sealed class QuizLlmModelStore
                 "Only GGUF model files are supported.");
         }
 
+        await ValidateGgufHeaderAsync(
+            fileResult,
+            cancellationToken);
+
 #if WINDOWS
         if (!string.IsNullOrWhiteSpace(fileResult.FullPath) &&
             File.Exists(fileResult.FullPath))
         {
-            SaveModelPath(fileResult.FullPath);
             return fileResult.FullPath;
         }
 #endif
@@ -88,8 +99,18 @@ public sealed class QuizLlmModelStore
         await destination.FlushAsync(
             cancellationToken);
 
-        SaveModelPath(destinationPath);
         return destinationPath;
+    }
+
+    public void SaveModelPath(
+        string modelPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            modelPath);
+
+        Preferences.Default.Set(
+            ModelPathPreferenceKey,
+            modelPath);
     }
 
     public bool ShouldShowFirstGreeting() =>
@@ -102,6 +123,12 @@ public sealed class QuizLlmModelStore
         Preferences.Default.Set(
             FirstGreetingPreferenceKey,
             true);
+    }
+
+    public void ClearSavedModelPath()
+    {
+        Preferences.Default.Remove(
+            ModelPathPreferenceKey);
     }
 
     public static bool IsRecommendedQuantization(
@@ -121,11 +148,38 @@ public sealed class QuizLlmModelStore
                    StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void SaveModelPath(
-        string modelPath)
+    private static async Task ValidateGgufHeaderAsync(
+        FileResult fileResult,
+        CancellationToken cancellationToken)
     {
-        Preferences.Default.Set(
-            ModelPathPreferenceKey,
-            modelPath);
+        await using Stream stream =
+            await fileResult.OpenReadAsync();
+
+        var header = new byte[GgufMagic.Length];
+        int bytesRead = 0;
+
+        while (bytesRead < header.Length)
+        {
+            int read =
+                await stream.ReadAsync(
+                    header.AsMemory(
+                        bytesRead,
+                        header.Length - bytesRead),
+                    cancellationToken);
+
+            if (read == 0)
+            {
+                break;
+            }
+
+            bytesRead += read;
+        }
+
+        if (bytesRead != GgufMagic.Length ||
+            !header.AsSpan().SequenceEqual(GgufMagic))
+        {
+            throw new InvalidDataException(
+                "The selected file does not contain a GGUF header.");
+        }
     }
 }

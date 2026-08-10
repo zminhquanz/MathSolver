@@ -21,12 +21,19 @@ public sealed class LocalLlmQuizGenerator
     public const int CpuThreadCount = 4;
     public const int MaximumAttempts = 3;
     public const int MaximumOutputTokens = 240;
+    public const int ModelUnloadGracePeriodSeconds = 60;
     public const uint ContextSize = 1536;
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
+    private readonly object _modelLifetimeSync = new();
+
+    private LLamaWeights? _loadedWeights;
+    private ModelParams? _loadedModelParameters;
+    private string? _loadedModelPath;
+    private CancellationTokenSource? _scheduledUnloadCancellation;
 
     public LocalLlmQuizGenerator(
         ArithmeticQuizGenerator quizGenerator,
@@ -41,6 +48,65 @@ public sealed class LocalLlmQuizGenerator
             throw new ArgumentNullException(nameof(engine));
     }
 
+    /// <summary>
+    /// Bỏ ngay weights đang cache khi người dùng reject hoặc đổi model.
+    /// File GGUF trên ổ đĩa không bị xóa.
+    /// </summary>
+    public async Task UnloadModelAsync(
+        CancellationToken cancellationToken = default)
+    {
+        CancelScheduledModelUnload();
+        await _generationGate.WaitAsync(cancellationToken);
+
+        try
+        {
+            await Task.Run(
+                DisposeLoadedModel,
+                cancellationToken);
+        }
+        finally
+        {
+            _generationGate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Giữ model trong RAM khi người dùng quay lại trang Toán đố trong thời
+    /// gian chờ. Có thể gọi nhiều lần an toàn.
+    /// </summary>
+    public void CancelScheduledModelUnload()
+    {
+        CancellationTokenSource? cancellation;
+
+        lock (_modelLifetimeSync)
+        {
+            cancellation = _scheduledUnloadCancellation;
+            _scheduledUnloadCancellation = null;
+        }
+
+        CancelWithoutThrow(cancellation);
+    }
+
+    /// <summary>
+    /// Bắt đầu grace period 60 giây. Hết thời gian mà trang không xuất hiện
+    /// lại thì weights mới được giải phóng; context/KV không được giữ ở đây.
+    /// </summary>
+    public void ScheduleModelUnload()
+    {
+        var cancellation = new CancellationTokenSource();
+        CancellationTokenSource? previousCancellation;
+
+        lock (_modelLifetimeSync)
+        {
+            previousCancellation = _scheduledUnloadCancellation;
+            _scheduledUnloadCancellation = cancellation;
+        }
+
+        CancelWithoutThrow(previousCancellation);
+
+        _ = UnloadModelAfterGracePeriodAsync(cancellation);
+    }
+
     public async Task<LlmQuizGenerationResult> GenerateAsync(
         string modelPath,
         ArithmeticQuizMode mode,
@@ -49,19 +115,14 @@ public sealed class LocalLlmQuizGenerator
         IProgress<LlmQuizProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(modelPath) ||
-            !File.Exists(modelPath) ||
-            !string.Equals(
-                Path.GetExtension(modelPath),
-                ".gguf",
-                StringComparison.OrdinalIgnoreCase))
+        if (!IsValidModelPath(modelPath))
         {
             return new(null, 0, "ModelFileNotFound", false);
         }
 
+        CancelScheduledModelUnload();
         await _generationGate.WaitAsync(cancellationToken);
 
-        LLamaWeights? weights = null;
         bool modelWasLoaded = false;
         int completedAttempts = 0;
 
@@ -72,29 +133,14 @@ public sealed class LocalLlmQuizGenerator
                     mode,
                     requestedOperation);
 
-            var modelParameters =
-                new ModelParams(modelPath)
-                {
-                    ContextSize = ContextSize,
-                    GpuLayerCount = 0,
-                    Threads = CpuThreadCount,
-                    BatchThreads = CpuThreadCount,
-                    BatchSize = 256,
-                    UBatchSize = 128,
-                    UseMemorymap = true,
-                    UseMemoryLock = false
-                };
+            (LLamaWeights weights, ModelParams modelParameters) =
+                await EnsureModelLoadedAsync(
+                    modelPath,
+                    progress,
+                    cancellationToken);
 
-            progress?.Report(
-                new(
-                    LlmQuizProgressStage.LoadingModel,
-                    0,
-                    MaximumAttempts));
-
-            weights =
-                await LLamaWeights.LoadFromFileAsync(
-                    modelParameters);
-
+            // ModelWasLoaded nghĩa là weights đã sẵn sàng trong RAM, bất kể
+            // vừa nạp từ GGUF hay được tái sử dụng từ câu trước.
             modelWasLoaded = true;
 
             // Gemma 4 stores a Jinja template that currently cannot be
@@ -108,12 +154,9 @@ public sealed class LocalLlmQuizGenerator
                 LlmQuizPromptBuilder.BuildSystemPrompt(
                     language);
 
-            progress?.Report(
-                new(
-                    LlmQuizProgressStage.ModelLoaded,
-                    0,
-                    MaximumAttempts));
-
+            // Executor chỉ tồn tại trong một lần sinh câu. StatelessExecutor
+            // tạo context/KV cho InferAsync và giải phóng chúng khi lượt suy
+            // luận kết thúc; chỉ LLamaWeights được cache giữa các câu.
             var executor =
                 new StatelessExecutor(
                     weights,
@@ -299,20 +342,213 @@ public sealed class LocalLlmQuizGenerator
         }
         finally
         {
-            if (weights is not null)
-            {
-                progress?.Report(
-                    new(
-                        LlmQuizProgressStage.DisposingModel,
-                        completedAttempts,
-                        MaximumAttempts));
-
-                weights.Dispose();
-            }
-
             _generationGate.Release();
         }
     }
+
+    private async Task<(LLamaWeights Weights, ModelParams Parameters)>
+        EnsureModelLoadedAsync(
+            string modelPath,
+            IProgress<LlmQuizProgress>? progress,
+            CancellationToken cancellationToken)
+    {
+        string normalizedPath =
+            Path.GetFullPath(modelPath);
+
+        LLamaWeights? cachedWeights = _loadedWeights;
+        ModelParams? cachedParameters = _loadedModelParameters;
+
+        if (cachedWeights is not null &&
+            cachedParameters is not null &&
+            string.Equals(
+                _loadedModelPath,
+                normalizedPath,
+                ModelPathComparison))
+        {
+            progress?.Report(
+                new(
+                    LlmQuizProgressStage.ModelLoaded,
+                    0,
+                    MaximumAttempts));
+
+            System.Diagnostics.Debug.WriteLine(
+                "Local LLM reused cached GGUF weights.");
+
+            return (cachedWeights, cachedParameters);
+        }
+
+        DisposeLoadedModel();
+
+        var modelParameters =
+            CreateModelParameters(normalizedPath);
+
+        progress?.Report(
+            new(
+                LlmQuizProgressStage.LoadingModel,
+                0,
+                MaximumAttempts));
+
+        LLamaWeights? loadedWeights = null;
+
+        try
+        {
+            loadedWeights =
+                await LLamaWeights.LoadFromFileAsync(
+                    modelParameters);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            LLamaWeights weightsToCache = loadedWeights;
+
+            _loadedWeights = weightsToCache;
+            _loadedModelParameters = modelParameters;
+            _loadedModelPath = normalizedPath;
+            loadedWeights = null;
+
+            System.Diagnostics.Debug.WriteLine(
+                "Local LLM loaded GGUF weights into the shared model cache.");
+
+            progress?.Report(
+                new(
+                    LlmQuizProgressStage.ModelLoaded,
+                    0,
+                    MaximumAttempts));
+
+            return (weightsToCache, modelParameters);
+        }
+        finally
+        {
+            // Nếu quá trình nạp bị hủy hoặc phát sinh lỗi trước khi cache nhận
+            // quyền sở hữu thì giải phóng ngay phần weights vừa tạo.
+            loadedWeights?.Dispose();
+        }
+    }
+
+    private static ModelParams CreateModelParameters(
+        string modelPath) =>
+        new(modelPath)
+        {
+            ContextSize = ContextSize,
+            GpuLayerCount = 0,
+            Threads = CpuThreadCount,
+            BatchThreads = CpuThreadCount,
+            BatchSize = 256,
+            UBatchSize = 128,
+            UseMemorymap = true,
+            UseMemoryLock = false
+        };
+
+    private async Task UnloadModelAfterGracePeriodAsync(
+        CancellationTokenSource cancellation)
+    {
+        CancellationToken cancellationToken =
+            cancellation.Token;
+
+        try
+        {
+            await Task.Delay(
+                TimeSpan.FromSeconds(
+                    ModelUnloadGracePeriodSeconds),
+                cancellationToken);
+
+            await _generationGate.WaitAsync(
+                cancellationToken);
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                lock (_modelLifetimeSync)
+                {
+                    if (!ReferenceEquals(
+                            _scheduledUnloadCancellation,
+                            cancellation))
+                    {
+                        return;
+                    }
+
+                    _scheduledUnloadCancellation = null;
+                }
+
+                DisposeLoadedModel();
+
+                System.Diagnostics.Debug.WriteLine(
+                    "Local LLM weights were released after the 60-second grace period.");
+            }
+            finally
+            {
+                _generationGate.Release();
+            }
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            // Người dùng đã quay lại trang trước khi hết grace period.
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Local LLM delayed unload failed: {exception}");
+        }
+        finally
+        {
+            lock (_modelLifetimeSync)
+            {
+                if (ReferenceEquals(
+                        _scheduledUnloadCancellation,
+                        cancellation))
+                {
+                    _scheduledUnloadCancellation = null;
+                }
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    private void DisposeLoadedModel()
+    {
+        LLamaWeights? weights = _loadedWeights;
+
+        _loadedWeights = null;
+        _loadedModelParameters = null;
+        _loadedModelPath = null;
+
+        weights?.Dispose();
+    }
+
+    private static StringComparison ModelPathComparison =>
+        OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+    private static void CancelWithoutThrow(
+        CancellationTokenSource? cancellation)
+    {
+        if (cancellation is null)
+        {
+            return;
+        }
+
+        try
+        {
+            cancellation.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Tác vụ unload đã tự hoàn tất và giải phóng CTS đúng lúc lời gọi
+            // hủy được gửi tới; model khi đó đã ở trạng thái nhất quán.
+        }
+    }
+
+    private static bool IsValidModelPath(
+        string? modelPath) =>
+        !string.IsNullOrWhiteSpace(modelPath) &&
+        File.Exists(modelPath) &&
+        string.Equals(
+            Path.GetExtension(modelPath),
+            ".gguf",
+            StringComparison.OrdinalIgnoreCase);
 
     private ArithmeticQuizQuestion CreateNaturalLanguageContract(
         ArithmeticQuizMode mode,

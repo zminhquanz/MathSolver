@@ -141,18 +141,40 @@
                                         LineHeight="1.25"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                                    <Button
-                                        x:Name="SelectLlmModelButton"
-                                        Text="{localization:Translate Quiz.SelectModel}"
-                                        HeightRequest="46"
-                                        CornerRadius="11"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource SurfaceColor}"
-                                        BorderColor="{DynamicResource PrimaryBorderColor}"
-                                        BorderWidth="1"
-                                        TextColor="{DynamicResource PrimaryColor}"
-                                        Clicked="OnSelectLlmModelClicked" />
+                                    <Grid
+                                        ColumnDefinitions="*,*"
+                                        ColumnSpacing="10">
+
+                                        <Button
+                                            x:Name="SelectLlmModelButton"
+                                            Grid.Column="0"
+                                            Text="{localization:Translate Quiz.SelectModel}"
+                                            HeightRequest="46"
+                                            CornerRadius="11"
+                                            FontSize="16"
+                                            FontAttributes="Bold"
+                                            BackgroundColor="{DynamicResource SurfaceColor}"
+                                            BorderColor="{DynamicResource PrimaryBorderColor}"
+                                            BorderWidth="1"
+                                            TextColor="{DynamicResource PrimaryColor}"
+                                            Clicked="OnSelectLlmModelClicked" />
+
+                                        <Button
+                                            x:Name="RejectLlmModelButton"
+                                            Grid.Column="1"
+                                            Text="{localization:Translate Quiz.RejectModel}"
+                                            IsEnabled="False"
+                                            HeightRequest="46"
+                                            CornerRadius="11"
+                                            FontSize="16"
+                                            FontAttributes="Bold"
+                                            BackgroundColor="{DynamicResource DangerSoftColor}"
+                                            BorderColor="{DynamicResource DangerBorderColor}"
+                                            BorderWidth="1"
+                                            TextColor="{DynamicResource DangerColor}"
+                                            Clicked="OnRejectLlmModelClicked" />
+
+                                    </Grid>
 
                                     <Label
                                         x:Name="LlmModelNameLabel"

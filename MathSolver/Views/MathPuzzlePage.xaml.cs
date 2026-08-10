@@ -27,6 +27,7 @@ public partial class MathPuzzlePage : ContentPage
     private bool _isGeneratingWithLlm;
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
+    private int _llmProgressVersion;
     private int _questionCount;
     private int _correctCount;
     private int _incorrectCount;
@@ -73,6 +74,10 @@ public partial class MathPuzzlePage : ContentPage
     {
         base.OnAppearing();
 
+        // Nếu quay lại trong grace period thì giữ nguyên GGUF weights đang
+        // nằm trong RAM; câu kế tiếp chỉ cần tạo context/KV mới.
+        _localLlmQuizGenerator.CancelScheduledModelUnload();
+
         BeginMainTabTransitionIfPending();
 
         if (_currentQuestion is null &&
@@ -94,7 +99,22 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        bool wasGeneratingWithLlm =
+            _isGeneratingWithLlm;
+
         CancelLlmGeneration();
+
+        if (wasGeneratingWithLlm)
+        {
+            ShowLlmStatus(
+                Translate("Quiz.GenerationCancelled"),
+                isRunning: false);
+        }
+
+        // Không unload weights ngay khi đổi tab. Context/KV của lượt sinh
+        // hiện tại sẽ được hủy khi cancellation hoàn tất; weights chỉ được
+        // giải phóng nếu người dùng không quay lại sau 60 giây.
+        _localLlmQuizGenerator.ScheduleModelUnload();
 
         _mainTabAnimationVersion++;
         MathPuzzlePageContentRoot.CancelAnimations();
@@ -435,7 +455,8 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         var cancellation = new CancellationTokenSource();
-        _llmGenerationCancellation = cancellation;
+        int progressVersion =
+            BeginLlmProgress(cancellation);
         SetLlmBusy(true);
         ShowLlmStatus(
             Translate("Quiz.ImportingModel"),
@@ -443,12 +464,34 @@ public partial class MathPuzzlePage : ContentPage
 
         try
         {
-            _llmModelPath =
+            string? previousModelPath =
+                _llmModelPath;
+
+            string selectedModelPath =
                 await _llmModelStore.ImportAsync(
                     fileResult,
                     cancellation.Token);
 
+            // Chọn file chỉ kiểm tra/lưu đường dẫn. Nếu người dùng đổi sang
+            // file khác thì giải phóng cache cũ; weights mới chỉ được nạp khi
+            // bấm Tạo đề bằng AI.
+            if (!string.Equals(
+                    previousModelPath,
+                    selectedModelPath,
+                    OperatingSystem.IsWindows()
+                        ? StringComparison.OrdinalIgnoreCase
+                        : StringComparison.Ordinal))
+            {
+                await _localLlmQuizGenerator.UnloadModelAsync(
+                    cancellation.Token);
+            }
+
+            _llmModelPath = selectedModelPath;
+            _llmModelStore.SaveModelPath(
+                selectedModelPath);
             UpdateLlmModelUi();
+
+            CompleteLlmProgress(progressVersion);
             PrepareLlmQuestionForGeneration(
                 cancelPending: false);
             ShowLlmStatus(
@@ -457,24 +500,103 @@ public partial class MathPuzzlePage : ContentPage
         }
         catch (OperationCanceledException)
         {
+            CompleteLlmProgress(progressVersion);
             ShowLlmStatus(
                 Translate("Quiz.GenerationCancelled"),
                 isRunning: false);
         }
         catch (InvalidDataException)
         {
+            CompleteLlmProgress(progressVersion);
             ShowLlmStatus(
                 Translate("Quiz.InvalidModelFile"),
                 isRunning: false);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            CompleteLlmProgress(progressVersion);
+            System.Diagnostics.Debug.WriteLine(
+                $"Local LLM file selection failed: {exception}");
+
             ShowLlmStatus(
                 Translate("Quiz.ModelImportError"),
                 isRunning: false);
         }
         finally
         {
+            CompleteLlmProgress(progressVersion);
+
+            if (ReferenceEquals(
+                    _llmGenerationCancellation,
+                    cancellation))
+            {
+                _llmGenerationCancellation = null;
+                SetLlmBusy(false);
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    private async void OnRejectLlmModelClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isGeneratingWithLlm ||
+            _llmModelPath is null)
+        {
+            return;
+        }
+
+        CancelLlmGeneration();
+
+        var cancellation = new CancellationTokenSource();
+        int progressVersion =
+            BeginLlmProgress(cancellation);
+
+        SetLlmBusy(true);
+        ShowLlmStatus(
+            Translate("Quiz.DisposingModel"),
+            isRunning: true);
+
+        try
+        {
+            await _localLlmQuizGenerator.UnloadModelAsync(
+                cancellation.Token);
+
+            cancellation.Token.ThrowIfCancellationRequested();
+
+            _llmModelStore.ClearSavedModelPath();
+            _llmModelPath = null;
+
+            CompleteLlmProgress(progressVersion);
+            PrepareLlmQuestionForGeneration(
+                cancelPending: false);
+            ShowLlmStatus(
+                Translate("Quiz.ModelRejected"),
+                isRunning: false);
+        }
+        catch (OperationCanceledException)
+        {
+            CompleteLlmProgress(progressVersion);
+            ShowLlmStatus(
+                Translate("Quiz.GenerationCancelled"),
+                isRunning: false);
+        }
+        catch (Exception exception)
+        {
+            CompleteLlmProgress(progressVersion);
+            System.Diagnostics.Debug.WriteLine(
+                $"Local LLM rejection failed: {exception}");
+
+            ShowLlmStatus(
+                Translate("Quiz.ModelRuntimeError"),
+                isRunning: false);
+        }
+        finally
+        {
+            CompleteLlmProgress(progressVersion);
+
             if (ReferenceEquals(
                     _llmGenerationCancellation,
                     cancellation))
@@ -513,7 +635,8 @@ public partial class MathPuzzlePage : ContentPage
         CancelLlmGeneration();
 
         var cancellation = new CancellationTokenSource();
-        _llmGenerationCancellation = cancellation;
+        int progressVersion =
+            BeginLlmProgress(cancellation);
         _showFriendlyGreetingForCurrentLoad =
             _llmModelStore.ShouldShowFirstGreeting();
 
@@ -545,8 +668,9 @@ public partial class MathPuzzlePage : ContentPage
         try
         {
             var progress =
-                new Progress<LlmQuizProgress>(
-                    UpdateLlmProgress);
+                CreateLlmProgress(
+                    cancellation,
+                    progressVersion);
 
             LlmQuizGenerationResult result =
                 await _localLlmQuizGenerator.GenerateAsync(
@@ -556,6 +680,11 @@ public partial class MathPuzzlePage : ContentPage
                     AppLanguageManager.CurrentLanguage,
                     progress,
                     cancellation.Token);
+
+            // Vô hiệu hóa callback Progress<T> đang chờ trên UI thread trước
+            // khi hiển thị trạng thái cuối. Nếu không, ModelLoaded/Validating
+            // đến muộn có thể bật spinner trở lại sau khi tác vụ đã hoàn tất.
+            CompleteLlmProgress(progressVersion);
 
             if (result.ModelWasLoaded &&
                 _showFriendlyGreetingForCurrentLoad)
@@ -581,12 +710,15 @@ public partial class MathPuzzlePage : ContentPage
         }
         catch (OperationCanceledException)
         {
+            CompleteLlmProgress(progressVersion);
             ShowLlmStatus(
                 Translate("Quiz.GenerationCancelled"),
                 isRunning: false);
         }
         finally
         {
+            CompleteLlmProgress(progressVersion);
+
             if (ReferenceEquals(
                     _llmGenerationCancellation,
                     cancellation))
@@ -710,6 +842,10 @@ public partial class MathPuzzlePage : ContentPage
         CreateLlmQuestionButton.IsEnabled =
             !_isGeneratingWithLlm &&
             _llmModelPath is not null;
+
+        RejectLlmModelButton.IsEnabled =
+            !_isGeneratingWithLlm &&
+            _llmModelPath is not null;
     }
 
     private void SetLlmBusy(
@@ -717,6 +853,9 @@ public partial class MathPuzzlePage : ContentPage
     {
         _isGeneratingWithLlm = isBusy;
         SelectLlmModelButton.IsEnabled = !isBusy;
+        RejectLlmModelButton.IsEnabled =
+            !isBusy &&
+            _llmModelPath is not null;
         AlgorithmSourceButton.IsEnabled = !isBusy;
         LocalLlmSourceButton.IsEnabled = !isBusy;
         TrueFalseModeButton.IsEnabled = !isBusy;
@@ -738,9 +877,53 @@ public partial class MathPuzzlePage : ContentPage
         LlmStatusLabel.Text = message;
     }
 
+    private int BeginLlmProgress(
+        CancellationTokenSource cancellation)
+    {
+        _llmGenerationCancellation = cancellation;
+
+        return Interlocked.Increment(
+            ref _llmProgressVersion);
+    }
+
+    private IProgress<LlmQuizProgress> CreateLlmProgress(
+        CancellationTokenSource cancellation,
+        int progressVersion)
+    {
+        return new Progress<LlmQuizProgress>(
+            progress =>
+            {
+                if (progressVersion !=
+                        Volatile.Read(ref _llmProgressVersion) ||
+                    cancellation.IsCancellationRequested ||
+                    !ReferenceEquals(
+                        _llmGenerationCancellation,
+                        cancellation))
+                {
+                    return;
+                }
+
+                UpdateLlmProgress(progress);
+            });
+    }
+
+    private void CompleteLlmProgress(
+        int progressVersion)
+    {
+        Interlocked.CompareExchange(
+            ref _llmProgressVersion,
+            progressVersion + 1,
+            progressVersion);
+    }
+
     private void CancelLlmGeneration()
     {
+        Interlocked.Increment(
+            ref _llmProgressVersion);
+
         _llmGenerationCancellation?.Cancel();
+        LlmActivityIndicator.IsRunning = false;
+        LlmActivityIndicator.IsVisible = false;
     }
 
     private void SetAnswerControlsEnabled(
