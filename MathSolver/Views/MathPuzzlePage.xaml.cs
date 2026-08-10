@@ -111,6 +111,16 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        // SettingsMenuPage chỉ là một modal trong suốt phủ lên trang hiện tại.
+        // Constructor của nó bật cờ này trước khi PushModalAsync làm
+        // MathPuzzlePage nhận OnDisappearing, vì vậy không được coi đây là
+        // thao tác rời tab lớn: giữ nguyên câu hỏi, lựa chọn và điểm số.
+        if (SettingsMenuPage.IsTransparentOverlayActive)
+        {
+            base.OnDisappearing();
+            return;
+        }
+
         bool wasGeneratingWithLlm =
             _isGeneratingWithLlm;
 
@@ -148,6 +158,11 @@ public partial class MathPuzzlePage : ContentPage
         Dispatcher.Dispatch(
             () =>
             {
+                // Đổi ngôn ngữ bắt đầu một phiên luyện tập mới để câu hỏi,
+                // đáp án và toàn bộ nhãn điểm không bị trộn hai ngôn ngữ.
+                CancelLlmGeneration();
+                ResetQuizSessionState();
+
                 UpdateOperationPickerItems();
                 UpdateGenerationSourceStyles();
                 UpdateLlmModelUi();
@@ -157,20 +172,8 @@ public partial class MathPuzzlePage : ContentPage
                         QuizGenerationSource.LocalLlm)
                 {
                     // Đề AI phụ thuộc chương trình/ngôn ngữ tại thời điểm sinh.
-                    PrepareLlmQuestionForGeneration();
-                }
-                else if (_currentQuestion is not null)
-                {
-                    RenderCurrentQuestion(
-                        resetAnswerControls: false);
-
-                    if (_questionAnswered &&
-                        _lastAnswerWasCorrect is bool wasCorrect)
-                    {
-                        ShowFeedback(
-                            wasCorrect,
-                            _currentQuestion.CorrectAnswer);
-                    }
+                    PrepareLlmQuestionForGeneration(
+                        cancelPending: false);
                 }
             });
     }
@@ -1613,7 +1616,7 @@ public partial class MathPuzzlePage : ContentPage
         UpdateScoreLabels();
     }
 
-    private void ResetQuizSessionState()
+    private void ResetCurrentQuestionState()
     {
         _currentQuestion = null;
         _questionAnswered = false;
@@ -1631,12 +1634,17 @@ public partial class MathPuzzlePage : ContentPage
         ClearMultipleChoiceAnswers();
         SetAnswerControlsEnabled(false);
         UpdateModeStyles();
-        ResetQuizSessionCounters();
 
         LlmActivityIndicator.IsRunning = false;
         LlmActivityIndicator.IsVisible = false;
         LlmStatusLabel.Text = string.Empty;
         LlmProgressGrid.IsVisible = false;
+    }
+
+    private void ResetQuizSessionState()
+    {
+        ResetCurrentQuestionState();
+        ResetQuizSessionCounters();
     }
 
     private void UpdateScoreLabels()

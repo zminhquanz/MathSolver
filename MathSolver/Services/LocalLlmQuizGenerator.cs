@@ -1180,19 +1180,21 @@ internal sealed partial class LlmWordProblemValidator
                     : "items";
         }
 
+        solutionLead =
+            ElementaryWordProblemSolutionFormatter
+                .NormalizeSolutionLeadPunctuation(
+                    solutionLead);
+
         if (string.IsNullOrWhiteSpace(solutionLead) ||
             solutionLead.Contains('='))
         {
             solutionLead =
-                BuildDefaultSolutionLead(
-                    expression.Operation,
-                    unit,
-                    language);
-        }
-
-        if (!solutionLead.EndsWith(':'))
-        {
-            solutionLead += ":";
+                ElementaryWordProblemSolutionFormatter
+                    .NormalizeSolutionLeadPunctuation(
+                        BuildDefaultSolutionLead(
+                            expression.Operation,
+                            unit,
+                            language));
         }
 
         return new(

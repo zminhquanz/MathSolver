@@ -43,9 +43,31 @@ public static class ElementaryWordProblemSolutionFormatter
                 ? "Đáp số"
                 : "Answer";
 
+        string solutionLead =
+            NormalizeSolutionLeadPunctuation(
+                wordProblem.SolutionLead);
+
         return
-            $"{wordProblem.SolutionLead}{Environment.NewLine}" +
+            $"{solutionLead}{Environment.NewLine}" +
             $"{left} {symbol} {right} = {answer}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+    }
+
+    internal static string NormalizeSolutionLeadPunctuation(
+        string solutionLead)
+    {
+        string text =
+            solutionLead.TrimEnd();
+
+        while (text.Length > 0 &&
+               ".,!?:;…".Contains(text[^1]))
+        {
+            text =
+                text[..^1].TrimEnd();
+        }
+
+        return text.Length == 0
+            ? string.Empty
+            : $"{text}:";
     }
 }
