@@ -14,6 +14,8 @@ public partial class CalculationPage : ContentPage
 
     private readonly LongDivisionDrawable _longDivisionDrawable = new();
 
+    private readonly BasicArithmeticEngine _arithmeticEngine = new();
+
     private ArithmeticOperation _selectedOperation = ArithmeticOperation.Add;
 
     private NumberInputType _selectedNumberType = NumberInputType.Integer;
@@ -423,26 +425,17 @@ public partial class CalculationPage : ContentPage
         BigInteger second =
             (BigInteger)secondNumber;
 
-        BigInteger result =
-            _selectedOperation switch
-            {
-                ArithmeticOperation.Add =>
-                    first + second,
-
-                ArithmeticOperation.Subtract =>
-                    first - second,
-
-                ArithmeticOperation.Multiply =>
-                    first * second,
-
-                _ =>
-                    BigInteger.Zero
-            };
+        IntegerArithmeticResult calculation =
+            _arithmeticEngine.CalculateInteger(
+                new IntegerArithmeticExpression(
+                    first,
+                    _selectedOperation,
+                    second));
 
         ShowIntegerResult(
             first,
             second,
-            result);
+            calculation.Result);
     }
 
     private void ShowDivisionByZeroError(
@@ -548,11 +541,18 @@ public partial class CalculationPage : ContentPage
         BigInteger divisorInteger =
             (BigInteger)divisor;
 
+        IntegerArithmeticResult calculation =
+            _arithmeticEngine.CalculateInteger(
+                new IntegerArithmeticExpression(
+                    dividendInteger,
+                    ArithmeticOperation.Divide,
+                    divisorInteger));
+
         BigInteger quotient =
-            BigInteger.DivRem(
-                dividendInteger,
-                divisorInteger,
-                out BigInteger remainder);
+            calculation.Result;
+
+        BigInteger remainder =
+            calculation.Remainder;
 
         BigInteger absoluteRemainder =
             BigInteger.Abs(
@@ -774,9 +774,9 @@ public partial class CalculationPage : ContentPage
         decimal divisor)
     {
         QuadDouble result =
-            QuadDouble.FromDecimal(
-                dividend) /
-            QuadDouble.FromDecimal(
+            _arithmeticEngine.CalculateDecimal(
+                dividend,
+                ArithmeticOperation.Divide,
                 divisor);
 
         string dividendText =
@@ -1106,31 +1106,10 @@ public partial class CalculationPage : ContentPage
         decimal firstNumber,
         decimal secondNumber)
     {
-        QuadDouble firstValue =
-            QuadDouble.FromDecimal(
-                firstNumber);
-
-        QuadDouble secondValue =
-            QuadDouble.FromDecimal(
-                secondNumber);
-
-        return _selectedOperation switch
-        {
-            ArithmeticOperation.Add =>
-                firstValue + secondValue,
-
-            ArithmeticOperation.Subtract =>
-                firstValue - secondValue,
-
-            ArithmeticOperation.Multiply =>
-                firstValue * secondValue,
-
-            ArithmeticOperation.Divide =>
-                firstValue / secondValue,
-
-            _ =>
-                QuadDouble.Zero
-        };
+        return _arithmeticEngine.CalculateDecimal(
+            firstNumber,
+            _selectedOperation,
+            secondNumber);
     }
 
     private void ShowResult(
@@ -3506,13 +3485,6 @@ public partial class CalculationPage : ContentPage
             HideLongDivision();
         }
     }
-}
-public enum ArithmeticOperation
-{
-    Add,
-    Subtract,
-    Multiply,
-    Divide
 }
 public enum NumberInputType
 {

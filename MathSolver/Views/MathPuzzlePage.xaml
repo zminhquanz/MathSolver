@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentPage
+    x:Class="MathSolver.Views.MathPuzzlePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Grid
+        x:Name="MathPuzzlePageContentRoot"
+        RowDefinitions="Auto,*">
+
+        <Border
+            Grid.Row="0"
+            Margin="20,12,20,8"
+            Padding="6"
+            BackgroundColor="{DynamicResource SurfaceColor}"
+            Stroke="{DynamicResource PrimaryBorderBrush}"
+            StrokeThickness="1">
+
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+
+            <Grid
+                ColumnDefinitions="*,*"
+                ColumnSpacing="6">
+
+                <Button
+                    x:Name="PracticeTabButton"
+                    Grid.Column="0"
+                    Text="{localization:Translate Quiz.PracticeTab}"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
+                    BackgroundColor="{DynamicResource PrimaryColor}"
+                    TextColor="{DynamicResource OnPrimaryColor}"
+                    Clicked="OnPracticeTabClicked" />
+
+                <Button
+                    x:Name="LearnTabButton"
+                    Grid.Column="1"
+                    Text="{localization:Translate Quiz.LearnTab}"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
+                    TextColor="{DynamicResource TextSecondaryColor}"
+                    Clicked="OnLearnTabClicked" />
+
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+
+            <ScrollView
+                x:Name="PracticeContent"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill">
+
+                <VerticalStackLayout
+                    Padding="20,12,20,28"
+                    Spacing="14"
+                    HorizontalOptions="Fill">
+
+                    <VerticalStackLayout
+                        Margin="0,4,0,4"
+                        Spacing="3">
+
+                        <Label
+                            Text="?  + − × ÷"
+                            Style="{StaticResource SolverHeroSymbolStyle}" />
+
+                        <Label
+                            Text="{localization:Translate Quiz.PracticeTitle}"
+                            Style="{StaticResource SolverHeroTitleStyle}" />
+
+                        <Label
+                            Text="{localization:Translate Quiz.PracticeSubtitle}"
+                            Style="{StaticResource SolverHeroSubtitleStyle}" />
+
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource SolverCardStyle}">
+                        <VerticalStackLayout Spacing="14">
+
+                            <Label
+                                Text="{localization:Translate Quiz.ModeTitle}"
+                                Style="{StaticResource SolverSectionTitleStyle}" />
+
+                            <Grid
+                                ColumnDefinitions="*,*"
+                                ColumnSpacing="10">
+
+                                <Button
+                                    x:Name="TrueFalseModeButton"
+                                    Grid.Column="0"
+                                    Text="{localization:Translate Quiz.TrueFalseMode}"
+                                    HeightRequest="48"
+                                    CornerRadius="12"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource PrimaryColor}"
+                                    TextColor="{DynamicResource OnPrimaryColor}"
+                                    Clicked="OnTrueFalseModeClicked" />
+
+                                <Button
+                                    x:Name="MultipleChoiceModeButton"
+                                    Grid.Column="1"
+                                    Text="{localization:Translate Quiz.MultipleChoiceMode}"
+                                    HeightRequest="48"
+                                    CornerRadius="12"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnMultipleChoiceModeClicked" />
+
+                            </Grid>
+
+                            <Label
+                                Text="{localization:Translate Quiz.OperationTitle}"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Border
+                                Padding="0"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <Grid
+                                    HeightRequest="50"
+                                    ColumnDefinitions="*,48">
+
+                                    <controls:BorderlessPicker
+                                        x:Name="OperationPicker"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="2"
+                                        Margin="14,0,0,0"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="17"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        BackgroundColor="Transparent"
+                                        SelectedIndexChanged="OnOperationChanged" />
+
+                                    <BoxView
+                                        Grid.Column="1"
+                                        WidthRequest="1"
+                                        Margin="0,10,0,10"
+                                        HorizontalOptions="Start"
+                                        BackgroundColor="{DynamicResource DividerColor}"
+                                        InputTransparent="True" />
+
+                                    <Border
+                                        Grid.Column="1"
+                                        WidthRequest="32"
+                                        HeightRequest="32"
+                                        Margin="8"
+                                        Padding="0"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1"
+                                        InputTransparent="True">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <Label
+                                            Text="▾"
+                                            FontSize="14"
+                                            FontAttributes="Bold"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+
+                                    </Border>
+
+                                </Grid>
+
+                            </Border>
+
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border
+                        Padding="14"
+                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                        Stroke="{DynamicResource PrimarySoftBrush}"
+                        StrokeThickness="1">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14" />
+                        </Border.StrokeShape>
+
+                        <Grid
+                            ColumnDefinitions="*,Auto,Auto,Auto"
+                            ColumnSpacing="12">
+
+                            <Label
+                                x:Name="QuestionCounterLabel"
+                                Grid.Column="0"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                VerticalTextAlignment="Center" />
+
+                            <Label
+                                x:Name="CorrectScoreLabel"
+                                Grid.Column="1"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource SuccessColor}"
+                                VerticalTextAlignment="Center" />
+
+                            <Label
+                                x:Name="IncorrectScoreLabel"
+                                Grid.Column="2"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource DangerColor}"
+                                VerticalTextAlignment="Center" />
+
+                            <Button
+                                x:Name="ResetScoreButton"
+                                Grid.Column="3"
+                                Text="{localization:Translate Quiz.ResetScore}"
+                                HeightRequest="36"
+                                Padding="12,0"
+                                CornerRadius="9"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource SurfaceColor}"
+                                BorderColor="{DynamicResource PrimaryBorderColor}"
+                                BorderWidth="1"
+                                TextColor="{DynamicResource PrimaryColor}"
+                                Clicked="OnResetScoreClicked" />
+
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        Padding="18"
+                        BackgroundColor="{DynamicResource SurfaceColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        StrokeThickness="1.5">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="16" />
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="16">
+
+                            <Label
+                                x:Name="QuestionPromptLabel"
+                                Text="{localization:Translate Quiz.QuestionTitle}"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            <Label
+                                x:Name="QuestionExpressionLabel"
+                                FontSize="34"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <Grid
+                                x:Name="TrueFalseAnswerGrid"
+                                ColumnDefinitions="*,*"
+                                ColumnSpacing="12">
+
+                                <Button
+                                    x:Name="TrueAnswerButton"
+                                    Grid.Column="0"
+                                    Text="{localization:Translate Quiz.TrueAnswer}"
+                                    CommandParameter="true"
+                                    HeightRequest="54"
+                                    CornerRadius="12"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SuccessSoftColor}"
+                                    BorderColor="{DynamicResource SuccessColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource SuccessColor}"
+                                    Clicked="OnTrueFalseAnswerClicked" />
+
+                                <Button
+                                    x:Name="FalseAnswerButton"
+                                    Grid.Column="1"
+                                    Text="{localization:Translate Quiz.FalseAnswer}"
+                                    CommandParameter="false"
+                                    HeightRequest="54"
+                                    CornerRadius="12"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource DangerSoftColor}"
+                                    BorderColor="{DynamicResource DangerColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource DangerColor}"
+                                    Clicked="OnTrueFalseAnswerClicked" />
+
+                            </Grid>
+
+                            <Grid
+                                x:Name="MultipleChoiceAnswerGrid"
+                                IsVisible="False"
+                                RowDefinitions="Auto,Auto"
+                                ColumnDefinitions="*,*"
+                                RowSpacing="10"
+                                ColumnSpacing="10">
+
+                                <Button
+                                    x:Name="ChoiceAButton"
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    HeightRequest="54"
+                                    CornerRadius="12"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    BorderColor="{DynamicResource BorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnChoiceAnswerClicked" />
+
+                                <Button
+                                    x:Name="ChoiceBButton"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    HeightRequest="54"
+                                    CornerRadius="12"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    BorderColor="{DynamicResource BorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnChoiceAnswerClicked" />
+
+                                <Button
+                                    x:Name="ChoiceCButton"
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    HeightRequest="54"
+                                    CornerRadius="12"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    BorderColor="{DynamicResource BorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnChoiceAnswerClicked" />
+
+                                <Button
+                                    x:Name="ChoiceDButton"
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    HeightRequest="54"
+                                    CornerRadius="12"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    BorderColor="{DynamicResource BorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnChoiceAnswerClicked" />
+
+                            </Grid>
+
+                            <Border
+                                x:Name="FeedbackBorder"
+                                IsVisible="False"
+                                Padding="12"
+                                BackgroundColor="{DynamicResource SuccessSoftColor}"
+                                Stroke="{DynamicResource SuccessBorderBrush}"
+                                StrokeThickness="1">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <Label
+                                    x:Name="FeedbackLabel"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource SuccessColor}" />
+
+                            </Border>
+
+                            <Button
+                                x:Name="NextQuestionButton"
+                                IsEnabled="False"
+                                Text="{localization:Translate Quiz.NextQuestion}"
+                                HeightRequest="50"
+                                CornerRadius="12"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
+                                Clicked="OnNextQuestionClicked" />
+
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label
+                        Text="{localization:Translate Quiz.ValidationHint}"
+                        FontSize="14"
+                        HorizontalTextAlignment="Center"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <ScrollView
+                x:Name="LearnContent"
+                IsVisible="False"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill">
+
+                <VerticalStackLayout
+                    Padding="20,16,20,28"
+                    Spacing="14">
+
+                    <VerticalStackLayout Spacing="3">
+                        <Label
+                            Text="📖  + − × ÷"
+                            Style="{StaticResource SolverHeroSymbolStyle}" />
+
+                        <Label
+                            Text="{localization:Translate Quiz.LearnTitle}"
+                            Style="{StaticResource SolverHeroTitleStyle}" />
+
+                        <Label
+                            Text="{localization:Translate Quiz.LearnSubtitle}"
+                            Style="{StaticResource SolverHeroSubtitleStyle}" />
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource SolverCardStyle}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label
+                                Text="{localization:Translate Quiz.LearnIntroductionTitle}"
+                                Style="{StaticResource SolverSectionTitleStyle}" />
+
+                            <Label
+                                Text="{localization:Translate Quiz.LearnIntroduction}"
+                                FontSize="17"
+                                LineHeight="1.3"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Grid
+                        RowDefinitions="Auto,Auto"
+                        ColumnDefinitions="*,*"
+                        RowSpacing="12"
+                        ColumnSpacing="12">
+
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Style="{StaticResource SolverCardStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="+" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                <Label Text="{localization:Translate Quiz.LearnAddition}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="a + b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Style="{StaticResource SolverCardStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="−" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                <Label Text="{localization:Translate Quiz.LearnSubtraction}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="a − b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Style="{StaticResource SolverCardStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="×" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                <Label Text="{localization:Translate Quiz.LearnMultiplication}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="a × b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Style="{StaticResource SolverCardStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="÷" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                <Label Text="{localization:Translate Quiz.LearnDivision}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="a ÷ b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </Grid>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+        </Grid>
+    </Grid>
+</ContentPage>

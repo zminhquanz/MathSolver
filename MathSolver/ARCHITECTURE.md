@@ -116,11 +116,24 @@ App
       │   │   ├── Fraction tab → FractionView / FractionCalculator
       │   │   ├── Geometry tab → GeometryCalculatorView
       │   │   └── Long Division tab → LongDivisionCalculator + Drawable
+      │   ├── MathPuzzlePage
+      │   │   ├── Practice tab → ArithmeticQuizGenerator + ArithmeticQuizValidator
+      │   │   └── Learn tab → Basic arithmetic lesson content
       │   └── SettingsPage (locale, theme, threading config)
       └── AboutPage
 ```
 
 `WindowStateManager` intercepts Windows X / Alt+F4 while calculations or TXT exports are active. Pressing Stop shows a Yes/No confirmation before cancelling the calculation token. Task completion sources coordinate with the OS close path.
+
+### Shared Basic Arithmetic & Quiz Validation
+
+`BasicArithmeticEngine` is the single source of truth for integer and decimal
+addition, subtraction, multiplication, and division. `CalculationPage` uses it
+for the Basic solver; `ArithmeticQuizGenerator` uses the same engine to create
+practice questions. Quiz questions are accepted only after
+`ArithmeticQuizValidator` recalculates the expression and verifies all shape
+invariants: exact division, correct answer key, true/false flag consistency,
+and four unique multiple-choice answers containing the correct answer once.
 
 ### Localization — `Services/LocalizationService.cs` / `TRANSLATING.md`
 

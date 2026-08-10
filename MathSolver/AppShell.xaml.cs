@@ -30,6 +30,9 @@ public partial class AppShell : Shell
             CalculationShellContent);
 
         LocalizationService.Attach(
+            MathPuzzleShellContent);
+
+        LocalizationService.Attach(
             FormulaShellContent);
 
         LocalizationService.Attach(
@@ -433,6 +436,13 @@ public partial class AppShell : Shell
 
         if (ReferenceEquals(
                 selectedContent,
+                MathPuzzleShellContent))
+        {
+            return "MathPuzzlePage";
+        }
+
+        if (ReferenceEquals(
+                selectedContent,
                 FormulaShellContent))
         {
             return "FormulaPage";
@@ -460,8 +470,9 @@ public partial class AppShell : Shell
         return route switch
         {
             "CalculationPage" => 0,
-            "FormulaPage" => 1,
-            "MultiplicationTablePage" => 2,
+            "MathPuzzlePage" => 1,
+            "FormulaPage" => 2,
+            "MultiplicationTablePage" => 3,
             _ => -1
         };
     }
@@ -472,6 +483,7 @@ public partial class AppShell : Shell
         string[] mainRoutes =
         [
             "CalculationPage",
+            "MathPuzzlePage",
             "FormulaPage",
             "MultiplicationTablePage"
         ];

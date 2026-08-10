@@ -10,11 +10,29 @@ public static class LocalizationKeys
         public const string Solve =
             "Tabs.Solve";
 
+        public const string MathPuzzle =
+            "Tabs.MathPuzzle";
+
         public const string Formulas =
             "Tabs.Formulas";
 
         public const string TimesTables =
             "Tabs.TimesTables";
+    }
+
+    public static class Quiz
+    {
+        public const string PracticeTab =
+            "Quiz.PracticeTab";
+
+        public const string LearnTab =
+            "Quiz.LearnTab";
+
+        public const string CorrectFeedback =
+            "Quiz.CorrectFeedback";
+
+        public const string IncorrectFeedback =
+            "Quiz.IncorrectFeedback";
     }
 
     public static class Settings
