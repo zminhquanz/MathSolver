@@ -91,7 +91,8 @@ public sealed class LocalLlmQuizGenerator
     /// Bắt đầu grace period 60 giây. Hết thời gian mà trang không xuất hiện
     /// lại thì weights mới được giải phóng; context/KV không được giữ ở đây.
     /// </summary>
-    public void ScheduleModelUnload()
+    public void ScheduleModelUnload(
+        Func<Task>? onModelUnloadedAsync = null)
     {
         var cancellation = new CancellationTokenSource();
         CancellationTokenSource? previousCancellation;
@@ -104,7 +105,9 @@ public sealed class LocalLlmQuizGenerator
 
         CancelWithoutThrow(previousCancellation);
 
-        _ = UnloadModelAfterGracePeriodAsync(cancellation);
+        _ = UnloadModelAfterGracePeriodAsync(
+            cancellation,
+            onModelUnloadedAsync);
     }
 
     public async Task<LlmQuizGenerationResult> GenerateAsync(
@@ -439,7 +442,8 @@ public sealed class LocalLlmQuizGenerator
         };
 
     private async Task UnloadModelAfterGracePeriodAsync(
-        CancellationTokenSource cancellation)
+        CancellationTokenSource cancellation,
+        Func<Task>? onModelUnloadedAsync)
     {
         CancellationToken cancellationToken =
             cancellation.Token;
@@ -471,6 +475,11 @@ public sealed class LocalLlmQuizGenerator
                 }
 
                 DisposeLoadedModel();
+
+                if (onModelUnloadedAsync is not null)
+                {
+                    await onModelUnloadedAsync();
+                }
 
                 System.Diagnostics.Debug.WriteLine(
                     "Local LLM weights were released after the 60-second grace period.");

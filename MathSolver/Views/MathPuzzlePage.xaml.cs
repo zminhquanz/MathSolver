@@ -114,7 +114,8 @@ public partial class MathPuzzlePage : ContentPage
         // Không unload weights ngay khi đổi tab. Context/KV của lượt sinh
         // hiện tại sẽ được hủy khi cancellation hoàn tất; weights chỉ được
         // giải phóng nếu người dùng không quay lại sau 60 giây.
-        _localLlmQuizGenerator.ScheduleModelUnload();
+        _localLlmQuizGenerator.ScheduleModelUnload(
+            ClearLlmQuestionAfterDelayedUnloadAsync);
 
         _mainTabAnimationVersion++;
         MathPuzzlePageContentRoot.CancelAnimations();
@@ -283,10 +284,14 @@ public partial class MathPuzzlePage : ContentPage
             TrueFalseModeButton,
             MultipleChoiceModeButton);
 
+        bool hasQuestion = _currentQuestion is not null;
+
         TrueFalseAnswerGrid.IsVisible =
+            hasQuestion &&
             _selectedMode == ArithmeticQuizMode.TrueFalse;
 
         MultipleChoiceAnswerGrid.IsVisible =
+            hasQuestion &&
             _selectedMode == ArithmeticQuizMode.MultipleChoice;
 
         QuestionPromptLabel.Text =
@@ -365,7 +370,8 @@ public partial class MathPuzzlePage : ContentPage
         };
     }
 
-    private void GenerateAlgorithmQuestion()
+    private void GenerateAlgorithmQuestion(
+        bool advanceQuestionNumber = false)
     {
         CancelLlmGeneration();
         _questionAnswered = false;
@@ -379,7 +385,8 @@ public partial class MathPuzzlePage : ContentPage
                     _selectedMode,
                     GetSelectedOperation());
 
-            _questionCount++;
+            AdvanceQuestionNumberIfNeeded(
+                advanceQuestionNumber);
             RenderCurrentQuestion(
                 resetAnswerControls: true);
             UpdateScoreLabels();
@@ -422,6 +429,7 @@ public partial class MathPuzzlePage : ContentPage
         SolutionBorder.IsVisible = false;
         NextQuestionButton.IsEnabled = false;
 
+        ClearMultipleChoiceAnswers();
         SetAnswerControlsEnabled(false);
         UpdateModeStyles();
         UpdateLlmModelUi();
@@ -613,12 +621,27 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
-        await GenerateLlmQuestionAsync();
+        // Nút Tạo đề chỉ tạo câu đầu tiên hoặc tạo lại sau một lần sinh lỗi.
+        // Khi đang có câu hỏi, người dùng phải trả lời rồi bấm Câu tiếp theo;
+        // không cho phép nút này thay câu hiện tại và làm nhảy bộ đếm.
+        if (_currentQuestion is not null)
+        {
+            return;
+        }
+
+        await GenerateLlmQuestionAsync(
+            advanceQuestionNumber: false);
     }
 
-    private async Task GenerateLlmQuestionAsync()
+    private async Task GenerateLlmQuestionAsync(
+        bool advanceQuestionNumber)
     {
-        if (_isGeneratingWithLlm)
+        if (_isGeneratingWithLlm ||
+            (advanceQuestionNumber &&
+             (!_questionAnswered ||
+              _currentQuestion is null)) ||
+            (!advanceQuestionNumber &&
+             _currentQuestion is not null))
         {
             return;
         }
@@ -695,7 +718,8 @@ public partial class MathPuzzlePage : ContentPage
             if (result.Question is not null)
             {
                 _currentQuestion = result.Question;
-                _questionCount++;
+                AdvanceQuestionNumberIfNeeded(
+                    advanceQuestionNumber);
                 RenderCurrentQuestion(
                     resetAnswerControls: true);
                 UpdateScoreLabels();
@@ -841,7 +865,8 @@ public partial class MathPuzzlePage : ContentPage
 
         CreateLlmQuestionButton.IsEnabled =
             !_isGeneratingWithLlm &&
-            _llmModelPath is not null;
+            _llmModelPath is not null &&
+            _currentQuestion is null;
 
         RejectLlmModelButton.IsEnabled =
             !_isGeneratingWithLlm &&
@@ -864,7 +889,8 @@ public partial class MathPuzzlePage : ContentPage
 
         CreateLlmQuestionButton.IsEnabled =
             !isBusy &&
-            _llmModelPath is not null;
+            _llmModelPath is not null &&
+            _currentQuestion is null;
     }
 
     private void ShowLlmStatus(
@@ -924,6 +950,35 @@ public partial class MathPuzzlePage : ContentPage
         _llmGenerationCancellation?.Cancel();
         LlmActivityIndicator.IsRunning = false;
         LlmActivityIndicator.IsVisible = false;
+    }
+
+    private Task ClearLlmQuestionAfterDelayedUnloadAsync()
+    {
+        return Microsoft.Maui.ApplicationModel.MainThread
+            .InvokeOnMainThreadAsync(
+                () =>
+                {
+                    if (_generationSource !=
+                            QuizGenerationSource.LocalLlm ||
+                        _isGeneratingWithLlm)
+                    {
+                        return;
+                    }
+
+                    PrepareLlmQuestionForGeneration(
+                        cancelPending: false);
+                });
+    }
+
+    private void ClearMultipleChoiceAnswers()
+    {
+        foreach (Button button in ChoiceButtons)
+        {
+            button.Text = string.Empty;
+            button.CommandParameter = null;
+            button.IsEnabled = false;
+            ApplyNeutralAnswerStyle(button);
+        }
     }
 
     private void SetAnswerControlsEnabled(
@@ -1234,11 +1289,25 @@ public partial class MathPuzzlePage : ContentPage
 
         if (_generationSource == QuizGenerationSource.Algorithm)
         {
-            GenerateAlgorithmQuestion();
+            GenerateAlgorithmQuestion(
+                advanceQuestionNumber: true);
         }
         else
         {
-            await GenerateLlmQuestionAsync();
+            await GenerateLlmQuestionAsync(
+                advanceQuestionNumber: true);
+        }
+    }
+
+    private void AdvanceQuestionNumberIfNeeded(
+        bool advanceQuestionNumber)
+    {
+        // Câu đầu tiên bắt đầu ở 1. Sau đó chỉ hành động Câu tiếp theo hợp lệ
+        // mới được tăng số thứ tự; đổi cấu hình hoặc tạo lại không được nhảy câu.
+        if (_questionCount == 0 ||
+            advanceQuestionNumber)
+        {
+            _questionCount++;
         }
     }
 
