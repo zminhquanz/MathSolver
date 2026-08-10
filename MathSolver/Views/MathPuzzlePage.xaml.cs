@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services;
+using MathSolver.Services.Localization;
 using System.Globalization;
 using System.Numerics;
 
@@ -9,13 +10,22 @@ public partial class MathPuzzlePage : ContentPage
 {
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
     private readonly ArithmeticQuizGenerator _quizGenerator;
+    private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
+    private readonly QuizLlmModelStore _llmModelStore = new();
 
     private ArithmeticQuizMode _selectedMode =
         ArithmeticQuizMode.TrueFalse;
 
+    private QuizGenerationSource _generationSource =
+        QuizGenerationSource.Algorithm;
+
     private ArithmeticQuizQuestion? _currentQuestion;
+    private CancellationTokenSource? _llmGenerationCancellation;
+    private string? _llmModelPath;
     private bool _questionAnswered;
     private bool? _lastAnswerWasCorrect;
+    private bool _isGeneratingWithLlm;
+    private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
     private int _questionCount;
     private int _correctCount;
@@ -38,8 +48,14 @@ public partial class MathPuzzlePage : ContentPage
             new ArithmeticQuizGenerator(
                 _arithmeticEngine);
 
-        // Trang mới dùng hoàn toàn stable localization keys. Không để facade
-        // legacy ghi đè các chuỗi động như câu hỏi và điểm số.
+        _localLlmQuizGenerator =
+            new LocalLlmQuizGenerator(
+                _quizGenerator,
+                _arithmeticEngine);
+
+        _llmModelPath =
+            _llmModelStore.GetSavedModelPath();
+
         LocalizationService.ExcludeSubtreeFromLegacyTracking(
             this);
 
@@ -47,7 +63,9 @@ public partial class MathPuzzlePage : ContentPage
             OnCultureChanged;
 
         UpdateOperationPickerItems();
+        UpdateGenerationSourceStyles();
         UpdateModeStyles();
+        UpdateLlmModelUi();
         UpdateScoreLabels();
     }
 
@@ -57,22 +75,28 @@ public partial class MathPuzzlePage : ContentPage
 
         BeginMainTabTransitionIfPending();
 
-        if (_currentQuestion is null)
+        if (_currentQuestion is null &&
+            _generationSource == QuizGenerationSource.Algorithm)
         {
-            GenerateQuestion();
+            GenerateAlgorithmQuestion();
         }
         else
         {
-            RenderCurrentQuestion(
-                resetAnswerControls: false);
+            if (_currentQuestion is not null)
+            {
+                RenderCurrentQuestion(
+                    resetAnswerControls: false);
+            }
+
             UpdateScoreLabels();
         }
     }
 
     protected override void OnDisappearing()
     {
-        _mainTabAnimationVersion++;
+        CancelLlmGeneration();
 
+        _mainTabAnimationVersion++;
         MathPuzzlePageContentRoot.CancelAnimations();
         ResetMainTabRoot();
 
@@ -87,16 +111,23 @@ public partial class MathPuzzlePage : ContentPage
             () =>
             {
                 UpdateOperationPickerItems();
+                UpdateGenerationSourceStyles();
+                UpdateLlmModelUi();
                 UpdateScoreLabels();
 
-                if (_currentQuestion is not null)
+                if (_generationSource ==
+                        QuizGenerationSource.LocalLlm)
+                {
+                    // Đề AI phụ thuộc chương trình/ngôn ngữ tại thời điểm sinh.
+                    PrepareLlmQuestionForGeneration();
+                }
+                else if (_currentQuestion is not null)
                 {
                     RenderCurrentQuestion(
                         resetAnswerControls: false);
 
                     if (_questionAnswered &&
-                        _lastAnswerWasCorrect is
-                            bool wasCorrect)
+                        _lastAnswerWasCorrect is bool wasCorrect)
                     {
                         ShowFeedback(
                             wasCorrect,
@@ -110,26 +141,21 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
-        SelectSubTab(
-            showPractice: true);
+        SelectSubTab(showPractice: true);
     }
 
     private void OnLearnTabClicked(
         object? sender,
         EventArgs e)
     {
-        SelectSubTab(
-            showPractice: false);
+        SelectSubTab(showPractice: false);
     }
 
     private void SelectSubTab(
         bool showPractice)
     {
-        PracticeContent.IsVisible =
-            showPractice;
-
-        LearnContent.IsVisible =
-            !showPractice;
+        PracticeContent.IsVisible = showPractice;
+        LearnContent.IsVisible = !showPractice;
 
         SelectionButtonStyler.Select(
             showPractice
@@ -137,6 +163,57 @@ public partial class MathPuzzlePage : ContentPage
                 : LearnTabButton,
             PracticeTabButton,
             LearnTabButton);
+    }
+
+    private void OnAlgorithmSourceClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectGenerationSource(
+            QuizGenerationSource.Algorithm);
+    }
+
+    private void OnLocalLlmSourceClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectGenerationSource(
+            QuizGenerationSource.LocalLlm);
+    }
+
+    private void SelectGenerationSource(
+        QuizGenerationSource source)
+    {
+        if (_generationSource == source)
+        {
+            return;
+        }
+
+        CancelLlmGeneration();
+        _generationSource = source;
+        UpdateGenerationSourceStyles();
+
+        if (source == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
+        }
+    }
+
+    private void UpdateGenerationSourceStyles()
+    {
+        SelectionButtonStyler.Select(
+            _generationSource == QuizGenerationSource.Algorithm
+                ? AlgorithmSourceButton
+                : LocalLlmSourceButton,
+            AlgorithmSourceButton,
+            LocalLlmSourceButton);
+
+        LlmSettingsBorder.IsVisible =
+            _generationSource == QuizGenerationSource.LocalLlm;
     }
 
     private void OnTrueFalseModeClicked(
@@ -164,11 +241,17 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        _selectedMode =
-            mode;
-
+        _selectedMode = mode;
         UpdateModeStyles();
-        GenerateQuestion();
+
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
+        }
     }
 
     private void UpdateModeStyles()
@@ -187,10 +270,12 @@ public partial class MathPuzzlePage : ContentPage
             _selectedMode == ArithmeticQuizMode.MultipleChoice;
 
         QuestionPromptLabel.Text =
-            Translate(
-                _selectedMode == ArithmeticQuizMode.TrueFalse
-                    ? "Quiz.QuestionTitle"
-                    : "Quiz.MultipleChoiceQuestionTitle");
+            _currentQuestion?.WordProblem is not null
+                ? Translate("Quiz.WordProblemTitle")
+                : Translate(
+                    _selectedMode == ArithmeticQuizMode.TrueFalse
+                        ? "Quiz.QuestionTitle"
+                        : "Quiz.MultipleChoiceQuestionTitle");
     }
 
     private void UpdateOperationPickerItems()
@@ -200,27 +285,21 @@ public partial class MathPuzzlePage : ContentPage
                 ? 0
                 : OperationPicker.SelectedIndex;
 
-        _isUpdatingOperationPicker =
-            true;
+        _isUpdatingOperationPicker = true;
 
         try
         {
             OperationPicker.Items.Clear();
             OperationPicker.Items.Add(
-                Translate(
-                    "Quiz.OperationMixed"));
+                Translate("Quiz.OperationMixed"));
             OperationPicker.Items.Add(
-                Translate(
-                    "Quiz.OperationAddition"));
+                Translate("Quiz.OperationAddition"));
             OperationPicker.Items.Add(
-                Translate(
-                    "Quiz.OperationSubtraction"));
+                Translate("Quiz.OperationSubtraction"));
             OperationPicker.Items.Add(
-                Translate(
-                    "Quiz.OperationMultiplication"));
+                Translate("Quiz.OperationMultiplication"));
             OperationPicker.Items.Add(
-                Translate(
-                    "Quiz.OperationDivision"));
+                Translate("Quiz.OperationDivision"));
 
             OperationPicker.SelectedIndex =
                 Math.Clamp(
@@ -230,8 +309,7 @@ public partial class MathPuzzlePage : ContentPage
         }
         finally
         {
-            _isUpdatingOperationPicker =
-                false;
+            _isUpdatingOperationPicker = false;
         }
     }
 
@@ -245,7 +323,14 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        GenerateQuestion();
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
+        }
     }
 
     private ArithmeticOperation? GetSelectedOperation()
@@ -260,16 +345,12 @@ public partial class MathPuzzlePage : ContentPage
         };
     }
 
-    private void GenerateQuestion()
+    private void GenerateAlgorithmQuestion()
     {
-        _questionAnswered =
-            false;
-
-        _lastAnswerWasCorrect =
-            null;
-
-        NextQuestionButton.IsEnabled =
-            false;
+        CancelLlmGeneration();
+        _questionAnswered = false;
+        _lastAnswerWasCorrect = null;
+        NextQuestionButton.IsEnabled = false;
 
         try
         {
@@ -279,19 +360,398 @@ public partial class MathPuzzlePage : ContentPage
                     GetSelectedOperation());
 
             _questionCount++;
-
             RenderCurrentQuestion(
                 resetAnswerControls: true);
             UpdateScoreLabels();
         }
         catch (InvalidOperationException)
         {
-            _currentQuestion =
-                null;
-
+            _currentQuestion = null;
             QuestionExpressionLabel.Text =
-                Translate(
-                    "Quiz.GenerationError");
+                Translate("Quiz.GenerationError");
+        }
+    }
+
+    private void PrepareLlmQuestionForGeneration(
+        bool cancelPending = true)
+    {
+        if (cancelPending)
+        {
+            CancelLlmGeneration();
+        }
+
+        _currentQuestion = null;
+        _questionAnswered = false;
+        _lastAnswerWasCorrect = null;
+
+        QuestionPromptLabel.Text =
+            Translate("Quiz.WordProblemTitle");
+
+        QuestionExpressionLabel.FontSize = 20;
+        QuestionExpressionLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "TextSecondaryColor");
+
+        QuestionExpressionLabel.Text =
+            _llmModelPath is null
+                ? Translate("Quiz.SelectModelFirst")
+                : Translate("Quiz.LlmReady");
+
+        PresentedAnswerLabel.IsVisible = false;
+        FeedbackBorder.IsVisible = false;
+        SolutionBorder.IsVisible = false;
+        NextQuestionButton.IsEnabled = false;
+
+        SetAnswerControlsEnabled(false);
+        UpdateModeStyles();
+        UpdateLlmModelUi();
+        ShowLlmStatus(
+            _llmModelPath is null
+                ? Translate("Quiz.SelectModelFirst")
+                : Translate("Quiz.LlmReady"),
+            isRunning: false);
+    }
+
+    private async void OnSelectLlmModelClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isGeneratingWithLlm)
+        {
+            return;
+        }
+
+        FileResult? fileResult =
+            await FilePicker.Default.PickAsync(
+                new PickOptions
+                {
+                    PickerTitle =
+                        Translate("Quiz.SelectModelPickerTitle")
+                });
+
+        if (fileResult is null)
+        {
+            return;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        _llmGenerationCancellation = cancellation;
+        SetLlmBusy(true);
+        ShowLlmStatus(
+            Translate("Quiz.ImportingModel"),
+            isRunning: true);
+
+        try
+        {
+            _llmModelPath =
+                await _llmModelStore.ImportAsync(
+                    fileResult,
+                    cancellation.Token);
+
+            UpdateLlmModelUi();
+            PrepareLlmQuestionForGeneration(
+                cancelPending: false);
+            ShowLlmStatus(
+                Translate("Quiz.ModelReady"),
+                isRunning: false);
+        }
+        catch (OperationCanceledException)
+        {
+            ShowLlmStatus(
+                Translate("Quiz.GenerationCancelled"),
+                isRunning: false);
+        }
+        catch (InvalidDataException)
+        {
+            ShowLlmStatus(
+                Translate("Quiz.InvalidModelFile"),
+                isRunning: false);
+        }
+        catch (Exception)
+        {
+            ShowLlmStatus(
+                Translate("Quiz.ModelImportError"),
+                isRunning: false);
+        }
+        finally
+        {
+            if (ReferenceEquals(
+                    _llmGenerationCancellation,
+                    cancellation))
+            {
+                _llmGenerationCancellation = null;
+                SetLlmBusy(false);
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    private async void OnCreateLlmQuestionClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await GenerateLlmQuestionAsync();
+    }
+
+    private async Task GenerateLlmQuestionAsync()
+    {
+        if (_isGeneratingWithLlm)
+        {
+            return;
+        }
+
+        if (_llmModelPath is null ||
+            !File.Exists(_llmModelPath))
+        {
+            _llmModelPath = null;
+            UpdateLlmModelUi();
+            PrepareLlmQuestionForGeneration();
+            return;
+        }
+
+        CancelLlmGeneration();
+
+        var cancellation = new CancellationTokenSource();
+        _llmGenerationCancellation = cancellation;
+        _showFriendlyGreetingForCurrentLoad =
+            _llmModelStore.ShouldShowFirstGreeting();
+
+        _currentQuestion = null;
+        _questionAnswered = false;
+        _lastAnswerWasCorrect = null;
+        FeedbackBorder.IsVisible = false;
+        SolutionBorder.IsVisible = false;
+        PresentedAnswerLabel.IsVisible = false;
+        NextQuestionButton.IsEnabled = false;
+        SetAnswerControlsEnabled(false);
+        SetLlmBusy(true);
+
+        QuestionPromptLabel.Text =
+            Translate("Quiz.WordProblemTitle");
+        QuestionExpressionLabel.FontSize = 21;
+        QuestionExpressionLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "TextPrimaryColor");
+        QuestionExpressionLabel.Text =
+            Translate("Quiz.LoadingModel");
+
+        ShowLlmStatus(
+            _showFriendlyGreetingForCurrentLoad
+                ? Translate("Quiz.FirstModelGreeting")
+                : Translate("Quiz.LoadingModel"),
+            isRunning: true);
+
+        try
+        {
+            var progress =
+                new Progress<LlmQuizProgress>(
+                    UpdateLlmProgress);
+
+            LlmQuizGenerationResult result =
+                await _localLlmQuizGenerator.GenerateAsync(
+                    _llmModelPath,
+                    _selectedMode,
+                    GetSelectedOperation(),
+                    AppLanguageManager.CurrentLanguage,
+                    progress,
+                    cancellation.Token);
+
+            if (result.ModelWasLoaded &&
+                _showFriendlyGreetingForCurrentLoad)
+            {
+                _llmModelStore.MarkFirstGreetingShown();
+            }
+
+            if (result.Question is not null)
+            {
+                _currentQuestion = result.Question;
+                _questionCount++;
+                RenderCurrentQuestion(
+                    resetAnswerControls: true);
+                UpdateScoreLabels();
+                ShowLlmStatus(
+                    Translate("Quiz.GenerationSucceeded"),
+                    isRunning: false);
+            }
+            else
+            {
+                ShowLlmGenerationFailure(result);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            ShowLlmStatus(
+                Translate("Quiz.GenerationCancelled"),
+                isRunning: false);
+        }
+        finally
+        {
+            if (ReferenceEquals(
+                    _llmGenerationCancellation,
+                    cancellation))
+            {
+                _llmGenerationCancellation = null;
+                SetLlmBusy(false);
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    private void UpdateLlmProgress(
+        LlmQuizProgress progress)
+    {
+        if (_isGeneratingWithLlm &&
+            !string.IsNullOrWhiteSpace(
+                progress.ProblemPreview))
+        {
+            ShowGeneratedProblemPreview(
+                progress.ProblemPreview);
+        }
+
+        string status =
+            progress.Stage switch
+            {
+                LlmQuizProgressStage.LoadingModel
+                    when _showFriendlyGreetingForCurrentLoad =>
+                    Translate("Quiz.FirstModelGreeting"),
+                LlmQuizProgressStage.LoadingModel =>
+                    Translate("Quiz.LoadingModel"),
+                LlmQuizProgressStage.ModelLoaded =>
+                    Translate("Quiz.ModelLoaded"),
+                LlmQuizProgressStage.Generating =>
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        Translate("Quiz.GeneratingAttempt"),
+                        progress.Attempt,
+                        progress.MaximumAttempts),
+                LlmQuizProgressStage.Validating =>
+                    Translate("Quiz.ValidatingProblem"),
+                LlmQuizProgressStage.Retrying =>
+                    Translate("Quiz.RetryingProblem"),
+                LlmQuizProgressStage.DisposingModel =>
+                    Translate("Quiz.DisposingModel"),
+                _ => Translate("Quiz.LoadingModel")
+            };
+
+        ShowLlmStatus(
+            status,
+            isRunning: progress.Stage !=
+                LlmQuizProgressStage.DisposingModel);
+    }
+
+    private void ShowGeneratedProblemPreview(
+        string problemText)
+    {
+        QuestionPromptLabel.Text =
+            Translate("Quiz.WordProblemTitle");
+
+        QuestionExpressionLabel.FontSize = 21;
+        QuestionExpressionLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "TextPrimaryColor");
+        QuestionExpressionLabel.Text = problemText;
+
+        PresentedAnswerLabel.IsVisible = false;
+        FeedbackBorder.IsVisible = false;
+        SolutionBorder.IsVisible = false;
+        SetAnswerControlsEnabled(false);
+    }
+
+    private void ShowLlmGenerationFailure(
+        LlmQuizGenerationResult result)
+    {
+        string key =
+            result.ErrorCode switch
+            {
+                "ModelFileNotFound" => "Quiz.SelectModelFirst",
+                "NotEnoughMemory" => "Quiz.NotEnoughMemory",
+                "ModelRuntimeError" => "Quiz.ModelRuntimeError",
+                _ when result.Attempts >=
+                    LocalLlmQuizGenerator.MaximumAttempts =>
+                    "Quiz.GenerationFailedAfterRetries",
+                _ => "Quiz.GenerationError"
+            };
+
+        string message = Translate(key);
+
+        QuestionExpressionLabel.FontSize = 20;
+        QuestionExpressionLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "DangerColor");
+        QuestionExpressionLabel.Text = message;
+        ShowLlmStatus(message, isRunning: false);
+    }
+
+    private void UpdateLlmModelUi()
+    {
+        if (_llmModelPath is null ||
+            !File.Exists(_llmModelPath))
+        {
+            _llmModelPath = null;
+            LlmModelNameLabel.Text =
+                Translate("Quiz.NoModelSelected");
+            LlmModelRecommendationLabel.Text =
+                Translate("Quiz.ModelRecommendation");
+        }
+        else
+        {
+            LlmModelNameLabel.Text =
+                Path.GetFileName(_llmModelPath);
+
+            LlmModelRecommendationLabel.Text =
+                QuizLlmModelStore.IsRecommendedQuantization(
+                    _llmModelPath)
+                    ? Translate("Quiz.RecommendedModelDetected")
+                    : Translate("Quiz.ModelRecommendation");
+        }
+
+        CreateLlmQuestionButton.IsEnabled =
+            !_isGeneratingWithLlm &&
+            _llmModelPath is not null;
+    }
+
+    private void SetLlmBusy(
+        bool isBusy)
+    {
+        _isGeneratingWithLlm = isBusy;
+        SelectLlmModelButton.IsEnabled = !isBusy;
+        AlgorithmSourceButton.IsEnabled = !isBusy;
+        LocalLlmSourceButton.IsEnabled = !isBusy;
+        TrueFalseModeButton.IsEnabled = !isBusy;
+        MultipleChoiceModeButton.IsEnabled = !isBusy;
+        OperationPicker.IsEnabled = !isBusy;
+
+        CreateLlmQuestionButton.IsEnabled =
+            !isBusy &&
+            _llmModelPath is not null;
+    }
+
+    private void ShowLlmStatus(
+        string message,
+        bool isRunning)
+    {
+        LlmProgressGrid.IsVisible = true;
+        LlmActivityIndicator.IsRunning = isRunning;
+        LlmActivityIndicator.IsVisible = isRunning;
+        LlmStatusLabel.Text = message;
+    }
+
+    private void CancelLlmGeneration()
+    {
+        _llmGenerationCancellation?.Cancel();
+    }
+
+    private void SetAnswerControlsEnabled(
+        bool isEnabled)
+    {
+        TrueAnswerButton.IsEnabled = isEnabled;
+        FalseAnswerButton.IsEnabled = isEnabled;
+
+        foreach (Button button in ChoiceButtons)
+        {
+            button.IsEnabled = isEnabled;
         }
     }
 
@@ -302,6 +762,8 @@ public partial class MathPuzzlePage : ContentPage
         {
             return;
         }
+
+        UpdateModeStyles();
 
         string left =
             _currentQuestion.Expression.LeftOperand.ToString(
@@ -317,24 +779,74 @@ public partial class MathPuzzlePage : ContentPage
             BasicArithmeticEngine.GetSymbol(
                 _currentQuestion.Expression.Operation);
 
-        if (_currentQuestion.Mode ==
-            ArithmeticQuizMode.TrueFalse)
-        {
-            string presentedAnswer =
-                _currentQuestion.PresentedAnswer
-                    .GetValueOrDefault()
-                    .ToString(
-                        "N0",
-                        CultureInfo.CurrentCulture);
+        MathWordProblem? wordProblem =
+            _currentQuestion.WordProblem;
 
+        if (wordProblem is not null)
+        {
+            QuestionPromptLabel.Text =
+                Translate("Quiz.WordProblemTitle");
             QuestionExpressionLabel.Text =
-                $"{left} {symbol} {right} = {presentedAnswer}";
+                wordProblem.ProblemText;
+            QuestionExpressionLabel.FontSize = 21;
+            QuestionExpressionLabel.SetDynamicResource(
+                Label.TextColorProperty,
+                "TextPrimaryColor");
+
+            if (_currentQuestion.Mode ==
+                ArithmeticQuizMode.TrueFalse)
+            {
+                string presentedAnswer =
+                    _currentQuestion.PresentedAnswer
+                        .GetValueOrDefault()
+                        .ToString(
+                            "N0",
+                            CultureInfo.CurrentCulture);
+
+                PresentedAnswerLabel.Text =
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        Translate("Quiz.PresentedAnswer"),
+                        presentedAnswer,
+                        wordProblem.AnswerUnit);
+                PresentedAnswerLabel.IsVisible = true;
+            }
+            else
+            {
+                PresentedAnswerLabel.IsVisible = false;
+            }
         }
         else
         {
-            QuestionExpressionLabel.Text =
-                $"{left} {symbol} {right} = ?";
+            PresentedAnswerLabel.IsVisible = false;
+            QuestionExpressionLabel.FontSize = 34;
+            QuestionExpressionLabel.SetDynamicResource(
+                Label.TextColorProperty,
+                "PrimaryColor");
 
+            if (_currentQuestion.Mode ==
+                ArithmeticQuizMode.TrueFalse)
+            {
+                string presentedAnswer =
+                    _currentQuestion.PresentedAnswer
+                        .GetValueOrDefault()
+                        .ToString(
+                            "N0",
+                            CultureInfo.CurrentCulture);
+
+                QuestionExpressionLabel.Text =
+                    $"{left} {symbol} {right} = {presentedAnswer}";
+            }
+            else
+            {
+                QuestionExpressionLabel.Text =
+                    $"{left} {symbol} {right} = ?";
+            }
+        }
+
+        if (_currentQuestion.Mode ==
+            ArithmeticQuizMode.MultipleChoice)
+        {
             for (int index = 0;
                  index < ChoiceButtons.Length;
                  index++)
@@ -365,26 +877,16 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ResetAnswerControls()
     {
-        TrueAnswerButton.IsEnabled =
-            true;
-
-        FalseAnswerButton.IsEnabled =
-            true;
+        SetAnswerControlsEnabled(true);
 
         foreach (Button button in ChoiceButtons)
         {
-            button.IsEnabled =
-                true;
-
-            ApplyNeutralAnswerStyle(
-                button);
+            ApplyNeutralAnswerStyle(button);
         }
 
-        FeedbackBorder.IsVisible =
-            false;
-
-        NextQuestionButton.IsEnabled =
-            false;
+        FeedbackBorder.IsVisible = false;
+        SolutionBorder.IsVisible = false;
+        NextQuestionButton.IsEnabled = false;
     }
 
     private void OnTrueFalseAnswerClicked(
@@ -438,11 +940,8 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        _questionAnswered =
-            true;
-
-        _lastAnswerWasCorrect =
-            isCorrect;
+        _questionAnswered = true;
+        _lastAnswerWasCorrect = isCorrect;
 
         if (isCorrect)
         {
@@ -453,17 +952,10 @@ public partial class MathPuzzlePage : ContentPage
             _incorrectCount++;
         }
 
-        TrueAnswerButton.IsEnabled =
-            false;
-
-        FalseAnswerButton.IsEnabled =
-            false;
+        SetAnswerControlsEnabled(false);
 
         foreach (Button button in ChoiceButtons)
         {
-            button.IsEnabled =
-                false;
-
             if (_currentQuestion.Mode ==
                     ArithmeticQuizMode.MultipleChoice &&
                 BigInteger.TryParse(
@@ -473,8 +965,7 @@ public partial class MathPuzzlePage : ContentPage
                     out BigInteger answer) &&
                 answer == _currentQuestion.CorrectAnswer)
             {
-                ApplyCorrectAnswerStyle(
-                    button);
+                ApplyCorrectAnswerStyle(button);
             }
         }
 
@@ -489,9 +980,17 @@ public partial class MathPuzzlePage : ContentPage
             isCorrect,
             _currentQuestion.CorrectAnswer);
 
-        NextQuestionButton.IsEnabled =
-            true;
+        if (_currentQuestion.WordProblem is not null)
+        {
+            SolutionLabel.Text =
+                ElementaryWordProblemSolutionFormatter.Format(
+                    _currentQuestion,
+                    AppLanguageManager.CurrentLanguage,
+                    CultureInfo.CurrentCulture);
+            SolutionBorder.IsVisible = true;
+        }
 
+        NextQuestionButton.IsEnabled = true;
         UpdateScoreLabels();
     }
 
@@ -504,6 +1003,13 @@ public partial class MathPuzzlePage : ContentPage
                 "N0",
                 CultureInfo.CurrentCulture);
 
+        if (_currentQuestion?.WordProblem is
+            MathWordProblem wordProblem)
+        {
+            answerText +=
+                $" {wordProblem.AnswerUnit}";
+        }
+
         FeedbackLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
@@ -513,8 +1019,7 @@ public partial class MathPuzzlePage : ContentPage
                         : "Quiz.IncorrectFeedback"),
                 answerText);
 
-        FeedbackBorder.IsVisible =
-            true;
+        FeedbackBorder.IsVisible = true;
 
         FeedbackBorder.SetDynamicResource(
             Border.BackgroundColorProperty,
@@ -535,7 +1040,7 @@ public partial class MathPuzzlePage : ContentPage
                 : "DangerColor");
     }
 
-    private void OnNextQuestionClicked(
+    private async void OnNextQuestionClicked(
         object? sender,
         EventArgs e)
     {
@@ -544,19 +1049,22 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        GenerateQuestion();
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            await GenerateLlmQuestionAsync();
+        }
     }
 
     private void OnResetScoreClicked(
         object? sender,
         EventArgs e)
     {
-        _correctCount =
-            0;
-
-        _incorrectCount =
-            0;
-
+        _correctCount = 0;
+        _incorrectCount = 0;
         UpdateScoreLabels();
     }
 
@@ -565,22 +1073,19 @@ public partial class MathPuzzlePage : ContentPage
         QuestionCounterLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
-                Translate(
-                    "Quiz.QuestionCounter"),
+                Translate("Quiz.QuestionCounter"),
                 _questionCount);
 
         CorrectScoreLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
-                Translate(
-                    "Quiz.CorrectCounter"),
+                Translate("Quiz.CorrectCounter"),
                 _correctCount);
 
         IncorrectScoreLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
-                Translate(
-                    "Quiz.IncorrectCounter"),
+                Translate("Quiz.IncorrectCounter"),
                 _incorrectCount);
     }
 
@@ -590,11 +1095,9 @@ public partial class MathPuzzlePage : ContentPage
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
             "SurfaceAltColor");
-
         button.SetDynamicResource(
             Button.BorderColorProperty,
             "BorderColor");
-
         button.SetDynamicResource(
             Button.TextColorProperty,
             "TextPrimaryColor");
@@ -606,11 +1109,9 @@ public partial class MathPuzzlePage : ContentPage
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
             "SuccessSoftColor");
-
         button.SetDynamicResource(
             Button.BorderColorProperty,
             "SuccessColor");
-
         button.SetDynamicResource(
             Button.TextColorProperty,
             "SuccessColor");
@@ -622,11 +1123,9 @@ public partial class MathPuzzlePage : ContentPage
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
             "DangerSoftColor");
-
         button.SetDynamicResource(
             Button.BorderColorProperty,
             "DangerColor");
-
         button.SetDynamicResource(
             Button.TextColorProperty,
             "DangerColor");
@@ -635,8 +1134,7 @@ public partial class MathPuzzlePage : ContentPage
     private static string Translate(
         string key)
     {
-        return LocalizationService.TranslateKey(
-            key);
+        return LocalizationService.TranslateKey(key);
     }
 
     private void BeginMainTabTransitionIfPending()
@@ -659,7 +1157,8 @@ public partial class MathPuzzlePage : ContentPage
 
         MathPuzzlePageContentRoot.CancelAnimations();
         MathPuzzlePageContentRoot.Opacity = 0d;
-        MathPuzzlePageContentRoot.TranslationX = direction * 44d;
+        MathPuzzlePageContentRoot.TranslationX =
+            direction * 44d;
         MathPuzzlePageContentRoot.Scale = 0.985d;
 
         Dispatcher.Dispatch(
@@ -686,13 +1185,11 @@ public partial class MathPuzzlePage : ContentPage
                     1d,
                     175,
                     Easing.CubicOut),
-
                 MathPuzzlePageContentRoot.TranslateToAsync(
                     0d,
                     0d,
                     250,
                     Easing.CubicOut),
-
                 MathPuzzlePageContentRoot.ScaleToAsync(
                     1d,
                     250,
