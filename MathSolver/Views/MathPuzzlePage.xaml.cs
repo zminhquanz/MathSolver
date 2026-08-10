@@ -170,34 +170,6 @@ public partial class MathPuzzlePage : ContentPage
             });
     }
 
-    private void OnPracticeTabClicked(
-        object? sender,
-        EventArgs e)
-    {
-        SelectSubTab(showPractice: true);
-    }
-
-    private void OnLearnTabClicked(
-        object? sender,
-        EventArgs e)
-    {
-        SelectSubTab(showPractice: false);
-    }
-
-    private void SelectSubTab(
-        bool showPractice)
-    {
-        PracticeContent.IsVisible = showPractice;
-        LearnContent.IsVisible = !showPractice;
-
-        SelectionButtonStyler.Select(
-            showPractice
-                ? PracticeTabButton
-                : LearnTabButton,
-            PracticeTabButton,
-            LearnTabButton);
-    }
-
     private void OnAlgorithmSourceClicked(
         object? sender,
         EventArgs e)

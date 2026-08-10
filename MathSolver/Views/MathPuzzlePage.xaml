@@ -10,50 +10,12 @@
 
     <Grid
         x:Name="MathPuzzlePageContentRoot"
-        RowDefinitions="Auto,*">
+        RowDefinitions="*">
 
-        <Border
+        <ScrollView
             Grid.Row="0"
-            Margin="20,12,20,8"
-            Padding="6"
-            BackgroundColor="{DynamicResource SurfaceColor}"
-            Stroke="{DynamicResource PrimaryBorderBrush}"
-            StrokeThickness="1">
-
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="14" />
-            </Border.StrokeShape>
-
-            <Grid
-                ColumnDefinitions="*,*"
-                ColumnSpacing="6">
-
-                <Button
-                    x:Name="PracticeTabButton"
-                    Grid.Column="0"
-                    Text="{localization:Translate Quiz.PracticeTab}"
-                    Style="{StaticResource SolverSubTabButtonStyle}"
-                    BackgroundColor="{DynamicResource PrimaryColor}"
-                    TextColor="{DynamicResource OnPrimaryColor}"
-                    Clicked="OnPracticeTabClicked" />
-
-                <Button
-                    x:Name="LearnTabButton"
-                    Grid.Column="1"
-                    Text="{localization:Translate Quiz.LearnTab}"
-                    Style="{StaticResource SolverSubTabButtonStyle}"
-                    TextColor="{DynamicResource TextSecondaryColor}"
-                    Clicked="OnLearnTabClicked" />
-
-            </Grid>
-        </Border>
-
-        <Grid Grid.Row="1">
-
-            <ScrollView
-                x:Name="PracticeContent"
-                HorizontalOptions="Fill"
-                VerticalOptions="Fill">
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill">
 
                 <VerticalStackLayout
                     Padding="20,12,20,28"
@@ -604,101 +566,6 @@
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                 </VerticalStackLayout>
-            </ScrollView>
-
-            <ScrollView
-                x:Name="LearnContent"
-                IsVisible="False"
-                HorizontalOptions="Fill"
-                VerticalOptions="Fill">
-
-                <VerticalStackLayout
-                    Padding="20,16,20,28"
-                    Spacing="14">
-
-                    <VerticalStackLayout Spacing="3">
-                        <Label
-                            Text="📖  + − × ÷"
-                            Style="{StaticResource SolverHeroSymbolStyle}" />
-
-                        <Label
-                            Text="{localization:Translate Quiz.LearnTitle}"
-                            Style="{StaticResource SolverHeroTitleStyle}" />
-
-                        <Label
-                            Text="{localization:Translate Quiz.LearnSubtitle}"
-                            Style="{StaticResource SolverHeroSubtitleStyle}" />
-                    </VerticalStackLayout>
-
-                    <Border Style="{StaticResource SolverCardStyle}">
-                        <VerticalStackLayout Spacing="12">
-                            <Label
-                                Text="{localization:Translate Quiz.LearnIntroductionTitle}"
-                                Style="{StaticResource SolverSectionTitleStyle}" />
-
-                            <Label
-                                Text="{localization:Translate Quiz.LearnIntroduction}"
-                                FontSize="17"
-                                LineHeight="1.3"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <Grid
-                        RowDefinitions="Auto,Auto"
-                        ColumnDefinitions="*,*"
-                        RowSpacing="12"
-                        ColumnSpacing="12">
-
-                        <Border
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Style="{StaticResource SolverCardStyle}">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="+" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                <Label Text="{localization:Translate Quiz.LearnAddition}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="a + b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Style="{StaticResource SolverCardStyle}">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="−" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                <Label Text="{localization:Translate Quiz.LearnSubtraction}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="a − b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Style="{StaticResource SolverCardStyle}">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="×" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                <Label Text="{localization:Translate Quiz.LearnMultiplication}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="a × b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            Style="{StaticResource SolverCardStyle}">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="÷" FontSize="32" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                <Label Text="{localization:Translate Quiz.LearnDivision}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="a ÷ b = c" FontSize="17" TextColor="{DynamicResource TextSecondaryColor}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                    </Grid>
-
-                </VerticalStackLayout>
-            </ScrollView>
-
-        </Grid>
+        </ScrollView>
     </Grid>
 </ContentPage>
