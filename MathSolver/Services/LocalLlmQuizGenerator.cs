@@ -167,6 +167,13 @@ public sealed class LocalLlmQuizGenerator
                 LlmQuizPromptBuilder.BuildSystemPrompt(
                     language);
 
+            // Chọn gợi ý tên đúng một lần cho cả lượt sinh và mọi lần retry.
+            // Không đưa toàn bộ catalog tên/xưng hô vào prompt vì phần đó chỉ
+            // làm tăng token prefill mà không giúp model viết đề chính xác hơn.
+            WordProblemStudent? studentHint =
+                LlmQuizPromptBuilder.SelectStudentHint(
+                    language);
+
             // Executor chỉ tồn tại trong một lần sinh câu. StatelessExecutor
             // tạo context/KV cho InferAsync và giải phóng chúng khi lượt suy
             // luận kết thúc; chỉ LLamaWeights được cache giữa các câu.
@@ -201,6 +208,7 @@ public sealed class LocalLlmQuizGenerator
                     LlmQuizPromptBuilder.BuildUserPrompt(
                         contract.Expression,
                         language,
+                        studentHint,
                         previousErrorCode);
 
                 string prompt = useManualGemma4Template
@@ -614,6 +622,25 @@ public sealed class LocalLlmQuizGenerator
 
 internal static class LlmQuizPromptBuilder
 {
+    private const int WordProblemPeoplePercent = 50;
+
+    public static WordProblemStudent? SelectStudentHint(
+        AppLanguage language)
+    {
+        WordProblemPeopleProfile people =
+            WordProblemPeopleCatalog.GetProfile(
+                language);
+
+        if (people.Students.Count == 0 ||
+            Random.Shared.Next(100) >= WordProblemPeoplePercent)
+        {
+            return null;
+        }
+
+        return people.Students[
+            Random.Shared.Next(people.Students.Count)];
+    }
+
     public static string BuildSystemPrompt(
         AppLanguage language)
     {
@@ -641,6 +668,7 @@ internal static class LlmQuizPromptBuilder
     public static string BuildUserPrompt(
         IntegerArithmeticExpression expression,
         AppLanguage language,
+        WordProblemStudent? studentHint,
         string? previousErrorCode)
     {
         string operation =
@@ -666,30 +694,10 @@ internal static class LlmQuizPromptBuilder
                     previousErrorCode,
                     language);
 
-        WordProblemPeopleProfile people =
-            WordProblemPeopleCatalog.GetProfile(
-                language);
-
-        string studentNames =
-            string.Join(
-                ", ",
-                people.Students.Select(student =>
-                    student.NaturalReference));
-
-        string familyReferences =
-            string.Join(
-                ", ",
-                people.FamilyReferences);
-
-        string schoolReferences =
-            string.Join(
-                ", ",
-                people.SchoolReferences);
-
         string characterRule =
-            language == AppLanguage.Vietnamese
-                ? $"Có thể dùng tên học sinh trong danh sách này nếu phù hợp: {studentNames}. Tên riêng không bắt buộc; có thể dùng cách gọi chung tự nhiên như một bạn học sinh, các bạn trong lớp, hoặc các cách xưng hô gia đình ({familyReferences}) và trường học ({schoolReferences})."
-                : $"A student name from this list may be used when natural: {studentNames}. A personal name is optional; natural generic references such as a student, the classmates, family references ({familyReferences}), or school references ({schoolReferences}) are also valid.";
+            BuildCharacterRule(
+                language,
+                studentHint);
 
         string classroomRule =
             language == AppLanguage.Vietnamese
@@ -719,6 +727,22 @@ internal static class LlmQuizPromptBuilder
             JSON schema:
             {"problem_text":"... ?","subject_name":"...","answer_unit":"...","solution_lead":"...:"}
             """);
+    }
+
+    private static string BuildCharacterRule(
+        AppLanguage language,
+        WordProblemStudent? studentHint)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return studentHint is null
+                ? "Tên riêng không bắt buộc; hãy dùng cách gọi chung tự nhiên như một bạn học sinh, các bạn trong lớp hoặc người thân."
+                : $"Nếu dùng tên riêng, chỉ dùng gợi ý \"{studentHint.NaturalReference}\"; cũng có thể không dùng tên và viết bằng cách gọi chung tự nhiên.";
+        }
+
+        return studentHint is null
+            ? "A personal name is optional; use a natural generic reference such as a student, the classmates, or a family member."
+            : $"If using a personal name, use only the hint \"{studentHint.NaturalReference}\"; a natural generic reference without a name is also valid.";
     }
 
     private static string BuildRetryInstruction(
