@@ -40,6 +40,8 @@
     "Quiz.ChooseDownloadModelTitle": "Chọn model Gemma 4",
     "Quiz.DownloadE2BOption": "E2B • Nhẹ hơn • 3,35 GB",
     "Quiz.DownloadE4BOption": "E4B • Chất lượng tốt hơn • 5,15 GB",
+    "Quiz.OpenModelWebsiteOption": "Mở trang {0} trên Hugging Face",
+    "Quiz.OpenModelWebsiteFailed": "Không thể mở trang model trên Hugging Face.",
     "Quiz.Cancel": "Hủy",
     "Quiz.DownloadConfirmTitle": "Xác nhận tải model",
     "Quiz.DownloadConfirmMessage": "Tải {0} (khoảng {1} GB) từ Hugging Face? Nên dùng Wi-Fi và bảo đảm thiết bị còn đủ dung lượng trống.",

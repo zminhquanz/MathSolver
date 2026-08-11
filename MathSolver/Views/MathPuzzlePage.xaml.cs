@@ -572,6 +572,16 @@ public partial class MathPuzzlePage : ContentPage
             Translate("Quiz.DownloadE2BOption");
         string e4BOption =
             Translate("Quiz.DownloadE4BOption");
+        string e2BWebsiteOption =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                Translate("Quiz.OpenModelWebsiteOption"),
+                "E2B");
+        string e4BWebsiteOption =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                Translate("Quiz.OpenModelWebsiteOption"),
+                "E4B");
 
         string? selection =
             await DisplayActionSheetAsync(
@@ -579,7 +589,22 @@ public partial class MathPuzzlePage : ContentPage
                 Translate("Quiz.Cancel"),
                 null,
                 e2BOption,
-                e4BOption);
+                e4BOption,
+                e2BWebsiteOption,
+                e4BWebsiteOption);
+
+        if (selection == e2BWebsiteOption ||
+            selection == e4BWebsiteOption)
+        {
+            Gemma4ModelDescriptor websiteModel =
+                selection == e2BWebsiteOption
+                    ? Gemma4ModelDownloadService.E2B
+                    : Gemma4ModelDownloadService.E4B;
+
+            await OpenGemma4ModelWebsiteAsync(
+                websiteModel);
+            return;
+        }
 
         Gemma4ModelDescriptor? model =
             selection == e2BOption
@@ -747,6 +772,36 @@ public partial class MathPuzzlePage : ContentPage
 
             cancellation.Dispose();
         }
+    }
+
+    private async Task OpenGemma4ModelWebsiteAsync(
+        Gemma4ModelDescriptor model)
+    {
+        try
+        {
+            bool canOpen =
+                await Launcher.Default.CanOpenAsync(
+                    model.ModelPageUri);
+
+            bool opened =
+                canOpen &&
+                await Launcher.Default.OpenAsync(
+                    model.ModelPageUri);
+
+            if (opened)
+            {
+                return;
+            }
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Could not open the Gemma 4 model website: {exception}");
+        }
+
+        ShowLlmStatus(
+            Translate("Quiz.OpenModelWebsiteFailed"),
+            isRunning: false);
     }
 
     private void UpdateGemma4DownloadProgress(

@@ -36,6 +36,8 @@
     { "key": "Quiz.ChooseDownloadModelTitle", "source": "Chọn model Gemma 4", "mode": "exact" },
     { "key": "Quiz.DownloadE2BOption", "source": "E2B • Nhẹ hơn • 3,35 GB", "mode": "exact" },
     { "key": "Quiz.DownloadE4BOption", "source": "E4B • Chất lượng tốt hơn • 5,15 GB", "mode": "exact" },
+    { "key": "Quiz.OpenModelWebsiteOption", "source": "Mở trang {0} trên Hugging Face", "mode": "exact" },
+    { "key": "Quiz.OpenModelWebsiteFailed", "source": "Không thể mở trang model trên Hugging Face.", "mode": "exact" },
     { "key": "Quiz.Cancel", "source": "Hủy", "mode": "exact" },
     { "key": "Quiz.DownloadConfirmTitle", "source": "Xác nhận tải model", "mode": "exact" },
     { "key": "Quiz.DownloadConfirmMessage", "source": "Tải {0} (khoảng {1} GB) từ Hugging Face? Nên dùng Wi-Fi và bảo đảm thiết bị còn đủ dung lượng trống.", "mode": "exact" },

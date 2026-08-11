@@ -15,6 +15,7 @@ public sealed record Gemma4ModelDescriptor(
     Gemma4ModelVariant Variant,
     string DisplayName,
     string FileName,
+    Uri ModelPageUri,
     Uri DownloadUri,
     long ApproximateSizeBytes);
 
@@ -51,6 +52,8 @@ public sealed class Gemma4ModelDownloadService
             "Gemma 4 E2B Q4_0",
             "gemma-4-E2B_q4_0-it.gguf",
             new Uri(
+                "https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf"),
+            new Uri(
                 "https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf/resolve/main/gemma-4-E2B_q4_0-it.gguf?download=true"),
             3_350_000_000L);
 
@@ -59,6 +62,8 @@ public sealed class Gemma4ModelDownloadService
             Gemma4ModelVariant.E4B,
             "Gemma 4 E4B Q4_0",
             "gemma-4-E4B_q4_0-it.gguf",
+            new Uri(
+                "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf"),
             new Uri(
                 "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf/resolve/main/gemma-4-E4B_q4_0-it.gguf?download=true"),
             5_150_000_000L);

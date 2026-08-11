@@ -662,7 +662,39 @@ internal static class LlmQuizPromptBuilder
         string retry =
             string.IsNullOrWhiteSpace(previousErrorCode)
                 ? string.Empty
-                : BuildRetryInstruction(previousErrorCode);
+                : BuildRetryInstruction(
+                    previousErrorCode,
+                    language);
+
+        WordProblemPeopleProfile people =
+            WordProblemPeopleCatalog.GetProfile(
+                language);
+
+        string studentNames =
+            string.Join(
+                ", ",
+                people.Students.Select(student =>
+                    student.NaturalReference));
+
+        string familyReferences =
+            string.Join(
+                ", ",
+                people.FamilyReferences);
+
+        string schoolReferences =
+            string.Join(
+                ", ",
+                people.SchoolReferences);
+
+        string characterRule =
+            language == AppLanguage.Vietnamese
+                ? $"Phải dùng ít nhất một học sinh trong danh sách này và giữ cách gọi tự nhiên: {studentNames}. Có thể thêm cách xưng hô gia đình ({familyReferences}) hoặc trường học ({schoolReferences}), nhưng không được chỉ dùng vai trò chung chung."
+                : $"Use at least one student from this approved name list: {studentNames}. Family references ({familyReferences}) and school references ({schoolReferences}) may also appear, but do not use only generic roles.";
+
+        string classroomRule =
+            language == AppLanguage.Vietnamese
+                ? "Nếu dùng tên lớp, khối chỉ được từ lớp 1 đến lớp 5. Lớp con dạng số chỉ từ 1 đến 9 và phải viết lớp 3/1 ... lớp 3/9; dạng chữ đi theo alphabet từ lớp 3A ... lớp 3I. Không viết lớp 30, lớp 3/0, lớp 3/10 hoặc lớp 3J; không viết gọn lớp 31 mà phải viết lớp 3/1."
+                : "If a class label is used, the grade must be Class 1 through Class 5. Numeric sections are only 1 through 9 and must be written Class 3/1 ... Class 3/9; alphabetic sections follow A through I, as in Class 3A ... Class 3I. Never write Class 30, Class 3/0, Class 3/10, or Class 3J; write Class 3/1 instead of compact Class 31.";
 
         return FormattableString.Invariant(
             $$"""
@@ -672,9 +704,11 @@ internal static class LlmQuizPromptBuilder
             Required operation: {{operation}}
 
             Rules:
-            - problem_text must contain the two required input numbers as digits and no other numbers.
+            - problem_text must contain the two required input numbers as digits and no other arithmetic quantities. One valid class label described below is allowed as metadata.
             - Do not calculate or reveal the answer inside problem_text.
             - Use a realistic elementary-school situation and make the operation unambiguous.
+            - {{characterRule}}
+            - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             - For division, divide the left total exactly into the right number of equal groups.
             - solution_lead is one short textbook sentence introducing the calculation.
@@ -688,7 +722,8 @@ internal static class LlmQuizPromptBuilder
     }
 
     private static string BuildRetryInstruction(
-        string errorCode) =>
+        string errorCode,
+        AppLanguage language) =>
         errorCode switch
         {
             "InvalidJson" or "EmptyModelOutput" =>
@@ -699,6 +734,16 @@ internal static class LlmQuizPromptBuilder
 
             "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                 "\nThe previous story did not clearly express the required operation. Rewrite it with an unmistakable elementary-school action for that operation.",
+
+            "InvalidClassLabel" =>
+                language == AppLanguage.Vietnamese
+                    ? "\nTên lớp trước không hợp lệ. Chỉ dùng khối 1–5, lớp con 1–9 hoặc A–I; ví dụ lớp 3/1 hoặc lớp 3A."
+                    : "\nThe previous class label was invalid. Use only grades 1–5 with sections 1–9 or A–I, such as Class 3/1 or Class 3A.",
+
+            "MissingPersonalName" =>
+                language == AppLanguage.Vietnamese
+                    ? "\nĐề trước thiếu tên học sinh. Hãy dùng ít nhất một tên đúng trong danh sách được cung cấp, ví dụ bạn Lan hoặc bạn Minh."
+                    : "\nThe previous story did not use an approved student name. Include at least one name from the supplied list, such as Emma or Jack.",
 
             _ =>
                 "\nThe previous response failed validation. Return a shorter corrected story using the exact schema and required facts."
@@ -1088,6 +1133,24 @@ internal sealed partial class LlmWordProblemValidator
                 "InvalidTextLength");
         }
 
+        problem = NormalizeClassLabels(
+            problem,
+            out bool hasInvalidClassLabel);
+
+        if (hasInvalidClassLabel)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidClassLabel");
+        }
+
+        if (!WordProblemPeopleCatalog.ContainsStudentName(
+                problem,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "MissingPersonalName");
+        }
+
         // Dấu hỏi và cách mở câu là lỗi trình bày, không phải lỗi dữ kiện.
         // Model nhỏ thường viết một câu mệnh lệnh hoặc quên dấu hỏi dù nội
         // dung bài toán vẫn dùng được. Chuẩn hóa tại đây để tránh tốn thêm
@@ -1101,9 +1164,14 @@ internal sealed partial class LlmWordProblemValidator
             problem = problem.TrimEnd('.', '!', ';', ':') + "?";
         }
 
+        string problemWithoutClassLabels =
+            ClassLabelRegex().Replace(
+                problem,
+                " ");
+
         int[] numbers =
             NumberRegex()
-                .Matches(problem)
+                .Matches(problemWithoutClassLabels)
                 .Select(match =>
                     int.TryParse(
                         match.Value,
@@ -1349,8 +1417,42 @@ internal sealed partial class LlmWordProblemValidator
             value?.Trim() ?? string.Empty,
             " ");
 
+    private static string NormalizeClassLabels(
+        string problem,
+        out bool hasInvalidClassLabel)
+    {
+        bool invalid = false;
+
+        string normalized =
+            ClassLabelRegex().Replace(
+                problem,
+                match =>
+                {
+                    string prefix =
+                        match.Groups["prefix"].Value;
+
+                    if (PrimarySchoolClassCatalog.TryNormalizeLabel(
+                            match.Groups["label"].Value,
+                            out string normalizedLabel))
+                    {
+                        return prefix + normalizedLabel;
+                    }
+
+                    invalid = true;
+                    return match.Value;
+                });
+
+        hasInvalidClassLabel = invalid;
+        return normalized;
+    }
+
     [GeneratedRegex(@"(?<!\d)-?\d+(?!\d)", RegexOptions.CultureInvariant)]
     private static partial Regex NumberRegex();
+
+    [GeneratedRegex(
+        @"(?<prefix>\b(?:lớp|class)\s*)(?<label>\d+(?:\s*/\s*\d+|[A-Za-z])?)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ClassLabelRegex();
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
     private static partial Regex WhitespaceRegex();

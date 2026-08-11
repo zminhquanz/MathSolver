@@ -40,6 +40,8 @@
     "Quiz.ChooseDownloadModelTitle": "Choose a Gemma 4 model",
     "Quiz.DownloadE2BOption": "E2B • Lighter • 3.35 GB",
     "Quiz.DownloadE4BOption": "E4B • Better quality • 5.15 GB",
+    "Quiz.OpenModelWebsiteOption": "Open the {0} page on Hugging Face",
+    "Quiz.OpenModelWebsiteFailed": "The model page on Hugging Face could not be opened.",
     "Quiz.Cancel": "Cancel",
     "Quiz.DownloadConfirmTitle": "Confirm model download",
     "Quiz.DownloadConfirmMessage": "Download {0} (about {1} GB) from Hugging Face? Wi-Fi is recommended, and the device needs enough free storage.",
