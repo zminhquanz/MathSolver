@@ -364,7 +364,7 @@ public partial class MathPuzzlePage : ContentPage
     }
 
     private void GenerateAlgorithmQuestion(
-        bool advanceQuestionNumber = false)
+        int? questionNumberOnSuccess = null)
     {
         CancelLlmGeneration();
         _questionAnswered = false;
@@ -378,8 +378,8 @@ public partial class MathPuzzlePage : ContentPage
                     _selectedMode,
                     GetSelectedOperation());
 
-            AdvanceQuestionNumberIfNeeded(
-                advanceQuestionNumber);
+            CommitGeneratedQuestionNumber(
+                questionNumberOnSuccess);
             RenderCurrentQuestion(
                 resetAnswerControls: true);
             UpdateScoreLabels();
@@ -957,14 +957,14 @@ public partial class MathPuzzlePage : ContentPage
         // Nút này vừa tạo câu đầu tiên vừa cho phép bỏ qua/tạo lại câu hiện
         // tại. Tạo lại không tăng số câu và không tính là đúng hoặc sai.
         await GenerateLlmQuestionAsync(
-            advanceQuestionNumber: false);
+            questionNumberOnSuccess: null);
     }
 
     private async Task GenerateLlmQuestionAsync(
-        bool advanceQuestionNumber)
+        int? questionNumberOnSuccess)
     {
         if (_isGeneratingWithLlm ||
-            (advanceQuestionNumber &&
+            (questionNumberOnSuccess.HasValue &&
              (!_questionAnswered ||
               _currentQuestion is null)))
         {
@@ -1046,8 +1046,8 @@ public partial class MathPuzzlePage : ContentPage
             if (result.Question is not null)
             {
                 _currentQuestion = result.Question;
-                AdvanceQuestionNumberIfNeeded(
-                    advanceQuestionNumber);
+                CommitGeneratedQuestionNumber(
+                    questionNumberOnSuccess);
                 RenderCurrentQuestion(
                     resetAnswerControls: true);
                 UpdateScoreLabels();
@@ -1639,27 +1639,38 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
+        // Số câu kế tiếp được chốt từ bộ đếm hiện tại, hoàn toàn độc lập
+        // với việc câu vừa trả lời là đúng hay sai. Chỉ khi tạo câu mới
+        // thành công thì giá trị này mới được commit.
+        int nextQuestionNumber =
+            checked(_questionCount + 1);
+
         if (_generationSource == QuizGenerationSource.Algorithm)
         {
             GenerateAlgorithmQuestion(
-                advanceQuestionNumber: true);
+                questionNumberOnSuccess:
+                    nextQuestionNumber);
         }
         else
         {
             await GenerateLlmQuestionAsync(
-                advanceQuestionNumber: true);
+                questionNumberOnSuccess:
+                    nextQuestionNumber);
         }
     }
 
-    private void AdvanceQuestionNumberIfNeeded(
-        bool advanceQuestionNumber)
+    private void CommitGeneratedQuestionNumber(
+        int? questionNumberOnSuccess)
     {
-        // Câu đầu tiên bắt đầu ở 1. Sau đó chỉ hành động Câu tiếp theo hợp lệ
-        // mới được tăng số thứ tự; đổi cấu hình hoặc tạo lại không được nhảy câu.
-        if (_questionCount == 0 ||
-            advanceQuestionNumber)
+        if (questionNumberOnSuccess is int questionNumber)
         {
-            _questionCount++;
+            _questionCount = questionNumber;
+        }
+        else if (_questionCount == 0)
+        {
+            // Câu đầu tiên của một phiên luôn bắt đầu ở 1. Đổi cấu hình hoặc
+            // tạo lại đề hiện tại sau đó không làm nhảy số câu.
+            _questionCount = 1;
         }
     }
 

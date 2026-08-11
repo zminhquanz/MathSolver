@@ -46,12 +46,15 @@ public static class WordProblemPeopleCatalog
                 new("Khoa", "bạn Khoa"),
                 new("My", "bạn My"),
                 new("Duy", "bạn Duy"),
-                new("Tú", "bạn Tú")
+                new("Tú", "bạn Tú"),
+                new("Chi", "bạn Chi"),
+                new("Diệp", "bạn Diệp"),
+                new("Vũ", "bạn Vũ")
             ],
             FamilyReferences:
             [
-                "ba", "bố", "mẹ", "ông", "bà",
-                "anh", "chị", "em"
+                "ba", "bố", "cha", "tía", "mẹ", "má", "ông", "bà",
+                "anh", "chị", "em", "cô", "cậu", "mợ", "dì", "chú", "bác"
             ],
             SchoolReferences:
             [

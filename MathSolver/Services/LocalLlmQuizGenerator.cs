@@ -688,8 +688,8 @@ internal static class LlmQuizPromptBuilder
 
         string characterRule =
             language == AppLanguage.Vietnamese
-                ? $"Phải dùng ít nhất một học sinh trong danh sách này và giữ cách gọi tự nhiên: {studentNames}. Có thể thêm cách xưng hô gia đình ({familyReferences}) hoặc trường học ({schoolReferences}), nhưng không được chỉ dùng vai trò chung chung."
-                : $"Use at least one student from this approved name list: {studentNames}. Family references ({familyReferences}) and school references ({schoolReferences}) may also appear, but do not use only generic roles.";
+                ? $"Có thể dùng tên học sinh trong danh sách này nếu phù hợp: {studentNames}. Tên riêng không bắt buộc; có thể dùng cách gọi chung tự nhiên như một bạn học sinh, các bạn trong lớp, hoặc các cách xưng hô gia đình ({familyReferences}) và trường học ({schoolReferences})."
+                : $"A student name from this list may be used when natural: {studentNames}. A personal name is optional; natural generic references such as a student, the classmates, family references ({familyReferences}), or school references ({schoolReferences}) are also valid.";
 
         string classroomRule =
             language == AppLanguage.Vietnamese
@@ -713,7 +713,7 @@ internal static class LlmQuizPromptBuilder
             - For division, divide the left total exactly into the right number of equal groups.
             - solution_lead is one short textbook sentence introducing the calculation.
             - answer_unit is a short noun phrase without a number.
-            - subject_name is the person or object named in problem_text.
+            - subject_name is the person, group, or object described in problem_text; it may be a generic reference and does not require a personal name.
             {{retry}}
 
             JSON schema:
@@ -739,11 +739,6 @@ internal static class LlmQuizPromptBuilder
                 language == AppLanguage.Vietnamese
                     ? "\nTên lớp trước không hợp lệ. Chỉ dùng khối 1–5, lớp con 1–9 hoặc A–I; ví dụ lớp 3/1 hoặc lớp 3A."
                     : "\nThe previous class label was invalid. Use only grades 1–5 with sections 1–9 or A–I, such as Class 3/1 or Class 3A.",
-
-            "MissingPersonalName" =>
-                language == AppLanguage.Vietnamese
-                    ? "\nĐề trước thiếu tên học sinh. Hãy dùng ít nhất một tên đúng trong danh sách được cung cấp, ví dụ bạn Lan hoặc bạn Minh."
-                    : "\nThe previous story did not use an approved student name. Include at least one name from the supplied list, such as Emma or Jack.",
 
             _ =>
                 "\nThe previous response failed validation. Return a shorter corrected story using the exact schema and required facts."
@@ -1141,14 +1136,6 @@ internal sealed partial class LlmWordProblemValidator
         {
             return LlmWordProblemValidationResult.Invalid(
                 "InvalidClassLabel");
-        }
-
-        if (!WordProblemPeopleCatalog.ContainsStudentName(
-                problem,
-                language))
-        {
-            return LlmWordProblemValidationResult.Invalid(
-                "MissingPersonalName");
         }
 
         // Dấu hỏi và cách mở câu là lỗi trình bày, không phải lỗi dữ kiện.
