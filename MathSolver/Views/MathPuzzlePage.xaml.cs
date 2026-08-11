@@ -274,7 +274,12 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
+        // Đúng/Sai và 4 đáp án là hai phiên luyện tập độc lập. Khi đổi
+        // kiểu câu hỏi, hủy lượt sinh AI đang chạy và đặt lại cả câu hiện
+        // tại lẫn ba bộ đếm để phiên mới luôn bắt đầu từ đầu.
+        CancelLlmGeneration();
         _selectedMode = mode;
+        ResetQuizSessionState();
         UpdateModeStyles();
 
         if (_generationSource == QuizGenerationSource.Algorithm)
