@@ -79,6 +79,12 @@ public partial class MathPuzzlePage : ContentPage
     {
         base.OnAppearing();
 
+        // WinUI can restore its native blue accent when a Button leaves the
+        // Disabled visual state. Reattach the app's dynamic theme resources
+        // whenever this page returns from Settings so the current accent is
+        // applied immediately.
+        RefreshLlmActionButtonTheme();
+
         // Nếu quay lại trong grace period thì giữ nguyên GGUF weights đang
         // nằm trong RAM; câu kế tiếp chỉ cần tạo context/KV mới.
         _localLlmQuizGenerator.CancelScheduledModelUnload();
@@ -1233,6 +1239,8 @@ public partial class MathPuzzlePage : ContentPage
                 _isDownloadingModel
                     ? "Quiz.StopModelDownload"
                     : "Quiz.DownloadGemma4");
+
+        RefreshLlmActionButtonTheme();
     }
 
     private void SetLlmBusy(
@@ -1269,6 +1277,40 @@ public partial class MathPuzzlePage : ContentPage
             !_isGeneratingWithLlm &&
             _llmModelPath is not null &&
             !_questionAnswered;
+
+        // Reapply after the Enabled/Disabled transition. On Windows this
+        // transition can otherwise replace the DynamicResource with the
+        // platform's default blue accent.
+        RefreshLlmActionButtonTheme();
+    }
+
+    private void RefreshLlmActionButtonTheme()
+    {
+        OpenLlmModelFolderButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "SurfaceColor");
+        OpenLlmModelFolderButton.SetDynamicResource(
+            Button.BorderColorProperty,
+            "PrimaryBorderColor");
+        OpenLlmModelFolderButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "PrimaryColor");
+
+        CreateLlmQuestionButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+        CreateLlmQuestionButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
+
+        // This button follows the same disabled-to-enabled lifecycle after
+        // an answer is selected, so keep it on the active accent as well.
+        NextQuestionButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+        NextQuestionButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
     }
 
     private void ShowLlmStatus(

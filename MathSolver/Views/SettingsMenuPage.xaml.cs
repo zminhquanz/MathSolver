@@ -257,6 +257,7 @@ public partial class SettingsMenuPage : ContentPage
             return;
         }
 
+        ResetSettingsIconTintBehavior.TintColor = tintColor;
         MoreSettingsIconTintBehavior.TintColor = tintColor;
         FontIconTintBehavior.TintColor = tintColor;
         LanguageIconTintBehavior.TintColor = tintColor;
