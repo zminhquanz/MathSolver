@@ -103,16 +103,38 @@
                                         LineHeight="1.25"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                                    <Button
-                                        x:Name="DownloadGemma4Button"
-                                        Text="{localization:Translate Quiz.DownloadGemma4}"
-                                        HeightRequest="46"
-                                        CornerRadius="11"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource PrimaryColor}"
-                                        TextColor="{DynamicResource OnPrimaryColor}"
-                                        Clicked="OnDownloadGemma4Clicked" />
+                                    <Grid
+                                        ColumnDefinitions="*,*"
+                                        ColumnSpacing="10">
+
+                                        <Button
+                                            x:Name="DownloadGemma4Button"
+                                            Grid.Column="0"
+                                            Text="{localization:Translate Quiz.DownloadGemma4}"
+                                            HeightRequest="46"
+                                            CornerRadius="11"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            BackgroundColor="{DynamicResource PrimaryColor}"
+                                            TextColor="{DynamicResource OnPrimaryColor}"
+                                            Clicked="OnDownloadGemma4Clicked" />
+
+                                        <Button
+                                            x:Name="OpenLlmModelFolderButton"
+                                            Grid.Column="1"
+                                            Text="{localization:Translate Quiz.OpenInFileExplorer}"
+                                            IsEnabled="False"
+                                            HeightRequest="46"
+                                            CornerRadius="11"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            BackgroundColor="{DynamicResource SurfaceColor}"
+                                            BorderColor="{DynamicResource PrimaryBorderColor}"
+                                            BorderWidth="1"
+                                            TextColor="{DynamicResource PrimaryColor}"
+                                            Clicked="OnOpenLlmModelFolderClicked" />
+
+                                    </Grid>
 
                                     <Grid
                                         ColumnDefinitions="*,*"
@@ -161,38 +183,6 @@
                                         FontSize="14"
                                         LineHeight="1.2"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
-
-                                    <Button
-                                        x:Name="OpenLlmModelFolderButton"
-                                        Text="{localization:Translate Quiz.OpenInFileExplorer}"
-                                        IsEnabled="False"
-                                        HeightRequest="44"
-                                        CornerRadius="11"
-                                        FontSize="15"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource SurfaceColor}"
-                                        BorderColor="{DynamicResource PrimaryBorderColor}"
-                                        BorderWidth="1"
-                                        TextColor="{DynamicResource PrimaryColor}"
-                                        Clicked="OnOpenLlmModelFolderClicked" />
-
-                                    <Label
-                                        Text="{localization:Translate Quiz.LlmResourceHint}"
-                                        FontSize="13"
-                                        LineHeight="1.2"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-
-                                    <Button
-                                        x:Name="CreateLlmQuestionButton"
-                                        Text="{localization:Translate Quiz.CreateWithAi}"
-                                        IsEnabled="False"
-                                        HeightRequest="48"
-                                        CornerRadius="12"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource PrimaryColor}"
-                                        TextColor="{DynamicResource OnPrimaryColor}"
-                                        Clicked="OnCreateLlmQuestionClicked" />
 
                                     <Grid
                                         x:Name="LlmProgressGrid"
@@ -576,17 +566,38 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Button
-                                x:Name="NextQuestionButton"
-                                IsEnabled="False"
-                                Text="{localization:Translate Quiz.NextQuestion}"
-                                HeightRequest="50"
-                                CornerRadius="12"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource PrimaryColor}"
-                                TextColor="{DynamicResource OnPrimaryColor}"
-                                Clicked="OnNextQuestionClicked" />
+                            <Grid
+                                ColumnDefinitions="*,*"
+                                ColumnSpacing="10">
+
+                                <Button
+                                    x:Name="CreateLlmQuestionButton"
+                                    Grid.Column="0"
+                                    Text="{localization:Translate Quiz.CreateWithAi}"
+                                    IsVisible="False"
+                                    IsEnabled="False"
+                                    HeightRequest="50"
+                                    CornerRadius="12"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource PrimaryColor}"
+                                    TextColor="{DynamicResource OnPrimaryColor}"
+                                    Clicked="OnCreateLlmQuestionClicked" />
+
+                                <Button
+                                    x:Name="NextQuestionButton"
+                                    Grid.Column="1"
+                                    IsEnabled="False"
+                                    Text="{localization:Translate Quiz.NextQuestion}"
+                                    HeightRequest="50"
+                                    CornerRadius="12"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource PrimaryColor}"
+                                    TextColor="{DynamicResource OnPrimaryColor}"
+                                    Clicked="OnNextQuestionClicked" />
+
+                            </Grid>
 
                         </VerticalStackLayout>
                     </Border>

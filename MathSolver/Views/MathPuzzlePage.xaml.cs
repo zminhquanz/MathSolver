@@ -226,8 +226,21 @@ public partial class MathPuzzlePage : ContentPage
             AlgorithmSourceButton,
             LocalLlmSourceButton);
 
-        LlmSettingsBorder.IsVisible =
+        bool isLocalLlm =
             _generationSource == QuizGenerationSource.LocalLlm;
+
+        LlmSettingsBorder.IsVisible = isLocalLlm;
+        CreateLlmQuestionButton.IsVisible = isLocalLlm;
+
+        // Ở chế độ AI, hai thao tác thường dùng nằm cạnh nhau theo tỷ lệ
+        // 50/50. Chế độ thuật toán không có nút tạo lại bằng AI nên nút
+        // Câu tiếp theo chiếm toàn bộ hai cột.
+        Grid.SetColumn(
+            NextQuestionButton,
+            isLocalLlm ? 1 : 0);
+        Grid.SetColumnSpan(
+            NextQuestionButton,
+            isLocalLlm ? 1 : 2);
     }
 
     private void OnTrueFalseModeClicked(
@@ -954,8 +967,15 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
+        if (_questionAnswered)
+        {
+            UpdateCreateLlmQuestionButtonState();
+            return;
+        }
+
         // Nút này vừa tạo câu đầu tiên vừa cho phép bỏ qua/tạo lại câu hiện
-        // tại. Tạo lại không tăng số câu và không tính là đúng hoặc sai.
+        // tại trước khi trả lời. Sau khi đã trả lời, người dùng phải chuyển
+        // sang câu tiếp theo; tạo lại không tăng số câu và không tính điểm.
         await GenerateLlmQuestionAsync(
             questionNumberOnSuccess: null);
     }
@@ -964,6 +984,8 @@ public partial class MathPuzzlePage : ContentPage
         int? questionNumberOnSuccess)
     {
         if (_isGeneratingWithLlm ||
+            (!questionNumberOnSuccess.HasValue &&
+             _questionAnswered) ||
             (questionNumberOnSuccess.HasValue &&
              (!_questionAnswered ||
               _currentQuestion is null)))
@@ -1192,9 +1214,7 @@ public partial class MathPuzzlePage : ContentPage
                     : Translate("Quiz.ModelRecommendation");
         }
 
-        CreateLlmQuestionButton.IsEnabled =
-            !_isGeneratingWithLlm &&
-            _llmModelPath is not null;
+        UpdateCreateLlmQuestionButtonState();
 
         EjectLlmModelButton.IsEnabled =
             !_isGeneratingWithLlm &&
@@ -1240,9 +1260,15 @@ public partial class MathPuzzlePage : ContentPage
         MultipleChoiceModeButton.IsEnabled = !isBusy;
         OperationPicker.IsEnabled = !isBusy;
 
+        UpdateCreateLlmQuestionButtonState();
+    }
+
+    private void UpdateCreateLlmQuestionButtonState()
+    {
         CreateLlmQuestionButton.IsEnabled =
-            !isBusy &&
-            _llmModelPath is not null;
+            !_isGeneratingWithLlm &&
+            _llmModelPath is not null &&
+            !_questionAnswered;
     }
 
     private void ShowLlmStatus(
@@ -1581,6 +1607,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         NextQuestionButton.IsEnabled = true;
+        UpdateCreateLlmQuestionButtonState();
         UpdateScoreLabels();
     }
 

@@ -58,7 +58,6 @@
     { "key": "Quiz.ModelRecommendation", "source": "Ứng dụng chỉ hỗ trợ Gemma 4. Nên chọn E2B/E4B Instruct bản Q4 vì tạo câu tiếng Việt tự nhiên, đủ tốt cho toán tiểu học và nhẹ hơn để tiết kiệm pin.", "mode": "exact" },
     { "key": "Quiz.RecommendedModelDetected", "source": "Gemma 4 bản gọn nhẹ đã sẵn sàng để tạo đề.", "mode": "exact" },
     { "key": "Quiz.CreateWithAi", "source": "Tạo đề bằng AI", "mode": "exact" },
-    { "key": "Quiz.LlmResourceHint", "source": "Lần tạo đề đầu tiên có thể chờ lâu hơn; những câu sau sẽ được tạo nhanh hơn.", "mode": "exact" },
     { "key": "Quiz.SelectModelPickerTitle", "source": "Chọn file Gemma 4 GGUF", "mode": "exact" },
     { "key": "Quiz.ImportingModel", "source": "Đang kiểm tra file Gemma 4...", "mode": "exact" },
     { "key": "Quiz.ModelReady", "source": "File model GGUF đúng định dạng.", "mode": "exact" },

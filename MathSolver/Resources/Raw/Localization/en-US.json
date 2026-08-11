@@ -62,7 +62,6 @@
     "Quiz.ModelRecommendation": "The app supports Gemma 4 only. E2B/E4B Instruct Q4 is recommended because it writes natural questions, is strong enough for elementary math, and uses less battery.",
     "Quiz.RecommendedModelDetected": "A lightweight Gemma 4 model is ready to create questions.",
     "Quiz.CreateWithAi": "Create with AI",
-    "Quiz.LlmResourceHint": "The first question may take longer; later questions will be created faster.",
     "Quiz.SelectModelPickerTitle": "Choose a Gemma 4 GGUF file",
     "Quiz.ImportingModel": "Checking the Gemma 4 file...",
     "Quiz.ModelReady": "The GGUF model file is valid.",
