@@ -49,7 +49,7 @@
 
                             <Grid
                                 ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
+                                ColumnSpacing="8">
 
                                 <Button
                                     x:Name="AlgorithmSourceButton"
@@ -57,7 +57,7 @@
                                     Text="{localization:Translate Quiz.AlgorithmSource}"
                                     HeightRequest="48"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="14"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -69,7 +69,7 @@
                                     Text="{localization:Translate Quiz.LocalLlmSource}"
                                     HeightRequest="48"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="14"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource SurfaceAltColor}"
                                     TextColor="{DynamicResource TextPrimaryColor}"
@@ -230,8 +230,8 @@
                                 Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
+                                ColumnDefinitions="*,*,*"
+                                ColumnSpacing="8">
 
                                 <Button
                                     x:Name="TrueFalseModeButton"
@@ -239,7 +239,7 @@
                                     Text="{localization:Translate Quiz.TrueFalseMode}"
                                     HeightRequest="48"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="14"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -251,11 +251,23 @@
                                     Text="{localization:Translate Quiz.MultipleChoiceMode}"
                                     HeightRequest="48"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="14"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource SurfaceAltColor}"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     Clicked="OnMultipleChoiceModeClicked" />
+
+                                <Button
+                                    x:Name="EssayModeButton"
+                                    Grid.Column="2"
+                                    Text="{localization:QuizTranslate Quiz.EssayMode}"
+                                    HeightRequest="48"
+                                    CornerRadius="12"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnEssayModeClicked" />
 
                             </Grid>
 
@@ -514,6 +526,112 @@
                                     Clicked="OnChoiceAnswerClicked" />
 
                             </Grid>
+
+                            <VerticalStackLayout
+                                x:Name="EssayAnswerLayout"
+                                IsVisible="False"
+                                Spacing="10">
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.EssaySolutionLabel}"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Border
+                                    Padding="12,8"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource BorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <Editor
+                                        x:Name="EssaySolutionEditor"
+                                        MinimumHeightRequest="86"
+                                        AutoSize="TextChanges"
+                                        FontSize="16"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        Placeholder="{localization:QuizTranslate Quiz.EssaySolutionPlaceholder}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}" />
+
+                                </Border>
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.EssayEquationLabel}"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Border
+                                    Padding="12,4"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource BorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <Entry
+                                        x:Name="EssayEquationEntry"
+                                        HeightRequest="48"
+                                        FontSize="18"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        Placeholder="{localization:QuizTranslate Quiz.EssayEquationPlaceholder}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}" />
+
+                                </Border>
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.EssayAnswerLabel}"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Border
+                                    Padding="12,4"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource BorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <Entry
+                                        x:Name="EssayAnswerEntry"
+                                        HeightRequest="48"
+                                        FontSize="18"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        Placeholder="{localization:QuizTranslate Quiz.EssayAnswerPlaceholder}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}" />
+
+                                </Border>
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.EssayValidationHint}"
+                                    FontSize="14"
+                                    LineHeight="1.2"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                <Button
+                                    x:Name="SubmitEssayAnswerButton"
+                                    Text="{localization:QuizTranslate Quiz.SubmitEssayAnswer}"
+                                    HeightRequest="50"
+                                    CornerRadius="12"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource PrimaryColor}"
+                                    TextColor="{DynamicResource OnPrimaryColor}"
+                                    Clicked="OnSubmitEssayAnswerClicked" />
+
+                            </VerticalStackLayout>
 
                             <Border
                                 x:Name="FeedbackBorder"

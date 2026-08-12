@@ -5,7 +5,8 @@ namespace MathSolver.Models;
 public enum ArithmeticQuizMode
 {
     TrueFalse,
-    MultipleChoice
+    MultipleChoice,
+    Essay
 }
 
 /// <summary>

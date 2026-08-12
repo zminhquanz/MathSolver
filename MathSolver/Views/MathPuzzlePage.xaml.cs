@@ -10,6 +10,7 @@ public partial class MathPuzzlePage : ContentPage
 {
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
     private readonly ArithmeticQuizGenerator _quizGenerator;
+    private readonly EssayAnswerValidator _essayAnswerValidator;
     private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
     private readonly QuizLlmModelStore _llmModelStore = new();
     private readonly Gemma4ModelDownloadService
@@ -52,6 +53,10 @@ public partial class MathPuzzlePage : ContentPage
 
         _quizGenerator =
             new ArithmeticQuizGenerator(
+                _arithmeticEngine);
+
+        _essayAnswerValidator =
+            new EssayAnswerValidator(
                 _arithmeticEngine);
 
         _localLlmQuizGenerator =
@@ -265,18 +270,22 @@ public partial class MathPuzzlePage : ContentPage
             ArithmeticQuizMode.MultipleChoice);
     }
 
+    private void OnEssayModeClicked(
+        object? sender,
+        EventArgs e)
+    {
+        SelectMode(
+            ArithmeticQuizMode.Essay);
+    }
+
     private void SelectMode(
         ArithmeticQuizMode mode)
     {
-        if (_selectedMode == mode &&
-            _currentQuestion is not null)
+        if (_selectedMode == mode)
         {
             return;
         }
 
-        // Đúng/Sai và 4 đáp án là hai phiên luyện tập độc lập. Khi đổi
-        // kiểu câu hỏi, hủy lượt sinh AI đang chạy và đặt lại cả câu hiện
-        // tại lẫn ba bộ đếm để phiên mới luôn bắt đầu từ đầu.
         CancelLlmGeneration();
         _selectedMode = mode;
         ResetQuizSessionState();
@@ -295,11 +304,19 @@ public partial class MathPuzzlePage : ContentPage
     private void UpdateModeStyles()
     {
         SelectionButtonStyler.Select(
-            _selectedMode == ArithmeticQuizMode.TrueFalse
-                ? TrueFalseModeButton
-                : MultipleChoiceModeButton,
+            _selectedMode switch
+            {
+                ArithmeticQuizMode.TrueFalse =>
+                    TrueFalseModeButton,
+                ArithmeticQuizMode.MultipleChoice =>
+                    MultipleChoiceModeButton,
+                ArithmeticQuizMode.Essay =>
+                    EssayModeButton,
+                _ => throw new ArgumentOutOfRangeException()
+            },
             TrueFalseModeButton,
-            MultipleChoiceModeButton);
+            MultipleChoiceModeButton,
+            EssayModeButton);
 
         bool hasQuestion = _currentQuestion is not null;
 
@@ -311,13 +328,24 @@ public partial class MathPuzzlePage : ContentPage
             hasQuestion &&
             _selectedMode == ArithmeticQuizMode.MultipleChoice;
 
+        EssayAnswerLayout.IsVisible =
+            hasQuestion &&
+            _selectedMode == ArithmeticQuizMode.Essay;
+
         QuestionPromptLabel.Text =
             _currentQuestion?.WordProblem is not null
                 ? Translate("Quiz.WordProblemTitle")
                 : Translate(
-                    _selectedMode == ArithmeticQuizMode.TrueFalse
-                        ? "Quiz.QuestionTitle"
-                        : "Quiz.MultipleChoiceQuestionTitle");
+                    _selectedMode switch
+                    {
+                        ArithmeticQuizMode.TrueFalse =>
+                            "Quiz.QuestionTitle",
+                        ArithmeticQuizMode.MultipleChoice =>
+                            "Quiz.MultipleChoiceQuestionTitle",
+                        ArithmeticQuizMode.Essay =>
+                            "Quiz.EssayQuestionTitle",
+                        _ => "Quiz.QuestionTitle"
+                    });
     }
 
     private void UpdateOperationPickerItems()
@@ -1271,6 +1299,7 @@ public partial class MathPuzzlePage : ContentPage
         LocalLlmSourceButton.IsEnabled = !isBusy;
         TrueFalseModeButton.IsEnabled = !isBusy;
         MultipleChoiceModeButton.IsEnabled = !isBusy;
+        EssayModeButton.IsEnabled = !isBusy;
         OperationPicker.IsEnabled = !isBusy;
 
         UpdateCreateLlmQuestionButtonState();
@@ -1314,6 +1343,13 @@ public partial class MathPuzzlePage : ContentPage
             Button.BackgroundColorProperty,
             "PrimaryColor");
         NextQuestionButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
+
+        SubmitEssayAnswerButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+        SubmitEssayAnswerButton.SetDynamicResource(
             Button.TextColorProperty,
             "OnPrimaryColor");
     }
@@ -1411,6 +1447,10 @@ public partial class MathPuzzlePage : ContentPage
     {
         TrueAnswerButton.IsEnabled = isEnabled;
         FalseAnswerButton.IsEnabled = isEnabled;
+        EssaySolutionEditor.IsEnabled = isEnabled;
+        EssayEquationEntry.IsEnabled = isEnabled;
+        EssayAnswerEntry.IsEnabled = isEnabled;
+        SubmitEssayAnswerButton.IsEnabled = isEnabled;
 
         foreach (Button button in ChoiceButtons)
         {
@@ -1542,6 +1582,10 @@ public partial class MathPuzzlePage : ContentPage
     {
         SetAnswerControlsEnabled(true);
 
+        EssaySolutionEditor.Text = string.Empty;
+        EssayEquationEntry.Text = string.Empty;
+        EssayAnswerEntry.Text = string.Empty;
+
         foreach (Button button in ChoiceButtons)
         {
             ApplyNeutralAnswerStyle(button);
@@ -1594,9 +1638,34 @@ public partial class MathPuzzlePage : ContentPage
             button);
     }
 
+    private void OnSubmitEssayAnswerClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_questionAnswered ||
+            _currentQuestion is null ||
+            _currentQuestion.Mode != ArithmeticQuizMode.Essay)
+        {
+            return;
+        }
+
+        EssayAnswerValidationResult validation =
+            _essayAnswerValidator.Validate(
+                _currentQuestion,
+                EssayEquationEntry.Text,
+                EssayAnswerEntry.Text);
+
+        CompleteAnswer(
+            validation.IsCorrect,
+            selectedButton: null,
+            feedbackOverride:
+                BuildEssayFeedback(validation));
+    }
+
     private void CompleteAnswer(
         bool isCorrect,
-        Button? selectedButton)
+        Button? selectedButton,
+        string? feedbackOverride = null)
     {
         if (_currentQuestion is null)
         {
@@ -1643,6 +1712,12 @@ public partial class MathPuzzlePage : ContentPage
             isCorrect,
             _currentQuestion.CorrectAnswer);
 
+        if (!string.IsNullOrWhiteSpace(
+                feedbackOverride))
+        {
+            FeedbackLabel.Text = feedbackOverride;
+        }
+
         if (_currentQuestion.WordProblem is not null)
         {
             SolutionLabel.Text =
@@ -1652,10 +1727,86 @@ public partial class MathPuzzlePage : ContentPage
                     CultureInfo.CurrentCulture);
             SolutionBorder.IsVisible = true;
         }
+        else if (_currentQuestion.Mode ==
+                 ArithmeticQuizMode.Essay)
+        {
+            SolutionLabel.Text =
+                FormatPlainEssaySolution(
+                    _currentQuestion);
+            SolutionBorder.IsVisible = true;
+        }
 
         NextQuestionButton.IsEnabled = true;
         UpdateCreateLlmQuestionButtonState();
         UpdateScoreLabels();
+    }
+
+    private static string BuildEssayFeedback(
+        EssayAnswerValidationResult validation)
+    {
+        if (validation.IsCorrect)
+        {
+            return TranslateQuiz(
+                "Quiz.EssayCorrectFeedback");
+        }
+
+        if (!validation.EquationIsCorrect &&
+            !validation.AnswerIsCorrect)
+        {
+            return TranslateQuiz(
+                "Quiz.EssayEquationAndAnswerIncorrect");
+        }
+
+        if (!validation.EquationIsCorrect)
+        {
+            return validation.EquationError ==
+                    EssayAnswerError.InvalidEquationFormat
+                ? TranslateQuiz(
+                    "Quiz.EssayEquationFormatIncorrect")
+                : TranslateQuiz(
+                    "Quiz.EssayEquationIncorrect");
+        }
+
+        return validation.AnswerError ==
+                EssayAnswerError.WrongAnswerUnit
+            ? TranslateQuiz(
+                "Quiz.EssayAnswerUnitIncorrect")
+            : TranslateQuiz(
+                "Quiz.EssayAnswerIncorrect");
+    }
+
+    private static string FormatPlainEssaySolution(
+        ArithmeticQuizQuestion question)
+    {
+        string left =
+            question.Expression.LeftOperand.ToString(
+                "N0",
+                CultureInfo.CurrentCulture);
+
+        string right =
+            question.Expression.RightOperand.ToString(
+                "N0",
+                CultureInfo.CurrentCulture);
+
+        string answer =
+            question.CorrectAnswer.ToString(
+                "N0",
+                CultureInfo.CurrentCulture);
+
+        string symbol =
+            BasicArithmeticEngine.GetSymbol(
+                question.Expression.Operation);
+
+        string answerLabel =
+            AppLanguageManager.CurrentLanguage ==
+                AppLanguage.Vietnamese
+                ? "Đáp số"
+                : "Answer";
+
+        return
+            $"{left} {symbol} {right} = {answer}" +
+            Environment.NewLine +
+            $"{answerLabel}: {answer}";
     }
 
     private void ShowFeedback(
@@ -1769,6 +1920,9 @@ public partial class MathPuzzlePage : ContentPage
         FeedbackBorder.IsVisible = false;
         SolutionLabel.Text = string.Empty;
         SolutionBorder.IsVisible = false;
+        EssaySolutionEditor.Text = string.Empty;
+        EssayEquationEntry.Text = string.Empty;
+        EssayAnswerEntry.Text = string.Empty;
         NextQuestionButton.IsEnabled = false;
 
         ClearMultipleChoiceAnswers();
@@ -1854,6 +2008,23 @@ public partial class MathPuzzlePage : ContentPage
         string key)
     {
         return LocalizationService.TranslateKey(key);
+    }
+
+    private static string TranslateQuiz(
+        string key)
+    {
+        string culture =
+            AppLanguageManager.CurrentLanguage ==
+                AppLanguage.Vietnamese
+                ? "vi-VN"
+                : "en-US";
+
+        return QuizLocalizationOverrides.TryGetValue(
+                key,
+                culture,
+                out string value)
+            ? value
+            : Translate(key);
     }
 
     private void BeginMainTabTransitionIfPending()

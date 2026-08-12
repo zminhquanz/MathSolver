@@ -65,13 +65,28 @@ public sealed class ArithmeticQuizGenerator
                     expression);
 
             ArithmeticQuizQuestion question =
-                mode == ArithmeticQuizMode.TrueFalse
-                    ? CreateTrueFalseQuestion(
-                        expression,
-                        calculation.Result)
-                    : CreateMultipleChoiceQuestion(
-                        expression,
-                        calculation.Result);
+                mode switch
+                {
+                    ArithmeticQuizMode.TrueFalse =>
+                        CreateTrueFalseQuestion(
+                            expression,
+                            calculation.Result),
+
+                    ArithmeticQuizMode.MultipleChoice =>
+                        CreateMultipleChoiceQuestion(
+                            expression,
+                            calculation.Result),
+
+                    ArithmeticQuizMode.Essay =>
+                        CreateEssayQuestion(
+                            expression,
+                            calculation.Result),
+
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(mode),
+                        mode,
+                        "Unsupported quiz mode.")
+                };
 
             if (_validator.Validate(
                     question).IsValid)
@@ -195,6 +210,19 @@ public sealed class ArithmeticQuizGenerator
             null,
             null,
             choices);
+    }
+
+    private static ArithmeticQuizQuestion CreateEssayQuestion(
+        IntegerArithmeticExpression expression,
+        BigInteger correctAnswer)
+    {
+        return new ArithmeticQuizQuestion(
+            expression,
+            ArithmeticQuizMode.Essay,
+            correctAnswer,
+            null,
+            null,
+            []);
     }
 
     private IReadOnlyList<BigInteger> CreateDistractors(
@@ -349,6 +377,16 @@ public sealed class ArithmeticQuizValidator
             return actualTruth == expectedTruth
                 ? ArithmeticQuizValidationResult.Valid
                 : new(false, "TruthFlagMismatch");
+        }
+
+        if (question.Mode ==
+            ArithmeticQuizMode.Essay)
+        {
+            return question.PresentedAnswer is null &&
+                   question.PresentedEquationIsCorrect is null &&
+                   question.Choices.Count == 0
+                ? ArithmeticQuizValidationResult.Valid
+                : new(false, "InvalidEssayShape");
         }
 
         if (question.Mode !=

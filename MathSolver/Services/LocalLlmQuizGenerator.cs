@@ -144,6 +144,12 @@ public sealed class LocalLlmQuizGenerator
                     mode,
                     requestedOperation);
 
+            // Chỉ chọn tối đa một tên cho cả lượt sinh. Mọi lần retry giữ
+            // nguyên gợi ý này và catalog đầy đủ không bị nối vào prompt.
+            WordProblemStudent? selectedStudent =
+                LlmQuizPromptBuilder.SelectStudent(
+                    language);
+
             (LLamaWeights weights, ModelParams modelParameters) =
                 await EnsureModelLoadedAsync(
                     modelPath,
@@ -165,13 +171,6 @@ public sealed class LocalLlmQuizGenerator
 
             string systemPrompt =
                 LlmQuizPromptBuilder.BuildSystemPrompt(
-                    language);
-
-            // Chọn gợi ý tên đúng một lần cho cả lượt sinh và mọi lần retry.
-            // Không đưa toàn bộ catalog tên/xưng hô vào prompt vì phần đó chỉ
-            // làm tăng token prefill mà không giúp model viết đề chính xác hơn.
-            WordProblemStudent? studentHint =
-                LlmQuizPromptBuilder.SelectStudentHint(
                     language);
 
             // Executor chỉ tồn tại trong một lần sinh câu. StatelessExecutor
@@ -208,7 +207,7 @@ public sealed class LocalLlmQuizGenerator
                     LlmQuizPromptBuilder.BuildUserPrompt(
                         contract.Expression,
                         language,
-                        studentHint,
+                        selectedStudent,
                         previousErrorCode);
 
                 string prompt = useManualGemma4Template
@@ -622,25 +621,6 @@ public sealed class LocalLlmQuizGenerator
 
 internal static class LlmQuizPromptBuilder
 {
-    private const int WordProblemPeoplePercent = 50;
-
-    public static WordProblemStudent? SelectStudentHint(
-        AppLanguage language)
-    {
-        WordProblemPeopleProfile people =
-            WordProblemPeopleCatalog.GetProfile(
-                language);
-
-        if (people.Students.Count == 0 ||
-            Random.Shared.Next(100) >= WordProblemPeoplePercent)
-        {
-            return null;
-        }
-
-        return people.Students[
-            Random.Shared.Next(people.Students.Count)];
-    }
-
     public static string BuildSystemPrompt(
         AppLanguage language)
     {
@@ -668,7 +648,7 @@ internal static class LlmQuizPromptBuilder
     public static string BuildUserPrompt(
         IntegerArithmeticExpression expression,
         AppLanguage language,
-        WordProblemStudent? studentHint,
+        WordProblemStudent? selectedStudent,
         string? previousErrorCode)
     {
         string operation =
@@ -695,9 +675,13 @@ internal static class LlmQuizPromptBuilder
                     language);
 
         string characterRule =
-            BuildCharacterRule(
-                language,
-                studentHint);
+            selectedStudent is null
+                ? language == AppLanguage.Vietnamese
+                    ? "Tên riêng không bắt buộc; hãy dùng cách gọi chung tự nhiên như một bạn học sinh, các bạn trong lớp hoặc một người thân."
+                    : "A personal name is optional; use a natural generic reference such as a student, the classmates, or a family member."
+                : language == AppLanguage.Vietnamese
+                    ? $"Nếu dùng tên riêng, chỉ gợi ý dùng \"{selectedStudent.NaturalReference}\"; cũng có thể dùng cách gọi chung tự nhiên."
+                    : $"If a personal name is used, use \"{selectedStudent.NaturalReference}\"; a natural generic reference is also valid.";
 
         string classroomRule =
             language == AppLanguage.Vietnamese
@@ -719,7 +703,7 @@ internal static class LlmQuizPromptBuilder
             - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             - For division, divide the left total exactly into the right number of equal groups.
-            - solution_lead is one short textbook answer sentence naming the quantity asked in problem_text. For example: "Số cái bút các bạn có tất cả là:" or "The total number of pencils the students have is:". Never write only "Ta thực hiện phép nhân" or "We perform the multiplication".
+            - solution_lead is one short textbook sentence naming the quantity being found and introducing the calculation. Do not use a generic sentence that only says to perform an operation.
             - answer_unit is a short noun phrase without a number.
             - subject_name is the person, group, or object described in problem_text; it may be a generic reference and does not require a personal name.
             {{retry}}
@@ -729,20 +713,19 @@ internal static class LlmQuizPromptBuilder
             """);
     }
 
-    private static string BuildCharacterRule(
-        AppLanguage language,
-        WordProblemStudent? studentHint)
+    public static WordProblemStudent? SelectStudent(
+        AppLanguage language)
     {
-        if (language == AppLanguage.Vietnamese)
-        {
-            return studentHint is null
-                ? "Tên riêng không bắt buộc; hãy dùng cách gọi chung tự nhiên như một bạn học sinh, các bạn trong lớp hoặc người thân."
-                : $"Nếu dùng tên riêng, chỉ dùng gợi ý \"{studentHint.NaturalReference}\"; cũng có thể không dùng tên và viết bằng cách gọi chung tự nhiên.";
-        }
+        WordProblemPeopleProfile people =
+            WordProblemPeopleCatalog.GetProfile(
+                language);
 
-        return studentHint is null
-            ? "A personal name is optional; use a natural generic reference such as a student, the classmates, or a family member."
-            : $"If using a personal name, use only the hint \"{studentHint.NaturalReference}\"; a natural generic reference without a name is also valid.";
+        return people.Students.Count > 0 &&
+               Random.Shared.Next(100) < 45
+            ? people.Students[
+                Random.Shared.Next(
+                    people.Students.Count)]
+            : null;
     }
 
     private static string BuildRetryInstruction(
@@ -1264,14 +1247,16 @@ internal sealed partial class LlmWordProblemValidator
                 .NormalizeSolutionLeadPunctuation(
                     solutionLead);
 
-        if (ShouldRebuildSolutionLead(
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            solutionLead.Contains('=') ||
+            IsGenericSolutionLead(
                 solutionLead,
                 language))
         {
             solutionLead =
                 ElementaryWordProblemSolutionFormatter
                     .NormalizeSolutionLeadPunctuation(
-                        BuildNaturalSolutionLead(
+                        BuildQuestionBasedSolutionLead(
                             problem,
                             expression.Operation,
                             unit,
@@ -1395,204 +1380,6 @@ internal sealed partial class LlmWordProblemValidator
             : $"{statement}. What is the answer?";
     }
 
-    private static bool ShouldRebuildSolutionLead(
-        string solutionLead,
-        AppLanguage language)
-    {
-        if (string.IsNullOrWhiteSpace(solutionLead) ||
-            solutionLead.Contains('='))
-        {
-            return true;
-        }
-
-        string normalized =
-            solutionLead
-                .Trim()
-                .TrimEnd('.', ',', '!', '?', ':', ';', '…')
-                .Trim()
-                .ToLowerInvariant();
-
-        if (language == AppLanguage.Vietnamese)
-        {
-            return normalized.StartsWith(
-                       "ta thực hiện phép ",
-                       StringComparison.Ordinal) ||
-                   normalized.StartsWith(
-                       "thực hiện phép ",
-                       StringComparison.Ordinal) ||
-                   normalized.StartsWith(
-                       "ta cần thực hiện phép ",
-                       StringComparison.Ordinal) ||
-                   normalized is
-                       "ta tính" or
-                       "phép tính cần thực hiện";
-        }
-
-        return normalized.StartsWith(
-                   "we perform the ",
-                   StringComparison.Ordinal) ||
-               normalized.StartsWith(
-                   "perform the ",
-                   StringComparison.Ordinal) ||
-               normalized.StartsWith(
-                   "we need to perform the ",
-                   StringComparison.Ordinal) ||
-               normalized is
-                   "we calculate" or
-                   "the calculation to perform";
-    }
-
-    private static string BuildNaturalSolutionLead(
-        string problem,
-        ArithmeticOperation operation,
-        string unit,
-        AppLanguage language)
-    {
-        if (language == AppLanguage.Vietnamese &&
-            TryBuildVietnameseSolutionLeadFromQuestion(
-                problem,
-                unit,
-                out string contextualLead))
-        {
-            return contextualLead;
-        }
-
-        return BuildDefaultSolutionLead(
-            operation,
-            unit,
-            language);
-    }
-
-    private static bool TryBuildVietnameseSolutionLeadFromQuestion(
-        string problem,
-        string unit,
-        out string solutionLead)
-    {
-        solutionLead = string.Empty;
-
-        int questionIndex =
-            problem.LastIndexOf(
-                "bao nhiêu",
-                StringComparison.OrdinalIgnoreCase);
-
-        if (questionIndex < 0)
-        {
-            return false;
-        }
-
-        string questionContext =
-            problem[..questionIndex].TrimEnd();
-
-        int clauseBoundary =
-            questionContext.LastIndexOfAny(
-                ['.', '!', '?', ';', ',']);
-
-        if (clauseBoundary >= 0)
-        {
-            questionContext =
-                questionContext[(clauseBoundary + 1)..];
-        }
-
-        questionContext =
-            TrimVietnameseQuestionStarter(
-                questionContext.Trim());
-
-        if (!IsUsefulVietnameseQuestionContext(
-                questionContext))
-        {
-            return false;
-        }
-
-        bool alreadyNamesQuantity =
-            questionContext.StartsWith(
-                "số ",
-                StringComparison.OrdinalIgnoreCase);
-
-        bool alreadyEndsWithIs =
-            questionContext.EndsWith(
-                " là",
-                StringComparison.OrdinalIgnoreCase) ||
-            questionContext.Equals(
-                "là",
-                StringComparison.OrdinalIgnoreCase);
-
-        string core = alreadyNamesQuantity
-            ? questionContext
-            : $"Số {unit} {questionContext}";
-
-        solutionLead = alreadyEndsWithIs
-            ? $"{core}:"
-            : $"{core} là:";
-
-        return true;
-    }
-
-    private static string TrimVietnameseQuestionStarter(
-        string value)
-    {
-        string result = value;
-
-        string[] starters =
-        [
-            "vậy thì ",
-            "cho biết ",
-            "vậy ",
-            "hỏi ",
-            "thì "
-        ];
-
-        bool removed;
-
-        do
-        {
-            removed = false;
-
-            foreach (string starter in starters)
-            {
-                if (!result.StartsWith(
-                        starter,
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                result =
-                    result[starter.Length..].TrimStart();
-
-                removed = true;
-                break;
-            }
-        }
-        while (removed);
-
-        return result;
-    }
-
-    private static bool IsUsefulVietnameseQuestionContext(
-        string value)
-    {
-        if (value.Length is < 3 or > 120)
-        {
-            return false;
-        }
-
-        string normalized =
-            value
-                .Trim()
-                .TrimEnd('.', ',', '!', '?', ':', ';', '…')
-                .Trim()
-                .ToLowerInvariant();
-
-        return normalized is not
-            "có" and not
-            "có tất cả" and not
-            "tất cả có" and not
-            "tổng cộng có" and not
-            "còn lại" and not
-            "mỗi phần có" and not
-            "mỗi nhóm có";
-    }
-
     private static string BuildDefaultSolutionLead(
         ArithmeticOperation operation,
         string unit,
@@ -1620,6 +1407,132 @@ internal sealed partial class LlmWordProblemValidator
             _ =>
                 $"The total number of {unit} is:"
         };
+    }
+
+    private static bool IsGenericSolutionLead(
+        string solutionLead,
+        AppLanguage language)
+    {
+        string lower =
+            solutionLead
+                .Trim()
+                .TrimEnd('.', ',', '!', '?', ':', ';')
+                .ToLowerInvariant();
+
+        return language == AppLanguage.Vietnamese
+            ? lower.StartsWith("ta thực hiện phép", StringComparison.Ordinal) ||
+              lower.StartsWith("thực hiện phép", StringComparison.Ordinal) ||
+              lower.StartsWith("ta làm phép", StringComparison.Ordinal) ||
+              lower.StartsWith("ta tính", StringComparison.Ordinal) ||
+              lower.StartsWith("phép tính cần thực hiện", StringComparison.Ordinal)
+            : lower.StartsWith("we perform", StringComparison.Ordinal) ||
+              lower.StartsWith("perform the", StringComparison.Ordinal) ||
+              lower.StartsWith("use multiplication", StringComparison.Ordinal) ||
+              lower.StartsWith("use addition", StringComparison.Ordinal) ||
+              lower.StartsWith("use subtraction", StringComparison.Ordinal) ||
+              lower.StartsWith("use division", StringComparison.Ordinal);
+    }
+
+    private static string BuildQuestionBasedSolutionLead(
+        string problem,
+        ArithmeticOperation operation,
+        string unit,
+        AppLanguage language)
+    {
+        if (language != AppLanguage.Vietnamese)
+        {
+            return BuildDefaultSolutionLead(
+                operation,
+                unit,
+                language);
+        }
+
+        string[] clauses =
+            problem.Split(
+                ['.', '!', '?'],
+                StringSplitOptions.RemoveEmptyEntries |
+                StringSplitOptions.TrimEntries);
+
+        for (int index = clauses.Length - 1;
+             index >= 0;
+             index--)
+        {
+            string clause =
+                clauses[index].Trim();
+
+            int questionCueIndex =
+                Math.Max(
+                    clause.LastIndexOf(
+                        "vậy ",
+                        StringComparison.OrdinalIgnoreCase),
+                    clause.LastIndexOf(
+                        "hỏi ",
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (questionCueIndex > 0)
+            {
+                clause =
+                    clause[questionCueIndex..];
+            }
+
+            clause = Regex.Replace(
+                clause,
+                @"^(?:vậy|hỏi)\s*[:,]?\s*",
+                string.Empty,
+                RegexOptions.IgnoreCase |
+                RegexOptions.CultureInvariant);
+
+            int quantityIndex =
+                clause.IndexOf(
+                    "bao nhiêu",
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (quantityIndex <= 0)
+            {
+                continue;
+            }
+
+            string subjectPhrase =
+                clause[..quantityIndex]
+                    .Trim(' ', ',', ':', ';');
+
+            string unitPhrase =
+                clause[(quantityIndex + "bao nhiêu".Length)..]
+                    .Trim(' ', ',', '.', '!', '?', ':', ';');
+
+            if (subjectPhrase.Length == 0 ||
+                unitPhrase.Length == 0)
+            {
+                continue;
+            }
+
+            subjectPhrase =
+                LowercaseLeadingGenericPhrase(
+                    subjectPhrase);
+
+            return $"Số {unitPhrase} {subjectPhrase} là:";
+        }
+
+        return BuildDefaultSolutionLead(
+            operation,
+            unit,
+            language);
+    }
+
+    private static string LowercaseLeadingGenericPhrase(
+        string value)
+    {
+        string[] genericStarts =
+        [
+            "Mỗi ", "Một ", "Các ", "Những "
+        ];
+
+        return genericStarts.Any(prefix =>
+                value.StartsWith(
+                    prefix,
+                    StringComparison.Ordinal))
+            ? char.ToLowerInvariant(value[0]) + value[1..]
+            : value;
     }
 
     private static string NormalizeSingleLine(
