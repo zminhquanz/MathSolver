@@ -469,7 +469,7 @@ public sealed partial class EssayAnswerValidator
     {
         string[] classifiers =
         [
-            "cái", "chiếc", "cây", "quyển", "cuốn", "quả",
+            "cái", "chiếc", "cây", "quyển", "cuốn", "quả", "trái",
             "con", "chú", "tờ", "viên", "bông", "hộp", "chai",
             "cục", "lọ", "hũ", "chậu", "tập", "bộ", "khối",
             "sợi", "thanh", "miếng", "tấm", "đoàn"

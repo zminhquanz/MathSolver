@@ -151,24 +151,13 @@
             </Border>
 
             <!-- Loại số và dữ liệu -->
-            <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                Style="{StaticResource SolverCardStyle}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+            <Border Style="{StaticResource SolverCardStyle}">
 
                 <VerticalStackLayout Spacing="14">
 
                     <Label
                         Text="2. Nhập các giá trị đã biết"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        Style="{StaticResource SolverSectionTitleStyle}" />
 
                     <Grid
                         ColumnDefinitions="*,*"
@@ -177,11 +166,7 @@
                         <Button
                             x:Name="FindXIntegerTypeButton"
                             Grid.Column="0"
-                            Text="Số nguyên"
-                            HeightRequest="48"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
+                            Text="{localization:Translate Numbers.Integer}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             TextColor="{DynamicResource TextPrimaryColor}"
@@ -190,11 +175,7 @@
                         <Button
                             x:Name="FindXDecimalTypeButton"
                             Grid.Column="1"
-                            Text="Số thập phân"
-                            HeightRequest="48"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
+                            Text="{localization:Translate Numbers.Decimal}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             TextColor="{DynamicResource TextPrimaryColor}"
@@ -331,13 +312,13 @@
 
                         <Button
                             Grid.Column="0"
-                            Text="Tìm x"
+                            Text="{localization:Translate FindX.Action}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnFindXCalculateClicked" />
 
                         <Button
                             Grid.Column="1"
-                            Text="Xóa"
+                            Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
                             Clicked="OnFindXClearClicked" />

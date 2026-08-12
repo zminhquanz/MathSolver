@@ -79,14 +79,14 @@
                                 <Button
                                     x:Name="PlaneGeometryButton"
                                     Grid.Column="0"
-                                    Text="Hình học mặt phẳng"
+                                    Text="{localization:Translate Geometry.Plane}"
                                     Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnPlaneGeometryClicked" />
 
                                 <Button
                                     x:Name="SolidGeometryButton"
                                     Grid.Column="1"
-                                    Text="Hình học không gian"
+                                    Text="{localization:Translate Geometry.Solid}"
                                     Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnSolidGeometryClicked" />
 
@@ -194,23 +194,13 @@
                     </Border>
 
                     <!-- 3. Kiểu số -->
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource BorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
+                    <Border Style="{StaticResource SolverCardStyle}">
 
                         <VerticalStackLayout Spacing="12">
 
                             <Label
                                 Text="3. Chọn kiểu số"
-                                FontSize="20"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <Grid
                                 ColumnDefinitions="*,*"
@@ -219,23 +209,15 @@
                                 <Button
                                     x:Name="IntegerNumberButton"
                                     Grid.Column="0"
-                                    Text="Số nguyên"
-                                    HeightRequest="48"
-                                    Padding="10,0"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    CornerRadius="11"
+                                    Text="{localization:Translate Numbers.Integer}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnIntegerNumberClicked" />
 
                                 <Button
                                     x:Name="DecimalNumberButton"
                                     Grid.Column="1"
-                                    Text="Số thập phân"
-                                    HeightRequest="48"
-                                    Padding="10,0"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    CornerRadius="11"
+                                    Text="{localization:Translate Numbers.Decimal}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnDecimalNumberClicked" />
 
                             </Grid>
@@ -539,14 +521,14 @@
                         <Button
                             x:Name="CalculateGeometryButton"
                             Grid.Column="0"
-                            Text="Tính toán"
+                            Text="{localization:Translate Actions.Calculate}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
                             x:Name="ClearGeometryButton"
                             Grid.Column="1"
-                            Text="Xóa"
+                            Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
                             Clicked="OnClearClicked" />

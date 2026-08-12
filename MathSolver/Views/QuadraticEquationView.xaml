@@ -286,13 +286,13 @@
                         <Button
                             x:Name="CalculateQuadraticButton"
                             Grid.Column="0"
-                            Text="Tính nghiệm"
+                            Text="{localization:Translate Quadratic.Action}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
                         <Button
                             Grid.Column="1"
-                            Text="Xóa"
+                            Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
                             Clicked="OnClearClicked" />

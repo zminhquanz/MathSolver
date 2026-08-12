@@ -8,22 +8,21 @@
         <Setter Property="Padding" Value="20,16,20,24" />
         <Setter Property="Spacing" Value="14" />
         <Setter Property="HorizontalOptions" Value="Fill" />
-        <Setter Property="MaximumWidthRequest" Value="1180" />
     </Style>
 
     <Style x:Key="SolverHeroStyle" TargetType="VerticalStackLayout">
-        <Setter Property="Margin" Value="0,4,0,8" />
+        <Setter Property="Margin" Value="0,4,0,4" />
         <Setter Property="Spacing" Value="3" />
     </Style>
 
     <Style x:Key="SolverHeroSymbolStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="40" />
+        <Setter Property="FontSize" Value="30" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="TextColor" Value="{DynamicResource PrimaryColor}" />
     </Style>
 
     <Style x:Key="SolverHeroTitleStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="27" />
+        <Setter Property="FontSize" Value="30" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
@@ -44,22 +43,22 @@
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="16" />
             </Setter.Value>
         </Setter>
     </Style>
 
     <Style x:Key="SolverSectionTitleStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontSize" Value="17" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
     </Style>
 
     <Style x:Key="SolverChoiceButtonStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="50" />
+        <Setter Property="HeightRequest" Value="48" />
         <Setter Property="Padding" Value="8,0" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
@@ -70,7 +69,7 @@
     </Style>
 
     <Style x:Key="SolverInputBorderStyle" TargetType="Border">
-        <Setter Property="HeightRequest" Value="50" />
+        <Setter Property="HeightRequest" Value="48" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="BackgroundColor" Value="{DynamicResource InputBackgroundColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
@@ -83,9 +82,9 @@
     </Style>
 
     <Style x:Key="SolverPrimaryActionStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="52" />
+        <Setter Property="HeightRequest" Value="48" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryColor}" />
         <Setter Property="TextColor" Value="{DynamicResource OnPrimaryColor}" />

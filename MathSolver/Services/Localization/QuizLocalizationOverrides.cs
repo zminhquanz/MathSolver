@@ -23,7 +23,7 @@ internal static class QuizLocalizationOverrides
             ["Quiz.EssayEquationLabel"] = "Phép tính",
             ["Quiz.EssayEquationPlaceholder"] = "Ví dụ: 5 × 6 = 30",
             ["Quiz.EssayAnswerLabel"] = "Đáp số",
-            ["Quiz.EssayAnswerPlaceholder"] = "Ví dụ: 30 cái bút",
+            ["Quiz.EssayAnswerPlaceholder"] = "Ví dụ: 30 cây bút",
             ["Quiz.EssayValidationHint"] = "Ứng dụng chấm hai số dữ kiện, phép toán, kết quả, giá trị và đơn vị đáp số. Phần lời giải không bị chấm văn phong.",
             ["Quiz.EssayValidationHintAlgorithm"] = "Ứng dụng chấm hai số dữ kiện, phép toán, kết quả và giá trị đáp số.",
             ["Quiz.SubmitEssayAnswer"] = "📝 Chấm bài",

@@ -118,23 +118,13 @@
             </Border>
 
             <!-- 2. Nhập hai phân số -->
-            <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+            <Border Style="{StaticResource SolverCardStyle}">
 
                 <VerticalStackLayout Spacing="14">
 
                     <Label
                         Text="2. Nhập các phân số"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        Style="{StaticResource SolverSectionTitleStyle}" />
 
 
                     <Grid
@@ -329,7 +319,7 @@
                             x:Name="CalculateButton"
                             Grid.Row="0"
                             Grid.Column="0"
-                            Text="Tính toán"
+                            Text="{localization:Translate Actions.Calculate}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
@@ -337,7 +327,7 @@
                             x:Name="ClearButton"
                             Grid.Row="0"
                             Grid.Column="1"
-                            Text="Xóa"
+                            Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource DividerColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"

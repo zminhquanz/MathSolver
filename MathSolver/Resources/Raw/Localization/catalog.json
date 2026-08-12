@@ -28,7 +28,7 @@
     { "key": "Quiz.EssayEquationLabel", "source": "Phép tính", "mode": "exact" },
     { "key": "Quiz.EssayEquationPlaceholder", "source": "Ví dụ: 5 × 6 = 30", "mode": "exact" },
     { "key": "Quiz.EssayAnswerLabel", "source": "Đáp số", "mode": "exact" },
-    { "key": "Quiz.EssayAnswerPlaceholder", "source": "Ví dụ: 30 cái bút", "mode": "exact" },
+    { "key": "Quiz.EssayAnswerPlaceholder", "source": "Ví dụ: 30 cây bút", "mode": "exact" },
     { "key": "Quiz.EssayValidationHint", "source": "Ứng dụng chấm hai số dữ kiện, phép toán, kết quả, giá trị và đơn vị đáp số. Phần lời giải không bị chấm văn phong.", "mode": "exact" },
     { "key": "Quiz.EssayValidationHintAlgorithm", "source": "Ứng dụng chấm hai số dữ kiện, phép toán, kết quả và giá trị đáp số.", "mode": "exact" },
     { "key": "Quiz.SubmitEssayAnswer", "source": "📝 Chấm bài", "mode": "exact" },
@@ -4108,12 +4108,22 @@
     },
     {
       "key": "Actions.Calculate",
-      "source": "Tính toán",
+      "source": "🧮 Tính toán",
       "mode": "exact"
     },
     {
       "key": "Actions.Clear",
-      "source": "Xóa",
+      "source": "🗑️ Xóa",
+      "mode": "exact"
+    },
+    {
+      "key": "FindX.Action",
+      "source": "🔎 Tìm x",
+      "mode": "exact"
+    },
+    {
+      "key": "Quadratic.Action",
+      "source": "🧮 Tính nghiệm",
       "mode": "exact"
     },
     {
@@ -4133,12 +4143,12 @@
     },
     {
       "key": "Geometry.Plane",
-      "source": "Hình học mặt phẳng",
+      "source": "📐 Hình học mặt phẳng",
       "mode": "exact"
     },
     {
       "key": "Geometry.Solid",
-      "source": "Hình học không gian",
+      "source": "🧊 Hình học không gian",
       "mode": "exact"
     },
     {
@@ -4158,12 +4168,12 @@
     },
     {
       "key": "Numbers.Integer",
-      "source": "Số nguyên",
+      "source": "🔢 Số nguyên",
       "mode": "exact"
     },
     {
       "key": "Numbers.Decimal",
-      "source": "Số thập phân",
+      "source": "🔣 Số thập phân",
       "mode": "exact"
     },
     {

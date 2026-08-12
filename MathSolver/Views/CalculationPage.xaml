@@ -189,23 +189,13 @@
 
                     <!-- Khung nhập số -->
                     <!-- Khung nhập số và chọn loại số -->
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource BorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
+                    <Border Style="{StaticResource SolverCardStyle}">
 
                         <VerticalStackLayout Spacing="14">
 
                             <Label
                                 Text="2. Nhập các số"
-                                FontSize="20"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <!-- Chọn số nguyên hoặc số thập phân -->
                             <Grid
@@ -216,12 +206,8 @@
                                 <Button
                                     x:Name="IntegerTypeButton"
                                     Grid.Column="0"
-                                    Text="Số nguyên"
-                                    HeightRequest="48"
-                                    Padding="8,0"
-                                    CornerRadius="12"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
+                                    Text="{localization:Translate Numbers.Integer}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
                                     Clicked="OnIntegerTypeClicked" />
@@ -229,12 +215,8 @@
                                 <Button
                                     x:Name="DecimalTypeButton"
                                     Grid.Column="1"
-                                    Text="Số thập phân"
-                                    HeightRequest="48"
-                                    Padding="8,0"
-                                    CornerRadius="12"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
+                                    Text="{localization:Translate Numbers.Decimal}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     BackgroundColor="{DynamicResource SurfaceAltColor}"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     Clicked="OnDecimalTypeClicked" />
@@ -344,13 +326,13 @@
 
                                 <Button
                                     Grid.Column="0"
-                                    Text="Tính toán"
+                                    Text="{localization:Translate Actions.Calculate}"
                                     Style="{StaticResource SolverPrimaryActionStyle}"
                                     Clicked="OnCalculateClicked" />
 
                                 <Button
                                     Grid.Column="1"
-                                    Text="Xóa"
+                                    Text="{localization:Translate Actions.Clear}"
                                     Style="{StaticResource SolverSecondaryActionStyle}"
                                     BackgroundColor="{DynamicResource DividerColor}"
                                     Clicked="OnClearClicked" />
