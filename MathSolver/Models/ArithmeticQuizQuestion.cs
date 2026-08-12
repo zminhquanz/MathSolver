@@ -19,7 +19,8 @@ public sealed record ArithmeticQuizQuestion(
     BigInteger? PresentedAnswer,
     bool? PresentedEquationIsCorrect,
     IReadOnlyList<BigInteger> Choices,
-    MathWordProblem? WordProblem = null);
+    MathWordProblem? WordProblem = null,
+    GeometryQuizContract? GeometryProblem = null);
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,

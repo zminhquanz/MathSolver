@@ -9,7 +9,9 @@ namespace MathSolver.Views;
 public partial class MathPuzzlePage : ContentPage
 {
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
+    private readonly GeometryCalculationEngine _geometryEngine = new();
     private readonly ArithmeticQuizGenerator _quizGenerator;
+    private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly EssayAnswerValidator _essayAnswerValidator;
     private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
     private readonly QuizLlmModelStore _llmModelStore = new();
@@ -59,10 +61,15 @@ public partial class MathPuzzlePage : ContentPage
             new EssayAnswerValidator(
                 _arithmeticEngine);
 
+        _geometryQuizGenerator =
+            new GeometryQuizGenerator(
+                _geometryEngine);
+
         _localLlmQuizGenerator =
             new LocalLlmQuizGenerator(
                 _quizGenerator,
-                _arithmeticEngine);
+                _arithmeticEngine,
+                _geometryQuizGenerator);
 
         _llmModelPath =
             _llmModelStore.GetSavedModelPath();
@@ -216,6 +223,7 @@ public partial class MathPuzzlePage : ContentPage
         CancelLlmGeneration();
         ResetQuizSessionState();
         _generationSource = source;
+        UpdateOperationPickerItems();
         UpdateGenerationSourceStyles();
 
         if (source == QuizGenerationSource.Algorithm)
@@ -365,9 +373,16 @@ public partial class MathPuzzlePage : ContentPage
 
         EssayValidationHintLabel.Text =
             TranslateQuiz(
-                isWordProblemSource
-                    ? "Quiz.EssayValidationHint"
-                    : "Quiz.EssayValidationHintAlgorithm");
+                IsGeometryProblemSelected()
+                    ? "Quiz.GeometryEssayValidationHint"
+                    : isWordProblemSource
+                        ? "Quiz.EssayValidationHint"
+                        : "Quiz.EssayValidationHintAlgorithm");
+
+        EssayEquationEntry.Placeholder =
+            IsGeometryProblemSelected()
+                ? Translate("Quiz.GeometryEssayEquationPlaceholder")
+                : Translate("Quiz.EssayEquationPlaceholder");
     }
 
     private void UpdateOperationPickerItems()
@@ -393,6 +408,17 @@ public partial class MathPuzzlePage : ContentPage
             OperationPicker.Items.Add(
                 Translate("Quiz.OperationDivision"));
 
+            if (_generationSource == QuizGenerationSource.LocalLlm)
+            {
+                OperationPicker.Items.Add(
+                    Translate("Quiz.ProblemGeometry"));
+            }
+
+            if (selectedIndex >= OperationPicker.Items.Count)
+            {
+                selectedIndex = 0;
+            }
+
             OperationPicker.SelectedIndex =
                 Math.Clamp(
                     selectedIndex,
@@ -415,6 +441,8 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
+        UpdateEssayAnswerPresentation();
+
         if (_generationSource == QuizGenerationSource.Algorithm)
         {
             GenerateAlgorithmQuestion();
@@ -436,6 +464,10 @@ public partial class MathPuzzlePage : ContentPage
             _ => null
         };
     }
+
+    private bool IsGeometryProblemSelected() =>
+        _generationSource == QuizGenerationSource.LocalLlm &&
+        OperationPicker.SelectedIndex == 5;
 
     private void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
@@ -1114,6 +1146,7 @@ public partial class MathPuzzlePage : ContentPage
                     _llmModelPath,
                     _selectedMode,
                     GetSelectedOperation(),
+                    IsGeometryProblemSelected(),
                     AppLanguageManager.CurrentLanguage,
                     progress,
                     cancellation.Token);
@@ -1625,8 +1658,13 @@ public partial class MathPuzzlePage : ContentPage
                 char prefix =
                     (char)('A' + index);
 
+                string choiceUnit =
+                    wordProblem is null
+                        ? string.Empty
+                        : $" {wordProblem.AnswerUnit}";
+
                 button.Text =
-                    $"{prefix}. {choice.ToString("N0", CultureInfo.CurrentCulture)}";
+                    $"{prefix}. {choice.ToString("N0", CultureInfo.CurrentCulture)}{choiceUnit}";
 
                 button.CommandParameter =
                     choice.ToString(

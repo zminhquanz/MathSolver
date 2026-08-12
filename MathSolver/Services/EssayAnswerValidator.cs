@@ -53,9 +53,13 @@ public sealed partial class EssayAnswerValidator
         ArgumentNullException.ThrowIfNull(question);
 
         (bool equationIsCorrect, EssayAnswerError equationError) =
-            ValidateEquation(
-                question,
-                equationText);
+            question.GeometryProblem is GeometryQuizContract geometry
+                ? ValidateGeometryEquation(
+                    geometry,
+                    equationText)
+                : ValidateEquation(
+                    question,
+                    equationText);
 
         (bool answerIsCorrect, EssayAnswerError answerError) =
             ValidateAnswer(
@@ -67,6 +71,86 @@ public sealed partial class EssayAnswerValidator
             answerIsCorrect,
             equationError,
             answerError);
+    }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateGeometryEquation(
+            GeometryQuizContract contract,
+            string? equationText)
+    {
+        string entered = NormalizeGeometryEquation(equationText);
+
+        if (entered.Length == 0 ||
+            !entered.Contains('='))
+        {
+            return (false, EssayAnswerError.InvalidEquationFormat);
+        }
+
+        HashSet<string> accepted =
+            BuildAcceptedGeometryEquations(contract)
+                .Select(NormalizeGeometryEquation)
+                .ToHashSet(StringComparer.Ordinal);
+
+        return accepted.Contains(entered)
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongOperandsOrOperation);
+    }
+
+    private static IEnumerable<string> BuildAcceptedGeometryEquations(
+        GeometryQuizContract contract)
+    {
+        yield return contract.EquationText;
+
+        IReadOnlyDictionary<string, BigInteger> value = contract.Dimensions;
+        string answer = contract.CorrectAnswer.ToString(
+            CultureInfo.InvariantCulture);
+
+        if (contract.ShapeId == "rectangle")
+        {
+            string a = value["a"].ToString(CultureInfo.InvariantCulture);
+            string b = value["b"].ToString(CultureInfo.InvariantCulture);
+
+            if (contract.Measurement == GeometryMeasurement.Perimeter)
+            {
+                yield return $"2 × ({a} + {b}) = {answer}";
+                yield return $"({b} + {a}) × 2 = {answer}";
+            }
+            else if (contract.Measurement == GeometryMeasurement.Area)
+            {
+                yield return $"{b} × {a} = {answer}";
+            }
+        }
+    }
+
+    private static string NormalizeGeometryEquation(
+        string? equationText)
+    {
+        string normalized = (equationText ?? string.Empty)
+            .Trim()
+            .Replace('x', '×')
+            .Replace('X', '×')
+            .Replace('*', '×')
+            .Replace('−', '-')
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .Replace("\t", string.Empty, StringComparison.Ordinal)
+            .Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Replace("\n", string.Empty, StringComparison.Ordinal)
+            .Replace(",", string.Empty, StringComparison.Ordinal)
+            .Replace(".", string.Empty, StringComparison.Ordinal)
+            .Replace("\u00A0", string.Empty, StringComparison.Ordinal)
+            .Replace("\u202F", string.Empty, StringComparison.Ordinal);
+
+        int firstEquals = normalized.IndexOf('=');
+        int lastEquals = normalized.LastIndexOf('=');
+
+        if (firstEquals > 0 &&
+            firstEquals != lastEquals &&
+            normalized[..firstEquals].All(char.IsLetter))
+        {
+            normalized = normalized[(firstEquals + 1)..];
+        }
+
+        return normalized;
     }
 
     private (bool IsCorrect, EssayAnswerError Error) ValidateEquation(
@@ -250,6 +334,18 @@ public sealed partial class EssayAnswerValidator
             unit.Trim()
                 .TrimEnd('.', '!', '?', ':', ';')
                 .ToLowerInvariant();
+
+        normalized = Regex.Replace(
+            normalized,
+            @"\b(km|dm|cm|mm|m)\s*(?:\^\s*)?2\b",
+            "$1²",
+            RegexOptions.CultureInvariant);
+
+        normalized = Regex.Replace(
+            normalized,
+            @"\b(km|dm|cm|mm|m)\s*(?:\^\s*)?3\b",
+            "$1³",
+            RegexOptions.CultureInvariant);
 
         return string.Join(
             ' ',

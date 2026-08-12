@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using System.Globalization;
+using System.Numerics;
 
 namespace MathSolver.Services;
 
@@ -18,6 +19,15 @@ public static class ElementaryWordProblemSolutionFormatter
             throw new ArgumentException(
                 "The question does not contain a word problem.",
                 nameof(question));
+
+        if (question.GeometryProblem is GeometryQuizContract geometry)
+        {
+            return FormatGeometry(
+                geometry,
+                wordProblem,
+                language,
+                culture);
+        }
 
         string left =
             question.Expression.LeftOperand.ToString(
@@ -51,6 +61,44 @@ public static class ElementaryWordProblemSolutionFormatter
             $"{solutionLead}{Environment.NewLine}" +
             $"{left} {symbol} {right} = {answer}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+    }
+
+    private static string FormatGeometry(
+        GeometryQuizContract geometry,
+        MathWordProblem wordProblem,
+        AppLanguage language,
+        CultureInfo culture)
+    {
+        string answer =
+            geometry.CorrectAnswer.ToString("N0", culture);
+
+        string substitution = geometry.SubstitutionExpression;
+
+        foreach (BigInteger dimension in geometry.Dimensions.Values
+                     .Distinct()
+                     .OrderByDescending(value =>
+                         value.ToString(CultureInfo.InvariantCulture).Length))
+        {
+            substitution = substitution.Replace(
+                dimension.ToString(CultureInfo.InvariantCulture),
+                dimension.ToString("N0", culture),
+                StringComparison.Ordinal);
+        }
+
+        string answerLabel =
+            language == AppLanguage.Vietnamese
+                ? "Đáp số"
+                : "Answer";
+
+        string solutionLead =
+            NormalizeSolutionLeadPunctuation(
+                wordProblem.SolutionLead);
+
+        return
+            $"{solutionLead}{Environment.NewLine}" +
+            $"{geometry.Formula}{Environment.NewLine}" +
+            $"{substitution} = {answer}{Environment.NewLine}" +
+            $"{answerLabel}: {answer} {geometry.AnswerUnit}";
     }
 
     internal static string NormalizeSolutionLeadPunctuation(

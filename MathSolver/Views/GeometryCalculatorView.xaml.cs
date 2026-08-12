@@ -17,6 +17,8 @@ namespace MathSolver.Views;
 /// </summary>
 public partial class GeometryCalculatorView : LocalizedSolverView
 {
+    private readonly GeometryCalculationEngine _geometryEngine = new();
+
     private const int MaxDecimalPlaces = 10;
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
@@ -1143,39 +1145,14 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             return false;
         }
 
-        bool usesDecimalResult =
-            false;
+        GeometryCalculationResult calculation =
+            _geometryEngine.CalculateInteger(
+                geometry.Id,
+                values);
 
-        switch (geometry.Category)
+        if (!ApplyEngineResult(calculation))
         {
-            case GeometryCategory.Plane:
-                if (!CalculatePlaneInteger(
-                        geometry.Id,
-                        values,
-                        ref usesDecimalResult))
-                {
-                    return false;
-                }
-
-                break;
-
-            case GeometryCategory.Solid:
-                if (!CalculateSolidInteger(
-                        geometry.Id,
-                        values,
-                        ref usesDecimalResult))
-                {
-                    return false;
-                }
-
-                break;
-
-            default:
-                ShowError(
-                    T(
-                        "Loại hình học chưa được hỗ trợ."));
-
-                return false;
+            return false;
         }
 
         CalculationExplanationLabel.Text =
@@ -1512,35 +1489,52 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ConvertDecimalInputsToOctoDouble(
                 decimalInputs);
 
-        switch (geometry.Category)
+        GeometryCalculationResult calculation =
+            _geometryEngine.CalculateDecimal(
+                geometry.Id,
+                values);
+
+        if (!ApplyEngineResult(calculation))
         {
-            case GeometryCategory.Plane:
-                if (!CalculatePlaneDecimal(
-                        geometry.Id,
-                        values))
-                {
-                    return false;
-                }
-
-                break;
-
-            case GeometryCategory.Solid:
-                if (!CalculateSolidDecimal(
-                        geometry.Id,
-                        values))
-                {
-                    return false;
-                }
-
-                break;
-
-            default:
-                ShowError(T("Loại hình học chưa được hỗ trợ."));
-                return false;
+            return false;
         }
 
         CalculationExplanationLabel.Text =
             BuildExplanation();
+
+        return Results.Count > 0;
+    }
+
+    private bool ApplyEngineResult(
+        GeometryCalculationResult calculation)
+    {
+        if (!calculation.IsSuccess)
+        {
+            ShowError(
+                T(
+                    calculation.ErrorKey ??
+                    "Loại hình học chưa được hỗ trợ."));
+
+            return false;
+        }
+
+        foreach (GeometryCalculationLine line in calculation.Lines)
+        {
+            if (line.IntegerValue is BigInteger integerValue)
+            {
+                AddIntegerResult(
+                    line.TitleKey,
+                    line.Formula,
+                    integerValue);
+            }
+            else
+            {
+                AddOctoDoubleResult(
+                    line.TitleKey,
+                    line.Formula,
+                    line.DecimalValue);
+            }
+        }
 
         return Results.Count > 0;
     }

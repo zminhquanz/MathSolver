@@ -12,9 +12,8 @@ using System.Text.RegularExpressions;
 namespace MathSolver.Services;
 
 /// <summary>
-/// Dùng LLM cục bộ để diễn đạt một biểu thức do engine sở hữu thành toán đố.
-/// Model chỉ viết ngôn ngữ tự nhiên; mọi số, phép tính, đáp án và lựa chọn đều
-/// được ArithmeticQuizGenerator/BasicArithmeticEngine quyết định trước.
+/// Dùng LLM cục bộ để diễn đạt hợp đồng số học hoặc hình học do engine sở hữu
+/// thành toán đố. Model chỉ viết ngôn ngữ tự nhiên; dữ kiện và đáp án do C# giữ.
 /// </summary>
 public sealed class LocalLlmQuizGenerator
 {
@@ -33,6 +32,7 @@ public sealed class LocalLlmQuizGenerator
     public const uint ContextSize = 1536;
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
+    private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
@@ -45,7 +45,8 @@ public sealed class LocalLlmQuizGenerator
 
     public LocalLlmQuizGenerator(
         ArithmeticQuizGenerator quizGenerator,
-        BasicArithmeticEngine engine)
+        BasicArithmeticEngine engine,
+        GeometryQuizGenerator geometryQuizGenerator)
     {
         _quizGenerator =
             quizGenerator ??
@@ -54,6 +55,10 @@ public sealed class LocalLlmQuizGenerator
         _engine =
             engine ??
             throw new ArgumentNullException(nameof(engine));
+
+        _geometryQuizGenerator =
+            geometryQuizGenerator ??
+            throw new ArgumentNullException(nameof(geometryQuizGenerator));
     }
 
     /// <summary>
@@ -122,6 +127,7 @@ public sealed class LocalLlmQuizGenerator
         string modelPath,
         ArithmeticQuizMode mode,
         ArithmeticOperation? requestedOperation,
+        bool generateGeometryProblem,
         AppLanguage language,
         IProgress<LlmQuizProgress>? progress = null,
         CancellationToken cancellationToken = default)
@@ -142,9 +148,13 @@ public sealed class LocalLlmQuizGenerator
         try
         {
             ArithmeticQuizQuestion contract =
-                CreateNaturalLanguageContract(
-                    mode,
-                    requestedOperation);
+                generateGeometryProblem
+                    ? _geometryQuizGenerator.Generate(
+                        mode,
+                        language)
+                    : CreateNaturalLanguageContract(
+                        mode,
+                        requestedOperation);
 
             // Chỉ chọn tối đa một tên cho cả lượt sinh. Mọi lần retry giữ
             // nguyên gợi ý này và catalog đầy đủ không bị nối vào prompt.
@@ -212,12 +222,18 @@ public sealed class LocalLlmQuizGenerator
                         MaximumAttempts));
 
                 string userPrompt =
-                    LlmQuizPromptBuilder.BuildUserPrompt(
-                        contract.Expression,
-                        language,
-                        selectedStudent,
-                        selectedStoryContext,
-                        previousErrorCode);
+                    contract.GeometryProblem is GeometryQuizContract geometry
+                        ? LlmQuizPromptBuilder.BuildGeometryUserPrompt(
+                            geometry,
+                            language,
+                            selectedStudent,
+                            previousErrorCode)
+                        : LlmQuizPromptBuilder.BuildUserPrompt(
+                            contract.Expression,
+                            language,
+                            selectedStudent,
+                            selectedStoryContext,
+                            previousErrorCode);
 
                 string prompt = useManualGemma4Template
                     ? LlmQuizPromptBuilder.BuildGemma4Prompt(
@@ -368,11 +384,16 @@ public sealed class LocalLlmQuizGenerator
                 else
                 {
                     LlmWordProblemValidationResult validation =
-                        _wordProblemValidator.Validate(
-                            draft,
-                            contract.Expression,
-                            contract.CorrectAnswer,
-                            language);
+                        contract.GeometryProblem is GeometryQuizContract validatedGeometry
+                            ? _wordProblemValidator.ValidateGeometry(
+                                draft,
+                                validatedGeometry,
+                                language)
+                            : _wordProblemValidator.Validate(
+                                draft,
+                                contract.Expression,
+                                contract.CorrectAnswer,
+                                language);
 
                     if (validation.IsValid &&
                         validation.WordProblem is not null)
@@ -715,8 +736,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn chỉ viết bài toán đố một bước dùng cộng, trừ, nhân hoặc chia theo dữ kiện bắt buộc. Không tự đổi số, phép tính hay đáp án. Chỉ trả về đúng một JSON hợp lệ, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write only one-step addition, subtraction, multiplication, or division word problems from the required facts. Never change the numbers, operation, or answer. Return exactly one valid JSON object with no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phép tính, hình, đơn vị, đại lượng cần tìm hay đáp án. Chỉ trả về đúng một JSON hợp lệ, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic or geometry word problems from the required facts. Never change the numbers, operation, shape, unit, requested measurement, or answer. Return exactly one valid JSON object with no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -810,6 +831,105 @@ internal static class LlmQuizPromptBuilder
             """);
     }
 
+    public static string BuildGeometryUserPrompt(
+        GeometryQuizContract contract,
+        AppLanguage language,
+        WordProblemStudent? selectedStudent,
+        string? previousErrorCode)
+    {
+        ArgumentNullException.ThrowIfNull(contract);
+
+        string languageName =
+            language == AppLanguage.Vietnamese
+                ? "Vietnamese used in Vietnamese primary schools"
+                : "natural English used in an English-language elementary school";
+
+        string measurement =
+            (contract.Measurement, language) switch
+            {
+                (GeometryMeasurement.Perimeter, AppLanguage.Vietnamese) => "chu vi",
+                (GeometryMeasurement.Area, AppLanguage.Vietnamese) => "diện tích",
+                (GeometryMeasurement.TotalArea, AppLanguage.Vietnamese) => "diện tích toàn phần",
+                (GeometryMeasurement.Volume, AppLanguage.Vietnamese) => "thể tích",
+                (GeometryMeasurement.Perimeter, _) => "perimeter",
+                (GeometryMeasurement.Area, _) => "area",
+                (GeometryMeasurement.TotalArea, _) => "total surface area",
+                (GeometryMeasurement.Volume, _) => "volume",
+                _ => throw new ArgumentOutOfRangeException(nameof(contract))
+            };
+
+        string dimensionFacts = string.Join(
+            Environment.NewLine,
+            contract.Dimensions.Select(pair =>
+                $"- {GetDimensionName(pair.Key, language)}: {pair.Value} {contract.LengthUnitSymbol}"));
+
+        string characterRule =
+            selectedStudent is null
+                ? language == AppLanguage.Vietnamese
+                    ? "Không cần dùng tên riêng; hãy tập trung vào đồ vật thực tế đã chọn."
+                    : "A personal name is unnecessary; focus on the selected real-world object."
+                : language == AppLanguage.Vietnamese
+                    ? $"Tên riêng không bắt buộc. Nếu cần người quan sát, chỉ gợi ý dùng \"{selectedStudent.NaturalReference}\"."
+                    : $"A personal name is optional. If an observer is useful, use only \"{selectedStudent.NaturalReference}\".";
+
+        string retry =
+            string.IsNullOrWhiteSpace(previousErrorCode)
+                ? string.Empty
+                : BuildRetryInstruction(previousErrorCode, language);
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural, age-appropriate geometry word problem in {{languageName}}.
+            Required real-world object: {{contract.ObjectName}}
+            Required shape: {{contract.ShapeName}}
+            Required measurement to find: {{measurement}}
+            Required length unit for every dimension: {{contract.LengthUnitSymbol}}
+            Required answer unit: {{contract.AnswerUnit}}
+            Required dimensions:
+            {{dimensionFacts}}
+
+            Rules:
+            - State that the object has the required shape.
+            - problem_text must contain every required dimension as digits with its length unit and no other arithmetic quantities.
+            - Ask only for the required measurement. Do not ask for a different measurement.
+            - Do not convert units. All given dimensions use {{contract.LengthUnitSymbol}}.
+            - Do not calculate or reveal the answer inside problem_text.
+            - Use the exact real-world object naturally; do not replace it.
+            - {{characterRule}}
+            - solution_lead is one short textbook sentence naming the required measurement and introducing the calculation.
+            - Set answer_unit exactly to "{{contract.AnswerUnit}}". Never use a plain length unit for area or volume.
+            - subject_name is the required real-world object, without a number.
+            {{retry}}
+
+            JSON schema:
+            {"problem_text":"... ?","subject_name":"...","answer_unit":"{{contract.AnswerUnit}}","solution_lead":"...:"}
+            """);
+    }
+
+    private static string GetDimensionName(
+        string key,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return key switch
+            {
+                "a" => "chiều dài hoặc cạnh a",
+                "b" => "chiều rộng b",
+                "h" => "chiều cao h",
+                _ => key
+            };
+        }
+
+        return key switch
+        {
+            "a" => "length or side a",
+            "b" => "width b",
+            "h" => "height h",
+            _ => key
+        };
+    }
+
     public static WordProblemStudent? SelectStudent(
         AppLanguage language)
     {
@@ -889,6 +1009,10 @@ internal static class LlmQuizPromptBuilder
 
             "ProblemNumbersMismatch" or "AnswerRevealedInProblem" =>
                 "\nThe previous story used wrong or extra numbers. Use each required input number and no other number; do not state the answer.",
+
+            "GeometryShapeMismatch" or "GeometryMeasurementMismatch" or
+            "GeometryUnitMismatch" or "GeometryObjectMismatch" =>
+                "\nThe previous geometry story changed or omitted a required shape, measurement, object, dimension, or unit. Rewrite it using every exact geometry fact from the prompt.",
 
             "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                 "\nThe previous story did not clearly express the required operation. Rewrite it with an unmistakable elementary-school action for that operation.",
@@ -1423,6 +1547,163 @@ internal sealed partial class LlmWordProblemValidator
                 unit,
                 subject));
     }
+
+    public LlmWordProblemValidationResult ValidateGeometry(
+        LlmWordProblemDraft draft,
+        GeometryQuizContract contract,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentNullException.ThrowIfNull(contract);
+
+        string problem = NormalizeSingleLine(draft.ProblemText);
+        string subject = NormalizeSingleLine(draft.SubjectName);
+        string solutionLead = NormalizeSingleLine(draft.SolutionLead);
+
+        if (problem.Length is < 20 or > 700 ||
+            subject.Length > 100 ||
+            solutionLead.Length > 240)
+        {
+            return LlmWordProblemValidationResult.Invalid("InvalidTextLength");
+        }
+
+        problem = NormalizeClassLabels(
+            problem,
+            out bool hasInvalidClassLabel);
+
+        if (hasInvalidClassLabel)
+        {
+            return LlmWordProblemValidationResult.Invalid("InvalidClassLabel");
+        }
+
+        if (!problem.Contains('?'))
+        {
+            problem = problem.TrimEnd('.', '!', ';', ':') + "?";
+        }
+
+        string problemWithoutClassLabels =
+            ClassLabelRegex().Replace(problem, " ");
+
+        int[] actualNumbers =
+            NumberRegex()
+                .Matches(problemWithoutClassLabels)
+                .Select(match =>
+                    int.TryParse(
+                        match.Value,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out int value)
+                            ? value
+                            : int.MinValue)
+                .ToArray();
+
+        int[] expectedNumbers =
+            contract.Dimensions.Values
+                .Select(value =>
+                    value >= int.MinValue && value <= int.MaxValue
+                        ? (int)value
+                        : int.MinValue)
+                .Order()
+                .ToArray();
+
+        if (!actualNumbers.Order().SequenceEqual(expectedNumbers))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "ProblemNumbersMismatch");
+        }
+
+        string lowerProblem = problem.ToLowerInvariant();
+
+        if (!lowerProblem.Contains(
+                contract.ShapeName.ToLowerInvariant(),
+                StringComparison.Ordinal))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "GeometryShapeMismatch");
+        }
+
+        if (!lowerProblem.Contains(
+                GetGeometryMeasurementPhrase(
+                    contract.Measurement,
+                    language),
+                StringComparison.Ordinal))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "GeometryMeasurementMismatch");
+        }
+
+        if (!lowerProblem.Contains(
+                contract.ObjectName.ToLowerInvariant(),
+                StringComparison.Ordinal))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "GeometryObjectMismatch");
+        }
+
+        string unitPattern =
+            $@"(?<![\p{{L}}]){Regex.Escape(contract.LengthUnitSymbol)}(?![\p{{L}}²³\d])";
+
+        if (Regex.Matches(
+                problem,
+                unitPattern,
+                RegexOptions.IgnoreCase |
+                RegexOptions.CultureInvariant).Count <
+            contract.Dimensions.Count)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "GeometryUnitMismatch");
+        }
+
+        if (string.IsNullOrWhiteSpace(subject) ||
+            !lowerProblem.Contains(
+                subject.ToLowerInvariant(),
+                StringComparison.Ordinal))
+        {
+            subject = contract.ObjectName;
+        }
+
+        solutionLead =
+            ElementaryWordProblemSolutionFormatter
+                .NormalizeSolutionLeadPunctuation(solutionLead);
+
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            solutionLead.Contains('=') ||
+            IsGenericSolutionLead(solutionLead, language))
+        {
+            string measurement = GetGeometryMeasurementPhrase(
+                contract.Measurement,
+                language);
+
+            solutionLead = language == AppLanguage.Vietnamese
+                ? $"{char.ToUpperInvariant(measurement[0])}{measurement[1..]} của {contract.ObjectName} là:"
+                : $"The {measurement} of {contract.ObjectName} is:";
+        }
+
+        return new(
+            true,
+            null,
+            new MathWordProblem(
+                problem,
+                solutionLead,
+                contract.AnswerUnit,
+                subject));
+    }
+
+    private static string GetGeometryMeasurementPhrase(
+        GeometryMeasurement measurement,
+        AppLanguage language) =>
+        (measurement, language) switch
+        {
+            (GeometryMeasurement.Perimeter, AppLanguage.Vietnamese) => "chu vi",
+            (GeometryMeasurement.Area, AppLanguage.Vietnamese) => "diện tích",
+            (GeometryMeasurement.TotalArea, AppLanguage.Vietnamese) => "diện tích toàn phần",
+            (GeometryMeasurement.Volume, AppLanguage.Vietnamese) => "thể tích",
+            (GeometryMeasurement.Perimeter, _) => "perimeter",
+            (GeometryMeasurement.Area, _) => "area",
+            (GeometryMeasurement.TotalArea, _) => "total surface area",
+            (GeometryMeasurement.Volume, _) => "volume",
+            _ => throw new ArgumentOutOfRangeException(nameof(measurement))
+        };
 
     private static bool HasUnambiguousOperationMeaning(
         string problem,
