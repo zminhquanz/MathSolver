@@ -637,6 +637,7 @@
                             <Button
                                 x:Name="RootClearButton"
                                 Grid.Column="1"
+                                BackgroundColor="{DynamicResource DividerColor}"
                                 Text="{localization:Translate Actions.Clear}"
                                 Style="{StaticResource SolverSecondaryActionStyle}"
                                 Clicked="OnRootClearClicked" />
