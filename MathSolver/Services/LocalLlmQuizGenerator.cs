@@ -719,7 +719,7 @@ internal static class LlmQuizPromptBuilder
             - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             - For division, divide the left total exactly into the right number of equal groups.
-            - solution_lead is one short textbook sentence introducing the calculation.
+            - solution_lead is one short textbook answer sentence naming the quantity asked in problem_text. For example: "Số cái bút các bạn có tất cả là:" or "The total number of pencils the students have is:". Never write only "Ta thực hiện phép nhân" or "We perform the multiplication".
             - answer_unit is a short noun phrase without a number.
             - subject_name is the person, group, or object described in problem_text; it may be a generic reference and does not require a personal name.
             {{retry}}
@@ -1264,13 +1264,15 @@ internal sealed partial class LlmWordProblemValidator
                 .NormalizeSolutionLeadPunctuation(
                     solutionLead);
 
-        if (string.IsNullOrWhiteSpace(solutionLead) ||
-            solutionLead.Contains('='))
+        if (ShouldRebuildSolutionLead(
+                solutionLead,
+                language))
         {
             solutionLead =
                 ElementaryWordProblemSolutionFormatter
                     .NormalizeSolutionLeadPunctuation(
-                        BuildDefaultSolutionLead(
+                        BuildNaturalSolutionLead(
+                            problem,
                             expression.Operation,
                             unit,
                             language));
@@ -1391,6 +1393,204 @@ internal sealed partial class LlmWordProblemValidator
         return language == AppLanguage.Vietnamese
             ? $"{statement}. Hỏi kết quả là bao nhiêu?"
             : $"{statement}. What is the answer?";
+    }
+
+    private static bool ShouldRebuildSolutionLead(
+        string solutionLead,
+        AppLanguage language)
+    {
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            solutionLead.Contains('='))
+        {
+            return true;
+        }
+
+        string normalized =
+            solutionLead
+                .Trim()
+                .TrimEnd('.', ',', '!', '?', ':', ';', '…')
+                .Trim()
+                .ToLowerInvariant();
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return normalized.StartsWith(
+                       "ta thực hiện phép ",
+                       StringComparison.Ordinal) ||
+                   normalized.StartsWith(
+                       "thực hiện phép ",
+                       StringComparison.Ordinal) ||
+                   normalized.StartsWith(
+                       "ta cần thực hiện phép ",
+                       StringComparison.Ordinal) ||
+                   normalized is
+                       "ta tính" or
+                       "phép tính cần thực hiện";
+        }
+
+        return normalized.StartsWith(
+                   "we perform the ",
+                   StringComparison.Ordinal) ||
+               normalized.StartsWith(
+                   "perform the ",
+                   StringComparison.Ordinal) ||
+               normalized.StartsWith(
+                   "we need to perform the ",
+                   StringComparison.Ordinal) ||
+               normalized is
+                   "we calculate" or
+                   "the calculation to perform";
+    }
+
+    private static string BuildNaturalSolutionLead(
+        string problem,
+        ArithmeticOperation operation,
+        string unit,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese &&
+            TryBuildVietnameseSolutionLeadFromQuestion(
+                problem,
+                unit,
+                out string contextualLead))
+        {
+            return contextualLead;
+        }
+
+        return BuildDefaultSolutionLead(
+            operation,
+            unit,
+            language);
+    }
+
+    private static bool TryBuildVietnameseSolutionLeadFromQuestion(
+        string problem,
+        string unit,
+        out string solutionLead)
+    {
+        solutionLead = string.Empty;
+
+        int questionIndex =
+            problem.LastIndexOf(
+                "bao nhiêu",
+                StringComparison.OrdinalIgnoreCase);
+
+        if (questionIndex < 0)
+        {
+            return false;
+        }
+
+        string questionContext =
+            problem[..questionIndex].TrimEnd();
+
+        int clauseBoundary =
+            questionContext.LastIndexOfAny(
+                ['.', '!', '?', ';', ',']);
+
+        if (clauseBoundary >= 0)
+        {
+            questionContext =
+                questionContext[(clauseBoundary + 1)..];
+        }
+
+        questionContext =
+            TrimVietnameseQuestionStarter(
+                questionContext.Trim());
+
+        if (!IsUsefulVietnameseQuestionContext(
+                questionContext))
+        {
+            return false;
+        }
+
+        bool alreadyNamesQuantity =
+            questionContext.StartsWith(
+                "số ",
+                StringComparison.OrdinalIgnoreCase);
+
+        bool alreadyEndsWithIs =
+            questionContext.EndsWith(
+                " là",
+                StringComparison.OrdinalIgnoreCase) ||
+            questionContext.Equals(
+                "là",
+                StringComparison.OrdinalIgnoreCase);
+
+        string core = alreadyNamesQuantity
+            ? questionContext
+            : $"Số {unit} {questionContext}";
+
+        solutionLead = alreadyEndsWithIs
+            ? $"{core}:"
+            : $"{core} là:";
+
+        return true;
+    }
+
+    private static string TrimVietnameseQuestionStarter(
+        string value)
+    {
+        string result = value;
+
+        string[] starters =
+        [
+            "vậy thì ",
+            "cho biết ",
+            "vậy ",
+            "hỏi ",
+            "thì "
+        ];
+
+        bool removed;
+
+        do
+        {
+            removed = false;
+
+            foreach (string starter in starters)
+            {
+                if (!result.StartsWith(
+                        starter,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                result =
+                    result[starter.Length..].TrimStart();
+
+                removed = true;
+                break;
+            }
+        }
+        while (removed);
+
+        return result;
+    }
+
+    private static bool IsUsefulVietnameseQuestionContext(
+        string value)
+    {
+        if (value.Length is < 3 or > 120)
+        {
+            return false;
+        }
+
+        string normalized =
+            value
+                .Trim()
+                .TrimEnd('.', ',', '!', '?', ':', ';', '…')
+                .Trim()
+                .ToLowerInvariant();
+
+        return normalized is not
+            "có" and not
+            "có tất cả" and not
+            "tất cả có" and not
+            "tổng cộng có" and not
+            "còn lại" and not
+            "mỗi phần có" and not
+            "mỗi nhóm có";
     }
 
     private static string BuildDefaultSolutionLead(
