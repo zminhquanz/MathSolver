@@ -333,7 +333,11 @@
                         <!-- Reset -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*" ColumnSpacing="10">
-                                <Label Grid.Column="0" Text="↶" Style="{StaticResource ThemeMenuIconStyle}" HeightRequest="24" WidthRequest="24"/>
+                                <Image Grid.Column="0" Source="reset_settings.png" WidthRequest="24" HeightRequest="24">
+                                    <Image.Behaviors>
+                                        <toolkit:IconTintColorBehavior x:Name="ResetSettingsIconTintBehavior" />
+                                    </Image.Behaviors>
+                                </Image>
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Đặt lại" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label Text="Khôi phục cài đặt mặc định" Style="{StaticResource ThemeMenuSummaryStyle}" />
