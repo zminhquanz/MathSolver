@@ -272,11 +272,11 @@ public sealed partial class EssayAnswerValidator
         }
 
         string singularEntered =
-            RemoveEnglishPluralSuffix(
+            NormalizeEnglishUnitToSingular(
                 enteredUnit);
 
         string singularExpected =
-            RemoveEnglishPluralSuffix(
+            NormalizeEnglishUnitToSingular(
                 expectedUnit);
 
         string unclassifiedEntered =
@@ -371,11 +371,98 @@ public sealed partial class EssayAnswerValidator
                 StringSplitOptions.RemoveEmptyEntries));
     }
 
-    private static string RemoveEnglishPluralSuffix(
-        string value) =>
-        value.Length > 2 && value.EndsWith('s')
-            ? value[..^1]
-            : value;
+    /// <summary>
+    /// Chuẩn hóa đơn vị tiếng Anh về số ít. Với cụm "... of ...", danh từ
+    /// đếm được nằm ở đầu (sheets of paper); các cụm còn lại đổi từ cuối.
+    /// Danh sách bất quy tắc chỉ bao phủ catalog toán đố để tránh suy diễn
+    /// ngôn ngữ quá rộng trong validator.
+    /// </summary>
+    private static string NormalizeEnglishUnitToSingular(
+        string value)
+    {
+        int ofIndex = value.IndexOf(
+            " of ",
+            StringComparison.Ordinal);
+
+        if (ofIndex > 0)
+        {
+            return string.Concat(
+                SingularizeEnglishWord(value[..ofIndex]),
+                value[ofIndex..]);
+        }
+
+        int lastSpace = value.LastIndexOf(' ');
+
+        if (lastSpace < 0)
+        {
+            return SingularizeEnglishWord(value);
+        }
+
+        return string.Concat(
+            value[..(lastSpace + 1)],
+            SingularizeEnglishWord(value[(lastSpace + 1)..]));
+    }
+
+    private static string SingularizeEnglishWord(
+        string word)
+    {
+        string irregular =
+            word switch
+            {
+                "cacti" => "cactus",
+                "mice" => "mouse",
+                "cookies" => "cookie",
+                "brownies" => "brownie",
+                "budgies" => "budgie",
+                _ => string.Empty
+            };
+
+        if (irregular.Length > 0)
+        {
+            return irregular;
+        }
+
+        if (word.Length > 3 &&
+            word.EndsWith(
+                "ies",
+                StringComparison.Ordinal))
+        {
+            return string.Concat(
+                word[..^3],
+                "y");
+        }
+
+        if (word.Length > 3 &&
+            (word.EndsWith(
+                 "sses",
+                 StringComparison.Ordinal) ||
+             word.EndsWith(
+                 "xes",
+                 StringComparison.Ordinal) ||
+             word.EndsWith(
+                 "zes",
+                 StringComparison.Ordinal) ||
+             word.EndsWith(
+                 "ches",
+                 StringComparison.Ordinal) ||
+             word.EndsWith(
+                 "shes",
+                 StringComparison.Ordinal) ||
+             word.EndsWith(
+                 "oes",
+                 StringComparison.Ordinal)))
+        {
+            return word[..^2];
+        }
+
+        return word.Length > 2 &&
+               word.EndsWith('s') &&
+               !word.EndsWith(
+                   "ss",
+                   StringComparison.Ordinal)
+            ? word[..^1]
+            : word;
+    }
 
     private static string RemoveVietnameseClassifier(
         string value)
@@ -383,7 +470,9 @@ public sealed partial class EssayAnswerValidator
         string[] classifiers =
         [
             "cái", "chiếc", "cây", "quyển", "cuốn", "quả",
-            "con", "tờ", "viên", "bông", "hộp", "chai"
+            "con", "chú", "tờ", "viên", "bông", "hộp", "chai",
+            "cục", "lọ", "hũ", "chậu", "tập", "bộ", "khối",
+            "sợi", "thanh", "miếng", "tấm", "đoàn"
         ];
 
         foreach (string classifier in classifiers)

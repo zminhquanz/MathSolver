@@ -150,6 +150,12 @@ public sealed class LocalLlmQuizGenerator
                 LlmQuizPromptBuilder.SelectStudent(
                     language);
 
+            // Chọn đúng một nhóm đồ vật cho cả lượt sinh và mọi lần retry.
+            // Catalog đầy đủ ở C# không bị ghép vào prompt.
+            WordProblemStoryContext selectedStoryContext =
+                LlmQuizPromptBuilder.SelectStoryContext(
+                    language);
+
             (LLamaWeights weights, ModelParams modelParameters) =
                 await EnsureModelLoadedAsync(
                     modelPath,
@@ -208,6 +214,7 @@ public sealed class LocalLlmQuizGenerator
                         contract.Expression,
                         language,
                         selectedStudent,
+                        selectedStoryContext,
                         previousErrorCode);
 
                 string prompt = useManualGemma4Template
@@ -621,6 +628,9 @@ public sealed class LocalLlmQuizGenerator
 
 internal static class LlmQuizPromptBuilder
 {
+    private static readonly WordProblemContextCategory[] StoryContextCategories =
+        Enum.GetValues<WordProblemContextCategory>();
+
     public static string BuildSystemPrompt(
         AppLanguage language)
     {
@@ -649,6 +659,7 @@ internal static class LlmQuizPromptBuilder
         IntegerArithmeticExpression expression,
         AppLanguage language,
         WordProblemStudent? selectedStudent,
+        WordProblemStoryContext selectedStoryContext,
         string? previousErrorCode)
     {
         string operation =
@@ -688,6 +699,11 @@ internal static class LlmQuizPromptBuilder
                 ? "Nếu dùng tên lớp, khối chỉ được từ lớp 1 đến lớp 5. Lớp con dạng số chỉ từ 1 đến 9 và phải viết lớp 3/1 ... lớp 3/9; dạng chữ đi theo alphabet từ lớp 3A ... lớp 3I. Không viết lớp 30, lớp 3/0, lớp 3/10 hoặc lớp 3J; không viết gọn lớp 31 mà phải viết lớp 3/1."
                 : "If a class label is used, the grade must be Class 1 through Class 5. Numeric sections are only 1 through 9 and must be written Class 3/1 ... Class 3/9; alphabetic sections follow A through I, as in Class 3A ... Class 3I. Never write Class 30, Class 3/0, Class 3/10, or Class 3J; write Class 3/1 instead of compact Class 31.";
 
+        string storyContextRule =
+            language == AppLanguage.Vietnamese
+                ? $"Ngữ cảnh được chọn là \"{selectedStoryContext.NaturalReference}\". Hãy dùng đúng loại đồ vật này trong đề và đặt answer_unit là \"{selectedStoryContext.AnswerUnit}\"."
+                : $"The selected story item is \"{selectedStoryContext.NaturalReference}\". Use this exact kind of item in the problem and set answer_unit to \"{selectedStoryContext.AnswerUnit}\".";
+
         return FormattableString.Invariant(
             $$"""
             Write one natural, age-appropriate word problem in {{languageName}}.
@@ -700,6 +716,7 @@ internal static class LlmQuizPromptBuilder
             - Do not calculate or reveal the answer inside problem_text.
             - Use a realistic elementary-school situation and make the operation unambiguous.
             - {{characterRule}}
+            - {{storyContextRule}}
             - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             - For division, divide the left total exactly into the right number of equal groups.
@@ -726,6 +743,60 @@ internal static class LlmQuizPromptBuilder
                 Random.Shared.Next(
                     people.Students.Count)]
             : null;
+    }
+
+    public static WordProblemStoryContext SelectStoryContext(
+        AppLanguage language)
+    {
+        IReadOnlyList<WordProblemStoryContext> items =
+            WordProblemStoryContextCatalog
+                .GetProfile(language)
+                .Items;
+
+        if (items.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "The word-problem story context catalog is empty.");
+        }
+
+        WordProblemContextCategory category =
+            StoryContextCategories[
+                Random.Shared.Next(
+                    StoryContextCategories.Length)];
+
+        int categoryItemCount = 0;
+
+        foreach (WordProblemStoryContext item in items)
+        {
+            if (item.Category == category)
+            {
+                categoryItemCount++;
+            }
+        }
+
+        if (categoryItemCount == 0)
+        {
+            return items[Random.Shared.Next(items.Count)];
+        }
+
+        int selectedIndex =
+            Random.Shared.Next(categoryItemCount);
+
+        foreach (WordProblemStoryContext item in items)
+        {
+            if (item.Category != category)
+            {
+                continue;
+            }
+
+            if (selectedIndex-- == 0)
+            {
+                return item;
+            }
+        }
+
+        throw new InvalidOperationException(
+            "Could not select a word-problem story context.");
     }
 
     private static string BuildRetryInstruction(
