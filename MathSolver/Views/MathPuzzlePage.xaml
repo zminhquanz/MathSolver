@@ -200,12 +200,24 @@
                                             Color="{DynamicResource PrimaryColor}"
                                             VerticalOptions="Start" />
 
-                                        <Label
-                                            x:Name="LlmStatusLabel"
+                                        <VerticalStackLayout
                                             Grid.Column="1"
-                                            FontSize="14"
-                                            LineHeight="1.2"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                            Spacing="3">
+
+                                            <Label
+                                                x:Name="LlmStatusLabel"
+                                                FontSize="14"
+                                                LineHeight="1.2"
+                                                TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                            <Label
+                                                x:Name="LlmTokenSpeedLabel"
+                                                IsVisible="False"
+                                                FontSize="14"
+                                                FontAttributes="Bold"
+                                                TextColor="{DynamicResource PrimaryColor}" />
+
+                                        </VerticalStackLayout>
 
                                     </Grid>
 
@@ -532,33 +544,39 @@
                                 IsVisible="False"
                                 Spacing="10">
 
-                                <Label
-                                    Text="{localization:QuizTranslate Quiz.EssaySolutionLabel}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <VerticalStackLayout
+                                    x:Name="EssaySolutionSection"
+                                    Spacing="10">
 
-                                <Border
-                                    Padding="12,8"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource BorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-
-                                    <Editor
-                                        x:Name="EssaySolutionEditor"
-                                        MinimumHeightRequest="86"
-                                        AutoSize="TextChanges"
+                                    <Label
+                                        Text="{localization:QuizTranslate Quiz.EssaySolutionLabel}"
                                         FontSize="16"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        Placeholder="{localization:QuizTranslate Quiz.EssaySolutionPlaceholder}"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}" />
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
 
-                                </Border>
+                                    <Border
+                                        Padding="12,8"
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+
+                                        <Editor
+                                            x:Name="EssaySolutionEditor"
+                                            MinimumHeightRequest="86"
+                                            AutoSize="TextChanges"
+                                            FontSize="16"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{DynamicResource TextPrimaryColor}"
+                                            Placeholder="{localization:QuizTranslate Quiz.EssaySolutionPlaceholder}"
+                                            PlaceholderColor="{DynamicResource TextSecondaryColor}" />
+
+                                    </Border>
+
+                                </VerticalStackLayout>
 
                                 <Label
                                     Text="{localization:QuizTranslate Quiz.EssayEquationLabel}"
@@ -615,6 +633,7 @@
                                 </Border>
 
                                 <Label
+                                    x:Name="EssayValidationHintLabel"
                                     Text="{localization:QuizTranslate Quiz.EssayValidationHint}"
                                     FontSize="14"
                                     LineHeight="1.2"

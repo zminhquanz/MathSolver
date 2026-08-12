@@ -30,13 +30,17 @@ public sealed record LlmQuizProgress(
     LlmQuizProgressStage Stage,
     int Attempt,
     int MaximumAttempts,
-    string? ProblemPreview = null);
+    string? ProblemPreview = null,
+    int GeneratedTokenCount = 0,
+    double TokensPerSecond = 0d);
 
 public sealed record LlmQuizGenerationResult(
     ArithmeticQuizQuestion? Question,
     int Attempts,
     string? ErrorCode,
-    bool ModelWasLoaded)
+    bool ModelWasLoaded,
+    int GeneratedTokenCount = 0,
+    double TokensPerSecond = 0d)
 {
     public bool IsSuccess =>
         Question is not null;

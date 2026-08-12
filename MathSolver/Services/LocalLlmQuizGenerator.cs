@@ -136,6 +136,8 @@ public sealed class LocalLlmQuizGenerator
 
         bool modelWasLoaded = false;
         int completedAttempts = 0;
+        int generatedTokenCount = 0;
+        TimeSpan totalGenerationTime = TimeSpan.Zero;
 
         try
         {
@@ -239,6 +241,11 @@ public sealed class LocalLlmQuizGenerator
                 string? lastPreview = null;
                 var previewTimer =
                     System.Diagnostics.Stopwatch.StartNew();
+                var speedReportTimer =
+                    System.Diagnostics.Stopwatch.StartNew();
+                var generationTimer =
+                    new System.Diagnostics.Stopwatch();
+                int attemptGeneratedTokenCount = 0;
 
                 await foreach (string token in
                     executor.InferAsync(
@@ -246,7 +253,20 @@ public sealed class LocalLlmQuizGenerator
                         inferenceParameters,
                         cancellationToken))
                 {
+                    attemptGeneratedTokenCount++;
+
+                    // InferAsync evaluates the prompt before yielding its
+                    // first generated token. Start timing at that first yield
+                    // so token/s measures decode speed rather than model load
+                    // or prompt-prefill time.
+                    if (attemptGeneratedTokenCount == 1)
+                    {
+                        generationTimer.Start();
+                    }
+
                     output.Append(token);
+
+                    string? previewToReport = null;
 
                     if (previewTimer.ElapsedMilliseconds >= 80)
                     {
@@ -261,16 +281,54 @@ public sealed class LocalLlmQuizGenerator
                                 StringComparison.Ordinal))
                         {
                             lastPreview = preview;
-
-                            progress?.Report(
-                                new(
-                                    LlmQuizProgressStage.Generating,
-                                    attempt,
-                                    MaximumAttempts,
-                                    preview));
+                            previewToReport = preview;
                         }
                     }
+
+                    bool shouldReportSpeed =
+                        speedReportTimer.ElapsedMilliseconds >= 250;
+
+                    if (shouldReportSpeed)
+                    {
+                        speedReportTimer.Restart();
+                    }
+
+                    if (previewToReport is not null ||
+                        shouldReportSpeed)
+                    {
+                        int currentGeneratedTokenCount =
+                            generatedTokenCount +
+                            attemptGeneratedTokenCount;
+
+                        TimeSpan currentGenerationTime =
+                            totalGenerationTime +
+                            generationTimer.Elapsed;
+
+                        progress?.Report(
+                            new(
+                                LlmQuizProgressStage.Generating,
+                                attempt,
+                                MaximumAttempts,
+                                previewToReport,
+                                currentGeneratedTokenCount,
+                                CalculateTokensPerSecond(
+                                    currentGeneratedTokenCount,
+                                    currentGenerationTime)));
+                    }
                 }
+
+                generationTimer.Stop();
+
+                generatedTokenCount +=
+                    attemptGeneratedTokenCount;
+
+                totalGenerationTime +=
+                    generationTimer.Elapsed;
+
+                double tokensPerSecond =
+                    CalculateTokensPerSecond(
+                        generatedTokenCount,
+                        totalGenerationTime);
 
                 string rawOutput = output.ToString();
 
@@ -283,7 +341,9 @@ public sealed class LocalLlmQuizGenerator
                             LlmQuizProgressStage.Generating,
                             attempt,
                             MaximumAttempts,
-                            completedPreview));
+                            completedPreview,
+                            generatedTokenCount,
+                            tokensPerSecond));
                 }
 
                 System.Diagnostics.Debug.WriteLine(
@@ -324,7 +384,9 @@ public sealed class LocalLlmQuizGenerator
                             },
                             attempt,
                             null,
-                            true);
+                            true,
+                            generatedTokenCount,
+                            tokensPerSecond);
                     }
 
                     previousErrorCode =
@@ -349,7 +411,11 @@ public sealed class LocalLlmQuizGenerator
                 null,
                 completedAttempts,
                 previousErrorCode ?? "InvalidWordProblem",
-                modelWasLoaded);
+                modelWasLoaded,
+                generatedTokenCount,
+                CalculateTokensPerSecond(
+                    generatedTokenCount,
+                    totalGenerationTime));
         }
         catch (OperationCanceledException)
             when (cancellationToken.IsCancellationRequested)
@@ -365,7 +431,11 @@ public sealed class LocalLlmQuizGenerator
                 null,
                 completedAttempts,
                 MapRuntimeError(exception),
-                modelWasLoaded);
+                modelWasLoaded,
+                generatedTokenCount,
+                CalculateTokensPerSecond(
+                    generatedTokenCount,
+                    totalGenerationTime));
         }
         finally
         {
@@ -623,6 +693,16 @@ public sealed class LocalLlmQuizGenerator
         }
 
         return "ModelRuntimeError";
+    }
+
+    private static double CalculateTokensPerSecond(
+        int generatedTokenCount,
+        TimeSpan elapsed)
+    {
+        return generatedTokenCount > 0 &&
+               elapsed.TotalSeconds > 0d
+            ? generatedTokenCount / elapsed.TotalSeconds
+            : 0d;
     }
 }
 

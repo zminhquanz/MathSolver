@@ -252,6 +252,8 @@ public partial class MathPuzzlePage : ContentPage
         Grid.SetColumnSpan(
             NextQuestionButton,
             isLocalLlm ? 1 : 2);
+
+        UpdateEssayAnswerPresentation();
     }
 
     private void OnTrueFalseModeClicked(
@@ -332,6 +334,8 @@ public partial class MathPuzzlePage : ContentPage
             hasQuestion &&
             _selectedMode == ArithmeticQuizMode.Essay;
 
+        UpdateEssayAnswerPresentation();
+
         QuestionPromptLabel.Text =
             _currentQuestion?.WordProblem is not null
                 ? Translate("Quiz.WordProblemTitle")
@@ -346,6 +350,24 @@ public partial class MathPuzzlePage : ContentPage
                             "Quiz.EssayQuestionTitle",
                         _ => "Quiz.QuestionTitle"
                     });
+    }
+
+    private void UpdateEssayAnswerPresentation()
+    {
+        bool isWordProblemSource =
+            _generationSource == QuizGenerationSource.LocalLlm;
+
+        // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
+        // Nguồn Thuật toán chỉ hiển thị biểu thức, nên học sinh chỉ cần
+        // nhập phép tính và đáp số.
+        EssaySolutionSection.IsVisible =
+            isWordProblemSource;
+
+        EssayValidationHintLabel.Text =
+            TranslateQuiz(
+                isWordProblemSource
+                    ? "Quiz.EssayValidationHint"
+                    : "Quiz.EssayValidationHintAlgorithm");
     }
 
     private void UpdateOperationPickerItems()
@@ -483,6 +505,7 @@ public partial class MathPuzzlePage : ContentPage
                 ? Translate("Quiz.SelectModelFirst")
                 : Translate("Quiz.LlmReady"),
             isRunning: false);
+        ResetLlmTokenSpeed();
     }
 
     private async void OnSelectLlmModelClicked(
@@ -1071,6 +1094,8 @@ public partial class MathPuzzlePage : ContentPage
         QuestionExpressionLabel.Text =
             Translate("Quiz.LoadingModel");
 
+        ResetLlmTokenSpeed();
+
         ShowLlmStatus(
             _showFriendlyGreetingForCurrentLoad
                 ? Translate("Quiz.FirstModelGreeting")
@@ -1115,6 +1140,8 @@ public partial class MathPuzzlePage : ContentPage
                 ShowLlmStatus(
                     Translate("Quiz.GenerationSucceeded"),
                     isRunning: false);
+                ShowLlmTokenSpeed(
+                    result.TokensPerSecond);
             }
             else
             {
@@ -1153,6 +1180,12 @@ public partial class MathPuzzlePage : ContentPage
         {
             ShowGeneratedProblemPreview(
                 progress.ProblemPreview);
+        }
+
+        if (progress.TokensPerSecond > 0d)
+        {
+            ShowLlmTokenSpeed(
+                progress.TokensPerSecond);
         }
 
         string status =
@@ -1227,6 +1260,8 @@ public partial class MathPuzzlePage : ContentPage
             "DangerColor");
         QuestionExpressionLabel.Text = message;
         ShowLlmStatus(message, isRunning: false);
+        ShowLlmTokenSpeed(
+            result.TokensPerSecond);
     }
 
     private void UpdateLlmModelUi()
@@ -1362,6 +1397,33 @@ public partial class MathPuzzlePage : ContentPage
         LlmActivityIndicator.IsRunning = isRunning;
         LlmActivityIndicator.IsVisible = isRunning;
         LlmStatusLabel.Text = message;
+    }
+
+    private void ShowLlmTokenSpeed(
+        double tokensPerSecond)
+    {
+        if (!double.IsFinite(tokensPerSecond) ||
+            tokensPerSecond <= 0d)
+        {
+            ResetLlmTokenSpeed();
+            return;
+        }
+
+        LlmTokenSpeedLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                TranslateQuiz("Quiz.GenerationSpeed"),
+                tokensPerSecond.ToString(
+                    "0.0",
+                    CultureInfo.CurrentCulture));
+
+        LlmTokenSpeedLabel.IsVisible = true;
+    }
+
+    private void ResetLlmTokenSpeed()
+    {
+        LlmTokenSpeedLabel.Text = string.Empty;
+        LlmTokenSpeedLabel.IsVisible = false;
     }
 
     private int BeginLlmProgress(
@@ -1933,6 +1995,7 @@ public partial class MathPuzzlePage : ContentPage
         LlmActivityIndicator.IsVisible = false;
         LlmStatusLabel.Text = string.Empty;
         LlmProgressGrid.IsVisible = false;
+        ResetLlmTokenSpeed();
     }
 
     private void ResetQuizSessionState()
