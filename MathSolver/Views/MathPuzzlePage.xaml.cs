@@ -14,6 +14,7 @@ public partial class MathPuzzlePage : ContentPage
     private readonly GeometryCalculationEngine _geometryEngine = new();
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
+    private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
     private readonly EssayAnswerValidator _essayAnswerValidator;
     private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
     private readonly QuizLlmModelStore _llmModelStore = new();
@@ -29,6 +30,7 @@ public partial class MathPuzzlePage : ContentPage
         QuizGenerationSource.Algorithm;
 
     private ArithmeticQuizQuestion? _currentQuestion;
+    private QuizProblemRequest? _activeProblemRequest;
     private CancellationTokenSource? _llmGenerationCancellation;
     private string? _llmModelPath;
     private bool _questionAnswered;
@@ -422,18 +424,12 @@ public partial class MathPuzzlePage : ContentPage
         try
         {
             OperationPicker.Items.Clear();
-            OperationPicker.Items.Add(
-                Translate("Quiz.OperationMixed"));
-            OperationPicker.Items.Add(
-                Translate("Quiz.OperationAddition"));
-            OperationPicker.Items.Add(
-                Translate("Quiz.OperationSubtraction"));
-            OperationPicker.Items.Add(
-                Translate("Quiz.OperationMultiplication"));
-            OperationPicker.Items.Add(
-                Translate("Quiz.OperationDivision"));
-            OperationPicker.Items.Add(
-                Translate("Quiz.ProblemGeometry"));
+            foreach (QuizProblemOption option in
+                     _quizProblemTypeCatalog.Options)
+            {
+                OperationPicker.Items.Add(
+                    Translate(option.LocalizationKey));
+            }
 
             if (selectedIndex >= OperationPicker.Items.Count)
             {
@@ -445,6 +441,10 @@ public partial class MathPuzzlePage : ContentPage
                     selectedIndex,
                     0,
                     OperationPicker.Items.Count - 1);
+
+            _activeProblemRequest =
+                _quizProblemTypeCatalog.GetFixedRequest(
+                    OperationPicker.SelectedIndex);
         }
         finally
         {
@@ -462,6 +462,10 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
+        _activeProblemRequest =
+            _quizProblemTypeCatalog.GetFixedRequest(
+                OperationPicker.SelectedIndex);
+
         UpdateEssayAnswerPresentation();
 
         if (_generationSource == QuizGenerationSource.Algorithm)
@@ -474,20 +478,24 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
-    private ArithmeticOperation? GetSelectedOperation()
-    {
-        return OperationPicker.SelectedIndex switch
-        {
-            1 => ArithmeticOperation.Add,
-            2 => ArithmeticOperation.Subtract,
-            3 => ArithmeticOperation.Multiply,
-            4 => ArithmeticOperation.Divide,
-            _ => null
-        };
-    }
+    private QuizProblemRequest ResolveSelectedProblem() =>
+        _quizProblemTypeCatalog.Resolve(
+            OperationPicker.SelectedIndex);
 
-    private bool IsGeometryProblemSelected() =>
-        OperationPicker.SelectedIndex == 5;
+    private bool IsGeometryProblemSelected()
+    {
+        if (_currentQuestion?.GeometryProblem is not null)
+        {
+            return true;
+        }
+
+        QuizProblemRequest? request =
+            _activeProblemRequest ??
+            _quizProblemTypeCatalog.GetFixedRequest(
+                OperationPicker.SelectedIndex);
+
+        return request?.Kind == QuizProblemKind.Geometry;
+    }
 
     private void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
@@ -499,14 +507,25 @@ public partial class MathPuzzlePage : ContentPage
 
         try
         {
+            QuizProblemRequest problemRequest =
+                ResolveSelectedProblem();
+
+            _activeProblemRequest = problemRequest;
+
             _currentQuestion =
-                IsGeometryProblemSelected()
-                    ? _geometryQuizGenerator.GenerateAlgorithm(
-                        _selectedMode,
-                        AppLanguageManager.CurrentLanguage)
-                    : _quizGenerator.Generate(
-                        _selectedMode,
-                        GetSelectedOperation());
+                problemRequest.Kind switch
+                {
+                    QuizProblemKind.Geometry =>
+                        _geometryQuizGenerator.GenerateAlgorithm(
+                            _selectedMode,
+                            AppLanguageManager.CurrentLanguage),
+                    QuizProblemKind.Arithmetic =>
+                        _quizGenerator.Generate(
+                            _selectedMode,
+                            problemRequest.ArithmeticOperation),
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(problemRequest))
+                };
 
             CommitGeneratedQuestionNumber(
                 questionNumberOnSuccess);
@@ -538,6 +557,9 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         _currentQuestion = null;
+        _activeProblemRequest =
+            _quizProblemTypeCatalog.GetFixedRequest(
+                OperationPicker.SelectedIndex);
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
 
@@ -1073,6 +1095,11 @@ public partial class MathPuzzlePage : ContentPage
 
         CancelLlmGeneration();
 
+        QuizProblemRequest problemRequest =
+            ResolveSelectedProblem();
+
+        _activeProblemRequest = problemRequest;
+
         var cancellation = new CancellationTokenSource();
         int progressVersion =
             BeginLlmProgress(cancellation);
@@ -1119,8 +1146,7 @@ public partial class MathPuzzlePage : ContentPage
                 await _localLlmQuizGenerator.GenerateAsync(
                     _llmModelPath,
                     _selectedMode,
-                    GetSelectedOperation(),
-                    IsGeometryProblemSelected(),
+                    problemRequest,
                     AppLanguageManager.CurrentLanguage,
                     progress,
                     cancellation.Token);
@@ -1985,6 +2011,9 @@ public partial class MathPuzzlePage : ContentPage
     private void ResetCurrentQuestionState()
     {
         _currentQuestion = null;
+        _activeProblemRequest =
+            _quizProblemTypeCatalog.GetFixedRequest(
+                OperationPicker.SelectedIndex);
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
 

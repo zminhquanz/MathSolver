@@ -127,8 +127,7 @@ public sealed class LocalLlmQuizGenerator
     public async Task<LlmQuizGenerationResult> GenerateAsync(
         string modelPath,
         ArithmeticQuizMode mode,
-        ArithmeticOperation? requestedOperation,
-        bool generateGeometryProblem,
+        QuizProblemRequest problemRequest,
         AppLanguage language,
         IProgress<LlmQuizProgress>? progress = null,
         CancellationToken cancellationToken = default)
@@ -149,13 +148,19 @@ public sealed class LocalLlmQuizGenerator
         try
         {
             ArithmeticQuizQuestion contract =
-                generateGeometryProblem
-                    ? _geometryQuizGenerator.Generate(
-                        mode,
-                        language)
-                    : CreateNaturalLanguageContract(
-                        mode,
-                        requestedOperation);
+                problemRequest.Kind switch
+                {
+                    QuizProblemKind.Geometry =>
+                        _geometryQuizGenerator.Generate(
+                            mode,
+                            language),
+                    QuizProblemKind.Arithmetic =>
+                        CreateNaturalLanguageContract(
+                            mode,
+                            problemRequest.ArithmeticOperation),
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(problemRequest))
+                };
 
             // Chỉ chọn tối đa một tên cho cả lượt sinh. Mọi lần retry giữ
             // nguyên gợi ý này và catalog đầy đủ không bị nối vào prompt.

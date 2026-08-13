@@ -13,7 +13,7 @@
     { "key": "Quiz.MultipleChoiceMode", "source": "🔢 4 đáp án", "mode": "exact" },
     { "key": "Quiz.EssayMode", "source": "✍️ Tự luận", "mode": "exact" },
     { "key": "Quiz.OperationTitle", "source": "3. Chọn bài toán", "mode": "exact" },
-    { "key": "Quiz.OperationMixed", "source": "Hỗn hợp + − × ÷", "mode": "exact" },
+    { "key": "Quiz.OperationMixed", "source": "Hỗn hợp", "mode": "exact" },
     { "key": "Quiz.OperationAddition", "source": "Phép cộng +", "mode": "exact" },
     { "key": "Quiz.OperationSubtraction", "source": "Phép trừ −", "mode": "exact" },
     { "key": "Quiz.OperationMultiplication", "source": "Phép nhân ×", "mode": "exact" },

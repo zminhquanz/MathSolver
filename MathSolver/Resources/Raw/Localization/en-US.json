@@ -17,7 +17,7 @@
     "Quiz.MultipleChoiceMode": "🔢 4 choices",
     "Quiz.EssayMode": "✍️ Written",
     "Quiz.OperationTitle": "3. Choose a problem type",
-    "Quiz.OperationMixed": "Mixed + − × ÷",
+    "Quiz.OperationMixed": "Mixed",
     "Quiz.OperationAddition": "Addition +",
     "Quiz.OperationSubtraction": "Subtraction −",
     "Quiz.OperationMultiplication": "Multiplication ×",
