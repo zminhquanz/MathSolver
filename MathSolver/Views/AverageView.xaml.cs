@@ -1,5 +1,6 @@
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Views.Base;
 using System.Globalization;
 using System.Numerics;
@@ -10,6 +11,7 @@ namespace MathSolver.Views;
 
 public partial class AverageView : LocalizedSolverView
 {
+    private readonly ArithmeticMeanEngine _averageEngine = new();
     private const int ResultSignificantDigits =
         OctoDouble.SignificantDigits;
 
@@ -288,9 +290,6 @@ public partial class AverageView : LocalizedSolverView
                 value);
         }
 
-        BigInteger numerator =
-            BigInteger.Zero;
-
         var valueTexts =
             new List<string>(
                 values.Count);
@@ -301,20 +300,18 @@ public partial class AverageView : LocalizedSolverView
             BigInteger bigValue =
                 (BigInteger)value;
 
-            numerator +=
-                bigValue;
-
             valueTexts.Add(
                 FormatRational(
                     bigValue,
                     BigInteger.One));
         }
 
+        ArithmeticMeanResult result =
+            _averageEngine.CalculateInteger(values);
+
         ShowSolution(
             valueTexts,
-            numerator,
-            BigInteger.One,
-            values.Count);
+            result);
     }
 
     private void CalculateDecimalAverage(
@@ -354,20 +351,6 @@ public partial class AverageView : LocalizedSolverView
                 value);
         }
 
-        int commonScale =
-            values.Count == 0
-                ? 0
-                : values.Max(
-                    GetDecimalScale);
-
-        BigInteger denominator =
-            BigInteger.Pow(
-                10,
-                commonScale);
-
-        BigInteger numerator =
-            BigInteger.Zero;
-
         var valueTexts =
             new List<string>(
                 values.Count);
@@ -375,16 +358,10 @@ public partial class AverageView : LocalizedSolverView
         foreach (decimal value
                  in values)
         {
-            GetDecimalParts(
+            ArithmeticMeanEngine.GetDecimalParts(
                 value,
                 out BigInteger unscaledValue,
                 out int scale);
-
-            numerator +=
-                unscaledValue *
-                BigInteger.Pow(
-                    10,
-                    commonScale - scale);
 
             valueTexts.Add(
                 FormatRational(
@@ -394,31 +371,19 @@ public partial class AverageView : LocalizedSolverView
                         scale)));
         }
 
+        ArithmeticMeanResult result =
+            _averageEngine.CalculateDecimal(values);
+
         ShowSolution(
             valueTexts,
-            numerator,
-            denominator,
-            values.Count);
+            result);
     }
 
     private void ShowSolution(
         IReadOnlyList<string> valueTexts,
-        BigInteger sumNumerator,
-        BigInteger sumDenominator,
-        int count)
+        ArithmeticMeanResult calculation)
     {
-        BigInteger averageDenominator =
-            sumDenominator *
-            count;
-
-        // Kết quả cuối cùng luôn là OctoDouble. Riêng tử/mẫu BigInteger
-        // chỉ giữ tổng chính xác của dữ liệu Int128/decimal trước khi đổi kiểu.
-        OctoDouble average =
-            OctoDouble.FromRational(
-                sumNumerator,
-                averageDenominator);
-
-        if (!average.IsFinite)
+        if (!calculation.IsFinite)
         {
             ShowError(
                 Translate(
@@ -440,22 +405,22 @@ public partial class AverageView : LocalizedSolverView
 
         string sumText =
             FormatRational(
-                sumNumerator,
-                sumDenominator);
+                calculation.SumNumerator,
+                calculation.SumDenominator);
 
         string resultText =
             FormatRational(
-                sumNumerator,
-                averageDenominator);
+                calculation.SumNumerator,
+                calculation.AverageDenominator);
 
         _solutionState =
             new AverageSolutionState(
                 valuesText,
                 expressionText,
-                count,
+                calculation.Count,
                 sumText,
                 resultText,
-                average);
+                calculation.Average);
 
         RefreshLocalizedSolution();
 
@@ -628,49 +593,6 @@ public partial class AverageView : LocalizedSolverView
         }
 
         return DecimalParseError.None;
-    }
-
-    private static int GetDecimalScale(
-        decimal value)
-    {
-        return (decimal.GetBits(
-                    value)[3] >> 16) &
-               0xFF;
-    }
-
-    private static void GetDecimalParts(
-        decimal value,
-        out BigInteger unscaledValue,
-        out int scale)
-    {
-        int[] bits =
-            decimal.GetBits(
-                value);
-
-        uint low =
-            unchecked((uint)bits[0]);
-
-        uint middle =
-            unchecked((uint)bits[1]);
-
-        uint high =
-            unchecked((uint)bits[2]);
-
-        scale =
-            (bits[3] >> 16) &
-            0xFF;
-
-        unscaledValue =
-            ((BigInteger)high << 64) |
-            ((BigInteger)middle << 32) |
-            low;
-
-        if ((bits[3] & int.MinValue) != 0)
-        {
-            unscaledValue =
-                BigInteger.Negate(
-                    unscaledValue);
-        }
     }
 
     /// <summary>
@@ -1077,7 +999,7 @@ public partial class AverageView : LocalizedSolverView
                 CultureInfo.InvariantCulture,
                 out decimal decimalValue))
         {
-            GetDecimalParts(
+            ArithmeticMeanEngine.GetDecimalParts(
                 decimalValue,
                 out BigInteger unscaledValue,
                 out int scale);

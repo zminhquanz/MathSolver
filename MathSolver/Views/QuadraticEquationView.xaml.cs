@@ -2,6 +2,7 @@ using MathSolver.Graphics;
 using MathSolver.Controls;
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Views.Base;
 using System.Globalization;
 using System.Numerics;
@@ -11,6 +12,7 @@ namespace MathSolver.Views;
 
 public partial class QuadraticEquationView : LocalizedSolverView
 {
+    private readonly QuadraticEquationEngine _quadraticEngine = new();
     private const string Int128RangeText =
         "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến " +
         "170,141,183,460,469,231,731,687,303,715,884,105,727";
@@ -928,11 +930,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
             CoefficientCEntry,
             c);
 
-        if (!TryCalculateDelta(
-                a,
-                b,
-                c,
-                out OctoDouble delta))
+        QuadraticEquationResult calculation =
+            _quadraticEngine.Solve(a, b, c);
+
+        if (!calculation.IsFinite)
         {
             ShowError(
                 "Kết quả Δ không thể biểu diễn hữu hạn bằng " +
@@ -946,7 +947,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
             a,
             b,
             c,
-            delta);
+            calculation);
 
         ClearTransientFocus();
     }
@@ -1240,134 +1241,6 @@ public partial class QuadraticEquationView : LocalizedSolverView
             "−",
             StringComparison.Ordinal);
     }
-
-    private static bool TryCalculateDelta(
-        Int128 a,
-        Int128 b,
-        Int128 c,
-        out OctoDouble delta)
-    {
-        OctoDouble preciseA =
-            OctoDouble.FromInt128(
-                a);
-
-        OctoDouble preciseB =
-            OctoDouble.FromInt128(
-                b);
-
-        OctoDouble preciseC =
-            OctoDouble.FromInt128(
-                c);
-
-        // Δ = b² − 4ac. OctoDouble.FusedMultiplyAdd gom chính xác các
-        // tích riêng phần bằng FMA rồi chỉ làm tròn về tám thành phần ở cuối.
-        delta =
-            OctoDouble.FusedMultiplyAdd(
-                -4d *
-                preciseA,
-                preciseC,
-                preciseB *
-                preciseB);
-
-        return delta.IsFinite;
-    }
-
-    private static bool TryCalculateDoubleRoot(
-        Int128 a,
-        Int128 b,
-        out OctoDouble root)
-    {
-        OctoDouble preciseA =
-            OctoDouble.FromInt128(
-                a);
-
-        OctoDouble preciseB =
-            OctoDouble.FromInt128(
-                b);
-
-        root =
-            -preciseB /
-            (2d *
-             preciseA);
-
-        return root.IsFinite;
-    }
-
-    private static bool TryCalculateDistinctRoots(
-        Int128 a,
-        Int128 b,
-        Int128 c,
-        OctoDouble delta,
-        out OctoDouble squareRootDelta,
-        out OctoDouble firstRoot,
-        out OctoDouble secondRoot)
-    {
-        OctoDouble preciseA =
-            OctoDouble.FromInt128(
-                a);
-
-        OctoDouble preciseB =
-            OctoDouble.FromInt128(
-                b);
-
-        OctoDouble preciseC =
-            OctoDouble.FromInt128(
-                c);
-
-        squareRootDelta =
-            OctoDouble.Sqrt(
-                delta);
-
-        firstRoot =
-            OctoDouble.NaN;
-
-        secondRoot =
-            OctoDouble.NaN;
-
-        if (!squareRootDelta.IsFinite)
-        {
-            return false;
-        }
-
-        // Công thức q hạn chế triệt tiêu số khi b và √Δ gần bằng nhau.
-        OctoDouble q =
-            -0.5d *
-            (preciseB +
-             OctoDouble.CopySign(
-                 squareRootDelta,
-                 preciseB));
-
-        if (!q.IsZero)
-        {
-            firstRoot =
-                q /
-                preciseA;
-
-            secondRoot =
-                preciseC /
-                q;
-        }
-        else
-        {
-            OctoDouble denominator =
-                2d *
-                preciseA;
-
-            firstRoot =
-                (-preciseB +
-                 squareRootDelta) /
-                denominator;
-
-            secondRoot =
-                (-preciseB -
-                 squareRootDelta) /
-                denominator;
-        }
-
-        return firstRoot.IsFinite &&
-               secondRoot.IsFinite;
-    }
-
 
     private void ResetStep4MathPresentation()
     {
@@ -1808,8 +1681,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
         Int128 a,
         Int128 b,
         Int128 c,
-        OctoDouble delta)
+        QuadraticEquationResult calculation)
     {
+        OctoDouble delta = calculation.Delta;
         string aText =
             FormatNumber(
                 a);
@@ -1862,7 +1736,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         ResetStep4MathPresentation();
 
-        if (delta < OctoDouble.Zero)
+        if (calculation.Kind == QuadraticSolutionKind.NoRealRoots)
         {
             SetResultStateColors(
                 hasRealRoots: false);
@@ -1886,19 +1760,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
             Step4BodyLabel.Text =
                 "Phương trình vô nghiệm trong tập số thực ℝ.";
         }
-        else if (delta.IsZero)
+        else if (calculation.Kind == QuadraticSolutionKind.DoubleRoot)
         {
-            if (!TryCalculateDoubleRoot(
-                    a,
-                    b,
-                    out OctoDouble doubleRoot))
-            {
-                ShowError(
-                    LocalizationService.TranslateKey(
-                        "Quadratic.RootNotFiniteOctoDouble"));
-
-                return;
-            }
+            OctoDouble doubleRoot = calculation.FirstRoot;
 
             SetResultStateColors(
                 hasRealRoots: true);
@@ -1931,21 +1795,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
         }
         else
         {
-            if (!TryCalculateDistinctRoots(
-                    a,
-                    b,
-                    c,
-                    delta,
-                    out OctoDouble squareRootDelta,
-                    out OctoDouble firstRoot,
-                    out OctoDouble secondRoot))
-            {
-                ShowError(
-                    LocalizationService.TranslateKey(
-                        "Quadratic.RootNotFiniteOctoDouble"));
-
-                return;
-            }
+            OctoDouble squareRootDelta = calculation.SquareRootDelta;
+            OctoDouble firstRoot = calculation.FirstRoot;
+            OctoDouble secondRoot = calculation.SecondRoot;
 
             SetResultStateColors(
                 hasRealRoots: true);

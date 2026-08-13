@@ -2,7 +2,7 @@ using MathSolver.Models;
 using MathSolver.Numerics;
 using System.Numerics;
 
-namespace MathSolver.Services;
+namespace MathSolver.Services.Core;
 
 /// <summary>
 /// Engine hình học độc lập với UI. Cả tab Giải toán/Hình học và bộ sinh

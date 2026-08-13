@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Views.Base;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -11,6 +12,7 @@ namespace MathSolver.Views;
 
 public partial class FractionView : LocalizedSolverView
 {
+    private readonly FractionCalculationEngine _fractionEngine = new();
     private bool _isCompact;
     private bool _isUpdatingNumberText;
 
@@ -259,7 +261,7 @@ public partial class FractionView : LocalizedSolverView
             (BigInteger)denominator2Input;
 
         FractionCalculationResult result =
-            FractionCalculator.Calculate(
+            _fractionEngine.Calculate(
                 numerator1,
                 denominator1,
                 numerator2,

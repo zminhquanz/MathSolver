@@ -2,6 +2,7 @@ using LLama;
 using LLama.Common;
 using LLama.Sampling;
 using MathSolver.Models;
+using MathSolver.Services.Core;
 using System.Globalization;
 using System.Numerics;
 using System.Text;

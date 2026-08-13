@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Services.Localization;
 using System.Globalization;
 using System.Numerics;

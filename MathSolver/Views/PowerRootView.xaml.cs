@@ -2,6 +2,7 @@ using CommunityToolkit.Maui.Storage;
 using MathSolver.Controls;
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Views.Base;
 using System.Diagnostics;
 using System.Globalization;
@@ -18,6 +19,7 @@ namespace MathSolver.Views;
 
 public partial class PowerRootView : LocalizedSolverView
 {
+    private readonly PowerRootEngine _powerRootEngine = new();
     private const long MaxBaseMagnitude =
         1_000_000_000_000_000_000L;
 
@@ -854,84 +856,29 @@ public partial class PowerRootView : LocalizedSolverView
 
         try
         {
+            RootCalculationResult calculation =
+                _powerRootEngine.CalculateRoot(
+                    radicand,
+                    degree);
+
             RootCalculationMethod method =
-                degree switch
-                {
-                    2 => RootCalculationMethod.Sqrt,
-                    3 => RootCalculationMethod.Cbrt,
-                    _ => RootCalculationMethod.Pow
-                };
+                (RootCalculationMethod)calculation.Method;
 
-            bool isComplex =
-                radicand < 0 &&
-                degree % 2 == 0;
-
-            DoubleDouble realResult =
-                DoubleDouble.Zero;
-
-            Complex complexResult =
-                Complex.Zero;
+            bool isComplex = calculation.IsComplex;
+            DoubleDouble realResult = calculation.RealResult;
+            Complex complexResult = calculation.ComplexResult;
 
             string resultText;
 
-            if (isComplex)
+            if (!calculation.IsFinite)
             {
-                complexResult =
-                    degree == 2
-                        ? Complex.Sqrt(
-                            new Complex(
-                                (double)radicand,
-                                0d))
-                        : Complex.Pow(
-                            new Complex(
-                                (double)radicand,
-                                0d),
-                            1d / degree);
-
-                resultText =
-                    FormatRootComplex(
-                        complexResult);
+                ShowRootError(Translate("PowerRoot.RootNotFinite"));
+                return;
             }
-            else
-            {
-                DoubleDouble magnitude =
-                    DoubleDouble.Abs(
-                        DoubleDouble.FromInt128(
-                            radicand));
 
-                realResult =
-                    method switch
-                    {
-                        RootCalculationMethod.Sqrt =>
-                            DoubleDouble.Sqrt(
-                                magnitude),
-                        RootCalculationMethod.Cbrt =>
-                            DoubleDouble.Cbrt(
-                                magnitude),
-                        _ =>
-                            DoubleDouble.RootUsingPow(
-                                magnitude,
-                                degree)
-                    };
-
-                if (radicand < 0)
-                {
-                    realResult =
-                        -realResult;
-                }
-
-                if (!realResult.IsFinite)
-                {
-                    ShowRootError(
-                        Translate(
-                            "PowerRoot.RootNotFinite"));
-                    return;
-                }
-
-                resultText =
-                    FormatRootReal(
-                        realResult);
-            }
+            resultText = isComplex
+                ? FormatRootComplex(complexResult)
+                : FormatRootReal(realResult);
 
             _rootCalculationState =
                 new RootCalculationState(
@@ -1063,7 +1010,7 @@ public partial class PowerRootView : LocalizedSolverView
                 (BigInteger)state.Radicand);
 
         bool hasExactIntegerRoot =
-            TryGetExactIntegerRoot(
+            _powerRootEngine.TryGetExactIntegerRoot(
                 absoluteRadicand,
                 state.Degree,
                 out BigInteger exactMagnitude);
@@ -1475,86 +1422,6 @@ public partial class PowerRootView : LocalizedSolverView
             : radicandText;
     }
 
-    private static bool TryGetExactIntegerRoot(
-        BigInteger magnitude,
-        int degree,
-        out BigInteger root)
-    {
-        root =
-            BigInteger.Zero;
-
-        if (magnitude.Sign < 0 ||
-            degree < 1)
-        {
-            return false;
-        }
-
-        if (magnitude.IsZero ||
-            magnitude.IsOne)
-        {
-            root =
-                magnitude;
-            return true;
-        }
-
-        long bitLength =
-            magnitude.GetBitLength();
-
-        if (degree >= bitLength)
-        {
-            return false;
-        }
-
-        int upperRootBitCount =
-            checked(
-                (int)((bitLength + degree - 1L) /
-                      degree));
-
-        BigInteger lower =
-            new(2);
-
-        BigInteger upper =
-            BigInteger.One <<
-            upperRootBitCount;
-
-        while (lower <= upper)
-        {
-            BigInteger candidate =
-                (lower + upper) >> 1;
-
-            BigInteger candidatePower =
-                BigInteger.Pow(
-                    candidate,
-                    degree);
-
-            int comparison =
-                candidatePower.CompareTo(
-                    magnitude);
-
-            if (comparison == 0)
-            {
-                root =
-                    candidate;
-                return true;
-            }
-
-            if (comparison < 0)
-            {
-                lower =
-                    candidate +
-                    BigInteger.One;
-            }
-            else
-            {
-                upper =
-                    candidate -
-                    BigInteger.One;
-            }
-        }
-
-        return false;
-    }
-
     private static string FormatRootInteger(
         BigInteger value)
     {
@@ -1934,7 +1801,8 @@ public partial class PowerRootView : LocalizedSolverView
                 exponent);
 
         PowerComputationStrategy strategy =
-            SelectComputationStrategy(
+            (PowerComputationStrategy)
+            _powerRootEngine.SelectPowerStrategy(
                 baseValue,
                 exponent,
                 out int decimalExponent);
@@ -2045,7 +1913,7 @@ public partial class PowerRootView : LocalizedSolverView
                     1);
 
                 ParallelPowerResult parallelResult =
-                    await ComputeParallelPowerAsync(
+                    await _powerRootEngine.ComputeParallelPowerAsync(
                         baseValue,
                         exponent,
                         activeWorkerCount,
@@ -2102,7 +1970,7 @@ public partial class PowerRootView : LocalizedSolverView
                         0,
                         1);
 
-                    if (!TryGetPowerOfTwoExponent(
+                    if (!_powerRootEngine.TryGetPowerOfTwoExponent(
                             baseValue,
                             out int basePowerOfTwoExponent))
                     {
@@ -2116,7 +1984,7 @@ public partial class PowerRootView : LocalizedSolverView
                             exponent);
 
                     result =
-                        await ComputeBitShiftPowerAsync(
+                        await _powerRootEngine.ComputeBitShiftPowerAsync(
                             baseValue,
                             exponent,
                             totalBitShift,
@@ -2134,7 +2002,7 @@ public partial class PowerRootView : LocalizedSolverView
                 else
                 {
                     int multiplicationCount =
-                        CountPowerMultiplications(
+                        _powerRootEngine.CountPowerMultiplications(
                             exponent);
 
                     SetCalculationProgress(
@@ -2147,7 +2015,7 @@ public partial class PowerRootView : LocalizedSolverView
                             multiplicationCount));
 
                     result =
-                        await ComputeSingleThreadedPowerAsync(
+                        await _powerRootEngine.ComputeSingleThreadedPowerAsync(
                             baseValue,
                             exponent,
                             (completed, total) =>
@@ -2482,7 +2350,7 @@ public partial class PowerRootView : LocalizedSolverView
                 _calculationActiveWorkerCount);
     }
 
-    private static string CreateCalculationPhaseText(
+    private string CreateCalculationPhaseText(
         CalculationProgressPhase phase,
         long baseValue,
         int exponent,
@@ -2507,7 +2375,7 @@ public partial class PowerRootView : LocalizedSolverView
         int totalBitShift = exponent;
 
         if (phase == CalculationProgressPhase.BitShift &&
-            TryGetPowerOfTwoExponent(
+            _powerRootEngine.TryGetPowerOfTwoExponent(
                 baseValue,
                 out int basePowerOfTwoExponent))
         {
@@ -2575,286 +2443,6 @@ public partial class PowerRootView : LocalizedSolverView
             _ =>
                 string.Empty
         };
-    }
-
-    private static PowerComputationStrategy SelectComputationStrategy(
-        long baseValue,
-        int exponent,
-        out int decimalExponent)
-    {
-        decimalExponent = 0;
-
-        if (exponent > 0 &&
-            TryGetPowerOfTenExponent(
-                baseValue,
-                out decimalExponent))
-        {
-            return PowerComputationStrategy.DecimalPowerOfTen;
-        }
-
-        if (exponent > 0 &&
-            TryGetPowerOfTwoExponent(
-                baseValue,
-                out _))
-        {
-            return PowerComputationStrategy.BitShift;
-        }
-
-        return PowerComputationStrategy.SingleThreadedBigIntegerPower;
-    }
-
-    private static Task<BigInteger> ComputeBitShiftPowerAsync(
-        long baseValue,
-        int exponent,
-        int totalBitShift,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // BigInteger's shift is intrinsically sequential. Run it on exactly
-        // one dedicated background worker so the MAUI UI stays responsive and
-        // this fast path never enters the NTT/CRT worker pool.
-        return Task.Factory.StartNew(
-            () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // If |a| = 2^k, then |a|^n = 2^(k*n). Shifting zero
-                // would still produce zero, so the correct seed is One.
-                BigInteger result =
-                    BigInteger.One << totalBitShift;
-
-                if (baseValue < 0 &&
-                    (exponent & 1) != 0)
-                {
-                    result =
-                        BigInteger.Negate(
-                            result);
-                }
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                return result;
-            },
-            cancellationToken,
-            TaskCreationOptions.LongRunning |
-            TaskCreationOptions.DenyChildAttach,
-            TaskScheduler.Default);
-    }
-
-    private static Task<BigInteger> ComputeSingleThreadedPowerAsync(
-        long baseValue,
-        int exponent,
-        Action<int, int> progress,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // LongRunning keeps the UI responsive without adding computation
-        // workers. Every multiplication is still executed sequentially on
-        // this one dedicated background thread, but is now observable so the
-        // same detailed progress UI can be used in both threading modes.
-        return Task.Factory.StartNew(
-            () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (exponent == 0)
-                {
-                    return BigInteger.One;
-                }
-
-                BigInteger factor =
-                    new(
-                        baseValue);
-
-                BigInteger result =
-                    BigInteger.One;
-
-                bool resultInitialized = false;
-                int remainingExponent = exponent;
-                int completedOperations = 0;
-                int totalOperations =
-                    CountPowerMultiplications(
-                        exponent);
-
-                while (remainingExponent > 0)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    if ((remainingExponent & 1) != 0)
-                    {
-                        if (!resultInitialized)
-                        {
-                            result = factor;
-                            resultInitialized = true;
-                        }
-                        else
-                        {
-                            result *= factor;
-
-                            progress(
-                                ++completedOperations,
-                                totalOperations);
-                        }
-                    }
-
-                    remainingExponent >>= 1;
-
-                    if (remainingExponent > 0)
-                    {
-                        factor *= factor;
-
-                        progress(
-                            ++completedOperations,
-                            totalOperations);
-                    }
-                }
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                return result;
-            },
-            cancellationToken,
-            TaskCreationOptions.LongRunning |
-            TaskCreationOptions.DenyChildAttach,
-            TaskScheduler.Default);
-    }
-
-    private static int CountPowerMultiplications(
-        int exponent)
-    {
-        int operationCount = 0;
-        bool resultInitialized = false;
-        int remainingExponent = exponent;
-
-        while (remainingExponent > 0)
-        {
-            if ((remainingExponent & 1) != 0)
-            {
-                if (resultInitialized)
-                {
-                    operationCount++;
-                }
-                else
-                {
-                    resultInitialized = true;
-                }
-            }
-
-            remainingExponent >>= 1;
-
-            if (remainingExponent > 0)
-            {
-                operationCount++;
-            }
-        }
-
-        return operationCount;
-    }
-
-    private static Task<ParallelPowerResult> ComputeParallelPowerAsync(
-        long baseValue,
-        int exponent,
-        int workerCount,
-        Action<int, int> progress,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        ulong magnitude =
-            (ulong)Math.Abs(
-                baseValue);
-
-        return Task.Factory.StartNew(
-            () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                return ParallelBigUnsigned.Pow(
-                    magnitude,
-                    exponent,
-                    workerCount,
-                    progress,
-                    cancellationToken);
-            },
-            cancellationToken,
-            TaskCreationOptions.LongRunning |
-            TaskCreationOptions.DenyChildAttach,
-            TaskScheduler.Default);
-    }
-
-    private static bool TryGetPowerOfTenExponent(
-        long baseValue,
-        out int decimalExponent)
-    {
-        decimalExponent = 0;
-
-        long magnitude =
-            Math.Abs(
-                baseValue);
-
-        // 10^k uses k >= 1. Values +/-1 are handled by BigInteger.Pow.
-        if (magnitude < 10)
-        {
-            return false;
-        }
-
-        while (magnitude % 10 == 0)
-        {
-            magnitude /= 10;
-            decimalExponent++;
-        }
-
-        return magnitude == 1;
-    }
-
-    private static bool TryGetPowerOfTwoExponent(
-        long baseValue,
-        out int powerOfTwoExponent)
-    {
-        powerOfTwoExponent = 0;
-
-        // Convert to an unsigned magnitude without overflowing at long.MinValue.
-        // Negative powers of two keep the existing optimized path; their sign
-        // is applied after the magnitude has been created by the shift.
-        ulong magnitude =
-            baseValue < 0
-                ? unchecked((ulong)(-(baseValue + 1))) + 1UL
-                : (ulong)baseValue;
-
-        if (!IsPowerOfTwo(
-                magnitude))
-        {
-            return false;
-        }
-
-        powerOfTwoExponent =
-            GetBitShiftCount(
-                magnitude);
-
-        return true;
-    }
-
-    private static bool IsPowerOfTwo(
-        ulong value)
-    {
-        return value > 0UL &&
-               (value & (value - 1UL)) == 0UL;
-    }
-
-    private static int GetBitShiftCount(
-        ulong value)
-    {
-        int shiftCount = 0;
-
-        while ((value & 1UL) == 0UL)
-        {
-            value >>= 1;
-            shiftCount++;
-        }
-
-        return shiftCount;
     }
 
     private static PowerCalculationState CreateBigIntegerCalculationState(
@@ -3684,7 +3272,7 @@ public partial class PowerRootView : LocalizedSolverView
         else if (state.Strategy ==
                  PowerComputationStrategy.BitShift)
         {
-            if (!TryGetPowerOfTwoExponent(
+            if (!_powerRootEngine.TryGetPowerOfTwoExponent(
                     state.BaseValue,
                     out int basePowerOfTwoExponent))
             {

@@ -1,11 +1,14 @@
 using MathSolver.Models;
 using System.Numerics;
 
-namespace MathSolver.Services;
+namespace MathSolver.Services.Core;
 
-public static class FractionCalculator
+/// <summary>
+/// Engine phân số độc lập với MAUI và có thể tái sử dụng ở mọi tầng gọi.
+/// </summary>
+public sealed class FractionCalculationEngine
 {
-    public static FractionCalculationResult Calculate(
+    public FractionCalculationResult Calculate(
         BigInteger numerator1,
         BigInteger denominator1,
         BigInteger numerator2,

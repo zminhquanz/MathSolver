@@ -2,6 +2,7 @@ using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using System.Globalization;
 using System.Numerics;
 using System.Text;

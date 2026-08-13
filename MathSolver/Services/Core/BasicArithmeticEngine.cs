@@ -2,7 +2,7 @@ using MathSolver.Models;
 using MathSolver.Numerics;
 using System.Numerics;
 
-namespace MathSolver.Services;
+namespace MathSolver.Services.Core;
 
 /// <summary>
 /// Nguồn sự thật dùng chung cho cộng, trừ, nhân và chia.

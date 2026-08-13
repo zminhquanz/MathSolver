@@ -1,6 +1,7 @@
 using MathSolver.Models;
 using MathSolver.Numerics;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Views.Base;
 using System.Collections.ObjectModel;
 using System.ComponentModel;

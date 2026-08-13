@@ -1,4 +1,5 @@
 using MathSolver.Models;
+using MathSolver.Services.Core;
 using System.Numerics;
 
 namespace MathSolver.Services;
