@@ -267,6 +267,7 @@ public static class WordProblemStoryContextCatalog
         new(
             [
                 // Đồ dùng học tập
+                Vi(WordProblemContextCategory.SchoolSupply, "cây bút"),
                 Vi(WordProblemContextCategory.SchoolSupply, "cây bút chì"),
                 Vi(WordProblemContextCategory.SchoolSupply, "cây bút bi"),
                 Vi(WordProblemContextCategory.SchoolSupply, "cây bút mực"),

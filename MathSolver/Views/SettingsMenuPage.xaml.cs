@@ -16,6 +16,7 @@ public partial class SettingsMenuPage : ContentPage
     private bool _hasPlayedOpenAnimation;
     private bool _isClosing;
     private bool _isNavigating;
+    private bool _isAnimatingDeveloperModeButton;
 
     private readonly HashSet<VisualElement>
         _animatingSections =
@@ -60,6 +61,9 @@ public partial class SettingsMenuPage : ContentPage
         AppLanguageManager.LanguageChanged +=
             OnSettingsChanged;
 
+        DeveloperModeManager.DeveloperModeChanged +=
+            OnSettingsChanged;
+
         LocalizationService.Attach(
             this);
         UpdateState();
@@ -87,6 +91,9 @@ public partial class SettingsMenuPage : ContentPage
             OnSettingsChanged;
 
         AppLanguageManager.LanguageChanged -=
+            OnSettingsChanged;
+
+        DeveloperModeManager.DeveloperModeChanged -=
             OnSettingsChanged;
 
         base.OnDisappearing();
@@ -388,6 +395,33 @@ public partial class SettingsMenuPage : ContentPage
                 ? "Application, author, and version information"
                 : "Thông tin ứng dụng, tác giả và phiên bản";
 
+        DeveloperModeTitleLabel.Text =
+            useEnglish
+                ? "Developer mode"
+                : "Chế độ nhà phát triển";
+
+        DeveloperModeSummaryLabel.Text =
+            (useEnglish, DeveloperModeManager.IsEnabled) switch
+            {
+                (true, true) =>
+                    "On · Show JSON, logs, and technical details",
+                (true, false) =>
+                    "Off · Hide JSON, logs, and technical details",
+                (false, true) =>
+                    "Đang bật · Hiện JSON, log và chi tiết kỹ thuật",
+                _ =>
+                    "Đang tắt · Ẩn JSON, log và chi tiết kỹ thuật"
+            };
+
+        SemanticProperties.SetDescription(
+            DeveloperModeToggleButton,
+            useEnglish
+                ? "Turn developer mode on or off"
+                : "Bật hoặc tắt chế độ nhà phát triển");
+
+        UpdateDeveloperModeButton(
+            useEnglish);
+
         UpdateChoiceButton(
             SystemThemeButton,
             AppThemeManager.CurrentMode ==
@@ -673,6 +707,86 @@ public partial class SettingsMenuPage : ContentPage
         UpdateState();
     }
 
+    private void UpdateDeveloperModeButton(
+        bool useEnglish)
+    {
+        bool isEnabled =
+            DeveloperModeManager.IsEnabled;
+
+        DeveloperModeToggleButton.Text =
+            (useEnglish, isEnabled) switch
+            {
+                (true, true) => "✓ ON",
+                (true, false) => "○ OFF",
+                (false, true) => "✓ BẬT",
+                _ => "○ TẮT"
+            };
+
+        DeveloperModeToggleButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            isEnabled
+                ? "PrimaryColor"
+                : "SurfaceAltColor");
+
+        DeveloperModeToggleButton.SetDynamicResource(
+            Button.TextColorProperty,
+            isEnabled
+                ? "OnPrimaryColor"
+                : "TextSecondaryColor");
+
+        DeveloperModeToggleButton.SetDynamicResource(
+            Button.BorderColorProperty,
+            isEnabled
+                ? "PrimaryColor"
+                : "BorderColor");
+
+        SemanticProperties.SetHint(
+            DeveloperModeToggleButton,
+            (useEnglish, isEnabled) switch
+            {
+                (true, true) => "Developer mode is on. Activate to turn it off.",
+                (true, false) => "Developer mode is off. Activate to turn it on.",
+                (false, true) => "Chế độ nhà phát triển đang bật. Nhấn để tắt.",
+                _ => "Chế độ nhà phát triển đang tắt. Nhấn để bật."
+            });
+    }
+
+    private async void OnDeveloperModeClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isAnimatingDeveloperModeButton)
+        {
+            return;
+        }
+
+        _isAnimatingDeveloperModeButton = true;
+
+        try
+        {
+            DeveloperModeManager.SetEnabled(
+                !DeveloperModeManager.IsEnabled);
+
+            UpdateState();
+
+            DeveloperModeToggleButton.CancelAnimations();
+
+            await DeveloperModeToggleButton.ScaleToAsync(
+                0.94d,
+                70,
+                Easing.CubicOut);
+
+            await DeveloperModeToggleButton.ScaleToAsync(
+                1d,
+                110,
+                Easing.CubicOut);
+        }
+        finally
+        {
+            _isAnimatingDeveloperModeButton = false;
+        }
+    }
+
     private void OnResetTapped(
         object? sender,
         TappedEventArgs e)
@@ -680,6 +794,7 @@ public partial class SettingsMenuPage : ContentPage
         AppThemeManager.ResetToDefault();
         AppFontManager.ResetToDefault();
         AppLanguageManager.ResetToDefault();
+        DeveloperModeManager.ResetToDefault();
         UpdateState();
     }
 

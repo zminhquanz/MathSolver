@@ -394,6 +394,50 @@
 
                                     </Border>
 
+                                    <Border
+                                        Padding="11,9"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Start"
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <VerticalStackLayout Spacing="6">
+
+                                            <Label
+                                                Text="Tính chất chung"
+                                                FontSize="16"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="Center"
+                                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                            <VerticalStackLayout
+                                                Spacing="5"
+                                                BindableLayout.ItemsSource="{Binding SelectedGeometry.Properties}">
+
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate>
+
+                                                        <Label
+                                                            Text="{Binding ., StringFormat='• {0}'}"
+                                                            FontSize="14"
+                                                            LineHeight="1.15"
+                                                            LineBreakMode="WordWrap"
+                                                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+
+                                            </VerticalStackLayout>
+
+                                        </VerticalStackLayout>
+
+                                    </Border>
+
                                 </VerticalStackLayout>
 
                             </Grid>

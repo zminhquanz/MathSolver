@@ -42,6 +42,11 @@ public sealed class QuizProblemTypeCatalog
             "Quiz.ProblemGeometry",
             new(
                 QuizProblemKind.Geometry),
+            IncludeInMixed: true),
+        new(
+            "Quiz.ProblemFindX",
+            new(
+                QuizProblemKind.FindX),
             IncludeInMixed: true)
     ];
 

@@ -13,25 +13,31 @@ public enum EssayAnswerError
     InvalidEquationFormat,
     WrongOperandsOrOperation,
     WrongEquationResult,
+    MissingSolution,
+    WrongSolutionContent,
     InvalidAnswerFormat,
     WrongAnswer,
     WrongAnswerUnit
 }
 
 public sealed record EssayAnswerValidationResult(
+    bool SolutionIsCorrect,
     bool EquationIsCorrect,
     bool AnswerIsCorrect,
+    EssayAnswerError SolutionError,
     EssayAnswerError EquationError,
     EssayAnswerError AnswerError)
 {
     public bool IsCorrect =>
-        EquationIsCorrect && AnswerIsCorrect;
+        SolutionIsCorrect &&
+        EquationIsCorrect &&
+        AnswerIsCorrect;
 }
 
 /// <summary>
-/// Chấm phần phép tính và đáp số của bài tự luận bằng engine C#. Nội dung lời
-/// giải không được truyền vào đây vì văn phong của học sinh không phải điều
-/// kiện đúng/sai.
+/// Chấm đủ ba phần của bài tự luận: câu lời giải, phép tính và đáp số. Câu lời
+/// giải không cần trùng từng chữ với mẫu, nhưng bắt buộc phải có và phải nêu
+/// đúng đại lượng/đơn vị mà đề bài yêu cầu.
 /// </summary>
 public sealed partial class EssayAnswerValidator
 {
@@ -48,10 +54,16 @@ public sealed partial class EssayAnswerValidator
 
     public EssayAnswerValidationResult Validate(
         ArithmeticQuizQuestion question,
+        string? solutionText,
         string? equationText,
         string? answerText)
     {
         ArgumentNullException.ThrowIfNull(question);
+
+        (bool solutionIsCorrect, EssayAnswerError solutionError) =
+            ValidateSolution(
+                question,
+                solutionText);
 
         (bool equationIsCorrect, EssayAnswerError equationError) =
             question.GeometryProblem is GeometryQuizContract geometry
@@ -68,10 +80,93 @@ public sealed partial class EssayAnswerValidator
                 answerText);
 
         return new(
+            solutionIsCorrect,
             equationIsCorrect,
             answerIsCorrect,
+            solutionError,
             equationError,
             answerError);
+    }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateSolution(
+            ArithmeticQuizQuestion question,
+            string? solutionText)
+    {
+        // Nguồn Thuật toán không hiển thị ô lời giải bằng câu văn. Chỉ bài
+        // toán đố do AI tạo mới bắt buộc học sinh điền phần này.
+        if (question.WordProblem is not MathWordProblem wordProblem)
+        {
+            return (true, EssayAnswerError.None);
+        }
+
+        string solution =
+            NormalizeComparisonText(
+                solutionText ?? string.Empty);
+
+        if (solution.Length == 0)
+        {
+            return (false, EssayAnswerError.MissingSolution);
+        }
+
+        if (question.GeometryProblem is GeometryQuizContract geometry)
+        {
+            bool mentionsGeometryQuantity =
+                GetGeometryQuantityPhrases(
+                        geometry.Measurement)
+                    .Any(phrase =>
+                        ContainsNormalizedPhrase(
+                            solution,
+                            phrase));
+
+            return mentionsGeometryQuantity
+                ? (true, EssayAnswerError.None)
+                : (false, EssayAnswerError.WrongSolutionContent);
+        }
+
+        string expectedUnit =
+            NormalizeUnit(
+                wordProblem.AnswerUnit);
+
+        bool mentionsExpectedQuantity =
+            WordProblemUnitEquivalence.ContainsVietnameseUnit(
+                solution,
+                expectedUnit) ||
+            ContainsNormalizedPhrase(
+                solution,
+                NormalizeEnglishUnitToSingular(expectedUnit));
+
+        return mentionsExpectedQuantity
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongSolutionContent);
+    }
+
+    private static IReadOnlyList<string> GetGeometryQuantityPhrases(
+        GeometryMeasurement measurement) =>
+        measurement switch
+        {
+            GeometryMeasurement.Perimeter =>
+                ["chu vi", "perimeter"],
+            GeometryMeasurement.Area =>
+                ["diện tích", "area"],
+            GeometryMeasurement.TotalArea =>
+                ["diện tích toàn phần", "total surface area"],
+            GeometryMeasurement.Volume =>
+                ["thể tích", "volume"],
+            _ => []
+        };
+
+    private static bool ContainsNormalizedPhrase(
+        string normalizedText,
+        string phrase)
+    {
+        string normalizedPhrase =
+            NormalizeComparisonText(phrase);
+
+        return normalizedPhrase.Length > 0 &&
+               $" {normalizedText} ".Contains(
+                   $" {normalizedPhrase} ",
+                   StringComparison.Ordinal);
     }
 
     private static (bool IsCorrect, EssayAnswerError Error)
@@ -364,6 +459,17 @@ public sealed partial class EssayAnswerValidator
                 enteredUnit,
                 expectedUnit,
                 StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        // Từ chỉ loại tiếng Việt không làm thay đổi danh từ được đếm.
+        // Ví dụ: cây bút = cái bút = chiếc bút; quy tắc vẫn giữ nguyên
+        // phần tên cụ thể như bút chì, bút bi hoặc sổ tay.
+        if (WordProblemUnitEquivalence
+            .AreVietnameseUnitsEquivalent(
+                enteredUnit,
+                expectedUnit))
         {
             return true;
         }

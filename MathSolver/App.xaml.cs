@@ -15,6 +15,7 @@ public partial class App : Application
 
         AppLanguageManager.Initialize();
         LocalizationService.Initialize();
+        DeveloperModeManager.Initialize();
         AppThemeManager.Initialize(this);
         AppFontManager.Initialize(this);
     }

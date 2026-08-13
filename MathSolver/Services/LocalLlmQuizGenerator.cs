@@ -13,8 +13,9 @@ using System.Text.RegularExpressions;
 namespace MathSolver.Services;
 
 /// <summary>
-/// Dùng LLM cục bộ để diễn đạt hợp đồng số học hoặc hình học do engine sở hữu
-/// thành toán đố. Model chỉ viết ngôn ngữ tự nhiên; dữ kiện và đáp án do C# giữ.
+/// Dùng LLM cục bộ để diễn đạt hợp đồng số học, Tìm x hoặc hình học do engine
+/// sở hữu thành toán đố. Model chỉ viết ngôn ngữ tự nhiên; dữ kiện và đáp án
+/// do C# giữ.
 /// </summary>
 public sealed class LocalLlmQuizGenerator
 {
@@ -36,6 +37,7 @@ public sealed class LocalLlmQuizGenerator
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
+    private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
@@ -49,7 +51,8 @@ public sealed class LocalLlmQuizGenerator
     public LocalLlmQuizGenerator(
         ArithmeticQuizGenerator quizGenerator,
         BasicArithmeticEngine engine,
-        GeometryQuizGenerator geometryQuizGenerator)
+        GeometryQuizGenerator geometryQuizGenerator,
+        FindXQuizGenerator findXQuizGenerator)
     {
         _quizGenerator =
             quizGenerator ??
@@ -62,6 +65,10 @@ public sealed class LocalLlmQuizGenerator
         _geometryQuizGenerator =
             geometryQuizGenerator ??
             throw new ArgumentNullException(nameof(geometryQuizGenerator));
+
+        _findXQuizGenerator =
+            findXQuizGenerator ??
+            throw new ArgumentNullException(nameof(findXQuizGenerator));
     }
 
     /// <summary>
@@ -162,6 +169,8 @@ public sealed class LocalLlmQuizGenerator
                         CreateNaturalLanguageContract(
                             mode,
                             problemRequest.ArithmeticOperation),
+                    QuizProblemKind.FindX =>
+                        _findXQuizGenerator.Generate(mode),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -261,7 +270,14 @@ public sealed class LocalLlmQuizGenerator
                 if (attempt == 1)
                 {
                     string userPrompt =
-                        contract.GeometryProblem is GeometryQuizContract geometry
+                        contract.FindXProblem is FindXQuizContract findX
+                            ? LlmQuizPromptBuilder.BuildFindXUserPrompt(
+                                findX,
+                                language,
+                                selectedStudent,
+                                selectedStoryContext,
+                                previousErrorCode: null)
+                            : contract.GeometryProblem is GeometryQuizContract geometry
                             ? LlmQuizPromptBuilder.BuildGeometryUserPrompt(
                                 geometry,
                                 language,
@@ -460,7 +476,17 @@ public sealed class LocalLlmQuizGenerator
                         rawModelOutput: rawOutput);
 
                     LlmWordProblemValidationResult validation =
-                        contract.GeometryProblem is GeometryQuizContract validatedGeometry
+                        contract.FindXProblem is FindXQuizContract validatedFindX
+                            ? _wordProblemValidator.ValidateFindX(
+                                draft,
+                                validatedFindX,
+                                selectedStoryContext.NaturalReference,
+                                LlmQuizPromptBuilder.GetFindXAnswerUnit(
+                                    validatedFindX,
+                                    selectedStoryContext,
+                                    language),
+                                language)
+                            : contract.GeometryProblem is GeometryQuizContract validatedGeometry
                             ? _wordProblemValidator.ValidateGeometry(
                                 draft,
                                 validatedGeometry,
@@ -469,6 +495,7 @@ public sealed class LocalLlmQuizGenerator
                                 draft,
                                 contract.Expression,
                                 contract.CorrectAnswer,
+                                selectedStoryContext,
                                 language);
 
                     if (validation.IsValid &&
@@ -856,8 +883,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phép tính, hình, đơn vị, đại lượng cần tìm hay đáp án. Chỉ trả về đúng một JSON hợp lệ, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic or geometry word problems from the required facts. Never change the numbers, operation, shape, unit, requested measurement, or answer. Return exactly one valid JSON object with no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, Tìm x hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, Find-x, or geometry word problems from the required facts. Never change the numbers, operation, role of x, shape, unit, requested measurement, or answer. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -912,8 +939,8 @@ internal static class LlmQuizPromptBuilder
                 : validationFeedback.Trim();
 
         return language == AppLanguage.Vietnamese
-            ? $"Đề vừa tạo không vượt qua validation C# ({errorCode}).\nCHI TIẾT LỖI: {feedback}\nYÊU CẦU SỬA: {correction} Hãy giữ nguyên dữ kiện gốc trong context và trả lại đúng một JSON đã sửa, không Markdown hay giải thích."
-            : $"The previous problem failed C# validation ({errorCode}).\nEXACT ERROR: {feedback}\nREQUIRED FIX: {correction} Keep the original facts already present in the context and return exactly one corrected JSON object with no Markdown or commentary.";
+            ? $"Đề vừa tạo không vượt qua validation C# ({errorCode}).\nCHI TIẾT LỖI: {feedback}\nYÊU CẦU SỬA: {correction} Hãy giữ nguyên dữ kiện gốc trong context và trả lại đúng một JSON đã sửa, mỗi thuộc tính trên một dòng, không Markdown hay giải thích."
+            : $"The previous problem failed C# validation ({errorCode}).\nEXACT ERROR: {feedback}\nREQUIRED FIX: {correction} Keep the original facts already present in the context and return exactly one corrected JSON object with one property per line and no Markdown or commentary.";
     }
 
     public static string BuildParserFeedback(
@@ -980,9 +1007,9 @@ internal static class LlmQuizPromptBuilder
                 : "If a class label is used, the grade must be Class 1 through Class 5. Numeric sections are only 1 through 9 and must be written Class 3/1 ... Class 3/9; alphabetic sections follow A through I, as in Class 3A ... Class 3I. Never write Class 30, Class 3/0, Class 3/10, or Class 3J; write Class 3/1 instead of compact Class 31.";
 
         string storyContextRule =
-            language == AppLanguage.Vietnamese
-                ? $"Ngữ cảnh được chọn là \"{selectedStoryContext.NaturalReference}\". Hãy dùng đúng loại đồ vật này trong đề và đặt answer_unit là \"{selectedStoryContext.AnswerUnit}\"."
-                : $"The selected story item is \"{selectedStoryContext.NaturalReference}\". Use this exact kind of item in the problem and set answer_unit to \"{selectedStoryContext.AnswerUnit}\".";
+            BuildStoryContextRule(
+                selectedStoryContext,
+                language);
 
         return FormattableString.Invariant(
             $$"""
@@ -1000,14 +1027,222 @@ internal static class LlmQuizPromptBuilder
             - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             - For division, divide the left total exactly into the right number of equal groups.
-            - solution_lead is one short textbook sentence naming the quantity being found and introducing the calculation. Do not use a generic sentence that only says to perform an operation.
+            - solution_lead is only one short textbook lead-in sentence before the student's calculation. It must repeat the exact answer_unit noun phrase (or the same pen noun with cây/cái/chiếc exchanged) and end with a colon. It must contain no number, arithmetic expression, operator, equals sign, calculated result, or answer. Valid example: "Số quả chôm chôm mẹ còn lại là:". Forbidden example: "Số quả chôm chôm mẹ còn lại là: 11 - 1 = 10 quả chôm chôm." Never replace a specific unit such as "cuốn sổ tay" with a broader word such as "sách".
             - answer_unit is a short noun phrase without a number.
             - subject_name is the person, group, or object described in problem_text; it may be a generic reference and does not require a personal name.
             {{retry}}
 
             JSON schema:
-            {"problem_text":"... ?","subject_name":"...","answer_unit":"...","solution_lead":"...:"}
+            {
+              "problem_text": "... ?",
+              "subject_name": "...",
+              "answer_unit": "...",
+              "solution_lead": "...:"
+            }
             """);
+    }
+
+    private static string BuildStoryContextRule(
+        WordProblemStoryContext storyContext,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese &&
+            WordProblemUnitEquivalence.IsVietnamesePenUnit(
+                storyContext.NaturalReference))
+        {
+            string alternatives = string.Join(
+                " / ",
+                WordProblemUnitEquivalence
+                    .GetVietnamesePenVariants(
+                        storyContext.NaturalReference)
+                    .Select(value => $"\"{value}\""));
+
+            return $"Ngữ cảnh được chọn là bút. Trong problem_text có thể dùng tự nhiên một trong các cách tương đương: {alternatives}. answer_unit phải dùng đúng cùng cách gọi đã chọn trong problem_text; cây/cái/chiếc chỉ là từ chỉ loại, không làm thay đổi đồ vật.";
+        }
+
+        return language == AppLanguage.Vietnamese
+            ? $"Ngữ cảnh được chọn là \"{storyContext.NaturalReference}\". Hãy dùng đúng loại đồ vật này trong đề và đặt answer_unit là \"{storyContext.AnswerUnit}\"."
+            : $"The selected story item is \"{storyContext.NaturalReference}\". Use this exact kind of item in the problem and set answer_unit to \"{storyContext.AnswerUnit}\".";
+    }
+
+    private static string BuildFindXStoryItemRule(
+        WordProblemStoryContext storyContext,
+        string answerUnit,
+        AppLanguage language)
+    {
+        bool isVietnamesePen =
+            language == AppLanguage.Vietnamese &&
+            WordProblemUnitEquivalence.IsVietnamesePenUnit(
+                storyContext.NaturalReference);
+
+        if (!isVietnamesePen)
+        {
+            return language == AppLanguage.Vietnamese
+                ? $"Dùng đúng đồ vật \"{storyContext.NaturalReference}\" và đặt answer_unit là \"{answerUnit}\"."
+                : $"Use the exact story item \"{storyContext.NaturalReference}\" and set answer_unit to \"{answerUnit}\".";
+        }
+
+        string alternatives = string.Join(
+            " / ",
+            WordProblemUnitEquivalence
+                .GetVietnamesePenVariants(
+                    storyContext.NaturalReference)
+                .Select(value => $"\"{value}\""));
+        bool xCountsPens =
+            WordProblemUnitEquivalence.IsVietnamesePenUnit(
+                answerUnit);
+
+        return xCountsPens
+            ? $"Dùng một trong các cách gọi tương đương {alternatives}. answer_unit phải dùng cùng cách gọi bút đã chọn trong problem_text."
+            : $"Dùng một trong các cách gọi tương đương {alternatives} trong problem_text; vì x đếm số nhóm nên answer_unit vẫn phải đúng là \"{answerUnit}\".";
+    }
+
+    public static string GetFindXAnswerUnit(
+        FindXQuizContract contract,
+        WordProblemStoryContext storyContext,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(contract);
+        ArgumentNullException.ThrowIfNull(storyContext);
+
+        bool answerIsGroupCount =
+            (contract.Operation == ArithmeticOperation.Multiply &&
+             contract.UnknownIsLeftOperand) ||
+            (contract.Operation == ArithmeticOperation.Divide &&
+             !contract.UnknownIsLeftOperand);
+
+        return answerIsGroupCount
+            ? language == AppLanguage.Vietnamese
+                ? "nhóm"
+                : "groups"
+            : storyContext.AnswerUnit;
+    }
+
+    public static string BuildFindXUserPrompt(
+        FindXQuizContract contract,
+        AppLanguage language,
+        WordProblemStudent? selectedStudent,
+        WordProblemStoryContext selectedStoryContext,
+        string? previousErrorCode)
+    {
+        ArgumentNullException.ThrowIfNull(contract);
+        ArgumentNullException.ThrowIfNull(selectedStoryContext);
+
+        string languageName =
+            language == AppLanguage.Vietnamese
+                ? "Vietnamese used in Vietnamese primary schools"
+                : "natural English used in an English-language elementary school";
+
+        string answerUnit =
+            GetFindXAnswerUnit(
+                contract,
+                selectedStoryContext,
+                language);
+
+        string relationship =
+            GetFindXRelationshipRule(
+                contract,
+                selectedStoryContext,
+                language);
+
+        string storyItemRule =
+            BuildFindXStoryItemRule(
+                selectedStoryContext,
+                answerUnit,
+                language);
+
+        string characterRule =
+            selectedStudent is null
+                ? language == AppLanguage.Vietnamese
+                    ? "Tên riêng không bắt buộc; có thể dùng một bạn học sinh hoặc một nhóm học sinh."
+                    : "A personal name is optional; a student or group of students is sufficient."
+                : language == AppLanguage.Vietnamese
+                    ? $"Nếu dùng tên riêng, chỉ dùng gợi ý \"{selectedStudent.NaturalReference}\"."
+                    : $"If a personal name is used, use only \"{selectedStudent.NaturalReference}\".";
+
+        string classroomRule =
+            language == AppLanguage.Vietnamese
+                ? "Nếu dùng tên lớp, khối chỉ từ lớp 1 đến lớp 5; lớp con chỉ từ 1 đến 9 hoặc A đến I."
+                : "If a class label is used, use only grades 1 through 5 and sections 1 through 9 or A through I.";
+
+        string retry =
+            string.IsNullOrWhiteSpace(previousErrorCode)
+                ? string.Empty
+                : BuildRetryInstruction(
+                    previousErrorCode,
+                    language);
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural, age-appropriate find-x word problem in {{languageName}}.
+            Required equation owned by C#: {{contract.EquationText}}
+            Required known number: {{contract.KnownValue}}
+            Required result number: {{contract.ResultValue}}
+            The value of x is intentionally hidden by C#; do not calculate or guess it in problem_text.
+            Required story item: {{selectedStoryContext.NaturalReference}}
+            Required answer_unit: {{answerUnit}}
+
+            Mathematical relationship that the wording must express:
+            - {{relationship}}
+
+            Rules:
+            - problem_text must contain the required known number and result number as digits, with exactly the multiplicity shown by the equation, and no other arithmetic quantities. One valid class label is allowed as metadata.
+            - Do not write the symbol x, do not reveal or calculate the hidden value, and do not state an equivalent extra numeric fact.
+            - {{storyItemRule}}
+            - The wording must lead to exactly {{contract.EquationText}}. Do not swap what is initially known, added, removed, grouped, shared, or left over.
+            - Keep answer_unit semantically equivalent to "{{answerUnit}}"; only cây/cái/chiếc may be exchanged for a Vietnamese pen unit.
+            - {{characterRule}}
+            - {{classroomRule}}
+            - solution_lead is only one short textbook lead-in sentence before the student's calculation. It introduces finding x, repeats the answer_unit noun phrase, ends with a colon, and contains no number, equation, operator, equals sign, value of x, result, or answer.
+            - subject_name is the person, group, or object described in problem_text and contains no number.
+            {{retry}}
+
+            JSON schema:
+            {
+              "problem_text": "... ?",
+              "subject_name": "...",
+              "answer_unit": "{{answerUnit}}",
+              "solution_lead": "...:"
+            }
+            """);
+    }
+
+    private static string GetFindXRelationshipRule(
+        FindXQuizContract contract,
+        WordProblemStoryContext storyContext,
+        AppLanguage language)
+    {
+        string item = storyContext.NaturalReference;
+        bool vietnamese = language == AppLanguage.Vietnamese;
+
+        return (contract.Operation, contract.UnknownIsLeftOperand) switch
+        {
+            (ArithmeticOperation.Add, true) => vietnamese
+                ? $"Một số {item} chưa biết ban đầu, thêm {contract.KnownValue}, thì có tất cả {contract.ResultValue}."
+                : $"An unknown initial number of {item}, plus {contract.KnownValue}, gives a total of {contract.ResultValue}.",
+            (ArithmeticOperation.Add, false) => vietnamese
+                ? $"Ban đầu có {contract.KnownValue} {item}, nhận thêm một số chưa biết, thì có tất cả {contract.ResultValue}."
+                : $"There are initially {contract.KnownValue} {item}; an unknown number is added, giving {contract.ResultValue} in total.",
+            (ArithmeticOperation.Subtract, true) => vietnamese
+                ? $"Một số {item} chưa biết ban đầu, bớt đi {contract.KnownValue}, thì còn {contract.ResultValue}."
+                : $"Remove {contract.KnownValue} from an unknown initial number of {item}; {contract.ResultValue} remains.",
+            (ArithmeticOperation.Subtract, false) => vietnamese
+                ? $"Ban đầu có {contract.KnownValue} {item}, bớt đi một số chưa biết, thì còn {contract.ResultValue}."
+                : $"There are initially {contract.KnownValue} {item}; an unknown number is removed, leaving {contract.ResultValue}.",
+            (ArithmeticOperation.Multiply, true) => vietnamese
+                ? $"Có một số nhóm chưa biết, mỗi nhóm có {contract.KnownValue} {item}, tổng cộng có {contract.ResultValue} {item}."
+                : $"There is an unknown number of groups; each group has {contract.KnownValue} {item}, for a total of {contract.ResultValue} {item}.",
+            (ArithmeticOperation.Multiply, false) => vietnamese
+                ? $"Có {contract.KnownValue} nhóm, mỗi nhóm có một số {item} chưa biết, tổng cộng có {contract.ResultValue} {item}."
+                : $"There are {contract.KnownValue} groups with an unknown number of {item} in each group, for a total of {contract.ResultValue} {item}.",
+            (ArithmeticOperation.Divide, true) => vietnamese
+                ? $"Một tổng số {item} chưa biết được chia đều vào {contract.KnownValue} nhóm, mỗi nhóm có {contract.ResultValue} {item}."
+                : $"An unknown total number of {item} is divided equally among {contract.KnownValue} groups; each group has {contract.ResultValue} {item}.",
+            (ArithmeticOperation.Divide, false) => vietnamese
+                ? $"Tổng cộng có {contract.KnownValue} {item} được chia đều vào một số nhóm chưa biết, mỗi nhóm có {contract.ResultValue} {item}."
+                : $"A total of {contract.KnownValue} {item} is divided equally among an unknown number of groups; each group has {contract.ResultValue} {item}.",
+            _ => throw new ArgumentOutOfRangeException(nameof(contract))
+        };
     }
 
     public static string BuildGeometryUserPrompt(
@@ -1075,13 +1310,18 @@ internal static class LlmQuizPromptBuilder
             - Do not calculate or reveal the answer inside problem_text.
             - Use the exact real-world object naturally; do not replace it.
             - {{characterRule}}
-            - solution_lead is one short textbook sentence naming the required measurement and introducing the calculation.
+            - solution_lead is only one short textbook lead-in sentence before the student's calculation. It names the required measurement, ends with a colon, and contains no dimension number, formula, operator, equals sign, calculated result, or answer.
             - Set answer_unit exactly to "{{contract.AnswerUnit}}". Never use a plain length unit for area or volume.
             - subject_name is the required real-world object, without a number.
             {{retry}}
 
             JSON schema:
-            {"problem_text":"... ?","subject_name":"...","answer_unit":"{{contract.AnswerUnit}}","solution_lead":"...:"}
+            {
+              "problem_text": "... ?",
+              "subject_name": "...",
+              "answer_unit": "{{contract.AnswerUnit}}",
+              "solution_lead": "...:"
+            }
             """);
     }
 
@@ -1192,9 +1432,18 @@ internal static class LlmQuizPromptBuilder
                     "Sửa đúng các dữ kiện số mà validator đã chỉ ra; dùng đủ từng số bắt buộc và không thêm số khác.",
                 "AnswerRevealedInProblem" =>
                     "Xóa đáp án bị lộ khỏi problem_text; chỉ giữ các dữ kiện đầu vào và câu hỏi.",
+                "SolutionLeadRevealsAnswer" =>
+                    "Xóa toàn bộ số, phép tính, dấu bằng, kết quả và đáp án khỏi solution_lead. Trường này chỉ được là câu dẫn kết thúc bằng dấu hai chấm, ví dụ: “Số quả chôm chôm mẹ còn lại là:”.",
                 "GeometryShapeMismatch" or "GeometryMeasurementMismatch" or
                 "GeometryUnitMismatch" or "GeometryObjectMismatch" =>
                     "Giữ nguyên từng dữ kiện hình học trong contract: đồ vật, hình, đại lượng cần tìm, kích thước và đơn vị.",
+                "FindXStoryItemMismatch" or "FindXAnswerUnitMismatch" or
+                "FindXRelationshipMismatch" =>
+                    "Giữ nguyên phương trình Tìm x, dùng đúng đồ vật và answer_unit mà validator đã nêu; không đổi vai trò của số đã biết, kết quả hoặc đại lượng x.",
+                "StoryItemMismatch" or "AnswerUnitMismatch" =>
+                    "Dùng đúng đồ vật và answer_unit validator đã nêu. Với bút, cây/cái/chiếc là tương đương nhưng phải giữ nguyên phần tên bút.",
+                "SolutionLeadUnitMismatch" =>
+                    "Viết lại solution_lead bằng đúng cụm answer_unit; không thay đơn vị cụ thể bằng một từ khái quát hơn.",
                 "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                     "Bỏ cụm từ gây suy ra sai phép toán và thay bằng hành động tiểu học thể hiện đúng phép tính bắt buộc.",
                 "InvalidClassLabel" =>
@@ -1212,9 +1461,18 @@ internal static class LlmQuizPromptBuilder
                 "Correct the exact numeric facts named by the validator; use every required value and no other value.",
             "AnswerRevealedInProblem" =>
                 "Remove the revealed answer from problem_text; keep only the input facts and the question.",
+            "SolutionLeadRevealsAnswer" =>
+                "Remove every number, calculation, equals sign, result, and answer from solution_lead. It must only be a lead-in sentence ending with a colon, such as: “The number of rambutans Mother has left is:”.",
             "GeometryShapeMismatch" or "GeometryMeasurementMismatch" or
             "GeometryUnitMismatch" or "GeometryObjectMismatch" =>
                 "Preserve every geometry contract fact: object, shape, requested measurement, dimensions, and units.",
+            "FindXStoryItemMismatch" or "FindXAnswerUnitMismatch" or
+            "FindXRelationshipMismatch" =>
+                "Preserve the Find-x equation and use the exact story item and answer_unit named by the validator; do not swap the known value, result, or meaning of x.",
+            "StoryItemMismatch" or "AnswerUnitMismatch" =>
+                "Use the exact required story item and answer_unit named by the validator.",
+            "SolutionLeadUnitMismatch" =>
+                "Rewrite solution_lead with the exact answer_unit noun phrase instead of a broader category.",
             "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                 "Remove wording that implies the wrong operation and replace it with a clear elementary-school action for the required operation.",
             "InvalidClassLabel" =>
@@ -1575,8 +1833,11 @@ internal sealed partial class LlmWordProblemValidator
         LlmWordProblemDraft draft,
         IntegerArithmeticExpression expression,
         BigInteger correctAnswer,
+        WordProblemStoryContext requiredStoryContext,
         AppLanguage language)
     {
+        ArgumentNullException.ThrowIfNull(requiredStoryContext);
+
         if (expression.LeftOperand < int.MinValue ||
             expression.LeftOperand > int.MaxValue ||
             expression.RightOperand < int.MinValue ||
@@ -1729,6 +1990,32 @@ internal sealed partial class LlmWordProblemValidator
                 "the problem was accepted after numeric validation.");
         }
 
+        if (!ProblemContainsRequiredStoryItem(
+                problem,
+                requiredStoryContext.NaturalReference,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "StoryItemMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Trong problem_text không có đúng đồ vật bắt buộc “{requiredStoryContext.NaturalReference}” hoặc một cách gọi tương đương được phép. Nếu là bút, chỉ được đổi từ chỉ loại cây/cái/chiếc; không được đổi phần danh từ của đồ vật."
+                    : $"problem_text does not contain the required story item “{requiredStoryContext.NaturalReference}”. Use that item exactly and do not substitute a different object.");
+        }
+
+        if (!AreAnswerUnitsEquivalent(
+                unit,
+                requiredStoryContext.AnswerUnit,
+                language) ||
+            NumberRegex().IsMatch(unit) ||
+            unit.Contains('='))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Trường answer_unit đang là “{unit}”, nhưng đồ vật bắt buộc là “{requiredStoryContext.AnswerUnit}”. Hãy dùng đúng đơn vị này; riêng bút có thể đổi tương đương giữa cây bút, cái bút và chiếc bút nhưng phải giữ nguyên phần tên bút."
+                    : $"answer_unit is “{unit}”, but the required unit is “{requiredStoryContext.AnswerUnit}”. Use that exact unit without a number or equation.");
+        }
+
         if (string.IsNullOrWhiteSpace(subject) ||
             !lowerProblem.Contains(
                 subject.ToLowerInvariant(),
@@ -1740,14 +2027,18 @@ internal sealed partial class LlmWordProblemValidator
                     : "The problem";
         }
 
-        if (string.IsNullOrWhiteSpace(unit) ||
-            NumberRegex().IsMatch(unit) ||
-            unit.Contains('='))
+        string? solutionLeadDisclosureFeedback =
+            BuildSolutionLeadDisclosureFeedback(
+                solutionLead,
+                correctAnswer,
+                language);
+
+        if (!string.IsNullOrWhiteSpace(
+                solutionLeadDisclosureFeedback))
         {
-            unit =
-                language == AppLanguage.Vietnamese
-                    ? "đơn vị"
-                    : "items";
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                solutionLeadDisclosureFeedback);
         }
 
         solutionLead =
@@ -1756,7 +2047,6 @@ internal sealed partial class LlmWordProblemValidator
                     solutionLead);
 
         if (string.IsNullOrWhiteSpace(solutionLead) ||
-            solutionLead.Contains('=') ||
             IsGenericSolutionLead(
                 solutionLead,
                 language))
@@ -1771,6 +2061,18 @@ internal sealed partial class LlmWordProblemValidator
                             language));
         }
 
+        if (!SolutionLeadMentionsAnswerUnit(
+                solutionLead,
+                unit,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Trường solution_lead đang dùng sai hoặc thiếu tên đại lượng của answer_unit “{unit}”. Ví dụ với answer_unit “cuốn sổ tay”, phải viết “Số cuốn sổ tay ... là:”; không được đổi thành “sách” hay “cuốn sách”."
+                    : $"solution_lead does not name the answer_unit “{unit}”. Repeat that noun phrase in the solution sentence instead of replacing it with a broader category.");
+        }
+
         return new(
             true,
             null,
@@ -1780,6 +2082,415 @@ internal sealed partial class LlmWordProblemValidator
                 solutionLead,
                 unit,
                 subject));
+    }
+
+    public LlmWordProblemValidationResult ValidateFindX(
+        LlmWordProblemDraft draft,
+        FindXQuizContract contract,
+        string requiredStoryItem,
+        string requiredAnswerUnit,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentNullException.ThrowIfNull(contract);
+
+        if (contract.KnownValue < int.MinValue ||
+            contract.KnownValue > int.MaxValue ||
+            contract.ResultValue < int.MinValue ||
+            contract.ResultValue > int.MaxValue ||
+            contract.CorrectAnswer < int.MinValue ||
+            contract.CorrectAnswer > int.MaxValue)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "ContractOutOfRange",
+                language == AppLanguage.Vietnamese
+                    ? "Dữ kiện Tìm x do C# cấp nằm ngoài phạm vi số nguyên 32-bit. Đây là lỗi contract nguồn, không phải lỗi câu chữ của AI."
+                    : "A C# Find-x contract value is outside the 32-bit integer range. This is a source-contract error, not an AI wording error.");
+        }
+
+        int known = (int)contract.KnownValue;
+        int result = (int)contract.ResultValue;
+        int answer = (int)contract.CorrectAnswer;
+        string problem = NormalizeSingleLine(draft.ProblemText);
+        string subject = NormalizeSingleLine(draft.SubjectName);
+        string unit = NormalizeSingleLine(draft.AnswerUnit);
+        string solutionLead = NormalizeSingleLine(draft.SolutionLead);
+
+        if (problem.Length is < 20 or > 700 ||
+            subject.Length > 100 ||
+            unit.Length > 80 ||
+            solutionLead.Length > 240)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidTextLength",
+                BuildTextLengthFeedback(
+                    problem.Length,
+                    20,
+                    700,
+                    subject.Length,
+                    100,
+                    unit.Length,
+                    80,
+                    solutionLead.Length,
+                    240,
+                    language));
+        }
+
+        problem = NormalizeClassLabels(
+            problem,
+            out string[] invalidClassLabels);
+
+        if (invalidClassLabels.Length > 0)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidClassLabel",
+                BuildClassLabelFeedback(
+                    invalidClassLabels,
+                    language));
+        }
+
+        if (!IsQuestionSentence(problem, language))
+        {
+            problem = AppendDefaultQuestion(problem, language);
+        }
+        else if (!problem.Contains('?'))
+        {
+            problem = problem.TrimEnd('.', '!', ';', ':') + "?";
+        }
+
+        string problemWithoutClassLabels =
+            ClassLabelRegex().Replace(problem, " ");
+
+        int[] actualNumbers =
+            NumberRegex()
+                .Matches(problemWithoutClassLabels)
+                .Select(match =>
+                    int.TryParse(
+                        match.Value,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out int value)
+                            ? value
+                            : int.MinValue)
+                .ToArray();
+
+        int[] expectedNumbers = [known, result];
+
+        if (!actualNumbers.Order().SequenceEqual(
+                expectedNumbers.Order()))
+        {
+            string answerLeak =
+                actualNumbers.Contains(answer) &&
+                !FindMultisetDifference(
+                    actualNumbers,
+                    expectedNumbers).All(value => value != answer)
+                    ? language == AppLanguage.Vietnamese
+                        ? $" Số thừa {answer} chính là nghiệm x nên đã làm lộ đáp án."
+                        : $" The extra value {answer} is the solution for x, so it reveals the answer."
+                    : string.Empty;
+
+            return LlmWordProblemValidationResult.Invalid(
+                actualNumbers.Contains(answer) &&
+                !FindMultisetDifference(
+                    actualNumbers,
+                    expectedNumbers).All(value => value != answer)
+                    ? "AnswerRevealedInProblem"
+                    : "ProblemNumbersMismatch",
+                BuildNumberMismatchFeedback(
+                    expectedNumbers,
+                    actualNumbers,
+                    language,
+                    language == AppLanguage.Vietnamese
+                        ? $"hai dữ kiện của phương trình {contract.EquationText}: {known} và {result}"
+                        : $"the two facts in equation {contract.EquationText}: {known} and {result}") +
+                answerLeak);
+        }
+
+        string lowerProblem = problem.ToLowerInvariant();
+        string requiredItem = requiredStoryItem.Trim();
+
+        if (requiredItem.Length == 0 ||
+            !ProblemContainsRequiredStoryItem(
+                problem,
+                requiredItem,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "FindXStoryItemMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Trong problem_text không có đúng loại đồ vật bắt buộc “{requiredStoryItem}”. Hãy dùng nguyên cụm này để kể lại phương trình {contract.EquationText}, không thay bằng đồ vật khác."
+                    : $"problem_text does not contain the required story item “{requiredStoryItem}”. Use that exact phrase to express {contract.EquationText}; do not substitute another item.");
+        }
+
+        if (!AreAnswerUnitsEquivalent(
+                unit,
+                requiredAnswerUnit,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "FindXAnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Trường answer_unit đang là “{unit}”, nhưng nghiệm x trong ngữ cảnh này đếm “{requiredAnswerUnit}”. Hãy dùng đúng đơn vị đó; nếu là bút thì cây/cái/chiếc được xem là tương đương, nhưng không được đổi phần tên bút hoặc thêm số."
+                    : $"answer_unit is “{unit}”, but x counts “{requiredAnswerUnit}” in this context. Set answer_unit exactly to “{requiredAnswerUnit}”; do not add a number or use the unit of a different fact.");
+        }
+
+        if (!HasUnambiguousOperationMeaning(
+                lowerProblem,
+                contract.Operation,
+                language))
+        {
+            string? conflictFeedback =
+                BuildFindXOperationConflictFeedback(
+                    lowerProblem,
+                    contract,
+                    language);
+
+            if (!string.IsNullOrWhiteSpace(conflictFeedback))
+            {
+                return LlmWordProblemValidationResult.Invalid(
+                    "OperationMeaningConflict",
+                    conflictFeedback);
+            }
+
+            System.Diagnostics.Debug.WriteLine(
+                "Find-x semantic keyword check was inconclusive; " +
+                "the problem was accepted after contract validation.");
+        }
+
+        string? roleFeedback =
+            BuildFindXRoleMismatchFeedback(
+                lowerProblem,
+                contract,
+                language);
+
+        if (!string.IsNullOrWhiteSpace(roleFeedback))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "FindXRelationshipMismatch",
+                roleFeedback);
+        }
+
+        if (string.IsNullOrWhiteSpace(subject) ||
+            !lowerProblem.Contains(
+                subject.ToLowerInvariant(),
+                StringComparison.Ordinal))
+        {
+            subject = requiredStoryItem;
+        }
+
+        string? solutionLeadDisclosureFeedback =
+            BuildSolutionLeadDisclosureFeedback(
+                solutionLead,
+                contract.CorrectAnswer,
+                language);
+
+        if (!string.IsNullOrWhiteSpace(
+                solutionLeadDisclosureFeedback))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                solutionLeadDisclosureFeedback);
+        }
+
+        solutionLead =
+            ElementaryWordProblemSolutionFormatter
+                .NormalizeSolutionLeadPunctuation(solutionLead);
+
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            IsGenericSolutionLead(solutionLead, language))
+        {
+            solutionLead = language == AppLanguage.Vietnamese
+                ? $"Số {unit} chưa biết là:"
+                : $"The unknown number of {unit} is:";
+        }
+
+        if (!SolutionLeadMentionsAnswerUnit(
+                solutionLead,
+                unit,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Trường solution_lead không nêu đúng đơn vị của x là “{unit}”. Hãy viết câu như “Số {unit} chưa biết là:” và không thay bằng một danh từ rộng hơn."
+                    : $"solution_lead does not name x's answer_unit “{unit}”. Use a sentence such as “The unknown number of {unit} is:” without replacing it with a broader noun.");
+        }
+
+        return new(
+            true,
+            null,
+            null,
+            new MathWordProblem(
+                problem,
+                solutionLead,
+                unit,
+                subject));
+    }
+
+    private static bool ProblemContainsRequiredStoryItem(
+        string problem,
+        string requiredStoryItem,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return WordProblemUnitEquivalence.ContainsVietnameseUnit(
+                problem,
+                requiredStoryItem);
+        }
+
+        return problem.Contains(
+            requiredStoryItem,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool AreAnswerUnitsEquivalent(
+        string actualUnit,
+        string expectedUnit,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return WordProblemUnitEquivalence
+                .AreVietnameseUnitsEquivalent(
+                    actualUnit,
+                    expectedUnit);
+        }
+
+        return string.Equals(
+            actualUnit,
+            expectedUnit,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SolutionLeadMentionsAnswerUnit(
+        string solutionLead,
+        string answerUnit,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return WordProblemUnitEquivalence.ContainsVietnameseUnit(
+                solutionLead,
+                answerUnit);
+        }
+
+        string normalizedLead =
+            NormalizeSingleLine(solutionLead)
+                .ToLowerInvariant();
+        string normalizedUnit =
+            NormalizeSingleLine(answerUnit)
+                .ToLowerInvariant();
+
+        return normalizedUnit.Length > 0 &&
+               $" {normalizedLead} ".Contains(
+                   $" {normalizedUnit} ",
+                   StringComparison.Ordinal);
+    }
+
+    private static string? BuildSolutionLeadDisclosureFeedback(
+        string solutionLead,
+        BigInteger correctAnswer,
+        AppLanguage language)
+    {
+        if (string.IsNullOrWhiteSpace(solutionLead))
+        {
+            return null;
+        }
+
+        string[] numberTokens =
+            NumberRegex()
+                .Matches(solutionLead)
+                .Select(match => match.Value)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+        string[] operatorTokens =
+            SolutionLeadForbiddenOperatorRegex()
+                .Matches(solutionLead)
+                .Select(match => match.Value.Trim())
+                .Where(value => value.Length > 0)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+        string[] textualDisclosureTokens =
+            SolutionLeadTextualAnswerRegex()
+                .Matches(solutionLead)
+                .Select(match => match.Value.Trim())
+                .Where(value => value.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        int colonIndex = solutionLead.IndexOf(':');
+        string contentAfterColon =
+            colonIndex >= 0
+                ? solutionLead[(colonIndex + 1)..].Trim()
+                : string.Empty;
+
+        if (numberTokens.Length == 0 &&
+            operatorTokens.Length == 0 &&
+            textualDisclosureTokens.Length == 0 &&
+            contentAfterColon.Length == 0)
+        {
+            return null;
+        }
+
+        bool revealsCorrectAnswer =
+            numberTokens.Any(value =>
+                BigInteger.TryParse(
+                    value,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out BigInteger parsed) &&
+                parsed == correctAnswer);
+        string numberDetail =
+            numberTokens.Length == 0
+                ? language == AppLanguage.Vietnamese
+                    ? "không có số"
+                    : "no numeric token"
+                : FormatQuotedList(numberTokens);
+        string operatorDetail =
+            operatorTokens.Length == 0
+                ? language == AppLanguage.Vietnamese
+                    ? "không có ký hiệu phép tính"
+                    : "no calculation symbol"
+                : FormatQuotedList(operatorTokens);
+        var disclosureParts =
+            new List<string>();
+
+        if (textualDisclosureTokens.Length > 0)
+        {
+            disclosureParts.Add(
+                FormatQuotedList(textualDisclosureTokens));
+        }
+
+        if (contentAfterColon.Length > 0)
+        {
+            disclosureParts.Add(
+                language == AppLanguage.Vietnamese
+                    ? $"nội dung đứng sau dấu hai chấm “{contentAfterColon}”"
+                    : $"content after the colon “{contentAfterColon}”");
+        }
+
+        string textualDetail =
+            disclosureParts.Count == 0
+                ? language == AppLanguage.Vietnamese
+                    ? "không có cụm từ tiết lộ bằng chữ"
+                    : "no textual disclosure"
+                : string.Join(
+                    language == AppLanguage.Vietnamese
+                        ? " và "
+                        : " and ",
+                    disclosureParts);
+
+        return language == AppLanguage.Vietnamese
+            ? $"Trường solution_lead đang là “{solutionLead}”. Validator phát hiện {numberDetail}, {operatorDetail} và {textualDetail}; " +
+              (revealsCorrectAnswer
+                  ? $"trong đó đã lộ trực tiếp đáp án {correctAnswer}. "
+                  : "những nội dung này đã biến câu dẫn thành một phần của phép giải. ") +
+              "Đây là lỗi cấm: solution_lead chỉ được nêu đại lượng cần tìm và kết thúc bằng dấu hai chấm, tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Ví dụ đúng: “Số quả chôm chôm mẹ còn lại là:”."
+            : $"solution_lead is “{solutionLead}”. The validator found {numberDetail}, {operatorDetail}, and {textualDetail}; " +
+              (revealsCorrectAnswer
+                  ? $"it directly reveals the answer {correctAnswer}. "
+                  : "this turns the lead-in sentence into part of the calculation. ") +
+              "This is forbidden: solution_lead may only name the requested quantity and end with a colon. It must contain no number, calculation, equals sign, result, or answer.";
     }
 
     public LlmWordProblemValidationResult ValidateGeometry(
@@ -1955,12 +2666,25 @@ internal sealed partial class LlmWordProblemValidator
             subject = contract.ObjectName;
         }
 
+        string? solutionLeadDisclosureFeedback =
+            BuildSolutionLeadDisclosureFeedback(
+                solutionLead,
+                contract.CorrectAnswer,
+                language);
+
+        if (!string.IsNullOrWhiteSpace(
+                solutionLeadDisclosureFeedback))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                solutionLeadDisclosureFeedback);
+        }
+
         solutionLead =
             ElementaryWordProblemSolutionFormatter
                 .NormalizeSolutionLeadPunctuation(solutionLead);
 
         if (string.IsNullOrWhiteSpace(solutionLead) ||
-            solutionLead.Contains('=') ||
             IsGenericSolutionLead(solutionLead, language))
         {
             string measurement = GetGeometryMeasurementPhrase(
@@ -2239,6 +2963,201 @@ internal sealed partial class LlmWordProblemValidator
             : $"Conflicting wording in problem_text. The contract requires {expectedName} ({left} {GetOperationSymbol(expectedOperation)} {right}), but {conflictDetail}. These phrases make the reader infer the wrong operation; remove or replace them with clear {expectedName} wording such as {suggestions}.";
     }
 
+    private static string? BuildFindXOperationConflictFeedback(
+        string problem,
+        FindXQuizContract contract,
+        AppLanguage language)
+    {
+        var conflicts =
+            Enum.GetValues<ArithmeticOperation>()
+                .Where(operation => operation != contract.Operation)
+                .Where(operation =>
+                    HasUnambiguousOperationMeaning(
+                        problem,
+                        operation,
+                        language))
+                .Select(operation =>
+                    new
+                    {
+                        Operation = operation,
+                        Phrases = FindMatchedOperationPhrases(
+                            problem,
+                            operation,
+                            language)
+                    })
+                .ToArray();
+
+        if (conflicts.Length == 0)
+        {
+            return null;
+        }
+
+        string conflictDetail = string.Join(
+            "; ",
+            conflicts.Select(conflict =>
+                language == AppLanguage.Vietnamese
+                    ? $"{FormatQuotedList(conflict.Phrases)} gợi {GetOperationDisplayName(conflict.Operation, language)}"
+                    : $"{FormatQuotedList(conflict.Phrases)} implies {GetOperationDisplayName(conflict.Operation, language)}"));
+        string expectedName =
+            GetOperationDisplayName(
+                contract.Operation,
+                language);
+        string suggestions =
+            FormatQuotedList(
+                GetPreferredOperationPhrases(
+                    contract.Operation,
+                    language));
+
+        return language == AppLanguage.Vietnamese
+            ? $"Mâu thuẫn cách dùng từ trong problem_text. Contract Tìm x bắt buộc là “{contract.EquationText}” ({expectedName}), nhưng {conflictDetail}. Các cụm này làm học sinh đặt sai phương trình; hãy bỏ chúng và diễn đạt đúng vai trò số ban đầu, số thêm/bớt, số nhóm hoặc số mỗi nhóm, chẳng hạn {suggestions}."
+            : $"Conflicting wording in problem_text. The Find-x contract is “{contract.EquationText}” ({expectedName}), but {conflictDetail}. These phrases make a student form the wrong equation; remove them and state the correct roles of the initial amount, change, group count, or items per group, using wording such as {suggestions}.";
+    }
+
+    private static string? BuildFindXRoleMismatchFeedback(
+        string problem,
+        FindXQuizContract contract,
+        AppLanguage language)
+    {
+        int known = (int)contract.KnownValue;
+        int result = (int)contract.ResultValue;
+        bool vi = language == AppLanguage.Vietnamese;
+
+        string[] initial = vi
+            ? ["ban đầu", "lúc đầu", "đang có", "có"]
+            : ["initially", "at first", "started with", "has", "had"];
+        string[] added = vi
+            ? ["thêm", "nhận", "được cho", "mua thêm", "có thêm"]
+            : ["plus", "added", "received", "more", "bought", "joined"];
+        string[] removed = vi
+            ? ["bớt", "cho", "tặng", "lấy đi", "lấy ra", "bỏ đi", "dùng", "ăn", "bán"]
+            : ["remove", "removed", "minus", "gave", "took away", "used", "ate", "sold", "left"];
+        string[] remaining = vi
+            ? ["còn", "còn lại"]
+            : ["remain", "remaining", "leaving", "leaves", "left"];
+        string[] total = vi
+            ? ["tổng cộng", "tất cả", "có tất cả"]
+            : ["in total", "altogether", "in all", "total"];
+        string[] groups = vi
+            ? ["nhóm", "phần"]
+            : ["groups", "group", "parts"];
+        string[] perGroup = vi
+            ? ["mỗi nhóm", "mỗi phần", "mỗi"]
+            : ["each group", "per group", "each"];
+
+        bool valid =
+            (contract.Operation, contract.UnknownIsLeftOperand) switch
+            {
+                (ArithmeticOperation.Add, true) =>
+                    HasPhraseBeforeNumber(problem, known, added) &&
+                    HasPhraseBeforeNumber(problem, result, total),
+                (ArithmeticOperation.Add, false) =>
+                    HasPhraseBeforeNumber(problem, known, initial) &&
+                    HasPhraseBeforeNumber(problem, result, total),
+                (ArithmeticOperation.Subtract, true) =>
+                    HasPhraseBeforeNumber(problem, known, removed) &&
+                    HasPhraseBeforeNumber(problem, result, remaining),
+                (ArithmeticOperation.Subtract, false) =>
+                    HasPhraseBeforeNumber(problem, known, initial) &&
+                    HasPhraseBeforeNumber(problem, result, remaining),
+                (ArithmeticOperation.Multiply, true) =>
+                    HasPhraseBeforeNumber(problem, known, perGroup) &&
+                    HasPhraseBeforeNumber(problem, result, total),
+                (ArithmeticOperation.Multiply, false) =>
+                    HasNumberBeforePhrase(problem, known, groups) &&
+                    HasPhraseBeforeNumber(problem, result, total),
+                (ArithmeticOperation.Divide, true) =>
+                    HasNumberBeforePhrase(problem, known, groups) &&
+                    HasPhraseBeforeNumber(problem, result, perGroup),
+                (ArithmeticOperation.Divide, false) =>
+                    HasPhraseBeforeNumber(problem, known, total) &&
+                    HasPhraseBeforeNumber(problem, result, perGroup),
+                _ => false
+            };
+
+        if (valid)
+        {
+            return null;
+        }
+
+        string relationship =
+            (contract.Operation, contract.UnknownIsLeftOperand, vi) switch
+            {
+                (ArithmeticOperation.Add, true, true) => $"{known} là số thêm vào và {result} là tổng sau khi thêm",
+                (ArithmeticOperation.Add, false, true) => $"{known} là số ban đầu và {result} là tổng sau khi thêm",
+                (ArithmeticOperation.Subtract, true, true) => $"{known} là số bị bớt đi và {result} là số còn lại",
+                (ArithmeticOperation.Subtract, false, true) => $"{known} là số ban đầu và {result} là số còn lại",
+                (ArithmeticOperation.Multiply, true, true) => $"{known} là số đồ vật mỗi nhóm và {result} là tổng số đồ vật",
+                (ArithmeticOperation.Multiply, false, true) => $"{known} là số nhóm và {result} là tổng số đồ vật",
+                (ArithmeticOperation.Divide, true, true) => $"{known} là số nhóm và {result} là số đồ vật mỗi nhóm",
+                (ArithmeticOperation.Divide, false, true) => $"{known} là tổng số đồ vật và {result} là số đồ vật mỗi nhóm",
+                (ArithmeticOperation.Add, true, false) => $"{known} is the added amount and {result} is the total after adding",
+                (ArithmeticOperation.Add, false, false) => $"{known} is the initial amount and {result} is the total after adding",
+                (ArithmeticOperation.Subtract, true, false) => $"{known} is removed and {result} is the amount remaining",
+                (ArithmeticOperation.Subtract, false, false) => $"{known} is the initial amount and {result} is the amount remaining",
+                (ArithmeticOperation.Multiply, true, false) => $"{known} is the item count per group and {result} is the total item count",
+                (ArithmeticOperation.Multiply, false, false) => $"{known} is the number of groups and {result} is the total item count",
+                (ArithmeticOperation.Divide, true, false) => $"{known} is the number of groups and {result} is the item count per group",
+                (ArithmeticOperation.Divide, false, false) => $"{known} is the total item count and {result} is the item count per group",
+                _ => contract.EquationText
+            };
+
+        return vi
+            ? $"Dữ kiện đúng số nhưng sai vai trò trong problem_text. Phương trình bắt buộc là “{contract.EquationText}”: {relationship}. Cách đặt từ hiện tại không gắn rõ các số với đúng vai trò nên có thể khiến học sinh lập phương trình ngược. Hãy viết lại đúng quan hệ này và không đổi số."
+            : $"The numeric values are present, but their roles are wrong or unclear in problem_text. The required equation is “{contract.EquationText}”: {relationship}. The current wording can make a student form the inverse equation. Rewrite the relationship clearly without changing any number.";
+    }
+
+    private static bool HasPhraseBeforeNumber(
+        string text,
+        int number,
+        IReadOnlyList<string> phrases)
+    {
+        MatchCollection matches = Regex.Matches(
+            text,
+            $@"(?<!\d){Regex.Escape(number.ToString(CultureInfo.InvariantCulture))}(?!\d)",
+            RegexOptions.CultureInvariant);
+
+        foreach (Match match in matches)
+        {
+            int start = Math.Max(0, match.Index - 38);
+            string window = text[start..match.Index];
+
+            if (phrases.Any(phrase =>
+                    ContainsKeyword(window, phrase)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasNumberBeforePhrase(
+        string text,
+        int number,
+        IReadOnlyList<string> phrases)
+    {
+        MatchCollection matches = Regex.Matches(
+            text,
+            $@"(?<!\d){Regex.Escape(number.ToString(CultureInfo.InvariantCulture))}(?!\d)",
+            RegexOptions.CultureInvariant);
+
+        foreach (Match match in matches)
+        {
+            int end = Math.Min(
+                text.Length,
+                match.Index + match.Length + 38);
+            string window = text[(match.Index + match.Length)..end];
+
+            if (phrases.Any(phrase =>
+                    ContainsKeyword(window, phrase)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static string[] FindMatchedOperationPhrases(
         string problem,
         ArithmeticOperation operation,
@@ -2379,7 +3298,7 @@ internal sealed partial class LlmWordProblemValidator
                 ContainsAny(problem, "altogether", "in total", "how many"),
 
             ArithmeticOperation.Subtract =>
-                ContainsAny(problem, "gave", "used", "lost", "took away", "ate", "sold", "left", "removed") &&
+                ContainsAny(problem, "gave", "used", "lost", "took away", "ate", "sold", "left", "remove", "removed") &&
                 ContainsAny(problem, "left", "remain"),
 
             ArithmeticOperation.Multiply =>
@@ -2669,6 +3588,16 @@ internal sealed partial class LlmWordProblemValidator
 
     [GeneratedRegex(@"(?<!\d)-?\d+(?!\d)", RegexOptions.CultureInvariant)]
     private static partial Regex NumberRegex();
+
+    [GeneratedRegex(
+        @"=|[+×*÷/]|(?<=\d)\s*[-−]\s*(?=\d)",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SolutionLeadForbiddenOperatorRegex();
+
+    [GeneratedRegex(
+        @"\b(?:đáp\s*(?:số|án)|answer)\b|\b(?:là|bằng)\s+(?:âm\s+)?(?:không|một|hai|ba|bốn|tư|năm|lăm|sáu|bảy|tám|chín|mười|mươi|trăm|nghìn|triệu|tỷ)\b|\b(?:is|equals?)\s+(?:negative\s+)?(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|trillion)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SolutionLeadTextualAnswerRegex();
 
     [GeneratedRegex(
         @"(?<prefix>\b(?:lớp|class)\s*)(?<label>\d+(?:\s*/\s*\d+|[A-Za-z])?)\b",

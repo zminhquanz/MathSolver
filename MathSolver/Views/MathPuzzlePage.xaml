@@ -229,6 +229,7 @@
                                         BackgroundColor="{DynamicResource SurfaceAltColor}" />
 
                                     <Border
+                                        x:Name="AiDiagnosticsSectionBorder"
                                         Padding="12"
                                         BackgroundColor="{DynamicResource SurfaceColor}"
                                         Stroke="{DynamicResource PrimaryBorderBrush}"

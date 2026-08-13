@@ -20,7 +20,8 @@ public sealed record ArithmeticQuizQuestion(
     bool? PresentedEquationIsCorrect,
     IReadOnlyList<BigInteger> Choices,
     MathWordProblem? WordProblem = null,
-    GeometryQuizContract? GeometryProblem = null);
+    GeometryQuizContract? GeometryProblem = null,
+    FindXQuizContract? FindXProblem = null);
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,

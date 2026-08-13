@@ -129,8 +129,21 @@ public partial class PowerRootView : LocalizedSolverView
         RefreshLocalizedDynamicText();
     }
 
+    protected override void OnSolverLoaded()
+    {
+        base.OnSolverLoaded();
+
+        DeveloperModeManager.DeveloperModeChanged +=
+            OnDeveloperModeChanged;
+
+        UpdateDeveloperDiagnosticsVisibility();
+    }
+
     protected override void OnSolverUnloaded()
     {
+        DeveloperModeManager.DeveloperModeChanged -=
+            OnDeveloperModeChanged;
+
 #if WINDOWS
         MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
             this);
@@ -3072,25 +3085,6 @@ public partial class PowerRootView : LocalizedSolverView
                 ? 1
                 : 2);
 
-        DiagnosticsToggleButton.IsVisible =
-            canExport;
-
-        if (!canExport)
-        {
-            _isDiagnosticsVisible =
-                false;
-        }
-
-        LargeResultInfoBorder.IsVisible =
-            canExport &&
-            _isDiagnosticsVisible;
-
-        DiagnosticsToggleButton.Text =
-            Translate(
-                _isDiagnosticsVisible
-                    ? "PowerRoot.HideDetails"
-                    : "PowerRoot.ShowDetails");
-
         if (canExport)
         {
             LargeResultInfoLabel.Text =
@@ -3104,13 +3098,16 @@ public partial class PowerRootView : LocalizedSolverView
 
         ResultBorder.IsVisible =
             true;
+
+        UpdateDeveloperDiagnosticsVisibility();
     }
 
     private void OnDiagnosticsToggleClicked(
         object? sender,
         EventArgs e)
     {
-        if (!DiagnosticsToggleButton.IsVisible)
+        if (!DeveloperModeManager.IsEnabled ||
+            !DiagnosticsToggleButton.IsVisible)
         {
             return;
         }
@@ -3119,6 +3116,42 @@ public partial class PowerRootView : LocalizedSolverView
             !_isDiagnosticsVisible;
 
         LargeResultInfoBorder.IsVisible =
+            _isDiagnosticsVisible;
+
+        DiagnosticsToggleButton.Text =
+            Translate(
+                _isDiagnosticsVisible
+                    ? "PowerRoot.HideDetails"
+                    : "PowerRoot.ShowDetails");
+    }
+
+    private void OnDeveloperModeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            UpdateDeveloperDiagnosticsVisibility);
+    }
+
+    private void UpdateDeveloperDiagnosticsVisibility()
+    {
+        bool canShowDeveloperDiagnostics =
+            DeveloperModeManager.IsEnabled &&
+            ResultBorder.IsVisible &&
+            _calculationState is not null &&
+            _calculationState.DigitCount >=
+                ExportDigitThreshold;
+
+        DiagnosticsToggleButton.IsVisible =
+            canShowDeveloperDiagnostics;
+
+        if (!canShowDeveloperDiagnostics)
+        {
+            _isDiagnosticsVisible = false;
+        }
+
+        LargeResultInfoBorder.IsVisible =
+            canShowDeveloperDiagnostics &&
             _isDiagnosticsVisible;
 
         DiagnosticsToggleButton.Text =

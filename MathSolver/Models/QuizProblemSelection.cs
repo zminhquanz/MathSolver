@@ -7,7 +7,8 @@ namespace MathSolver.Models;
 public enum QuizProblemKind
 {
     Arithmetic,
-    Geometry
+    Geometry,
+    FindX
 }
 
 /// <summary>

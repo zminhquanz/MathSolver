@@ -5,15 +5,27 @@ using MathSolver.Services.Core;
 using MathSolver.Services.Localization;
 using System.Globalization;
 using System.Numerics;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace MathSolver.Views;
 
 public partial class MathPuzzlePage : ContentPage
 {
+    private static readonly JsonSerializerOptions PrettyJsonOptions =
+        new()
+        {
+            Encoder =
+                JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            WriteIndented = true
+        };
+
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
     private readonly GeometryCalculationEngine _geometryEngine = new();
+    private readonly FindXEngine _findXEngine = new();
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
+    private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
     private readonly SortedDictionary<int, string> _llmRawOutputs = new();
     private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
@@ -42,6 +54,7 @@ public partial class MathPuzzlePage : ContentPage
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
     private bool _isAiDiagnosticsVisible;
+    private bool _isDeveloperModeSubscribed;
     private int _llmProgressVersion;
     private int _questionCount;
     private int _correctCount;
@@ -76,11 +89,16 @@ public partial class MathPuzzlePage : ContentPage
             new GeometryQuizGenerator(
                 _geometryEngine);
 
+        _findXQuizGenerator =
+            new FindXQuizGenerator(
+                _findXEngine);
+
         _localLlmQuizGenerator =
             new LocalLlmQuizGenerator(
                 _quizGenerator,
                 _arithmeticEngine,
-                _geometryQuizGenerator);
+                _geometryQuizGenerator,
+                _findXQuizGenerator);
 
         _llmModelPath =
             _llmModelStore.GetSavedModelPath();
@@ -103,6 +121,9 @@ public partial class MathPuzzlePage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        SubscribeDeveloperModeChanged();
+        UpdateAiDiagnosticsVisibility();
 
         // WinUI can restore its native blue accent when a Button leaves the
         // Disabled visual state. Reattach the app's dynamic theme resources
@@ -142,6 +163,8 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        UnsubscribeDeveloperModeChanged();
+
         // Settings và thư viện Gemma chỉ là modal trong suốt phủ lên trang.
         // Constructor của overlay bật cờ trước khi PushModalAsync làm trang
         // nhận OnDisappearing, nên không được coi đây là thao tác rời tab lớn:
@@ -369,6 +392,12 @@ public partial class MathPuzzlePage : ContentPage
 
     private string GetQuestionPromptTitle()
     {
+        if (_currentQuestion?.FindXProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return TranslateQuiz("Quiz.FindXQuestionTitle");
+        }
+
         if (_currentQuestion?.GeometryProblem is not null &&
             _generationSource == QuizGenerationSource.Algorithm)
         {
@@ -397,6 +426,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         bool isWordProblemSource =
             _generationSource == QuizGenerationSource.LocalLlm;
+        bool isFindX = IsFindXProblemSelected();
 
         // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
         // Nguồn Thuật toán dùng biểu thức hoặc đề hình học ngắn, nên học sinh
@@ -406,14 +436,22 @@ public partial class MathPuzzlePage : ContentPage
 
         EssayValidationHintLabel.Text =
             TranslateQuiz(
-                IsGeometryProblemSelected()
+                isWordProblemSource && isFindX
+                    ? "Quiz.FindXEssayValidationHintAi"
+                    : isWordProblemSource && IsGeometryProblemSelected()
+                    ? "Quiz.GeometryEssayValidationHintAi"
+                    : isFindX
+                    ? "Quiz.FindXEssayValidationHint"
+                    : IsGeometryProblemSelected()
                     ? "Quiz.GeometryEssayValidationHint"
                     : isWordProblemSource
                         ? "Quiz.EssayValidationHint"
                         : "Quiz.EssayValidationHintAlgorithm");
 
         EssayEquationEntry.Placeholder =
-            IsGeometryProblemSelected()
+            isFindX
+                ? TranslateQuiz("Quiz.FindXEssayEquationPlaceholder")
+                : IsGeometryProblemSelected()
                 ? Translate("Quiz.GeometryEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
     }
@@ -434,7 +472,7 @@ public partial class MathPuzzlePage : ContentPage
                      _quizProblemTypeCatalog.Options)
             {
                 OperationPicker.Items.Add(
-                    Translate(option.LocalizationKey));
+                    TranslateQuiz(option.LocalizationKey));
             }
 
             if (selectedIndex >= OperationPicker.Items.Count)
@@ -509,6 +547,21 @@ public partial class MathPuzzlePage : ContentPage
         return request?.Kind == QuizProblemKind.Geometry;
     }
 
+    private bool IsFindXProblemSelected()
+    {
+        if (_currentQuestion?.FindXProblem is not null)
+        {
+            return true;
+        }
+
+        QuizProblemRequest? request =
+            _activeProblemRequest ??
+            _quizProblemTypeCatalog.GetFixedRequest(
+                OperationPicker.SelectedIndex);
+
+        return request?.Kind == QuizProblemKind.FindX;
+    }
+
     private void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
     {
@@ -535,6 +588,9 @@ public partial class MathPuzzlePage : ContentPage
                         _quizGenerator.Generate(
                             _selectedMode,
                             problemRequest.ArithmeticOperation),
+                    QuizProblemKind.FindX =>
+                        _findXQuizGenerator.Generate(
+                            _selectedMode),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -1528,6 +1584,11 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
+        if (!DeveloperModeManager.IsEnabled)
+        {
+            return;
+        }
+
         _isAiDiagnosticsVisible =
             !_isAiDiagnosticsVisible;
 
@@ -1536,14 +1597,63 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateAiDiagnosticsVisibility()
     {
+        bool developerModeEnabled =
+            DeveloperModeManager.IsEnabled;
+
+        AiDiagnosticsSectionBorder.IsVisible =
+            developerModeEnabled;
+
+        if (!developerModeEnabled)
+        {
+            _isAiDiagnosticsVisible = false;
+        }
+
         AiDiagnosticsBorder.IsVisible =
+            developerModeEnabled &&
             _isAiDiagnosticsVisible;
+
+        AiDiagnosticsToggleButton.IsVisible =
+            developerModeEnabled;
 
         AiDiagnosticsToggleButton.Text =
             TranslateQuiz(
                 _isAiDiagnosticsVisible
                     ? "Quiz.HideAiDiagnostics"
                     : "Quiz.ShowAiDiagnostics");
+    }
+
+    private void SubscribeDeveloperModeChanged()
+    {
+        if (_isDeveloperModeSubscribed)
+        {
+            return;
+        }
+
+        DeveloperModeManager.DeveloperModeChanged +=
+            OnDeveloperModeChanged;
+
+        _isDeveloperModeSubscribed = true;
+    }
+
+    private void UnsubscribeDeveloperModeChanged()
+    {
+        if (!_isDeveloperModeSubscribed)
+        {
+            return;
+        }
+
+        DeveloperModeManager.DeveloperModeChanged -=
+            OnDeveloperModeChanged;
+
+        _isDeveloperModeSubscribed = false;
+    }
+
+    private void OnDeveloperModeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            UpdateAiDiagnosticsVisibility);
     }
 
     private void ResetLlmDiagnostics()
@@ -1578,7 +1688,7 @@ public partial class MathPuzzlePage : ContentPage
                         entry.Key,
                         maximumAttempts) +
                     Environment.NewLine +
-                    entry.Value));
+                    FormatLlmJsonForDisplay(entry.Value)));
     }
 
     private void AppendLlmDiagnostic(
@@ -1630,9 +1740,42 @@ public partial class MathPuzzlePage : ContentPage
                         entry.Key,
                         maximumAttempts) +
                     Environment.NewLine +
-                    entry.Value));
+                    FormatLlmJsonForDisplay(entry.Value)));
 
         RenderLlmValidationLog();
+    }
+
+    private static string FormatLlmJsonForDisplay(
+        string rawModelOutput)
+    {
+        string trimmed = rawModelOutput.Trim();
+        int objectStart = trimmed.IndexOf('{');
+        int objectEnd = trimmed.LastIndexOf('}');
+
+        if (objectStart < 0 ||
+            objectEnd <= objectStart)
+        {
+            return rawModelOutput;
+        }
+
+        string json =
+            trimmed[objectStart..(objectEnd + 1)];
+
+        try
+        {
+            using JsonDocument document =
+                JsonDocument.Parse(json);
+
+            return JsonSerializer.Serialize(
+                document.RootElement,
+                PrettyJsonOptions);
+        }
+        catch (JsonException)
+        {
+            // Khi model còn streaming, JSON chưa đóng đủ ngoặc. Giữ nguyên
+            // nội dung tạm thời và tự định dạng ở lần cập nhật hoàn chỉnh.
+            return rawModelOutput;
+        }
     }
 
     private void RenderLlmValidationLog()
@@ -1806,6 +1949,8 @@ public partial class MathPuzzlePage : ContentPage
 
         MathWordProblem? wordProblem =
             _currentQuestion.WordProblem;
+        FindXQuizContract? findXProblem =
+            _currentQuestion.FindXProblem;
 
         if (wordProblem is not null)
         {
@@ -1840,6 +1985,20 @@ public partial class MathPuzzlePage : ContentPage
             {
                 PresentedAnswerLabel.IsVisible = false;
             }
+        }
+        else if (findXProblem is not null)
+        {
+            PresentedAnswerLabel.IsVisible = false;
+            QuestionExpressionLabel.FontSize = 32;
+            QuestionExpressionLabel.SetDynamicResource(
+                Label.TextColorProperty,
+                "PrimaryColor");
+
+            QuestionExpressionLabel.Text =
+                _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? $"{findXProblem.EquationText}{Environment.NewLine}" +
+                      $"x = {_currentQuestion.PresentedAnswer.GetValueOrDefault().ToString("N0", CultureInfo.CurrentCulture)}"
+                    : findXProblem.EquationText;
         }
         else
         {
@@ -1979,6 +2138,7 @@ public partial class MathPuzzlePage : ContentPage
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(
                 _currentQuestion,
+                EssaySolutionEditor.Text,
                 EssayEquationEntry.Text,
                 EssayAnswerEntry.Text);
 
@@ -2077,6 +2237,15 @@ public partial class MathPuzzlePage : ContentPage
                 "Quiz.EssayCorrectFeedback");
         }
 
+        if (!validation.SolutionIsCorrect)
+        {
+            return TranslateQuiz(
+                validation.SolutionError ==
+                    EssayAnswerError.MissingSolution
+                    ? "Quiz.EssaySolutionRequired"
+                    : "Quiz.EssaySolutionContentIncorrect");
+        }
+
         if (!validation.EquationIsCorrect &&
             !validation.AnswerIsCorrect)
         {
@@ -2129,6 +2298,22 @@ public partial class MathPuzzlePage : ContentPage
                 AppLanguage.Vietnamese
                 ? "Đáp số"
                 : "Answer";
+
+        if (question.FindXProblem is
+            FindXQuizContract findX)
+        {
+            string xLabel =
+                AppLanguageManager.CurrentLanguage ==
+                    AppLanguage.Vietnamese
+                    ? "Giá trị của x"
+                    : "The value of x";
+
+            return
+                $"{findX.EquationText}{Environment.NewLine}" +
+                $"x = {left} {symbol} {right}{Environment.NewLine}" +
+                $"x = {answer}{Environment.NewLine}" +
+                $"{xLabel}: {answer}";
+        }
 
         return
             $"{left} {symbol} {right} = {answer}" +

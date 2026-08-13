@@ -328,6 +328,53 @@
                             </Grid>
                         </Border>
 
+                        <!-- Developer mode -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="&lt;/&gt;"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="1"
+                                    VerticalOptions="Center">
+
+                                    <Label
+                                        x:Name="DeveloperModeTitleLabel"
+                                        Text="Chế độ nhà phát triển"
+                                        Style="{StaticResource ThemeMenuTitleStyle}" />
+
+                                    <Label
+                                        x:Name="DeveloperModeSummaryLabel"
+                                        Text="Hiện công cụ chẩn đoán và log kỹ thuật"
+                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
+
+                                </VerticalStackLayout>
+
+                                <Button
+                                    x:Name="DeveloperModeToggleButton"
+                                    Grid.Column="2"
+                                    WidthRequest="78"
+                                    HeightRequest="34"
+                                    Padding="8,0"
+                                    VerticalOptions="Center"
+                                    CornerRadius="17"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    BorderWidth="1"
+                                    Text="✓ BẬT"
+                                    SemanticProperties.Description="Bật hoặc tắt chế độ nhà phát triển"
+                                    Clicked="OnDeveloperModeClicked" />
+
+                            </Grid>
+                        </Border>
+
                         <BoxView Margin="12,6" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
                         <!-- Reset -->

@@ -30,6 +30,15 @@ public static class ElementaryWordProblemSolutionFormatter
                 culture);
         }
 
+        if (question.FindXProblem is FindXQuizContract findX)
+        {
+            return FormatFindX(
+                findX,
+                wordProblem,
+                language,
+                culture);
+        }
+
         string left =
             question.Expression.LeftOperand.ToString(
                 "N0",
@@ -61,6 +70,43 @@ public static class ElementaryWordProblemSolutionFormatter
         return
             $"{solutionLead}{Environment.NewLine}" +
             $"{left} {symbol} {right} = {answer}{Environment.NewLine}" +
+            $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+    }
+
+    private static string FormatFindX(
+        FindXQuizContract findX,
+        MathWordProblem wordProblem,
+        AppLanguage language,
+        CultureInfo culture)
+    {
+        string left =
+            findX.SolutionExpression.LeftOperand.ToString(
+                "N0",
+                culture);
+        string right =
+            findX.SolutionExpression.RightOperand.ToString(
+                "N0",
+                culture);
+        string answer =
+            findX.CorrectAnswer.ToString(
+                "N0",
+                culture);
+        string symbol =
+            BasicArithmeticEngine.GetSymbol(
+                findX.SolutionExpression.Operation);
+        string answerLabel =
+            language == AppLanguage.Vietnamese
+                ? "Đáp số"
+                : "Answer";
+        string solutionLead =
+            NormalizeSolutionLeadPunctuation(
+                wordProblem.SolutionLead);
+
+        return
+            $"{solutionLead}{Environment.NewLine}" +
+            $"{findX.EquationText}{Environment.NewLine}" +
+            $"x = {left} {symbol} {right}{Environment.NewLine}" +
+            $"x = {answer}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
