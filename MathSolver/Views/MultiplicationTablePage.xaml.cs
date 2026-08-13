@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Services;
 using System.Collections.ObjectModel;
 
@@ -19,6 +20,10 @@ public partial class MultiplicationTablePage : ContentPage
     public MultiplicationTablePage()
     {
         InitializeComponent();
+
+        InteractiveButtonAnimation.SetIsScopeEnabled(
+            this,
+            true);
 
         // This page uses stable-key bindings for static text and rebuilds
         // dynamic card text itself. Keep the legacy visual-tree translator

@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Numerics;
@@ -86,6 +87,10 @@ public partial class CalculationPage : ContentPage
     public CalculationPage()
     {
         InitializeComponent();
+
+        InteractiveButtonAnimation.SetIsScopeEnabled(
+            this,
+            true);
 
         LocalizationService.Attach(
             this);
@@ -2972,9 +2977,6 @@ public partial class CalculationPage : ContentPage
 
         if (_selectedSubTab == selectedTab)
         {
-            await AnimateSubTabButtonAsync(
-                selectedButton);
-
             await ScrollSubTabIntoViewAsync(
                 selectedButton);
 
@@ -3064,10 +3066,7 @@ public partial class CalculationPage : ContentPage
                 incomingContent.ScaleToAsync(
                     1d,
                     190,
-                    Easing.CubicOut),
-
-                AnimateSubTabButtonAsync(
-                    selectedButton));
+                    Easing.CubicOut));
 
             await ScrollSubTabIntoViewAsync(
                 selectedButton);
@@ -3179,22 +3178,6 @@ public partial class CalculationPage : ContentPage
             CalculationSubTab.Geometry => GeometryTabButton,
             _ => BasicTabButton
         };
-    }
-
-    private static async Task AnimateSubTabButtonAsync(
-        Button button)
-    {
-        button.CancelAnimations();
-
-        await button.ScaleToAsync(
-            0.94d,
-            65,
-            Easing.CubicOut);
-
-        await button.ScaleToAsync(
-            1d,
-            105,
-            Easing.CubicOut);
     }
 
     private void SelectSubTab(CalculationSubTab selectedTab)

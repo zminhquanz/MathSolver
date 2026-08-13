@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Maui;
+using MathSolver.Controls;
 using MathSolver.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Handlers;
 
 namespace MathSolver
 {
@@ -8,6 +10,16 @@ namespace MathSolver
     {
         public static MauiApp CreateMauiApp()
         {
+            ButtonHandler.Mapper.AppendToMapping(
+                "InteractivePressAnimation",
+                static (_, view) =>
+                {
+                    if (view is Button button)
+                    {
+                        InteractiveButtonAnimation.Attach(button);
+                    }
+                });
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()

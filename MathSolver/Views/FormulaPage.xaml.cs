@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Services;
 using MathSolver.Graphics;
 using MathSolver.Models;
@@ -49,6 +50,10 @@ public partial class FormulaPage : ContentPage
     public FormulaPage()
     {
         InitializeComponent();
+
+        InteractiveButtonAnimation.SetIsScopeEnabled(
+            this,
+            true);
 
         LocalizationService.Attach(
             this);
@@ -689,16 +694,9 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        Button selectedButton =
-            GetFormulaSubTabButton(
-                selectedTab);
-
         if (_selectedSubTab ==
             selectedTab)
         {
-            await AnimateFormulaSubTabButtonAsync(
-                selectedButton);
-
             return;
         }
 
@@ -797,10 +795,7 @@ public partial class FormulaPage : ContentPage
                 incomingContent.ScaleToAsync(
                     1d,
                     190,
-                    Easing.CubicOut),
-
-                AnimateFormulaSubTabButtonAsync(
-                    selectedButton));
+                    Easing.CubicOut));
 
             RefreshSelectedFormulaSubTabLayout();
         }
@@ -885,38 +880,6 @@ public partial class FormulaPage : ContentPage
             _ =>
                 UnknownComponentContent
         };
-    }
-
-    private Button GetFormulaSubTabButton(
-        FormulaSubTab tab)
-    {
-        return tab switch
-        {
-            FormulaSubTab.UnknownComponent =>
-                UnknownComponentTabButton,
-
-            FormulaSubTab.Geometry =>
-                GeometryTabButton,
-
-            _ =>
-                UnknownComponentTabButton
-        };
-    }
-
-    private static async Task AnimateFormulaSubTabButtonAsync(
-        Button button)
-    {
-        button.CancelAnimations();
-
-        await button.ScaleToAsync(
-            0.94d,
-            65,
-            Easing.CubicOut);
-
-        await button.ScaleToAsync(
-            1d,
-            105,
-            Easing.CubicOut);
     }
 
     private static void ResetTransitionTransform(

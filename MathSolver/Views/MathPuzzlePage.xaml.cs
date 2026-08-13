@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
@@ -53,6 +54,10 @@ public partial class MathPuzzlePage : ContentPage
     public MathPuzzlePage()
     {
         InitializeComponent();
+
+        InteractiveButtonAnimation.SetIsScopeEnabled(
+            this,
+            true);
 
         _quizGenerator =
             new ArithmeticQuizGenerator(
