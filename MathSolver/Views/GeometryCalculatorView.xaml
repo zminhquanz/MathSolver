@@ -558,7 +558,7 @@
 
                     <Label
                         Grid.Column="0"
-                        Text="⚠"
+                        Text="❌"
                         FontSize="20"
                         TextColor="{DynamicResource DangerColor}" />
 

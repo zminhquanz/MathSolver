@@ -184,7 +184,7 @@
                                 ColumnSpacing="10">
 
                                 <Label
-                                    Text="⚠"
+                                    Text="❌"
                                     FontSize="22"
                                     TextColor="{DynamicResource DangerColor}" />
 
@@ -608,7 +608,7 @@
                                 ColumnSpacing="10">
 
                                 <Label
-                                    Text="⚠"
+                                    Text="❌"
                                     FontSize="22"
                                     TextColor="{DynamicResource DangerColor}" />
 

@@ -40,6 +40,12 @@ public sealed class GeometryFormulaItem
     public ObservableCollection<string> Formulas { get; init; } = [];
 
     public ObservableCollection<string> Symbols { get; init; } = [];
+
+    /// <summary>
+    /// Các tính chất nhận biết và quan hệ hình học, hiển thị sau phần chú
+    /// thích ký hiệu. Công thức tính toán vẫn được giữ riêng trong Formulas.
+    /// </summary>
+    public ObservableCollection<string> Properties { get; init; } = [];
 }
 
 /// <summary>
@@ -71,6 +77,10 @@ public static class GeometryFormulaCatalog
                 symbols:
                 [
                     T("a: độ dài một cạnh")
+                ],
+                properties:
+                [
+                    T("Bốn cạnh bằng nhau; bốn góc vuông; hai đường chéo bằng nhau, vuông góc và cắt nhau tại trung điểm.")
                 ]),
 
             Create(
@@ -88,6 +98,10 @@ public static class GeometryFormulaCatalog
                 [
                     T("a: chiều dài"),
                     T("b: chiều rộng")
+                ],
+                properties:
+                [
+                    T("Các cạnh đối song song và bằng nhau; bốn góc vuông; hai đường chéo bằng nhau và cắt nhau tại trung điểm.")
                 ]),
 
             Create(
@@ -106,6 +120,10 @@ public static class GeometryFormulaCatalog
                     T("a: độ dài đáy"),
                     T("b, c: hai cạnh còn lại"),
                     T("h: chiều cao tương ứng với đáy a")
+                ],
+                properties:
+                [
+                    T("Tổng ba góc bằng 180°; tổng độ dài hai cạnh bất kỳ luôn lớn hơn cạnh còn lại.")
                 ]),
 
             Create(
@@ -125,6 +143,10 @@ public static class GeometryFormulaCatalog
                     T("a, b: hai cạnh góc vuông"),
                     T("c: cạnh huyền"),
                     T("Góc giữa a và b bằng 90°")
+                ],
+                properties:
+                [
+                    T("Có một góc vuông; hai góc nhọn phụ nhau; cạnh huyền đối diện góc vuông và là cạnh dài nhất.")
                 ]),
 
             Create(
@@ -144,6 +166,10 @@ public static class GeometryFormulaCatalog
                     T("a: độ dài mỗi cạnh"),
                     T("h: chiều cao, h = (a × √3) ÷ 2"),
                     T("Ba cạnh bằng nhau; ba góc đều bằng 60°")
+                ],
+                properties:
+                [
+                    T("Ba đường cao đồng thời là ba trung tuyến, ba đường phân giác và ba đường trung trực.")
                 ]),
 
             Create(
@@ -163,6 +189,10 @@ public static class GeometryFormulaCatalog
                     T("r: bán kính"),
                     T("d: đường kính, d = 2 × r"),
                     T("π ≈ 3,14")
+                ],
+                properties:
+                [
+                    T("Mọi điểm trên đường tròn cách tâm một khoảng bằng bán kính; đường kính đi qua tâm và dài gấp đôi bán kính.")
                 ]),
 
             Create(
@@ -181,6 +211,10 @@ public static class GeometryFormulaCatalog
                     T("a, b: hai đáy song song"),
                     T("c, d: hai cạnh bên"),
                     T("h: chiều cao")
+                ],
+                properties:
+                [
+                    T("Có một cặp cạnh đối song song gọi là hai đáy; chiều cao là khoảng cách vuông góc giữa hai đáy.")
                 ]),
 
             Create(
@@ -199,6 +233,10 @@ public static class GeometryFormulaCatalog
                     T("a, b: hai đáy song song"),
                     T("c: hai cạnh bên bằng nhau"),
                     T("h: chiều cao")
+                ],
+                properties:
+                [
+                    T("Hai cạnh bên bằng nhau; hai góc kề mỗi đáy bằng nhau; hai đường chéo bằng nhau.")
                 ]),
 
             Create(
@@ -217,6 +255,10 @@ public static class GeometryFormulaCatalog
                     T("a, b: hai đáy song song"),
                     T("h: cạnh bên vuông góc với hai đáy, đồng thời là chiều cao"),
                     T("c: cạnh bên còn lại")
+                ],
+                properties:
+                [
+                    T("Có hai góc vuông; một cạnh bên vuông góc với hai đáy và chính là chiều cao.")
                 ]),
 
             Create(
@@ -236,6 +278,10 @@ public static class GeometryFormulaCatalog
                     T("a: độ dài một cạnh"),
                     T("d₁, d₂: hai đường chéo"),
                     T("h: chiều cao")
+                ],
+                properties:
+                [
+                    T("Bốn cạnh bằng nhau; các cạnh đối song song; hai đường chéo vuông góc, cắt nhau tại trung điểm và phân giác các góc.")
                 ]),
 
             Create(
@@ -254,6 +300,10 @@ public static class GeometryFormulaCatalog
                     T("a: độ dài đáy"),
                     T("b: độ dài cạnh bên"),
                     T("h: chiều cao tương ứng với đáy a")
+                ],
+                properties:
+                [
+                    T("Các cạnh đối song song và bằng nhau; các góc đối bằng nhau; hai đường chéo cắt nhau tại trung điểm.")
                 ]),
 
             Create(
@@ -273,6 +323,10 @@ public static class GeometryFormulaCatalog
                     T("a: độ dài một cạnh"),
                     T("Có 6 mặt là các hình vuông bằng nhau"),
                     T("Sxq gồm 4 mặt bên; Stp gồm cả 6 mặt")
+                ],
+                properties:
+                [
+                    T("Có 6 mặt vuông, 12 cạnh bằng nhau và 8 đỉnh; ba cạnh gặp nhau tại mỗi đỉnh đôi một vuông góc.")
                 ]),
 
             Create(
@@ -292,6 +346,10 @@ public static class GeometryFormulaCatalog
                     T("a: chiều dài"),
                     T("b: chiều rộng"),
                     T("h: chiều cao")
+                ],
+                properties:
+                [
+                    T("Có 6 mặt chữ nhật, 12 cạnh và 8 đỉnh; các mặt đối diện song song và bằng nhau.")
                 ]),
 
             Create(
@@ -309,6 +367,10 @@ public static class GeometryFormulaCatalog
                 [
                     T("r: bán kính hình cầu"),
                     T("π ≈ 3,14")
+                ],
+                properties:
+                [
+                    T("Mọi điểm trên mặt cầu cách tâm một khoảng bằng bán kính; hình cầu không có cạnh và không có đỉnh.")
                 ]),
 
             Create(
@@ -329,6 +391,10 @@ public static class GeometryFormulaCatalog
                     T("r: bán kính đáy"),
                     T("h: chiều cao"),
                     T("π ≈ 3,14")
+                ],
+                properties:
+                [
+                    T("Có hai đáy tròn bằng nhau và song song; chiều cao là khoảng cách vuông góc giữa hai mặt đáy.")
                 ]),
 
             Create(
@@ -350,6 +416,10 @@ public static class GeometryFormulaCatalog
                     T("h: chiều cao"),
                     T("l: đường sinh"),
                     T("π ≈ 3,14")
+                ],
+                properties:
+                [
+                    T("Có một đáy tròn và một đỉnh; chiều cao vuông góc với mặt đáy; đường sinh nối đỉnh với đường tròn đáy.")
                 ])
         ];
     }
@@ -384,7 +454,8 @@ public static class GeometryFormulaCatalog
         string name,
         double cardHeight,
         IEnumerable<string> formulas,
-        IEnumerable<string> symbols)
+        IEnumerable<string> symbols,
+        IEnumerable<string> properties)
     {
         return new GeometryFormulaItem
         {
@@ -395,7 +466,8 @@ public static class GeometryFormulaCatalog
             CardHeight = cardHeight,
             Diagram = GeometryFormulaDrawableCache.Get(shapeType),
             Formulas = new ObservableCollection<string>(formulas),
-            Symbols = new ObservableCollection<string>(symbols)
+            Symbols = new ObservableCollection<string>(symbols),
+            Properties = new ObservableCollection<string>(properties)
         };
     }
 

@@ -468,6 +468,12 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
+        // Đổi dạng bài toán bắt đầu một phiên luyện tập mới, giống hệt đổi
+        // kiểu câu hỏi hoặc đổi tab chính. Không giữ lại số câu/đúng/sai của
+        // dạng trước vì chúng không còn cùng một cấu hình luyện tập.
+        CancelLlmGeneration();
+        ResetQuizSessionState();
+
         _activeProblemRequest =
             _quizProblemTypeCatalog.GetFixedRequest(
                 OperationPicker.SelectedIndex);

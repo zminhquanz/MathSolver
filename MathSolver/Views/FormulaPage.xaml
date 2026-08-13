@@ -607,7 +607,7 @@
                             </Border.StrokeShape>
 
                             <Grid
-                                RowDefinitions="Auto,Auto,1,Auto,Auto"
+                                RowDefinitions="Auto,Auto,1,Auto,Auto,Auto"
                                 RowSpacing="9">
 
                                 <Label
@@ -696,6 +696,48 @@
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
 
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <Border
+                                    Grid.Row="5"
+                                    Padding="10"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource BorderBrush}"
+                                    StrokeThickness="1"
+                                    VerticalOptions="Start">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout
+                                        Spacing="5"
+                                        VerticalOptions="Start">
+
+                                        <Label
+                                            Text="Tính chất chung"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                        <VerticalStackLayout
+                                            BindableLayout.ItemsSource="{Binding Properties}"
+                                            Spacing="4">
+
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+
+                                                    <Label
+                                                        Text="{Binding ., StringFormat='• {0}'}"
+                                                        FontSize="14"
+                                                        LineBreakMode="WordWrap"
+                                                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+
+                                        </VerticalStackLayout>
                                     </VerticalStackLayout>
                                 </Border>
 

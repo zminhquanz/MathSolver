@@ -322,7 +322,7 @@
 
                     <Label
                     Grid.Column="0"
-                    Text="!"
+                    Text="❌"
                     FontSize="22"
                     FontAttributes="Bold"
                     TextColor="{DynamicResource DangerColor}" />
