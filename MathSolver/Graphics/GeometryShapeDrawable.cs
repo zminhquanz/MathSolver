@@ -25,6 +25,10 @@ public enum GeometryShapeType
 
 public sealed class GeometryShapeDrawable : IDrawable
 {
+    private const float DesignWidth = 320f;
+    private const float DesignHeight = 210f;
+    private const float ViewportPadding = 8f;
+
     public GeometryShapeType ShapeType { get; init; }
 
     private static Color ShapeColor =>
@@ -48,81 +52,128 @@ public sealed class GeometryShapeDrawable : IDrawable
 
         try
         {
+            float availableWidth =
+                MathF.Max(
+                    0f,
+                    dirtyRect.Width - ViewportPadding * 2f);
+
+            float availableHeight =
+                MathF.Max(
+                    0f,
+                    dirtyRect.Height - ViewportPadding * 2f);
+
+            if (availableWidth <= 0f ||
+                availableHeight <= 0f)
+            {
+                return;
+            }
+
+            // Vẽ mọi hình trong cùng một viewport chuẩn, sau đó scale đều cả
+            // hai trục theo kích thước thật của GraphicsView. Cách này giữ
+            // đúng tỷ lệ, căn giữa hình và làm cả nét/chữ co giãn cùng nhau.
+            float viewportScale =
+                MathF.Min(
+                    availableWidth / DesignWidth,
+                    availableHeight / DesignHeight);
+
+            float offsetX =
+                dirtyRect.Left +
+                (dirtyRect.Width - DesignWidth * viewportScale) / 2f;
+
+            float offsetY =
+                dirtyRect.Top +
+                (dirtyRect.Height - DesignHeight * viewportScale) / 2f;
+
+            canvas.Translate(
+                offsetX,
+                offsetY);
+
+            canvas.Scale(
+                viewportScale,
+                viewportScale);
+
+            var viewport =
+                new RectF(
+                    0f,
+                    0f,
+                    DesignWidth,
+                    DesignHeight);
+
             canvas.StrokeColor = ShapeColor;
             canvas.StrokeSize = 2.5f;
             canvas.FontColor = LabelColor;
-            canvas.FontSize = GetFontSize(dirtyRect.Width);
+            canvas.FontSize = GetFontSize(viewport.Width);
             canvas.Font = Microsoft.Maui.Graphics.Font.Default;
 
             switch (ShapeType)
             {
                 case GeometryShapeType.Square:
-                    DrawSquare(canvas, dirtyRect);
+                    DrawSquare(canvas, viewport);
                     break;
 
                 case GeometryShapeType.Rectangle:
-                    DrawRectangle(canvas, dirtyRect);
+                    DrawRectangle(canvas, viewport);
                     break;
 
                 case GeometryShapeType.Triangle:
-                    DrawTriangle(canvas, dirtyRect);
+                    DrawTriangle(canvas, viewport);
                     break;
 
                 case GeometryShapeType.RightTriangle:
-                    DrawRightTriangle(canvas, dirtyRect);
+                    DrawRightTriangle(canvas, viewport);
                     break;
 
                 case GeometryShapeType.EquilateralTriangle:
-                    DrawEquilateralTriangle(canvas, dirtyRect);
+                    DrawEquilateralTriangle(canvas, viewport);
                     break;
 
                 case GeometryShapeType.Circle:
-                    DrawCircle(canvas, dirtyRect);
+                    DrawCircle(canvas, viewport);
                     break;
 
                 case GeometryShapeType.Trapezoid:
-                    DrawTrapezoid(canvas, dirtyRect);
+                    DrawTrapezoid(canvas, viewport);
                     break;
 
                 case GeometryShapeType.IsoscelesTrapezoid:
-                    DrawIsoscelesTrapezoid(canvas, dirtyRect);
+                    DrawIsoscelesTrapezoid(canvas, viewport);
                     break;
 
                 case GeometryShapeType.RightTrapezoid:
-                    DrawRightTrapezoid(canvas, dirtyRect);
+                    DrawRightTrapezoid(canvas, viewport);
                     break;
 
                 case GeometryShapeType.Rhombus:
-                    DrawRhombus(canvas, dirtyRect);
+                    DrawRhombus(canvas, viewport);
                     break;
 
                 case GeometryShapeType.Parallelogram:
-                    DrawParallelogram(canvas, dirtyRect);
+                    DrawParallelogram(canvas, viewport);
                     break;
                 case GeometryShapeType.Cube:
-                    DrawCube(canvas, dirtyRect);
+                    DrawCube(canvas, viewport);
                     break;
                 case GeometryShapeType.RectangularPrism:
                     DrawRectangularPrism(
                         canvas,
-                        dirtyRect);
+                        viewport);
                     break;
                 case GeometryShapeType.Sphere:
                     DrawSphere(
                         canvas,
-                        dirtyRect);
+                        viewport);
                     break;
 
                 case GeometryShapeType.Cylinder:
                     DrawCylinder(
                         canvas,
-                        dirtyRect);
+                        viewport);
                     break;
 
                 case GeometryShapeType.Cone:
                     DrawCone(
                         canvas,
-                        dirtyRect);
+                        viewport);
                     break;
             }
         }

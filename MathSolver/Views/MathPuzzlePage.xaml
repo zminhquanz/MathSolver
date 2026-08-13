@@ -228,24 +228,63 @@
                                         ProgressColor="{DynamicResource PrimaryColor}"
                                         BackgroundColor="{DynamicResource SurfaceAltColor}" />
 
-                                    <Button
-                                        x:Name="AiDiagnosticsToggleButton"
-                                        Text="{localization:QuizTranslate Quiz.ShowAiDiagnostics}"
-                                        HorizontalOptions="End"
-                                        HeightRequest="34"
-                                        Padding="12,4"
-                                        CornerRadius="9"
-                                        FontSize="12"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource SurfaceColor}"
-                                        BorderColor="{DynamicResource BorderColor}"
-                                        BorderWidth="1"
-                                        TextColor="{DynamicResource TextSecondaryColor}"
-                                        Clicked="OnAiDiagnosticsToggleClicked" />
-
                                     <Border
-                                        x:Name="AiDiagnosticsBorder"
-                                        IsVisible="False"
+                                        Padding="12"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+
+                                        <VerticalStackLayout Spacing="10">
+
+                                            <Grid
+                                                ColumnDefinitions="*,Auto"
+                                                ColumnSpacing="12">
+
+                                                <VerticalStackLayout
+                                                    Grid.Column="0"
+                                                    Spacing="2"
+                                                    VerticalOptions="Center">
+
+                                                    <Label
+                                                        Text="{localization:QuizTranslate Quiz.AiDiagnosticsTitle}"
+                                                        FontSize="16"
+                                                        FontAttributes="Bold"
+                                                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                                    <Label
+                                                        Text="{localization:QuizTranslate Quiz.AiDiagnosticsDescription}"
+                                                        FontSize="13"
+                                                        LineHeight="1.15"
+                                                        TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                                </VerticalStackLayout>
+
+                                                <Button
+                                                    x:Name="AiDiagnosticsToggleButton"
+                                                    Grid.Column="1"
+                                                    Text="{localization:QuizTranslate Quiz.ShowAiDiagnostics}"
+                                                    HorizontalOptions="End"
+                                                    VerticalOptions="Center"
+                                                    HeightRequest="38"
+                                                    Padding="14,5"
+                                                    CornerRadius="9"
+                                                    FontSize="13"
+                                                    FontAttributes="Bold"
+                                                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                                    BorderColor="{DynamicResource PrimaryBorderColor}"
+                                                    BorderWidth="1"
+                                                    TextColor="{DynamicResource PrimaryColor}"
+                                                    Clicked="OnAiDiagnosticsToggleClicked" />
+
+                                            </Grid>
+
+                                            <Border
+                                                x:Name="AiDiagnosticsBorder"
+                                                IsVisible="False"
                                         Padding="12"
                                         BackgroundColor="{DynamicResource SurfaceAltColor}"
                                         Stroke="{DynamicResource BorderBrush}"
@@ -277,16 +316,16 @@
                                                     <Label
                                                         Grid.Row="0"
                                                         Text="{localization:QuizTranslate Quiz.RawJsonTitle}"
-                                                        FontSize="14"
+                                                        FontSize="16"
                                                         FontAttributes="Bold"
                                                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                     <Editor
                                                         x:Name="LlmRawJsonEditor"
                                                         Grid.Row="1"
-                                                        HeightRequest="220"
+                                                        HeightRequest="260"
                                                         IsReadOnly="True"
-                                                        FontSize="12"
+                                                        FontSize="15"
                                                         BackgroundColor="Transparent"
                                                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -312,16 +351,16 @@
                                                     <Label
                                                         Grid.Row="0"
                                                         Text="{localization:QuizTranslate Quiz.ValidationLogTitle}"
-                                                        FontSize="14"
+                                                        FontSize="16"
                                                         FontAttributes="Bold"
                                                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                                                     <Editor
                                                         x:Name="LlmValidationLogEditor"
                                                         Grid.Row="1"
-                                                        HeightRequest="220"
+                                                        HeightRequest="260"
                                                         IsReadOnly="True"
-                                                        FontSize="12"
+                                                        FontSize="15"
                                                         BackgroundColor="Transparent"
                                                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -330,6 +369,10 @@
                                             </Border>
 
                                         </Grid>
+
+                                            </Border>
+
+                                        </VerticalStackLayout>
 
                                     </Border>
 

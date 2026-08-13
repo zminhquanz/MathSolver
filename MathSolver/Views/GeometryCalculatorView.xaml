@@ -293,6 +293,7 @@
                                     MinimumHeightRequest="170"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
+                                    SizeChanged="OnGeometryDiagramViewSizeChanged"
                                     BackgroundColor="Transparent" />
 
                             </Grid>

@@ -2565,6 +2565,16 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         UpdateMainResponsiveLayout();
     }
 
+    private void OnGeometryDiagramViewSizeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        // Drawable dùng chính dirtyRect mới để scale theo vùng border thực.
+        // Chủ động invalidate giúp WinUI/Android cập nhật ngay sau khi layout
+        // chuyển giữa hai cột và một cột.
+        GeometryDiagramView.Invalidate();
+    }
+
     private void UpdateMainResponsiveLayout()
     {
         if (_isUpdatingResponsiveLayout)
