@@ -260,19 +260,20 @@ public partial class MathPuzzlePage : ContentPage
             _generationSource == QuizGenerationSource.LocalLlm;
 
         LlmSettingsBorder.IsVisible = isLocalLlm;
-        CreateLlmQuestionButton.IsVisible = isLocalLlm;
+        CreateOrRegenerateQuestionButton.Text =
+            TranslateQuiz(
+                isLocalLlm
+                    ? "Quiz.CreateWithAi"
+                    : "Quiz.RegenerateQuestion");
 
-        // Ở chế độ AI, hai thao tác thường dùng nằm cạnh nhau theo tỷ lệ
-        // 50/50. Chế độ thuật toán không có nút tạo lại bằng AI nên nút
-        // Câu tiếp theo chiếm toàn bộ hai cột.
-        Grid.SetColumn(
-            NextQuestionButton,
-            isLocalLlm ? 1 : 0);
-        Grid.SetColumnSpan(
-            NextQuestionButton,
-            isLocalLlm ? 1 : 2);
+        // Cả hai nguồn dùng chung nút bên trái: AI tạo đề bằng model cục bộ,
+        // còn Thuật toán tạo lại một câu cùng cấu hình để học sinh có thể
+        // bỏ qua câu đang quá khó mà không làm thay đổi điểm hay số thứ tự.
+        Grid.SetColumn(NextQuestionButton, 1);
+        Grid.SetColumnSpan(NextQuestionButton, 1);
 
         UpdateEssayAnswerPresentation();
+        UpdateCreateOrRegenerateQuestionButtonState();
     }
 
     private void OnTrueFalseModeClicked(
@@ -518,6 +519,13 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion = null;
             QuestionExpressionLabel.Text =
                 Translate("Quiz.GenerationError");
+        }
+        finally
+        {
+            // Câu vừa được tạo mới hoặc tạo lại nên trạng thái đã trả lời đã
+            // được xóa. Bật lại nút Tạo đề lại; nếu không, trạng thái Disabled
+            // của câu trước sẽ còn giữ nguyên sau khi bấm Câu tiếp theo.
+            UpdateCreateOrRegenerateQuestionButtonState();
         }
     }
 
@@ -1015,13 +1023,21 @@ public partial class MathPuzzlePage : ContentPage
             Translate("Common.OK"));
     }
 
-    private async void OnCreateLlmQuestionClicked(
+    private async void OnCreateOrRegenerateQuestionClicked(
         object? sender,
         EventArgs e)
     {
         if (_questionAnswered)
         {
-            UpdateCreateLlmQuestionButtonState();
+            UpdateCreateOrRegenerateQuestionButtonState();
+            return;
+        }
+
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            // Tạo lại câu hiện tại, không tăng bộ đếm và không tính điểm.
+            GenerateAlgorithmQuestion(
+                questionNumberOnSuccess: null);
             return;
         }
 
@@ -1279,7 +1295,7 @@ public partial class MathPuzzlePage : ContentPage
                     : Translate("Quiz.ModelRecommendation");
         }
 
-        UpdateCreateLlmQuestionButtonState();
+        UpdateCreateOrRegenerateQuestionButtonState();
 
         EjectLlmModelButton.IsEnabled =
             !_isGeneratingWithLlm &&
@@ -1328,14 +1344,15 @@ public partial class MathPuzzlePage : ContentPage
         EssayModeButton.IsEnabled = !isBusy;
         OperationPicker.IsEnabled = !isBusy;
 
-        UpdateCreateLlmQuestionButtonState();
+        UpdateCreateOrRegenerateQuestionButtonState();
     }
 
-    private void UpdateCreateLlmQuestionButtonState()
+    private void UpdateCreateOrRegenerateQuestionButtonState()
     {
-        CreateLlmQuestionButton.IsEnabled =
+        CreateOrRegenerateQuestionButton.IsEnabled =
             !_isGeneratingWithLlm &&
-            _llmModelPath is not null &&
+            (_generationSource == QuizGenerationSource.Algorithm ||
+             _llmModelPath is not null) &&
             !_questionAnswered;
 
         // Reapply after the Enabled/Disabled transition. On Windows this
@@ -1356,10 +1373,10 @@ public partial class MathPuzzlePage : ContentPage
             Button.TextColorProperty,
             "PrimaryColor");
 
-        CreateLlmQuestionButton.SetDynamicResource(
+        CreateOrRegenerateQuestionButton.SetDynamicResource(
             Button.BackgroundColorProperty,
             "PrimaryColor");
-        CreateLlmQuestionButton.SetDynamicResource(
+        CreateOrRegenerateQuestionButton.SetDynamicResource(
             Button.TextColorProperty,
             "OnPrimaryColor");
 
@@ -1795,7 +1812,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         NextQuestionButton.IsEnabled = true;
-        UpdateCreateLlmQuestionButtonState();
+        UpdateCreateOrRegenerateQuestionButtonState();
         UpdateScoreLabels();
     }
 

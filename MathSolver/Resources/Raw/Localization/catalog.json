@@ -42,6 +42,7 @@
     { "key": "Quiz.EssayEquationIncorrect", "source": "Phép tính chưa đúng dữ kiện, phép toán hoặc kết quả.", "mode": "exact" },
     { "key": "Quiz.EssayAnswerIncorrect", "source": "Phép tính đúng nhưng đáp số chưa đúng.", "mode": "exact" },
     { "key": "Quiz.EssayAnswerUnitIncorrect", "source": "Giá trị đáp số đúng nhưng đơn vị chưa phù hợp với đề bài.", "mode": "exact" },
+    { "key": "Quiz.RegenerateQuestion", "source": "🔄 Tạo đề lại", "mode": "exact" },
     { "key": "Quiz.NextQuestion", "source": "➡️ Câu tiếp theo", "mode": "exact" },
     { "key": "Quiz.ValidationHint", "source": "Mỗi câu hỏi đều được tính đáp án và kiểm tra lại trước khi hiển thị.", "mode": "exact" },
     { "key": "Quiz.GenerationError", "source": "Không thể sinh câu hỏi hợp lệ. Hãy thử lại.", "mode": "exact" },

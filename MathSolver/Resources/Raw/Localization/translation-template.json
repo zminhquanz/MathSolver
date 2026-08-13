@@ -46,6 +46,7 @@
     "Quiz.EssayEquationIncorrect": "Phép tính chưa đúng dữ kiện, phép toán hoặc kết quả.",
     "Quiz.EssayAnswerIncorrect": "Phép tính đúng nhưng đáp số chưa đúng.",
     "Quiz.EssayAnswerUnitIncorrect": "Giá trị đáp số đúng nhưng đơn vị chưa phù hợp với đề bài.",
+    "Quiz.RegenerateQuestion": "🔄 Tạo đề lại",
     "Quiz.NextQuestion": "➡️ Câu tiếp theo",
     "Quiz.ValidationHint": "Mỗi câu hỏi đều được tính đáp án và kiểm tra lại trước khi hiển thị.",
     "Quiz.GenerationError": "Không thể sinh câu hỏi hợp lệ. Hãy thử lại.",

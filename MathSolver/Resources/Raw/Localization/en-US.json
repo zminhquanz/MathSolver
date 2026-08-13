@@ -46,6 +46,7 @@
     "Quiz.EssayEquationIncorrect": "The calculation does not match the given numbers, operation, or result.",
     "Quiz.EssayAnswerIncorrect": "The calculation is correct, but the final answer is incorrect.",
     "Quiz.EssayAnswerUnitIncorrect": "The answer value is correct, but its unit does not match the problem.",
+    "Quiz.RegenerateQuestion": "🔄 Generate again",
     "Quiz.NextQuestion": "➡️ Next question",
     "Quiz.ValidationHint": "Every answer is calculated and checked before the question is shown.",
     "Quiz.GenerationError": "A valid question could not be generated. Please try again.",

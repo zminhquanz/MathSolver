@@ -708,18 +708,16 @@
                                 ColumnSpacing="10">
 
                                 <Button
-                                    x:Name="CreateLlmQuestionButton"
+                                    x:Name="CreateOrRegenerateQuestionButton"
                                     Grid.Column="0"
                                     Text="{localization:Translate Quiz.CreateWithAi}"
-                                    IsVisible="False"
-                                    IsEnabled="False"
                                     HeightRequest="50"
                                     CornerRadius="12"
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
-                                    Clicked="OnCreateLlmQuestionClicked" />
+                                    Clicked="OnCreateOrRegenerateQuestionClicked" />
 
                                 <Button
                                     x:Name="NextQuestionButton"
