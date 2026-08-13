@@ -135,11 +135,12 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
-        // SettingsMenuPage chỉ là một modal trong suốt phủ lên trang hiện tại.
-        // Constructor của nó bật cờ này trước khi PushModalAsync làm
-        // MathPuzzlePage nhận OnDisappearing, vì vậy không được coi đây là
-        // thao tác rời tab lớn: giữ nguyên câu hỏi, lựa chọn và điểm số.
-        if (SettingsMenuPage.IsTransparentOverlayActive)
+        // Settings và thư viện Gemma chỉ là modal trong suốt phủ lên trang.
+        // Constructor của overlay bật cờ trước khi PushModalAsync làm trang
+        // nhận OnDisappearing, nên không được coi đây là thao tác rời tab lớn:
+        // giữ nguyên câu hỏi, lựa chọn, điểm số và model đang nằm trong RAM.
+        if (SettingsMenuPage.IsTransparentOverlayActive ||
+            GemmaModelCatalogPage.IsTransparentOverlayActive)
         {
             base.OnDisappearing();
             return;
@@ -697,50 +698,15 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        string e2BOption =
-            Translate("Quiz.DownloadE2BOption");
-        string e4BOption =
-            Translate("Quiz.DownloadE4BOption");
-        string e2BWebsiteOption =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                Translate("Quiz.OpenModelWebsiteOption"),
-                "E2B");
-        string e4BWebsiteOption =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                Translate("Quiz.OpenModelWebsiteOption"),
-                "E4B");
+        var catalogPage =
+            new GemmaModelCatalogPage();
 
-        string? selection =
-            await DisplayActionSheetAsync(
-                Translate("Quiz.ChooseDownloadModelTitle"),
-                Translate("Quiz.Cancel"),
-                null,
-                e2BOption,
-                e4BOption,
-                e2BWebsiteOption,
-                e4BWebsiteOption);
-
-        if (selection == e2BWebsiteOption ||
-            selection == e4BWebsiteOption)
-        {
-            Gemma4ModelDescriptor websiteModel =
-                selection == e2BWebsiteOption
-                    ? Gemma4ModelDownloadService.E2B
-                    : Gemma4ModelDownloadService.E4B;
-
-            await OpenGemma4ModelWebsiteAsync(
-                websiteModel);
-            return;
-        }
+        await Navigation.PushModalAsync(
+            catalogPage,
+            animated: false);
 
         Gemma4ModelDescriptor? model =
-            selection == e2BOption
-                ? Gemma4ModelDownloadService.E2B
-                : selection == e4BOption
-                    ? Gemma4ModelDownloadService.E4B
-                    : null;
+            await catalogPage.WaitForDownloadSelectionAsync();
 
         if (model is null)
         {
@@ -901,36 +867,6 @@ public partial class MathPuzzlePage : ContentPage
 
             cancellation.Dispose();
         }
-    }
-
-    private async Task OpenGemma4ModelWebsiteAsync(
-        Gemma4ModelDescriptor model)
-    {
-        try
-        {
-            bool canOpen =
-                await Launcher.Default.CanOpenAsync(
-                    model.ModelPageUri);
-
-            bool opened =
-                canOpen &&
-                await Launcher.Default.OpenAsync(
-                    model.ModelPageUri);
-
-            if (opened)
-            {
-                return;
-            }
-        }
-        catch (Exception exception)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Could not open the Gemma 4 model website: {exception}");
-        }
-
-        ShowLlmStatus(
-            Translate("Quiz.OpenModelWebsiteFailed"),
-            isRunning: false);
     }
 
     private void UpdateGemma4DownloadProgress(

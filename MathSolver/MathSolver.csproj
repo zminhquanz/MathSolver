@@ -75,6 +75,9 @@
     <Compile Update="Views\MathPuzzlePage.xaml.cs">
       <DependentUpon>MathPuzzlePage.xaml</DependentUpon>
     </Compile>
+    <Compile Update="Views\GemmaModelCatalogPage.xaml.cs">
+      <DependentUpon>GemmaModelCatalogPage.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Views\PowerRootView.xaml.cs">
       <DependentUpon>PowerRootView.xaml</DependentUpon>
     </Compile>
@@ -100,6 +103,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\MathPuzzlePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Views\GemmaModelCatalogPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\SettingsMenuPage.xaml">
