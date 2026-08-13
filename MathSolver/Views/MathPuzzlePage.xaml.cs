@@ -187,7 +187,11 @@ public partial class MathPuzzlePage : ContentPage
                 UpdateScoreLabels();
 
                 if (_generationSource ==
-                        QuizGenerationSource.LocalLlm)
+                        QuizGenerationSource.Algorithm)
+                {
+                    GenerateAlgorithmQuestion();
+                }
+                else
                 {
                     // Đề AI phụ thuộc chương trình/ngôn ngữ tại thời điểm sinh.
                     PrepareLlmQuestionForGeneration(
@@ -344,20 +348,33 @@ public partial class MathPuzzlePage : ContentPage
 
         UpdateEssayAnswerPresentation();
 
-        QuestionPromptLabel.Text =
-            _currentQuestion?.WordProblem is not null
-                ? Translate("Quiz.WordProblemTitle")
-                : Translate(
-                    _selectedMode switch
-                    {
-                        ArithmeticQuizMode.TrueFalse =>
-                            "Quiz.QuestionTitle",
-                        ArithmeticQuizMode.MultipleChoice =>
-                            "Quiz.MultipleChoiceQuestionTitle",
-                        ArithmeticQuizMode.Essay =>
-                            "Quiz.EssayQuestionTitle",
-                        _ => "Quiz.QuestionTitle"
-                    });
+        QuestionPromptLabel.Text = GetQuestionPromptTitle();
+    }
+
+    private string GetQuestionPromptTitle()
+    {
+        if (_currentQuestion?.GeometryProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return Translate("Quiz.GeometryQuestionTitle");
+        }
+
+        if (_currentQuestion?.WordProblem is not null)
+        {
+            return Translate("Quiz.WordProblemTitle");
+        }
+
+        return Translate(
+            _selectedMode switch
+            {
+                ArithmeticQuizMode.TrueFalse =>
+                    "Quiz.QuestionTitle",
+                ArithmeticQuizMode.MultipleChoice =>
+                    "Quiz.MultipleChoiceQuestionTitle",
+                ArithmeticQuizMode.Essay =>
+                    "Quiz.EssayQuestionTitle",
+                _ => "Quiz.QuestionTitle"
+            });
     }
 
     private void UpdateEssayAnswerPresentation()
@@ -366,8 +383,8 @@ public partial class MathPuzzlePage : ContentPage
             _generationSource == QuizGenerationSource.LocalLlm;
 
         // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
-        // Nguồn Thuật toán chỉ hiển thị biểu thức, nên học sinh chỉ cần
-        // nhập phép tính và đáp số.
+        // Nguồn Thuật toán dùng biểu thức hoặc đề hình học ngắn, nên học sinh
+        // chỉ cần nhập phép tính và đáp số.
         EssaySolutionSection.IsVisible =
             isWordProblemSource;
 
@@ -407,12 +424,8 @@ public partial class MathPuzzlePage : ContentPage
                 Translate("Quiz.OperationMultiplication"));
             OperationPicker.Items.Add(
                 Translate("Quiz.OperationDivision"));
-
-            if (_generationSource == QuizGenerationSource.LocalLlm)
-            {
-                OperationPicker.Items.Add(
-                    Translate("Quiz.ProblemGeometry"));
-            }
+            OperationPicker.Items.Add(
+                Translate("Quiz.ProblemGeometry"));
 
             if (selectedIndex >= OperationPicker.Items.Count)
             {
@@ -466,7 +479,6 @@ public partial class MathPuzzlePage : ContentPage
     }
 
     private bool IsGeometryProblemSelected() =>
-        _generationSource == QuizGenerationSource.LocalLlm &&
         OperationPicker.SelectedIndex == 5;
 
     private void GenerateAlgorithmQuestion(
@@ -480,9 +492,13 @@ public partial class MathPuzzlePage : ContentPage
         try
         {
             _currentQuestion =
-                _quizGenerator.Generate(
-                    _selectedMode,
-                    GetSelectedOperation());
+                IsGeometryProblemSelected()
+                    ? _geometryQuizGenerator.GenerateAlgorithm(
+                        _selectedMode,
+                        AppLanguageManager.CurrentLanguage)
+                    : _quizGenerator.Generate(
+                        _selectedMode,
+                        GetSelectedOperation());
 
             CommitGeneratedQuestionNumber(
                 questionNumberOnSuccess);
@@ -1583,7 +1599,7 @@ public partial class MathPuzzlePage : ContentPage
         if (wordProblem is not null)
         {
             QuestionPromptLabel.Text =
-                Translate("Quiz.WordProblemTitle");
+                GetQuestionPromptTitle();
             QuestionExpressionLabel.Text =
                 wordProblem.ProblemText;
             QuestionExpressionLabel.FontSize = 21;

@@ -23,6 +23,7 @@
     "Quiz.OperationMultiplication": "Multiplication ×",
     "Quiz.OperationDivision": "Division ÷",
     "Quiz.ProblemGeometry": "Geometry △ □ ◯",
+    "Quiz.GeometryQuestionTitle": "Geometry problem",
     "Quiz.QuestionTitle": "Is this equation true or false?",
     "Quiz.MultipleChoiceQuestionTitle": "Choose the correct answer",
     "Quiz.EssayQuestionTitle": "Show your solution",

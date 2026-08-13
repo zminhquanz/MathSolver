@@ -4,8 +4,9 @@ using System.Numerics;
 namespace MathSolver.Services;
 
 /// <summary>
-/// Sinh dữ kiện hình học thực tế trước khi gọi LLM. LLM chỉ diễn đạt lại
-/// hợp đồng này; đáp án luôn được lấy từ GeometryCalculationEngine.
+/// Sinh hợp đồng hình học dùng chung cho nguồn Thuật toán và AI/LLM.
+/// Nguồn Thuật toán ghép câu hỏi trực tiếp bằng template ngắn; AI/LLM chỉ
+/// diễn đạt lại hợp đồng. Đáp án luôn được lấy từ GeometryCalculationEngine.
 /// </summary>
 public sealed class GeometryQuizGenerator
 {
@@ -68,6 +69,118 @@ public sealed class GeometryQuizGenerator
                 dimensions));
 
         return CreateQuestion(mode, contract);
+    }
+
+    /// <summary>
+    /// Tạo câu hỏi hình học hoàn toàn bằng C#, không gọi model. Câu chữ chỉ
+    /// nêu hình, kích thước và đại lượng cần tính để nhánh Thuật toán luôn
+    /// nhanh, dễ kiểm tra và không cần một catalog ngữ cảnh thực tế.
+    /// </summary>
+    public ArithmeticQuizQuestion GenerateAlgorithm(
+        ArithmeticQuizMode mode,
+        AppLanguage language)
+    {
+        ArithmeticQuizQuestion question =
+            Generate(mode, language);
+
+        GeometryQuizContract contract =
+            question.GeometryProblem ??
+            throw new InvalidOperationException(
+                "The generated question does not contain a geometry contract.");
+
+        return question with
+        {
+            WordProblem = BuildAlgorithmProblem(
+                contract,
+                language)
+        };
+    }
+
+    private static MathWordProblem BuildAlgorithmProblem(
+        GeometryQuizContract contract,
+        AppLanguage language)
+    {
+        IReadOnlyDictionary<string, BigInteger> value =
+            contract.Dimensions;
+
+        string a = value.TryGetValue("a", out BigInteger av)
+            ? av.ToString()
+            : string.Empty;
+        string b = value.TryGetValue("b", out BigInteger bv)
+            ? bv.ToString()
+            : string.Empty;
+        string h = value.TryGetValue("h", out BigInteger hv)
+            ? hv.ToString()
+            : string.Empty;
+        string unit = contract.LengthUnitSymbol;
+
+        string problemText = language == AppLanguage.Vietnamese
+            ? (contract.ShapeId, contract.Measurement) switch
+            {
+                ("square", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình vuông có cạnh {a} {unit}.",
+                ("square", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình vuông có cạnh {a} {unit}.",
+                ("rectangle", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình chữ nhật có chiều dài {a} {unit} và chiều rộng {b} {unit}.",
+                ("rectangle", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình chữ nhật có chiều dài {a} {unit} và chiều rộng {b} {unit}.",
+                ("cube", GeometryMeasurement.TotalArea) =>
+                    $"Tính diện tích toàn phần của hình lập phương có cạnh {a} {unit}.",
+                ("cube", GeometryMeasurement.Volume) =>
+                    $"Tính thể tích của hình lập phương có cạnh {a} {unit}.",
+                ("rectangular_prism", GeometryMeasurement.TotalArea) =>
+                    $"Tính diện tích toàn phần của hình hộp chữ nhật có chiều dài {a} {unit}, chiều rộng {b} {unit} và chiều cao {h} {unit}.",
+                ("rectangular_prism", GeometryMeasurement.Volume) =>
+                    $"Tính thể tích của hình hộp chữ nhật có chiều dài {a} {unit}, chiều rộng {b} {unit} và chiều cao {h} {unit}.",
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(contract.Measurement))
+            }
+            : (contract.ShapeId, contract.Measurement) switch
+            {
+                ("square", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the perimeter of a square with side length {a} {unit}.",
+                ("square", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a square with side length {a} {unit}.",
+                ("rectangle", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the perimeter of a rectangle with length {a} {unit} and width {b} {unit}.",
+                ("rectangle", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a rectangle with length {a} {unit} and width {b} {unit}.",
+                ("cube", GeometryMeasurement.TotalArea) =>
+                    $"Calculate the total surface area of a cube with side length {a} {unit}.",
+                ("cube", GeometryMeasurement.Volume) =>
+                    $"Calculate the volume of a cube with side length {a} {unit}.",
+                ("rectangular_prism", GeometryMeasurement.TotalArea) =>
+                    $"Calculate the total surface area of a rectangular prism with length {a} {unit}, width {b} {unit}, and height {h} {unit}.",
+                ("rectangular_prism", GeometryMeasurement.Volume) =>
+                    $"Calculate the volume of a rectangular prism with length {a} {unit}, width {b} {unit}, and height {h} {unit}.",
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(contract.Measurement))
+            };
+
+        string solutionLead = language == AppLanguage.Vietnamese
+            ? contract.Measurement switch
+            {
+                GeometryMeasurement.Perimeter =>
+                    $"Chu vi {contract.ShapeName} là",
+                GeometryMeasurement.Volume =>
+                    $"Thể tích {contract.ShapeName} là",
+                _ => $"Diện tích {contract.ShapeName} là"
+            }
+            : contract.Measurement switch
+            {
+                GeometryMeasurement.Perimeter =>
+                    $"The perimeter of the {contract.ShapeName} is",
+                GeometryMeasurement.Volume =>
+                    $"The volume of the {contract.ShapeName} is",
+                _ => $"The area of the {contract.ShapeName} is"
+            };
+
+        return new MathWordProblem(
+            problemText,
+            solutionLead,
+            contract.AnswerUnit,
+            contract.ShapeName);
     }
 
     private ArithmeticQuizQuestion CreateQuestion(
