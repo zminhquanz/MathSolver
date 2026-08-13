@@ -60,13 +60,41 @@ public enum LlmQuizProgressStage
     DisposingModel
 }
 
+public enum LlmQuizDiagnosticEvent
+{
+    AttemptStarted,
+    JsonReceived,
+    ParseSucceeded,
+    ParseFailed,
+    ValidationSucceeded,
+    ValidationFailed,
+    RetryScheduled,
+    GenerationFailed,
+    RuntimeError
+}
+
+public sealed record LlmQuizDiagnostic(
+    LlmQuizDiagnosticEvent Event,
+    int Attempt,
+    int MaximumAttempts,
+    string? Detail = null,
+    int CharacterCount = 0);
+
+public sealed record LlmQuizAttemptReport(
+    int Attempt,
+    int MaximumAttempts,
+    string RawModelOutput,
+    IReadOnlyList<LlmQuizDiagnostic> Diagnostics);
+
 public sealed record LlmQuizProgress(
     LlmQuizProgressStage Stage,
     int Attempt,
     int MaximumAttempts,
     string? ProblemPreview = null,
     int GeneratedTokenCount = 0,
-    double TokensPerSecond = 0d);
+    double TokensPerSecond = 0d,
+    string? RawModelOutput = null,
+    LlmQuizDiagnostic? Diagnostic = null);
 
 public sealed record LlmQuizGenerationResult(
     ArithmeticQuizQuestion? Question,
@@ -74,7 +102,8 @@ public sealed record LlmQuizGenerationResult(
     string? ErrorCode,
     bool ModelWasLoaded,
     int GeneratedTokenCount = 0,
-    double TokensPerSecond = 0d)
+    double TokensPerSecond = 0d,
+    IReadOnlyList<LlmQuizAttemptReport>? AttemptReports = null)
 {
     public bool IsSuccess =>
         Question is not null;

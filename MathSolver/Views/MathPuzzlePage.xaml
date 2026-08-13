@@ -228,6 +228,111 @@
                                         ProgressColor="{DynamicResource PrimaryColor}"
                                         BackgroundColor="{DynamicResource SurfaceAltColor}" />
 
+                                    <Button
+                                        x:Name="AiDiagnosticsToggleButton"
+                                        Text="{localization:QuizTranslate Quiz.ShowAiDiagnostics}"
+                                        HorizontalOptions="End"
+                                        HeightRequest="34"
+                                        Padding="12,4"
+                                        CornerRadius="9"
+                                        FontSize="12"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        BorderColor="{DynamicResource BorderColor}"
+                                        BorderWidth="1"
+                                        TextColor="{DynamicResource TextSecondaryColor}"
+                                        Clicked="OnAiDiagnosticsToggleClicked" />
+
+                                    <Border
+                                        x:Name="AiDiagnosticsBorder"
+                                        IsVisible="False"
+                                        Padding="12"
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+
+                                        <Grid
+                                            ColumnDefinitions="*,*"
+                                            ColumnSpacing="10">
+
+                                            <Border
+                                                Grid.Column="0"
+                                                Padding="10"
+                                                BackgroundColor="{DynamicResource SurfaceColor}"
+                                                Stroke="{DynamicResource BorderBrush}"
+                                                StrokeThickness="1">
+
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+
+                                                <Grid
+                                                    RowDefinitions="Auto,*"
+                                                    RowSpacing="8">
+
+                                                    <Label
+                                                        Grid.Row="0"
+                                                        Text="{localization:QuizTranslate Quiz.RawJsonTitle}"
+                                                        FontSize="14"
+                                                        FontAttributes="Bold"
+                                                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                                    <Editor
+                                                        x:Name="LlmRawJsonEditor"
+                                                        Grid.Row="1"
+                                                        HeightRequest="220"
+                                                        IsReadOnly="True"
+                                                        FontSize="12"
+                                                        BackgroundColor="Transparent"
+                                                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                                </Grid>
+
+                                            </Border>
+
+                                            <Border
+                                                Grid.Column="1"
+                                                Padding="10"
+                                                BackgroundColor="{DynamicResource SurfaceColor}"
+                                                Stroke="{DynamicResource BorderBrush}"
+                                                StrokeThickness="1">
+
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+
+                                                <Grid
+                                                    RowDefinitions="Auto,*"
+                                                    RowSpacing="8">
+
+                                                    <Label
+                                                        Grid.Row="0"
+                                                        Text="{localization:QuizTranslate Quiz.ValidationLogTitle}"
+                                                        FontSize="14"
+                                                        FontAttributes="Bold"
+                                                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                                    <Editor
+                                                        x:Name="LlmValidationLogEditor"
+                                                        Grid.Row="1"
+                                                        HeightRequest="220"
+                                                        IsReadOnly="True"
+                                                        FontSize="12"
+                                                        BackgroundColor="Transparent"
+                                                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                                </Grid>
+
+                                            </Border>
+
+                                        </Grid>
+
+                                    </Border>
+
                                 </VerticalStackLayout>
                             </Border>
 

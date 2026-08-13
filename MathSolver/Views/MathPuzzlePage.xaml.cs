@@ -15,6 +15,8 @@ public partial class MathPuzzlePage : ContentPage
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
+    private readonly SortedDictionary<int, string> _llmRawOutputs = new();
+    private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
     private readonly EssayAnswerValidator _essayAnswerValidator;
     private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
     private readonly QuizLlmModelStore _llmModelStore = new();
@@ -39,6 +41,7 @@ public partial class MathPuzzlePage : ContentPage
     private bool _isDownloadingModel;
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
+    private bool _isAiDiagnosticsVisible;
     private int _llmProgressVersion;
     private int _questionCount;
     private int _correctCount;
@@ -92,6 +95,8 @@ public partial class MathPuzzlePage : ContentPage
         UpdateGenerationSourceStyles();
         UpdateModeStyles();
         UpdateLlmModelUi();
+        ResetLlmDiagnostics();
+        UpdateAiDiagnosticsVisibility();
         UpdateScoreLabels();
     }
 
@@ -276,6 +281,7 @@ public partial class MathPuzzlePage : ContentPage
 
         UpdateEssayAnswerPresentation();
         UpdateCreateOrRegenerateQuestionButtonState();
+        UpdateAiDiagnosticsVisibility();
     }
 
     private void OnTrueFalseModeClicked(
@@ -591,6 +597,7 @@ public partial class MathPuzzlePage : ContentPage
                 : Translate("Quiz.LlmReady"),
             isRunning: false);
         ResetLlmTokenSpeed();
+        ResetLlmDiagnostics();
     }
 
     private async void OnSelectLlmModelClicked(
@@ -1100,6 +1107,8 @@ public partial class MathPuzzlePage : ContentPage
 
         _activeProblemRequest = problemRequest;
 
+        ResetLlmDiagnostics();
+
         var cancellation = new CancellationTokenSource();
         int progressVersion =
             BeginLlmProgress(cancellation);
@@ -1156,6 +1165,23 @@ public partial class MathPuzzlePage : ContentPage
             // đến muộn có thể bật spinner trở lại sau khi tác vụ đã hoàn tất.
             CompleteLlmProgress(progressVersion);
 
+            ApplyLlmAttemptReports(
+                result.AttemptReports);
+
+            if (result.Question is null &&
+                result.ErrorCode is
+                    "ModelFileNotFound" or
+                    "NotEnoughMemory" or
+                    "ModelRuntimeError")
+            {
+                AppendLlmDiagnostic(
+                    new(
+                        LlmQuizDiagnosticEvent.RuntimeError,
+                        Math.Max(1, result.Attempts),
+                        LocalLlmQuizGenerator.MaximumAttempts,
+                        result.ErrorCode));
+            }
+
             if (result.ModelWasLoaded &&
                 _showFriendlyGreetingForCurrentLoad)
             {
@@ -1207,6 +1233,21 @@ public partial class MathPuzzlePage : ContentPage
     private void UpdateLlmProgress(
         LlmQuizProgress progress)
     {
+        if (progress.RawModelOutput is not null &&
+            progress.Attempt > 0)
+        {
+            UpdateLlmRawOutput(
+                progress.Attempt,
+                progress.MaximumAttempts,
+                progress.RawModelOutput);
+        }
+
+        if (progress.Diagnostic is not null)
+        {
+            AppendLlmDiagnostic(
+                progress.Diagnostic);
+        }
+
         if (_isGeneratingWithLlm &&
             !string.IsNullOrWhiteSpace(
                 progress.ProblemPreview))
@@ -1389,6 +1430,23 @@ public partial class MathPuzzlePage : ContentPage
 
     private void RefreshLlmActionButtonTheme()
     {
+        // WinUI có thể khôi phục màu accent mặc định (xanh dương) sau khi
+        // Button đi qua visual state Disabled/Enabled. Áp lại cả hai nút chọn
+        // nguồn để nút đang chọn luôn theo accent hiện tại của ứng dụng.
+        SelectionButtonStyler.Select(
+            _generationSource == QuizGenerationSource.Algorithm
+                ? AlgorithmSourceButton
+                : LocalLlmSourceButton,
+            AlgorithmSourceButton,
+            LocalLlmSourceButton);
+
+        DownloadGemma4Button.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "PrimaryColor");
+        DownloadGemma4Button.SetDynamicResource(
+            Button.TextColorProperty,
+            "OnPrimaryColor");
+
         OpenLlmModelFolderButton.SetDynamicResource(
             Button.BackgroundColorProperty,
             "SurfaceColor");
@@ -1458,6 +1516,168 @@ public partial class MathPuzzlePage : ContentPage
     {
         LlmTokenSpeedLabel.Text = string.Empty;
         LlmTokenSpeedLabel.IsVisible = false;
+    }
+
+    private void OnAiDiagnosticsToggleClicked(
+        object? sender,
+        EventArgs e)
+    {
+        _isAiDiagnosticsVisible =
+            !_isAiDiagnosticsVisible;
+
+        UpdateAiDiagnosticsVisibility();
+    }
+
+    private void UpdateAiDiagnosticsVisibility()
+    {
+        AiDiagnosticsBorder.IsVisible =
+            _isAiDiagnosticsVisible;
+
+        AiDiagnosticsToggleButton.Text =
+            TranslateQuiz(
+                _isAiDiagnosticsVisible
+                    ? "Quiz.HideAiDiagnostics"
+                    : "Quiz.ShowAiDiagnostics");
+    }
+
+    private void ResetLlmDiagnostics()
+    {
+        _llmRawOutputs.Clear();
+        _llmValidationDiagnostics.Clear();
+
+        LlmRawJsonEditor.Text =
+            TranslateQuiz("Quiz.DiagnosticsNoJson");
+
+        LlmValidationLogEditor.Text =
+            TranslateQuiz("Quiz.DiagnosticsNoLog");
+    }
+
+    private void UpdateLlmRawOutput(
+        int attempt,
+        int maximumAttempts,
+        string rawModelOutput)
+    {
+        _llmRawOutputs[attempt] =
+            rawModelOutput;
+
+        LlmRawJsonEditor.Text =
+            string.Join(
+                Environment.NewLine +
+                Environment.NewLine,
+                _llmRawOutputs.Select(entry =>
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        TranslateQuiz(
+                            "Quiz.DiagnosticsAttemptHeader"),
+                        entry.Key,
+                        maximumAttempts) +
+                    Environment.NewLine +
+                    entry.Value));
+    }
+
+    private void AppendLlmDiagnostic(
+        LlmQuizDiagnostic diagnostic)
+    {
+        if (_llmValidationDiagnostics.Contains(diagnostic))
+        {
+            return;
+        }
+
+        _llmValidationDiagnostics.Add(diagnostic);
+        RenderLlmValidationLog();
+    }
+
+    private void ApplyLlmAttemptReports(
+        IReadOnlyList<LlmQuizAttemptReport>? reports)
+    {
+        if (reports is null || reports.Count == 0)
+        {
+            return;
+        }
+
+        _llmRawOutputs.Clear();
+        _llmValidationDiagnostics.Clear();
+
+        foreach (LlmQuizAttemptReport report in
+                 reports.OrderBy(report => report.Attempt))
+        {
+            _llmRawOutputs[report.Attempt] =
+                report.RawModelOutput;
+
+            _llmValidationDiagnostics.AddRange(
+                report.Diagnostics);
+        }
+
+        int maximumAttempts =
+            reports.Max(report =>
+                report.MaximumAttempts);
+
+        LlmRawJsonEditor.Text =
+            string.Join(
+                Environment.NewLine +
+                Environment.NewLine,
+                _llmRawOutputs.Select(entry =>
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        TranslateQuiz(
+                            "Quiz.DiagnosticsAttemptHeader"),
+                        entry.Key,
+                        maximumAttempts) +
+                    Environment.NewLine +
+                    entry.Value));
+
+        RenderLlmValidationLog();
+    }
+
+    private void RenderLlmValidationLog()
+    {
+        LlmValidationLogEditor.Text =
+            _llmValidationDiagnostics.Count == 0
+                ? TranslateQuiz(
+                    "Quiz.DiagnosticsNoLog")
+                : string.Join(
+                    Environment.NewLine,
+                    _llmValidationDiagnostics.Select(
+                        FormatLlmDiagnostic));
+    }
+
+    private static string FormatLlmDiagnostic(
+        LlmQuizDiagnostic diagnostic)
+    {
+        string key =
+            diagnostic.Event switch
+            {
+                LlmQuizDiagnosticEvent.AttemptStarted =>
+                    "Quiz.DiagnosticsAttemptStarted",
+                LlmQuizDiagnosticEvent.JsonReceived =>
+                    "Quiz.DiagnosticsJsonReceived",
+                LlmQuizDiagnosticEvent.ParseSucceeded =>
+                    "Quiz.DiagnosticsParseSucceeded",
+                LlmQuizDiagnosticEvent.ParseFailed =>
+                    "Quiz.DiagnosticsParseFailed",
+                LlmQuizDiagnosticEvent.ValidationSucceeded =>
+                    "Quiz.DiagnosticsValidationSucceeded",
+                LlmQuizDiagnosticEvent.ValidationFailed =>
+                    "Quiz.DiagnosticsValidationFailed",
+                LlmQuizDiagnosticEvent.RetryScheduled =>
+                    "Quiz.DiagnosticsRetryScheduled",
+                LlmQuizDiagnosticEvent.GenerationFailed =>
+                    "Quiz.DiagnosticsGenerationFailed",
+                LlmQuizDiagnosticEvent.RuntimeError =>
+                    "Quiz.DiagnosticsRuntimeError",
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(diagnostic))
+            };
+
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            TranslateQuiz(key),
+            diagnostic.Attempt,
+            diagnostic.MaximumAttempts,
+            diagnostic.Event ==
+                LlmQuizDiagnosticEvent.JsonReceived
+                    ? diagnostic.CharacterCount
+                    : diagnostic.Detail ?? string.Empty);
     }
 
     private int BeginLlmProgress(

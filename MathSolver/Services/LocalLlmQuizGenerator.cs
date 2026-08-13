@@ -30,7 +30,9 @@ public sealed class LocalLlmQuizGenerator
     public const int MaximumAttempts = 3;
     public const int MaximumOutputTokens = 240;
     public const int ModelUnloadGracePeriodSeconds = 60;
-    public const uint ContextSize = 1536;
+    // Đủ chứa contract ban đầu, tối đa ba JSON và hai feedback validation
+    // trong cùng KV cache. Phần tăng nhỏ này tránh retry cuối bị tràn context.
+    public const uint ContextSize = 2048;
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
@@ -144,6 +146,8 @@ public sealed class LocalLlmQuizGenerator
         int completedAttempts = 0;
         int generatedTokenCount = 0;
         TimeSpan totalGenerationTime = TimeSpan.Zero;
+        var attemptReports =
+            new List<LlmQuizAttemptReport>();
 
         try
         {
@@ -197,19 +201,16 @@ public sealed class LocalLlmQuizGenerator
                 LlmQuizPromptBuilder.BuildSystemPrompt(
                     language);
 
-            // Executor chỉ tồn tại trong một lần sinh câu. StatelessExecutor
-            // tạo context/KV cho InferAsync và giải phóng chúng khi lượt suy
-            // luận kết thúc; chỉ LLamaWeights được cache giữa các câu.
+            // Một context/KV duy nhất được giữ trong toàn bộ chuỗi retry để
+            // model nhớ prompt, JSON sai và phản hồi validation trước đó.
+            // Context chỉ được giải phóng khi lượt GenerateAsync đã kết thúc:
+            // đề được chấp nhận, hết số lần thử, bị hủy hoặc gặp lỗi runtime.
+            // LLamaWeights vẫn được cache riêng giữa các câu như trước.
+            using LLamaContext context =
+                weights.CreateContext(modelParameters);
+
             var executor =
-                new StatelessExecutor(
-                    weights,
-                    modelParameters)
-                {
-                    ApplyTemplate = !useManualGemma4Template,
-                    SystemMessage = useManualGemma4Template
-                        ? string.Empty
-                        : systemPrompt
-                };
+                new InteractiveExecutor(context);
 
             string? previousErrorCode = null;
 
@@ -221,31 +222,80 @@ public sealed class LocalLlmQuizGenerator
 
                 completedAttempts = attempt;
 
-                progress?.Report(
-                    new(
-                        LlmQuizProgressStage.Generating,
-                        attempt,
-                        MaximumAttempts));
+                var attemptDiagnostics =
+                    new List<LlmQuizDiagnostic>();
 
-                string userPrompt =
-                    contract.GeometryProblem is GeometryQuizContract geometry
-                        ? LlmQuizPromptBuilder.BuildGeometryUserPrompt(
-                            geometry,
-                            language,
-                            selectedStudent,
-                            previousErrorCode)
-                        : LlmQuizPromptBuilder.BuildUserPrompt(
-                            contract.Expression,
-                            language,
-                            selectedStudent,
-                            selectedStoryContext,
-                            previousErrorCode);
+                void ReportDiagnostic(
+                    LlmQuizDiagnosticEvent diagnosticEvent,
+                    LlmQuizProgressStage stage,
+                    string? detail = null,
+                    int characterCount = 0,
+                    string? rawModelOutput = null)
+                {
+                    var diagnostic =
+                        new LlmQuizDiagnostic(
+                            diagnosticEvent,
+                            attempt,
+                            MaximumAttempts,
+                            detail,
+                            characterCount);
 
-                string prompt = useManualGemma4Template
-                    ? LlmQuizPromptBuilder.BuildGemma4Prompt(
-                        systemPrompt,
-                        userPrompt)
-                    : userPrompt;
+                    attemptDiagnostics.Add(diagnostic);
+
+                    progress?.Report(
+                        new(
+                            stage,
+                            attempt,
+                            MaximumAttempts,
+                            RawModelOutput: rawModelOutput,
+                            Diagnostic: diagnostic));
+                }
+
+                ReportDiagnostic(
+                    LlmQuizDiagnosticEvent.AttemptStarted,
+                    LlmQuizProgressStage.Generating);
+
+                string prompt;
+
+                if (attempt == 1)
+                {
+                    string userPrompt =
+                        contract.GeometryProblem is GeometryQuizContract geometry
+                            ? LlmQuizPromptBuilder.BuildGeometryUserPrompt(
+                                geometry,
+                                language,
+                                selectedStudent,
+                                previousErrorCode: null)
+                            : LlmQuizPromptBuilder.BuildUserPrompt(
+                                contract.Expression,
+                                language,
+                                selectedStudent,
+                                selectedStoryContext,
+                                previousErrorCode: null);
+
+                    prompt = useManualGemma4Template
+                        ? LlmQuizPromptBuilder.BuildGemma4Prompt(
+                            systemPrompt,
+                            userPrompt)
+                        : string.Concat(
+                            systemPrompt,
+                            Environment.NewLine,
+                            Environment.NewLine,
+                            userPrompt);
+                }
+                else
+                {
+                    // InteractiveExecutor tiếp tục ngay trên KV cache cũ.
+                    // Chỉ gửi feedback ngắn thay vì lặp lại toàn bộ contract;
+                    // model vẫn nhìn thấy đề sai và dữ kiện gốc trong context.
+                    prompt = useManualGemma4Template
+                        ? LlmQuizPromptBuilder.BuildGemma4RetryPrompt(
+                            previousErrorCode ?? "InvalidWordProblem",
+                            language)
+                        : LlmQuizPromptBuilder.BuildRetryPrompt(
+                            previousErrorCode ?? "InvalidWordProblem",
+                            language);
+                }
 
                 var inferenceParameters =
                     new InferenceParams
@@ -335,7 +385,8 @@ public sealed class LocalLlmQuizGenerator
                                 currentGeneratedTokenCount,
                                 CalculateTokensPerSecond(
                                     currentGeneratedTokenCount,
-                                    currentGenerationTime)));
+                                    currentGenerationTime),
+                                RawModelOutput: output.ToString()));
                     }
                 }
 
@@ -365,17 +416,18 @@ public sealed class LocalLlmQuizGenerator
                             MaximumAttempts,
                             completedPreview,
                             generatedTokenCount,
-                            tokensPerSecond));
+                            tokensPerSecond,
+                            RawModelOutput: rawOutput));
                 }
 
                 System.Diagnostics.Debug.WriteLine(
                     $"Local LLM attempt {attempt} raw output: {rawOutput}");
 
-                progress?.Report(
-                    new(
-                        LlmQuizProgressStage.Validating,
-                        attempt,
-                        MaximumAttempts));
+                ReportDiagnostic(
+                    LlmQuizDiagnosticEvent.JsonReceived,
+                    LlmQuizProgressStage.Validating,
+                    characterCount: rawOutput.Length,
+                    rawModelOutput: rawOutput);
 
                 if (!LlmWordProblemParser.TryParse(
                         rawOutput,
@@ -384,11 +436,22 @@ public sealed class LocalLlmQuizGenerator
                 {
                     previousErrorCode = parseErrorCode;
 
+                    ReportDiagnostic(
+                        LlmQuizDiagnosticEvent.ParseFailed,
+                        LlmQuizProgressStage.Validating,
+                        detail: parseErrorCode,
+                        rawModelOutput: rawOutput);
+
                     System.Diagnostics.Debug.WriteLine(
                         $"Local LLM attempt {attempt} rejected by parser: {parseErrorCode}");
                 }
                 else
                 {
+                    ReportDiagnostic(
+                        LlmQuizDiagnosticEvent.ParseSucceeded,
+                        LlmQuizProgressStage.Validating,
+                        rawModelOutput: rawOutput);
+
                     LlmWordProblemValidationResult validation =
                         contract.GeometryProblem is GeometryQuizContract validatedGeometry
                             ? _wordProblemValidator.ValidateGeometry(
@@ -404,6 +467,18 @@ public sealed class LocalLlmQuizGenerator
                     if (validation.IsValid &&
                         validation.WordProblem is not null)
                     {
+                        ReportDiagnostic(
+                            LlmQuizDiagnosticEvent.ValidationSucceeded,
+                            LlmQuizProgressStage.Validating,
+                            rawModelOutput: rawOutput);
+
+                        attemptReports.Add(
+                            new(
+                                attempt,
+                                MaximumAttempts,
+                                rawOutput,
+                                attemptDiagnostics.ToArray()));
+
                         return new(
                             contract with
                             {
@@ -413,12 +488,19 @@ public sealed class LocalLlmQuizGenerator
                             null,
                             true,
                             generatedTokenCount,
-                            tokensPerSecond);
+                            tokensPerSecond,
+                            attemptReports.ToArray());
                     }
 
                     previousErrorCode =
                         validation.ErrorCode ??
                         "InvalidWordProblem";
+
+                    ReportDiagnostic(
+                        LlmQuizDiagnosticEvent.ValidationFailed,
+                        LlmQuizProgressStage.Validating,
+                        detail: previousErrorCode,
+                        rawModelOutput: rawOutput);
 
                     System.Diagnostics.Debug.WriteLine(
                         $"Local LLM attempt {attempt} rejected by validator: {previousErrorCode}");
@@ -426,12 +508,27 @@ public sealed class LocalLlmQuizGenerator
 
                 if (attempt < MaximumAttempts)
                 {
-                    progress?.Report(
-                        new(
-                            LlmQuizProgressStage.Retrying,
-                            attempt,
-                            MaximumAttempts));
+                    ReportDiagnostic(
+                        LlmQuizDiagnosticEvent.RetryScheduled,
+                        LlmQuizProgressStage.Retrying,
+                        detail: previousErrorCode,
+                        rawModelOutput: rawOutput);
                 }
+                else
+                {
+                    ReportDiagnostic(
+                        LlmQuizDiagnosticEvent.GenerationFailed,
+                        LlmQuizProgressStage.Validating,
+                        detail: previousErrorCode,
+                        rawModelOutput: rawOutput);
+                }
+
+                attemptReports.Add(
+                    new(
+                        attempt,
+                        MaximumAttempts,
+                        rawOutput,
+                        attemptDiagnostics.ToArray()));
             }
 
             return new(
@@ -442,7 +539,8 @@ public sealed class LocalLlmQuizGenerator
                 generatedTokenCount,
                 CalculateTokensPerSecond(
                     generatedTokenCount,
-                    totalGenerationTime));
+                    totalGenerationTime),
+                attemptReports.ToArray());
         }
         catch (OperationCanceledException)
             when (cancellationToken.IsCancellationRequested)
@@ -462,7 +560,8 @@ public sealed class LocalLlmQuizGenerator
                 generatedTokenCount,
                 CalculateTokensPerSecond(
                     generatedTokenCount,
-                    totalGenerationTime));
+                    totalGenerationTime),
+                attemptReports.ToArray());
         }
         finally
         {
@@ -760,6 +859,36 @@ internal static class LlmQuizPromptBuilder
             userPrompt,
             "<turn|>\n",
             "<|turn>model");
+    }
+
+    public static string BuildGemma4RetryPrompt(
+        string errorCode,
+        AppLanguage language)
+    {
+        // Kết thúc model turn trước, thêm một user turn sửa lỗi rồi mở model
+        // turn mới. InteractiveExecutor giữ KV cache nên model vẫn thấy đầy
+        // đủ contract và JSON đã trả ở lần trước.
+        return string.Concat(
+            "<turn|>\n",
+            "<|turn>user\n",
+            BuildRetryPrompt(errorCode, language),
+            "<turn|>\n",
+            "<|turn>model");
+    }
+
+    public static string BuildRetryPrompt(
+        string errorCode,
+        AppLanguage language)
+    {
+        string correction =
+            BuildRetryInstruction(
+                errorCode,
+                language)
+            .Trim();
+
+        return language == AppLanguage.Vietnamese
+            ? $"Đề vừa tạo không vượt qua validation C# ({errorCode}). {correction} Hãy nhớ dữ kiện gốc và trả lại đúng một JSON đã sửa, không Markdown hay giải thích."
+            : $"The previous problem failed C# validation ({errorCode}). {correction} Remember the original required facts and return exactly one corrected JSON object with no Markdown or commentary.";
     }
 
     public static string BuildUserPrompt(
