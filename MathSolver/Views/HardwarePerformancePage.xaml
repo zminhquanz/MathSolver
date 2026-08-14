@@ -214,26 +214,6 @@
                                     x:Name="HardwareAccelerationSwitch"
                                     HorizontalOptions="Center"
                                     Toggled="OnHardwareAccelerationToggled" />
-
-                                <Border
-                                    x:Name="HardwareAccelerationLockBadge"
-                                    IsVisible="False"
-                                    Padding="7,2"
-                                    BackgroundColor="{DynamicResource WarningSoftColor}"
-                                    Stroke="{DynamicResource WarningBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="8" />
-                                    </Border.StrokeShape>
-
-                                    <Label
-                                        x:Name="HardwareAccelerationLockLabel"
-                                        Text="🔒 KHÓA"
-                                        FontSize="9"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WarningColor}" />
-                                </Border>
                             </VerticalStackLayout>
                         </Grid>
 
@@ -356,26 +336,6 @@
                                     x:Name="MultithreadingSwitch"
                                     HorizontalOptions="Center"
                                     Toggled="OnMultithreadingToggled" />
-
-                                <Border
-                                    x:Name="MultithreadingLockBadge"
-                                    IsVisible="False"
-                                    Padding="7,2"
-                                    BackgroundColor="{DynamicResource WarningSoftColor}"
-                                    Stroke="{DynamicResource WarningBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="8" />
-                                    </Border.StrokeShape>
-
-                                    <Label
-                                        x:Name="MultithreadingLockLabel"
-                                        Text="🔒 KHÓA"
-                                        FontSize="9"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WarningColor}" />
-                                </Border>
                             </VerticalStackLayout>
                         </Grid>
 

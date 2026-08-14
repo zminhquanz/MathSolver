@@ -56,6 +56,10 @@ public partial class MathPuzzlePage : ContentPage
     private bool _isAiDiagnosticsVisible;
     private bool _isDeveloperModeSubscribed;
     private int _llmProgressVersion;
+    // Khi bấm Câu tiếp theo, số câu mới chỉ được commit sau khi AI tạo được
+    // đề hợp lệ. Nếu cả ba attempt đều thất bại, giữ lại số này để lần bấm
+    // Tạo lại kế tiếp vẫn hoàn tất đúng câu đang chờ thay vì đứng ở câu cũ.
+    private int? _pendingLlmQuestionNumberOnSuccess;
     private int _questionCount;
     private int _correctCount;
     private int _incorrectCount;
@@ -1133,8 +1137,9 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         // Nút này vừa tạo câu đầu tiên vừa cho phép bỏ qua/tạo lại câu hiện
-        // tại trước khi trả lời. Sau khi đã trả lời, người dùng phải chuyển
-        // sang câu tiếp theo; tạo lại không tăng số câu và không tính điểm.
+        // tại trước khi trả lời. Tạo lại thông thường không tăng số câu; riêng
+        // khi lần sinh từ nút Câu tiếp theo đã thất bại, GenerateLlmQuestionAsync
+        // tiếp tục dùng số câu đang chờ và chỉ commit khi đề hợp lệ.
         await GenerateLlmQuestionAsync(
             questionNumberOnSuccess: null);
     }
@@ -1151,6 +1156,19 @@ public partial class MathPuzzlePage : ContentPage
         {
             return;
         }
+
+        if (questionNumberOnSuccess.HasValue)
+        {
+            _pendingLlmQuestionNumberOnSuccess =
+                questionNumberOnSuccess;
+        }
+
+        // Một lần Tạo lại sau khi AI đã thất bại đủ ba attempt phải tiếp tục
+        // commit số câu của lần bấm Câu tiếp theo trước đó. Tạo lại một câu
+        // hiện có vẫn truyền null và không làm tăng bộ đếm.
+        int? resolvedQuestionNumberOnSuccess =
+            questionNumberOnSuccess ??
+            _pendingLlmQuestionNumberOnSuccess;
 
         if (!QuizLlmModelStore.IsSupportedModelPath(
                 _llmModelPath))
@@ -1254,7 +1272,9 @@ public partial class MathPuzzlePage : ContentPage
             {
                 _currentQuestion = result.Question;
                 CommitGeneratedQuestionNumber(
-                    questionNumberOnSuccess);
+                    resolvedQuestionNumberOnSuccess);
+                _pendingLlmQuestionNumberOnSuccess =
+                    null;
                 RenderCurrentQuestion(
                     resetAnswerControls: true);
                 UpdateScoreLabels();
@@ -2453,6 +2473,8 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ResetQuizSessionState()
     {
+        _pendingLlmQuestionNumberOnSuccess =
+            null;
         ResetCurrentQuestionState();
         ResetQuizSessionCounters();
     }

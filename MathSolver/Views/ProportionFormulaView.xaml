@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentView
+    x:Class="MathSolver.Views.ProportionFormulaView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    BackgroundColor="Transparent"
+    HorizontalOptions="Fill"
+    VerticalOptions="Fill">
+
+    <ScrollView
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill"
+        VerticalScrollBarVisibility="Default">
+
+        <VerticalStackLayout
+            Padding="20,16,20,28"
+            Spacing="14"
+            HorizontalOptions="Fill">
+
+            <VerticalStackLayout
+                Margin="0,4,0,6"
+                Spacing="2">
+
+                <Label
+                    Text="↗  ↘"
+                    FontSize="40"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource PrimaryColor}" />
+
+                <Label
+                    Text="{localization:Translate Formula.Proportion.Title}"
+                    FontSize="27"
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <Label
+                    Text="{localization:Translate Formula.Proportion.Subtitle}"
+                    FontSize="17"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+            </VerticalStackLayout>
+
+            <!-- 1. Mối quan hệ -->
+            <Border
+                Padding="18"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource PrimaryBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="{localization:Translate Formula.Common.Relationship}"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="12">
+
+                        <Border
+                            Grid.Column="0"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="11" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="7">
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Direct.Title}"
+                                    FontSize="19"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Direct.Relationship}"
+                                    FontSize="16"
+                                    LineHeight="1.25"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    Text="y = k × x"
+                                    FontSize="20"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="11" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="7">
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Inverse.Title}"
+                                    FontSize="19"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Inverse.Relationship}"
+                                    FontSize="16"
+                                    LineHeight="1.25"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    Text="y = k ÷ x"
+                                    FontSize="20"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 2. Công thức -->
+            <Border
+                Padding="18"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="{localization:Translate Formula.Common.Formulas}"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Border
+                        Padding="14,11"
+                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        <Label
+                            Text="{localization:Translate Formula.Proportion.Direct.Formulas}"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            LineHeight="1.35"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+                    </Border>
+
+                    <Border
+                        Padding="14,11"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                        Stroke="{DynamicResource BorderBrush}"
+                        StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        <Label
+                            Text="{localization:Translate Formula.Proportion.Inverse.Formulas}"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            LineHeight="1.35"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+                    </Border>
+
+                    <Label
+                        Text="{localization:Translate Formula.Proportion.Conditions}"
+                        FontSize="15"
+                        FontAttributes="Italic"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 3. Tính chất -->
+            <Border
+                Padding="18"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="{localization:Translate Formula.Common.Properties}"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+                    <Label
+                        Text="{localization:Translate Formula.Proportion.Direct.Properties}"
+                        FontSize="17"
+                        LineHeight="1.3"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+                    <Label
+                        Text="{localization:Translate Formula.Proportion.Inverse.Properties}"
+                        FontSize="17"
+                        LineHeight="1.3"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+                    <Label
+                        Text="{localization:Translate Formula.Proportion.GraphProperties}"
+                        FontSize="17"
+                        LineHeight="1.3"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 4. Cách giải -->
+            <Border
+                Padding="18"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource PrimaryBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="{localization:Translate Formula.Common.HowToSolve}"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+                    <Label
+                        Text="{localization:Translate Formula.Proportion.Steps}"
+                        FontSize="17"
+                        LineHeight="1.35"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="12">
+                        <Border
+                            Grid.Column="0"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Direct.ExampleTitle}"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Direct.Example}"
+                                    FontSize="16"
+                                    LineHeight="1.3"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Inverse.ExampleTitle}"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Inverse.Example}"
+                                    FontSize="16"
+                                    LineHeight="1.3"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

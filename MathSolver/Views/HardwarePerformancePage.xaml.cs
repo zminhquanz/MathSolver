@@ -527,20 +527,6 @@ public partial class HardwarePerformancePage : ContentPage
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
 
-        HardwareAccelerationLockBadge.IsVisible =
-            isLocked;
-
-        MultithreadingLockBadge.IsVisible =
-            isLocked;
-
-        HardwareAccelerationLockLabel.Text =
-            useEnglish
-                ? "🔒 LOCKED"
-                : "🔒 KHÓA";
-
-        MultithreadingLockLabel.Text =
-            HardwareAccelerationLockLabel.Text;
-
         // Disabled VisualState đã giảm opacity; gán trực tiếp ở đây để
         // bảo đảm Windows cập nhật ngay cả khi native Switch giữ màu cũ.
         HardwareAccelerationSwitch.Opacity =

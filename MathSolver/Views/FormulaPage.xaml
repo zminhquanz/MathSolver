@@ -4,7 +4,9 @@
     x:Class="MathSolver.Views.FormulaPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:models="clr-namespace:MathSolver.Models"
+    xmlns:views="clr-namespace:MathSolver.Views"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <Grid
@@ -28,13 +30,13 @@
 
             <Grid
                 x:Name="FormulaSubTabGrid"
-                ColumnDefinitions="*,*"
+                ColumnDefinitions="*,*,*,*"
                 ColumnSpacing="6">
 
                 <Button
                     x:Name="UnknownComponentTabButton"
                     Grid.Column="0"
-                    Text="𝑥  Tìm thành phần chưa biết"
+                    Text="{localization:Translate Formula.Tabs.UnknownComponent}"
                     HeightRequest="44"
                     Padding="8,0"
                     FontSize="14"
@@ -45,12 +47,38 @@
                     Clicked="OnUnknownComponentTabClicked" />
 
                 <Button
-                    x:Name="GeometryTabButton"
+                    x:Name="ProportionTabButton"
                     Grid.Column="1"
-                    Text="△  Hình học"
+                    Text="{localization:Translate Formula.Tabs.Proportion}"
                     HeightRequest="44"
                     Padding="8,0"
-                    FontSize="14"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                    TextColor="{DynamicResource TextSecondaryColor}"
+                    Clicked="OnProportionTabClicked" />
+
+                <Button
+                    x:Name="MotionTabButton"
+                    Grid.Column="2"
+                    Text="{localization:Translate Formula.Tabs.Motion}"
+                    HeightRequest="44"
+                    Padding="8,0"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                    TextColor="{DynamicResource TextSecondaryColor}"
+                    Clicked="OnMotionTabClicked" />
+
+                <Button
+                    x:Name="GeometryTabButton"
+                    Grid.Column="3"
+                    Text="{localization:Translate Formula.Tabs.Geometry}"
+                    HeightRequest="44"
+                    Padding="8,0"
+                    FontSize="13"
                     FontAttributes="Bold"
                     CornerRadius="10"
                     BackgroundColor="{DynamicResource SurfaceAltColor}"
@@ -574,6 +602,20 @@
                         </Border>
                     </VerticalStackLayout>
                 </ScrollView>
+            </Grid>
+
+            <!-- TAB: TỈ LỆ THUẬN - NGHỊCH -->
+            <Grid
+                x:Name="ProportionContent"
+                IsVisible="False">
+                <views:ProportionFormulaView />
+            </Grid>
+
+            <!-- TAB: CHUYỂN ĐỘNG -->
+            <Grid
+                x:Name="MotionContent"
+                IsVisible="False">
+                <views:MotionFormulaView />
             </Grid>
 
             <!-- TAB: HÌNH HỌC -->

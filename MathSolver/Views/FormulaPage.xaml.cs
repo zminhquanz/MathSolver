@@ -162,6 +162,12 @@ public partial class FormulaPage : ContentPage
             UnknownComponentContent);
 
         ResetTransitionTransform(
+            ProportionContent);
+
+        ResetTransitionTransform(
+            MotionContent);
+
+        ResetTransitionTransform(
             FormulaSubTabBar);
 
         // Root không còn là animation host. Giữ root ở trạng thái chuẩn để
@@ -180,23 +186,28 @@ public partial class FormulaPage : ContentPage
 
     private void RestoreSelectedSubTabVisualState()
     {
-        bool showGeometry =
-            _selectedSubTab ==
-            FormulaSubTab.Geometry;
-
         UnknownComponentContent.IsVisible =
-            !showGeometry;
+            _selectedSubTab ==
+            FormulaSubTab.UnknownComponent;
+
+        ProportionContent.IsVisible =
+            _selectedSubTab ==
+            FormulaSubTab.Proportion;
+
+        MotionContent.IsVisible =
+            _selectedSubTab ==
+            FormulaSubTab.Motion;
 
         GeometryContent.IsVisible =
-            showGeometry;
+            _selectedSubTab ==
+            FormulaSubTab.Geometry;
 
         ResetTransitionTransform(
             FormulaSubTabBar);
 
         ResetTransitionTransform(
-            showGeometry
-                ? GeometryContent
-                : UnknownComponentContent);
+            GetFormulaSubTabContent(
+                _selectedSubTab));
 
         UpdateSubTabButtonStyles();
     }
@@ -348,7 +359,11 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        EnsureGeometryLayoutInitialized();
+        if (_selectedSubTab ==
+            FormulaSubTab.Geometry)
+        {
+            EnsureGeometryLayoutInitialized();
+        }
 
         // Không gọi UpdateGeometryCardWidthsIfNeeded ở mỗi OnAppearing.
         // Width đã được lưu và chỉ cập nhật khi SizeChanged thật sự xảy ra.
@@ -518,6 +533,8 @@ public partial class FormulaPage : ContentPage
     {
         FormulaSubTabBar.CancelAnimations();
         UnknownComponentContent.CancelAnimations();
+        ProportionContent.CancelAnimations();
+        MotionContent.CancelAnimations();
         GeometryContent.CancelAnimations();
     }
 
@@ -685,6 +702,22 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.Geometry);
     }
 
+    private async void OnProportionTabClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await SwitchFormulaSubTabAsync(
+            FormulaSubTab.Proportion);
+    }
+
+    private async void OnMotionTabClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await SwitchFormulaSubTabAsync(
+            FormulaSubTab.Motion);
+    }
+
     private async Task SwitchFormulaSubTabAsync(
         FormulaSubTab selectedTab)
     {
@@ -816,12 +849,26 @@ public partial class FormulaPage : ContentPage
             selectedTab ==
             FormulaSubTab.UnknownComponent;
 
+        ProportionContent.IsVisible =
+            selectedTab ==
+            FormulaSubTab.Proportion;
+
+        MotionContent.IsVisible =
+            selectedTab ==
+            FormulaSubTab.Motion;
+
         GeometryContent.IsVisible =
             selectedTab ==
             FormulaSubTab.Geometry;
 
         ResetTransitionTransform(
             UnknownComponentContent);
+
+        ResetTransitionTransform(
+            ProportionContent);
+
+        ResetTransitionTransform(
+            MotionContent);
 
         ResetTransitionTransform(
             GeometryContent);
@@ -848,9 +895,13 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        // Chỉ tạo card và GraphicsView ở lần mở tab Hình học đầu tiên.
-        // Những lần chuyển tab sau chỉ đổi IsVisible và chạy animation.
-        EnsureGeometryLayoutInitialized();
+        if (selectedTab ==
+            FormulaSubTab.Geometry)
+        {
+            // Chỉ tạo card và GraphicsView ở lần mở tab Hình học đầu tiên.
+            // Những lần chuyển tab sau chỉ đổi IsVisible và chạy animation.
+            EnsureGeometryLayoutInitialized();
+        }
     }
 
     private void RefreshSelectedFormulaSubTabLayout()
@@ -860,7 +911,8 @@ public partial class FormulaPage : ContentPage
         {
             UpdateUnknownComponentCardWidthsIfNeeded();
         }
-        else
+        else if (_selectedSubTab ==
+                 FormulaSubTab.Geometry)
         {
             UpdateGeometryCardWidthsIfNeeded();
         }
@@ -873,6 +925,12 @@ public partial class FormulaPage : ContentPage
         {
             FormulaSubTab.UnknownComponent =>
                 UnknownComponentContent,
+
+            FormulaSubTab.Proportion =>
+                ProportionContent,
+
+            FormulaSubTab.Motion =>
+                MotionContent,
 
             FormulaSubTab.Geometry =>
                 GeometryContent,
@@ -898,12 +956,16 @@ public partial class FormulaPage : ContentPage
     private void UpdateSubTabButtonStyles()
     {
         ResetSubTabButton(UnknownComponentTabButton);
+        ResetSubTabButton(ProportionTabButton);
+        ResetSubTabButton(MotionTabButton);
         ResetSubTabButton(GeometryTabButton);
 
         Button selectedButton =
             _selectedSubTab switch
             {
                 FormulaSubTab.UnknownComponent => UnknownComponentTabButton,
+                FormulaSubTab.Proportion => ProportionTabButton,
+                FormulaSubTab.Motion => MotionTabButton,
                 FormulaSubTab.Geometry => GeometryTabButton,
                 _ => UnknownComponentTabButton
             };
@@ -949,7 +1011,8 @@ public partial class FormulaPage : ContentPage
                 {
                     UpdateUnknownComponentCardWidthsIfNeeded();
                 }
-                else
+                else if (_selectedSubTab ==
+                         FormulaSubTab.Geometry)
                 {
                     UpdateGeometryCardWidthsIfNeeded();
                 }
@@ -1472,7 +1535,8 @@ public partial class FormulaPage : ContentPage
                     RefreshUnknownComponentLayout(
                         force: true);
                 }
-                else
+                else if (_selectedSubTab ==
+                         FormulaSubTab.Geometry)
                 {
                     EnsureGeometryLayoutInitialized();
                     UpdateGeometryCardWidthsIfNeeded(
@@ -1667,6 +1731,8 @@ public partial class FormulaPage : ContentPage
     private enum FormulaSubTab
     {
         UnknownComponent,
+        Proportion,
+        Motion,
         Geometry
     }
 }
