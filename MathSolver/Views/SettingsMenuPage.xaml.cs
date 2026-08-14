@@ -4,6 +4,11 @@ namespace MathSolver.Views;
 
 public partial class SettingsMenuPage : ContentPage
 {
+    // Glyph › có optical center hơi lệch khi xoay 90° do font metrics.
+    // Bù 1 DIP sang phải chỉ ở trạng thái mở để dấu hướng xuống nằm đúng
+    // tâm hình tròn, nhưng vẫn giữ vị trí chuẩn khi đóng.
+    private const double ExpandedChevronOffsetX = 1d;
+
     // Được bật ngay từ constructor, trước khi PushModalAsync làm trang bên
     // dưới nhận OnDisappearing. FormulaPage dùng cờ này để biết rằng nó chỉ
     // đang bị một overlay trong suốt che lên và không được tự ẩn nội dung.
@@ -528,13 +533,12 @@ public partial class SettingsMenuPage : ContentPage
             true;
 
         section.CancelAnimations();
+        chevron.CancelAnimations();
 
-        // Đổi ký hiệu tức thì, không xoay SVG. Chevron được đặt trong
-        // pill giống các mục mở trang để toàn bộ menu có cùng thiết kế.
-        chevron.Text =
-            isExpanding
-                ? "⌄"
-                : "›";
+        // Giữ đúng một glyph › trong pill và xoay chính Label như icon SVG:
+        // 0° khi đóng, 90° khi mở. HashSet phía trên khóa riêng từng section
+        // nên bấm liên tục không thể làm chevron kẹt giữa hai trạng thái.
+        chevron.Text = "›";
 
         try
         {
@@ -569,6 +573,17 @@ public partial class SettingsMenuPage : ContentPage
                     section.ScaleYToAsync(
                         1d,
                         210,
+                        Easing.CubicOut),
+
+                    chevron.RotateToAsync(
+                        90d,
+                        210,
+                        Easing.CubicOut),
+
+                    chevron.TranslateToAsync(
+                        ExpandedChevronOffsetX,
+                        0d,
+                        210,
                         Easing.CubicOut));
             }
             else
@@ -588,6 +603,17 @@ public partial class SettingsMenuPage : ContentPage
                     section.ScaleYToAsync(
                         0.82d,
                         145,
+                        Easing.CubicIn),
+
+                    chevron.RotateToAsync(
+                        0d,
+                        145,
+                        Easing.CubicIn),
+
+                    chevron.TranslateToAsync(
+                        0d,
+                        0d,
+                        145,
                         Easing.CubicIn));
 
                 section.IsVisible =
@@ -606,6 +632,20 @@ public partial class SettingsMenuPage : ContentPage
         }
         finally
         {
+            // Bảo đảm trạng thái cuối luôn chính xác nếu animation bị hủy do
+            // trang đóng hoặc vòng đời giao diện thay đổi giữa chừng.
+            chevron.Rotation =
+                isExpanding
+                    ? 90d
+                    : 0d;
+
+            chevron.TranslationX =
+                isExpanding
+                    ? ExpandedChevronOffsetX
+                    : 0d;
+
+            chevron.TranslationY = 0d;
+
             section.InputTransparent =
                 false;
 
