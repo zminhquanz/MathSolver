@@ -16,7 +16,6 @@ public partial class SettingsMenuPage : ContentPage
     private bool _hasPlayedOpenAnimation;
     private bool _isClosing;
     private bool _isNavigating;
-    private bool _isAnimatingDeveloperModeButton;
 
     private readonly HashSet<VisualElement>
         _animatingSections =
@@ -413,15 +412,6 @@ public partial class SettingsMenuPage : ContentPage
                     "Đang tắt · Ẩn JSON, log và chi tiết kỹ thuật"
             };
 
-        SemanticProperties.SetDescription(
-            DeveloperModeToggleButton,
-            useEnglish
-                ? "Turn developer mode on or off"
-                : "Bật hoặc tắt chế độ nhà phát triển");
-
-        UpdateDeveloperModeButton(
-            useEnglish);
-
         UpdateChoiceButton(
             SystemThemeButton,
             AppThemeManager.CurrentMode ==
@@ -707,86 +697,6 @@ public partial class SettingsMenuPage : ContentPage
         UpdateState();
     }
 
-    private void UpdateDeveloperModeButton(
-        bool useEnglish)
-    {
-        bool isEnabled =
-            DeveloperModeManager.IsEnabled;
-
-        DeveloperModeToggleButton.Text =
-            (useEnglish, isEnabled) switch
-            {
-                (true, true) => "✓ ON",
-                (true, false) => "○ OFF",
-                (false, true) => "✓ BẬT",
-                _ => "○ TẮT"
-            };
-
-        DeveloperModeToggleButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            isEnabled
-                ? "PrimaryColor"
-                : "SurfaceAltColor");
-
-        DeveloperModeToggleButton.SetDynamicResource(
-            Button.TextColorProperty,
-            isEnabled
-                ? "OnPrimaryColor"
-                : "TextSecondaryColor");
-
-        DeveloperModeToggleButton.SetDynamicResource(
-            Button.BorderColorProperty,
-            isEnabled
-                ? "PrimaryColor"
-                : "BorderColor");
-
-        SemanticProperties.SetHint(
-            DeveloperModeToggleButton,
-            (useEnglish, isEnabled) switch
-            {
-                (true, true) => "Developer mode is on. Activate to turn it off.",
-                (true, false) => "Developer mode is off. Activate to turn it on.",
-                (false, true) => "Chế độ nhà phát triển đang bật. Nhấn để tắt.",
-                _ => "Chế độ nhà phát triển đang tắt. Nhấn để bật."
-            });
-    }
-
-    private async void OnDeveloperModeClicked(
-        object? sender,
-        EventArgs e)
-    {
-        if (_isAnimatingDeveloperModeButton)
-        {
-            return;
-        }
-
-        _isAnimatingDeveloperModeButton = true;
-
-        try
-        {
-            DeveloperModeManager.SetEnabled(
-                !DeveloperModeManager.IsEnabled);
-
-            UpdateState();
-
-            DeveloperModeToggleButton.CancelAnimations();
-
-            await DeveloperModeToggleButton.ScaleToAsync(
-                0.94d,
-                70,
-                Easing.CubicOut);
-
-            await DeveloperModeToggleButton.ScaleToAsync(
-                1d,
-                110,
-                Easing.CubicOut);
-        }
-        finally
-        {
-            _isAnimatingDeveloperModeButton = false;
-        }
-    }
-
     private void OnResetTapped(
         object? sender,
         TappedEventArgs e)
@@ -803,6 +713,44 @@ public partial class SettingsMenuPage : ContentPage
         TappedEventArgs e)
     {
         await OpenHardwarePerformancePageAsync();
+    }
+
+    private async void OnDeveloperModeTapped(
+        object? sender,
+        TappedEventArgs e)
+    {
+        await OpenDeveloperModePageAsync();
+    }
+
+    private async Task OpenDeveloperModePageAsync()
+    {
+        if (_isNavigating)
+        {
+            return;
+        }
+
+        _isNavigating =
+            true;
+
+        try
+        {
+            await CloseAsync();
+
+            if (Shell.Current is null)
+            {
+                return;
+            }
+
+            await Shell.Current.GoToAsync(
+                nameof(DeveloperModePage),
+                animate:
+                    false);
+        }
+        finally
+        {
+            _isNavigating =
+                false;
+        }
     }
 
     private async Task OpenHardwarePerformancePageAsync()

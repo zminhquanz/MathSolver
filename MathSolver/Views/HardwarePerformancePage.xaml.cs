@@ -326,7 +326,8 @@ public partial class HardwarePerformancePage : ContentPage
             true;
 
         HardwareAccelerationSwitch.IsEnabled =
-            hasSimd;
+            hasSimd &&
+            !_isBenchmarkRunning;
 
         HardwareAccelerationSwitch.IsToggled =
             CalculationAccelerationManager.UseSimd;
@@ -334,7 +335,8 @@ public partial class HardwarePerformancePage : ContentPage
         LoadSimdModeOptions();
 
         MultithreadingSwitch.IsEnabled =
-            hasMultipleThreads;
+            hasMultipleThreads &&
+            !_isBenchmarkRunning;
 
         MultithreadingSwitch.IsToggled =
             CalculationThreadingManager.UseMultithreading;
@@ -343,6 +345,7 @@ public partial class HardwarePerformancePage : ContentPage
             false;
 
         UpdateAccelerationStateText();
+        UpdateBenchmarkControlLockState();
 
         VectorWidthValueLabel.Text =
             GetMaximumVectorWidthText();
@@ -513,6 +516,72 @@ public partial class HardwarePerformancePage : ContentPage
                         workerCount)
                     : LocalizationService.Translate(
                         "Benchmark đang dùng một luồng CPU.");
+    }
+
+    private void UpdateBenchmarkControlLockState()
+    {
+        bool isLocked =
+            _isBenchmarkRunning;
+
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        HardwareAccelerationLockBadge.IsVisible =
+            isLocked;
+
+        MultithreadingLockBadge.IsVisible =
+            isLocked;
+
+        HardwareAccelerationLockLabel.Text =
+            useEnglish
+                ? "🔒 LOCKED"
+                : "🔒 KHÓA";
+
+        MultithreadingLockLabel.Text =
+            HardwareAccelerationLockLabel.Text;
+
+        // Disabled VisualState đã giảm opacity; gán trực tiếp ở đây để
+        // bảo đảm Windows cập nhật ngay cả khi native Switch giữ màu cũ.
+        HardwareAccelerationSwitch.Opacity =
+            isLocked
+                ? 0.42d
+                : HardwareAccelerationSwitch.IsEnabled
+                    ? 1d
+                    : 0.55d;
+
+        MultithreadingSwitch.Opacity =
+            isLocked
+                ? 0.42d
+                : MultithreadingSwitch.IsEnabled
+                    ? 1d
+                    : 0.55d;
+
+        string hardwareDescription =
+            (useEnglish, isLocked) switch
+            {
+                (true, true) => "Hardware acceleration is locked while the benchmark is running.",
+                (true, false) => "Turn hardware acceleration on or off.",
+                (false, true) => "Tăng tốc phần cứng đang bị khóa trong lúc đo sức mạnh.",
+                _ => "Bật hoặc tắt tăng tốc phần cứng."
+            };
+
+        string multithreadingDescription =
+            (useEnglish, isLocked) switch
+            {
+                (true, true) => "Multithreading is locked while the benchmark is running.",
+                (true, false) => "Turn benchmark multithreading on or off.",
+                (false, true) => "Đa luồng đang bị khóa trong lúc đo sức mạnh.",
+                _ => "Bật hoặc tắt đa luồng cho benchmark."
+            };
+
+        SemanticProperties.SetDescription(
+            HardwareAccelerationSwitch,
+            hardwareDescription);
+
+        SemanticProperties.SetDescription(
+            MultithreadingSwitch,
+            multithreadingDescription);
     }
 
     private static string BuildFloatingPointModeText(
@@ -1699,6 +1768,8 @@ public partial class HardwarePerformancePage : ContentPage
         MultithreadingSwitch.IsEnabled =
             false;
 
+        UpdateBenchmarkControlLockState();
+
         BenchmarkProgress.IsVisible =
             true;
 
@@ -1829,6 +1900,7 @@ public partial class HardwarePerformancePage : ContentPage
                     CalculationThreadingManager.IsMultithreadingAvailable;
 
                 UpdateSimdModeSelectorVisibility();
+                UpdateBenchmarkControlLockState();
             }
 
             _benchmarkCancellationTokenSource?.Dispose();

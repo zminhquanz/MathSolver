@@ -59,6 +59,10 @@ public partial class AppShell : Shell
             typeof(HardwarePerformancePage));
 
         Routing.RegisterRoute(
+            nameof(DeveloperModePage),
+            typeof(DeveloperModePage));
+
+        Routing.RegisterRoute(
             nameof(AboutPage),
             typeof(AboutPage));
 

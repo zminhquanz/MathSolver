@@ -335,8 +335,11 @@
                     <VisualState x:Name="Normal" />
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="OnColor" Value="{DynamicResource TextSecondaryColor}" />
+                            <!-- Giữ thanh và nút tròn khác màu để trạng thái khóa
+                                 vẫn đọc được trên Windows, Android và theme tối. -->
+                            <Setter Property="OnColor" Value="{DynamicResource BorderColor}" />
                             <Setter Property="ThumbColor" Value="{DynamicResource TextSecondaryColor}" />
+                            <Setter Property="Opacity" Value="0.55" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="On">

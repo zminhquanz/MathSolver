@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MathSolver.Views.DeveloperModePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Chế độ nhà phát triển"
+    Shell.NavBarIsVisible="True"
+    Shell.TabBarIsVisible="False"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior
+            IsVisible="False"
+            IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
+    <Shell.TitleView>
+        <Grid
+            Padding="0,0,8,0"
+            ColumnDefinitions="Auto,*"
+            ColumnSpacing="8">
+
+            <Button
+                x:Name="DeveloperModeBackButton"
+                Grid.Column="0"
+                Text="‹"
+                WidthRequest="40"
+                HeightRequest="40"
+                MinimumWidthRequest="40"
+                MinimumHeightRequest="40"
+                Padding="0"
+                CornerRadius="20"
+                FontSize="28"
+                FontAttributes="Bold"
+                BackgroundColor="Transparent"
+                TextColor="{DynamicResource TextPrimaryColor}"
+                SemanticProperties.Description="Quay lại"
+                Clicked="OnCloseClicked" />
+
+            <VerticalStackLayout
+                Grid.Column="1"
+                Spacing="0"
+                VerticalOptions="Center">
+
+                <Label
+                    x:Name="PageTitleLabel"
+                    Text="CHẾ ĐỘ NHÀ PHÁT TRIỂN"
+                    FontSize="19"
+                    FontAttributes="Bold"
+                    LineBreakMode="NoWrap"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <Label
+                    x:Name="PageSubtitleLabel"
+                    Text="Quản lý JSON, log kiểm tra và chi tiết kỹ thuật"
+                    FontSize="11"
+                    LineBreakMode="TailTruncation"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
+    <Grid x:Name="DeveloperModePageContentRoot">
+        <ScrollView>
+            <VerticalStackLayout
+                Padding="16"
+                Spacing="14"
+                MaximumWidthRequest="920"
+                HorizontalOptions="Center">
+
+                <Border Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label
+                            x:Name="SettingsSectionTitleLabel"
+                            Text="Công cụ dành cho nhà phát triển"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
+                            <VerticalStackLayout
+                                Grid.Column="0"
+                                Spacing="4"
+                                VerticalOptions="Center">
+
+                                <Label
+                                    x:Name="DeveloperModeTitleLabel"
+                                    Text="Chế độ nhà phát triển"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <Label
+                                    x:Name="DeveloperModeDescriptionLabel"
+                                    Text="Hiện dữ liệu chẩn đoán phục vụ kiểm tra thuật toán và LLM."
+                                    Style="{StaticResource HardwareDescriptionStyle}" />
+                            </VerticalStackLayout>
+
+                            <Switch
+                                x:Name="DeveloperModeSwitch"
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="Bật hoặc tắt chế độ nhà phát triển"
+                                Toggled="OnDeveloperModeToggled" />
+                        </Grid>
+
+                        <Border
+                            x:Name="DeveloperModeStateBadge"
+                            Padding="10,7"
+                            HorizontalOptions="Start"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+
+                            <Label
+                                x:Name="DeveloperModeStateLabel"
+                                Text="✓ ĐANG BẬT"
+                                FontSize="12"
+                                FontAttributes="Bold" />
+                        </Border>
+
+                        <Label
+                            x:Name="DefaultStateNoteLabel"
+                            Text="Bản Debug mặc định bật; bản Release/Publish mặc định tắt. Lựa chọn của bạn sẽ được ghi nhớ."
+                            FontSize="11"
+                            FontAttributes="Italic"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            x:Name="VisibleToolsTitleLabel"
+                            Text="Nội dung được hiển thị khi bật"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Label
+                                Text="JSON"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label
+                                    x:Name="LlmToolsTitleLabel"
+                                    Text="JSON và log kiểm tra AI"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="LlmToolsDescriptionLabel"
+                                    Text="Hiện JSON do LLM tạo và từng bước validation của C#."
+                                    Style="{StaticResource HardwareDescriptionStyle}" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Label
+                                Text="aⁿ"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label
+                                    x:Name="PowerToolsTitleLabel"
+                                    Text="Chi tiết lũy thừa và căn bậc"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="PowerToolsDescriptionLabel"
+                                    Text="Hiện nút và nội dung phân tích kỹ thuật của quá trình tính toán."
+                                    Style="{StaticResource HardwareDescriptionStyle}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

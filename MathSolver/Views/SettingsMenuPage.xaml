@@ -357,20 +357,19 @@
 
                                 </VerticalStackLayout>
 
-                                <Button
-                                    x:Name="DeveloperModeToggleButton"
+                                <Border
                                     Grid.Column="2"
-                                    WidthRequest="78"
-                                    HeightRequest="34"
-                                    Padding="8,0"
-                                    VerticalOptions="Center"
-                                    CornerRadius="17"
-                                    FontSize="12"
-                                    FontAttributes="Bold"
-                                    BorderWidth="1"
-                                    Text="✓ BẬT"
-                                    SemanticProperties.Description="Bật hoặc tắt chế độ nhà phát triển"
-                                    Clicked="OnDeveloperModeClicked" />
+                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
+
+                                    <Label
+                                        Text="›"
+                                        Style="{StaticResource ThemeMenuChevronStyle}"
+                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                </Border>
+
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnDeveloperModeTapped" />
+                                </Grid.GestureRecognizers>
 
                             </Grid>
                         </Border>
