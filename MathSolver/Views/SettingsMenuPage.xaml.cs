@@ -267,10 +267,6 @@ public partial class SettingsMenuPage : ContentPage
         MoreSettingsIconTintBehavior.TintColor = tintColor;
         FontIconTintBehavior.TintColor = tintColor;
         LanguageIconTintBehavior.TintColor = tintColor;
-        ThemeArrowForwardIconTintBehavior.TintColor = tintColor;
-        ColorThemeArrowForwardIconTintBehavior.TintColor = tintColor;
-        FontArrowForwardIconTintBehavior.TintColor = tintColor;
-        LanguageArrowForwardIconTintBehavior.TintColor = tintColor;
         BenchmarkIconTintBehavior.TintColor = tintColor;
         AboutIconTintBehavior.TintColor = tintColor;
     }
@@ -485,7 +481,7 @@ public partial class SettingsMenuPage : ContentPage
     {
         await ToggleSectionAsync(
             ThemeOptionsBorder,
-            ThemeArrowImage);
+            ThemeChevronLabel);
     }
 
     private async void OnAccentRowTapped(
@@ -494,7 +490,7 @@ public partial class SettingsMenuPage : ContentPage
     {
         await ToggleSectionAsync(
             AccentOptionsBorder,
-            AccentArrowImage);
+            AccentChevronLabel);
     }
 
     private async void OnFontRowTapped(
@@ -503,7 +499,7 @@ public partial class SettingsMenuPage : ContentPage
     {
         await ToggleSectionAsync(
             FontOptionsBorder,
-            FontArrowImage);
+            FontChevronLabel);
     }
 
     private async void OnLanguageRowTapped(
@@ -512,12 +508,12 @@ public partial class SettingsMenuPage : ContentPage
     {
         await ToggleSectionAsync(
             LanguageOptionsBorder,
-            LanguageArrowImage);
+            LanguageChevronLabel);
     }
 
     private async Task ToggleSectionAsync(
         VisualElement section,
-        VisualElement arrow)
+        Label chevron)
     {
         if (!_animatingSections.Add(
                 section))
@@ -532,7 +528,13 @@ public partial class SettingsMenuPage : ContentPage
             true;
 
         section.CancelAnimations();
-        arrow.CancelAnimations();
+
+        // Đổi ký hiệu tức thì, không xoay SVG. Chevron được đặt trong
+        // pill giống các mục mở trang để toàn bộ menu có cùng thiết kế.
+        chevron.Text =
+            isExpanding
+                ? "⌄"
+                : "›";
 
         try
         {
@@ -567,11 +569,6 @@ public partial class SettingsMenuPage : ContentPage
                     section.ScaleYToAsync(
                         1d,
                         210,
-                        Easing.CubicOut),
-
-                    arrow.RotateToAsync(
-                        90d,
-                        180,
                         Easing.CubicOut));
             }
             else
@@ -590,11 +587,6 @@ public partial class SettingsMenuPage : ContentPage
 
                     section.ScaleYToAsync(
                         0.82d,
-                        145,
-                        Easing.CubicIn),
-
-                    arrow.RotateToAsync(
-                        0d,
                         145,
                         Easing.CubicIn));
 

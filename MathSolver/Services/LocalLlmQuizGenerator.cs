@@ -29,10 +29,11 @@ public sealed class LocalLlmQuizGenerator
             ? 8
             : Math.Min(4, Environment.ProcessorCount);
     public const int MaximumAttempts = 3;
-    public const int MaximumOutputTokens = 240;
+    public const int MaximumOutputTokens = 320;
     public const int ModelUnloadGracePeriodSeconds = 60;
-    // Đủ chứa contract ban đầu, tối đa ba JSON và hai feedback validation
-    // trong cùng KV cache. Phần tăng nhỏ này tránh retry cuối bị tràn context.
+    // Mỗi lần thử dùng một KV context sạch và replay lại contract C# cùng lỗi
+    // mới nhất, nên 2K chỉ cần chứa đúng một lượt sinh hoàn chỉnh. Weights vẫn
+    // được cache giữa các lần thử và giữa các câu hỏi.
     public const uint ContextSize = 2048;
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
@@ -210,16 +211,28 @@ public sealed class LocalLlmQuizGenerator
                 LlmQuizPromptBuilder.BuildSystemPrompt(
                     language);
 
-            // Một context/KV duy nhất được giữ trong toàn bộ chuỗi retry để
-            // model nhớ prompt, JSON sai và phản hồi validation trước đó.
-            // Context chỉ được giải phóng khi lượt GenerateAsync đã kết thúc:
-            // đề được chấp nhận, hết số lần thử, bị hủy hoặc gặp lỗi runtime.
-            // LLamaWeights vẫn được cache riêng giữa các câu như trước.
-            using LLamaContext context =
-                weights.CreateContext(modelParameters);
-
-            var executor =
-                new InteractiveExecutor(context);
+            // Đây là nguồn sự thật bất biến của cả ba lần thử. Retry luôn
+            // replay prompt này; không dựa vào token của JSON sai trước đó.
+            string authoritativeUserPrompt =
+                contract.FindXProblem is FindXQuizContract findX
+                    ? LlmQuizPromptBuilder.BuildFindXUserPrompt(
+                        findX,
+                        language,
+                        selectedStudent,
+                        selectedStoryContext,
+                        previousErrorCode: null)
+                    : contract.GeometryProblem is GeometryQuizContract geometry
+                    ? LlmQuizPromptBuilder.BuildGeometryUserPrompt(
+                        geometry,
+                        language,
+                        selectedStudent,
+                        previousErrorCode: null)
+                    : LlmQuizPromptBuilder.BuildUserPrompt(
+                        contract.Expression,
+                        language,
+                        selectedStudent,
+                        selectedStoryContext,
+                        previousErrorCode: null);
 
             string? previousErrorCode = null;
             string? previousValidationFeedback = null;
@@ -265,56 +278,32 @@ public sealed class LocalLlmQuizGenerator
                     LlmQuizDiagnosticEvent.AttemptStarted,
                     LlmQuizProgressStage.Generating);
 
-                string prompt;
-
-                if (attempt == 1)
-                {
-                    string userPrompt =
-                        contract.FindXProblem is FindXQuizContract findX
-                            ? LlmQuizPromptBuilder.BuildFindXUserPrompt(
-                                findX,
-                                language,
-                                selectedStudent,
-                                selectedStoryContext,
-                                previousErrorCode: null)
-                            : contract.GeometryProblem is GeometryQuizContract geometry
-                            ? LlmQuizPromptBuilder.BuildGeometryUserPrompt(
-                                geometry,
-                                language,
-                                selectedStudent,
-                                previousErrorCode: null)
-                            : LlmQuizPromptBuilder.BuildUserPrompt(
-                                contract.Expression,
-                                language,
-                                selectedStudent,
-                                selectedStoryContext,
-                                previousErrorCode: null);
-
-                    prompt = useManualGemma4Template
-                        ? LlmQuizPromptBuilder.BuildGemma4Prompt(
-                            systemPrompt,
-                            userPrompt)
-                        : string.Concat(
-                            systemPrompt,
-                            Environment.NewLine,
-                            Environment.NewLine,
-                            userPrompt);
-                }
-                else
-                {
-                    // InteractiveExecutor tiếp tục ngay trên KV cache cũ.
-                    // Chỉ gửi feedback ngắn thay vì lặp lại toàn bộ contract;
-                    // model vẫn nhìn thấy đề sai và dữ kiện gốc trong context.
-                    prompt = useManualGemma4Template
-                        ? LlmQuizPromptBuilder.BuildGemma4RetryPrompt(
-                            previousErrorCode ?? "InvalidWordProblem",
-                            language,
-                            previousValidationFeedback)
-                        : LlmQuizPromptBuilder.BuildRetryPrompt(
+                string attemptUserPrompt =
+                    attempt == 1
+                        ? authoritativeUserPrompt
+                        : LlmQuizPromptBuilder.BuildIsolatedRetryUserPrompt(
+                            authoritativeUserPrompt,
                             previousErrorCode ?? "InvalidWordProblem",
                             language,
                             previousValidationFeedback);
-                }
+
+                string prompt = useManualGemma4Template
+                    ? LlmQuizPromptBuilder.BuildGemma4Prompt(
+                        systemPrompt,
+                        attemptUserPrompt)
+                    : string.Concat(
+                        systemPrompt,
+                        Environment.NewLine,
+                        Environment.NewLine,
+                        attemptUserPrompt);
+
+                // Mỗi attempt có KV sạch. JSON sai, EOS và control token của
+                // lượt trước không thể làm lượt sau trả rỗng hoặc bị cắt.
+                using LLamaContext attemptContext =
+                    weights.CreateContext(modelParameters);
+
+                var executor =
+                    new InteractiveExecutor(attemptContext);
 
                 var inferenceParameters =
                     new InferenceParams
@@ -323,7 +312,9 @@ public sealed class LocalLlmQuizGenerator
                         SamplingPipeline =
                             new DefaultSamplingPipeline
                             {
-                                Temperature = 0.35f,
+                                Temperature = attempt == 1
+                                    ? 0.35f
+                                    : 0.25f,
                                 TopP = 0.9f
                             }
                     };
@@ -451,13 +442,15 @@ public sealed class LocalLlmQuizGenerator
                 if (!LlmWordProblemParser.TryParse(
                         rawOutput,
                         out LlmWordProblemDraft? draft,
-                        out string parseErrorCode))
+                        out string parseErrorCode,
+                        out string? parseErrorDetail))
                 {
                     previousErrorCode = parseErrorCode;
                     previousValidationFeedback =
                         LlmQuizPromptBuilder.BuildParserFeedback(
                             parseErrorCode,
-                            language);
+                            language,
+                            parseErrorDetail);
 
                     ReportDiagnostic(
                         LlmQuizDiagnosticEvent.ParseFailed,
@@ -903,23 +896,25 @@ internal static class LlmQuizPromptBuilder
             "<|turn>model");
     }
 
-    public static string BuildGemma4RetryPrompt(
+    public static string BuildIsolatedRetryUserPrompt(
+        string authoritativeUserPrompt,
         string errorCode,
         AppLanguage language,
         string? validationFeedback)
     {
-        // Kết thúc model turn trước, thêm một user turn sửa lỗi rồi mở model
-        // turn mới. InteractiveExecutor giữ KV cache nên model vẫn thấy đầy
-        // đủ contract và JSON đã trả ở lần trước.
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            authoritativeUserPrompt);
+
+        // Contract được replay nguyên vẹn vào một context sạch. Chỉ lỗi mới
+        // nhất được thêm vào; JSON sai và các feedback cũ không được đưa sang.
         return string.Concat(
-            "<turn|>\n",
-            "<|turn>user\n",
+            authoritativeUserPrompt,
+            Environment.NewLine,
+            Environment.NewLine,
             BuildRetryPrompt(
                 errorCode,
                 language,
-                validationFeedback),
-            "<turn|>\n",
-            "<|turn>model");
+                validationFeedback));
     }
 
     public static string BuildRetryPrompt(
@@ -934,33 +929,95 @@ internal static class LlmQuizPromptBuilder
             .Trim();
 
         string feedback =
-            string.IsNullOrWhiteSpace(validationFeedback)
-                ? correction
-                : validationFeedback.Trim();
+            CompactRetryFeedback(
+                string.IsNullOrWhiteSpace(validationFeedback)
+                    ? correction
+                    : validationFeedback.Trim());
 
         return language == AppLanguage.Vietnamese
-            ? $"Đề vừa tạo không vượt qua validation C# ({errorCode}).\nCHI TIẾT LỖI: {feedback}\nYÊU CẦU SỬA: {correction} Hãy giữ nguyên dữ kiện gốc trong context và trả lại đúng một JSON đã sửa, mỗi thuộc tính trên một dòng, không Markdown hay giải thích."
-            : $"The previous problem failed C# validation ({errorCode}).\nEXACT ERROR: {feedback}\nREQUIRED FIX: {correction} Keep the original facts already present in the context and return exactly one corrected JSON object with one property per line and no Markdown or commentary.";
+            ? $$"""
+              RETRY CÁCH LY — BỎ TOÀN BỘ CÂU TRẢ LỜI CŨ.
+              LỖI MỚI NHẤT: {{errorCode}}
+              CHI TIẾT: {{feedback}}
+              BẮT BUỘC: {{correction}}
+              Dùng contract và schema phía trên làm nguồn duy nhất. Tạo lại từ đầu đúng một JSON hoàn chỉnh, không trả bản vá. Trước khi kết thúc phải có dấu } và đủ problem_text, subject_name, answer_unit, solution_lead; không trường thứ năm, Markdown hay giải thích.
+              """
+            : $$"""
+              ISOLATED RETRY — DISCARD THE ENTIRE PREVIOUS RESPONSE.
+              LATEST ERROR: {{errorCode}}
+              DETAIL: {{feedback}}
+              REQUIRED: {{correction}}
+              Use only the contract and schema above. Regenerate one complete JSON object from scratch, not a patch. Before finishing, ensure } and all four fields exist: problem_text, subject_name, answer_unit, solution_lead. No fifth field, Markdown, or commentary.
+              """;
     }
 
     public static string BuildParserFeedback(
         string errorCode,
-        AppLanguage language) =>
-        language == AppLanguage.Vietnamese
-            ? errorCode switch
+        AppLanguage language,
+        string? detail)
+    {
+        string suffix =
+            string.IsNullOrWhiteSpace(detail)
+                ? string.Empty
+                : $" ({detail.Trim()})";
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return errorCode switch
             {
                 "EmptyModelOutput" =>
-                    "Phản hồi rỗng: model chưa tạo ra JSON nào. Cần trả đủ bốn trường problem_text, subject_name, answer_unit và solution_lead.",
+                    "Phản hồi rỗng; model phải tạo lại một JSON hoàn chỉnh có đủ bốn trường.",
+                "IncompleteJson" =>
+                    "JSON bị cắt trước khi đóng object; phải tạo lại từ đầu và kết thúc bằng dấu }." + suffix,
+                "MissingJsonFields" =>
+                    "JSON thiếu hoặc để rỗng trường bắt buộc" + suffix + ". Phải trả đủ problem_text, subject_name, answer_unit và solution_lead.",
+                "UnexpectedJsonFields" =>
+                    "JSON có trường ngoài schema" + suffix + ". Chỉ được dùng đúng bốn trường bắt buộc.",
+                "DuplicateJsonFields" =>
+                    "JSON lặp tên trường" + suffix + ". Mỗi trường bắt buộc chỉ được xuất hiện một lần.",
+                "MultipleJsonObjects" =>
+                    "Model đã trả nhiều JSON object. Chỉ được trả đúng một object hoàn chỉnh.",
                 _ =>
-                    "Phản hồi không phải đúng một JSON object hoàn chỉnh hoặc sai schema. Không thêm Markdown, lời giải thích hay JSON thứ hai; cần trả đủ bốn trường problem_text, subject_name, answer_unit và solution_lead."
-            }
-            : errorCode switch
-            {
-                "EmptyModelOutput" =>
-                    "The response was empty: the model produced no JSON. Return all four fields: problem_text, subject_name, answer_unit, and solution_lead.",
-                _ =>
-                    "The response was not exactly one complete JSON object or did not match the schema. Do not add Markdown, commentary, or a second JSON object; return all four fields: problem_text, subject_name, answer_unit, and solution_lead."
+                    "Phản hồi không phải một JSON object hoàn chỉnh đúng schema; phải tạo lại đủ bốn trường, không Markdown hay giải thích." + suffix
             };
+        }
+
+        return errorCode switch
+        {
+            "EmptyModelOutput" =>
+                "The response was empty; regenerate one complete JSON object with all four fields.",
+            "IncompleteJson" =>
+                "The JSON was cut off before the object closed; regenerate it from scratch and finish with }." + suffix,
+            "MissingJsonFields" =>
+                "The JSON has missing or empty required fields" + suffix + ". Return problem_text, subject_name, answer_unit, and solution_lead.",
+            "UnexpectedJsonFields" =>
+                "The JSON contains fields outside the schema" + suffix + ". Use exactly the four required fields.",
+            "DuplicateJsonFields" =>
+                "The JSON repeats a property name" + suffix + ". Emit each required field exactly once.",
+            "MultipleJsonObjects" =>
+                "The model returned multiple JSON objects. Return exactly one complete object.",
+            _ =>
+                "The response was not one complete JSON object matching the schema; regenerate all four fields without Markdown or commentary." + suffix
+        };
+    }
+
+    private static string CompactRetryFeedback(
+        string feedback)
+    {
+        string compact =
+            Regex.Replace(
+                    feedback,
+                    @"\s+",
+                    " ",
+                    RegexOptions.CultureInvariant)
+                .Trim();
+
+        const int maximumLength = 240;
+
+        return compact.Length <= maximumLength
+            ? compact
+            : compact[..maximumLength].TrimEnd() + "…";
+    }
 
     public static string BuildUserPrompt(
         IntegerArithmeticExpression expression,
@@ -1011,6 +1068,13 @@ internal static class LlmQuizPromptBuilder
                 selectedStoryContext,
                 language);
 
+        string multiplicationRoleRule =
+            expression.Operation == ArithmeticOperation.Multiply
+                ? language == AppLanguage.Vietnamese
+                    ? $"- Phép nhân phải tách hai vai trò: {expression.RightOperand} là số nhóm/dãy/khu vực, mỗi nhóm có {expression.LeftOperand} {selectedStoryContext.AnswerUnit}. Danh từ chỉ nhóm tuyệt đối không được là chính đồ vật \"{selectedStoryContext.NaturalReference}\". Ví dụ đúng: \"Có {expression.RightOperand} dãy, mỗi dãy có {expression.LeftOperand} {selectedStoryContext.AnswerUnit}\". Cấm viết kiểu \"Mỗi {selectedStoryContext.NaturalReference} có {expression.LeftOperand} cái\" vì biến vật cần đếm thành vật chứa chính nó."
+                    : $"- For multiplication, keep two distinct roles: {expression.RightOperand} is the number of groups/rows/areas, and each group has {expression.LeftOperand} {selectedStoryContext.AnswerUnit}. The group noun must never be the item \"{selectedStoryContext.NaturalReference}\" itself. Valid: \"There are {expression.RightOperand} rows, each row has {expression.LeftOperand} {selectedStoryContext.AnswerUnit}.\" Never make each counted item contain more of itself."
+                : string.Empty;
+
         return FormattableString.Invariant(
             $$"""
             Write one natural, age-appropriate word problem in {{languageName}}.
@@ -1026,6 +1090,7 @@ internal static class LlmQuizPromptBuilder
             - {{storyContextRule}}
             - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
+            {{multiplicationRoleRule}}
             - For division, divide the left total exactly into the right number of equal groups.
             - solution_lead is only one short textbook lead-in sentence before the student's calculation. It must repeat the exact answer_unit noun phrase (or the same pen noun with cây/cái/chiếc exchanged) and end with a colon. It must contain no number, arithmetic expression, operator, equals sign, calculated result, or answer. Valid example: "Số quả chôm chôm mẹ còn lại là:". Forbidden example: "Số quả chôm chôm mẹ còn lại là: 11 - 1 = 10 quả chôm chôm." Never replace a specific unit such as "cuốn sổ tay" with a broader word such as "sách".
             - answer_unit is a short noun phrase without a number.
@@ -1426,8 +1491,11 @@ internal static class LlmQuizPromptBuilder
         {
             return errorCode switch
             {
-                "InvalidJson" or "EmptyModelOutput" =>
-                    "Chỉ trả về một JSON object hoàn chỉnh đúng schema.",
+                "InvalidJson" or "EmptyModelOutput" or
+                "IncompleteJson" or "MissingJsonFields" or
+                "UnexpectedJsonFields" or "DuplicateJsonFields" or
+                "MultipleJsonObjects" =>
+                    "Bỏ phản hồi cũ và tạo lại toàn bộ một JSON object hoàn chỉnh, đủ đúng bốn trường bắt buộc, không thêm trường khác.",
                 "ProblemNumbersMismatch" =>
                     "Sửa đúng các dữ kiện số mà validator đã chỉ ra; dùng đủ từng số bắt buộc và không thêm số khác.",
                 "AnswerRevealedInProblem" =>
@@ -1444,6 +1512,8 @@ internal static class LlmQuizPromptBuilder
                     "Dùng đúng đồ vật và answer_unit validator đã nêu. Với bút, cây/cái/chiếc là tương đương nhưng phải giữ nguyên phần tên bút.",
                 "SolutionLeadUnitMismatch" =>
                     "Viết lại solution_lead bằng đúng cụm answer_unit; không thay đơn vị cụ thể bằng một từ khái quát hơn.",
+                "MultiplicationGroupItemConflict" =>
+                    "Tách rõ số nhóm và số đồ vật mỗi nhóm. Dùng một danh từ nhóm như nhóm, dãy hoặc khu vực; không dùng chính answer_unit làm vật chứa nhiều vật cùng loại.",
                 "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                     "Bỏ cụm từ gây suy ra sai phép toán và thay bằng hành động tiểu học thể hiện đúng phép tính bắt buộc.",
                 "InvalidClassLabel" =>
@@ -1455,8 +1525,11 @@ internal static class LlmQuizPromptBuilder
 
         return errorCode switch
         {
-            "InvalidJson" or "EmptyModelOutput" =>
-                "Return exactly one complete JSON object matching the schema.",
+            "InvalidJson" or "EmptyModelOutput" or
+            "IncompleteJson" or "MissingJsonFields" or
+            "UnexpectedJsonFields" or "DuplicateJsonFields" or
+            "MultipleJsonObjects" =>
+                "Discard the previous response and regenerate one complete JSON object with exactly the four required fields and no others.",
             "ProblemNumbersMismatch" =>
                 "Correct the exact numeric facts named by the validator; use every required value and no other value.",
             "AnswerRevealedInProblem" =>
@@ -1473,6 +1546,8 @@ internal static class LlmQuizPromptBuilder
                 "Use the exact required story item and answer_unit named by the validator.",
             "SolutionLeadUnitMismatch" =>
                 "Rewrite solution_lead with the exact answer_unit noun phrase instead of a broader category.",
+            "MultiplicationGroupItemConflict" =>
+                "Separate the group count from the item count per group. Use a distinct group noun such as group, row, or area; never make the answer_unit contain more items of itself.",
             "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                 "Remove wording that implies the wrong operation and replace it with a clear elementary-school action for the required operation.",
             "InvalidClassLabel" =>
@@ -1500,6 +1575,14 @@ internal sealed class LlmWordProblemDraft
 
 internal static class LlmWordProblemParser
 {
+    private static readonly string[] RequiredPropertyNames =
+    [
+        "problem_text",
+        "subject_name",
+        "answer_unit",
+        "solution_lead"
+    ];
+
     private static readonly JsonSerializerOptions JsonOptions =
         new()
         {
@@ -1511,10 +1594,12 @@ internal static class LlmWordProblemParser
     public static bool TryParse(
         string rawOutput,
         out LlmWordProblemDraft? draft,
-        out string errorCode)
+        out string errorCode,
+        out string? errorDetail)
     {
         draft = null;
         errorCode = "InvalidJson";
+        errorDetail = null;
 
         if (string.IsNullOrWhiteSpace(rawOutput))
         {
@@ -1522,53 +1607,139 @@ internal static class LlmWordProblemParser
             return false;
         }
 
+        string normalizedOutput =
+            StripModelControlText(rawOutput);
+
         List<string> jsonObjects =
-            ExtractCompleteJsonObjects(rawOutput);
+            ExtractCompleteJsonObjects(normalizedOutput);
 
-        for (int index = jsonObjects.Count - 1;
-             index >= 0;
-             index--)
+        if (jsonObjects.Count == 0)
         {
-            try
-            {
-                LlmWordProblemDraft? candidate =
-                    JsonSerializer.Deserialize<LlmWordProblemDraft>(
-                        jsonObjects[index],
-                        JsonOptions);
+            errorCode = normalizedOutput.Contains('{')
+                ? "IncompleteJson"
+                : "InvalidJson";
+            return false;
+        }
 
-                if (!string.IsNullOrWhiteSpace(
-                        candidate?.ProblemText))
+        if (jsonObjects.Count != 1)
+        {
+            errorCode = "MultipleJsonObjects";
+            errorDetail = jsonObjects.Count.ToString(
+                CultureInfo.InvariantCulture);
+            return false;
+        }
+
+        string json = jsonObjects[0];
+        int objectStart =
+            normalizedOutput.IndexOf(
+                json,
+                StringComparison.Ordinal);
+
+        if (objectStart < 0 ||
+            normalizedOutput[..objectStart].Trim().Length > 0 ||
+            normalizedOutput[(objectStart + json.Length)..].Trim().Length > 0)
+        {
+            errorCode = "InvalidJson";
+            errorDetail = "text outside JSON object";
+            return false;
+        }
+
+        try
+        {
+            using JsonDocument document =
+                JsonDocument.Parse(json);
+
+            if (document.RootElement.ValueKind !=
+                JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            var occurrences =
+                new Dictionary<string, int>(
+                    StringComparer.OrdinalIgnoreCase);
+            var unexpected =
+                new List<string>();
+            var emptyOrInvalid =
+                new List<string>();
+
+            foreach (JsonProperty property in
+                document.RootElement.EnumerateObject())
+            {
+                if (!RequiredPropertyNames.Contains(
+                        property.Name,
+                        StringComparer.OrdinalIgnoreCase))
                 {
-                    draft = candidate;
-                    errorCode = string.Empty;
-                    return true;
+                    unexpected.Add(property.Name);
+                    continue;
+                }
+
+                occurrences[property.Name] =
+                    occurrences.GetValueOrDefault(property.Name) + 1;
+
+                if (property.Value.ValueKind != JsonValueKind.String ||
+                    string.IsNullOrWhiteSpace(
+                        property.Value.GetString()))
+                {
+                    emptyOrInvalid.Add(property.Name);
                 }
             }
-            catch (JsonException)
-            {
-                // Thử object hoàn chỉnh khác hoặc fallback văn bản bên dưới.
-            }
-        }
 
-        // Nếu model hết token sau khi đã viết xong problem_text nhưng chưa
-        // đóng toàn bộ JSON, vẫn có thể dùng đề bài và để engine dựng metadata
-        // lời giải an toàn. Đây cũng hỗ trợ model trả thẳng một câu hỏi.
-        if (TryExtractProblemTextPreview(
-                rawOutput,
-                out string problemText) &&
-            problemText.Length >= 12)
-        {
+            if (unexpected.Count > 0)
+            {
+                errorCode = "UnexpectedJsonFields";
+                errorDetail = string.Join(", ", unexpected);
+                return false;
+            }
+
+            string[] duplicated =
+                occurrences
+                    .Where(pair => pair.Value != 1)
+                    .Select(pair => pair.Key)
+                    .ToArray();
+
+            if (duplicated.Length > 0)
+            {
+                errorCode = "DuplicateJsonFields";
+                errorDetail = string.Join(", ", duplicated);
+                return false;
+            }
+
+            string[] missing =
+                RequiredPropertyNames
+                    .Where(name =>
+                        !occurrences.ContainsKey(name) ||
+                        emptyOrInvalid.Contains(
+                            name,
+                            StringComparer.OrdinalIgnoreCase))
+                    .ToArray();
+
+            if (missing.Length > 0)
+            {
+                errorCode = "MissingJsonFields";
+                errorDetail = string.Join(", ", missing);
+                return false;
+            }
+
             draft =
-                new LlmWordProblemDraft
-                {
-                    ProblemText = problemText
-                };
+                JsonSerializer.Deserialize<LlmWordProblemDraft>(
+                    json,
+                    JsonOptions);
+
+            if (draft is null)
+            {
+                return false;
+            }
 
             errorCode = string.Empty;
+            errorDetail = null;
             return true;
         }
-
-        return false;
+        catch (JsonException exception)
+        {
+            errorDetail = exception.Message;
+            return false;
+        }
     }
 
     public static bool TryExtractProblemTextPreview(
@@ -1960,6 +2131,24 @@ internal sealed partial class LlmWordProblemValidator
 
         string lowerProblem =
             problem.ToLowerInvariant();
+
+        if (expression.Operation == ArithmeticOperation.Multiply)
+        {
+            string? groupItemConflict =
+                BuildMultiplicationGroupItemConflictFeedback(
+                    problem,
+                    left,
+                    right,
+                    requiredStoryContext,
+                    language);
+
+            if (!string.IsNullOrWhiteSpace(groupItemConflict))
+            {
+                return LlmWordProblemValidationResult.Invalid(
+                    "MultiplicationGroupItemConflict",
+                    groupItemConflict);
+            }
+        }
 
         // Từ khóa chỉ là heuristic ngôn ngữ, không phải bằng chứng toán học.
         // Không loại một đề đã có đúng hai dữ kiện chỉ vì model dùng cách
@@ -2910,6 +3099,117 @@ internal sealed partial class LlmWordProblemValidator
         string.Join(
             ", ",
             values.Select(value => $"“{value}”"));
+
+    private static string? BuildMultiplicationGroupItemConflictFeedback(
+        string problem,
+        int itemsPerGroup,
+        int groupCount,
+        WordProblemStoryContext storyContext,
+        AppLanguage language)
+    {
+        string normalizedProblem =
+            NormalizeSemanticComparisonText(problem);
+
+        string[] itemCandidates =
+            GetCountedItemCandidates(
+                storyContext,
+                language);
+
+        string? conflictingItem =
+            itemCandidates.FirstOrDefault(candidate =>
+            {
+                string escaped = Regex.Escape(candidate);
+                string pattern = language == AppLanguage.Vietnamese
+                    ? $@"(?:^|\s)(?:mỗi|từng)\s+{escaped}(?:\s|$)"
+                    : $@"(?:^|\s)(?:each|every)\s+{escaped}(?:\s|$)";
+
+                return Regex.IsMatch(
+                    normalizedProblem,
+                    pattern,
+                    RegexOptions.CultureInvariant);
+            });
+
+        if (conflictingItem is null)
+        {
+            return null;
+        }
+
+        return language == AppLanguage.Vietnamese
+            ? $"Sai vai trò đại lượng trong phép nhân {itemsPerGroup} × {groupCount}. problem_text dùng cụm “mỗi {conflictingItem}”, làm chính vật cần đếm “{storyContext.AnswerUnit}” trở thành một nhóm chứa nhiều vật cùng loại. Hãy tách danh từ chỉ nhóm khỏi answer_unit, chẳng hạn: “Có {groupCount} dãy, mỗi dãy có {itemsPerGroup} {storyContext.AnswerUnit}. Hỏi có tất cả bao nhiêu {storyContext.AnswerUnit}?”. Không viết “mỗi {storyContext.NaturalReference} có {itemsPerGroup} cái”."
+            : $"The quantities have conflicting roles in multiplication {itemsPerGroup} × {groupCount}. problem_text says “each {conflictingItem}”, making the counted item “{storyContext.AnswerUnit}” act as a group containing more of itself. Use a separate group noun, for example: “There are {groupCount} rows, and each row has {itemsPerGroup} {storyContext.AnswerUnit}. How many {storyContext.AnswerUnit} are there in all?”.";
+    }
+
+    private static string[] GetCountedItemCandidates(
+        WordProblemStoryContext storyContext,
+        AppLanguage language)
+    {
+        var candidates =
+            new List<string>
+            {
+                storyContext.NaturalReference,
+                storyContext.AnswerUnit
+            };
+
+        if (language == AppLanguage.Vietnamese &&
+            (WordProblemUnitEquivalence.IsVietnamesePenUnit(
+                 storyContext.NaturalReference) ||
+             WordProblemUnitEquivalence.IsVietnamesePenUnit(
+                 storyContext.AnswerUnit)))
+        {
+            candidates.AddRange(
+                WordProblemUnitEquivalence.GetVietnamesePenVariants(
+                    storyContext.AnswerUnit));
+        }
+
+        string[] normalized =
+            candidates
+                .Select(NormalizeSemanticComparisonText)
+                .Where(value => value.Length > 0)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return normalized;
+        }
+
+        return normalized
+            .Concat(
+                normalized.Select(TrySingularizeEnglishUnit))
+            .Where(value => value.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static string TrySingularizeEnglishUnit(
+        string value)
+    {
+        if (value.EndsWith("ies", StringComparison.Ordinal) &&
+            value.Length > 3)
+        {
+            return value[..^3] + "y";
+        }
+
+        return value.EndsWith('s') &&
+               !value.EndsWith("ss", StringComparison.Ordinal)
+            ? value[..^1]
+            : value;
+    }
+
+    private static string NormalizeSemanticComparisonText(
+        string value)
+    {
+        string withoutPunctuation =
+            Regex.Replace(
+                value.ToLowerInvariant(),
+                @"[^\p{L}\p{Nd}\s]",
+                " ",
+                RegexOptions.CultureInvariant);
+
+        return WhitespaceRegex()
+            .Replace(withoutPunctuation, " ")
+            .Trim();
+    }
 
     private static string? BuildOperationConflictFeedback(
         string problem,
