@@ -1120,7 +1120,51 @@ public partial class SettingsMenuPage : ContentView
         object? sender,
         EventArgs e)
     {
+        if (_closeTask is not null)
+        {
+            return;
+        }
+
+        await AnimateOverlaySettingsButtonAsync();
         await CloseAsync();
+    }
+
+    private async Task AnimateOverlaySettingsButtonAsync()
+    {
+        OverlaySettingsButton.CancelAnimations();
+
+        try
+        {
+            await Task.WhenAll(
+                OverlaySettingsButton.ScaleToAsync(
+                    0.88d,
+                    75,
+                    Easing.CubicOut),
+
+                OverlaySettingsButton.RotateToAsync(
+                    -22d,
+                    75,
+                    Easing.CubicOut));
+
+            await Task.WhenAll(
+                OverlaySettingsButton.ScaleToAsync(
+                    1d,
+                    110,
+                    Easing.CubicOut),
+
+                OverlaySettingsButton.RotateToAsync(
+                    0d,
+                    110,
+                    Easing.CubicOut));
+        }
+        finally
+        {
+            OverlaySettingsButton.Scale =
+                1d;
+
+            OverlaySettingsButton.Rotation =
+                0d;
+        }
     }
 
     private async void OnCloseClicked(

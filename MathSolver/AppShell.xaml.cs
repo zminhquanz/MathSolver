@@ -434,8 +434,8 @@ public partial class AppShell : Shell
         out double buttonWidth,
         out double buttonHeight)
     {
-        // Giá trị fallback chỉ được dùng nếu handler của SettingsButton chưa
-        // có platform view. Bình thường button thật luôn đã loaded khi click.
+        // Giá trị fallback chỉ được dùng nếu handler của SettingsButtonHost chưa
+        // có platform view. Bình thường host thật luôn đã loaded khi click.
         buttonTop =
             4d;
 
@@ -445,18 +445,21 @@ public partial class AppShell : Shell
         buttonWidth =
             Math.Max(
                 42d,
-                SettingsButton.Width);
+                SettingsButtonHost.Width);
 
         buttonHeight =
             Math.Max(
                 42d,
-                SettingsButton.Height);
+                SettingsButtonHost.Height);
 
-        if (SettingsButton.Handler?.PlatformView is not
-                WinUIFrameworkElement nativeSettingsButton ||
-            nativeSettingsButton.XamlRoot is null ||
+        // Đo chính Grid 42x42 đang chứa gear, không đo ImageButton trong suốt.
+        // Icon thật được center theo SettingsButtonHost; Popup cũng dùng cùng
+        // hộp này nên khi chuyển từ gear Shell sang gear Popup không nhảy vài px.
+        if (SettingsButtonHost.Handler?.PlatformView is not
+                WinUIFrameworkElement nativeSettingsHost ||
+            nativeSettingsHost.XamlRoot is null ||
             !ReferenceEquals(
-                nativeSettingsButton.XamlRoot,
+                nativeSettingsHost.XamlRoot,
                 shellRoot.XamlRoot))
         {
             return;
@@ -465,7 +468,7 @@ public partial class AppShell : Shell
         try
         {
             var transform =
-                nativeSettingsButton.TransformToVisual(
+                nativeSettingsHost.TransformToVisual(
                     null);
 
             WindowsPoint origin =
@@ -475,13 +478,13 @@ public partial class AppShell : Shell
                         0d));
 
             double measuredWidth =
-                nativeSettingsButton.ActualWidth > 0d
-                    ? nativeSettingsButton.ActualWidth
+                nativeSettingsHost.ActualWidth > 0d
+                    ? nativeSettingsHost.ActualWidth
                     : 42d;
 
             double measuredHeight =
-                nativeSettingsButton.ActualHeight > 0d
-                    ? nativeSettingsButton.ActualHeight
+                nativeSettingsHost.ActualHeight > 0d
+                    ? nativeSettingsHost.ActualHeight
                     : 42d;
 
             buttonTop =
@@ -620,29 +623,43 @@ public partial class AppShell : Shell
 
     private async Task AnimateSettingsButtonAsync()
     {
-        SettingsButton.CancelAnimations();
+        // Animate cả host chứa vector gear. SettingsButton chỉ là hit target
+        // trong suốt, nên animate riêng ImageButton sẽ không làm gear chuyển động.
+        SettingsButtonHost.CancelAnimations();
 
-        await Task.WhenAll(
-            SettingsButton.ScaleToAsync(
-                0.88d,
-                75,
-                Easing.CubicOut),
+        try
+        {
+            await Task.WhenAll(
+                SettingsButtonHost.ScaleToAsync(
+                    0.88d,
+                    75,
+                    Easing.CubicOut),
 
-            SettingsButton.RotateToAsync(
-                22d,
-                75,
-                Easing.CubicOut));
+                SettingsButtonHost.RotateToAsync(
+                    22d,
+                    75,
+                    Easing.CubicOut));
 
-        await Task.WhenAll(
-            SettingsButton.ScaleToAsync(
-                1d,
-                110,
-                Easing.CubicOut),
+            await Task.WhenAll(
+                SettingsButtonHost.ScaleToAsync(
+                    1d,
+                    110,
+                    Easing.CubicOut),
 
-            SettingsButton.RotateToAsync(
-                0d,
-                110,
-                Easing.CubicOut));
+                SettingsButtonHost.RotateToAsync(
+                    0d,
+                    110,
+                    Easing.CubicOut));
+        }
+        finally
+        {
+            // Không để transform dở dang ảnh hưởng phép đo tọa độ dùng để neo Popup.
+            SettingsButtonHost.Scale =
+                1d;
+
+            SettingsButtonHost.Rotation =
+                0d;
+        }
     }
 
     private void OnLanguageChanged(

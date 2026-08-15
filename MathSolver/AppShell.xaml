@@ -71,6 +71,7 @@
                 VerticalOptions="Center">
 
                 <Grid
+                    x:Name="SettingsButtonHost"
                     WidthRequest="42"
                     HeightRequest="42"
                     VerticalOptions="Center">
