@@ -298,6 +298,16 @@ public partial class FractionView : LocalizedSolverView
             true;
     }
 
+    public void RefreshNumberDisplay()
+    {
+        if (ResultBorder.IsVisible)
+        {
+            OnCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
+    }
+
     private async void OnFractionCopyResultClicked(
         object? sender,
         EventArgs e)
@@ -956,7 +966,8 @@ public partial class FractionView : LocalizedSolverView
     private static string FormatBigIntegerForDisplay(
         BigInteger value)
     {
-        if (CountIntegerDigits(value) <=
+        if (ResultNumberDisplayMode.ShowFullNumbers ||
+            CountIntegerDigits(value) <=
             ScientificDisplayDigitThreshold)
         {
             return FormatIntegerForEditing(

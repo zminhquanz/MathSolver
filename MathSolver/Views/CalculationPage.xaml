@@ -367,6 +367,8 @@
                                         TextColor="{DynamicResource TextPrimaryColor}"
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         BackgroundColor="Transparent"
+                                        Focused="OnArithmeticExpressionFocused"
+                                        Unfocused="OnArithmeticExpressionUnfocused"
                                         TextChanged="OnArithmeticExpressionTextChanged" />
                                 </Border>
 
@@ -882,28 +884,28 @@
             <Grid
                 x:Name="AverageTabContent"
                 IsVisible="False">
-                <views:AverageView />
+                <views:AverageView x:Name="AverageSolverView" />
             </Grid>
 
             <!-- Tab lũy thừa - căn bậc -->
             <Grid
                 x:Name="PowerRootTabContent"
                 IsVisible="False">
-                <views:PowerRootView />
+                <views:PowerRootView x:Name="PowerRootSolverView" />
             </Grid>
 
             <!-- Tab Phân số -->
             <Grid
                 x:Name="FractionTabContent"
                 IsVisible="False">
-                <views:FractionView />
+                <views:FractionView x:Name="FractionSolverView" />
             </Grid>
 
             <!-- Tab tìm x -->
             <Grid
                 x:Name="FindXTabContent"
                 IsVisible="False">
-                <views:FindXView />
+                <views:FindXView x:Name="FindXSolverView" />
 
             </Grid>
 
@@ -911,7 +913,7 @@
             <Grid
                 x:Name="QuadraticTabContent"
                 IsVisible="False">
-                <views:QuadraticEquationView />
+                <views:QuadraticEquationView x:Name="QuadraticSolverView" />
             </Grid>
 
             <!-- Tab hình học -->
@@ -919,7 +921,7 @@
                 x:Name="GeometryTabContent"
                 IsVisible="False">
 
-                <views:GeometryCalculatorView />
+                <views:GeometryCalculatorView x:Name="GeometrySolverView" />
 
             </Grid>
         </Grid>

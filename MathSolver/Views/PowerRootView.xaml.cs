@@ -35,8 +35,10 @@ public partial class PowerRootView : LocalizedSolverView
     private const int FullResultDigitThreshold =
         18;
 
+    // Từ 19 chữ số, tab Lũy thừa dùng luồng xuất TXT có sẵn thay vì
+    // cố đưa toàn bộ kết quả lên giao diện.
     private const int ExportDigitThreshold =
-        100_001;
+        19;
 
     private const int ParallelComputationDigitThreshold =
         100_000;

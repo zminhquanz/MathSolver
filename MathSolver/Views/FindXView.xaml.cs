@@ -1060,7 +1060,8 @@ public partial class FindXView : LocalizedSolverView
             FormatFindXDecimalForEditing(
                 value);
 
-        return CountIntegerDigits(
+        return !ResultNumberDisplayMode.ShowFullNumbers &&
+               CountIntegerDigits(
                    plainText) >
                ScientificDisplayDigitThreshold
             ? FormatPlainNumberAsScientificDisplay(
@@ -1093,10 +1094,11 @@ public partial class FindXView : LocalizedSolverView
                     approximateValue));
 
         bool useScientificNotation =
-            exponent >=
-                ScientificDisplayDigitThreshold ||
-            exponent <=
-                -MaxDecimalPlaces;
+            !ResultNumberDisplayMode.ShowFullNumbers &&
+            (exponent >=
+                 ScientificDisplayDigitThreshold ||
+             exponent <=
+                 -MaxDecimalPlaces);
 
         int significantDigits =
             useScientificNotation
@@ -1111,7 +1113,9 @@ public partial class FindXView : LocalizedSolverView
         string text =
             value.ToGeneralString(
                 significantDigits,
-                ScientificDisplayDigitThreshold,
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? int.MaxValue
+                    : ScientificDisplayDigitThreshold,
                 -MaxDecimalPlaces);
 
         int exponentSeparatorIndex =
@@ -1220,6 +1224,16 @@ public partial class FindXView : LocalizedSolverView
         }
 
         CalculateFindXDecimal();
+    }
+
+    public void RefreshNumberDisplay()
+    {
+        if (FindXResultBorder.IsVisible)
+        {
+            OnFindXCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
     }
 
     private void CalculateFindXInteger()
@@ -2503,6 +2517,11 @@ public partial class FindXView : LocalizedSolverView
         BigInteger numerator,
         BigInteger denominator)
     {
+        if (ResultNumberDisplayMode.ShowFullNumbers)
+        {
+            return false;
+        }
+
         if (denominator.IsOne)
         {
             return CountBigIntegerDigits(
@@ -2526,7 +2545,8 @@ public partial class FindXView : LocalizedSolverView
     private static string FormatFindXIntegerForDisplay(
         BigInteger value)
     {
-        if (CountBigIntegerDigits(
+        if (ResultNumberDisplayMode.ShowFullNumbers ||
+            CountBigIntegerDigits(
                 value) <=
             ScientificDisplayDigitThreshold)
         {

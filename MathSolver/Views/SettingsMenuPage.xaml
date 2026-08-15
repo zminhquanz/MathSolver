@@ -3,6 +3,7 @@
     x:Class="MathSolver.Views.SettingsMenuPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     Shell.NavBarIsVisible="False"
     Shell.TabBarIsVisible="False"
@@ -264,6 +265,39 @@
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
                                 <Button x:Name="EnglishLanguageButton" Grid.Column="0" Text="Tiếng Anh" Clicked="OnEnglishClicked" />
                                 <Button x:Name="VietnameseLanguageButton" Grid.Column="1" Text="Tiếng Việt" Clicked="OnVietnameseClicked" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Result number display -->
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="123"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="1"
+                                    VerticalOptions="Center">
+                                    <Label
+                                        Text="{localization:Translate Settings.NumberDisplay.Title}"
+                                        Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label
+                                        x:Name="NumberDisplaySummaryLabel"
+                                        Style="{StaticResource ThemeMenuSummaryStyle}"
+                                        LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+
+                                <Switch
+                                    x:Name="FullNumberDisplaySwitch"
+                                    Grid.Column="2"
+                                    VerticalOptions="Center"
+                                    Toggled="OnFullNumberDisplayToggled" />
                             </Grid>
                         </Border>
 

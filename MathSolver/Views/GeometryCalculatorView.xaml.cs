@@ -1137,6 +1137,16 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             true;
     }
 
+    public void RefreshNumberDisplay()
+    {
+        if (ResultBorder.IsVisible)
+        {
+            OnCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
+    }
+
     private bool CalculateIntegerGeometry(
         GeometryFormulaItem geometry)
     {
@@ -2078,7 +2088,9 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         string text =
             value.ToGeneralString(
                 displaySignificantDigits,
-                ScientificDisplayDigitThreshold,
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? int.MaxValue
+                    : ScientificDisplayDigitThreshold,
                 -MaxDecimalPlaces);
 
         int exponentMarker =
@@ -2168,10 +2180,11 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 Math.Log10(
                     approximateValue));
 
-        if (exponent >=
-                ScientificDisplayDigitThreshold ||
-            exponent <=
-                -MaxDecimalPlaces)
+        if (!ResultNumberDisplayMode.ShowFullNumbers &&
+            (exponent >=
+                 ScientificDisplayDigitThreshold ||
+             exponent <=
+                 -MaxDecimalPlaces))
         {
             return OctoDoubleScientificSignificantDigits;
         }
@@ -2282,7 +2295,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 .ToString(
                     CultureInfo.InvariantCulture);
 
-        if (digits.Length <=
+        if (ResultNumberDisplayMode.ShowFullNumbers ||
+            digits.Length <=
             ScientificDisplayDigitThreshold)
         {
             return value.ToString(
@@ -2352,7 +2366,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 .TrimStart(
                     '0');
 
-        if (plainDigits.Length >
+        if (!ResultNumberDisplayMode.ShowFullNumbers &&
+            plainDigits.Length >
             ScientificDisplayDigitThreshold)
         {
             return FormatDecimalScientific(

@@ -952,6 +952,16 @@ public partial class QuadraticEquationView : LocalizedSolverView
         ClearTransientFocus();
     }
 
+    public void RefreshNumberDisplay()
+    {
+        if (ResultBorder.IsVisible)
+        {
+            OnCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
+    }
+
     private async void OnQuadraticCopyResultClicked(
         object? sender,
         EventArgs e)
@@ -2173,7 +2183,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
             value.ToGeneralString(
                 OctoDoubleDisplaySignificantDigits,
                 scientificUpperExponent:
-                ScientificDisplayDigitThreshold,
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? int.MaxValue
+                    : ScientificDisplayDigitThreshold,
                 scientificLowerExponent:
                 -10);
 
@@ -2459,7 +2471,8 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 .ToString(
                     CultureInfo.InvariantCulture);
 
-        if (digits.Length >
+        if (!ResultNumberDisplayMode.ShowFullNumbers &&
+            digits.Length >
             ScientificDisplayDigitThreshold)
         {
             return FormatScientificForDisplay(

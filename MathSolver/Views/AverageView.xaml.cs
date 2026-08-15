@@ -198,6 +198,14 @@ public partial class AverageView : LocalizedSolverView
         CalculateAverage();
     }
 
+    public void RefreshNumberDisplay()
+    {
+        if (ResultBorder.IsVisible)
+        {
+            CalculateAverage();
+        }
+    }
+
     private void CalculateAverage()
     {
         HideError();
@@ -745,8 +753,9 @@ public partial class AverageView : LocalizedSolverView
                 ? "−"
                 : string.Empty;
 
-        if (exponent >= 18 ||
-            exponent <= -10)
+        if (!ResultNumberDisplayMode.ShowFullNumbers &&
+            (exponent >= 18 ||
+             exponent <= -10))
         {
             string mantissa =
                 digitText.Length == 1

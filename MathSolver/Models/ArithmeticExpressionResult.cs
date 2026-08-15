@@ -37,5 +37,5 @@ public sealed record IntegerExpressionResult(
 
 public sealed record DecimalExpressionResult(
     string NormalizedExpression,
-    QuadDouble Result,
+    OctoDouble Result,
     IReadOnlyList<string> Steps);

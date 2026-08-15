@@ -190,7 +190,7 @@ public sealed class BasicArithmeticEngine
             ConvertToPostfix(expression);
 
         var values =
-            new Stack<QuadDouble>();
+            new Stack<OctoDouble>();
 
         var steps =
             new List<string>();
@@ -209,6 +209,10 @@ public sealed class BasicArithmeticEngine
                         ArithmeticExpressionError.InvalidNumber);
                 }
 
+                // Giới hạn dữ liệu nhập theo System.Decimal trước để tránh
+                // tạo OctoDouble cho những literal vượt phạm vi hỗ trợ của UI.
+                // OctoDouble chỉ được tạo sau khi token đã hợp lệ và dùng cho
+                // các phép tính trung gian/kết quả có độ chính xác cao hơn.
                 if (!decimal.TryParse(
                         token.Text,
                         NumberStyles.AllowDecimalPoint,
@@ -219,19 +223,21 @@ public sealed class BasicArithmeticEngine
                         ArithmeticExpressionError.NumberOutOfRange);
                 }
 
-                values.Push(QuadDouble.FromDecimal(number));
+                values.Push(
+                    OctoDouble.FromDecimal(
+                        number));
                 continue;
             }
 
             if (token.IsUnary)
             {
-                QuadDouble operand = PopDecimal(values);
+                OctoDouble operand = PopDecimal(values);
                 values.Push(token.Text == "u-" ? -operand : operand);
                 continue;
             }
 
-            QuadDouble right = PopDecimal(values);
-            QuadDouble left = PopDecimal(values);
+            OctoDouble right = PopDecimal(values);
+            OctoDouble left = PopDecimal(values);
             ArithmeticOperation operation = ToOperation(token.Text);
 
             if (operation == ArithmeticOperation.Divide &&
@@ -241,7 +247,7 @@ public sealed class BasicArithmeticEngine
                     ArithmeticExpressionError.DivisionByZero);
             }
 
-            QuadDouble result = CalculateDecimal(
+            OctoDouble result = CalculateExpressionDecimal(
                 left,
                 operation,
                 right);
@@ -262,6 +268,33 @@ public sealed class BasicArithmeticEngine
             NormalizeExpressionForDisplay(expression),
             values.Pop(),
             steps);
+    }
+
+    private static OctoDouble CalculateExpressionDecimal(
+        OctoDouble left,
+        ArithmeticOperation operation,
+        OctoDouble right)
+    {
+        return operation switch
+        {
+            ArithmeticOperation.Add =>
+                left + right,
+
+            ArithmeticOperation.Subtract =>
+                left - right,
+
+            ArithmeticOperation.Multiply =>
+                left * right,
+
+            ArithmeticOperation.Divide =>
+                left / right,
+
+            _ =>
+                throw new ArgumentOutOfRangeException(
+                    nameof(operation),
+                    operation,
+                    "Unsupported arithmetic operation.")
+        };
     }
 
     private static QuadDouble CalculateDecimal(
@@ -597,9 +630,9 @@ public sealed class BasicArithmeticEngine
         return value;
     }
 
-    private static QuadDouble PopDecimal(Stack<QuadDouble> values)
+    private static OctoDouble PopDecimal(Stack<OctoDouble> values)
     {
-        if (!values.TryPop(out QuadDouble value))
+        if (!values.TryPop(out OctoDouble value))
         {
             throw new ArithmeticExpressionException(
                 ArithmeticExpressionError.MissingOperand);
@@ -617,9 +650,9 @@ public sealed class BasicArithmeticEngine
         }
     }
 
-    private static string FormatDecimalStep(QuadDouble value) =>
+    private static string FormatDecimalStep(OctoDouble value) =>
         value.ToGeneralString(
-            significantDigits: 16,
+            significantDigits: 32,
             scientificUpperExponent: 18,
             scientificLowerExponent: -10);
 

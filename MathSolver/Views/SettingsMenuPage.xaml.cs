@@ -21,6 +21,7 @@ public partial class SettingsMenuPage : ContentPage
     private bool _hasPlayedOpenAnimation;
     private bool _isClosing;
     private bool _isNavigating;
+    private bool _isUpdatingFullNumberDisplaySwitch;
 
     private readonly HashSet<VisualElement>
         _animatingSections =
@@ -385,6 +386,26 @@ public partial class SettingsMenuPage : ContentPage
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
 
+        NumberDisplaySummaryLabel.Text =
+            LocalizationService.TranslateKey(
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? "Settings.NumberDisplay.SummaryFull"
+                    : "Settings.NumberDisplay.SummaryCompact");
+
+        _isUpdatingFullNumberDisplaySwitch =
+            true;
+
+        try
+        {
+            FullNumberDisplaySwitch.IsToggled =
+                ResultNumberDisplayMode.ShowFullNumbers;
+        }
+        finally
+        {
+            _isUpdatingFullNumberDisplaySwitch =
+                false;
+        }
+
         AboutMenuTitleLabel.Text =
             useEnglish
                 ? "About"
@@ -729,6 +750,21 @@ public partial class SettingsMenuPage : ContentPage
         UpdateState();
     }
 
+    private void OnFullNumberDisplayToggled(
+        object? sender,
+        ToggledEventArgs e)
+    {
+        if (_isUpdatingFullNumberDisplaySwitch)
+        {
+            return;
+        }
+
+        ResultNumberDisplayMode.SetShowFullNumbers(
+            e.Value);
+
+        UpdateState();
+    }
+
     private void OnResetTapped(
         object? sender,
         TappedEventArgs e)
@@ -737,6 +773,7 @@ public partial class SettingsMenuPage : ContentPage
         AppFontManager.ResetToDefault();
         AppLanguageManager.ResetToDefault();
         DeveloperModeManager.ResetToDefault();
+        ResultNumberDisplayMode.ResetToDefault();
         UpdateState();
     }
 

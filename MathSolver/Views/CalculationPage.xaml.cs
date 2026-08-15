@@ -26,9 +26,18 @@ public partial class CalculationPage : ContentPage
 
     private bool _isUpdatingNumberText;
 
+    private bool _isUpdatingArithmeticExpressionText;
+
+    private bool _isArithmeticExpressionDisplayCompacted;
+
+    private string _arithmeticExpressionRawText =
+        string.Empty;
+
     private bool _isUpdatingLongDivisionMode;
 
     private bool? _isCompactOperationLayout;
+
+    private bool _lastAppliedShowFullNumbers;
 
     // Khi Entry mất focus và số quá dài, giá trị chính xác được giữ
     // bằng dạng khoa học dùng chữ e, ví dụ: 1e18.
@@ -92,6 +101,9 @@ public partial class CalculationPage : ContentPage
     {
         InitializeComponent();
 
+        _lastAppliedShowFullNumbers =
+            ResultNumberDisplayMode.ShowFullNumbers;
+
         InteractiveButtonAnimation.SetIsScopeEnabled(
             this,
             true);
@@ -139,6 +151,8 @@ public partial class CalculationPage : ContentPage
         BeginMainTabTransitionIfPending();
 
         UpdateNumberTypeButtonStyles();
+
+        RefreshNumberDisplaysIfSettingChanged();
 
         LongDivisionGraphicsView.Invalidate();
     }
@@ -500,8 +514,7 @@ public partial class CalculationPage : ContentPage
     private void CalculateArithmeticExpression()
     {
         string expression =
-            ArithmeticExpressionEditor.Text ??
-            string.Empty;
+            GetArithmeticExpressionInputText();
 
         try
         {
@@ -544,8 +557,12 @@ public partial class CalculationPage : ContentPage
         string resultText,
         IReadOnlyList<string> steps)
     {
+        string displayExpression =
+            FormatArithmeticExpressionForDisplay(
+                normalizedExpression);
+
         ExpressionLabel.Text =
-            $"{normalizedExpression} = {resultText}";
+            $"{displayExpression} = {resultText}";
 
         ResultLabel.Text =
             resultText;
@@ -557,7 +574,9 @@ public partial class CalculationPage : ContentPage
                 : string.Join(
                     Environment.NewLine,
                     steps.Select((step, index) =>
-                        $"{index + 1}. {step}"));
+                        $"{index + 1}. " +
+                        FormatArithmeticExpressionForDisplay(
+                            step)));
 
         ExplanationLabel.Text =
             string.Format(
@@ -1783,6 +1802,115 @@ public partial class CalculationPage : ContentPage
             number);
     }
 
+    private static string FormatNumberForDisplay(
+        OctoDouble number)
+    {
+        if (!number.IsFinite)
+        {
+            return number.ToGeneralString();
+        }
+
+        if (number.IsZero)
+        {
+            return "0";
+        }
+
+        double approximateValue =
+            Math.Abs(
+                number.ToDouble());
+
+        int exponent =
+            (int)Math.Floor(
+                Math.Log10(
+                    approximateValue));
+
+        bool useScientificNotation =
+            !ResultNumberDisplayMode.ShowFullNumbers &&
+            (exponent >=
+                 ScientificDisplayDigitThreshold ||
+             exponent <=
+                 -MaxDecimalPlaces);
+
+        int significantDigits =
+            useScientificNotation
+                ? ScientificDisplaySignificantDigits
+                : Math.Clamp(
+                    exponent +
+                    1 +
+                    MaxDecimalPlaces,
+                    1,
+                    OctoDouble.SignificantDigits);
+
+        string text =
+            number.ToGeneralString(
+                significantDigits,
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? int.MaxValue
+                    : ScientificDisplayDigitThreshold,
+                -MaxDecimalPlaces);
+
+        int exponentSeparatorIndex =
+            text.IndexOfAny(
+                new[] { 'e', 'E' });
+
+        if (exponentSeparatorIndex >= 0)
+        {
+            string mantissa =
+                text[..exponentSeparatorIndex]
+                    .Replace(
+                        "-",
+                        "−",
+                        StringComparison.Ordinal);
+
+            if (int.TryParse(
+                    text[(exponentSeparatorIndex + 1)..],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int scientificExponent))
+            {
+                return
+                    $"{mantissa} × " +
+                    $"10{ToSuperscript(scientificExponent)}";
+            }
+        }
+
+        bool isNegative =
+            text.StartsWith(
+                "-",
+                StringComparison.Ordinal);
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalPointIndex =
+            unsignedText.IndexOf(
+                '.',
+                StringComparison.Ordinal);
+
+        string integerPart =
+            decimalPointIndex >= 0
+                ? unsignedText[..decimalPointIndex]
+                : unsignedText;
+
+        string fractionPart =
+            decimalPointIndex >= 0
+                ? unsignedText[(decimalPointIndex + 1)..]
+                : string.Empty;
+
+        integerPart =
+            IntegerInputFormatter.AddThousandsSeparators(
+                integerPart);
+
+        return
+            (isNegative ? "−" : string.Empty) +
+            integerPart +
+            (fractionPart.Length > 0
+                ? $".{fractionPart}"
+                : string.Empty);
+    }
+
     private static string FormatQuadDoubleForDisplay(
         QuadDouble number,
         int? fixedDecimalPlaces = null)
@@ -1812,10 +1940,11 @@ public partial class CalculationPage : ContentPage
                     approximateValue));
 
         bool useScientificNotation =
-            exponent >=
-                ScientificDisplayDigitThreshold ||
-            exponent <=
-                -MaxDecimalPlaces;
+            !ResultNumberDisplayMode.ShowFullNumbers &&
+            (exponent >=
+                 ScientificDisplayDigitThreshold ||
+             exponent <=
+                 -MaxDecimalPlaces);
 
         int decimalPlaces =
             fixedDecimalPlaces ??
@@ -1834,7 +1963,9 @@ public partial class CalculationPage : ContentPage
         string text =
             number.ToGeneralString(
                 significantDigits,
-                ScientificDisplayDigitThreshold,
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? int.MaxValue
+                    : ScientificDisplayDigitThreshold,
                 -MaxDecimalPlaces);
 
         int exponentSeparatorIndex =
@@ -1945,7 +2076,8 @@ public partial class CalculationPage : ContentPage
             FormatNumber(
                 number);
 
-        return CountNumericDigits(
+        return !ResultNumberDisplayMode.ShowFullNumbers &&
+               CountNumericDigits(
                    standardText) >
                ScientificDisplayDigitThreshold
             ? FormatScientificForDisplay(
@@ -1968,7 +2100,8 @@ public partial class CalculationPage : ContentPage
             FormatInteger(
                 number);
 
-        if (CountNumericDigits(
+        if (ResultNumberDisplayMode.ShowFullNumbers ||
+            CountNumericDigits(
                 standardText) <=
             ScientificDisplayDigitThreshold)
         {
@@ -2274,7 +2407,7 @@ public partial class CalculationPage : ContentPage
 
         FirstNumberEntry.Text = string.Empty;
         SecondNumberEntry.Text = string.Empty;
-        ArithmeticExpressionEditor.Text = string.Empty;
+        ClearArithmeticExpressionInput();
 
         HideMessages();
 
@@ -2369,8 +2502,7 @@ public partial class CalculationPage : ContentPage
         SecondNumberEntry.Text =
             string.Empty;
 
-        ArithmeticExpressionEditor.Text =
-            string.Empty;
+        ClearArithmeticExpressionInput();
 
         HideMessages();
 
@@ -2388,7 +2520,337 @@ public partial class CalculationPage : ContentPage
         object? sender,
         TextChangedEventArgs e)
     {
+        if (_isUpdatingArithmeticExpressionText)
+        {
+            return;
+        }
+
         HideMessages();
+
+        string newText =
+            e.NewTextValue ??
+            string.Empty;
+
+        int cursorPosition =
+            Math.Clamp(
+                ArithmeticExpressionEditor.CursorPosition,
+                0,
+                newText.Length);
+
+        int logicalPosition =
+            IntegerInputFormatter.CountLogicalCharacters(
+                newText,
+                cursorPosition);
+
+        string formattedText =
+            FormatArithmeticExpressionWhileTyping(
+                newText);
+
+        _arithmeticExpressionRawText =
+            RemoveArithmeticExpressionGrouping(
+                formattedText);
+
+        _isArithmeticExpressionDisplayCompacted =
+            false;
+
+        if (string.Equals(
+                formattedText,
+                newText,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SetArithmeticExpressionEditorText(
+            formattedText,
+            IntegerInputFormatter.FindCursorPosition(
+                formattedText,
+                logicalPosition));
+    }
+
+    private void OnArithmeticExpressionFocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        if (!_isArithmeticExpressionDisplayCompacted)
+        {
+            return;
+        }
+
+        _isArithmeticExpressionDisplayCompacted =
+            false;
+
+        SetArithmeticExpressionEditorText(
+            FormatArithmeticExpressionWhileTyping(
+                _arithmeticExpressionRawText));
+    }
+
+    private void OnArithmeticExpressionUnfocused(
+        object? sender,
+        FocusEventArgs e)
+    {
+        CompactArithmeticExpressionEditorDisplay();
+    }
+
+    private string GetArithmeticExpressionInputText()
+    {
+        if (!_isArithmeticExpressionDisplayCompacted)
+        {
+            _arithmeticExpressionRawText =
+                RemoveArithmeticExpressionGrouping(
+                    ArithmeticExpressionEditor.Text ??
+                    string.Empty);
+        }
+
+        return _arithmeticExpressionRawText;
+    }
+
+    private void CompactArithmeticExpressionEditorDisplay()
+    {
+        string rawExpression =
+            GetArithmeticExpressionInputText();
+
+        if (string.IsNullOrWhiteSpace(
+                rawExpression))
+        {
+            return;
+        }
+
+        _isArithmeticExpressionDisplayCompacted =
+            true;
+
+        SetArithmeticExpressionEditorText(
+            FormatArithmeticExpressionForDisplay(
+                rawExpression));
+    }
+
+    private void ClearArithmeticExpressionInput()
+    {
+        _arithmeticExpressionRawText =
+            string.Empty;
+
+        _isArithmeticExpressionDisplayCompacted =
+            false;
+
+        SetArithmeticExpressionEditorText(
+            string.Empty);
+    }
+
+    private void SetArithmeticExpressionEditorText(
+        string text,
+        int? cursorPosition = null)
+    {
+        _isUpdatingArithmeticExpressionText =
+            true;
+
+        try
+        {
+            ArithmeticExpressionEditor.Text =
+                text;
+
+            ArithmeticExpressionEditor.CursorPosition =
+                Math.Clamp(
+                    cursorPosition ??
+                    text.Length,
+                    0,
+                    text.Length);
+
+            ArithmeticExpressionEditor.SelectionLength =
+                0;
+        }
+        finally
+        {
+            _isUpdatingArithmeticExpressionText =
+                false;
+        }
+    }
+
+    private static string FormatArithmeticExpressionWhileTyping(
+        string text)
+    {
+        string source =
+            RemoveArithmeticExpressionGrouping(
+                text);
+
+        var builder =
+            new StringBuilder(
+                source.Length +
+                source.Length / 4);
+
+        for (int index = 0;
+             index < source.Length;)
+        {
+            if (!char.IsDigit(
+                    source[index]))
+            {
+                builder.Append(
+                    source[index]);
+
+                index++;
+                continue;
+            }
+
+            int startIndex =
+                index;
+
+            int decimalPointCount =
+                0;
+
+            while (index < source.Length &&
+                   (char.IsDigit(
+                        source[index]) ||
+                    source[index] == '.'))
+            {
+                if (source[index] == '.')
+                {
+                    decimalPointCount++;
+                }
+
+                index++;
+            }
+
+            string numberText =
+                source[startIndex..index];
+
+            builder.Append(
+                decimalPointCount <= 1
+                    ? IntegerInputFormatter.FormatWhileTyping(
+                        numberText,
+                        allowDecimal: true)
+                    : numberText);
+        }
+
+        return builder.ToString();
+    }
+
+    private string FormatArithmeticExpressionForDisplay(
+        string expression)
+    {
+        string source =
+            RemoveArithmeticExpressionGrouping(
+                expression);
+
+        var builder =
+            new StringBuilder(
+                source.Length +
+                source.Length / 4);
+
+        for (int index = 0;
+             index < source.Length;)
+        {
+            if (!char.IsDigit(
+                    source[index]))
+            {
+                builder.Append(
+                    source[index]);
+
+                index++;
+                continue;
+            }
+
+            int startIndex =
+                index;
+
+            int decimalPointCount =
+                0;
+
+            while (index < source.Length &&
+                   (char.IsDigit(
+                        source[index]) ||
+                    source[index] == '.'))
+            {
+                if (source[index] == '.')
+                {
+                    decimalPointCount++;
+                }
+
+                index++;
+            }
+
+            if (index < source.Length &&
+                source[index] is 'e' or 'E')
+            {
+                int exponentEndIndex =
+                    index + 1;
+
+                if (exponentEndIndex < source.Length &&
+                    source[exponentEndIndex] is '+' or '-')
+                {
+                    exponentEndIndex++;
+                }
+
+                int exponentDigitStart =
+                    exponentEndIndex;
+
+                while (exponentEndIndex < source.Length &&
+                       char.IsDigit(
+                           source[exponentEndIndex]))
+                {
+                    exponentEndIndex++;
+                }
+
+                if (exponentEndIndex >
+                    exponentDigitStart)
+                {
+                    index =
+                        exponentEndIndex;
+                }
+            }
+
+            string numberText =
+                source[startIndex..index];
+
+            builder.Append(
+                FormatArithmeticNumberForDisplay(
+                    numberText,
+                    decimalPointCount));
+        }
+
+        return builder.ToString();
+    }
+
+    private string FormatArithmeticNumberForDisplay(
+        string numberText,
+        int decimalPointCount)
+    {
+        if (_selectedNumberType ==
+                NumberInputType.Integer &&
+            decimalPointCount == 0 &&
+            !numberText.Contains(
+                "e",
+                StringComparison.OrdinalIgnoreCase) &&
+            BigInteger.TryParse(
+                numberText,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out BigInteger integerValue))
+        {
+            return FormatIntegerForDisplay(
+                integerValue);
+        }
+
+        if (decimalPointCount <= 1 &&
+            OctoDouble.TryParse(
+                numberText,
+                out OctoDouble decimalValue) &&
+            decimalValue.IsFinite)
+        {
+            return FormatNumberForDisplay(
+                decimalValue);
+        }
+
+        return IntegerInputFormatter.FormatWhileTyping(
+            numberText,
+            allowDecimal: true);
+    }
+
+    private static string RemoveArithmeticExpressionGrouping(
+        string text)
+    {
+        return text.Replace(
+            ",",
+            string.Empty,
+            StringComparison.Ordinal);
     }
 
     private void UpdateNumberTypeButtonStyles()
@@ -3222,6 +3684,45 @@ public partial class CalculationPage : ContentPage
     {
         await SwitchSubTabAsync(
             CalculationSubTab.Geometry);
+    }
+
+    private void RefreshNumberDisplaysIfSettingChanged()
+    {
+        bool showFullNumbers =
+            ResultNumberDisplayMode.ShowFullNumbers;
+
+        if (_lastAppliedShowFullNumbers ==
+            showFullNumbers)
+        {
+            return;
+        }
+
+        _lastAppliedShowFullNumbers =
+            showFullNumbers;
+
+        RefreshAllNumberDisplays();
+    }
+
+    private void RefreshAllNumberDisplays()
+    {
+        if (_isExpressionMode &&
+            !ArithmeticExpressionEditor.IsFocused)
+        {
+            CompactArithmeticExpressionEditorDisplay();
+        }
+
+        if (ResultBorder.IsVisible)
+        {
+            OnCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
+
+        AverageSolverView.RefreshNumberDisplay();
+        FractionSolverView.RefreshNumberDisplay();
+        FindXSolverView.RefreshNumberDisplay();
+        QuadraticSolverView.RefreshNumberDisplay();
+        GeometrySolverView.RefreshNumberDisplay();
     }
 
     private async Task SwitchSubTabAsync(
