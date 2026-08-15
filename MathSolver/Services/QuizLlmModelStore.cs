@@ -19,9 +19,6 @@ public sealed class QuizLlmModelStore
     private const string ModelPathPreferenceKey =
         "quiz_llm_model_path";
 
-    private const string FirstGreetingPreferenceKey =
-        "quiz_llm_first_greeting_shown";
-
     public const long MaximumModelFileSizeBytes =
         5_500_000_000L;
 
@@ -137,18 +134,6 @@ public sealed class QuizLlmModelStore
         Preferences.Default.Set(
             ModelPathPreferenceKey,
             modelPath);
-    }
-
-    public bool ShouldShowFirstGreeting() =>
-        !Preferences.Default.Get(
-            FirstGreetingPreferenceKey,
-            false);
-
-    public void MarkFirstGreetingShown()
-    {
-        Preferences.Default.Set(
-            FirstGreetingPreferenceKey,
-            true);
     }
 
     public void ClearSavedModelPath()

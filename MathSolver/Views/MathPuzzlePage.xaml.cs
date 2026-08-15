@@ -134,6 +134,7 @@ public partial class MathPuzzlePage : ContentPage
         // whenever this page returns from Settings so the current accent is
         // applied immediately.
         RefreshLlmActionButtonTheme();
+        UpdateAiTeacherState();
 
         // Nếu quay lại trong grace period thì giữ nguyên GGUF weights đang
         // nằm trong RAM; câu kế tiếp chỉ cần tạo context/KV mới.
@@ -1192,8 +1193,13 @@ public partial class MathPuzzlePage : ContentPage
         var cancellation = new CancellationTokenSource();
         int progressVersion =
             BeginLlmProgress(cancellation);
+
+        _localLlmQuizGenerator.CancelScheduledModelUnload();
         _showFriendlyGreetingForCurrentLoad =
-            _llmModelStore.ShouldShowFirstGreeting();
+            !_localLlmQuizGenerator.IsModelLoaded(
+                _llmModelPath);
+
+        HideAiTeacherGreeting();
 
         _currentQuestion = null;
         _questionAnswered = false;
@@ -1219,9 +1225,7 @@ public partial class MathPuzzlePage : ContentPage
         ResetLlmTokenSpeed();
 
         ShowLlmStatus(
-            _showFriendlyGreetingForCurrentLoad
-                ? Translate("Quiz.FirstModelGreeting")
-                : Translate("Quiz.LoadingModel"),
+            Translate("Quiz.LoadingModel"),
             isRunning: true);
 
         try
@@ -1260,12 +1264,6 @@ public partial class MathPuzzlePage : ContentPage
                         Math.Max(1, result.Attempts),
                         LocalLlmQuizGenerator.MaximumAttempts,
                         result.ErrorCode));
-            }
-
-            if (result.ModelWasLoaded &&
-                _showFriendlyGreetingForCurrentLoad)
-            {
-                _llmModelStore.MarkFirstGreetingShown();
             }
 
             if (result.Question is not null)
@@ -1315,6 +1313,12 @@ public partial class MathPuzzlePage : ContentPage
     private void UpdateLlmProgress(
         LlmQuizProgress progress)
     {
+        if (progress.Stage == LlmQuizProgressStage.ModelLoaded &&
+            _showFriendlyGreetingForCurrentLoad)
+        {
+            ShowAiTeacherGreeting();
+        }
+
         if (progress.RawModelOutput is not null &&
             progress.Attempt > 0)
         {
@@ -1347,9 +1351,6 @@ public partial class MathPuzzlePage : ContentPage
         string status =
             progress.Stage switch
             {
-                LlmQuizProgressStage.LoadingModel
-                    when _showFriendlyGreetingForCurrentLoad =>
-                    Translate("Quiz.FirstModelGreeting"),
                 LlmQuizProgressStage.LoadingModel =>
                     Translate("Quiz.LoadingModel"),
                 LlmQuizProgressStage.ModelLoaded =>
@@ -1465,6 +1466,7 @@ public partial class MathPuzzlePage : ContentPage
                     : "Quiz.DownloadGemma4");
 
         RefreshLlmActionButtonTheme();
+        UpdateAiTeacherState();
     }
 
     private void SetLlmBusy(
@@ -1494,6 +1496,67 @@ public partial class MathPuzzlePage : ContentPage
         OperationPicker.IsEnabled = !isBusy;
 
         UpdateCreateOrRegenerateQuestionButtonState();
+        UpdateAiTeacherState();
+    }
+
+    private void UpdateAiTeacherState()
+    {
+        bool hasSelectedModel =
+            !string.IsNullOrWhiteSpace(_llmModelPath);
+
+        bool modelIsLoaded =
+            hasSelectedModel &&
+            _localLlmQuizGenerator.IsModelLoaded(
+                _llmModelPath);
+
+        string key;
+        string colorKey;
+
+        if (_isGeneratingWithLlm)
+        {
+            key = "Quiz.AiTeacherStateWorking";
+            colorKey = "PrimaryColor";
+        }
+        else if (modelIsLoaded)
+        {
+            key = "Quiz.AiTeacherStateReady";
+            colorKey = "SuccessColor";
+        }
+        else if (hasSelectedModel)
+        {
+            key = "Quiz.AiTeacherStateModelSelected";
+            colorKey = "WarningColor";
+        }
+        else
+        {
+            key = "Quiz.AiTeacherStateNoModel";
+            colorKey = "TextSecondaryColor";
+        }
+
+        AiTeacherStateLabel.Text =
+            TranslateQuiz(key);
+
+        AiTeacherStateLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            colorKey);
+
+        AiTeacherStateDot.SetDynamicResource(
+            BoxView.ColorProperty,
+            colorKey);
+    }
+
+    private void ShowAiTeacherGreeting()
+    {
+        AiTeacherGreetingLabel.Text =
+            TranslateQuiz("Quiz.FirstModelGreeting");
+
+        AiTeacherGreetingBorder.IsVisible = true;
+    }
+
+    private void HideAiTeacherGreeting()
+    {
+        AiTeacherGreetingBorder.IsVisible = false;
+        AiTeacherGreetingLabel.Text = string.Empty;
     }
 
     private void UpdateCreateOrRegenerateQuestionButtonState()
@@ -2469,6 +2532,7 @@ public partial class MathPuzzlePage : ContentPage
         LlmStatusLabel.Text = string.Empty;
         LlmProgressGrid.IsVisible = false;
         ResetLlmTokenSpeed();
+        HideAiTeacherGreeting();
     }
 
     private void ResetQuizSessionState()

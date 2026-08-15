@@ -20,11 +20,15 @@ public partial class CalculationPage : ContentPage
 
     private ArithmeticOperation _selectedOperation = ArithmeticOperation.Add;
 
+    private bool _isExpressionMode;
+
     private NumberInputType _selectedNumberType = NumberInputType.Integer;
 
     private bool _isUpdatingNumberText;
 
     private bool _isUpdatingLongDivisionMode;
+
+    private bool? _isCompactOperationLayout;
 
     // Khi Entry mất focus và số quá dài, giá trị chính xác được giữ
     // bằng dạng khoa học dùng chữ e, ví dụ: 1e18.
@@ -137,6 +141,89 @@ public partial class CalculationPage : ContentPage
         UpdateNumberTypeButtonStyles();
 
         LongDivisionGraphicsView.Invalidate();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+
+        if (width <= 0d)
+        {
+            return;
+        }
+
+        bool compact = width < 720d;
+
+        if (_isCompactOperationLayout == compact)
+        {
+            return;
+        }
+
+        _isCompactOperationLayout = compact;
+        ConfigureOperationButtonsLayout(compact);
+    }
+
+    private void ConfigureOperationButtonsLayout(bool compact)
+    {
+        OperationButtonsGrid.ColumnDefinitions.Clear();
+        OperationButtonsGrid.RowDefinitions.Clear();
+
+        int columnCount = compact ? 3 : 5;
+
+        for (int index = 0; index < columnCount; index++)
+        {
+            OperationButtonsGrid.ColumnDefinitions.Add(
+                new ColumnDefinition
+                {
+                    Width = GridLength.Star,
+                });
+        }
+
+        OperationButtonsGrid.RowDefinitions.Add(
+            new RowDefinition
+            {
+                Height = GridLength.Auto,
+            });
+
+        if (compact)
+        {
+            OperationButtonsGrid.RowDefinitions.Add(
+                new RowDefinition
+                {
+                    Height = GridLength.Auto,
+                });
+
+            OperationButtonsGrid.RowSpacing = 8d;
+            Grid.SetColumn(AddButton, 0);
+            Grid.SetRow(AddButton, 0);
+            Grid.SetColumn(SubtractButton, 1);
+            Grid.SetRow(SubtractButton, 0);
+            Grid.SetColumn(MultiplyButton, 2);
+            Grid.SetRow(MultiplyButton, 0);
+            Grid.SetColumn(DivideButton, 0);
+            Grid.SetRow(DivideButton, 1);
+            Grid.SetColumn(ExpressionButton, 1);
+            Grid.SetColumnSpan(ExpressionButton, 2);
+            Grid.SetRow(ExpressionButton, 1);
+            return;
+        }
+
+        OperationButtonsGrid.RowSpacing = 0d;
+        Button[] buttons =
+        [
+            AddButton,
+            SubtractButton,
+            MultiplyButton,
+            DivideButton,
+            ExpressionButton
+        ];
+
+        for (int index = 0; index < buttons.Length; index++)
+        {
+            Grid.SetColumn(buttons[index], index);
+            Grid.SetColumnSpan(buttons[index], 1);
+            Grid.SetRow(buttons[index], 0);
+        }
     }
 
     protected override void OnDisappearing()
@@ -263,8 +350,26 @@ public partial class CalculationPage : ContentPage
         SelectOperation(ArithmeticOperation.Divide);
     }
 
+    private void OnExpressionClicked(object? sender, EventArgs e)
+    {
+        _isExpressionMode = true;
+
+        SelectionButtonStyler.Select(
+            ExpressionButton,
+            AddButton,
+            SubtractButton,
+            MultiplyButton,
+            DivideButton,
+            ExpressionButton);
+
+        UpdateArithmeticInputModeUi();
+        HideMessages();
+        ArithmeticExpressionEditor.Focus();
+    }
+
     private void SelectOperation(ArithmeticOperation operation)
     {
+        _isExpressionMode = false;
         _selectedOperation = operation;
 
         Button selectedButton;
@@ -302,14 +407,30 @@ public partial class CalculationPage : ContentPage
             AddButton,
             SubtractButton,
             MultiplyButton,
-            DivideButton);
+            DivideButton,
+            ExpressionButton);
 
+        UpdateArithmeticInputModeUi();
         HideMessages();
+    }
+
+    private void UpdateArithmeticInputModeUi()
+    {
+        NumberInputGrid.IsVisible = !_isExpressionMode;
+        ExpressionInputPanel.IsVisible = _isExpressionMode;
+        NumberInputTitleLabel.IsVisible = !_isExpressionMode;
+        ExpressionInputTitleLabel.IsVisible = _isExpressionMode;
     }
 
     private void OnCalculateClicked(object? sender, EventArgs e)
     {
         HideMessages();
+
+        if (_isExpressionMode)
+        {
+            CalculateArithmeticExpression();
+            return;
+        }
 
         if (_selectedNumberType ==
             NumberInputType.Integer)
@@ -374,6 +495,121 @@ public partial class CalculationPage : ContentPage
                 secondNumber,
                 result);
         }
+    }
+
+    private void CalculateArithmeticExpression()
+    {
+        string expression =
+            ArithmeticExpressionEditor.Text ??
+            string.Empty;
+
+        try
+        {
+            if (_selectedNumberType == NumberInputType.Integer)
+            {
+                IntegerExpressionResult evaluation =
+                    _arithmeticEngine.EvaluateIntegerExpression(expression);
+
+                string resultText =
+                    FormatIntegerForDisplay(evaluation.Result);
+
+                ShowArithmeticExpressionResult(
+                    evaluation.NormalizedExpression,
+                    resultText,
+                    evaluation.Steps);
+
+                return;
+            }
+
+            DecimalExpressionResult decimalEvaluation =
+                _arithmeticEngine.EvaluateDecimalExpression(expression);
+
+            ShowArithmeticExpressionResult(
+                decimalEvaluation.NormalizedExpression,
+                FormatNumberForDisplay(decimalEvaluation.Result),
+                decimalEvaluation.Steps);
+        }
+        catch (ArithmeticExpressionException exception)
+        {
+            ShowError(
+                GetArithmeticExpressionErrorMessage(
+                    exception.Error));
+
+            ArithmeticExpressionEditor.Focus();
+        }
+    }
+
+    private void ShowArithmeticExpressionResult(
+        string normalizedExpression,
+        string resultText,
+        IReadOnlyList<string> steps)
+    {
+        ExpressionLabel.Text =
+            $"{normalizedExpression} = {resultText}";
+
+        ResultLabel.Text =
+            resultText;
+
+        string stepText =
+            steps.Count == 0
+                ? LocalizationService.TranslateKey(
+                    "Calculation.Expression.SingleValue")
+                : string.Join(
+                    Environment.NewLine,
+                    steps.Select((step, index) =>
+                        $"{index + 1}. {step}"));
+
+        ExplanationLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                LocalizationService.TranslateKey(
+                    "Calculation.Expression.SolutionSteps"),
+                stepText,
+                resultText);
+
+        AdditionalLabel.Text =
+            LocalizationService.TranslateKey(
+                "Calculation.Expression.ResultRules");
+
+        DivisionDetailBorder.IsVisible = false;
+        ResultBorder.IsVisible = true;
+        _currentDivisionDividend = 0;
+        _currentDivisionDivisor = 0;
+        HideLongDivision();
+    }
+
+    private static string GetArithmeticExpressionErrorMessage(
+        ArithmeticExpressionError error)
+    {
+        string key = error switch
+        {
+            ArithmeticExpressionError.Empty =>
+                "Calculation.Expression.Error.Empty",
+            ArithmeticExpressionError.TooLong =>
+                "Calculation.Expression.Error.TooLong",
+            ArithmeticExpressionError.InvalidCharacter =>
+                "Calculation.Expression.Error.InvalidCharacter",
+            ArithmeticExpressionError.InvalidNumber =>
+                "Calculation.Expression.Error.InvalidNumber",
+            ArithmeticExpressionError.NumberOutOfRange =>
+                "Calculation.Expression.Error.NumberOutOfRange",
+            ArithmeticExpressionError.MissingOperand =>
+                "Calculation.Expression.Error.MissingOperand",
+            ArithmeticExpressionError.MissingOperator =>
+                "Calculation.Expression.Error.MissingOperator",
+            ArithmeticExpressionError.MismatchedBracket =>
+                "Calculation.Expression.Error.MismatchedBracket",
+            ArithmeticExpressionError.InvalidBracketOrder =>
+                "Calculation.Expression.Error.InvalidBracketOrder",
+            ArithmeticExpressionError.DivisionByZero =>
+                "Calculation.Expression.Error.DivisionByZero",
+            ArithmeticExpressionError.NonIntegralDivision =>
+                "Calculation.Expression.Error.NonIntegralDivision",
+            _ =>
+                "Calculation.Expression.Error.InvalidCharacter"
+        };
+
+        return LocalizationService.TranslateKey(key);
     }
 
     private void CalculateIntegerValues()
@@ -2038,10 +2274,18 @@ public partial class CalculationPage : ContentPage
 
         FirstNumberEntry.Text = string.Empty;
         SecondNumberEntry.Text = string.Empty;
+        ArithmeticExpressionEditor.Text = string.Empty;
 
         HideMessages();
 
-        FirstNumberEntry.Focus();
+        if (_isExpressionMode)
+        {
+            ArithmeticExpressionEditor.Focus();
+        }
+        else
+        {
+            FirstNumberEntry.Focus();
+        }
     }
 
     private void ShowError(string message)
@@ -2125,9 +2369,26 @@ public partial class CalculationPage : ContentPage
         SecondNumberEntry.Text =
             string.Empty;
 
+        ArithmeticExpressionEditor.Text =
+            string.Empty;
+
         HideMessages();
 
-        FirstNumberEntry.Focus();
+        if (_isExpressionMode)
+        {
+            ArithmeticExpressionEditor.Focus();
+        }
+        else
+        {
+            FirstNumberEntry.Focus();
+        }
+    }
+
+    private void OnArithmeticExpressionTextChanged(
+        object? sender,
+        TextChangedEventArgs e)
+    {
+        HideMessages();
     }
 
     private void UpdateNumberTypeButtonStyles()

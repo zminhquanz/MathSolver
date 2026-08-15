@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Numerics;
+using System.Globalization;
 using System.Numerics;
 
 namespace MathSolver.Services.Core;
@@ -10,6 +11,9 @@ namespace MathSolver.Services.Core;
 /// </summary>
 public sealed class BasicArithmeticEngine
 {
+    private const int MaximumExpressionLength = 512;
+    private const int MaximumTokenCount = 255;
+
     public IntegerArithmeticResult CalculateInteger(
         IntegerArithmeticExpression expression)
     {
@@ -84,6 +88,187 @@ public sealed class BasicArithmeticEngine
             QuadDouble.FromDecimal(
                 rightOperand);
 
+        return CalculateDecimal(
+            left,
+            operation,
+            right);
+    }
+
+    public IntegerExpressionResult EvaluateIntegerExpression(
+        string expression)
+    {
+        IReadOnlyList<ExpressionToken> postfix =
+            ConvertToPostfix(expression);
+
+        var values =
+            new Stack<BigInteger>();
+
+        var steps =
+            new List<string>();
+
+        foreach (ExpressionToken token in postfix)
+        {
+            if (token.Kind == ExpressionTokenKind.Number)
+            {
+                if (token.Text.Contains('.'))
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.InvalidNumber);
+                }
+
+                if (!BigInteger.TryParse(
+                        token.Text,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out BigInteger number) ||
+                    number < (BigInteger)Int128.MinValue ||
+                    number > (BigInteger)Int128.MaxValue)
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.NumberOutOfRange);
+                }
+
+                values.Push(number);
+                continue;
+            }
+
+            if (token.IsUnary)
+            {
+                BigInteger operand = PopInteger(values);
+                values.Push(token.Text == "u-" ? -operand : operand);
+                continue;
+            }
+
+            BigInteger right = PopInteger(values);
+            BigInteger left = PopInteger(values);
+            ArithmeticOperation operation = ToOperation(token.Text);
+
+            IntegerArithmeticResult calculation;
+
+            try
+            {
+                calculation = CalculateInteger(
+                    new IntegerArithmeticExpression(
+                        left,
+                        operation,
+                        right));
+            }
+            catch (DivideByZeroException)
+            {
+                throw new ArithmeticExpressionException(
+                    ArithmeticExpressionError.DivisionByZero);
+            }
+
+            if (operation == ArithmeticOperation.Divide &&
+                !calculation.Remainder.IsZero)
+            {
+                throw new ArithmeticExpressionException(
+                    ArithmeticExpressionError.NonIntegralDivision);
+            }
+
+            values.Push(calculation.Result);
+            steps.Add(
+                $"{left} {GetSymbol(operation)} {right} = {calculation.Result}");
+        }
+
+        if (values.Count != 1)
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MissingOperator);
+        }
+
+        return new IntegerExpressionResult(
+            NormalizeExpressionForDisplay(expression),
+            values.Pop(),
+            steps);
+    }
+
+    public DecimalExpressionResult EvaluateDecimalExpression(
+        string expression)
+    {
+        IReadOnlyList<ExpressionToken> postfix =
+            ConvertToPostfix(expression);
+
+        var values =
+            new Stack<QuadDouble>();
+
+        var steps =
+            new List<string>();
+
+        foreach (ExpressionToken token in postfix)
+        {
+            if (token.Kind == ExpressionTokenKind.Number)
+            {
+                int decimalSeparatorIndex =
+                    token.Text.IndexOf('.');
+
+                if (decimalSeparatorIndex >= 0 &&
+                    token.Text.Length - decimalSeparatorIndex - 1 > 10)
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.InvalidNumber);
+                }
+
+                if (!decimal.TryParse(
+                        token.Text,
+                        NumberStyles.AllowDecimalPoint,
+                        CultureInfo.InvariantCulture,
+                        out decimal number))
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.NumberOutOfRange);
+                }
+
+                values.Push(QuadDouble.FromDecimal(number));
+                continue;
+            }
+
+            if (token.IsUnary)
+            {
+                QuadDouble operand = PopDecimal(values);
+                values.Push(token.Text == "u-" ? -operand : operand);
+                continue;
+            }
+
+            QuadDouble right = PopDecimal(values);
+            QuadDouble left = PopDecimal(values);
+            ArithmeticOperation operation = ToOperation(token.Text);
+
+            if (operation == ArithmeticOperation.Divide &&
+                right.IsZero)
+            {
+                throw new ArithmeticExpressionException(
+                    ArithmeticExpressionError.DivisionByZero);
+            }
+
+            QuadDouble result = CalculateDecimal(
+                left,
+                operation,
+                right);
+
+            values.Push(result);
+            steps.Add(
+                $"{FormatDecimalStep(left)} {GetSymbol(operation)} " +
+                $"{FormatDecimalStep(right)} = {FormatDecimalStep(result)}");
+        }
+
+        if (values.Count != 1)
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MissingOperator);
+        }
+
+        return new DecimalExpressionResult(
+            NormalizeExpressionForDisplay(expression),
+            values.Pop(),
+            steps);
+    }
+
+    private static QuadDouble CalculateDecimal(
+        QuadDouble left,
+        ArithmeticOperation operation,
+        QuadDouble right)
+    {
         return operation switch
         {
             ArithmeticOperation.Add =>
@@ -135,5 +320,322 @@ public sealed class BasicArithmeticEngine
                 operation,
                 "Unsupported arithmetic operation.")
         };
+    }
+
+    private static IReadOnlyList<ExpressionToken> ConvertToPostfix(
+        string expression)
+    {
+        if (string.IsNullOrWhiteSpace(expression))
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.Empty);
+        }
+
+        if (expression.Length > MaximumExpressionLength)
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.TooLong);
+        }
+
+        string normalized = NormalizeExpression(expression);
+        var output = new List<ExpressionToken>();
+        var operators = new Stack<ExpressionToken>();
+        var brackets = new Stack<char>();
+        bool expectsOperand = true;
+
+        for (int index = 0; index < normalized.Length;)
+        {
+            char character = normalized[index];
+
+            if (char.IsWhiteSpace(character))
+            {
+                index++;
+                continue;
+            }
+
+            if (char.IsDigit(character) || character == '.')
+            {
+                if (!expectsOperand)
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.MissingOperator);
+                }
+
+                int start = index;
+                int decimalPoints = 0;
+
+                while (index < normalized.Length &&
+                       (char.IsDigit(normalized[index]) ||
+                        normalized[index] == '.'))
+                {
+                    if (normalized[index] == '.')
+                    {
+                        decimalPoints++;
+                    }
+
+                    index++;
+                }
+
+                string number = normalized[start..index];
+
+                if (decimalPoints > 1 ||
+                    number == "." ||
+                    number.EndsWith('.'))
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.InvalidNumber);
+                }
+
+                output.Add(new(ExpressionTokenKind.Number, number));
+                expectsOperand = false;
+                EnsureTokenLimit(output.Count + operators.Count);
+                continue;
+            }
+
+            if (IsOpeningBracket(character))
+            {
+                if (!expectsOperand)
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.MissingOperator);
+                }
+
+                if (brackets.TryPeek(out char parent) &&
+                    BracketRank(character) > BracketRank(parent))
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.InvalidBracketOrder);
+                }
+
+                brackets.Push(character);
+                operators.Push(new(ExpressionTokenKind.Bracket, character.ToString()));
+                expectsOperand = true;
+                index++;
+                EnsureTokenLimit(output.Count + operators.Count);
+                continue;
+            }
+
+            if (IsClosingBracket(character))
+            {
+                if (expectsOperand ||
+                    !brackets.TryPop(out char opening) ||
+                    !BracketsMatch(opening, character))
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.MismatchedBracket);
+                }
+
+                while (operators.Count > 0 &&
+                       operators.Peek().Kind != ExpressionTokenKind.Bracket)
+                {
+                    output.Add(operators.Pop());
+                }
+
+                if (operators.Count == 0)
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.MismatchedBracket);
+                }
+
+                operators.Pop();
+                expectsOperand = false;
+                index++;
+                continue;
+            }
+
+            if (IsOperator(character))
+            {
+                string operation;
+                bool isUnary = expectsOperand && character is '+' or '-';
+
+                if (expectsOperand && !isUnary)
+                {
+                    throw new ArithmeticExpressionException(
+                        ArithmeticExpressionError.MissingOperand);
+                }
+
+                operation = isUnary
+                    ? character == '-' ? "u-" : "u+"
+                    : character.ToString();
+
+                var token = new ExpressionToken(
+                    ExpressionTokenKind.Operator,
+                    operation);
+
+                while (operators.Count > 0 &&
+                       operators.Peek().Kind == ExpressionTokenKind.Operator &&
+                       ShouldPopOperator(operators.Peek(), token))
+                {
+                    output.Add(operators.Pop());
+                }
+
+                operators.Push(token);
+                expectsOperand = true;
+                index++;
+                EnsureTokenLimit(output.Count + operators.Count);
+                continue;
+            }
+
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.InvalidCharacter);
+        }
+
+        if (expectsOperand)
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MissingOperand);
+        }
+
+        if (brackets.Count > 0)
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MismatchedBracket);
+        }
+
+        while (operators.Count > 0)
+        {
+            ExpressionToken token = operators.Pop();
+
+            if (token.Kind == ExpressionTokenKind.Bracket)
+            {
+                throw new ArithmeticExpressionException(
+                    ArithmeticExpressionError.MismatchedBracket);
+            }
+
+            output.Add(token);
+        }
+
+        return output;
+    }
+
+    private static string NormalizeExpression(string expression)
+    {
+        return expression
+            .Replace(",", string.Empty, StringComparison.Ordinal)
+            .Replace('−', '-')
+            .Replace('–', '-')
+            .Replace('×', '*')
+            .Replace('x', '*')
+            .Replace('X', '*')
+            .Replace('÷', '/')
+            .Replace(':', '/');
+    }
+
+    private static string NormalizeExpressionForDisplay(string expression)
+    {
+        return NormalizeExpression(expression)
+            .Replace('*', '×')
+            .Replace('/', '÷')
+            .Trim();
+    }
+
+    private static bool ShouldPopOperator(
+        ExpressionToken stacked,
+        ExpressionToken incoming)
+    {
+        int stackedPrecedence = OperatorPrecedence(stacked.Text);
+        int incomingPrecedence = OperatorPrecedence(incoming.Text);
+        bool incomingIsRightAssociative = incoming.IsUnary;
+
+        return incomingIsRightAssociative
+            ? stackedPrecedence > incomingPrecedence
+            : stackedPrecedence >= incomingPrecedence;
+    }
+
+    private static int OperatorPrecedence(string operation) =>
+        operation switch
+        {
+            "u+" or "u-" => 3,
+            "*" or "/" => 2,
+            "+" or "-" => 1,
+            _ => 0
+        };
+
+    private static ArithmeticOperation ToOperation(string operation) =>
+        operation switch
+        {
+            "+" => ArithmeticOperation.Add,
+            "-" => ArithmeticOperation.Subtract,
+            "*" => ArithmeticOperation.Multiply,
+            "/" => ArithmeticOperation.Divide,
+            _ => throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.InvalidCharacter)
+        };
+
+    private static bool IsOperator(char value) =>
+        value is '+' or '-' or '*' or '/';
+
+    private static bool IsOpeningBracket(char value) =>
+        value is '(' or '[' or '{';
+
+    private static bool IsClosingBracket(char value) =>
+        value is ')' or ']' or '}';
+
+    private static int BracketRank(char value) =>
+        value switch
+        {
+            '(' => 1,
+            '[' => 2,
+            '{' => 3,
+            _ => 0
+        };
+
+    private static bool BracketsMatch(char opening, char closing) =>
+        (opening, closing) is
+            ('(', ')') or
+            ('[', ']') or
+            ('{', '}');
+
+    private static BigInteger PopInteger(Stack<BigInteger> values)
+    {
+        if (!values.TryPop(out BigInteger value))
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MissingOperand);
+        }
+
+        return value;
+    }
+
+    private static QuadDouble PopDecimal(Stack<QuadDouble> values)
+    {
+        if (!values.TryPop(out QuadDouble value))
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MissingOperand);
+        }
+
+        return value;
+    }
+
+    private static void EnsureTokenLimit(int tokenCount)
+    {
+        if (tokenCount > MaximumTokenCount)
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.TooLong);
+        }
+    }
+
+    private static string FormatDecimalStep(QuadDouble value) =>
+        value.ToGeneralString(
+            significantDigits: 16,
+            scientificUpperExponent: 18,
+            scientificLowerExponent: -10);
+
+    private enum ExpressionTokenKind
+    {
+        Number,
+        Operator,
+        Bracket
+    }
+
+    private readonly record struct ExpressionToken(
+        ExpressionTokenKind Kind,
+        string Text)
+    {
+        public bool IsUnary =>
+            Kind == ExpressionTokenKind.Operator &&
+            Text is "u+" or "u-";
     }
 }

@@ -111,6 +111,29 @@ public sealed class LocalLlmQuizGenerator
         CancelWithoutThrow(cancellation);
     }
 
+    public bool IsModelLoaded(string? modelPath)
+    {
+        if (string.IsNullOrWhiteSpace(modelPath) ||
+            _loadedWeights is null ||
+            _loadedModelParameters is null ||
+            string.IsNullOrWhiteSpace(_loadedModelPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            return string.Equals(
+                _loadedModelPath,
+                Path.GetFullPath(modelPath),
+                ModelPathComparison);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Bắt đầu grace period 60 giây. Hết thời gian mà trang không xuất hiện
     /// lại thì weights mới được giải phóng; context/KV không được giữ ở đây.

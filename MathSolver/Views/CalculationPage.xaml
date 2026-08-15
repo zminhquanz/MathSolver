@@ -39,8 +39,8 @@
 
                 <Button
                     x:Name="BasicTabButton"
-                    Text="+ Cơ bản"
-                    MinimumWidthRequest="120"
+                    Text="{localization:Translate Calculation.Arithmetic.Tab}"
+                    MinimumWidthRequest="138"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -120,12 +120,12 @@
 
                         <Label
                         x:Name="PageTitle"
-                        Text="PHÉP TÍNH CƠ BẢN"
+                        Text="{localization:Translate Calculation.Arithmetic.Title}"
                         Style="{StaticResource SolverHeroTitleStyle}" />
 
                         <Label
                         x:Name="PageSubtitle"
-                        Text="Cộng • Trừ • Nhân • Chia"
+                        Text="{localization:Translate Calculation.Arithmetic.Subtitle}"
                         Style="{StaticResource SolverHeroSubtitleStyle}" />
 
                     </VerticalStackLayout>
@@ -142,7 +142,7 @@
 
                             <Grid
                             x:Name="OperationButtonsGrid"
-                            ColumnDefinitions="*,*,*,*"
+                            ColumnDefinitions="*,*,*,*,1.35*"
                             ColumnSpacing="8">
 
                                 <Button
@@ -181,6 +181,16 @@
                                 TextColor="{DynamicResource OnPrimaryColor}"
                                 Clicked="OnDivideClicked" />
 
+                                <Button
+                                x:Name="ExpressionButton"
+                                Grid.Column="4"
+                                Text="{localization:Translate Calculation.Expression.Option}"
+                                Style="{StaticResource SolverOperationButtonStyle}"
+                                FontSize="15"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                Clicked="OnExpressionClicked" />
+
                             </Grid>
 
                         </VerticalStackLayout>
@@ -194,7 +204,14 @@
                         <VerticalStackLayout Spacing="14">
 
                             <Label
-                                Text="2. Nhập các số"
+                                x:Name="NumberInputTitleLabel"
+                                Text="{localization:Translate Calculation.Arithmetic.InputNumbersTitle}"
+                                Style="{StaticResource SolverSectionTitleStyle}" />
+
+                            <Label
+                                x:Name="ExpressionInputTitleLabel"
+                                IsVisible="False"
+                                Text="{localization:Translate Calculation.Expression.InputTitle}"
                                 Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <!-- Chọn số nguyên hoặc số thập phân -->
@@ -319,6 +336,58 @@
                                     TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
                             </Grid>
+
+                            <VerticalStackLayout
+                                x:Name="ExpressionInputPanel"
+                                IsVisible="False"
+                                Spacing="10">
+
+                                <Label
+                                    Text="{localization:Translate Calculation.Expression.InputHelp}"
+                                    FontSize="15"
+                                    LineHeight="1.25"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                <Border
+                                    Padding="12,8"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <Editor
+                                        x:Name="ArithmeticExpressionEditor"
+                                        Placeholder="{localization:Translate Calculation.Expression.Placeholder}"
+                                        AutoSize="TextChanges"
+                                        MinimumHeightRequest="132"
+                                        FontSize="19"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        BackgroundColor="Transparent"
+                                        TextChanged="OnArithmeticExpressionTextChanged" />
+                                </Border>
+
+                                <Border
+                                    Padding="12,10"
+                                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
+                                    <Label
+                                        Text="{localization:Translate Calculation.Expression.PriorityHint}"
+                                        FontSize="14"
+                                        LineHeight="1.25"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                </Border>
+
+                            </VerticalStackLayout>
+
                             <Grid
                                 Margin="0,8,0,0"
                                 ColumnDefinitions="*,*"
