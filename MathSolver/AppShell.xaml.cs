@@ -399,12 +399,15 @@ public partial class AppShell : Shell
         shellRoot.SizeChanged +=
             OnWindowsOverlayHostSizeChanged;
 
-        // Giữ SettingsButton thật trong visual tree và trong layout. Popup nằm
-        // phía trên nên scrim sẽ phủ nó; OverlaySettingsButton đảm nhiệm hit target
-        // và icon ở lớp trên. Không IsVisible=false nữa để tránh WinUI dispose/
-        // recreate native ImageButton sau nhiều vòng Settings detail -> Back.
+        // Giữ SettingsButton thật trong visual tree/layout để không mất handler,
+        // nhưng ẩn PHẦN HÌNH của button thật. Popup đã có OverlaySettingsButton
+        // ở đúng tọa độ. Như vậy chỉ có một gear được render, không còn hai icon
+        // chồng qua lớp scrim tạo cảm giác bị đè/dày.
         SetSettingsActionPresentation(
             visible: true);
+
+        SetBaseSettingsButtonVisual(
+            visible: false);
 
         popup.IsOpen =
             true;
@@ -593,6 +596,9 @@ public partial class AppShell : Shell
 
         if (popup is null)
         {
+            SetBaseSettingsButtonVisual(
+                visible: true);
+
             return false;
         }
 
@@ -601,6 +607,10 @@ public partial class AppShell : Shell
 
         popup.Child =
             null;
+
+        // Popup gear đã biến mất; trả lại duy nhất gear thật của Shell.
+        SetBaseSettingsButtonVisual(
+            visible: true);
 
         return true;
 #else
@@ -657,6 +667,26 @@ public partial class AppShell : Shell
     {
         Dispatcher.Dispatch(
             ApplyShellChromeAppearance);
+    }
+
+    private void SetBaseSettingsButtonVisual(
+        bool visible)
+    {
+        // Popup Windows có một Settings button riêng nằm trên scrim để người
+        // dùng có thể bấm lại và đóng menu. Nếu vẫn vẽ button/icon thật của
+        // Shell ở bên dưới, hai glyph gần như trùng nhau qua lớp scrim và tạo
+        // cảm giác icon bị đè/dày. Chỉ đổi Opacity: control thật vẫn ở nguyên
+        // visual tree và vẫn giữ layout/handler ổn định.
+        double opacity =
+            visible
+                ? 1d
+                : 0d;
+
+        SettingsButton.Opacity =
+            opacity;
+
+        SettingsButtonIcon.Opacity =
+            opacity;
     }
 
     private void SetSettingsActionPresentation(

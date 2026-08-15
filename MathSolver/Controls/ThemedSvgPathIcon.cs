@@ -1,4 +1,6 @@
 using MathSolver.Services;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 using MauiGeometry = Microsoft.Maui.Controls.Shapes.Geometry;
 using MauiPath = Microsoft.Maui.Controls.Shapes.Path;
 using MauiPathGeometryConverter = Microsoft.Maui.Controls.Shapes.PathGeometryConverter;
