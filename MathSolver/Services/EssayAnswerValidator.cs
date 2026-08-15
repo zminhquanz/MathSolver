@@ -66,7 +66,11 @@ public sealed partial class EssayAnswerValidator
                 solutionText);
 
         (bool equationIsCorrect, EssayAnswerError equationError) =
-            question.GeometryProblem is GeometryQuizContract geometry
+            question.FractionProblem is FractionQuizContract fraction
+                ? ValidateFractionEquation(
+                    fraction,
+                    equationText)
+                : question.GeometryProblem is GeometryQuizContract geometry
                 ? ValidateGeometryEquation(
                     geometry,
                     equationText)
@@ -75,9 +79,14 @@ public sealed partial class EssayAnswerValidator
                     equationText);
 
         (bool answerIsCorrect, EssayAnswerError answerError) =
-            ValidateAnswer(
-                question,
-                answerText);
+            question.FractionProblem is FractionQuizContract fractionAnswer
+                ? ValidateFractionAnswer(
+                    question,
+                    fractionAnswer,
+                    answerText)
+                : ValidateAnswer(
+                    question,
+                    answerText);
 
         return new(
             solutionIsCorrect,
@@ -167,6 +176,106 @@ public sealed partial class EssayAnswerValidator
                $" {normalizedText} ".Contains(
                    $" {normalizedPhrase} ",
                    StringComparison.Ordinal);
+    }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateFractionEquation(
+            FractionQuizContract contract,
+            string? equationText)
+    {
+        string compact = (equationText ?? string.Empty)
+            .Trim()
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .Replace('−', '-')
+            .Replace('x', '×')
+            .Replace('X', '×')
+            .Replace('*', '×')
+            .Replace(':', '÷');
+
+        char symbol = contract.Operation switch
+        {
+            FractionOperation.Add => '+',
+            FractionOperation.Subtract => '-',
+            FractionOperation.Multiply => '×',
+            FractionOperation.Divide => '÷',
+            _ => '\0'
+        };
+
+        int operationIndex = compact.IndexOf(symbol);
+        int equalsIndex = compact.IndexOf('=');
+        if (operationIndex <= 0 ||
+            equalsIndex <= operationIndex + 1 ||
+            compact.LastIndexOf('=') != equalsIndex ||
+            !ReducedFraction.TryParse(
+                compact[..operationIndex],
+                out ReducedFraction enteredLeft) ||
+            !ReducedFraction.TryParse(
+                compact[(operationIndex + 1)..equalsIndex],
+                out ReducedFraction enteredRight) ||
+            !ReducedFraction.TryParse(
+                compact[(equalsIndex + 1)..],
+                out ReducedFraction enteredAnswer))
+        {
+            return (false, EssayAnswerError.InvalidEquationFormat);
+        }
+
+        bool commutative =
+            contract.Operation is FractionOperation.Add or FractionOperation.Multiply;
+        bool operandsMatch =
+            enteredLeft == contract.LeftOperand &&
+            enteredRight == contract.RightOperand ||
+            commutative &&
+            enteredLeft == contract.RightOperand &&
+            enteredRight == contract.LeftOperand;
+
+        if (!operandsMatch)
+        {
+            return (false, EssayAnswerError.WrongOperandsOrOperation);
+        }
+
+        return enteredAnswer == contract.CorrectAnswer
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongEquationResult);
+    }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateFractionAnswer(
+            ArithmeticQuizQuestion question,
+            FractionQuizContract contract,
+            string? answerText)
+    {
+        string value = (answerText ?? string.Empty).Trim();
+        Match match = Regex.Match(
+            value,
+            @"^\s*(?<value>[+-]?\d+(?:\s*/\s*[+-]?\d+)?)\s*(?<unit>.*?)\s*$",
+            RegexOptions.CultureInvariant);
+
+        if (!match.Success ||
+            !ReducedFraction.TryParse(
+                match.Groups["value"].Value,
+                out ReducedFraction entered))
+        {
+            return (false, EssayAnswerError.InvalidAnswerFormat);
+        }
+
+        if (entered != contract.CorrectAnswer)
+        {
+            return (false, EssayAnswerError.WrongAnswer);
+        }
+
+        string expectedUnit = NormalizeUnit(question.WordProblem?.AnswerUnit);
+        string enteredUnit = NormalizeUnit(match.Groups["unit"].Value);
+        if (expectedUnit.Length > 0 &&
+            (enteredUnit.Length == 0 ||
+             !UnitsMatch(
+                 enteredUnit,
+                 expectedUnit,
+                 question.WordProblem?.ProblemText)))
+        {
+            return (false, EssayAnswerError.WrongAnswerUnit);
+        }
+
+        return (true, EssayAnswerError.None);
     }
 
     private static (bool IsCorrect, EssayAnswerError Error)

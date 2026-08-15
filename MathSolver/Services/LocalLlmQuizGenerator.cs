@@ -37,6 +37,7 @@ public sealed class LocalLlmQuizGenerator
     public const uint ContextSize = 2048;
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
+    private readonly FractionQuizGenerator _fractionQuizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly BasicArithmeticEngine _engine;
@@ -52,6 +53,7 @@ public sealed class LocalLlmQuizGenerator
     public LocalLlmQuizGenerator(
         ArithmeticQuizGenerator quizGenerator,
         BasicArithmeticEngine engine,
+        FractionQuizGenerator fractionQuizGenerator,
         GeometryQuizGenerator geometryQuizGenerator,
         FindXQuizGenerator findXQuizGenerator)
     {
@@ -62,6 +64,10 @@ public sealed class LocalLlmQuizGenerator
         _engine =
             engine ??
             throw new ArgumentNullException(nameof(engine));
+
+        _fractionQuizGenerator =
+            fractionQuizGenerator ??
+            throw new ArgumentNullException(nameof(fractionQuizGenerator));
 
         _geometryQuizGenerator =
             geometryQuizGenerator ??
@@ -193,6 +199,10 @@ public sealed class LocalLlmQuizGenerator
                         CreateNaturalLanguageContract(
                             mode,
                             problemRequest.ArithmeticOperation),
+                    QuizProblemKind.Fraction =>
+                        _fractionQuizGenerator.Generate(
+                            mode,
+                            problemRequest.FractionOperation),
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(mode),
                     _ => throw new ArgumentOutOfRangeException(
@@ -208,8 +218,11 @@ public sealed class LocalLlmQuizGenerator
             // Chọn đúng một nhóm đồ vật cho cả lượt sinh và mọi lần retry.
             // Catalog đầy đủ ở C# không bị ghép vào prompt.
             WordProblemStoryContext selectedStoryContext =
-                LlmQuizPromptBuilder.SelectStoryContext(
-                    language);
+                contract.FractionProblem is not null
+                    ? LlmQuizPromptBuilder.SelectFractionStoryContext(
+                        language)
+                    : LlmQuizPromptBuilder.SelectStoryContext(
+                        language);
 
             (LLamaWeights weights, ModelParams modelParameters) =
                 await EnsureModelLoadedAsync(
@@ -249,6 +262,13 @@ public sealed class LocalLlmQuizGenerator
                         geometry,
                         language,
                         selectedStudent,
+                        previousErrorCode: null)
+                    : contract.FractionProblem is FractionQuizContract fraction
+                    ? LlmQuizPromptBuilder.BuildFractionUserPrompt(
+                        fraction,
+                        language,
+                        selectedStudent,
+                        selectedStoryContext,
                         previousErrorCode: null)
                     : LlmQuizPromptBuilder.BuildUserPrompt(
                         contract.Expression,
@@ -506,6 +526,12 @@ public sealed class LocalLlmQuizGenerator
                             ? _wordProblemValidator.ValidateGeometry(
                                 draft,
                                 validatedGeometry,
+                                language)
+                            : contract.FractionProblem is FractionQuizContract validatedFraction
+                            ? _wordProblemValidator.ValidateFraction(
+                                draft,
+                                validatedFraction,
+                                selectedStoryContext,
                                 language)
                             : _wordProblemValidator.Validate(
                                 draft,
@@ -899,8 +925,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, Tìm x hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, Find-x, or geometry word problems from the required facts. Never change the numbers, operation, role of x, shape, unit, requested measurement, or answer. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -1041,6 +1067,133 @@ internal static class LlmQuizPromptBuilder
             ? compact
             : compact[..maximumLength].TrimEnd() + "…";
     }
+
+    public static string BuildFractionUserPrompt(
+        FractionQuizContract contract,
+        AppLanguage language,
+        WordProblemStudent? selectedStudent,
+        WordProblemStoryContext selectedStoryContext,
+        string? previousErrorCode)
+    {
+        string operation = contract.Operation switch
+        {
+            FractionOperation.Add => "add",
+            FractionOperation.Subtract => "subtract",
+            FractionOperation.Multiply => "multiply",
+            FractionOperation.Divide => "divide",
+            _ => throw new ArgumentOutOfRangeException(nameof(contract))
+        };
+
+        string characterRule = selectedStudent is null
+            ? language == AppLanguage.Vietnamese
+                ? "Hãy dùng cách gọi chung tự nhiên như một bạn học sinh hoặc người thân."
+                : "Use a natural generic student or family reference."
+            : language == AppLanguage.Vietnamese
+                ? $"Tên riêng không bắt buộc; nếu dùng, chỉ dùng \"{selectedStudent.NaturalReference}\"."
+                : $"A personal name is optional; if used, use \"{selectedStudent.NaturalReference}\".";
+
+        string retry = string.IsNullOrWhiteSpace(previousErrorCode)
+            ? string.Empty
+            : BuildRetryInstruction(previousErrorCode, language);
+
+        string languageName = language == AppLanguage.Vietnamese
+            ? "Vietnamese used in Vietnamese primary schools"
+            : "natural English used in an elementary school";
+
+        string operationRule = (contract.Operation, language) switch
+        {
+            (FractionOperation.Add, AppLanguage.Vietnamese) =>
+                "Hai phần được gộp lại để hỏi tất cả hoặc tổng cộng.",
+            (FractionOperation.Subtract, AppLanguage.Vietnamese) =>
+                "Một lượng bị bớt, dùng hoặc cắt đi để hỏi phần còn lại.",
+            (FractionOperation.Multiply, AppLanguage.Vietnamese) =>
+                "Hỏi một phân số của một lượng phân số; phải dùng từ “của” để thể hiện phép nhân.",
+            (FractionOperation.Divide, AppLanguage.Vietnamese) =>
+                "Chia một lượng phân số thành các phần có kích thước bằng phân số còn lại; hỏi được bao nhiêu phần.",
+            (FractionOperation.Add, _) =>
+                "Combine the two parts and ask for the total.",
+            (FractionOperation.Subtract, _) =>
+                "Remove or use one fractional amount and ask what remains.",
+            (FractionOperation.Multiply, _) =>
+                "Ask for one fraction of another fractional amount; use the word 'of'.",
+            (FractionOperation.Divide, _) =>
+                "Divide one fractional amount into portions of the other fractional size and ask how many portions.",
+            _ => throw new ArgumentOutOfRangeException(nameof(contract))
+        };
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return FormattableString.Invariant(
+                $$"""
+                Viết một bài toán đố phân số tự nhiên, phù hợp học sinh tiểu học Việt Nam.
+                Phân số thứ nhất bắt buộc: {{contract.LeftOperand}}
+                Phân số thứ hai bắt buộc: {{contract.RightOperand}}
+                Phép tính bắt buộc: {{GetFractionOperationPromptName(contract.Operation, language)}}
+                Đồ vật bắt buộc: {{selectedStoryContext.NaturalReference}}
+                answer_unit bắt buộc: {{selectedStoryContext.AnswerUnit}}
+
+                Quy tắc:
+                - problem_text phải ghi đúng cả hai phân số bằng dấu / và không thêm dữ kiện số học nào khác.
+                - Tuyệt đối không dùng LaTeX, dấu $, \frac, \dfrac, \tfrac hoặc ngoặc nhọn để viết phân số.
+                - Diễn đạt rõ đúng phép tính bắt buộc; không tính hoặc làm lộ đáp án.
+                - {{operationRule}}
+                - Dùng đúng đồ vật bắt buộc. {{characterRule}}
+                - answer_unit phải đúng nguyên cụm bắt buộc, không chứa số.
+                - solution_lead là một câu dẫn ngắn kết thúc bằng dấu hai chấm, nhắc lại answer_unit và không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
+                - Chỉ trả đúng JSON bốn trường sau, không thêm nội dung khác:
+                {
+                  "problem_text": "...",
+                  "subject_name": "...",
+                  "answer_unit": "{{selectedStoryContext.AnswerUnit}}",
+                  "solution_lead": "...:"
+                }
+                {{retry}}
+                """);
+        }
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural fraction word problem in {{languageName}}.
+            Required first fraction: {{contract.LeftOperand}}
+            Required second fraction: {{contract.RightOperand}}
+            Required operation: {{operation}}
+            Required story item: {{selectedStoryContext.NaturalReference}}
+            Required answer_unit: {{selectedStoryContext.AnswerUnit}}
+
+            Rules:
+            - problem_text must show both required fractions exactly with a slash and must not add any other arithmetic quantity.
+            - Never use LaTeX, $, \frac, \dfrac, \tfrac, or braces for a fraction.
+            - Use the required operation unambiguously; do not calculate or reveal the answer.
+            - {{operationRule}}
+            - Use the required story item exactly. {{characterRule}}
+            - answer_unit must be exactly the required noun phrase without a number.
+            - solution_lead is one short sentence ending with a colon. It repeats answer_unit and contains no number, calculation, equals sign, result, or answer.
+            - Return exactly this four-field JSON schema and nothing else:
+            {
+              "problem_text": "...",
+              "subject_name": "...",
+              "answer_unit": "{{selectedStoryContext.AnswerUnit}}",
+              "solution_lead": "...:"
+            }
+            {{retry}}
+            """);
+    }
+
+    private static string GetFractionOperationPromptName(
+        FractionOperation operation,
+        AppLanguage language) =>
+        (operation, language) switch
+        {
+            (FractionOperation.Add, AppLanguage.Vietnamese) => "phép cộng",
+            (FractionOperation.Subtract, AppLanguage.Vietnamese) => "phép trừ",
+            (FractionOperation.Multiply, AppLanguage.Vietnamese) => "phép nhân",
+            (FractionOperation.Divide, AppLanguage.Vietnamese) => "phép chia",
+            (FractionOperation.Add, _) => "addition",
+            (FractionOperation.Subtract, _) => "subtraction",
+            (FractionOperation.Multiply, _) => "multiplication",
+            (FractionOperation.Divide, _) => "division",
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
 
     public static string BuildUserPrompt(
         IntegerArithmeticExpression expression,
@@ -1506,6 +1659,31 @@ internal static class LlmQuizPromptBuilder
             "Could not select a word-problem story context.");
     }
 
+    public static WordProblemStoryContext SelectFractionStoryContext(
+        AppLanguage language)
+    {
+        WordProblemStoryContext[] contexts =
+            language == AppLanguage.Vietnamese
+                ?
+                [
+                    new(WordProblemContextCategory.SchoolSupply, "dây ruy băng", "mét dây ruy băng"),
+                    new(WordProblemContextCategory.SchoolSupply, "tấm vải", "mét vải"),
+                    new(WordProblemContextCategory.Sweet, "bình nước", "lít nước"),
+                    new(WordProblemContextCategory.Sweet, "túi bột", "ki-lô-gam bột"),
+                    new(WordProblemContextCategory.Sweet, "chiếc bánh", "chiếc bánh")
+                ]
+                :
+                [
+                    new(WordProblemContextCategory.SchoolSupply, "ribbon", "metres of ribbon"),
+                    new(WordProblemContextCategory.SchoolSupply, "fabric", "metres of fabric"),
+                    new(WordProblemContextCategory.Sweet, "water", "litres of water"),
+                    new(WordProblemContextCategory.Sweet, "flour", "kilograms of flour"),
+                    new(WordProblemContextCategory.Sweet, "cake", "cakes")
+                ];
+
+        return contexts[Random.Shared.Next(contexts.Length)];
+    }
+
     private static string BuildRetryInstruction(
         string errorCode,
         AppLanguage language)
@@ -1521,6 +1699,8 @@ internal static class LlmQuizPromptBuilder
                     "Bỏ phản hồi cũ và tạo lại toàn bộ một JSON object hoàn chỉnh, đủ đúng bốn trường bắt buộc, không thêm trường khác.",
                 "ProblemNumbersMismatch" =>
                     "Sửa đúng các dữ kiện số mà validator đã chỉ ra; dùng đủ từng số bắt buộc và không thêm số khác.",
+                "FractionFactsMismatch" =>
+                    "Ghi từng phân số đúng dạng 1/2 bằng dấu /. Tuyệt đối không dùng $, LaTeX, \\frac, \\dfrac, \\tfrac hoặc ngoặc nhọn.",
                 "AnswerRevealedInProblem" =>
                     "Xóa đáp án bị lộ khỏi problem_text; chỉ giữ các dữ kiện đầu vào và câu hỏi.",
                 "SolutionLeadRevealsAnswer" =>
@@ -1555,6 +1735,8 @@ internal static class LlmQuizPromptBuilder
                 "Discard the previous response and regenerate one complete JSON object with exactly the four required fields and no others.",
             "ProblemNumbersMismatch" =>
                 "Correct the exact numeric facts named by the validator; use every required value and no other value.",
+            "FractionFactsMismatch" =>
+                "Write each fraction exactly as 1/2 with a slash. Never use $, LaTeX, \\frac, \\dfrac, \\tfrac, or braces.",
             "AnswerRevealedInProblem" =>
                 "Remove the revealed answer from problem_text; keep only the input facts and the question.",
             "SolutionLeadRevealsAnswer" =>
@@ -1613,6 +1795,27 @@ internal static class LlmWordProblemParser
             AllowTrailingCommas = false,
             ReadCommentHandling = JsonCommentHandling.Disallow
         };
+
+    private static readonly Regex LatexFractionRegex =
+        new(
+            @"\\+(?:dfrac|tfrac|frac)\s*\{\s*([+-]?\d+)\s*\}\s*\{\s*([+-]?\d+)\s*\}",
+            RegexOptions.IgnoreCase |
+            RegexOptions.CultureInvariant);
+
+    private static readonly Regex DollarWrappedFractionRegex =
+        new(
+            @"\$\s*([+-]?\d+\s*/\s*[+-]?\d+)\s*\$",
+            RegexOptions.CultureInvariant);
+
+    private static readonly Regex ParenthesizedFractionRegex =
+        new(
+            @"\\+\(\s*([+-]?\d+\s*/\s*[+-]?\d+)\s*\\+\)",
+            RegexOptions.CultureInvariant);
+
+    private static readonly Regex BracketedFractionRegex =
+        new(
+            @"\\+\[\s*([+-]?\d+\s*/\s*[+-]?\d+)\s*\\+\]",
+            RegexOptions.CultureInvariant);
 
     public static bool TryParse(
         string rawOutput,
@@ -1744,15 +1947,38 @@ internal static class LlmWordProblemParser
                 return false;
             }
 
-            draft =
+            LlmWordProblemDraft? parsedDraft =
                 JsonSerializer.Deserialize<LlmWordProblemDraft>(
                     json,
                     JsonOptions);
 
-            if (draft is null)
+            if (parsedDraft is null)
             {
                 return false;
             }
+
+            // Gemma nhỏ đôi khi bỏ qua yêu cầu dùng dấu / và trả LaTeX như
+            // $\\frac{1}{2}$. C# chuẩn hóa ký hiệu trình bày trước validation;
+            // dữ kiện tử/mẫu không bị sửa và UI không bao giờ nhận text LaTeX.
+            draft =
+                new LlmWordProblemDraft
+                {
+                    ProblemText =
+                        NormalizeFractionNotation(
+                            parsedDraft.ProblemText),
+
+                    SubjectName =
+                        NormalizeFractionNotation(
+                            parsedDraft.SubjectName),
+
+                    AnswerUnit =
+                        NormalizeFractionNotation(
+                            parsedDraft.AnswerUnit),
+
+                    SolutionLead =
+                        NormalizeFractionNotation(
+                            parsedDraft.SolutionLead)
+                };
 
             errorCode = string.Empty;
             errorDetail = null;
@@ -1997,7 +2223,8 @@ internal static class LlmWordProblemParser
     {
         string normalized =
             Regex.Replace(
-                    value,
+                    NormalizeFractionNotation(value) ??
+                    string.Empty,
                     @"\s+",
                     " ",
                     RegexOptions.CultureInvariant)
@@ -2006,6 +2233,34 @@ internal static class LlmWordProblemParser
         return normalized.Length <= 600
             ? normalized
             : normalized[..600];
+    }
+
+    private static string? NormalizeFractionNotation(
+        string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return value;
+        }
+
+        string normalized =
+            LatexFractionRegex.Replace(
+                value,
+                "$1/$2");
+
+        normalized =
+            DollarWrappedFractionRegex.Replace(
+                normalized,
+                "$1");
+
+        normalized =
+            ParenthesizedFractionRegex.Replace(
+                normalized,
+                "$1");
+
+        return BracketedFractionRegex.Replace(
+            normalized,
+            "$1");
     }
 }
 
@@ -2295,6 +2550,244 @@ internal sealed partial class LlmWordProblemValidator
                 unit,
                 subject));
     }
+
+    public LlmWordProblemValidationResult ValidateFraction(
+        LlmWordProblemDraft draft,
+        FractionQuizContract contract,
+        WordProblemStoryContext requiredStoryContext,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentNullException.ThrowIfNull(contract);
+        ArgumentNullException.ThrowIfNull(requiredStoryContext);
+
+        string problem = NormalizeSingleLine(draft.ProblemText);
+        string subject = NormalizeSingleLine(draft.SubjectName);
+        string unit = NormalizeSingleLine(draft.AnswerUnit);
+        string solutionLead = NormalizeSingleLine(draft.SolutionLead);
+
+        if (problem.Length is < 12 or > 600 ||
+            subject.Length > 80 ||
+            unit.Length > 80 ||
+            solutionLead.Length > 220)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidTextLength",
+                language == AppLanguage.Vietnamese
+                    ? "Độ dài một trường JSON không hợp lệ; hãy viết lại ngắn gọn nhưng đủ dữ kiện."
+                    : "A JSON field has an invalid length; rewrite it concisely while keeping all required facts.");
+        }
+
+        string left = contract.LeftOperand.ToString();
+        string right = contract.RightOperand.ToString();
+        if (!ContainsFractionToken(problem, left) ||
+            !ContainsFractionToken(problem, right) ||
+            (left == right && CountFractionToken(problem, left) < 2))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "FractionFactsMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"problem_text phải chứa đúng hai dữ kiện phân số {left} và {right}, viết bằng dấu /. Không được đổi tử hoặc mẫu."
+                    : $"problem_text must contain the two fraction facts {left} and {right}, written with /. Do not change a numerator or denominator.");
+        }
+
+        string problemWithoutRequiredFractions =
+            RemoveFractionToken(
+                RemoveFractionToken(problem, left),
+                right);
+        problemWithoutRequiredFractions =
+            ClassLabelRegex().Replace(
+                problemWithoutRequiredFractions,
+                " ");
+
+        if (NumberRegex().IsMatch(problemWithoutRequiredFractions))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "FractionExtraFacts",
+                language == AppLanguage.Vietnamese
+                    ? "problem_text có thêm dữ kiện số ngoài hai phân số bắt buộc. Hãy bỏ mọi số thừa để C# đối chiếu phép tính chính xác."
+                    : "problem_text contains an extra number beyond the two required fractions. Remove every extra numeric fact so C# can validate the calculation exactly.");
+        }
+
+        if (!HasFractionOperationMeaning(
+                problem.ToLowerInvariant(),
+                contract.Operation,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "FractionOperationMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"problem_text chưa diễn đạt rõ đúng phép {GetFractionOperationName(contract.Operation, language)} giữa {left} và {right}. Hãy viết lại quan hệ toán học cho rõ."
+                    : $"problem_text does not clearly express {GetFractionOperationName(contract.Operation, language)} between {left} and {right}. Rewrite the mathematical relationship unambiguously.");
+        }
+
+        if (!ProblemContainsRequiredStoryItem(
+                problem,
+                requiredStoryContext.NaturalReference,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "StoryItemMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"problem_text phải dùng đúng đồ vật “{requiredStoryContext.NaturalReference}”."
+                    : $"problem_text must use the required item “{requiredStoryContext.NaturalReference}”.");
+        }
+
+        if (!AreAnswerUnitsEquivalent(
+                unit,
+                requiredStoryContext.AnswerUnit,
+                language) ||
+            NumberRegex().IsMatch(unit) ||
+            unit.Contains('='))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"answer_unit phải là “{requiredStoryContext.AnswerUnit}” và không chứa số."
+                    : $"answer_unit must be “{requiredStoryContext.AnswerUnit}” without a number.");
+        }
+
+        if (!IsQuestionSentence(problem, language))
+        {
+            problem = AppendDefaultQuestion(problem, language);
+        }
+        else if (!problem.Contains('?'))
+        {
+            problem = problem.TrimEnd('.', '!', ';', ':') + "?";
+        }
+
+        solutionLead = ElementaryWordProblemSolutionFormatter
+            .NormalizeSolutionLeadPunctuation(solutionLead);
+
+        if (NumberRegex().IsMatch(solutionLead) ||
+            solutionLead.Contains('=') ||
+            solutionLead.Contains('/') ||
+            solutionLead.Contains('×') ||
+            solutionLead.Contains('÷'))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                language == AppLanguage.Vietnamese
+                    ? "solution_lead chỉ được là câu dẫn trước phép tính; hãy bỏ mọi số, phân số, dấu bằng và phép tính."
+                    : "solution_lead must only introduce the calculation; remove every number, fraction, equals sign, and operation.");
+        }
+
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            IsGenericSolutionLead(solutionLead, language))
+        {
+            solutionLead = language == AppLanguage.Vietnamese
+                ? $"Số {unit} cần tìm là:"
+                : $"The requested number of {unit} is:";
+        }
+
+        if (!SolutionLeadMentionsAnswerUnit(
+                solutionLead,
+                unit,
+                language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"solution_lead phải nhắc đúng đơn vị “{unit}” và kết thúc bằng dấu hai chấm."
+                    : $"solution_lead must mention the answer unit “{unit}” and end with a colon.");
+        }
+
+        if (string.IsNullOrWhiteSpace(subject) ||
+            !problem.Contains(subject, StringComparison.OrdinalIgnoreCase))
+        {
+            subject = language == AppLanguage.Vietnamese
+                ? "Bài toán phân số"
+                : "The fraction problem";
+        }
+
+        return new(
+            true,
+            null,
+            null,
+            new MathWordProblem(
+                problem,
+                solutionLead,
+                unit,
+                subject));
+    }
+
+    private static bool ContainsFractionToken(
+        string text,
+        string token) =>
+        Regex.IsMatch(
+            text,
+            $@"(?<!\d){Regex.Escape(token)}(?!\d)",
+            RegexOptions.CultureInvariant);
+
+    private static int CountFractionToken(
+        string text,
+        string token) =>
+        Regex.Matches(
+            text,
+            $@"(?<!\d){Regex.Escape(token)}(?!\d)",
+            RegexOptions.CultureInvariant).Count;
+
+    private static string RemoveFractionToken(
+        string text,
+        string token) =>
+        Regex.Replace(
+            text,
+            $@"(?<!\d){Regex.Escape(token)}(?!\d)",
+            " ",
+            RegexOptions.CultureInvariant);
+
+    private static bool HasFractionOperationMeaning(
+        string problem,
+        FractionOperation operation,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return operation switch
+            {
+                FractionOperation.Add =>
+                    ContainsAny(problem, "thêm", "gộp", "cộng", "và") &&
+                    ContainsAny(problem, "tất cả", "tổng cộng", "bao nhiêu"),
+                FractionOperation.Subtract =>
+                    ContainsAny(problem, "bớt", "dùng", "cắt", "lấy đi", "còn lại"),
+                FractionOperation.Multiply =>
+                    ContainsAny(problem, "của", "phần của", "số đó"),
+                FractionOperation.Divide =>
+                    ContainsAny(problem, "chia", "mỗi phần", "được bao nhiêu", "bao nhiêu phần"),
+                _ => false
+            };
+        }
+
+        return operation switch
+        {
+            FractionOperation.Add =>
+                ContainsAny(problem, "added", "combined", "and") &&
+                ContainsAny(problem, "total", "altogether", "how much"),
+            FractionOperation.Subtract =>
+                ContainsAny(problem, "used", "removed", "cut", "left", "remain"),
+            FractionOperation.Multiply =>
+                ContainsAny(problem, "of", "fraction of", "part of"),
+            FractionOperation.Divide =>
+                ContainsAny(problem, "divide", "divided", "how many portions", "each portion"),
+            _ => false
+        };
+    }
+
+    private static string GetFractionOperationName(
+        FractionOperation operation,
+        AppLanguage language) =>
+        (operation, language) switch
+        {
+            (FractionOperation.Add, AppLanguage.Vietnamese) => "cộng",
+            (FractionOperation.Subtract, AppLanguage.Vietnamese) => "trừ",
+            (FractionOperation.Multiply, AppLanguage.Vietnamese) => "nhân",
+            (FractionOperation.Divide, AppLanguage.Vietnamese) => "chia",
+            (FractionOperation.Add, _) => "addition",
+            (FractionOperation.Subtract, _) => "subtraction",
+            (FractionOperation.Multiply, _) => "multiplication",
+            (FractionOperation.Divide, _) => "division",
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
 
     public LlmWordProblemValidationResult ValidateFindX(
         LlmWordProblemDraft draft,

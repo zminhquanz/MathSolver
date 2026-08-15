@@ -3684,18 +3684,8 @@ public partial class HardwarePerformancePage : ContentPage
 
             await PlayPageExitAnimationAsync();
 
-            // Hỗ trợ bản cũ từng mở trang bằng PushModalAsync.
-            if (Navigation.ModalStack.Contains(
-                    this))
-            {
-                await Navigation.PopModalAsync(
-                    animated:
-                        false);
-
-                return;
-            }
-
-            // Cách điều hướng hiện tại: global route qua Shell.GoToAsync.
+            // Các trang Settings chỉ dùng global route; không đi qua modal
+            // để tránh lỗi PlatformView null của PopModalAsync trên WinUI.
             if (Shell.Current is not null)
             {
                 await Shell.Current.GoToAsync(

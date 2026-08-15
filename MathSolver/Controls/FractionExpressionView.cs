@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Globalization;
+using Microsoft.Maui.Layouts;
 
 namespace MathSolver.Controls;
 
@@ -29,6 +30,22 @@ public sealed class FractionExpressionView : ContentView
             Color.FromArgb("#334155"),
             propertyChanged: OnVisualPropertyChanged);
 
+    public static readonly BindableProperty HorizontalTextAlignmentProperty =
+        BindableProperty.Create(
+            nameof(HorizontalTextAlignment),
+            typeof(TextAlignment),
+            typeof(FractionExpressionView),
+            TextAlignment.Start,
+            propertyChanged: OnVisualPropertyChanged);
+
+    public static readonly BindableProperty WrapContentProperty =
+        BindableProperty.Create(
+            nameof(WrapContent),
+            typeof(bool),
+            typeof(FractionExpressionView),
+            false,
+            propertyChanged: OnVisualPropertyChanged);
+
     public string Expression
     {
         get => (string)GetValue(ExpressionProperty);
@@ -45,6 +62,18 @@ public sealed class FractionExpressionView : ContentView
     {
         get => (Color)GetValue(MathColorProperty);
         set => SetValue(MathColorProperty, value);
+    }
+
+    public TextAlignment HorizontalTextAlignment
+    {
+        get => (TextAlignment)GetValue(HorizontalTextAlignmentProperty);
+        set => SetValue(HorizontalTextAlignmentProperty, value);
+    }
+
+    public bool WrapContent
+    {
+        get => (bool)GetValue(WrapContentProperty);
+        set => SetValue(WrapContentProperty, value);
     }
 
     public FractionExpressionView()
@@ -69,7 +98,9 @@ public sealed class FractionExpressionView : ContentView
         var rootLayout = new VerticalStackLayout
         {
             Spacing = 8,
-            HorizontalOptions = LayoutOptions.Start
+            HorizontalOptions = WrapContent
+                ? LayoutOptions.Fill
+                : GetHorizontalLayoutOptions()
         };
 
         string expression =
@@ -92,31 +123,63 @@ public sealed class FractionExpressionView : ContentView
     private View CreateExpressionLine(
         string line)
     {
-        var lineLayout =
-            new HorizontalStackLayout
-            {
-                Spacing = 8,
-                VerticalOptions =
-                    LayoutOptions.Center,
-
-                HorizontalOptions =
-                    LayoutOptions.Start
-            };
-
         string[] tokens =
             line.Split(
                 ' ',
                 StringSplitOptions
                     .RemoveEmptyEntries);
 
-        foreach (string token in tokens)
+        if (!WrapContent)
         {
-            lineLayout.Children.Add(
-                CreateTokenView(token));
+            var singleLineLayout =
+                new HorizontalStackLayout
+                {
+                    Spacing = 8,
+                    VerticalOptions = LayoutOptions.Center,
+                    HorizontalOptions = GetHorizontalLayoutOptions()
+                };
+
+            foreach (string token in tokens)
+            {
+                singleLineLayout.Children.Add(
+                    CreateTokenView(token));
+            }
+
+            return singleLineLayout;
         }
 
-        return lineLayout;
+        var wrappingLayout =
+            new FlexLayout
+            {
+                Direction = FlexDirection.Row,
+                Wrap = FlexWrap.Wrap,
+                AlignItems = FlexAlignItems.Center,
+                JustifyContent = HorizontalTextAlignment switch
+                {
+                    TextAlignment.Center => FlexJustify.Center,
+                    TextAlignment.End => FlexJustify.End,
+                    _ => FlexJustify.Start
+                },
+                HorizontalOptions = LayoutOptions.Fill
+            };
+
+        foreach (string token in tokens)
+        {
+            View tokenView = CreateTokenView(token);
+            tokenView.Margin = new Thickness(0, 0, 8, 4);
+            wrappingLayout.Children.Add(tokenView);
+        }
+
+        return wrappingLayout;
     }
+
+    private LayoutOptions GetHorizontalLayoutOptions() =>
+        HorizontalTextAlignment switch
+        {
+            TextAlignment.Center => LayoutOptions.Center,
+            TextAlignment.End => LayoutOptions.End,
+            _ => LayoutOptions.Start
+        };
 
     private View CreateTokenView(
         string token)
@@ -131,9 +194,45 @@ public sealed class FractionExpressionView : ContentView
                 denominator);
         }
 
-        return new Label
+        if (TrySplitDecoratedFraction(
+                token,
+                out string prefix,
+                out string fractionToken,
+                out string suffix) &&
+            TryParseFraction(
+                fractionToken,
+                out numerator,
+                out denominator))
         {
-            Text = token,
+            var decorated = new HorizontalStackLayout
+            {
+                Spacing = 1,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            if (prefix.Length > 0)
+            {
+                decorated.Children.Add(CreateTextToken(prefix));
+            }
+
+            decorated.Children.Add(
+                CreateFractionView(numerator, denominator));
+
+            if (suffix.Length > 0)
+            {
+                decorated.Children.Add(CreateTextToken(suffix));
+            }
+
+            return decorated;
+        }
+
+        return CreateTextToken(token);
+    }
+
+    private Label CreateTextToken(string text) =>
+        new()
+        {
+            Text = text,
             FontSize = MathFontSize,
             FontAttributes =
                 FontAttributes.Bold,
@@ -143,6 +242,35 @@ public sealed class FractionExpressionView : ContentView
             VerticalTextAlignment =
                 TextAlignment.Center
         };
+
+    private static bool TrySplitDecoratedFraction(
+        string token,
+        out string prefix,
+        out string fractionToken,
+        out string suffix)
+    {
+        const string leadingPunctuation = "([{\"'“‘";
+        const string trailingPunctuation = ").,;:!?]}\"'”’";
+
+        int start = 0;
+        while (start < token.Length &&
+               leadingPunctuation.Contains(token[start]))
+        {
+            start++;
+        }
+
+        int end = token.Length;
+        while (end > start &&
+               trailingPunctuation.Contains(token[end - 1]))
+        {
+            end--;
+        }
+
+        prefix = token[..start];
+        fractionToken = token[start..end];
+        suffix = token[end..];
+
+        return start > 0 || end < token.Length;
     }
 
     private View CreateFractionView(

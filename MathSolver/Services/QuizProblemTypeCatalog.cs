@@ -3,9 +3,8 @@ using MathSolver.Models;
 namespace MathSolver.Services;
 
 /// <summary>
-/// Catalog duy nhất cho danh sách dạng đề và cách phân giải mục Hỗn hợp.
-/// Khi bổ sung dạng đề, đăng ký thêm một QuizProblemOption cụ thể với
-/// IncludeInMixed = true để cả nguồn Thuật toán và AI tự dùng chung nó.
+/// Catalog duy nhất cho nhóm dạng đề và cách phân giải mục Hỗn hợp.
+/// Cơ bản và Phân số là nhóm hai tầng; phép tính con được giao vào Resolve.
 /// </summary>
 public sealed class QuizProblemTypeCatalog
 {
@@ -15,49 +14,32 @@ public sealed class QuizProblemTypeCatalog
             "Quiz.OperationMixed",
             FixedRequest: null),
         new(
-            "Quiz.OperationAddition",
-            new(
-                QuizProblemKind.Arithmetic,
-                ArithmeticOperation.Add),
-            IncludeInMixed: true),
+            "Quiz.ProblemBasic",
+            new(QuizProblemKind.Arithmetic)),
         new(
-            "Quiz.OperationSubtraction",
-            new(
-                QuizProblemKind.Arithmetic,
-                ArithmeticOperation.Subtract),
-            IncludeInMixed: true),
-        new(
-            "Quiz.OperationMultiplication",
-            new(
-                QuizProblemKind.Arithmetic,
-                ArithmeticOperation.Multiply),
-            IncludeInMixed: true),
-        new(
-            "Quiz.OperationDivision",
-            new(
-                QuizProblemKind.Arithmetic,
-                ArithmeticOperation.Divide),
-            IncludeInMixed: true),
+            "Quiz.ProblemFraction",
+            new(QuizProblemKind.Fraction)),
         new(
             "Quiz.ProblemGeometry",
-            new(
-                QuizProblemKind.Geometry),
-            IncludeInMixed: true),
+            new(QuizProblemKind.Geometry)),
         new(
             "Quiz.ProblemFindX",
-            new(
-                QuizProblemKind.FindX),
-            IncludeInMixed: true)
+            new(QuizProblemKind.FindX))
     ];
 
     private static readonly QuizProblemRequest[] MixedRequests =
-        RegisteredOptions
-            .Where(option =>
-                option.IncludeInMixed &&
-                option.FixedRequest.HasValue)
-            .Select(option =>
-                option.FixedRequest!.Value)
-            .ToArray();
+    [
+        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Add),
+        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Subtract),
+        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Multiply),
+        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Divide),
+        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Add),
+        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Subtract),
+        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Multiply),
+        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Divide),
+        new(QuizProblemKind.Geometry),
+        new(QuizProblemKind.FindX)
+    ];
 
     private static readonly IReadOnlyList<QuizProblemOption>
         ReadOnlyOptions =
@@ -75,7 +57,9 @@ public sealed class QuizProblemTypeCatalog
         ReadOnlyOptions;
 
     public QuizProblemRequest Resolve(
-        int selectedIndex)
+        int selectedIndex,
+        ArithmeticOperation basicOperation,
+        FractionOperation fractionOperation)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -83,7 +67,20 @@ public sealed class QuizProblemTypeCatalog
         if (option.FixedRequest is
             QuizProblemRequest fixedRequest)
         {
-            return fixedRequest;
+            return fixedRequest.Kind switch
+            {
+                QuizProblemKind.Arithmetic =>
+                    fixedRequest with
+                    {
+                        ArithmeticOperation = basicOperation
+                    },
+                QuizProblemKind.Fraction =>
+                    fixedRequest with
+                    {
+                        FractionOperation = fractionOperation
+                    },
+                _ => fixedRequest
+            };
         }
 
         if (MixedRequests.Length == 0)

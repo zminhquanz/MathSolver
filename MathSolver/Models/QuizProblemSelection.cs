@@ -7,6 +7,7 @@ namespace MathSolver.Models;
 public enum QuizProblemKind
 {
     Arithmetic,
+    Fraction,
     Geometry,
     FindX
 }
@@ -17,16 +18,16 @@ public enum QuizProblemKind
 /// </summary>
 public readonly record struct QuizProblemRequest(
     QuizProblemKind Kind,
-    ArithmeticOperation? ArithmeticOperation = null);
+    ArithmeticOperation? ArithmeticOperation = null,
+    FractionOperation? FractionOperation = null);
 
 /// <summary>
-/// Một mục hiển thị trong danh sách dạng đề. FixedRequest bằng null dành cho
-/// mục Hỗn hợp; IncludeInMixed cho biết mục cụ thể có tham gia bộ trộn hay không.
+/// Một mục nhóm hiển thị trong danh sách dạng đề. FixedRequest bằng null dành
+/// cho mục Hỗn hợp; phép tính con của Cơ bản/Phân số được chọn ở tầng kế tiếp.
 /// </summary>
 public sealed record QuizProblemOption(
     string LocalizationKey,
-    QuizProblemRequest? FixedRequest,
-    bool IncludeInMixed = false)
+    QuizProblemRequest? FixedRequest)
 {
     public bool IsMixed =>
         FixedRequest is null;

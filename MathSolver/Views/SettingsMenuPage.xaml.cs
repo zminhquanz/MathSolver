@@ -9,9 +9,9 @@ public partial class SettingsMenuPage : ContentPage
     // tâm hình tròn, nhưng vẫn giữ vị trí chuẩn khi đóng.
     private const double ExpandedChevronOffsetX = 1d;
 
-    // Được bật ngay từ constructor, trước khi PushModalAsync làm trang bên
-    // dưới nhận OnDisappearing. FormulaPage dùng cờ này để biết rằng nó chỉ
-    // đang bị một overlay trong suốt che lên và không được tự ẩn nội dung.
+    // Được bật ngay từ constructor, trước khi Shell route làm trang bên dưới
+    // nhận OnDisappearing. FormulaPage dùng cờ này để biết rằng nó chỉ đang bị
+    // overlay trong suốt che lên và không được tự ẩn nội dung.
     internal static bool IsTransparentOverlayActive { get; private set; }
 
     private readonly Dictionary<string, Button>
@@ -19,9 +19,9 @@ public partial class SettingsMenuPage : ContentPage
             new(StringComparer.Ordinal);
 
     private bool _hasPlayedOpenAnimation;
-    private bool _isClosing;
     private bool _isNavigating;
     private bool _isUpdatingFullNumberDisplaySwitch;
+    private Task? _closeTask;
 
     private readonly HashSet<VisualElement>
         _animatingSections =
@@ -803,6 +803,10 @@ public partial class SettingsMenuPage : ContentPage
 
         try
         {
+            // Đóng overlay bằng navigation gốc trước, sau đó mở global route.
+            // DeveloperModePage cần nằm trong Shell để Shell.TitleView hiển thị
+            // nút quay lại; nếu đẩy nó thành modal thì toàn bộ thanh điều hướng
+            // của Shell sẽ không được dựng.
             await CloseAsync();
 
             if (Shell.Current is null)
@@ -950,32 +954,50 @@ public partial class SettingsMenuPage : ContentPage
         await CloseAsync();
     }
 
-    private async Task CloseAsync()
+    private Task CloseAsync()
     {
-        if (_isClosing)
+        if (_closeTask is not null)
         {
-            return;
+            return _closeTask;
         }
 
-        _isClosing =
-            true;
+        _closeTask =
+            CloseCoreAsync();
 
+        return _closeTask;
+    }
+
+    private async Task CloseCoreAsync()
+    {
         try
         {
             await PlayCloseAnimationAsync();
 
-            if (Navigation.ModalStack.Contains(
+            if (Shell.Current is AppShell appShell)
+            {
+                await appShell.CloseSettingsAsync();
+                return;
+            }
+
+            if (Shell.Current is not null)
+            {
+                await Shell.Current.GoToAsync(
+                    "..",
+                    animate: false);
+                return;
+            }
+
+            if (ReferenceEquals(
+                    Navigation.NavigationStack.LastOrDefault(),
                     this))
             {
-                await Navigation.PopModalAsync(
-                    animated:
-                        false);
+                await Navigation.PopAsync(animated: false);
             }
         }
         finally
         {
-            _isClosing =
-                false;
+            _closeTask =
+                null;
         }
     }
 }

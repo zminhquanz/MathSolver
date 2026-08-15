@@ -39,6 +39,14 @@ public static class ElementaryWordProblemSolutionFormatter
                 culture);
         }
 
+        if (question.FractionProblem is FractionQuizContract fraction)
+        {
+            return FormatFraction(
+                fraction,
+                wordProblem,
+                language);
+        }
+
         string left =
             question.Expression.LeftOperand.ToString(
                 "N0",
@@ -108,6 +116,25 @@ public static class ElementaryWordProblemSolutionFormatter
             $"x = {left} {symbol} {right}{Environment.NewLine}" +
             $"x = {answer}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+    }
+
+    private static string FormatFraction(
+        FractionQuizContract fraction,
+        MathWordProblem wordProblem,
+        AppLanguage language)
+    {
+        string answerLabel =
+            language == AppLanguage.Vietnamese
+                ? "Đáp số"
+                : "Answer";
+        string solutionLead =
+            NormalizeSolutionLeadPunctuation(
+                wordProblem.SolutionLead);
+
+        return
+            $"{solutionLead}{Environment.NewLine}" +
+            $"{fraction.ExpressionText} = {fraction.CorrectAnswer}{Environment.NewLine}" +
+            $"{answerLabel}: {fraction.CorrectAnswer} {wordProblem.AnswerUnit}";
     }
 
     private static string FormatGeometry(

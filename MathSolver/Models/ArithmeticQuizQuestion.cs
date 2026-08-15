@@ -21,7 +21,8 @@ public sealed record ArithmeticQuizQuestion(
     IReadOnlyList<BigInteger> Choices,
     MathWordProblem? WordProblem = null,
     GeometryQuizContract? GeometryProblem = null,
-    FindXQuizContract? FindXProblem = null);
+    FindXQuizContract? FindXProblem = null,
+    FractionQuizContract? FractionProblem = null);
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,

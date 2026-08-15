@@ -51,6 +51,10 @@ public partial class AppShell : Shell
         }
 
         Routing.RegisterRoute(
+            nameof(SettingsMenuPage),
+            typeof(SettingsMenuPage));
+
+        Routing.RegisterRoute(
             nameof(SettingsPage),
             typeof(SettingsPage));
 
@@ -99,16 +103,18 @@ public partial class AppShell : Shell
         {
             await AnimateSettingsButtonAsync();
 
-            if (Navigation.ModalStack.LastOrDefault()
-                is SettingsMenuPage settingsMenu)
+            if (IsSettingsRouteOpen())
             {
-                await settingsMenu.CloseWithAnimationAsync();
+                await CloseSettingsAsync();
                 return;
             }
 
-            await Navigation.PushModalAsync(
-                new SettingsMenuPage(),
-                animated:
+            // Settings dùng global route thay cho modal. Trên WinUI,
+            // PopModalAsync có thể tháo PlatformView trước khi hoàn tất và
+            // ném InvalidOperationException khi mở trang cài đặt con.
+            await Shell.Current.GoToAsync(
+                nameof(SettingsMenuPage),
+                animate:
                     false);
         }
         finally
@@ -416,10 +422,19 @@ public partial class AppShell : Shell
             string.Empty;
 
         return location.Contains(
+                   nameof(SettingsMenuPage),
+                   StringComparison.OrdinalIgnoreCase) ||
+               location.Contains(
                    nameof(SettingsPage),
                    StringComparison.OrdinalIgnoreCase) ||
                location.Contains(
                    nameof(HardwarePerformancePage),
+                   StringComparison.OrdinalIgnoreCase) ||
+               location.Contains(
+                   nameof(DeveloperModePage),
+                   StringComparison.OrdinalIgnoreCase) ||
+               location.Contains(
+                   nameof(AboutPage),
                    StringComparison.OrdinalIgnoreCase);
     }
 

@@ -21,9 +21,11 @@ public partial class MathPuzzlePage : ContentPage
         };
 
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
+    private readonly FractionCalculationEngine _fractionEngine = new();
     private readonly GeometryCalculationEngine _geometryEngine = new();
     private readonly FindXEngine _findXEngine = new();
     private readonly ArithmeticQuizGenerator _quizGenerator;
+    private readonly FractionQuizGenerator _fractionQuizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
@@ -53,6 +55,10 @@ public partial class MathPuzzlePage : ContentPage
     private bool _isDownloadingModel;
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
+    private ArithmeticOperation _selectedBasicOperation =
+        ArithmeticOperation.Add;
+    private FractionOperation _selectedFractionOperation =
+        FractionOperation.Add;
     private bool _isAiDiagnosticsVisible;
     private bool _isDeveloperModeSubscribed;
     private int _llmProgressVersion;
@@ -73,6 +79,14 @@ public partial class MathPuzzlePage : ContentPage
         ChoiceDButton
     ];
 
+    private FractionExpressionView[] ChoiceFractionViews =>
+    [
+        ChoiceAFractionView,
+        ChoiceBFractionView,
+        ChoiceCFractionView,
+        ChoiceDFractionView
+    ];
+
     public MathPuzzlePage()
     {
         InitializeComponent();
@@ -84,6 +98,10 @@ public partial class MathPuzzlePage : ContentPage
         _quizGenerator =
             new ArithmeticQuizGenerator(
                 _arithmeticEngine);
+
+        _fractionQuizGenerator =
+            new FractionQuizGenerator(
+                _fractionEngine);
 
         _essayAnswerValidator =
             new EssayAnswerValidator(
@@ -101,6 +119,7 @@ public partial class MathPuzzlePage : ContentPage
             new LocalLlmQuizGenerator(
                 _quizGenerator,
                 _arithmeticEngine,
+                _fractionQuizGenerator,
                 _geometryQuizGenerator,
                 _findXQuizGenerator);
 
@@ -397,6 +416,12 @@ public partial class MathPuzzlePage : ContentPage
 
     private string GetQuestionPromptTitle()
     {
+        if (_currentQuestion?.FractionProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return TranslateQuiz("Quiz.FractionQuestionTitle");
+        }
+
         if (_currentQuestion?.FindXProblem is not null &&
             _generationSource == QuizGenerationSource.Algorithm)
         {
@@ -432,6 +457,7 @@ public partial class MathPuzzlePage : ContentPage
         bool isWordProblemSource =
             _generationSource == QuizGenerationSource.LocalLlm;
         bool isFindX = IsFindXProblemSelected();
+        bool isFraction = IsFractionProblemSelected();
 
         // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
         // Nguồn Thuật toán dùng biểu thức hoặc đề hình học ngắn, nên học sinh
@@ -445,10 +471,14 @@ public partial class MathPuzzlePage : ContentPage
                     ? "Quiz.FindXEssayValidationHintAi"
                     : isWordProblemSource && IsGeometryProblemSelected()
                     ? "Quiz.GeometryEssayValidationHintAi"
+                    : isWordProblemSource && isFraction
+                    ? "Quiz.FractionEssayValidationHintAi"
                     : isFindX
                     ? "Quiz.FindXEssayValidationHint"
                     : IsGeometryProblemSelected()
                     ? "Quiz.GeometryEssayValidationHint"
+                    : isFraction
+                    ? "Quiz.FractionEssayValidationHint"
                     : isWordProblemSource
                         ? "Quiz.EssayValidationHint"
                         : "Quiz.EssayValidationHintAlgorithm");
@@ -456,9 +486,16 @@ public partial class MathPuzzlePage : ContentPage
         EssayEquationEntry.Placeholder =
             isFindX
                 ? TranslateQuiz("Quiz.FindXEssayEquationPlaceholder")
+                : IsFractionProblemSelected()
+                ? TranslateQuiz("Quiz.FractionEssayEquationPlaceholder")
                 : IsGeometryProblemSelected()
                 ? Translate("Quiz.GeometryEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
+
+        EssayAnswerEntry.Placeholder =
+            isFraction
+                ? TranslateQuiz("Quiz.FractionEssayAnswerPlaceholder")
+                : Translate("Quiz.EssayAnswerPlaceholder");
     }
 
     private void UpdateOperationPickerItems()
@@ -492,8 +529,9 @@ public partial class MathPuzzlePage : ContentPage
                     OperationPicker.Items.Count - 1);
 
             _activeProblemRequest =
-                _quizProblemTypeCatalog.GetFixedRequest(
-                    OperationPicker.SelectedIndex);
+                GetSelectedFixedProblemRequest();
+
+            UpdateProblemOperationPanel();
         }
         finally
         {
@@ -518,8 +556,9 @@ public partial class MathPuzzlePage : ContentPage
         ResetQuizSessionState();
 
         _activeProblemRequest =
-            _quizProblemTypeCatalog.GetFixedRequest(
-                OperationPicker.SelectedIndex);
+            GetSelectedFixedProblemRequest();
+
+        UpdateProblemOperationPanel();
 
         UpdateEssayAnswerPresentation();
 
@@ -535,7 +574,154 @@ public partial class MathPuzzlePage : ContentPage
 
     private QuizProblemRequest ResolveSelectedProblem() =>
         _quizProblemTypeCatalog.Resolve(
-            OperationPicker.SelectedIndex);
+            OperationPicker.SelectedIndex,
+            _selectedBasicOperation,
+            _selectedFractionOperation);
+
+    private QuizProblemRequest? GetSelectedFixedProblemRequest()
+    {
+        QuizProblemRequest? request =
+            _quizProblemTypeCatalog.GetFixedRequest(
+                OperationPicker.SelectedIndex);
+
+        return request?.Kind switch
+        {
+            QuizProblemKind.Arithmetic =>
+                request.Value with
+                {
+                    ArithmeticOperation = _selectedBasicOperation
+                },
+            QuizProblemKind.Fraction =>
+                request.Value with
+                {
+                    FractionOperation = _selectedFractionOperation
+                },
+            _ => request
+        };
+    }
+
+    private void UpdateProblemOperationPanel()
+    {
+        QuizProblemKind? kind =
+            _quizProblemTypeCatalog
+                .GetFixedRequest(OperationPicker.SelectedIndex)
+                ?.Kind;
+
+        bool showOperations =
+            kind is QuizProblemKind.Arithmetic or QuizProblemKind.Fraction;
+
+        ProblemOperationPanel.IsVisible = showOperations;
+        if (!showOperations)
+        {
+            return;
+        }
+
+        ProblemOperationTitleLabel.Text = TranslateQuiz(
+            kind == QuizProblemKind.Fraction
+                ? "Quiz.FractionOperationTitle"
+                : "Quiz.BasicOperationTitle");
+
+        ArithmeticOperation operation =
+            kind == QuizProblemKind.Fraction
+                ? MapFractionOperation(_selectedFractionOperation)
+                : _selectedBasicOperation;
+
+        Button selected = operation switch
+        {
+            ArithmeticOperation.Add => ProblemAddButton,
+            ArithmeticOperation.Subtract => ProblemSubtractButton,
+            ArithmeticOperation.Multiply => ProblemMultiplyButton,
+            ArithmeticOperation.Divide => ProblemDivideButton,
+            _ => ProblemAddButton
+        };
+
+        SelectionButtonStyler.Select(
+            selected,
+            ProblemAddButton,
+            ProblemSubtractButton,
+            ProblemMultiplyButton,
+            ProblemDivideButton);
+    }
+
+    private void OnProblemAddClicked(object? sender, EventArgs e) =>
+        SelectProblemOperation(ArithmeticOperation.Add);
+
+    private void OnProblemSubtractClicked(object? sender, EventArgs e) =>
+        SelectProblemOperation(ArithmeticOperation.Subtract);
+
+    private void OnProblemMultiplyClicked(object? sender, EventArgs e) =>
+        SelectProblemOperation(ArithmeticOperation.Multiply);
+
+    private void OnProblemDivideClicked(object? sender, EventArgs e) =>
+        SelectProblemOperation(ArithmeticOperation.Divide);
+
+    private void SelectProblemOperation(ArithmeticOperation operation)
+    {
+        QuizProblemKind? kind =
+            _quizProblemTypeCatalog
+                .GetFixedRequest(OperationPicker.SelectedIndex)
+                ?.Kind;
+
+        bool changed;
+        if (kind == QuizProblemKind.Arithmetic)
+        {
+            changed = _selectedBasicOperation != operation;
+            _selectedBasicOperation = operation;
+        }
+        else if (kind == QuizProblemKind.Fraction)
+        {
+            FractionOperation fractionOperation =
+                MapArithmeticOperation(operation);
+            changed = _selectedFractionOperation != fractionOperation;
+            _selectedFractionOperation = fractionOperation;
+        }
+        else
+        {
+            return;
+        }
+
+        UpdateProblemOperationPanel();
+        if (!changed)
+        {
+            return;
+        }
+
+        CancelLlmGeneration();
+        ResetQuizSessionState();
+        _activeProblemRequest = GetSelectedFixedProblemRequest();
+        UpdateEssayAnswerPresentation();
+
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
+        }
+    }
+
+    private static FractionOperation MapArithmeticOperation(
+        ArithmeticOperation operation) =>
+        operation switch
+        {
+            ArithmeticOperation.Add => FractionOperation.Add,
+            ArithmeticOperation.Subtract => FractionOperation.Subtract,
+            ArithmeticOperation.Multiply => FractionOperation.Multiply,
+            ArithmeticOperation.Divide => FractionOperation.Divide,
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
+
+    private static ArithmeticOperation MapFractionOperation(
+        FractionOperation operation) =>
+        operation switch
+        {
+            FractionOperation.Add => ArithmeticOperation.Add,
+            FractionOperation.Subtract => ArithmeticOperation.Subtract,
+            FractionOperation.Multiply => ArithmeticOperation.Multiply,
+            FractionOperation.Divide => ArithmeticOperation.Divide,
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
 
     private bool IsGeometryProblemSelected()
     {
@@ -546,8 +732,7 @@ public partial class MathPuzzlePage : ContentPage
 
         QuizProblemRequest? request =
             _activeProblemRequest ??
-            _quizProblemTypeCatalog.GetFixedRequest(
-                OperationPicker.SelectedIndex);
+            GetSelectedFixedProblemRequest();
 
         return request?.Kind == QuizProblemKind.Geometry;
     }
@@ -561,10 +746,23 @@ public partial class MathPuzzlePage : ContentPage
 
         QuizProblemRequest? request =
             _activeProblemRequest ??
-            _quizProblemTypeCatalog.GetFixedRequest(
-                OperationPicker.SelectedIndex);
+            GetSelectedFixedProblemRequest();
 
         return request?.Kind == QuizProblemKind.FindX;
+    }
+
+    private bool IsFractionProblemSelected()
+    {
+        if (_currentQuestion?.FractionProblem is not null)
+        {
+            return true;
+        }
+
+        QuizProblemRequest? request =
+            _activeProblemRequest ??
+            GetSelectedFixedProblemRequest();
+
+        return request?.Kind == QuizProblemKind.Fraction;
     }
 
     private void GenerateAlgorithmQuestion(
@@ -593,6 +791,10 @@ public partial class MathPuzzlePage : ContentPage
                         _quizGenerator.Generate(
                             _selectedMode,
                             problemRequest.ArithmeticOperation),
+                    QuizProblemKind.Fraction =>
+                        _fractionQuizGenerator.Generate(
+                            _selectedMode,
+                            problemRequest.FractionOperation),
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(
                             _selectedMode),
@@ -609,8 +811,11 @@ public partial class MathPuzzlePage : ContentPage
         catch (InvalidOperationException)
         {
             _currentQuestion = null;
-            QuestionExpressionLabel.Text =
-                Translate("Quiz.GenerationError");
+            SetQuestionContent(
+                Translate("Quiz.GenerationError"),
+                20,
+                "DangerColor",
+                useFractionFormatting: false);
         }
         finally
         {
@@ -631,25 +836,26 @@ public partial class MathPuzzlePage : ContentPage
 
         _currentQuestion = null;
         _activeProblemRequest =
-            _quizProblemTypeCatalog.GetFixedRequest(
-                OperationPicker.SelectedIndex);
+            GetSelectedFixedProblemRequest();
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
 
         QuestionPromptLabel.Text =
             Translate("Quiz.WordProblemTitle");
 
-        QuestionExpressionLabel.FontSize = 20;
-        QuestionExpressionLabel.SetDynamicResource(
-            Label.TextColorProperty,
-            "TextSecondaryColor");
-
-        QuestionExpressionLabel.Text =
+        string readyMessage =
             _llmModelPath is null
                 ? Translate("Quiz.SelectModelFirst")
                 : Translate("Quiz.LlmReady");
 
+        SetQuestionContent(
+            readyMessage,
+            20,
+            "TextSecondaryColor",
+            useFractionFormatting: false);
+
         PresentedAnswerLabel.IsVisible = false;
+        PresentedAnswerFractionView.IsVisible = false;
         FeedbackBorder.IsVisible = false;
         SolutionBorder.IsVisible = false;
         NextQuestionButton.IsEnabled = false;
@@ -1207,6 +1413,7 @@ public partial class MathPuzzlePage : ContentPage
         FeedbackBorder.IsVisible = false;
         SolutionBorder.IsVisible = false;
         PresentedAnswerLabel.IsVisible = false;
+        PresentedAnswerFractionView.IsVisible = false;
         NextQuestionButton.IsEnabled = false;
         ClearMultipleChoiceAnswers();
         UpdateModeStyles();
@@ -1215,12 +1422,11 @@ public partial class MathPuzzlePage : ContentPage
 
         QuestionPromptLabel.Text =
             Translate("Quiz.WordProblemTitle");
-        QuestionExpressionLabel.FontSize = 21;
-        QuestionExpressionLabel.SetDynamicResource(
-            Label.TextColorProperty,
-            "TextPrimaryColor");
-        QuestionExpressionLabel.Text =
-            Translate("Quiz.LoadingModel");
+        SetQuestionContent(
+            Translate("Quiz.LoadingModel"),
+            21,
+            "TextPrimaryColor",
+            useFractionFormatting: false);
 
         ResetLlmTokenSpeed();
 
@@ -1382,13 +1588,15 @@ public partial class MathPuzzlePage : ContentPage
         QuestionPromptLabel.Text =
             Translate("Quiz.WordProblemTitle");
 
-        QuestionExpressionLabel.FontSize = 21;
-        QuestionExpressionLabel.SetDynamicResource(
-            Label.TextColorProperty,
-            "TextPrimaryColor");
-        QuestionExpressionLabel.Text = problemText;
+        SetQuestionContent(
+            problemText,
+            21,
+            "TextPrimaryColor",
+            useFractionFormatting:
+                IsFractionProblemSelected());
 
         PresentedAnswerLabel.IsVisible = false;
+        PresentedAnswerFractionView.IsVisible = false;
         FeedbackBorder.IsVisible = false;
         SolutionBorder.IsVisible = false;
         SetAnswerControlsEnabled(false);
@@ -1411,11 +1619,11 @@ public partial class MathPuzzlePage : ContentPage
 
         string message = Translate(key);
 
-        QuestionExpressionLabel.FontSize = 20;
-        QuestionExpressionLabel.SetDynamicResource(
-            Label.TextColorProperty,
-            "DangerColor");
-        QuestionExpressionLabel.Text = message;
+        SetQuestionContent(
+            message,
+            20,
+            "DangerColor",
+            useFractionFormatting: false);
         ShowLlmStatus(message, isRunning: false);
         ShowLlmTokenSpeed(
             result.TokensPerSecond);
@@ -1981,13 +2189,49 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ClearMultipleChoiceAnswers()
     {
-        foreach (Button button in ChoiceButtons)
+        for (int index = 0;
+             index < ChoiceButtons.Length;
+             index++)
         {
+            Button button = ChoiceButtons[index];
             button.Text = string.Empty;
             button.CommandParameter = null;
             button.IsEnabled = false;
             ApplyNeutralAnswerStyle(button);
+
+            FractionExpressionView fractionView =
+                ChoiceFractionViews[index];
+            fractionView.Expression = string.Empty;
+            fractionView.IsVisible = false;
         }
+    }
+
+    private void SetQuestionContent(
+        string text,
+        double fontSize,
+        string colorResource,
+        bool useFractionFormatting)
+    {
+        QuestionExpressionLabel.IsVisible =
+            !useFractionFormatting;
+        QuestionFractionExpressionView.IsVisible =
+            useFractionFormatting;
+
+        if (useFractionFormatting)
+        {
+            QuestionFractionExpressionView.Expression = text;
+            QuestionFractionExpressionView.MathFontSize = fontSize;
+            QuestionFractionExpressionView.SetDynamicResource(
+                FractionExpressionView.MathColorProperty,
+                colorResource);
+            return;
+        }
+
+        QuestionExpressionLabel.Text = text;
+        QuestionExpressionLabel.FontSize = fontSize;
+        QuestionExpressionLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            colorResource);
     }
 
     private void SetAnswerControlsEnabled(
@@ -2034,62 +2278,86 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.WordProblem;
         FindXQuizContract? findXProblem =
             _currentQuestion.FindXProblem;
+        FractionQuizContract? fractionProblem =
+            _currentQuestion.FractionProblem;
 
         if (wordProblem is not null)
         {
             QuestionPromptLabel.Text =
                 GetQuestionPromptTitle();
-            QuestionExpressionLabel.Text =
-                wordProblem.ProblemText;
-            QuestionExpressionLabel.FontSize = 21;
-            QuestionExpressionLabel.SetDynamicResource(
-                Label.TextColorProperty,
-                "TextPrimaryColor");
+            SetQuestionContent(
+                wordProblem.ProblemText,
+                21,
+                "TextPrimaryColor",
+                useFractionFormatting:
+                    fractionProblem is not null);
 
             if (_currentQuestion.Mode ==
                 ArithmeticQuizMode.TrueFalse)
             {
                 string presentedAnswer =
+                    fractionProblem?.PresentedAnswer?.ToString() ??
                     _currentQuestion.PresentedAnswer
                         .GetValueOrDefault()
-                        .ToString(
-                            "N0",
-                            CultureInfo.CurrentCulture);
+                        .ToString("N0", CultureInfo.CurrentCulture);
 
-                PresentedAnswerLabel.Text =
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        Translate("Quiz.PresentedAnswer"),
-                        presentedAnswer,
-                        wordProblem.AnswerUnit);
-                PresentedAnswerLabel.IsVisible = true;
+                string presentedText = string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translate("Quiz.PresentedAnswer"),
+                    presentedAnswer,
+                    wordProblem.AnswerUnit);
+
+                if (fractionProblem is not null)
+                {
+                    PresentedAnswerLabel.IsVisible = false;
+                    PresentedAnswerFractionView.Expression =
+                        presentedText;
+                    PresentedAnswerFractionView.IsVisible = true;
+                }
+                else
+                {
+                    PresentedAnswerFractionView.IsVisible = false;
+                    PresentedAnswerLabel.Text = presentedText;
+                    PresentedAnswerLabel.IsVisible = true;
+                }
             }
             else
             {
                 PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerFractionView.IsVisible = false;
             }
+        }
+        else if (fractionProblem is not null)
+        {
+            PresentedAnswerLabel.IsVisible = false;
+            PresentedAnswerFractionView.IsVisible = false;
+
+            SetQuestionContent(
+                _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? $"{fractionProblem.ExpressionText} = {fractionProblem.PresentedAnswer}"
+                    : $"{fractionProblem.ExpressionText} = ?",
+                32,
+                "PrimaryColor",
+                useFractionFormatting: true);
         }
         else if (findXProblem is not null)
         {
             PresentedAnswerLabel.IsVisible = false;
-            QuestionExpressionLabel.FontSize = 32;
-            QuestionExpressionLabel.SetDynamicResource(
-                Label.TextColorProperty,
-                "PrimaryColor");
+            PresentedAnswerFractionView.IsVisible = false;
 
-            QuestionExpressionLabel.Text =
+            SetQuestionContent(
                 _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
                     ? $"{findXProblem.EquationText}{Environment.NewLine}" +
                       $"x = {_currentQuestion.PresentedAnswer.GetValueOrDefault().ToString("N0", CultureInfo.CurrentCulture)}"
-                    : findXProblem.EquationText;
+                    : findXProblem.EquationText,
+                32,
+                "PrimaryColor",
+                useFractionFormatting: false);
         }
         else
         {
             PresentedAnswerLabel.IsVisible = false;
-            QuestionExpressionLabel.FontSize = 34;
-            QuestionExpressionLabel.SetDynamicResource(
-                Label.TextColorProperty,
-                "PrimaryColor");
+            PresentedAnswerFractionView.IsVisible = false;
 
             if (_currentQuestion.Mode ==
                 ArithmeticQuizMode.TrueFalse)
@@ -2101,13 +2369,19 @@ public partial class MathPuzzlePage : ContentPage
                             "N0",
                             CultureInfo.CurrentCulture);
 
-                QuestionExpressionLabel.Text =
-                    $"{left} {symbol} {right} = {presentedAnswer}";
+                SetQuestionContent(
+                    $"{left} {symbol} {right} = {presentedAnswer}",
+                    34,
+                    "PrimaryColor",
+                    useFractionFormatting: false);
             }
             else
             {
-                QuestionExpressionLabel.Text =
-                    $"{left} {symbol} {right} = ?";
+                SetQuestionContent(
+                    $"{left} {symbol} {right} = ?",
+                    34,
+                    "PrimaryColor",
+                    useFractionFormatting: false);
             }
         }
 
@@ -2118,11 +2392,13 @@ public partial class MathPuzzlePage : ContentPage
                  index < ChoiceButtons.Length;
                  index++)
             {
-                BigInteger choice =
-                    _currentQuestion.Choices[index];
-
                 Button button =
                     ChoiceButtons[index];
+
+                button.HeightRequest =
+                    fractionProblem is not null
+                        ? 72
+                        : 54;
 
                 char prefix =
                     (char)('A' + index);
@@ -2132,12 +2408,29 @@ public partial class MathPuzzlePage : ContentPage
                         ? string.Empty
                         : $" {wordProblem.AnswerUnit}";
 
-                button.Text =
-                    $"{prefix}. {choice.ToString("N0", CultureInfo.CurrentCulture)}{choiceUnit}";
+                if (fractionProblem is not null)
+                {
+                    ReducedFraction choice =
+                        fractionProblem.Choices[index];
+                    button.Text = string.Empty;
+                    button.CommandParameter = choice.ToString();
 
-                button.CommandParameter =
-                    choice.ToString(
-                        CultureInfo.InvariantCulture);
+                    FractionExpressionView fractionView =
+                        ChoiceFractionViews[index];
+                    fractionView.Expression =
+                        $"{prefix}. {choice}{choiceUnit}";
+                    fractionView.IsVisible = true;
+                }
+                else
+                {
+                    ChoiceFractionViews[index].IsVisible = false;
+                    BigInteger choice =
+                        _currentQuestion.Choices[index];
+                    button.Text =
+                        $"{prefix}. {choice.ToString("N0", CultureInfo.CurrentCulture)}{choiceUnit}";
+                    button.CommandParameter =
+                        choice.ToString(CultureInfo.InvariantCulture);
+                }
             }
         }
 
@@ -2191,8 +2484,27 @@ public partial class MathPuzzlePage : ContentPage
     {
         if (_questionAnswered ||
             _currentQuestion is null ||
-            sender is not Button button ||
-            !BigInteger.TryParse(
+            sender is not Button button)
+        {
+            return;
+        }
+
+        if (_currentQuestion.FractionProblem is FractionQuizContract fraction)
+        {
+            if (!ReducedFraction.TryParse(
+                    button.CommandParameter?.ToString(),
+                    out ReducedFraction selectedFraction))
+            {
+                return;
+            }
+
+            CompleteAnswer(
+                selectedFraction == fraction.CorrectAnswer,
+                button);
+            return;
+        }
+
+        if (!BigInteger.TryParse(
                 button.CommandParameter?.ToString(),
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
@@ -2258,14 +2570,22 @@ public partial class MathPuzzlePage : ContentPage
 
         foreach (Button button in ChoiceButtons)
         {
+            bool isCorrectChoice =
+                _currentQuestion.FractionProblem is FractionQuizContract fraction
+                    ? ReducedFraction.TryParse(
+                        button.CommandParameter?.ToString(),
+                        out ReducedFraction fractionAnswer) &&
+                      fractionAnswer == fraction.CorrectAnswer
+                    : BigInteger.TryParse(
+                        button.CommandParameter?.ToString(),
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out BigInteger answer) &&
+                      answer == _currentQuestion.CorrectAnswer;
+
             if (_currentQuestion.Mode ==
                     ArithmeticQuizMode.MultipleChoice &&
-                BigInteger.TryParse(
-                    button.CommandParameter?.ToString(),
-                    NumberStyles.Integer,
-                    CultureInfo.InvariantCulture,
-                    out BigInteger answer) &&
-                answer == _currentQuestion.CorrectAnswer)
+                isCorrectChoice)
             {
                 ApplyCorrectAnswerStyle(button);
             }
@@ -2278,31 +2598,41 @@ public partial class MathPuzzlePage : ContentPage
                 selectedButton);
         }
 
-        ShowFeedback(
-            isCorrect,
-            _currentQuestion.CorrectAnswer);
+        ShowFeedback(isCorrect);
 
         if (!string.IsNullOrWhiteSpace(
                 feedbackOverride))
         {
             FeedbackLabel.Text = feedbackOverride;
+            FeedbackLabel.IsVisible = true;
+            FeedbackFractionView.IsVisible = false;
         }
 
         if (_currentQuestion.WordProblem is not null)
         {
-            SolutionLabel.Text =
+            string solutionText =
                 ElementaryWordProblemSolutionFormatter.Format(
                     _currentQuestion,
                     AppLanguageManager.CurrentLanguage,
                     CultureInfo.CurrentCulture);
+
+            SetSolutionContent(
+                solutionText,
+                useFractionFormatting:
+                    _currentQuestion.FractionProblem is not null);
             SolutionBorder.IsVisible = true;
         }
         else if (_currentQuestion.Mode ==
                  ArithmeticQuizMode.Essay)
         {
-            SolutionLabel.Text =
+            string solutionText =
                 FormatPlainEssaySolution(
                     _currentQuestion);
+
+            SetSolutionContent(
+                solutionText,
+                useFractionFormatting:
+                    _currentQuestion.FractionProblem is not null);
             SolutionBorder.IsVisible = true;
         }
 
@@ -2357,6 +2687,19 @@ public partial class MathPuzzlePage : ContentPage
     private static string FormatPlainEssaySolution(
         ArithmeticQuizQuestion question)
     {
+        if (question.FractionProblem is FractionQuizContract fraction)
+        {
+            string fractionAnswerLabel =
+                AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
+                    ? "Đáp số"
+                    : "Answer";
+
+            return
+                $"{fraction.ExpressionText} = {fraction.CorrectAnswer}" +
+                Environment.NewLine +
+                $"{fractionAnswerLabel}: {fraction.CorrectAnswer}";
+        }
+
         string left =
             question.Expression.LeftOperand.ToString(
                 "N0",
@@ -2404,14 +2747,14 @@ public partial class MathPuzzlePage : ContentPage
             $"{answerLabel}: {answer}";
     }
 
-    private void ShowFeedback(
-        bool isCorrect,
-        BigInteger correctAnswer)
+    private void ShowFeedback(bool isCorrect)
     {
         string answerText =
-            correctAnswer.ToString(
+            _currentQuestion?.FractionProblem?.CorrectAnswer.ToString() ??
+            _currentQuestion?.CorrectAnswer.ToString(
                 "N0",
-                CultureInfo.CurrentCulture);
+                CultureInfo.CurrentCulture) ??
+            string.Empty;
 
         if (_currentQuestion?.WordProblem is
             MathWordProblem wordProblem)
@@ -2420,14 +2763,28 @@ public partial class MathPuzzlePage : ContentPage
                 $" {wordProblem.AnswerUnit}";
         }
 
-        FeedbackLabel.Text =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                Translate(
-                    isCorrect
-                        ? "Quiz.CorrectFeedback"
-                        : "Quiz.IncorrectFeedback"),
-                answerText);
+        string feedbackText = string.Format(
+            CultureInfo.CurrentCulture,
+            Translate(
+                isCorrect
+                    ? "Quiz.CorrectFeedback"
+                    : "Quiz.IncorrectFeedback"),
+            answerText);
+
+        bool useFractionFormatting =
+            _currentQuestion?.FractionProblem is not null;
+
+        FeedbackLabel.IsVisible = !useFractionFormatting;
+        FeedbackFractionView.IsVisible = useFractionFormatting;
+
+        if (useFractionFormatting)
+        {
+            FeedbackFractionView.Expression = feedbackText;
+        }
+        else
+        {
+            FeedbackLabel.Text = feedbackText;
+        }
 
         FeedbackBorder.IsVisible = true;
 
@@ -2448,6 +2805,29 @@ public partial class MathPuzzlePage : ContentPage
             isCorrect
                 ? "SuccessColor"
                 : "DangerColor");
+
+        FeedbackFractionView.SetDynamicResource(
+            FractionExpressionView.MathColorProperty,
+            isCorrect
+                ? "SuccessColor"
+                : "DangerColor");
+    }
+
+    private void SetSolutionContent(
+        string text,
+        bool useFractionFormatting)
+    {
+        SolutionLabel.IsVisible = !useFractionFormatting;
+        SolutionFractionView.IsVisible = useFractionFormatting;
+
+        if (useFractionFormatting)
+        {
+            SolutionFractionView.Expression = text;
+        }
+        else
+        {
+            SolutionLabel.Text = text;
+        }
     }
 
     private async void OnNextQuestionClicked(
@@ -2506,17 +2886,27 @@ public partial class MathPuzzlePage : ContentPage
     {
         _currentQuestion = null;
         _activeProblemRequest =
-            _quizProblemTypeCatalog.GetFixedRequest(
-                OperationPicker.SelectedIndex);
+            GetSelectedFixedProblemRequest();
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
 
         QuestionExpressionLabel.Text = string.Empty;
+        QuestionExpressionLabel.IsVisible = true;
+        QuestionFractionExpressionView.Expression = string.Empty;
+        QuestionFractionExpressionView.IsVisible = false;
         PresentedAnswerLabel.Text = string.Empty;
         PresentedAnswerLabel.IsVisible = false;
+        PresentedAnswerFractionView.Expression = string.Empty;
+        PresentedAnswerFractionView.IsVisible = false;
         FeedbackLabel.Text = string.Empty;
+        FeedbackLabel.IsVisible = true;
+        FeedbackFractionView.Expression = string.Empty;
+        FeedbackFractionView.IsVisible = false;
         FeedbackBorder.IsVisible = false;
         SolutionLabel.Text = string.Empty;
+        SolutionLabel.IsVisible = true;
+        SolutionFractionView.Expression = string.Empty;
+        SolutionFractionView.IsVisible = false;
         SolutionBorder.IsVisible = false;
         EssaySolutionEditor.Text = string.Empty;
         EssayEquationEntry.Text = string.Empty;
@@ -2564,7 +2954,7 @@ public partial class MathPuzzlePage : ContentPage
                 _incorrectCount);
     }
 
-    private static void ApplyNeutralAnswerStyle(
+    private void ApplyNeutralAnswerStyle(
         Button button)
     {
         button.SetDynamicResource(
@@ -2576,9 +2966,10 @@ public partial class MathPuzzlePage : ContentPage
         button.SetDynamicResource(
             Button.TextColorProperty,
             "TextPrimaryColor");
+        SetChoiceFractionColor(button, "TextPrimaryColor");
     }
 
-    private static void ApplyCorrectAnswerStyle(
+    private void ApplyCorrectAnswerStyle(
         Button button)
     {
         button.SetDynamicResource(
@@ -2590,9 +2981,10 @@ public partial class MathPuzzlePage : ContentPage
         button.SetDynamicResource(
             Button.TextColorProperty,
             "SuccessColor");
+        SetChoiceFractionColor(button, "SuccessColor");
     }
 
-    private static void ApplyIncorrectAnswerStyle(
+    private void ApplyIncorrectAnswerStyle(
         Button button)
     {
         button.SetDynamicResource(
@@ -2604,6 +2996,22 @@ public partial class MathPuzzlePage : ContentPage
         button.SetDynamicResource(
             Button.TextColorProperty,
             "DangerColor");
+        SetChoiceFractionColor(button, "DangerColor");
+    }
+
+    private void SetChoiceFractionColor(
+        Button button,
+        string colorResource)
+    {
+        int index = Array.IndexOf(ChoiceButtons, button);
+        if ((uint)index >= (uint)ChoiceFractionViews.Length)
+        {
+            return;
+        }
+
+        ChoiceFractionViews[index].SetDynamicResource(
+            FractionExpressionView.MathColorProperty,
+            colorResource);
     }
 
     private static string Translate(

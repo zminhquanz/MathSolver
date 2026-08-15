@@ -289,16 +289,6 @@ public partial class DeveloperModePage : ContentPage
         {
             await PlayPageExitAnimationAsync();
 
-            if (Navigation.ModalStack.Contains(
-                    this))
-            {
-                await Navigation.PopModalAsync(
-                    animated:
-                        false);
-
-                return;
-            }
-
             if (Shell.Current is not null)
             {
                 await Shell.Current.GoToAsync(
