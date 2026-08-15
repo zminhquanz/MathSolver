@@ -156,6 +156,16 @@ public sealed class ThemedSvgPathIcon : ContentView
         ApplyThemeColor();
     }
 
+    /// <summary>
+    /// Ép cập nhật màu icon theo theme hiện tại. Cần cho các control được
+    /// native-embed vào WinUI Popup, vì lifecycle Loaded/Unloaded của MAUI
+    /// không phải lúc nào cũng phát lại khi Application theme thay đổi.
+    /// </summary>
+    public void RefreshThemeColor()
+    {
+        ApplyThemeColor();
+    }
+
     private void ApplyThemeColor()
     {
         Color iconColor =

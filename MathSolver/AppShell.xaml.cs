@@ -657,16 +657,22 @@ public partial class AppShell : Shell
         object? sender,
         EventArgs e)
     {
-        Dispatcher.Dispatch(
-            ApplyShellChromeAppearance);
+        Dispatcher.Dispatch(() =>
+        {
+            SettingsButtonIcon.RefreshThemeColor();
+            ApplyShellChromeAppearance();
+        });
     }
 
     private void OnRequestedThemeChanged(
         object? sender,
         AppThemeChangedEventArgs e)
     {
-        Dispatcher.Dispatch(
-            ApplyShellChromeAppearance);
+        Dispatcher.Dispatch(() =>
+        {
+            SettingsButtonIcon.RefreshThemeColor();
+            ApplyShellChromeAppearance();
+        });
     }
 
     private void SetBaseSettingsButtonVisual(
@@ -681,6 +687,14 @@ public partial class AppShell : Shell
             visible
                 ? 1d
                 : 0d;
+
+        if (visible)
+        {
+            // Gear thật của Shell bị ẩn trong lúc Popup mở. Nếu theme đã đổi
+            // trong thời gian đó, refresh màu TRƯỚC khi đưa Opacity về 1 để
+            // không lóe/mất icon do giữ Fill của theme cũ.
+            SettingsButtonIcon.RefreshThemeColor();
+        }
 
         SettingsButton.Opacity =
             opacity;
