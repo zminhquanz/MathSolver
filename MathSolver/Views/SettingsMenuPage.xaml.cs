@@ -2,30 +2,39 @@ using MathSolver.Services;
 
 namespace MathSolver.Views;
 
-public partial class SettingsMenuPage : ContentPage
+public partial class SettingsMenuPage : ContentView
 {
     // Glyph › có optical center hơi lệch khi xoay 90° do font metrics.
     // Bù 1 DIP sang phải chỉ ở trạng thái mở để dấu hướng xuống nằm đúng
     // tâm hình tròn, nhưng vẫn giữ vị trí chuẩn khi đóng.
     private const double ExpandedChevronOffsetX = 1d;
 
-    // Được bật ngay từ constructor, trước khi Shell route làm trang bên dưới
-    // nhận OnDisappearing. FormulaPage dùng cờ này để biết rằng nó chỉ đang bị
-    // overlay trong suốt che lên và không được tự ẩn nội dung.
+    // Overlay này nằm trực tiếp trên visual tree của tab hiện tại, không phải
+    // Shell route và cũng không dùng Navigation.PushModalAsync. Giữ cờ để các
+    // trang cũ vẫn tương thích với logic bảo toàn GraphicsView/LLM.
     internal static bool IsTransparentOverlayActive { get; private set; }
 
     private readonly Dictionary<string, Button>
         _fontButtons =
             new(StringComparer.Ordinal);
 
+
+    private readonly TaskCompletionSource<string?>
+        _completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     private bool _hasPlayedOpenAnimation;
+    private bool _isFullWindowOverlayMode;
     private bool _isNavigating;
     private bool _isUpdatingFullNumberDisplaySwitch;
+    private bool _isLoaded;
     private Task? _closeTask;
 
     private readonly HashSet<VisualElement>
         _animatingSections =
             new();
+
+    public string? RequestedRoute { get; private set; }
 
     public SettingsMenuPage()
     {
@@ -34,13 +43,11 @@ public partial class SettingsMenuPage : ContentPage
 
         InitializeComponent();
 
-        Shell.SetNavBarIsVisible(
-            this,
-            false);
+        Loaded +=
+            OnLoaded;
 
-        Shell.SetTabBarIsVisible(
-            this,
-            false);
+        Unloaded +=
+            OnUnloaded;
 
         BuildFontOptions();
         LocalizationService.Attach(
@@ -50,43 +57,195 @@ public partial class SettingsMenuPage : ContentPage
         PrepareOpenAnimation();
     }
 
-    protected override void OnAppearing()
+    public Task<string?> WaitForCloseAsync()
     {
-        base.OnAppearing();
-
-        IsTransparentOverlayActive =
-            true;
-
-        AppThemeManager.ThemeChanged +=
-            OnSettingsChanged;
-
-        AppFontManager.FontChanged +=
-            OnSettingsChanged;
-
-        AppLanguageManager.LanguageChanged +=
-            OnSettingsChanged;
-
-        DeveloperModeManager.DeveloperModeChanged +=
-            OnSettingsChanged;
-
-        LocalizationService.Attach(
-            this);
-        UpdateState();
-
-        if (!_hasPlayedOpenAnimation)
-        {
-            _hasPlayedOpenAnimation =
-                true;
-
-            Dispatcher.Dispatch(
-                async () =>
-                    await PlayOpenAnimationAsync());
-        }
+        return _completion.Task;
     }
 
-    protected override void OnDisappearing()
+    internal void UseFullWindowOverlayMode(
+        double overlayWidth,
+        double overlayHeight,
+        double buttonTop,
+        double buttonRight,
+        double buttonWidth,
+        double buttonHeight)
+    {
+        _isFullWindowOverlayMode =
+            true;
+
+        OverlaySettingsButton.IsVisible =
+            true;
+
+        UpdateFullWindowOverlayLayout(
+            overlayWidth,
+            overlayHeight,
+            buttonTop,
+            buttonRight,
+            buttonWidth,
+            buttonHeight);
+    }
+
+    internal void UpdateFullWindowOverlayLayout(
+        double overlayWidth,
+        double overlayHeight,
+        double buttonTop,
+        double buttonRight,
+        double buttonWidth,
+        double buttonHeight)
+    {
+        if (!_isFullWindowOverlayMode)
+        {
+            return;
+        }
+
+        double safeWidth =
+            Math.Max(
+                1d,
+                overlayWidth);
+
+        double safeHeight =
+            Math.Max(
+                1d,
+                overlayHeight);
+
+        WidthRequest =
+            safeWidth;
+
+        HeightRequest =
+            safeHeight;
+
+        OverlaySettingsButton.WidthRequest =
+            Math.Max(
+                36d,
+                buttonWidth);
+
+        OverlaySettingsButton.HeightRequest =
+            Math.Max(
+                36d,
+                buttonHeight);
+
+        OverlaySettingsButton.Margin =
+            new Thickness(
+                0d,
+                Math.Max(
+                    0d,
+                    buttonTop),
+                Math.Max(
+                    0d,
+                    buttonRight),
+                0d);
+
+        double menuTop =
+            Math.Max(
+                0d,
+                buttonTop +
+                buttonHeight +
+                4d);
+
+        double menuRight =
+            Math.Max(
+                8d,
+                buttonRight);
+
+        MenuPanel.Margin =
+            new Thickness(
+                0d,
+                menuTop,
+                menuRight,
+                12d);
+
+        MenuPanel.WidthRequest =
+            Math.Max(
+                300d,
+                Math.Min(
+                    390d,
+                    safeWidth - 28d));
+
+        MenuPanel.MaximumHeightRequest =
+            Math.Max(
+                240d,
+                safeHeight -
+                menuTop -
+                12d);
+    }
+
+    internal void ActivateFullWindowOverlay()
+    {
+        ActivateOverlayLifecycle();
+
+    }
+
+    private void OnLoaded(
+        object? sender,
+        EventArgs e)
+    {
+        ActivateOverlayLifecycle();
+    }
+
+    private void ActivateOverlayLifecycle()
+    {
+        if (!_isLoaded)
+        {
+            _isLoaded =
+                true;
+
+            IsTransparentOverlayActive =
+                true;
+
+            AppThemeManager.ThemeChanged +=
+                OnSettingsChanged;
+
+            AppFontManager.FontChanged +=
+                OnSettingsChanged;
+
+            AppLanguageManager.LanguageChanged +=
+                OnSettingsChanged;
+
+            DeveloperModeManager.DeveloperModeChanged +=
+                OnSettingsChanged;
+
+            LocalizationService.Attach(
+                this);
+
+            UpdateState();
+        }
+
+        if (_hasPlayedOpenAnimation)
+        {
+            return;
+        }
+
+        _hasPlayedOpenAnimation =
+            true;
+
+        Dispatcher.Dispatch(
+            async () =>
+                await PlayOpenAnimationAsync());
+    }
+
+    private void OnUnloaded(
+        object? sender,
+        EventArgs e)
+    {
+        ReleaseOverlayState();
+
+        // Nếu host page bị tháo bất ngờ (đóng cửa sổ / đổi root), không để
+        // AppShell chờ vô hạn ở WaitForCloseAsync.
+        _completion.TrySetResult(
+            null);
+    }
+
+    internal void ReleaseOverlayState()
     {
         IsTransparentOverlayActive =
+            false;
+
+        if (!_isLoaded)
+        {
+            return;
+        }
+
+        _isLoaded =
             false;
 
         AppThemeManager.ThemeChanged -=
@@ -101,7 +260,6 @@ public partial class SettingsMenuPage : ContentPage
         DeveloperModeManager.DeveloperModeChanged -=
             OnSettingsChanged;
 
-        base.OnDisappearing();
     }
 
     protected override void OnSizeAllocated(
@@ -119,16 +277,27 @@ public partial class SettingsMenuPage : ContentPage
                     390,
                     width - 28));
 
+        if (_isFullWindowOverlayMode)
+        {
+            double menuTop =
+                Math.Max(
+                    0d,
+                    MenuPanel.Margin.Top);
+
+            MenuPanel.MaximumHeightRequest =
+                Math.Max(
+                    240d,
+                    height -
+                    menuTop -
+                    12d);
+
+            return;
+        }
+
         MenuPanel.MaximumHeightRequest =
             Math.Max(
                 360,
-                height - 28);
-    }
-
-    protected override bool OnBackButtonPressed()
-    {
-        _ = CloseAsync();
-        return true;
+                height - 28d);
     }
 
     private void PrepareOpenAnimation()
@@ -260,100 +429,8 @@ public partial class SettingsMenuPage : ContentPage
                 button);
         }
     }
-    private void UpdateSettingsIconTint()
-    {
-        if (!TryGetThemeColor(
-                "TextPrimaryColor",
-                out Color tintColor))
-        {
-            return;
-        }
-
-        ResetSettingsIconTintBehavior.TintColor = tintColor;
-        MoreSettingsIconTintBehavior.TintColor = tintColor;
-        FontIconTintBehavior.TintColor = tintColor;
-        LanguageIconTintBehavior.TintColor = tintColor;
-        BenchmarkIconTintBehavior.TintColor = tintColor;
-        AboutIconTintBehavior.TintColor = tintColor;
-    }
-
-    private static bool TryGetThemeColor(
-        string resourceKey,
-        out Color color)
-    {
-        color =
-            Colors.Transparent;
-
-        if (Application.Current?.Resources is not
-            ResourceDictionary resources)
-        {
-            return false;
-        }
-
-        return TryGetThemeColorNextStep(
-            resources,
-            resourceKey,
-            out color);
-    }
-
-    private static bool TryGetThemeColorNextStep(
-        ResourceDictionary resources,
-        string resourceKey,
-        out Color color)
-    {
-        // Mỗi phương thức có tham số out phải gán giá trị trên mọi
-        // nhánh thoát, kể cả khi không tìm thấy resource.
-        color =
-            Colors.Transparent;
-
-        if (resources.TryGetValue(
-                resourceKey,
-                out object? resourceValue))
-        {
-            if (resourceValue is Color resourceColor)
-            {
-                color =
-                    resourceColor;
-
-                return true;
-            }
-
-            if (resourceValue is SolidColorBrush resourceBrush)
-            {
-                color =
-                    resourceBrush.Color;
-
-                return true;
-            }
-        }
-
-        // MergedDictionaries có kiểu ICollection<ResourceDictionary>,
-        // nên không thể truy cập trực tiếp bằng toán tử [index].
-        // Chép sang List để duyệt ngược theo đúng thứ tự ưu tiên.
-        var mergedDictionaries =
-            new List<ResourceDictionary>(
-                resources.MergedDictionaries);
-
-        for (int index =
-                 mergedDictionaries.Count - 1;
-             index >= 0;
-             index--)
-        {
-            if (TryGetThemeColorNextStep(
-                    mergedDictionaries[index],
-                    resourceKey,
-                    out color))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private void UpdateState()
     {
-        UpdateSettingsIconTint();
         ThemeSummaryLabel.Text =
             AppThemeManager.CurrentMode switch
             {
@@ -781,135 +858,44 @@ public partial class SettingsMenuPage : ContentPage
         object? sender,
         TappedEventArgs e)
     {
-        await OpenHardwarePerformancePageAsync();
+        await RequestNavigationAsync(
+            nameof(HardwarePerformancePage));
     }
 
     private async void OnDeveloperModeTapped(
         object? sender,
         TappedEventArgs e)
     {
-        await OpenDeveloperModePageAsync();
-    }
-
-    private async Task OpenDeveloperModePageAsync()
-    {
-        if (_isNavigating)
-        {
-            return;
-        }
-
-        _isNavigating =
-            true;
-
-        try
-        {
-            // Đóng overlay bằng navigation gốc trước, sau đó mở global route.
-            // DeveloperModePage cần nằm trong Shell để Shell.TitleView hiển thị
-            // nút quay lại; nếu đẩy nó thành modal thì toàn bộ thanh điều hướng
-            // của Shell sẽ không được dựng.
-            await CloseAsync();
-
-            if (Shell.Current is null)
-            {
-                return;
-            }
-
-            await Shell.Current.GoToAsync(
-                nameof(DeveloperModePage),
-                animate:
-                    false);
-        }
-        finally
-        {
-            _isNavigating =
-                false;
-        }
-    }
-
-    private async Task OpenHardwarePerformancePageAsync()
-    {
-        if (_isNavigating)
-        {
-            return;
-        }
-
-        _isNavigating =
-            true;
-
-        try
-        {
-            await CloseAsync();
-
-            if (Shell.Current is null)
-            {
-                return;
-            }
-
-            await Shell.Current.GoToAsync(
-                nameof(HardwarePerformancePage),
-                animate:
-                    false);
-        }
-        finally
-        {
-            _isNavigating =
-                false;
-        }
+        await RequestNavigationAsync(
+            nameof(DeveloperModePage));
     }
 
     private async void OnAboutTapped(
         object? sender,
         TappedEventArgs e)
     {
-        await OpenAboutPageAsync();
-    }
-
-    private async Task OpenAboutPageAsync()
-    {
-        if (_isNavigating)
-        {
-            return;
-        }
-
-        _isNavigating =
-            true;
-
-        try
-        {
-            await CloseAsync();
-
-            if (Shell.Current is null)
-            {
-                return;
-            }
-
-            await Shell.Current.GoToAsync(
-                nameof(AboutPage),
-                animate:
-                    false);
-        }
-        finally
-        {
-            _isNavigating =
-                false;
-        }
+        await RequestNavigationAsync(
+            nameof(AboutPage));
     }
 
     private async void OnAdvancedColorClicked(
         object? sender,
         EventArgs e)
     {
-        await OpenAdvancedSettingsAsync();
+        await RequestNavigationAsync(
+            nameof(SettingsPage));
     }
 
     private async void OnAdvancedSettingsTapped(
         object? sender,
         TappedEventArgs e)
     {
-        await OpenAdvancedSettingsAsync();
+        await RequestNavigationAsync(
+            nameof(SettingsPage));
     }
 
-    private async Task OpenAdvancedSettingsAsync()
+    private async Task RequestNavigationAsync(
+        string route)
     {
         if (_isNavigating)
         {
@@ -919,19 +905,12 @@ public partial class SettingsMenuPage : ContentPage
         _isNavigating =
             true;
 
+        RequestedRoute =
+            route;
+
         try
         {
             await CloseAsync();
-
-            if (Shell.Current is null)
-            {
-                return;
-            }
-
-            await Shell.Current.GoToAsync(
-                nameof(SettingsPage),
-                animate:
-                    false);
         }
         finally
         {
@@ -943,6 +922,13 @@ public partial class SettingsMenuPage : ContentPage
     private async void OnOutsideTapped(
         object? sender,
         TappedEventArgs e)
+    {
+        await CloseAsync();
+    }
+
+    private async void OnOverlaySettingsButtonClicked(
+        object? sender,
+        EventArgs e)
     {
         await CloseAsync();
     }
@@ -973,26 +959,11 @@ public partial class SettingsMenuPage : ContentPage
         {
             await PlayCloseAnimationAsync();
 
-            if (Shell.Current is AppShell appShell)
-            {
-                await appShell.CloseSettingsAsync();
-                return;
-            }
+            IsTransparentOverlayActive =
+                false;
 
-            if (Shell.Current is not null)
-            {
-                await Shell.Current.GoToAsync(
-                    "..",
-                    animate: false);
-                return;
-            }
-
-            if (ReferenceEquals(
-                    Navigation.NavigationStack.LastOrDefault(),
-                    this))
-            {
-                await Navigation.PopAsync(animated: false);
-            }
+            _completion.TrySetResult(
+                RequestedRoute);
         }
         finally
         {

@@ -1,7 +1,14 @@
 using MathSolver.Views;
 using MathSolver.Services;
-using System.ComponentModel;
 using System.Collections.Generic;
+
+#if WINDOWS
+using Microsoft.Maui.Platform;
+using WinUIFrameworkElement = Microsoft.UI.Xaml.FrameworkElement;
+using WinUIPopup = Microsoft.UI.Xaml.Controls.Primitives.Popup;
+using WinUIWindow = Microsoft.UI.Xaml.Window;
+using WindowsPoint = Windows.Foundation.Point;
+#endif
 
 namespace MathSolver;
 
@@ -10,6 +17,27 @@ public partial class AppShell : Shell
     private bool _openingSettings;
     private bool _returningFromSettings;
 
+    private SettingsMenuPage? _settingsOverlay;
+    private Grid? _settingsOverlayHost;
+
+#if WINDOWS
+    private WinUIPopup? _windowsSettingsPopup;
+    private WinUIFrameworkElement? _windowsOverlayHostElement;
+    private WinUIFrameworkElement? _windowsSettingsPlatformView;
+
+    // Geometry của nút Settings được chụp đúng lúc trước khi TitleActionButtons
+    // bị ẩn. Nút này neo ở góc phải TitleView, nên top/right/size không phụ
+    // thuộc chiều rộng cửa sổ. Khi maximize/restore chỉ cần đổi kích thước
+    // full-window overlay và dùng lại geometry này; tuyệt đối không đo lại
+    // một native button đang IsVisible=false vì WinUI giữ tọa độ layout cũ.
+    private double _windowsSettingsButtonTop;
+    private double _windowsSettingsButtonRight;
+    private double _windowsSettingsButtonWidth = 42d;
+    private double _windowsSettingsButtonHeight = 42d;
+#endif
+
+    private bool _isShellChromeDimmed;
+
     private string _activeMainRoute =
         "CalculationPage";
 
@@ -17,6 +45,13 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
+
+
+        // Giữ TitleActionButtons luôn trong visual tree. Khi cần ẩn ở trang
+        // Settings detail chỉ đổi Opacity/InputTransparent, không IsVisible=false.
+        // Nhờ vậy WinUI không dispose/re-create ImageButton qua mỗi lần vào/ra.
+        SetSettingsActionPresentation(
+            visible: true);
 
         // Ghi nhận tab ban đầu nhưng không chạy animation khi ứng dụng mở.
         _activeMainRoute =
@@ -51,10 +86,6 @@ public partial class AppShell : Shell
         }
 
         Routing.RegisterRoute(
-            nameof(SettingsMenuPage),
-            typeof(SettingsMenuPage));
-
-        Routing.RegisterRoute(
             nameof(SettingsPage),
             typeof(SettingsPage));
 
@@ -70,19 +101,13 @@ public partial class AppShell : Shell
             nameof(AboutPage),
             typeof(AboutPage));
 
-        // Các trang cài đặt là global route nằm ngoài cây Shell nên được
-        // đẩy lên navigation stack. Khi đổi tab, cần pop route trước.
-        MainTabBar.PropertyChanged +=
-            OnMainTabBarPropertyChanged;
-
-        Navigating +=
-            OnShellNavigating;
-
+        // Các trang cài đặt chi tiết là global route nằm ngoài cây Shell.
+        // Menu cài đặt nhanh không còn là route; nó là visual-tree overlay của tab hiện tại.
         Navigated +=
             OnShellNavigated;
 
         UpdateSettingsAccessibilityText();
-        UpdateSettingsIconTint();
+        ApplyShellChromeAppearance();
     }
 
     private async void OnSettingsClicked(
@@ -96,8 +121,9 @@ public partial class AppShell : Shell
             return;
         }
 
-        _openingSettings = true;
-        SettingsButton.IsEnabled = false;
+        _openingSettings =
+            true;
+
 
         try
         {
@@ -109,19 +135,477 @@ public partial class AppShell : Shell
                 return;
             }
 
-            // Settings dùng global route thay cho modal. Trên WinUI,
-            // PopModalAsync có thể tháo PlatformView trước khi hoàn tất và
-            // ném InvalidOperationException khi mở trang cài đặt con.
-            await Shell.Current.GoToAsync(
-                nameof(SettingsMenuPage),
-                animate:
-                    false);
+            ContentPage? hostPage =
+                Shell.Current.CurrentPage as ContentPage;
+
+            if (hostPage?.Content is not Grid hostGrid)
+            {
+                // Bốn tab chính hiện tại đều dùng Grid làm root. Không thay
+                // Content ở runtime để tránh detach/re-attach các native view
+                // như GraphicsView trên WinUI.
+                return;
+            }
+
+            var settingsMenu =
+                new SettingsMenuPage();
+
+            _settingsOverlay =
+                settingsMenu;
+
+            bool isFullWindowOverlay =
+                TryAttachSettingsOverlayToWindow(
+                    settingsMenu);
+
+            if (!isFullWindowOverlay)
+            {
+                Grid.SetRow(
+                    settingsMenu,
+                    0);
+
+                Grid.SetRowSpan(
+                    settingsMenu,
+                    Math.Max(
+                        1,
+                        hostGrid.RowDefinitions.Count));
+
+                Grid.SetColumn(
+                    settingsMenu,
+                    0);
+
+                Grid.SetColumnSpan(
+                    settingsMenu,
+                    Math.Max(
+                        1,
+                        hostGrid.ColumnDefinitions.Count));
+
+                settingsMenu.ZIndex =
+                    10000;
+
+                _settingsOverlayHost =
+                    hostGrid;
+
+                // Fallback cho các nền tảng không gắn được overlay ở cấp Window.
+                // SettingsMenuPage vẫn nằm trên content của tab và Shell chrome
+                // được làm tối riêng.
+                SetShellChromeDimmed(
+                    true);
+
+                hostGrid.Children.Add(
+                    settingsMenu);
+            }
+
+            // Trên Windows, SettingsMenuPage nằm trong WinUI Popup layer phía
+            // trên toàn bộ Shell. Fallback ở nền tảng khác vẫn dùng ContentPage overlay.
+            if (!isFullWindowOverlay)
+            {
+                SetSettingsActionPresentation(
+                    visible: true);
+            }
+
+            string? requestedRoute =
+                await settingsMenu.WaitForCloseAsync();
+
+            RemoveSettingsOverlay();
+
+            if (!string.IsNullOrWhiteSpace(
+                    requestedRoute) &&
+                Shell.Current is not null)
+            {
+                // Ẩn bằng Opacity/InputTransparent nhưng KHÔNG tháo
+                // TitleActionButtons khỏi visual tree. Điều này tránh WinUI
+                // tái tạo ImageButton/behavior sau mỗi lần navigation.
+                SetSettingsActionPresentation(
+                    visible: false);
+
+                // Chỉ có đúng một lệnh Shell navigation: từ tab hiện tại tới
+                // trang chi tiết. Không còn chuỗi ".." rồi push route mới.
+                await Shell.Current.GoToAsync(
+                    requestedRoute,
+                    animate: false);
+            }
         }
         finally
         {
-            SettingsButton.IsEnabled = true;
-            _openingSettings = false;
+            // Nếu có exception giữa chừng vẫn phải trả visual tree về trạng thái
+            // hợp lệ trước khi cho phép bấm Settings lần tiếp theo.
+            RemoveSettingsOverlay();
+
+
+            _openingSettings =
+                false;
         }
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (_settingsOverlay is not null)
+        {
+            _ =
+                _settingsOverlay.CloseWithAnimationAsync();
+
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
+
+    private void RemoveSettingsOverlay()
+    {
+        SettingsMenuPage? overlay =
+            _settingsOverlay;
+
+        Grid? host =
+            _settingsOverlayHost;
+
+        _settingsOverlay =
+            null;
+
+        _settingsOverlayHost =
+            null;
+
+        bool removedFromWindow =
+            RemoveSettingsOverlayFromWindow();
+
+        if (!removedFromWindow &&
+            overlay is not null &&
+            host is not null &&
+            host.Children.Contains(
+                overlay))
+        {
+            host.Children.Remove(
+                overlay);
+        }
+
+        overlay?.ReleaseOverlayState();
+
+        // TabBar chính luôn được giữ nguyên trạng thái hiển thị khi mở/đóng
+        // Settings overlay. Không cần restore Shell.TabBarIsVisible ở đây nữa.
+        SetShellChromeDimmed(
+            false);
+
+        SetSettingsActionPresentation(
+            visible: !IsSettingsRouteOpen());
+    }
+
+    private bool TryAttachSettingsOverlayToWindow(
+        SettingsMenuPage settingsMenu)
+    {
+#if WINDOWS
+        if (Window?.Handler?.PlatformView is not
+                WinUIWindow nativeWindow ||
+            nativeWindow.Content is not
+                WinUIFrameworkElement shellRoot ||
+            shellRoot.XamlRoot is null)
+        {
+            return false;
+        }
+
+        var mauiContext =
+            Window.Handler.MauiContext;
+
+        if (mauiContext is null)
+        {
+            return false;
+        }
+
+        // Không thay nativeWindow.Content và không re-parent Shell root nữa.
+        // Việc bọc lại Window.Content ở runtime có thể phá layout/title-bar
+        // của MAUI Shell. WinUI Popup có popup layer riêng và nằm trên XamlRoot.
+        WinUIFrameworkElement platformView =
+            settingsMenu.ToPlatform(
+                mauiContext);
+
+        double overlayWidth =
+            Math.Max(
+                1d,
+                shellRoot.XamlRoot.Size.Width);
+
+        double overlayHeight =
+            Math.Max(
+                1d,
+                shellRoot.XamlRoot.Size.Height);
+
+        platformView.Width =
+            overlayWidth;
+
+        platformView.Height =
+            overlayHeight;
+
+        platformView.HorizontalAlignment =
+            Microsoft.UI.Xaml.HorizontalAlignment.Left;
+
+        platformView.VerticalAlignment =
+            Microsoft.UI.Xaml.VerticalAlignment.Top;
+
+        GetWindowsSettingsButtonGeometry(
+            shellRoot,
+            overlayWidth,
+            out double buttonTop,
+            out double buttonRight,
+            out double buttonWidth,
+            out double buttonHeight);
+
+        // Lưu geometry theo right edge để resize/maximize chỉ cần cập nhật
+        // kích thước overlay. SettingsButton thật vẫn được giữ trong visual tree
+        // xuyên suốt vòng đời popup, tránh mất handler sau nhiều lần navigation.
+        _windowsSettingsButtonTop =
+            buttonTop;
+
+        _windowsSettingsButtonRight =
+            buttonRight;
+
+        _windowsSettingsButtonWidth =
+            buttonWidth;
+
+        _windowsSettingsButtonHeight =
+            buttonHeight;
+
+        settingsMenu.UseFullWindowOverlayMode(
+            overlayWidth,
+            overlayHeight,
+            _windowsSettingsButtonTop,
+            _windowsSettingsButtonRight,
+            _windowsSettingsButtonWidth,
+            _windowsSettingsButtonHeight);
+
+        var popup =
+            new WinUIPopup
+            {
+                XamlRoot =
+                    shellRoot.XamlRoot,
+
+                Child =
+                    platformView,
+
+                HorizontalOffset =
+                    0d,
+
+                VerticalOffset =
+                    0d,
+
+                IsLightDismissEnabled =
+                    false
+            };
+
+        _windowsSettingsPopup =
+            popup;
+
+        _windowsOverlayHostElement =
+            shellRoot;
+
+        _windowsSettingsPlatformView =
+            platformView;
+
+        shellRoot.SizeChanged +=
+            OnWindowsOverlayHostSizeChanged;
+
+        // Giữ SettingsButton thật trong visual tree và trong layout. Popup nằm
+        // phía trên nên scrim sẽ phủ nó; OverlaySettingsButton đảm nhiệm hit target
+        // và icon ở lớp trên. Không IsVisible=false nữa để tránh WinUI dispose/
+        // recreate native ImageButton sau nhiều vòng Settings detail -> Back.
+        SetSettingsActionPresentation(
+            visible: true);
+
+        popup.IsOpen =
+            true;
+
+        // Native embedding không được phép phụ thuộc hoàn toàn vào MAUI Loaded
+        // để chạy animation/lifecycle. Kích hoạt rõ ràng sau khi Popup đã mở.
+        settingsMenu.ActivateFullWindowOverlay();
+
+        SetShellChromeDimmed(
+            false);
+
+        return true;
+#else
+        return false;
+#endif
+    }
+
+#if WINDOWS
+    private void GetWindowsSettingsButtonGeometry(
+        WinUIFrameworkElement shellRoot,
+        double overlayWidth,
+        out double buttonTop,
+        out double buttonRight,
+        out double buttonWidth,
+        out double buttonHeight)
+    {
+        // Giá trị fallback chỉ được dùng nếu handler của SettingsButton chưa
+        // có platform view. Bình thường button thật luôn đã loaded khi click.
+        buttonTop =
+            4d;
+
+        buttonRight =
+            4d;
+
+        buttonWidth =
+            Math.Max(
+                42d,
+                SettingsButton.Width);
+
+        buttonHeight =
+            Math.Max(
+                42d,
+                SettingsButton.Height);
+
+        if (SettingsButton.Handler?.PlatformView is not
+                WinUIFrameworkElement nativeSettingsButton ||
+            nativeSettingsButton.XamlRoot is null ||
+            !ReferenceEquals(
+                nativeSettingsButton.XamlRoot,
+                shellRoot.XamlRoot))
+        {
+            return;
+        }
+
+        try
+        {
+            var transform =
+                nativeSettingsButton.TransformToVisual(
+                    null);
+
+            WindowsPoint origin =
+                transform.TransformPoint(
+                    new WindowsPoint(
+                        0d,
+                        0d));
+
+            double measuredWidth =
+                nativeSettingsButton.ActualWidth > 0d
+                    ? nativeSettingsButton.ActualWidth
+                    : 42d;
+
+            double measuredHeight =
+                nativeSettingsButton.ActualHeight > 0d
+                    ? nativeSettingsButton.ActualHeight
+                    : 42d;
+
+            buttonTop =
+                Math.Max(
+                    0d,
+                    origin.Y);
+
+            buttonRight =
+                Math.Max(
+                    0d,
+                    overlayWidth -
+                    origin.X -
+                    measuredWidth);
+
+            buttonWidth =
+                measuredWidth;
+
+            buttonHeight =
+                measuredHeight;
+        }
+        catch (InvalidOperationException)
+        {
+            // Nếu visual tree đang chuyển trạng thái đúng lúc click, fallback
+            // ở trên vẫn giữ menu usable thay vì làm crash ứng dụng.
+        }
+        catch (ArgumentException)
+        {
+            // TransformToVisual có thể thất bại nếu visual vừa bị detach.
+            // Không để lỗi layout của overlay làm crash Settings.
+        }
+    }
+
+    private void OnWindowsOverlayHostSizeChanged(
+        object sender,
+        Microsoft.UI.Xaml.SizeChangedEventArgs e)
+    {
+        if (_windowsSettingsPopup?.IsOpen != true ||
+            _windowsSettingsPlatformView is not
+                WinUIFrameworkElement platformView ||
+            _settingsOverlay is not
+                SettingsMenuPage settingsMenu ||
+            sender is not
+                WinUIFrameworkElement shellRoot ||
+            shellRoot.XamlRoot is null)
+        {
+            return;
+        }
+
+        double overlayWidth =
+            Math.Max(
+                1d,
+                shellRoot.XamlRoot.Size.Width);
+
+        double overlayHeight =
+            Math.Max(
+                1d,
+                shellRoot.XamlRoot.Size.Height);
+
+        platformView.Width =
+            overlayWidth;
+
+        platformView.Height =
+            overlayHeight;
+
+        // Dùng geometry neo theo cạnh phải đã chụp lúc mở popup. Right/top/size
+        // ổn định khi maximize/restore, còn overlayWidth/Height luôn lấy mới.
+        settingsMenu.UpdateFullWindowOverlayLayout(
+            overlayWidth,
+            overlayHeight,
+            _windowsSettingsButtonTop,
+            _windowsSettingsButtonRight,
+            _windowsSettingsButtonWidth,
+            _windowsSettingsButtonHeight);
+    }
+#endif
+
+    private bool RemoveSettingsOverlayFromWindow()
+    {
+#if WINDOWS
+        WinUIPopup? popup =
+            _windowsSettingsPopup;
+
+        WinUIFrameworkElement? hostElement =
+            _windowsOverlayHostElement;
+
+        _windowsSettingsPopup =
+            null;
+
+        _windowsOverlayHostElement =
+            null;
+
+        _windowsSettingsPlatformView =
+            null;
+
+        _windowsSettingsButtonTop =
+            0d;
+
+        _windowsSettingsButtonRight =
+            0d;
+
+        _windowsSettingsButtonWidth =
+            42d;
+
+        _windowsSettingsButtonHeight =
+            42d;
+
+        if (hostElement is not null)
+        {
+            hostElement.SizeChanged -=
+                OnWindowsOverlayHostSizeChanged;
+        }
+
+        if (popup is null)
+        {
+            return false;
+        }
+
+        popup.IsOpen =
+            false;
+
+        popup.Child =
+            null;
+
+        return true;
+#else
+        return false;
+#endif
     }
 
     private async Task AnimateSettingsButtonAsync()
@@ -163,35 +647,124 @@ public partial class AppShell : Shell
         object? sender,
         EventArgs e)
     {
-        RefreshSettingsIconTint();
+        Dispatcher.Dispatch(
+            ApplyShellChromeAppearance);
     }
 
     private void OnRequestedThemeChanged(
         object? sender,
         AppThemeChangedEventArgs e)
     {
-        RefreshSettingsIconTint();
-    }
-
-    private void RefreshSettingsIconTint()
-    {
-        // AppThemeManager thay ResourceDictionary trong cùng chu kỳ sự kiện.
-        // Đẩy việc đọc màu sang dispatcher để lấy đúng resource mới.
         Dispatcher.Dispatch(
-            UpdateSettingsIconTint);
+            ApplyShellChromeAppearance);
     }
 
-    private void UpdateSettingsIconTint()
+    private void SetSettingsActionPresentation(
+        bool visible)
     {
-        if (!TryGetThemeColor(
-                "TextPrimaryColor",
-                out Color tintColor))
+        // Không dùng IsVisible để ẩn TitleActionButtons. IsVisible=false khiến
+        // WinUI Shell có thể detach/recreate native ImageButton sau nhiều vòng
+        // detail -> Back. Giữ nguyên visual tree và chỉ đổi Opacity/InputTransparent.
+        TitleActionButtons.IsVisible =
+            true;
+
+        TitleActionButtons.Opacity =
+            visible
+                ? 1d
+                : 0d;
+
+        TitleActionButtons.InputTransparent =
+            !visible;
+
+        SettingsButton.IsEnabled =
+            visible;
+
+    }
+
+    private void SetShellChromeDimmed(
+        bool isDimmed)
+    {
+        if (_isShellChromeDimmed == isDimmed)
         {
             return;
         }
 
-        SettingsIconTintBehavior.TintColor =
-            tintColor;
+        _isShellChromeDimmed =
+            isDimmed;
+
+        ApplyShellChromeAppearance();
+    }
+
+    private void ApplyShellChromeAppearance()
+    {
+        ShellTitleScrim.IsVisible =
+            _isShellChromeDimmed;
+
+        if (TryGetThemeColor(
+                "ShellBackgroundColor",
+                out Color shellBackgroundColor))
+        {
+            Shell.SetTabBarBackgroundColor(
+                MainTabBar,
+                _isShellChromeDimmed
+                    ? BlendColorWithBlack(
+                        shellBackgroundColor,
+                        0.4f)
+                    : shellBackgroundColor);
+        }
+
+        if (TryGetThemeColor(
+                "ShellForegroundColor",
+                out Color shellForegroundColor))
+        {
+            Color dimmedForegroundColor =
+                _isShellChromeDimmed
+                    ? BlendColorWithBlack(
+                        shellForegroundColor,
+                        0.4f)
+                    : shellForegroundColor;
+
+            Shell.SetTabBarForegroundColor(
+                MainTabBar,
+                dimmedForegroundColor);
+
+            Shell.SetTabBarTitleColor(
+                MainTabBar,
+                dimmedForegroundColor);
+        }
+
+        if (TryGetThemeColor(
+                "ShellUnselectedColor",
+                out Color shellUnselectedColor))
+        {
+            Shell.SetTabBarUnselectedColor(
+                MainTabBar,
+                _isShellChromeDimmed
+                    ? BlendColorWithBlack(
+                        shellUnselectedColor,
+                        0.4f)
+                    : shellUnselectedColor);
+        }
+    }
+
+    private static Color BlendColorWithBlack(
+        Color source,
+        float blackAmount)
+    {
+        float clampedBlackAmount =
+            Math.Clamp(
+                blackAmount,
+                0f,
+                1f);
+
+        float retainedAmount =
+            1f - clampedBlackAmount;
+
+        return new Color(
+            source.Red * retainedAmount,
+            source.Green * retainedAmount,
+            source.Blue * retainedAmount,
+            source.Alpha);
     }
 
     private static bool TryGetThemeColor(
@@ -281,70 +854,30 @@ public partial class AppShell : Shell
                 "Mở cài đặt giao diện"));
     }
 
-    private void OnMainTabBarPropertyChanged(
-        object? sender,
-        PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != "CurrentItem" ||
-            !IsSettingsRouteOpen() ||
-            _returningFromSettings)
-        {
-            return;
-        }
-
-        // PropertyChanged chỉ còn phục vụ việc đóng trang cài đặt đang phủ
-        // lên Shell. Không khởi chạy animation ở đây vì CurrentItem đổi sau
-        // khi trang đích có thể đã xuất hiện, dễ tạo cảm giác nháy hai lần.
-        Dispatcher.Dispatch(
-            async () => await CloseSettingsAsync());
-    }
-
-    private void OnShellNavigating(
-        object? sender,
-        ShellNavigatingEventArgs e)
-    {
-        string targetLocation =
-            e.Target.Location.OriginalString;
-
-        string? targetMainRoute =
-            GetMainRoute(
-                targetLocation);
-
-        if (_returningFromSettings ||
-            !IsSettingsRouteOpen() ||
-            !e.CanCancel ||
-            targetMainRoute is null)
-        {
-            return;
-        }
-
-        // Khi một global route cài đặt đang mở mà người dùng chọn tab,
-        // hủy điều hướng mặc định, pop route rồi đi tới tab đã chọn.
-        e.Cancel();
-
-        Dispatcher.Dispatch(
-            async () =>
-            {
-                await CloseSettingsAsync();
-
-                if (Shell.Current is not null)
-                {
-                    await Shell.Current.GoToAsync(
-                        $"//{targetMainRoute}",
-                        animate: false);
-                }
-            });
-    }
-
     private void OnShellNavigated(
         object? sender,
         ShellNavigatedEventArgs e)
     {
+        // TabBar chính vẫn có thể bấm khi Settings overlay đang mở. Nếu người
+        // dùng chuyển sang tab khác, đóng overlay của tab cũ để không giữ một
+        // WaitForCloseAsync treo và để lần quay lại tab cũ không còn lớp phủ.
+        if (_settingsOverlay is not null)
+        {
+            SetSettingsActionPresentation(
+                visible: true);
+
+            _ =
+                _settingsOverlay.CloseWithAnimationAsync();
+
+            UpdateSettingsAccessibilityText();
+            return;
+        }
+
         bool settingsOpen =
             IsSettingsRouteOpen();
 
-        TitleActionButtons.IsVisible =
-            !settingsOpen;
+        SetSettingsActionPresentation(
+            visible: !settingsOpen);
 
         UpdateSettingsAccessibilityText();
 
@@ -412,6 +945,10 @@ public partial class AppShell : Shell
         finally
         {
             _returningFromSettings = false;
+
+            Dispatcher.Dispatch(() =>
+                SetSettingsActionPresentation(
+                    visible: !IsSettingsRouteOpen()));
         }
     }
 
@@ -422,9 +959,6 @@ public partial class AppShell : Shell
             string.Empty;
 
         return location.Contains(
-                   nameof(SettingsMenuPage),
-                   StringComparison.OrdinalIgnoreCase) ||
-               location.Contains(
                    nameof(SettingsPage),
                    StringComparison.OrdinalIgnoreCase) ||
                location.Contains(

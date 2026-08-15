@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
+<ContentView
     x:Class="MathSolver.Views.SettingsMenuPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="False"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
+    HorizontalOptions="Fill"
+    VerticalOptions="Fill"
     BackgroundColor="Transparent">
 
     <Grid x:Name="OverlayRoot">
@@ -18,9 +18,45 @@
             </BoxView.GestureRecognizers>
         </BoxView>
 
+        <!--
+            Chỉ bật khi SettingsMenuPage được gắn ở cấp Window trên Windows.
+            Nút này nằm trên scrim và trùng vị trí nút Settings thật ở Shell,
+            nên người dùng vẫn thấy/có thể bấm lại nút Settings để đóng menu.
+        -->
+        <Grid
+            x:Name="OverlaySettingsButton"
+            WidthRequest="42"
+            HeightRequest="42"
+            Margin="0"
+            HorizontalOptions="End"
+            VerticalOptions="Start"
+            IsVisible="False"
+            ZIndex="3">
+
+            <ImageButton
+                WidthRequest="42"
+                HeightRequest="42"
+                Padding="0"
+                BorderWidth="1"
+                CornerRadius="24"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill"
+                BackgroundColor="Transparent"
+                SemanticProperties.Description="Đóng cài đặt giao diện"
+                Clicked="OnOverlaySettingsButtonClicked" />
+
+            <controls:ThemedSvgPathIcon
+                Data="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"
+                WidthRequest="22"
+                HeightRequest="22"
+                HorizontalOptions="Center"
+                VerticalOptions="Center" />
+        </Grid>
+
         <Border
             x:Name="MenuPanel"
-            Margin="0,12,18,12"
+            Margin="0,6,8,12"
+            ZIndex="2"
             Padding="0"
             WidthRequest="390"
             MaximumHeightRequest="760"
@@ -182,11 +218,13 @@
                         <!-- Font -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Image Grid.Column="0" Source="font.png" HeightRequest="24" WidthRequest="24">
-                                    <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="FontIconTintBehavior" />
-                                    </Image.Behaviors>
-                                </Image>
+                                <controls:ThemedSvgPathIcon
+                                    Grid.Column="0"
+                                    Data="M384-362h192l35 97q4 11 14 18t22 7q20 0 32.5-16.5T684-293L532-695q-5-11-15-18t-22-7h-30q-12 0-22 7t-15 18L276-293q-8 19 4 36t32 17q13 0 22.5-7t14.5-19l35-96Zm24-70 70-198h4l70 198H408ZM160-80q-33 0-56.5-23.5T80-160v-640q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v640q0 33-23.5 56.5T800-80H160Zm0-80h640v-640H160v640Zm0-640v640-640Z"
+                                    HeightRequest="24"
+                                    WidthRequest="24"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Phông chữ" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label x:Name="FontSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
@@ -225,11 +263,13 @@
                         <!-- Language -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Image Grid.Column="0" Source="language.png" HeightRequest="24" WidthRequest="24">
-                                    <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="LanguageIconTintBehavior" />
-                                    </Image.Behaviors>
-                                </Image>
+                                <controls:ThemedSvgPathIcon
+                                    Grid.Column="0"
+                                    Data="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z"
+                                    HeightRequest="24"
+                                    WidthRequest="24"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Ngôn ngữ" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label x:Name="LanguageSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
@@ -304,13 +344,13 @@
                         <!-- Hardware and performance -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Image
-                                    Grid.Column="0" WidthRequest="24" HeightRequest="24"
-                                    Source="benchmark.png">
-                                    <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="BenchmarkIconTintBehavior" />
-                                    </Image.Behaviors>
-                                </Image>
+                                <controls:ThemedSvgPathIcon
+                                    Grid.Column="0"
+                                    Data="M680-160q-17 0-28.5-11.5T640-200v-200q0-17 11.5-28.5T680-440h80q17 0 28.5 11.5T800-400v200q0 17-11.5 28.5T760-160h-80Zm-240 0q-17 0-28.5-11.5T400-200v-560q0-17 11.5-28.5T440-800h80q17 0 28.5 11.5T560-760v560q0 17-11.5 28.5T520-160h-80Zm-240 0q-17 0-28.5-11.5T160-200v-360q0-17 11.5-28.5T200-600h80q17 0 28.5 11.5T320-560v360q0 17-11.5 28.5T280-160h-80Z"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
                                 <VerticalStackLayout
                                     Grid.Column="1"
                                     Spacing="1"
@@ -341,13 +381,13 @@
                         <!-- About -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Image
-                                    Grid.Column="0" WidthRequest="24" HeightRequest="24"
-                                    Source="info.png">
-                                    <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="AboutIconTintBehavior" />
-                                    </Image.Behaviors>
-                                </Image>
+                                <controls:ThemedSvgPathIcon
+                                    Grid.Column="0"
+                                    Data="M508.5-291.5Q520-303 520-320v-160q0-17-11.5-28.5T480-520q-17 0-28.5 11.5T440-480v160q0 17 11.5 28.5T480-280q17 0 28.5-11.5Zm0-320Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
 
                                 <VerticalStackLayout
                                     Grid.Column="1"
@@ -431,11 +471,13 @@
                         <!-- Reset -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*" ColumnSpacing="10">
-                                <Image Grid.Column="0" Source="reset_settings.png" WidthRequest="24" HeightRequest="24">
-                                    <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="ResetSettingsIconTintBehavior" />
-                                    </Image.Behaviors>
-                                </Image>
+                                <controls:ThemedSvgPathIcon
+                                    Grid.Column="0"
+                                    Data="M550-390h100q13 0 21.5 8.5T680-360q0 13-8.5 21.5T650-330H550q-13 0-21.5-8.5T520-360q0-13 8.5-21.5T550-390Zm30 240v-20h-30q-13 0-21.5-8.5T520-200q0-13 8.5-21.5T550-230h30v-20q0-13 8.5-21.5T610-280q13 0 21.5 8.5T640-250v100q0 13-8.5 21.5T610-120q-13 0-21.5-8.5T580-150Zm130-80h100q13 0 21.5 8.5T840-200q0 13-8.5 21.5T810-170H710q-13 0-21.5-8.5T680-200q0-13 8.5-21.5T710-230Zm10-80v-100q0-13 8.5-21.5T750-440q13 0 21.5 8.5T780-410v20h30q13 0 21.5 8.5T840-360q0 13-8.5 21.5T810-330h-30v20q0 13-8.5 21.5T750-280q-13 0-21.5-8.5T720-310ZM480-760q-117 0-198.5 81.5T200-480q0 72 32.5 132t87.5 98v-70q0-17 11.5-28.5T360-360q17 0 28.5 11.5T400-320v160q0 17-11.5 28.5T360-120H200q-17 0-28.5-11.5T160-160q0-17 11.5-28.5T200-200h54q-62-50-98-122.5T120-480q0-75 28.5-140.5t77-114q48.5-48.5 114-77T480-840q114 0 204 62.5T814-615q6 16 0 31t-22 21q-16 6-31.5 0T739-585q-31-78-100.5-126.5T480-760Z"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Đặt lại" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label Text="Khôi phục cài đặt mặc định" Style="{StaticResource ThemeMenuSummaryStyle}" />
@@ -449,11 +491,13 @@
                         <!-- Advanced -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Image Grid.Column="0" Source="settings.png" WidthRequest="24" HeightRequest="24">
-                                    <Image.Behaviors>
-                                        <toolkit:IconTintColorBehavior x:Name="MoreSettingsIconTintBehavior" />
-                                    </Image.Behaviors>
-                                </Image>
+                                <controls:ThemedSvgPathIcon
+                                    Grid.Column="0"
+                                    Data="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="Cài đặt nâng cao" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label Text="Màu HEX, RGB và xem trước" Style="{StaticResource ThemeMenuSummaryStyle}" />
@@ -478,4 +522,4 @@
             </Grid>
         </Border>
     </Grid>
-</ContentPage>
+</ContentView>

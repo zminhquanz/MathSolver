@@ -113,7 +113,7 @@ public partial class FormulaPage : ContentPage
 
         CancelMainTabAnimations();
 
-        // SettingsMenuPage là modal trong suốt. Khi mở nó, FormulaPage vẫn là
+        // SettingsMenuPage là visual-tree overlay trong suốt. Khi mở nó, FormulaPage vẫn là
         // phần nền đang được nhìn qua lớp scrim, vì vậy tuyệt đối không đặt
         // GeometryContent.Opacity = 0. Chỉ ẩn Hình học khi thật sự rời tab
         // Công thức để chuyển sang một trang/tab chính khác.

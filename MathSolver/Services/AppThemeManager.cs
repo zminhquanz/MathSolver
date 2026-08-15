@@ -35,6 +35,37 @@ public static class AppThemeManager
             ? color
             : Color.FromArgb(DefaultAccentHex);
 
+    // Màu icon đơn sắc được quyết định hoàn toàn bằng code:
+    // Light  -> đen tuyệt đối
+    // Dark   -> trắng tuyệt đối
+    // System -> theo RequestedTheme hiện tại của hệ điều hành.
+    public static bool IsDarkThemeEffective
+    {
+        get
+        {
+            if (CurrentMode == AppThemeMode.Dark)
+            {
+                return true;
+            }
+
+            if (CurrentMode == AppThemeMode.Light)
+            {
+                return false;
+            }
+
+            Application? application =
+                _application ??
+                Application.Current;
+
+            return application?.RequestedTheme == AppTheme.Dark;
+        }
+    }
+
+    public static Color MonochromeIconColor =>
+        IsDarkThemeEffective
+            ? Colors.White
+            : Colors.Black;
+
     public static void Initialize(Application application)
     {
         ArgumentNullException.ThrowIfNull(application);

@@ -189,8 +189,8 @@ public partial class MathPuzzlePage : ContentPage
     {
         UnsubscribeDeveloperModeChanged();
 
-        // Settings và thư viện Gemma chỉ là modal trong suốt phủ lên trang.
-        // Constructor của overlay bật cờ trước khi PushModalAsync làm trang
+        // Settings và thư viện Gemma chỉ là overlay trong suốt phủ lên trang.
+        // Constructor của overlay bật cờ trước khi popup làm trang
         // nhận OnDisappearing, nên không được coi đây là thao tác rời tab lớn:
         // giữ nguyên câu hỏi, lựa chọn, điểm số và model đang nằm trong RAM.
         if (SettingsMenuPage.IsTransparentOverlayActive ||
