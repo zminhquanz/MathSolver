@@ -727,6 +727,7 @@
                                 MathColor="{DynamicResource PrimaryColor}"
                                 HorizontalTextAlignment="Center"
                                 WrapContent="True"
+                                TokenSpacing="4"
                                 HorizontalOptions="Fill" />
 
                             <Label
@@ -1027,21 +1028,26 @@
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
 
-                                <Label
-                                    x:Name="FeedbackLabel"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource SuccessColor}" />
+                                <Grid>
+                                    <Label
+                                        x:Name="FeedbackLabel"
+                                        FontSize="17"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        VerticalTextAlignment="Center"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource SuccessColor}" />
 
-                                <controls:FractionExpressionView
-                                    x:Name="FeedbackFractionView"
-                                    IsVisible="False"
-                                    MathFontSize="17"
-                                    MathColor="{DynamicResource SuccessColor}"
-                                    HorizontalTextAlignment="Center"
-                                    WrapContent="True"
-                                    HorizontalOptions="Fill" />
+                                    <controls:FractionExpressionView
+                                        x:Name="FeedbackFractionView"
+                                        IsVisible="False"
+                                        MathFontSize="17"
+                                        MathColor="{DynamicResource SuccessColor}"
+                                        HorizontalTextAlignment="Center"
+                                        WrapContent="True"
+                                        TokenSpacing="4"
+                                        HorizontalOptions="Fill" />
+                                </Grid>
 
                             </Border>
 
@@ -1079,6 +1085,7 @@
                                         MathColor="{DynamicResource TextPrimaryColor}"
                                         HorizontalTextAlignment="Start"
                                         WrapContent="True"
+                                        TokenSpacing="4"
                                         HorizontalOptions="Fill" />
 
                                 </VerticalStackLayout>

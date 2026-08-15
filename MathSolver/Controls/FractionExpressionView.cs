@@ -46,6 +46,14 @@ public sealed class FractionExpressionView : ContentView
             false,
             propertyChanged: OnVisualPropertyChanged);
 
+    public static readonly BindableProperty TokenSpacingProperty =
+        BindableProperty.Create(
+            nameof(TokenSpacing),
+            typeof(double),
+            typeof(FractionExpressionView),
+            8d,
+            propertyChanged: OnVisualPropertyChanged);
+
     public string Expression
     {
         get => (string)GetValue(ExpressionProperty);
@@ -74,6 +82,12 @@ public sealed class FractionExpressionView : ContentView
     {
         get => (bool)GetValue(WrapContentProperty);
         set => SetValue(WrapContentProperty, value);
+    }
+
+    public double TokenSpacing
+    {
+        get => (double)GetValue(TokenSpacingProperty);
+        set => SetValue(TokenSpacingProperty, Math.Max(0d, value));
     }
 
     public FractionExpressionView()
@@ -134,7 +148,7 @@ public sealed class FractionExpressionView : ContentView
             var singleLineLayout =
                 new HorizontalStackLayout
                 {
-                    Spacing = 8,
+                    Spacing = TokenSpacing,
                     VerticalOptions = LayoutOptions.Center,
                     HorizontalOptions = GetHorizontalLayoutOptions()
                 };
@@ -166,7 +180,11 @@ public sealed class FractionExpressionView : ContentView
         foreach (string token in tokens)
         {
             View tokenView = CreateTokenView(token);
-            tokenView.Margin = new Thickness(0, 0, 8, 4);
+            tokenView.Margin = new Thickness(
+                0,
+                0,
+                TokenSpacing,
+                Math.Min(4d, TokenSpacing));
             wrappingLayout.Children.Add(tokenView);
         }
 
