@@ -290,12 +290,20 @@ public partial class AboutPage : ContentPage
 
             await PlayPageExitAnimationAsync();
 
-            if (Shell.Current is not null)
+            if (Shell.Current is AppShell appShell)
             {
-                await Shell.Current.GoToAsync(
-                    "..",
-                    animate:
-                        false);
+                await appShell.CloseSettingsAsync(
+                    this);
+
+                return;
+            }
+
+            // Fallback only when this page is hosted without AppShell.
+            // Pop the navigation stack directly; don't use Shell URI-back.
+            if (Navigation.NavigationStack.Count > 1)
+            {
+                await Navigation.PopAsync(
+                    animated: false);
             }
         }
         finally

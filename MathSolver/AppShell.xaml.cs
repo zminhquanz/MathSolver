@@ -986,7 +986,8 @@ public partial class AppShell : Shell
         return true;
     }
 
-    public async Task CloseSettingsAsync()
+    public async Task CloseSettingsAsync(
+        Page? sourcePage = null)
     {
         if (_returningFromSettings ||
             Shell.Current is null ||
@@ -995,13 +996,58 @@ public partial class AppShell : Shell
             return;
         }
 
+        // Nếu một lần back khác đã thắng race và CurrentPage không còn là
+        // trang phát lệnh nữa thì không pop thêm lần thứ hai. Đây là guard
+        // quan trọng cho WinUI, nơi handler có thể bị disconnect trong lúc
+        // Shell đang hoàn tất một navigation trước đó.
+        if (sourcePage is not null &&
+            !ReferenceEquals(
+                CurrentPage,
+                sourcePage))
+        {
+            return;
+        }
+
         _returningFromSettings = true;
 
         try
         {
-            await Shell.Current.GoToAsync(
+            // Exit animation vừa kết thúc có thể vẫn còn một layout pass của
+            // WinUI trong queue. Nhường đúng một UI turn trước khi pop để
+            // tránh đụng handler đang ở pha disconnect/reconnect.
+            await Task.Yield();
+
+            if (sourcePage is not null &&
+                !ReferenceEquals(
+                    CurrentPage,
+                    sourcePage))
+            {
+                return;
+            }
+
+#if WINDOWS
+            // Với Settings detail là global route, Shell tạo navigation stack.
+            // Trên WinUI dùng INavigation.PopAsync để pop đúng page hiện tại
+            // thay vì GoToAsync(".."). Cách này tránh đường Shell URI back
+            // thỉnh thoảng chạm vào PlatformView đã bị disconnect.
+            if (Navigation.NavigationStack.Count > 1)
+            {
+                await Navigation.PopAsync(
+                    animated: false);
+            }
+            else
+            {
+                // Trạng thái này không nên xảy ra với global Settings route.
+                // Không gọi GoToAsync("..") làm fallback trên Windows vì đó
+                // chính là đường navigation gây PlatformView-null race.
+                System.Diagnostics.Debug.WriteLine(
+                    "[Settings] Back ignored: navigation stack has no detail page to pop.");
+            }
+#else
+            await GoToAsync(
                 "..",
                 animate: false);
+#endif
         }
         finally
         {

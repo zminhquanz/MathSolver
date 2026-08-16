@@ -138,6 +138,14 @@ public partial class PowerRootView : LocalizedSolverView
         DeveloperModeManager.DeveloperModeChanged +=
             OnDeveloperModeChanged;
 
+        AppThemeManager.ThemeChanged +=
+            OnThemeChanged;
+
+        // SelectionButtonStyler gắn DynamicResource lên hai nút chế độ.
+        // Trên WinUI, sau khi ResourceDictionary của theme bị thay trong lúc
+        // view đang sống, visual state của Button đôi khi vẫn giữ brush cũ.
+        // Gắn lại resource mỗi lần view Loaded để trạng thái luôn khớp theme.
+        RefreshModeButtonTheme();
         UpdateDeveloperDiagnosticsVisibility();
     }
 
@@ -145,6 +153,9 @@ public partial class PowerRootView : LocalizedSolverView
     {
         DeveloperModeManager.DeveloperModeChanged -=
             OnDeveloperModeChanged;
+
+        AppThemeManager.ThemeChanged -=
+            OnThemeChanged;
 
 #if WINDOWS
         MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
@@ -182,21 +193,35 @@ public partial class PowerRootView : LocalizedSolverView
         _isPowerMode =
             powerMode;
 
-        Button selectedButton =
-            powerMode
-                ? PowerModeButton
-                : RootModeButton;
-
-        SelectionButtonStyler.Select(
-            selectedButton,
-            PowerModeButton,
-            RootModeButton);
+        RefreshModeButtonTheme();
 
         PowerContent.IsVisible =
             powerMode;
 
         RootContent.IsVisible =
             !powerMode;
+    }
+
+    private void RefreshModeButtonTheme()
+    {
+        SelectionButtonStyler.Select(
+            _isPowerMode
+                ? PowerModeButton
+                : RootModeButton,
+            PowerModeButton,
+            RootModeButton);
+    }
+
+    private void OnThemeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        // AppThemeManager phát ThemeChanged sau khi palette mới đã được gắn.
+        // Dispatch thêm một UI tick để WinUI thoát khỏi visual state cũ trước
+        // khi SetDynamicResource được gắn lại. Không gọi SelectMode vì khi đang
+        // tính toán SelectMode chủ động return và sẽ làm màu nút không refresh.
+        Dispatcher.Dispatch(
+            RefreshModeButtonTheme);
     }
 
     private void OnInputTextChanged(

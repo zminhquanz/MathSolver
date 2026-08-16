@@ -132,6 +132,12 @@ public partial class MathPuzzlePage : ContentPage
         LocalizationService.CultureChanged +=
             OnCultureChanged;
 
+        // MathPuzzlePage là ShellContent sống suốt vòng đời tab. Khi đổi theme
+        // từ Settings popup, trang có thể nhận OnDisappearing nhưng không bị
+        // destroy; vì vậy giữ subscription ở cùng lifetime với CultureChanged.
+        AppThemeManager.ThemeChanged +=
+            OnThemeChanged;
+
         UpdateOperationPickerItems();
         UpdateGenerationSourceStyles();
         UpdateModeStyles();
@@ -148,11 +154,10 @@ public partial class MathPuzzlePage : ContentPage
         SubscribeDeveloperModeChanged();
         UpdateAiDiagnosticsVisibility();
 
-        // WinUI can restore its native blue accent when a Button leaves the
-        // Disabled visual state. Reattach the app's dynamic theme resources
-        // whenever this page returns from Settings so the current accent is
-        // applied immediately.
-        RefreshLlmActionButtonTheme();
+        // WinUI can keep the old theme brush on stateful Buttons after a
+        // ResourceDictionary swap or after returning from Settings. Reattach
+        // every selection group's DynamicResource to the current palette.
+        RefreshStatefulButtonTheme();
         UpdateAiTeacherState();
 
         // Nếu quay lại trong grace period thì giữ nguyên GGUF weights đang
@@ -228,6 +233,24 @@ public partial class MathPuzzlePage : ContentPage
         ResetMainTabRoot();
 
         base.OnDisappearing();
+    }
+
+    private void OnThemeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        // AppThemeManager đã thay palette trước khi phát event. Dispatch sang
+        // UI queue giúp WinUI hoàn tất state transition của Button rồi mới gắn
+        // lại DynamicResource, tránh hai nút Thuật toán / AI-LLM giữ màu cũ.
+        Dispatcher.Dispatch(
+            RefreshStatefulButtonTheme);
+    }
+
+    private void RefreshStatefulButtonTheme()
+    {
+        UpdateGenerationSourceStyles();
+        UpdateModeStyles();
+        UpdateProblemOperationPanel();
     }
 
     private void OnCultureChanged(

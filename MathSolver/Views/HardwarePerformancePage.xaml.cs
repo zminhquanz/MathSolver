@@ -3686,12 +3686,20 @@ public partial class HardwarePerformancePage : ContentPage
 
             // Các trang Settings chỉ dùng global route; không đi qua modal
             // để tránh lỗi PlatformView null của PopModalAsync trên WinUI.
-            if (Shell.Current is not null)
+            if (Shell.Current is AppShell appShell)
             {
-                await Shell.Current.GoToAsync(
-                    "..",
-                    animate:
-                        false);
+                await appShell.CloseSettingsAsync(
+                    this);
+
+                return;
+            }
+
+            // Fallback only when this page is hosted without AppShell.
+            // Pop the navigation stack directly; don't use Shell URI-back.
+            if (Navigation.NavigationStack.Count > 1)
+            {
+                await Navigation.PopAsync(
+                    animated: false);
             }
         }
         finally

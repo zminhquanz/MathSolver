@@ -476,26 +476,16 @@ public partial class SettingsPage : ContentPage
 
             if (Shell.Current is AppShell appShell)
             {
-                await appShell.CloseSettingsAsync();
-                return;
-            }
-
-            if (Shell.Current is not null)
-            {
-                await Shell.Current.GoToAsync(
-                    "..",
-                    animate:
-                        false);
+                await appShell.CloseSettingsAsync(
+                    this);
 
                 return;
             }
 
-            if (Navigation.NavigationStack.Contains(
-                    this))
+            if (Navigation.NavigationStack.Count > 1)
             {
                 await Navigation.PopAsync(
-                    animated:
-                        false);
+                    animated: false);
             }
         }
         finally
