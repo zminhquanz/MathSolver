@@ -41,6 +41,7 @@ public sealed class LocalLlmQuizGenerator
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly ProportionQuizGenerator _proportionQuizGenerator;
+    private readonly MotionQuizGenerator _motionQuizGenerator;
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
@@ -57,7 +58,8 @@ public sealed class LocalLlmQuizGenerator
         FractionQuizGenerator fractionQuizGenerator,
         GeometryQuizGenerator geometryQuizGenerator,
         FindXQuizGenerator findXQuizGenerator,
-        ProportionQuizGenerator proportionQuizGenerator)
+        ProportionQuizGenerator proportionQuizGenerator,
+        MotionQuizGenerator motionQuizGenerator)
     {
         _quizGenerator =
             quizGenerator ??
@@ -82,6 +84,10 @@ public sealed class LocalLlmQuizGenerator
         _proportionQuizGenerator =
             proportionQuizGenerator ??
             throw new ArgumentNullException(nameof(proportionQuizGenerator));
+
+        _motionQuizGenerator =
+            motionQuizGenerator ??
+            throw new ArgumentNullException(nameof(motionQuizGenerator));
     }
 
     /// <summary>
@@ -216,6 +222,10 @@ public sealed class LocalLlmQuizGenerator
                             mode,
                             problemRequest.ProportionType ?? ProportionQuizType.Direct,
                             language),
+                    QuizProblemKind.Motion =>
+                        _motionQuizGenerator.GenerateContract(
+                            mode,
+                            language),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -284,6 +294,11 @@ public sealed class LocalLlmQuizGenerator
                     : contract.ProportionProblem is ProportionQuizContract proportion
                     ? LlmQuizPromptBuilder.BuildProportionUserPrompt(
                         proportion,
+                        language,
+                        previousErrorCode: null)
+                    : contract.MotionProblem is MotionQuizContract motion
+                    ? LlmQuizPromptBuilder.BuildMotionUserPrompt(
+                        motion,
                         language,
                         previousErrorCode: null)
                     : LlmQuizPromptBuilder.BuildUserPrompt(
@@ -553,6 +568,11 @@ public sealed class LocalLlmQuizGenerator
                             ? _wordProblemValidator.ValidateProportion(
                                 draft,
                                 validatedProportion,
+                                language)
+                            : contract.MotionProblem is MotionQuizContract validatedMotion
+                            ? _wordProblemValidator.ValidateMotion(
+                                draft,
+                                validatedMotion,
                                 language)
                             : _wordProblemValidator.Validate(
                                 draft,
@@ -946,8 +966,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -1242,6 +1262,10 @@ internal static class LlmQuizPromptBuilder
                 : "- The question must ask for the NUMBER OF ADDITIONAL PEOPLE, not the new total number of people."
             : string.Empty;
 
+        string personalizationHint = BuildProportionPersonalizationHint(
+            contract.Scenario,
+            language);
+
         if (language == AppLanguage.Vietnamese)
         {
             return FormattableString.Invariant(
@@ -1261,6 +1285,9 @@ internal static class LlmQuizPromptBuilder
                 - Không tự thêm dấu ngoặc giải thích cách đọc số, không lặp lại cùng dữ kiện bằng cả chữ số lẫn chữ viết.
                 - Đây bắt buộc là bài {{typeName}}; không đổi thành cộng/trừ/nhân/chia đơn thuần có ngữ cảnh khác.
                 - Có thể diễn đạt lại câu chữ tự nhiên nhưng không đổi đối tượng, vai trò các số, đại lượng cần tìm hoặc quan hệ thuận/nghịch.
+                - Để câu chuyện sinh động hơn, ưu tiên thêm MỘT tên riêng hoặc vai trò đời thường phù hợp với ngữ cảnh: {{personalizationHint}}
+                - Tên riêng/vai trò chỉ là chi tiết câu chuyện; không được làm phát sinh dữ kiện số mới, không dùng tên lớp/đội có chữ số như “lớp 5A”, và không được thay thế đối tượng chính của contract.
+                - Giữ nguyên đơn vị thực tế do C# chọn trong mẫu tham chiếu (ví dụ bao gạo dùng kg, rau/củ/trái cây/thịt/trứng dùng gam, xe tải chở nhiều gạo dùng tấn, thùng/can chất lỏng dùng lít); không tự đổi sang đơn vị khác.
                 {{specialRule}}
                 - Không tính hoặc làm lộ đáp án trong problem_text.
                 - answer_unit phải đúng "{{contract.AnswerUnit}}", không chứa số hay phép tính.
@@ -1294,6 +1321,9 @@ internal static class LlmQuizPromptBuilder
             - Do not add a parenthetical spelling of a number and do not repeat the same fact once as digits and again as words.
             - It must genuinely be a {{typeName}} problem. Do not replace it with an unrelated one-step arithmetic story.
             - You may rewrite the wording naturally, but do not change the objects, numerical roles, requested quantity, or direct/inverse relationship.
+            - To make the story livelier, prefer adding ONE suitable proper name or everyday role: {{personalizationHint}}
+            - The name/role is story flavor only. It must not introduce another numeric fact, must not use numbered class/team labels such as “Grade 5A”, and must not replace the contract's main object.
+            - Preserve the realistic unit chosen by C# in the reference (for example rice bags use kg, vegetables/fruit/meat/eggs use grams, truckloads of rice use tons, and liquid containers use liters); do not convert it to another unit.
             {{specialRule}}
             - Do not calculate or reveal the answer in problem_text.
             - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
@@ -1308,6 +1338,221 @@ internal static class LlmQuizPromptBuilder
             }
             {{retry}}
             """);
+    }
+
+    public static string BuildMotionUserPrompt(
+        MotionQuizContract contract,
+        AppLanguage language,
+        string? previousErrorCode)
+    {
+        string retry = string.IsNullOrWhiteSpace(previousErrorCode)
+            ? string.Empty
+            : BuildRetryInstruction(previousErrorCode, language);
+
+        string typeName = contract.Type switch
+        {
+            MotionQuizType.Basic => language == AppLanguage.Vietnamese
+                ? "một vật chuyển động cơ bản"
+                : "basic single-object motion",
+            MotionQuizType.Chasing => language == AppLanguage.Vietnamese
+                ? "hai vật cùng chiều đuổi kịp"
+                : "same-direction catching up",
+            MotionQuizType.Meeting => language == AppLanguage.Vietnamese
+                ? "hai vật ngược chiều gặp nhau"
+                : "opposite-direction meeting",
+            MotionQuizType.River => language == AppLanguage.Vietnamese
+                ? "chuyển động xuôi/ngược dòng"
+                : "upstream/downstream river motion",
+            _ => throw new ArgumentOutOfRangeException(nameof(contract))
+        };
+
+        string facts = string.Join(
+            ", ",
+            contract.Facts.Select(value =>
+                value.ToString(CultureInfo.InvariantCulture)));
+
+        string personalizationHint = BuildMotionPersonalizationHint(
+            contract.Type,
+            language);
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return FormattableString.Invariant(
+                $$"""
+                Viết một bài toán chuyển động loại {{typeName}} tự nhiên, phù hợp học sinh tiểu học/THCS Việt Nam.
+                Các dữ kiện số bắt buộc theo đúng thứ tự xuất hiện: [{{facts}}]
+                Mẫu tham chiếu C# bắt buộc giữ nguyên ý nghĩa, đối tượng, đơn vị và vai trò từng số:
+                {{contract.ProblemText}}
+                answer_unit bắt buộc: {{contract.AnswerUnit}}
+
+                Quy tắc cứng:
+                - CHỈ dùng 4 nhóm chuyển động cơ bản: một vật; cùng chiều đuổi kịp; ngược chiều gặp nhau; xuôi/ngược dòng. Không thêm bài nâng cao, vận tốc thay đổi nhiều chặng, đi-về hay kết hợp nhiều dạng.
+                - Mọi dữ kiện số trong problem_text bắt buộc viết bằng chữ số 0-9; không viết số bằng chữ.
+                - problem_text phải giữ đúng toàn bộ các lần xuất hiện số trong danh sách [{{facts}}], đúng vai trò như mẫu; không thêm, bỏ, gộp hoặc đổi bất kỳ dữ kiện số nào.
+                - Không tự đổi đơn vị. Giữ nguyên các đơn vị tốc độ, thời gian và quãng đường trong mẫu C#.
+                - Giữ nguyên loại chuyển động {{typeName}}; không đổi cùng chiều thành ngược chiều, không đổi gặp nhau thành đuổi kịp, không đổi xuôi/ngược dòng thành bài khác.
+                - Có thể diễn đạt câu văn tự nhiên hơn, nhưng không đổi phương tiện/con vật/người đi bộ đã được C# chọn sang đối tượng khác.
+                - Để câu chuyện sinh động hơn, ưu tiên thêm tên riêng/vai trò phù hợp: {{personalizationHint}}
+                - Tên riêng/vai trò không được tạo thêm dữ kiện số. Nếu có hai chủ thể thì có thể dùng hai tên khác nhau, nhưng vẫn phải giữ nguyên đúng phương tiện/con vật/người mà C# đã chọn.
+                - Không tính hoặc làm lộ đáp án trong problem_text.
+                - answer_unit phải đúng "{{contract.AnswerUnit}}", không chứa số hoặc phép tính.
+                - subject_name là cụm ngắn mô tả đúng đại lượng cần tìm.
+                - solution_lead chỉ là câu dẫn đứng trước phép tính, nhắc đúng answer_unit, không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
+                - Chỉ trả đúng JSON bốn trường sau, không Markdown hay giải thích:
+                {
+                  "problem_text": "...",
+                  "subject_name": "...",
+                  "answer_unit": "{{contract.AnswerUnit}}",
+                  "solution_lead": "...:"
+                }
+                {{retry}}
+                """);
+        }
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural {{typeName}} word problem for an elementary/middle-school learner.
+            Required numeric facts in their reference order: [{{facts}}]
+            Preserve the exact meaning, objects, units, and numeric roles in this C# reference problem:
+            {{contract.ProblemText}}
+            Required answer_unit: {{contract.AnswerUnit}}
+
+            Hard rules:
+            - Use only the four basic motion families: one moving object; same-direction catch-up; opposite-direction meeting; upstream/downstream river motion. Do not create advanced multi-stage, round-trip, variable-speed, or combined-motion problems.
+            - Every numeric fact in problem_text MUST use digits 0-9; never spell a number out as a word.
+            - problem_text must preserve every numeric occurrence in [{{facts}}] with the same role as the reference. Do not add, omit, merge, or change any numeric fact.
+            - Do not convert units. Keep the exact speed, time, and distance units selected by C#.
+            - Keep the required {{typeName}} relationship. Do not turn catch-up into meeting, meeting into catch-up, or river motion into another kind.
+            - You may polish the wording, but do not replace the vehicle, animal, pedestrian, or watercraft selected by C# with a different object.
+            - To make the story livelier, prefer adding suitable names/roles: {{personalizationHint}}
+            - Names/roles must not introduce any new numeric fact. If there are two subjects, two different names are allowed, but the C#-selected vehicles/animals/people must remain unchanged.
+            - Do not calculate or reveal the answer in problem_text.
+            - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
+            - subject_name is a short phrase naming the requested quantity.
+            - solution_lead is only the lead-in sentence before the calculation. It must mention the answer unit and contain no number, calculation, equals sign, result, or answer.
+            - Return exactly this four-field JSON schema and nothing else:
+            {
+              "problem_text": "...",
+              "subject_name": "...",
+              "answer_unit": "{{contract.AnswerUnit}}",
+              "solution_lead": "...:"
+            }
+            {{retry}}
+            """);
+    }
+
+    private static string BuildProportionPersonalizationHint(
+        ProportionScenarioKind scenario,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return scenario switch
+            {
+                ProportionScenarioKind.Clothing =>
+                    "ví dụ cô Lan là thợ may hoặc cô Hương nhận may quần áo",
+                ProportionScenarioKind.StudentsPlanting =>
+                    "ví dụ cô Hương hướng dẫn các học sinh, hoặc bạn An tham gia trồng cây",
+                ProportionScenarioKind.Shopping =>
+                    "ví dụ mẹ của Minh, cô Lan hoặc bạn Mai đi mua vở",
+                ProportionScenarioKind.VehiclesCargo or
+                ProportionScenarioKind.VehiclesFuel =>
+                    "ví dụ chú Nam là tài xế hoặc bác Bình phụ trách đoàn xe",
+                ProportionScenarioKind.DistanceTime =>
+                    "ví dụ chú Nam lái ô tô hoặc cô Mai đang đi công tác",
+                ProportionScenarioKind.RiceBagsWeight or
+                ProportionScenarioKind.FoodWeightGrams or
+                ProportionScenarioKind.EggWeightGrams =>
+                    "ví dụ cô Mai bán hàng, cô Lan chuẩn bị thực phẩm hoặc mẹ của An đi chợ",
+                ProportionScenarioKind.ContainersLiquid =>
+                    "ví dụ bác Hòa đóng mật ong vào thùng hoặc cô Mai chuẩn bị các can dầu",
+                ProportionScenarioKind.PaintArea =>
+                    "ví dụ chú Bình là thợ sơn hoặc bác Nam đang sơn tường",
+                ProportionScenarioKind.ProductionItems =>
+                    "ví dụ chú Minh quản lý xưởng, cô Lan phụ trách nhóm thợ hoặc bác Bình kiểm tra sản phẩm",
+                ProportionScenarioKind.WorkersDays or
+                ProportionScenarioKind.WorkersJob =>
+                    "ví dụ chú Bình phụ trách đội công nhân hoặc bác Nam quản lý nhóm thợ",
+                ProportionScenarioKind.MachinesHours =>
+                    "ví dụ cô Lan quản lý xưởng hoặc chú Minh phụ trách các máy",
+                ProportionScenarioKind.FoodPeopleDays or
+                ProportionScenarioKind.FoodAdditionalPeople =>
+                    "ví dụ cô Mai phụ trách bếp ăn hoặc cô Hương chuẩn bị thực phẩm",
+                ProportionScenarioKind.SalesStock =>
+                    "ví dụ cô Lan là chủ cửa hàng hoặc chú Minh phụ trách quầy bán hàng",
+                _ => "ví dụ bạn An, cô Lan, chú Minh hoặc một vai trò đời thường phù hợp"
+            };
+        }
+
+        return scenario switch
+        {
+            ProportionScenarioKind.Clothing =>
+                "for example Emma is a tailor or Mia is sewing the clothes",
+            ProportionScenarioKind.StudentsPlanting =>
+                "for example Ms. Emma supervises the students or Alex joins the planting activity",
+            ProportionScenarioKind.Shopping =>
+                "for example Mia's parent, Emma, or Alex is buying notebooks",
+            ProportionScenarioKind.VehiclesCargo or
+            ProportionScenarioKind.VehiclesFuel =>
+                "for example Liam is a driver or Ben manages the trucks",
+            ProportionScenarioKind.DistanceTime =>
+                "for example Liam drives the car or Emma is traveling for work",
+            ProportionScenarioKind.RiceBagsWeight or
+            ProportionScenarioKind.FoodWeightGrams or
+            ProportionScenarioKind.EggWeightGrams =>
+                "for example Mia is a shopkeeper, Emma prepares the food, or Alex's parent is shopping",
+            ProportionScenarioKind.ContainersLiquid =>
+                "for example Ben packs honey into containers or Mia prepares oil cans",
+            ProportionScenarioKind.PaintArea =>
+                "for example Liam is a painter or Ben is painting a wall",
+            ProportionScenarioKind.ProductionItems =>
+                "for example Liam manages the workshop, Emma supervises the workers, or Ben checks the products",
+            ProportionScenarioKind.WorkersDays or
+            ProportionScenarioKind.WorkersJob =>
+                "for example Ben supervises the workers or Liam manages the crew",
+            ProportionScenarioKind.MachinesHours =>
+                "for example Emma manages the workshop or Liam operates the machines",
+            ProportionScenarioKind.FoodPeopleDays or
+            ProportionScenarioKind.FoodAdditionalPeople =>
+                "for example Mia runs the kitchen or Emma prepares the food",
+            ProportionScenarioKind.SalesStock =>
+                "for example Emma owns the store or Ben manages the sales counter",
+            _ => "for example Alex, Emma, Liam, Mia, or another natural everyday role"
+        };
+    }
+
+    private static string BuildMotionPersonalizationHint(
+        MotionQuizType type,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return type switch
+            {
+                MotionQuizType.Basic =>
+                    "nếu là xe có thể dùng chú Nam/cô Mai là người điều khiển; nếu là người đi bộ/chạy bộ dùng tên như An, Minh; nếu là con vật có thể viết 'con rùa của bé An'",
+                MotionQuizType.Chasing =>
+                    "có thể đặt tên An và Minh cho hai người/chủ thể, hoặc chú Nam và chú Bình cho hai người điều khiển phương tiện",
+                MotionQuizType.Meeting =>
+                    "có thể đặt hai tên như An và Mai, hoặc chú Nam và cô Lan cho hai chủ thể đi từ hai phía",
+                MotionQuizType.River =>
+                    "ví dụ chú Bình điều khiển ca nô, bác Nam chèo thuyền hoặc cô Lan lái xuồng máy",
+                _ => "dùng tên riêng và vai trò đời thường phù hợp"
+            };
+        }
+
+        return type switch
+        {
+            MotionQuizType.Basic =>
+                "for a vehicle, name its driver such as Liam or Emma; for a pedestrian/runner use Alex or Mia; for an animal you may write 'Alex's turtle'",
+            MotionQuizType.Chasing =>
+                "use two names such as Alex and Liam for the two subjects, or name the two drivers when vehicles are involved",
+            MotionQuizType.Meeting =>
+                "use two different names such as Mia and Alex for the subjects approaching from opposite sides",
+            MotionQuizType.River =>
+                "for example Ben operates the motorboat, Liam rows the boat, or Emma pilots the canoe",
+            _ => "use a natural proper name and everyday role"
+        };
     }
 
     public static string BuildUserPrompt(
@@ -1818,6 +2063,12 @@ internal static class LlmQuizPromptBuilder
                     "Bài tỉ lệ bắt buộc ghi mọi dữ kiện bằng chữ số 0-9. Hãy dùng đúng ba giá trị contract dưới dạng số, ví dụ 10 chứ không viết “mười”; không thêm, bỏ, đổi hoặc viết lại số bằng chữ.",
                 "ProportionRelationshipMismatch" =>
                     "Giữ nguyên ngữ cảnh mẫu và đúng quan hệ tỉ lệ thuận/nghịch; không đổi vai trò của ba dữ kiện hay đại lượng cần tìm.",
+                "MotionFactsMismatch" =>
+                    "Bài chuyển động bắt buộc giữ đúng toàn bộ dữ kiện số của contract bằng chữ số 0-9, đúng số lần xuất hiện; không viết số bằng chữ, không thêm, bỏ, gộp hoặc đổi số.",
+                "MotionRelationshipMismatch" =>
+                    "Giữ đúng loại chuyển động và đơn vị trong mẫu C#: một vật, cùng chiều đuổi kịp, ngược chiều gặp nhau hoặc xuôi/ngược dòng. Không chuyển sang dạng nâng cao.",
+                "MotionUnitMismatch" =>
+                    "Giữ nguyên chính xác các đơn vị do C# chọn trong problem_text; không đổi km/h, m/s, mph, giờ/phút/giây hoặc km/m/cm/mm/miles sang đơn vị khác.",
                 "FractionFactsMismatch" =>
                     "Ghi từng phân số đúng dạng 1/2 bằng dấu /. Tuyệt đối không dùng $, LaTeX, \\frac, \\dfrac, \\tfrac hoặc ngoặc nhọn.",
                 "AnswerRevealedInProblem" =>
@@ -1858,6 +2109,12 @@ internal static class LlmQuizPromptBuilder
                 "A proportion problem must write every arithmetic fact with digits 0-9. Use exactly the three contract values as digits, for example 10 rather than “ten”; do not add, omit, change, or spell out any numeric fact.",
             "ProportionRelationshipMismatch" =>
                 "Keep the reference context and the required direct/inverse relationship; do not change the roles of the three facts or the requested quantity.",
+            "MotionFactsMismatch" =>
+                "A motion problem must preserve every contract numeric fact as digits 0-9 with the same occurrence count. Do not spell out, add, omit, merge, or change a number.",
+            "MotionRelationshipMismatch" =>
+                "Keep the exact C# motion type and units: single-object, same-direction catch-up, opposite-direction meeting, or upstream/downstream river motion. Do not turn it into an advanced problem.",
+            "MotionUnitMismatch" =>
+                "Keep every unit selected by C# exactly as written in problem_text. Do not convert km/h, m/s, mph, hours/minutes/seconds, or km/m/cm/mm/miles.",
             "FractionFactsMismatch" =>
                 "Write each fraction exactly as 1/2 with a slash. Never use $, LaTeX, \\frac, \\dfrac, \\tfrac, or braces.",
             "AnswerRevealedInProblem" =>
@@ -2824,6 +3081,209 @@ internal sealed partial class LlmWordProblemValidator
                 subject));
     }
 
+    public LlmWordProblemValidationResult ValidateMotion(
+        LlmWordProblemDraft draft,
+        MotionQuizContract contract,
+        AppLanguage language)
+    {
+        string problem = NormalizeSingleLine(draft.ProblemText);
+        string subject = NormalizeSingleLine(draft.SubjectName);
+        string unit = NormalizeSingleLine(draft.AnswerUnit);
+        string solutionLead = NormalizeSingleLine(draft.SolutionLead);
+
+        if (problem.Length is < 18 or > 800 ||
+            subject.Length > 100 ||
+            unit.Length > 80 ||
+            solutionLead.Length > 240)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidTextLength",
+                language == AppLanguage.Vietnamese
+                    ? "Độ dài một trường JSON của bài chuyển động không hợp lệ. Hãy viết ngắn gọn, đủ ý và giữ đúng bốn trường."
+                    : "A JSON field in the motion problem has an invalid length. Keep all four fields concise and complete.");
+        }
+
+        if (!IsQuestionSentence(problem, language))
+        {
+            problem = AppendDefaultQuestion(problem, language);
+        }
+        else if (!problem.Contains('?'))
+        {
+            problem = problem.TrimEnd('.', '!', ';', ':') + "?";
+        }
+
+        string problemForNumberValidation = Regex.Replace(
+            problem,
+            @"(?<=\d)[, .\u00A0\u202F](?=\d{3}(?:\D|$))",
+            string.Empty,
+            RegexOptions.CultureInvariant);
+
+        int[] actualNumbers = NumberRegex()
+            .Matches(problemForNumberValidation)
+            .Select(match =>
+                int.TryParse(
+                    match.Value,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int value)
+                    ? value
+                    : int.MinValue)
+            .ToArray();
+
+        int[] expectedNumbers = contract.Facts.ToArray();
+        if (!expectedNumbers.Order().SequenceEqual(actualNumbers.Order()))
+        {
+            string expected = string.Join(", ", expectedNumbers);
+            string actual = actualNumbers.Length == 0
+                ? language == AppLanguage.Vietnamese ? "không có số" : "no numbers"
+                : string.Join(", ", actualNumbers);
+
+            return LlmWordProblemValidationResult.Invalid(
+                "MotionFactsMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"problem_text phải giữ đúng các dữ kiện số [{expected}] bằng chữ số 0-9 và đúng số lần xuất hiện. Validator đọc được [{actual}]. Không viết số bằng chữ, không thêm, bỏ, gộp hoặc đổi dữ kiện."
+                    : $"problem_text must preserve the numeric facts [{expected}] as digits 0-9 with the same occurrence counts. The validator read [{actual}]. Do not spell out, add, omit, merge, or change a numeric fact.");
+        }
+
+        if (!expectedNumbers.Contains((int)contract.CorrectAnswer) &&
+            actualNumbers.Contains((int)contract.CorrectAnswer))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerRevealedInProblem",
+                language == AppLanguage.Vietnamese
+                    ? "problem_text đã làm lộ đáp án của bài chuyển động. Chỉ giữ các dữ kiện đầu vào và câu hỏi."
+                    : "problem_text reveals the answer to the motion problem. Keep only the input facts and the question.");
+        }
+
+        string? missingUnit = contract.RequiredProblemUnits
+            .FirstOrDefault(requiredUnit =>
+                !ContainsExactUnit(problem, requiredUnit));
+
+        if (!string.IsNullOrWhiteSpace(missingUnit))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "MotionUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"problem_text phải giữ nguyên đơn vị “{missingUnit}” do C# chọn. Không tự quy đổi hoặc đổi cách ghi đơn vị."
+                    : $"problem_text must preserve the C# unit “{missingUnit}” exactly. Do not convert or rewrite that unit.");
+        }
+
+        if (!MatchesMotionScenario(problem.ToLowerInvariant(), contract.Type, language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "MotionRelationshipMismatch",
+                language == AppLanguage.Vietnamese
+                    ? "Câu văn đã làm thay đổi loại chuyển động. Phải giữ đúng loại trong contract: một vật, cùng chiều đuổi kịp, ngược chiều gặp nhau hoặc xuôi/ngược dòng; không chuyển sang dạng nâng cao."
+                    : "The wording changed the motion relationship. Preserve the contract type: single-object, same-direction catch-up, opposite-direction meeting, or upstream/downstream river motion. Do not turn it into an advanced problem.");
+        }
+
+        if (!AreAnswerUnitsEquivalent(unit, contract.AnswerUnit, language) ||
+            NumberRegex().IsMatch(unit) ||
+            unit.Contains('='))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"answer_unit phải giữ nguyên là “{contract.AnswerUnit}”, không tự đổi đơn vị và không chứa số hay phép tính."
+                    : $"answer_unit must remain exactly “{contract.AnswerUnit}”. Do not convert it or include a number/equation.");
+        }
+
+        string? disclosure = BuildSolutionLeadDisclosureFeedback(
+            solutionLead,
+            contract.CorrectAnswer,
+            language);
+        if (!string.IsNullOrWhiteSpace(disclosure))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                disclosure);
+        }
+
+        solutionLead = ElementaryWordProblemSolutionFormatter
+            .NormalizeSolutionLeadPunctuation(solutionLead);
+
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            IsGenericSolutionLead(solutionLead, language) ||
+            !SolutionLeadMentionsAnswerUnit(solutionLead, unit, language))
+        {
+            solutionLead = ElementaryWordProblemSolutionFormatter
+                .NormalizeSolutionLeadPunctuation(
+                    language == AppLanguage.Vietnamese
+                        ? $"Đại lượng cần tìm theo đơn vị {unit} là"
+                        : $"The required quantity in {unit} is");
+        }
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            subject = contract.SubjectName;
+        }
+
+        return new(
+            true,
+            null,
+            null,
+            new MathWordProblem(
+                problem,
+                solutionLead,
+                unit,
+                subject));
+    }
+
+    private static bool ContainsExactUnit(
+        string text,
+        string unit)
+    {
+        if (string.IsNullOrWhiteSpace(text) ||
+            string.IsNullOrWhiteSpace(unit))
+        {
+            return false;
+        }
+
+        string pattern =
+            $@"(?<![\p{{L}}\p{{N}}/]){Regex.Escape(unit)}(?![\p{{L}}\p{{N}}/])";
+
+        return Regex.IsMatch(
+            text,
+            pattern,
+            RegexOptions.IgnoreCase |
+            RegexOptions.CultureInvariant);
+    }
+
+    private static bool MatchesMotionScenario(
+        string problem,
+        MotionQuizType type,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return type switch
+            {
+                MotionQuizType.Basic =>
+                    ContainsAny(problem, "vận tốc", "quãng đường", "thời gian", "đi", "chạy"),
+                MotionQuizType.Chasing =>
+                    ContainsAny(problem, "đuổi", "đuổi kịp", "cùng chiều"),
+                MotionQuizType.Meeting =>
+                    ContainsAny(problem, "gặp", "ngược chiều", "về phía nhau"),
+                MotionQuizType.River =>
+                    ContainsAny(problem, "xuôi dòng", "ngược dòng", "dòng nước", "nước yên"),
+                _ => false
+            };
+        }
+
+        return type switch
+        {
+            MotionQuizType.Basic =>
+                ContainsAny(problem, "speed", "distance", "time", "travel", "move"),
+            MotionQuizType.Chasing =>
+                ContainsAny(problem, "catch", "catch up", "same direction", "ahead"),
+            MotionQuizType.Meeting =>
+                ContainsAny(problem, "meet", "toward each other", "opposite direction"),
+            MotionQuizType.River =>
+                ContainsAny(problem, "downstream", "upstream", "current", "still water"),
+            _ => false
+        };
+    }
+
     private static bool MatchesProportionScenario(
         string problem,
         ProportionScenarioKind scenario,
@@ -2843,11 +3303,32 @@ internal sealed partial class LlmWordProblemValidator
                     ContainsAny(problem, "vở", "tập") &&
                     ContainsAny(problem, "giá", "đồng", "tiền", "mua"),
                 ProportionScenarioKind.VehiclesCargo =>
-                    ContainsAny(problem, "xe") &&
-                    ContainsAny(problem, "hàng", "tấn", "chở"),
+                    ContainsAny(problem, "xe tải") &&
+                    ContainsAny(problem, "gạo", "tấn", "chở"),
                 ProportionScenarioKind.VehiclesFuel =>
                     ContainsAny(problem, "xe") &&
                     ContainsAny(problem, "xăng", "lít"),
+                ProportionScenarioKind.ContainersLiquid =>
+                    ContainsAny(problem, "thùng", "can", "bình") &&
+                    ContainsAny(problem, "mật ong", "dầu", "lít"),
+                ProportionScenarioKind.PaintArea =>
+                    ContainsAny(problem, "sơn", "thùng sơn") &&
+                    ContainsAny(problem, "m²", "tường", "diện tích"),
+                ProportionScenarioKind.ProductionItems =>
+                    ContainsAny(problem, "thợ", "máy", "thùng") &&
+                    ContainsAny(problem, "ghế", "sản phẩm", "hộp", "làm được", "có"),
+                ProportionScenarioKind.RiceBagsWeight =>
+                    ContainsAny(problem, "bao gạo", "gạo") &&
+                    ContainsAny(problem, "kg", "ki-lô-gam", "kilôgam"),
+                ProportionScenarioKind.FoodWeightGrams =>
+                    ContainsAny(
+                        problem,
+                        "rau", "củ", "cà rốt", "khoai", "táo", "cam", "xoài",
+                        "trái cây", "thịt", "thịt heo", "thịt gà", "cá") &&
+                    ContainsAny(problem, "gam"),
+                ProportionScenarioKind.EggWeightGrams =>
+                    ContainsAny(problem, "trứng") &&
+                    ContainsAny(problem, "gam"),
                 ProportionScenarioKind.DistanceTime =>
                     ContainsAny(problem, "ô tô", "xe") &&
                     ContainsAny(problem, "km", "giờ", "quãng đường", "đi được"),
@@ -2863,7 +3344,7 @@ internal sealed partial class LlmWordProblemValidator
                 ProportionScenarioKind.FoodPeopleDays or
                 ProportionScenarioKind.FoodAdditionalPeople =>
                     ContainsAny(problem, "gạo", "thực phẩm", "bếp ăn") &&
-                    ContainsAny(problem, "người") &&
+                    ContainsAny(problem, "người", "học sinh", "em") &&
                     ContainsAny(problem, "ngày"),
                 ProportionScenarioKind.SalesStock =>
                     ContainsAny(problem, "cửa hàng", "mứt", "hộp") &&
@@ -2884,11 +3365,33 @@ internal sealed partial class LlmWordProblemValidator
                 ContainsAny(problem, "notebook", "notebooks") &&
                 ContainsAny(problem, "cost", "price", "buy", "buys"),
             ProportionScenarioKind.VehiclesCargo =>
-                ContainsAny(problem, "truck", "trucks", "vehicle", "vehicles") &&
-                ContainsAny(problem, "cargo", "tons", "carry"),
+                ContainsAny(problem, "truck", "trucks") &&
+                ContainsAny(problem, "rice", "tons", "carry"),
             ProportionScenarioKind.VehiclesFuel =>
                 ContainsAny(problem, "vehicle", "vehicles", "car", "cars") &&
                 ContainsAny(problem, "fuel", "liters", "litres"),
+            ProportionScenarioKind.ContainersLiquid =>
+                ContainsAny(problem, "container", "containers", "can", "cans") &&
+                ContainsAny(problem, "honey", "oil", "liter", "liters", "litre", "litres"),
+            ProportionScenarioKind.PaintArea =>
+                ContainsAny(problem, "paint", "painter", "wall") &&
+                ContainsAny(problem, "m²", "square meter", "square meters", "area", "cover"),
+            ProportionScenarioKind.ProductionItems =>
+                ContainsAny(problem, "worker", "workers", "machine", "machines", "crate", "crates") &&
+                ContainsAny(problem, "chair", "chairs", "product", "products", "box", "boxes", "make", "contain"),
+            ProportionScenarioKind.RiceBagsWeight =>
+                ContainsAny(problem, "rice", "bag", "bags") &&
+                ContainsAny(problem, "kg", "kilogram", "kilograms"),
+            ProportionScenarioKind.FoodWeightGrams =>
+                ContainsAny(
+                    problem,
+                    "vegetable", "vegetables", "carrot", "carrots", "potato", "potatoes",
+                    "apple", "apples", "orange", "oranges", "mango", "mangoes", "fruit",
+                    "meat", "pork", "chicken", "fish") &&
+                ContainsAny(problem, "gram", "grams"),
+            ProportionScenarioKind.EggWeightGrams =>
+                ContainsAny(problem, "egg", "eggs") &&
+                ContainsAny(problem, "gram", "grams"),
             ProportionScenarioKind.DistanceTime =>
                 ContainsAny(problem, "car", "vehicle") &&
                 ContainsAny(problem, "km", "hours", "distance", "travels"),
@@ -2904,7 +3407,7 @@ internal sealed partial class LlmWordProblemValidator
             ProportionScenarioKind.FoodPeopleDays or
             ProportionScenarioKind.FoodAdditionalPeople =>
                 ContainsAny(problem, "food", "rice", "kitchen") &&
-                ContainsAny(problem, "people") &&
+                ContainsAny(problem, "people", "students") &&
                 ContainsAny(problem, "days"),
             ProportionScenarioKind.SalesStock =>
                 ContainsAny(problem, "store", "shop", "jam", "boxes") &&

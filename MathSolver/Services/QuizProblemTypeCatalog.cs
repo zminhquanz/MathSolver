@@ -27,7 +27,10 @@ public sealed class QuizProblemTypeCatalog
             new(QuizProblemKind.FindX)),
         new(
             "Quiz.ProblemProportion",
-            new(QuizProblemKind.Proportion))
+            new(QuizProblemKind.Proportion)),
+        new(
+            "Quiz.ProblemMotion",
+            new(QuizProblemKind.Motion))
     ];
 
     private static readonly QuizProblemRequest[] MixedRequests =
@@ -43,7 +46,8 @@ public sealed class QuizProblemTypeCatalog
         new(QuizProblemKind.Geometry),
         new(QuizProblemKind.FindX),
         new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Direct),
-        new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Inverse)
+        new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Inverse),
+        new(QuizProblemKind.Motion)
     ];
 
     private static readonly IReadOnlyList<QuizProblemOption>

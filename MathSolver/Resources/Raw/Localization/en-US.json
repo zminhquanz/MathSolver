@@ -1284,7 +1284,12 @@
     "Quiz.ProportionQuestionTitle": "Direct / inverse proportion problem",
     "Quiz.ProportionEssayValidationHint": "The app checks the proportion facts, calculation, and final answer value.",
     "Quiz.ProportionEssayValidationHintAi": "A solution sentence is required. The app checks the proportion relationship, calculation, result, and answer unit.",
-    "Quiz.ProportionEssayEquationPlaceholder": "Example: 24 ÷ 4 × 6 = 36"
+    "Quiz.ProportionEssayEquationPlaceholder": "Example: 24 ÷ 4 × 6 = 36",
+    "Quiz.ProblemMotion": "Motion ➜⏱️",
+    "Quiz.MotionQuestionTitle": "Motion problem",
+    "Quiz.MotionEssayValidationHint": "Enter a calculation that matches the motion facts and an answer with the correct unit.",
+    "Quiz.MotionEssayValidationHintAi": "A written solution, calculation, and final answer are required. The calculation must preserve the motion relationship and the answer must include the correct unit.",
+    "Quiz.MotionEssayEquationPlaceholder": "Example: 120 ÷ (60 + 40) = 1"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

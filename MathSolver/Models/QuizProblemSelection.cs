@@ -10,7 +10,8 @@ public enum QuizProblemKind
     Fraction,
     Geometry,
     FindX,
-    Proportion
+    Proportion,
+    Motion
 }
 
 /// <summary>

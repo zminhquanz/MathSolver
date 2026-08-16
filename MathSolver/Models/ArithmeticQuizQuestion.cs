@@ -23,7 +23,8 @@ public sealed record ArithmeticQuizQuestion(
     GeometryQuizContract? GeometryProblem = null,
     FindXQuizContract? FindXProblem = null,
     FractionQuizContract? FractionProblem = null,
-    ProportionQuizContract? ProportionProblem = null);
+    ProportionQuizContract? ProportionProblem = null,
+    MotionQuizContract? MotionProblem = null);
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,

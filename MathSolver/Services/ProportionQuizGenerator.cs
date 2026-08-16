@@ -11,6 +11,24 @@ namespace MathSolver.Services;
 /// </summary>
 public sealed class ProportionQuizGenerator
 {
+    private enum DirectRateProfile
+    {
+        GenericCount,
+        FabricMeters,
+        TreesPerStudent,
+        MoneyDong,
+        CargoTons,
+        FuelLiters,
+        RiceBagKilograms,
+        VegetableGrams,
+        FruitGrams,
+        MeatGrams,
+        EggGrams,
+        DistanceKilometers,
+        ContainerLiters,
+        PaintAreaSquareMeters
+    }
+
     private sealed record TemplateDefinition(
         ProportionQuizType Type,
         ProportionScenarioKind Scenario,
@@ -20,11 +38,13 @@ public sealed class ProportionQuizGenerator
         string EnglishUnit,
         string VietnameseSubject,
         string EnglishSubject,
-        bool AsksForAdditionalPeople = false);
+        bool AsksForAdditionalPeople = false,
+        DirectRateProfile RateProfile = DirectRateProfile.GenericCount);
 
     private static readonly TemplateDefinition[] Templates =
     [
         // Tỉ lệ thuận -------------------------------------------------------
+        // Nhóm kinh điển được ưu tiên bằng GetTemplateWeight() bên dưới.
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.Clothing,
@@ -33,7 +53,8 @@ public sealed class ProportionQuizGenerator
             "mét vải",
             "meters of fabric",
             "vải",
-            "fabric"),
+            "fabric",
+            RateProfile: DirectRateProfile.FabricMeters),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.Clothing,
@@ -42,7 +63,8 @@ public sealed class ProportionQuizGenerator
             "mét vải",
             "meters of fabric",
             "vải",
-            "fabric"),
+            "fabric",
+            RateProfile: DirectRateProfile.FabricMeters),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.StudentsPlanting,
@@ -51,7 +73,8 @@ public sealed class ProportionQuizGenerator
             "cây",
             "trees",
             "cây",
-            "trees"),
+            "trees",
+            RateProfile: DirectRateProfile.TreesPerStudent),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.StudentsPlanting,
@@ -60,7 +83,8 @@ public sealed class ProportionQuizGenerator
             "cây",
             "trees",
             "cây",
-            "trees"),
+            "trees",
+            RateProfile: DirectRateProfile.TreesPerStudent),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.Shopping,
@@ -69,7 +93,8 @@ public sealed class ProportionQuizGenerator
             "đồng",
             "đồng",
             "tiền",
-            "money"),
+            "money",
+            RateProfile: DirectRateProfile.MoneyDong),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.Shopping,
@@ -78,25 +103,28 @@ public sealed class ProportionQuizGenerator
             "đồng",
             "đồng",
             "tiền",
-            "money"),
+            "money",
+            RateProfile: DirectRateProfile.MoneyDong),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.VehiclesCargo,
-            "{0} xe chở được {1} tấn hàng. Hỏi {2} xe như thế chở được bao nhiêu tấn hàng?",
-            "{0} trucks carry {1} tons of cargo. How many tons can {2} identical trucks carry?",
-            "tấn hàng",
-            "tons of cargo",
-            "hàng",
-            "cargo"),
+            "{0} xe tải chở được {1} tấn gạo đóng bao. Hỏi {2} xe tải như thế chở được bao nhiêu tấn gạo?",
+            "{0} trucks carry {1} tons of bagged rice. How many tons of rice can {2} identical trucks carry?",
+            "tấn gạo",
+            "tons of rice",
+            "gạo",
+            "rice",
+            RateProfile: DirectRateProfile.CargoTons),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.VehiclesFuel,
-            "{0} xe hết {1} lít xăng. Hỏi {2} xe như thế hết bao nhiêu lít xăng?",
-            "{0} vehicles use {1} liters of fuel. How many liters do {2} identical vehicles use?",
+            "{0} xe cùng loại hết {1} lít xăng cho cùng một quãng đường. Hỏi {2} xe như thế hết bao nhiêu lít xăng?",
+            "{0} identical vehicles use {1} liters of fuel over the same route. How many liters do {2} such vehicles use?",
             "lít xăng",
             "liters of fuel",
             "xăng",
-            "fuel"),
+            "fuel",
+            RateProfile: DirectRateProfile.FuelLiters),
         new(
             ProportionQuizType.Direct,
             ProportionScenarioKind.DistanceTime,
@@ -105,7 +133,183 @@ public sealed class ProportionQuizGenerator
             "km",
             "km",
             "quãng đường",
-            "distance"),
+            "distance",
+            RateProfile: DirectRateProfile.DistanceKilometers),
+
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.ProductionItems,
+            "Trong cùng một khoảng thời gian, {0} thợ làm được {1} cái ghế. Hỏi {2} thợ cùng năng suất làm được bao nhiêu cái ghế?",
+            "In the same amount of time, {0} workers make {1} chairs. How many chairs can {2} equally productive workers make?",
+            "cái ghế",
+            "chairs",
+            "ghế",
+            "chairs",
+            RateProfile: DirectRateProfile.GenericCount),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.ProductionItems,
+            "Trong cùng một khoảng thời gian, {0} máy làm được {1} sản phẩm. Hỏi {2} máy cùng năng suất làm được bao nhiêu sản phẩm?",
+            "In the same amount of time, {0} machines make {1} products. How many products can {2} equally productive machines make?",
+            "sản phẩm",
+            "products",
+            "sản phẩm",
+            "products",
+            RateProfile: DirectRateProfile.GenericCount),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.ProductionItems,
+            "{0} thùng như nhau có tổng cộng {1} hộp hàng. Hỏi {2} thùng như thế có bao nhiêu hộp hàng?",
+            "{0} identical crates contain {1} boxes in total. How many boxes are in {2} such crates?",
+            "hộp",
+            "boxes",
+            "hộp hàng",
+            "boxes",
+            RateProfile: DirectRateProfile.GenericCount),
+
+        // Khối lượng / thực phẩm thực tế -----------------------------------
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.RiceBagsWeight,
+            "{0} bao gạo cùng loại nặng {1} kg. Hỏi {2} bao gạo như thế nặng bao nhiêu kg?",
+            "{0} equal bags of rice weigh {1} kg. How many kilograms do {2} such bags weigh?",
+            "kg",
+            "kg",
+            "gạo",
+            "rice",
+            RateProfile: DirectRateProfile.RiceBagKilograms),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} bó rau cùng loại nặng {1} gam. Hỏi {2} bó rau như thế nặng bao nhiêu gam?",
+            "{0} equal bunches of vegetables weigh {1} grams. How many grams do {2} such bunches weigh?",
+            "gam",
+            "grams",
+            "rau",
+            "vegetables",
+            RateProfile: DirectRateProfile.VegetableGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} củ cà rốt có khối lượng như nhau nặng tổng cộng {1} gam. Hỏi {2} củ như thế nặng bao nhiêu gam?",
+            "{0} equal carrots weigh {1} grams in total. How many grams do {2} such carrots weigh?",
+            "gam",
+            "grams",
+            "cà rốt",
+            "carrots",
+            RateProfile: DirectRateProfile.VegetableGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} củ khoai tây cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} củ khoai tây như thế nặng bao nhiêu gam?",
+            "{0} equal potatoes weigh {1} grams in total. How many grams do {2} such potatoes weigh?",
+            "gam",
+            "grams",
+            "khoai tây",
+            "potatoes",
+            RateProfile: DirectRateProfile.VegetableGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} quả táo cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả táo như thế nặng bao nhiêu gam?",
+            "{0} equal apples weigh {1} grams in total. How many grams do {2} such apples weigh?",
+            "gam",
+            "grams",
+            "táo",
+            "apples",
+            RateProfile: DirectRateProfile.FruitGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} quả cam cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả cam như thế nặng bao nhiêu gam?",
+            "{0} equal oranges weigh {1} grams in total. How many grams do {2} such oranges weigh?",
+            "gam",
+            "grams",
+            "cam",
+            "oranges",
+            RateProfile: DirectRateProfile.FruitGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} quả xoài cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả xoài như thế nặng bao nhiêu gam?",
+            "{0} equal mangoes weigh {1} grams in total. How many grams do {2} such mangoes weigh?",
+            "gam",
+            "grams",
+            "xoài",
+            "mangoes",
+            RateProfile: DirectRateProfile.FruitGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} phần thịt heo cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần như thế nặng bao nhiêu gam?",
+            "{0} equal portions of pork weigh {1} grams in total. How many grams do {2} such portions weigh?",
+            "gam",
+            "grams",
+            "thịt heo",
+            "pork",
+            RateProfile: DirectRateProfile.MeatGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} phần cá cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần cá như thế nặng bao nhiêu gam?",
+            "{0} equal portions of fish weigh {1} grams in total. How many grams do {2} such portions weigh?",
+            "gam",
+            "grams",
+            "cá",
+            "fish",
+            RateProfile: DirectRateProfile.MeatGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.FoodWeightGrams,
+            "{0} phần thịt gà cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần như thế nặng bao nhiêu gam?",
+            "{0} equal portions of chicken weigh {1} grams in total. How many grams do {2} such portions weigh?",
+            "gam",
+            "grams",
+            "thịt gà",
+            "chicken",
+            RateProfile: DirectRateProfile.MeatGrams),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.EggWeightGrams,
+            "{0} quả trứng cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả trứng như thế nặng bao nhiêu gam?",
+            "{0} eggs of the same size weigh {1} grams in total. How many grams do {2} such eggs weigh?",
+            "gam",
+            "grams",
+            "trứng",
+            "eggs",
+            RateProfile: DirectRateProfile.EggGrams),
+
+        // Thùng / lít và diện tích -----------------------------------------
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.ContainersLiquid,
+            "{0} thùng cùng loại chứa được {1} lít mật ong. Hỏi {2} thùng như thế chứa được bao nhiêu lít mật ong?",
+            "{0} identical containers hold {1} liters of honey. How many liters can {2} such containers hold?",
+            "lít mật ong",
+            "liters of honey",
+            "mật ong",
+            "honey",
+            RateProfile: DirectRateProfile.ContainerLiters),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.ContainersLiquid,
+            "{0} can cùng loại chứa được {1} lít dầu. Hỏi {2} can như thế chứa được bao nhiêu lít dầu?",
+            "{0} identical cans hold {1} liters of oil. How many liters can {2} such cans hold?",
+            "lít dầu",
+            "liters of oil",
+            "dầu",
+            "oil",
+            RateProfile: DirectRateProfile.ContainerLiters),
+        new(
+            ProportionQuizType.Direct,
+            ProportionScenarioKind.PaintArea,
+            "{0} thùng sơn cùng loại sơn được {1} m² tường. Hỏi {2} thùng sơn như thế sơn được bao nhiêu m² tường?",
+            "{0} identical cans of paint cover {1} m² of wall. How many square meters can {2} cans cover?",
+            "m²",
+            "m²",
+            "diện tích tường",
+            "wall area",
+            RateProfile: DirectRateProfile.PaintAreaSquareMeters),
 
         // Tỉ lệ nghịch -----------------------------------------------------
         new(
@@ -124,6 +328,15 @@ public sealed class ProportionQuizGenerator
             "{0} workers finish a road section in {1} days. How many days do {2} workers need at the same productivity?",
             "ngày",
             "days",
+            "thời gian",
+            "time"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.WorkersDays,
+            "{0} công nhân cùng năng suất hoàn thành một công việc trong {1} giờ. Hỏi {2} công nhân hoàn thành công việc đó trong bao nhiêu giờ?",
+            "{0} equally productive workers finish a job in {1} hours. How many hours do {2} workers need to finish the same job?",
+            "giờ",
+            "hours",
             "thời gian",
             "time"),
         new(
@@ -149,6 +362,15 @@ public sealed class ProportionQuizGenerator
             ProportionScenarioKind.FoodPeopleDays,
             "Một bếp ăn chuẩn bị gạo đủ cho {0} người ăn trong {1} ngày. Thực tế có {2} người. Hỏi số gạo đó đủ ăn trong bao nhiêu ngày?",
             "A kitchen has enough rice for {0} people for {1} days. If there are actually {2} people, for how many days will the rice last?",
+            "ngày",
+            "days",
+            "thời gian",
+            "time"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.FoodPeopleDays,
+            "Một bếp ăn có đủ thực phẩm cho {0} học sinh dùng trong {1} ngày. Nếu số học sinh thực tế là {2} em thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?",
+            "A school kitchen has enough food for {0} students for {1} days. If there are actually {2} students, for how many days will the food last?",
             "ngày",
             "days",
             "thời gian",
@@ -207,13 +429,14 @@ public sealed class ProportionQuizGenerator
             .Where(template => template.Type == type)
             .ToArray();
 
-        TemplateDefinition template =
-            candidates[_random.Next(candidates.Length)];
+        TemplateDefinition template = PickWeightedTemplate(candidates);
 
         (int a, int b, int c, BigInteger answer) =
             template.Type == ProportionQuizType.Direct
-                ? CreateDirectNumbers(template.Scenario)
-                : CreateInverseNumbers(template.AsksForAdditionalPeople);
+                ? CreateDirectNumbers(template.RateProfile)
+                : CreateInverseNumbers(
+                    template.Scenario,
+                    template.AsksForAdditionalPeople);
 
         string problemTemplate = language == AppLanguage.Vietnamese
             ? template.VietnameseTemplate
@@ -247,8 +470,60 @@ public sealed class ProportionQuizGenerator
             template.AsksForAdditionalPeople);
     }
 
+    private TemplateDefinition PickWeightedTemplate(
+        IReadOnlyList<TemplateDefinition> candidates)
+    {
+        int totalWeight = 0;
+        foreach (TemplateDefinition candidate in candidates)
+        {
+            totalWeight += GetTemplateWeight(candidate);
+        }
+
+        int roll = _random.Next(totalWeight);
+        foreach (TemplateDefinition candidate in candidates)
+        {
+            roll -= GetTemplateWeight(candidate);
+            if (roll < 0)
+            {
+                return candidate;
+            }
+        }
+
+        return candidates[^1];
+    }
+
+    private static int GetTemplateWeight(
+        TemplateDefinition template) =>
+        template.Scenario switch
+        {
+            // Các cặp kinh điển lớp 5: ưu tiên xuất hiện nhiều nhất.
+            ProportionScenarioKind.Shopping => 7,
+            ProportionScenarioKind.Clothing => 6,
+            ProportionScenarioKind.StudentsPlanting => 6,
+            ProportionScenarioKind.WorkersDays => 7,
+            ProportionScenarioKind.FoodPeopleDays => 6,
+            ProportionScenarioKind.MachinesHours => 5,
+            ProportionScenarioKind.WorkersJob => 5,
+
+            // Nhóm phổ biến tiếp theo.
+            ProportionScenarioKind.VehiclesCargo => 4,
+            ProportionScenarioKind.VehiclesFuel => 3,
+            ProportionScenarioKind.DistanceTime => 4,
+            ProportionScenarioKind.ContainersLiquid => 4,
+            ProportionScenarioKind.ProductionItems => 3,
+            ProportionScenarioKind.SalesStock => 4,
+            ProportionScenarioKind.FoodAdditionalPeople => 3,
+
+            // Khối lượng / diện tích có trong chương trình nhưng ít gặp hơn.
+            ProportionScenarioKind.RiceBagsWeight => 3,
+            ProportionScenarioKind.FoodWeightGrams => 1,
+            ProportionScenarioKind.EggWeightGrams => 2,
+            ProportionScenarioKind.PaintArea => 2,
+            _ => 1
+        };
+
     private (int A, int B, int C, BigInteger Answer)
-        CreateDirectNumbers(ProportionScenarioKind scenario)
+        CreateDirectNumbers(DirectRateProfile rateProfile)
     {
         int a = _random.Next(2, 11);
         int c;
@@ -258,10 +533,21 @@ public sealed class ProportionQuizGenerator
         }
         while (c == a);
 
-        int rate = scenario switch
+        int rate = rateProfile switch
         {
-            ProportionScenarioKind.Shopping => _random.Next(2, 16) * 1000,
-            ProportionScenarioKind.DistanceTime => _random.Next(25, 81),
+            DirectRateProfile.FabricMeters => PickFrom([2, 3, 4, 5]),
+            DirectRateProfile.TreesPerStudent => _random.Next(2, 9),
+            DirectRateProfile.MoneyDong => _random.Next(4, 21) * 1000,
+            DirectRateProfile.CargoTons => _random.Next(2, 11),
+            DirectRateProfile.FuelLiters => _random.Next(1, 9) * 5,
+            DirectRateProfile.RiceBagKilograms => PickFrom([10, 20, 25, 30, 40, 50]),
+            DirectRateProfile.VegetableGrams => _random.Next(2, 11) * 50,
+            DirectRateProfile.FruitGrams => PickFrom([100, 125, 150, 175, 200, 225, 250, 300]),
+            DirectRateProfile.MeatGrams => _random.Next(2, 11) * 50,
+            DirectRateProfile.EggGrams => _random.Next(45, 76),
+            DirectRateProfile.DistanceKilometers => _random.Next(30, 91),
+            DirectRateProfile.ContainerLiters => _random.Next(1, 7) * 5,
+            DirectRateProfile.PaintAreaSquareMeters => _random.Next(2, 7) * 5,
             _ => _random.Next(2, 16)
         };
 
@@ -271,18 +557,56 @@ public sealed class ProportionQuizGenerator
     }
 
     private (int A, int B, int C, BigInteger Answer)
-        CreateInverseNumbers(bool asksForAdditionalPeople)
+        CreateInverseNumbers(
+            ProportionScenarioKind scenario,
+            bool asksForAdditionalPeople)
     {
-        for (int attempt = 0; attempt < 128; attempt++)
+        for (int attempt = 0; attempt < 192; attempt++)
         {
-            int a = _random.Next(2, 13);
-            int b = _random.Next(2, 13);
+            int a;
+            int b;
+            int c;
+
+            switch (scenario)
+            {
+                case ProportionScenarioKind.FoodPeopleDays:
+                case ProportionScenarioKind.FoodAdditionalPeople:
+                    a = _random.Next(2, 13) * 10;       // 20..120 người
+                    b = _random.Next(3, 16);            // 3..15 ngày
+                    c = asksForAdditionalPeople
+                        ? _random.Next(1, b)
+                        : _random.Next(2, 16) * 10;      // 20..150 người
+                    break;
+
+                case ProportionScenarioKind.SalesStock:
+                    a = _random.Next(5, 21);             // số ngày dự kiến
+                    b = _random.Next(2, 11) * 5;         // 10..50 hộp/ngày
+                    c = _random.Next(2, 13) * 5;         // 10..60 hộp/ngày
+                    break;
+
+                case ProportionScenarioKind.MachinesHours:
+                    a = _random.Next(2, 11);
+                    b = _random.Next(2, 13);
+                    c = _random.Next(2, 13);
+                    break;
+
+                case ProportionScenarioKind.WorkersDays:
+                case ProportionScenarioKind.WorkersJob:
+                    a = _random.Next(4, 21);
+                    b = _random.Next(3, 16);
+                    c = _random.Next(4, 25);
+                    break;
+
+                default:
+                    a = _random.Next(2, 13);
+                    b = _random.Next(2, 13);
+                    c = _random.Next(2, 13);
+                    break;
+            }
 
             if (asksForAdditionalPeople)
             {
-                // c là số ngày mới, phải nhỏ hơn b để thực sự có thêm người.
-                int c = _random.Next(1, b);
-                int totalPersonDays = a * b;
+                int totalPersonDays = checked(a * b);
                 if (totalPersonDays % c != 0)
                 {
                     continue;
@@ -298,30 +622,49 @@ public sealed class ProportionQuizGenerator
                 continue;
             }
 
-            int cPeopleOrRate = _random.Next(2, 13);
-            if (cPeopleOrRate == a)
+            if (c == a &&
+                scenario is not ProportionScenarioKind.SalesStock)
             {
                 continue;
             }
 
-            int total = a * b;
-            if (total % cPeopleOrRate != 0)
+            int total = checked(a * b);
+            if (total % c != 0)
             {
                 continue;
             }
 
-            int answer = total / cPeopleOrRate;
-            if (answer > 0)
+            int answer = total / c;
+            int maxReasonableAnswer = scenario switch
             {
-                return (a, b, cPeopleOrRate, answer);
+                ProportionScenarioKind.MachinesHours => 24,
+                ProportionScenarioKind.SalesStock => 30,
+                ProportionScenarioKind.FoodPeopleDays => 30,
+                ProportionScenarioKind.WorkersDays or
+                ProportionScenarioKind.WorkersJob => 30,
+                _ => 60
+            };
+
+            if (answer > 0 && answer <= maxReasonableAnswer)
+            {
+                return (a, b, c, answer);
             }
         }
 
-        // Fallback luôn chia hết.
-        return asksForAdditionalPeople
-            ? (4, 6, 3, 4)
-            : (4, 6, 8, 3);
+        return scenario switch
+        {
+            ProportionScenarioKind.FoodAdditionalPeople => (40, 6, 4, 20),
+            ProportionScenarioKind.FoodPeopleDays => (40, 6, 80, 3),
+            ProportionScenarioKind.SalesStock => (10, 30, 50, 6),
+            ProportionScenarioKind.MachinesHours => (4, 6, 8, 3),
+            ProportionScenarioKind.WorkersDays or
+            ProportionScenarioKind.WorkersJob => (6, 8, 12, 4),
+            _ => (4, 6, 8, 3)
+        };
     }
+
+    private int PickFrom(IReadOnlyList<int> values) =>
+        values[_random.Next(values.Count)];
 
     private ArithmeticQuizQuestion CreateQuestion(
         ArithmeticQuizMode mode,

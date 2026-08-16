@@ -29,6 +29,7 @@ public partial class MathPuzzlePage : ContentPage
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly ProportionQuizGenerator _proportionQuizGenerator;
+    private readonly MotionQuizGenerator _motionQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
     private readonly SortedDictionary<int, string> _llmRawOutputs = new();
     private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
@@ -121,6 +122,9 @@ public partial class MathPuzzlePage : ContentPage
         _proportionQuizGenerator =
             new ProportionQuizGenerator();
 
+        _motionQuizGenerator =
+            new MotionQuizGenerator();
+
         _localLlmQuizGenerator =
             new LocalLlmQuizGenerator(
                 _quizGenerator,
@@ -128,7 +132,8 @@ public partial class MathPuzzlePage : ContentPage
                 _fractionQuizGenerator,
                 _geometryQuizGenerator,
                 _findXQuizGenerator,
-                _proportionQuizGenerator);
+                _proportionQuizGenerator,
+                _motionQuizGenerator);
 
         _llmModelPath =
             _llmModelStore.GetSavedModelPath();
@@ -512,6 +517,12 @@ public partial class MathPuzzlePage : ContentPage
             return TranslateQuiz("Quiz.ProportionQuestionTitle");
         }
 
+        if (_currentQuestion?.MotionProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return TranslateQuiz("Quiz.MotionQuestionTitle");
+        }
+
         if (_currentQuestion?.WordProblem is not null)
         {
             return Translate("Quiz.WordProblemTitle");
@@ -537,6 +548,7 @@ public partial class MathPuzzlePage : ContentPage
         bool isFindX = IsFindXProblemSelected();
         bool isFraction = IsFractionProblemSelected();
         bool isProportion = IsProportionProblemSelected();
+        bool isMotion = IsMotionProblemSelected();
 
         // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
         // Nguồn Thuật toán dùng biểu thức hoặc đề hình học ngắn, nên học sinh
@@ -554,6 +566,8 @@ public partial class MathPuzzlePage : ContentPage
                     ? "Quiz.FractionEssayValidationHintAi"
                     : isWordProblemSource && isProportion
                     ? "Quiz.ProportionEssayValidationHintAi"
+                    : isWordProblemSource && isMotion
+                    ? "Quiz.MotionEssayValidationHintAi"
                     : isFindX
                     ? "Quiz.FindXEssayValidationHint"
                     : IsGeometryProblemSelected()
@@ -562,6 +576,8 @@ public partial class MathPuzzlePage : ContentPage
                     ? "Quiz.FractionEssayValidationHint"
                     : isProportion
                     ? "Quiz.ProportionEssayValidationHint"
+                    : isMotion
+                    ? "Quiz.MotionEssayValidationHint"
                     : isWordProblemSource
                         ? "Quiz.EssayValidationHint"
                         : "Quiz.EssayValidationHintAlgorithm");
@@ -575,6 +591,8 @@ public partial class MathPuzzlePage : ContentPage
                 ? Translate("Quiz.GeometryEssayEquationPlaceholder")
                 : isProportion
                 ? TranslateQuiz("Quiz.ProportionEssayEquationPlaceholder")
+                : isMotion
+                ? TranslateQuiz("Quiz.MotionEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
 
         EssayAnswerEntry.Placeholder =
@@ -926,6 +944,20 @@ public partial class MathPuzzlePage : ContentPage
         return request?.Kind == QuizProblemKind.Proportion;
     }
 
+    private bool IsMotionProblemSelected()
+    {
+        if (_currentQuestion?.MotionProblem is not null)
+        {
+            return true;
+        }
+
+        QuizProblemRequest? request =
+            _activeProblemRequest ??
+            GetSelectedFixedProblemRequest();
+
+        return request?.Kind == QuizProblemKind.Motion;
+    }
+
     private void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
     {
@@ -963,6 +995,10 @@ public partial class MathPuzzlePage : ContentPage
                         _proportionQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
                             problemRequest.ProportionType ?? _selectedProportionType,
+                            AppLanguageManager.CurrentLanguage),
+                    QuizProblemKind.Motion =>
+                        _motionQuizGenerator.GenerateAlgorithm(
+                            _selectedMode,
                             AppLanguageManager.CurrentLanguage),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
@@ -2448,6 +2484,8 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.FractionProblem;
         ProportionQuizContract? proportionProblem =
             _currentQuestion.ProportionProblem;
+        MotionQuizContract? motionProblem =
+            _currentQuestion.MotionProblem;
 
         if (wordProblem is not null)
         {
@@ -2519,6 +2557,38 @@ public partial class MathPuzzlePage : ContentPage
                     Translate("Quiz.PresentedAnswer"),
                     presentedAnswer,
                     proportionProblem.AnswerUnit);
+                PresentedAnswerLabel.IsVisible = true;
+            }
+            else
+            {
+                PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerFractionView.IsVisible = false;
+            }
+        }
+        else if (motionProblem is not null)
+        {
+            QuestionPromptLabel.Text =
+                GetQuestionPromptTitle();
+            SetQuestionContent(
+                motionProblem.ProblemText,
+                21,
+                "TextPrimaryColor",
+                useFractionFormatting: false);
+
+            if (_currentQuestion.Mode ==
+                ArithmeticQuizMode.TrueFalse)
+            {
+                string presentedAnswer =
+                    _currentQuestion.PresentedAnswer
+                        .GetValueOrDefault()
+                        .ToString("N0", CultureInfo.CurrentCulture);
+
+                PresentedAnswerFractionView.IsVisible = false;
+                PresentedAnswerLabel.Text = string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translate("Quiz.PresentedAnswer"),
+                    presentedAnswer,
+                    motionProblem.AnswerUnit);
                 PresentedAnswerLabel.IsVisible = true;
             }
             else
@@ -2608,7 +2678,9 @@ public partial class MathPuzzlePage : ContentPage
                         ? $" {wordProblem.AnswerUnit}"
                         : proportionProblem is not null
                             ? $" {proportionProblem.AnswerUnit}"
-                            : string.Empty;
+                            : motionProblem is not null
+                                ? $" {motionProblem.AnswerUnit}"
+                                : string.Empty;
 
                 if (fractionProblem is not null)
                 {
@@ -2810,7 +2882,25 @@ public partial class MathPuzzlePage : ContentPage
             FeedbackFractionView.IsVisible = false;
         }
 
-        if (_currentQuestion.WordProblem is not null)
+        if (_currentQuestion.WordProblem is MathWordProblem motionWordProblem &&
+            _currentQuestion.MotionProblem is MotionQuizContract motionProblem)
+        {
+            string answerLabel =
+                AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
+                    ? "Đáp số"
+                    : "Answer";
+
+            string solutionText =
+                $"{motionWordProblem.SolutionLead}{Environment.NewLine}" +
+                $"{motionProblem.SolutionText}{Environment.NewLine}" +
+                $"{answerLabel}: {motionProblem.CorrectAnswer:N0} {motionWordProblem.AnswerUnit}";
+
+            SetSolutionContent(
+                solutionText,
+                useFractionFormatting: false);
+            SolutionBorder.IsVisible = true;
+        }
+        else if (_currentQuestion.WordProblem is not null)
         {
             string solutionText =
                 ElementaryWordProblemSolutionFormatter.Format(
@@ -2825,6 +2915,7 @@ public partial class MathPuzzlePage : ContentPage
             SolutionBorder.IsVisible = true;
         }
         else if (_currentQuestion.ProportionProblem is not null ||
+                 _currentQuestion.MotionProblem is not null ||
                  _currentQuestion.Mode == ArithmeticQuizMode.Essay)
         {
             string solutionText =
@@ -2905,6 +2996,11 @@ public partial class MathPuzzlePage : ContentPage
         if (question.ProportionProblem is ProportionQuizContract proportion)
         {
             return FormatProportionEssaySolution(proportion);
+        }
+
+        if (question.MotionProblem is MotionQuizContract motion)
+        {
+            return motion.SolutionText;
         }
 
         string left =
@@ -3032,6 +3128,12 @@ public partial class MathPuzzlePage : ContentPage
         {
             answerText +=
                 $" {proportionProblem.AnswerUnit}";
+        }
+        else if (_currentQuestion?.MotionProblem is
+                 MotionQuizContract motionProblem)
+        {
+            answerText +=
+                $" {motionProblem.AnswerUnit}";
         }
 
         string feedbackText = string.Format(

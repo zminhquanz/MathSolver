@@ -78,6 +78,10 @@ public sealed partial class EssayAnswerValidator
                 ? ValidateProportionEquation(
                     proportion,
                     equationText)
+                : question.MotionProblem is MotionQuizContract motion
+                ? ValidateMotionEquation(
+                    motion,
+                    equationText)
                 : ValidateEquation(
                     question,
                     equationText);
@@ -274,7 +278,9 @@ public sealed partial class EssayAnswerValidator
              !UnitsMatch(
                  enteredUnit,
                  expectedUnit,
-                 question.WordProblem?.ProblemText)))
+                 question.WordProblem?.ProblemText ??
+                 question.ProportionProblem?.ProblemText ??
+                 question.MotionProblem?.ProblemText)))
         {
             return (false, EssayAnswerError.WrongAnswerUnit);
         }
@@ -373,6 +379,55 @@ public sealed partial class EssayAnswerValidator
             ? (true, EssayAnswerError.None)
             : (false, EssayAnswerError.WrongOperandsOrOperation);
     }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateMotionEquation(
+            MotionQuizContract contract,
+            string? equationText)
+    {
+        string entered = NormalizeMotionEquation(equationText);
+        if (entered.Length == 0 || !entered.Contains('='))
+        {
+            return (false, EssayAnswerError.InvalidEquationFormat);
+        }
+
+        var accepted = new HashSet<string>(StringComparer.Ordinal)
+        {
+            NormalizeMotionEquation(contract.EquationText)
+        };
+
+        string symbol = contract.RepresentativeOperation switch
+        {
+            ArithmeticOperation.Add => "+",
+            ArithmeticOperation.Subtract => "-",
+            ArithmeticOperation.Multiply => "×",
+            ArithmeticOperation.Divide => "÷",
+            _ => string.Empty
+        };
+
+        accepted.Add(
+            NormalizeMotionEquation(
+                $"{contract.RepresentativeLeft} {symbol} {contract.RepresentativeRight} = {contract.CorrectAnswer}"));
+
+        return accepted.Contains(entered)
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongOperandsOrOperation);
+    }
+
+    private static string NormalizeMotionEquation(string? equationText) =>
+        (equationText ?? string.Empty)
+            .Trim()
+            .Replace('x', '×')
+            .Replace('X', '×')
+            .Replace('*', '×')
+            .Replace(':', '÷')
+            .Replace('/', '÷')
+            .Replace('−', '-')
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .Replace("\t", string.Empty, StringComparison.Ordinal)
+            .Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Replace("\n", string.Empty, StringComparison.Ordinal)
+            .Replace(",", string.Empty, StringComparison.Ordinal);
 
     private static string NormalizeProportionEquation(string? equationText) =>
         (equationText ?? string.Empty)
@@ -519,7 +574,9 @@ public sealed partial class EssayAnswerValidator
 
         string expectedUnit =
             NormalizeUnit(
-                question.WordProblem?.AnswerUnit);
+                question.WordProblem?.AnswerUnit ??
+                question.ProportionProblem?.AnswerUnit ??
+                question.MotionProblem?.AnswerUnit);
 
         // Bài toán đố có đơn vị thì đáp số phải ghi đúng đơn vị như một bài
         // giải tiểu học. Câu do thuật toán tạo chỉ là biểu thức nên không ép
@@ -529,7 +586,9 @@ public sealed partial class EssayAnswerValidator
              !UnitsMatch(
                  enteredUnit,
                  expectedUnit,
-                 question.WordProblem?.ProblemText)))
+                 question.WordProblem?.ProblemText ??
+                 question.ProportionProblem?.ProblemText ??
+                 question.MotionProblem?.ProblemText)))
         {
             return (false, EssayAnswerError.WrongAnswerUnit);
         }

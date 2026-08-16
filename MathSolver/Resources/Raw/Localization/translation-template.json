@@ -1209,7 +1209,12 @@
     "Quiz.ProportionQuestionTitle": "Bài toán tỉ lệ thuận / nghịch",
     "Quiz.ProportionEssayValidationHint": "Ứng dụng chấm đúng dữ kiện tỉ lệ, công thức tính và giá trị đáp số.",
     "Quiz.ProportionEssayValidationHintAi": "Bắt buộc điền lời giải. Ứng dụng chấm đúng quan hệ tỉ lệ, phép tính, kết quả và đơn vị đáp số.",
-    "Quiz.ProportionEssayEquationPlaceholder": "Ví dụ: 24 ÷ 4 × 6 = 36"
+    "Quiz.ProportionEssayEquationPlaceholder": "Ví dụ: 24 ÷ 4 × 6 = 36",
+    "Quiz.ProblemMotion": "Chuyển động ➜⏱️",
+    "Quiz.MotionQuestionTitle": "Bài toán chuyển động",
+    "Quiz.MotionEssayValidationHint": "Nhập phép tính đúng theo dữ kiện chuyển động và đáp số kèm đúng đơn vị.",
+    "Quiz.MotionEssayValidationHintAi": "Bắt buộc điền lời giải, phép tính và đáp số. Phép tính phải đúng quan hệ chuyển động; đáp số phải kèm đúng đơn vị.",
+    "Quiz.MotionEssayEquationPlaceholder": "Ví dụ: 120 ÷ (60 + 40) = 1"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

@@ -5796,6 +5796,31 @@
       "key": "Quiz.ProportionEssayEquationPlaceholder",
       "source": "Ví dụ: 24 ÷ 4 × 6 = 36",
       "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemMotion",
+      "source": "Chuyển động ➜⏱️",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionQuestionTitle",
+      "source": "Bài toán chuyển động",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionEssayValidationHint",
+      "source": "Nhập phép tính đúng theo dữ kiện chuyển động và đáp số kèm đúng đơn vị.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionEssayValidationHintAi",
+      "source": "Bắt buộc điền lời giải, phép tính và đáp số. Phép tính phải đúng quan hệ chuyển động; đáp số phải kèm đúng đơn vị.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionEssayEquationPlaceholder",
+      "source": "Ví dụ: 120 ÷ (60 + 40) = 1",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [
