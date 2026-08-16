@@ -47,6 +47,15 @@ public static class ElementaryWordProblemSolutionFormatter
                 language);
         }
 
+        if (question.ProportionProblem is ProportionQuizContract proportion)
+        {
+            return FormatProportion(
+                proportion,
+                wordProblem,
+                language,
+                culture);
+        }
+
         string left =
             question.Expression.LeftOperand.ToString(
                 "N0",
@@ -79,6 +88,41 @@ public static class ElementaryWordProblemSolutionFormatter
             $"{solutionLead}{Environment.NewLine}" +
             $"{left} {symbol} {right} = {answer}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+    }
+
+    private static string FormatProportion(
+        ProportionQuizContract contract,
+        MathWordProblem wordProblem,
+        AppLanguage language,
+        CultureInfo culture)
+    {
+        string lead = NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead);
+        string answer = contract.CorrectAnswer.ToString("N0", culture);
+        string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+
+        if (contract.IsDirect)
+        {
+            int unitRate = contract.B / contract.A;
+            string step1 = language == AppLanguage.Vietnamese
+                ? $"Giá trị ứng với 1 đơn vị: {contract.B.ToString("N0", culture)} ÷ {contract.A.ToString("N0", culture)} = {unitRate.ToString("N0", culture)}"
+                : $"Value for 1 unit: {contract.B.ToString("N0", culture)} ÷ {contract.A.ToString("N0", culture)} = {unitRate.ToString("N0", culture)}";
+            string step2 = $"{unitRate.ToString("N0", culture)} × {contract.C.ToString("N0", culture)} = {answer}";
+            return $"{lead}{Environment.NewLine}{step1}{Environment.NewLine}{step2}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+        }
+
+        int total = contract.A * contract.B;
+        if (contract.AsksForAdditionalPeople)
+        {
+            int newPeople = total / contract.C;
+            string step1 = $"{contract.A.ToString("N0", culture)} × {contract.B.ToString("N0", culture)} = {total.ToString("N0", culture)}";
+            string step2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {newPeople.ToString("N0", culture)}";
+            string step3 = $"{newPeople.ToString("N0", culture)} − {contract.A.ToString("N0", culture)} = {answer}";
+            return $"{lead}{Environment.NewLine}{step1}{Environment.NewLine}{step2}{Environment.NewLine}{step3}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+        }
+
+        string inverseStep1 = $"{contract.A.ToString("N0", culture)} × {contract.B.ToString("N0", culture)} = {total.ToString("N0", culture)}";
+        string inverseStep2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {answer}";
+        return $"{lead}{Environment.NewLine}{inverseStep1}{Environment.NewLine}{inverseStep2}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
     private static string FormatFindX(

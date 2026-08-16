@@ -28,6 +28,7 @@ public partial class MathPuzzlePage : ContentPage
     private readonly FractionQuizGenerator _fractionQuizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly FindXQuizGenerator _findXQuizGenerator;
+    private readonly ProportionQuizGenerator _proportionQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
     private readonly SortedDictionary<int, string> _llmRawOutputs = new();
     private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
@@ -59,6 +60,8 @@ public partial class MathPuzzlePage : ContentPage
         ArithmeticOperation.Add;
     private FractionOperation _selectedFractionOperation =
         FractionOperation.Add;
+    private ProportionQuizType _selectedProportionType =
+        ProportionQuizType.Direct;
     private bool _isAiDiagnosticsVisible;
     private bool _isDeveloperModeSubscribed;
     private int _llmProgressVersion;
@@ -115,13 +118,17 @@ public partial class MathPuzzlePage : ContentPage
             new FindXQuizGenerator(
                 _findXEngine);
 
+        _proportionQuizGenerator =
+            new ProportionQuizGenerator();
+
         _localLlmQuizGenerator =
             new LocalLlmQuizGenerator(
                 _quizGenerator,
                 _arithmeticEngine,
                 _fractionQuizGenerator,
                 _geometryQuizGenerator,
-                _findXQuizGenerator);
+                _findXQuizGenerator,
+                _proportionQuizGenerator);
 
         _llmModelPath =
             _llmModelStore.GetSavedModelPath();
@@ -499,6 +506,12 @@ public partial class MathPuzzlePage : ContentPage
             return Translate("Quiz.GeometryQuestionTitle");
         }
 
+        if (_currentQuestion?.ProportionProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return TranslateQuiz("Quiz.ProportionQuestionTitle");
+        }
+
         if (_currentQuestion?.WordProblem is not null)
         {
             return Translate("Quiz.WordProblemTitle");
@@ -523,6 +536,7 @@ public partial class MathPuzzlePage : ContentPage
             _generationSource == QuizGenerationSource.LocalLlm;
         bool isFindX = IsFindXProblemSelected();
         bool isFraction = IsFractionProblemSelected();
+        bool isProportion = IsProportionProblemSelected();
 
         // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
         // Nguồn Thuật toán dùng biểu thức hoặc đề hình học ngắn, nên học sinh
@@ -538,12 +552,16 @@ public partial class MathPuzzlePage : ContentPage
                     ? "Quiz.GeometryEssayValidationHintAi"
                     : isWordProblemSource && isFraction
                     ? "Quiz.FractionEssayValidationHintAi"
+                    : isWordProblemSource && isProportion
+                    ? "Quiz.ProportionEssayValidationHintAi"
                     : isFindX
                     ? "Quiz.FindXEssayValidationHint"
                     : IsGeometryProblemSelected()
                     ? "Quiz.GeometryEssayValidationHint"
                     : isFraction
                     ? "Quiz.FractionEssayValidationHint"
+                    : isProportion
+                    ? "Quiz.ProportionEssayValidationHint"
                     : isWordProblemSource
                         ? "Quiz.EssayValidationHint"
                         : "Quiz.EssayValidationHintAlgorithm");
@@ -555,6 +573,8 @@ public partial class MathPuzzlePage : ContentPage
                 ? TranslateQuiz("Quiz.FractionEssayEquationPlaceholder")
                 : IsGeometryProblemSelected()
                 ? Translate("Quiz.GeometryEssayEquationPlaceholder")
+                : isProportion
+                ? TranslateQuiz("Quiz.ProportionEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
 
         EssayAnswerEntry.Placeholder =
@@ -641,7 +661,8 @@ public partial class MathPuzzlePage : ContentPage
         _quizProblemTypeCatalog.Resolve(
             OperationPicker.SelectedIndex,
             _selectedBasicOperation,
-            _selectedFractionOperation);
+            _selectedFractionOperation,
+            _selectedProportionType);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -661,6 +682,11 @@ public partial class MathPuzzlePage : ContentPage
                 {
                     FractionOperation = _selectedFractionOperation
                 },
+            QuizProblemKind.Proportion =>
+                request.Value with
+                {
+                    ProportionType = _selectedProportionType
+                },
             _ => request
         };
     }
@@ -674,8 +700,22 @@ public partial class MathPuzzlePage : ContentPage
 
         bool showOperations =
             kind is QuizProblemKind.Arithmetic or QuizProblemKind.Fraction;
+        bool showProportionType =
+            kind == QuizProblemKind.Proportion;
 
         ProblemOperationPanel.IsVisible = showOperations;
+        ProportionTypePanel.IsVisible = showProportionType;
+
+        if (showProportionType)
+        {
+            SelectionButtonStyler.Select(
+                _selectedProportionType == ProportionQuizType.Direct
+                    ? DirectProportionButton
+                    : InverseProportionButton,
+                DirectProportionButton,
+                InverseProportionButton);
+        }
+
         if (!showOperations)
         {
             return;
@@ -766,6 +806,48 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
+    private void OnDirectProportionClicked(object? sender, EventArgs e) =>
+        SelectProportionType(ProportionQuizType.Direct);
+
+    private void OnInverseProportionClicked(object? sender, EventArgs e) =>
+        SelectProportionType(ProportionQuizType.Inverse);
+
+    private void SelectProportionType(ProportionQuizType type)
+    {
+        QuizProblemKind? kind =
+            _quizProblemTypeCatalog
+                .GetFixedRequest(OperationPicker.SelectedIndex)
+                ?.Kind;
+
+        if (kind != QuizProblemKind.Proportion)
+        {
+            return;
+        }
+
+        bool changed = _selectedProportionType != type;
+        _selectedProportionType = type;
+        UpdateProblemOperationPanel();
+
+        if (!changed)
+        {
+            return;
+        }
+
+        CancelLlmGeneration();
+        ResetQuizSessionState();
+        _activeProblemRequest = GetSelectedFixedProblemRequest();
+        UpdateEssayAnswerPresentation();
+
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
+        }
+    }
+
     private static FractionOperation MapArithmeticOperation(
         ArithmeticOperation operation) =>
         operation switch
@@ -830,6 +912,20 @@ public partial class MathPuzzlePage : ContentPage
         return request?.Kind == QuizProblemKind.Fraction;
     }
 
+    private bool IsProportionProblemSelected()
+    {
+        if (_currentQuestion?.ProportionProblem is not null)
+        {
+            return true;
+        }
+
+        QuizProblemRequest? request =
+            _activeProblemRequest ??
+            GetSelectedFixedProblemRequest();
+
+        return request?.Kind == QuizProblemKind.Proportion;
+    }
+
     private void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
     {
@@ -863,6 +959,11 @@ public partial class MathPuzzlePage : ContentPage
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(
                             _selectedMode),
+                    QuizProblemKind.Proportion =>
+                        _proportionQuizGenerator.GenerateAlgorithm(
+                            _selectedMode,
+                            problemRequest.ProportionType ?? _selectedProportionType,
+                            AppLanguageManager.CurrentLanguage),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -2345,6 +2446,8 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.FindXProblem;
         FractionQuizContract? fractionProblem =
             _currentQuestion.FractionProblem;
+        ProportionQuizContract? proportionProblem =
+            _currentQuestion.ProportionProblem;
 
         if (wordProblem is not null)
         {
@@ -2385,6 +2488,38 @@ public partial class MathPuzzlePage : ContentPage
                     PresentedAnswerLabel.Text = presentedText;
                     PresentedAnswerLabel.IsVisible = true;
                 }
+            }
+            else
+            {
+                PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerFractionView.IsVisible = false;
+            }
+        }
+        else if (proportionProblem is not null)
+        {
+            QuestionPromptLabel.Text =
+                GetQuestionPromptTitle();
+            SetQuestionContent(
+                proportionProblem.ProblemText,
+                21,
+                "TextPrimaryColor",
+                useFractionFormatting: false);
+
+            if (_currentQuestion.Mode ==
+                ArithmeticQuizMode.TrueFalse)
+            {
+                string presentedAnswer =
+                    _currentQuestion.PresentedAnswer
+                        .GetValueOrDefault()
+                        .ToString("N0", CultureInfo.CurrentCulture);
+
+                PresentedAnswerFractionView.IsVisible = false;
+                PresentedAnswerLabel.Text = string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translate("Quiz.PresentedAnswer"),
+                    presentedAnswer,
+                    proportionProblem.AnswerUnit);
+                PresentedAnswerLabel.IsVisible = true;
             }
             else
             {
@@ -2469,9 +2604,11 @@ public partial class MathPuzzlePage : ContentPage
                     (char)('A' + index);
 
                 string choiceUnit =
-                    wordProblem is null
-                        ? string.Empty
-                        : $" {wordProblem.AnswerUnit}";
+                    wordProblem is not null
+                        ? $" {wordProblem.AnswerUnit}"
+                        : proportionProblem is not null
+                            ? $" {proportionProblem.AnswerUnit}"
+                            : string.Empty;
 
                 if (fractionProblem is not null)
                 {
@@ -2687,8 +2824,8 @@ public partial class MathPuzzlePage : ContentPage
                     _currentQuestion.FractionProblem is not null);
             SolutionBorder.IsVisible = true;
         }
-        else if (_currentQuestion.Mode ==
-                 ArithmeticQuizMode.Essay)
+        else if (_currentQuestion.ProportionProblem is not null ||
+                 _currentQuestion.Mode == ArithmeticQuizMode.Essay)
         {
             string solutionText =
                 FormatPlainEssaySolution(
@@ -2765,6 +2902,11 @@ public partial class MathPuzzlePage : ContentPage
                 $"{fractionAnswerLabel}: {fraction.CorrectAnswer}";
         }
 
+        if (question.ProportionProblem is ProportionQuizContract proportion)
+        {
+            return FormatProportionEssaySolution(proportion);
+        }
+
         string left =
             question.Expression.LeftOperand.ToString(
                 "N0",
@@ -2812,6 +2954,64 @@ public partial class MathPuzzlePage : ContentPage
             $"{answerLabel}: {answer}";
     }
 
+    private static string FormatProportionEssaySolution(
+        ProportionQuizContract contract)
+    {
+        CultureInfo culture = CultureInfo.CurrentCulture;
+        bool vi = AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese;
+        string answer = contract.CorrectAnswer.ToString("N0", culture);
+        string answerLabel = vi ? "Đáp số" : "Answer";
+
+        if (contract.IsDirect)
+        {
+            int unitRate = contract.B / contract.A;
+            return vi
+                ? $"Giá trị ứng với 1 đơn vị là:{Environment.NewLine}" +
+                  $"{contract.B:N0} ÷ {contract.A:N0} = {unitRate:N0}{Environment.NewLine}" +
+                  $"Giá trị ứng với {contract.C:N0} đơn vị là:{Environment.NewLine}" +
+                  $"{unitRate:N0} × {contract.C:N0} = {answer}{Environment.NewLine}" +
+                  $"{answerLabel}: {answer} {contract.AnswerUnit}"
+                : $"Value for 1 unit:{Environment.NewLine}" +
+                  $"{contract.B:N0} ÷ {contract.A:N0} = {unitRate:N0}{Environment.NewLine}" +
+                  $"Value for {contract.C:N0} units:{Environment.NewLine}" +
+                  $"{unitRate:N0} × {contract.C:N0} = {answer}{Environment.NewLine}" +
+                  $"{answerLabel}: {answer} {contract.AnswerUnit}";
+        }
+
+        int total = contract.A * contract.B;
+        if (contract.AsksForAdditionalPeople)
+        {
+            int newPeople = total / contract.C;
+            return vi
+                ? $"Tổng số người-ngày không đổi:{Environment.NewLine}" +
+                  $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
+                  $"Số người thực tế là:{Environment.NewLine}" +
+                  $"{total:N0} ÷ {contract.C:N0} = {newPeople:N0}{Environment.NewLine}" +
+                  $"Số người đến thêm là:{Environment.NewLine}" +
+                  $"{newPeople:N0} − {contract.A:N0} = {answer}{Environment.NewLine}" +
+                  $"{answerLabel}: {answer} {contract.AnswerUnit}"
+                : $"The total person-days stays constant:{Environment.NewLine}" +
+                  $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
+                  $"Actual number of people:{Environment.NewLine}" +
+                  $"{total:N0} ÷ {contract.C:N0} = {newPeople:N0}{Environment.NewLine}" +
+                  $"Additional people:{Environment.NewLine}" +
+                  $"{newPeople:N0} − {contract.A:N0} = {answer}{Environment.NewLine}" +
+                  $"{answerLabel}: {answer} {contract.AnswerUnit}";
+        }
+
+        return vi
+            ? $"Tích của hai đại lượng tỉ lệ nghịch không đổi:{Environment.NewLine}" +
+              $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
+              $"Giá trị cần tìm là:{Environment.NewLine}" +
+              $"{total:N0} ÷ {contract.C:N0} = {answer}{Environment.NewLine}" +
+              $"{answerLabel}: {answer} {contract.AnswerUnit}"
+            : $"The product of the inversely proportional quantities stays constant:{Environment.NewLine}" +
+              $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
+              $"Required value:{Environment.NewLine}" +
+              $"{total:N0} ÷ {contract.C:N0} = {answer}{Environment.NewLine}" +
+              $"{answerLabel}: {answer} {contract.AnswerUnit}";
+    }
+
     private void ShowFeedback(bool isCorrect)
     {
         string answerText =
@@ -2826,6 +3026,12 @@ public partial class MathPuzzlePage : ContentPage
         {
             answerText +=
                 $" {wordProblem.AnswerUnit}";
+        }
+        else if (_currentQuestion?.ProportionProblem is
+                 ProportionQuizContract proportionProblem)
+        {
+            answerText +=
+                $" {proportionProblem.AnswerUnit}";
         }
 
         string feedbackText = string.Format(

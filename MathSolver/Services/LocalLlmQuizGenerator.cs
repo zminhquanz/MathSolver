@@ -40,6 +40,7 @@ public sealed class LocalLlmQuizGenerator
     private readonly FractionQuizGenerator _fractionQuizGenerator;
     private readonly GeometryQuizGenerator _geometryQuizGenerator;
     private readonly FindXQuizGenerator _findXQuizGenerator;
+    private readonly ProportionQuizGenerator _proportionQuizGenerator;
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
@@ -55,7 +56,8 @@ public sealed class LocalLlmQuizGenerator
         BasicArithmeticEngine engine,
         FractionQuizGenerator fractionQuizGenerator,
         GeometryQuizGenerator geometryQuizGenerator,
-        FindXQuizGenerator findXQuizGenerator)
+        FindXQuizGenerator findXQuizGenerator,
+        ProportionQuizGenerator proportionQuizGenerator)
     {
         _quizGenerator =
             quizGenerator ??
@@ -76,6 +78,10 @@ public sealed class LocalLlmQuizGenerator
         _findXQuizGenerator =
             findXQuizGenerator ??
             throw new ArgumentNullException(nameof(findXQuizGenerator));
+
+        _proportionQuizGenerator =
+            proportionQuizGenerator ??
+            throw new ArgumentNullException(nameof(proportionQuizGenerator));
     }
 
     /// <summary>
@@ -205,6 +211,11 @@ public sealed class LocalLlmQuizGenerator
                             problemRequest.FractionOperation),
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(mode),
+                    QuizProblemKind.Proportion =>
+                        _proportionQuizGenerator.GenerateContract(
+                            mode,
+                            problemRequest.ProportionType ?? ProportionQuizType.Direct,
+                            language),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -269,6 +280,11 @@ public sealed class LocalLlmQuizGenerator
                         language,
                         selectedStudent,
                         selectedStoryContext,
+                        previousErrorCode: null)
+                    : contract.ProportionProblem is ProportionQuizContract proportion
+                    ? LlmQuizPromptBuilder.BuildProportionUserPrompt(
+                        proportion,
+                        language,
                         previousErrorCode: null)
                     : LlmQuizPromptBuilder.BuildUserPrompt(
                         contract.Expression,
@@ -532,6 +548,11 @@ public sealed class LocalLlmQuizGenerator
                                 draft,
                                 validatedFraction,
                                 selectedStoryContext,
+                                language)
+                            : contract.ProportionProblem is ProportionQuizContract validatedProportion
+                            ? _wordProblemValidator.ValidateProportion(
+                                draft,
+                                validatedProportion,
                                 language)
                             : _wordProblemValidator.Validate(
                                 draft,
@@ -925,8 +946,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -1194,6 +1215,100 @@ internal static class LlmQuizPromptBuilder
             (FractionOperation.Divide, _) => "division",
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
+
+    public static string BuildProportionUserPrompt(
+        ProportionQuizContract contract,
+        AppLanguage language,
+        string? previousErrorCode)
+    {
+        string retry = string.IsNullOrWhiteSpace(previousErrorCode)
+            ? string.Empty
+            : BuildRetryInstruction(previousErrorCode, language);
+
+        string typeName = contract.Type switch
+        {
+            ProportionQuizType.Direct => language == AppLanguage.Vietnamese
+                ? "tỉ lệ thuận"
+                : "direct proportion",
+            ProportionQuizType.Inverse => language == AppLanguage.Vietnamese
+                ? "tỉ lệ nghịch"
+                : "inverse proportion",
+            _ => throw new ArgumentOutOfRangeException(nameof(contract))
+        };
+
+        string specialRule = contract.AsksForAdditionalPeople
+            ? language == AppLanguage.Vietnamese
+                ? "- Câu hỏi bắt buộc hỏi SỐ NGƯỜI ĐẾN THÊM, không hỏi tổng số người thực tế."
+                : "- The question must ask for the NUMBER OF ADDITIONAL PEOPLE, not the new total number of people."
+            : string.Empty;
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return FormattableString.Invariant(
+                $$"""
+                Viết một bài toán đố {{typeName}} tự nhiên, phù hợp học sinh tiểu học/THCS Việt Nam.
+                Dữ kiện bắt buộc A = {{contract.A}}
+                Dữ kiện bắt buộc B = {{contract.B}}
+                Dữ kiện bắt buộc C = {{contract.C}}
+                Ngữ cảnh/quan hệ bắt buộc phải giữ đúng như mẫu tham chiếu sau:
+                {{contract.ProblemText}}
+                answer_unit bắt buộc: {{contract.AnswerUnit}}
+
+                Quy tắc:
+                - QUY TẮC CỨNG VỀ CHỮ SỐ: mọi dữ kiện số học trong problem_text BẮT BUỘC phải viết bằng chữ số Ả Rập 0-9. TUYỆT ĐỐI KHÔNG viết số bằng chữ tiếng Việt như “mười”, “bảy”, “năm”, “một trăm”, “một nghìn”, v.v.
+                - Ba giá trị {{contract.A}}, {{contract.B}}, {{contract.C}} phải xuất hiện trực tiếp dưới dạng chữ số trong problem_text. Ví dụ dữ kiện {{contract.A}} phải được giữ là “{{contract.A}}”, không được đổi thành cách đọc bằng chữ.
+                - problem_text phải chứa đúng ba dữ kiện số {{contract.A}}, {{contract.B}}, {{contract.C}} với đúng vai trò như mẫu; không thêm dữ kiện số học khác.
+                - Không tự thêm dấu ngoặc giải thích cách đọc số, không lặp lại cùng dữ kiện bằng cả chữ số lẫn chữ viết.
+                - Đây bắt buộc là bài {{typeName}}; không đổi thành cộng/trừ/nhân/chia đơn thuần có ngữ cảnh khác.
+                - Có thể diễn đạt lại câu chữ tự nhiên nhưng không đổi đối tượng, vai trò các số, đại lượng cần tìm hoặc quan hệ thuận/nghịch.
+                {{specialRule}}
+                - Không tính hoặc làm lộ đáp án trong problem_text.
+                - answer_unit phải đúng "{{contract.AnswerUnit}}", không chứa số hay phép tính.
+                - subject_name là cụm ngắn mô tả đại lượng/đối tượng chính và phải phù hợp problem_text.
+                - solution_lead là một câu dẫn ngắn đứng trước phép tính, nhắc đúng answer_unit, không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
+                - Chỉ trả đúng JSON bốn trường sau, không Markdown hay giải thích:
+                {
+                  "problem_text": "...",
+                  "subject_name": "...",
+                  "answer_unit": "{{contract.AnswerUnit}}",
+                  "solution_lead": "...:"
+                }
+                {{retry}}
+                """);
+        }
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural {{typeName}} word problem for an elementary/middle-school learner.
+            Required fact A = {{contract.A}}
+            Required fact B = {{contract.B}}
+            Required fact C = {{contract.C}}
+            Keep exactly the same context and numerical roles as this reference pattern:
+            {{contract.ProblemText}}
+            Required answer_unit: {{contract.AnswerUnit}}
+
+            Rules:
+            - HARD DIGIT RULE: every arithmetic fact in problem_text MUST be written with Arabic digits 0-9. NEVER spell a number out as a word such as “ten”, “seven”, “five”, “one hundred”, or “one thousand”.
+            - The three values {{contract.A}}, {{contract.B}}, and {{contract.C}} must appear directly as digits in problem_text. For example, the fact {{contract.A}} must remain “{{contract.A}}”; do not rewrite it in words.
+            - problem_text must contain exactly the three arithmetic facts {{contract.A}}, {{contract.B}}, and {{contract.C}} with the same roles as the reference; add no other arithmetic quantity.
+            - Do not add a parenthetical spelling of a number and do not repeat the same fact once as digits and again as words.
+            - It must genuinely be a {{typeName}} problem. Do not replace it with an unrelated one-step arithmetic story.
+            - You may rewrite the wording naturally, but do not change the objects, numerical roles, requested quantity, or direct/inverse relationship.
+            {{specialRule}}
+            - Do not calculate or reveal the answer in problem_text.
+            - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
+            - subject_name is a short phrase describing the main object/quantity and must fit problem_text.
+            - solution_lead is one short sentence before the calculation. It repeats answer_unit and contains no number, calculation, equals sign, result, or answer.
+            - Return exactly this four-field JSON schema and nothing else:
+            {
+              "problem_text": "...",
+              "subject_name": "...",
+              "answer_unit": "{{contract.AnswerUnit}}",
+              "solution_lead": "...:"
+            }
+            {{retry}}
+            """);
+    }
 
     public static string BuildUserPrompt(
         IntegerArithmeticExpression expression,
@@ -1699,6 +1814,10 @@ internal static class LlmQuizPromptBuilder
                     "Bỏ phản hồi cũ và tạo lại toàn bộ một JSON object hoàn chỉnh, đủ đúng bốn trường bắt buộc, không thêm trường khác.",
                 "ProblemNumbersMismatch" =>
                     "Sửa đúng các dữ kiện số mà validator đã chỉ ra; dùng đủ từng số bắt buộc và không thêm số khác.",
+                "ProportionFactsMismatch" =>
+                    "Bài tỉ lệ bắt buộc ghi mọi dữ kiện bằng chữ số 0-9. Hãy dùng đúng ba giá trị contract dưới dạng số, ví dụ 10 chứ không viết “mười”; không thêm, bỏ, đổi hoặc viết lại số bằng chữ.",
+                "ProportionRelationshipMismatch" =>
+                    "Giữ nguyên ngữ cảnh mẫu và đúng quan hệ tỉ lệ thuận/nghịch; không đổi vai trò của ba dữ kiện hay đại lượng cần tìm.",
                 "FractionFactsMismatch" =>
                     "Ghi từng phân số đúng dạng 1/2 bằng dấu /. Tuyệt đối không dùng $, LaTeX, \\frac, \\dfrac, \\tfrac hoặc ngoặc nhọn.",
                 "AnswerRevealedInProblem" =>
@@ -1735,6 +1854,10 @@ internal static class LlmQuizPromptBuilder
                 "Discard the previous response and regenerate one complete JSON object with exactly the four required fields and no others.",
             "ProblemNumbersMismatch" =>
                 "Correct the exact numeric facts named by the validator; use every required value and no other value.",
+            "ProportionFactsMismatch" =>
+                "A proportion problem must write every arithmetic fact with digits 0-9. Use exactly the three contract values as digits, for example 10 rather than “ten”; do not add, omit, change, or spell out any numeric fact.",
+            "ProportionRelationshipMismatch" =>
+                "Keep the reference context and the required direct/inverse relationship; do not change the roles of the three facts or the requested quantity.",
             "FractionFactsMismatch" =>
                 "Write each fraction exactly as 1/2 with a slash. Never use $, LaTeX, \\frac, \\dfrac, \\tfrac, or braces.",
             "AnswerRevealedInProblem" =>
@@ -2549,6 +2672,245 @@ internal sealed partial class LlmWordProblemValidator
                 solutionLead,
                 unit,
                 subject));
+    }
+
+    public LlmWordProblemValidationResult ValidateProportion(
+        LlmWordProblemDraft draft,
+        ProportionQuizContract contract,
+        AppLanguage language)
+    {
+        string problem = NormalizeSingleLine(draft.ProblemText);
+        string subject = NormalizeSingleLine(draft.SubjectName);
+        string unit = NormalizeSingleLine(draft.AnswerUnit);
+        string solutionLead = NormalizeSingleLine(draft.SolutionLead);
+
+        if (problem.Length is < 18 or > 700 ||
+            subject.Length > 80 ||
+            unit.Length > 80 ||
+            solutionLead.Length > 220)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidTextLength",
+                language == AppLanguage.Vietnamese
+                    ? "Độ dài một trường JSON của bài tỉ lệ không hợp lệ; hãy viết ngắn gọn, đầy đủ và giữ đúng bốn trường."
+                    : "A JSON field in the proportion problem has an invalid length. Keep all four fields concise and complete.");
+        }
+
+        if (!IsQuestionSentence(problem, language))
+        {
+            problem = AppendDefaultQuestion(problem, language);
+        }
+        else if (!problem.Contains('?'))
+        {
+            problem = problem.TrimEnd('.', '!', ';', ':') + "?";
+        }
+
+        string problemForNumberValidation = Regex.Replace(
+            problem,
+            @"(?<=\d)[, .\u00A0\u202F](?=\d{3}(?:\D|$))",
+            string.Empty,
+            RegexOptions.CultureInvariant);
+
+        int[] actualNumbers = NumberRegex()
+            .Matches(problemForNumberValidation)
+            .Select(match =>
+                int.TryParse(
+                    match.Value,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int value)
+                    ? value
+                    : int.MinValue)
+            .ToArray();
+
+        int[] expectedNumbers = [contract.A, contract.B, contract.C];
+        int[] expectedSorted = expectedNumbers.Order().ToArray();
+        int[] actualSorted = actualNumbers.Order().ToArray();
+
+        if (!expectedSorted.SequenceEqual(actualSorted))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "ProportionFactsMismatch",
+                BuildProportionNumberMismatchFeedback(
+                    expectedNumbers,
+                    actualNumbers,
+                    language));
+        }
+
+        if (!expectedNumbers.Contains((int)contract.CorrectAnswer) &&
+            actualNumbers.Contains((int)contract.CorrectAnswer))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerRevealedInProblem",
+                language == AppLanguage.Vietnamese
+                    ? "problem_text đã làm lộ đáp án. Hãy giữ đúng ba dữ kiện đầu vào và để học sinh tự tính kết quả."
+                    : "problem_text reveals the answer. Keep only the three required input facts and let the learner calculate the result.");
+        }
+
+        string lower = problem.ToLowerInvariant();
+        bool scenarioLooksValid =
+            MatchesProportionScenario(
+                lower,
+                contract.Scenario,
+                language);
+
+        if (!scenarioLooksValid)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "ProportionRelationshipMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Câu văn chưa thể hiện rõ quan hệ {(contract.IsDirect ? "tỉ lệ thuận" : "tỉ lệ nghịch")} và đúng vai trò dữ kiện của contract. Hãy giữ ngữ cảnh mẫu, chỉ viết lại câu chữ tự nhiên hơn."
+                    : $"The wording does not clearly preserve the required {(contract.IsDirect ? "direct" : "inverse")} proportion and the contract's numerical roles. Keep the reference context and only rewrite it naturally.");
+        }
+
+        if (!AreAnswerUnitsEquivalent(unit, contract.AnswerUnit, language) ||
+            NumberRegex().IsMatch(unit) ||
+            unit.Contains('='))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"answer_unit phải là “{contract.AnswerUnit}”, không chứa số hoặc phép tính."
+                    : $"answer_unit must be “{contract.AnswerUnit}” and contain no number or equation.");
+        }
+
+        string? disclosure = BuildSolutionLeadDisclosureFeedback(
+            solutionLead,
+            contract.CorrectAnswer,
+            language);
+        if (!string.IsNullOrWhiteSpace(disclosure))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                disclosure);
+        }
+
+        solutionLead = ElementaryWordProblemSolutionFormatter
+            .NormalizeSolutionLeadPunctuation(solutionLead);
+
+        if (string.IsNullOrWhiteSpace(solutionLead) ||
+            IsGenericSolutionLead(solutionLead, language))
+        {
+            solutionLead = ElementaryWordProblemSolutionFormatter
+                .NormalizeSolutionLeadPunctuation(
+                    language == AppLanguage.Vietnamese
+                        ? $"{contract.SubjectName} cần tìm là"
+                        : $"The required {contract.SubjectName} is");
+        }
+
+        if (!SolutionLeadMentionsAnswerUnit(solutionLead, unit, language))
+        {
+            solutionLead = ElementaryWordProblemSolutionFormatter
+                .NormalizeSolutionLeadPunctuation(
+                    language == AppLanguage.Vietnamese
+                        ? $"Số {unit} cần tìm là"
+                        : $"The required {unit} is");
+        }
+
+        if (string.IsNullOrWhiteSpace(subject) ||
+            !problem.Contains(subject, StringComparison.OrdinalIgnoreCase))
+        {
+            subject = contract.SubjectName;
+        }
+
+        return new(
+            true,
+            null,
+            null,
+            new MathWordProblem(
+                problem,
+                solutionLead,
+                unit,
+                subject));
+    }
+
+    private static bool MatchesProportionScenario(
+        string problem,
+        ProportionScenarioKind scenario,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return scenario switch
+            {
+                ProportionScenarioKind.Clothing =>
+                    ContainsAny(problem, "vải") &&
+                    ContainsAny(problem, "may", "quần áo", "bộ"),
+                ProportionScenarioKind.StudentsPlanting =>
+                    ContainsAny(problem, "học sinh", "em", "lớp", "tổ") &&
+                    ContainsAny(problem, "trồng", "cây"),
+                ProportionScenarioKind.Shopping =>
+                    ContainsAny(problem, "vở", "tập") &&
+                    ContainsAny(problem, "giá", "đồng", "tiền", "mua"),
+                ProportionScenarioKind.VehiclesCargo =>
+                    ContainsAny(problem, "xe") &&
+                    ContainsAny(problem, "hàng", "tấn", "chở"),
+                ProportionScenarioKind.VehiclesFuel =>
+                    ContainsAny(problem, "xe") &&
+                    ContainsAny(problem, "xăng", "lít"),
+                ProportionScenarioKind.DistanceTime =>
+                    ContainsAny(problem, "ô tô", "xe") &&
+                    ContainsAny(problem, "km", "giờ", "quãng đường", "đi được"),
+                ProportionScenarioKind.WorkersDays =>
+                    ContainsAny(problem, "người", "công nhân") &&
+                    ContainsAny(problem, "ngày", "làm xong", "đắp", "công việc"),
+                ProportionScenarioKind.MachinesHours =>
+                    ContainsAny(problem, "máy") &&
+                    ContainsAny(problem, "giờ", "hoàn thành", "công việc"),
+                ProportionScenarioKind.WorkersJob =>
+                    ContainsAny(problem, "thợ") &&
+                    ContainsAny(problem, "ngày", "làm xong", "công việc"),
+                ProportionScenarioKind.FoodPeopleDays or
+                ProportionScenarioKind.FoodAdditionalPeople =>
+                    ContainsAny(problem, "gạo", "thực phẩm", "bếp ăn") &&
+                    ContainsAny(problem, "người") &&
+                    ContainsAny(problem, "ngày"),
+                ProportionScenarioKind.SalesStock =>
+                    ContainsAny(problem, "cửa hàng", "mứt", "hộp") &&
+                    ContainsAny(problem, "bán", "ngày"),
+                _ => false
+            };
+        }
+
+        return scenario switch
+        {
+            ProportionScenarioKind.Clothing =>
+                ContainsAny(problem, "fabric", "cloth") &&
+                ContainsAny(problem, "clothes", "sets", "make", "making"),
+            ProportionScenarioKind.StudentsPlanting =>
+                ContainsAny(problem, "student", "students", "class", "group") &&
+                ContainsAny(problem, "plant", "plants", "trees"),
+            ProportionScenarioKind.Shopping =>
+                ContainsAny(problem, "notebook", "notebooks") &&
+                ContainsAny(problem, "cost", "price", "buy", "buys"),
+            ProportionScenarioKind.VehiclesCargo =>
+                ContainsAny(problem, "truck", "trucks", "vehicle", "vehicles") &&
+                ContainsAny(problem, "cargo", "tons", "carry"),
+            ProportionScenarioKind.VehiclesFuel =>
+                ContainsAny(problem, "vehicle", "vehicles", "car", "cars") &&
+                ContainsAny(problem, "fuel", "liters", "litres"),
+            ProportionScenarioKind.DistanceTime =>
+                ContainsAny(problem, "car", "vehicle") &&
+                ContainsAny(problem, "km", "hours", "distance", "travels"),
+            ProportionScenarioKind.WorkersDays =>
+                ContainsAny(problem, "people", "workers") &&
+                ContainsAny(problem, "days", "job", "road", "finish"),
+            ProportionScenarioKind.MachinesHours =>
+                ContainsAny(problem, "machine", "machines") &&
+                ContainsAny(problem, "hours", "job", "finish"),
+            ProportionScenarioKind.WorkersJob =>
+                ContainsAny(problem, "worker", "workers") &&
+                ContainsAny(problem, "days", "job", "finish"),
+            ProportionScenarioKind.FoodPeopleDays or
+            ProportionScenarioKind.FoodAdditionalPeople =>
+                ContainsAny(problem, "food", "rice", "kitchen") &&
+                ContainsAny(problem, "people") &&
+                ContainsAny(problem, "days"),
+            ProportionScenarioKind.SalesStock =>
+                ContainsAny(problem, "store", "shop", "jam", "boxes") &&
+                ContainsAny(problem, "sell", "sells", "days"),
+            _ => false
+        };
     }
 
     public LlmWordProblemValidationResult ValidateFraction(
@@ -3553,6 +3915,25 @@ internal sealed partial class LlmWordProblemValidator
         return language == AppLanguage.Vietnamese
             ? $"Trong trường problem_text có nhãn lớp không hợp lệ: {labels}. Chỉ được dùng khối 1–5 và lớp con 1–9 hoặc A–I, ví dụ “lớp 3/1” hoặc “lớp 3A”; hãy thay đúng ngay tại cụm này."
             : $"The problem_text field contains invalid class label(s): {labels}. Use only grades 1–5 and sections 1–9 or A–I, such as “Class 3/1” or “Class 3A”; replace the named phrase.";
+    }
+
+    private static string BuildProportionNumberMismatchFeedback(
+        IReadOnlyList<int> expectedNumbers,
+        IReadOnlyList<int> actualNumbers,
+        AppLanguage language)
+    {
+        int[] missing =
+            FindMultisetDifference(
+                expectedNumbers,
+                actualNumbers);
+        int[] unexpected =
+            FindMultisetDifference(
+                actualNumbers,
+                expectedNumbers);
+
+        return language == AppLanguage.Vietnamese
+            ? $"Sai dữ kiện số trong problem_text. Bài tỉ lệ bắt buộc dùng CHỮ SỐ 0-9, không được viết số bằng chữ. Contract yêu cầu đúng danh sách {FormatNumberList(expectedNumbers, language)}, nhưng validator chỉ đọc được {FormatNumberList(actualNumbers, language)}. Số bị thiếu: {FormatNumberList(missing, language)}. Số sai hoặc thừa: {FormatNumberList(unexpected, language)}. Hãy ghi trực tiếp các giá trị bằng số, ví dụ 10 chứ không viết ‘mười’, và không thêm dữ kiện số mới."
+            : $"Numeric facts are wrong in problem_text. A proportion problem must use DIGITS 0-9 and must not spell numbers out as words. The contract requires exactly {FormatNumberList(expectedNumbers, language)}, but the validator found {FormatNumberList(actualNumbers, language)}. Missing value(s): {FormatNumberList(missing, language)}. Wrong or extra value(s): {FormatNumberList(unexpected, language)}. Write the values directly as digits, for example 10 rather than ‘ten’, and add no new numeric fact.";
     }
 
     private static string BuildNumberMismatchFeedback(

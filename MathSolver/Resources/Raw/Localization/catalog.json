@@ -5756,6 +5756,46 @@
       "key": "Formula.Motion.Types.Advanced.Body",
       "source": "• Vận tốc thay đổi trên các đoạn đường khác nhau → tính vận tốc trung bình.\n• Một vật đi và về với hai vận tốc khác nhau.\n• Kết hợp cùng chiều + ngược chiều trong cùng một bài.\n• Có thời gian nghỉ, hoặc các vật xuất phát không cùng lúc.",
       "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemProportion",
+      "source": "Tỉ lệ thuận / nghịch ↗↘",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionTypeTitle",
+      "source": "Chọn dạng tỉ lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionDirect",
+      "source": "↗ Tỉ lệ thuận",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionInverse",
+      "source": "↘ Tỉ lệ nghịch",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionQuestionTitle",
+      "source": "Bài toán tỉ lệ thuận / nghịch",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionEssayValidationHint",
+      "source": "Ứng dụng chấm đúng dữ kiện tỉ lệ, công thức tính và giá trị đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionEssayValidationHintAi",
+      "source": "Bắt buộc điền lời giải. Ứng dụng chấm đúng quan hệ tỉ lệ, phép tính, kết quả và đơn vị đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProportionEssayEquationPlaceholder",
+      "source": "Ví dụ: 24 ÷ 4 × 6 = 36",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

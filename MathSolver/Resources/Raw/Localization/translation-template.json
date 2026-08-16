@@ -1201,7 +1201,15 @@
     "Formula.Motion.Types.River.Title": "4. Chuyển động trên dòng nước",
     "Formula.Motion.Types.River.Body": "• Vận tốc xuôi dòng = vận tốc thuyền + vận tốc dòng nước.\n• Vận tốc ngược dòng = vận tốc thuyền − vận tốc dòng nước.\n• Có thể suy ra: vận tốc thuyền = (v xuôi + v ngược) ÷ 2, vận tốc dòng nước = (v xuôi − v ngược) ÷ 2.",
     "Formula.Motion.Types.Advanced.Title": "5. Dạng mở rộng / nâng cao",
-    "Formula.Motion.Types.Advanced.Body": "• Vận tốc thay đổi trên các đoạn đường khác nhau → tính vận tốc trung bình.\n• Một vật đi và về với hai vận tốc khác nhau.\n• Kết hợp cùng chiều + ngược chiều trong cùng một bài.\n• Có thời gian nghỉ, hoặc các vật xuất phát không cùng lúc."
+    "Formula.Motion.Types.Advanced.Body": "• Vận tốc thay đổi trên các đoạn đường khác nhau → tính vận tốc trung bình.\n• Một vật đi và về với hai vận tốc khác nhau.\n• Kết hợp cùng chiều + ngược chiều trong cùng một bài.\n• Có thời gian nghỉ, hoặc các vật xuất phát không cùng lúc.",
+    "Quiz.ProblemProportion": "Tỉ lệ thuận / nghịch ↗↘",
+    "Quiz.ProportionTypeTitle": "Chọn dạng tỉ lệ",
+    "Quiz.ProportionDirect": "↗ Tỉ lệ thuận",
+    "Quiz.ProportionInverse": "↘ Tỉ lệ nghịch",
+    "Quiz.ProportionQuestionTitle": "Bài toán tỉ lệ thuận / nghịch",
+    "Quiz.ProportionEssayValidationHint": "Ứng dụng chấm đúng dữ kiện tỉ lệ, công thức tính và giá trị đáp số.",
+    "Quiz.ProportionEssayValidationHintAi": "Bắt buộc điền lời giải. Ứng dụng chấm đúng quan hệ tỉ lệ, phép tính, kết quả và đơn vị đáp số.",
+    "Quiz.ProportionEssayEquationPlaceholder": "Ví dụ: 24 ÷ 4 × 6 = 36"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

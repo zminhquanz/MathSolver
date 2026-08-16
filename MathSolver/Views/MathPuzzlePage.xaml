@@ -648,6 +648,40 @@
 
                             </VerticalStackLayout>
 
+                            <VerticalStackLayout
+                                x:Name="ProportionTypePanel"
+                                IsVisible="False"
+                                Spacing="8">
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.ProportionTypeTitle}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <Button
+                                        x:Name="DirectProportionButton"
+                                        Grid.Column="0"
+                                        Text="{localization:QuizTranslate Quiz.ProportionDirect}"
+                                        HeightRequest="46"
+                                        CornerRadius="12"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        Clicked="OnDirectProportionClicked" />
+                                    <Button
+                                        x:Name="InverseProportionButton"
+                                        Grid.Column="1"
+                                        Text="{localization:QuizTranslate Quiz.ProportionInverse}"
+                                        HeightRequest="46"
+                                        CornerRadius="12"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        Clicked="OnInverseProportionClicked" />
+                                </Grid>
+
+                            </VerticalStackLayout>
+
                         </VerticalStackLayout>
                     </Border>
 

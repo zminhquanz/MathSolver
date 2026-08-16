@@ -1276,7 +1276,15 @@
     "Formula.Motion.Types.River.Title": "4. Motion in a river current",
     "Formula.Motion.Types.River.Body": "• Downstream speed = boat speed + current speed.\n• Upstream speed = boat speed − current speed.\n• Therefore: boat speed = (downstream + upstream) ÷ 2, current speed = (downstream − upstream) ÷ 2.",
     "Formula.Motion.Types.Advanced.Title": "5. Extended / advanced cases",
-    "Formula.Motion.Types.Advanced.Body": "• Variable speed on different segments → find average speed.\n• Round trip with different outgoing and return speeds.\n• Combined same-direction and opposite-direction motion in one problem.\n• Rest periods or non-simultaneous starting times."
+    "Formula.Motion.Types.Advanced.Body": "• Variable speed on different segments → find average speed.\n• Round trip with different outgoing and return speeds.\n• Combined same-direction and opposite-direction motion in one problem.\n• Rest periods or non-simultaneous starting times.",
+    "Quiz.ProblemProportion": "Direct / inverse proportion ↗↘",
+    "Quiz.ProportionTypeTitle": "Choose a proportion type",
+    "Quiz.ProportionDirect": "↗ Direct proportion",
+    "Quiz.ProportionInverse": "↘ Inverse proportion",
+    "Quiz.ProportionQuestionTitle": "Direct / inverse proportion problem",
+    "Quiz.ProportionEssayValidationHint": "The app checks the proportion facts, calculation, and final answer value.",
+    "Quiz.ProportionEssayValidationHintAi": "A solution sentence is required. The app checks the proportion relationship, calculation, result, and answer unit.",
+    "Quiz.ProportionEssayEquationPlaceholder": "Example: 24 ÷ 4 × 6 = 36"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

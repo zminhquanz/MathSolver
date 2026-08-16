@@ -74,6 +74,10 @@ public sealed partial class EssayAnswerValidator
                 ? ValidateGeometryEquation(
                     geometry,
                     equationText)
+                : question.ProportionProblem is ProportionQuizContract proportion
+                ? ValidateProportionEquation(
+                    proportion,
+                    equationText)
                 : ValidateEquation(
                     question,
                     equationText);
@@ -326,6 +330,66 @@ public sealed partial class EssayAnswerValidator
             }
         }
     }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateProportionEquation(
+            ProportionQuizContract contract,
+            string? equationText)
+    {
+        string entered = NormalizeProportionEquation(equationText);
+        if (entered.Length == 0 || !entered.Contains('='))
+        {
+            return (false, EssayAnswerError.InvalidEquationFormat);
+        }
+
+        string answer = contract.CorrectAnswer.ToString(CultureInfo.InvariantCulture);
+        var accepted = new HashSet<string>(StringComparer.Ordinal);
+
+        if (contract.IsDirect)
+        {
+            int unitRate = contract.B / contract.A;
+            accepted.Add(NormalizeProportionEquation($"{contract.B} ÷ {contract.A} × {contract.C} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{contract.B} × {contract.C} ÷ {contract.A} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{unitRate} × {contract.C} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{contract.C} × {unitRate} = {answer}"));
+        }
+        else if (contract.AsksForAdditionalPeople)
+        {
+            int total = contract.A * contract.B;
+            int newPeople = total / contract.C;
+            accepted.Add(NormalizeProportionEquation($"{contract.A} × {contract.B} ÷ {contract.C} − {contract.A} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{contract.B} × {contract.A} ÷ {contract.C} − {contract.A} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{newPeople} − {contract.A} = {answer}"));
+        }
+        else
+        {
+            int total = contract.A * contract.B;
+            accepted.Add(NormalizeProportionEquation($"{contract.A} × {contract.B} ÷ {contract.C} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{contract.B} × {contract.A} ÷ {contract.C} = {answer}"));
+            accepted.Add(NormalizeProportionEquation($"{total} ÷ {contract.C} = {answer}"));
+        }
+
+        return accepted.Contains(entered)
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongOperandsOrOperation);
+    }
+
+    private static string NormalizeProportionEquation(string? equationText) =>
+        (equationText ?? string.Empty)
+            .Trim()
+            .Replace('x', '×')
+            .Replace('X', '×')
+            .Replace('*', '×')
+            .Replace(':', '÷')
+            .Replace('/', '÷')
+            .Replace('−', '-')
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .Replace("\t", string.Empty, StringComparison.Ordinal)
+            .Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Replace("\n", string.Empty, StringComparison.Ordinal)
+            .Replace(",", string.Empty, StringComparison.Ordinal)
+            .Replace("(", string.Empty, StringComparison.Ordinal)
+            .Replace(")", string.Empty, StringComparison.Ordinal);
 
     private static string NormalizeGeometryEquation(
         string? equationText)

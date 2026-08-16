@@ -996,6 +996,13 @@ public partial class AppShell : Shell
             return;
         }
 
+        // Có trường hợp CloseSettingsAsync được gọi từ nút Settings của Shell
+        // mà không truyền sourcePage. Chụp page detail hiện tại ngay từ đầu để
+        // mọi retry đều biết chính xác page nào được phép đóng; nếu logical pop
+        // đã đổi CurrentPage thì sẽ không bao giờ pop thêm tab chính.
+        sourcePage ??=
+            CurrentPage;
+
         // Nếu một lần back khác đã thắng race và CurrentPage không còn là
         // trang phát lệnh nữa thì không pop thêm lần thứ hai. Đây là guard
         // quan trọng cho WinUI, nơi handler có thể bị disconnect trong lúc
@@ -1026,23 +1033,16 @@ public partial class AppShell : Shell
             }
 
 #if WINDOWS
-            // Với Settings detail là global route, Shell tạo navigation stack.
-            // Trên WinUI dùng INavigation.PopAsync để pop đúng page hiện tại
-            // thay vì GoToAsync(".."). Cách này tránh đường Shell URI back
-            // thỉnh thoảng chạm vào PlatformView đã bị disconnect.
-            if (Navigation.NavigationStack.Count > 1)
-            {
-                await Navigation.PopAsync(
-                    animated: false);
-            }
-            else
-            {
-                // Trạng thái này không nên xảy ra với global Settings route.
-                // Không gọi GoToAsync("..") làm fallback trên Windows vì đó
-                // chính là đường navigation gây PlatformView-null race.
-                System.Diagnostics.Debug.WriteLine(
-                    "[Settings] Back ignored: navigation stack has no detail page to pop.");
-            }
+            // WinUI có một race hiếm trong MAUI Shell: PopAsync có thể đã đổi
+            // CurrentPage về tab chính nhưng native transition vẫn tiếp tục dùng
+            // PlatformView của page detail vừa bị disconnect. Khi đó MAUI ném
+            // "PlatformView cannot be null here" dù logical navigation đã xong.
+            //
+            // Không để exception đó thoát ra ngoài. Thay vào đó serialize việc
+            // back, chờ handler sẵn sàng, retry khi thật sự chưa pop, và coi là
+            // thành công nếu Shell đã chuyển CurrentPage về trang chính.
+            await CloseSettingsOnWindowsAsync(
+                sourcePage);
 #else
             await GoToAsync(
                 "..",
@@ -1058,6 +1058,170 @@ public partial class AppShell : Shell
                     visible: !IsSettingsRouteOpen()));
         }
     }
+
+#if WINDOWS
+    private async Task CloseSettingsOnWindowsAsync(
+        Page? sourcePage)
+    {
+        const int maxAttempts = 4;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            // Một PopAsync trước đó có thể đã hoàn tất phần logical của Shell
+            // trước khi native layer ném lỗi. Nếu page detail không còn là
+            // CurrentPage thì tuyệt đối không pop thêm lần nữa.
+            if (!IsSettingsRouteOpen() ||
+                (sourcePage is not null &&
+                 !ReferenceEquals(
+                     CurrentPage,
+                     sourcePage)))
+            {
+                return;
+            }
+
+            if (Navigation.NavigationStack.Count <= 1)
+            {
+                RestoreSettingsPageVisualState(
+                    sourcePage);
+
+                System.Diagnostics.Debug.WriteLine(
+                    "[Settings] Back skipped: navigation stack no longer contains a detail page.");
+
+                return;
+            }
+
+            // Đừng bắt đầu PopAsync trong đúng frame mà Shell/Page handler đang
+            // detach/reattach. Đây chỉ là pre-check; race vẫn được catch bên dưới.
+            if (!IsSettingsNavigationPlatformReady(
+                    sourcePage))
+            {
+                await DelaySettingsBackRetryAsync(
+                    attempt);
+
+                continue;
+            }
+
+            try
+            {
+                await Navigation.PopAsync(
+                    animated: false);
+
+                return;
+            }
+            catch (InvalidOperationException exception)
+                when (IsPlatformViewNullException(
+                    exception))
+            {
+                // Quan trọng: PopAsync của MAUI có thể đổi CurrentPage trước rồi
+                // mới fail ở native WinUI cleanup. Sau một UI turn, kiểm tra lại
+                // logical state trước khi quyết định retry.
+                await DelaySettingsBackRetryAsync(
+                    attempt);
+
+                if (!IsSettingsRouteOpen() ||
+                    (sourcePage is not null &&
+                     !ReferenceEquals(
+                         CurrentPage,
+                         sourcePage)))
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[Settings] Suppressed WinUI PlatformView-null after logical back completed (attempt {attempt + 1}).");
+
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"[Settings] WinUI PlatformView-null before back completed; retry {attempt + 1}/{maxAttempts}.");
+            }
+        }
+
+        // Nếu handler không ổn định sau nhiều UI turns thì giữ nguyên detail page
+        // thay vì crash hoặc pop một page khác. Exit animation đã làm content mờ,
+        // nên restore visual state để người dùng có thể bấm Back lại.
+        RestoreSettingsPageVisualState(
+            sourcePage);
+
+        System.Diagnostics.Debug.WriteLine(
+            "[Settings] Back deferred: WinUI navigation handler did not become stable in time.");
+    }
+
+    private bool IsSettingsNavigationPlatformReady(
+        Page? sourcePage)
+    {
+        if (Handler?.PlatformView is null ||
+            Window?.Handler?.PlatformView is null)
+        {
+            return false;
+        }
+
+        if (sourcePage is not null &&
+            sourcePage.Handler?.PlatformView is null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsPlatformViewNullException(
+        InvalidOperationException exception)
+    {
+        const string platformViewNullMessage =
+            "PlatformView cannot be null here";
+
+        Exception? current =
+            exception;
+
+        while (current is not null)
+        {
+            if (current.Message.Contains(
+                    platformViewNullMessage,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            current =
+                current.InnerException;
+        }
+
+        return false;
+    }
+
+    private static async Task DelaySettingsBackRetryAsync(
+        int attempt)
+    {
+        // 24/48/72/96 ms: đủ để qua ít nhất một WinUI composition/layout turn
+        // nhưng không tạo cảm giác Back bị trễ đối với người dùng.
+        int delayMilliseconds =
+            24 * (attempt + 1);
+
+        await Task.Delay(
+            delayMilliseconds);
+    }
+
+    private static void RestoreSettingsPageVisualState(
+        Page? sourcePage)
+    {
+        if (sourcePage is not ContentPage contentPage ||
+            contentPage.Content is not VisualElement content)
+        {
+            return;
+        }
+
+        content.CancelAnimations();
+        content.Opacity =
+            1d;
+        content.TranslationX =
+            0d;
+        content.TranslationY =
+            0d;
+        content.Scale =
+            1d;
+        content.InputTransparent =
+            false;
+    }
+#endif
 
     private static bool IsSettingsRouteOpen()
     {

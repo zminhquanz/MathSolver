@@ -24,7 +24,10 @@ public sealed class QuizProblemTypeCatalog
             new(QuizProblemKind.Geometry)),
         new(
             "Quiz.ProblemFindX",
-            new(QuizProblemKind.FindX))
+            new(QuizProblemKind.FindX)),
+        new(
+            "Quiz.ProblemProportion",
+            new(QuizProblemKind.Proportion))
     ];
 
     private static readonly QuizProblemRequest[] MixedRequests =
@@ -38,7 +41,9 @@ public sealed class QuizProblemTypeCatalog
         new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Multiply),
         new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Divide),
         new(QuizProblemKind.Geometry),
-        new(QuizProblemKind.FindX)
+        new(QuizProblemKind.FindX),
+        new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Direct),
+        new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Inverse)
     ];
 
     private static readonly IReadOnlyList<QuizProblemOption>
@@ -59,7 +64,8 @@ public sealed class QuizProblemTypeCatalog
     public QuizProblemRequest Resolve(
         int selectedIndex,
         ArithmeticOperation basicOperation,
-        FractionOperation fractionOperation)
+        FractionOperation fractionOperation,
+        ProportionQuizType proportionType)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -78,6 +84,11 @@ public sealed class QuizProblemTypeCatalog
                     fixedRequest with
                     {
                         FractionOperation = fractionOperation
+                    },
+                QuizProblemKind.Proportion =>
+                    fixedRequest with
+                    {
+                        ProportionType = proportionType
                     },
                 _ => fixedRequest
             };

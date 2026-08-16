@@ -22,7 +22,8 @@ public sealed record ArithmeticQuizQuestion(
     MathWordProblem? WordProblem = null,
     GeometryQuizContract? GeometryProblem = null,
     FindXQuizContract? FindXProblem = null,
-    FractionQuizContract? FractionProblem = null);
+    FractionQuizContract? FractionProblem = null,
+    ProportionQuizContract? ProportionProblem = null);
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,
