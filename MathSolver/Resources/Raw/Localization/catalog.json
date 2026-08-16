@@ -259,17 +259,17 @@
     },
     {
       "key": "Formula.Motion.Relationship",
-      "source": "Trong chuyển động đều, quãng đường s bằng vận tốc v nhân thời gian t. Khi giữ v không đổi, s tỉ lệ thuận với t; khi giữ s không đổi, v và t tỉ lệ nghịch.",
+      "source": "Trong chuyển động đều, quãng đường d bằng vận tốc v nhân thời gian t. Khi giữ v không đổi, d tỉ lệ thuận với t; khi giữ d không đổi, v và t tỉ lệ nghịch.",
       "mode": "exact"
     },
     {
       "key": "Formula.Motion.Symbols",
-      "source": "Ký hiệu: s là quãng đường, v là vận tốc, t là thời gian. Ba đại lượng phải dùng các đơn vị tương thích.",
+      "source": "Trong tab này ưu tiên dùng d cho quãng đường để đồng bộ với phần minh họa tương tác. Khi gặp sách giáo khoa dùng s, có thể hiểu s và d cùng biểu diễn quãng đường.",
       "mode": "exact"
     },
     {
       "key": "Formula.Motion.MeetingFormula",
-      "source": "Đi ngược chiều – gặp nhau:\nv tương đối = v₁ + v₂\nt gặp = khoảng cách ban đầu ÷ (v₁ + v₂)",
+      "source": "Đi ngược chiều – gặp nhau:\nv tương đối = v₁ + v₂\nt gặp = khoảng cách ban đầu ÷ (v₁ + v₂)\nd gặp từ A = v₁ × t gặp",
       "mode": "exact"
     },
     {
@@ -279,7 +279,7 @@
     },
     {
       "key": "Formula.Motion.AverageFormula",
-      "source": "Vận tốc trung bình:\nv tb = tổng quãng đường ÷ tổng thời gian\nKhông lấy trung bình cộng các vận tốc nếu thời gian khác nhau.",
+      "source": "Vận tốc trung bình:\nv tb = tổng quãng đường ÷ tổng thời gian\nNếu có thời gian nghỉ thì thời gian thực đi = thời gian đến − thời gian xuất phát − thời gian nghỉ.",
       "mode": "exact"
     },
     {
@@ -289,7 +289,7 @@
     },
     {
       "key": "Formula.Motion.Properties",
-      "source": "• Cùng vận tốc: quãng đường tỉ lệ thuận với thời gian.\n• Cùng thời gian: quãng đường tỉ lệ thuận với vận tốc.\n• Cùng quãng đường: vận tốc tỉ lệ nghịch với thời gian.\n• Vận tốc tương đối là tổng khi tiến lại gần nhau và là hiệu khi chuyển động cùng chiều.",
+      "source": "• Cùng vận tốc: quãng đường d tỉ lệ thuận với thời gian t.\n• Cùng thời gian: quãng đường d tỉ lệ thuận với vận tốc v.\n• Cùng quãng đường: vận tốc v tỉ lệ nghịch với thời gian t.\n• Vận tốc tương đối là tổng khi tiến lại gần nhau và là hiệu khi chuyển động cùng chiều.\n• Xuôi dòng nhanh hơn, ngược dòng chậm hơn do ảnh hưởng của dòng nước.",
       "mode": "exact"
     },
     {
@@ -299,7 +299,7 @@
     },
     {
       "key": "Formula.Motion.Steps",
-      "source": "Bước 1: Tóm tắt s, v, t và đổi về cùng hệ đơn vị.\nBước 2: Xác định kiểu chuyển động: một vật, gặp nhau hay đuổi kịp.\nBước 3: Chọn s = vt hoặc công thức vận tốc tương đối, rồi tính đại lượng cần tìm.\nBước 4: Ghi đơn vị, đối chiếu thời gian và quãng đường với thực tế đề bài.",
+      "source": "Bước 1: Tóm tắt d, v, t và đổi về cùng hệ đơn vị.\nBước 2: Xác định kiểu chuyển động: một vật, gặp nhau, đuổi kịp hay xuôi/ngược dòng.\nBước 3: Chọn d = v × t, v = d ÷ t, t = d ÷ v hoặc công thức vận tốc tương đối phù hợp.\nBước 4: Nếu có nghỉ hoặc xuất phát lệch nhau thì điều chỉnh thời gian trước khi tính.\nBước 5: Ghi đơn vị, đối chiếu kết quả với thực tế đề bài.",
       "mode": "exact"
     },
     {
@@ -5675,6 +5675,86 @@
     {
       "key": "Formula.Proportion.Compound.Example",
       "source": "Số sản phẩm tăng từ 120 lên 240 nên số ngày tăng theo tỉ lệ thuận. Nhưng số công nhân tăng từ 4 lên 6 và số giờ/ngày tăng từ 6 lên 8 nên số ngày lại giảm theo tỉ lệ nghịch. Kết hợp ba yếu tố ta được D₂ = 5 ngày.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.SymbolLegend",
+      "source": "Quy ước ký hiệu chính",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Symbol.Distance",
+      "source": "d: quãng đường",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Symbol.Speed",
+      "source": "v: vận tốc",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Symbol.Time",
+      "source": "t: thời gian",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Title",
+      "source": "3. CÁC DẠNG CHUYỂN ĐỘNG",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Subtitle",
+      "source": "Tổng hợp các dạng toán chuyển động thường gặp từ cơ bản đến nâng cao để học sinh dễ phân biệt cách làm.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Basic.Title",
+      "source": "1. Dạng cơ bản – một vật chuyển động",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Basic.Body",
+      "source": "• Tính quãng đường: d = v × t\n• Tính vận tốc: v = d ÷ t\n• Tính thời gian: t = d ÷ v\n• Nếu có thời gian nghỉ: thời gian đi thực tế = thời gian đến − thời gian xuất phát − thời gian nghỉ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Chasing.Title",
+      "source": "2. Hai vật cùng chiều – đuổi nhau / đuổi kịp",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Chasing.Body",
+      "source": "• Hai vật đi cùng hướng, vật nhanh đuổi vật chậm.\n• Thời gian đuổi kịp = khoảng cách ban đầu ÷ |v₁ − v₂|.\n• Có thể xuất phát cùng lúc hoặc một vật xuất phát trước, nên cần xét độ chênh thời gian.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Meeting.Title",
+      "source": "3. Hai vật ngược chiều – gặp nhau",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Meeting.Body",
+      "source": "• Hai vật đi ngược hướng nhau.\n• Thời gian gặp nhau = khoảng cách ban đầu ÷ (v₁ + v₂).\n• Điểm gặp có thể tính bằng quãng đường của mỗi vật: d₁ = v₁ × t, d₂ = v₂ × t.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.River.Title",
+      "source": "4. Chuyển động trên dòng nước",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.River.Body",
+      "source": "• Vận tốc xuôi dòng = vận tốc thuyền + vận tốc dòng nước.\n• Vận tốc ngược dòng = vận tốc thuyền − vận tốc dòng nước.\n• Có thể suy ra: vận tốc thuyền = (v xuôi + v ngược) ÷ 2, vận tốc dòng nước = (v xuôi − v ngược) ÷ 2.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Advanced.Title",
+      "source": "5. Dạng mở rộng / nâng cao",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Types.Advanced.Body",
+      "source": "• Vận tốc thay đổi trên các đoạn đường khác nhau → tính vận tốc trung bình.\n• Một vật đi và về với hai vận tốc khác nhau.\n• Kết hợp cùng chiều + ngược chiều trong cùng một bài.\n• Có thời gian nghỉ, hoặc các vật xuất phát không cùng lúc.",
       "mode": "exact"
     }
   ],
