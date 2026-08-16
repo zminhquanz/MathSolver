@@ -1,3 +1,4 @@
+using MathSolver.Services;
 using Microsoft.Maui.Platform;
 using Microsoft.UI.Windowing;
 using global::Windows.Graphics;
@@ -178,6 +179,11 @@ public static class WindowStateManager
 
         appWindow.Closing +=
             OnAppWindowClosing;
+
+        AppThemeManager.ThemeChanged +=
+            OnAppThemeChanged;
+
+        ApplyNativeTitleBarTheme();
 
         nativeWindow.DispatcherQueue.TryEnqueue(
             RestoreWindowState);
@@ -636,6 +642,40 @@ public static class WindowStateManager
             displayArea);
     }
 
+    private static void OnAppThemeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        ApplyNativeTitleBarTheme();
+    }
+
+    private static void ApplyNativeTitleBarTheme()
+    {
+        AppWindow? appWindow =
+            _appWindow;
+
+        if (appWindow is null ||
+            !AppWindowTitleBar.IsCustomizationSupported())
+        {
+            return;
+        }
+
+        global::Windows.UI.Color foreground =
+            AppThemeManager.IsDarkThemeEffective
+                ? Microsoft.UI.Colors.White
+                : Microsoft.UI.Colors.Black;
+
+        AppWindowTitleBar titleBar =
+            appWindow.TitleBar;
+
+        // Chỉ ép màu chữ/icon caption. Không thay background title bar để
+        // vẫn giữ màu nền do Windows/app đang sử dụng.
+        titleBar.ForegroundColor = foreground;
+        titleBar.InactiveForegroundColor = foreground;
+        titleBar.ButtonForegroundColor = foreground;
+        titleBar.ButtonInactiveForegroundColor = foreground;
+    }
+
     private static void Detach()
     {
         if (_mauiWindow is not null)
@@ -665,6 +705,9 @@ public static class WindowStateManager
 
         _appWindow.Closing -=
             OnAppWindowClosing;
+
+        AppThemeManager.ThemeChanged -=
+            OnAppThemeChanged;
 
         _appWindow =
             null;

@@ -22,6 +22,7 @@ public partial class ProportionFormulaView : ContentView
         Loaded += OnViewLoaded;
         Unloaded += OnViewUnloaded;
 
+        RefreshSliderTheme();
         UpdateInteractiveValues();
     }
 
@@ -74,6 +75,7 @@ public partial class ProportionFormulaView : ContentView
     private void OnViewLoaded(object? sender, EventArgs e)
     {
         SubscribeDynamicEvents();
+        RefreshSliderTheme();
         UpdateInteractiveValues();
     }
 
@@ -113,7 +115,31 @@ public partial class ProportionFormulaView : ContentView
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
-        Dispatcher.Dispatch(ProportionGraphicsView.Invalidate);
+        Dispatcher.Dispatch(() =>
+        {
+            RefreshSliderTheme();
+            ProportionGraphicsView.Invalidate();
+        });
+    }
+
+    private void RefreshSliderTheme()
+    {
+        Color primary =
+            ThemeResource.GetColor(
+                "PrimaryColor",
+                "#6D28D9");
+
+        Color primaryBorder =
+            ThemeResource.GetColor(
+                "PrimaryBorderColor",
+                "#C4B5FD");
+
+        // Concrete colors are intentional here. WinUI's native Slider can
+        // retain old brush instances after a runtime palette swap.
+        ProportionXSlider.MinimumTrackColor = primary;
+        ProportionXSlider.MaximumTrackColor = Colors.Transparent;
+        ProportionXSlider.ThumbColor = primary;
+        ProportionSliderTrack.BackgroundColor = primaryBorder;
     }
 
     private void OnProportionXSliderValueChanged(

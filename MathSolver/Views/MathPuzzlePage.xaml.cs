@@ -251,6 +251,48 @@ public partial class MathPuzzlePage : ContentPage
         UpdateGenerationSourceStyles();
         UpdateModeStyles();
         UpdateProblemOperationPanel();
+        RefreshTrueFalseAnswerButtonTheme();
+    }
+
+    private void RefreshTrueFalseAnswerButtonTheme()
+    {
+        // Hai nút này dùng màu semantic Success/Danger thay vì màu selected
+        // của SelectionButtonStyler. Trên WinUI, Button đang ở visual state
+        // hiện tại có thể giữ brush cũ sau khi ResourceDictionary đổi theme.
+        // Gán trực tiếp màu palette hiện tại để Dark -> Light và Light -> Dark
+        // cập nhật ngay cả khi câu hỏi đã được render trước lúc đổi theme.
+        ApplySemanticAnswerButtonTheme(
+            TrueAnswerButton,
+            "SuccessSoftColor",
+            "SuccessColor");
+
+        ApplySemanticAnswerButtonTheme(
+            FalseAnswerButton,
+            "DangerSoftColor",
+            "DangerColor");
+    }
+
+    private static void ApplySemanticAnswerButtonTheme(
+        Button button,
+        string backgroundResourceKey,
+        string foregroundResourceKey)
+    {
+        button.BackgroundColor =
+            ThemeResource.GetColor(
+                backgroundResourceKey,
+                backgroundResourceKey == "SuccessSoftColor"
+                    ? "#F0FDF4"
+                    : "#FEF2F2");
+
+        Color foreground =
+            ThemeResource.GetColor(
+                foregroundResourceKey,
+                foregroundResourceKey == "SuccessColor"
+                    ? "#15803D"
+                    : "#B91C1C");
+
+        button.BorderColor = foreground;
+        button.TextColor = foreground;
     }
 
     private void OnCultureChanged(

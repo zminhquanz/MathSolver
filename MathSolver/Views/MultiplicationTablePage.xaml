@@ -50,6 +50,87 @@
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         </Style>
+
+
+        <!--
+            RadioButton mặc định trên Windows dùng màu accent của hệ điều hành
+            cho vòng tròn checked, nên có thể bị xanh dù app đang dùng màu cam,
+            tím, cyan... Template riêng chỉ dùng PrimaryColor/BorderColor của app.
+            Màu luôn nằm ở DynamicResource; VisualState chỉ bật/tắt Opacity để
+            đổi theme không bị giữ brush cũ trong trạng thái Checked.
+        -->
+        <ControlTemplate x:Key="TimesTableRangeRadioTemplate">
+            <Grid
+                WidthRequest="24"
+                HeightRequest="24"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CheckedStates">
+                            <VisualState x:Name="Checked">
+                                <VisualState.Setters>
+                                    <Setter
+                                        TargetName="CheckedVisual"
+                                        Property="Opacity"
+                                        Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+
+                            <VisualState x:Name="Unchecked">
+                                <VisualState.Setters>
+                                    <Setter
+                                        TargetName="CheckedVisual"
+                                        Property="Opacity"
+                                        Value="0" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </VisualStateManager.VisualStateGroups>
+
+                <Ellipse
+                    WidthRequest="20"
+                    HeightRequest="20"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Fill="{DynamicResource SurfaceColor}"
+                    Stroke="{DynamicResource BorderColor}"
+                    StrokeThickness="2" />
+
+                <Grid
+                    x:Name="CheckedVisual"
+                    Opacity="0"
+                    InputTransparent="True">
+
+                    <Ellipse
+                        WidthRequest="20"
+                        HeightRequest="20"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Fill="Transparent"
+                        Stroke="{DynamicResource PrimaryColor}"
+                        StrokeThickness="2" />
+
+                    <Ellipse
+                        WidthRequest="10"
+                        HeightRequest="10"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Fill="{DynamicResource PrimaryColor}" />
+                </Grid>
+            </Grid>
+        </ControlTemplate>
+
+        <Style x:Key="TimesTableRangeRadioStyle" TargetType="RadioButton">
+            <Setter Property="ControlTemplate" Value="{StaticResource TimesTableRangeRadioTemplate}" />
+            <Setter Property="WidthRequest" Value="24" />
+            <Setter Property="HeightRequest" Value="24" />
+            <Setter Property="MinimumWidthRequest" Value="24" />
+            <Setter Property="MinimumHeightRequest" Value="24" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+        </Style>
     </ContentPage.Resources>
 
     <Grid
@@ -163,6 +244,7 @@
 
                                             <RadioButton
                                                 x:Name="Range1To10Radio"
+                                                Style="{StaticResource TimesTableRangeRadioStyle}"
                                                 GroupName="RangeGroup"
                                                 CheckedChanged="OnRangeChanged"
                                                 VerticalOptions="Center" />
@@ -195,6 +277,7 @@
 
                                             <RadioButton
                                                 x:Name="Range11To20Radio"
+                                                Style="{StaticResource TimesTableRangeRadioStyle}"
                                                 GroupName="RangeGroup"
                                                 CheckedChanged="OnRangeChanged"
                                                 VerticalOptions="Center" />
@@ -227,6 +310,7 @@
 
                                             <RadioButton
                                                 x:Name="RangeAllRadio"
+                                                Style="{StaticResource TimesTableRangeRadioStyle}"
                                                 GroupName="RangeGroup"
                                                 CheckedChanged="OnRangeChanged"
                                                 VerticalOptions="Center" />
