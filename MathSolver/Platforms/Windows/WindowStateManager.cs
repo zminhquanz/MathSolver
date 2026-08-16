@@ -1,7 +1,8 @@
-using MathSolver.Services;
-using Microsoft.Maui.Platform;
-using Microsoft.UI.Windowing;
 using global::Windows.Graphics;
+using MathSolver.Services;
+using Microsoft.UI.Windowing;
+using System.Runtime.InteropServices;
+using WinRT.Interop;
 using MauiWindow = Microsoft.Maui.Controls.Window;
 
 namespace MathSolver.Platforms.Windows;
@@ -20,6 +21,7 @@ namespace MathSolver.Platforms.Windows;
 /// </summary>
 public static class WindowStateManager
 {
+
     private const string StatePreferenceKey =
         "Window.State";
 
@@ -43,6 +45,7 @@ public static class WindowStateManager
 
     private static MauiWindow? _mauiWindow;
     private static AppWindow? _appWindow;
+    private static nint _nativeWindowHandle;
     private static RectInt32? _lastRestoredBounds;
     private static PersistedWindowState _lastObservedState =
         PersistedWindowState.Restored;
@@ -159,10 +162,18 @@ public static class WindowStateManager
         AppWindow appWindow =
             nativeWindow.AppWindow;
 
+        nint nativeWindowHandle =
+            WindowNative.GetWindowHandle(
+                nativeWindow);
+
         if (ReferenceEquals(
                 _appWindow,
                 appWindow))
         {
+            _nativeWindowHandle =
+                nativeWindowHandle;
+
+            ApplyNativeTitleBarTheme();
             return;
         }
 
@@ -170,6 +181,9 @@ public static class WindowStateManager
 
         _appWindow =
             appWindow;
+
+        _nativeWindowHandle =
+            nativeWindowHandle;
 
         _lastObservedState =
             ReadSavedState();
@@ -654,27 +668,41 @@ public static class WindowStateManager
         AppWindow? appWindow =
             _appWindow;
 
-        if (appWindow is null ||
-            !AppWindowTitleBar.IsCustomizationSupported())
+        if (appWindow is null)
         {
             return;
         }
 
+        bool isDark =
+            AppThemeManager.IsDarkThemeEffective;
+
         global::Windows.UI.Color foreground =
-            AppThemeManager.IsDarkThemeEffective
+            isDark
                 ? Microsoft.UI.Colors.White
                 : Microsoft.UI.Colors.Black;
 
-        AppWindowTitleBar titleBar =
-            appWindow.TitleBar;
+        if (AppWindowTitleBar.IsCustomizationSupported())
+        {
+            AppWindowTitleBar titleBar =
+                appWindow.TitleBar;
 
-        // Chỉ ép màu chữ/icon caption. Không thay background title bar để
-        // vẫn giữ màu nền do Windows/app đang sử dụng.
-        titleBar.ForegroundColor = foreground;
-        titleBar.InactiveForegroundColor = foreground;
-        titleBar.ButtonForegroundColor = foreground;
-        titleBar.ButtonInactiveForegroundColor = foreground;
+            // Keep Windows App SDK caption buttons and foreground in sync.
+            titleBar.ForegroundColor = foreground;
+            titleBar.InactiveForegroundColor = foreground;
+            titleBar.ButtonForegroundColor = foreground;
+            titleBar.ButtonInactiveForegroundColor = foreground;
+        }
     }
+
+    [DllImport(
+        "dwmapi.dll",
+        PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(
+        nint hwnd,
+        int attribute,
+        ref int attributeValue,
+        int attributeSize);
+
 
     private static void Detach()
     {
@@ -711,6 +739,9 @@ public static class WindowStateManager
 
         _appWindow =
             null;
+
+        _nativeWindowHandle =
+            0;
 
         _allowCloseOnce =
             false;

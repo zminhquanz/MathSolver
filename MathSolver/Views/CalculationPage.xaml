@@ -39,8 +39,8 @@
 
                 <Button
                     x:Name="BasicTabButton"
-                    Text="{localization:Translate Calculation.Arithmetic.Tab}"
-                    MinimumWidthRequest="138"
+                    Text="{localization:Translate Calculation.Tabs.Basic}"
+                    MinimumWidthRequest="146"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -48,16 +48,16 @@
 
                 <Button
                     x:Name="AverageTabButton"
-                    Text="x̄ Trung bình cộng"
-                    MinimumWidthRequest="168"
+                    Text="{localization:Translate Calculation.Tabs.Average}"
+                    MinimumWidthRequest="180"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnAverageTabClicked" />
 
                 <Button
                     x:Name="PowerRootTabButton"
-                    Text="aⁿ Lũy thừa - Căn bậc"
-                    MinimumWidthRequest="205"
+                    Text="{localization:Translate Calculation.Tabs.PowerRoot}"
+                    MinimumWidthRequest="214"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     FontSize="15"
                     TextColor="{DynamicResource TextSecondaryColor}"
@@ -65,24 +65,24 @@
 
                 <Button
                     x:Name="FractionTabButton"
-                    Text="½ Phân số"
-                    MinimumWidthRequest="120"
+                    Text="{localization:Translate Calculation.Tabs.Fraction}"
+                    MinimumWidthRequest="132"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnFractionTabClicked" />
 
                 <Button
                     x:Name="FindXTabButton"
-                    Text="𝑥 Tìm x"
-                    MinimumWidthRequest="120"
+                    Text="{localization:Translate Calculation.Tabs.FindX}"
+                    MinimumWidthRequest="126"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnFindXTabClicked" />
 
                 <Button
                     x:Name="QuadraticTabButton"
-                    Text="x² Phương trình bậc 2"
-                    MinimumWidthRequest="190"
+                    Text="{localization:Translate Calculation.Tabs.Quadratic}"
+                    MinimumWidthRequest="206"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     Padding="6,0"
                     FontSize="15"
@@ -91,8 +91,8 @@
 
                 <Button
                     x:Name="GeometryTabButton"
-                    Text="△ Hình học"
-                    MinimumWidthRequest="130"
+                    Text="{localization:Translate Calculation.Tabs.Geometry}"
+                    MinimumWidthRequest="138"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />

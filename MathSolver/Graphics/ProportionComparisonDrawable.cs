@@ -90,6 +90,10 @@ public sealed class ProportionComparisonDrawable : IDrawable
                 canvas,
                 plotRect);
 
+            DrawReferenceHighlights(
+                canvas,
+                plotRect);
+
             DrawCurves(
                 canvas,
                 plotRect);
@@ -127,9 +131,10 @@ public sealed class ProportionComparisonDrawable : IDrawable
         canvas.StrokeSize =
             1f;
 
-        for (double x = 0.5d;
-             x <= 2.5d + 0.001d;
-             x += 0.5d)
+        // Trục X dùng bước 1 đơn vị để biểu đồ thoáng và dễ đọc hơn.
+        for (double x = 1d;
+             x <= XMaximum + 0.001d;
+             x += 1d)
         {
             float screenX =
                 MapX(
@@ -218,6 +223,40 @@ public sealed class ProportionComparisonDrawable : IDrawable
             22f,
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
+    }
+
+
+    private static void DrawReferenceHighlights(
+        ICanvas canvas,
+        RectF plotRect)
+    {
+        double[] focusValues = [0.5d, 1.5d, 2.5d];
+
+        canvas.Font = Microsoft.Maui.Graphics.Font.Default;
+        canvas.FontSize = 11f;
+        canvas.FontColor = AxisColor;
+        canvas.StrokeColor = AxisColor;
+        canvas.StrokeSize = 1f;
+
+        foreach (double value in focusValues)
+        {
+            float screenX = MapX(value, plotRect);
+
+            canvas.DrawLine(
+                screenX,
+                plotRect.Bottom,
+                screenX,
+                plotRect.Bottom + 6f);
+
+            canvas.DrawString(
+                FormatTick(value),
+                screenX - 24f,
+                plotRect.Bottom + 5f,
+                48f,
+                22f,
+                HorizontalAlignment.Center,
+                VerticalAlignment.Top);
+        }
     }
 
     private static void DrawCurves(

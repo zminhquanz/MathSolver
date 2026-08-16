@@ -134,6 +134,7 @@
 
             <!-- Minh họa tương tác bằng GraphicsView -->
             <Border
+                x:Name="InteractiveSectionBorder"
                 Padding="18"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource PrimaryBorderBrush}"
@@ -156,7 +157,7 @@
 
                     <Grid
                         x:Name="InteractiveGraphGrid"
-                        ColumnDefinitions="4*,6*"
+                        ColumnDefinitions="3*,7*"
                         ColumnSpacing="16">
 
                         <Border
@@ -201,29 +202,34 @@
                                     Text="{localization:Translate Formula.Proportion.Graph.SliderHint}"
                                     FontSize="14"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
-                                <Grid HeightRequest="44">
-                                    <!--
-                                        Track nền 4 DIP luôn nhìn thấy kể cả khi Value đang ở Minimum.
-                                        Slider native đặt lên trên: phần đã đi qua dùng PrimaryColor,
-                                        phần còn lại trong suốt để lộ PrimaryBorderColor bên dưới.
-                                    -->
-                                    <BoxView
-                                        x:Name="ProportionSliderTrack"
-                                        HeightRequest="4"
-                                        HorizontalOptions="Fill"
-                                        VerticalOptions="Center"
-                                        BackgroundColor="{DynamicResource PrimaryBorderColor}" />
+                                <Border
+                                    HeightRequest="50"
+                                    Padding="10,0"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1"
+                                    VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="999" />
+                                    </Border.StrokeShape>
 
+                                    <!--
+                                        Chỉ dùng một Slider native. HeightRequest + VerticalOptions
+                                        giúp track nằm đúng giữa Border trên WinUI thay vì hơi lệch lên.
+                                    -->
                                     <Slider
                                         x:Name="ProportionXSlider"
+                                        HeightRequest="38"
                                         Minimum="0.5"
                                         Maximum="2.5"
                                         Value="0.5"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Center"
                                         MinimumTrackColor="{DynamicResource PrimaryColor}"
-                                        MaximumTrackColor="Transparent"
+                                        MaximumTrackColor="{DynamicResource PrimaryBorderColor}"
                                         ThumbColor="{DynamicResource PrimaryColor}"
                                         ValueChanged="OnProportionXSliderValueChanged" />
-                                </Grid>
+                                </Border>
                             </VerticalStackLayout>
                         </Border>
 
@@ -239,7 +245,7 @@
                             </Border.StrokeShape>
                             <GraphicsView
                                 x:Name="ProportionGraphicsView"
-                                HeightRequest="330"
+                                MinimumHeightRequest="360"
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Fill" />
                         </Border>

@@ -23,7 +23,6 @@
         <Grid
             x:Name="ShellTitleRoot"
             Padding="8,0,4,0"
-            ClipToBounds="False"
             ColumnDefinitions="*,Auto"
             ColumnSpacing="10">
 

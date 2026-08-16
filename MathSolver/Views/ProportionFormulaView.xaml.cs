@@ -7,6 +7,12 @@ namespace MathSolver.Views;
 public partial class ProportionFormulaView : ContentView
 {
     private const double CompactLayoutThreshold = 760d;
+    private const double WideGraphAspectRatio = 1.90d;
+    private const double CompactGraphAspectRatio = 1.60d;
+    private const double WideGraphMinHeight = 390d;
+    private const double WideGraphMaxHeight = 600d;
+    private const double CompactGraphMinHeight = 320d;
+    private const double CompactGraphMaxHeight = 500d;
 
     private readonly ProportionComparisonDrawable _comparisonDrawable = new();
     private bool _eventsSubscribed;
@@ -37,39 +43,92 @@ public partial class ProportionFormulaView : ContentView
 
         bool useCompactLayout = width < CompactLayoutThreshold;
 
-        if (_isCompactLayout == useCompactLayout)
+        // Chỉ rebuild Grid khi thật sự đổi giữa layout ngang và layout compact.
+        // Chiều cao tương tác vẫn phải được tính lại ở MỌI lần resize/maximize để
+        // biểu đồ không bị kéo dài theo chiều ngang khi cửa sổ rộng hơn.
+        if (_isCompactLayout != useCompactLayout)
         {
-            return;
+            _isCompactLayout = useCompactLayout;
+
+            ConfigureResponsivePair(
+                RelationshipGrid,
+                DirectRelationshipCard,
+                InverseRelationshipCard,
+                useCompactLayout,
+                1d,
+                1d);
+
+            ConfigureResponsivePair(
+                InteractiveGraphGrid,
+                InteractiveExplanationPanel,
+                InteractiveGraphPanel,
+                useCompactLayout,
+                3d,
+                7d);
+
+            ConfigureResponsivePair(
+                ExamplesGrid,
+                DirectExampleCard,
+                InverseExampleCard,
+                useCompactLayout,
+                1d,
+                1d);
         }
 
-        _isCompactLayout = useCompactLayout;
+        UpdateInteractiveSectionSize(
+            width,
+            useCompactLayout);
 
-        ConfigureResponsivePair(
-            RelationshipGrid,
-            DirectRelationshipCard,
-            InverseRelationshipCard,
-            useCompactLayout,
-            1d,
-            1d);
-
-        ConfigureResponsivePair(
-            InteractiveGraphGrid,
-            InteractiveExplanationPanel,
-            InteractiveGraphPanel,
-            useCompactLayout,
-            4d,
-            6d);
-
-        ConfigureResponsivePair(
-            ExamplesGrid,
-            DirectExampleCard,
-            InverseExampleCard,
-            useCompactLayout,
-            1d,
-            1d);
-
-        ProportionGraphicsView.HeightRequest = useCompactLayout ? 285d : 330d;
         ProportionGraphicsView.Invalidate();
+    }
+
+    private void UpdateInteractiveSectionSize(
+        double availableWidth,
+        bool compact)
+    {
+        // Content của view có padding ngoài + Border 18 DIP và khoảng cách giữa hai panel.
+        // Không cần đo tuyệt đối từng pixel; lấy chiều rộng thực của ContentView làm cơ sở
+        // giúp tỉ lệ vẫn ổn khi Windows maximize/restore hoặc DPI scale thay đổi.
+        double innerWidth =
+            Math.Max(
+                0d,
+                availableWidth - 72d);
+
+        double targetHeight;
+
+        if (compact)
+        {
+            // Hai panel xếp dọc: biểu đồ gần full width, giữ tỉ lệ rộng/cao tự nhiên.
+            targetHeight =
+                Math.Clamp(
+                    innerWidth / CompactGraphAspectRatio,
+                    CompactGraphMinHeight,
+                    CompactGraphMaxHeight);
+
+            InteractiveExplanationPanel.MinimumHeightRequest = -1d;
+        }
+        else
+        {
+            // Layout 30/70: ước lượng đúng chiều rộng thực của panel biểu đồ rồi suy ra
+            // chiều cao theo aspect ratio. Nhờ vậy Border "Minh họa tương tác" tự mở
+            // rộng theo scale màn hình thay vì biểu đồ càng rộng càng bẹt.
+            double graphWidth =
+                Math.Max(
+                    0d,
+                    (innerWidth - InteractiveGraphGrid.ColumnSpacing) * 0.70d);
+
+            targetHeight =
+                Math.Clamp(
+                    graphWidth / WideGraphAspectRatio,
+                    WideGraphMinHeight,
+                    WideGraphMaxHeight);
+
+            // Giữ hai cột 30/70 cân chiều cao. Border ngoài dùng Auto nên sẽ tự nở theo.
+            InteractiveExplanationPanel.MinimumHeightRequest = targetHeight;
+        }
+
+        ProportionGraphicsView.HeightRequest = targetHeight;
+        InteractiveGraphPanel.MinimumHeightRequest = targetHeight;
     }
 
     private void OnViewLoaded(object? sender, EventArgs e)
@@ -134,12 +193,20 @@ public partial class ProportionFormulaView : ContentView
                 "PrimaryBorderColor",
                 "#C4B5FD");
 
+        Color sliderBackground =
+            ThemeResource.GetColor(
+                "SurfaceAltColor",
+                AppThemeManager.IsDarkThemeEffective
+                    ? "#172033"
+                    : "#F4F8FF");
+
         // Concrete colors are intentional here. WinUI's native Slider can
         // retain old brush instances after a runtime palette swap.
+        // Dùng cùng một track duy nhất để không còn cảm giác bị tách thành 2 thanh.
         ProportionXSlider.MinimumTrackColor = primary;
-        ProportionXSlider.MaximumTrackColor = Colors.Transparent;
+        ProportionXSlider.MaximumTrackColor = primaryBorder;
         ProportionXSlider.ThumbColor = primary;
-        ProportionSliderTrack.BackgroundColor = primaryBorder;
+        ProportionXSlider.BackgroundColor = sliderBackground;
     }
 
     private void OnProportionXSliderValueChanged(
