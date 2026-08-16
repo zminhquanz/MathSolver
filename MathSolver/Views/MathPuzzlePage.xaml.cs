@@ -1217,30 +1217,16 @@ public partial class MathPuzzlePage : ContentPage
             catalogPage,
             animated: false);
 
-        Gemma4ModelDescriptor? model =
+        Gemma4ModelDownloadSelection? selection =
             await catalogPage.WaitForDownloadSelectionAsync();
 
-        if (model is null)
+        if (selection is null)
         {
             return;
         }
 
-        bool confirmed =
-            await DisplayAlertAsync(
-                Translate("Quiz.DownloadConfirmTitle"),
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    Translate("Quiz.DownloadConfirmMessage"),
-                    model.DisplayName,
-                    FormatDownloadGigabytes(
-                        model.ApproximateSizeBytes)),
-                Translate("Quiz.DownloadAction"),
-                Translate("Quiz.Cancel"));
-
-        if (!confirmed)
-        {
-            return;
-        }
+        Gemma4ModelDescriptor model =
+            selection.Model;
 
         var cancellation = new CancellationTokenSource();
         int progressVersion =
@@ -1284,6 +1270,7 @@ public partial class MathPuzzlePage : ContentPage
             string downloadedModelPath =
                 await _gemma4ModelDownloadService.DownloadAsync(
                     model,
+                    selection.DestinationDirectory,
                     progress,
                     cancellation.Token);
 

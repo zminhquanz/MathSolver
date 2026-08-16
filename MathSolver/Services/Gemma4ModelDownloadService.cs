@@ -19,6 +19,10 @@ public sealed record Gemma4ModelDescriptor(
     Uri DownloadUri,
     long ApproximateSizeBytes);
 
+public sealed record Gemma4ModelDownloadSelection(
+    Gemma4ModelDescriptor Model,
+    string DestinationDirectory);
+
 public sealed record Gemma4ModelDownloadProgress(
     long BytesReceived,
     long? TotalBytes)
@@ -74,24 +78,46 @@ public sealed class Gemma4ModelDownloadService
             ? E2B
             : E4B;
 
+    public static string GetDefaultModelsDirectory() =>
+        Path.Combine(
+            FileSystem.AppDataDirectory,
+            "Models");
+
+    public static string GetDestinationPath(
+        Gemma4ModelDescriptor model,
+        string? destinationDirectory = null)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        string modelsDirectory =
+            string.IsNullOrWhiteSpace(destinationDirectory)
+                ? GetDefaultModelsDirectory()
+                : Path.GetFullPath(destinationDirectory);
+
+        return Path.Combine(
+            modelsDirectory,
+            model.FileName);
+    }
+
     public async Task<string> DownloadAsync(
         Gemma4ModelDescriptor model,
+        string? destinationDirectory = null,
         IProgress<Gemma4ModelDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
 
         string modelsDirectory =
-            Path.Combine(
-                FileSystem.AppDataDirectory,
-                "Models");
+            string.IsNullOrWhiteSpace(destinationDirectory)
+                ? GetDefaultModelsDirectory()
+                : Path.GetFullPath(destinationDirectory);
 
         Directory.CreateDirectory(modelsDirectory);
 
         string destinationPath =
-            Path.Combine(
-                modelsDirectory,
-                model.FileName);
+            GetDestinationPath(
+                model,
+                modelsDirectory);
 
         if (QuizLlmModelStore.IsSupportedModelPath(
                 destinationPath))

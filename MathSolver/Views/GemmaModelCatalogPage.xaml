@@ -20,8 +20,8 @@
             x:Name="CatalogPanel"
             Margin="16"
             Padding="0"
-            WidthRequest="940"
-            MaximumHeightRequest="720"
+            WidthRequest="980"
+            MaximumHeightRequest="760"
             HorizontalOptions="Center"
             VerticalOptions="Center"
             BackgroundColor="{DynamicResource SurfaceColor}"
@@ -29,46 +29,67 @@
             StrokeThickness="1">
 
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="20" />
+                <RoundRectangle CornerRadius="24" />
             </Border.StrokeShape>
 
             <Border.Shadow>
                 <Shadow
                     Brush="#88000000"
-                    Offset="0,10"
-                    Radius="28"
-                    Opacity="0.48" />
+                    Offset="0,12"
+                    Radius="32"
+                    Opacity="0.52" />
             </Border.Shadow>
 
-            <Grid RowDefinitions="Auto,*">
+            <Grid RowDefinitions="Auto,*,Auto">
                 <Grid
                     Grid.Row="0"
-                    Padding="20,15"
-                    ColumnDefinitions="*,Auto,Auto"
-                    ColumnSpacing="8"
+                    Padding="20,18"
+                    ColumnDefinitions="Auto,*,Auto,Auto"
+                    ColumnSpacing="12"
                     BackgroundColor="{DynamicResource SurfaceAltColor}">
 
+                    <Border
+                        WidthRequest="50"
+                        HeightRequest="50"
+                        Padding="0"
+                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        StrokeThickness="1.5"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18" />
+                        </Border.StrokeShape>
+                        <Label
+                            FontSize="24"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            HorizontalTextAlignment="Center"
+                            VerticalTextAlignment="Center"
+                            Text="🧠" />
+                    </Border>
+
                     <VerticalStackLayout
-                        Grid.Column="0"
-                        Spacing="2"
+                        Grid.Column="1"
+                        Spacing="3"
                         VerticalOptions="Center">
 
                         <Label
                             x:Name="CatalogTitleLabel"
-                            FontSize="21"
+                            FontSize="22"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="CatalogSubtitleLabel"
                             FontSize="12"
-                            LineBreakMode="TailTruncation"
+                            LineBreakMode="WordWrap"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
 
                     <Button
                         x:Name="OpenModelPageButton"
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Text="↗"
                         WidthRequest="42"
                         HeightRequest="42"
@@ -83,7 +104,7 @@
                         Clicked="OnOpenModelPageClicked" />
 
                     <Button
-                        Grid.Column="2"
+                        Grid.Column="3"
                         Text="×"
                         WidthRequest="42"
                         HeightRequest="42"
@@ -98,37 +119,60 @@
                 <Grid
                     x:Name="CatalogBodyGrid"
                     Grid.Row="1"
-                    Padding="14"
-                    ColumnDefinitions="310,*"
+                    Padding="16"
+                    ColumnDefinitions="330,*"
                     RowDefinitions="*"
-                    ColumnSpacing="14"
-                    RowSpacing="14">
+                    ColumnSpacing="16"
+                    RowSpacing="16">
 
                     <VerticalStackLayout
                         x:Name="ModelListPanel"
                         Grid.Column="0"
-                        Spacing="10">
+                        Spacing="12">
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource InfoSoftColor}"
+                            Stroke="{DynamicResource InfoBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    x:Name="GuideTitleLabel"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource InfoColor}" />
+                                <Label
+                                    x:Name="GuideBodyLabel"
+                                    FontSize="13"
+                                    LineHeight="1.3"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
 
                         <Label
                             x:Name="ModelsHeadingLabel"
-                            Margin="2,0,0,2"
+                            Margin="2,2,0,0"
                             FontSize="14"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
                             x:Name="E2BModelBorder"
-                            Padding="14,12"
+                            Padding="16"
                             BackgroundColor="{DynamicResource PrimarySoftColor}"
                             Stroke="{DynamicResource PrimaryBorderBrush}"
                             StrokeThickness="2">
 
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14" />
+                                <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="10">
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
                                     <Label
                                         x:Name="E2BTitleLabel"
                                         FontSize="16"
@@ -137,27 +181,49 @@
                                     <Label
                                         x:Name="E2BDescriptionLabel"
                                         FontSize="13"
+                                        LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
-                                    <Label
-                                        x:Name="E2BMetadataLabel"
-                                        FontSize="12"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
                                 </VerticalStackLayout>
 
                                 <Button
                                     x:Name="DownloadE2BButton"
+                                    Grid.RowSpan="3"
                                     Grid.Column="1"
-                                    Text="↓"
-                                    WidthRequest="42"
-                                    HeightRequest="42"
+                                    Text="↓ Tải"
+                                    WidthRequest="92"
+                                    HeightRequest="40"
                                     Padding="0"
-                                    CornerRadius="21"
-                                    FontSize="22"
+                                    CornerRadius="18"
+                                    FontSize="14"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
                                     Clicked="OnDownloadE2BClicked" />
+
+                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
+                                    <Border
+                                        Padding="10,4"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="999" />
+                                        </Border.StrokeShape>
+                                        <Label
+                                            x:Name="E2BMetadataLabel"
+                                            FontSize="11"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </Border>
+                                </HorizontalStackLayout>
+
+                                <Label
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    x:Name="E2BCardHintLabel"
+                                    FontSize="12"
+                                    LineHeight="1.25"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
 
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnE2BRowTapped" />
@@ -167,17 +233,17 @@
 
                         <Border
                             x:Name="E4BModelBorder"
-                            Padding="14,12"
+                            Padding="16"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1">
 
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14" />
+                                <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="10">
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
                                     <Label
                                         x:Name="E4BTitleLabel"
                                         FontSize="16"
@@ -186,27 +252,49 @@
                                     <Label
                                         x:Name="E4BDescriptionLabel"
                                         FontSize="13"
+                                        LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
-                                    <Label
-                                        x:Name="E4BMetadataLabel"
-                                        FontSize="12"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
                                 </VerticalStackLayout>
 
                                 <Button
                                     x:Name="DownloadE4BButton"
+                                    Grid.RowSpan="3"
                                     Grid.Column="1"
-                                    Text="↓"
-                                    WidthRequest="42"
-                                    HeightRequest="42"
+                                    Text="↓ Tải"
+                                    WidthRequest="92"
+                                    HeightRequest="40"
                                     Padding="0"
-                                    CornerRadius="21"
-                                    FontSize="22"
+                                    CornerRadius="18"
+                                    FontSize="14"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
                                     Clicked="OnDownloadE4BClicked" />
+
+                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
+                                    <Border
+                                        Padding="10,4"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="999" />
+                                        </Border.StrokeShape>
+                                        <Label
+                                            x:Name="E4BMetadataLabel"
+                                            FontSize="11"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </Border>
+                                </HorizontalStackLayout>
+
+                                <Label
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    x:Name="E4BCardHintLabel"
+                                    FontSize="12"
+                                    LineHeight="1.25"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
 
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnE4BRowTapped" />
@@ -214,12 +302,20 @@
                             </Grid>
                         </Border>
 
-                        <Label
-                            x:Name="RowInteractionHintLabel"
-                            Margin="4,2,4,0"
-                            FontSize="12"
-                            LineHeight="1.2"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Border
+                            Padding="12"
+                            BackgroundColor="{DynamicResource WarningSoftColor}"
+                            Stroke="{DynamicResource WarningBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14" />
+                            </Border.StrokeShape>
+                            <Label
+                                x:Name="RowInteractionHintLabel"
+                                FontSize="12"
+                                LineHeight="1.25"
+                                TextColor="{DynamicResource WarningColor}" />
+                        </Border>
                     </VerticalStackLayout>
 
                     <Grid
@@ -242,18 +338,16 @@
                             StrokeThickness="1">
 
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14" />
+                                <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
                             <ScrollView>
-                                <VerticalStackLayout Padding="18" Spacing="13">
+                                <VerticalStackLayout Padding="18" Spacing="14">
                                     <Label
                                         x:Name="ReadmeModelTitleLabel"
                                         FontSize="22"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                    <BoxView HeightRequest="1" />
 
                                     <Label
                                         x:Name="ReadmeSummaryLabel"
@@ -261,47 +355,322 @@
                                         LineHeight="1.35"
                                         TextColor="{DynamicResource TextPrimaryColor}" />
 
-                                    <Label
-                                        x:Name="ReadmeMathSolverHeadingLabel"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Border
+                                        Padding="14"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="14" />
+                                        </Border.StrokeShape>
+                                        <VerticalStackLayout Spacing="6">
+                                            <Label
+                                                x:Name="ReadmeMathSolverHeadingLabel"
+                                                FontSize="16"
+                                                FontAttributes="Bold"
+                                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                            <Label
+                                                x:Name="ReadmeMathSolverBodyLabel"
+                                                FontSize="14"
+                                                LineHeight="1.32"
+                                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                        </VerticalStackLayout>
+                                    </Border>
 
-                                    <Label
-                                        x:Name="ReadmeMathSolverBodyLabel"
-                                        FontSize="14"
-                                        LineHeight="1.32"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                    <Border
+                                        Padding="14"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="14" />
+                                        </Border.StrokeShape>
+                                        <VerticalStackLayout Spacing="6">
+                                            <Label
+                                                x:Name="ReadmeRecommendationHeadingLabel"
+                                                FontSize="16"
+                                                FontAttributes="Bold"
+                                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                            <Label
+                                                x:Name="ReadmeRecommendationBodyLabel"
+                                                FontSize="14"
+                                                LineHeight="1.32"
+                                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                        </VerticalStackLayout>
+                                    </Border>
 
-                                    <Label
-                                        x:Name="ReadmeRecommendationHeadingLabel"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                    <Label
-                                        x:Name="ReadmeRecommendationBodyLabel"
-                                        FontSize="14"
-                                        LineHeight="1.32"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-
-                                    <Label
-                                        x:Name="ReadmeFileHeadingLabel"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                    <Label
-                                        x:Name="ReadmeFileBodyLabel"
-                                        FontSize="13"
-                                        LineHeight="1.3"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                    <Border
+                                        Padding="14"
+                                        BackgroundColor="{DynamicResource SurfaceColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="14" />
+                                        </Border.StrokeShape>
+                                        <VerticalStackLayout Spacing="6">
+                                            <Label
+                                                x:Name="ReadmeFileHeadingLabel"
+                                                FontSize="16"
+                                                FontAttributes="Bold"
+                                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                            <Label
+                                                x:Name="ReadmeFileBodyLabel"
+                                                FontSize="13"
+                                                LineHeight="1.3"
+                                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                        </VerticalStackLayout>
+                                    </Border>
                                 </VerticalStackLayout>
                             </ScrollView>
                         </Border>
                     </Grid>
                 </Grid>
+
+                <Border
+                    Grid.Row="2"
+                    Margin="16,0,16,16"
+                    Padding="12"
+                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                    StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+                    <Label
+                        x:Name="FooterHintLabel"
+                        FontSize="12"
+                        LineHeight="1.25"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+                </Border>
             </Grid>
         </Border>
+
+        <Grid
+            x:Name="DownloadConfirmOverlay"
+            IsVisible="False"
+            Opacity="0"
+            InputTransparent="True"
+            BackgroundColor="#66000000">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDownloadConfirmOverlayTapped" />
+            </Grid.GestureRecognizers>
+
+            <Border
+                x:Name="DownloadConfirmPanel"
+                Margin="20"
+                Padding="0"
+                WidthRequest="560"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                BackgroundColor="{DynamicResource SurfaceColor}"
+                Stroke="{DynamicResource BorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22" />
+                </Border.StrokeShape>
+                <Border.Shadow>
+                    <Shadow
+                        Brush="#99000000"
+                        Offset="0,12"
+                        Radius="26"
+                        Opacity="0.48" />
+                </Border.Shadow>
+
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid
+                        Padding="18,16"
+                        ColumnDefinitions="Auto,*,Auto"
+                        ColumnSpacing="10"
+                        BackgroundColor="{DynamicResource SurfaceAltColor}">
+                        <Border
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            StrokeThickness="1"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16" />
+                            </Border.StrokeShape>
+                            <Label
+                                Text="📁"
+                                FontSize="22"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                HorizontalTextAlignment="Center"
+                                VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label
+                                x:Name="DownloadConfirmTitleLabel"
+                                FontSize="20"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+                            <Label
+                                x:Name="DownloadConfirmSubtitleLabel"
+                                FontSize="12"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+                        </VerticalStackLayout>
+
+                        <Button
+                            Grid.Column="2"
+                            Text="×"
+                            WidthRequest="38"
+                            HeightRequest="38"
+                            Padding="0"
+                            CornerRadius="19"
+                            FontSize="22"
+                            BackgroundColor="Transparent"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            Clicked="OnCancelDownloadClicked" />
+                    </Grid>
+
+                    <VerticalStackLayout Grid.Row="1" Padding="18" Spacing="14">
+                        <Label
+                            x:Name="DownloadConfirmModelHeadingLabel"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="4">
+                                <Label
+                                    x:Name="DownloadConfirmModelNameLabel"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="DownloadConfirmModelMetaLabel"
+                                    FontSize="12"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Label
+                            x:Name="DownloadConfirmPathHeadingLabel"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <VerticalStackLayout Spacing="8">
+                            <Border
+                                Padding="12,10"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14" />
+                                </Border.StrokeShape>
+                                <Label
+                                    x:Name="DownloadConfirmFolderValueLabel"
+                                    FontSize="12"
+                                    LineBreakMode="CharacterWrap"
+                                    VerticalTextAlignment="Center"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                            </Border>
+
+                            <HorizontalStackLayout
+                                Spacing="8"
+                                HorizontalOptions="End">
+                                <Button
+                                    x:Name="ResetDownloadFolderButton"
+                                    HeightRequest="40"
+                                    Padding="14,0"
+                                    CornerRadius="14"
+                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                    BorderColor="{DynamicResource BorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    Clicked="OnResetDownloadFolderClicked" />
+
+                                <Button
+                                    x:Name="ChooseDownloadFolderButton"
+                                    HeightRequest="40"
+                                    Padding="16,0"
+                                    CornerRadius="14"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                    BorderColor="{DynamicResource PrimaryBorderColor}"
+                                    BorderWidth="1"
+                                    TextColor="{DynamicResource PrimaryColor}"
+                                    Clicked="OnChooseDownloadFolderClicked" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <Label
+                            x:Name="DownloadConfirmFinalFileHeadingLabel"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Border
+                            Padding="12"
+                            BackgroundColor="{DynamicResource InfoSoftColor}"
+                            Stroke="{DynamicResource InfoBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14" />
+                            </Border.StrokeShape>
+                            <Label
+                                x:Name="DownloadConfirmPathValueLabel"
+                                FontSize="12"
+                                LineBreakMode="CharacterWrap"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+                        </Border>
+
+                        <Border
+                            Padding="12"
+                            BackgroundColor="{DynamicResource WarningSoftColor}"
+                            Stroke="{DynamicResource WarningBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14" />
+                            </Border.StrokeShape>
+                            <Label
+                                x:Name="DownloadConfirmNoteLabel"
+                                FontSize="12"
+                                LineHeight="1.25"
+                                TextColor="{DynamicResource WarningColor}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Grid
+                        Grid.Row="2"
+                        Padding="18,0,18,18"
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10">
+                        <Button
+                            x:Name="ConfirmCancelButton"
+                            Grid.Column="0"
+                            CornerRadius="18"
+                            HeightRequest="44"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="1"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            Clicked="OnCancelDownloadClicked" />
+                        <Button
+                            x:Name="ConfirmDownloadButton"
+                            Grid.Column="1"
+                            CornerRadius="18"
+                            HeightRequest="44"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            FontAttributes="Bold"
+                            Clicked="OnConfirmDownloadClicked" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

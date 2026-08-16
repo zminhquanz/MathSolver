@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Storage;
 using MathSolver.Controls;
 using MathSolver.Services;
 using System.Globalization;
@@ -8,12 +9,16 @@ public partial class GemmaModelCatalogPage : ContentPage
 {
     internal static bool IsTransparentOverlayActive { get; private set; }
 
-    private readonly TaskCompletionSource<Gemma4ModelDescriptor?>
+    private readonly TaskCompletionSource<Gemma4ModelDownloadSelection?>
         _downloadSelection =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private Gemma4ModelDescriptor _selectedModel =
         Gemma4ModelDownloadService.E2B;
+
+    private Gemma4ModelDescriptor? _pendingDownloadModel;
+    private string _downloadDirectory =
+        Gemma4ModelDownloadService.GetDefaultModelsDirectory();
 
     private bool _isClosing;
     private bool _hasPlayedOpenAnimation;
@@ -37,9 +42,10 @@ public partial class GemmaModelCatalogPage : ContentPage
         RefreshLocalizedContent();
         SelectModel(Gemma4ModelDownloadService.E2B);
         PrepareOpenAnimation();
+        PrepareDownloadConfirmationAnimation();
     }
 
-    public Task<Gemma4ModelDescriptor?> WaitForDownloadSelectionAsync() =>
+    public Task<Gemma4ModelDownloadSelection?> WaitForDownloadSelectionAsync() =>
         _downloadSelection.Task;
 
     protected override void OnAppearing()
@@ -81,17 +87,24 @@ public partial class GemmaModelCatalogPage : ContentPage
 
         CatalogPanel.WidthRequest =
             Math.Max(
-                300d,
+                320d,
                 Math.Min(
-                    940d,
+                    980d,
                     width - 32d));
 
         CatalogPanel.MaximumHeightRequest =
             Math.Max(
-                300d,
+                320d,
                 height - 32d);
 
-        bool useCompactLayout = width < 760d;
+        DownloadConfirmPanel.WidthRequest =
+            Math.Max(
+                300d,
+                Math.Min(
+                    560d,
+                    width - 40d));
+
+        bool useCompactLayout = width < 860d;
 
         if (_isCompactLayout == useCompactLayout)
         {
@@ -120,7 +133,7 @@ public partial class GemmaModelCatalogPage : ContentPage
         else
         {
             CatalogBodyGrid.ColumnDefinitions.Add(
-                new ColumnDefinition(new GridLength(310d)));
+                new ColumnDefinition(new GridLength(330d)));
             CatalogBodyGrid.ColumnDefinitions.Add(
                 new ColumnDefinition(GridLength.Star));
             CatalogBodyGrid.RowDefinitions.Add(
@@ -135,6 +148,12 @@ public partial class GemmaModelCatalogPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
+        if (DownloadConfirmOverlay.IsVisible)
+        {
+            _ = HideDownloadConfirmationAsync();
+            return true;
+        }
+
         _ = CloseAsync(null);
         return true;
     }
@@ -148,6 +167,7 @@ public partial class GemmaModelCatalogPage : ContentPage
             {
                 RefreshLocalizedContent();
                 UpdateReadme();
+                UpdateDownloadConfirmationContent();
             });
     }
 
@@ -155,6 +175,8 @@ public partial class GemmaModelCatalogPage : ContentPage
     {
         CatalogTitleLabel.Text = T("Quiz.ModelCatalogTitle");
         CatalogSubtitleLabel.Text = T("Quiz.ModelCatalogSubtitle");
+        GuideTitleLabel.Text = T("Quiz.ModelCatalogGuideTitle");
+        GuideBodyLabel.Text = T("Quiz.ModelCatalogGuideBody");
         ModelsHeadingLabel.Text = T("Quiz.ModelCatalogModelsHeading");
         ReadmeHeadingLabel.Text = T("Quiz.ModelCatalogReadmeHeading");
 
@@ -171,6 +193,9 @@ public partial class GemmaModelCatalogPage : ContentPage
             FormatModelMetadata(
                 Gemma4ModelDownloadService.E4B);
 
+        E2BCardHintLabel.Text = T("Quiz.ModelCatalogE2BRecommendation");
+        E4BCardHintLabel.Text = T("Quiz.ModelCatalogE4BRecommendation");
+
         RowInteractionHintLabel.Text =
             T("Quiz.ModelCatalogInteractionHint");
 
@@ -180,8 +205,22 @@ public partial class GemmaModelCatalogPage : ContentPage
             T("Quiz.ModelCatalogMathSolverBody");
         ReadmeRecommendationHeadingLabel.Text =
             T("Quiz.ModelCatalogRecommendationHeading");
-        ReadmeFileHeadingLabel.Text =
-            T("Quiz.ModelCatalogFileHeading");
+        ReadmeFileHeadingLabel.Text = T("Quiz.ModelCatalogFileHeading");
+        FooterHintLabel.Text = T("Quiz.ModelCatalogFooterHint");
+
+        DownloadE2BButton.Text = T("Quiz.DownloadActionShort");
+        DownloadE4BButton.Text = T("Quiz.DownloadActionShort");
+
+        DownloadConfirmTitleLabel.Text = T("Quiz.DownloadPathPopupTitle");
+        DownloadConfirmSubtitleLabel.Text = T("Quiz.DownloadPathPopupSubtitle");
+        DownloadConfirmModelHeadingLabel.Text = T("Quiz.DownloadPathPopupModelHeading");
+        DownloadConfirmPathHeadingLabel.Text = T("Quiz.DownloadPathPopupPathHeading");
+        ChooseDownloadFolderButton.Text = T("Quiz.DownloadPathPopupChooseFolder");
+        ResetDownloadFolderButton.Text = T("Quiz.DownloadPathPopupResetDefault");
+        DownloadConfirmFinalFileHeadingLabel.Text = T("Quiz.DownloadPathPopupFinalFileHeading");
+        DownloadConfirmNoteLabel.Text = T("Quiz.DownloadPathPopupNote");
+        ConfirmCancelButton.Text = T("Quiz.Cancel");
+        ConfirmDownloadButton.Text = T("Quiz.DownloadAction");
 
         UpdateAccessibilityText();
     }
@@ -242,6 +281,29 @@ public partial class GemmaModelCatalogPage : ContentPage
                 FormatGigabytes(_selectedModel.ApproximateSizeBytes));
     }
 
+    private void UpdateDownloadConfirmationContent()
+    {
+        if (_pendingDownloadModel is null)
+        {
+            return;
+        }
+
+        DownloadConfirmModelNameLabel.Text = _pendingDownloadModel.DisplayName;
+        DownloadConfirmModelMetaLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                T("Quiz.DownloadPathPopupModelMeta"),
+                FormatGigabytes(_pendingDownloadModel.ApproximateSizeBytes),
+                _pendingDownloadModel.FileName);
+        DownloadConfirmFolderValueLabel.Text =
+            _downloadDirectory;
+
+        DownloadConfirmPathValueLabel.Text =
+            Gemma4ModelDownloadService.GetDestinationPath(
+                _pendingDownloadModel,
+                _downloadDirectory);
+    }
+
     private void UpdateAccessibilityText()
     {
         string openPageText =
@@ -289,12 +351,225 @@ public partial class GemmaModelCatalogPage : ContentPage
     private async void OnDownloadE2BClicked(
         object? sender,
         EventArgs e) =>
-        await CloseAsync(Gemma4ModelDownloadService.E2B);
+        await ShowDownloadConfirmationAsync(
+            Gemma4ModelDownloadService.E2B);
 
     private async void OnDownloadE4BClicked(
         object? sender,
         EventArgs e) =>
-        await CloseAsync(Gemma4ModelDownloadService.E4B);
+        await ShowDownloadConfirmationAsync(
+            Gemma4ModelDownloadService.E4B);
+
+    private async Task ShowDownloadConfirmationAsync(
+        Gemma4ModelDescriptor model)
+    {
+        _pendingDownloadModel = model;
+        SelectModel(model);
+
+        if (string.IsNullOrWhiteSpace(_downloadDirectory))
+        {
+            _downloadDirectory =
+                Gemma4ModelDownloadService.GetDefaultModelsDirectory();
+        }
+
+        UpdateDownloadConfirmationContent();
+
+        if (DownloadConfirmOverlay.IsVisible)
+        {
+            return;
+        }
+
+        DownloadConfirmOverlay.IsVisible = true;
+        DownloadConfirmOverlay.InputTransparent = false;
+        DownloadConfirmPanel.Scale = 0.96d;
+        DownloadConfirmPanel.TranslationY = 16d;
+
+        await Task.WhenAll(
+            DownloadConfirmOverlay.FadeToAsync(1d, 140, Easing.CubicOut),
+            DownloadConfirmPanel.FadeToAsync(1d, 140, Easing.CubicOut),
+            DownloadConfirmPanel.ScaleToAsync(1d, 180, Easing.CubicOut),
+            DownloadConfirmPanel.TranslateToAsync(0d, 0d, 180, Easing.CubicOut));
+    }
+
+    private async Task HideDownloadConfirmationAsync()
+    {
+        if (!DownloadConfirmOverlay.IsVisible)
+        {
+            return;
+        }
+
+        DownloadConfirmOverlay.InputTransparent = true;
+
+        await Task.WhenAll(
+            DownloadConfirmOverlay.FadeToAsync(0d, 110, Easing.CubicIn),
+            DownloadConfirmPanel.FadeToAsync(0d, 110, Easing.CubicIn),
+            DownloadConfirmPanel.ScaleToAsync(0.98d, 130, Easing.CubicIn),
+            DownloadConfirmPanel.TranslateToAsync(0d, 10d, 130, Easing.CubicIn));
+
+        _pendingDownloadModel = null;
+        DownloadConfirmOverlay.IsVisible = false;
+        PrepareDownloadConfirmationAnimation();
+    }
+
+    private async void OnChooseDownloadFolderClicked(
+        object? sender,
+        EventArgs e)
+    {
+        try
+        {
+            string initialPath =
+                Directory.Exists(_downloadDirectory)
+                    ? _downloadDirectory
+                    : FileSystem.AppDataDirectory;
+
+            FolderPickerResult result =
+                await FolderPicker.Default.PickAsync(
+                    initialPath,
+                    CancellationToken.None);
+
+            if (!result.IsSuccessful)
+            {
+                if (result.Exception is not null &&
+                    result.Exception is not OperationCanceledException)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Folder picker failed: {result.Exception}");
+
+                    await DisplayAlertAsync(
+                        T("Quiz.DownloadPathPopupFolderPickerFailedTitle"),
+                        T("Quiz.DownloadPathPopupFolderPickerFailedMessage"),
+                        T("Quiz.ModelCatalogClose"));
+                }
+
+                return;
+            }
+
+            string selectedDirectory =
+                result.Folder.Path;
+
+            if (!await CanWriteToDirectoryAsync(selectedDirectory))
+            {
+                await DisplayAlertAsync(
+                    T("Quiz.DownloadPathPopupFolderNotWritableTitle"),
+                    T("Quiz.DownloadPathPopupFolderNotWritableMessage"),
+                    T("Quiz.ModelCatalogClose"));
+                return;
+            }
+
+            _downloadDirectory =
+                Path.GetFullPath(selectedDirectory);
+            UpdateDownloadConfirmationContent();
+        }
+        catch (OperationCanceledException)
+        {
+            // User closed the native folder picker. Keep the current path.
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Could not choose model download folder: {exception}");
+
+            await DisplayAlertAsync(
+                T("Quiz.DownloadPathPopupFolderPickerFailedTitle"),
+                T("Quiz.DownloadPathPopupFolderPickerFailedMessage"),
+                T("Quiz.ModelCatalogClose"));
+        }
+    }
+
+    private void OnResetDownloadFolderClicked(
+        object? sender,
+        EventArgs e)
+    {
+        _downloadDirectory =
+            Gemma4ModelDownloadService.GetDefaultModelsDirectory();
+        UpdateDownloadConfirmationContent();
+    }
+
+    private static async Task<bool> CanWriteToDirectoryAsync(
+        string? directoryPath)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+        {
+            return false;
+        }
+
+        string? probePath = null;
+
+        try
+        {
+            string fullPath =
+                Path.GetFullPath(directoryPath);
+
+            if (!Directory.Exists(fullPath))
+            {
+                return false;
+            }
+
+            probePath =
+                Path.Combine(
+                    fullPath,
+                    $".mathsolver-write-test-{Guid.NewGuid():N}.tmp");
+
+            await using (var probe =
+                new FileStream(
+                    probePath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    1,
+                    useAsync: true))
+            {
+                await probe.WriteAsync(new byte[] { 0 });
+                await probe.FlushAsync();
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            if (!string.IsNullOrWhiteSpace(probePath) &&
+                File.Exists(probePath))
+            {
+                try
+                {
+                    File.Delete(probePath);
+                }
+                catch
+                {
+                    // Best effort cleanup only.
+                }
+            }
+        }
+    }
+
+    private async void OnConfirmDownloadClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_pendingDownloadModel is null)
+        {
+            return;
+        }
+
+        await CloseAsync(
+            new Gemma4ModelDownloadSelection(
+                _pendingDownloadModel,
+                _downloadDirectory));
+    }
+
+    private async void OnDownloadConfirmOverlayTapped(
+        object? sender,
+        TappedEventArgs e) =>
+        await HideDownloadConfirmationAsync();
+
+    private async void OnCancelDownloadClicked(
+        object? sender,
+        EventArgs e) =>
+        await HideDownloadConfirmationAsync();
 
     private async void OnOpenModelPageClicked(
         object? sender,
@@ -327,13 +602,29 @@ public partial class GemmaModelCatalogPage : ContentPage
 
     private async void OnOutsideTapped(
         object? sender,
-        TappedEventArgs e) =>
+        TappedEventArgs e)
+    {
+        if (DownloadConfirmOverlay.IsVisible)
+        {
+            await HideDownloadConfirmationAsync();
+            return;
+        }
+
         await CloseAsync(null);
+    }
 
     private async void OnCloseClicked(
         object? sender,
-        EventArgs e) =>
+        EventArgs e)
+    {
+        if (DownloadConfirmOverlay.IsVisible)
+        {
+            await HideDownloadConfirmationAsync();
+            return;
+        }
+
         await CloseAsync(null);
+    }
 
     private void PrepareOpenAnimation()
     {
@@ -341,6 +632,14 @@ public partial class GemmaModelCatalogPage : ContentPage
         CatalogPanel.Opacity = 0d;
         CatalogPanel.Scale = 0.96d;
         CatalogPanel.TranslationY = 18d;
+    }
+
+    private void PrepareDownloadConfirmationAnimation()
+    {
+        DownloadConfirmOverlay.Opacity = 0d;
+        DownloadConfirmPanel.Opacity = 0d;
+        DownloadConfirmPanel.Scale = 0.96d;
+        DownloadConfirmPanel.TranslationY = 18d;
     }
 
     private async Task PlayOpenAnimationAsync()
@@ -355,7 +654,7 @@ public partial class GemmaModelCatalogPage : ContentPage
             CatalogPanel.TranslateToAsync(0d, 0d, 210, Easing.CubicOut));
     }
 
-    private async Task CloseAsync(Gemma4ModelDescriptor? selection)
+    private async Task CloseAsync(Gemma4ModelDownloadSelection? selection)
     {
         if (_isClosing)
         {
@@ -369,6 +668,14 @@ public partial class GemmaModelCatalogPage : ContentPage
         {
             OverlayScrim.CancelAnimations();
             CatalogPanel.CancelAnimations();
+            DownloadConfirmOverlay.CancelAnimations();
+            DownloadConfirmPanel.CancelAnimations();
+
+            if (DownloadConfirmOverlay.IsVisible)
+            {
+                DownloadConfirmOverlay.Opacity = 0d;
+                DownloadConfirmOverlay.IsVisible = false;
+            }
 
             await Task.WhenAll(
                 OverlayScrim.FadeToAsync(0d, 125, Easing.CubicIn),
@@ -401,8 +708,7 @@ public partial class GemmaModelCatalogPage : ContentPage
 
     private static string FormatModelMetadata(
         Gemma4ModelDescriptor model) =>
-        $"GGUF  •  QAT Q4_0  •  " +
-        $"{FormatGigabytes(model.ApproximateSizeBytes)} GB";
+        $"GGUF • QAT Q4_0 • {FormatGigabytes(model.ApproximateSizeBytes)} GB";
 
     private static string T(string key) =>
         LocalizationService.TranslateKey(key);

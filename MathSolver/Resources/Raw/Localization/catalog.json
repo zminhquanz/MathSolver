@@ -784,17 +784,27 @@
     },
     {
       "key": "Quiz.ModelCatalogSubtitle",
-      "source": "Chọn model để xem README; bấm biểu tượng tải xuống để tải.",
+      "source": "Chọn model để xem chi tiết. Khi bấm Tải, ứng dụng sẽ hiện bước xác nhận nơi lưu file trước khi bắt đầu tải.",
       "mode": "exact"
     },
     {
       "key": "Quiz.ModelCatalogModelsHeading",
-      "source": "MODEL",
+      "source": "MODEL PHÙ HỢP",
       "mode": "exact"
     },
     {
       "key": "Quiz.ModelCatalogReadmeHeading",
-      "source": "README",
+      "source": "CHI TIẾT",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogGuideTitle",
+      "source": "Chọn model phù hợp thiết bị",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogGuideBody",
+      "source": "E2B nhẹ hơn, phù hợp máy yếu hoặc điện thoại. E4B nặng hơn nhưng thường cho câu chữ tự nhiên hơn trên PC.",
       "mode": "exact"
     },
     {
@@ -819,7 +829,7 @@
     },
     {
       "key": "Quiz.ModelCatalogInteractionHint",
-      "source": "Bấm vào một model để đọc README. Chỉ biểu tượng ↓ mới bắt đầu quy trình tải.",
+      "source": "Bấm vào một model để xem chi tiết. Nút Tải sẽ mở thêm bước xác nhận đường dẫn lưu model.",
       "mode": "exact"
     },
     {
@@ -885,6 +895,46 @@
     {
       "key": "Quiz.ModelCatalogClose",
       "source": "Đóng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogFooterHint",
+      "source": "Sau khi bấm Tải, bạn có thể chọn thư mục lưu model bằng trình chọn thư mục của hệ điều hành rồi mới bắt đầu tải.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadActionShort",
+      "source": "↓ Tải",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupTitle",
+      "source": "Xác nhận nơi lưu model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupSubtitle",
+      "source": "Bạn có thể giữ đường dẫn mặc định hoặc chọn một thư mục khác trước khi tải.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupModelHeading",
+      "source": "Model đã chọn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupModelMeta",
+      "source": "Khoảng {0} GB • {1}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupPathHeading",
+      "source": "Thư mục lưu model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupNote",
+      "source": "Hãy bảo đảm ổ đĩa còn đủ dung lượng trống. Nếu tải bị gián đoạn, phần đã tải sẽ được giữ lại trong chính thư mục bạn chọn để tiếp tục lần sau.",
       "mode": "exact"
     },
     {
@@ -5820,6 +5870,41 @@
     {
       "key": "Quiz.MotionEssayEquationPlaceholder",
       "source": "Ví dụ: 120 ÷ (60 + 40) = 1",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupChooseFolder",
+      "source": "📁 Chọn thư mục",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupResetDefault",
+      "source": "Mặc định",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupFinalFileHeading",
+      "source": "File GGUF sẽ lưu tại",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupFolderPickerFailedTitle",
+      "source": "Không mở được trình chọn thư mục",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupFolderPickerFailedMessage",
+      "source": "Không thể mở hoặc đọc thư mục đã chọn. Hãy thử chọn một thư mục khác.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupFolderNotWritableTitle",
+      "source": "Không thể lưu vào thư mục này",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadPathPopupFolderNotWritableMessage",
+      "source": "Math Solver không có quyền ghi file vào thư mục đã chọn. Hãy chọn một thư mục khác có quyền ghi.",
       "mode": "exact"
     }
   ],
