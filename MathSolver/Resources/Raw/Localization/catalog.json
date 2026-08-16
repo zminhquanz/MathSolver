@@ -2,285 +2,1401 @@
   "schemaVersion": 1,
   "sourceCulture": "vi-VN",
   "entries": [
-    { "key": "Formula.Tabs.UnknownComponent", "source": "𝑥  Tìm thành phần chưa biết", "mode": "exact" },
-    { "key": "Formula.Tabs.Proportion", "source": "↗↘  Tỉ lệ thuận – nghịch", "mode": "exact" },
-    { "key": "Formula.Tabs.Motion", "source": "➜  Chuyển động", "mode": "exact" },
-    { "key": "Formula.Tabs.Geometry", "source": "△  Hình học", "mode": "exact" },
-    { "key": "Formula.Common.Relationship", "source": "1. MỐI QUAN HỆ", "mode": "exact" },
-    { "key": "Formula.Common.Formulas", "source": "2. CÔNG THỨC", "mode": "exact" },
-    { "key": "Formula.Common.Properties", "source": "3. TÍNH CHẤT", "mode": "exact" },
-    { "key": "Formula.Common.HowToSolve", "source": "4. CÁCH GIẢI", "mode": "exact" },
-    { "key": "Formula.Motion.Graph.Title", "source": "MINH HỌA TƯƠNG TÁC", "mode": "exact" },
-    { "key": "Formula.Motion.Graph.Subtitle", "source": "Kéo thanh trượt để thay đổi quãng đường và thời gian, từ đó thấy ngay vận tốc trung bình và mô hình chia quãng đường theo từng giây.", "mode": "exact" },
-    { "key": "Formula.Proportion.Title", "source": "TỈ LỆ THUẬN – TỈ LỆ NGHỊCH", "mode": "exact" },
-    { "key": "Formula.Proportion.Subtitle", "source": "Nhận biết mối quan hệ • Lập công thức • Giải bài toán", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Title", "source": "Tỉ lệ thuận", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Relationship", "source": "Hai đại lượng x và y tỉ lệ thuận khi y bằng x nhân với một hằng số k. x tăng (hoặc giảm) bao nhiêu lần thì y cũng tăng (hoặc giảm) bấy nhiêu lần.", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Title", "source": "Tỉ lệ nghịch", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Relationship", "source": "Hai đại lượng x và y tỉ lệ nghịch khi y bằng một hằng số k chia cho x. x tăng bao nhiêu lần thì y giảm bấy nhiêu lần và ngược lại.", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Formulas", "source": "Tỉ lệ thuận:\ny = k × x\nk = y ÷ x\ny₁ ÷ x₁ = y₂ ÷ x₂", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Formulas", "source": "Tỉ lệ nghịch:\ny = k ÷ x\nk = x × y\nx₁ × y₁ = x₂ × y₂", "mode": "exact" },
-    { "key": "Formula.Proportion.Conditions", "source": "Điều kiện: k ≠ 0. Với tỉ lệ nghịch còn phải có x ≠ 0 và y ≠ 0.", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Properties", "source": "• Tỉ lệ thuận: tỉ số y ÷ x luôn không đổi và bằng hệ số tỉ lệ k. Nhân x với m thì y cũng được nhân với m.", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Properties", "source": "• Tỉ lệ nghịch: tích x × y luôn không đổi và bằng k. Nhân x với m (m ≠ 0) thì y được chia cho m.", "mode": "exact" },
-    { "key": "Formula.Proportion.GraphProperties", "source": "• Đồ thị: y = kx là đường thẳng đi qua gốc tọa độ; y = k/x là một hypebol và không cắt hai trục tọa độ.", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.Title", "source": "MINH HỌA TƯƠNG TÁC", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.Subtitle", "source": "Kéo thanh trượt để so sánh tỉ lệ thuận y = 2x và tỉ lệ nghịch y = 2/x tại cùng một giá trị x.", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.DirectLegend", "source": "Tỉ lệ thuận: y = 2x", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.InverseLegend", "source": "Tỉ lệ nghịch: y = 2/x", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.XValue", "source": "x = {0}", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.DirectValue", "source": "Tỉ lệ thuận: y = {0}; y ÷ x luôn bằng 2.", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.InverseValue", "source": "Tỉ lệ nghịch: y = {0}; x × y luôn bằng 2.", "mode": "exact" },
-    { "key": "Formula.Proportion.Graph.SliderHint", "source": "Thay đổi giá trị x", "mode": "exact" },
-    { "key": "Formula.Proportion.Summary.Title", "source": "Tóm tắt", "mode": "exact" },
-    { "key": "Formula.Proportion.Summary.Solution", "source": "Bài giải", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Method", "source": "Nhân chéo – chia ngang", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Method", "source": "Nhân ngang – chia dọc", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.LeftTop", "source": "3 kg gạo", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.RightTop", "source": "54.000 đồng", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.LeftBottom", "source": "5 kg gạo", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.RightBottom", "source": "? đồng", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Calculation", "source": "? = 54.000 × 5 ÷ 3 = 90.000 đồng", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.LeftTop", "source": "6 người", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.RightTop", "source": "8 ngày", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.LeftBottom", "source": "12 người", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.RightBottom", "source": "? ngày", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Calculation", "source": "? = 6 × 8 ÷ 12 = 4 ngày", "mode": "exact" },
-    { "key": "Formula.Proportion.Steps", "source": "Bước 1: Xác định hai đại lượng thay đổi cùng chiều hay ngược chiều.\nBước 2: Viết y = kx (thuận) hoặc xy = k (nghịch).\nBước 3: Dùng cặp giá trị đã biết để tìm k, rồi tìm đại lượng chưa biết.\nBước 4: Ghi đơn vị và kiểm tra kết quả có đúng chiều biến thiên không.", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.ExampleTitle", "source": "Ví dụ tỉ lệ thuận", "mode": "exact" },
-    { "key": "Formula.Proportion.Direct.Example", "source": "3 kg gạo giá 54.000 đồng. 5 kg giá bao nhiêu?\nk = 54.000 ÷ 3 = 18.000 (đồng/kg)\nGiá 5 kg: 18.000 × 5 = 90.000 đồng.", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.ExampleTitle", "source": "Ví dụ tỉ lệ nghịch", "mode": "exact" },
-    { "key": "Formula.Proportion.Inverse.Example", "source": "6 người làm xong việc trong 8 ngày. 12 người làm trong bao lâu (năng suất như nhau)?\nk = 6 × 8 = 48 (người-ngày)\nThời gian: 48 ÷ 12 = 4 ngày.", "mode": "exact" },
-    { "key": "Formula.Motion.Title", "source": "TOÁN CHUYỂN ĐỘNG", "mode": "exact" },
-    { "key": "Formula.Motion.Subtitle", "source": "Quãng đường • Vận tốc • Thời gian • Gặp nhau • Đuổi kịp", "mode": "exact" },
-    { "key": "Formula.Motion.Relationship", "source": "Trong chuyển động đều, quãng đường s bằng vận tốc v nhân thời gian t. Khi giữ v không đổi, s tỉ lệ thuận với t; khi giữ s không đổi, v và t tỉ lệ nghịch.", "mode": "exact" },
-    { "key": "Formula.Motion.Symbols", "source": "Ký hiệu: s là quãng đường, v là vận tốc, t là thời gian. Ba đại lượng phải dùng các đơn vị tương thích.", "mode": "exact" },
-    { "key": "Formula.Motion.MeetingFormula", "source": "Đi ngược chiều – gặp nhau:\nv tương đối = v₁ + v₂\nt gặp = khoảng cách ban đầu ÷ (v₁ + v₂)", "mode": "exact" },
-    { "key": "Formula.Motion.ChasingFormula", "source": "Đi cùng chiều – đuổi kịp:\nv tương đối = v nhanh − v chậm\nt đuổi = khoảng cách ban đầu ÷ (v nhanh − v chậm)", "mode": "exact" },
-    { "key": "Formula.Motion.AverageFormula", "source": "Vận tốc trung bình:\nv tb = tổng quãng đường ÷ tổng thời gian\nKhông lấy trung bình cộng các vận tốc nếu thời gian khác nhau.", "mode": "exact" },
-    { "key": "Formula.Motion.UnitConversion", "source": "Đổi đơn vị:\n1 giờ = 60 phút = 3.600 giây\n1 km = 1.000 m\n1 m/s = 3,6 km/h", "mode": "exact" },
-    { "key": "Formula.Motion.Properties", "source": "• Cùng vận tốc: quãng đường tỉ lệ thuận với thời gian.\n• Cùng thời gian: quãng đường tỉ lệ thuận với vận tốc.\n• Cùng quãng đường: vận tốc tỉ lệ nghịch với thời gian.\n• Vận tốc tương đối là tổng khi tiến lại gần nhau và là hiệu khi chuyển động cùng chiều.", "mode": "exact" },
-    { "key": "Formula.Motion.UnitWarning", "source": "Luôn đổi đơn vị trước khi thay số: km đi với km/h và giờ; m đi với m/s và giây.", "mode": "exact" },
-    { "key": "Formula.Motion.Steps", "source": "Bước 1: Tóm tắt s, v, t và đổi về cùng hệ đơn vị.\nBước 2: Xác định kiểu chuyển động: một vật, gặp nhau hay đuổi kịp.\nBước 3: Chọn s = vt hoặc công thức vận tốc tương đối, rồi tính đại lượng cần tìm.\nBước 4: Ghi đơn vị, đối chiếu thời gian và quãng đường với thực tế đề bài.", "mode": "exact" },
-    { "key": "Formula.Motion.MeetingExampleTitle", "source": "Ví dụ gặp nhau", "mode": "exact" },
-    { "key": "Formula.Motion.MeetingExample", "source": "Hai xe cách nhau 180 km, đi ngược chiều với vận tốc 50 km/h và 40 km/h.\nv tương đối = 50 + 40 = 90 km/h\nt gặp = 180 ÷ 90 = 2 giờ.", "mode": "exact" },
-    { "key": "Formula.Motion.ChasingExampleTitle", "source": "Ví dụ đuổi kịp", "mode": "exact" },
-    { "key": "Formula.Motion.ChasingExample", "source": "Xe chậm đi trước 30 km. Xe nhanh chạy 60 km/h, xe chậm chạy 45 km/h.\nv tương đối = 60 − 45 = 15 km/h\nt đuổi = 30 ÷ 15 = 2 giờ.", "mode": "exact" },
-    { "key": "Tabs.MathPuzzle", "source": "Toán đố", "mode": "exact" },
-    { "key": "Geometry.Properties.Square", "source": "Bốn cạnh bằng nhau; bốn góc vuông; hai đường chéo bằng nhau, vuông góc và cắt nhau tại trung điểm.", "mode": "exact" },
-    { "key": "Geometry.Properties.Rectangle", "source": "Các cạnh đối song song và bằng nhau; bốn góc vuông; hai đường chéo bằng nhau và cắt nhau tại trung điểm.", "mode": "exact" },
-    { "key": "Geometry.Properties.Triangle", "source": "Tổng ba góc bằng 180°; tổng độ dài hai cạnh bất kỳ luôn lớn hơn cạnh còn lại.", "mode": "exact" },
-    { "key": "Geometry.Properties.RightTriangle", "source": "Có một góc vuông; hai góc nhọn phụ nhau; cạnh huyền đối diện góc vuông và là cạnh dài nhất.", "mode": "exact" },
-    { "key": "Geometry.Properties.EquilateralTriangle", "source": "Ba đường cao đồng thời là ba trung tuyến, ba đường phân giác và ba đường trung trực.", "mode": "exact" },
-    { "key": "Geometry.Properties.Circle", "source": "Mọi điểm trên đường tròn cách tâm một khoảng bằng bán kính; đường kính đi qua tâm và dài gấp đôi bán kính.", "mode": "exact" },
-    { "key": "Geometry.Properties.Trapezoid", "source": "Có một cặp cạnh đối song song gọi là hai đáy; chiều cao là khoảng cách vuông góc giữa hai đáy.", "mode": "exact" },
-    { "key": "Geometry.Properties.IsoscelesTrapezoid", "source": "Hai cạnh bên bằng nhau; hai góc kề mỗi đáy bằng nhau; hai đường chéo bằng nhau.", "mode": "exact" },
-    { "key": "Geometry.Properties.RightTrapezoid", "source": "Có hai góc vuông; một cạnh bên vuông góc với hai đáy và chính là chiều cao.", "mode": "exact" },
-    { "key": "Geometry.Properties.Rhombus", "source": "Bốn cạnh bằng nhau; các cạnh đối song song; hai đường chéo vuông góc, cắt nhau tại trung điểm và phân giác các góc.", "mode": "exact" },
-    { "key": "Geometry.Properties.Parallelogram", "source": "Các cạnh đối song song và bằng nhau; các góc đối bằng nhau; hai đường chéo cắt nhau tại trung điểm.", "mode": "exact" },
-    { "key": "Geometry.Properties.Cube", "source": "Có 6 mặt vuông, 12 cạnh bằng nhau và 8 đỉnh; ba cạnh gặp nhau tại mỗi đỉnh đôi một vuông góc.", "mode": "exact" },
-    { "key": "Geometry.Properties.RectangularPrism", "source": "Có 6 mặt chữ nhật, 12 cạnh và 8 đỉnh; các mặt đối diện song song và bằng nhau.", "mode": "exact" },
-    { "key": "Geometry.Properties.Sphere", "source": "Mọi điểm trên mặt cầu cách tâm một khoảng bằng bán kính; hình cầu không có cạnh và không có đỉnh.", "mode": "exact" },
-    { "key": "Geometry.Properties.Cylinder", "source": "Có hai đáy tròn bằng nhau và song song; chiều cao là khoảng cách vuông góc giữa hai mặt đáy.", "mode": "exact" },
-    { "key": "Geometry.Properties.Cone", "source": "Có một đáy tròn và một đỉnh; chiều cao vuông góc với mặt đáy; đường sinh nối đỉnh với đường tròn đáy.", "mode": "exact" },
-    { "key": "Quiz.PracticeTitle", "source": "LUYỆN TẬP TOÁN ĐỐ", "mode": "exact" },
-    { "key": "Quiz.PracticeSubtitle", "source": "Thuật toán • Giáo viên AI • Đúng/Sai • 4 đáp án • Tự luận", "mode": "exact" },
-    { "key": "Quiz.SourceTitle", "source": "1. Chọn cách tạo đề", "mode": "exact" },
-    { "key": "Quiz.AlgorithmSource", "source": "🧮 Thuật toán", "mode": "exact" },
-    { "key": "Quiz.LocalLlmSource", "source": "🤖 AI / LLM", "mode": "exact" },
-    { "key": "Quiz.ModeTitle", "source": "2. Chọn kiểu câu hỏi", "mode": "exact" },
-    { "key": "Quiz.TrueFalseMode", "source": "✅❌ Đúng / Sai", "mode": "exact" },
-    { "key": "Quiz.MultipleChoiceMode", "source": "🔢 4 đáp án", "mode": "exact" },
-    { "key": "Quiz.EssayMode", "source": "✍️ Tự luận", "mode": "exact" },
-    { "key": "Quiz.OperationTitle", "source": "3. Chọn bài toán", "mode": "exact" },
-    { "key": "Quiz.OperationMixed", "source": "Hỗn hợp", "mode": "exact" },
-    { "key": "Quiz.ProblemBasic", "source": "Cơ bản + − × ÷", "mode": "exact" },
-    { "key": "Quiz.ProblemFraction", "source": "Phân số ½", "mode": "exact" },
-    { "key": "Quiz.BasicOperationTitle", "source": "Chọn phép tính cơ bản", "mode": "exact" },
-    { "key": "Quiz.FractionOperationTitle", "source": "Chọn phép tính phân số", "mode": "exact" },
-    { "key": "Quiz.OperationAddition", "source": "Phép cộng +", "mode": "exact" },
-    { "key": "Quiz.OperationSubtraction", "source": "Phép trừ −", "mode": "exact" },
-    { "key": "Quiz.OperationMultiplication", "source": "Phép nhân ×", "mode": "exact" },
-    { "key": "Quiz.OperationDivision", "source": "Phép chia ÷", "mode": "exact" },
-    { "key": "Quiz.ProblemGeometry", "source": "Hình học △ □ ◯", "mode": "exact" },
-    { "key": "Quiz.ProblemFindX", "source": "Tìm x", "mode": "exact" },
-    { "key": "Quiz.FractionQuestionTitle", "source": "Bài toán phân số", "mode": "exact" },
-    { "key": "Quiz.FractionEssayEquationPlaceholder", "source": "Ví dụ: 1/2 + 1/4 = 3/4", "mode": "exact" },
-    { "key": "Quiz.FractionEssayValidationHint", "source": "Ứng dụng chấm hai phân số, phép tính và kết quả đã rút gọn.", "mode": "exact" },
-    { "key": "Quiz.FractionEssayValidationHintAi", "source": "Bắt buộc điền lời giải. Ứng dụng chấm hai phân số, phép tính, kết quả đã rút gọn và đúng đơn vị đáp số.", "mode": "exact" },
-    { "key": "Quiz.FractionEssayAnswerPlaceholder", "source": "Ví dụ: 3/4 mét vải", "mode": "exact" },
-    { "key": "Quiz.FindXQuestionTitle", "source": "Tìm giá trị của x", "mode": "exact" },
-    { "key": "Quiz.FindXEssayValidationHint", "source": "Ứng dụng chấm phép tính ngược và giá trị x; với đề AI, ứng dụng còn kiểm tra đúng đơn vị của x.", "mode": "exact" },
-    { "key": "Quiz.FindXEssayValidationHintAi", "source": "Bắt buộc điền lời giải. Ứng dụng chấm đúng đại lượng của x, phép tính ngược, giá trị và đơn vị của x.", "mode": "exact" },
-    { "key": "Quiz.FindXEssayEquationPlaceholder", "source": "Ví dụ: 12 − 5 = 7", "mode": "exact" },
-    { "key": "Quiz.GeometryQuestionTitle", "source": "Bài toán hình học", "mode": "exact" },
-    { "key": "Quiz.QuestionTitle", "source": "Phép tính sau đúng hay sai?", "mode": "exact" },
-    { "key": "Quiz.MultipleChoiceQuestionTitle", "source": "Chọn đáp án đúng", "mode": "exact" },
-    { "key": "Quiz.EssayQuestionTitle", "source": "Trình bày bài giải", "mode": "exact" },
-    { "key": "Quiz.TrueAnswer", "source": "Đúng", "mode": "exact" },
-    { "key": "Quiz.FalseAnswer", "source": "Sai", "mode": "exact" },
-    { "key": "Quiz.EssaySolutionLabel", "source": "Lời giải", "mode": "exact" },
-    { "key": "Quiz.EssaySolutionPlaceholder", "source": "Viết câu lời giải nêu đúng đại lượng cần tìm (bắt buộc)", "mode": "exact" },
-    { "key": "Quiz.EssayEquationLabel", "source": "Phép tính", "mode": "exact" },
-    { "key": "Quiz.EssayEquationPlaceholder", "source": "Ví dụ: 5 × 6 = 30", "mode": "exact" },
-    { "key": "Quiz.GeometryEssayEquationPlaceholder", "source": "Ví dụ: (12 + 8) × 2 = 40", "mode": "exact" },
-    { "key": "Quiz.EssayAnswerLabel", "source": "Đáp số", "mode": "exact" },
-    { "key": "Quiz.EssayAnswerPlaceholder", "source": "Ví dụ: 30 cây bút", "mode": "exact" },
-    { "key": "Quiz.EssayValidationHint", "source": "Bắt buộc điền lời giải. Ứng dụng chấm đại lượng trong lời giải, phép tính, kết quả, giá trị và đơn vị đáp số.", "mode": "exact" },
-    { "key": "Quiz.EssayValidationHintAlgorithm", "source": "Ứng dụng chấm hai số dữ kiện, phép toán, kết quả và giá trị đáp số.", "mode": "exact" },
-    { "key": "Quiz.GeometryEssayValidationHint", "source": "Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị: độ dài, diện tích hoặc thể tích.", "mode": "exact" },
-    { "key": "Quiz.GeometryEssayValidationHintAi", "source": "Bắt buộc điền lời giải. Ứng dụng chấm đại lượng hình học, công thức thay số, kết quả và đúng bậc đơn vị.", "mode": "exact" },
-    { "key": "Quiz.SubmitEssayAnswer", "source": "📝 Chấm bài", "mode": "exact" },
-    { "key": "Quiz.EssayCorrectFeedback", "source": "Chính xác! Lời giải, phép tính và đáp số đều đúng.", "mode": "exact" },
-    { "key": "Quiz.EssaySolutionRequired", "source": "Em chưa điền lời giải. Phần lời giải là bắt buộc đối với bài toán đố.", "mode": "exact" },
-    { "key": "Quiz.EssaySolutionContentIncorrect", "source": "Lời giải chưa nêu đúng đại lượng cần tìm. Hãy dùng đúng tên đơn vị trong đề bài.", "mode": "exact" },
-    { "key": "Quiz.EssayEquationAndAnswerIncorrect", "source": "Phép tính và đáp số đều chưa đúng.", "mode": "exact" },
-    { "key": "Quiz.EssayEquationFormatIncorrect", "source": "Phép tính chưa đúng định dạng. Hãy nhập đầy đủ như 5 × 6 = 30.", "mode": "exact" },
-    { "key": "Quiz.EssayEquationIncorrect", "source": "Phép tính chưa đúng dữ kiện, phép toán hoặc kết quả.", "mode": "exact" },
-    { "key": "Quiz.EssayAnswerIncorrect", "source": "Phép tính đúng nhưng đáp số chưa đúng.", "mode": "exact" },
-    { "key": "Quiz.EssayAnswerUnitIncorrect", "source": "Giá trị đáp số đúng nhưng đơn vị chưa phù hợp với đề bài.", "mode": "exact" },
-    { "key": "Quiz.RegenerateQuestion", "source": "🔄 Tạo đề lại", "mode": "exact" },
-    { "key": "Quiz.NextQuestion", "source": "➡️ Câu tiếp theo", "mode": "exact" },
-    { "key": "Quiz.ValidationHint", "source": "Mỗi câu hỏi đều được tính đáp án và kiểm tra lại trước khi hiển thị.", "mode": "exact" },
-    { "key": "Quiz.GenerationError", "source": "Không thể sinh câu hỏi hợp lệ. Hãy thử lại.", "mode": "exact" },
-    { "key": "Quiz.CorrectFeedback", "source": "Chính xác! Đáp án là {0}.", "mode": "exact" },
-    { "key": "Quiz.IncorrectFeedback", "source": "Chưa đúng. Đáp án đúng là {0}.", "mode": "exact" },
-    { "key": "Quiz.QuestionCounter", "source": "Câu {0}", "mode": "exact" },
-    { "key": "Quiz.CorrectCounter", "source": "✓ {0}", "mode": "exact" },
-    { "key": "Quiz.IncorrectCounter", "source": "✕ {0}", "mode": "exact" },
-    { "key": "Quiz.LlmSettingsTitle", "source": "Giáo viên AI cục bộ", "mode": "exact" },
-    { "key": "Quiz.LlmSettingsDescription", "source": "AI viết đề theo chương trình tiểu học Việt Nam. Ứng dụng tự tính đáp án và kiểm tra lại trước khi hiển thị.", "mode": "exact" },
-    { "key": "Quiz.DownloadGemma4", "source": "⬇️ Tải Gemma 4 từ Hugging Face", "mode": "exact" },
-    { "key": "Quiz.StopModelDownload", "source": "⏹️ Dừng tải model", "mode": "exact" },
-    { "key": "Quiz.ChooseDownloadModelTitle", "source": "Chọn model Gemma 4", "mode": "exact" },
-    { "key": "Quiz.DownloadE2BOption", "source": "E2B • Nhẹ hơn • 3,35 GB", "mode": "exact" },
-    { "key": "Quiz.DownloadE4BOption", "source": "E4B • Chất lượng tốt hơn • 5,15 GB", "mode": "exact" },
-    { "key": "Quiz.OpenModelWebsiteOption", "source": "Mở trang {0} trên Hugging Face", "mode": "exact" },
-    { "key": "Quiz.OpenModelWebsiteFailed", "source": "Không thể mở trang model trên Hugging Face.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogTitle", "source": "Thư viện model Gemma 4", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogSubtitle", "source": "Chọn model để xem README; bấm biểu tượng tải xuống để tải.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogModelsHeading", "source": "MODEL", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogReadmeHeading", "source": "README", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE2BTitle", "source": "Gemma 4 E2B • Nhẹ hơn", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE2BDescription", "source": "Nhanh, ít RAM và tiết kiệm pin", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE4BTitle", "source": "Gemma 4 E4B • Chất lượng tốt hơn", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE4BDescription", "source": "Viết tự nhiên và suy luận tốt hơn", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogInteractionHint", "source": "Bấm vào một model để đọc README. Chỉ biểu tượng ↓ mới bắt đầu quy trình tải.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogMathSolverHeading", "source": "Sử dụng trong Math Solver", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogMathSolverBody", "source": "Model chỉ đảm nhiệm việc viết đề bài bằng ngôn ngữ tự nhiên. Dữ kiện, phép tính và đáp án vẫn được C# kiểm tra trước khi hiển thị; model chạy cục bộ và không gửi nội dung bài toán lên máy chủ.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogRecommendationHeading", "source": "Khuyến nghị", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE2BSummary", "source": "Gemma 4 E2B Instruct là biến thể nhỏ hướng tới thiết bị cá nhân. Bản GGUF QAT Q4_0 giảm bộ nhớ cần thiết trong khi giữ chất lượng gần với checkpoint độ chính xác cao hơn.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE4BSummary", "source": "Gemma 4 E4B Instruct có năng lực ngôn ngữ và suy luận tốt hơn E2B. Bản GGUF QAT Q4_0 phù hợp khi ưu tiên đề bài tự nhiên và đa dạng hơn.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE2BRecommendation", "source": "Nên chọn cho điện thoại, máy ít RAM hoặc khi ưu tiên tốc độ, nhiệt độ và thời lượng pin. Đây là lựa chọn mặc định hợp lý để tạo toán đố tiểu học.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogE4BRecommendation", "source": "Nên chọn cho PC hoặc thiết bị có nhiều RAM khi ưu tiên chất lượng câu chữ. Model tải và chạy nặng hơn E2B nhưng thường tạo đề tự nhiên hơn.", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogFileHeading", "source": "Thông tin bản tải", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogFileBody", "source": "{0}\nKhoảng {1} GB • GGUF • QAT Q4_0\nNguồn: Google DeepMind trên Hugging Face • Apache 2.0", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogOpenPage", "source": "Mở trang {0} trên Hugging Face", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogDownloadModel", "source": "Tải Gemma 4 {0}", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogOpenFailedTitle", "source": "Không thể mở trang", "mode": "exact" },
-    { "key": "Quiz.ModelCatalogClose", "source": "Đóng", "mode": "exact" },
-    { "key": "Quiz.Cancel", "source": "Hủy", "mode": "exact" },
-    { "key": "Quiz.DownloadConfirmTitle", "source": "Xác nhận tải model", "mode": "exact" },
-    { "key": "Quiz.DownloadConfirmMessage", "source": "Tải {0} (khoảng {1} GB) từ Hugging Face? Nên dùng Wi-Fi và bảo đảm thiết bị còn đủ dung lượng trống.", "mode": "exact" },
-    { "key": "Quiz.DownloadAction", "source": "Tải xuống", "mode": "exact" },
-    { "key": "Quiz.DownloadingModel", "source": "Đang bắt đầu tải {0}...", "mode": "exact" },
-    { "key": "Quiz.DownloadingModelProgress", "source": "Đang tải {0}: {1}% • {2}/{3} GB", "mode": "exact" },
-    { "key": "Quiz.DownloadComplete", "source": "Đã tải và chọn {0}. File GGUF đã sẵn sàng.", "mode": "exact" },
-    { "key": "Quiz.DownloadCancelled", "source": "Đã dừng tải. Phần đã tải được giữ lại để tiếp tục lần sau.", "mode": "exact" },
-    { "key": "Quiz.DownloadInvalid", "source": "File tải về không phải model Gemma 4 GGUF hợp lệ. Hãy thử tải lại.", "mode": "exact" },
-    { "key": "Quiz.DownloadAccessDenied", "source": "Hugging Face không cho phép tải model này. Hãy kiểm tra kết nối hoặc quyền truy cập rồi thử lại.", "mode": "exact" },
-    { "key": "Quiz.DownloadFailed", "source": "Không thể tải model. Hãy kiểm tra kết nối mạng; lần tải sau sẽ tiếp tục từ phần đã có.", "mode": "exact" },
-    { "key": "Quiz.SelectModel", "source": "📦 Chọn model", "mode": "exact" },
-    { "key": "Quiz.EjectModel", "source": "⏏️ Eject model", "mode": "exact" },
-    { "key": "Quiz.OpenInFileExplorer", "source": "📂 Mở trong File Explorer", "mode": "exact" },
-    { "key": "Quiz.ModelLocationTitle", "source": "Vị trí AI model", "mode": "exact" },
-    { "key": "Quiz.ModelLocationUnavailable", "source": "Nền tảng này không cho phép mở trực tiếp thư mục riêng của ứng dụng. AI model đang nằm tại:\n{0}", "mode": "exact" },
-    { "key": "Quiz.NoModelSelected", "source": "Chưa chọn model GGUF", "mode": "exact" },
-    { "key": "Quiz.ModelRecommendation", "source": "Ứng dụng chỉ hỗ trợ Gemma 4. Nên chọn E2B/E4B Instruct bản Q4 vì tạo câu tiếng Việt tự nhiên, đủ tốt cho toán tiểu học và nhẹ hơn để tiết kiệm pin.", "mode": "exact" },
-    { "key": "Quiz.RecommendedModelDetected", "source": "Gemma 4 bản gọn nhẹ đã sẵn sàng để tạo đề.", "mode": "exact" },
-    { "key": "Quiz.CreateWithAi", "source": "✨ Tạo đề bằng AI", "mode": "exact" },
-    { "key": "Quiz.ShowAiDiagnostics", "source": "Hiện JSON & Log", "mode": "exact" },
-    { "key": "Quiz.HideAiDiagnostics", "source": "Ẩn JSON & Log", "mode": "exact" },
-    { "key": "Quiz.AiDiagnosticsTitle", "source": "JSON và log kiểm tra AI", "mode": "exact" },
-    { "key": "Quiz.AiDiagnosticsDescription", "source": "Xem dữ liệu model trả về và từng bước validation của C#.", "mode": "exact" },
-    { "key": "Quiz.RawJsonTitle", "source": "JSON do LLM tạo", "mode": "exact" },
-    { "key": "Quiz.ValidationLogTitle", "source": "Log validation", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsNoJson", "source": "JSON thô sẽ xuất hiện tại đây khi AI bắt đầu tạo đề.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsNoLog", "source": "Log parse và validation sẽ xuất hiện tại đây.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsAttemptHeader", "source": "── Lần {0}/{1} ──", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsAttemptStarted", "source": "[{0}/{1}] Bắt đầu nhận JSON từ model.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsJsonReceived", "source": "[{0}/{1}] Đã nhận {2} ký tự; bắt đầu parse JSON.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsParseSucceeded", "source": "[{0}/{1}] Parse JSON thành công.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsParseFailed", "source": "[{0}/{1}] Parse JSON thất bại: {2}.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsValidationSucceeded", "source": "[{0}/{1}] Validation thành công; đề được chấp nhận.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsValidationFailed", "source": "[{0}/{1}] Validation từ chối đề: {2}.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsRetryScheduled", "source": "[{0}/{1}] Tạo lại đề do lỗi: {2}.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsGenerationFailed", "source": "[{0}/{1}] Đã hết số lần thử; lỗi cuối: {2}.", "mode": "exact" },
-    { "key": "Quiz.DiagnosticsRuntimeError", "source": "[{0}/{1}] Lỗi runtime AI: {2}.", "mode": "exact" },
-    { "key": "Quiz.SelectModelPickerTitle", "source": "Chọn file Gemma 4 GGUF", "mode": "exact" },
-    { "key": "Quiz.ImportingModel", "source": "Đang kiểm tra file Gemma 4...", "mode": "exact" },
-    { "key": "Quiz.ModelReady", "source": "File model GGUF đúng định dạng.", "mode": "exact" },
-    { "key": "Quiz.ModelEjected", "source": "Đã Eject model và đặt lại toàn bộ phiên luyện tập.", "mode": "exact" },
-    { "key": "Quiz.UnsupportedModelFamily", "source": "Chỉ hỗ trợ model Gemma 4 dành cho tạo đề. Hãy chọn đúng file Gemma 4 GGUF.", "mode": "exact" },
-    { "key": "Quiz.ModelTooLarge", "source": "Model này quá nặng (trên 5,5 GB) nên có thể làm máy nóng và hao pin. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.", "mode": "exact" },
-    { "key": "Quiz.InvalidModelFile", "source": "File đã chọn không phải là file GGUF hợp lệ.", "mode": "exact" },
-    { "key": "Quiz.ModelImportError", "source": "Không thể mở hoặc lưu model đã chọn.", "mode": "exact" },
-    { "key": "Quiz.SelectModelFirst", "source": "Hãy chọn model GGUF trước khi tạo đề bằng AI.", "mode": "exact" },
-    { "key": "Quiz.LlmReady", "source": "Chọn bài toán rồi bấm Tạo đề bằng AI.", "mode": "exact" },
-    { "key": "Quiz.AiTeacherGreetingTitle", "source": "Giáo viên AI", "mode": "exact" },
-    { "key": "Quiz.AiTeacherStateNoModel", "source": "Chưa có model", "mode": "exact" },
-    { "key": "Quiz.AiTeacherStateModelSelected", "source": "Đã chọn model", "mode": "exact" },
-    { "key": "Quiz.AiTeacherStateWorking", "source": "Đang làm việc", "mode": "exact" },
-    { "key": "Quiz.AiTeacherStateReady", "source": "Sẵn sàng", "mode": "exact" },
-    { "key": "Quiz.FirstModelGreeting", "source": "Chào em! Giáo viên AI đã sẵn sàng. Chúng ta cùng bắt đầu bài toán đầu tiên nhé!", "mode": "exact" },
-    { "key": "Quiz.LoadingModel", "source": "Đang tạo sinh đề bài bằng AI...", "mode": "exact" },
-    { "key": "Quiz.ModelLoaded", "source": "AI đang chuẩn bị nội dung câu hỏi...", "mode": "exact" },
-    { "key": "Quiz.GeneratingAttempt", "source": "AI đang viết đề bài, lần {0}/{1}...", "mode": "exact" },
-    { "key": "Quiz.GenerationSpeed", "source": "Tốc độ tạo sinh: {0} token/s", "mode": "exact" },
-    { "key": "Quiz.ValidatingProblem", "source": "Đang kiểm tra lại đề bài và đáp án...", "mode": "exact" },
-    { "key": "Quiz.RetryingProblem", "source": "Đề chưa hợp lệ. AI đang tự tạo lại...", "mode": "exact" },
-    { "key": "Quiz.DisposingModel", "source": "Đang Eject model...", "mode": "exact" },
-    { "key": "Quiz.GenerationSucceeded", "source": "Đề bài đã sẵn sàng.", "mode": "exact" },
-    { "key": "Quiz.GenerationCancelled", "source": "Đã dừng tạo đề.", "mode": "exact" },
-    { "key": "Quiz.GenerationFailedAfterRetries", "source": "AI đã tạo sai dữ kiện 3 lần. Hãy bấm Tạo đề bằng AI để thử lại.", "mode": "exact" },
-    { "key": "Quiz.NotEnoughMemory", "source": "Model này quá nặng đối với thiết bị. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.", "mode": "exact" },
-    { "key": "Quiz.ModelRuntimeError", "source": "Không thể dùng model này trên thiết bị. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.", "mode": "exact" },
-    { "key": "Quiz.WordProblemTitle", "source": "Bài toán do giáo viên AI tạo", "mode": "exact" },
-    { "key": "Quiz.PresentedAnswer", "source": "Đáp án được đưa ra: {0} {1}", "mode": "exact" },
-    { "key": "Quiz.SolutionTitle", "source": "Lời giải", "mode": "exact" },
-    { "key": "Calculation.Arithmetic.Tab", "source": "+ − × ÷ Phép tính", "mode": "exact" },
-    { "key": "Calculation.Arithmetic.Title", "source": "PHÉP TÍNH", "mode": "exact" },
-    { "key": "Calculation.Tabs.Basic", "source": "🧮 Phép tính", "mode": "exact" },
-    { "key": "Calculation.Tabs.Average", "source": "📊 Trung bình cộng", "mode": "exact" },
-    { "key": "Calculation.Tabs.PowerRoot", "source": "⚡ Lũy thừa - Căn bậc", "mode": "exact" },
-    { "key": "Calculation.Tabs.Fraction", "source": "½ Phân số", "mode": "exact" },
-    { "key": "Calculation.Tabs.FindX", "source": "🔎 Tìm x", "mode": "exact" },
-    { "key": "Calculation.Tabs.Quadratic", "source": "📈 Phương trình bậc 2", "mode": "exact" },
-    { "key": "Calculation.Tabs.Geometry", "source": "📐 Hình học", "mode": "exact" },
-    { "key": "Calculation.Arithmetic.Subtitle", "source": "Cộng • Trừ • Nhân • Chia • Biểu thức", "mode": "exact" },
-    { "key": "Calculation.Arithmetic.InputNumbersTitle", "source": "2. Nhập các số", "mode": "exact" },
-    { "key": "Settings.NumberDisplay.Title", "source": "Hiển thị kết quả đầy đủ", "mode": "exact" },
-    { "key": "Settings.NumberDisplay.SummaryFull", "source": "Đang bật · Áp dụng cho Phép tính, Trung bình cộng, Phân số, Tìm x, Bậc hai và Hình học", "mode": "exact" },
-    { "key": "Settings.NumberDisplay.SummaryCompact", "source": "Đang tắt · Các tab trên rút gọn số dài hơn 18 chữ số", "mode": "exact" },
-    { "key": "Calculation.Expression.Option", "source": "ƒ Biểu thức", "mode": "exact" },
-    { "key": "Calculation.Expression.InputTitle", "source": "2. Nhập biểu thức", "mode": "exact" },
-    { "key": "Calculation.Expression.InputHelp", "source": "Nhập nhiều phép cộng, trừ, nhân, chia trong cùng một biểu thức. Có thể dùng +, −, ×, ÷ hoặc +, -, *, /.", "mode": "exact" },
-    { "key": "Calculation.Expression.Placeholder", "source": "Ví dụ: {48 - [18 ÷ (3 + 3)]} × 2", "mode": "exact" },
-    { "key": "Calculation.Expression.PriorityHint", "source": "Thứ tự tính: thực hiện từ trong ra ngoài theo (), rồi [], rồi {}; trong mỗi nhóm, nhân và chia trước, cộng và trừ sau.", "mode": "exact" },
-    { "key": "Calculation.Expression.SingleValue", "source": "Biểu thức chỉ có một giá trị nên không cần thực hiện phép tính trung gian.", "mode": "exact" },
-    { "key": "Calculation.Expression.SolutionSteps", "source": "Tính lần lượt theo thứ tự ưu tiên:\n{0}\nVậy giá trị của biểu thức là {1}.", "mode": "exact" },
-    { "key": "Calculation.Expression.ResultRules", "source": "Có thể dùng riêng từng loại ngoặc. Khi lồng nhiều loại, đặt () trong [] và [] trong {}; những ngoặc cùng loại vẫn có thể lồng nhau.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.Empty", "source": "Vui lòng nhập biểu thức cần tính.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.TooLong", "source": "Biểu thức quá dài. Hãy nhập tối đa 512 ký tự và 255 thành phần.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.InvalidCharacter", "source": "Biểu thức chứa ký tự không hợp lệ. Chỉ dùng số, +, −, ×, ÷ và các dấu ngoặc (), [], {}.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.InvalidNumber", "source": "Có một số chưa đúng định dạng hoặc không phù hợp với loại số đang chọn.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.NumberOutOfRange", "source": "Có một số nằm ngoài phạm vi hỗ trợ của loại số đang chọn.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.MissingOperand", "source": "Biểu thức đang thiếu số trước hoặc sau một phép tính.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.MissingOperator", "source": "Biểu thức đang thiếu dấu phép tính giữa hai số hoặc giữa số và dấu ngoặc.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.MismatchedBracket", "source": "Các dấu ngoặc chưa đủ hoặc không khớp đúng cặp (), [] và {}.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.InvalidBracketOrder", "source": "Thứ tự ngoặc chưa đúng. Khi lồng nhiều loại, hãy đặt () bên trong [] và [] bên trong {}.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.DivisionByZero", "source": "Biểu thức có phép chia cho 0 nên không xác định.", "mode": "exact" },
-    { "key": "Calculation.Expression.Error.NonIntegralDivision", "source": "Phép chia trung gian không chia hết trong chế độ Số nguyên. Hãy chọn Số thập phân để giữ phần lẻ.", "mode": "exact" },
+    {
+      "key": "Formula.Tabs.UnknownComponent",
+      "source": "𝑥  Tìm thành phần chưa biết",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Tabs.Proportion",
+      "source": "↗↘⤢  Tỉ lệ thuận – nghịch – kép",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Tabs.Motion",
+      "source": "➜  Chuyển động",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Tabs.Geometry",
+      "source": "△  Hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Common.Relationship",
+      "source": "1. MỐI QUAN HỆ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Common.Formulas",
+      "source": "2. CÔNG THỨC",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Common.Properties",
+      "source": "3. TÍNH CHẤT",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Common.HowToSolve",
+      "source": "4. CÁCH GIẢI",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Graph.Title",
+      "source": "MINH HỌA TƯƠNG TÁC",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Graph.Subtitle",
+      "source": "Kéo thanh trượt để thay đổi quãng đường và thời gian, từ đó thấy ngay vận tốc trung bình và mô hình chia quãng đường theo từng giây.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Title",
+      "source": "TỈ LỆ THUẬN – TỈ LỆ NGHỊCH – TỈ LỆ KÉP",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Subtitle",
+      "source": "Nhận biết mối quan hệ • Lập công thức • Giải bài toán nhiều đại lượng",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Title",
+      "source": "Tỉ lệ thuận",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Relationship",
+      "source": "Hai đại lượng x và y tỉ lệ thuận khi y bằng x nhân với một hằng số k. x tăng (hoặc giảm) bao nhiêu lần thì y cũng tăng (hoặc giảm) bấy nhiêu lần.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Title",
+      "source": "Tỉ lệ nghịch",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Relationship",
+      "source": "Hai đại lượng x và y tỉ lệ nghịch khi y bằng một hằng số k chia cho x. x tăng bao nhiêu lần thì y giảm bấy nhiêu lần và ngược lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Formulas",
+      "source": "Tỉ lệ thuận:\ny = k × x\nk = y ÷ x\ny₁ ÷ x₁ = y₂ ÷ x₂",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Formulas",
+      "source": "Tỉ lệ nghịch:\ny = k ÷ x\nk = x × y\nx₁ × y₁ = x₂ × y₂",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Conditions",
+      "source": "Điều kiện: k ≠ 0. Với tỉ lệ nghịch còn phải có x ≠ 0 và y ≠ 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Properties",
+      "source": "• Tỉ lệ thuận: tỉ số y ÷ x luôn không đổi và bằng hệ số tỉ lệ k. Nhân x với m thì y cũng được nhân với m.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Properties",
+      "source": "• Tỉ lệ nghịch: tích x × y luôn không đổi và bằng k. Nhân x với m (m ≠ 0) thì y được chia cho m.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.GraphProperties",
+      "source": "• Đồ thị: y = kx là đường thẳng đi qua gốc tọa độ; y = k/x là một hypebol và không cắt hai trục tọa độ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.Title",
+      "source": "MINH HỌA TƯƠNG TÁC",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.Subtitle",
+      "source": "Chọn “Tỉ lệ đơn” để xem đồ thị y = 2x và y = 2/x, hoặc chọn “Tỉ lệ kép” để xem nhiều đại lượng cùng tác động đến số ngày.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.DirectLegend",
+      "source": "Tỉ lệ thuận: y = 2x",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.InverseLegend",
+      "source": "Tỉ lệ nghịch: y = 2/x",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.XValue",
+      "source": "x = {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.DirectValue",
+      "source": "Tỉ lệ thuận: y = {0}; y ÷ x luôn bằng 2.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.InverseValue",
+      "source": "Tỉ lệ nghịch: y = {0}; x × y luôn bằng 2.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Graph.SliderHint",
+      "source": "Thay đổi giá trị x",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Summary.Title",
+      "source": "Tóm tắt",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Summary.Solution",
+      "source": "Bài giải",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Method",
+      "source": "Nhân chéo – chia ngang",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Method",
+      "source": "Nhân ngang – chia dọc",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.LeftTop",
+      "source": "3 kg gạo",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.RightTop",
+      "source": "54.000 đồng",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.LeftBottom",
+      "source": "5 kg gạo",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.RightBottom",
+      "source": "? đồng",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Calculation",
+      "source": "? = 54.000 × 5 ÷ 3 = 90.000 đồng",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.LeftTop",
+      "source": "6 người",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.RightTop",
+      "source": "8 ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.LeftBottom",
+      "source": "12 người",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.RightBottom",
+      "source": "? ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Calculation",
+      "source": "? = 6 × 8 ÷ 12 = 4 ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Steps",
+      "source": "Bước 1: Xác định đại lượng cần tìm.\nBước 2: Xét từng đại lượng còn lại thay đổi cùng chiều (thuận) hay ngược chiều (nghịch) với đại lượng cần tìm.\nBước 3: Viết công thức dạng y = kx, xy = k hoặc ghép nhiều tỉ số để lập công thức tỉ lệ kép.\nBước 4: Thế số, tính kết quả rồi kiểm tra xem chiều biến thiên có hợp lý không.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.ExampleTitle",
+      "source": "Ví dụ tỉ lệ thuận",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Direct.Example",
+      "source": "3 kg gạo giá 54.000 đồng. 5 kg giá bao nhiêu?\nk = 54.000 ÷ 3 = 18.000 (đồng/kg)\nGiá 5 kg: 18.000 × 5 = 90.000 đồng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.ExampleTitle",
+      "source": "Ví dụ tỉ lệ nghịch",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Inverse.Example",
+      "source": "6 người làm xong việc trong 8 ngày. 12 người làm trong bao lâu (năng suất như nhau)?\nk = 6 × 8 = 48 (người-ngày)\nThời gian: 48 ÷ 12 = 4 ngày.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Title",
+      "source": "TOÁN CHUYỂN ĐỘNG",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Subtitle",
+      "source": "Quãng đường • Vận tốc • Thời gian • Gặp nhau • Đuổi kịp",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Relationship",
+      "source": "Trong chuyển động đều, quãng đường s bằng vận tốc v nhân thời gian t. Khi giữ v không đổi, s tỉ lệ thuận với t; khi giữ s không đổi, v và t tỉ lệ nghịch.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Symbols",
+      "source": "Ký hiệu: s là quãng đường, v là vận tốc, t là thời gian. Ba đại lượng phải dùng các đơn vị tương thích.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.MeetingFormula",
+      "source": "Đi ngược chiều – gặp nhau:\nv tương đối = v₁ + v₂\nt gặp = khoảng cách ban đầu ÷ (v₁ + v₂)",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.ChasingFormula",
+      "source": "Đi cùng chiều – đuổi kịp:\nv tương đối = v nhanh − v chậm\nt đuổi = khoảng cách ban đầu ÷ (v nhanh − v chậm)",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.AverageFormula",
+      "source": "Vận tốc trung bình:\nv tb = tổng quãng đường ÷ tổng thời gian\nKhông lấy trung bình cộng các vận tốc nếu thời gian khác nhau.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.UnitConversion",
+      "source": "Đổi đơn vị:\n1 giờ = 60 phút = 3.600 giây\n1 km = 1.000 m\n1 m/s = 3,6 km/h",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Properties",
+      "source": "• Cùng vận tốc: quãng đường tỉ lệ thuận với thời gian.\n• Cùng thời gian: quãng đường tỉ lệ thuận với vận tốc.\n• Cùng quãng đường: vận tốc tỉ lệ nghịch với thời gian.\n• Vận tốc tương đối là tổng khi tiến lại gần nhau và là hiệu khi chuyển động cùng chiều.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.UnitWarning",
+      "source": "Luôn đổi đơn vị trước khi thay số: km đi với km/h và giờ; m đi với m/s và giây.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.Steps",
+      "source": "Bước 1: Tóm tắt s, v, t và đổi về cùng hệ đơn vị.\nBước 2: Xác định kiểu chuyển động: một vật, gặp nhau hay đuổi kịp.\nBước 3: Chọn s = vt hoặc công thức vận tốc tương đối, rồi tính đại lượng cần tìm.\nBước 4: Ghi đơn vị, đối chiếu thời gian và quãng đường với thực tế đề bài.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.MeetingExampleTitle",
+      "source": "Ví dụ gặp nhau",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.MeetingExample",
+      "source": "Hai xe cách nhau 180 km, đi ngược chiều với vận tốc 50 km/h và 40 km/h.\nv tương đối = 50 + 40 = 90 km/h\nt gặp = 180 ÷ 90 = 2 giờ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.ChasingExampleTitle",
+      "source": "Ví dụ đuổi kịp",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Motion.ChasingExample",
+      "source": "Xe chậm đi trước 30 km. Xe nhanh chạy 60 km/h, xe chậm chạy 45 km/h.\nv tương đối = 60 − 45 = 15 km/h\nt đuổi = 30 ÷ 15 = 2 giờ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Tabs.MathPuzzle",
+      "source": "Toán đố",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Square",
+      "source": "Bốn cạnh bằng nhau; bốn góc vuông; hai đường chéo bằng nhau, vuông góc và cắt nhau tại trung điểm.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Rectangle",
+      "source": "Các cạnh đối song song và bằng nhau; bốn góc vuông; hai đường chéo bằng nhau và cắt nhau tại trung điểm.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Triangle",
+      "source": "Tổng ba góc bằng 180°; tổng độ dài hai cạnh bất kỳ luôn lớn hơn cạnh còn lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.RightTriangle",
+      "source": "Có một góc vuông; hai góc nhọn phụ nhau; cạnh huyền đối diện góc vuông và là cạnh dài nhất.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.EquilateralTriangle",
+      "source": "Ba đường cao đồng thời là ba trung tuyến, ba đường phân giác và ba đường trung trực.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Circle",
+      "source": "Mọi điểm trên đường tròn cách tâm một khoảng bằng bán kính; đường kính đi qua tâm và dài gấp đôi bán kính.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Trapezoid",
+      "source": "Có một cặp cạnh đối song song gọi là hai đáy; chiều cao là khoảng cách vuông góc giữa hai đáy.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.IsoscelesTrapezoid",
+      "source": "Hai cạnh bên bằng nhau; hai góc kề mỗi đáy bằng nhau; hai đường chéo bằng nhau.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.RightTrapezoid",
+      "source": "Có hai góc vuông; một cạnh bên vuông góc với hai đáy và chính là chiều cao.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Rhombus",
+      "source": "Bốn cạnh bằng nhau; các cạnh đối song song; hai đường chéo vuông góc, cắt nhau tại trung điểm và phân giác các góc.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Parallelogram",
+      "source": "Các cạnh đối song song và bằng nhau; các góc đối bằng nhau; hai đường chéo cắt nhau tại trung điểm.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Cube",
+      "source": "Có 6 mặt vuông, 12 cạnh bằng nhau và 8 đỉnh; ba cạnh gặp nhau tại mỗi đỉnh đôi một vuông góc.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.RectangularPrism",
+      "source": "Có 6 mặt chữ nhật, 12 cạnh và 8 đỉnh; các mặt đối diện song song và bằng nhau.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Sphere",
+      "source": "Mọi điểm trên mặt cầu cách tâm một khoảng bằng bán kính; hình cầu không có cạnh và không có đỉnh.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Cylinder",
+      "source": "Có hai đáy tròn bằng nhau và song song; chiều cao là khoảng cách vuông góc giữa hai mặt đáy.",
+      "mode": "exact"
+    },
+    {
+      "key": "Geometry.Properties.Cone",
+      "source": "Có một đáy tròn và một đỉnh; chiều cao vuông góc với mặt đáy; đường sinh nối đỉnh với đường tròn đáy.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PracticeTitle",
+      "source": "LUYỆN TẬP TOÁN ĐỐ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PracticeSubtitle",
+      "source": "Thuật toán • Giáo viên AI • Đúng/Sai • 4 đáp án • Tự luận",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SourceTitle",
+      "source": "1. Chọn cách tạo đề",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AlgorithmSource",
+      "source": "🧮 Thuật toán",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.LocalLlmSource",
+      "source": "🤖 AI / LLM",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModeTitle",
+      "source": "2. Chọn kiểu câu hỏi",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.TrueFalseMode",
+      "source": "✅❌ Đúng / Sai",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MultipleChoiceMode",
+      "source": "🔢 4 đáp án",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayMode",
+      "source": "✍️ Tự luận",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationTitle",
+      "source": "3. Chọn bài toán",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationMixed",
+      "source": "Hỗn hợp",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemBasic",
+      "source": "Cơ bản + − × ÷",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemFraction",
+      "source": "Phân số ½",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.BasicOperationTitle",
+      "source": "Chọn phép tính cơ bản",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FractionOperationTitle",
+      "source": "Chọn phép tính phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationAddition",
+      "source": "Phép cộng +",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationSubtraction",
+      "source": "Phép trừ −",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationMultiplication",
+      "source": "Phép nhân ×",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationDivision",
+      "source": "Phép chia ÷",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemGeometry",
+      "source": "Hình học △ □ ◯",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemFindX",
+      "source": "Tìm x",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FractionQuestionTitle",
+      "source": "Bài toán phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FractionEssayEquationPlaceholder",
+      "source": "Ví dụ: 1/2 + 1/4 = 3/4",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FractionEssayValidationHint",
+      "source": "Ứng dụng chấm hai phân số, phép tính và kết quả đã rút gọn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FractionEssayValidationHintAi",
+      "source": "Bắt buộc điền lời giải. Ứng dụng chấm hai phân số, phép tính, kết quả đã rút gọn và đúng đơn vị đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FractionEssayAnswerPlaceholder",
+      "source": "Ví dụ: 3/4 mét vải",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FindXQuestionTitle",
+      "source": "Tìm giá trị của x",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FindXEssayValidationHint",
+      "source": "Ứng dụng chấm phép tính ngược và giá trị x; với đề AI, ứng dụng còn kiểm tra đúng đơn vị của x.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FindXEssayValidationHintAi",
+      "source": "Bắt buộc điền lời giải. Ứng dụng chấm đúng đại lượng của x, phép tính ngược, giá trị và đơn vị của x.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FindXEssayEquationPlaceholder",
+      "source": "Ví dụ: 12 − 5 = 7",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryQuestionTitle",
+      "source": "Bài toán hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.QuestionTitle",
+      "source": "Phép tính sau đúng hay sai?",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MultipleChoiceQuestionTitle",
+      "source": "Chọn đáp án đúng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayQuestionTitle",
+      "source": "Trình bày bài giải",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.TrueAnswer",
+      "source": "Đúng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FalseAnswer",
+      "source": "Sai",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssaySolutionLabel",
+      "source": "Lời giải",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssaySolutionPlaceholder",
+      "source": "Viết câu lời giải nêu đúng đại lượng cần tìm (bắt buộc)",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationLabel",
+      "source": "Phép tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationPlaceholder",
+      "source": "Ví dụ: 5 × 6 = 30",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryEssayEquationPlaceholder",
+      "source": "Ví dụ: (12 + 8) × 2 = 40",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayAnswerLabel",
+      "source": "Đáp số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayAnswerPlaceholder",
+      "source": "Ví dụ: 30 cây bút",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayValidationHint",
+      "source": "Bắt buộc điền lời giải. Ứng dụng chấm đại lượng trong lời giải, phép tính, kết quả, giá trị và đơn vị đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayValidationHintAlgorithm",
+      "source": "Ứng dụng chấm hai số dữ kiện, phép toán, kết quả và giá trị đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryEssayValidationHint",
+      "source": "Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị: độ dài, diện tích hoặc thể tích.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryEssayValidationHintAi",
+      "source": "Bắt buộc điền lời giải. Ứng dụng chấm đại lượng hình học, công thức thay số, kết quả và đúng bậc đơn vị.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SubmitEssayAnswer",
+      "source": "📝 Chấm bài",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCorrectFeedback",
+      "source": "Chính xác! Lời giải, phép tính và đáp số đều đúng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssaySolutionRequired",
+      "source": "Em chưa điền lời giải. Phần lời giải là bắt buộc đối với bài toán đố.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssaySolutionContentIncorrect",
+      "source": "Lời giải chưa nêu đúng đại lượng cần tìm. Hãy dùng đúng tên đơn vị trong đề bài.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationAndAnswerIncorrect",
+      "source": "Phép tính và đáp số đều chưa đúng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationFormatIncorrect",
+      "source": "Phép tính chưa đúng định dạng. Hãy nhập đầy đủ như 5 × 6 = 30.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationIncorrect",
+      "source": "Phép tính chưa đúng dữ kiện, phép toán hoặc kết quả.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayAnswerIncorrect",
+      "source": "Phép tính đúng nhưng đáp số chưa đúng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayAnswerUnitIncorrect",
+      "source": "Giá trị đáp số đúng nhưng đơn vị chưa phù hợp với đề bài.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.RegenerateQuestion",
+      "source": "🔄 Tạo đề lại",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.NextQuestion",
+      "source": "➡️ Câu tiếp theo",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ValidationHint",
+      "source": "Mỗi câu hỏi đều được tính đáp án và kiểm tra lại trước khi hiển thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GenerationError",
+      "source": "Không thể sinh câu hỏi hợp lệ. Hãy thử lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CorrectFeedback",
+      "source": "Chính xác! Đáp án là {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.IncorrectFeedback",
+      "source": "Chưa đúng. Đáp án đúng là {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.QuestionCounter",
+      "source": "Câu {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CorrectCounter",
+      "source": "✓ {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.IncorrectCounter",
+      "source": "✕ {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.LlmSettingsTitle",
+      "source": "Giáo viên AI cục bộ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.LlmSettingsDescription",
+      "source": "AI viết đề theo chương trình tiểu học Việt Nam. Ứng dụng tự tính đáp án và kiểm tra lại trước khi hiển thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadGemma4",
+      "source": "⬇️ Tải Gemma 4 từ Hugging Face",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.StopModelDownload",
+      "source": "⏹️ Dừng tải model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ChooseDownloadModelTitle",
+      "source": "Chọn model Gemma 4",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadE2BOption",
+      "source": "E2B • Nhẹ hơn • 3,35 GB",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadE4BOption",
+      "source": "E4B • Chất lượng tốt hơn • 5,15 GB",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OpenModelWebsiteOption",
+      "source": "Mở trang {0} trên Hugging Face",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OpenModelWebsiteFailed",
+      "source": "Không thể mở trang model trên Hugging Face.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogTitle",
+      "source": "Thư viện model Gemma 4",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogSubtitle",
+      "source": "Chọn model để xem README; bấm biểu tượng tải xuống để tải.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogModelsHeading",
+      "source": "MODEL",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogReadmeHeading",
+      "source": "README",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE2BTitle",
+      "source": "Gemma 4 E2B • Nhẹ hơn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE2BDescription",
+      "source": "Nhanh, ít RAM và tiết kiệm pin",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE4BTitle",
+      "source": "Gemma 4 E4B • Chất lượng tốt hơn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE4BDescription",
+      "source": "Viết tự nhiên và suy luận tốt hơn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogInteractionHint",
+      "source": "Bấm vào một model để đọc README. Chỉ biểu tượng ↓ mới bắt đầu quy trình tải.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogMathSolverHeading",
+      "source": "Sử dụng trong Math Solver",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogMathSolverBody",
+      "source": "Model chỉ đảm nhiệm việc viết đề bài bằng ngôn ngữ tự nhiên. Dữ kiện, phép tính và đáp án vẫn được C# kiểm tra trước khi hiển thị; model chạy cục bộ và không gửi nội dung bài toán lên máy chủ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogRecommendationHeading",
+      "source": "Khuyến nghị",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE2BSummary",
+      "source": "Gemma 4 E2B Instruct là biến thể nhỏ hướng tới thiết bị cá nhân. Bản GGUF QAT Q4_0 giảm bộ nhớ cần thiết trong khi giữ chất lượng gần với checkpoint độ chính xác cao hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE4BSummary",
+      "source": "Gemma 4 E4B Instruct có năng lực ngôn ngữ và suy luận tốt hơn E2B. Bản GGUF QAT Q4_0 phù hợp khi ưu tiên đề bài tự nhiên và đa dạng hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE2BRecommendation",
+      "source": "Nên chọn cho điện thoại, máy ít RAM hoặc khi ưu tiên tốc độ, nhiệt độ và thời lượng pin. Đây là lựa chọn mặc định hợp lý để tạo toán đố tiểu học.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogE4BRecommendation",
+      "source": "Nên chọn cho PC hoặc thiết bị có nhiều RAM khi ưu tiên chất lượng câu chữ. Model tải và chạy nặng hơn E2B nhưng thường tạo đề tự nhiên hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogFileHeading",
+      "source": "Thông tin bản tải",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogFileBody",
+      "source": "{0}\nKhoảng {1} GB • GGUF • QAT Q4_0\nNguồn: Google DeepMind trên Hugging Face • Apache 2.0",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogOpenPage",
+      "source": "Mở trang {0} trên Hugging Face",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogDownloadModel",
+      "source": "Tải Gemma 4 {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogOpenFailedTitle",
+      "source": "Không thể mở trang",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelCatalogClose",
+      "source": "Đóng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Cancel",
+      "source": "Hủy",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadConfirmTitle",
+      "source": "Xác nhận tải model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadConfirmMessage",
+      "source": "Tải {0} (khoảng {1} GB) từ Hugging Face? Nên dùng Wi-Fi và bảo đảm thiết bị còn đủ dung lượng trống.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadAction",
+      "source": "Tải xuống",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadingModel",
+      "source": "Đang bắt đầu tải {0}...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadingModelProgress",
+      "source": "Đang tải {0}: {1}% • {2}/{3} GB",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadComplete",
+      "source": "Đã tải và chọn {0}. File GGUF đã sẵn sàng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadCancelled",
+      "source": "Đã dừng tải. Phần đã tải được giữ lại để tiếp tục lần sau.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadInvalid",
+      "source": "File tải về không phải model Gemma 4 GGUF hợp lệ. Hãy thử tải lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadAccessDenied",
+      "source": "Hugging Face không cho phép tải model này. Hãy kiểm tra kết nối hoặc quyền truy cập rồi thử lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DownloadFailed",
+      "source": "Không thể tải model. Hãy kiểm tra kết nối mạng; lần tải sau sẽ tiếp tục từ phần đã có.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SelectModel",
+      "source": "📦 Chọn model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EjectModel",
+      "source": "⏏️ Eject model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OpenInFileExplorer",
+      "source": "📂 Mở trong File Explorer",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelLocationTitle",
+      "source": "Vị trí AI model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelLocationUnavailable",
+      "source": "Nền tảng này không cho phép mở trực tiếp thư mục riêng của ứng dụng. AI model đang nằm tại:\n{0}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.NoModelSelected",
+      "source": "Chưa chọn model GGUF",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelRecommendation",
+      "source": "Ứng dụng chỉ hỗ trợ Gemma 4. Nên chọn E2B/E4B Instruct bản Q4 vì tạo câu tiếng Việt tự nhiên, đủ tốt cho toán tiểu học và nhẹ hơn để tiết kiệm pin.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.RecommendedModelDetected",
+      "source": "Gemma 4 bản gọn nhẹ đã sẵn sàng để tạo đề.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CreateWithAi",
+      "source": "✨ Tạo đề bằng AI",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ShowAiDiagnostics",
+      "source": "Hiện JSON & Log",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.HideAiDiagnostics",
+      "source": "Ẩn JSON & Log",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiDiagnosticsTitle",
+      "source": "JSON và log kiểm tra AI",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiDiagnosticsDescription",
+      "source": "Xem dữ liệu model trả về và từng bước validation của C#.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.RawJsonTitle",
+      "source": "JSON do LLM tạo",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ValidationLogTitle",
+      "source": "Log validation",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsNoJson",
+      "source": "JSON thô sẽ xuất hiện tại đây khi AI bắt đầu tạo đề.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsNoLog",
+      "source": "Log parse và validation sẽ xuất hiện tại đây.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsAttemptHeader",
+      "source": "── Lần {0}/{1} ──",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsAttemptStarted",
+      "source": "[{0}/{1}] Bắt đầu nhận JSON từ model.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsJsonReceived",
+      "source": "[{0}/{1}] Đã nhận {2} ký tự; bắt đầu parse JSON.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsParseSucceeded",
+      "source": "[{0}/{1}] Parse JSON thành công.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsParseFailed",
+      "source": "[{0}/{1}] Parse JSON thất bại: {2}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsValidationSucceeded",
+      "source": "[{0}/{1}] Validation thành công; đề được chấp nhận.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsValidationFailed",
+      "source": "[{0}/{1}] Validation từ chối đề: {2}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsRetryScheduled",
+      "source": "[{0}/{1}] Tạo lại đề do lỗi: {2}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsGenerationFailed",
+      "source": "[{0}/{1}] Đã hết số lần thử; lỗi cuối: {2}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagnosticsRuntimeError",
+      "source": "[{0}/{1}] Lỗi runtime AI: {2}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SelectModelPickerTitle",
+      "source": "Chọn file Gemma 4 GGUF",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ImportingModel",
+      "source": "Đang kiểm tra file Gemma 4...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelReady",
+      "source": "File model GGUF đúng định dạng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelEjected",
+      "source": "Đã Eject model và đặt lại toàn bộ phiên luyện tập.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.UnsupportedModelFamily",
+      "source": "Chỉ hỗ trợ model Gemma 4 dành cho tạo đề. Hãy chọn đúng file Gemma 4 GGUF.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelTooLarge",
+      "source": "Model này quá nặng (trên 5,5 GB) nên có thể làm máy nóng và hao pin. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.InvalidModelFile",
+      "source": "File đã chọn không phải là file GGUF hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelImportError",
+      "source": "Không thể mở hoặc lưu model đã chọn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SelectModelFirst",
+      "source": "Hãy chọn model GGUF trước khi tạo đề bằng AI.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.LlmReady",
+      "source": "Chọn bài toán rồi bấm Tạo đề bằng AI.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiTeacherGreetingTitle",
+      "source": "Giáo viên AI",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiTeacherStateNoModel",
+      "source": "Chưa có model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiTeacherStateModelSelected",
+      "source": "Đã chọn model",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiTeacherStateWorking",
+      "source": "Đang làm việc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiTeacherStateReady",
+      "source": "Sẵn sàng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.FirstModelGreeting",
+      "source": "Chào em! Giáo viên AI đã sẵn sàng. Chúng ta cùng bắt đầu bài toán đầu tiên nhé!",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.LoadingModel",
+      "source": "Đang tạo sinh đề bài bằng AI...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelLoaded",
+      "source": "AI đang chuẩn bị nội dung câu hỏi...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeneratingAttempt",
+      "source": "AI đang viết đề bài, lần {0}/{1}...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GenerationSpeed",
+      "source": "Tốc độ tạo sinh: {0} token/s",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ValidatingProblem",
+      "source": "Đang kiểm tra lại đề bài và đáp án...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.RetryingProblem",
+      "source": "Đề chưa hợp lệ. AI đang tự tạo lại...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DisposingModel",
+      "source": "Đang Eject model...",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GenerationSucceeded",
+      "source": "Đề bài đã sẵn sàng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GenerationCancelled",
+      "source": "Đã dừng tạo đề.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GenerationFailedAfterRetries",
+      "source": "AI đã tạo sai dữ kiện 3 lần. Hãy bấm Tạo đề bằng AI để thử lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.NotEnoughMemory",
+      "source": "Model này quá nặng đối với thiết bị. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModelRuntimeError",
+      "source": "Không thể dùng model này trên thiết bị. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.WordProblemTitle",
+      "source": "Bài toán do giáo viên AI tạo",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PresentedAnswer",
+      "source": "Đáp án được đưa ra: {0} {1}",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SolutionTitle",
+      "source": "Lời giải",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Tab",
+      "source": "+ − × ÷ Phép tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Title",
+      "source": "PHÉP TÍNH",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.Basic",
+      "source": "🧮 Phép tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.Average",
+      "source": "📊 Trung bình cộng",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.PowerRoot",
+      "source": "⚡ Lũy thừa - Căn bậc",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.Fraction",
+      "source": "½ Phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.FindX",
+      "source": "🔎 Tìm x",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.Quadratic",
+      "source": "📈 Phương trình bậc 2",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Tabs.Geometry",
+      "source": "📐 Hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Subtitle",
+      "source": "Cộng • Trừ • Nhân • Chia • Biểu thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.InputNumbersTitle",
+      "source": "2. Nhập các số",
+      "mode": "exact"
+    },
+    {
+      "key": "Settings.NumberDisplay.Title",
+      "source": "Hiển thị kết quả đầy đủ",
+      "mode": "exact"
+    },
+    {
+      "key": "Settings.NumberDisplay.SummaryFull",
+      "source": "Đang bật · Áp dụng cho Phép tính, Trung bình cộng, Phân số, Tìm x, Bậc hai và Hình học",
+      "mode": "exact"
+    },
+    {
+      "key": "Settings.NumberDisplay.SummaryCompact",
+      "source": "Đang tắt · Các tab trên rút gọn số dài hơn 18 chữ số",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Option",
+      "source": "ƒ Biểu thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.InputTitle",
+      "source": "2. Nhập biểu thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.InputHelp",
+      "source": "Nhập nhiều phép cộng, trừ, nhân, chia trong cùng một biểu thức. Có thể dùng +, −, ×, ÷ hoặc +, -, *, /.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Placeholder",
+      "source": "Ví dụ: {48 - [18 ÷ (3 + 3)]} × 2",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.PriorityHint",
+      "source": "Thứ tự tính: thực hiện từ trong ra ngoài theo (), rồi [], rồi {}; trong mỗi nhóm, nhân và chia trước, cộng và trừ sau.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.SingleValue",
+      "source": "Biểu thức chỉ có một giá trị nên không cần thực hiện phép tính trung gian.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.SolutionSteps",
+      "source": "Tính lần lượt theo thứ tự ưu tiên:\n{0}\nVậy giá trị của biểu thức là {1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.ResultRules",
+      "source": "Có thể dùng riêng từng loại ngoặc. Khi lồng nhiều loại, đặt () trong [] và [] trong {}; những ngoặc cùng loại vẫn có thể lồng nhau.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.Empty",
+      "source": "Vui lòng nhập biểu thức cần tính.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.TooLong",
+      "source": "Biểu thức quá dài. Hãy nhập tối đa 512 ký tự và 255 thành phần.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.InvalidCharacter",
+      "source": "Biểu thức chứa ký tự không hợp lệ. Chỉ dùng số, +, −, ×, ÷ và các dấu ngoặc (), [], {}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.InvalidNumber",
+      "source": "Có một số chưa đúng định dạng hoặc không phù hợp với loại số đang chọn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.NumberOutOfRange",
+      "source": "Có một số nằm ngoài phạm vi hỗ trợ của loại số đang chọn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.MissingOperand",
+      "source": "Biểu thức đang thiếu số trước hoặc sau một phép tính.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.MissingOperator",
+      "source": "Biểu thức đang thiếu dấu phép tính giữa hai số hoặc giữa số và dấu ngoặc.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.MismatchedBracket",
+      "source": "Các dấu ngoặc chưa đủ hoặc không khớp đúng cặp (), [] và {}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.InvalidBracketOrder",
+      "source": "Thứ tự ngoặc chưa đúng. Khi lồng nhiều loại, hãy đặt () bên trong [] và [] bên trong {}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.DivisionByZero",
+      "source": "Biểu thức có phép chia cho 0 nên không xác định.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Expression.Error.NonIntegralDivision",
+      "source": "Phép chia trung gian không chia hết trong chế độ Số nguyên. Hãy chọn Số thập phân để giữ phần lẻ.",
+      "mode": "exact"
+    },
     {
       "key": "Average.Tab",
       "source": "x̄ Trung bình cộng",
@@ -4509,6 +5625,56 @@
     {
       "key": "PowerRoot.RootStepComplexConclusionVisual",
       "source": "Kết luận: phép tính không có kết quả thực; căn phức chính là:",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.Title",
+      "source": "Tỉ lệ kép",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.Relationship",
+      "source": "Một đại lượng có thể phụ thuộc đồng thời vào hai hay nhiều đại lượng khác. Mỗi đại lượng có thể tác động theo chiều thuận hoặc nghịch đối với đại lượng cần tìm.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.Formulas",
+      "source": "Tỉ lệ kép (ví dụ số ngày D):\nD₂ = D₁ × (Q₂ ÷ Q₁) × (W₁ ÷ W₂) × (H₁ ÷ H₂)\nQ = số sản phẩm → thuận với số ngày\nW = số công nhân → nghịch với số ngày\nH = số giờ/ngày → nghịch với số ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Mode.Single",
+      "source": "Tỉ lệ đơn",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Mode.Compound",
+      "source": "Tỉ lệ kép",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.Properties",
+      "source": "• Tỉ lệ kép: chọn đại lượng cần tìm làm trung tâm, rồi xét từng đại lượng còn lại là thuận hay nghịch với nó. Sau đó ghép các tỉ số thuận/nghịch vào cùng một công thức.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.ExampleTitle",
+      "source": "Ví dụ tỉ lệ kép",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.ExampleSummary",
+      "source": "4 công nhân × 6 giờ/ngày → 120 sản phẩm trong 5 ngày\n6 công nhân × 8 giờ/ngày → 240 sản phẩm trong ? ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.Calculation",
+      "source": "D₂ = 5 × (240 ÷ 120) × (4 ÷ 6) × (6 ÷ 8)\n= 5 × 2 × 2/3 × 3/4\n= 5 (ngày)",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Proportion.Compound.Example",
+      "source": "Số sản phẩm tăng từ 120 lên 240 nên số ngày tăng theo tỉ lệ thuận. Nhưng số công nhân tăng từ 4 lên 6 và số giờ/ngày tăng từ 6 lên 8 nên số ngày lại giảm theo tỉ lệ nghịch. Kết hợp ba yếu tố ta được D₂ = 5 ngày.",
       "mode": "exact"
     }
   ],

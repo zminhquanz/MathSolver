@@ -6,6 +6,12 @@ namespace MathSolver.Views;
 
 public partial class ProportionFormulaView : ContentView
 {
+    private enum ProportionInteractiveMode
+    {
+        Single,
+        Compound,
+    }
+
     private const double CompactLayoutThreshold = 760d;
     private const double WideGraphAspectRatio = 1.90d;
     private const double CompactGraphAspectRatio = 1.60d;
@@ -14,9 +20,16 @@ public partial class ProportionFormulaView : ContentView
     private const double CompactGraphMinHeight = 320d;
     private const double CompactGraphMaxHeight = 500d;
 
+    private const double BaseDays = 5d;
+    private const double BaseProducts = 120d;
+    private const double BaseWorkers = 4d;
+    private const double BaseHoursPerDay = 6d;
+
     private readonly ProportionComparisonDrawable _comparisonDrawable = new();
+    private readonly CompoundProportionDrawable _compoundDrawable = new();
     private bool _eventsSubscribed;
     private bool? _isCompactLayout;
+    private ProportionInteractiveMode _interactiveMode = ProportionInteractiveMode.Single;
 
     public ProportionFormulaView()
     {
@@ -24,11 +37,13 @@ public partial class ProportionFormulaView : ContentView
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         ProportionGraphicsView.Drawable = _comparisonDrawable;
+        CompoundGraphicsView.Drawable = _compoundDrawable;
 
         Loaded += OnViewLoaded;
         Unloaded += OnViewUnloaded;
 
-        RefreshSliderTheme();
+        SetInteractiveMode(ProportionInteractiveMode.Single);
+        RefreshControlTheme();
         UpdateInteractiveValues();
     }
 
@@ -43,9 +58,6 @@ public partial class ProportionFormulaView : ContentView
 
         bool useCompactLayout = width < CompactLayoutThreshold;
 
-        // Chỉ rebuild Grid khi thật sự đổi giữa layout ngang và layout compact.
-        // Chiều cao tương tác vẫn phải được tính lại ở MỌI lần resize/maximize để
-        // biểu đồ không bị kéo dài theo chiều ngang khi cửa sổ rộng hơn.
         if (_isCompactLayout != useCompactLayout)
         {
             _isCompactLayout = useCompactLayout;
@@ -59,9 +71,17 @@ public partial class ProportionFormulaView : ContentView
                 1d);
 
             ConfigureResponsivePair(
-                InteractiveGraphGrid,
+                SingleInteractiveGrid,
                 InteractiveExplanationPanel,
                 InteractiveGraphPanel,
+                useCompactLayout,
+                3d,
+                7d);
+
+            ConfigureResponsivePair(
+                CompoundInteractiveGrid,
+                CompoundExplanationPanel,
+                CompoundGraphPanel,
                 useCompactLayout,
                 3d,
                 7d);
@@ -75,66 +95,53 @@ public partial class ProportionFormulaView : ContentView
                 1d);
         }
 
-        UpdateInteractiveSectionSize(
-            width,
-            useCompactLayout);
+        UpdateInteractiveSectionSize(width, useCompactLayout);
 
         ProportionGraphicsView.Invalidate();
+        CompoundGraphicsView.Invalidate();
     }
 
-    private void UpdateInteractiveSectionSize(
-        double availableWidth,
-        bool compact)
+    private void UpdateInteractiveSectionSize(double availableWidth, bool compact)
     {
-        // Content của view có padding ngoài + Border 18 DIP và khoảng cách giữa hai panel.
-        // Không cần đo tuyệt đối từng pixel; lấy chiều rộng thực của ContentView làm cơ sở
-        // giúp tỉ lệ vẫn ổn khi Windows maximize/restore hoặc DPI scale thay đổi.
-        double innerWidth =
-            Math.Max(
-                0d,
-                availableWidth - 72d);
-
+        double innerWidth = Math.Max(0d, availableWidth - 72d);
         double targetHeight;
 
         if (compact)
         {
-            // Hai panel xếp dọc: biểu đồ gần full width, giữ tỉ lệ rộng/cao tự nhiên.
-            targetHeight =
-                Math.Clamp(
-                    innerWidth / CompactGraphAspectRatio,
-                    CompactGraphMinHeight,
-                    CompactGraphMaxHeight);
+            targetHeight = Math.Clamp(
+                innerWidth / CompactGraphAspectRatio,
+                CompactGraphMinHeight,
+                CompactGraphMaxHeight);
 
             InteractiveExplanationPanel.MinimumHeightRequest = -1d;
+            CompoundExplanationPanel.MinimumHeightRequest = -1d;
         }
         else
         {
-            // Layout 30/70: ước lượng đúng chiều rộng thực của panel biểu đồ rồi suy ra
-            // chiều cao theo aspect ratio. Nhờ vậy Border "Minh họa tương tác" tự mở
-            // rộng theo scale màn hình thay vì biểu đồ càng rộng càng bẹt.
-            double graphWidth =
-                Math.Max(
-                    0d,
-                    (innerWidth - InteractiveGraphGrid.ColumnSpacing) * 0.70d);
+            double graphWidth = Math.Max(
+                0d,
+                (innerWidth - SingleInteractiveGrid.ColumnSpacing) * 0.70d);
 
-            targetHeight =
-                Math.Clamp(
-                    graphWidth / WideGraphAspectRatio,
-                    WideGraphMinHeight,
-                    WideGraphMaxHeight);
+            targetHeight = Math.Clamp(
+                graphWidth / WideGraphAspectRatio,
+                WideGraphMinHeight,
+                WideGraphMaxHeight);
 
-            // Giữ hai cột 30/70 cân chiều cao. Border ngoài dùng Auto nên sẽ tự nở theo.
             InteractiveExplanationPanel.MinimumHeightRequest = targetHeight;
+            CompoundExplanationPanel.MinimumHeightRequest = targetHeight;
         }
 
         ProportionGraphicsView.HeightRequest = targetHeight;
         InteractiveGraphPanel.MinimumHeightRequest = targetHeight;
+
+        CompoundGraphicsView.HeightRequest = targetHeight;
+        CompoundGraphPanel.MinimumHeightRequest = targetHeight;
     }
 
     private void OnViewLoaded(object? sender, EventArgs e)
     {
         SubscribeDynamicEvents();
-        RefreshSliderTheme();
+        RefreshControlTheme();
         UpdateInteractiveValues();
     }
 
@@ -169,54 +176,137 @@ public partial class ProportionFormulaView : ContentView
 
     private void OnCultureChanged(object? sender, EventArgs e)
     {
-        Dispatcher.Dispatch(UpdateInteractiveValues);
+        Dispatcher.Dispatch(() =>
+        {
+            RefreshControlTheme();
+            UpdateInteractiveValues();
+        });
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
         Dispatcher.Dispatch(() =>
         {
-            RefreshSliderTheme();
+            RefreshControlTheme();
             ProportionGraphicsView.Invalidate();
+            CompoundGraphicsView.Invalidate();
         });
     }
 
-    private void RefreshSliderTheme()
+    private void OnSingleModeClicked(object? sender, EventArgs e)
     {
-        Color primary =
-            ThemeResource.GetColor(
-                "PrimaryColor",
-                "#6D28D9");
+        SetInteractiveMode(ProportionInteractiveMode.Single);
+    }
 
-        Color primaryBorder =
-            ThemeResource.GetColor(
-                "PrimaryBorderColor",
-                "#C4B5FD");
+    private void OnCompoundModeClicked(object? sender, EventArgs e)
+    {
+        SetInteractiveMode(ProportionInteractiveMode.Compound);
+    }
 
-        Color sliderBackground =
-            ThemeResource.GetColor(
-                "SurfaceAltColor",
-                AppThemeManager.IsDarkThemeEffective
-                    ? "#172033"
-                    : "#F4F8FF");
+    private void SetInteractiveMode(ProportionInteractiveMode mode)
+    {
+        _interactiveMode = mode;
+        SingleInteractiveGrid.IsVisible = mode == ProportionInteractiveMode.Single;
+        CompoundInteractiveGrid.IsVisible = mode == ProportionInteractiveMode.Compound;
+        RefreshModeButtons();
 
-        // Concrete colors are intentional here. WinUI's native Slider can
-        // retain old brush instances after a runtime palette swap.
-        // Dùng cùng một track duy nhất để không còn cảm giác bị tách thành 2 thanh.
+        if (mode == ProportionInteractiveMode.Single)
+        {
+            ProportionGraphicsView.Invalidate();
+        }
+        else
+        {
+            CompoundGraphicsView.Invalidate();
+        }
+    }
+
+    private void RefreshControlTheme()
+    {
+        Color primary = ThemeResource.GetColor("PrimaryColor", "#6D28D9");
+        Color primaryBorder = ThemeResource.GetColor("PrimaryBorderColor", "#C4B5FD");
+        Color sliderBackground = ThemeResource.GetColor(
+            "SurfaceAltColor",
+            AppThemeManager.IsDarkThemeEffective ? "#172033" : "#F4F8FF");
+
         ProportionXSlider.MinimumTrackColor = primary;
         ProportionXSlider.MaximumTrackColor = primaryBorder;
         ProportionXSlider.ThumbColor = primary;
         ProportionXSlider.BackgroundColor = sliderBackground;
+
+        ApplySliderTheme(CompoundProductSlider, primary, primaryBorder, sliderBackground);
+        ApplySliderTheme(CompoundWorkersSlider, primary, primaryBorder, sliderBackground);
+        ApplySliderTheme(CompoundHoursSlider, primary, primaryBorder, sliderBackground);
+
+        RefreshModeButtons();
     }
 
-    private void OnProportionXSliderValueChanged(
-        object? sender,
-        ValueChangedEventArgs e)
+    private void ApplySliderTheme(Slider slider, Color minimumTrack, Color maximumTrack, Color background)
     {
-        UpdateInteractiveValues();
+        slider.MinimumTrackColor = minimumTrack;
+        slider.MaximumTrackColor = maximumTrack;
+        slider.ThumbColor = minimumTrack;
+        slider.BackgroundColor = background;
+    }
+
+    private void RefreshModeButtons()
+    {
+        Color primary = ThemeResource.GetColor("PrimaryColor", "#6D28D9");
+        Color surfaceAlt = ThemeResource.GetColor(
+            "SurfaceAltColor",
+            AppThemeManager.IsDarkThemeEffective ? "#172033" : "#F8FAFC");
+        Color textPrimary = ThemeResource.GetColor(
+            "TextPrimaryColor",
+            AppThemeManager.IsDarkThemeEffective ? "#F8FAFC" : "#0F172A");
+        Color white = Colors.White;
+
+        StyleModeButton(
+            SingleModeButton,
+            _interactiveMode == ProportionInteractiveMode.Single,
+            primary,
+            surfaceAlt,
+            white,
+            textPrimary);
+
+        StyleModeButton(
+            CompoundModeButton,
+            _interactiveMode == ProportionInteractiveMode.Compound,
+            primary,
+            surfaceAlt,
+            white,
+            textPrimary);
+    }
+
+    private static void StyleModeButton(
+        Button button,
+        bool isActive,
+        Color activeBackground,
+        Color inactiveBackground,
+        Color activeText,
+        Color inactiveText)
+    {
+        button.BackgroundColor = isActive ? activeBackground : inactiveBackground;
+        button.TextColor = isActive ? activeText : inactiveText;
+        button.BorderColor = activeBackground;
+        button.BorderWidth = 1d;
+    }
+
+    private void OnProportionXSliderValueChanged(object? sender, ValueChangedEventArgs e)
+    {
+        UpdateSingleModeValues();
+    }
+
+    private void OnCompoundSliderValueChanged(object? sender, ValueChangedEventArgs e)
+    {
+        UpdateCompoundModeValues();
     }
 
     private void UpdateInteractiveValues()
+    {
+        UpdateSingleModeValues();
+        UpdateCompoundModeValues();
+    }
+
+    private void UpdateSingleModeValues()
     {
         double x = Math.Clamp(
             ProportionXSlider.Value,
@@ -227,35 +317,62 @@ public partial class ProportionFormulaView : ContentView
         double inverseY = 2d / x;
 
         _comparisonDrawable.SelectedX = x;
-        _comparisonDrawable.DirectLegend = LocalizationService.TranslateKey(
-            "Formula.Proportion.Graph.DirectLegend");
-        _comparisonDrawable.InverseLegend = LocalizationService.TranslateKey(
-            "Formula.Proportion.Graph.InverseLegend");
+        _comparisonDrawable.DirectLegend = LocalizationService.TranslateKey("Formula.Proportion.Graph.DirectLegend");
+        _comparisonDrawable.InverseLegend = LocalizationService.TranslateKey("Formula.Proportion.Graph.InverseLegend");
 
-        GraphXValueLabel.Text = FormatLocalizedValue(
-            "Formula.Proportion.Graph.XValue",
-            x);
-        GraphDirectValueLabel.Text = FormatLocalizedValue(
-            "Formula.Proportion.Graph.DirectValue",
-            directY);
-        GraphInverseValueLabel.Text = FormatLocalizedValue(
-            "Formula.Proportion.Graph.InverseValue",
-            inverseY);
+        GraphXValueLabel.Text = FormatLocalizedValue("Formula.Proportion.Graph.XValue", x);
+        GraphDirectValueLabel.Text = FormatLocalizedValue("Formula.Proportion.Graph.DirectValue", directY);
+        GraphInverseValueLabel.Text = FormatLocalizedValue("Formula.Proportion.Graph.InverseValue", inverseY);
 
         ProportionGraphicsView.Invalidate();
+    }
+
+    private void UpdateCompoundModeValues()
+    {
+        int productCount = (int)Math.Round(CompoundProductSlider.Value);
+        int workerCount = Math.Max(1, (int)Math.Round(CompoundWorkersSlider.Value));
+        int hoursPerDay = Math.Max(1, (int)Math.Round(CompoundHoursSlider.Value));
+
+        double daysNeeded =
+            BaseDays *
+            (productCount / BaseProducts) *
+            (BaseWorkers / workerCount) *
+            (BaseHoursPerDay / hoursPerDay);
+
+        CompoundProductValueLabel.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            LocalizationService.TranslateKey("Formula.Proportion.Compound.InteractiveProduct"),
+            productCount.ToString("0", CultureInfo.CurrentCulture));
+
+        CompoundWorkersValueLabel.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            LocalizationService.TranslateKey("Formula.Proportion.Compound.InteractiveWorkers"),
+            workerCount.ToString("0", CultureInfo.CurrentCulture));
+
+        CompoundHoursValueLabel.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            LocalizationService.TranslateKey("Formula.Proportion.Compound.InteractiveHours"),
+            hoursPerDay.ToString("0", CultureInfo.CurrentCulture));
+
+        CompoundDaysValueLabel.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            LocalizationService.TranslateKey("Formula.Proportion.Compound.InteractiveDays"),
+            daysNeeded.ToString("0.##", CultureInfo.CurrentCulture));
+
+        _compoundDrawable.ProductCount = productCount;
+        _compoundDrawable.WorkerCount = workerCount;
+        _compoundDrawable.HoursPerDay = hoursPerDay;
+        _compoundDrawable.DaysNeeded = daysNeeded;
+
+        CompoundGraphicsView.Invalidate();
     }
 
     private static string FormatLocalizedValue(string key, double value)
     {
         string template = LocalizationService.TranslateKey(key);
-        string formattedValue = value.ToString(
-            "0.##",
-            CultureInfo.CurrentCulture);
+        string formattedValue = value.ToString("0.##", CultureInfo.CurrentCulture);
 
-        return string.Format(
-            CultureInfo.CurrentCulture,
-            template,
-            formattedValue);
+        return string.Format(CultureInfo.CurrentCulture, template, formattedValue);
     }
 
     private static void ConfigureResponsivePair(
