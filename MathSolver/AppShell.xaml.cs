@@ -45,6 +45,12 @@ public partial class AppShell : Shell
     // Version này hủy các re-assert cũ khi một navigation mới bắt đầu.
     private int _mainTabBarRestoreVersion;
 
+    // Shell trên WinUI đôi lúc cache text của native TabBar. Khi culture đổi,
+    // ShellContent.Title đã đổi trong MAUI nhưng native label chỉ refresh khi
+    // người dùng click tab. Version này dùng để re-assert title qua vài layout
+    // turn mà không cho callback của culture cũ ghi đè culture mới.
+    private int _mainTabLocalizationRefreshVersion;
+
     private string _activeMainRoute =
         "CalculationPage";
 
@@ -65,23 +71,16 @@ public partial class AppShell : Shell
             GetSelectedMainRoute() ??
             "CalculationPage";
 
-        LocalizationService.Attach(
-            this);
+        // Không đưa ShellContent vào legacy source-text tracker. AppShell tự
+        // cập nhật title theo stable localization key sau khi JSON culture đã
+        // đổi xong, tránh race với AppLanguageManager.LanguageChanged.
+        LocalizationService.CultureChanged +=
+            OnLocalizationCultureChanged;
 
-        LocalizationService.Attach(
-            CalculationShellContent);
-
-        LocalizationService.Attach(
-            MathPuzzleShellContent);
-
-        LocalizationService.Attach(
-            FormulaShellContent);
-
-        LocalizationService.Attach(
-            MultiplicationShellContent);
-
-        AppLanguageManager.LanguageChanged +=
-            OnLanguageChanged;
+        // AppShell tự sở hữu title của 4 main tab bằng stable localization key.
+        // Không dựa vào legacy visual-tree translator hay XAML binding ở đây vì
+        // native WinUI Shell có thể cache label cũ cho đến lần chọn tab kế tiếp.
+        ApplyMainTabLocalizedTitles();
 
         AppThemeManager.ThemeChanged +=
             OnThemeChanged;
@@ -753,12 +752,95 @@ public partial class AppShell : Shell
         }
     }
 
-    private void OnLanguageChanged(
+    private void OnLocalizationCultureChanged(
         object? sender,
         EventArgs e)
     {
-        LocalizationService.RefreshAll();
-        UpdateSettingsAccessibilityText();
+        int refreshVersion =
+            Interlocked.Increment(
+                ref _mainTabLocalizationRefreshVersion);
+
+        Dispatcher.Dispatch(
+            () =>
+            {
+                ApplyMainTabLocalizedTitles();
+                UpdateSettingsAccessibilityText();
+
+                _ = ReassertMainTabLocalizedTitlesAsync(
+                    refreshVersion);
+            });
+    }
+
+    private void ApplyMainTabLocalizedTitles()
+    {
+        ReassertShellContentTitle(
+            CalculationShellContent,
+            LocalizationService.TranslateKey(
+                "Tabs.Solve"));
+
+        ReassertShellContentTitle(
+            MathPuzzleShellContent,
+            LocalizationService.TranslateKey(
+                "Tabs.MathPuzzle"));
+
+        ReassertShellContentTitle(
+            FormulaShellContent,
+            LocalizationService.TranslateKey(
+                "Tabs.Formulas"));
+
+        ReassertShellContentTitle(
+            MultiplicationShellContent,
+            LocalizationService.TranslateKey(
+                "Tabs.TimesTables"));
+
+        // Shell/WinUI có thể đã giữ layout của title cũ. Invalidate cả Shell và
+        // TabBar để label mới được đo ngay, không đợi người dùng chọn tab khác.
+        InvalidateMeasure();
+    }
+
+    private async Task ReassertMainTabLocalizedTitlesAsync(
+        int refreshVersion)
+    {
+        // Pass đầu đã chạy đồng bộ ở event CultureChanged. Hai pass sau vượt qua
+        // binding/layout turn và native WinUI composition turn. Đây là đúng nơi
+        // bug cũ xảy ra ngẫu nhiên khi đổi language trong Settings overlay.
+        await Task.Yield();
+
+        if (refreshVersion !=
+            Volatile.Read(
+                ref _mainTabLocalizationRefreshVersion))
+        {
+            return;
+        }
+
+        ApplyMainTabLocalizedTitles();
+
+        await Task.Delay(
+            32);
+
+        if (refreshVersion !=
+            Volatile.Read(
+                ref _mainTabLocalizationRefreshVersion))
+        {
+            return;
+        }
+
+        ApplyMainTabLocalizedTitles();
+    }
+
+    private static void ReassertShellContentTitle(
+        ShellContent shellContent,
+        string localizedTitle)
+    {
+        // Nếu binding đã cập nhật Title trước callback này, gán lại cùng chuỗi
+        // sẽ không phát PropertyChanged và native Shell có thể tiếp tục cache.
+        // Zero-width space tạo một thay đổi property thật nhưng không tạo nháy
+        // text; ngay sau đó trả về title chuẩn trong cùng UI turn.
+        shellContent.Title =
+            localizedTitle + "\u200B";
+
+        shellContent.Title =
+            localizedTitle;
     }
 
     private void OnThemeChanged(

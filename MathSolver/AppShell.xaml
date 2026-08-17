@@ -119,7 +119,7 @@
 
         <ShellContent
             x:Name="MathPuzzleShellContent"
-            Title="{localization:Translate Tabs.MathPuzzle}"
+            Title="Toán đố"
             Route="MathPuzzlePage"
             Icon="quiz.png"
             ContentTemplate="{DataTemplate views:MathPuzzlePage}" />
