@@ -6096,6 +6096,11 @@
       "key": "Equation.Linear.Step3.Body",
       "source": "x = {0} ÷ ({1})\nx = {2}\nVậy nghiệm của phương trình là x = {2}.",
       "mode": "exact"
+    },
+    {
+      "key": "Quadratic.RootNotFiniteOctoDouble",
+      "source": "Không thể biểu diễn nghiệm hữu hạn bằng độ chính xác Octo Double. Ứng dụng không thể tiếp tục tính toán.",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

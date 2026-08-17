@@ -1,6 +1,7 @@
 using MathSolver.Services;
 using MathSolver.Numerics;
 using System.Globalization;
+using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
@@ -11,9 +12,9 @@ namespace MathSolver.Graphics;
 /// Vẽ parabol theo dạng minh họa SGK:
 /// trục Ox, Oy có mũi tên; trục đối xứng nét đứt;
 /// đỉnh, nghiệm thực và nhãn -b/(2a).
-/// Hệ số đầu vào là Int128, còn toàn bộ phép tính hình học của parabol
-/// dùng Quad Double khoảng 127-128 chữ số có nghĩa và Math.FusedMultiplyAdd.
-/// Chỉ bước chiếu cuối cùng sang tọa độ màn hình mới chuyển về double.
+/// Hệ số đầu vào là Int128. Biệt thức Δ được giữ chính xác bằng BigInteger;
+/// các phép tính hình học và nghiệm dùng OctoDouble. Chỉ bước chiếu cuối
+/// cùng sang tọa độ màn hình mới chuyển về double.
 /// </summary>
 public sealed class ParabolaGraphDrawable : IDrawable
 {
@@ -81,6 +82,13 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private OctoDouble _a;
     private OctoDouble _b;
     private OctoDouble _c;
+
+    // Hệ số gốc và Δ chính xác dùng riêng cho marker nghiệm. Hệ số _a/_b/_c
+    // phía trên vẫn được chuẩn hóa để viewport đồ thị không phụ thuộc độ lớn.
+    private OctoDouble _rootA;
+    private OctoDouble _rootB;
+    private OctoDouble _rootC;
+    private BigInteger _exactDiscriminant;
 
     private double _baseCenterX;
     private double _baseHalfRangeX =
@@ -208,6 +216,17 @@ public sealed class ParabolaGraphDrawable : IDrawable
         OctoDouble rawC =
             OctoDouble.FromInt128(
                 c);
+
+        _rootA = rawA;
+        _rootB = rawB;
+        _rootC = rawC;
+
+        BigInteger integerA = (BigInteger)a;
+        BigInteger integerB = (BigInteger)b;
+        BigInteger integerC = (BigInteger)c;
+        _exactDiscriminant =
+            integerB * integerB -
+            4 * integerA * integerC;
 
         OctoDouble coefficientScale =
             OctoDouble.Max(
@@ -825,27 +844,17 @@ public sealed class ParabolaGraphDrawable : IDrawable
         _secondRoot =
             null;
 
-        OctoDouble discriminant =
-            OctoDouble.FusedMultiplyAdd(
-                -4d *
-                _a,
-                _c,
-                _b *
-                _b);
-
-        if (!discriminant.IsFinite ||
-            discriminant <
-            OctoDouble.Zero)
+        if (_exactDiscriminant.Sign < 0)
         {
             return;
         }
 
-        if (discriminant.IsZero)
+        if (_exactDiscriminant.IsZero)
         {
             OctoDouble root =
-                -_b /
+                -_rootB /
                 (2d *
-                 _a);
+                 _rootA);
 
             double projectedRoot =
                 root.ToDouble();
@@ -863,15 +872,16 @@ public sealed class ParabolaGraphDrawable : IDrawable
 
         OctoDouble squareRoot =
             OctoDouble.Sqrt(
-                discriminant);
+                OctoDouble.FromBigInteger(
+                    _exactDiscriminant));
 
         // Công thức q tránh triệt tiêu số khi |b| gần √Δ.
         OctoDouble q =
             -0.5d *
-            (_b +
+            (_rootB +
              OctoDouble.CopySign(
                  squareRoot,
-                 _b));
+                 _rootB));
 
         OctoDouble firstRoot;
         OctoDouble secondRoot;
@@ -880,25 +890,25 @@ public sealed class ParabolaGraphDrawable : IDrawable
         {
             firstRoot =
                 q /
-                _a;
+                _rootA;
 
             secondRoot =
-                _c /
+                _rootC /
                 q;
         }
         else
         {
             firstRoot =
-                (-_b +
+                (-_rootB +
                  squareRoot) /
                 (2d *
-                 _a);
+                 _rootA);
 
             secondRoot =
-                (-_b -
+                (-_rootB -
                  squareRoot) /
                 (2d *
-                 _a);
+                 _rootA);
         }
 
         double projectedFirstRoot =

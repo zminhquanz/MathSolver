@@ -1269,7 +1269,8 @@
         "Equation.Linear.Step2.Title": "Bước 2. Chuyển hạng tử tự do",
         "Equation.Linear.Step2.Body": "Chuyển b sang vế phải:\n{0}x = −({1})\n{0}x = {2}",
         "Equation.Linear.Step3.Title": "Bước 3. Chia hai vế cho a và kết luận",
-        "Equation.Linear.Step3.Body": "x = {0} ÷ ({1})\nx = {2}\nVậy nghiệm của phương trình là x = {2}."
+        "Equation.Linear.Step3.Body": "x = {0} ÷ ({1})\nx = {2}\nVậy nghiệm của phương trình là x = {2}.",
+        "Quadratic.RootNotFiniteOctoDouble": "Không thể biểu diễn nghiệm hữu hạn bằng độ chính xác Octo Double. Ứng dụng không thể tiếp tục tính toán."
     },
     "templates": {
         "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

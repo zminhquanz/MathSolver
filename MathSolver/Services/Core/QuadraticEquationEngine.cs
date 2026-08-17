@@ -1,4 +1,5 @@
 using MathSolver.Numerics;
+using System.Numerics;
 
 namespace MathSolver.Services.Core;
 
@@ -12,7 +13,7 @@ public enum QuadraticSolutionKind
 
 public sealed record QuadraticEquationResult(
     QuadraticSolutionKind Kind,
-    OctoDouble Delta,
+    BigInteger Delta,
     OctoDouble SquareRootDelta,
     OctoDouble FirstRoot,
     OctoDouble SecondRoot)
@@ -22,8 +23,9 @@ public sealed record QuadraticEquationResult(
 }
 
 /// <summary>
-/// Engine giải phương trình ax² + bx + c = 0 bằng OctoDouble. Lớp không
-/// phụ thuộc MAUI; View chỉ định dạng lời giải và đồ thị từ kết quả trả về.
+/// Engine giải phương trình ax² + bx + c = 0 theo mô hình lai:
+/// Δ được tính chính xác tuyệt đối bằng BigInteger, còn √Δ và nghiệm được
+/// tính bằng OctoDouble. Lớp không phụ thuộc MAUI.
 /// </summary>
 public sealed class QuadraticEquationEngine
 {
@@ -43,19 +45,17 @@ public sealed class QuadraticEquationEngine
         OctoDouble preciseB = OctoDouble.FromInt128(b);
         OctoDouble preciseC = OctoDouble.FromInt128(c);
 
-        // Δ = b² − 4ac. FMA preserves the current high-precision behavior.
-        OctoDouble delta =
-            OctoDouble.FusedMultiplyAdd(
-                -4d * preciseA,
-                preciseC,
-                preciseB * preciseB);
+        // a, b, c đều là Int128 nên Δ = b² − 4ac luôn là số nguyên.
+        // Tính Δ bằng BigInteger để việc xét dấu / Δ = 0 hoàn toàn chính xác,
+        // kể cả khi b² hoặc 4ac vượt xa miền Int128.
+        BigInteger integerA = (BigInteger)a;
+        BigInteger integerB = (BigInteger)b;
+        BigInteger integerC = (BigInteger)c;
+        BigInteger delta =
+            integerB * integerB -
+            4 * integerA * integerC;
 
-        if (!delta.IsFinite)
-        {
-            return NotFinite(delta);
-        }
-
-        if (delta < OctoDouble.Zero)
+        if (delta.Sign < 0)
         {
             return new(
                 QuadraticSolutionKind.NoRealRoots,
@@ -81,8 +81,13 @@ public sealed class QuadraticEquationEngine
                 : NotFinite(delta);
         }
 
+        // Chỉ chuyển Δ sang OctoDouble tại bước cần √Δ để tính nghiệm.
+        // Với hệ số Int128, Δ có tối đa khoảng 77 chữ số thập phân, nhỏ hơn
+        // đáng kể độ chính xác của OctoDouble nên phép chuyển này vẫn giữ
+        // đủ thông tin cần thiết cho phần nghiệm.
         OctoDouble squareRootDelta =
-            OctoDouble.Sqrt(delta);
+            OctoDouble.Sqrt(
+                OctoDouble.FromBigInteger(delta));
 
         if (!squareRootDelta.IsFinite)
         {
@@ -123,7 +128,7 @@ public sealed class QuadraticEquationEngine
     }
 
     private static QuadraticEquationResult NotFinite(
-        OctoDouble delta) =>
+        BigInteger delta) =>
         new(
             QuadraticSolutionKind.NotFinite,
             delta,

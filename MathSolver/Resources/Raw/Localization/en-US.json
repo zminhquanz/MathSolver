@@ -522,7 +522,7 @@
         "Quadratic.RequiredCoefficient": "Please enter {0}.",
         "Quadratic.ANonZero": "Coefficient a must be nonzero. When a = 0, the expression is no longer a quadratic equation.",
         "Quadratic.DeltaNotFiniteOctoDouble": "The discriminant cannot be represented as a finite Octo Double value. The calculation cannot continue.",
-        "Quadratic.RootNotFiniteOctoDouble": "The root cannot be represented as a finite Octo Double value. The calculation cannot continue.",
+        "Quadratic.RootNotFiniteOctoDouble": "The roots cannot be represented as finite Octo Double values. The calculation cannot continue.",
         "captured.term.ban.kinh.day.r.4bf488ba": "base radius r",
         "captured.term.ban.kinh.r.4014ef8c": "radius r",
         "captured.term.canh.ben.c.963bec07": "side c",

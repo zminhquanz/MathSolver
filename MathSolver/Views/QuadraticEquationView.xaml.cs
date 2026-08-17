@@ -1253,7 +1253,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         {
             ShowError(
                 LocalizationService.TranslateKey(
-                    "Quadratic.DeltaNotFiniteOctoDouble"));
+                    "Quadratic.RootNotFiniteOctoDouble"));
 
             return;
         }
@@ -1588,7 +1588,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
     private void ShowDistinctRootStep4Presentation(
         Int128 a,
         Int128 b,
-        OctoDouble delta,
+        BigInteger delta,
         OctoDouble squareRootDelta,
         OctoDouble firstRoot,
         OctoDouble secondRoot)
@@ -1604,7 +1604,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 b);
 
         string deltaText =
-            FormatOctoDouble(
+            FormatIntegerForDisplay(
                 delta);
 
         string squareRootText =
@@ -2110,7 +2110,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         Int128 c,
         QuadraticEquationResult calculation)
     {
-        OctoDouble delta = calculation.Delta;
+        BigInteger delta = calculation.Delta;
         string aText =
             FormatNumber(
                 a);
@@ -2124,7 +2124,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 c);
 
         string deltaText =
-            FormatOctoDouble(
+            FormatIntegerForDisplay(
                 delta);
 
         string equation =
