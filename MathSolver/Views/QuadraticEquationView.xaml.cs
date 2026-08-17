@@ -2643,15 +2643,20 @@ public partial class QuadraticEquationView : LocalizedSolverView
     private static string FormatQuadDouble(
         QuadDouble value)
     {
+        bool showFullNumbers =
+            ResultNumberDisplayMode.ShowFullNumbers;
+
         string text =
             value.ToGeneralString(
                 QuadDoubleDisplaySignificantDigits,
                 scientificUpperExponent:
-                ResultNumberDisplayMode.ShowFullNumbers
+                showFullNumbers
                     ? int.MaxValue
                     : ScientificDisplayDigitThreshold,
                 scientificLowerExponent:
-                -10);
+                showFullNumbers
+                    ? int.MinValue
+                    : -10);
 
         int exponentSeparatorIndex =
             text.IndexOf(
@@ -2702,9 +2707,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
         }
 
         text =
-            RoundDecimalText(
+            RoundEquationDecimalText(
                 text,
-                MaxResultDecimalPlaces);
+                showFullNumbers);
 
         bool isNegative =
             text.StartsWith(
@@ -2742,15 +2747,20 @@ public partial class QuadraticEquationView : LocalizedSolverView
         // Octo Double giữ khoảng 127-128 chữ số có nghĩa trong toàn bộ
         // quá trình tính toán. Chỉ bước trình bày cuối cùng mới làm tròn,
         // giới hạn tối đa 10 chữ số sau dấu thập phân.
+        bool showFullNumbers =
+            ResultNumberDisplayMode.ShowFullNumbers;
+
         string text =
             value.ToGeneralString(
                 OctoDoubleDisplaySignificantDigits,
                 scientificUpperExponent:
-                ResultNumberDisplayMode.ShowFullNumbers
+                showFullNumbers
                     ? int.MaxValue
                     : ScientificDisplayDigitThreshold,
                 scientificLowerExponent:
-                -10);
+                showFullNumbers
+                    ? int.MinValue
+                    : -10);
 
         int exponentSeparatorIndex =
             text.IndexOf(
@@ -2809,9 +2819,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
         }
 
         text =
-            RoundDecimalText(
+            RoundEquationDecimalText(
                 text,
-                MaxResultDecimalPlaces);
+                showFullNumbers);
 
         bool isNegative =
             text.StartsWith(
@@ -2846,6 +2856,87 @@ public partial class QuadraticEquationView : LocalizedSolverView
             GroupIntegerDigits(
                 integerPart) +
             fractionPart;
+    }
+
+    /// <summary>
+    /// Định dạng phần thập phân của nghiệm phương trình. Ở chế độ rút gọn,
+    /// kết quả vẫn giới hạn tối đa 10 chữ số sau dấu thập phân. Khi bật
+    /// “Hiển thị kết quả đầy đủ”, số rất nhỏ không được ép về dạng khoa học:
+    /// ta giữ đủ các số 0 đứng trước chữ số có nghĩa đầu tiên rồi mới giữ
+    /// tối đa 10 chữ số có nghĩa tiếp theo. Nhờ vậy 10^-38 được hiển thị
+    /// thành 0.000...0001 thay vì bị làm tròn thành 0 hoặc vẫn giữ 10^-38.
+    /// </summary>
+    private static string RoundEquationDecimalText(
+        string text,
+        bool showFullNumbers)
+    {
+        if (!showFullNumbers)
+        {
+            return RoundDecimalText(
+                text,
+                MaxResultDecimalPlaces);
+        }
+
+        string unsignedText =
+            text.StartsWith(
+                "-",
+                StringComparison.Ordinal)
+                ? text[1..]
+                : text;
+
+        int decimalSeparatorIndex =
+            unsignedText.IndexOf(
+                '.');
+
+        if (decimalSeparatorIndex < 0)
+        {
+            return text;
+        }
+
+        string integerPart =
+            unsignedText[..decimalSeparatorIndex];
+
+        // Với |x| >= 1, quy tắc cũ “tối đa 10 chữ số thập phân” vẫn phù hợp.
+        if (integerPart.Any(
+                character =>
+                    character != '0'))
+        {
+            return RoundDecimalText(
+                text,
+                MaxResultDecimalPlaces);
+        }
+
+        string fractionPart =
+            unsignedText[(decimalSeparatorIndex + 1)..];
+
+        int firstSignificantIndex =
+            -1;
+
+        for (int index = 0;
+             index < fractionPart.Length;
+             index++)
+        {
+            if (fractionPart[index] != '0')
+            {
+                firstSignificantIndex =
+                    index;
+
+                break;
+            }
+        }
+
+        if (firstSignificantIndex < 0)
+        {
+            return "0";
+        }
+
+        int decimalPlaces =
+            firstSignificantIndex +
+            MaxResultDecimalPlaces;
+
+        return RoundDecimalText(
+            text,
+            decimalPlaces);
     }
 
     /// <summary>

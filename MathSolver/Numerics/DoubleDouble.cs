@@ -24,6 +24,14 @@ public readonly struct DoubleDouble :
     public static DoubleDouble Two { get; } = new(2d);
     public static DoubleDouble Three { get; } = new(3d);
 
+    // π split into a leading double plus its residual. Together they retain
+    // the full DoubleDouble precision needed by complex root calculations.
+    public static DoubleDouble Pi { get; } =
+        new(
+            3.141592653589793116d,
+            1.2246467991473532072e-16d,
+            alreadyNormalized: true);
+
     public static DoubleDouble NaN { get; } =
         new(double.NaN, 0d, alreadyNormalized: true);
 
@@ -325,6 +333,57 @@ public readonly struct DoubleDouble :
         }
 
         return estimate;
+    }
+
+    /// <summary>
+    /// Computes sin(angle) and cos(angle) with DoubleDouble arithmetic.
+    /// The root engine only calls this for |angle| <= π/2, so a fixed
+    /// Taylor expansion converges quickly and keeps the result at the same
+    /// ~31-32 digit precision as the real root path.
+    /// </summary>
+    public static void SinCos(
+        DoubleDouble angle,
+        out DoubleDouble sine,
+        out DoubleDouble cosine)
+    {
+        if (!angle.IsFinite)
+        {
+            sine = NaN;
+            cosine = NaN;
+            return;
+        }
+
+        DoubleDouble angleSquared =
+            angle * angle;
+
+        DoubleDouble sineTerm = angle;
+        DoubleDouble cosineTerm = One;
+        sine = angle;
+        cosine = One;
+
+        // At |x| <= π/2, 24 terms are far beyond the ~106-bit mantissa
+        // requirement. Using a fixed count also avoids a double-based
+        // termination test that could silently lower precision.
+        for (int index = 1;
+             index < 24;
+             index++)
+        {
+            int sineLeft = 2 * index;
+            int sineRight = sineLeft + 1;
+            sineTerm *=
+                -angleSquared /
+                new DoubleDouble(
+                    (double)sineLeft * sineRight);
+            sine += sineTerm;
+
+            int cosineLeft = 2 * index - 1;
+            int cosineRight = 2 * index;
+            cosineTerm *=
+                -angleSquared /
+                new DoubleDouble(
+                    (double)cosineLeft * cosineRight);
+            cosine += cosineTerm;
+        }
     }
 
     public static DoubleDouble Pow(

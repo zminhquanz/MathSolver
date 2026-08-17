@@ -4,8 +4,8 @@ namespace MathSolver.Controls;
 
 /// <summary>
 /// Hiển thị biểu thức căn theo cách trình bày trong sách giáo khoa:
-/// căn bậc hai không ghi chỉ số, còn căn bậc lớn hơn đặt chỉ số nhỏ
-/// ở góc trên bên trái và có gạch ngang phủ hết số dưới dấu căn.
+/// căn bậc hai không ghi chỉ số, còn mọi bậc khác 2 (kể cả bậc âm)
+/// đặt chỉ số nhỏ ở góc trên bên trái và có gạch ngang phủ hết số dưới dấu căn.
 /// </summary>
 public sealed class TextbookRadicalExpressionView : ContentView
 {
@@ -218,15 +218,17 @@ public sealed class TextbookRadicalExpressionView : ContentView
     private void UpdateVisuals()
     {
         int normalizedDegree =
-            Math.Max(
-                2,
-                Degree);
+            Degree == 0
+                ? 2
+                : Degree;
 
         _degreeLabel.Text =
             normalizedDegree == 2
                 ? string.Empty
-                : normalizedDegree.ToString(
-                    System.Globalization.CultureInfo.InvariantCulture);
+                : normalizedDegree
+                    .ToString(
+                        System.Globalization.CultureInfo.InvariantCulture)
+                    .Replace('-', '−');
 
         _degreeLabel.IsVisible =
             normalizedDegree != 2;

@@ -578,7 +578,8 @@
                                     <controls:BorderlessEntry
                                         x:Name="RootDegreeEntry"
                                         Placeholder="{localization:Translate PowerRoot.DegreePlaceholder}"
-                                        Keyboard="Numeric"
+                                        Keyboard="Text"
+                                        MaxLength="4"
                                         FontSize="18"
                                         TextColor="{DynamicResource TextPrimaryColor}"
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
@@ -681,8 +682,8 @@
 
                                 <!--
                                     Trình bày dấu căn theo đúng quy ước sách giáo khoa:
-                                    căn bậc hai không có chỉ số; bậc 3–255 đặt
-                                    chỉ số nhỏ ở góc trên bên trái của dấu căn.
+                                    căn bậc hai không có chỉ số; mọi bậc khác 2
+                                    (kể cả bậc âm) đặt chỉ số nhỏ ở góc trên bên trái.
                                     Biểu thức, dấu bằng và kết quả nằm cùng dòng.
                                 -->
                                 <ScrollView

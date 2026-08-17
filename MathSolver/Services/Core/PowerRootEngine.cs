@@ -20,14 +20,15 @@ public enum PowerRootCalculationMethod
 
 public sealed record RootCalculationResult(
     Int128 Radicand,
-    byte Degree,
+    sbyte Degree,
     bool IsComplex,
     DoubleDouble RealResult,
-    Complex ComplexResult,
+    DoubleDouble ImaginaryResult,
     PowerRootCalculationMethod Method)
 {
     public bool IsFinite =>
-        IsComplex || RealResult.IsFinite;
+        RealResult.IsFinite &&
+        ImaginaryResult.IsFinite;
 }
 
 /// <summary>
@@ -38,66 +39,112 @@ public sealed class PowerRootEngine
 {
     public RootCalculationResult CalculateRoot(
         Int128 radicand,
-        byte degree)
+        sbyte degree)
     {
-        if (degree < 2)
+        if (degree == 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(degree),
-                "Root degree must be from 2 through 255.");
+                "Root degree cannot be zero.");
         }
 
-        PowerRootCalculationMethod method = degree switch
+        if (radicand == 0 &&
+            degree < 0)
         {
-            2 => PowerRootCalculationMethod.Sqrt,
-            3 => PowerRootCalculationMethod.Cbrt,
-            _ => PowerRootCalculationMethod.Pow
-        };
-
-        bool isComplex = radicand < 0 && degree % 2 == 0;
-
-        if (isComplex)
-        {
-            Complex complexResult = degree == 2
-                ? Complex.Sqrt(new Complex((double)radicand, 0d))
-                : Complex.Pow(
-                    new Complex((double)radicand, 0d),
-                    1d / degree);
-
-            return new(
-                radicand,
-                degree,
-                true,
-                DoubleDouble.Zero,
-                complexResult,
-                method);
+            throw new DivideByZeroException(
+                "A negative-degree root of zero is undefined.");
         }
+
+        int absoluteDegree =
+            Math.Abs((int)degree);
+
+        PowerRootCalculationMethod method =
+            absoluteDegree switch
+            {
+                2 => PowerRootCalculationMethod.Sqrt,
+                3 => PowerRootCalculationMethod.Cbrt,
+                _ => PowerRootCalculationMethod.Pow
+            };
 
         DoubleDouble magnitude =
             DoubleDouble.Abs(
                 DoubleDouble.FromInt128(radicand));
 
-        DoubleDouble realResult = method switch
-        {
-            PowerRootCalculationMethod.Sqrt =>
-                DoubleDouble.Sqrt(magnitude),
-            PowerRootCalculationMethod.Cbrt =>
-                DoubleDouble.Cbrt(magnitude),
-            _ => DoubleDouble.RootUsingPow(magnitude, degree)
-        };
+        DoubleDouble positiveMagnitudeRoot =
+            CalculatePositiveMagnitudeRoot(
+                magnitude,
+                absoluteDegree,
+                method);
 
-        if (radicand < 0)
+        DoubleDouble resultMagnitude =
+            degree < 0
+                ? DoubleDouble.One /
+                  positiveMagnitudeRoot
+                : positiveMagnitudeRoot;
+
+        bool isComplex =
+            radicand < 0 &&
+            (absoluteDegree & 1) == 0;
+
+        if (isComplex)
         {
-            realResult = -realResult;
+            DoubleDouble angle =
+                DoubleDouble.Pi /
+                new DoubleDouble(absoluteDegree);
+
+            if (degree < 0)
+            {
+                angle = -angle;
+            }
+
+            DoubleDouble.SinCos(
+                angle,
+                out DoubleDouble sine,
+                out DoubleDouble cosine);
+
+            return new(
+                radicand,
+                degree,
+                true,
+                resultMagnitude * cosine,
+                resultMagnitude * sine,
+                method);
         }
+
+        DoubleDouble realResult =
+            radicand < 0
+                ? -resultMagnitude
+                : resultMagnitude;
 
         return new(
             radicand,
             degree,
             false,
             realResult,
-            Complex.Zero,
+            DoubleDouble.Zero,
             method);
+    }
+
+    private static DoubleDouble CalculatePositiveMagnitudeRoot(
+        DoubleDouble magnitude,
+        int degree,
+        PowerRootCalculationMethod method)
+    {
+        if (degree == 1)
+        {
+            return magnitude;
+        }
+
+        return method switch
+        {
+            PowerRootCalculationMethod.Sqrt =>
+                DoubleDouble.Sqrt(magnitude),
+            PowerRootCalculationMethod.Cbrt =>
+                DoubleDouble.Cbrt(magnitude),
+            _ => DoubleDouble.RootUsingPow(
+                magnitude,
+                degree)
+        };
     }
 
     public PowerRootComputationStrategy SelectPowerStrategy(

@@ -68,11 +68,11 @@ public partial class PowerRootView : LocalizedSolverView
     private const int RootScientificDisplaySignificantDigits =
         12;
 
-    private const byte MinRootDegree =
-        2;
+    private const sbyte MinRootDegree =
+        sbyte.MinValue;
 
-    private const byte MaxRootDegree =
-        byte.MaxValue;
+    private const sbyte MaxRootDegree =
+        sbyte.MaxValue;
 
     private const int RootMaximumDecimalPlaces =
         10;
@@ -716,23 +716,21 @@ public partial class PowerRootView : LocalizedSolverView
             RemoveGroupSeparators(
                 text);
 
-        if (normalized.Length == 0)
+        if (normalized.Length == 0 ||
+            normalized == "-")
         {
             return true;
         }
 
-        if (normalized.Length > 3 ||
-            normalized.Any(
-                character =>
-                    !char.IsAsciiDigit(
-                        character)))
+        // sbyte allows −128..127. The extra character is the optional minus.
+        if (normalized.Length > 4)
         {
             return false;
         }
 
-        return byte.TryParse(
+        return sbyte.TryParse(
             normalized,
-            NumberStyles.None,
+            NumberStyles.Integer,
             CultureInfo.InvariantCulture,
             out _);
     }
@@ -837,11 +835,11 @@ public partial class PowerRootView : LocalizedSolverView
             RemoveGroupSeparators(
                 entry.Text);
 
-        if (byte.TryParse(
+        if (sbyte.TryParse(
                 normalized,
-                NumberStyles.None,
+                NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
-                out byte degree))
+                out sbyte degree))
         {
             SetRootEntryText(
                 entry,
@@ -889,7 +887,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         if (!TryReadRootInputs(
                 out Int128 radicand,
-                out byte degree))
+                out sbyte degree))
         {
             return;
         }
@@ -906,7 +904,8 @@ public partial class PowerRootView : LocalizedSolverView
 
             bool isComplex = calculation.IsComplex;
             DoubleDouble realResult = calculation.RealResult;
-            Complex complexResult = calculation.ComplexResult;
+            DoubleDouble imaginaryResult =
+                calculation.ImaginaryResult;
 
             string resultText;
 
@@ -917,7 +916,9 @@ public partial class PowerRootView : LocalizedSolverView
             }
 
             resultText = isComplex
-                ? FormatRootComplex(complexResult)
+                ? FormatRootComplex(
+                    realResult,
+                    imaginaryResult)
                 : FormatRootReal(realResult);
 
             _rootCalculationState =
@@ -926,7 +927,7 @@ public partial class PowerRootView : LocalizedSolverView
                     degree,
                     isComplex,
                     realResult,
-                    complexResult,
+                    imaginaryResult,
                     resultText,
                     method);
 
@@ -944,7 +945,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private bool TryReadRootInputs(
         out Int128 radicand,
-        out byte degree)
+        out sbyte degree)
     {
         radicand = Int128.Zero;
         degree = 0;
@@ -975,19 +976,31 @@ public partial class PowerRootView : LocalizedSolverView
             RemoveGroupSeparators(
                 RootDegreeEntry.Text);
 
-        if (!byte.TryParse(
+        if (!sbyte.TryParse(
                 degreeText,
-                NumberStyles.None,
+                NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
                 out degree) ||
             degree < MinRootDegree ||
-            degree > MaxRootDegree)
+            degree > MaxRootDegree ||
+            degree == 0)
         {
             ShowRootError(
                 Translate(
                     "PowerRoot.RootDegreeRangeError"));
 
             RootDegreeEntry.Focus();
+            return false;
+        }
+
+        if (radicand == 0 &&
+            degree < 0)
+        {
+            ShowRootError(
+                Translate(
+                    "PowerRoot.NegativeDegreeZeroError"));
+
+            RootRadicandEntry.Focus();
             return false;
         }
 
@@ -1019,7 +1032,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private void ShowTextbookRootExpression(
         Int128 radicand,
-        byte degree)
+        sbyte degree)
     {
         RootResultExpressionView.Degree =
             degree;
@@ -1043,16 +1056,19 @@ public partial class PowerRootView : LocalizedSolverView
                 CultureInfo.InvariantCulture);
 
         string unknownPower =
-            $"x{ToSuperscript(state.Degree)}";
+            $"x{ToSignedSuperscript(state.Degree)}";
 
         BigInteger absoluteRadicand =
             BigInteger.Abs(
                 (BigInteger)state.Radicand);
 
+        int absoluteDegree =
+            Math.Abs((int)state.Degree);
+
         bool hasExactIntegerRoot =
             _powerRootEngine.TryGetExactIntegerRoot(
                 absoluteRadicand,
-                state.Degree,
+                absoluteDegree,
                 out BigInteger exactMagnitude);
 
         int stepNumber = 1;
@@ -1063,6 +1079,21 @@ public partial class PowerRootView : LocalizedSolverView
                 stepNumber++),
             (BigInteger)state.Radicand,
             state.Degree);
+
+        // Bậc căn âm cần được giải thích theo cách trực quan trước.
+        // Nếu dùng ngay x^(-n) = a, học sinh phải hiểu số mũ âm trước khi
+        // hiểu phép căn âm, làm lời giải khó theo dõi hơn mức cần thiết.
+        if (state.Degree < 0)
+        {
+            RenderNegativeDegreeRootSolution(
+                state,
+                absoluteDegree,
+                formattedRadicand,
+                hasExactIntegerRoot,
+                exactMagnitude,
+                ref stepNumber);
+            return;
+        }
 
         AddRootTextStep(
             Format(
@@ -1112,9 +1143,9 @@ public partial class PowerRootView : LocalizedSolverView
                     hasExactIntegerRoot
                         ? FormatRootInteger(
                             exactMagnitude)
-                        : FormatRootDouble(
-                            Math.Abs(
-                                state.ComplexResult.Imaginary));
+                        : FormatRootReal(
+                            DoubleDouble.Abs(
+                                state.ImaginaryResult));
 
                 bool isExact =
                     hasExactIntegerRoot;
@@ -1272,6 +1303,186 @@ public partial class PowerRootView : LocalizedSolverView
         }
     }
 
+    private void RenderNegativeDegreeRootSolution(
+        RootCalculationState state,
+        int absoluteDegree,
+        string formattedRadicand,
+        bool hasExactIntegerRoot,
+        BigInteger exactMagnitude,
+        ref int stepNumber)
+    {
+        string absoluteDegreeText =
+            absoluteDegree.ToString(
+                CultureInfo.InvariantCulture);
+
+        AddRootTextStep(
+            Format(
+                "PowerRoot.RootStepNegativeDegreeReciprocal",
+                stepNumber++,
+                state.Degree.ToString(
+                    CultureInfo.InvariantCulture),
+                absoluteDegreeText));
+
+        if (state.IsComplex)
+        {
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepNegativeEven",
+                    stepNumber++,
+                    absoluteDegreeText,
+                    formattedRadicand));
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepComplexIntroduction",
+                    stepNumber++));
+
+            AddRootVisualStep(
+                Format(
+                    "PowerRoot.RootStepNegativeDegreeComplexVisual",
+                    stepNumber++,
+                    absoluteDegreeText),
+                (BigInteger)state.Radicand,
+                state.Degree,
+                "≈",
+                state.ResultText);
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepNegativeDegreeCheck",
+                    stepNumber++,
+                    state.ResultText,
+                    ToSuperscript(absoluteDegree),
+                    formattedRadicand));
+
+            AddRootConclusion(
+                Translate(
+                    "PowerRoot.RootStepComplexConclusionVisual"),
+                (BigInteger)state.Radicand,
+                state.Degree,
+                "≈",
+                state.ResultText);
+
+            return;
+        }
+
+        AddRootTextStep(
+            Format(
+                state.Radicand < 0
+                    ? "PowerRoot.RootStepNegativeOdd"
+                    : "PowerRoot.RootStepPositive",
+                stepNumber++,
+                absoluteDegreeText));
+
+        string relation;
+
+        if (hasExactIntegerRoot)
+        {
+            BigInteger signedRoot =
+                state.Radicand < 0
+                    ? -exactMagnitude
+                    : exactMagnitude;
+
+            bool displayedReciprocalIsExact =
+                HasTerminatingReciprocalWithinDisplayScale(
+                    signedRoot,
+                    RootMaximumDecimalPlaces);
+
+            relation =
+                displayedReciprocalIsExact
+                    ? "="
+                    : "≈";
+
+            string signedRootText =
+                FormatRootInteger(signedRoot);
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepNegativeDegreeExactReciprocal",
+                    stepNumber++,
+                    absoluteDegreeText,
+                    formattedRadicand,
+                    signedRootText,
+                    signedRootText,
+                    relation,
+                    state.ResultText));
+        }
+        else
+        {
+            // Với bậc âm, state.RealResult là 1 / căn_bậc_dương.
+            // Lấy nghịch đảo một lần chỉ để trình bày giá trị trung gian
+            // giúp lời giải cho học sinh dễ theo dõi hơn.
+            DoubleDouble positiveDegreeRoot =
+                DoubleDouble.One /
+                state.RealResult;
+
+            string positiveDegreeRootText =
+                FormatRootReal(positiveDegreeRoot);
+
+            relation = "≈";
+
+            AddRootTextStep(
+                Format(
+                    "PowerRoot.RootStepNegativeDegreeApproxReciprocal",
+                    stepNumber++,
+                    absoluteDegreeText,
+                    formattedRadicand,
+                    positiveDegreeRootText,
+                    state.ResultText));
+        }
+
+        AddRootTextStep(
+            Format(
+                "PowerRoot.RootStepNegativeDegreeCheck",
+                stepNumber++,
+                state.ResultText,
+                ToSuperscript(absoluteDegree),
+                formattedRadicand));
+
+        AddRootConclusion(
+            Translate(
+                relation == "="
+                    ? "PowerRoot.RootStepRealExactConclusionVisual"
+                    : "PowerRoot.RootStepRealApproxConclusionVisual"),
+            (BigInteger)state.Radicand,
+            state.Degree,
+            relation,
+            state.ResultText);
+    }
+
+    private static bool HasTerminatingReciprocalWithinDisplayScale(
+        BigInteger denominator,
+        int maximumDecimalPlaces)
+    {
+        denominator = BigInteger.Abs(denominator);
+
+        if (denominator.IsZero)
+        {
+            return false;
+        }
+
+        int factorTwoCount = 0;
+        int factorFiveCount = 0;
+
+        while ((denominator & BigInteger.One) == BigInteger.Zero)
+        {
+            denominator >>= 1;
+            factorTwoCount++;
+        }
+
+        while (denominator % 5 == 0)
+        {
+            denominator /= 5;
+            factorFiveCount++;
+        }
+
+        return denominator.IsOne &&
+               Math.Max(
+                   factorTwoCount,
+                   factorFiveCount) <=
+               maximumDecimalPlaces;
+    }
+
     private void AddRootTextStep(
         string text)
     {
@@ -1283,7 +1494,7 @@ public partial class PowerRootView : LocalizedSolverView
     private void AddRootVisualStep(
         string text,
         BigInteger radicand,
-        byte degree,
+        sbyte degree,
         string? relation = null,
         string? result = null)
     {
@@ -1308,7 +1519,7 @@ public partial class PowerRootView : LocalizedSolverView
     private void AddRootConclusion(
         string text,
         BigInteger radicand,
-        byte degree,
+        sbyte degree,
         string relation,
         string result)
     {
@@ -1366,7 +1577,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private static View CreateRootEquation(
         BigInteger radicand,
-        byte degree,
+        sbyte degree,
         string? relation,
         string? result,
         bool isConclusion = false)
@@ -1522,32 +1733,33 @@ public partial class PowerRootView : LocalizedSolverView
                 significantDigits,
                 scientificUpperExponent:
                     RootScientificDisplayDigitThreshold,
-                scientificLowerExponent: -1000);
+                scientificLowerExponent:
+                    -RootMaximumDecimalPlaces);
 
         return FormatRootNumberForDisplay(
             text);
     }
 
     private static string FormatRootComplex(
-        Complex value)
+        DoubleDouble realValue,
+        DoubleDouble imaginaryValue)
     {
-        double real =
+        DoubleDouble real =
             NormalizeDisplayedComplexComponent(
-                value.Real);
+                realValue);
 
-        double imaginary =
+        DoubleDouble imaginary =
             NormalizeDisplayedComplexComponent(
-                value.Imaginary);
+                imaginaryValue);
 
-        if (imaginary == 0d)
+        if (imaginary.IsZero)
         {
-            return FormatRootDouble(
-                real);
+            return FormatRootReal(real);
         }
 
         string imaginaryMagnitude =
-            FormatRootDouble(
-                Math.Abs(
+            FormatRootReal(
+                DoubleDouble.Abs(
                     imaginary));
 
         string imaginaryTerm =
@@ -1555,47 +1767,31 @@ public partial class PowerRootView : LocalizedSolverView
                 ? "i"
                 : $"{imaginaryMagnitude}i";
 
-        if (real == 0d)
+        if (real.IsZero)
         {
-            return imaginary < 0d
+            return imaginary.Sign < 0
                 ? $"−{imaginaryTerm}"
                 : imaginaryTerm;
         }
 
         return
-            $"{FormatRootDouble(real)} " +
-            $"{(imaginary < 0d ? '−' : '+')} " +
+            $"{FormatRootReal(real)} " +
+            $"{(imaginary.Sign < 0 ? '−' : '+')} " +
             imaginaryTerm;
     }
 
-    private static double NormalizeDisplayedComplexComponent(
-        double value)
+    private static DoubleDouble NormalizeDisplayedComplexComponent(
+        DoubleDouble value)
     {
-        const double HalfUnitAtLastDisplayedPlace =
-            0.00000000005d;
+        // Half a unit at the last displayed (10th) decimal place. The
+        // computation remains DoubleDouble; this only suppresses visual
+        // residue such as cos(π/2) in a principal square root.
+        DoubleDouble threshold =
+            new(0.00000000005d);
 
-        return Math.Abs(
-                   value) <
-               HalfUnitAtLastDisplayedPlace
-            ? 0d
+        return DoubleDouble.Abs(value) < threshold
+            ? DoubleDouble.Zero
             : value;
-    }
-
-    private static string FormatRootDouble(
-        double value)
-    {
-        string text =
-            Math.Abs(
-                value) >= 1e18d
-                ? value.ToString(
-                    "0.##########e+0",
-                    CultureInfo.InvariantCulture)
-                : value.ToString(
-                    "0.##########",
-                    CultureInfo.InvariantCulture);
-
-        return FormatRootNumberForDisplay(
-            text);
     }
 
     private static string FormatRootNumberForDisplay(
@@ -5237,10 +5433,10 @@ public partial class PowerRootView : LocalizedSolverView
 
     private sealed record RootCalculationState(
         Int128 Radicand,
-        byte Degree,
+        sbyte Degree,
         bool IsComplex,
         DoubleDouble RealResult,
-        Complex ComplexResult,
+        DoubleDouble ImaginaryResult,
         string ResultText,
         RootCalculationMethod Method);
 

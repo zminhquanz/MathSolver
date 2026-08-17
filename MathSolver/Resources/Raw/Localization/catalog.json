@@ -1744,12 +1744,12 @@
     },
     {
       "key": "PowerRoot.DegreePlaceholder",
-      "source": "Ví dụ: 2, 3 hoặc 255",
+      "source": "Ví dụ: −3, 2 hoặc 127",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.DegreeHint",
-      "source": "Số nguyên từ 2 đến 255, được lưu bằng kiểu byte.",
+      "source": "Số nguyên từ −128 đến 127, trừ 0. Nếu nhập bậc âm, ứng dụng sẽ tính căn với bậc dương tương ứng trước, rồi lấy 1 chia cho kết quả vừa tìm.",
       "mode": "exact"
     },
     {
@@ -1769,7 +1769,12 @@
     },
     {
       "key": "PowerRoot.RootDegreeRangeError",
-      "source": "Bậc căn phải là số nguyên từ 2 đến 255.",
+      "source": "Bậc căn phải là số nguyên từ −128 đến 127 và khác 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.NegativeDegreeZeroError",
+      "source": "Không thể lấy căn bậc âm của 0. Sau khi tính căn của 0, ta sẽ phải lấy 1 chia cho 0, mà phép chia cho 0 không được xác định.",
       "mode": "exact"
     },
     {
@@ -5539,7 +5544,7 @@
     },
     {
       "key": "PowerRoot.RootDegreeHint",
-      "source": "Nhập số nguyên từ 2 đến 255.",
+      "source": "Nhập số nguyên từ −128 đến 127, khác 0. Nếu là bậc âm, hãy tính căn với bậc dương tương ứng trước rồi lấy 1 chia cho kết quả.",
       "mode": "exact"
     },
     {
@@ -5655,6 +5660,31 @@
     {
       "key": "PowerRoot.RootStepComplexGeneralVisual",
       "source": "Bước {0}. Với căn bậc {1} của một số âm, có nhiều kết quả trong số phức. Sau khi chọn căn chính và tính toán, ta được:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeDegreeReciprocal",
+      "source": "Bước {0}. Bậc căn là {1}, tức là một bậc âm. Ta làm theo 2 việc đơn giản: trước hết tính căn bậc {2} của số đã cho, sau đó lấy 1 chia cho kết quả vừa tìm.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeDegreeExactReciprocal",
+      "source": "Bước {0}. Trước hết, căn bậc {1} của {2} bằng {3}. Sau đó lấy 1 chia cho {4}: 1 ÷ ({4}) {5} {6}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeDegreeApproxReciprocal",
+      "source": "Bước {0}. Trước hết tính gần đúng căn bậc {1} của {2}, được khoảng {3}. Sau đó lấy 1 chia cho kết quả này: 1 ÷ ({3}) ≈ {4}.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeDegreeComplexVisual",
+      "source": "Bước {0}. Trước hết tính căn bậc {1} trong tập số phức, sau đó lấy 1 chia cho kết quả vừa tìm. Ta được:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.RootStepNegativeDegreeCheck",
+      "source": "Bước {0}. Kiểm tra: (1 ÷ ({1})){2} ≈ {3}. Kết quả quay lại gần số dưới dấu căn ban đầu, nên phép tính phù hợp.",
       "mode": "exact"
     },
     {
