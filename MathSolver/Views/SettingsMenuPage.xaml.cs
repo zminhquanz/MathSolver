@@ -100,7 +100,6 @@ public partial class SettingsMenuPage : ContentView
     private bool _hasPlayedOpenAnimation;
     private bool _isFullWindowOverlayMode;
     private bool _isNavigating;
-    private bool _isUpdatingFullNumberDisplaySwitch;
     private bool _isLoaded;
     private Task? _closeTask;
 
@@ -284,9 +283,6 @@ public partial class SettingsMenuPage : ContentView
             AppLanguageManager.LanguageChanged +=
                 OnSettingsChanged;
 
-            DeveloperModeManager.DeveloperModeChanged +=
-                OnSettingsChanged;
-
             LocalizationService.Attach(
                 this);
 
@@ -340,9 +336,6 @@ public partial class SettingsMenuPage : ContentView
             OnSettingsChanged;
 
         AppLanguageManager.LanguageChanged -=
-            OnSettingsChanged;
-
-        DeveloperModeManager.DeveloperModeChanged -=
             OnSettingsChanged;
 
     }
@@ -653,26 +646,6 @@ public partial class SettingsMenuPage : ContentView
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
 
-        NumberDisplaySummaryLabel.Text =
-            LocalizationService.TranslateKey(
-                ResultNumberDisplayMode.ShowFullNumbers
-                    ? "Settings.NumberDisplay.SummaryFull"
-                    : "Settings.NumberDisplay.SummaryCompact");
-
-        _isUpdatingFullNumberDisplaySwitch =
-            true;
-
-        try
-        {
-            FullNumberDisplaySwitch.IsToggled =
-                ResultNumberDisplayMode.ShowFullNumbers;
-        }
-        finally
-        {
-            _isUpdatingFullNumberDisplaySwitch =
-                false;
-        }
-
         AboutMenuTitleLabel.Text =
             useEnglish
                 ? "About"
@@ -683,23 +656,15 @@ public partial class SettingsMenuPage : ContentView
                 ? "Application, author, and version information"
                 : "Thông tin ứng dụng, tác giả và phiên bản";
 
-        DeveloperModeTitleLabel.Text =
+        AdvancedMenuTitleLabel.Text =
             useEnglish
-                ? "Developer mode"
-                : "Chế độ nhà phát triển";
+                ? "Advanced settings"
+                : "Cài đặt nâng cao";
 
-        DeveloperModeSummaryLabel.Text =
-            (useEnglish, DeveloperModeManager.IsEnabled) switch
-            {
-                (true, true) =>
-                    "On · Show JSON, logs, and technical details",
-                (true, false) =>
-                    "Off · Hide JSON, logs, and technical details",
-                (false, true) =>
-                    "Đang bật · Hiện JSON, log và chi tiết kỹ thuật",
-                _ =>
-                    "Đang tắt · Ẩn JSON, log và chi tiết kỹ thuật"
-            };
+        AdvancedMenuSummaryLabel.Text =
+            useEnglish
+                ? "Appearance, results, and developer tools"
+                : "Giao diện, kết quả và nhà phát triển";
 
         UpdateChoiceButton(
             SystemThemeButton,
@@ -1017,21 +982,6 @@ public partial class SettingsMenuPage : ContentView
         UpdateState();
     }
 
-    private void OnFullNumberDisplayToggled(
-        object? sender,
-        ToggledEventArgs e)
-    {
-        if (_isUpdatingFullNumberDisplaySwitch)
-        {
-            return;
-        }
-
-        ResultNumberDisplayMode.SetShowFullNumbers(
-            e.Value);
-
-        UpdateState();
-    }
-
     private void OnResetTapped(
         object? sender,
         TappedEventArgs e)
@@ -1050,14 +1000,6 @@ public partial class SettingsMenuPage : ContentView
     {
         await RequestNavigationAsync(
             nameof(HardwarePerformancePage));
-    }
-
-    private async void OnDeveloperModeTapped(
-        object? sender,
-        TappedEventArgs e)
-    {
-        await RequestNavigationAsync(
-            nameof(DeveloperModePage));
     }
 
     private async void OnAboutTapped(

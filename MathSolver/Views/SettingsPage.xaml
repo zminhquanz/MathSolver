@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MathSolver.Controls"
-    Title="Cài đặt giao diện"
+    Title="Cài đặt"
     Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
@@ -45,14 +45,16 @@
                 Spacing="0"
                 VerticalOptions="Center">
                 <Label
-                    Text="CÀI ĐẶT GIAO DIỆN"
+                    x:Name="SettingsPageTitleLabel"
+                    Text="CÀI ĐẶT"
                     FontSize="19"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                 <Label
-                    Text="Chọn phong cách sáng, tối và bất kỳ màu chủ đề nào cho Math Solver"
+                    x:Name="SettingsPageSubtitleLabel"
+                    Text="Giao diện, kết quả hiển thị và công cụ nhà phát triển"
                     FontSize="11"
                     LineBreakMode="TailTruncation"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -532,20 +534,219 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- HIỂN THỊ KẾT QUẢ -->
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="13">
+                        <Label
+                            x:Name="ResultDisplaySectionTitleLabel"
+                            Text="Hiển thị kết quả"
+                            FontSize="19"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="ResultDisplaySectionDescriptionLabel"
+                            Text="Tùy chỉnh cách Math Solver trình bày các kết quả có nhiều chữ số."
+                            FontSize="13"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="123"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="3"
+                                    VerticalOptions="Center">
+                                    <Label
+                                        x:Name="FullNumberDisplayTitleLabel"
+                                        Text="Hiển thị kết quả đầy đủ"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="FullNumberDisplaySummaryLabel"
+                                        FontSize="12"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                </VerticalStackLayout>
+
+                                <Switch
+                                    x:Name="FullNumberDisplaySwitch"
+                                    Grid.Column="2"
+                                    VerticalOptions="Center"
+                                    Toggled="OnFullNumberDisplayToggled" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- CHẾ ĐỘ NHÀ PHÁT TRIỂN -->
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label
+                            x:Name="DeveloperSectionTitleLabel"
+                            Text="Chế độ nhà phát triển"
+                            FontSize="19"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="DeveloperSectionDescriptionLabel"
+                            Text="Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán và AI/LLM."
+                            FontSize="13"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                    <Label
+                                        Grid.Column="0"
+                                        Text="&lt;/&gt;"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        VerticalTextAlignment="Center"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                        <Label
+                                            x:Name="DeveloperModeTitleLabel"
+                                            Text="Chế độ nhà phát triển"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="DeveloperModeDescriptionLabel"
+                                            Text="Hiện JSON, log validation và chi tiết kỹ thuật khi cần kiểm tra."
+                                            FontSize="12"
+                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                    </VerticalStackLayout>
+
+                                    <Switch
+                                        x:Name="DeveloperModeSwitch"
+                                        Grid.Column="2"
+                                        VerticalOptions="Center"
+                                        Toggled="OnDeveloperModeToggled" />
+                                </Grid>
+
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <Border
+                                        x:Name="DeveloperModeStateBadge"
+                                        Grid.Column="0"
+                                        Padding="10,6"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        <Label
+                                            x:Name="DeveloperModeStateLabel"
+                                            FontSize="12"
+                                            FontAttributes="Bold" />
+                                    </Border>
+
+                                    <Label
+                                        x:Name="DeveloperModeDefaultNoteLabel"
+                                        Grid.Column="1"
+                                        FontSize="11"
+                                        FontAttributes="Italic"
+                                        VerticalTextAlignment="Center"
+                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                </Grid>
+
+                                <BoxView HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
+
+                                <Label
+                                    x:Name="DeveloperVisibleToolsTitleLabel"
+                                    Text="Nội dung được hiển thị khi bật"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                    <Label
+                                        Grid.Column="0"
+                                        Text="JSON"
+                                        FontSize="11"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label
+                                            x:Name="DeveloperLlmToolsTitleLabel"
+                                            Text="JSON và log kiểm tra AI"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="DeveloperLlmToolsDescriptionLabel"
+                                            Text="Hiện JSON do LLM tạo và từng bước validation của C#."
+                                            FontSize="12"
+                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                    <Label
+                                        Grid.Column="0"
+                                        Text="aⁿ"
+                                        FontSize="17"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label
+                                            x:Name="DeveloperPowerToolsTitleLabel"
+                                            Text="Chi tiết lũy thừa và căn bậc"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="DeveloperPowerToolsDescriptionLabel"
+                                            Text="Hiện nút và nội dung phân tích kỹ thuật của quá trình tính toán."
+                                            FontSize="12"
+                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="10">
                         <Label
+                        x:Name="ResetSectionTitleLabel"
                         Text="Khôi phục mặc định"
                         FontSize="19"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
-                        Text="Đưa ứng dụng về màu tím, phông Open Sans và phong cách theo hệ thống."
+                        x:Name="ResetSectionDescriptionLabel"
+                        Text="Đặt lại giao diện, hiển thị kết quả và chế độ nhà phát triển về mặc định."
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Button
+                        x:Name="ResetSettingsButton"
                         Text="Khôi phục"
                         Style="{StaticResource ThemeSecondaryButtonStyle}"
                         HorizontalOptions="Start"

@@ -101,10 +101,6 @@ public partial class AppShell : Shell
             typeof(HardwarePerformancePage));
 
         Routing.RegisterRoute(
-            nameof(DeveloperModePage),
-            typeof(DeveloperModePage));
-
-        Routing.RegisterRoute(
             nameof(AboutPage),
             typeof(AboutPage));
 
@@ -1402,9 +1398,6 @@ public partial class AppShell : Shell
                    StringComparison.OrdinalIgnoreCase) ||
                location.Contains(
                    nameof(HardwarePerformancePage),
-                   StringComparison.OrdinalIgnoreCase) ||
-               location.Contains(
-                   nameof(DeveloperModePage),
                    StringComparison.OrdinalIgnoreCase) ||
                location.Contains(
                    nameof(AboutPage),

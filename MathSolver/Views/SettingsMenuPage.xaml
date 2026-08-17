@@ -314,39 +314,6 @@
                             </Grid>
                         </Border>
 
-                        <!-- Result number display -->
-                        <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Label
-                                    Grid.Column="0"
-                                    Text="123"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    VerticalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                <VerticalStackLayout
-                                    Grid.Column="1"
-                                    Spacing="1"
-                                    VerticalOptions="Center">
-                                    <Label
-                                        Text="{localization:Translate Settings.NumberDisplay.Title}"
-                                        Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label
-                                        x:Name="NumberDisplaySummaryLabel"
-                                        Style="{StaticResource ThemeMenuSummaryStyle}"
-                                        LineBreakMode="WordWrap" />
-                                </VerticalStackLayout>
-
-                                <Switch
-                                    x:Name="FullNumberDisplaySwitch"
-                                    Grid.Column="2"
-                                    VerticalOptions="Center"
-                                    Toggled="OnFullNumberDisplayToggled" />
-                            </Grid>
-                        </Border>
-
                         <!-- Hardware and performance -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
@@ -430,52 +397,6 @@
                             </Grid>
                         </Border>
 
-                        <!-- Developer mode -->
-                        <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Label
-                                    Grid.Column="0"
-                                    Text="&lt;/&gt;"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    VerticalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-
-                                <VerticalStackLayout
-                                    Grid.Column="1"
-                                    Spacing="1"
-                                    VerticalOptions="Center">
-
-                                    <Label
-                                        x:Name="DeveloperModeTitleLabel"
-                                        Text="Chế độ nhà phát triển"
-                                        Style="{StaticResource ThemeMenuTitleStyle}" />
-
-                                    <Label
-                                        x:Name="DeveloperModeSummaryLabel"
-                                        Text="Hiện công cụ chẩn đoán và log kỹ thuật"
-                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
-
-                                </VerticalStackLayout>
-
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-
-                                    <Label
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-                                </Border>
-
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnDeveloperModeTapped" />
-                                </Grid.GestureRecognizers>
-
-                            </Grid>
-                        </Border>
-
                         <BoxView Margin="12,6" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
                         <!-- Reset -->
@@ -513,8 +434,8 @@
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                    <Label Text="Cài đặt nâng cao" Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label Text="Màu HEX, RGB và xem trước" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                    <Label x:Name="AdvancedMenuTitleLabel" Text="Cài đặt nâng cao" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label x:Name="AdvancedMenuSummaryLabel" Text="Giao diện, kết quả và nhà phát triển" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
 
                                 <Border

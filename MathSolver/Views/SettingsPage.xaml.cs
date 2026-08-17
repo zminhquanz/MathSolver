@@ -8,6 +8,8 @@ public partial class SettingsPage : ContentPage
     private bool _updatingFontSelection;
     private bool _hasPlayedEntryAnimation;
     private bool _isClosing;
+    private bool _updatingFullNumberDisplaySwitch;
+    private bool _updatingDeveloperModeSwitch;
 
     // Picker.ItemsSource yêu cầu IList, trong khi AppFontCatalog.Options
     // được khai báo là IReadOnlyList. Tạo một List dùng chung để vừa
@@ -67,6 +69,8 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.ThemeChanged += OnThemeChanged;
         AppFontManager.FontChanged += OnFontChanged;
         AppLanguageManager.LanguageChanged += OnLanguageChanged;
+        DeveloperModeManager.DeveloperModeChanged += OnDeveloperModeChanged;
+        ResultNumberDisplayMode.DisplayModeChanged += OnResultNumberDisplayModeChanged;
 
         LoadCurrentSettings();
 
@@ -86,6 +90,8 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.ThemeChanged -= OnThemeChanged;
         AppFontManager.FontChanged -= OnFontChanged;
         AppLanguageManager.LanguageChanged -= OnLanguageChanged;
+        DeveloperModeManager.DeveloperModeChanged -= OnDeveloperModeChanged;
+        ResultNumberDisplayMode.DisplayModeChanged -= OnResultNumberDisplayModeChanged;
 
         Shell.SetTabBarIsVisible(
             this,
@@ -174,6 +180,21 @@ public partial class SettingsPage : ContentPage
 
         LoadCurrentSettings();
         LocalizationService.RefreshAll();
+        UpdateAdvancedSettingsState();
+    }
+
+    private void OnDeveloperModeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        UpdateAdvancedSettingsState();
+    }
+
+    private void OnResultNumberDisplayModeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        UpdateAdvancedSettingsState();
     }
 
     private void OnVietnameseLanguageClicked(
@@ -258,8 +279,11 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.ResetToDefault();
         AppFontManager.ResetToDefault();
         AppLanguageManager.ResetToDefault();
+        DeveloperModeManager.ResetToDefault();
+        ResultNumberDisplayMode.ResetToDefault();
 
         LoadCurrentSettings();
+        UpdateAdvancedSettingsState();
     }
 
     private void ApplyHexColor(string? input)
@@ -280,6 +304,194 @@ public partial class SettingsPage : ContentPage
         HideValidationMessage();
     }
 
+    private void OnFullNumberDisplayToggled(
+        object? sender,
+        ToggledEventArgs e)
+    {
+        if (_updatingFullNumberDisplaySwitch)
+        {
+            return;
+        }
+
+        ResultNumberDisplayMode.SetShowFullNumbers(
+            e.Value);
+
+        UpdateAdvancedSettingsState();
+    }
+
+    private void OnDeveloperModeToggled(
+        object? sender,
+        ToggledEventArgs e)
+    {
+        if (_updatingDeveloperModeSwitch)
+        {
+            return;
+        }
+
+        DeveloperModeManager.SetEnabled(
+            e.Value);
+
+        UpdateAdvancedSettingsState();
+    }
+
+    private void UpdateAdvancedSettingsState()
+    {
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        _updatingFullNumberDisplaySwitch = true;
+        _updatingDeveloperModeSwitch = true;
+
+        try
+        {
+            FullNumberDisplaySwitch.IsToggled =
+                ResultNumberDisplayMode.ShowFullNumbers;
+
+            DeveloperModeSwitch.IsToggled =
+                DeveloperModeManager.IsEnabled;
+        }
+        finally
+        {
+            _updatingFullNumberDisplaySwitch = false;
+            _updatingDeveloperModeSwitch = false;
+        }
+
+        SettingsPageTitleLabel.Text =
+            useEnglish
+                ? "SETTINGS"
+                : "CÀI ĐẶT";
+
+        SettingsPageSubtitleLabel.Text =
+            useEnglish
+                ? "Appearance, result display, and developer tools"
+                : "Giao diện, kết quả hiển thị và công cụ nhà phát triển";
+
+        ResultDisplaySectionTitleLabel.Text =
+            useEnglish
+                ? "Result display"
+                : "Hiển thị kết quả";
+
+        ResultDisplaySectionDescriptionLabel.Text =
+            useEnglish
+                ? "Choose how Math Solver presents results containing many digits."
+                : "Tùy chỉnh cách Math Solver trình bày các kết quả có nhiều chữ số.";
+
+        FullNumberDisplayTitleLabel.Text =
+            LocalizationService.TranslateKey(
+                "Settings.NumberDisplay.Title");
+
+        FullNumberDisplaySummaryLabel.Text =
+            LocalizationService.TranslateKey(
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? "Settings.NumberDisplay.SummaryFull"
+                    : "Settings.NumberDisplay.SummaryCompact");
+
+        DeveloperSectionTitleLabel.Text =
+            useEnglish
+                ? "Developer mode"
+                : "Chế độ nhà phát triển";
+
+        DeveloperSectionDescriptionLabel.Text =
+            useEnglish
+                ? "Enable diagnostic data used to inspect algorithms and AI/LLM behavior."
+                : "Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán và AI/LLM.";
+
+        DeveloperModeTitleLabel.Text =
+            useEnglish
+                ? "Developer mode"
+                : "Chế độ nhà phát triển";
+
+        DeveloperModeDescriptionLabel.Text =
+            useEnglish
+                ? "Show JSON, validation logs, and technical details when diagnostics are needed."
+                : "Hiện JSON, log validation và chi tiết kỹ thuật khi cần kiểm tra.";
+
+        DeveloperModeStateLabel.Text =
+            (useEnglish, DeveloperModeManager.IsEnabled) switch
+            {
+                (true, true) => "✓ ENABLED",
+                (true, false) => "○ DISABLED",
+                (false, true) => "✓ ĐANG BẬT",
+                _ => "○ ĐANG TẮT"
+            };
+
+        DeveloperModeStateBadge.SetDynamicResource(
+            Border.BackgroundColorProperty,
+            DeveloperModeManager.IsEnabled
+                ? "PrimarySoftColor"
+                : "SurfaceAltColor");
+
+        DeveloperModeStateBadge.SetDynamicResource(
+            Border.StrokeProperty,
+            DeveloperModeManager.IsEnabled
+                ? "PrimaryBorderBrush"
+                : "BorderBrush");
+
+        DeveloperModeStateLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            DeveloperModeManager.IsEnabled
+                ? "PrimaryColor"
+                : "TextSecondaryColor");
+
+        DeveloperModeDefaultNoteLabel.Text =
+            useEnglish
+                ? "Debug builds default to on; Release/Publish builds default to off. Your choice is remembered."
+                : "Bản Debug mặc định bật; bản Release/Publish mặc định tắt. Lựa chọn của bạn sẽ được ghi nhớ.";
+
+        DeveloperVisibleToolsTitleLabel.Text =
+            useEnglish
+                ? "Content shown while enabled"
+                : "Nội dung được hiển thị khi bật";
+
+        DeveloperLlmToolsTitleLabel.Text =
+            useEnglish
+                ? "AI JSON and validation logs"
+                : "JSON và log kiểm tra AI";
+
+        DeveloperLlmToolsDescriptionLabel.Text =
+            useEnglish
+                ? "Show LLM-generated JSON and each C# validation step."
+                : "Hiện JSON do LLM tạo và từng bước validation của C#.";
+
+        DeveloperPowerToolsTitleLabel.Text =
+            useEnglish
+                ? "Power and root details"
+                : "Chi tiết lũy thừa và căn bậc";
+
+        DeveloperPowerToolsDescriptionLabel.Text =
+            useEnglish
+                ? "Show the toggle and technical analysis of the calculation process."
+                : "Hiện nút và nội dung phân tích kỹ thuật của quá trình tính toán.";
+
+        ResetSectionTitleLabel.Text =
+            useEnglish
+                ? "Restore defaults"
+                : "Khôi phục mặc định";
+
+        ResetSectionDescriptionLabel.Text =
+            useEnglish
+                ? "Reset appearance, result display, and developer mode to their defaults."
+                : "Đặt lại giao diện, hiển thị kết quả và chế độ nhà phát triển về mặc định.";
+
+        ResetSettingsButton.Text =
+            useEnglish
+                ? "Restore"
+                : "Khôi phục";
+
+        SemanticProperties.SetDescription(
+            FullNumberDisplaySwitch,
+            useEnglish
+                ? "Turn full result number display on or off"
+                : "Bật hoặc tắt hiển thị kết quả đầy đủ");
+
+        SemanticProperties.SetDescription(
+            DeveloperModeSwitch,
+            useEnglish
+                ? "Turn developer mode on or off"
+                : "Bật hoặc tắt chế độ nhà phát triển");
+    }
+
     private void LoadCurrentSettings()
     {
         Color color = AppThemeManager.CurrentAccentColor;
@@ -291,6 +503,7 @@ public partial class SettingsPage : ContentPage
         UpdateThemeModeButtons();
         UpdateLanguageButtons();
         LoadFontSettings();
+        UpdateAdvancedSettingsState();
     }
 
     private void LoadFontSettings()
