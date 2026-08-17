@@ -815,8 +815,10 @@ public partial class AverageView : LocalizedSolverView
                     decimalPointIndex));
         }
 
-        return AddThousandsSeparatorsToPlainNumber(
-            builder.ToString());
+        return
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    builder.ToString());
     }
 
     private string FormatValuesWhileTyping(
@@ -1021,39 +1023,6 @@ public partial class AverageView : LocalizedSolverView
         }
 
         return token;
-    }
-
-    private static string AddThousandsSeparatorsToPlainNumber(
-        string text)
-    {
-        bool isNegative =
-            text.StartsWith(
-                '−');
-
-        string unsignedText =
-            isNegative
-                ? text[1..]
-                : text;
-
-        int decimalPointIndex =
-            unsignedText.IndexOf(
-                '.');
-
-        string integerPart =
-            decimalPointIndex >= 0
-                ? unsignedText[..decimalPointIndex]
-                : unsignedText;
-
-        string fractionPart =
-            decimalPointIndex >= 0
-                ? unsignedText[decimalPointIndex..]
-                : string.Empty;
-
-        return
-            (isNegative ? "−" : string.Empty) +
-            AddThousandsSeparators(
-                integerPart) +
-            fractionPart;
     }
 
     private static string AddThousandsSeparators(

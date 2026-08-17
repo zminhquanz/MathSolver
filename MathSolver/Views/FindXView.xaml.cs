@@ -1143,41 +1143,10 @@ public partial class FindXView : LocalizedSolverView
             }
         }
 
-        bool isNegative =
-            text.StartsWith(
-                "-",
-                StringComparison.Ordinal);
-
-        string unsignedText =
-            isNegative
-                ? text[1..]
-                : text;
-
-        int decimalPointIndex =
-            unsignedText.IndexOf(
-                '.',
-                StringComparison.Ordinal);
-
-        string integerPart =
-            decimalPointIndex >= 0
-                ? unsignedText[..decimalPointIndex]
-                : unsignedText;
-
-        string fractionPart =
-            decimalPointIndex >= 0
-                ? unsignedText[(decimalPointIndex + 1)..]
-                : string.Empty;
-
-        integerPart =
-            IntegerInputFormatter.AddThousandsSeparators(
-                integerPart);
-
         return
-            (isNegative ? "−" : string.Empty) +
-            integerPart +
-            (fractionPart.Length > 0
-                ? $".{fractionPart}"
-                : string.Empty);
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    text);
     }
 
     private static string FormatFindXDecimalScientificForCode(

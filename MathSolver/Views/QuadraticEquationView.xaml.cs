@@ -2711,34 +2711,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 text,
                 showFullNumbers);
 
-        bool isNegative =
-            text.StartsWith(
-                '-');
-
-        string unsignedText =
-            isNegative
-                ? text[1..]
-                : text;
-
-        int decimalSeparatorIndex =
-            unsignedText.IndexOf(
-                '.');
-
-        string integerPart =
-            decimalSeparatorIndex >= 0
-                ? unsignedText[..decimalSeparatorIndex]
-                : unsignedText;
-
-        string fractionPart =
-            decimalSeparatorIndex >= 0
-                ? unsignedText[decimalSeparatorIndex..]
-                : string.Empty;
-
         return
-            (isNegative ? "−" : string.Empty) +
-            GroupIntegerDigits(
-                integerPart) +
-            fractionPart;
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    text);
     }
 
     private static string FormatOctoDouble(
@@ -2823,39 +2799,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 text,
                 showFullNumbers);
 
-        bool isNegative =
-            text.StartsWith(
-                '-');
-
-        string unsignedText =
-            isNegative
-                ? text[1..]
-                : text;
-
-        int decimalSeparatorIndex =
-            unsignedText.IndexOf(
-                '.');
-
-        string integerPart =
-            decimalSeparatorIndex >= 0
-                ? unsignedText[..decimalSeparatorIndex]
-                : unsignedText;
-
-        string fractionPart =
-            decimalSeparatorIndex >= 0
-                ? unsignedText[decimalSeparatorIndex..]
-                : string.Empty;
-
-        string sign =
-            isNegative
-                ? "−"
-                : string.Empty;
-
         return
-            sign +
-            GroupIntegerDigits(
-                integerPart) +
-            fractionPart;
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    text);
     }
 
     /// <summary>
@@ -3263,50 +3210,6 @@ public partial class QuadraticEquationView : LocalizedSolverView
         return
             $"{approximation}{sign}{mantissa} × " +
             $"10{ToSuperscript(exponent)}";
-    }
-
-    private static string GroupIntegerDigits(
-        string digits)
-    {
-        if (digits.Length <= 3)
-        {
-            return digits;
-        }
-
-        var builder =
-            new StringBuilder(
-                digits.Length +
-                digits.Length / 3);
-
-        int firstGroupLength =
-            digits.Length %
-            3;
-
-        if (firstGroupLength == 0)
-        {
-            firstGroupLength =
-                3;
-        }
-
-        builder.Append(
-            digits.AsSpan(
-                0,
-                firstGroupLength));
-
-        for (int index = firstGroupLength;
-             index < digits.Length;
-             index += 3)
-        {
-            builder.Append(
-                ',');
-
-            builder.Append(
-                digits.AsSpan(
-                    index,
-                    3));
-        }
-
-        return builder.ToString();
     }
 
     private static string ToSuperscript(

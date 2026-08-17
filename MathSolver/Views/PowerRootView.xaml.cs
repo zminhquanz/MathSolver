@@ -1830,38 +1830,10 @@ public partial class PowerRootView : LocalizedSolverView
     private static string GroupRootNumber(
         string text)
     {
-        bool isNegative =
-            text.Length > 0 &&
-            text[0] == '-';
-
-        string unsignedText =
-            isNegative
-                ? text[1..]
-                : text;
-
-        int decimalPointIndex =
-            unsignedText.IndexOf(
-                '.',
-                StringComparison.Ordinal);
-
-        string integerPart =
-            decimalPointIndex >= 0
-                ? unsignedText[..decimalPointIndex]
-                : unsignedText;
-
-        string fractionalPart =
-            decimalPointIndex >= 0
-                ? unsignedText[decimalPointIndex..]
-                : string.Empty;
-
-        string groupedInteger =
-            IntegerInputFormatter.AddThousandsSeparators(
-                integerPart);
-
         return
-            (isNegative ? "−" : string.Empty) +
-            groupedInteger +
-            fractionalPart;
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    text);
     }
 
     private static string FormatRootScientificInput(

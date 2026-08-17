@@ -129,6 +129,79 @@ internal static class IntegerInputFormatter
         return formattedText.Length;
     }
 
+    /// <summary>
+    /// Adds invariant thousands separators to the integer part of a plain
+    /// decimal number while preserving its fractional digits. This is the
+    /// shared final-display path for solver results such as
+    /// 1234567.8901234567 -> 1,234,567.8901234567. Scientific notation is
+    /// intentionally handled by each solver before this method is called.
+    /// </summary>
+    public static string AddThousandsSeparatorsToPlainNumber(
+        string text,
+        bool useUnicodeMinus = true)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        bool isNegative =
+            text[0] is '-' or '−';
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        // This helper is only for normal decimal notation. Leave a scientific
+        // value untouched so the caller can render its exponent consistently.
+        if (unsignedText.Contains('e') ||
+            unsignedText.Contains('E'))
+        {
+            return useUnicodeMinus
+                ? text.Replace(
+                    "-",
+                    "−",
+                    StringComparison.Ordinal)
+                : text.Replace(
+                    '−',
+                    '-');
+        }
+
+        int decimalPointIndex =
+            unsignedText.IndexOf(
+                '.',
+                StringComparison.Ordinal);
+
+        string integerPart =
+            decimalPointIndex >= 0
+                ? unsignedText[..decimalPointIndex]
+                : unsignedText;
+
+        string fractionPart =
+            decimalPointIndex >= 0
+                ? unsignedText[decimalPointIndex..]
+                : string.Empty;
+
+        if (integerPart.Length == 0)
+        {
+            integerPart = "0";
+        }
+
+        string sign =
+            isNegative
+                ? useUnicodeMinus
+                    ? "−"
+                    : "-"
+                : string.Empty;
+
+        return
+            sign +
+            AddThousandsSeparators(
+                integerPart) +
+            fractionPart;
+    }
+
     public static string AddThousandsSeparators(
         string digits)
     {

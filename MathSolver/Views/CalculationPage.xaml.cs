@@ -1881,41 +1881,10 @@ public partial class CalculationPage : ContentPage
             }
         }
 
-        bool isNegative =
-            text.StartsWith(
-                "-",
-                StringComparison.Ordinal);
-
-        string unsignedText =
-            isNegative
-                ? text[1..]
-                : text;
-
-        int decimalPointIndex =
-            unsignedText.IndexOf(
-                '.',
-                StringComparison.Ordinal);
-
-        string integerPart =
-            decimalPointIndex >= 0
-                ? unsignedText[..decimalPointIndex]
-                : unsignedText;
-
-        string fractionPart =
-            decimalPointIndex >= 0
-                ? unsignedText[(decimalPointIndex + 1)..]
-                : string.Empty;
-
-        integerPart =
-            IntegerInputFormatter.AddThousandsSeparators(
-                integerPart);
-
         return
-            (isNegative ? "−" : string.Empty) +
-            integerPart +
-            (fractionPart.Length > 0
-                ? $".{fractionPart}"
-                : string.Empty);
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    text);
     }
 
     private static string FormatQuadDoubleForDisplay(
@@ -2040,19 +2009,17 @@ public partial class CalculationPage : ContentPage
             }
         }
 
-        integerPart =
-            IntegerInputFormatter.AddThousandsSeparators(
-                integerPart);
-
-        string decimalPart =
-            fractionPart.Length > 0
+        string plainText =
+            (isNegative ? "-" : string.Empty) +
+            integerPart +
+            (fractionPart.Length > 0
                 ? $".{fractionPart}"
-                : string.Empty;
+                : string.Empty);
 
         return
-            (isNegative ? "−" : string.Empty) +
-            integerPart +
-            decimalPart;
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    plainText);
     }
 
     private static int GetDecimalScale(
