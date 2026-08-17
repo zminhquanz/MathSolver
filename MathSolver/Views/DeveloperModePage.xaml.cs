@@ -24,6 +24,12 @@ public partial class DeveloperModePage : ContentPage
     {
         base.OnAppearing();
 
+        // Detail page chỉ ẩn TabBar khi đang active. Re-assert ở đây để
+        // trường hợp Shell tái sử dụng page vẫn có trạng thái chính xác.
+        Shell.SetTabBarIsVisible(
+            this,
+            false);
+
         AppLanguageManager.LanguageChanged +=
             OnStateChanged;
 
@@ -50,6 +56,12 @@ public partial class DeveloperModePage : ContentPage
 
         DeveloperModeManager.DeveloperModeChanged -=
             OnStateChanged;
+
+        // Xóa override ẩn trước khi native Shell hoàn tất pop. Điều này ngăn
+        // WinUI áp lại trạng thái TabBar=false sau khi main page đã hiện.
+        Shell.SetTabBarIsVisible(
+            this,
+            true);
 
         base.OnDisappearing();
     }

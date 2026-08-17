@@ -61,6 +61,13 @@ public partial class MultiplicationTablePage : ContentPage
     {
         base.OnAppearing();
 
+        // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
+        // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
+        // re-assert này sửa chrome ngay trong lifecycle của trang chính.
+        Shell.SetTabBarIsVisible(
+            this,
+            true);
+
         // Ổn định trạng thái hiển thị trước khi root được chuẩn bị cho
         // animation, tránh style/range thay đổi giữa lúc fade-in.
         UpdateOperationButtons();

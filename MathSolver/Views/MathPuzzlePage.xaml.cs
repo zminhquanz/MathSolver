@@ -163,6 +163,13 @@ public partial class MathPuzzlePage : ContentPage
     {
         base.OnAppearing();
 
+        // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
+        // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
+        // re-assert này sửa chrome ngay trong lifecycle của trang chính.
+        Shell.SetTabBarIsVisible(
+            this,
+            true);
+
         SubscribeDeveloperModeChanged();
         UpdateAiDiagnosticsVisibility();
 

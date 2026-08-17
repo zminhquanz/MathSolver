@@ -60,6 +60,10 @@ public partial class SettingsPage : ContentPage
     {
         base.OnAppearing();
 
+        Shell.SetTabBarIsVisible(
+            this,
+            false);
+
         AppThemeManager.ThemeChanged += OnThemeChanged;
         AppFontManager.FontChanged += OnFontChanged;
         AppLanguageManager.LanguageChanged += OnLanguageChanged;
@@ -82,6 +86,10 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.ThemeChanged -= OnThemeChanged;
         AppFontManager.FontChanged -= OnFontChanged;
         AppLanguageManager.LanguageChanged -= OnLanguageChanged;
+
+        Shell.SetTabBarIsVisible(
+            this,
+            true);
 
         base.OnDisappearing();
     }

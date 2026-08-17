@@ -100,6 +100,10 @@ public partial class HardwarePerformancePage : ContentPage
     {
         base.OnAppearing();
 
+        Shell.SetTabBarIsVisible(
+            this,
+            false);
+
         _isPageDisappearing =
             false;
 
@@ -145,6 +149,10 @@ public partial class HardwarePerformancePage : ContentPage
 
         AppLanguageManager.LanguageChanged -=
             OnLanguageChanged;
+
+        Shell.SetTabBarIsVisible(
+            this,
+            true);
 
         base.OnDisappearing();
     }

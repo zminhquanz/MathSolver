@@ -38,6 +38,13 @@ public partial class AppShell : Shell
 
     private bool _isShellChromeDimmed;
 
+    // Mỗi lần quay từ một Settings detail về tab chính, WinUI/MAUI đôi lúc
+    // hoàn tất logical Pop trước rồi mới cập nhật native Shell chrome. Khi
+    // outgoing page từng đặt Shell.TabBarIsVisible=false, native update muộn
+    // có thể làm hàng tab chính biến mất dù CurrentPage đã là trang chính.
+    // Version này hủy các re-assert cũ khi một navigation mới bắt đầu.
+    private int _mainTabBarRestoreVersion;
+
     private string _activeMainRoute =
         "CalculationPage";
 
@@ -216,6 +223,11 @@ public partial class AppShell : Shell
                 // tái tạo ImageButton/behavior sau mỗi lần navigation.
                 SetSettingsActionPresentation(
                     visible: false);
+
+                // Hủy mọi re-assert TabBar còn sót từ lần Back trước. Nếu không,
+                // một callback trễ có thể làm TabBar ló ra khi Settings detail
+                // mới vừa được mở.
+                CancelMainTabBarRestore();
 
                 // Chỉ có đúng một lệnh Shell navigation: từ tab hiện tại tới
                 // trang chi tiết. Không còn chuỗi ".." rồi push route mới.
@@ -940,6 +952,19 @@ public partial class AppShell : Shell
         SetSettingsActionPresentation(
             visible: !settingsOpen);
 
+        // Dùng CurrentPage làm nguồn sự thật cho TabBar. CurrentState.Location
+        // có thể trễ một nhịp trong đúng race PlatformView-null của WinUI,
+        // trong khi CurrentPage đã là tab chính. Vì vậy chỉ cần thấy một trong
+        // bốn main page là lập tức re-assert TabBar=true vài lần qua các frame.
+        if (IsMainTabPage(CurrentPage))
+        {
+            ScheduleMainTabBarRestore();
+        }
+        else
+        {
+            CancelMainTabBarRestore();
+        }
+
         UpdateSettingsAccessibilityText();
 
         // Không chạy animation trong Navigated. Mỗi trang tự quyết định
@@ -990,9 +1015,20 @@ public partial class AppShell : Shell
         Page? sourcePage = null)
     {
         if (_returningFromSettings ||
-            Shell.Current is null ||
-            !IsSettingsRouteOpen())
+            Shell.Current is null)
         {
+            return;
+        }
+
+        if (!IsSettingsRouteOpen())
+        {
+            // Có thể logical Pop của một lệnh trước đã hoàn tất nhưng native
+            // Shell chrome chưa kịp phục hồi. Không pop thêm; chỉ sửa TabBar.
+            if (IsMainTabPage(CurrentPage))
+            {
+                ScheduleMainTabBarRestore();
+            }
+
             return;
         }
 
@@ -1012,6 +1048,14 @@ public partial class AppShell : Shell
                 CurrentPage,
                 sourcePage))
         {
+            ReleaseSettingsTabBarOverrideIfDetached(
+                sourcePage);
+
+            if (IsMainTabPage(CurrentPage))
+            {
+                ScheduleMainTabBarRestore();
+            }
+
             return;
         }
 
@@ -1054,9 +1098,133 @@ public partial class AppShell : Shell
             _returningFromSettings = false;
 
             Dispatcher.Dispatch(() =>
+            {
                 SetSettingsActionPresentation(
-                    visible: !IsSettingsRouteOpen()));
+                    visible: !IsSettingsRouteOpen());
+
+                // Nếu logical pop đã thắng race thì outgoing detail không còn
+                // là CurrentPage. Xóa luôn attached override false trên page đó
+                // để một native callback trễ không thể áp lại trạng thái ẩn.
+                ReleaseSettingsTabBarOverrideIfDetached(
+                    sourcePage);
+
+                if (IsMainTabPage(CurrentPage))
+                {
+                    ScheduleMainTabBarRestore();
+                }
+            });
         }
+    }
+
+    private static bool IsMainTabPage(Page? page) =>
+        page is CalculationPage or
+            MathPuzzlePage or
+            FormulaPage or
+            MultiplicationTablePage;
+
+    private void ReleaseSettingsTabBarOverrideIfDetached(
+        Page? sourcePage)
+    {
+        if (sourcePage is null ||
+            ReferenceEquals(
+                CurrentPage,
+                sourcePage))
+        {
+            return;
+        }
+
+        // Detail page chỉ được quyền ẩn TabBar trong lúc nó thực sự active.
+        // Khi đã pop khỏi CurrentPage, trả attached property về true.
+        Shell.SetTabBarIsVisible(
+            sourcePage,
+            true);
+    }
+
+    private void CancelMainTabBarRestore()
+    {
+        unchecked
+        {
+            _mainTabBarRestoreVersion++;
+        }
+    }
+
+    private void ScheduleMainTabBarRestore()
+    {
+        int version;
+
+        unchecked
+        {
+            version =
+                ++_mainTabBarRestoreVersion;
+        }
+
+        // Re-assert ngay lập tức, rồi thêm vài lần sau các layout/composition
+        // turn của WinUI. Đây không phải polling dài hạn; tổng cửa sổ chỉ vài
+        // trăm ms, đủ phủ race native Shell chrome sau PopAsync.
+        RestoreMainTabBarVisibilityNow(
+            version);
+
+        _ = RestoreMainTabBarVisibilityAfterNavigationAsync(
+            version);
+    }
+
+    private async Task RestoreMainTabBarVisibilityAfterNavigationAsync(
+        int version)
+    {
+        int[] delays =
+        [
+            24,
+            56,
+            120,
+            240
+        ];
+
+        foreach (int delay in delays)
+        {
+            await Task.Delay(
+                delay);
+
+            if (version !=
+                _mainTabBarRestoreVersion)
+            {
+                return;
+            }
+
+            Dispatcher.Dispatch(() =>
+                RestoreMainTabBarVisibilityNow(
+                    version));
+        }
+    }
+
+    private void RestoreMainTabBarVisibilityNow(
+        int version)
+    {
+        if (version !=
+            _mainTabBarRestoreVersion)
+        {
+            return;
+        }
+
+        Page? currentPage =
+            CurrentPage;
+
+        if (!IsMainTabPage(
+                currentPage))
+        {
+            return;
+        }
+
+        // Native Shell chrome có state riêng. Nếu attached property của main
+        // page vốn đã là true thì gán true lần nữa có thể không phát
+        // PropertyChanged. Pulse false -> true trong cùng UI turn để buộc Shell
+        // đồng bộ lại nhưng final state vẫn là visible trước frame kế tiếp.
+        Shell.SetTabBarIsVisible(
+            currentPage,
+            false);
+
+        Shell.SetTabBarIsVisible(
+            currentPage,
+            true);
     }
 
 #if WINDOWS

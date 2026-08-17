@@ -42,6 +42,10 @@ public partial class AboutPage : ContentPage
     {
         base.OnAppearing();
 
+        Shell.SetTabBarIsVisible(
+            this,
+            false);
+
         UpdateAppInformation();
 
         if (!_hasPlayedEntryAnimation)
@@ -53,6 +57,15 @@ public partial class AboutPage : ContentPage
                 async () =>
                     await PlayPageEntryAnimationAsync());
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        Shell.SetTabBarIsVisible(
+            this,
+            true);
+
+        base.OnDisappearing();
     }
 
     protected override bool OnBackButtonPressed()
