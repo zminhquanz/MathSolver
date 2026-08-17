@@ -19,11 +19,41 @@
             x:Name="QuadraticContent"
             Style="{StaticResource SolverContentStyle}">
 
+            <!-- Chọn dạng phương trình -->
+            <Border Style="{StaticResource SolverCardStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="{localization:Translate Equation.ChooseType}"
+                        Style="{StaticResource SolverSectionTitleStyle}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            x:Name="LinearModeButton"
+                            Grid.Column="0"
+                            Text="{localization:Translate Equation.Mode.Linear}"
+                            Style="{StaticResource SolverChoiceButtonStyle}"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            TextColor="{DynamicResource TextPrimaryColor}"
+                            Clicked="OnLinearModeClicked" />
+
+                        <Button
+                            x:Name="QuadraticModeButton"
+                            Grid.Column="1"
+                            Text="{localization:Translate Equation.Mode.Quadratic}"
+                            Style="{StaticResource SolverChoiceButtonStyle}"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Clicked="OnQuadraticModeClicked" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
             <!-- Tiêu đề đồng bộ với Cơ bản, Phân số và Tìm x -->
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
 
                 <Label
+                    x:Name="HeroSymbolLabel"
                     Text="ax² + bx + c = 0"
                     Style="{StaticResource SolverHeroSymbolStyle}"
                     FontAttributes="Bold"
@@ -31,10 +61,12 @@
                     />
 
                 <Label
+                    x:Name="HeroTitleLabel"
                     Text="PHƯƠNG TRÌNH BẬC HAI"
                     Style="{StaticResource SolverHeroTitleStyle}" />
 
                 <Label
+                    x:Name="HeroSubtitleLabel"
                     Text="Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết"
                     Style="{StaticResource SolverHeroSubtitleStyle}" />
 
@@ -83,6 +115,7 @@
                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
+                                    x:Name="CoefficientADescriptionLabel"
                                     Text="Hệ số của x²"
                                     FontSize="14"
                                     HorizontalTextAlignment="Center"
@@ -145,6 +178,7 @@
                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
+                                    x:Name="CoefficientBDescriptionLabel"
                                     Text="Hệ số của x"
                                     FontSize="14"
                                     HorizontalTextAlignment="Center"
@@ -286,7 +320,7 @@
                         <Button
                             x:Name="CalculateQuadraticButton"
                             Grid.Column="0"
-                            Text="{localization:Translate Quadratic.Action}"
+                            Text="{localization:Translate Equation.Action}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
 
@@ -380,6 +414,7 @@
                         <VerticalStackLayout Spacing="7">
 
                             <Label
+                                x:Name="ResultMetricCaptionLabel"
                                 Text="Biệt thức"
                                 FontSize="15"
                                 HorizontalTextAlignment="Center"
@@ -647,6 +682,7 @@
                             VerticalOptions="Center">
 
                             <Label
+                                x:Name="GraphTitleLabel"
                                 Text="Đồ thị parabol"
                                 FontSize="20"
                                 FontAttributes="Bold"
@@ -729,6 +765,7 @@
                     </Border>
 
                     <Label
+                        x:Name="GraphHelpLabel"
                         Text="Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%."
                         FontSize="14"
                         HorizontalTextAlignment="Center"

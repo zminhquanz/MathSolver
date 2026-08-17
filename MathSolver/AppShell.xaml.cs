@@ -793,8 +793,9 @@ public partial class AppShell : Shell
             LocalizationService.TranslateKey(
                 "Tabs.TimesTables"));
 
-        // Shell/WinUI có thể đã giữ layout của title cũ. Invalidate cả Shell và
-        // TabBar để label mới được đo ngay, không đợi người dùng chọn tab khác.
+        // TabBar là ShellItem/BindableObject, không phải VisualElement nên không
+        // có InvalidateMeasure(). Chỉ invalidate AppShell (VisualElement) là đủ để
+        // ép Shell đo/layout lại sau khi các ShellContent.Title đã được re-assert.
         InvalidateMeasure();
     }
 

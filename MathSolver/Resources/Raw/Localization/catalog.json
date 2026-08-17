@@ -1319,7 +1319,7 @@
     },
     {
       "key": "Calculation.Tabs.Quadratic",
-      "source": "📈 Phương trình bậc 2",
+      "source": "📈 Phương trình",
       "mode": "exact"
     },
     {
@@ -1344,7 +1344,7 @@
     },
     {
       "key": "Settings.NumberDisplay.SummaryFull",
-      "source": "Đang bật · Áp dụng cho Phép tính, Trung bình cộng, Phân số, Tìm x, Bậc hai và Hình học",
+      "source": "Đang bật · Áp dụng cho Phép tính, Trung bình cộng, Phân số, Tìm x, Phương trình và Hình học",
       "mode": "exact"
     },
     {
@@ -5955,6 +5955,146 @@
     {
       "key": "Quiz.AiValidationRuntimeErrorFallback",
       "source": "Có lỗi runtime khi tạo hoặc kiểm tra đề AI.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.ChooseType",
+      "source": "Chọn dạng phương trình",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Mode.Linear",
+      "source": "x  Phương trình bậc 1",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Mode.Quadratic",
+      "source": "x²  Phương trình bậc 2",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Action",
+      "source": "🧮 Tính nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Title",
+      "source": "PHƯƠNG TRÌNH BẬC NHẤT",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Subtitle",
+      "source": "Giải ax + b = 0 • a ≠ 0 • Nghiệm dùng QuadDouble",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Title",
+      "source": "PHƯƠNG TRÌNH BẬC HAI",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Subtitle",
+      "source": "Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.CoefficientA.Description",
+      "source": "Hệ số của x",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.CoefficientB.Description",
+      "source": "Hệ số tự do",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.CoefficientA.Description",
+      "source": "Hệ số của x²",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.CoefficientB.Description",
+      "source": "Hệ số của x",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.ResultMetric",
+      "source": "Công thức nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.ResultMetric",
+      "source": "Biệt thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Graph.Title",
+      "source": "Đồ thị đường thẳng",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Graph.Title",
+      "source": "Đồ thị parabol",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Graph.Help",
+      "source": "Đồ thị y = ax + b trình bày theo dạng SGK, có trục tọa độ, giao điểm với Ox là nghiệm và giao điểm với Oy. Kéo chuột để di chuyển; cuộn con lăn để thu phóng; hoặc dùng −, + và 100%.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Graph.Help",
+      "source": "Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Graph.Empty",
+      "source": "Nhập hệ số và tính nghiệm để hiển thị đồ thị.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.ANonZero",
+      "source": "Hệ số a phải khác 0 đối với phương trình bậc nhất ax + b = 0.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.RootNotFiniteQuadDouble",
+      "source": "Nghiệm không thể biểu diễn hữu hạn bằng QuadDouble. Ứng dụng không thể tiếp tục tính toán.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.UniqueRoot",
+      "source": "a ≠ 0: phương trình có một nghiệm duy nhất.",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Step1.Title",
+      "source": "Bước 1. Xác định các hệ số",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Step1.Body",
+      "source": "Phương trình có dạng ax + b = 0.\nTa có: a = {0}, b = {1}.\nPhương trình: {2}",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Step2.Title",
+      "source": "Bước 2. Chuyển hạng tử tự do",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Step2.Body",
+      "source": "Chuyển b sang vế phải:\n{0}x = −({1})\n{0}x = {2}",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Step3.Title",
+      "source": "Bước 3. Chia hai vế cho a và kết luận",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Linear.Step3.Body",
+      "source": "x = {0} ÷ ({1})\nx = {2}\nVậy nghiệm của phương trình là x = {2}.",
       "mode": "exact"
     }
   ],

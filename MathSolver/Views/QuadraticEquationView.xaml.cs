@@ -12,7 +12,15 @@ namespace MathSolver.Views;
 
 public partial class QuadraticEquationView : LocalizedSolverView
 {
+    private enum EquationMode
+    {
+        Linear,
+        Quadratic
+    }
+
+    private readonly LinearEquationEngine _linearEngine = new();
     private readonly QuadraticEquationEngine _quadraticEngine = new();
+    private EquationMode _equationMode = EquationMode.Quadratic;
     private const string Int128RangeText =
         "−170,141,183,460,469,231,731,687,303,715,884,105,728 đến " +
         "170,141,183,460,469,231,731,687,303,715,884,105,727";
@@ -22,6 +30,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
     private const int OctoDoubleDisplaySignificantDigits =
         OctoDouble.SignificantDigits;
+
+    private const int QuadDoubleDisplaySignificantDigits =
+        QuadDouble.SignificantDigits;
 
     // Từ 19 chữ số trở lên, giao diện rút gọn sang dạng khoa học.
     // Dictionary vẫn giữ chuỗi Int128 đầy đủ để khi focus hoặc tính toán,
@@ -49,6 +60,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
     private readonly ParabolaGraphDrawable
         _parabolaGraphDrawable =
+            new();
+
+    private readonly LinearEquationGraphDrawable
+        _linearGraphDrawable =
             new();
 
     private Microsoft.Maui.Graphics.PointF?
@@ -92,6 +107,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         InitializeLocalization();
 
+        ApplyEquationMode(
+            EquationMode.Quadratic,
+            clearResults: false);
+
         UpdateGraphStatus();
 
         ConfigureExpandedLayout();
@@ -100,6 +119,135 @@ public partial class QuadraticEquationView : LocalizedSolverView
             false;
 
         UpdateEquationPreview();
+    }
+
+    protected override void RefreshLocalizedContent()
+    {
+        bool hadVisibleResult =
+            ResultBorder?.IsVisible == true;
+
+        base.RefreshLocalizedContent();
+        ApplyModeLocalizedText();
+
+        if (hadVisibleResult)
+        {
+            OnCalculateClicked(
+                this,
+                EventArgs.Empty);
+        }
+    }
+
+    private static string T(string key) =>
+        LocalizationService.TranslateKey(key);
+
+    private void OnLinearModeClicked(
+        object? sender,
+        EventArgs e)
+    {
+        ApplyEquationMode(
+            EquationMode.Linear,
+            clearResults: true);
+    }
+
+    private void OnQuadraticModeClicked(
+        object? sender,
+        EventArgs e)
+    {
+        ApplyEquationMode(
+            EquationMode.Quadratic,
+            clearResults: true);
+    }
+
+    private void ApplyEquationMode(
+        EquationMode mode,
+        bool clearResults)
+    {
+        _equationMode = mode;
+
+        SelectionButtonStyler.Select(
+            mode == EquationMode.Linear
+                ? LinearModeButton
+                : QuadraticModeButton,
+            LinearModeButton,
+            QuadraticModeButton);
+
+        bool isLinear =
+            mode == EquationMode.Linear;
+
+        CoefficientCPanel.IsVisible =
+            !isLinear;
+
+        ParabolaGraphicsView.Drawable =
+            isLinear
+                ? _linearGraphDrawable
+                : _parabolaGraphDrawable;
+
+        ApplyModeLocalizedText();
+
+        if (_isCompactLayout == true)
+        {
+            ConfigureCompactLayout();
+        }
+        else
+        {
+            ConfigureExpandedLayout();
+        }
+
+        if (clearResults)
+        {
+            HideResultAndError();
+            GraphBorder.IsVisible = false;
+        }
+
+        UpdateEquationPreview();
+        UpdateGraphStatus();
+        ParabolaGraphicsView.Invalidate();
+    }
+
+    private void ApplyModeLocalizedText()
+    {
+        bool isLinear =
+            _equationMode == EquationMode.Linear;
+
+        HeroSymbolLabel.Text =
+            isLinear
+                ? "ax + b = 0"
+                : "ax² + bx + c = 0";
+
+        HeroTitleLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.Title"
+                : "Equation.Quadratic.Title");
+
+        HeroSubtitleLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.Subtitle"
+                : "Equation.Quadratic.Subtitle");
+
+        CoefficientADescriptionLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.CoefficientA.Description"
+                : "Equation.Quadratic.CoefficientA.Description");
+
+        CoefficientBDescriptionLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.CoefficientB.Description"
+                : "Equation.Quadratic.CoefficientB.Description");
+
+        ResultMetricCaptionLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.ResultMetric"
+                : "Equation.Quadratic.ResultMetric");
+
+        GraphTitleLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.Graph.Title"
+                : "Equation.Quadratic.Graph.Title");
+
+        GraphHelpLabel.Text = T(
+            isLinear
+                ? "Equation.Linear.Graph.Help"
+                : "Equation.Quadratic.Graph.Help");
     }
 
     protected override void OnSolverLoaded()
@@ -359,9 +507,15 @@ public partial class QuadraticEquationView : LocalizedSolverView
         Dispatcher.Dispatch(
             () =>
             {
-                _parabolaGraphDrawable.SetDarkTheme(
+                bool isDarkTheme =
                     e.RequestedTheme ==
-                    AppTheme.Dark);
+                    AppTheme.Dark;
+
+                _parabolaGraphDrawable.SetDarkTheme(
+                    isDarkTheme);
+
+                _linearGraphDrawable.SetDarkTheme(
+                    isDarkTheme);
 
                 ParabolaGraphicsView.Invalidate();
             });
@@ -373,9 +527,86 @@ public partial class QuadraticEquationView : LocalizedSolverView
             Application.Current?.RequestedTheme ??
             AppTheme.Light;
 
-        _parabolaGraphDrawable.SetDarkTheme(
+        bool isDarkTheme =
             requestedTheme ==
-            AppTheme.Dark);
+            AppTheme.Dark;
+
+        _parabolaGraphDrawable.SetDarkTheme(
+            isDarkTheme);
+
+        _linearGraphDrawable.SetDarkTheme(
+            isDarkTheme);
+    }
+
+    private bool CurrentGraphHasEquation =>
+        _equationMode == EquationMode.Linear
+            ? _linearGraphDrawable.HasEquation
+            : _parabolaGraphDrawable.HasEquation;
+
+    private int CurrentGraphZoomPercent =>
+        _equationMode == EquationMode.Linear
+            ? _linearGraphDrawable.ZoomPercent
+            : _parabolaGraphDrawable.ZoomPercent;
+
+    private bool ZoomCurrentGraphAtPixel(
+        float pixelX,
+        float pixelY,
+        bool zoomIn) =>
+        _equationMode == EquationMode.Linear
+            ? _linearGraphDrawable.ZoomAtPixel(
+                pixelX,
+                pixelY,
+                zoomIn)
+            : _parabolaGraphDrawable.ZoomAtPixel(
+                pixelX,
+                pixelY,
+                zoomIn);
+
+    private bool PanCurrentGraphByPixels(
+        float deltaX,
+        float deltaY) =>
+        _equationMode == EquationMode.Linear
+            ? _linearGraphDrawable.PanByPixels(
+                deltaX,
+                deltaY)
+            : _parabolaGraphDrawable.PanByPixels(
+                deltaX,
+                deltaY);
+
+    private void ZoomCurrentGraphIn()
+    {
+        if (_equationMode == EquationMode.Linear)
+        {
+            _linearGraphDrawable.ZoomIn();
+        }
+        else
+        {
+            _parabolaGraphDrawable.ZoomIn();
+        }
+    }
+
+    private void ZoomCurrentGraphOut()
+    {
+        if (_equationMode == EquationMode.Linear)
+        {
+            _linearGraphDrawable.ZoomOut();
+        }
+        else
+        {
+            _parabolaGraphDrawable.ZoomOut();
+        }
+    }
+
+    private void ResetCurrentGraphZoom()
+    {
+        if (_equationMode == EquationMode.Linear)
+        {
+            _linearGraphDrawable.ResetZoom();
+        }
+        else
+        {
+            _parabolaGraphDrawable.ResetZoom();
+        }
     }
 
     private void OnParabolaGraphicsViewHandlerChanged(
@@ -457,7 +688,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         object? sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        if (!_parabolaGraphDrawable.HasEquation ||
+        if (!CurrentGraphHasEquation ||
             _windowsGraphElement is null)
         {
             return;
@@ -481,7 +712,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         }
 
         bool zoomChanged =
-            _parabolaGraphDrawable.ZoomAtPixel(
+            ZoomCurrentGraphAtPixel(
                 (float)pointerPoint.Position.X,
                 (float)pointerPoint.Position.Y,
                 zoomIn:
@@ -548,8 +779,13 @@ public partial class QuadraticEquationView : LocalizedSolverView
             new ColumnDefinition(
                 GridLength.Star));
 
+        int coefficientCount =
+            _equationMode == EquationMode.Linear
+                ? 2
+                : 3;
+
         for (int index = 0;
-             index < 3;
+             index < coefficientCount;
              index++)
         {
             CoefficientGrid.RowDefinitions.Add(
@@ -567,10 +803,13 @@ public partial class QuadraticEquationView : LocalizedSolverView
             row: 1,
             column: 0);
 
-        SetCoefficientPanelPosition(
-            CoefficientCPanel,
-            row: 2,
-            column: 0);
+        if (_equationMode == EquationMode.Quadratic)
+        {
+            SetCoefficientPanelPosition(
+                CoefficientCPanel,
+                row: 2,
+                column: 0);
+        }
 
         CoefficientGrid.ColumnSpacing =
             0;
@@ -584,8 +823,13 @@ public partial class QuadraticEquationView : LocalizedSolverView
         CoefficientGrid.ColumnDefinitions.Clear();
         CoefficientGrid.RowDefinitions.Clear();
 
+        int coefficientCount =
+            _equationMode == EquationMode.Linear
+                ? 2
+                : 3;
+
         for (int index = 0;
-             index < 3;
+             index < coefficientCount;
              index++)
         {
             CoefficientGrid.ColumnDefinitions.Add(
@@ -607,10 +851,13 @@ public partial class QuadraticEquationView : LocalizedSolverView
             row: 0,
             column: 1);
 
-        SetCoefficientPanelPosition(
-            CoefficientCPanel,
-            row: 0,
-            column: 2);
+        if (_equationMode == EquationMode.Quadratic)
+        {
+            SetCoefficientPanelPosition(
+                CoefficientCPanel,
+                row: 0,
+                column: 2);
+        }
 
         CoefficientGrid.ColumnSpacing =
             12;
@@ -878,6 +1125,75 @@ public partial class QuadraticEquationView : LocalizedSolverView
     {
         HideResultAndError();
 
+        if (_equationMode == EquationMode.Linear)
+        {
+            CalculateLinearEquation();
+        }
+        else
+        {
+            CalculateQuadraticEquation();
+        }
+    }
+
+    private void CalculateLinearEquation()
+    {
+        if (!TryReadCoefficient(
+                CoefficientAEntry,
+                GetCoefficientFieldName(
+                    CoefficientAEntry),
+                out Int128 a))
+        {
+            CoefficientAEntry.Focus();
+            return;
+        }
+
+        if (!TryReadCoefficient(
+                CoefficientBEntry,
+                GetCoefficientFieldName(
+                    CoefficientBEntry),
+                out Int128 b))
+        {
+            CoefficientBEntry.Focus();
+            return;
+        }
+
+        if (a == Int128.Zero)
+        {
+            ShowError(
+                T("Equation.Linear.ANonZero"));
+
+            CoefficientAEntry.Focus();
+            return;
+        }
+
+        ApplyCoefficientEntryDisplayValue(
+            CoefficientAEntry,
+            a);
+
+        ApplyCoefficientEntryDisplayValue(
+            CoefficientBEntry,
+            b);
+
+        LinearEquationResult calculation =
+            _linearEngine.Solve(a, b);
+
+        if (!calculation.IsFinite)
+        {
+            ShowError(
+                T("Equation.Linear.RootNotFiniteQuadDouble"));
+            return;
+        }
+
+        ShowLinearSolution(
+            a,
+            b,
+            calculation);
+
+        ClearTransientFocus();
+    }
+
+    private void CalculateQuadraticEquation()
+    {
         if (!TryReadCoefficient(
                 CoefficientAEntry,
                 GetCoefficientFieldName(
@@ -936,9 +1252,8 @@ public partial class QuadraticEquationView : LocalizedSolverView
         if (!calculation.IsFinite)
         {
             ShowError(
-                "Kết quả Δ không thể biểu diễn hữu hạn bằng " +
-                "độ chính xác Octo Double. " +
-                "Ứng dụng không thể tiếp tục tính toán.");
+                LocalizationService.TranslateKey(
+                    "Quadratic.DeltaNotFiniteOctoDouble"));
 
             return;
         }
@@ -1211,6 +1526,13 @@ public partial class QuadraticEquationView : LocalizedSolverView
             GetPreviewCoefficientText(
                 CoefficientBEntry,
                 "b");
+
+        if (_equationMode == EquationMode.Linear)
+        {
+            EquationPreviewLabel.Text =
+                $"({aText})x + ({bText}) = 0";
+            return;
+        }
 
         string cText =
             GetPreviewCoefficientText(
@@ -1687,6 +2009,101 @@ public partial class QuadraticEquationView : LocalizedSolverView
             : radicandText;
     }
 
+    private void ShowLinearSolution(
+        Int128 a,
+        Int128 b,
+        LinearEquationResult calculation)
+    {
+        string aText =
+            FormatNumber(a);
+
+        string bText =
+            FormatNumber(b);
+
+        string rootText =
+            FormatQuadDouble(
+                calculation.Root);
+
+        string equation =
+            BuildLinearEquationText(
+                a,
+                b);
+
+        ResultEquationLabel.Text =
+            equation;
+
+        ResultMetricCaptionLabel.Text =
+            T("Equation.Linear.ResultMetric");
+
+        DeltaValueLabel.Text =
+            "x = −b ÷ a";
+
+        ClassificationLabel.Text =
+            T("Equation.Linear.UniqueRoot");
+
+        RootsLabel.Text =
+            $"x = {rootText}";
+
+        SetResultStateColors(
+            hasRealRoots: true);
+
+        Step1TitleLabel.Text =
+            T("Equation.Linear.Step1.Title");
+
+        Step1BodyLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                T("Equation.Linear.Step1.Body"),
+                aText,
+                bText,
+                equation);
+
+        Step2TitleLabel.Text =
+            T("Equation.Linear.Step2.Title");
+
+        Step2BodyLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                T("Equation.Linear.Step2.Body"),
+                aText,
+                bText,
+                FormatIntegerForDisplay(
+                    -(BigInteger)b));
+
+        Step3Border.IsVisible =
+            true;
+
+        Step3TitleLabel.Text =
+            T("Equation.Linear.Step3.Title");
+
+        Step3BodyLabel.Text =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                T("Equation.Linear.Step3.Body"),
+                FormatIntegerForDisplay(
+                    -(BigInteger)b),
+                aText,
+                rootText);
+
+        Step4Border.IsVisible =
+            false;
+
+        ResetStep4MathPresentation();
+
+        ShowLinearGraph(
+            a,
+            b);
+
+        ErrorBorder.IsVisible =
+            false;
+
+        ResultBorder.IsVisible =
+            true;
+
+        SolutionBorder.IsVisible =
+            true;
+    }
+
     private void ShowSolution(
         Int128 a,
         Int128 b,
@@ -1907,7 +2324,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         _lastGraphPointer =
             currentPoint;
 
-        if (_parabolaGraphDrawable.PanByPixels(
+        if (PanCurrentGraphByPixels(
                 deltaX,
                 deltaY))
         {
@@ -1931,6 +2348,30 @@ public partial class QuadraticEquationView : LocalizedSolverView
             null;
     }
 
+    private void ShowLinearGraph(
+        Int128 a,
+        Int128 b)
+    {
+        _lastGraphPointer =
+            null;
+
+        ParabolaGraphicsView.Drawable =
+            _linearGraphDrawable;
+
+        _linearGraphDrawable.SetEquation(
+            a,
+            b);
+
+        _linearGraphDrawable.ResetZoom();
+
+        GraphBorder.IsVisible =
+            true;
+
+        UpdateGraphStatus();
+
+        ParabolaGraphicsView.Invalidate();
+    }
+
     private void ShowParabolaGraph(
         Int128 a,
         Int128 b,
@@ -1938,6 +2379,9 @@ public partial class QuadraticEquationView : LocalizedSolverView
     {
         _lastGraphPointer =
             null;
+
+        ParabolaGraphicsView.Drawable =
+            _parabolaGraphDrawable;
 
         _parabolaGraphDrawable.SetEquation(
             a,
@@ -1958,12 +2402,12 @@ public partial class QuadraticEquationView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        if (!_parabolaGraphDrawable.HasEquation)
+        if (!CurrentGraphHasEquation)
         {
             return;
         }
 
-        _parabolaGraphDrawable.ZoomIn();
+        ZoomCurrentGraphIn();
 
         UpdateGraphStatus();
 
@@ -1974,12 +2418,12 @@ public partial class QuadraticEquationView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        if (!_parabolaGraphDrawable.HasEquation)
+        if (!CurrentGraphHasEquation)
         {
             return;
         }
 
-        _parabolaGraphDrawable.ZoomOut();
+        ZoomCurrentGraphOut();
 
         UpdateGraphStatus();
 
@@ -1990,7 +2434,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        if (!_parabolaGraphDrawable.HasEquation)
+        if (!CurrentGraphHasEquation)
         {
             return;
         }
@@ -1998,7 +2442,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         _lastGraphPointer =
             null;
 
-        _parabolaGraphDrawable.ResetZoom();
+        ResetCurrentGraphZoom();
 
         UpdateGraphStatus();
 
@@ -2008,7 +2452,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
     private void UpdateGraphStatus()
     {
         int zoomPercent =
-            _parabolaGraphDrawable.ZoomPercent;
+            CurrentGraphZoomPercent;
 
         GraphStatusLabel.Text =
             $"Zoom: {zoomPercent}%";
@@ -2034,6 +2478,29 @@ public partial class QuadraticEquationView : LocalizedSolverView
             hasRealRoots
                 ? "TextPrimaryColor"
                 : "ErrorColor");
+    }
+
+    private static string BuildLinearEquationText(
+        Int128 a,
+        Int128 b)
+    {
+        var builder =
+            new StringBuilder();
+
+        AppendLeadingTerm(
+            builder,
+            a,
+            "x");
+
+        AppendFollowingTerm(
+            builder,
+            b,
+            string.Empty);
+
+        builder.Append(
+            " = 0");
+
+        return builder.ToString();
     }
 
     private static string BuildEquationText(
@@ -2171,6 +2638,102 @@ public partial class QuadraticEquationView : LocalizedSolverView
         return ((BigInteger)value).ToString(
             "N0",
             CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatQuadDouble(
+        QuadDouble value)
+    {
+        string text =
+            value.ToGeneralString(
+                QuadDoubleDisplaySignificantDigits,
+                scientificUpperExponent:
+                ResultNumberDisplayMode.ShowFullNumbers
+                    ? int.MaxValue
+                    : ScientificDisplayDigitThreshold,
+                scientificLowerExponent:
+                -10);
+
+        int exponentSeparatorIndex =
+            text.IndexOf(
+                'e');
+
+        if (exponentSeparatorIndex >= 0)
+        {
+            string mantissaText =
+                RoundDecimalText(
+                    text[..exponentSeparatorIndex],
+                    MaxResultDecimalPlaces);
+
+            int exponent =
+                int.Parse(
+                    text[(exponentSeparatorIndex + 1)..],
+                    CultureInfo.InvariantCulture);
+
+            if (mantissaText == "10")
+            {
+                mantissaText = "1";
+                exponent++;
+            }
+            else if (mantissaText == "-10")
+            {
+                mantissaText = "-1";
+                exponent++;
+            }
+
+            if (mantissaText == "1")
+            {
+                return $"10{ToSuperscript(exponent)}";
+            }
+
+            if (mantissaText == "-1")
+            {
+                return $"−10{ToSuperscript(exponent)}";
+            }
+
+            mantissaText =
+                mantissaText.Replace(
+                    "-",
+                    "−",
+                    StringComparison.Ordinal);
+
+            return
+                $"{mantissaText} × " +
+                $"10{ToSuperscript(exponent)}";
+        }
+
+        text =
+            RoundDecimalText(
+                text,
+                MaxResultDecimalPlaces);
+
+        bool isNegative =
+            text.StartsWith(
+                '-');
+
+        string unsignedText =
+            isNegative
+                ? text[1..]
+                : text;
+
+        int decimalSeparatorIndex =
+            unsignedText.IndexOf(
+                '.');
+
+        string integerPart =
+            decimalSeparatorIndex >= 0
+                ? unsignedText[..decimalSeparatorIndex]
+                : unsignedText;
+
+        string fractionPart =
+            decimalSeparatorIndex >= 0
+                ? unsignedText[decimalSeparatorIndex..]
+                : string.Empty;
+
+        return
+            (isNegative ? "−" : string.Empty) +
+            GroupIntegerDigits(
+                integerPart) +
+            fractionPart;
     }
 
     private static string FormatOctoDouble(

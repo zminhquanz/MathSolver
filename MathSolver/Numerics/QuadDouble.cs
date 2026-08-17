@@ -212,6 +212,52 @@ public readonly struct QuadDouble :
     }
 
     /// <summary>
+    /// Chuyển Int128 sang QuadDouble theo từng limb 32 bit, tránh ép toàn bộ
+    /// giá trị qua double và giữ chính xác toàn bộ 128 bit đầu vào.
+    /// </summary>
+    public static QuadDouble FromInt128(
+        Int128 value)
+    {
+        if (value == 0)
+        {
+            return Zero;
+        }
+
+        bool negative = value < 0;
+
+        // Xử lý được cả Int128.MinValue mà không làm tràn khi đổi dấu.
+        UInt128 magnitude = negative
+            ? (UInt128)(-(value + 1)) + 1
+            : (UInt128)value;
+
+        Span<uint> limbs = stackalloc uint[4];
+        int limbCount = 0;
+
+        while (magnitude != 0)
+        {
+            limbs[limbCount++] = (uint)magnitude;
+            magnitude >>= 32;
+        }
+
+        QuadDouble result = Zero;
+
+        for (int index = limbCount - 1;
+             index >= 0;
+             index--)
+        {
+            result =
+                FusedMultiplyAdd(
+                    result,
+                    TwoPow32,
+                    (double)limbs[index]);
+        }
+
+        return negative
+            ? -result
+            : result;
+    }
+
+    /// <summary>
     /// Tính left * right + addend và chỉ làm tròn về bốn thành phần
     /// sau khi đã gom toàn bộ tích riêng phần và addend.
     /// </summary>
