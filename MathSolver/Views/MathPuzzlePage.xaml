@@ -349,6 +349,41 @@
                                     </Border>
 
                                     <Border
+                                        x:Name="AiValidationStatusBorder"
+                                        IsVisible="False"
+                                        Padding="12"
+                                        BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                        Stroke="{DynamicResource BorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                            <Label
+                                                x:Name="AiValidationStatusIconLabel"
+                                                Grid.Column="0"
+                                                Text="⏳"
+                                                FontSize="22"
+                                                VerticalOptions="Start" />
+
+                                            <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                                <Label
+                                                    x:Name="AiValidationStatusTitleLabel"
+                                                    FontSize="14"
+                                                    FontAttributes="Bold"
+                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                <Label
+                                                    x:Name="AiValidationStatusDetailLabel"
+                                                    FontSize="13"
+                                                    LineHeight="1.22"
+                                                    LineBreakMode="WordWrap"
+                                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+
+                                    <Border
                                         x:Name="AiDiagnosticsSectionBorder"
                                         Padding="12"
                                         BackgroundColor="{DynamicResource SurfaceColor}"

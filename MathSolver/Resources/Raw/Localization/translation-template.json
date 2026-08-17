@@ -1231,7 +1231,17 @@
     "Quiz.DownloadPathPopupFolderPickerFailedTitle": "Không mở được trình chọn thư mục",
     "Quiz.DownloadPathPopupFolderPickerFailedMessage": "Không thể mở hoặc đọc thư mục đã chọn. Hãy thử chọn một thư mục khác.",
     "Quiz.DownloadPathPopupFolderNotWritableTitle": "Không thể lưu vào thư mục này",
-    "Quiz.DownloadPathPopupFolderNotWritableMessage": "Math Solver không có quyền ghi file vào thư mục đã chọn. Hãy chọn một thư mục khác có quyền ghi."
+    "Quiz.DownloadPathPopupFolderNotWritableMessage": "Math Solver không có quyền ghi file vào thư mục đã chọn. Hãy chọn một thư mục khác có quyền ghi.",
+    "Quiz.AiValidationCheckingTitle": "Đang kiểm tra đề AI",
+    "Quiz.AiValidationCheckingDetail": "C# đang parse và validation đề ở lần {0}/{1}.",
+    "Quiz.AiValidationValidTitle": "Đề AI hợp lệ",
+    "Quiz.AiValidationValidDetail": "Validation thành công ở lần {0}/{1}. Dữ kiện, đơn vị và quan hệ toán đã được C# chấp nhận.",
+    "Quiz.AiValidationInvalidTitle": "Đề AI chưa hợp lệ",
+    "Quiz.AiValidationInvalidFallback": "Đề không vượt qua validation. Model cần tạo lại câu khác.",
+    "Quiz.AiValidationRetryTitle": "Đề chưa hợp lệ — đang tạo lại",
+    "Quiz.AiValidationGenerationFailedTitle": "Không tạo được đề hợp lệ",
+    "Quiz.AiValidationRuntimeErrorTitle": "Validation bị gián đoạn",
+    "Quiz.AiValidationRuntimeErrorFallback": "Có lỗi runtime khi tạo hoặc kiểm tra đề AI."
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

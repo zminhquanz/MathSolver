@@ -2147,12 +2147,15 @@ public partial class MathPuzzlePage : ContentPage
     {
         _llmRawOutputs.Clear();
         _llmValidationDiagnostics.Clear();
-
         LlmRawJsonEditor.Text =
             TranslateQuiz("Quiz.DiagnosticsNoJson");
 
         LlmValidationLogEditor.Text =
             TranslateQuiz("Quiz.DiagnosticsNoLog");
+
+        AiValidationStatusBorder.IsVisible = false;
+        AiValidationStatusTitleLabel.Text = string.Empty;
+        AiValidationStatusDetailLabel.Text = string.Empty;
     }
 
     private void UpdateLlmRawOutput(
@@ -2188,6 +2191,7 @@ public partial class MathPuzzlePage : ContentPage
 
         _llmValidationDiagnostics.Add(diagnostic);
         RenderLlmValidationLog();
+        UpdateLlmValidationStatus(diagnostic);
     }
 
     private void ApplyLlmAttemptReports(
@@ -2230,6 +2234,122 @@ public partial class MathPuzzlePage : ContentPage
                     FormatLlmJsonForDisplay(entry.Value)));
 
         RenderLlmValidationLog();
+
+        LlmQuizDiagnostic? lastDiagnostic =
+            reports
+                .OrderBy(report => report.Attempt)
+                .SelectMany(report => report.Diagnostics)
+                .LastOrDefault();
+
+        if (lastDiagnostic is not null)
+        {
+            UpdateLlmValidationStatus(lastDiagnostic);
+        }
+    }
+
+    private void UpdateLlmValidationStatus(
+        LlmQuizDiagnostic diagnostic)
+    {
+        switch (diagnostic.Event)
+        {
+            case LlmQuizDiagnosticEvent.JsonReceived:
+            case LlmQuizDiagnosticEvent.ParseSucceeded:
+                ShowLlmValidationStatus(
+                    "⏳",
+                    "Quiz.AiValidationCheckingTitle",
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        TranslateQuiz("Quiz.AiValidationCheckingDetail"),
+                        diagnostic.Attempt,
+                        diagnostic.MaximumAttempts),
+                    "PrimarySoftColor",
+                    "PrimaryBorderBrush",
+                    "PrimaryColor");
+                break;
+
+            case LlmQuizDiagnosticEvent.ParseFailed:
+            case LlmQuizDiagnosticEvent.ValidationFailed:
+                ShowLlmValidationStatus(
+                    "✕",
+                    "Quiz.AiValidationInvalidTitle",
+                    diagnostic.Detail ??
+                        TranslateQuiz("Quiz.AiValidationInvalidFallback"),
+                    "DangerSoftColor",
+                    "DangerBorderBrush",
+                    "DangerColor");
+                break;
+
+            case LlmQuizDiagnosticEvent.RetryScheduled:
+                ShowLlmValidationStatus(
+                    "↻",
+                    "Quiz.AiValidationRetryTitle",
+                    diagnostic.Detail ??
+                        TranslateQuiz("Quiz.AiValidationInvalidFallback"),
+                    "WarningSoftColor",
+                    "WarningBorderBrush",
+                    "WarningColor");
+                break;
+
+            case LlmQuizDiagnosticEvent.ValidationSucceeded:
+                ShowLlmValidationStatus(
+                    "✓",
+                    "Quiz.AiValidationValidTitle",
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        TranslateQuiz("Quiz.AiValidationValidDetail"),
+                        diagnostic.Attempt,
+                        diagnostic.MaximumAttempts),
+                    "SuccessSoftColor",
+                    "SuccessBorderBrush",
+                    "SuccessColor");
+                break;
+
+            case LlmQuizDiagnosticEvent.GenerationFailed:
+                ShowLlmValidationStatus(
+                    "✕",
+                    "Quiz.AiValidationGenerationFailedTitle",
+                    diagnostic.Detail ??
+                        TranslateQuiz("Quiz.AiValidationInvalidFallback"),
+                    "DangerSoftColor",
+                    "DangerBorderBrush",
+                    "DangerColor");
+                break;
+
+            case LlmQuizDiagnosticEvent.RuntimeError:
+                ShowLlmValidationStatus(
+                    "!",
+                    "Quiz.AiValidationRuntimeErrorTitle",
+                    diagnostic.Detail ??
+                        TranslateQuiz("Quiz.AiValidationRuntimeErrorFallback"),
+                    "DangerSoftColor",
+                    "DangerBorderBrush",
+                    "DangerColor");
+                break;
+        }
+    }
+
+    private void ShowLlmValidationStatus(
+        string icon,
+        string titleKey,
+        string detail,
+        string backgroundResourceKey,
+        string borderResourceKey,
+        string foregroundResourceKey)
+    {
+        AiValidationStatusBorder.IsVisible = true;
+        AiValidationStatusIconLabel.Text = icon;
+        AiValidationStatusTitleLabel.Text = TranslateQuiz(titleKey);
+        AiValidationStatusDetailLabel.Text = detail;
+
+        AiValidationStatusBorder.SetDynamicResource(
+            Border.BackgroundColorProperty,
+            backgroundResourceKey);
+        AiValidationStatusBorder.SetDynamicResource(
+            Border.StrokeProperty,
+            borderResourceKey);
+        AiValidationStatusTitleLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            foregroundResourceKey);
     }
 
     private static string FormatLlmJsonForDisplay(

@@ -5906,6 +5906,56 @@
       "key": "Quiz.DownloadPathPopupFolderNotWritableMessage",
       "source": "Math Solver không có quyền ghi file vào thư mục đã chọn. Hãy chọn một thư mục khác có quyền ghi.",
       "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationCheckingTitle",
+      "source": "Đang kiểm tra đề AI",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationCheckingDetail",
+      "source": "C# đang parse và validation đề ở lần {0}/{1}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationValidTitle",
+      "source": "Đề AI hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationValidDetail",
+      "source": "Validation thành công ở lần {0}/{1}. Dữ kiện, đơn vị và quan hệ toán đã được C# chấp nhận.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationInvalidTitle",
+      "source": "Đề AI chưa hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationInvalidFallback",
+      "source": "Đề không vượt qua validation. Model cần tạo lại câu khác.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationRetryTitle",
+      "source": "Đề chưa hợp lệ — đang tạo lại",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationGenerationFailedTitle",
+      "source": "Không tạo được đề hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationRuntimeErrorTitle",
+      "source": "Validation bị gián đoạn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiValidationRuntimeErrorFallback",
+      "source": "Có lỗi runtime khi tạo hoặc kiểm tra đề AI.",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

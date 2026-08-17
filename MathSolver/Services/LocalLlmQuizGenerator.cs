@@ -966,8 +966,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must never contain a number, calculation, equals sign, result, or answer. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Thông thường solution_lead không chứa số; RIÊNG bài tỉ lệ thuận/nghịch, được phép nhắc lại duy nhất dữ kiện C nếu số đó chỉ dùng để xác định đại lượng cần tìm, ví dụ “Trọng lượng của 9 bao gạo là:”. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -1266,6 +1266,13 @@ internal static class LlmQuizPromptBuilder
             contract.Scenario,
             language);
 
+        string currencyRule =
+            contract.Scenario == ProportionScenarioKind.Shopping
+                ? language == AppLanguage.Vietnamese
+                    ? "- Với bài tiền tệ tiếng Việt, giữ đơn vị đồng đúng như contract C#."
+                    : "- For an English money problem, use US dollars naturally: write the monetary fact with the $ symbol and keep answer_unit as dollars. Never use dong or VND."
+                : string.Empty;
+
         if (language == AppLanguage.Vietnamese)
         {
             return FormattableString.Invariant(
@@ -1288,11 +1295,12 @@ internal static class LlmQuizPromptBuilder
                 - Để câu chuyện sinh động hơn, ưu tiên thêm MỘT tên riêng hoặc vai trò đời thường phù hợp với ngữ cảnh: {{personalizationHint}}
                 - Tên riêng/vai trò chỉ là chi tiết câu chuyện; không được làm phát sinh dữ kiện số mới, không dùng tên lớp/đội có chữ số như “lớp 5A”, và không được thay thế đối tượng chính của contract.
                 - Giữ nguyên đơn vị thực tế do C# chọn trong mẫu tham chiếu (ví dụ bao gạo dùng kg, rau/củ/trái cây/thịt/trứng dùng gam, xe tải chở nhiều gạo dùng tấn, thùng/can chất lỏng dùng lít); không tự đổi sang đơn vị khác.
+                {{currencyRule}}
                 {{specialRule}}
                 - Không tính hoặc làm lộ đáp án trong problem_text.
                 - answer_unit phải đúng "{{contract.AnswerUnit}}", không chứa số hay phép tính.
                 - subject_name là cụm ngắn mô tả đại lượng/đối tượng chính và phải phù hợp problem_text.
-                - solution_lead là một câu dẫn ngắn đứng trước phép tính, nhắc đúng answer_unit, không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
+                - solution_lead là một câu dẫn ngắn đứng trước phép tính và nêu đúng đại lượng cần tìm; không bắt buộc phải lặp lại answer_unit nếu câu dẫn đã rõ nghĩa. Không chứa phép tính, dấu bằng, kết quả hay đáp án. Riêng bài tỉ lệ này, solution_lead ĐƯỢC PHÉP nhắc lại duy nhất dữ kiện C = {{contract.C}} khi số đó chỉ dùng để xác định đối tượng/đại lượng cần tìm, ví dụ “Trọng lượng của {{contract.C}} bao gạo là:”. Không được dùng A, B hay bất kỳ số nào khác.
                 - Chỉ trả đúng JSON bốn trường sau, không Markdown hay giải thích:
                 {
                   "problem_text": "...",
@@ -1324,11 +1332,12 @@ internal static class LlmQuizPromptBuilder
             - To make the story livelier, prefer adding ONE suitable proper name or everyday role: {{personalizationHint}}
             - The name/role is story flavor only. It must not introduce another numeric fact, must not use numbered class/team labels such as “Grade 5A”, and must not replace the contract's main object.
             - Preserve the realistic unit chosen by C# in the reference (for example rice bags use kg, vegetables/fruit/meat/eggs use grams, truckloads of rice use tons, and liquid containers use liters); do not convert it to another unit.
+            {{currencyRule}}
             {{specialRule}}
             - Do not calculate or reveal the answer in problem_text.
             - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
             - subject_name is a short phrase describing the main object/quantity and must fit problem_text.
-            - solution_lead is one short sentence before the calculation. It repeats answer_unit and contains no number, calculation, equals sign, result, or answer.
+            - solution_lead is one short sentence before the calculation and clearly names the requested quantity; it does not have to repeat answer_unit when the requested quantity is already unambiguous. It contains no calculation, equals sign, result, or answer. For this proportion problem only, solution_lead MAY repeat the single C fact = {{contract.C}} when that number merely identifies the requested object/quantity, for example “The weight of {{contract.C}} rice bags is:”. Do not use A, B, or any other number.
             - Return exactly this four-field JSON schema and nothing else:
             {
               "problem_text": "...",
@@ -2063,6 +2072,8 @@ internal static class LlmQuizPromptBuilder
                     "Bài tỉ lệ bắt buộc ghi mọi dữ kiện bằng chữ số 0-9. Hãy dùng đúng ba giá trị contract dưới dạng số, ví dụ 10 chứ không viết “mười”; không thêm, bỏ, đổi hoặc viết lại số bằng chữ.",
                 "ProportionRelationshipMismatch" =>
                     "Giữ nguyên ngữ cảnh mẫu và đúng quan hệ tỉ lệ thuận/nghịch; không đổi vai trò của ba dữ kiện hay đại lượng cần tìm.",
+                "ProportionCurrencyMismatch" =>
+                    "Giữ đúng tiền tệ của contract: bài tiếng Việt dùng đồng; bài tiếng Anh dùng US dollars với ký hiệu $ hoặc từ dollars. Không đổi qua tiền tệ khác.",
                 "MotionFactsMismatch" =>
                     "Bài chuyển động bắt buộc giữ đúng toàn bộ dữ kiện số của contract bằng chữ số 0-9, đúng số lần xuất hiện; không viết số bằng chữ, không thêm, bỏ, gộp hoặc đổi số.",
                 "MotionRelationshipMismatch" =>
@@ -2109,6 +2120,8 @@ internal static class LlmQuizPromptBuilder
                 "A proportion problem must write every arithmetic fact with digits 0-9. Use exactly the three contract values as digits, for example 10 rather than “ten”; do not add, omit, change, or spell out any numeric fact.",
             "ProportionRelationshipMismatch" =>
                 "Keep the reference context and the required direct/inverse relationship; do not change the roles of the three facts or the requested quantity.",
+            "ProportionCurrencyMismatch" =>
+                "Keep the contract currency exactly: Vietnamese problems use dong, while English problems use US dollars with $ or the word dollars. Do not switch currencies.",
             "MotionFactsMismatch" =>
                 "A motion problem must preserve every contract numeric fact as digits 0-9 with the same occurrence count. Do not spell out, add, omit, merge, or change a number.",
             "MotionRelationshipMismatch" =>
@@ -3020,6 +3033,25 @@ internal sealed partial class LlmWordProblemValidator
                     : $"The wording does not clearly preserve the required {(contract.IsDirect ? "direct" : "inverse")} proportion and the contract's numerical roles. Keep the reference context and only rewrite it naturally.");
         }
 
+        if (contract.Scenario == ProportionScenarioKind.Shopping)
+        {
+            bool currencyLooksValid =
+                language == AppLanguage.Vietnamese
+                    ? lower.Contains("đồng", StringComparison.OrdinalIgnoreCase) &&
+                      !ContainsAny(lower, "dollar", "usd", "$")
+                    : ContainsAny(lower, "$", "dollar", "dollars") &&
+                      !ContainsAny(lower, "dong", "vnd", "đồng");
+
+            if (!currencyLooksValid)
+            {
+                return LlmWordProblemValidationResult.Invalid(
+                    "ProportionCurrencyMismatch",
+                    language == AppLanguage.Vietnamese
+                        ? "Bài tiền tệ tiếng Việt phải dùng đồng và không được đổi sang dollar/USD. Hãy giữ đúng tiền tệ của contract C#."
+                        : "An English money problem must use US dollars ($ / dollars), not dong or VND. Keep the C# contract currency unchanged.");
+            }
+        }
+
         if (!AreAnswerUnitsEquivalent(unit, contract.AnswerUnit, language) ||
             NumberRegex().IsMatch(unit) ||
             unit.Contains('='))
@@ -3034,7 +3066,8 @@ internal sealed partial class LlmWordProblemValidator
         string? disclosure = BuildSolutionLeadDisclosureFeedback(
             solutionLead,
             contract.CorrectAnswer,
-            language);
+            language,
+            allowedContextNumbers: new[] { new BigInteger(contract.C) });
         if (!string.IsNullOrWhiteSpace(disclosure))
         {
             return LlmWordProblemValidationResult.Invalid(
@@ -3055,14 +3088,11 @@ internal sealed partial class LlmWordProblemValidator
                         : $"The required {contract.SubjectName} is");
         }
 
-        if (!SolutionLeadMentionsAnswerUnit(solutionLead, unit, language))
-        {
-            solutionLead = ElementaryWordProblemSolutionFormatter
-                .NormalizeSolutionLeadPunctuation(
-                    language == AppLanguage.Vietnamese
-                        ? $"Số {unit} cần tìm là"
-                        : $"The required {unit} is");
-        }
+        // Với bài tỉ lệ, câu dẫn tự nhiên có thể nêu đại lượng cần tìm mà
+        // không lặp lại đơn vị đo. Ví dụ: “Trọng lượng của 9 bao gạo là:”.
+        // answer_unit vẫn được kiểm tra riêng ở phía trên và formatter sẽ
+        // dùng nó khi trình bày kết quả, nên không được thay một câu dẫn
+        // hợp lệ bằng kiểu gượng ép “Số kg cần tìm là:”.
 
         if (string.IsNullOrWhiteSpace(subject) ||
             !problem.Contains(subject, StringComparison.OrdinalIgnoreCase))
@@ -3961,7 +3991,8 @@ internal sealed partial class LlmWordProblemValidator
     private static string? BuildSolutionLeadDisclosureFeedback(
         string solutionLead,
         BigInteger correctAnswer,
-        AppLanguage language)
+        AppLanguage language,
+        IReadOnlyCollection<BigInteger>? allowedContextNumbers = null)
     {
         if (string.IsNullOrWhiteSpace(solutionLead))
         {
@@ -3973,6 +4004,22 @@ internal sealed partial class LlmWordProblemValidator
                 .Matches(solutionLead)
                 .Select(match => match.Value)
                 .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+        HashSet<BigInteger> allowedNumbers =
+            allowedContextNumbers is null
+                ? new HashSet<BigInteger>()
+                : new HashSet<BigInteger>(allowedContextNumbers);
+
+        string[] forbiddenNumberTokens =
+            numberTokens
+                .Where(value =>
+                    !BigInteger.TryParse(
+                        value,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out BigInteger parsed) ||
+                    !allowedNumbers.Contains(parsed))
                 .ToArray();
         string[] operatorTokens =
             SolutionLeadForbiddenOperatorRegex()
@@ -3994,7 +4041,7 @@ internal sealed partial class LlmWordProblemValidator
                 ? solutionLead[(colonIndex + 1)..].Trim()
                 : string.Empty;
 
-        if (numberTokens.Length == 0 &&
+        if (forbiddenNumberTokens.Length == 0 &&
             operatorTokens.Length == 0 &&
             textualDisclosureTokens.Length == 0 &&
             contentAfterColon.Length == 0)
@@ -4003,7 +4050,7 @@ internal sealed partial class LlmWordProblemValidator
         }
 
         bool revealsCorrectAnswer =
-            numberTokens.Any(value =>
+            forbiddenNumberTokens.Any(value =>
                 BigInteger.TryParse(
                     value,
                     NumberStyles.Integer,
@@ -4011,11 +4058,11 @@ internal sealed partial class LlmWordProblemValidator
                     out BigInteger parsed) &&
                 parsed == correctAnswer);
         string numberDetail =
-            numberTokens.Length == 0
+            forbiddenNumberTokens.Length == 0
                 ? language == AppLanguage.Vietnamese
-                    ? "không có số"
-                    : "no numeric token"
-                : FormatQuotedList(numberTokens);
+                    ? "không có số bị cấm"
+                    : "no forbidden numeric token"
+                : FormatQuotedList(forbiddenNumberTokens);
         string operatorDetail =
             operatorTokens.Length == 0
                 ? language == AppLanguage.Vietnamese
@@ -4055,12 +4102,12 @@ internal sealed partial class LlmWordProblemValidator
               (revealsCorrectAnswer
                   ? $"trong đó đã lộ trực tiếp đáp án {correctAnswer}. "
                   : "những nội dung này đã biến câu dẫn thành một phần của phép giải. ") +
-              "Đây là lỗi cấm: solution_lead chỉ được nêu đại lượng cần tìm và kết thúc bằng dấu hai chấm, tuyệt đối không chứa số, phép tính, dấu bằng, kết quả hoặc đáp án. Ví dụ đúng: “Số quả chôm chôm mẹ còn lại là:”."
+              "Đây là lỗi cấm: solution_lead chỉ được nêu đại lượng cần tìm và kết thúc bằng dấu hai chấm; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Với bài tỉ lệ thuận/nghịch, số C dùng để định danh đại lượng cần tìm có thể được giữ lại, ví dụ: “Trọng lượng của 9 bao gạo là:”."
             : $"solution_lead is “{solutionLead}”. The validator found {numberDetail}, {operatorDetail}, and {textualDetail}; " +
               (revealsCorrectAnswer
                   ? $"it directly reveals the answer {correctAnswer}. "
                   : "this turns the lead-in sentence into part of the calculation. ") +
-              "This is forbidden: solution_lead may only name the requested quantity and end with a colon. It must contain no number, calculation, equals sign, result, or answer.";
+              "This is forbidden: solution_lead may only name the requested quantity and end with a colon. It must contain no calculation, equals sign, result, or answer. For direct/inverse proportion, the C fact may remain when it only identifies the requested quantity, for example: “The weight of 9 rice bags is:”.";
     }
 
     public LlmWordProblemValidationResult ValidateGeometry(

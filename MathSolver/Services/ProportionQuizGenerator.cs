@@ -89,9 +89,9 @@ public sealed class ProportionQuizGenerator
             ProportionQuizType.Direct,
             ProportionScenarioKind.Shopping,
             "{0} quyển vở giá {1} đồng. Hỏi {2} quyển vở giá bao nhiêu tiền, biết giá mỗi quyển như nhau?",
-            "{0} notebooks cost {1} đồng. How much do {2} notebooks cost at the same unit price?",
+            "{0} notebooks cost ${1}. How much do {2} notebooks cost at the same unit price?",
             "đồng",
-            "đồng",
+            "dollars",
             "tiền",
             "money",
             RateProfile: DirectRateProfile.MoneyDong),
@@ -99,9 +99,9 @@ public sealed class ProportionQuizGenerator
             ProportionQuizType.Direct,
             ProportionScenarioKind.Shopping,
             "Mẹ mua {0} quyển tập hết {1} đồng. Hỏi mua {2} quyển thì hết bao nhiêu tiền?",
-            "A parent buys {0} notebooks for {1} đồng. How much would {2} notebooks cost at the same unit price?",
+            "A parent buys {0} notebooks for ${1}. How much would {2} notebooks cost at the same unit price?",
             "đồng",
-            "đồng",
+            "dollars",
             "tiền",
             "money",
             RateProfile: DirectRateProfile.MoneyDong),
@@ -433,7 +433,7 @@ public sealed class ProportionQuizGenerator
 
         (int a, int b, int c, BigInteger answer) =
             template.Type == ProportionQuizType.Direct
-                ? CreateDirectNumbers(template.RateProfile)
+                ? CreateDirectNumbers(template.RateProfile, language)
                 : CreateInverseNumbers(
                     template.Scenario,
                     template.AsksForAdditionalPeople);
@@ -523,7 +523,9 @@ public sealed class ProportionQuizGenerator
         };
 
     private (int A, int B, int C, BigInteger Answer)
-        CreateDirectNumbers(DirectRateProfile rateProfile)
+        CreateDirectNumbers(
+            DirectRateProfile rateProfile,
+            AppLanguage language)
     {
         int a = _random.Next(2, 11);
         int c;
@@ -537,7 +539,10 @@ public sealed class ProportionQuizGenerator
         {
             DirectRateProfile.FabricMeters => PickFrom([2, 3, 4, 5]),
             DirectRateProfile.TreesPerStudent => _random.Next(2, 9),
-            DirectRateProfile.MoneyDong => _random.Next(4, 21) * 1000,
+            DirectRateProfile.MoneyDong =>
+                language == AppLanguage.Vietnamese
+                    ? _random.Next(4, 21) * 1000
+                    : _random.Next(2, 13),
             DirectRateProfile.CargoTons => _random.Next(2, 11),
             DirectRateProfile.FuelLiters => _random.Next(1, 9) * 5,
             DirectRateProfile.RiceBagKilograms => PickFrom([10, 20, 25, 30, 40, 50]),
@@ -763,18 +768,24 @@ public sealed class ProportionQuizGenerator
         // 100.000...) và có cả đáp án gần lẫn đáp án lệch xa hơn.
         if (IsMoneyProblem(contract))
         {
-            return CreateMoneyDistractors(correctAnswer, count);
+            return CreateMoneyDistractors(
+                contract,
+                correctAnswer,
+                count);
         }
 
         return CreateStandardDistractors(correctAnswer, count);
     }
 
     private IReadOnlyList<BigInteger> CreateMoneyDistractors(
+        ProportionQuizContract contract,
         BigInteger correctAnswer,
         int count)
     {
         var distractors = new HashSet<BigInteger>();
-        BigInteger step = GetMoneyDistractorStep(correctAnswer);
+        BigInteger step = GetMoneyDistractorStep(
+            contract,
+            correctAnswer);
 
         // Ví dụ 84.000 đồng với step 1.000 có thể sinh 81.000, 82.000,
         // 83.000, 85.000, 86.000, 94.000... thay vì 83.998/83.999.
@@ -817,9 +828,30 @@ public sealed class ProportionQuizGenerator
     }
 
     private static BigInteger GetMoneyDistractorStep(
+        ProportionQuizContract contract,
         BigInteger correctAnswer)
     {
         BigInteger absolute = BigInteger.Abs(correctAnswer);
+
+        if (contract.AnswerUnit.Contains(
+                "dollar",
+                StringComparison.OrdinalIgnoreCase) ||
+            contract.AnswerUnit.Contains(
+                "USD",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            if (absolute >= 100)
+            {
+                return 10;
+            }
+
+            if (absolute >= 40)
+            {
+                return 5;
+            }
+
+            return 1;
+        }
 
         if (absolute >= 10_000_000)
         {
@@ -866,6 +898,12 @@ public sealed class ProportionQuizGenerator
                    StringComparison.OrdinalIgnoreCase) ||
                unit.Contains(
                    "currency",
+                   StringComparison.OrdinalIgnoreCase) ||
+               unit.Contains(
+                   "dollar",
+                   StringComparison.OrdinalIgnoreCase) ||
+               unit.Contains(
+                   "USD",
                    StringComparison.OrdinalIgnoreCase);
     }
 
