@@ -1269,12 +1269,65 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
     public void RefreshNumberDisplay()
     {
+        // Đồng bộ cả ba ô hệ số với chế độ hiển thị hiện tại.
+        // Giá trị thật luôn được đọc qua GetCoefficientInputText(), nên khi
+        // Entry đang ở dạng khoa học ta vẫn khôi phục chính xác Int128 gốc.
+        RefreshCoefficientEntryDisplay(
+            CoefficientAEntry);
+
+        RefreshCoefficientEntryDisplay(
+            CoefficientBEntry);
+
+        if (_equationMode == EquationMode.Quadratic)
+        {
+            RefreshCoefficientEntryDisplay(
+                CoefficientCEntry);
+        }
+
         if (ResultBorder.IsVisible)
         {
             OnCalculateClicked(
                 this,
                 EventArgs.Empty);
         }
+
+        // EquationPreviewLabel là phần trình bày trực tiếp của các hệ số.
+        // Luôn dựng lại để preview và các Entry dùng cùng một policy:
+        // bật hiển thị đầy đủ -> số nguyên đầy đủ; tắt -> >18 chữ số dùng
+        // dạng khoa học.
+        UpdateEquationPreview();
+    }
+
+    private void RefreshCoefficientEntryDisplay(
+        Entry entry)
+    {
+        if (!TryParseCoefficientText(
+                GetCoefficientInputText(
+                    entry),
+                out Int128 value))
+        {
+            return;
+        }
+
+        // Entry đang focus phải giữ chuỗi số nguyên đầy đủ để người dùng
+        // có thể tiếp tục sửa. Khi mất focus, OnCoefficientEntryUnfocused
+        // sẽ áp lại dạng rút gọn nếu setting đang tắt.
+        if (entry.IsFocused)
+        {
+            _coefficientExactIntegerValues.Remove(
+                entry);
+
+            SetEntryText(
+                entry,
+                FormatInputInteger(
+                    value));
+
+            return;
+        }
+
+        ApplyCoefficientEntryDisplayValue(
+            entry,
+            value);
     }
 
     private async void OnQuadraticCopyResultClicked(
@@ -2608,7 +2661,11 @@ public partial class QuadraticEquationView : LocalizedSolverView
             FormatInputInteger(
                 value);
 
-        if (CountNumericDigits(
+        bool showFullNumbers =
+            ResultNumberDisplayMode.ShowFullNumbers;
+
+        if (showFullNumbers ||
+            CountNumericDigits(
                 standardText) <=
             ScientificDisplayDigitThreshold)
         {
@@ -2622,6 +2679,8 @@ public partial class QuadraticEquationView : LocalizedSolverView
             return;
         }
 
+        // Chỉ cần giữ bản exact riêng khi giao diện đang rút gọn.
+        // Khi bật hiển thị đầy đủ, chính Entry đã chứa nguyên vẹn Int128.
         _coefficientExactIntegerValues[entry] =
             value.ToString(
                 CultureInfo.InvariantCulture);
