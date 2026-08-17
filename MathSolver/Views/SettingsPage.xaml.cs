@@ -6,6 +6,7 @@ public partial class SettingsPage : ContentPage
 {
     private bool _updatingControls;
     private bool _updatingFontSelection;
+    private bool _updatingLanguageSelection;
     private bool _hasPlayedEntryAnimation;
     private bool _isClosing;
     private bool _updatingFullNumberDisplaySwitch;
@@ -16,6 +17,9 @@ public partial class SettingsPage : ContentPage
     // tương thích với Picker, vừa giữ đúng cùng các AppFontOption.
     private readonly List<AppFontOption> _fontOptions =
         AppFontCatalog.Options.ToList();
+
+    private readonly List<AppLanguageOption> _languageOptions =
+        AppLanguageCatalog.Options.ToList();
 
     public SettingsPage()
     {
@@ -46,6 +50,9 @@ public partial class SettingsPage : ContentPage
         FontPicker.ItemsSource =
             _fontOptions;
 
+        LanguagePicker.ItemsSource =
+            _languageOptions;
+
         LoadCurrentSettings();
         PreparePageEntryAnimation();
     }
@@ -69,6 +76,7 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.ThemeChanged += OnThemeChanged;
         AppFontManager.FontChanged += OnFontChanged;
         AppLanguageManager.LanguageChanged += OnLanguageChanged;
+        LocalizationService.CultureChanged += OnLocalizationCultureChanged;
         DeveloperModeManager.DeveloperModeChanged += OnDeveloperModeChanged;
         ResultNumberDisplayMode.DisplayModeChanged += OnResultNumberDisplayModeChanged;
 
@@ -90,6 +98,7 @@ public partial class SettingsPage : ContentPage
         AppThemeManager.ThemeChanged -= OnThemeChanged;
         AppFontManager.FontChanged -= OnFontChanged;
         AppLanguageManager.LanguageChanged -= OnLanguageChanged;
+        LocalizationService.CultureChanged -= OnLocalizationCultureChanged;
         DeveloperModeManager.DeveloperModeChanged -= OnDeveloperModeChanged;
         ResultNumberDisplayMode.DisplayModeChanged -= OnResultNumberDisplayModeChanged;
 
@@ -172,15 +181,45 @@ public partial class SettingsPage : ContentPage
         object? sender,
         EventArgs e)
     {
-        FontPicker.ItemsSource =
-            null;
-
-        FontPicker.ItemsSource =
-            _fontOptions;
-
-        LoadCurrentSettings();
-        LocalizationService.RefreshAll();
+        // AppLanguageManager phát event trước khi JSON language pack đổi xong.
+        // Chỉ đồng bộ selection ở đây; text item được refresh khi
+        // LocalizationService.CultureChanged chạy sau đó.
+        LoadLanguageSettings();
         UpdateAdvancedSettingsState();
+    }
+
+    private void OnLocalizationCultureChanged(
+        object? sender,
+        EventArgs e)
+    {
+        RefreshPickerDisplayItems();
+        LoadCurrentSettings();
+    }
+
+    private void RefreshPickerDisplayItems()
+    {
+        _updatingFontSelection = true;
+        _updatingLanguageSelection = true;
+
+        try
+        {
+            FontPicker.ItemsSource =
+                null;
+
+            FontPicker.ItemsSource =
+                _fontOptions;
+
+            LanguagePicker.ItemsSource =
+                null;
+
+            LanguagePicker.ItemsSource =
+                _languageOptions;
+        }
+        finally
+        {
+            _updatingFontSelection = false;
+            _updatingLanguageSelection = false;
+        }
     }
 
     private void OnDeveloperModeChanged(
@@ -195,24 +234,6 @@ public partial class SettingsPage : ContentPage
         EventArgs e)
     {
         UpdateAdvancedSettingsState();
-    }
-
-    private void OnVietnameseLanguageClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppLanguageManager.SetLanguage(
-            AppLanguage.Vietnamese);
-        UpdateLanguageButtons();
-    }
-
-    private void OnEnglishLanguageClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppLanguageManager.SetLanguage(
-            AppLanguage.English);
-        UpdateLanguageButtons();
     }
 
     private void OnSystemThemeClicked(object? sender, EventArgs e)
@@ -501,9 +522,39 @@ public partial class SettingsPage : ContentPage
             AppThemeManager.CurrentAccentHex);
 
         UpdateThemeModeButtons();
-        UpdateLanguageButtons();
+        LoadLanguageSettings();
         LoadFontSettings();
         UpdateAdvancedSettingsState();
+    }
+
+    private void LoadLanguageSettings()
+    {
+        _updatingLanguageSelection =
+            true;
+
+        LanguagePicker.SelectedItem =
+            _languageOptions.FirstOrDefault(
+                option =>
+                    option.Language ==
+                    AppLanguageManager.CurrentLanguage);
+
+        _updatingLanguageSelection =
+            false;
+    }
+
+    private void OnLanguageSelectionChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_updatingLanguageSelection ||
+            LanguagePicker.SelectedItem
+            is not AppLanguageOption selectedLanguage)
+        {
+            return;
+        }
+
+        AppLanguageManager.SetLanguage(
+            selectedLanguage.Language);
     }
 
     private void LoadFontSettings()
@@ -659,19 +710,6 @@ public partial class SettingsPage : ContentPage
         button.BorderWidth = 1;
         button.CornerRadius = 10;
         button.FontAttributes = FontAttributes.Bold;
-    }
-
-    private void UpdateLanguageButtons()
-    {
-        UpdateThemeModeButton(
-            VietnameseLanguageButton,
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.Vietnamese);
-
-        UpdateThemeModeButton(
-            EnglishLanguageButton,
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English);
     }
 
     private async void OnCloseClicked(

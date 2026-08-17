@@ -518,19 +518,72 @@
                         FontSize="13"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button
-                            x:Name="VietnameseLanguageButton"
-                            Grid.Column="0"
-                            Text="Tiếng Việt"
-                            Clicked="OnVietnameseLanguageClicked" />
+                        <Border
+                            Padding="0"
+                            BackgroundColor="{DynamicResource InputBackgroundColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
 
-                            <Button
-                            x:Name="EnglishLanguageButton"
-                            Grid.Column="1"
-                            Text="Tiếng Anh"
-                            Clicked="OnEnglishLanguageClicked" />
-                        </Grid>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+
+                            <Grid
+                                HeightRequest="46"
+                                ColumnDefinitions="*,44">
+
+                                <controls:BorderlessPicker
+                                    x:Name="LanguagePicker"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="2"
+                                    ItemDisplayBinding="{Binding LocalizedDisplayName}"
+                                    Margin="12,0,0,0"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TitleColor="{DynamicResource TextSecondaryColor}"
+                                    BackgroundColor="Transparent"
+                                    SelectedIndexChanged="OnLanguageSelectionChanged" />
+
+                                <BoxView
+                                    Grid.Column="1"
+                                    WidthRequest="1"
+                                    Margin="0,9,0,9"
+                                    HorizontalOptions="Start"
+                                    BackgroundColor="{DynamicResource DividerColor}"
+                                    InputTransparent="True" />
+
+                                <Border
+                                    Grid.Column="1"
+                                    WidthRequest="30"
+                                    HeightRequest="30"
+                                    Margin="6"
+                                    Padding="0"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    StrokeThickness="1"
+                                    InputTransparent="True">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+
+                                    <Label
+                                        Text="⌄"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        HorizontalTextAlignment="Center"
+                                        VerticalTextAlignment="Center"
+                                        TextColor="{DynamicResource PrimaryColor}"
+                                        InputTransparent="True" />
+                                </Border>
+                            </Grid>
+                        </Border>
                     </VerticalStackLayout>
                 </Border>
 

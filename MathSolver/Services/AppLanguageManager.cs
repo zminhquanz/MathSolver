@@ -1,5 +1,38 @@
 namespace MathSolver.Services;
 
+public sealed record AppLanguageOption(
+    AppLanguage Language,
+    string LocalizationKey)
+{
+    public string LocalizedDisplayName =>
+        LocalizationService.TranslateKey(
+            LocalizationKey);
+
+    public override string ToString() =>
+        LocalizedDisplayName;
+}
+
+public static class AppLanguageCatalog
+{
+    public static IReadOnlyList<AppLanguageOption> Options { get; } =
+    [
+        new(
+            AppLanguage.Vietnamese,
+            "Language.Vietnamese"),
+
+        new(
+            AppLanguage.English,
+            "Language.English")
+    ];
+
+    public static AppLanguageOption GetByLanguage(
+        AppLanguage language) =>
+        Options.First(
+            option =>
+                option.Language == language);
+}
+
+
 public enum AppLanguage
 {
     Vietnamese,

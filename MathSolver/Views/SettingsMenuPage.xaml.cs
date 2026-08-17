@@ -88,10 +88,13 @@ public partial class SettingsMenuPage : ContentView
     // trang cũ vẫn tương thích với logic bảo toàn GraphicsView/LLM.
     internal static bool IsTransparentOverlayActive { get; private set; }
 
-    private readonly Dictionary<string, Button>
-        _fontButtons =
-            new(StringComparer.Ordinal);
+    private readonly List<AppFontOption> _fontOptions =
+        AppFontCatalog.Options.ToList();
 
+    private readonly List<AppLanguageOption> _languageOptions =
+        AppLanguageCatalog.Options.ToList();
+
+    private bool _updatingPickerSelections;
 
     private readonly TaskCompletionSource<string?>
         _completion =
@@ -131,7 +134,12 @@ public partial class SettingsMenuPage : ContentView
         Unloaded +=
             OnUnloaded;
 
-        BuildFontOptions();
+        MenuFontPicker.ItemsSource =
+            _fontOptions;
+
+        MenuLanguagePicker.ItemsSource =
+            _languageOptions;
+
         LocalizationService.Attach(
             this);
         UpdateState();
@@ -283,6 +291,9 @@ public partial class SettingsMenuPage : ContentView
             AppLanguageManager.LanguageChanged +=
                 OnSettingsChanged;
 
+            LocalizationService.CultureChanged +=
+                OnLocalizationCultureChanged;
+
             LocalizationService.Attach(
                 this);
 
@@ -337,6 +348,9 @@ public partial class SettingsMenuPage : ContentView
 
         AppLanguageManager.LanguageChanged -=
             OnSettingsChanged;
+
+        LocalizationService.CultureChanged -=
+            OnLocalizationCultureChanged;
 
     }
 
@@ -472,6 +486,14 @@ public partial class SettingsMenuPage : ContentView
         UpdateState();
     }
 
+    private void OnLocalizationCultureChanged(
+        object? sender,
+        EventArgs e)
+    {
+        RefreshPickerDisplayItems();
+        UpdateState();
+    }
+
     private void RefreshVectorThemeIcons()
     {
         // SettingsMenuPage được native-embed trong WinUI Popup. DynamicResource
@@ -570,48 +592,6 @@ public partial class SettingsMenuPage : ContentView
         return false;
     }
 
-    private void BuildFontOptions()
-    {
-        FontOptionsLayout.Children.Clear();
-        _fontButtons.Clear();
-
-        foreach (AppFontOption font
-                 in AppFontCatalog.Options)
-        {
-            var button =
-                new Button
-                {
-                    Text =
-                        font.DisplayName,
-
-                    FontFamily =
-                        font.FontFamily,
-
-                    HorizontalOptions =
-                        LayoutOptions.Fill,
-
-                    CommandParameter =
-                        font.Key,
-
-                    Padding =
-                        new Thickness(
-                            12,
-                            8),
-
-                    MinimumHeightRequest =
-                        42
-                };
-
-            button.Clicked +=
-                OnFontClicked;
-
-            _fontButtons[font.Key] =
-                button;
-
-            FontOptionsLayout.Children.Add(
-                button);
-        }
-    }
     private void UpdateState()
     {
         ThemeSummaryLabel.Text =
@@ -633,14 +613,23 @@ public partial class SettingsMenuPage : ContentView
         AccentSummaryLabel.TextColor =
             AppThemeManager.CurrentAccentColor;
 
+        UpdatePickerSelections();
+
         FontSummaryLabel.Text =
-            AppFontManager.CurrentFont.DisplayName;
+            _fontOptions.FirstOrDefault(
+                option =>
+                    option.Key ==
+                    AppFontManager.CurrentFontKey)
+                ?.LocalizedDisplayName ??
+            AppFontManager.CurrentFontKey;
 
         LanguageSummaryLabel.Text =
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English
-                ? "Tiếng Anh"
-                : "Tiếng Việt";
+            _languageOptions.FirstOrDefault(
+                option =>
+                    option.Language ==
+                    AppLanguageManager.CurrentLanguage)
+                ?.LocalizedDisplayName ??
+            AppLanguageManager.CurrentLanguage.ToString();
 
         bool useEnglish =
             AppLanguageManager.CurrentLanguage ==
@@ -681,27 +670,109 @@ public partial class SettingsMenuPage : ContentView
             AppThemeManager.CurrentMode ==
             AppThemeMode.Dark);
 
-        UpdateChoiceButton(
-            VietnameseLanguageButton,
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.Vietnamese);
-
-        UpdateChoiceButton(
-            EnglishLanguageButton,
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English);
-
-        foreach ((string key, Button button)
-                 in _fontButtons)
-        {
-            UpdateChoiceButton(
-                button,
-                key ==
-                AppFontManager.CurrentFontKey);
-        }
-
         LocalizationService.Attach(
             this);
+    }
+
+    private void UpdatePickerSelections()
+    {
+        if (_updatingPickerSelections)
+        {
+            return;
+        }
+
+        _updatingPickerSelections =
+            true;
+
+        try
+        {
+            MenuFontPicker.SelectedItem =
+                _fontOptions.FirstOrDefault(
+                    option =>
+                        option.Key ==
+                        AppFontManager.CurrentFontKey);
+
+            MenuLanguagePicker.SelectedItem =
+                _languageOptions.FirstOrDefault(
+                    option =>
+                        option.Language ==
+                        AppLanguageManager.CurrentLanguage);
+        }
+        finally
+        {
+            _updatingPickerSelections =
+                false;
+        }
+    }
+
+    private void RefreshPickerDisplayItems()
+    {
+        _updatingPickerSelections =
+            true;
+
+        try
+        {
+            // BorderlessPicker/WinUI ComboBox cache ItemDisplayBinding text.
+            // Rebind after the JSON culture has actually changed.
+            MenuFontPicker.ItemsSource =
+                null;
+
+            MenuFontPicker.ItemsSource =
+                _fontOptions;
+
+            MenuLanguagePicker.ItemsSource =
+                null;
+
+            MenuLanguagePicker.ItemsSource =
+                _languageOptions;
+
+            MenuFontPicker.SelectedItem =
+                _fontOptions.FirstOrDefault(
+                    option =>
+                        option.Key ==
+                        AppFontManager.CurrentFontKey);
+
+            MenuLanguagePicker.SelectedItem =
+                _languageOptions.FirstOrDefault(
+                    option =>
+                        option.Language ==
+                        AppLanguageManager.CurrentLanguage);
+        }
+        finally
+        {
+            _updatingPickerSelections =
+                false;
+        }
+    }
+
+    private void OnMenuFontSelectionChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_updatingPickerSelections ||
+            MenuFontPicker.SelectedItem
+            is not AppFontOption selectedFont)
+        {
+            return;
+        }
+
+        AppFontManager.SetFont(
+            selectedFont.Key);
+    }
+
+    private void OnMenuLanguageSelectionChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_updatingPickerSelections ||
+            MenuLanguagePicker.SelectedItem
+            is not AppLanguageOption selectedLanguage)
+        {
+            return;
+        }
+
+        AppLanguageManager.SetLanguage(
+            selectedLanguage.Language);
     }
 
     private static void UpdateChoiceButton(
@@ -946,39 +1017,6 @@ public partial class SettingsMenuPage : ContentView
 
         AppThemeManager.SetAccentColor(
             color);
-        UpdateState();
-    }
-
-    private void OnFontClicked(
-        object? sender,
-        EventArgs e)
-    {
-        if (sender is not Button button ||
-            button.CommandParameter is not string key)
-        {
-            return;
-        }
-
-        AppFontManager.SetFont(
-            key);
-        UpdateState();
-    }
-
-    private void OnVietnameseClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppLanguageManager.SetLanguage(
-            AppLanguage.Vietnamese);
-        UpdateState();
-    }
-
-    private void OnEnglishClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppLanguageManager.SetLanguage(
-            AppLanguage.English);
         UpdateState();
     }
 

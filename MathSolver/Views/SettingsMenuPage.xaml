@@ -229,20 +229,29 @@
                                     Scale="0.833333"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                    <Label Text="Phông chữ" Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label x:Name="FontSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="1"
+                                    VerticalOptions="Center">
+                                    <Label
+                                        Text="Phông chữ"
+                                        Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label
+                                        x:Name="FontSummaryLabel"
+                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
+
                                 <Border
                                     Grid.Column="2"
                                     Style="{StaticResource ThemeMenuChevronContainerStyle}">
-
                                     <Label
                                         x:Name="FontChevronLabel"
                                         Text="›"
                                         Style="{StaticResource ThemeMenuChevronStyle}"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
                                 </Border>
+
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnFontRowTapped" />
                                 </Grid.GestureRecognizers>
@@ -261,7 +270,67 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
-                            <VerticalStackLayout x:Name="FontOptionsLayout" Spacing="4" />
+
+                            <Border
+                                Padding="0"
+                                BackgroundColor="{DynamicResource InputBackgroundColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+
+                                <Grid HeightRequest="42" ColumnDefinitions="*,38">
+                                    <controls:BorderlessPicker
+                                        x:Name="MenuFontPicker"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="2"
+                                        ItemDisplayBinding="{Binding LocalizedDisplayName}"
+                                        Margin="10,0,0,0"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="13"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TitleColor="{DynamicResource TextSecondaryColor}"
+                                        BackgroundColor="Transparent"
+                                        SelectedIndexChanged="OnMenuFontSelectionChanged" />
+
+                                    <BoxView
+                                        Grid.Column="1"
+                                        WidthRequest="1"
+                                        Margin="0,8,0,8"
+                                        HorizontalOptions="Start"
+                                        BackgroundColor="{DynamicResource DividerColor}"
+                                        InputTransparent="True" />
+
+                                    <Border
+                                        Grid.Column="1"
+                                        WidthRequest="26"
+                                        HeightRequest="26"
+                                        Margin="6"
+                                        Padding="0"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1"
+                                        InputTransparent="True">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="7" />
+                                        </Border.StrokeShape>
+                                        <Label
+                                            Text="⌄"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            TextColor="{DynamicResource PrimaryColor}"
+                                            InputTransparent="True" />
+                                    </Border>
+                                </Grid>
+                            </Border>
                         </Border>
 
                         <!-- Language -->
@@ -276,20 +345,29 @@
                                     Scale="0.833333"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                    <Label Text="Ngôn ngữ" Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label x:Name="LanguageSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="1"
+                                    VerticalOptions="Center">
+                                    <Label
+                                        Text="Ngôn ngữ"
+                                        Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label
+                                        x:Name="LanguageSummaryLabel"
+                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
+
                                 <Border
                                     Grid.Column="2"
                                     Style="{StaticResource ThemeMenuChevronContainerStyle}">
-
                                     <Label
                                         x:Name="LanguageChevronLabel"
                                         Text="›"
                                         Style="{StaticResource ThemeMenuChevronStyle}"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
                                 </Border>
+
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnLanguageRowTapped" />
                                 </Grid.GestureRecognizers>
@@ -308,10 +386,67 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
-                                <Button x:Name="EnglishLanguageButton" Grid.Column="0" Text="Tiếng Anh" Clicked="OnEnglishClicked" />
-                                <Button x:Name="VietnameseLanguageButton" Grid.Column="1" Text="Tiếng Việt" Clicked="OnVietnameseClicked" />
-                            </Grid>
+
+                            <Border
+                                Padding="0"
+                                BackgroundColor="{DynamicResource InputBackgroundColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+
+                                <Grid HeightRequest="42" ColumnDefinitions="*,38">
+                                    <controls:BorderlessPicker
+                                        x:Name="MenuLanguagePicker"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="2"
+                                        ItemDisplayBinding="{Binding LocalizedDisplayName}"
+                                        Margin="10,0,0,0"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="13"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TitleColor="{DynamicResource TextSecondaryColor}"
+                                        BackgroundColor="Transparent"
+                                        SelectedIndexChanged="OnMenuLanguageSelectionChanged" />
+
+                                    <BoxView
+                                        Grid.Column="1"
+                                        WidthRequest="1"
+                                        Margin="0,8,0,8"
+                                        HorizontalOptions="Start"
+                                        BackgroundColor="{DynamicResource DividerColor}"
+                                        InputTransparent="True" />
+
+                                    <Border
+                                        Grid.Column="1"
+                                        WidthRequest="26"
+                                        HeightRequest="26"
+                                        Margin="6"
+                                        Padding="0"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                                        StrokeThickness="1"
+                                        InputTransparent="True">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="7" />
+                                        </Border.StrokeShape>
+                                        <Label
+                                            Text="⌄"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            TextColor="{DynamicResource PrimaryColor}"
+                                            InputTransparent="True" />
+                                    </Border>
+                                </Grid>
+                            </Border>
                         </Border>
 
                         <!-- Hardware and performance -->
