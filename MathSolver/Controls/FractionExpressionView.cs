@@ -521,10 +521,20 @@ public sealed class FractionExpressionView : ContentView
                 ? valueText[1..]
                 : valueText;
 
+        // Kết quả phân số ở chế độ "Hiển thị đầy đủ" có thể đã được
+        // formatter chung chèn dấu phẩy phân cách hàng nghìn, ví dụ
+        // 100,000,000/25,000,000. Khi nhận diện token để dựng phân số
+        // kiểu SGK, bỏ dấu phân cách trước khi parse nhưng vẫn format lại
+        // có grouping khi render.
         string parsableText =
-            valueText.Replace(
-                '−',
-                '-');
+            valueText
+                .Replace(
+                    ",",
+                    string.Empty,
+                    StringComparison.Ordinal)
+                .Replace(
+                    '−',
+                    '-');
 
         if (BigInteger.TryParse(
                 parsableText,
@@ -684,8 +694,14 @@ public sealed class FractionExpressionView : ContentView
     private static string FormatIntegerForDisplay(
         BigInteger value)
     {
+        string grouped =
+            BigInteger.Abs(value)
+                .ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture);
+
         return value.Sign < 0
-            ? $"−{BigInteger.Abs(value)}"
-            : value.ToString();
+            ? $"−{grouped}"
+            : grouped;
     }
 }

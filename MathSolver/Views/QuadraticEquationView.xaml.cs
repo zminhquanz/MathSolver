@@ -1617,7 +1617,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 CultureInfo.InvariantCulture,
                 out Int128 value))
         {
-            return FormatNumber(
+            return FormatCoefficientForDisplay(
                 value);
         }
 
@@ -1685,8 +1685,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
             CreateGeneralRootFormulaPairView());
 
         Step4MathLayout.Children.Add(
-            CreateMathDescriptionLabel(
-                $"Thay a = {aText}, b = {bText}, Δ = {deltaText} vào công thức:"));
+            CreateSubstitutionDescriptionView(
+                aText,
+                bText,
+                deltaText));
 
         Step4MathLayout.Children.Add(
             CreateRootComputationSection(
@@ -1757,6 +1759,64 @@ public partial class QuadraticEquationView : LocalizedSolverView
                     fontSize: 22)));
 
         return formulaRow;
+    }
+
+    private View CreateSubstitutionDescriptionView(
+        string aText,
+        string bText,
+        string deltaText)
+    {
+        string oneLineText =
+            $"Thay a = {aText}, b = {bText}, Δ = {deltaText} vào công thức:";
+
+        // Với hệ số/Delta ngắn, giữ cách trình bày gọn trên một dòng.
+        // Khi số dài, chủ động xuống dòng thay vì để ScrollView kéo toàn bộ
+        // câu sang ngang. Đặc biệt Delta có thể dài gần gấp đôi hệ số Int128
+        // vì nó được tính chính xác bằng BigInteger.
+        bool shouldBreakDelta =
+            deltaText.Length > 28 ||
+            oneLineText.Length > 88;
+
+        if (!shouldBreakDelta)
+        {
+            return CreateMathDescriptionLabel(
+                oneLineText);
+        }
+
+        var layout =
+            new VerticalStackLayout
+            {
+                Spacing = 2,
+                HorizontalOptions = LayoutOptions.Start
+            };
+
+        string coefficientsText =
+            $"Thay a = {aText}, b = {bText},";
+
+        // Nếu cả a và b đều rất dài thì tách tiếp b ra một dòng riêng để
+        // phần thay số vẫn dễ đọc trên màn hình nhỏ.
+        if (coefficientsText.Length > 78)
+        {
+            layout.Children.Add(
+                CreateMathDescriptionLabel(
+                    $"Thay a = {aText},"));
+
+            layout.Children.Add(
+                CreateMathDescriptionLabel(
+                    $"b = {bText},"));
+        }
+        else
+        {
+            layout.Children.Add(
+                CreateMathDescriptionLabel(
+                    coefficientsText));
+        }
+
+        layout.Children.Add(
+            CreateMathDescriptionLabel(
+                $"Δ = {deltaText} vào công thức:"));
+
+        return layout;
     }
 
     private View CreateRootComputationSection(
@@ -1919,11 +1979,39 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 MinimumWidthRequest = 78
             };
 
+        // Bọc tử và mẫu trong các cell Fill riêng. Khi tử số rất dài,
+        // Grid sẽ lấy chiều rộng của tử làm chiều rộng cột; cell của mẫu
+        // vẫn Fill toàn cột và căn nội dung vào đúng tâm. Cách này tránh
+        // mẫu ngắn như "2 × (1)" hoặc "2" bị lệch sang một bên.
+        var numeratorCell =
+            new Grid
+            {
+                HorizontalOptions = LayoutOptions.Fill
+            };
+
         numeratorView.HorizontalOptions =
             LayoutOptions.Center;
 
+        numeratorCell.Children.Add(
+            numeratorView);
+
+        var denominatorCell =
+            new Grid
+            {
+                HorizontalOptions = LayoutOptions.Fill
+            };
+
         denominatorView.HorizontalOptions =
             LayoutOptions.Center;
+
+        if (denominatorView is Label denominatorLabel)
+        {
+            denominatorLabel.HorizontalTextAlignment =
+                TextAlignment.Center;
+        }
+
+        denominatorCell.Children.Add(
+            denominatorView);
 
         var fractionBar =
             new BoxView
@@ -1937,7 +2025,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
             "TextPrimaryColor");
 
         fractionGrid.Add(
-            numeratorView,
+            numeratorCell,
             0,
             0);
 
@@ -1947,7 +2035,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
             1);
 
         fractionGrid.Add(
-            denominatorView,
+            denominatorCell,
             0,
             2);
 
@@ -2687,7 +2775,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         SetEntryText(
             entry,
-            FormatScientificForDisplay(
+            FormatCoefficientScientificForDisplay(
                 value));
     }
 
@@ -3113,6 +3201,52 @@ public partial class QuadraticEquationView : LocalizedSolverView
             roundedIntegerPart +
             "." +
             roundedFractionPart;
+    }
+
+    private static string FormatCoefficientForDisplay(
+        Int128 value)
+    {
+        BigInteger bigValue =
+            (BigInteger)value;
+
+        string digits =
+            BigInteger.Abs(bigValue)
+                .ToString(
+                    CultureInfo.InvariantCulture);
+
+        if (!ResultNumberDisplayMode.ShowFullNumbers &&
+            digits.Length >
+            ScientificDisplayDigitThreshold)
+        {
+            return FormatCoefficientScientificForDisplay(
+                bigValue);
+        }
+
+        return bigValue.ToString(
+                "N0",
+                CultureInfo.InvariantCulture)
+            .Replace(
+                "-",
+                "−",
+                StringComparison.Ordinal);
+    }
+
+    private static string FormatCoefficientScientificForDisplay(
+        Int128 value)
+    {
+        return FormatCoefficientScientificForDisplay(
+            (BigInteger)value);
+    }
+
+    private static string FormatCoefficientScientificForDisplay(
+        BigInteger value)
+    {
+        // Hệ số a/b/c là giá trị đầu vào chính xác đang được lưu riêng.
+        // Dạng khoa học ở Entry/preview chỉ là cách trình bày rút gọn,
+        // nên không thêm ký hiệu "≈" trước hệ số.
+        return FormatScientificForDisplay(
+                value)
+            .TrimStart('≈', ' ');
     }
 
     private static string FormatNumber(
