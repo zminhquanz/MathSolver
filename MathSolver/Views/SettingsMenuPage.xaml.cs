@@ -101,6 +101,7 @@ public partial class SettingsMenuPage : ContentView
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private bool _hasPlayedOpenAnimation;
+    private bool _hasPlayedSettingsButtonOpenAnimation;
     private bool _isFullWindowOverlayMode;
     private bool _isNavigating;
     private bool _isLoaded;
@@ -433,6 +434,92 @@ public partial class SettingsMenuPage : ContentView
                 1d,
                 220,
                 Easing.CubicOut));
+    }
+
+    internal void ActivateSettingsButtonOpenAnimation(
+        double initialScale,
+        double initialRotation)
+    {
+        if (!_isFullWindowOverlayMode ||
+            _hasPlayedSettingsButtonOpenAnimation)
+        {
+            return;
+        }
+
+        _hasPlayedSettingsButtonOpenAnimation = true;
+
+        // Gọi từ native WinUI Loaded của Popup. Nhờ vậy animation bắt đầu đúng
+        // lúc gear overlay thật sự đã render, không bị chạy xong trong khoảng
+        // ToPlatform()/Popup attach khi người dùng chưa nhìn thấy nó. Scale và
+        // rotation hiện tại của gear Shell được truyền sang để frame handoff
+        // không nhảy hình.
+        Dispatcher.Dispatch(
+            async () =>
+                await PlayOverlaySettingsOpenAnimationAsync(
+                    initialScale,
+                    initialRotation));
+    }
+
+    private async Task PlayOverlaySettingsOpenAnimationAsync(
+        double initialScale,
+        double initialRotation)
+    {
+        // Cùng nhịp với gear thật của AppShell nhưng animate trực tiếp SVG,
+        // không transform Grid 42x42 dùng để neo vị trí popup. Nhờ vậy icon
+        // phản hồi ngay khi menu bắt đầu hiện mà không bị dịch vài pixel.
+        const double restScale = 0.833333d;
+
+        OverlaySettingsIcon.CancelAnimations();
+        OverlaySettingsIcon.Scale =
+            double.IsFinite(initialScale) &&
+            initialScale > 0d
+                ? initialScale
+                : restScale;
+        OverlaySettingsIcon.Rotation =
+            double.IsFinite(initialRotation)
+                ? initialRotation
+                : 0d;
+
+        try
+        {
+            await Task.WhenAll(
+                OverlaySettingsIcon.ScaleToAsync(
+                    0.72d,
+                    65,
+                    Easing.CubicOut),
+
+                OverlaySettingsIcon.RotateToAsync(
+                    18d,
+                    65,
+                    Easing.CubicOut));
+
+            await Task.WhenAll(
+                OverlaySettingsIcon.ScaleToAsync(
+                    restScale,
+                    105,
+                    Easing.CubicOut),
+
+                OverlaySettingsIcon.RotateToAsync(
+                    0d,
+                    105,
+                    Easing.CubicOut));
+        }
+        catch (OperationCanceledException)
+        {
+            // Đóng menu/theme change có thể hủy animation đang chạy.
+        }
+        catch (InvalidOperationException exception)
+        {
+            // Popup vừa attach/detach native view thì animation chỉ là hiệu ứng
+            // phụ; không được để nó ảnh hưởng flow mở Settings.
+            System.Diagnostics.Debug.WriteLine(
+                $"Settings overlay open animation skipped: {exception.Message}");
+        }
+        finally
+        {
+            OverlaySettingsIcon.Scale = restScale;
+            OverlaySettingsIcon.Rotation = 0d;
+        }
     }
 
     private async Task PlayCloseAnimationAsync()

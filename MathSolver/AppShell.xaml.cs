@@ -130,7 +130,12 @@ public partial class AppShell : Shell
 
         try
         {
-            await AnimateSettingsButtonAsync();
+            // Phản hồi click ngay nhưng KHÔNG chặn việc tạo Popup. Trước đây
+            // await toàn bộ animation (~185 ms) rồi mới ToPlatform/Open Popup,
+            // nên người dùng cảm giác nút Settings khựng trước khi menu xuất hiện.
+            // Animate riêng glyph để geometry của SettingsButtonHost luôn ổn định
+            // cho phép đo vị trí neo Popup.
+            _ = AnimateSettingsButtonAsync();
 
             if (IsSettingsRouteOpen())
             {
@@ -407,18 +412,23 @@ public partial class AppShell : Shell
         shellRoot.SizeChanged +=
             OnWindowsOverlayHostSizeChanged;
 
-        // Giữ SettingsButton thật trong visual tree/layout để không mất handler,
-        // nhưng ẩn PHẦN HÌNH của button thật. Popup đã có OverlaySettingsButton
-        // ở đúng tọa độ. Như vậy chỉ có một gear được render, không còn hai icon
-        // chồng qua lớp scrim tạo cảm giác bị đè/dày.
+        // Giữ SettingsButton thật trong visual tree/layout để không mất handler.
+        // Quan trọng: KHÔNG ẩn gear thật trước khi Popup đã có native child.
+        // Nếu ẩn ở đây, ToPlatform/WinUI Popup có thể mất vài frame (thậm chí lâu
+        // hơn khi UI thread bận), tạo cảm giác gear biến mất rồi mới hiện lại.
         SetSettingsActionPresentation(
             visible: true);
 
-        SetBaseSettingsButtonVisual(
-            visible: false);
-
         popup.IsOpen =
             true;
+
+        // Chỉ handoff sau khi Popup đã được yêu cầu mở. Nếu Loaded đã xảy ra
+        // đồng bộ trong IsOpen=true thì helper kiểm tra IsLoaded và hoàn tất ngay;
+        // nếu chưa, event Loaded sẽ thực hiện handoff ở frame đầu tiên.
+        PrepareWindowsSettingsButtonHandoff(
+            popup,
+            platformView,
+            settingsMenu);
 
         // Native embedding không được phép phụ thuộc hoàn toàn vào MAUI Loaded
         // để chạy animation/lifecycle. Kích hoạt rõ ràng sau khi Popup đã mở.
@@ -434,6 +444,64 @@ public partial class AppShell : Shell
     }
 
 #if WINDOWS
+    private void PrepareWindowsSettingsButtonHandoff(
+        WinUIPopup popup,
+        WinUIFrameworkElement platformView,
+        SettingsMenuPage settingsMenu)
+    {
+        // Popup Settings có một gear riêng nằm trên scrim. Handoff chỉ được thực
+        // hiện khi native child đã Loaded: gear Shell vẫn hiện trong toàn bộ thời
+        // gian ToPlatform/Open Popup, sau đó được thay bởi gear của Popup trong
+        // cùng một layout turn. Nhờ vậy không còn khoảng trống 0.5–1 s ở góc phải.
+        void CompleteHandoff(
+            object? sender,
+            Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            platformView.Loaded -=
+                CompleteHandoff;
+
+            if (!ReferenceEquals(
+                    _windowsSettingsPopup,
+                    popup) ||
+                popup.IsOpen != true)
+            {
+                return;
+            }
+
+            settingsMenu.ActivateSettingsButtonOpenAnimation(
+                SettingsButtonIcon.Scale,
+                SettingsButtonIcon.Rotation);
+
+            SetBaseSettingsButtonVisual(
+                visible: false);
+        }
+
+        platformView.Loaded +=
+            CompleteHandoff;
+
+        // Trường hợp WinUI đã load child ngay trong lúc gán Popup.Child, không
+        // chờ event kế tiếp. Vẫn kiểm tra identity để không ẩn gear của Shell nếu
+        // popup vừa bị đóng bởi một thao tác khác.
+        if (platformView.IsLoaded)
+        {
+            platformView.Loaded -=
+                CompleteHandoff;
+
+            if (ReferenceEquals(
+                    _windowsSettingsPopup,
+                    popup) &&
+                popup.IsOpen)
+            {
+                settingsMenu.ActivateSettingsButtonOpenAnimation(
+                    SettingsButtonIcon.Scale,
+                    SettingsButtonIcon.Rotation);
+
+                SetBaseSettingsButtonVisual(
+                    visible: false);
+            }
+        }
+    }
+
     private void GetWindowsSettingsButtonGeometry(
         WinUIFrameworkElement shellRoot,
         double overlayWidth,
@@ -631,41 +699,56 @@ public partial class AppShell : Shell
 
     private async Task AnimateSettingsButtonAsync()
     {
-        // Animate cả host chứa vector gear. SettingsButton chỉ là hit target
-        // trong suốt, nên animate riêng ImageButton sẽ không làm gear chuyển động.
-        SettingsButtonHost.CancelAnimations();
+        // Chỉ animate vector glyph, không transform SettingsButtonHost. Host là
+        // mốc đo tọa độ để neo WinUI Popup; giữ host bất động vừa tránh pixel
+        // drift vừa cho phép mở Popup song song với animation click.
+        const double restScale = 0.833333d;
+
+        SettingsButtonIcon.CancelAnimations();
 
         try
         {
             await Task.WhenAll(
-                SettingsButtonHost.ScaleToAsync(
-                    0.88d,
-                    75,
+                SettingsButtonIcon.ScaleToAsync(
+                    0.72d,
+                    65,
                     Easing.CubicOut),
 
-                SettingsButtonHost.RotateToAsync(
-                    22d,
-                    75,
+                SettingsButtonIcon.RotateToAsync(
+                    18d,
+                    65,
                     Easing.CubicOut));
 
             await Task.WhenAll(
-                SettingsButtonHost.ScaleToAsync(
-                    1d,
-                    110,
+                SettingsButtonIcon.ScaleToAsync(
+                    restScale,
+                    105,
                     Easing.CubicOut),
 
-                SettingsButtonHost.RotateToAsync(
+                SettingsButtonIcon.RotateToAsync(
                     0d,
-                    110,
+                    105,
                     Easing.CubicOut));
+        }
+        catch (OperationCanceledException)
+        {
+            // Một click/theme/navigation mới có thể cancel animation cũ. Đây là
+            // trạng thái UI bình thường, không được làm ảnh hưởng flow mở menu.
+        }
+        catch (InvalidOperationException exception)
+        {
+            // Animation chỉ là phản hồi thị giác. Nếu native view vừa chuyển
+            // trạng thái trong lúc Popup được attach thì bỏ animation, không để
+            // lỗi phụ ảnh hưởng việc mở SettingsMenuPage.
+            System.Diagnostics.Debug.WriteLine(
+                $"Settings button animation skipped: {exception.Message}");
         }
         finally
         {
-            // Không để transform dở dang ảnh hưởng phép đo tọa độ dùng để neo Popup.
-            SettingsButtonHost.Scale =
-                1d;
+            SettingsButtonIcon.Scale =
+                restScale;
 
-            SettingsButtonHost.Rotation =
+            SettingsButtonIcon.Rotation =
                 0d;
         }
     }
