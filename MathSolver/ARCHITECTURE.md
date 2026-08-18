@@ -191,3 +191,25 @@ Key thresholds:
 - **SDK**: .NET MAUI (`Microsoft.Net.Sdk`) targeting Windows 10+, iOS, Android.
 - **Platforms**: Single project with conditional `TargetFrameworks` and platform-specific adapters (`Platforms/Windows`, `Platforms/iOS`, `Platforms/MacCatalyst`, `Platforms/Android`).
 - **Output type**: Native executable; no additional runtime dependencies beyond the .NET SDK.
+
+## Android Material You / Material 3 migration
+
+### Phase 2 (Android-only)
+
+- Windows/WinUI is a locked UI/UX baseline and is not redesigned by this phase.
+- Shell bottom navigation is rendered by MAUI Material 3 on Android and maps Math Solver's palette to Material surface/primary/on-surface-variant roles.
+- Calculation and Formula secondary tabs keep the shared MAUI page architecture, while Android uses 48dp MaterialButton state layers and an animated 3dp selection indicator.
+- Android alert/confirmation dialogs are routed through `MaterialDialogService`, which uses `MaterialAlertDialogBuilder`; non-Android platforms continue to call MAUI `DisplayAlertAsync`.
+- The Android settings overflow remains a compact native popup menu. Destructive reset now requires a Material confirmation and reports completion with a Snackbar.
+- Entry remains on the legacy handler on Android so the `EmojiCompatEnabled = false` numeric-format crash workaround is preserved.
+
+## Android Material You Phase 3 (2026-08-18)
+
+Android is now the platform-specific Material You surface while WinUI remains the stable Windows baseline.
+
+- `UseMaterial3=true` remains Android-only.
+- Optional Dynamic Color is off by default and available on Android 12+. Enabling it recreates only the Android activity so `DynamicColors.ApplyToActivityIfAvailable` can run before the view hierarchy is inflated.
+- `AndroidMaterialYouManager` mirrors Material semantic colors (`primary`, `surface`, surface containers, outline, error) into MAUI DynamicResources. Custom Math Solver accent colors remain active when Dynamic Color is off.
+- Android application chrome uses Material typography metrics, surface containers, subtle elevation, native ripple/state layers, and larger Material shape tokens.
+- Custom SGK/math renderers and `GraphicsView` content remain shared and are not Materialized.
+- WinUI values are preserved through `#if ANDROID` and `OnPlatform ... WinUI=<previous value>` branches.

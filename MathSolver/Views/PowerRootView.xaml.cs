@@ -3888,7 +3888,8 @@ public partial class PowerRootView : LocalizedSolverView
 
         try
         {
-            return await dialogPage.DisplayAlertAsync(
+            return await MaterialDialogService.ConfirmAsync(
+                dialogPage,
                 Translate(
                     "PowerRoot.ConfirmStopTitle"),
                 Translate(

@@ -376,7 +376,8 @@ public partial class AboutPage : ContentPage
             // Hiển thị thông báo thân thiện bên dưới.
         }
 
-        await DisplayAlertAsync(
+        await MaterialDialogService.ShowAlertAsync(
+            this,
             LocalizationService.TranslateKey(
                 "About.LinkErrorTitle"),
 

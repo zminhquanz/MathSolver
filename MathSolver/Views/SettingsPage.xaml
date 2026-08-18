@@ -49,7 +49,7 @@
                     x:Name="SettingsPageTitleLabel"
                     Text="CÀI ĐẶT"
                     TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=18, WinUI=19, Default=19}"
+                    FontSize="{OnPlatform Android=22, WinUI=19, Default=19}"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
                     TextColor="{DynamicResource TextPrimaryColor}" />
@@ -77,13 +77,13 @@
                     <VerticalStackLayout Spacing="13">
                         <Label
                         Text="Phong cách hiển thị"
-                        FontSize="19"
+                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                         Text="Theo hệ thống sẽ tự chuyển sáng hoặc tối theo thiết bị."
-                        FontSize="13"
+                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Grid
@@ -108,20 +108,51 @@
                             Text="Tối"
                             Clicked="OnDarkThemeClicked" />
                         </Grid>
+
+                        <BoxView
+                            IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
+                            HeightRequest="1"
+                            Margin="0,2"
+                            BackgroundColor="{DynamicResource DividerColor}" />
+
+                        <Grid
+                            IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
+                            ColumnDefinitions="*,Auto"
+                            ColumnSpacing="12"
+                            Padding="2,2,2,0">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label
+                                    x:Name="DynamicColorTitleLabel"
+                                    Text="Màu theo hình nền"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="DynamicColorSummaryLabel"
+                                    Text="Dùng bảng màu Material You của hệ thống"
+                                    Style="{StaticResource MaterialBodyMediumStyle}" />
+                            </VerticalStackLayout>
+
+                            <Switch
+                                x:Name="DynamicColorSwitch"
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Toggled="OnDynamicColorToggled" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource ThemeCardStyle}">
+                <Border x:Name="AccentColorCard" Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="{OnPlatform Android=10, WinUI=14, Default=14}">
                         <Label
                         Text="Màu chủ đề"
-                        FontSize="19"
+                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                         Text="Chọn màu có sẵn, nhập mã HEX hoặc điều chỉnh ba kênh RGB."
-                        FontSize="13"
+                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <FlexLayout
@@ -371,7 +402,7 @@
                         <Label
                         x:Name="ValidationLabel"
                         IsVisible="False"
-                        FontSize="13"
+                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource DangerColor}" />
 
                         <Grid
@@ -480,7 +511,7 @@
 
                                     <Label
                                     x:Name="PreviewHexLabel"
-                                    FontSize="13" />
+                                    FontSize="{OnPlatform Android=14, WinUI=13, Default=13}" />
                                 </VerticalStackLayout>
 
                                 <Label
@@ -502,13 +533,13 @@
 
                         <Label
                         Text="Phông chữ"
-                        FontSize="19"
+                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                         Text="Chọn phông chữ dùng cho toàn bộ giao diện Math Solver."
-                        FontSize="13"
+                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
@@ -548,7 +579,7 @@
 
                                 <Label
                                 Text="Xem trước phông chữ"
-                                FontSize="13"
+                                FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -561,7 +592,7 @@
 
                                 <Label
                                 x:Name="SelectedFontNameLabel"
-                                FontSize="13"
+                                FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
@@ -576,13 +607,13 @@
                     <VerticalStackLayout Spacing="12">
                         <Label
                         Text="Ngôn ngữ"
-                        FontSize="19"
+                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                         Text="Chọn ngôn ngữ dùng cho toàn bộ giao diện và lời giải."
-                        FontSize="13"
+                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
@@ -616,14 +647,14 @@
                         <Label
                             x:Name="ResultDisplaySectionTitleLabel"
                             Text="Hiển thị kết quả"
-                            FontSize="19"
+                            FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="ResultDisplaySectionDescriptionLabel"
                             Text="Tùy chỉnh cách Math Solver trình bày các kết quả có nhiều chữ số."
-                            FontSize="13"
+                            FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
@@ -677,14 +708,14 @@
                         <Label
                             x:Name="DeveloperSectionTitleLabel"
                             Text="Chế độ nhà phát triển"
-                            FontSize="19"
+                            FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="DeveloperSectionDescriptionLabel"
                             Text="Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán và AI/LLM."
-                            FontSize="13"
+                            FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
@@ -756,7 +787,7 @@
                                 <Label
                                     x:Name="DeveloperVisibleToolsTitleLabel"
                                     Text="Nội dung được hiển thị khi bật"
-                                    FontSize="13"
+                                    FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -811,14 +842,14 @@
                         <Label
                         x:Name="ResetSectionTitleLabel"
                         Text="Khôi phục mặc định"
-                        FontSize="19"
+                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                         x:Name="ResetSectionDescriptionLabel"
                         Text="Đặt lại giao diện, hiển thị kết quả và chế độ nhà phát triển về mặc định."
-                        FontSize="13"
+                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Button

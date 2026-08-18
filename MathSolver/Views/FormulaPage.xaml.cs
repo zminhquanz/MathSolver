@@ -1044,10 +1044,37 @@ public partial class FormulaPage : ContentPage
             BoxView.BackgroundColorProperty,
             "PrimaryColor");
 
-        indicator.Opacity =
-            isSelected
-                ? 1d
-                : 0d;
+        indicator.CancelAnimations();
+
+        if (isSelected)
+        {
+            // Material secondary-tab motion: the selected indicator fades and
+            // grows into place instead of appearing abruptly.
+            if (indicator.Opacity < 0.99d)
+            {
+                indicator.Opacity = 0.25d;
+                indicator.Scale = 0.70d;
+
+                _ = Task.WhenAll(
+                    indicator.FadeToAsync(
+                        1d,
+                        120,
+                        Easing.CubicOut),
+                    indicator.ScaleToAsync(
+                        1d,
+                        170,
+                        Easing.CubicOut));
+            }
+            else
+            {
+                indicator.Scale = 1d;
+            }
+        }
+        else
+        {
+            indicator.Opacity = 0d;
+            indicator.Scale = 0.70d;
+        }
     }
 
     private Button GetAndroidFormulaSubTabButton(

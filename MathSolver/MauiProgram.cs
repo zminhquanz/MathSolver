@@ -3,7 +3,6 @@ using MathSolver.Controls;
 using MathSolver.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
-using Microsoft.Maui.Hosting;
 
 namespace MathSolver
 {
@@ -35,7 +34,7 @@ namespace MathSolver
                 });
 
 #if ANDROID
-            ConfigureAndroidMaterial3Phase1(builder);
+            ConfigureAndroidMaterial3Phase3(builder);
 #endif
 
 #if DEBUG
@@ -48,17 +47,17 @@ namespace MathSolver
 #if ANDROID
         /// <summary>
         /// .NET MAUI 10 exposes Material 3 as an Android app-wide feature flag.
-        /// Phase 1 intentionally keeps the new Material handlers only for
-        /// Slider, Switch, ProgressBar and Picker. Button/ImageButton use their
-        /// normal public handlers, which become Material 3-aware when the flag
-        /// is enabled.
+        /// Phase 3 keeps the native Material controls and Shell navigation from
+        /// Phases 1/2, then layers Material You color, typography, surface,
+        /// elevation, ripple/state and shape tokens over Android application UI.
+        /// Math/SGK renderers remain shared and intentionally unchanged.
         ///
-        /// Re-register the legacy handlers for controls that are outside this
-        /// phase so the rest of Math Solver does not change unexpectedly. In
-        /// particular Entry must stay on EntryHandler because its Android
-        /// EmojiCompat workaround below prevents the 1000 -> 1,000 input crash.
+        /// Legacy handlers remain registered for controls outside the migration
+        /// boundary. In particular Entry must stay on EntryHandler because its
+        /// Android EmojiCompat workaround below prevents the 1000 -> 1,000 input
+        /// crash. These registrations are Android-only; WinUI is unchanged.
         /// </summary>
-        private static void ConfigureAndroidMaterial3Phase1(
+        private static void ConfigureAndroidMaterial3Phase3(
             MauiAppBuilder builder)
         {
             builder.ConfigureMauiHandlers(handlers =>
@@ -73,7 +72,7 @@ namespace MathSolver
                 handlers.AddHandler<Microsoft.Maui.Controls.ActivityIndicator, ActivityIndicatorHandler>();
                 handlers.AddHandler<Microsoft.Maui.Controls.Image, ImageHandler>();
 
-                // Deliberately NOT overridden in Phase 1:
+                // Deliberately NOT overridden in Material Phase 1/2:
                 // Picker       -> PickerHandler2 (Material 3)
                 // Switch       -> SwitchHandler2 (Material 3)
                 // ProgressBar  -> ProgressBarHandler2 (Material 3)
@@ -81,6 +80,16 @@ namespace MathSolver
                 // Button       -> MaterialButton via ButtonHandler
                 // ImageButton  -> Material ShapeableImageView
             });
+
+            LabelHandler.Mapper.AppendToMapping(
+                "MathSolverAndroidMaterialTypography",
+                static (handler, _) =>
+                {
+                    // Material typography has tighter vertical metrics than the
+                    // legacy Android TextView defaults. Keep the selected app
+                    // font family, but remove Android's extra font padding.
+                    handler.PlatformView.SetIncludeFontPadding(false);
+                });
         }
 #endif
 

@@ -11,6 +11,7 @@ public partial class SettingsPage : ContentPage
     private bool _isClosing;
     private bool _updatingFullNumberDisplaySwitch;
     private bool _updatingDeveloperModeSwitch;
+    private bool _updatingDynamicColorSwitch;
 
     // Picker.ItemsSource yêu cầu IList, trong khi AppFontCatalog.Options
     // được khai báo là IReadOnlyList. Tạo một List dùng chung để vừa
@@ -302,6 +303,9 @@ public partial class SettingsPage : ContentPage
         AppLanguageManager.ResetToDefault();
         DeveloperModeManager.ResetToDefault();
         ResultNumberDisplayMode.ResetToDefault();
+#if ANDROID
+        AndroidMaterialYouManager.SetDynamicColorEnabled(false);
+#endif
 
         LoadCurrentSettings();
         UpdateAdvancedSettingsState();
@@ -340,6 +344,21 @@ public partial class SettingsPage : ContentPage
         UpdateAdvancedSettingsState();
     }
 
+    private void OnDynamicColorToggled(
+        object? sender,
+        ToggledEventArgs e)
+    {
+#if ANDROID
+        if (_updatingDynamicColorSwitch)
+        {
+            return;
+        }
+
+        AndroidMaterialYouManager.SetDynamicColorEnabled(
+            e.Value);
+#endif
+    }
+
     private void OnDeveloperModeToggled(
         object? sender,
         ToggledEventArgs e)
@@ -360,6 +379,22 @@ public partial class SettingsPage : ContentPage
         bool useEnglish =
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
+
+#if ANDROID
+        DynamicColorTitleLabel.Text =
+            useEnglish
+                ? "Dynamic color"
+                : "Màu theo hình nền";
+
+        DynamicColorSummaryLabel.Text =
+            !AndroidMaterialYouManager.IsDynamicColorSupported
+                ? (useEnglish
+                    ? "Requires Android 12 or later"
+                    : "Yêu cầu Android 12 trở lên")
+                : (useEnglish
+                    ? "Use the Material You palette from your wallpaper"
+                    : "Dùng bảng màu Material You từ hình nền hệ thống");
+#endif
 
         _updatingFullNumberDisplaySwitch = true;
         _updatingDeveloperModeSwitch = true;
@@ -516,16 +551,60 @@ public partial class SettingsPage : ContentPage
     private void LoadCurrentSettings()
     {
         Color color = AppThemeManager.CurrentAccentColor;
+        string colorHex = AppThemeManager.CurrentAccentHex;
+
+#if ANDROID
+        if (AndroidMaterialYouManager.IsDynamicColorEnabled &&
+            Application.Current?.Resources.TryGetValue(
+                "PrimaryColor",
+                out object? primaryValue) == true &&
+            primaryValue is Color dynamicPrimary)
+        {
+            color = dynamicPrimary;
+            colorHex = AppThemeManager.ToHex(dynamicPrimary);
+        }
+
+        UpdateDynamicColorSettings();
+#endif
 
         SetColorControls(
             color,
-            AppThemeManager.CurrentAccentHex);
+            colorHex);
 
         UpdateThemeModeButtons();
         LoadLanguageSettings();
         LoadFontSettings();
         UpdateAdvancedSettingsState();
     }
+
+#if ANDROID
+    private void UpdateDynamicColorSettings()
+    {
+        _updatingDynamicColorSwitch = true;
+
+        try
+        {
+            DynamicColorSwitch.IsEnabled =
+                AndroidMaterialYouManager.IsDynamicColorSupported;
+            DynamicColorSwitch.IsToggled =
+                AndroidMaterialYouManager.IsDynamicColorEnabled;
+        }
+        finally
+        {
+            _updatingDynamicColorSwitch = false;
+        }
+
+        bool customAccentEnabled =
+            !AndroidMaterialYouManager.IsDynamicColorEnabled;
+
+        AccentColorCard.InputTransparent =
+            !customAccentEnabled;
+        AccentColorCard.Opacity =
+            customAccentEnabled
+                ? 1d
+                : 0.56d;
+    }
+#endif
 
     private void LoadLanguageSettings()
     {

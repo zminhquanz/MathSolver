@@ -1512,7 +1512,8 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        await DisplayAlertAsync(
+        await MaterialDialogService.ShowAlertAsync(
+            this,
             Translate("Quiz.ModelLocationTitle"),
             string.Format(
                 CultureInfo.CurrentCulture,

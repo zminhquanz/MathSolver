@@ -10,9 +10,17 @@ namespace MathSolver.Controls;
 /// </summary>
 public static class InteractiveButtonAnimation
 {
+#if ANDROID
+    // Material 3 owns the Android ripple/state layer. Keep only a subtle scale
+    // response so the MAUI animation does not fade out the native ripple.
+    private const double PressedScale = 0.985d;
+    private const double PressedOpacity = 1d;
+    private const double ReleaseOvershoot = 1d;
+#else
     private const double PressedScale = 0.96d;
     private const double PressedOpacity = 0.88d;
     private const double ReleaseOvershoot = 1.015d;
+#endif
 
     private const uint PressDuration = 70;
     private const uint ReleaseDuration = 85;

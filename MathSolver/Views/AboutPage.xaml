@@ -53,7 +53,7 @@
                     x:Name="AboutTitleLabel"
                     Text="{localization:Translate About.HeaderTitle}"
                     TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    FontSize="19"
+                    FontSize="{OnPlatform Android=22, WinUI=19, Default=19}"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
                     TextColor="{DynamicResource TextPrimaryColor}" />
@@ -80,12 +80,16 @@
             <!-- App identity -->
             <Border
                 Padding="{OnPlatform Android=16, WinUI=22, Default=22}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
+                BackgroundColor="{DynamicResource SurfaceContainerLowColor}"
                 Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
+                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+
+                <Border.Shadow>
+                    <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
+                </Border.Shadow>
 
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="22" />
+                    <RoundRectangle CornerRadius="{OnPlatform Android=28, WinUI=22, Default=22}" />
                 </Border.StrokeShape>
 
                 <Grid
@@ -142,19 +146,23 @@
             <!-- Application information -->
             <Border
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
+                BackgroundColor="{DynamicResource SurfaceContainerLowColor}"
                 Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
+                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+
+                <Border.Shadow>
+                    <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
+                </Border.Shadow>
 
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="18" />
+                    <RoundRectangle CornerRadius="{OnPlatform Android=16, WinUI=18, Default=18}" />
                 </Border.StrokeShape>
 
                 <VerticalStackLayout Spacing="14">
                     <Label
                         x:Name="InformationTitleLabel"
                         Text="{localization:Translate About.InformationTitle}"
-                        FontSize="18"
+                        FontSize="{OnPlatform Android=20, WinUI=18, Default=18}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -227,12 +235,16 @@
             <!-- Project links -->
             <Border
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
+                BackgroundColor="{DynamicResource SurfaceContainerLowColor}"
                 Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="1">
+                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+
+                <Border.Shadow>
+                    <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
+                </Border.Shadow>
 
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="18" />
+                    <RoundRectangle CornerRadius="{OnPlatform Android=16, WinUI=18, Default=18}" />
                 </Border.StrokeShape>
 
                 <VerticalStackLayout Spacing="12">
@@ -240,7 +252,7 @@
                     <Label
                         x:Name="LinksTitleLabel"
                         Text="{localization:Translate About.LinksTitle}"
-                        FontSize="18"
+                        FontSize="{OnPlatform Android=20, WinUI=18, Default=18}"
                         FontAttributes="Bold"
                         HorizontalOptions="Start"
                         TextColor="{DynamicResource TextPrimaryColor}" />

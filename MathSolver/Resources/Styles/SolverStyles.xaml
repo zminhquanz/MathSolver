@@ -107,13 +107,14 @@
 
     <!-- Android-only visual style for Material/DevCheck-like sub tabs. -->
     <Style x:Key="AndroidNativeSubTabButtonStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="Padding" Value="16,0" />
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="BorderWidth" Value="0" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CharacterSpacing" Value="0.1" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
     </Style>

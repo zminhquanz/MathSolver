@@ -48,7 +48,7 @@
                 <Label
                     Text="THÔNG TIN PHẦN CỨNG"
                     TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    FontSize="19"
+                    FontSize="{OnPlatform Android=22, WinUI=19, Default=19}"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
                     TextColor="{DynamicResource TextPrimaryColor}" />

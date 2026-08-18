@@ -32,7 +32,7 @@
                 HorizontalScrollBarVisibility="Never">
 
                 <HorizontalStackLayout Spacing="0" Padding="6,0">
-                    <Grid MinimumWidthRequest="158" RowDefinitions="44,3">
+                    <Grid MinimumWidthRequest="158" RowDefinitions="48,3">
                         <Button
                             x:Name="AndroidUnknownComponentTabButton"
                             Grid.Row="0"
@@ -48,7 +48,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="112" RowDefinitions="44,3">
+                    <Grid MinimumWidthRequest="112" RowDefinitions="48,3">
                         <Button
                             x:Name="AndroidProportionTabButton"
                             Grid.Row="0"
@@ -63,7 +63,7 @@
                             BackgroundColor="Transparent" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="112" RowDefinitions="44,3">
+                    <Grid MinimumWidthRequest="112" RowDefinitions="48,3">
                         <Button
                             x:Name="AndroidMotionTabButton"
                             Grid.Row="0"
@@ -78,7 +78,7 @@
                             BackgroundColor="Transparent" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="102" RowDefinitions="44,3">
+                    <Grid MinimumWidthRequest="102" RowDefinitions="48,3">
                         <Button
                             x:Name="AndroidFormulaGeometryTabButton"
                             Grid.Row="0"

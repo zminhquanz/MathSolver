@@ -13,6 +13,7 @@ using WindowsPoint = Windows.Foundation.Point;
 #if ANDROID
 using Android.Views;
 using Android.Widget;
+using CommunityToolkit.Maui.Alerts;
 #endif
 
 namespace MathSolver;
@@ -355,19 +356,49 @@ public partial class AppShell : Shell
                     AppLanguageManager.CurrentLanguage ==
                     AppLanguage.English;
 
+                Page? currentPage =
+                    Shell.Current?.CurrentPage;
+
+                if (currentPage is null)
+                {
+                    break;
+                }
+
+                bool confirmed =
+                    await MaterialDialogService.ConfirmAsync(
+                        currentPage,
+                        useEnglish
+                            ? "Reset settings"
+                            : "Đặt lại cài đặt",
+                        useEnglish
+                            ? "Restore theme, font, language and advanced settings to their defaults?"
+                            : "Khôi phục chủ đề, phông chữ, ngôn ngữ và cài đặt nâng cao về mặc định?",
+                        useEnglish
+                            ? "Reset"
+                            : "Đặt lại",
+                        useEnglish
+                            ? "Cancel"
+                            : "Hủy");
+
+                if (!confirmed)
+                {
+                    break;
+                }
+
                 AppThemeManager.ResetToDefault();
                 AppFontManager.ResetToDefault();
                 AppLanguageManager.ResetToDefault();
                 DeveloperModeManager.ResetToDefault();
                 ResultNumberDisplayMode.ResetToDefault();
+#if ANDROID
+                AndroidMaterialYouManager.SetDynamicColorEnabled(false);
+#endif
 
-                Toast.MakeText(
-                        Android.App.Application.Context,
+                await Snackbar.Make(
                         useEnglish
                             ? "Settings restored"
-                            : "Đã khôi phục cài đặt",
-                        ToastLength.Short)
-                    ?.Show();
+                            : "Đã khôi phục cài đặt")
+                    .Show();
                 break;
         }
     }
@@ -387,6 +418,8 @@ public partial class AppShell : Shell
 
         CancelMainTabBarRestore();
 
+        // Detail pages already run their own entry animation; keep Shell's
+        // native transition disabled to avoid double motion.
         await Shell.Current.GoToAsync(
             route,
             animate: false);
@@ -1093,8 +1126,22 @@ public partial class AppShell : Shell
         ShellTitleScrim.IsVisible =
             _isShellChromeDimmed;
 
+#if ANDROID
+        // Material 3 BottomNavigationView: map the app palette to Material-like
+        // surface / primary / on-surface-variant roles. The active indicator,
+        // ripple and label state are rendered by MAUI's Material 3 Shell handler.
+        const string tabBackgroundKey = "SurfaceColor";
+        const string tabForegroundKey = "PrimaryColor";
+        const string tabUnselectedKey = "TextSecondaryColor";
+#else
+        // Keep the established WinUI Shell palette exactly as before.
+        const string tabBackgroundKey = "ShellBackgroundColor";
+        const string tabForegroundKey = "ShellForegroundColor";
+        const string tabUnselectedKey = "ShellUnselectedColor";
+#endif
+
         if (TryGetThemeColor(
-                "ShellBackgroundColor",
+                tabBackgroundKey,
                 out Color shellBackgroundColor))
         {
             Shell.SetTabBarBackgroundColor(
@@ -1107,7 +1154,7 @@ public partial class AppShell : Shell
         }
 
         if (TryGetThemeColor(
-                "ShellForegroundColor",
+                tabForegroundKey,
                 out Color shellForegroundColor))
         {
             Color dimmedForegroundColor =
@@ -1127,7 +1174,7 @@ public partial class AppShell : Shell
         }
 
         if (TryGetThemeColor(
-                "ShellUnselectedColor",
+                tabUnselectedKey,
                 out Color shellUnselectedColor))
         {
             Shell.SetTabBarUnselectedColor(
@@ -1408,6 +1455,8 @@ public partial class AppShell : Shell
             await CloseSettingsOnWindowsAsync(
                 sourcePage);
 #else
+            // Android detail pages already animate their content out before the
+            // logical pop, so avoid stacking a second Shell transition.
             await GoToAsync(
                 "..",
                 animate: false);

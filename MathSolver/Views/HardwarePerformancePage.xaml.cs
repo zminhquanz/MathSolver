@@ -1922,7 +1922,8 @@ public partial class HardwarePerformancePage : ContentPage
 
         try
         {
-            return await DisplayAlertAsync(
+            return await MaterialDialogService.ConfirmAsync(
+                this,
                 LocalizationService.Translate(
                     "Xác nhận dừng"),
                 LocalizationService.Translate(

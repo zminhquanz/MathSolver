@@ -132,6 +132,22 @@ public static class AppThemeManager
         ApplyCurrentTheme(savePreferences: true);
     }
 
+    /// <summary>
+    /// Re-read platform theme colors without changing saved preferences. On
+    /// Android this is used after an Activity recreation installs a Material
+    /// You dynamic-color overlay. Other platforms simply reapply the current
+    /// palette.
+    /// </summary>
+    public static void RefreshFromPlatformTheme()
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        ApplyCurrentTheme(savePreferences: false);
+    }
+
     public static bool TryParseHexColor(
         string? input,
         out Color color,
@@ -212,9 +228,23 @@ public static class AppThemeManager
                         : AppTheme.Light
                 };
 
-            ThemePalette palette = CreatePalette(
-                effectiveTheme,
-                CurrentAccentColor);
+            ThemePalette palette;
+
+#if ANDROID
+            if (AndroidMaterialYouManager.TryGetCurrentColorScheme(
+                    out AndroidMaterialColorScheme materialScheme))
+            {
+                palette = CreateMaterialYouPalette(
+                    effectiveTheme,
+                    materialScheme);
+            }
+            else
+#endif
+            {
+                palette = CreatePalette(
+                    effectiveTheme,
+                    CurrentAccentColor);
+            }
 
             ApplyPalette(application.Resources, palette);
 
@@ -251,6 +281,60 @@ public static class AppThemeManager
             ApplyCurrentTheme(savePreferences: false);
         }
     }
+
+#if ANDROID
+    private static ThemePalette CreateMaterialYouPalette(
+        AppTheme theme,
+        AndroidMaterialColorScheme material)
+    {
+        bool dark = theme == AppTheme.Dark;
+
+        Color success = dark
+            ? Color.FromArgb("#6DD58C")
+            : Color.FromArgb("#146C2E");
+        Color successSoft = dark
+            ? Color.FromArgb("#0A3818")
+            : Color.FromArgb("#C4EED0");
+        Color warning = dark
+            ? Color.FromArgb("#FFB77C")
+            : Color.FromArgb("#8A4D00");
+        Color warningSoft = dark
+            ? Color.FromArgb("#472A00")
+            : Color.FromArgb("#FFDDBD");
+        Color info = material.Primary;
+        Color infoSoft = material.PrimaryContainer;
+
+        return new ThemePalette(
+            Accent: material.Primary,
+            AccentDark: Mix(material.Primary, Colors.Black, dark ? 0.10 : 0.18),
+            AccentSoft: material.PrimaryContainer,
+            AccentBorder: material.OutlineVariant,
+            OnAccent: material.OnPrimary,
+            PageBackground: material.Surface,
+            Surface: material.Surface,
+            SurfaceAlt: material.SurfaceContainerLow,
+            InputBackground: material.SurfaceContainerHigh,
+            TextPrimary: material.OnSurface,
+            TextSecondary: material.OnSurfaceVariant,
+            Border: material.OutlineVariant,
+            Divider: material.OutlineVariant,
+            Success: success,
+            SuccessSoft: successSoft,
+            SuccessBorder: Mix(success, material.Surface, 0.50),
+            Warning: warning,
+            WarningSoft: warningSoft,
+            WarningBorder: Mix(warning, material.Surface, 0.50),
+            Danger: material.Error,
+            DangerSoft: material.ErrorContainer,
+            DangerBorder: Mix(material.Error, material.Surface, 0.48),
+            Info: info,
+            InfoSoft: infoSoft,
+            InfoBorder: material.OutlineVariant,
+            ShellBackground: material.SurfaceContainer,
+            ShellForeground: material.Primary,
+            ShellUnselected: material.OnSurfaceVariant);
+    }
+#endif
 
     private static ThemePalette CreatePalette(
         AppTheme theme,
@@ -350,6 +434,17 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "PageBackgroundColor", "PageBackgroundBrush", palette.PageBackground);
         SetColorAndBrush(resources, "SurfaceColor", "SurfaceBrush", palette.Surface);
         SetColorAndBrush(resources, "SurfaceAltColor", "SurfaceAltBrush", palette.SurfaceAlt);
+#if ANDROID
+        SetColorAndBrush(resources, "SurfaceContainerLowColor", "SurfaceContainerLowBrush", palette.SurfaceAlt);
+        SetColorAndBrush(resources, "SurfaceContainerColor", "SurfaceContainerBrush", palette.ShellBackground);
+        SetColorAndBrush(resources, "SurfaceContainerHighColor", "SurfaceContainerHighBrush", palette.InputBackground);
+#else
+        // Keep the established WinUI/iOS/Mac surface appearance exactly as it
+        // was before the Android Material You migration.
+        SetColorAndBrush(resources, "SurfaceContainerLowColor", "SurfaceContainerLowBrush", palette.Surface);
+        SetColorAndBrush(resources, "SurfaceContainerColor", "SurfaceContainerBrush", palette.Surface);
+        SetColorAndBrush(resources, "SurfaceContainerHighColor", "SurfaceContainerHighBrush", palette.Surface);
+#endif
         SetColorAndBrush(resources, "InputBackgroundColor", "InputBackgroundBrush", palette.InputBackground);
         SetColorAndBrush(resources, "TextPrimaryColor", "TextPrimaryBrush", palette.TextPrimary);
         SetColorAndBrush(resources, "TextSecondaryColor", "TextSecondaryBrush", palette.TextSecondary);

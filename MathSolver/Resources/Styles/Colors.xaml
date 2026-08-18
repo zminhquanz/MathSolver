@@ -13,6 +13,11 @@
     <Color x:Key="PageBackgroundColor">#F4F7FB</Color>
     <Color x:Key="SurfaceColor">#FFFFFF</Color>
     <Color x:Key="SurfaceAltColor">#F8FAFC</Color>
+    <!-- Material 3 semantic surface roles. They default to the existing Math
+         Solver palette, then Android Dynamic Color can replace them at runtime. -->
+    <Color x:Key="SurfaceContainerLowColor">#FFFFFF</Color>
+    <Color x:Key="SurfaceContainerColor">#FFFFFF</Color>
+    <Color x:Key="SurfaceContainerHighColor">#FFFFFF</Color>
     <Color x:Key="InputBackgroundColor">#FFFFFF</Color>
 
     <Color x:Key="TextPrimaryColor">#1E293B</Color>
@@ -49,6 +54,9 @@
     <SolidColorBrush x:Key="PageBackgroundBrush" Color="#F4F7FB" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="#F8FAFC" />
+    <SolidColorBrush x:Key="SurfaceContainerLowBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceContainerBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceContainerHighBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
 
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1E293B" />
@@ -110,21 +118,53 @@
     <SolidColorBrush x:Key="Gray900Brush" Color="#212121" />
     <SolidColorBrush x:Key="Gray950Brush" Color="#141414" />
 
+    <!-- Android Material You tokens. These are referenced only by Android
+         presentation values; WinUI continues to use its existing dimensions. -->
+    <x:Double x:Key="MaterialShapeSmall">8</x:Double>
+    <x:Double x:Key="MaterialShapeMedium">12</x:Double>
+    <x:Double x:Key="MaterialShapeLarge">16</x:Double>
+    <x:Double x:Key="MaterialShapeExtraLarge">28</x:Double>
+
+    <Style x:Key="MaterialSectionTitleStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="{OnPlatform Android=20, WinUI=19, Default=19}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="LineHeight" Value="{OnPlatform Android=1.18, WinUI=1, Default=1}" />
+        <Setter Property="CharacterSpacing" Value="{OnPlatform Android=0, WinUI=0, Default=0}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+    </Style>
+
+    <Style x:Key="MaterialBodyMediumStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=13, Default=13}" />
+        <Setter Property="LineHeight" Value="{OnPlatform Android=1.35, WinUI=1, Default=1}" />
+        <Setter Property="CharacterSpacing" Value="{OnPlatform Android=0.15, WinUI=0, Default=0}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
+    </Style>
+
     <Style x:Key="ThemeCardStyle" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceContainerLowColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=14, Default=14}" />
+        <Setter Property="StrokeThickness" Value="{OnPlatform Android=0, WinUI=1, Default=1}" />
+        <Setter Property="Padding" Value="{OnPlatform Android=16, WinUI=14, Default=14}" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
+                <RoundRectangle CornerRadius="{OnPlatform Android=16, WinUI=14, Default=14}" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow
+                    Brush="#33000000"
+                    Offset="0,2"
+                    Radius="6"
+                    Opacity="{OnPlatform Android=0.14, WinUI=0, Default=0}" />
             </Setter.Value>
         </Setter>
     </Style>
 
     <Style x:Key="HardwareSectionTitleStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontSize" Value="{OnPlatform Android=20, WinUI=18, Default=18}" />
         <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="LineHeight" Value="{OnPlatform Android=1.18, WinUI=1, Default=1}" />
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
     </Style>
 
@@ -157,10 +197,15 @@
 
     <Style x:Key="HardwareSectionStyle" TargetType="Border">
         <Setter Property="Padding" Value="16" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceContainerLowColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeThickness" Value="{OnPlatform Android=0, WinUI=1, Default=1}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="ThemePrimaryButtonStyle" TargetType="Button">
@@ -175,7 +220,7 @@
         <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
-        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="BorderWidth" Value="{OnPlatform Android=0, WinUI=1, Default=1}" />
         <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=10, Default=10}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="Padding" Value="14,10" />

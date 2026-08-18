@@ -445,7 +445,8 @@ public partial class GemmaModelCatalogPage : ContentPage
                     System.Diagnostics.Debug.WriteLine(
                         $"Folder picker failed: {result.Exception}");
 
-                    await DisplayAlertAsync(
+                    await MaterialDialogService.ShowAlertAsync(
+                        this,
                         T("Quiz.DownloadPathPopupFolderPickerFailedTitle"),
                         T("Quiz.DownloadPathPopupFolderPickerFailedMessage"),
                         T("Quiz.ModelCatalogClose"));
@@ -459,7 +460,8 @@ public partial class GemmaModelCatalogPage : ContentPage
 
             if (!await CanWriteToDirectoryAsync(selectedDirectory))
             {
-                await DisplayAlertAsync(
+                await MaterialDialogService.ShowAlertAsync(
+                    this,
                     T("Quiz.DownloadPathPopupFolderNotWritableTitle"),
                     T("Quiz.DownloadPathPopupFolderNotWritableMessage"),
                     T("Quiz.ModelCatalogClose"));
@@ -479,7 +481,8 @@ public partial class GemmaModelCatalogPage : ContentPage
             System.Diagnostics.Debug.WriteLine(
                 $"Could not choose model download folder: {exception}");
 
-            await DisplayAlertAsync(
+            await MaterialDialogService.ShowAlertAsync(
+                this,
                 T("Quiz.DownloadPathPopupFolderPickerFailedTitle"),
                 T("Quiz.DownloadPathPopupFolderPickerFailedMessage"),
                 T("Quiz.ModelCatalogClose"));
@@ -604,7 +607,8 @@ public partial class GemmaModelCatalogPage : ContentPage
                 $"Could not open the Gemma 4 model website: {exception}");
         }
 
-        await DisplayAlertAsync(
+        await MaterialDialogService.ShowAlertAsync(
+            this,
             T("Quiz.ModelCatalogOpenFailedTitle"),
             T("Quiz.OpenModelWebsiteFailed"),
             T("Quiz.ModelCatalogClose"));
