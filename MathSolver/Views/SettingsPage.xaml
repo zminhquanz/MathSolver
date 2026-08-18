@@ -3,7 +3,6 @@
     x:Class="MathSolver.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:controls="clr-namespace:MathSolver.Controls"
     Title="Cài đặt"
     Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True"
@@ -232,7 +231,7 @@
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>
 
-                                <controls:BorderlessEntry
+                                <Entry
                                 x:Name="HexColorEntry"
                                 Placeholder="#6D28D9"
                                 MaxLength="7"
@@ -411,10 +410,9 @@
 
                                 <!--
                                 Picker phủ toàn bộ chiều rộng để người dùng có thể
-                                bấm cả vùng mũi tên. Padding native bên phải được
-                                chừa trong BorderlessPicker.cs.
+                                bấm cả vùng mũi tên. Picker dùng handler chuẩn của .NET MAUI trên từng nền tảng.
                             -->
-                                <controls:BorderlessPicker
+                                <Picker
                                 x:Name="FontPicker"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
@@ -532,7 +530,7 @@
                                 HeightRequest="46"
                                 ColumnDefinitions="*,44">
 
-                                <controls:BorderlessPicker
+                                <Picker
                                     x:Name="LanguagePicker"
                                     Grid.Column="0"
                                     Grid.ColumnSpan="2"

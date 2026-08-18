@@ -214,7 +214,7 @@
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>
 
-                                <controls:BorderlessEntry
+                                <Entry
                                     x:Name="FindXKnownValueEntry"
                                     Placeholder="Ví dụ: 8"
                                     PlaceholderColor="{DynamicResource TextPrimaryColor}"
@@ -254,7 +254,7 @@
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>
 
-                                <controls:BorderlessEntry
+                                <Entry
                                     x:Name="FindXResultValueEntry"
                                     Placeholder="Ví dụ: 20"
 

@@ -271,7 +271,7 @@
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="FirstNumberEntry"
                                         Placeholder="Ví dụ: 25"
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
@@ -321,7 +321,7 @@
                                         <RoundRectangle CornerRadius="10" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                     x:Name="SecondNumberEntry"
                                     Placeholder="Ví dụ: 15"
                                     PlaceholderColor="{DynamicResource TextPrimaryColor}"

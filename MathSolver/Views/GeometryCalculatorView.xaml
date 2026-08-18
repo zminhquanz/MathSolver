@@ -134,10 +134,9 @@
 
                                     <!--
                                     Picker phủ toàn bộ chiều rộng để người dùng có thể
-                                    bấm cả vùng mũi tên. Padding native bên phải được
-                                    chừa trong BorderlessPicker.cs.
+                                    bấm cả vùng mũi tên. Picker dùng handler chuẩn của .NET MAUI trên từng nền tảng.
                                     -->
-                                    <controls:BorderlessPicker
+                                    <Picker
                                         x:Name="GeometryShapePicker"
                                         Grid.Column="0"
                                         Grid.ColumnSpan="2"
@@ -524,7 +523,7 @@
                                                 <RoundRectangle CornerRadius="9" />
                                             </Border.StrokeShape>
 
-                                            <controls:BorderlessEntry
+                                            <Entry
                                                 Text="{Binding Text, Mode=TwoWay}"
                                                 Placeholder="{Binding Placeholder}"
                                                 PlaceholderColor="{DynamicResource TextSecondaryColor}"

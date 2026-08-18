@@ -169,7 +169,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="FirstNumeratorEntry"
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Tử số"
@@ -198,7 +198,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="FirstDenominatorEntry"
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Mẫu số"
@@ -261,7 +261,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="SecondNumeratorEntry"
                                         Placeholder="Tử số"
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
@@ -290,7 +290,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="SecondDenominatorEntry"
                                         PlaceholderColor="{DynamicResource TextPrimaryColor}"
                                         Placeholder="Mẫu số"

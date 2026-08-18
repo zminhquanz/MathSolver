@@ -281,7 +281,7 @@
                                 </Border.StrokeShape>
 
                                 <Grid HeightRequest="42" ColumnDefinitions="*,38">
-                                    <controls:BorderlessPicker
+                                    <Picker
                                         x:Name="MenuFontPicker"
                                         Grid.Column="0"
                                         Grid.ColumnSpan="2"
@@ -397,7 +397,7 @@
                                 </Border.StrokeShape>
 
                                 <Grid HeightRequest="42" ColumnDefinitions="*,38">
-                                    <controls:BorderlessPicker
+                                    <Picker
                                         x:Name="MenuLanguagePicker"
                                         Grid.Column="0"
                                         Grid.ColumnSpan="2"

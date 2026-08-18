@@ -799,7 +799,7 @@ public partial class SettingsMenuPage : ContentView
 
         try
         {
-            // BorderlessPicker/WinUI ComboBox cache ItemDisplayBinding text.
+            // Picker/WinUI ComboBox can cache ItemDisplayBinding text.
             // Rebind after the JSON culture has actually changed.
             MenuFontPicker.ItemsSource =
                 null;

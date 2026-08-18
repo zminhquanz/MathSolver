@@ -607,7 +607,7 @@
                                     HeightRequest="50"
                                     ColumnDefinitions="*,48">
 
-                                    <controls:BorderlessPicker
+                                    <Picker
                                         x:Name="OperationPicker"
                                         Grid.Column="0"
                                         Grid.ColumnSpan="2"

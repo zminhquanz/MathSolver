@@ -3,7 +3,6 @@
     x:Class="MathSolver.Views.HardwarePerformancePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:controls="clr-namespace:MathSolver.Controls"
     Title="Thông tin phần cứng"
     Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
@@ -245,10 +244,9 @@
 
                                     <!--
                                     Picker phủ toàn bộ chiều rộng để người dùng có thể
-                                    bấm cả vùng mũi tên. Padding native bên phải được
-                                    chừa trong BorderlessPicker.cs.
+                                    bấm cả vùng mũi tên. Picker dùng handler chuẩn của .NET MAUI trên từng nền tảng.
                                     -->
-                                    <controls:BorderlessPicker
+                                    <Picker
                                         x:Name="SimdModePicker"
                                         Grid.Column="0"
                                         Grid.ColumnSpan="2"

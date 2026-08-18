@@ -132,7 +132,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="CoefficientAEntry"
                                         Placeholder="Ví dụ: 1"
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
@@ -195,7 +195,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="CoefficientBEntry"
                                         Placeholder="Ví dụ: −3"
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"
@@ -257,7 +257,7 @@
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="CoefficientCEntry"
                                         Placeholder="Ví dụ: 2"
                                         PlaceholderColor="{DynamicResource TextSecondaryColor}"

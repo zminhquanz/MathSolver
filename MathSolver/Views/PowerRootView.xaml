@@ -117,7 +117,7 @@
                                         <RoundRectangle CornerRadius="12" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="BaseEntry"
                                         Placeholder="Ví dụ : 1,000,000,000,000,000,000"
                                         Keyboard="Numeric"
@@ -151,7 +151,7 @@
                                         <RoundRectangle CornerRadius="12" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="ExponentEntry"
                                         Placeholder="{localization:Translate PowerRoot.ExponentPlaceholder}"
                                         Keyboard="Numeric"
@@ -540,7 +540,7 @@
                                         <RoundRectangle CornerRadius="12" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="RootRadicandEntry"
                                         Placeholder="{localization:Translate PowerRoot.RadicandPlaceholder}"
                                         Keyboard="Numeric"
@@ -575,7 +575,7 @@
                                         <RoundRectangle CornerRadius="12" />
                                     </Border.StrokeShape>
 
-                                    <controls:BorderlessEntry
+                                    <Entry
                                         x:Name="RootDegreeEntry"
                                         Placeholder="{localization:Translate PowerRoot.DegreePlaceholder}"
                                         Keyboard="Text"
