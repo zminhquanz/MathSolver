@@ -90,6 +90,18 @@ namespace MathSolver
                     var editText = handler.PlatformView;
                     editText.Background = null;
                     editText.SetPadding(0, 0, 0, 0);
+
+                    // AndroidX EmojiCompat gắn một TextWatcher vào
+                    // AppCompatEditText. Khi các ô số của Math Solver tự
+                    // format ngay trong TextChanged (1000 -> 1,000), watcher
+                    // có thể tiếp tục xử lý range của chuỗi cũ sau khi Text đã
+                    // đổi độ dài và ném Java.Lang.IllegalArgumentException:
+                    // "end should be < than charSequence length".
+                    //
+                    // Các Entry của ứng dụng không cần emoji processing, nên
+                    // tắt EmojiCompat ở native Android Entry. Đây chỉ nằm trong
+                    // #if ANDROID; Windows giữ nguyên hoàn toàn.
+                    editText.EmojiCompatEnabled = false;
 #elif IOS || MACCATALYST
                     var textField = handler.PlatformView;
                     textField.BorderStyle = UIKit.UITextBorderStyle.None;
