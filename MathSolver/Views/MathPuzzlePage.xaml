@@ -18,8 +18,8 @@
             VerticalOptions="Fill">
 
                 <VerticalStackLayout
-                    Padding="20,12,20,28"
-                    Spacing="14"
+                    Padding="{OnPlatform Android='12,10,12,20', WinUI='20,12,20,28', Default='20,12,20,28'}"
+                    Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
                     HorizontalOptions="Fill">
 
                     <VerticalStackLayout
@@ -80,7 +80,7 @@
                             <Border
                                 x:Name="LlmSettingsBorder"
                                 IsVisible="False"
-                                Padding="16"
+                                Padding="{OnPlatform Android=12, WinUI=16, Default=16}"
                                 BackgroundColor="{DynamicResource SurfaceColor}"
                                 Stroke="{DynamicResource PrimaryBorderBrush}"
                                 StrokeThickness="1.5">
@@ -92,13 +92,15 @@
                                 <VerticalStackLayout Spacing="12">
 
                                     <Grid
-                                        ColumnDefinitions="Auto,*,Auto"
-                                        ColumnSpacing="12">
+                                        ColumnDefinitions="{OnPlatform Android='Auto,*', WinUI='Auto,*,Auto', Default='Auto,*,Auto'}"
+                                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                        ColumnSpacing="12"
+                                        RowSpacing="8">
 
                                         <Border
                                             Grid.Column="0"
-                                            WidthRequest="54"
-                                            HeightRequest="54"
+                                            WidthRequest="{OnPlatform Android=46, WinUI=54, Default=54}"
+                                            HeightRequest="{OnPlatform Android=46, WinUI=54, Default=54}"
                                             Padding="0"
                                             BackgroundColor="{DynamicResource PrimaryColor}"
                                             StrokeThickness="0"
@@ -108,7 +110,7 @@
                                             </Border.StrokeShape>
                                             <Label
                                                 Text="🤖"
-                                                FontSize="27"
+                                                FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                                                 HorizontalTextAlignment="Center"
                                                 VerticalTextAlignment="Center" />
                                         </Border>
@@ -131,7 +133,10 @@
                                         </VerticalStackLayout>
 
                                         <Border
-                                            Grid.Column="2"
+                                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                            Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                                            Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                            HorizontalOptions="{OnPlatform Android=Start, WinUI=Fill, Default=Fill}"
                                             Padding="10,6"
                                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                                             Stroke="{DynamicResource BorderBrush}"
@@ -163,8 +168,10 @@
                                         Color="{DynamicResource DividerColor}" />
 
                                     <Grid
-                                        ColumnDefinitions="*,*"
-                                        ColumnSpacing="10">
+                                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                                        ColumnSpacing="10"
+                                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                        RowSpacing="8">
 
                                         <Button
                                             x:Name="DownloadGemma4Button"
@@ -180,7 +187,8 @@
 
                                         <Button
                                             x:Name="OpenLlmModelFolderButton"
-                                            Grid.Column="1"
+                                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                                             Text="{localization:Translate Quiz.OpenInFileExplorer}"
                                             IsEnabled="False"
                                             HeightRequest="46"
@@ -196,8 +204,10 @@
                                     </Grid>
 
                                     <Grid
-                                        ColumnDefinitions="*,*"
-                                        ColumnSpacing="10">
+                                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                                        ColumnSpacing="10"
+                                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                        RowSpacing="8">
 
                                         <Button
                                             x:Name="SelectLlmModelButton"
@@ -215,7 +225,8 @@
 
                                         <Button
                                             x:Name="EjectLlmModelButton"
-                                            Grid.Column="1"
+                                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                                             Text="{localization:Translate Quiz.EjectModel}"
                                             IsEnabled="False"
                                             HeightRequest="46"
@@ -451,8 +462,10 @@
                                         </Border.StrokeShape>
 
                                         <Grid
-                                            ColumnDefinitions="*,*"
-                                            ColumnSpacing="10">
+                                            ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                                            ColumnSpacing="10"
+                                            RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                            RowSpacing="10">
 
                                             <Border
                                                 Grid.Column="0"
@@ -479,7 +492,7 @@
                                                     <Editor
                                                         x:Name="LlmRawJsonEditor"
                                                         Grid.Row="1"
-                                                        HeightRequest="260"
+                                                        HeightRequest="{OnPlatform Android=190, WinUI=260, Default=260}"
                                                         IsReadOnly="True"
                                                         FontSize="15"
                                                         BackgroundColor="Transparent"
@@ -490,7 +503,8 @@
                                             </Border>
 
                                             <Border
-                                                Grid.Column="1"
+                                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                                Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                                                 Padding="10"
                                                 BackgroundColor="{DynamicResource SurfaceColor}"
                                                 Stroke="{DynamicResource BorderBrush}"
@@ -514,7 +528,7 @@
                                                     <Editor
                                                         x:Name="LlmValidationLogEditor"
                                                         Grid.Row="1"
-                                                        HeightRequest="260"
+                                                        HeightRequest="{OnPlatform Android=190, WinUI=260, Default=260}"
                                                         IsReadOnly="True"
                                                         FontSize="15"
                                                         BackgroundColor="Transparent"
@@ -1128,7 +1142,7 @@
                                     Text="{localization:Translate Quiz.CreateWithAi}"
                                     HeightRequest="50"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="{OnPlatform Android=14, WinUI=16, Default=16}"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -1141,7 +1155,7 @@
                                     Text="{localization:Translate Quiz.NextQuestion}"
                                     HeightRequest="50"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="{OnPlatform Android=14, WinUI=16, Default=16}"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"

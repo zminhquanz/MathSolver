@@ -15,29 +15,118 @@
 
 
         <!-- Thanh tab con: đồng bộ với CalculationPage -->
+        <!-- Android: tab row phẳng kiểu Material/DevCheck, cuộn ngang khi cần. -->
+        <Grid
+            x:Name="AndroidFormulaSubTabBar"
+            Grid.Row="0"
+            IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
+            RowDefinitions="Auto,1"
+            Margin="0,0,0,4"
+            BackgroundColor="{DynamicResource SurfaceColor}">
+
+            <ScrollView
+                x:Name="AndroidFormulaSubTabScrollView"
+                Grid.Row="0"
+                Orientation="Horizontal"
+                HorizontalOptions="Fill"
+                HorizontalScrollBarVisibility="Never">
+
+                <HorizontalStackLayout Spacing="0" Padding="6,0">
+                    <Grid MinimumWidthRequest="158" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidUnknownComponentTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Formula.Tabs.UnknownComponent}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            TextColor="{DynamicResource PrimaryColor}"
+                            Clicked="OnUnknownComponentTabClicked" />
+                        <BoxView
+                            x:Name="AndroidUnknownComponentTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="112" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidProportionTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Formula.Tabs.Proportion}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnProportionTabClicked" />
+                        <BoxView
+                            x:Name="AndroidProportionTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="112" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidMotionTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Formula.Tabs.Motion}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnMotionTabClicked" />
+                        <BoxView
+                            x:Name="AndroidMotionTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="102" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidFormulaGeometryTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Formula.Tabs.Geometry}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnGeometryTabClicked" />
+                        <BoxView
+                            x:Name="AndroidFormulaGeometryTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <BoxView
+                Grid.Row="1"
+                HeightRequest="1"
+                BackgroundColor="{DynamicResource DividerColor}" />
+        </Grid>
+
         <Border
             x:Name="FormulaSubTabBar"
             Grid.Row="0"
-            Margin="20,12,20,8"
-            Padding="6"
+            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
+            Margin="{OnPlatform Android='10,8,10,6', WinUI='20,12,20,8', Default='20,12,20,8'}"
+            Padding="{OnPlatform Android=4, WinUI=6, Default=6}"
             BackgroundColor="{DynamicResource SurfaceColor}"
             Stroke="{DynamicResource PrimaryBorderBrush}"
             StrokeThickness="1">
 
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
             <Grid
                 x:Name="FormulaSubTabGrid"
-                ColumnDefinitions="*,*,*,*"
-                ColumnSpacing="6">
+                ColumnDefinitions="{OnPlatform Android='*,*', WinUI='*,*,*,*', Default='*,*,*,*'}"
+                RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                ColumnSpacing="6"
+                RowSpacing="6">
 
                 <Button
                     x:Name="UnknownComponentTabButton"
                     Grid.Column="0"
                     Text="{localization:Translate Formula.Tabs.UnknownComponent}"
-                    HeightRequest="44"
+                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="14"
                     FontAttributes="Bold"
@@ -48,9 +137,10 @@
 
                 <Button
                     x:Name="ProportionTabButton"
+                    Grid.Row="0"
                     Grid.Column="1"
                     Text="{localization:Translate Formula.Tabs.Proportion}"
-                    HeightRequest="44"
+                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -61,9 +151,10 @@
 
                 <Button
                     x:Name="MotionTabButton"
-                    Grid.Column="2"
+                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                    Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                     Text="{localization:Translate Formula.Tabs.Motion}"
-                    HeightRequest="44"
+                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -74,9 +165,10 @@
 
                 <Button
                     x:Name="GeometryTabButton"
-                    Grid.Column="3"
+                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                    Grid.Column="{OnPlatform Android=1, WinUI=3, Default=3}"
                     Text="{localization:Translate Formula.Tabs.Geometry}"
-                    HeightRequest="44"
+                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -111,8 +203,8 @@
 
                     <VerticalStackLayout
                         x:Name="UnknownComponentPageContent"
-                        Padding="20,16"
-                        Spacing="14"
+                        Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16', Default='20,16'}"
+                        Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
                         HorizontalOptions="Fill">
 
                         <VerticalStackLayout
@@ -121,14 +213,14 @@
 
                             <Label
                                 Text="𝑥  + − × ÷"
-                                FontSize="40"
+                                FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource PrimaryColor}" />
 
                             <Label
                                 x:Name="UnknownPageTitle"
                                 Text="TÌM THÀNH PHẦN CHƯA BIẾT"
-                                FontSize="27"
+                                FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
@@ -136,7 +228,7 @@
                             <Label
                                 x:Name="UnknownPageSubtitle"
                                 Text="Dạng tổng quát • Quy tắc • Ví dụ minh họa"
-                                FontSize="17"
+                                FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
 

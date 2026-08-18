@@ -349,12 +349,23 @@ public partial class SettingsMenuPage : ContentView
             width,
             height);
 
+#if ANDROID
+        // Trên điện thoại, SettingsMenu là bottom sheet gần full-width.
+        // Không dùng giới hạn 300-420 DIP của popup desktop vì sẽ để lại
+        // khoảng trống hai bên không cần thiết trên Pixel-class devices.
+        MenuPanel.WidthRequest =
+            Math.Max(
+                280d,
+                width - 16d);
+#else
+        // Giữ nguyên kích thước popup Windows đã ổn định.
         MenuPanel.WidthRequest =
             Math.Max(
                 300,
                 Math.Min(
                     420,
                     width - 28));
+#endif
 
         if (_isFullWindowOverlayMode)
         {
@@ -373,10 +384,19 @@ public partial class SettingsMenuPage : ContentView
             return;
         }
 
+#if ANDROID
+        MenuPanel.MaximumHeightRequest =
+            Math.Max(
+                320d,
+                Math.Min(
+                    620d,
+                    height - 16d));
+#else
         MenuPanel.MaximumHeightRequest =
             Math.Max(
                 360,
                 height - 28d);
+#endif
     }
 
     private void PrepareOpenAnimation()
@@ -387,11 +407,24 @@ public partial class SettingsMenuPage : ContentView
         MenuPanel.Opacity =
             0d;
 
+#if ANDROID
+        // Bottom-sheet motion cho mobile: đi theo trục dọc, tránh cảm giác
+        // side-panel desktop khi panel đã được neo ở đáy màn hình.
+        MenuPanel.TranslationX =
+            0d;
+
+        MenuPanel.TranslationY =
+            32d;
+
+        MenuPanel.Scale =
+            0.995d;
+#else
         MenuPanel.TranslationX =
             56d;
 
         MenuPanel.Scale =
             0.985d;
+#endif
     }
 
     private async Task PlayOpenAnimationAsync()
@@ -527,6 +560,18 @@ public partial class SettingsMenuPage : ContentView
                 130,
                 Easing.CubicIn),
 
+#if ANDROID
+            MenuPanel.TranslateToAsync(
+                0d,
+                32d,
+                165,
+                Easing.CubicIn),
+
+            MenuPanel.ScaleToAsync(
+                0.995d,
+                165,
+                Easing.CubicIn));
+#else
             MenuPanel.TranslateToAsync(
                 48d,
                 0d,
@@ -537,6 +582,7 @@ public partial class SettingsMenuPage : ContentView
                 0.985d,
                 165,
                 Easing.CubicIn));
+#endif
     }
 
     public Task CloseWithAnimationAsync()

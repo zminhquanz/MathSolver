@@ -13,7 +13,7 @@
             <Setter Property="StrokeThickness" Value="1" />
             <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
-            <Setter Property="Padding" Value="16" />
+            <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=16, Default=16}" />
         </Style>
 
         <Style x:Key="CardBorderStyle" TargetType="Border">
@@ -21,7 +21,7 @@
             <Setter Property="StrokeThickness" Value="1" />
             <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
-            <Setter Property="Padding" Value="14" />
+            <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=14, Default=14}" />
         </Style>
 
         <Style x:Key="TableLineBorderStyle" TargetType="Border">
@@ -29,17 +29,17 @@
             <Setter Property="StrokeThickness" Value="1" />
             <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
-            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Padding" Value="{OnPlatform Android='8,7', WinUI='10,8', Default='10,8'}" />
         </Style>
 
         <Style x:Key="TitleLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontSize" Value="{OnPlatform Android=16, WinUI=17, Default=17}" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         </Style>
 
         <Style x:Key="SubLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=15, Default=15}" />
             <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
         </Style>
 
@@ -135,7 +135,7 @@
 
     <Grid
         x:Name="MultiplicationPageContentRoot"
-        Padding="20,16">
+        Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16', Default='20,16'}">
         <CollectionView
             x:Name="TablesCollectionView"
             ItemsSource="{Binding TableCards}"
@@ -149,21 +149,21 @@
                     <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
                         <Label
                             Text="×  ÷"
-                            FontSize="28"
+                            FontSize="{OnPlatform Android=24, WinUI=28, Default=28}"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource PrimaryColor}" />
 
                         <Label
                             Text="{localization:Translate TimesTables.Title}"
-                            FontSize="30"
+                            FontSize="{OnPlatform Android=24, WinUI=30, Default=30}"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             Text="{localization:Translate TimesTables.Subtitle}"
-                            FontSize="17"
+                            FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                             HorizontalTextAlignment="Center"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
@@ -229,8 +229,10 @@
                                     Style="{StaticResource SubLabelStyle}" />
 
                                 <Grid
-                                    ColumnDefinitions="*,*,*"
-                                    ColumnSpacing="12">
+                                    ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*,*', Default='*,*,*'}"
+                                    RowDefinitions="{OnPlatform Android='Auto,Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                    ColumnSpacing="12"
+                                    RowSpacing="8">
 
                                     <Border
                                         x:Name="Range1To10Border"
@@ -267,7 +269,8 @@
 
                                     <Border
                                         x:Name="Range11To20Border"
-                                        Grid.Column="1"
+                                        Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                        Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                                         Style="{StaticResource CardBorderStyle}"
                                         Padding="14,12">
 
@@ -300,7 +303,8 @@
 
                                     <Border
                                         x:Name="RangeAllBorder"
-                                        Grid.Column="2"
+                                        Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
+                                        Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                                         Style="{StaticResource CardBorderStyle}"
                                         Padding="14,12">
 
@@ -369,9 +373,9 @@
             <CollectionView.ItemsLayout>
                 <GridItemsLayout
                     Orientation="Vertical"
-                    Span="5"
-                    HorizontalItemSpacing="12"
-                    VerticalItemSpacing="12" />
+                    Span="{OnPlatform Android=2, WinUI=5, Default=5}"
+                    HorizontalItemSpacing="{OnPlatform Android=8, WinUI=12, Default=12}"
+                    VerticalItemSpacing="{OnPlatform Android=8, WinUI=12, Default=12}" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>

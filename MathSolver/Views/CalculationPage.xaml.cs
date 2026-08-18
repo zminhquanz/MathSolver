@@ -3818,6 +3818,10 @@ public partial class CalculationPage : ContentPage
         object? sender,
         EventArgs e)
     {
+#if ANDROID
+        // Android dùng Material-style horizontal tabs với kích thước theo nội dung.
+        return;
+#else
         double availableWidth =
             CalculationSubTabScrollView.Width;
 
@@ -3866,6 +3870,7 @@ public partial class CalculationPage : ContentPage
                 availableWidth,
                 minimumButtonsWidth +
                 totalSpacing);
+#endif
     }
 
     private async Task ScrollSubTabIntoViewAsync(
@@ -3873,10 +3878,17 @@ public partial class CalculationPage : ContentPage
     {
         try
         {
+#if ANDROID
+            await AndroidCalculationSubTabScrollView.ScrollToAsync(
+                selectedButton,
+                ScrollToPosition.Center,
+                true);
+#else
             await CalculationSubTabScrollView.ScrollToAsync(
                 selectedButton,
                 ScrollToPosition.Center,
                 true);
+#endif
         }
         catch (InvalidOperationException)
         {
@@ -3903,6 +3915,19 @@ public partial class CalculationPage : ContentPage
     private Button GetSubTabButton(
         CalculationSubTab tab)
     {
+#if ANDROID
+        return tab switch
+        {
+            CalculationSubTab.Basic => AndroidBasicTabButton,
+            CalculationSubTab.Average => AndroidAverageTabButton,
+            CalculationSubTab.PowerRoot => AndroidPowerRootTabButton,
+            CalculationSubTab.Fraction => AndroidFractionTabButton,
+            CalculationSubTab.FindX => AndroidFindXTabButton,
+            CalculationSubTab.Quadratic => AndroidQuadraticTabButton,
+            CalculationSubTab.Geometry => AndroidGeometryTabButton,
+            _ => AndroidBasicTabButton
+        };
+#else
         return tab switch
         {
             CalculationSubTab.Basic => BasicTabButton,
@@ -3914,6 +3939,7 @@ public partial class CalculationPage : ContentPage
             CalculationSubTab.Geometry => GeometryTabButton,
             _ => BasicTabButton
         };
+#endif
     }
 
     private void SelectSubTab(CalculationSubTab selectedTab)
@@ -3950,6 +3976,42 @@ public partial class CalculationPage : ContentPage
 
     private void UpdateSubTabButtonStyles()
     {
+#if ANDROID
+        ApplyAndroidSubTabState(
+            AndroidBasicTabButton,
+            AndroidBasicTabIndicator,
+            _selectedSubTab == CalculationSubTab.Basic);
+
+        ApplyAndroidSubTabState(
+            AndroidAverageTabButton,
+            AndroidAverageTabIndicator,
+            _selectedSubTab == CalculationSubTab.Average);
+
+        ApplyAndroidSubTabState(
+            AndroidPowerRootTabButton,
+            AndroidPowerRootTabIndicator,
+            _selectedSubTab == CalculationSubTab.PowerRoot);
+
+        ApplyAndroidSubTabState(
+            AndroidFractionTabButton,
+            AndroidFractionTabIndicator,
+            _selectedSubTab == CalculationSubTab.Fraction);
+
+        ApplyAndroidSubTabState(
+            AndroidFindXTabButton,
+            AndroidFindXTabIndicator,
+            _selectedSubTab == CalculationSubTab.FindX);
+
+        ApplyAndroidSubTabState(
+            AndroidQuadraticTabButton,
+            AndroidQuadraticTabIndicator,
+            _selectedSubTab == CalculationSubTab.Quadratic);
+
+        ApplyAndroidSubTabState(
+            AndroidGeometryTabButton,
+            AndroidGeometryTabIndicator,
+            _selectedSubTab == CalculationSubTab.Geometry);
+#else
         Button selectedButton =
             _selectedSubTab switch
             {
@@ -3972,7 +4034,34 @@ public partial class CalculationPage : ContentPage
             FindXTabButton,
             QuadraticTabButton,
             GeometryTabButton);
+#endif
     }
+
+#if ANDROID
+    private static void ApplyAndroidSubTabState(
+        Button button,
+        BoxView indicator,
+        bool isSelected)
+    {
+        button.SetDynamicResource(
+            Button.TextColorProperty,
+            isSelected
+                ? "PrimaryColor"
+                : "TextSecondaryColor");
+
+        button.BackgroundColor =
+            Microsoft.Maui.Graphics.Colors.Transparent;
+
+        indicator.SetDynamicResource(
+            BoxView.BackgroundColorProperty,
+            "PrimaryColor");
+
+        indicator.Opacity =
+            isSelected
+                ? 1d
+                : 0d;
+    }
+#endif
 
     private static string CreateDecimalDivisionExplanation(
     decimal dividend,

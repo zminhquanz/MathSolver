@@ -10,6 +10,11 @@ using WinUIWindow = Microsoft.UI.Xaml.Window;
 using WindowsPoint = Windows.Foundation.Point;
 #endif
 
+#if ANDROID
+using Android.Views;
+using Android.Widget;
+#endif
+
 namespace MathSolver;
 
 public partial class AppShell : Shell
@@ -34,6 +39,12 @@ public partial class AppShell : Shell
     private double _windowsSettingsButtonRight;
     private double _windowsSettingsButtonWidth = 42d;
     private double _windowsSettingsButtonHeight = 42d;
+#endif
+
+#if ANDROID
+    // Android dùng PopupMenu native neo trực tiếp vào nút bánh răng. Không tạo
+    // SettingsMenuPage/bottom-sheet trên điện thoại, nên UI gọn như menu hệ thống.
+    private PopupMenu? _androidSettingsPopup;
 #endif
 
     private bool _isShellChromeDimmed;
@@ -142,6 +153,20 @@ public partial class AppShell : Shell
                 return;
             }
 
+#if ANDROID
+            // Android không dùng overlay SettingsMenuPage. PopupMenu native tự
+            // neo vào gear, tự dismiss khi chạm ra ngoài và chỉ hiển thị title.
+            // Nếu handler chưa sẵn sàng (trường hợp rất hiếm), đi thẳng vào
+            // SettingsPage thay vì fallback sang bottom-sheet lớn.
+            if (!ShowAndroidSettingsPopup())
+            {
+                await NavigateFromAndroidSettingsPopupAsync(
+                    nameof(SettingsPage));
+            }
+
+            return;
+#endif
+
             ContentPage? hostPage =
                 Shell.Current.CurrentPage as ContentPage;
 
@@ -247,6 +272,139 @@ public partial class AppShell : Shell
                 false;
         }
     }
+
+#if ANDROID
+    private bool ShowAndroidSettingsPopup()
+    {
+        if (SettingsButton.Handler?.PlatformView is not Android.Views.View anchor)
+        {
+            return false;
+        }
+
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        var popup =
+            new PopupMenu(
+                anchor.Context,
+                anchor);
+
+        // Title-only menu: không icon, không subtitle, không current-value và
+        // không dim/full-screen overlay. Đây là presentation riêng cho Android.
+        popup.Menu.Add(
+            0,
+            1,
+            0,
+            useEnglish ? "Settings" : "Cài đặt");
+
+        popup.Menu.Add(
+            0,
+            2,
+            1,
+            useEnglish ? "Hardware information" : "Thông tin phần cứng");
+
+        popup.Menu.Add(
+            0,
+            3,
+            2,
+            useEnglish ? "About" : "Giới thiệu");
+
+        popup.Menu.Add(
+            0,
+            4,
+            3,
+            useEnglish ? "Reset settings" : "Đặt lại cài đặt");
+
+        popup.MenuItemClick +=
+            OnAndroidSettingsMenuItemClick;
+
+        popup.DismissEvent +=
+            OnAndroidSettingsPopupDismissed;
+
+        _androidSettingsPopup =
+            popup;
+
+        popup.Show();
+        return true;
+    }
+
+    private async void OnAndroidSettingsMenuItemClick(
+        object? sender,
+        PopupMenu.MenuItemClickEventArgs e)
+    {
+        switch (e.Item.ItemId)
+        {
+            case 1:
+                await NavigateFromAndroidSettingsPopupAsync(
+                    nameof(SettingsPage));
+                break;
+
+            case 2:
+                await NavigateFromAndroidSettingsPopupAsync(
+                    nameof(HardwarePerformancePage));
+                break;
+
+            case 3:
+                await NavigateFromAndroidSettingsPopupAsync(
+                    nameof(AboutPage));
+                break;
+
+            case 4:
+                bool useEnglish =
+                    AppLanguageManager.CurrentLanguage ==
+                    AppLanguage.English;
+
+                AppThemeManager.ResetToDefault();
+                AppFontManager.ResetToDefault();
+                AppLanguageManager.ResetToDefault();
+                DeveloperModeManager.ResetToDefault();
+                ResultNumberDisplayMode.ResetToDefault();
+
+                Toast.MakeText(
+                        Android.App.Application.Context,
+                        useEnglish
+                            ? "Settings restored"
+                            : "Đã khôi phục cài đặt",
+                        ToastLength.Short)
+                    ?.Show();
+                break;
+        }
+    }
+
+    private async Task NavigateFromAndroidSettingsPopupAsync(
+        string route)
+    {
+        if (Shell.Current is null)
+        {
+            return;
+        }
+
+        // Giữ cùng navigation contract với Settings overlay trên Windows:
+        // ẩn action button khi vào detail và hủy callback restore TabBar cũ.
+        SetSettingsActionPresentation(
+            visible: false);
+
+        CancelMainTabBarRestore();
+
+        await Shell.Current.GoToAsync(
+            route,
+            animate: false);
+    }
+
+    private void OnAndroidSettingsPopupDismissed(
+        object? sender,
+        PopupMenu.DismissEventArgs e)
+    {
+        if (ReferenceEquals(
+                sender,
+                _androidSettingsPopup))
+        {
+            _androidSettingsPopup =
+                null;
+        }
+    }
+#endif
 
     protected override bool OnBackButtonPressed()
     {

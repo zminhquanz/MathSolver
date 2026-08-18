@@ -3,6 +3,7 @@
     x:Class="MathSolver.Views.AboutPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     Title="{localization:Translate About.PageTitle}"
@@ -21,12 +22,13 @@
     <!-- Thanh tiêu đề riêng nên không hiển thị nút Settings bên phải. -->
     <Shell.TitleView>
         <Grid
-            Padding="0,0,8,0"
+            Padding="{OnPlatform Android='0,0,4,0', WinUI='0,0,8,0', Default='0,0,8,0'}"
             ColumnDefinitions="Auto,*"
             ColumnSpacing="8">
 
             <Button
                 x:Name="AboutBackButton"
+                controls:InteractiveButtonAnimation.IsScopeEnabled="True"
                 Grid.Column="0"
                 Text="‹"
                 WidthRequest="40"
@@ -50,6 +52,7 @@
                 <Label
                     x:Name="AboutTitleLabel"
                     Text="{localization:Translate About.HeaderTitle}"
+                    TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
                     FontSize="19"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
@@ -58,6 +61,7 @@
                 <Label
                     x:Name="AboutSubtitleLabel"
                     Text="{localization:Translate About.Subtitle}"
+                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                     FontSize="11"
                     LineBreakMode="TailTruncation"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -68,14 +72,14 @@
     <Grid x:Name="AboutPageContentRoot">
         <ScrollView>
             <VerticalStackLayout
-            Padding="20,22,20,30"
+            Padding="{OnPlatform Android='12,12,12,20', WinUI='20,22,20,30', Default='20,22,20,30'}"
             Spacing="16"
             MaximumWidthRequest="760"
             HorizontalOptions="Center">
 
             <!-- App identity -->
             <Border
-                Padding="22"
+                Padding="{OnPlatform Android=16, WinUI=22, Default=22}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource BorderBrush}"
                 StrokeThickness="1">
@@ -85,35 +89,42 @@
                 </Border.StrokeShape>
 
                 <Grid
-                    ColumnDefinitions="Auto,*"
-                    ColumnSpacing="20">
+                    ColumnDefinitions="{OnPlatform Android='*', WinUI='Auto,*', Default='Auto,*'}"
+                    RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                    ColumnSpacing="20"
+                    RowSpacing="10">
 
                     <Image
+                        Grid.Row="0"
                         Grid.Column="0"
                         Source="splashicon.png"
-                        WidthRequest="96"
-                        HeightRequest="96"
+                        WidthRequest="{OnPlatform Android=72, WinUI=96, Default=96}"
+                        HeightRequest="{OnPlatform Android=72, WinUI=96, Default=96}"
                         Aspect="AspectFit"
+                        HorizontalOptions="{OnPlatform Android=Center, WinUI=Fill, Default=Fill}"
                         VerticalOptions="Center"
                         SemanticProperties.Description="{localization:Translate About.AppIcon.Accessibility}" />
 
                     <VerticalStackLayout
-                        Grid.Column="1"
+                        Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                        Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                         Spacing="5"
                         VerticalOptions="Center">
 
                         <Label
                             x:Name="AppNameLabel"
                             Text="{localization:Translate App.Title}"
-                            FontSize="30"
+                            FontSize="{OnPlatform Android=24, WinUI=30, Default=30}"
                             FontAttributes="Bold"
                             LineBreakMode="WordWrap"
+                            HorizontalTextAlignment="{OnPlatform Android=Center, WinUI=Start, Default=Start}"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
                             x:Name="VersionHeaderLabel"
                             FontSize="15"
                             FontAttributes="Bold"
+                            HorizontalTextAlignment="{OnPlatform Android=Center, WinUI=Start, Default=Start}"
                             TextColor="{DynamicResource PrimaryColor}" />
 
                         <Label
@@ -122,6 +133,7 @@
                             FontSize="14"
                             LineHeight="1.25"
                             LineBreakMode="WordWrap"
+                            HorizontalTextAlignment="{OnPlatform Android=Center, WinUI=Start, Default=Start}"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
                 </Grid>
@@ -129,7 +141,7 @@
 
             <!-- Application information -->
             <Border
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource BorderBrush}"
                 StrokeThickness="1">
@@ -148,9 +160,9 @@
 
                     <Grid
                         RowDefinitions="Auto,Auto,Auto,Auto"
-                        ColumnDefinitions="150,*"
+                        ColumnDefinitions="{OnPlatform Android='105,*', WinUI='150,*', Default='150,*'}"
                         RowSpacing="12"
-                        ColumnSpacing="16">
+                        ColumnSpacing="{OnPlatform Android=10, WinUI=16, Default=16}">
 
                         <Label
                             x:Name="AuthorCaptionLabel"
@@ -214,7 +226,7 @@
 
             <!-- Project links -->
             <Border
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource BorderBrush}"
                 StrokeThickness="1">
@@ -240,8 +252,8 @@
 
                             <ImageButton
                             x:Name="GitHubButton"
-                            WidthRequest="64"
-                            HeightRequest="64"
+                            WidthRequest="{OnPlatform Android=56, WinUI=64, Default=64}"
+                            HeightRequest="{OnPlatform Android=56, WinUI=64, Default=64}"
                             Padding="5"
                             BackgroundColor="Transparent"
                             Source="github_black_clearspace.png"
@@ -254,8 +266,8 @@
 
                             <ImageButton
                             x:Name="KoFiButton"
-                            WidthRequest="64"
-                            HeightRequest="64"
+                            WidthRequest="{OnPlatform Android=56, WinUI=64, Default=64}"
+                            HeightRequest="{OnPlatform Android=56, WinUI=64, Default=64}"
                             Padding="5"
                             BackgroundColor="Transparent"
                             Source="kofi_symbol.png"

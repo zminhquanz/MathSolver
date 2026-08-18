@@ -28,8 +28,8 @@
             WidthRequest="42"
             HeightRequest="42"
             Margin="0"
-            HorizontalOptions="End"
-            VerticalOptions="Start"
+            HorizontalOptions="{OnPlatform Android=Fill, WinUI=End, Default=End}"
+            VerticalOptions="{OnPlatform Android=End, WinUI=Start, Default=Start}"
             IsVisible="False"
             ZIndex="3">
 
@@ -57,19 +57,19 @@
 
         <Border
             x:Name="MenuPanel"
-            Margin="0,6,8,12"
+            Margin="{OnPlatform Android='8,0,8,8', WinUI='0,6,8,12', Default='0,6,8,12'}"
             ZIndex="2"
             Padding="0"
-            WidthRequest="420"
-            MaximumHeightRequest="780"
-            HorizontalOptions="End"
-            VerticalOptions="Start"
+            WidthRequest="{OnPlatform Android=-1, WinUI=420, Default=420}"
+            MaximumHeightRequest="{OnPlatform Android=620, WinUI=780, Default=780}"
+            HorizontalOptions="{OnPlatform Android=Fill, WinUI=End, Default=End}"
+            VerticalOptions="{OnPlatform Android=End, WinUI=Start, Default=Start}"
             BackgroundColor="{DynamicResource SurfaceColor}"
             Stroke="{DynamicResource BorderBrush}"
             StrokeThickness="1">
 
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="18" />
+                <RoundRectangle CornerRadius="{OnPlatform Android=20, WinUI=18, Default=18}" />
             </Border.StrokeShape>
 
             <Border.Shadow>
@@ -83,7 +83,7 @@
             <Grid RowDefinitions="Auto,*">
                 <Grid
                     Grid.Row="0"
-                    Padding="18,14"
+                    Padding="{OnPlatform Android='16,11', WinUI='18,14', Default='18,14'}"
                     ColumnDefinitions="*,Auto"
                     BackgroundColor="{DynamicResource SurfaceAltColor}">
 
@@ -96,6 +96,7 @@
 
                         <Label
                             Text="Tùy chỉnh nhanh Math Solver"
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             FontSize="12"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
@@ -114,7 +115,9 @@
                 </Grid>
 
                 <ScrollView Grid.Row="1">
-                    <VerticalStackLayout Padding="12,10,12,14" Spacing="10">
+                    <VerticalStackLayout
+                        Padding="{OnPlatform Android='8,8,8,10', WinUI='12,10,12,14', Default='12,10,12,14'}"
+                        Spacing="{OnPlatform Android=6, WinUI=10, Default=10}">
 
                         <Label
                             Text="GIAO DIỆN"

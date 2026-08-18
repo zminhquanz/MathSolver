@@ -186,8 +186,8 @@
 
                     <Grid
                         x:Name="FindXValueInputGrid"
-                        ColumnDefinitions="*,*"
-                        RowDefinitions="Auto"
+                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
                         ColumnSpacing="12"
                         RowSpacing="10">
 
@@ -233,8 +233,8 @@
 
                         <VerticalStackLayout
                             x:Name="FindXResultInputPanel"
-                            Grid.Row="0"
-                            Grid.Column="1"
+                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                             Spacing="6">
 
                             <Label

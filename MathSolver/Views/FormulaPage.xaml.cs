@@ -17,6 +17,18 @@ public partial class FormulaPage : ContentPage
 
     private bool _isSubTabTransitioning;
 
+    private VisualElement FormulaSubTabAnimationHost
+    {
+        get
+        {
+#if ANDROID
+            return AndroidFormulaSubTabBar;
+#else
+            return FormulaSubTabBar;
+#endif
+        }
+    }
+
     // BindableLayout của Tìm thành phần chưa biết cũng chỉ được tạo một lần.
     // Không tháo/gắn lại ItemsSource khi chuyển tab vì thao tác đó tạo ra một
     // frame tạm nơi sáu card bị co vào cùng một hàng rồi mới giãn lại.
@@ -175,7 +187,7 @@ public partial class FormulaPage : ContentPage
             MotionContent);
 
         ResetTransitionTransform(
-            FormulaSubTabBar);
+            FormulaSubTabAnimationHost);
 
         // Root không còn là animation host. Giữ root ở trạng thái chuẩn để
         // GraphicsView không phải đi qua transform của toàn bộ trang.
@@ -210,7 +222,7 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.Geometry;
 
         ResetTransitionTransform(
-            FormulaSubTabBar);
+            FormulaSubTabAnimationHost);
 
         ResetTransitionTransform(
             GetFormulaSubTabContent(
@@ -390,7 +402,7 @@ public partial class FormulaPage : ContentPage
             // Trường hợp quay lại từ Settings hoặc lần xuất hiện không phải
             // đổi tab chính: khôi phục vùng Hình học đã được ẩn khi rời trang.
             ResetTransitionTransform(
-                FormulaSubTabBar);
+                FormulaSubTabAnimationHost);
 
             ResetTransitionTransform(
                 activeContent);
@@ -416,7 +428,7 @@ public partial class FormulaPage : ContentPage
         // mọi handler. Animate trực tiếp thanh tab con và vùng nội dung đang
         // hiện — đây cũng chính là host đã hoạt động ổn khi đổi tab con.
         PrepareMainTabAnimationHost(
-            FormulaSubTabBar,
+            FormulaSubTabAnimationHost,
             direction);
 
         PrepareMainTabAnimationHost(
@@ -465,7 +477,7 @@ public partial class FormulaPage : ContentPage
         {
             await Task.WhenAll(
                 AnimatePreparedMainTabHostAsync(
-                    FormulaSubTabBar),
+                    FormulaSubTabAnimationHost),
 
                 AnimatePreparedMainTabHostAsync(
                     activeContent));
@@ -476,7 +488,7 @@ public partial class FormulaPage : ContentPage
                 _mainTabAnimationVersion)
             {
                 ResetTransitionTransform(
-                    FormulaSubTabBar);
+                    FormulaSubTabAnimationHost);
 
                 ResetTransitionTransform(
                     activeContent);
@@ -538,7 +550,7 @@ public partial class FormulaPage : ContentPage
 
     private void CancelMainTabAnimations()
     {
-        FormulaSubTabBar.CancelAnimations();
+        FormulaSubTabAnimationHost.CancelAnimations();
         UnknownComponentContent.CancelAnimations();
         ProportionContent.CancelAnimations();
         MotionContent.CancelAnimations();
@@ -838,6 +850,11 @@ public partial class FormulaPage : ContentPage
                     Easing.CubicOut));
 
             RefreshSelectedFormulaSubTabLayout();
+
+#if ANDROID
+            await ScrollAndroidFormulaSubTabIntoViewAsync(
+                selectedTab);
+#endif
         }
         finally
         {
@@ -962,6 +979,27 @@ public partial class FormulaPage : ContentPage
 
     private void UpdateSubTabButtonStyles()
     {
+#if ANDROID
+        ApplyAndroidSubTabState(
+            AndroidUnknownComponentTabButton,
+            AndroidUnknownComponentTabIndicator,
+            _selectedSubTab == FormulaSubTab.UnknownComponent);
+
+        ApplyAndroidSubTabState(
+            AndroidProportionTabButton,
+            AndroidProportionTabIndicator,
+            _selectedSubTab == FormulaSubTab.Proportion);
+
+        ApplyAndroidSubTabState(
+            AndroidMotionTabButton,
+            AndroidMotionTabIndicator,
+            _selectedSubTab == FormulaSubTab.Motion);
+
+        ApplyAndroidSubTabState(
+            AndroidFormulaGeometryTabButton,
+            AndroidFormulaGeometryTabIndicator,
+            _selectedSubTab == FormulaSubTab.Geometry);
+#else
         ResetSubTabButton(UnknownComponentTabButton);
         ResetSubTabButton(ProportionTabButton);
         ResetSubTabButton(MotionTabButton);
@@ -984,8 +1022,63 @@ public partial class FormulaPage : ContentPage
         selectedButton.SetDynamicResource(
             Button.TextColorProperty,
             "OnPrimaryColor");
+#endif
     }
 
+#if ANDROID
+    private static void ApplyAndroidSubTabState(
+        Button button,
+        BoxView indicator,
+        bool isSelected)
+    {
+        button.SetDynamicResource(
+            Button.TextColorProperty,
+            isSelected
+                ? "PrimaryColor"
+                : "TextSecondaryColor");
+
+        button.BackgroundColor =
+            Microsoft.Maui.Graphics.Colors.Transparent;
+
+        indicator.SetDynamicResource(
+            BoxView.BackgroundColorProperty,
+            "PrimaryColor");
+
+        indicator.Opacity =
+            isSelected
+                ? 1d
+                : 0d;
+    }
+
+    private Button GetAndroidFormulaSubTabButton(
+        FormulaSubTab tab)
+    {
+        return tab switch
+        {
+            FormulaSubTab.UnknownComponent => AndroidUnknownComponentTabButton,
+            FormulaSubTab.Proportion => AndroidProportionTabButton,
+            FormulaSubTab.Motion => AndroidMotionTabButton,
+            FormulaSubTab.Geometry => AndroidFormulaGeometryTabButton,
+            _ => AndroidUnknownComponentTabButton
+        };
+    }
+
+    private async Task ScrollAndroidFormulaSubTabIntoViewAsync(
+        FormulaSubTab tab)
+    {
+        try
+        {
+            await AndroidFormulaSubTabScrollView.ScrollToAsync(
+                GetAndroidFormulaSubTabButton(tab),
+                ScrollToPosition.Center,
+                true);
+        }
+        catch (InvalidOperationException)
+        {
+            // Trang có thể vừa rời visual tree khi đổi tab chính.
+        }
+    }
+#else
     private static void ResetSubTabButton(Button button)
     {
         button.SetDynamicResource(
@@ -996,6 +1089,7 @@ public partial class FormulaPage : ContentPage
             Button.TextColorProperty,
             "TextPrimaryColor");
     }
+#endif
 
     protected override void OnSizeAllocated(
         double width,

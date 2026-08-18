@@ -114,10 +114,10 @@
         <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="14" />
+        <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=14, Default=14}" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Setter.Value>
         </Setter>
     </Style>

@@ -22,12 +22,22 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
+#if ANDROID
+        // Android already shows the native MAUI splash screen configured by
+        // <MauiSplashScreen>. Go straight to AppShell so users do not see a
+        // second in-app SplashPage after the platform splash disappears.
+        var window = new Window(new AppShell())
+        {
+            Title = "Math Solver"
+        };
+#else
         var splashPage = new SplashPage();
 
         var window = new Window(splashPage)
         {
             Title = "Math Solver"
         };
+#endif
 
 #if WINDOWS
         // .NET MAUI 10 has a first-class TitleBar control. On Windows use it
@@ -61,12 +71,14 @@ public partial class App : Application
         MathSolver.Platforms.Windows.WindowStateManager.Attach(window);
 #endif
 
+#if !ANDROID
         splashPage.Loaded += async (_, _) =>
         {
             await Task.Delay(500);
 
             window.Page = new AppShell();
         };
+#endif
 
         return window;
     }

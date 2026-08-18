@@ -53,8 +53,8 @@
 
                     <Grid
                         x:Name="OperationButtonsGrid"
-                        ColumnDefinitions="*,*,*,*,1.35*"
-                        RowDefinitions="Auto"
+                        ColumnDefinitions="{OnPlatform Android='*,*,*,*', WinUI='*,*,*,*,1.35*', Default='*,*,*,*,1.35*'}"
+                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
                         ColumnSpacing="8"
                         RowSpacing="8">
 
@@ -100,8 +100,9 @@
 
                         <Button
                             x:Name="CommonDenominatorButton"
-                            Grid.Row="0"
-                            Grid.Column="4"
+                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
+                            Grid.ColumnSpan="{OnPlatform Android=4, WinUI=1, Default=1}"
                             Text="Quy đồng"
                             FontSize="16"
                             FontAttributes="Bold"
@@ -129,17 +130,17 @@
 
                     <Grid
                         x:Name="FractionInputGrid"
-                        ColumnDefinitions="*,64,*"
-                        RowDefinitions="Auto"
+                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,64,*', Default='*,64,*'}"
+                        RowDefinitions="{OnPlatform Android='Auto,Auto,Auto', WinUI='Auto', Default='Auto'}"
                         ColumnSpacing="12"
-                        RowSpacing="10">
+                        RowSpacing="8">
 
                         <!-- Phân số thứ nhất -->
                         <Border
                             x:Name="FirstFractionCard"
                             Grid.Row="0"
                             Grid.Column="0"
-                            Padding="12"
+                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1"
@@ -217,8 +218,9 @@
                         <!-- Dấu phép tính -->
                         <Label
                             x:Name="OperatorLabel"
-                            Grid.Row="0"
-                            Grid.Column="1"
+                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                            HeightRequest="{OnPlatform Android=36, WinUI=-1, Default=-1}"
                             Text="+"
                             FontSize="32"
                             FontAttributes="Bold"
@@ -229,9 +231,9 @@
                         <!-- Phân số thứ hai -->
                         <Border
                             x:Name="SecondFractionCard"
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Padding="12"
+                            Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1"

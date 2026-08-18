@@ -438,12 +438,12 @@
 
     <!-- Compact Android-style settings menu -->
     <Style x:Key="ThemeMenuRowStyle" TargetType="Border">
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="{OnPlatform Android='8,6', WinUI='10,8', Default='10,8'}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
-        <Setter Property="MinimumHeightRequest" Value="58" />
+        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=50, WinUI=58, Default=58}" />
     </Style>
 
     <Style x:Key="ThemeMenuIconStyle" TargetType="Label">
@@ -455,7 +455,7 @@
     </Style>
 
     <Style x:Key="ThemeMenuTitleStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontSize" Value="{OnPlatform Android=16, WinUI=17, Default=17}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
     </Style>
@@ -481,8 +481,8 @@
     </Style>
 
     <Style x:Key="ThemeMenuChevronStyle" TargetType="Label">
-        <Setter Property="WidthRequest" Value="28" />
-        <Setter Property="HeightRequest" Value="28" />
+        <Setter Property="WidthRequest" Value="{OnPlatform Android=24, WinUI=28, Default=28}" />
+        <Setter Property="HeightRequest" Value="{OnPlatform Android=24, WinUI=28, Default=28}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontAttributes" Value="Bold" />

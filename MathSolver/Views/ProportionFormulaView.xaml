@@ -15,30 +15,30 @@
         VerticalScrollBarVisibility="Default">
 
         <VerticalStackLayout
-            Padding="20,16,20,28"
-            Spacing="14"
+            Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,28', Default='20,16,20,28'}"
+            Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
             HorizontalOptions="Fill">
 
             <VerticalStackLayout
-                Margin="0,4,0,6"
+                Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
                 Spacing="2">
 
                 <Label
                     Text="↗  ↘  ⤢"
-                    FontSize="40"
+                    FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource PrimaryColor}" />
 
                 <Label
                     Text="{localization:Translate Formula.Proportion.Title}"
-                    FontSize="27"
+                    FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                 <Label
                     Text="{localization:Translate Formula.Proportion.Subtitle}"
-                    FontSize="17"
+                    FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -46,7 +46,7 @@
 
             <!-- 1. Mối quan hệ -->
             <Border
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource PrimaryBorderBrush}"
                 StrokeThickness="1">
@@ -57,7 +57,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Label
                         Text="{localization:Translate Formula.Common.Relationship}"
-                        FontSize="22"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource PrimaryColor}" />
 
@@ -164,7 +164,7 @@
             <!-- Minh họa tương tác -->
             <Border
                 x:Name="InteractiveSectionBorder"
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource PrimaryBorderBrush}"
                 StrokeThickness="1">
@@ -175,7 +175,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Label
                         Text="{localization:Translate Formula.Proportion.Graph.Title}"
-                        FontSize="22"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource PrimaryColor}" />
                     <Label
@@ -314,7 +314,7 @@
                             <VerticalStackLayout Spacing="10" VerticalOptions="Center">
                                 <Label
                                     Text="{localization:Translate Formula.Proportion.Compound.Title}"
-                                    FontSize="22"
+                                    FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource PrimaryColor}" />
@@ -450,7 +450,7 @@
 
             <!-- 2. Công thức -->
             <Border
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource BorderBrush}"
                 StrokeThickness="1">
@@ -461,7 +461,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Label
                         Text="{localization:Translate Formula.Common.Formulas}"
-                        FontSize="22"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource PrimaryColor}" />
 
@@ -527,7 +527,7 @@
 
             <!-- 3. Tính chất -->
             <Border
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource BorderBrush}"
                 StrokeThickness="1">
@@ -538,7 +538,7 @@
                 <VerticalStackLayout Spacing="10">
                     <Label
                         Text="{localization:Translate Formula.Common.Properties}"
-                        FontSize="22"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource PrimaryColor}" />
                     <Label
@@ -570,7 +570,7 @@
 
             <!-- 4. Cách giải -->
             <Border
-                Padding="18"
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                 BackgroundColor="{DynamicResource SurfaceColor}"
                 Stroke="{DynamicResource PrimaryBorderBrush}"
                 StrokeThickness="1">
@@ -581,7 +581,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Label
                         Text="{localization:Translate Formula.Common.HowToSolve}"
-                        FontSize="22"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                         FontAttributes="Bold"
                         TextColor="{DynamicResource PrimaryColor}" />
                     <Label

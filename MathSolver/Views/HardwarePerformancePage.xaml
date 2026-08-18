@@ -3,6 +3,7 @@
     x:Class="MathSolver.Views.HardwarePerformancePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     Title="Thông tin phần cứng"
     Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
@@ -17,12 +18,13 @@
 
     <Shell.TitleView>
         <Grid
-            Padding="0,0,8,0"
+            Padding="{OnPlatform Android='0,0,4,0', WinUI='0,0,8,0', Default='0,0,8,0'}"
             ColumnDefinitions="Auto,*"
             ColumnSpacing="8">
 
             <Button
                 x:Name="HardwareBackButton"
+                controls:InteractiveButtonAnimation.IsScopeEnabled="True"
                 Grid.Column="0"
                 Text="‹"
                 WidthRequest="40"
@@ -45,6 +47,7 @@
 
                 <Label
                     Text="THÔNG TIN PHẦN CỨNG"
+                    TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
                     FontSize="19"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
@@ -52,6 +55,7 @@
 
                 <Label
                     Text="Đo hiệu năng Int32, Int64, Float và Double"
+                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                     FontSize="11"
                     LineBreakMode="TailTruncation"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -62,8 +66,8 @@
     <Grid x:Name="HardwarePageContentRoot">
         <ScrollView>
             <VerticalStackLayout
-                Padding="16"
-                Spacing="14"
+                Padding="{OnPlatform Android=12, WinUI=16, Default=16}"
+                Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
                 MaximumWidthRequest="920"
                 HorizontalOptions="Center">
 

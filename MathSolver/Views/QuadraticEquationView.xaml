@@ -85,8 +85,8 @@
 
                     <Grid
                         x:Name="CoefficientGrid"
-                        ColumnDefinitions="*,*,*"
-                        RowDefinitions="Auto"
+                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*,*', Default='*,*,*'}"
+                        RowDefinitions="{OnPlatform Android='Auto,Auto,Auto', WinUI='Auto', Default='Auto'}"
                         ColumnSpacing="12"
                         RowSpacing="10">
 
@@ -95,7 +95,7 @@
                             x:Name="CoefficientAPanel"
                             Grid.Row="0"
                             Grid.Column="0"
-                            Padding="12"
+                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1"
@@ -156,9 +156,9 @@
                         <!-- Hệ số b -->
                         <Border
                             x:Name="CoefficientBPanel"
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Padding="12"
+                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1"
@@ -219,9 +219,9 @@
                         <!-- Hệ số c -->
                         <Border
                             x:Name="CoefficientCPanel"
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Padding="12"
+                            Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1"
@@ -303,7 +303,7 @@
                             <Label
                                 x:Name="EquationPreviewLabel"
                                 Text="ax² + bx + c = 0"
-                                FontSize="25"
+                                FontSize="{OnPlatform Android=21, WinUI=25, Default=25}"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"

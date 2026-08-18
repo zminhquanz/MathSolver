@@ -85,24 +85,34 @@ public partial class GemmaModelCatalogPage : ContentPage
     {
         base.OnSizeAllocated(width, height);
 
+#if ANDROID
+        const double catalogHorizontalInset = 16d;
+        const double catalogVerticalInset = 16d;
+        const double confirmHorizontalInset = 24d;
+#else
+        const double catalogHorizontalInset = 32d;
+        const double catalogVerticalInset = 32d;
+        const double confirmHorizontalInset = 40d;
+#endif
+
         CatalogPanel.WidthRequest =
             Math.Max(
                 320d,
                 Math.Min(
                     980d,
-                    width - 32d));
+                    width - catalogHorizontalInset));
 
         CatalogPanel.MaximumHeightRequest =
             Math.Max(
                 320d,
-                height - 32d);
+                height - catalogVerticalInset);
 
         DownloadConfirmPanel.WidthRequest =
             Math.Max(
                 300d,
                 Math.Min(
                     560d,
-                    width - 40d));
+                    width - confirmHorizontalInset));
 
         bool useCompactLayout = width < 860d;
 

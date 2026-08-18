@@ -22,7 +22,7 @@
     <Shell.TitleView>
         <Grid
             x:Name="ShellTitleRoot"
-            Padding="8,0,4,0"
+            Padding="{OnPlatform Android='4,0,2,0', WinUI='8,0,4,0', Default='8,0,4,0'}"
             ColumnDefinitions="*,Auto"
             ColumnSpacing="10">
 
@@ -40,21 +40,21 @@
             <HorizontalStackLayout
                 Grid.Column="0"
                 ZIndex="20"
-                Spacing="8"
+                Spacing="{OnPlatform Android=6, WinUI=8, Default=8}"
                 HorizontalOptions="Start"
                 VerticalOptions="Center">
 
                 <Image
                     Source="splashicon.png"
-                    WidthRequest="26"
-                    HeightRequest="26"
+                    WidthRequest="{OnPlatform Android=22, WinUI=26, Default=26}"
+                    HeightRequest="{OnPlatform Android=22, WinUI=26, Default=26}"
                     Aspect="AspectFit"
                     VerticalOptions="Center"
                     SemanticProperties.Description="Biểu tượng Math Solver" />
 
                 <Label
                     Text="Math Solver"
-                    FontSize="20"
+                    FontSize="{OnPlatform Android=18, WinUI=20, Default=20}"
                     FontAttributes="Bold"
                     VerticalTextAlignment="Center"
                     VerticalOptions="Center"

@@ -15,16 +15,148 @@
         RowDefinitions="Auto,*">
 
         <!-- Thanh tab con -->
+        <!-- Android: Material-style scrolling tab row, không dùng pill/card desktop. -->
+        <Grid
+            x:Name="AndroidCalculationSubTabBar"
+            Grid.Row="0"
+            IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
+            RowDefinitions="Auto,1"
+            Margin="0,0,0,4"
+            BackgroundColor="{DynamicResource SurfaceColor}">
+
+            <ScrollView
+                x:Name="AndroidCalculationSubTabScrollView"
+                Grid.Row="0"
+                Orientation="Horizontal"
+                HorizontalOptions="Fill"
+                HorizontalScrollBarVisibility="Never">
+
+                <HorizontalStackLayout Spacing="0" Padding="6,0">
+                    <Grid MinimumWidthRequest="92" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidBasicTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.Basic}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            TextColor="{DynamicResource PrimaryColor}"
+                            Clicked="OnBasicTabClicked" />
+                        <BoxView
+                            x:Name="AndroidBasicTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="118" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidAverageTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.Average}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnAverageTabClicked" />
+                        <BoxView
+                            x:Name="AndroidAverageTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="144" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidPowerRootTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.PowerRoot}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnPowerRootTabClicked" />
+                        <BoxView
+                            x:Name="AndroidPowerRootTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="92" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidFractionTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.Fraction}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnFractionTabClicked" />
+                        <BoxView
+                            x:Name="AndroidFractionTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="84" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidFindXTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.FindX}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnFindXTabClicked" />
+                        <BoxView
+                            x:Name="AndroidFindXTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="140" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidQuadraticTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.Quadratic}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnQuadraticTabClicked" />
+                        <BoxView
+                            x:Name="AndroidQuadraticTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+
+                    <Grid MinimumWidthRequest="96" RowDefinitions="44,3">
+                        <Button
+                            x:Name="AndroidGeometryTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Calculation.Tabs.Geometry}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnGeometryTabClicked" />
+                        <BoxView
+                            x:Name="AndroidGeometryTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            BackgroundColor="Transparent" />
+                    </Grid>
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <BoxView
+                Grid.Row="1"
+                HeightRequest="1"
+                BackgroundColor="{DynamicResource DividerColor}" />
+        </Grid>
+
         <Border
             Grid.Row="0"
-            Margin="20,12,20,8"
-            Padding="6"
+            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
+            Margin="{OnPlatform Android='10,8,10,6', WinUI='20,12,20,8', Default='20,12,20,8'}"
+            Padding="{OnPlatform Android=4, WinUI=6, Default=6}"
             BackgroundColor="{DynamicResource SurfaceColor}"
             Stroke="{DynamicResource PrimaryBorderBrush}"
             StrokeThickness="1">
 
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
             <ScrollView
@@ -40,7 +172,7 @@
                 <Button
                     x:Name="BasicTabButton"
                     Text="{localization:Translate Calculation.Tabs.Basic}"
-                    MinimumWidthRequest="146"
+                    MinimumWidthRequest="{OnPlatform Android=104, WinUI=146, Default=146}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -49,7 +181,7 @@
                 <Button
                     x:Name="AverageTabButton"
                     Text="{localization:Translate Calculation.Tabs.Average}"
-                    MinimumWidthRequest="180"
+                    MinimumWidthRequest="{OnPlatform Android=126, WinUI=180, Default=180}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnAverageTabClicked" />
@@ -57,7 +189,7 @@
                 <Button
                     x:Name="PowerRootTabButton"
                     Text="{localization:Translate Calculation.Tabs.PowerRoot}"
-                    MinimumWidthRequest="214"
+                    MinimumWidthRequest="{OnPlatform Android=154, WinUI=214, Default=214}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     FontSize="15"
                     TextColor="{DynamicResource TextSecondaryColor}"
@@ -66,7 +198,7 @@
                 <Button
                     x:Name="FractionTabButton"
                     Text="{localization:Translate Calculation.Tabs.Fraction}"
-                    MinimumWidthRequest="132"
+                    MinimumWidthRequest="{OnPlatform Android=98, WinUI=132, Default=132}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnFractionTabClicked" />
@@ -74,7 +206,7 @@
                 <Button
                     x:Name="FindXTabButton"
                     Text="{localization:Translate Calculation.Tabs.FindX}"
-                    MinimumWidthRequest="126"
+                    MinimumWidthRequest="{OnPlatform Android=92, WinUI=126, Default=126}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnFindXTabClicked" />
@@ -82,7 +214,7 @@
                 <Button
                     x:Name="QuadraticTabButton"
                     Text="{localization:Translate Calculation.Tabs.Quadratic}"
-                    MinimumWidthRequest="206"
+                    MinimumWidthRequest="{OnPlatform Android=150, WinUI=206, Default=206}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     Padding="6,0"
                     FontSize="15"
@@ -92,7 +224,7 @@
                 <Button
                     x:Name="GeometryTabButton"
                     Text="{localization:Translate Calculation.Tabs.Geometry}"
-                    MinimumWidthRequest="138"
+                    MinimumWidthRequest="{OnPlatform Android=102, WinUI=138, Default=138}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource TextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
@@ -142,8 +274,10 @@
 
                             <Grid
                             x:Name="OperationButtonsGrid"
-                            ColumnDefinitions="*,*,*,*,1.35*"
-                            ColumnSpacing="8">
+                            ColumnDefinitions="{OnPlatform Android='*,*,*,*', WinUI='*,*,*,*,1.35*', Default='*,*,*,*,1.35*'}"
+                            RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                            ColumnSpacing="8"
+                            RowSpacing="8">
 
                                 <Button
                                 x:Name="AddButton"
@@ -183,7 +317,9 @@
 
                                 <Button
                                 x:Name="ExpressionButton"
-                                Grid.Column="4"
+                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
+                                Grid.ColumnSpan="{OnPlatform Android=4, WinUI=1, Default=1}"
                                 Text="{localization:Translate Calculation.Expression.Option}"
                                 Style="{StaticResource SolverOperationButtonStyle}"
                                 FontSize="15"
@@ -244,8 +380,8 @@
                             <!-- Hai ô nhập số -->
                             <Grid
                                 x:Name="NumberInputGrid"
-                                ColumnDefinitions="*,Auto,*"
-                                RowDefinitions="Auto,Auto"
+                                ColumnDefinitions="{OnPlatform Android='*', WinUI='*,Auto,*', Default='*,Auto,*'}"
+                                RowDefinitions="{OnPlatform Android='Auto,Auto,Auto,Auto,Auto', WinUI='Auto,Auto', Default='Auto,Auto'}"
                                 ColumnSpacing="12"
                                 RowSpacing="6">
 
@@ -289,9 +425,9 @@
 
                                 <Label
                                     x:Name="OperatorLabel"
-                                    Grid.Row="1"
-                                    Grid.Column="1"
-                                    WidthRequest="40"
+                                    Grid.Row="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                    WidthRequest="{OnPlatform Android='36', WinUI='40', Default='40'}"
                                     Text="+"
                                     FontSize="27"
                                     FontAttributes="Bold"
@@ -301,16 +437,16 @@
 
                                 <Label
                                     x:Name="SecondNumberLabel"
-                                    Grid.Row="0"
-                                    Grid.Column="2"
+                                    Grid.Row="{OnPlatform Android=3, WinUI=0, Default=0}"
+                                    Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                                     Text="Số thứ hai"
                                     FontSize="16"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
                                 <Border
                                     x:Name="SecondNumberBorder"
-                                    Grid.Row="1"
-                                    Grid.Column="2"
+                                    Grid.Row="{OnPlatform Android=4, WinUI=1, Default=1}"
+                                    Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                                     HeightRequest="48"
                                     Padding="10,0"
                                     BackgroundColor="{DynamicResource SurfaceAltColor}"

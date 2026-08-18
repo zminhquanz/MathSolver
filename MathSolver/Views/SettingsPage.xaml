@@ -3,6 +3,7 @@
     x:Class="MathSolver.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     Title="Cài đặt"
     Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True"
@@ -18,12 +19,13 @@
     <!-- Thay tiêu đề Math Solver bằng tiêu đề riêng của trang Cài đặt. -->
     <Shell.TitleView>
         <Grid
-            Padding="0,0,8,0"
+            Padding="{OnPlatform Android='0,0,4,0', WinUI='0,0,8,0', Default='0,0,8,0'}"
             ColumnDefinitions="Auto,*"
             ColumnSpacing="8">
 
             <Button
                 x:Name="SettingsBackButton"
+                controls:InteractiveButtonAnimation.IsScopeEnabled="True"
                 Grid.Column="0"
                 Text="‹"
                 WidthRequest="40"
@@ -46,7 +48,8 @@
                 <Label
                     x:Name="SettingsPageTitleLabel"
                     Text="CÀI ĐẶT"
-                    FontSize="19"
+                    TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
+                    FontSize="{OnPlatform Android=18, WinUI=19, Default=19}"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
                     TextColor="{DynamicResource TextPrimaryColor}" />
@@ -54,6 +57,7 @@
                 <Label
                     x:Name="SettingsPageSubtitleLabel"
                     Text="Giao diện, kết quả hiển thị và công cụ nhà phát triển"
+                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                     FontSize="11"
                     LineBreakMode="TailTruncation"
                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -64,8 +68,8 @@
     <ScrollView
         x:Name="SettingsPageContentRoot">
             <VerticalStackLayout
-            Padding="18"
-            Spacing="16"
+            Padding="{OnPlatform Android=12, WinUI=18, Default=18}"
+            Spacing="{OnPlatform Android=12, WinUI=16, Default=16}"
             HorizontalOptions="Center"
             MaximumWidthRequest="900">
 
@@ -108,7 +112,7 @@
                 </Border>
 
                 <Border Style="{StaticResource ThemeCardStyle}">
-                    <VerticalStackLayout Spacing="14">
+                    <VerticalStackLayout Spacing="{OnPlatform Android=10, WinUI=14, Default=14}">
                         <Label
                         Text="Màu chủ đề"
                         FontSize="19"
@@ -124,7 +128,8 @@
                         Direction="Row"
                         Wrap="Wrap"
                         JustifyContent="Start"
-                        AlignItems="Center">
+                        AlignItems="Center"
+                        IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}">
 
                             <Button
                             Margin="0,0,10,10"
@@ -216,6 +221,118 @@
                             SemanticProperties.Description="Màu hồng"
                             Clicked="OnPresetColorClicked" />
                         </FlexLayout>
+
+                        <!-- Android: fixed-height equal columns avoid FlexLayout's oversized measurement on narrow screens. -->
+                        <Grid
+                        IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
+                        ColumnDefinitions="*,*,*,*,*,*"
+                        ColumnSpacing="4"
+                        HeightRequest="46"
+                        Margin="2,0"
+                        HorizontalOptions="Fill">
+
+                            <Button
+                            Grid.Column="0"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            MinimumWidthRequest="42"
+                            MinimumHeightRequest="42"
+                            Padding="0"
+                            CornerRadius="21"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="#6D28D9"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="2"
+                            CommandParameter="#6D28D9"
+                            SemanticProperties.Description="Màu tím"
+                            Clicked="OnPresetColorClicked" />
+
+                            <Button
+                            Grid.Column="1"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            MinimumWidthRequest="42"
+                            MinimumHeightRequest="42"
+                            Padding="0"
+                            CornerRadius="21"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="#2563EB"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="2"
+                            CommandParameter="#2563EB"
+                            SemanticProperties.Description="Màu xanh dương"
+                            Clicked="OnPresetColorClicked" />
+
+                            <Button
+                            Grid.Column="2"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            MinimumWidthRequest="42"
+                            MinimumHeightRequest="42"
+                            Padding="0"
+                            CornerRadius="21"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="#0891B2"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="2"
+                            CommandParameter="#0891B2"
+                            SemanticProperties.Description="Màu xanh ngọc"
+                            Clicked="OnPresetColorClicked" />
+
+                            <Button
+                            Grid.Column="3"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            MinimumWidthRequest="42"
+                            MinimumHeightRequest="42"
+                            Padding="0"
+                            CornerRadius="21"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="#16A34A"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="2"
+                            CommandParameter="#16A34A"
+                            SemanticProperties.Description="Màu xanh lá"
+                            Clicked="OnPresetColorClicked" />
+
+                            <Button
+                            Grid.Column="4"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            MinimumWidthRequest="42"
+                            MinimumHeightRequest="42"
+                            Padding="0"
+                            CornerRadius="21"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="#EA580C"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="2"
+                            CommandParameter="#EA580C"
+                            SemanticProperties.Description="Màu cam"
+                            Clicked="OnPresetColorClicked" />
+
+                            <Button
+                            Grid.Column="5"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            MinimumWidthRequest="42"
+                            MinimumHeightRequest="42"
+                            Padding="0"
+                            CornerRadius="21"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="#DB2777"
+                            BorderColor="{DynamicResource BorderColor}"
+                            BorderWidth="2"
+                            CommandParameter="#DB2777"
+                            SemanticProperties.Description="Màu hồng"
+                            Clicked="OnPresetColorClicked" />
+                        </Grid>
 
                         <Grid
                         ColumnDefinitions="*,Auto"
