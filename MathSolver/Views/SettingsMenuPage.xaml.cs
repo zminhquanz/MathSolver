@@ -78,11 +78,6 @@ public partial class SettingsMenuPage : ContentView
         "MidnightBlue"
     ];
 
-    // Glyph › có optical center hơi lệch khi xoay 90° do font metrics.
-    // Bù 1 DIP sang phải chỉ ở trạng thái mở để dấu hướng xuống nằm đúng
-    // tâm hình tròn, nhưng vẫn giữ vị trí chuẩn khi đóng.
-    private const double ExpandedChevronOffsetX = 1d;
-
     // Overlay này nằm trực tiếp trên visual tree của tab hiện tại, không phải
     // Shell route và cũng không dùng Navigation.PushModalAsync. Giữ cờ để các
     // trang cũ vẫn tương thích với logic bảo toàn GraphicsView/LLM.
@@ -90,9 +85,6 @@ public partial class SettingsMenuPage : ContentView
 
     private readonly List<AppFontOption> _fontOptions =
         AppFontCatalog.Options.ToList();
-
-    private readonly List<AppLanguageOption> _languageOptions =
-        AppLanguageCatalog.Options.ToList();
 
     private bool _updatingPickerSelections;
 
@@ -134,12 +126,6 @@ public partial class SettingsMenuPage : ContentView
 
         Unloaded +=
             OnUnloaded;
-
-        MenuFontPicker.ItemsSource =
-            _fontOptions;
-
-        MenuLanguagePicker.ItemsSource =
-            _languageOptions;
 
         LocalizationService.Attach(
             this);
@@ -249,7 +235,7 @@ public partial class SettingsMenuPage : ContentView
             Math.Max(
                 300d,
                 Math.Min(
-                    390d,
+                    420d,
                     safeWidth - 28d));
 
         MenuPanel.MaximumHeightRequest =
@@ -367,7 +353,7 @@ public partial class SettingsMenuPage : ContentView
             Math.Max(
                 300,
                 Math.Min(
-                    390,
+                    420,
                     width - 28));
 
         if (_isFullWindowOverlayMode)
@@ -577,7 +563,6 @@ public partial class SettingsMenuPage : ContentView
         object? sender,
         EventArgs e)
     {
-        RefreshPickerDisplayItems();
         UpdateState();
     }
 
@@ -700,23 +685,19 @@ public partial class SettingsMenuPage : ContentView
         AccentSummaryLabel.TextColor =
             AppThemeManager.CurrentAccentColor;
 
-        UpdatePickerSelections();
+        AppFontOption currentFont =
+            AppFontCatalog.GetByKey(
+                AppFontManager.CurrentFontKey);
 
         FontSummaryLabel.Text =
-            _fontOptions.FirstOrDefault(
-                option =>
-                    option.Key ==
-                    AppFontManager.CurrentFontKey)
-                ?.LocalizedDisplayName ??
-            AppFontManager.CurrentFontKey;
+            currentFont.LocalizedDisplayName;
+
+        AppLanguageOption currentLanguage =
+            AppLanguageCatalog.GetByLanguage(
+                AppLanguageManager.CurrentLanguage);
 
         LanguageSummaryLabel.Text =
-            _languageOptions.FirstOrDefault(
-                option =>
-                    option.Language ==
-                    AppLanguageManager.CurrentLanguage)
-                ?.LocalizedDisplayName ??
-            AppLanguageManager.CurrentLanguage.ToString();
+            currentLanguage.LocalizedDisplayName;
 
         bool useEnglish =
             AppLanguageManager.CurrentLanguage ==
@@ -742,381 +723,16 @@ public partial class SettingsMenuPage : ContentView
                 ? "Appearance, results, and developer tools"
                 : "Giao diện, kết quả và nhà phát triển";
 
-        UpdateChoiceButton(
-            SystemThemeButton,
-            AppThemeManager.CurrentMode ==
-            AppThemeMode.System);
-
-        UpdateChoiceButton(
-            LightThemeButton,
-            AppThemeManager.CurrentMode ==
-            AppThemeMode.Light);
-
-        UpdateChoiceButton(
-            DarkThemeButton,
-            AppThemeManager.CurrentMode ==
-            AppThemeMode.Dark);
-
         LocalizationService.Attach(
             this);
     }
 
-    private void UpdatePickerSelections()
-    {
-        if (_updatingPickerSelections)
-        {
-            return;
-        }
-
-        _updatingPickerSelections =
-            true;
-
-        try
-        {
-            MenuFontPicker.SelectedItem =
-                _fontOptions.FirstOrDefault(
-                    option =>
-                        option.Key ==
-                        AppFontManager.CurrentFontKey);
-
-            MenuLanguagePicker.SelectedItem =
-                _languageOptions.FirstOrDefault(
-                    option =>
-                        option.Language ==
-                        AppLanguageManager.CurrentLanguage);
-        }
-        finally
-        {
-            _updatingPickerSelections =
-                false;
-        }
-    }
-
-    private void RefreshPickerDisplayItems()
-    {
-        _updatingPickerSelections =
-            true;
-
-        try
-        {
-            // Picker/WinUI ComboBox can cache ItemDisplayBinding text.
-            // Rebind after the JSON culture has actually changed.
-            MenuFontPicker.ItemsSource =
-                null;
-
-            MenuFontPicker.ItemsSource =
-                _fontOptions;
-
-            MenuLanguagePicker.ItemsSource =
-                null;
-
-            MenuLanguagePicker.ItemsSource =
-                _languageOptions;
-
-            MenuFontPicker.SelectedItem =
-                _fontOptions.FirstOrDefault(
-                    option =>
-                        option.Key ==
-                        AppFontManager.CurrentFontKey);
-
-            MenuLanguagePicker.SelectedItem =
-                _languageOptions.FirstOrDefault(
-                    option =>
-                        option.Language ==
-                        AppLanguageManager.CurrentLanguage);
-        }
-        finally
-        {
-            _updatingPickerSelections =
-                false;
-        }
-    }
-
-    private void OnMenuFontSelectionChanged(
-        object? sender,
-        EventArgs e)
-    {
-        if (_updatingPickerSelections ||
-            MenuFontPicker.SelectedItem
-            is not AppFontOption selectedFont)
-        {
-            return;
-        }
-
-        AppFontManager.SetFont(
-            selectedFont.Key);
-    }
-
-    private void OnMenuLanguageSelectionChanged(
-        object? sender,
-        EventArgs e)
-    {
-        if (_updatingPickerSelections ||
-            MenuLanguagePicker.SelectedItem
-            is not AppLanguageOption selectedLanguage)
-        {
-            return;
-        }
-
-        AppLanguageManager.SetLanguage(
-            selectedLanguage.Language);
-    }
-
-    private static void UpdateChoiceButton(
-        Button button,
-        bool isSelected)
-    {
-        button.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            isSelected
-                ? "PrimaryColor"
-                : "SurfaceColor");
-
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            isSelected
-                ? "OnPrimaryColor"
-                : "TextPrimaryColor");
-
-        button.SetDynamicResource(
-            Button.BorderColorProperty,
-            isSelected
-                ? "PrimaryColor"
-                : "BorderColor");
-
-        button.BorderWidth =
-            1;
-
-        button.CornerRadius =
-            9;
-    }
-
-    private async void OnThemeRowTapped(
+    private async void OnAppearanceSettingsTapped(
         object? sender,
         TappedEventArgs e)
     {
-        await ToggleSectionAsync(
-            ThemeOptionsBorder,
-            ThemeChevronLabel);
-    }
-
-    private async void OnAccentRowTapped(
-        object? sender,
-        TappedEventArgs e)
-    {
-        await ToggleSectionAsync(
-            AccentOptionsBorder,
-            AccentChevronLabel);
-    }
-
-    private async void OnFontRowTapped(
-        object? sender,
-        TappedEventArgs e)
-    {
-        await ToggleSectionAsync(
-            FontOptionsBorder,
-            FontChevronLabel);
-    }
-
-    private async void OnLanguageRowTapped(
-        object? sender,
-        TappedEventArgs e)
-    {
-        await ToggleSectionAsync(
-            LanguageOptionsBorder,
-            LanguageChevronLabel);
-    }
-
-    private async Task ToggleSectionAsync(
-        VisualElement section,
-        Label chevron)
-    {
-        if (!_animatingSections.Add(
-                section))
-        {
-            return;
-        }
-
-        bool isExpanding =
-            !section.IsVisible;
-
-        section.InputTransparent =
-            true;
-
-        section.CancelAnimations();
-        chevron.CancelAnimations();
-
-        // Giữ đúng một glyph › trong pill và xoay chính Label như icon SVG:
-        // 0° khi đóng, 90° khi mở. HashSet phía trên khóa riêng từng section
-        // nên bấm liên tục không thể làm chevron kẹt giữa hai trạng thái.
-        chevron.Text = "›";
-
-        try
-        {
-            if (isExpanding)
-            {
-                section.IsVisible =
-                    true;
-
-                section.Opacity =
-                    0d;
-
-                section.TranslationY =
-                    -10d;
-
-                section.ScaleY =
-                    0.82d;
-
-                await Task.Yield();
-
-                await Task.WhenAll(
-                    section.FadeToAsync(
-                        1d,
-                        150,
-                        Easing.CubicOut),
-
-                    section.TranslateToAsync(
-                        0d,
-                        0d,
-                        210,
-                        Easing.CubicOut),
-
-                    section.ScaleYToAsync(
-                        1d,
-                        210,
-                        Easing.CubicOut),
-
-                    chevron.RotateToAsync(
-                        90d,
-                        210,
-                        Easing.CubicOut),
-
-                    chevron.TranslateToAsync(
-                        ExpandedChevronOffsetX,
-                        0d,
-                        210,
-                        Easing.CubicOut));
-            }
-            else
-            {
-                await Task.WhenAll(
-                    section.FadeToAsync(
-                        0d,
-                        115,
-                        Easing.CubicIn),
-
-                    section.TranslateToAsync(
-                        0d,
-                        -8d,
-                        145,
-                        Easing.CubicIn),
-
-                    section.ScaleYToAsync(
-                        0.82d,
-                        145,
-                        Easing.CubicIn),
-
-                    chevron.RotateToAsync(
-                        0d,
-                        145,
-                        Easing.CubicIn),
-
-                    chevron.TranslateToAsync(
-                        0d,
-                        0d,
-                        145,
-                        Easing.CubicIn));
-
-                section.IsVisible =
-                    false;
-
-                // Đặt lại để lần mở tiếp theo luôn bắt đầu ổn định.
-                section.Opacity =
-                    1d;
-
-                section.TranslationY =
-                    0d;
-
-                section.ScaleY =
-                    1d;
-            }
-        }
-        finally
-        {
-            // Bảo đảm trạng thái cuối luôn chính xác nếu animation bị hủy do
-            // trang đóng hoặc vòng đời giao diện thay đổi giữa chừng.
-            chevron.Rotation =
-                isExpanding
-                    ? 90d
-                    : 0d;
-
-            chevron.TranslationX =
-                isExpanding
-                    ? ExpandedChevronOffsetX
-                    : 0d;
-
-            chevron.TranslationY = 0d;
-
-            section.InputTransparent =
-                false;
-
-            _animatingSections.Remove(
-                section);
-        }
-    }
-
-    private void OnSystemThemeClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppThemeManager.SetThemeMode(
-            AppThemeMode.System);
-        UpdateState();
-    }
-
-    private void OnLightThemeClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppThemeManager.SetThemeMode(
-            AppThemeMode.Light);
-        UpdateState();
-    }
-
-    private void OnDarkThemeClicked(
-        object? sender,
-        EventArgs e)
-    {
-        AppThemeManager.SetThemeMode(
-            AppThemeMode.Dark);
-        UpdateState();
-    }
-
-    private void OnPresetColorClicked(
-        object? sender,
-        EventArgs e)
-    {
-        if (sender is not Button button ||
-            button.CommandParameter is not string color)
-        {
-            return;
-        }
-
-        AppThemeManager.SetAccentColor(
-            color);
-        UpdateState();
-    }
-
-    private void OnResetTapped(
-        object? sender,
-        TappedEventArgs e)
-    {
-        AppThemeManager.ResetToDefault();
-        AppFontManager.ResetToDefault();
-        AppLanguageManager.ResetToDefault();
-        DeveloperModeManager.ResetToDefault();
-        ResultNumberDisplayMode.ResetToDefault();
-        UpdateState();
+        await RequestNavigationAsync(
+            nameof(SettingsPage));
     }
 
     private async void OnHardwarePerformanceTapped(

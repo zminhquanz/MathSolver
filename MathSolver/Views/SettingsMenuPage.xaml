@@ -60,8 +60,8 @@
             Margin="0,6,8,12"
             ZIndex="2"
             Padding="0"
-            WidthRequest="390"
-            MaximumHeightRequest="760"
+            WidthRequest="420"
+            MaximumHeightRequest="780"
             HorizontalOptions="End"
             VerticalOptions="Start"
             BackgroundColor="{DynamicResource SurfaceColor}"
@@ -114,340 +114,188 @@
                 </Grid>
 
                 <ScrollView Grid.Row="1">
-                    <VerticalStackLayout Padding="10,8,10,12" Spacing="4">
+                    <VerticalStackLayout Padding="12,10,12,14" Spacing="10">
 
-                        <!-- Theme -->
-                        <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Label Grid.Column="0" Text="◐" Style="{StaticResource ThemeMenuIconStyle}" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                    <Label Text="Chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label x:Name="ThemeSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
-                                </VerticalStackLayout>
+                        <Label
+                            Text="GIAO DIỆN"
+                            Style="{StaticResource SettingsMenuSectionLabelStyle}" />
 
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-
-                                    <Label
-                                        x:Name="ThemeChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-                                </Border>
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnThemeRowTapped" />
-                                </Grid.GestureRecognizers>
-                            </Grid>
-                        </Border>
-
-                        <Border
-                            x:Name="ThemeOptionsBorder"
-                            IsVisible="False"
-                            AnchorY="0"
-                            Margin="54,0,4,4"
-                            Padding="8"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
-                                <Button x:Name="SystemThemeButton" Grid.Column="0" Text="Hệ thống" Clicked="OnSystemThemeClicked" />
-                                <Button x:Name="LightThemeButton" Grid.Column="1" Text="Sáng" Clicked="OnLightThemeClicked" />
-                                <Button x:Name="DarkThemeButton" Grid.Column="2" Text="Tối" Clicked="OnDarkThemeClicked" />
-                            </Grid>
-                        </Border>
-
-                        <!-- Accent color -->
-                        <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <Label Grid.Column="0" Text="●" Style="{StaticResource ThemeMenuIconStyle}" TextColor="{DynamicResource PrimaryColor}" FontSize="30"/>
-                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                    <Label Text="Màu chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label x:Name="AccentSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
-                                </VerticalStackLayout>
-
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-
-                                    <Label
-                                        x:Name="AccentChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-                                </Border>
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnAccentRowTapped" />
-                                </Grid.GestureRecognizers>
-                            </Grid>
-                        </Border>
-
-                        <Border
-                            x:Name="AccentOptionsBorder"
-                            IsVisible="False"
-                            AnchorY="0"
-                            Margin="54,0,4,4"
-                            Padding="10"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-                            <VerticalStackLayout Spacing="10">
-                                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start" AlignItems="Center" HeightRequest="50">
-                                    <Button Text="" CommandParameter="#6D28D9" BackgroundColor="#6D28D9" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
-                                    <Button Text="" CommandParameter="#2563EB" BackgroundColor="#2563EB" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
-                                    <Button Text="" CommandParameter="#0891B2" BackgroundColor="#0891B2" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
-                                    <Button Text="" CommandParameter="#16A34A" BackgroundColor="#16A34A" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
-                                    <Button Text="" CommandParameter="#EA580C" BackgroundColor="#EA580C" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
-                                    <Button Text="" CommandParameter="#DB2777" BackgroundColor="#DB2777" Style="{StaticResource AccentSwatchButtonStyle}" Clicked="OnPresetColorClicked" />
-                                </FlexLayout>
-
-                                <Button
-                                    Text="Tùy chỉnh màu…"
-                                    BackgroundColor="Transparent"
-                                    BorderColor="{DynamicResource BorderColor}"
-                                    BorderWidth="1"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    Clicked="OnAdvancedColorClicked" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <!-- Font -->
-                        <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <controls:ThemedSvgPathIcon
-                                    x:Name="FontMenuIcon"
-                                    Grid.Column="0"
-                                    Data="M384-362h192l35 97q4 11 14 18t22 7q20 0 32.5-16.5T684-293L532-695q-5-11-15-18t-22-7h-30q-12 0-22 7t-15 18L276-293q-8 19 4 36t32 17q13 0 22.5-7t14.5-19l35-96Zm24-70 70-198h4l70 198H408ZM160-80q-33 0-56.5-23.5T80-160v-640q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v640q0 33-23.5 56.5T800-80H160Zm0-80h640v-640H160v640Zm0-640v640-640Z"
-                                    HeightRequest="24"
-                                    WidthRequest="24"
-                                    Scale="0.833333"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-
-                                <VerticalStackLayout
-                                    Grid.Column="1"
-                                    Spacing="1"
-                                    VerticalOptions="Center">
-                                    <Label
-                                        Text="Phông chữ"
-                                        Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label
-                                        x:Name="FontSummaryLabel"
-                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
-                                </VerticalStackLayout>
-
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        x:Name="FontChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-                                </Border>
-
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnFontRowTapped" />
-                                </Grid.GestureRecognizers>
-                            </Grid>
-                        </Border>
-
-                        <Border
-                            x:Name="FontOptionsBorder"
-                            IsVisible="False"
-                            AnchorY="0"
-                            Margin="54,0,4,4"
-                            Padding="8"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-
-                            <Border
-                                Padding="0"
-                                BackgroundColor="{DynamicResource InputBackgroundColor}"
-                                Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Grid HeightRequest="42" ColumnDefinitions="*,38">
-                                    <Picker
-                                        x:Name="MenuFontPicker"
-                                        Grid.Column="0"
-                                        Grid.ColumnSpan="2"
-                                        ItemDisplayBinding="{Binding LocalizedDisplayName}"
-                                        Margin="10,0,0,0"
-                                        HorizontalOptions="Fill"
-                                        VerticalOptions="Fill"
-                                        FontSize="13"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        TitleColor="{DynamicResource TextSecondaryColor}"
-                                        BackgroundColor="Transparent"
-                                        SelectedIndexChanged="OnMenuFontSelectionChanged" />
-
-                                    <BoxView
-                                        Grid.Column="1"
-                                        WidthRequest="1"
-                                        Margin="0,8,0,8"
-                                        HorizontalOptions="Start"
-                                        BackgroundColor="{DynamicResource DividerColor}"
-                                        InputTransparent="True" />
-
-                                    <Border
-                                        Grid.Column="1"
-                                        WidthRequest="26"
-                                        HeightRequest="26"
-                                        Margin="6"
-                                        Padding="0"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        BackgroundColor="{DynamicResource PrimarySoftColor}"
-                                        Stroke="{DynamicResource PrimaryBorderBrush}"
-                                        StrokeThickness="1"
-                                        InputTransparent="True">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="7" />
-                                        </Border.StrokeShape>
-                                        <Label
-                                            Text="⌄"
-                                            FontSize="13"
-                                            FontAttributes="Bold"
+                        <VerticalStackLayout Spacing="0">
+                                <Border Style="{StaticResource ThemeMenuRowStyle}">
+                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
+                                        <Grid
+                                            Grid.Column="0"
+                                            WidthRequest="28"
+                                            HeightRequest="28"
                                             HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                            <Label
+                                                Text="◐"
+                                                FontSize="18"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="Center"
+                                                VerticalTextAlignment="Center"
+                                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                        </Grid>
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="Chủ đề"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
                                             VerticalOptions="Center"
-                                            HorizontalTextAlignment="Center"
-                                            VerticalTextAlignment="Center"
-                                            TextColor="{DynamicResource PrimaryColor}"
-                                            InputTransparent="True" />
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </Border>
-
-                        <!-- Language -->
-                        <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
-                                <controls:ThemedSvgPathIcon
-                                    x:Name="LanguageMenuIcon"
-                                    Grid.Column="0"
-                                    Data="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z"
-                                    HeightRequest="24"
-                                    WidthRequest="24"
-                                    Scale="0.833333"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-
-                                <VerticalStackLayout
-                                    Grid.Column="1"
-                                    Spacing="1"
-                                    VerticalOptions="Center">
-                                    <Label
-                                        Text="Ngôn ngữ"
-                                        Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label
-                                        x:Name="LanguageSummaryLabel"
-                                        Style="{StaticResource ThemeMenuSummaryStyle}" />
-                                </VerticalStackLayout>
-
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ThemeMenuChevronContainerStyle}">
-                                    <Label
-                                        x:Name="LanguageChevronLabel"
-                                        Text="›"
-                                        Style="{StaticResource ThemeMenuChevronStyle}"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="ThemeSummaryLabel"
+                                            Grid.Column="2"
+                                            FontSize="13"
+                                            VerticalOptions="Center"
+                                            HorizontalTextAlignment="End"
+                                            LineBreakMode="TailTruncation"
+                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                        <Label
+                                            Grid.Column="3"
+                                            Text="›"
+                                            Style="{StaticResource ThemeMenuChevronStyle}" />
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnAppearanceSettingsTapped" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
                                 </Border>
 
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnLanguageRowTapped" />
-                                </Grid.GestureRecognizers>
-                            </Grid>
-                        </Border>
+                                <BoxView Margin="44,0,12,0" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
-                        <Border
-                            x:Name="LanguageOptionsBorder"
-                            IsVisible="False"
-                            AnchorY="0"
-                            Margin="54,0,4,4"
-                            Padding="8"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-
-                            <Border
-                                Padding="0"
-                                BackgroundColor="{DynamicResource InputBackgroundColor}"
-                                Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Grid HeightRequest="42" ColumnDefinitions="*,38">
-                                    <Picker
-                                        x:Name="MenuLanguagePicker"
-                                        Grid.Column="0"
-                                        Grid.ColumnSpan="2"
-                                        ItemDisplayBinding="{Binding LocalizedDisplayName}"
-                                        Margin="10,0,0,0"
-                                        HorizontalOptions="Fill"
-                                        VerticalOptions="Fill"
-                                        FontSize="13"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        TitleColor="{DynamicResource TextSecondaryColor}"
-                                        BackgroundColor="Transparent"
-                                        SelectedIndexChanged="OnMenuLanguageSelectionChanged" />
-
-                                    <BoxView
-                                        Grid.Column="1"
-                                        WidthRequest="1"
-                                        Margin="0,8,0,8"
-                                        HorizontalOptions="Start"
-                                        BackgroundColor="{DynamicResource DividerColor}"
-                                        InputTransparent="True" />
-
-                                    <Border
-                                        Grid.Column="1"
-                                        WidthRequest="26"
-                                        HeightRequest="26"
-                                        Margin="6"
-                                        Padding="0"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        BackgroundColor="{DynamicResource PrimarySoftColor}"
-                                        Stroke="{DynamicResource PrimaryBorderBrush}"
-                                        StrokeThickness="1"
-                                        InputTransparent="True">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="7" />
-                                        </Border.StrokeShape>
-                                        <Label
-                                            Text="⌄"
-                                            FontSize="13"
-                                            FontAttributes="Bold"
+                                <Border Style="{StaticResource ThemeMenuRowStyle}">
+                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
+                                        <Grid
+                                            Grid.Column="0"
+                                            WidthRequest="28"
+                                            HeightRequest="28"
                                             HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                            <Label
+                                                Text="●"
+                                                FontSize="18"
+                                                HorizontalTextAlignment="Center"
+                                                VerticalTextAlignment="Center"
+                                                TextColor="{DynamicResource PrimaryColor}" />
+                                        </Grid>
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="Màu chủ đề"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
                                             VerticalOptions="Center"
-                                            HorizontalTextAlignment="Center"
-                                            VerticalTextAlignment="Center"
-                                            TextColor="{DynamicResource PrimaryColor}"
-                                            InputTransparent="True" />
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </Border>
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="AccentSummaryLabel"
+                                            Grid.Column="2"
+                                            FontSize="13"
+                                            VerticalOptions="Center"
+                                            HorizontalTextAlignment="End"
+                                            LineBreakMode="TailTruncation" />
+                                        <Label
+                                            Grid.Column="3"
+                                            Text="›"
+                                            Style="{StaticResource ThemeMenuChevronStyle}" />
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnAppearanceSettingsTapped" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
+
+                                <BoxView Margin="44,0,12,0" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
+
+                                <Border Style="{StaticResource ThemeMenuRowStyle}">
+                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
+                                        <Grid
+                                            Grid.Column="0"
+                                            WidthRequest="28"
+                                            HeightRequest="28"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                            <controls:ThemedSvgPathIcon
+                                                x:Name="FontMenuIcon"
+                                                Data="M384-362h192l35 97q4 11 14 18t22 7q20 0 32.5-16.5T684-293L532-695q-5-11-15-18t-22-7h-30q-12 0-22 7t-15 18L276-293q-8 19 4 36t32 17q13 0 22.5-7t14.5-19l35-96Zm24-70 70-198h4l70 198H408ZM160-80q-33 0-56.5-23.5T80-160v-640q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v640q0 33-23.5 56.5T800-80H160Zm0-80h640v-640H160v640Zm0-640v640-640Z"
+                                                WidthRequest="18"
+                                                HeightRequest="18"
+                                                Scale="0.833333"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center" />
+                                        </Grid>
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="Phông chữ"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            VerticalOptions="Center"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="FontSummaryLabel"
+                                            Grid.Column="2"
+                                            FontSize="13"
+                                            VerticalOptions="Center"
+                                            HorizontalTextAlignment="End"
+                                            LineBreakMode="TailTruncation"
+                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                        <Label
+                                            Grid.Column="3"
+                                            Text="›"
+                                            Style="{StaticResource ThemeMenuChevronStyle}" />
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnAppearanceSettingsTapped" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
+
+                                <BoxView Margin="44,0,12,0" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
+
+                                <Border Style="{StaticResource ThemeMenuRowStyle}">
+                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
+                                        <Grid
+                                            Grid.Column="0"
+                                            WidthRequest="28"
+                                            HeightRequest="28"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                            <controls:ThemedSvgPathIcon
+                                                x:Name="LanguageMenuIcon"
+                                                Data="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z"
+                                                WidthRequest="18"
+                                                HeightRequest="18"
+                                                Scale="0.833333"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center" />
+                                        </Grid>
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="Ngôn ngữ"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            VerticalOptions="Center"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="LanguageSummaryLabel"
+                                            Grid.Column="2"
+                                            FontSize="13"
+                                            VerticalOptions="Center"
+                                            HorizontalTextAlignment="End"
+                                            LineBreakMode="TailTruncation"
+                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                        <Label
+                                            Grid.Column="3"
+                                            Text="›"
+                                            Style="{StaticResource ThemeMenuChevronStyle}" />
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnAppearanceSettingsTapped" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
+                        </VerticalStackLayout>
+
+                        <Label
+                            Margin="0,6,0,0"
+                            Text="THÔNG TIN &amp; HỆ THỐNG"
+                            Style="{StaticResource SettingsMenuSectionLabelStyle}" />
 
                         <!-- Hardware and performance -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">

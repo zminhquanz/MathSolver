@@ -438,12 +438,12 @@
 
     <!-- Compact Android-style settings menu -->
     <Style x:Key="ThemeMenuRowStyle" TargetType="Border">
-        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Padding" Value="10,8" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
-        <Setter Property="MinimumHeightRequest" Value="62" />
+        <Setter Property="MinimumHeightRequest" Value="58" />
     </Style>
 
     <Style x:Key="ThemeMenuIconStyle" TargetType="Label">
@@ -467,24 +467,24 @@
     </Style>
 
     <Style x:Key="ThemeMenuChevronContainerStyle" TargetType="Border">
-        <Setter Property="WidthRequest" Value="30" />
-        <Setter Property="HeightRequest" Value="30" />
-        <Setter Property="MinimumWidthRequest" Value="30" />
-        <Setter Property="MinimumHeightRequest" Value="30" />
+        <Setter Property="WidthRequest" Value="28" />
+        <Setter Property="HeightRequest" Value="28" />
+        <Setter Property="MinimumWidthRequest" Value="28" />
+        <Setter Property="MinimumHeightRequest" Value="28" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
-        <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 15" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
     </Style>
 
     <Style x:Key="ThemeMenuChevronStyle" TargetType="Label">
         <Setter Property="WidthRequest" Value="28" />
         <Setter Property="HeightRequest" Value="28" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontSize" Value="20" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
@@ -505,4 +505,67 @@
         <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderWidth" Value="1" />
     </Style>
+    <!-- Settings menu 2026 compact accordion -->
+    <Style x:Key="SettingsMenuSectionLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CharacterSpacing" Value="0.8" />
+        <Setter Property="Margin" Value="4,2,0,0" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
+    </Style>
+
+    <Style x:Key="SettingsMenuExpandableCardStyle" TargetType="Border">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
+        <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+    </Style>
+
+    <Style x:Key="SettingsMenuLeadingIconContainerStyle" TargetType="Border">
+        <Setter Property="WidthRequest" Value="34" />
+        <Setter Property="HeightRequest" Value="34" />
+        <Setter Property="Padding" Value="7" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
+        <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+    </Style>
+
+    <Style x:Key="SettingsMenuExpandChevronStyle" TargetType="Label">
+        <Setter Property="WidthRequest" Value="28" />
+        <Setter Property="HeightRequest" Value="28" />
+        <Setter Property="FontSize" Value="21" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
+    </Style>
+
+    <Style x:Key="SettingsMenuPickerFrameStyle" TargetType="Border">
+        <Setter Property="HeightRequest" Value="46" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource InputBackgroundColor}" />
+        <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+    </Style>
+
+    <Style x:Key="SettingsMenuAccentSwatchStyle" TargetType="Button">
+        <Setter Property="WidthRequest" Value="38" />
+        <Setter Property="HeightRequest" Value="38" />
+        <Setter Property="MinimumWidthRequest" Value="38" />
+        <Setter Property="MinimumHeightRequest" Value="38" />
+        <Setter Property="CornerRadius" Value="19" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
 </ResourceDictionary>
