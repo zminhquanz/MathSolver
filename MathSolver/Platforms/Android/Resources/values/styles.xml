@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android-only popup themes.  The compact Settings PopupMenu is created
+         with one of these contexts so it follows the effective app Light/Dark
+         mode instead of inheriting a stale light framework popup theme. -->
+    <style name="MathSolverPopupMenuLight" parent="Theme.Material3.Light">
+        <item name="popupMenuStyle">@style/Widget.Material3.PopupMenu</item>
+        <item name="listPopupWindowStyle">@style/Widget.Material3.PopupMenu.ListPopupWindow</item>
+    </style>
+
+    <style name="MathSolverPopupMenuDark" parent="Theme.Material3.Dark">
+        <item name="popupMenuStyle">@style/Widget.Material3.PopupMenu</item>
+        <item name="listPopupWindowStyle">@style/Widget.Material3.PopupMenu.ListPopupWindow</item>
+    </style>
+</resources>

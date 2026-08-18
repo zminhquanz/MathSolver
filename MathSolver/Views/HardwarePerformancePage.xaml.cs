@@ -193,6 +193,18 @@ public partial class HardwarePerformancePage : ContentPage
 
     private void PreparePageEntryAnimation()
     {
+#if ANDROID
+        // Material shared-axis style: enter from the trailing edge without
+        // scaling the page surface. This keeps the motion lighter on phones.
+        HardwarePageContentRoot.Opacity =
+            0d;
+
+        HardwarePageContentRoot.TranslationX =
+            24d;
+
+        HardwarePageContentRoot.Scale =
+            1d;
+#else
         HardwarePageContentRoot.Opacity =
             0d;
 
@@ -201,12 +213,26 @@ public partial class HardwarePerformancePage : ContentPage
 
         HardwarePageContentRoot.Scale =
             0.995d;
+#endif
     }
 
     private async Task PlayPageEntryAnimationAsync()
     {
         HardwarePageContentRoot.CancelAnimations();
 
+#if ANDROID
+        await Task.WhenAll(
+            HardwarePageContentRoot.FadeToAsync(
+                1d,
+                170,
+                Easing.CubicOut),
+
+            HardwarePageContentRoot.TranslateToAsync(
+                0d,
+                0d,
+                220,
+                Easing.CubicOut));
+#else
         await Task.WhenAll(
             HardwarePageContentRoot.FadeToAsync(
                 1d,
@@ -223,12 +249,26 @@ public partial class HardwarePerformancePage : ContentPage
                 1d,
                 240,
                 Easing.CubicOut));
+#endif
     }
 
     private async Task PlayPageExitAnimationAsync()
     {
         HardwarePageContentRoot.CancelAnimations();
 
+#if ANDROID
+        await Task.WhenAll(
+            HardwarePageContentRoot.FadeToAsync(
+                0d,
+                110,
+                Easing.CubicIn),
+
+            HardwarePageContentRoot.TranslateToAsync(
+                24d,
+                0d,
+                150,
+                Easing.CubicIn));
+#else
         await Task.WhenAll(
             HardwarePageContentRoot.FadeToAsync(
                 0d,
@@ -245,6 +285,7 @@ public partial class HardwarePerformancePage : ContentPage
                 0.995d,
                 155,
                 Easing.CubicIn));
+#endif
     }
 
     private void OnLanguageChanged(
@@ -3674,6 +3715,9 @@ public partial class HardwarePerformancePage : ContentPage
         _isClosing =
             true;
 
+        HardwareBackButton.IsEnabled =
+            false;
+
         try
         {
             if (_isBenchmarkRunning)
@@ -3715,6 +3759,9 @@ public partial class HardwarePerformancePage : ContentPage
         {
             _isClosing =
                 false;
+
+            HardwareBackButton.IsEnabled =
+                true;
         }
     }
 }

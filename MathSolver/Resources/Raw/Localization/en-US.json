@@ -1352,7 +1352,10 @@
     "Equation.Linear.Step3.Title": "Step 3. Divide both sides by a and conclude",
     "Equation.Linear.Step3.Body": "x = {0} ÷ ({1})\nx = {2}\nTherefore, the equation root is x = {2}.",
     "SettingsMenu.AppearanceSection": "APPEARANCE",
-    "SettingsMenu.SystemSection": "SYSTEM & INFORMATION"
+    "SettingsMenu.SystemSection": "SYSTEM & INFORMATION",
+    "About.UsageNoteTitle": "Responsible use",
+    "About.UsageNoteBody": "Math Solver is designed to support learning, verify results, and help learners understand calculation and solution steps. It should not be used to replace doing the work yourself or to copy answers without thinking through them.",
+    "About.UsageNoteHint": "Try the problem yourself first, then use Math Solver to check your work and review any steps you did not understand."
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

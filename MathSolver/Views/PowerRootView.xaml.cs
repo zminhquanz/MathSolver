@@ -2544,7 +2544,7 @@ public partial class PowerRootView : LocalizedSolverView
                 phase == CalculationProgressPhase.Completed
                     ? "PowerRoot.ProgressCompleted"
                     : "PowerRoot.ProgressTitle",
-                FormatPlainExpression(
+                FormatProgressExpression(
                     baseValue,
                     exponent));
 
@@ -5144,6 +5144,20 @@ public partial class PowerRootView : LocalizedSolverView
                 '−',
                 '-')
             .Trim();
+    }
+
+    private static string FormatProgressExpression(
+        long baseValue,
+        int exponent)
+    {
+        string formattedBase =
+            baseValue < 0
+                ? $"({baseValue.ToString(CultureInfo.InvariantCulture)})"
+                : baseValue.ToString(
+                    CultureInfo.InvariantCulture);
+
+        return
+            $"{formattedBase}{ToSuperscript(exponent)}";
     }
 
     private static string FormatPlainExpression(

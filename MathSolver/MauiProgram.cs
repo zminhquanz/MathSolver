@@ -161,6 +161,45 @@ namespace MathSolver
 #endif
                 });
 
+            EditorHandler.Mapper.AppendToMapping(
+                "MathSolverBorderHostedEditor",
+                static (handler, _) =>
+                {
+#if WINDOWS
+                    var textBox = handler.PlatformView;
+                    var transparentBrush =
+                        new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                            Microsoft.UI.Colors.Transparent);
+
+                    textBox.BorderThickness =
+                        new Microsoft.UI.Xaml.Thickness(0);
+                    textBox.BorderBrush = transparentBrush;
+                    textBox.Background = transparentBrush;
+                    textBox.Padding = new Microsoft.UI.Xaml.Thickness(0);
+                    textBox.UseSystemFocusVisuals = false;
+
+                    // AverageView uses Editor for its multiline number list.
+                    // Keep the MAUI Border as the only visible input chrome,
+                    // matching Entry fields across the other solver tabs.
+                    textBox.Resources["TextControlBorderBrush"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBorderBrushPointerOver"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBorderBrushFocused"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBorderBrushDisabled"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBackground"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBackgroundPointerOver"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBackgroundFocused"] =
+                        transparentBrush;
+                    textBox.Resources["TextControlBackgroundDisabled"] =
+                        transparentBrush;
+#endif
+                });
+
             PickerHandler.Mapper.AppendToMapping(
                 "MathSolverBorderHostedPicker",
                 static (handler, view) =>

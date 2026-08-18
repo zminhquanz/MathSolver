@@ -1278,7 +1278,10 @@
     "Equation.Linear.Step3.Body": "x = {0} ÷ ({1})\nx = {2}\nVậy nghiệm của phương trình là x = {2}.",
     "Quadratic.RootNotFiniteOctoDouble": "Không thể biểu diễn nghiệm hữu hạn bằng độ chính xác Octo Double. Ứng dụng không thể tiếp tục tính toán.",
     "SettingsMenu.AppearanceSection": "GIAO DIỆN",
-    "SettingsMenu.SystemSection": "THÔNG TIN & HỆ THỐNG"
+    "SettingsMenu.SystemSection": "THÔNG TIN & HỆ THỐNG",
+    "About.UsageNoteTitle": "Lưu ý khi sử dụng",
+    "About.UsageNoteBody": "Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ.",
+    "About.UsageNoteHint": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

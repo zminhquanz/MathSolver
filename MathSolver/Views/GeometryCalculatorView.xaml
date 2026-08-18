@@ -73,19 +73,27 @@
                                 Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <Grid
+                                RowDefinitions="Auto,Auto"
                                 ColumnDefinitions="*,*"
+                                RowSpacing="{OnPlatform Android=10, WinUI=0, Default=0}"
                                 ColumnSpacing="10">
 
                                 <Button
                                     x:Name="PlaneGeometryButton"
+                                    Grid.Row="0"
                                     Grid.Column="0"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                    HorizontalOptions="Fill"
                                     Text="{localization:Translate Geometry.Plane}"
                                     Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnPlaneGeometryClicked" />
 
                                 <Button
                                     x:Name="SolidGeometryButton"
-                                    Grid.Column="1"
+                                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                    HorizontalOptions="Fill"
                                     Text="{localization:Translate Geometry.Solid}"
                                     Style="{StaticResource SolverChoiceButtonStyle}"
                                     Clicked="OnSolidGeometryClicked" />
@@ -731,56 +739,6 @@
 
                 </VerticalStackLayout>
             </Border>
-
-            <!-- Lưu ý khi sử dụng -->
-            <Border
-    Padding="16"
-    BackgroundColor="{DynamicResource WarningSoftColor}"
-    Stroke="{DynamicResource WarningBorderBrush}"
-    StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-
-                <Grid
-        ColumnDefinitions="Auto,*"
-        ColumnSpacing="12">
-
-                    <Label
-            Grid.Column="0"
-            Text="⚠"
-            FontSize="26"
-            VerticalOptions="Start"
-            TextColor="{DynamicResource WarningColor}" />
-
-                    <VerticalStackLayout
-            Grid.Column="1"
-            Spacing="6">
-
-                        <Label
-                Text="Lưu ý khi sử dụng"
-                FontSize="18"
-                FontAttributes="Bold"
-                TextColor="{DynamicResource WarningColor}" />
-
-                        <Label
-                Text="Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ."
-                FontSize="16"
-                LineHeight="1.25"
-                TextColor="{DynamicResource WarningColor}" />
-
-                        <Label
-                Text="Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
-                FontSize="16"
-                FontAttributes="Italic"
-                LineHeight="1.25"
-                TextColor="{DynamicResource WarningColor}" />
-
-                    </VerticalStackLayout>
-                </Grid>
-            </Border>
-
-        </VerticalStackLayout>
+</VerticalStackLayout>
     </ScrollView>
 </base:LocalizedSolverView>

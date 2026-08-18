@@ -189,6 +189,59 @@ public partial class CalculationPage : ContentPage
         OperationButtonsGrid.ColumnDefinitions.Clear();
         OperationButtonsGrid.RowDefinitions.Clear();
 
+#if ANDROID
+        // Material/mobile layout mirrors FractionView: keep the four arithmetic
+        // operators on one row and let Expression own the complete second row.
+        // Do not reuse the old 3-column compact desktop fallback on Android.
+        if (compact)
+        {
+            for (int index = 0; index < 4; index++)
+            {
+                OperationButtonsGrid.ColumnDefinitions.Add(
+                    new ColumnDefinition
+                    {
+                        Width = GridLength.Star,
+                    });
+            }
+
+            OperationButtonsGrid.RowDefinitions.Add(
+                new RowDefinition
+                {
+                    Height = GridLength.Auto,
+                });
+
+            OperationButtonsGrid.RowDefinitions.Add(
+                new RowDefinition
+                {
+                    Height = GridLength.Auto,
+                });
+
+            Grid.SetColumn(AddButton, 0);
+            Grid.SetColumnSpan(AddButton, 1);
+            Grid.SetRow(AddButton, 0);
+
+            Grid.SetColumn(SubtractButton, 1);
+            Grid.SetColumnSpan(SubtractButton, 1);
+            Grid.SetRow(SubtractButton, 0);
+
+            Grid.SetColumn(MultiplyButton, 2);
+            Grid.SetColumnSpan(MultiplyButton, 1);
+            Grid.SetRow(MultiplyButton, 0);
+
+            Grid.SetColumn(DivideButton, 3);
+            Grid.SetColumnSpan(DivideButton, 1);
+            Grid.SetRow(DivideButton, 0);
+
+            Grid.SetColumn(ExpressionButton, 0);
+            Grid.SetColumnSpan(ExpressionButton, 4);
+            Grid.SetRow(ExpressionButton, 1);
+
+            OperationButtonsGrid.ColumnSpacing = 6d;
+            OperationButtonsGrid.RowSpacing = 8d;
+            return;
+        }
+#endif
+
         int columnCount = compact ? 3 : 5;
 
         for (int index = 0; index < columnCount; index++)

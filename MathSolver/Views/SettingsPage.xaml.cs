@@ -112,6 +112,18 @@ public partial class SettingsPage : ContentPage
 
     private void PreparePageEntryAnimation()
     {
+#if ANDROID
+        // Material shared-axis style: enter from the trailing edge without
+        // scaling the page surface. This keeps the motion lighter on phones.
+        SettingsPageContentRoot.Opacity =
+            0d;
+
+        SettingsPageContentRoot.TranslationX =
+            24d;
+
+        SettingsPageContentRoot.Scale =
+            1d;
+#else
         SettingsPageContentRoot.Opacity =
             0d;
 
@@ -120,12 +132,26 @@ public partial class SettingsPage : ContentPage
 
         SettingsPageContentRoot.Scale =
             0.995d;
+#endif
     }
 
     private async Task PlayPageEntryAnimationAsync()
     {
         SettingsPageContentRoot.CancelAnimations();
 
+#if ANDROID
+        await Task.WhenAll(
+            SettingsPageContentRoot.FadeToAsync(
+                1d,
+                170,
+                Easing.CubicOut),
+
+            SettingsPageContentRoot.TranslateToAsync(
+                0d,
+                0d,
+                220,
+                Easing.CubicOut));
+#else
         await Task.WhenAll(
             SettingsPageContentRoot.FadeToAsync(
                 1d,
@@ -142,12 +168,26 @@ public partial class SettingsPage : ContentPage
                 1d,
                 240,
                 Easing.CubicOut));
+#endif
     }
 
     private async Task PlayPageExitAnimationAsync()
     {
         SettingsPageContentRoot.CancelAnimations();
 
+#if ANDROID
+        await Task.WhenAll(
+            SettingsPageContentRoot.FadeToAsync(
+                0d,
+                110,
+                Easing.CubicIn),
+
+            SettingsPageContentRoot.TranslateToAsync(
+                24d,
+                0d,
+                150,
+                Easing.CubicIn));
+#else
         await Task.WhenAll(
             SettingsPageContentRoot.FadeToAsync(
                 0d,
@@ -164,6 +204,7 @@ public partial class SettingsPage : ContentPage
                 0.995d,
                 155,
                 Easing.CubicIn));
+#endif
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)
@@ -808,6 +849,9 @@ public partial class SettingsPage : ContentPage
         _isClosing =
             true;
 
+        SettingsBackButton.IsEnabled =
+            false;
+
         try
         {
             await PlayPageExitAnimationAsync();
@@ -830,6 +874,9 @@ public partial class SettingsPage : ContentPage
         {
             _isClosing =
                 false;
+
+            SettingsBackButton.IsEnabled =
+                true;
         }
     }
 

@@ -26,6 +26,14 @@ public static class InteractiveButtonAnimation
     private const uint ReleaseDuration = 85;
     private const uint SettleDuration = 95;
 
+    // Back navigation uses platform-specific feedback. On Android the native
+    // MaterialButton ripple/state layer owns the press animation entirely.
+    // On Windows keep a restrained Fluent-style press without spring overshoot.
+    private const double WinBackPressedScale = 0.97d;
+    private const double WinBackPressedOpacity = 0.94d;
+    private const uint WinBackPressDuration = 55;
+    private const uint WinBackReleaseDuration = 80;
+
     private static readonly ConditionalWeakTable<Button, AnimationState>
         States = new();
 
@@ -43,6 +51,21 @@ public static class InteractiveButtonAnimation
         BindableObject bindable,
         bool value) =>
         bindable.SetValue(IsScopeEnabledProperty, value);
+
+    public static readonly BindableProperty IsPlatformBackButtonProperty =
+        BindableProperty.CreateAttached(
+            "IsPlatformBackButton",
+            typeof(bool),
+            typeof(InteractiveButtonAnimation),
+            false);
+
+    public static bool GetIsPlatformBackButton(BindableObject bindable) =>
+        (bool)bindable.GetValue(IsPlatformBackButtonProperty);
+
+    public static void SetIsPlatformBackButton(
+        BindableObject bindable,
+        bool value) =>
+        bindable.SetValue(IsPlatformBackButtonProperty, value);
 
     /// <summary>
     /// Được gọi từ ButtonHandler mapper. Có thể gọi nhiều lần an toàn khi
@@ -91,20 +114,47 @@ public static class InteractiveButtonAnimation
             return;
         }
 
+        bool isPlatformBackButton =
+            GetIsPlatformBackButton(button);
+
+#if ANDROID
+        // MaterialButton already provides the correct circular ripple/state layer.
+        // Do not scale/fade it or the native feedback becomes visually muddy.
+        if (isPlatformBackButton)
+        {
+            return;
+        }
+#endif
+
         state.Version++;
 
         state.IsPressed = true;
         button.CancelAnimations();
 
+        double pressedScale =
+            isPlatformBackButton
+                ? WinBackPressedScale
+                : PressedScale;
+
+        double pressedOpacity =
+            isPlatformBackButton
+                ? WinBackPressedOpacity
+                : PressedOpacity;
+
+        uint pressDuration =
+            isPlatformBackButton
+                ? WinBackPressDuration
+                : PressDuration;
+
         await Task.WhenAll(
             button.ScaleToAsync(
-                state.RestingScale * PressedScale,
-                PressDuration,
+                state.RestingScale * pressedScale,
+                pressDuration,
                 Easing.CubicOut),
 
             button.FadeToAsync(
-                state.RestingOpacity * PressedOpacity,
-                PressDuration,
+                state.RestingOpacity * pressedOpacity,
+                pressDuration,
                 Easing.CubicOut));
 
     }
@@ -120,10 +170,29 @@ public static class InteractiveButtonAnimation
             return;
         }
 
+        bool isPlatformBackButton =
+            GetIsPlatformBackButton(button);
+
         state.IsPressed = false;
         int version = ++state.Version;
 
         button.CancelAnimations();
+
+        if (isPlatformBackButton)
+        {
+            await Task.WhenAll(
+                button.ScaleToAsync(
+                    state.RestingScale,
+                    WinBackReleaseDuration,
+                    Easing.CubicOut),
+
+                button.FadeToAsync(
+                    state.RestingOpacity,
+                    WinBackReleaseDuration,
+                    Easing.CubicOut));
+
+            return;
+        }
 
         await Task.WhenAll(
             button.ScaleToAsync(

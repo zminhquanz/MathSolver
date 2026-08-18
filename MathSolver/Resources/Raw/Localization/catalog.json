@@ -6141,6 +6141,21 @@
       "key": "SettingsMenu.SystemSection",
       "source": "THÔNG TIN & HỆ THỐNG",
       "mode": "exact"
+    },
+    {
+      "key": "About.UsageNoteTitle",
+      "source": "Lưu ý khi sử dụng",
+      "mode": "exact"
+    },
+    {
+      "key": "About.UsageNoteBody",
+      "source": "Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ.",
+      "mode": "exact"
+    },
+    {
+      "key": "About.UsageNoteHint",
+      "source": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu.",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

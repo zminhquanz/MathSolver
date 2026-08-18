@@ -286,36 +286,71 @@ public partial class AppShell : Shell
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
 
+        int popupThemeResource =
+            AppThemeManager.IsDarkThemeEffective
+                ? Resource.Style.MathSolverPopupMenuDark
+                : Resource.Style.MathSolverPopupMenuLight;
+
+        Android.Content.Context popupContext =
+            new ContextThemeWrapper(
+                anchor.Context,
+                popupThemeResource);
+
+        // Dynamic Color is optional. When enabled, apply the Material You
+        // overlay to this popup-specific Light/Dark context as well so the
+        // temporary menu surface follows the same wallpaper palette as the app.
+        if (AndroidMaterialYouManager.IsDynamicColorEnabled)
+        {
+            popupContext =
+                Google.Android.Material.Color.DynamicColors
+                    .WrapContextIfAvailable(popupContext);
+        }
+
         var popup =
             new PopupMenu(
-                anchor.Context,
+                popupContext,
                 anchor);
 
-        // Title-only menu: không icon, không subtitle, không current-value và
-        // không dim/full-screen overlay. Đây là presentation riêng cho Android.
-        popup.Menu.Add(
-            0,
-            1,
-            0,
-            useEnglish ? "Settings" : "Cài đặt");
+        // Android keeps the compact native PopupMenu, but uses the existing
+        // project SVG assets as leading icons. No custom popup layout is needed.
+        AddAndroidSettingsMenuItem(
+            popup,
+            anchor.Context,
+            itemId: 1,
+            order: 0,
+            title: useEnglish ? "Settings" : "Cài đặt",
+            iconResource: Resource.Drawable.settings);
 
-        popup.Menu.Add(
-            0,
-            2,
-            1,
-            useEnglish ? "Hardware information" : "Thông tin phần cứng");
+        AddAndroidSettingsMenuItem(
+            popup,
+            anchor.Context,
+            itemId: 2,
+            order: 1,
+            title: useEnglish ? "Hardware information" : "Thông tin phần cứng",
+            iconResource: Resource.Drawable.benchmark);
 
-        popup.Menu.Add(
-            0,
-            3,
-            2,
-            useEnglish ? "About" : "Giới thiệu");
+        AddAndroidSettingsMenuItem(
+            popup,
+            anchor.Context,
+            itemId: 3,
+            order: 2,
+            title: useEnglish ? "About" : "Giới thiệu",
+            iconResource: Resource.Drawable.info);
 
-        popup.Menu.Add(
-            0,
-            4,
-            3,
-            useEnglish ? "Reset settings" : "Đặt lại cài đặt");
+        AddAndroidSettingsMenuItem(
+            popup,
+            anchor.Context,
+            itemId: 4,
+            order: 3,
+            title: useEnglish ? "Reset settings" : "Đặt lại cài đặt",
+            iconResource: Resource.Drawable.reset_settings);
+
+        // Framework PopupMenu exposes this from API 29 onward. Pixel 9/API 36
+        // therefore shows all four leading icons without reflection/custom UI.
+        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q)
+        {
+            popup.SetForceShowIcon(true);
+        }
 
         popup.MenuItemClick +=
             OnAndroidSettingsMenuItemClick;
@@ -328,6 +363,59 @@ public partial class AppShell : Shell
 
         popup.Show();
         return true;
+    }
+
+    private static void AddAndroidSettingsMenuItem(
+        PopupMenu popup,
+        Android.Content.Context context,
+        int itemId,
+        int order,
+        string title,
+        int iconResource)
+    {
+        IMenuItem? menuItem =
+            popup.Menu.Add(
+                0,
+                itemId,
+                order,
+                title);
+
+        if (menuItem is null)
+        {
+            return;
+        }
+
+        Android.Graphics.Drawables.Drawable? icon =
+            context.GetDrawable(iconResource)?.Mutate();
+
+        if (icon is null)
+        {
+            return;
+        }
+
+        // SVGs are shared assets. Tint the generated Android drawable with the
+        // current semantic text color so it follows Light/Dark/Dynamic Color.
+        Microsoft.Maui.Graphics.Color iconColor =
+            ThemeResource.GetColor(
+                "TextPrimaryColor",
+                "#1F2937");
+
+        icon.SetTint(
+            Android.Graphics.Color.Argb(
+                ToAndroidColorChannel(iconColor.Alpha),
+                ToAndroidColorChannel(iconColor.Red),
+                ToAndroidColorChannel(iconColor.Green),
+                ToAndroidColorChannel(iconColor.Blue)));
+
+        menuItem.SetIcon(icon);
+    }
+
+    private static int ToAndroidColorChannel(
+        float channel)
+    {
+        return (int)Math.Round(
+            Math.Clamp(channel, 0f, 1f) *
+            255f);
     }
 
     private async void OnAndroidSettingsMenuItemClick(

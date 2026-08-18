@@ -20,25 +20,31 @@
         <Grid
             Padding="{OnPlatform Android='0,0,4,0', WinUI='0,0,8,0', Default='0,0,8,0'}"
             ColumnDefinitions="Auto,*"
-            ColumnSpacing="8">
+            ColumnSpacing="{OnPlatform Android=4, WinUI=8, Default=8}">
 
-            <Button
-                x:Name="HardwareBackButton"
-                controls:InteractiveButtonAnimation.IsScopeEnabled="True"
+            <Grid
                 Grid.Column="0"
-                Text="‹"
-                WidthRequest="40"
-                HeightRequest="40"
-                MinimumWidthRequest="40"
-                MinimumHeightRequest="40"
-                Padding="0"
-                CornerRadius="20"
-                FontSize="28"
-                FontAttributes="Bold"
-                BackgroundColor="Transparent"
-                TextColor="{DynamicResource TextPrimaryColor}"
-                SemanticProperties.Description="Quay lại"
-                Clicked="OnCloseClicked" />
+                WidthRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+
+                <Button
+                    x:Name="HardwareBackButton"
+                    Style="{StaticResource PlatformBackButtonStyle}"
+                    controls:InteractiveButtonAnimation.IsScopeEnabled="True"
+                    controls:InteractiveButtonAnimation.IsPlatformBackButton="True"
+                    SemanticProperties.Description="Quay lại"
+                    Clicked="OnCloseClicked" />
+
+                <controls:ThemedSvgPathIcon
+                    Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
+                    WidthRequest="{OnPlatform Android=24, WinUI=18, Default=18}"
+                    HeightRequest="{OnPlatform Android=24, WinUI=18, Default=18}"
+                    Opacity="{Binding Source={x:Reference HardwareBackButton}, Path=Opacity}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Grid>
 
             <VerticalStackLayout
                 Grid.Column="1"

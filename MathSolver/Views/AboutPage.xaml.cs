@@ -78,6 +78,18 @@ public partial class AboutPage : ContentPage
 
     private void PreparePageEntryAnimation()
     {
+#if ANDROID
+        // Material shared-axis style: enter from the trailing edge without
+        // scaling the page surface. This keeps the motion lighter on phones.
+        AboutPageContentRoot.Opacity =
+            0d;
+
+        AboutPageContentRoot.TranslationX =
+            24d;
+
+        AboutPageContentRoot.Scale =
+            1d;
+#else
         AboutPageContentRoot.Opacity =
             0d;
 
@@ -86,12 +98,26 @@ public partial class AboutPage : ContentPage
 
         AboutPageContentRoot.Scale =
             0.995d;
+#endif
     }
 
     private async Task PlayPageEntryAnimationAsync()
     {
         AboutPageContentRoot.CancelAnimations();
 
+#if ANDROID
+        await Task.WhenAll(
+            AboutPageContentRoot.FadeToAsync(
+                1d,
+                170,
+                Easing.CubicOut),
+
+            AboutPageContentRoot.TranslateToAsync(
+                0d,
+                0d,
+                220,
+                Easing.CubicOut));
+#else
         await Task.WhenAll(
             AboutPageContentRoot.FadeToAsync(
                 1d,
@@ -108,12 +134,26 @@ public partial class AboutPage : ContentPage
                 1d,
                 240,
                 Easing.CubicOut));
+#endif
     }
 
     private async Task PlayPageExitAnimationAsync()
     {
         AboutPageContentRoot.CancelAnimations();
 
+#if ANDROID
+        await Task.WhenAll(
+            AboutPageContentRoot.FadeToAsync(
+                0d,
+                110,
+                Easing.CubicIn),
+
+            AboutPageContentRoot.TranslateToAsync(
+                24d,
+                0d,
+                150,
+                Easing.CubicIn));
+#else
         await Task.WhenAll(
             AboutPageContentRoot.FadeToAsync(
                 0d,
@@ -130,6 +170,7 @@ public partial class AboutPage : ContentPage
                 0.995d,
                 155,
                 Easing.CubicIn));
+#endif
     }
 
     private void UpdateSettingsIconTint()
