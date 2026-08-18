@@ -217,7 +217,7 @@
                                 <Entry
                                     x:Name="FindXKnownValueEntry"
                                     Placeholder="Ví dụ: 8"
-                                    PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                    PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                     Keyboard="Numeric"
                                     FontSize="19"
                                     VerticalTextAlignment="Center"
@@ -258,7 +258,7 @@
                                     x:Name="FindXResultValueEntry"
                                     Placeholder="Ví dụ: 20"
 
-                                    PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                    PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                     Keyboard="Numeric"
                                     FontSize="19"
                                     VerticalTextAlignment="Center"

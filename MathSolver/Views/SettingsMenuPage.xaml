@@ -120,7 +120,7 @@
                         Spacing="{OnPlatform Android=6, WinUI=10, Default=10}">
 
                         <Label
-                            Text="GIAO DIỆN"
+                            Text="{localization:Translate SettingsMenu.AppearanceSection}"
                             Style="{StaticResource SettingsMenuSectionLabelStyle}" />
 
                         <VerticalStackLayout Spacing="0">
@@ -297,7 +297,7 @@
 
                         <Label
                             Margin="0,6,0,0"
-                            Text="THÔNG TIN &amp; HỆ THỐNG"
+                            Text="{localization:Translate SettingsMenu.SystemSection}"
                             Style="{StaticResource SettingsMenuSectionLabelStyle}" />
 
                         <!-- Hardware and performance -->

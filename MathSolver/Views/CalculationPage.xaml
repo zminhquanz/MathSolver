@@ -410,7 +410,7 @@
                                     <Entry
                                         x:Name="FirstNumberEntry"
                                         Placeholder="Ví dụ: 25"
-                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         VerticalTextAlignment="Center"
@@ -460,7 +460,7 @@
                                     <Entry
                                     x:Name="SecondNumberEntry"
                                     Placeholder="Ví dụ: 15"
-                                    PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                    PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                     Keyboard="Numeric"
                                     FontSize="19"
                                     VerticalTextAlignment="Center"

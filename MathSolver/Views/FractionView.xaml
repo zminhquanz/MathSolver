@@ -172,7 +172,7 @@
 
                                     <Entry
                                         x:Name="FirstNumeratorEntry"
-                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Placeholder="Tử số"
                                         Keyboard="Numeric"
                                         FontSize="19"
@@ -201,7 +201,7 @@
 
                                     <Entry
                                         x:Name="FirstDenominatorEntry"
-                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
                                         FontSize="19"
@@ -266,7 +266,7 @@
                                     <Entry
                                         x:Name="SecondNumeratorEntry"
                                         Placeholder="Tử số"
-                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
@@ -294,7 +294,7 @@
 
                                     <Entry
                                         x:Name="SecondDenominatorEntry"
-                                        PlaceholderColor="{DynamicResource TextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
                                         FontSize="19"
