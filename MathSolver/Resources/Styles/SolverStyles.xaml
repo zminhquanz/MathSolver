@@ -57,7 +57,7 @@
     <Style x:Key="SolverChoiceButtonStyle" TargetType="Button">
         <Setter Property="HeightRequest" Value="48" />
         <Setter Property="Padding" Value="8,0" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=12, Default=12}" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
     </Style>

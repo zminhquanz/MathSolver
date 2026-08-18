@@ -611,7 +611,7 @@
                                 Padding="0"
                                 BackgroundColor="{DynamicResource SurfaceAltColor}"
                                 Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
+                                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
 
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -619,14 +619,13 @@
 
                                 <Picker
                                     x:Name="OperationPicker"
-                                    HeightRequest="50"
-                                    Margin="14,0,0,0"
+                                    HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                    Margin="{OnPlatform Android='0', WinUI='14,0,0,0', Default='14,0,0,0'}"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
                                     FontSize="17"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource TextPrimaryColor}"
-                                    BackgroundColor="Transparent"
                                     SelectedIndexChanged="OnOperationChanged" />
 
                             </Border>

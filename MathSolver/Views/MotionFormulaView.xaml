@@ -224,7 +224,7 @@
                                         Minimum="10"
                                         Maximum="120"
                                         Value="40"
-                                        HeightRequest="36"
+                                        HeightRequest="{OnPlatform Android=48, WinUI=36, Default=36}"
                                         ValueChanged="OnMotionSliderValueChanged" />
                                 </Border>
 
@@ -246,7 +246,7 @@
                                         Minimum="1"
                                         Maximum="6"
                                         Value="1"
-                                        HeightRequest="36"
+                                        HeightRequest="{OnPlatform Android=48, WinUI=36, Default=36}"
                                         ValueChanged="OnMotionSliderValueChanged" />
                                 </Border>
 

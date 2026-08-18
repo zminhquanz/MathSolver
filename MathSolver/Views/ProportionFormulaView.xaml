@@ -262,7 +262,7 @@
                                     </Border.StrokeShape>
                                     <Slider
                                         x:Name="ProportionXSlider"
-                                        HeightRequest="38"
+                                        HeightRequest="{OnPlatform Android=48, WinUI=38, Default=38}"
                                         Minimum="0.5"
                                         Maximum="2.5"
                                         Value="0.5"
@@ -340,7 +340,7 @@
                                     </Border.StrokeShape>
                                     <Slider
                                         x:Name="CompoundProductSlider"
-                                        HeightRequest="38"
+                                        HeightRequest="{OnPlatform Android=48, WinUI=38, Default=38}"
                                         Minimum="60"
                                         Maximum="300"
                                         Value="240"
@@ -365,7 +365,7 @@
                                     </Border.StrokeShape>
                                     <Slider
                                         x:Name="CompoundWorkersSlider"
-                                        HeightRequest="38"
+                                        HeightRequest="{OnPlatform Android=48, WinUI=38, Default=38}"
                                         Minimum="2"
                                         Maximum="10"
                                         Value="6"
@@ -390,7 +390,7 @@
                                     </Border.StrokeShape>
                                     <Slider
                                         x:Name="CompoundHoursSlider"
-                                        HeightRequest="38"
+                                        HeightRequest="{OnPlatform Android=48, WinUI=38, Default=38}"
                                         Minimum="4"
                                         Maximum="10"
                                         Value="8"

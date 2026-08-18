@@ -28,10 +28,10 @@
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="BorderWidth" Value="0"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="14,10"/>
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=8, Default=8}"/>
+        <Setter Property="Padding" Value="{OnPlatform Android='16,10', WinUI='14,10', Default='14,10'}"/>
+        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
+        <Setter Property="MinimumWidthRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -135,9 +135,9 @@
         <Setter Property="Opacity" Value="1" />
         <Setter Property="BorderColor" Value="Transparent"/>
         <Setter Property="BorderWidth" Value="0"/>
-        <Setter Property="CornerRadius" Value="0"/>
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="CornerRadius" Value="{OnPlatform Android=22, WinUI=0, Default=0}"/>
+        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
+        <Setter Property="MinimumWidthRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -189,10 +189,9 @@
     <Style TargetType="Picker">
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         <Setter Property="TitleColor" Value="{DynamicResource ShellUnselectedColor}" />
-        <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=56, WinUI=44, Default=44}"/>
         <Setter Property="MinimumWidthRequest" Value="44"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>

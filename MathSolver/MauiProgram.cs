@@ -3,6 +3,7 @@ using MathSolver.Controls;
 using MathSolver.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
+using Microsoft.Maui.Hosting;
 
 namespace MathSolver
 {
@@ -33,6 +34,10 @@ namespace MathSolver
                     AppFontCatalog.RegisterFonts(fonts);
                 });
 
+#if ANDROID
+            ConfigureAndroidMaterial3Phase1(builder);
+#endif
+
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
@@ -40,13 +45,51 @@ namespace MathSolver
             return builder.Build();
         }
 
+#if ANDROID
         /// <summary>
-        /// Giữ Entry/Picker là control chuẩn của .NET MAUI. Các input được
-        /// Border trong XAML bao quanh sẽ loại bỏ native border/background để
-        /// Border là lớp duy nhất vẽ nền, stroke và bo góc; riêng native picker
-        /// indicator/chevron vẫn do platform control tự vẽ.
+        /// .NET MAUI 10 exposes Material 3 as an Android app-wide feature flag.
+        /// Phase 1 intentionally keeps the new Material handlers only for
+        /// Slider, Switch, ProgressBar and Picker. Button/ImageButton use their
+        /// normal public handlers, which become Material 3-aware when the flag
+        /// is enabled.
         ///
-        /// Handler mapper là global nên không cần custom Entry/Picker subclass.
+        /// Re-register the legacy handlers for controls that are outside this
+        /// phase so the rest of Math Solver does not change unexpectedly. In
+        /// particular Entry must stay on EntryHandler because its Android
+        /// EmojiCompat workaround below prevents the 1000 -> 1,000 input crash.
+        /// </summary>
+        private static void ConfigureAndroidMaterial3Phase1(
+            MauiAppBuilder builder)
+        {
+            builder.ConfigureMauiHandlers(handlers =>
+            {
+                handlers.AddHandler<Microsoft.Maui.Controls.Label, LabelHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.Entry, EntryHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.Editor, EditorHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.SearchBar, SearchBarHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.RadioButton, RadioButtonHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.DatePicker, DatePickerHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.TimePicker, TimePickerHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.ActivityIndicator, ActivityIndicatorHandler>();
+                handlers.AddHandler<Microsoft.Maui.Controls.Image, ImageHandler>();
+
+                // Deliberately NOT overridden in Phase 1:
+                // Picker       -> PickerHandler2 (Material 3)
+                // Switch       -> SwitchHandler2 (Material 3)
+                // ProgressBar  -> ProgressBarHandler2 (Material 3)
+                // Slider       -> SliderHandler2 (Material 3)
+                // Button       -> MaterialButton via ButtonHandler
+                // ImageButton  -> Material ShapeableImageView
+            });
+        }
+#endif
+
+        /// <summary>
+        /// Giữ Entry/Picker là control chuẩn của .NET MAUI, không tạo subclass.
+        /// Entry tiếp tục dùng native-chrome neutralization (và Android
+        /// EmojiCompat workaround). Picker legacy trên Windows/iOS/MacCatalyst
+        /// vẫn được neutralize để Border MAUI vẽ khung; trên Android Material 3,
+        /// PickerHandler2 được giữ nguyên để native Material field/dialog tự vẽ.
         /// </summary>
         private static void ConfigureNativeInputChrome()
         {

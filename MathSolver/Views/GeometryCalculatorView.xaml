@@ -122,7 +122,7 @@
                                 Padding="0"
                                 BackgroundColor="{DynamicResource InputBackgroundColor}"
                                 Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="1">
+                                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
 
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="10" />
@@ -130,15 +130,14 @@
 
                                 <Picker
                                     x:Name="GeometryShapePicker"
-                                    HeightRequest="46"
-                                    Margin="12,0,0,0"
+                                    HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                    Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     TitleColor="{DynamicResource TextSecondaryColor}"
-                                    BackgroundColor="Transparent"
                                     ItemsSource="{Binding GeometryItems}"
                                     SelectedIndexChanged="OnGeometryShapeSelected"
                                     ItemDisplayBinding="{Binding Path=Name}" />

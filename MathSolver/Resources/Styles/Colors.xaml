@@ -166,7 +166,7 @@
     <Style x:Key="ThemePrimaryButtonStyle" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryColor}" />
         <Setter Property="TextColor" Value="{DynamicResource OnPrimaryColor}" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=10, Default=10}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="Padding" Value="14,10" />
     </Style>
@@ -176,7 +176,7 @@
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=10, Default=10}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="Padding" Value="14,10" />
     </Style>
