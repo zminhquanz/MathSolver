@@ -770,7 +770,9 @@
                                     <Border
                                         x:Name="DeveloperModeStateBadge"
                                         Grid.Column="0"
-                                        Padding="10,6"
+                                        Padding="{OnPlatform Android='10,0', WinUI='10,6', Default='10,6'}"
+                                        MinimumHeightRequest="{OnPlatform Android=36, WinUI=-1, Default=-1}"
+                                        VerticalOptions="Center"
                                         StrokeThickness="1">
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="10" />
@@ -778,7 +780,12 @@
                                         <Label
                                             x:Name="DeveloperModeStateLabel"
                                             FontSize="12"
-                                            FontAttributes="Bold" />
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Fill"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}" />
                                     </Border>
 
                                     <Label

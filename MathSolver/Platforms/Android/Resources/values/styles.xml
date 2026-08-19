@@ -8,6 +8,19 @@
     <style name="MathSolver.MainTheme" parent="Maui.Material3.Theme.NoActionBar">
         <item name="android:forceDarkAllowed">false</item>
         <item name="windowActionModeOverlay">true</item>
+
+        <!-- Android-only compact Material slider. MAUI Material3 currently uses
+             the newer expressive slider metrics, whose thick track/tall thumb
+             are visually oversized inside Math Solver's compact cards. Keep
+             the native Material control and 48dp interaction area, but render
+             the visual track/thumb with the classic compact proportions. -->
+        <item name="sliderStyle">@style/MathSolver.Widget.Material3.Slider.Compact</item>
+    </style>
+
+    <style name="MathSolver.Widget.Material3.Slider.Compact" parent="Widget.Material3.Slider.Legacy">
+        <item name="trackHeight">4dp</item>
+        <item name="thumbRadius">10dp</item>
+        <item name="haloRadius">18dp</item>
     </style>
 
     <!-- Preserve MAUI's native splash implementation. MainActivity switches

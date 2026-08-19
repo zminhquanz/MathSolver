@@ -826,11 +826,15 @@
 
                                             <Grid
                                             ColumnDefinitions="*,*"
-                                            ColumnSpacing="12">
+                                            RowDefinitions="Auto,Auto"
+                                            ColumnSpacing="12"
+                                            RowSpacing="{OnPlatform Android=10, WinUI=0, Default=0}">
 
                                                 <Border
                                                 x:Name="ElementaryDivisionModeBorder"
+                                                Grid.Row="0"
                                                 Grid.Column="0"
+                                                Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
                                                 Padding="12"
                                                 BackgroundColor="{DynamicResource PrimarySoftColor}"
                                                 Stroke="{DynamicResource PrimaryBrush}"
@@ -875,7 +879,9 @@
 
                                                 <Border
                                                 x:Name="DecimalDivisionModeBorder"
-                                                Grid.Column="1"
+                                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                                Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                                Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
                                                 Padding="12"
                                                 BackgroundColor="{DynamicResource SurfaceColor}"
                                                 Stroke="{DynamicResource BorderBrush}"
