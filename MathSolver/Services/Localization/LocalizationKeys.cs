@@ -41,6 +41,13 @@ public static class LocalizationKeys
             "Settings.Language";
     }
 
+
+    public static class Hardware
+    {
+        public const string RuntimeSimdUnavailable =
+            "Hardware.RuntimeSimdUnavailable";
+    }
+
     public static class Languages
     {
         public const string Vietnamese =

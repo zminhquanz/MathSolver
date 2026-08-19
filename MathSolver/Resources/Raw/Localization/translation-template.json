@@ -1281,7 +1281,8 @@
     "SettingsMenu.SystemSection": "THÔNG TIN & HỆ THỐNG",
     "About.UsageNoteTitle": "Lưu ý khi sử dụng",
     "About.UsageNoteBody": "Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ.",
-    "About.UsageNoteHint": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu."
+    "About.UsageNoteHint": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu.",
+    "Hardware.RuntimeSimdUnavailable": "CPU hỗ trợ SIMD ARM, nhưng .NET runtime hiện tại chưa cung cấp tăng tốc SIMD. Float và Double sẽ dùng Scalar."
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

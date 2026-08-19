@@ -1,4 +1,5 @@
 using MathSolver.Services;
+using MathSolver.Services.Localization;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
@@ -8,6 +9,10 @@ using System.Runtime.Intrinsics;
 
 #if WINDOWS
 using MathSolver.Platforms.Windows;
+#endif
+
+#if ANDROID
+using MathSolver.Platforms.Android;
 #endif
 
 namespace MathSolver.Views;
@@ -538,20 +543,35 @@ public partial class HardwarePerformancePage : ContentPage
                 useMultithreading,
                 workerCount);
 
+#if ANDROID
+        bool hasArmHardwareSimd =
+            (RuntimeInformation.ProcessArchitecture is
+                Architecture.Arm or
+                Architecture.Arm64) &&
+            AndroidCpuInfo.HasArmSimd;
+#else
+        const bool hasArmHardwareSimd =
+            false;
+#endif
+
         AccelerationStatusLabel.Text =
-            !hasSimd
-                ? LocalizationService.Translate(
-                    "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar.")
-                : useSimd
-                    ? string.Format(
-                        CultureInfo.CurrentCulture,
-                        LocalizationService.Translate(
-                            "Float và Double đang dùng {0}."),
-                        CalculationAccelerationManager
-                            .GetModeDisplayName(
-                                selectedMode))
-                    : LocalizationService.Translate(
-                        "Float và Double đang dùng Scalar.");
+            !hasSimd &&
+            hasArmHardwareSimd
+                ? LocalizationService.TranslateKey(
+                    LocalizationKeys.Hardware.RuntimeSimdUnavailable)
+                : !hasSimd
+                    ? LocalizationService.Translate(
+                        "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar.")
+                    : useSimd
+                        ? string.Format(
+                            CultureInfo.CurrentCulture,
+                            LocalizationService.Translate(
+                                "Float và Double đang dùng {0}."),
+                            CalculationAccelerationManager
+                                .GetModeDisplayName(
+                                    selectedMode))
+                        : LocalizationService.Translate(
+                            "Float và Double đang dùng Scalar.");
 
         MultithreadingStatusLabel.Text =
             !hasMultipleThreads
@@ -703,6 +723,23 @@ public partial class HardwarePerformancePage : ContentPage
 
     private static string GetSupportedSimdInstructionSets()
     {
+#if ANDROID
+        if (RuntimeInformation.ProcessArchitecture is
+            Architecture.Arm or
+            Architecture.Arm64)
+        {
+            string androidArmSets =
+                AndroidCpuInfo
+                    .GetSupportedArmSimdInstructionSets();
+
+            if (!string.IsNullOrWhiteSpace(
+                    androidArmSets))
+            {
+                return androidArmSets;
+            }
+        }
+#endif
+
         var supportedSets =
             new List<string>();
 
@@ -794,6 +831,22 @@ public partial class HardwarePerformancePage : ContentPage
 
     private static int GetMaximumVectorWidthBits()
     {
+#if ANDROID
+        if (RuntimeInformation.ProcessArchitecture is
+            Architecture.Arm or
+            Architecture.Arm64)
+        {
+            int androidArmWidth =
+                AndroidCpuInfo
+                    .GetMaximumVectorWidthBits();
+
+            if (androidArmWidth > 0)
+            {
+                return androidArmWidth;
+            }
+        }
+#endif
+
         if (CalculationAccelerationManager
                 .IsAvx512Available ||
             Vector512.IsHardwareAccelerated)
@@ -825,6 +878,18 @@ public partial class HardwarePerformancePage : ContentPage
 
     private static string? GetProcessorName()
     {
+#if ANDROID
+        string? androidName =
+            AndroidCpuInfo
+                .GetProcessorName();
+
+        if (!string.IsNullOrWhiteSpace(
+                androidName))
+        {
+            return androidName;
+        }
+#endif
+
 #if WINDOWS
         string? windowsName =
             GetWindowsProcessorName();
@@ -863,7 +928,11 @@ public partial class HardwarePerformancePage : ContentPage
                 "/sys/devices/soc0/family");
 
         if (!string.IsNullOrWhiteSpace(
-                socName))
+                socName) &&
+            !string.Equals(
+                socName.Trim(),
+                "0",
+                StringComparison.Ordinal))
         {
             return socName;
         }

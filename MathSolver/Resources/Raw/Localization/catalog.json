@@ -6156,6 +6156,11 @@
       "key": "About.UsageNoteHint",
       "source": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu.",
       "mode": "exact"
+    },
+    {
+      "key": "Hardware.RuntimeSimdUnavailable",
+      "source": "CPU hỗ trợ SIMD ARM, nhưng .NET runtime hiện tại chưa cung cấp tăng tốc SIMD. Float và Double sẽ dùng Scalar.",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [
