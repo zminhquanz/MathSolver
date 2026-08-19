@@ -243,23 +243,36 @@
                                 Padding="0"
                                 BackgroundColor="{DynamicResource InputBackgroundColor}"
                                 Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+                                StrokeThickness="1">
 
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>
 
-                                <Picker
-                                    x:Name="SimdModePicker"
-                                    HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                                    Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    FontAttributes="Bold"
-                                    FontSize="15"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    TitleColor="{DynamicResource TextSecondaryColor}"
-                                    SelectedIndexChanged="OnSimdModeSelectionChanged" />
+                                <Grid>
+                                    <Picker
+                                        x:Name="SimdModePicker"
+                                        HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontAttributes="Bold"
+                                        FontSize="15"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TitleColor="{DynamicResource TextSecondaryColor}"
+                                        SelectedIndexChanged="OnSimdModeSelectionChanged" />
+
+                                    <Path
+                                        IsVisible="{OnPlatform Android=True, Default=False}"
+                                        Data="M4,7 L10,13 L16,7 Z"
+                                        Fill="{DynamicResource TextSecondaryBrush}"
+                                        WidthRequest="14"
+                                        HeightRequest="14"
+                                        Margin="0,0,18,0"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Center"
+                                        InputTransparent="True" />
+                                </Grid>
                             </Border>
 
 

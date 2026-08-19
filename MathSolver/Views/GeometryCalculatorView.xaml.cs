@@ -102,6 +102,11 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     {
         InitializeComponent();
 
+#if ANDROID
+        AndroidPickerVisualHelper.Attach(
+            GeometryShapePicker);
+#endif
+
         BindingContext =
             this;
 

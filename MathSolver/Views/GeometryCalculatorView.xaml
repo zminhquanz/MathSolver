@@ -130,25 +130,38 @@
                                 Padding="0"
                                 BackgroundColor="{DynamicResource InputBackgroundColor}"
                                 Stroke="{DynamicResource BorderBrush}"
-                                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+                                StrokeThickness="1">
 
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>
 
-                                <Picker
-                                    x:Name="GeometryShapePicker"
-                                    HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                                    Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
-                                    TitleColor="{DynamicResource TextSecondaryColor}"
-                                    ItemsSource="{Binding GeometryItems}"
-                                    SelectedIndexChanged="OnGeometryShapeSelected"
-                                    ItemDisplayBinding="{Binding Path=Name}" />
+                                <Grid>
+                                    <Picker
+                                        x:Name="GeometryShapePicker"
+                                        HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TitleColor="{DynamicResource TextSecondaryColor}"
+                                        ItemsSource="{Binding GeometryItems}"
+                                        SelectedIndexChanged="OnGeometryShapeSelected"
+                                        ItemDisplayBinding="{Binding Path=Name}" />
+
+                                    <Path
+                                        IsVisible="{OnPlatform Android=True, Default=False}"
+                                        Data="M4,7 L10,13 L16,7 Z"
+                                        Fill="{DynamicResource TextSecondaryBrush}"
+                                        WidthRequest="14"
+                                        HeightRequest="14"
+                                        Margin="0,0,18,0"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Center"
+                                        InputTransparent="True" />
+                                </Grid>
                             </Border>
                         </VerticalStackLayout>
                     </Border>

@@ -87,6 +87,11 @@ public partial class HardwarePerformancePage : ContentPage
     {
         InitializeComponent();
 
+#if ANDROID
+        AndroidPickerVisualHelper.Attach(
+            SimdModePicker);
+#endif
+
         Shell.SetNavBarIsVisible(
             this,
             false);

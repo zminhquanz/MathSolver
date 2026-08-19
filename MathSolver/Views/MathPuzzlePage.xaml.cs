@@ -95,6 +95,11 @@ public partial class MathPuzzlePage : ContentPage
     {
         InitializeComponent();
 
+#if ANDROID
+        AndroidPickerVisualHelper.Attach(
+            OperationPicker);
+#endif
+
         InteractiveButtonAnimation.SetIsScopeEnabled(
             this,
             true);

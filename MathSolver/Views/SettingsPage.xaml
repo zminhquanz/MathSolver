@@ -555,23 +555,36 @@
                         Padding="0"
                         BackgroundColor="{DynamicResource InputBackgroundColor}"
                         Stroke="{DynamicResource BorderBrush}"
-                        StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+                        StrokeThickness="1">
 
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
 
-                            <Picker
-                            x:Name="FontPicker"
-                            HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                            ItemDisplayBinding="{Binding LocalizedDisplayName}"
-                            Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
-                            HorizontalOptions="Fill"
-                            VerticalOptions="Fill"
-                            FontSize="14"
-                            TextColor="{DynamicResource TextPrimaryColor}"
-                            TitleColor="{DynamicResource TextSecondaryColor}"
-                            SelectedIndexChanged="OnFontSelectionChanged" />
+                            <Grid>
+                                <Picker
+                                x:Name="FontPicker"
+                                HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                ItemDisplayBinding="{Binding LocalizedDisplayName}"
+                                Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
+                                FontSize="14"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TitleColor="{DynamicResource TextSecondaryColor}"
+                                SelectedIndexChanged="OnFontSelectionChanged" />
+
+                                <Path
+                                    IsVisible="{OnPlatform Android=True, Default=False}"
+                                    Data="M4,7 L10,13 L16,7 Z"
+                                    Fill="{DynamicResource TextSecondaryBrush}"
+                                    WidthRequest="14"
+                                    HeightRequest="14"
+                                    Margin="0,0,18,0"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Center"
+                                    InputTransparent="True" />
+                            </Grid>
                         </Border>
 
                         <Border
@@ -630,23 +643,36 @@
                             Padding="0"
                             BackgroundColor="{DynamicResource InputBackgroundColor}"
                             Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
+                            StrokeThickness="1">
 
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
 
-                            <Picker
-                                x:Name="LanguagePicker"
-                                HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                                ItemDisplayBinding="{Binding LocalizedDisplayName}"
-                                Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
-                                HorizontalOptions="Fill"
-                                VerticalOptions="Fill"
-                                FontSize="14"
-                                TextColor="{DynamicResource TextPrimaryColor}"
-                                TitleColor="{DynamicResource TextSecondaryColor}"
+                            <Grid>
+                                <Picker
+                                    x:Name="LanguagePicker"
+                                    HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                    ItemDisplayBinding="{Binding LocalizedDisplayName}"
+                                    Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TitleColor="{DynamicResource TextSecondaryColor}"
                                     SelectedIndexChanged="OnLanguageSelectionChanged" />
+
+                                <Path
+                                    IsVisible="{OnPlatform Android=True, Default=False}"
+                                    Data="M4,7 L10,13 L16,7 Z"
+                                    Fill="{DynamicResource TextSecondaryBrush}"
+                                    WidthRequest="14"
+                                    HeightRequest="14"
+                                    Margin="0,0,18,0"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Center"
+                                    InputTransparent="True" />
+                            </Grid>
                         </Border>
                     </VerticalStackLayout>
                 </Border>
