@@ -49,6 +49,7 @@
                     BackgroundColor="{DynamicResource SurfaceAltColor}">
 
                     <Border
+                        IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                         WidthRequest="{OnPlatform Android=42, WinUI=50, Default=50}"
                         HeightRequest="{OnPlatform Android=42, WinUI=50, Default=50}"
                         Padding="0"
@@ -82,6 +83,7 @@
 
                         <Label
                             x:Name="CatalogSubtitleLabel"
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             FontSize="12"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource TextSecondaryColor}" />
@@ -91,10 +93,10 @@
                         x:Name="OpenModelPageButton"
                         Grid.Column="2"
                         Text="↗"
-                        WidthRequest="42"
-                        HeightRequest="42"
+                        WidthRequest="{OnPlatform Android=48, WinUI=42, Default=42}"
+                        HeightRequest="{OnPlatform Android=48, WinUI=42, Default=42}"
                         Padding="0"
-                        CornerRadius="21"
+                        CornerRadius="{OnPlatform Android=24, WinUI=21, Default=21}"
                         FontSize="22"
                         FontAttributes="Bold"
                         BackgroundColor="{DynamicResource PrimarySoftColor}"
@@ -106,10 +108,10 @@
                     <Button
                         Grid.Column="3"
                         Text="×"
-                        WidthRequest="42"
-                        HeightRequest="42"
+                        WidthRequest="{OnPlatform Android=48, WinUI=42, Default=42}"
+                        HeightRequest="{OnPlatform Android=48, WinUI=42, Default=42}"
                         Padding="0"
-                        CornerRadius="21"
+                        CornerRadius="{OnPlatform Android=24, WinUI=21, Default=21}"
                         FontSize="23"
                         BackgroundColor="Transparent"
                         TextColor="{DynamicResource TextPrimaryColor}"
@@ -128,9 +130,10 @@
                     <VerticalStackLayout
                         x:Name="ModelListPanel"
                         Grid.Column="0"
-                        Spacing="12">
+                        Spacing="{OnPlatform Android=10, WinUI=12, Default=12}">
 
                         <Border
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             Padding="14"
                             BackgroundColor="{DynamicResource InfoSoftColor}"
                             Stroke="{DynamicResource InfoBorderBrush}"
@@ -162,7 +165,7 @@
 
                         <Border
                             x:Name="E2BModelBorder"
-                            Padding="16"
+                            Padding="{OnPlatform Android=12, WinUI=16, Default=16}"
                             BackgroundColor="{DynamicResource PrimarySoftColor}"
                             Stroke="{DynamicResource PrimaryBorderBrush}"
                             StrokeThickness="2">
@@ -171,16 +174,16 @@
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="10">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{OnPlatform Android=6, WinUI=8, Default=8}" ColumnSpacing="10">
                                 <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
                                     <Label
                                         x:Name="E2BTitleLabel"
-                                        FontSize="16"
+                                        FontSize="{OnPlatform Android=15, WinUI=16, Default=16}"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource TextPrimaryColor}" />
                                     <Label
                                         x:Name="E2BDescriptionLabel"
-                                        FontSize="13"
+                                        FontSize="{OnPlatform Android=12, WinUI=13, Default=13}"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
                                 </VerticalStackLayout>
@@ -190,8 +193,8 @@
                                     Grid.RowSpan="3"
                                     Grid.Column="1"
                                     Text="↓ Tải"
-                                    WidthRequest="92"
-                                    HeightRequest="40"
+                                    WidthRequest="{OnPlatform Android=88, WinUI=92, Default=92}"
+                                    HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
                                     Padding="0"
                                     CornerRadius="18"
                                     FontSize="14"
@@ -221,6 +224,7 @@
                                     Grid.Row="2"
                                     Grid.Column="0"
                                     x:Name="E2BCardHintLabel"
+                                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                                     FontSize="12"
                                     LineHeight="1.25"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -233,7 +237,7 @@
 
                         <Border
                             x:Name="E4BModelBorder"
-                            Padding="16"
+                            Padding="{OnPlatform Android=12, WinUI=16, Default=16}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1">
@@ -242,16 +246,16 @@
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="10">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{OnPlatform Android=6, WinUI=8, Default=8}" ColumnSpacing="10">
                                 <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
                                     <Label
                                         x:Name="E4BTitleLabel"
-                                        FontSize="16"
+                                        FontSize="{OnPlatform Android=15, WinUI=16, Default=16}"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource TextPrimaryColor}" />
                                     <Label
                                         x:Name="E4BDescriptionLabel"
-                                        FontSize="13"
+                                        FontSize="{OnPlatform Android=12, WinUI=13, Default=13}"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource TextSecondaryColor}" />
                                 </VerticalStackLayout>
@@ -261,8 +265,8 @@
                                     Grid.RowSpan="3"
                                     Grid.Column="1"
                                     Text="↓ Tải"
-                                    WidthRequest="92"
-                                    HeightRequest="40"
+                                    WidthRequest="{OnPlatform Android=88, WinUI=92, Default=92}"
+                                    HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
                                     Padding="0"
                                     CornerRadius="18"
                                     FontSize="14"
@@ -292,6 +296,7 @@
                                     Grid.Row="2"
                                     Grid.Column="0"
                                     x:Name="E4BCardHintLabel"
+                                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                                     FontSize="12"
                                     LineHeight="1.25"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
@@ -303,6 +308,7 @@
                         </Border>
 
                         <Border
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             Padding="12"
                             BackgroundColor="{DynamicResource WarningSoftColor}"
                             Stroke="{DynamicResource WarningBorderBrush}"
@@ -320,6 +326,7 @@
 
                     <Grid
                         x:Name="ReadmePanel"
+                        IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                         Grid.Column="1"
                         RowDefinitions="Auto,*"
                         RowSpacing="8">
@@ -428,6 +435,7 @@
 
                 <Border
                     Grid.Row="2"
+                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                     Margin="16,0,16,16"
                     Padding="12"
                     BackgroundColor="{DynamicResource PrimarySoftColor}"
@@ -483,6 +491,7 @@
                         ColumnSpacing="10"
                         BackgroundColor="{DynamicResource SurfaceAltColor}">
                         <Border
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             WidthRequest="42"
                             HeightRequest="42"
                             BackgroundColor="{DynamicResource PrimarySoftColor}"
@@ -510,6 +519,7 @@
                                 TextColor="{DynamicResource TextPrimaryColor}" />
                             <Label
                                 x:Name="DownloadConfirmSubtitleLabel"
+                                IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                                 FontSize="12"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
@@ -528,9 +538,10 @@
                             Clicked="OnCancelDownloadClicked" />
                     </Grid>
 
-                    <VerticalStackLayout Grid.Row="1" Padding="18" Spacing="14">
+                    <VerticalStackLayout Grid.Row="1" Padding="{OnPlatform Android=12, WinUI=18, Default=18}" Spacing="{OnPlatform Android=10, WinUI=14, Default=14}">
                         <Label
                             x:Name="DownloadConfirmModelHeadingLabel"
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             FontSize="13"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextSecondaryColor}" />
@@ -558,6 +569,7 @@
 
                         <Label
                             x:Name="DownloadConfirmPathHeadingLabel"
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             FontSize="13"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextSecondaryColor}" />
@@ -609,11 +621,13 @@
 
                         <Label
                             x:Name="DownloadConfirmFinalFileHeadingLabel"
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             FontSize="13"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             Padding="12"
                             BackgroundColor="{DynamicResource InfoSoftColor}"
                             Stroke="{DynamicResource InfoBorderBrush}"
@@ -629,6 +643,7 @@
                         </Border>
 
                         <Border
+                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             Padding="12"
                             BackgroundColor="{DynamicResource WarningSoftColor}"
                             Stroke="{DynamicResource WarningBorderBrush}"
@@ -646,7 +661,7 @@
 
                     <Grid
                         Grid.Row="2"
-                        Padding="18,0,18,18"
+                        Padding="{OnPlatform Android='12,0,12,12', WinUI='18,0,18,18', Default='18,0,18,18'}"
                         ColumnDefinitions="*,*"
                         ColumnSpacing="10">
                         <Button

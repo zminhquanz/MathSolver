@@ -114,10 +114,22 @@ public partial class GemmaModelCatalogPage : ContentPage
                     560d,
                     width - confirmHorizontalInset));
 
+#if ANDROID
+        // Android uses a compact model picker rather than stacking the
+        // desktop README panel below the model cards. This keeps the popup
+        // comfortably inside a phone viewport and leaves detailed guidance
+        // to the model page / download confirmation flow.
+        const bool useCompactLayout = true;
+#else
         bool useCompactLayout = width < 860d;
+#endif
 
         if (_isCompactLayout == useCompactLayout)
         {
+#if ANDROID
+            DownloadConfirmPanel.MaximumHeightRequest =
+                Math.Max(320d, height - 48d);
+#endif
             return;
         }
 
@@ -132,13 +144,17 @@ public partial class GemmaModelCatalogPage : ContentPage
                 new ColumnDefinition(GridLength.Star));
             CatalogBodyGrid.RowDefinitions.Add(
                 new RowDefinition(GridLength.Auto));
-            CatalogBodyGrid.RowDefinitions.Add(
-                new RowDefinition(GridLength.Star));
 
             Grid.SetColumn(ModelListPanel, 0);
             Grid.SetRow(ModelListPanel, 0);
+
+#if !ANDROID
+            // Compact Windows layouts keep the README under the cards.
+            CatalogBodyGrid.RowDefinitions.Add(
+                new RowDefinition(GridLength.Star));
             Grid.SetColumn(ReadmePanel, 0);
             Grid.SetRow(ReadmePanel, 1);
+#endif
         }
         else
         {
@@ -154,6 +170,11 @@ public partial class GemmaModelCatalogPage : ContentPage
             Grid.SetColumn(ReadmePanel, 1);
             Grid.SetRow(ReadmePanel, 0);
         }
+
+#if ANDROID
+        DownloadConfirmPanel.MaximumHeightRequest =
+            Math.Max(320d, height - 48d);
+#endif
     }
 
     protected override bool OnBackButtonPressed()
