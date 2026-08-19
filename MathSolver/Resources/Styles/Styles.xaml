@@ -339,6 +339,12 @@
         <Setter Property="MinimumTrackColor" Value="{DynamicResource PrimaryColor}" />
         <Setter Property="MaximumTrackColor" Value="{DynamicResource BorderColor}" />
         <Setter Property="ThumbColor" Value="{DynamicResource PrimaryColor}" />
+        <!-- Android Material 3 uses a deliberately tall expressive handle.
+             Compact only the rendered vertical geometry on Android so the
+             slider fits Math Solver's phone cards without changing its width
+             or the established WinUI appearance. The layout slot remains the
+             same size, avoiding tighter spacing/touch-target regressions. -->
+        <Setter Property="ScaleY" Value="{OnPlatform Android=0.68, WinUI=1, Default=1}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
