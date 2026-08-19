@@ -3268,6 +3268,19 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 rowCount *
                 verticalMarginPerRow);
 
+#if ANDROID
+        // Ở Android, khi màn hình hẹp làm các ô nhập xếp thành 3+ hàng,
+        // native Entry có thể vẽ sát mép dưới vùng FlexLayout hơn phần đo
+        // cuối cùng một chút. Chừa thêm một khoảng nhỏ ở đáy để hàng nút
+        // Tính toán / Xóa không dính vào card dữ kiện cuối. Chỉ áp dụng
+        // cho form dài; Windows và các form ngắn giữ nguyên spacing cũ.
+        if (rowCount >= 3)
+        {
+            requestedHeight +=
+                12d;
+        }
+#endif
+
         if (Math.Abs(
                 GeometryInputFlexLayout.HeightRequest -
                 requestedHeight) < 1d)

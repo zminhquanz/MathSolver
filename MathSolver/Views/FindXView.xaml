@@ -170,7 +170,7 @@
                             Grid.Column="0"
                             Text="{localization:Translate Numbers.Integer}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Style="{StaticResource SolverChoiceButtonStyle}"
+                            Style="{StaticResource SolverNumberTypeButtonStyle}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXIntegerTypeClicked" />
 
@@ -179,7 +179,7 @@
                             Grid.Column="1"
                             Text="{localization:Translate Numbers.Decimal}"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Style="{StaticResource SolverChoiceButtonStyle}"
+                            Style="{StaticResource SolverNumberTypeButtonStyle}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnFindXDecimalTypeClicked" />
 

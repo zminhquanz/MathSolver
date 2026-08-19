@@ -62,6 +62,14 @@
         <Setter Property="FontAttributes" Value="Bold" />
     </Style>
 
+    <!-- Android Material button text sits a touch high with the app font.
+         Apply a tiny content-only vertical correction specifically to the
+         Integer/Decimal segmented controls; other SolverChoice buttons are
+         intentionally left unchanged. -->
+    <Style x:Key="SolverNumberTypeButtonStyle" TargetType="Button" BasedOn="{StaticResource SolverChoiceButtonStyle}">
+        <Setter Property="Padding" Value="{OnPlatform Android='8,3,8,0', WinUI='8,0', Default='8,0'}" />
+    </Style>
+
     <Style x:Key="SolverOperationButtonStyle" TargetType="Button" BasedOn="{StaticResource SolverChoiceButtonStyle}">
         <Setter Property="FontSize" Value="{OnPlatform Android=22, WinUI=24, Default=24}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />

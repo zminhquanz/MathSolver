@@ -367,7 +367,7 @@
                                     x:Name="IntegerTypeButton"
                                     Grid.Column="0"
                                     Text="{localization:Translate Numbers.Integer}"
-                                    Style="{StaticResource SolverChoiceButtonStyle}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
                                     BackgroundColor="{DynamicResource PrimaryColor}"
                                     TextColor="{DynamicResource OnPrimaryColor}"
                                     Clicked="OnIntegerTypeClicked" />
@@ -376,7 +376,7 @@
                                     x:Name="DecimalTypeButton"
                                     Grid.Column="1"
                                     Text="{localization:Translate Numbers.Decimal}"
-                                    Style="{StaticResource SolverChoiceButtonStyle}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
                                     BackgroundColor="{DynamicResource SurfaceAltColor}"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     Clicked="OnDecimalTypeClicked" />

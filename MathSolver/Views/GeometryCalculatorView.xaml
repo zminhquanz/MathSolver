@@ -183,14 +183,14 @@
                                     x:Name="IntegerNumberButton"
                                     Grid.Column="0"
                                     Text="{localization:Translate Numbers.Integer}"
-                                    Style="{StaticResource SolverChoiceButtonStyle}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
                                     Clicked="OnIntegerNumberClicked" />
 
                                 <Button
                                     x:Name="DecimalNumberButton"
                                     Grid.Column="1"
                                     Text="{localization:Translate Numbers.Decimal}"
-                                    Style="{StaticResource SolverChoiceButtonStyle}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
                                     Clicked="OnDecimalNumberClicked" />
 
                             </Grid>
