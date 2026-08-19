@@ -253,7 +253,7 @@
                                     <Picker
                                         x:Name="SimdModePicker"
                                         HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                                        Margin="{OnPlatform Android='0', WinUI='12,0,0,0', Default='12,0,0,0'}"
+                                        Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
                                         FontAttributes="Bold"

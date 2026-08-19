@@ -621,7 +621,7 @@
                                     <Picker
                                         x:Name="OperationPicker"
                                         HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
-                                        Margin="{OnPlatform Android='0', WinUI='14,0,0,0', Default='14,0,0,0'}"
+                                        Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
                                         FontSize="17"
