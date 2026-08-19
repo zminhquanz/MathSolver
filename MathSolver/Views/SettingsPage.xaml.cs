@@ -456,8 +456,8 @@ public partial class SettingsPage : ContentPage
 
         SettingsPageTitleLabel.Text =
             useEnglish
-                ? "SETTINGS"
-                : "CÀI ĐẶT";
+                ? "Settings"
+                : "Cài đặt";
 
         SettingsPageSubtitleLabel.Text =
             useEnglish

@@ -19,9 +19,9 @@
     <!-- Thay tiêu đề Math Solver bằng tiêu đề riêng của trang Cài đặt. -->
     <Shell.TitleView>
         <Grid
-            Padding="{OnPlatform Android='0,0,4,0', WinUI='0,0,8,0', Default='0,0,8,0'}"
+            Padding="{OnPlatform Android='0,0,8,0', WinUI='2,0,10,0', Default='2,0,10,0'}"
             ColumnDefinitions="Auto,*"
-            ColumnSpacing="{OnPlatform Android=4, WinUI=8, Default=8}">
+            ColumnSpacing="{OnPlatform Android=2, WinUI=6, Default=6}">
 
             <Grid
                 Grid.Column="0"
@@ -53,11 +53,12 @@
                 VerticalOptions="Center">
                 <Label
                     x:Name="SettingsPageTitleLabel"
-                    Text="CÀI ĐẶT"
-                    TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=22, WinUI=19, Default=19}"
+                    Text="Cài đặt"
+                    TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
+                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
+                    MaxLines="1"
                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                 <Label

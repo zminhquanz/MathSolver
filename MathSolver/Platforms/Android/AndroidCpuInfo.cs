@@ -224,6 +224,10 @@ internal static class AndroidCpuInfo
         GetArmSimdCapabilities()
             .MaximumVectorWidthBits;
 
+    public static bool HasAdvSimd =>
+        GetArmSimdCapabilities()
+            .AdvSimd;
+
     public static bool HasArmSimd =>
         GetArmSimdCapabilities()
             .HasSimd;

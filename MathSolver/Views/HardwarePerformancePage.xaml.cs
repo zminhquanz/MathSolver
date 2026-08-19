@@ -13,6 +13,8 @@ using MathSolver.Platforms.Windows;
 
 #if ANDROID
 using MathSolver.Platforms.Android;
+using System.Runtime.Intrinsics.Arm;
+#pragma warning disable SYSLIB5003
 #endif
 
 namespace MathSolver.Views;
@@ -445,8 +447,35 @@ public partial class HardwarePerformancePage : ContentPage
                     option.Mode ==
                     selectedMode);
 
+#if ANDROID
+        ArmRuntimeSupportLabel.Text =
+            BuildAndroidArmRuntimeSupportText();
+#endif
+
         UpdateSimdModeSelectorVisibility();
     }
+
+#if ANDROID
+    private static string BuildAndroidArmRuntimeSupportText()
+    {
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        string neonBackend =
+            CalculationAccelerationManager.IsArmNeonAdvSimdAvailable
+                ? ".NET AdvSimd (Mono JIT)"
+                : CalculationAccelerationManager.IsArmNeonManagedAvailable
+                    ? ".NET Vector128 (ARM64 Mono JIT)"
+                    : (useEnglish
+                        ? "NEON hardware detected; managed JIT backend unavailable"
+                        : "Đã phát hiện NEON; backend managed JIT chưa khả dụng");
+
+        return useEnglish
+            ? $"Benchmark: NEON/AdvSIMD only • {neonBackend} • SVE/SVE2 and SME/SME2: hardware information only"
+            : $"Benchmark: chỉ NEON/AdvSIMD • {neonBackend} • SVE/SVE2 và SME/SME2: chỉ hiển thị thông tin phần cứng";
+    }
+#endif
 
     private void OnSimdModeSelectionChanged(
         object? sender,
@@ -468,6 +497,17 @@ public partial class HardwarePerformancePage : ContentPage
 
     private void UpdateSimdModeSelectorVisibility()
     {
+#if ANDROID
+        // Trên Android luôn cho người dùng thấy backend ARM mà thiết bị có.
+        // Picker chỉ thao tác được khi công tắc tăng tốc đã bật.
+        SimdModeSelectorContainer.IsVisible =
+            _simdModeOptions.Count >
+            0;
+
+        SimdModePicker.IsEnabled =
+            HardwareAccelerationSwitch.IsToggled &&
+            !_isBenchmarkRunning;
+#else
         SimdModeSelectorContainer.IsVisible =
             HardwareAccelerationSwitch.IsToggled &&
             _simdModeOptions.Count >
@@ -475,6 +515,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         SimdModePicker.IsEnabled =
             !_isBenchmarkRunning;
+#endif
     }
 
     private void OnHardwareAccelerationToggled(
@@ -516,6 +557,18 @@ public partial class HardwarePerformancePage : ContentPage
         bool useSimd =
             CalculationAccelerationManager.UseSimd;
 
+#if ANDROID
+        bool runtimeCanExecuteSimd =
+            CalculationAccelerationManager.IsArmNeonManagedAvailable;
+
+        bool effectiveUseSimd =
+            useSimd &&
+            runtimeCanExecuteSimd;
+#else
+        const bool runtimeCanExecuteSimd = true;
+        bool effectiveUseSimd = useSimd;
+#endif
+
         bool hasMultipleThreads =
             CalculationThreadingManager.IsMultithreadingAvailable;
 
@@ -533,7 +586,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         FloatingPointModeValueLabel.Text =
             BuildFloatingPointModeText(
-                useSimd,
+                effectiveUseSimd,
                 selectedMode,
                 useMultithreading,
                 workerCount);
@@ -555,6 +608,13 @@ public partial class HardwarePerformancePage : ContentPage
 #endif
 
         AccelerationStatusLabel.Text =
+#if ANDROID
+            hasSimd &&
+            !runtimeCanExecuteSimd
+                ? LocalizationService.TranslateKey(
+                    LocalizationKeys.Hardware.RuntimeSimdUnavailable)
+                :
+#endif
             !hasSimd &&
             hasArmHardwareSimd
                 ? LocalizationService.TranslateKey(
@@ -562,7 +622,7 @@ public partial class HardwarePerformancePage : ContentPage
                 : !hasSimd
                     ? LocalizationService.Translate(
                         "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar.")
-                    : useSimd
+                    : effectiveUseSimd
                         ? string.Format(
                             CultureInfo.CurrentCulture,
                             LocalizationService.Translate(
@@ -1853,6 +1913,21 @@ public partial class HardwarePerformancePage : ContentPage
             return;
         }
 
+#if ANDROID
+        if (HardwareAccelerationSwitch.IsToggled &&
+            CalculationAccelerationManager.SelectedSimdMode ==
+                CalculationSimdMode.ArmNeon &&
+            !CalculationAccelerationManager.IsArmNeonManagedAvailable)
+        {
+            BenchmarkStatusLabel.Text =
+                AppLanguageManager.CurrentLanguage == AppLanguage.English
+                    ? "NEON is present in hardware, but this Mono build did not expose the managed AdvSIMD/Vector128 backend. Rebuild Android Debug with the Mono interpreter disabled."
+                    : "CPU có NEON, nhưng bản Mono hiện tại chưa expose backend managed AdvSIMD/Vector128. Hãy rebuild Android Debug với Mono interpreter đã tắt.";
+
+            return;
+        }
+#endif
+
         _isBenchmarkRunning =
             true;
 
@@ -2424,6 +2499,12 @@ public partial class HardwarePerformancePage : ContentPage
                     CalculationSimdMode.Sse =>
                         RunFloatSseWorker,
 
+#if ANDROID
+                    CalculationSimdMode.ArmNeon =>
+                        RunFloatNeonWorker,
+
+#endif
+
                     _ =>
                         RunFloatPortableSimdWorker
                 };
@@ -2459,6 +2540,12 @@ public partial class HardwarePerformancePage : ContentPage
 
                     CalculationSimdMode.Sse =>
                         RunDoubleSseWorker,
+
+#if ANDROID
+                    CalculationSimdMode.ArmNeon =>
+                        RunDoubleNeonWorker,
+
+#endif
 
                     _ =>
                         RunDoublePortableSimdWorker
@@ -3535,6 +3622,384 @@ public partial class HardwarePerformancePage : ContentPage
                 value));
     }
 
+#if ANDROID
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunFloatNeonWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsArmNeonManagedAvailable)
+        {
+            throw new PlatformNotSupportedException(
+                "The current Mono runtime did not expose a managed NEON/AdvSIMD backend.");
+        }
+
+        if (!AdvSimd.IsSupported)
+        {
+            return RunFloatNeonVector128Worker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector128<float>.Count;
+
+        Vector128<float> value =
+            Vector128.Create(
+                0.125f +
+                workerIndex *
+                0.0001f);
+
+        Vector128<float> multiplierA =
+            Vector128.Create(1.000001f);
+
+        Vector128<float> addA =
+            Vector128.Create(0.0001f);
+
+        Vector128<float> multiplierB =
+            Vector128.Create(0.999999f);
+
+        Vector128<float> subtractB =
+            Vector128.Create(0.00005f);
+
+        Vector128<float> smallScale =
+            Vector128.Create(0.00001f);
+
+        Vector128<float> multiplierC =
+            Vector128.Create(0.99999f);
+
+        Vector128<float> addC =
+            Vector128.Create(0.00001f);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    AdvSimd.Add(
+                        AdvSimd.Multiply(
+                            value,
+                            multiplierA),
+                        addA);
+
+                value =
+                    AdvSimd.Subtract(
+                        AdvSimd.Multiply(
+                            value,
+                            multiplierB),
+                        subtractB);
+
+                value =
+                    AdvSimd.Add(
+                        value,
+                        AdvSimd.Multiply(
+                            value,
+                            smallScale));
+
+                value =
+                    AdvSimd.Add(
+                        AdvSimd.Multiply(
+                            value,
+                            multiplierC),
+                        addC);
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunDoubleNeonWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsArmNeonManagedAvailable)
+        {
+            throw new PlatformNotSupportedException(
+                "The current Mono runtime did not expose a managed NEON/AdvSIMD backend.");
+        }
+
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            return RunDoubleNeonVector128Worker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector128<double>.Count;
+
+        Vector128<double> value =
+            Vector128.Create(
+                0.125d +
+                workerIndex *
+                0.0001d);
+
+        Vector128<double> multiplierA =
+            Vector128.Create(
+                1.0000001192092896d);
+
+        Vector128<double> addA =
+            Vector128.Create(0.0001d);
+
+        Vector128<double> multiplierB =
+            Vector128.Create(
+                0.9999998807907104d);
+
+        Vector128<double> subtractB =
+            Vector128.Create(0.00005d);
+
+        Vector128<double> smallScale =
+            Vector128.Create(0.00001d);
+
+        Vector128<double> multiplierC =
+            Vector128.Create(0.99999d);
+
+        Vector128<double> addC =
+            Vector128.Create(0.00001d);
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                value =
+                    AdvSimd.Arm64.Add(
+                        AdvSimd.Arm64.Multiply(
+                            value,
+                            multiplierA),
+                        addA);
+
+                value =
+                    AdvSimd.Arm64.Subtract(
+                        AdvSimd.Arm64.Multiply(
+                            value,
+                            multiplierB),
+                        subtractB);
+
+                value =
+                    AdvSimd.Arm64.Add(
+                        value,
+                        AdvSimd.Arm64.Multiply(
+                            value,
+                            smallScale));
+
+                value =
+                    AdvSimd.Arm64.Add(
+                        AdvSimd.Arm64.Multiply(
+                            value,
+                            multiplierC),
+                        addC);
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(
+                value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunFloatNeonVector128Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!Vector128.IsHardwareAccelerated)
+        {
+            throw new PlatformNotSupportedException(
+                "Vector128 hardware acceleration is unavailable on this Mono runtime.");
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector128<float>.Count;
+
+        Vector128<float> value = Vector128.Create(
+            0.125f + workerIndex * 0.0001f);
+        Vector128<float> multiplierA = Vector128.Create(1.000001f);
+        Vector128<float> addA = Vector128.Create(0.0001f);
+        Vector128<float> multiplierB = Vector128.Create(0.999999f);
+        Vector128<float> subtractB = Vector128.Create(0.00005f);
+        Vector128<float> smallScale = Vector128.Create(0.00001f);
+        Vector128<float> multiplierC = Vector128.Create(0.99999f);
+        Vector128<float> addC = Vector128.Create(0.00001f);
+
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                value =
+                    Vector128.Add(
+                        Vector128.Multiply(value, multiplierA),
+                        addA);
+
+                value =
+                    Vector128.Subtract(
+                        Vector128.Multiply(value, multiplierB),
+                        subtractB);
+
+                value =
+                    Vector128.Add(
+                        value,
+                        Vector128.Multiply(value, smallScale));
+
+                value =
+                    Vector128.Add(
+                        Vector128.Multiply(value, multiplierC),
+                        addC);
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(value));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunDoubleNeonVector128Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!Vector128.IsHardwareAccelerated)
+        {
+            throw new PlatformNotSupportedException(
+                "Vector128 hardware acceleration is unavailable on this Mono runtime.");
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector128<double>.Count;
+
+        Vector128<double> value = Vector128.Create(
+            0.125d + workerIndex * 0.0001d);
+        Vector128<double> multiplierA = Vector128.Create(1.0000001192092896d);
+        Vector128<double> addA = Vector128.Create(0.0001d);
+        Vector128<double> multiplierB = Vector128.Create(0.9999998807907104d);
+        Vector128<double> subtractB = Vector128.Create(0.00005d);
+        Vector128<double> smallScale = Vector128.Create(0.00001d);
+        Vector128<double> multiplierC = Vector128.Create(0.99999d);
+        Vector128<double> addC = Vector128.Create(0.00001d);
+
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                value =
+                    Vector128.Add(
+                        Vector128.Multiply(value, multiplierA),
+                        addA);
+
+                value =
+                    Vector128.Subtract(
+                        Vector128.Multiply(value, multiplierB),
+                        subtractB);
+
+                value =
+                    Vector128.Add(
+                        value,
+                        Vector128.Multiply(value, smallScale));
+
+                value =
+                    Vector128.Add(
+                        Vector128.Multiply(value, multiplierC),
+                        addC);
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(value));
+    }
+#endif
+
     private static WorkerResult RunFloatPortableSimdWorker(
         int workerIndex,
         long deadlineTimestamp,
@@ -3833,4 +4298,8 @@ public partial class HardwarePerformancePage : ContentPage
                 true;
         }
     }
+#if ANDROID
+#pragma warning restore SYSLIB5003
+#endif
+
 }

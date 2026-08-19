@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Android app theme used after the native splash screen.
-         Keep a real Material 3 DayNight parent at the Activity/Application
-         level so every Material component (including Shell navigation and
-         MAUI Material handlers) can resolve the required TextAppearance
-         attributes consistently on OEM ROMs such as OriginOS. -->
-    <style name="MathSolver.MainTheme" parent="Theme.Material3.DayNight.NoActionBar">
+         Inherit from MAUI's Material 3 application theme rather than directly
+         from the raw Google Material theme. MAUI's theme adds the control
+         TextAppearance/style attributes required by the Material 3 handlers
+         while still ultimately inheriting from Theme.Material3.DayNight. -->
+    <style name="MathSolver.MainTheme" parent="Maui.Material3.Theme.NoActionBar">
         <item name="android:forceDarkAllowed">false</item>
         <item name="windowActionModeOverlay">true</item>
     </style>

@@ -3,6 +3,10 @@ using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
+using System.Runtime.InteropServices;
+#if ANDROID
+using MathSolver.Platforms.Android;
+#endif
 
 namespace MathSolver.Services;
 
@@ -11,7 +15,10 @@ public enum CalculationSimdMode
     Portable,
     Sse,
     AvxAvx2,
-    Avx512
+    Avx512,
+    ArmNeon,
+    ArmSve,
+    ArmSme
 }
 
 /// <summary>
@@ -47,9 +54,48 @@ public static class CalculationAccelerationManager
         Sse2.IsSupported &&
         Vector128.IsHardwareAccelerated;
 
+    public static bool IsArmNeonAdvSimdAvailable =>
+        AdvSimd.IsSupported;
+
+    /// <summary>
+    /// Managed NEON backend. Prefer AdvSimd intrinsics; Vector128 is the
+    /// managed ARM64 fallback when the runtime exposes 128-bit SIMD through
+    /// the generic intrinsic API. No native .so fallback is used.
+    /// </summary>
+    public static bool IsArmNeonManagedAvailable =>
+        IsArmNeonAdvSimdAvailable ||
+        (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
+         Vector128.IsHardwareAccelerated);
+
+#if ANDROID
+    /// <summary>
+    /// Android UI availability is based on the real ARM64 HWCAP flag.
+    /// Debug builds disable the Mono interpreter so the benchmark methods
+    /// are JIT-compiled and can expose AdvSimd/Vector128 intrinsics.
+    /// </summary>
+    public static bool IsArmNeonHardwareAvailable =>
+        RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
+        AndroidCpuInfo.HasAdvSimd;
+
     public static bool IsArmNeonAvailable =>
-        AdvSimd.IsSupported &&
-        Vector128.IsHardwareAccelerated;
+        IsArmNeonHardwareAvailable;
+#else
+    public static bool IsArmNeonHardwareAvailable => false;
+
+    public static bool IsArmNeonAvailable =>
+        IsArmNeonManagedAvailable;
+#endif
+
+    // SVE/SVE2 and SME/SME2 remain hardware-information-only on Android.
+    // The benchmark intentionally exposes only the stable managed NEON path.
+    public static bool IsArmSveManagedAvailable => false;
+    public static bool IsArmSve2ManagedAvailable => false;
+    public static bool IsArmSveAvailable => false;
+    public static bool IsArmSve2Available => false;
+
+    // .NET 10 chưa expose System.Runtime.Intrinsics.Arm.Sme/Sme2.
+    // CPU capability vẫn được Hardware Information phát hiện riêng qua HWCAP.
+    public static bool IsArmSmeRuntimeAvailable => false;
 
     public static bool IsPortableSimdAvailable =>
         Vector.IsHardwareAccelerated &&
@@ -57,11 +103,14 @@ public static class CalculationAccelerationManager
         1;
 
     public static bool IsSimdAvailable =>
+#if ANDROID
+        IsArmNeonAvailable;
+#else
         IsAvx512Available ||
         IsAvxAvx2Available ||
         IsSseAvailable ||
-        IsArmNeonAvailable ||
         IsPortableSimdAvailable;
+#endif
 
     /// <summary>
     /// Các nhóm x86 xuất hiện trong selectbox. Nhóm không được CPU hỗ trợ
@@ -75,6 +124,13 @@ public static class CalculationAccelerationManager
             var modes =
                 new List<CalculationSimdMode>();
 
+#if ANDROID
+            if (IsArmNeonAvailable)
+            {
+                modes.Add(
+                    CalculationSimdMode.ArmNeon);
+            }
+#else
             if (IsAvx512Available)
             {
                 modes.Add(
@@ -92,6 +148,7 @@ public static class CalculationAccelerationManager
                 modes.Add(
                     CalculationSimdMode.Sse);
             }
+#endif
 
             return modes;
         }
@@ -132,8 +189,12 @@ public static class CalculationAccelerationManager
             CalculationSimdMode.Sse =>
                 128,
 
-            _ when IsArmNeonAvailable =>
+            CalculationSimdMode.ArmNeon =>
                 128,
+
+            CalculationSimdMode.ArmSve =>
+                Vector<byte>.Count *
+                8,
 
             _ =>
                 Vector<byte>.Count *
@@ -194,9 +255,21 @@ public static class CalculationAccelerationManager
             CalculationSimdMode.Sse =>
                 IsSseAvailable,
 
+            CalculationSimdMode.ArmNeon =>
+                IsArmNeonAvailable,
+
+            CalculationSimdMode.ArmSve =>
+                false,
+
+            CalculationSimdMode.ArmSme =>
+                IsArmSmeRuntimeAvailable,
+
             CalculationSimdMode.Portable =>
-                IsArmNeonAvailable ||
+#if ANDROID
+                false,
+#else
                 IsPortableSimdAvailable,
+#endif
 
             _ =>
                 false
@@ -217,8 +290,14 @@ public static class CalculationAccelerationManager
             CalculationSimdMode.Sse =>
                 "SSE2/SSE3/SSSE3/SSE4.1/SSE4.2",
 
-            _ when IsArmNeonAvailable =>
-                "ARM NEON",
+            CalculationSimdMode.ArmNeon =>
+                "NEON/AdvSIMD",
+
+            CalculationSimdMode.ArmSve =>
+                "SVE/SVE2",
+
+            CalculationSimdMode.ArmSme =>
+                "SME/SME2",
 
             _ =>
                 "SIMD"
@@ -305,6 +384,15 @@ public static class CalculationAccelerationManager
 
     private static CalculationSimdMode GetBestAvailableMode()
     {
+#if ANDROID
+        // Android benchmark intentionally uses only NEON/AdvSIMD.
+        if (IsArmNeonAvailable)
+        {
+            return CalculationSimdMode.ArmNeon;
+        }
+
+        return CalculationSimdMode.Portable;
+#else
         if (IsAvx512Available)
         {
             return CalculationSimdMode.Avx512;
@@ -321,5 +409,6 @@ public static class CalculationAccelerationManager
         }
 
         return CalculationSimdMode.Portable;
+#endif
     }
 }

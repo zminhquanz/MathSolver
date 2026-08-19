@@ -52,6 +52,14 @@
     <UseMaterial3>true</UseMaterial3>
   </PropertyGroup>
 
+  <!-- Keep Mono on Android, but benchmark Debug builds through the Mono JIT
+       instead of the interpreter so managed ARM64 NEON/AdvSIMD intrinsics
+       can be exposed to the benchmark path. Windows is unaffected. -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
+    <UseMonoRuntime>true</UseMonoRuntime>
+    <UseInterpreter>false</UseInterpreter>
+  </PropertyGroup>
+
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(RuntimeIdentifierOverride)' != ''">
     <RuntimeIdentifier>$(RuntimeIdentifierOverride)</RuntimeIdentifier>
   </PropertyGroup>

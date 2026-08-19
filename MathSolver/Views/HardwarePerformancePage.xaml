@@ -18,9 +18,9 @@
 
     <Shell.TitleView>
         <Grid
-            Padding="{OnPlatform Android='0,0,4,0', WinUI='0,0,8,0', Default='0,0,8,0'}"
+            Padding="{OnPlatform Android='0,0,8,0', WinUI='2,0,10,0', Default='2,0,10,0'}"
             ColumnDefinitions="Auto,*"
-            ColumnSpacing="{OnPlatform Android=4, WinUI=8, Default=8}">
+            ColumnSpacing="{OnPlatform Android=2, WinUI=6, Default=6}">
 
             <Grid
                 Grid.Column="0"
@@ -52,11 +52,12 @@
                 VerticalOptions="Center">
 
                 <Label
-                    Text="THÔNG TIN PHẦN CỨNG"
-                    TranslationY="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=22, WinUI=19, Default=19}"
+                    Text="Thông tin phần cứng"
+                    TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
+                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
                     FontAttributes="Bold"
                     LineBreakMode="NoWrap"
+                    MaxLines="1"
                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                 <Label
@@ -263,8 +264,15 @@
 
 
                             <Label
-                                Text="Chỉ các tập lệnh CPU đang hỗ trợ mới được hiển thị."
+                                Text="{OnPlatform Android='Android benchmark chỉ dùng NEON/AdvSIMD.', WinUI='Chỉ các tập lệnh CPU đang hỗ trợ mới được hiển thị.', Default='Chỉ các tập lệnh CPU đang hỗ trợ mới được hiển thị.'}"
                                 FontSize="11"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            <Label
+                                x:Name="ArmRuntimeSupportLabel"
+                                IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
+                                FontSize="11"
+                                LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource TextSecondaryColor}" />
                         </VerticalStackLayout>
 

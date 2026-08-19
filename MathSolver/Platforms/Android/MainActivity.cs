@@ -23,7 +23,7 @@ namespace MathSolver
         {
             // Android starts this Activity with MathSolver.SplashTheme so the
             // native MAUI splash/starting window can be displayed. Switch to a
-            // real Material 3 theme before MAUI inflates any Material control.
+            // MAUI's Material 3 theme before MAUI inflates any Material control.
             // This avoids relying on postSplashScreenTheme, which isn't present
             // in the Android resource set used by this project and fails AAPT2.
             SetTheme(Resource.Style.MathSolver_MainTheme);
