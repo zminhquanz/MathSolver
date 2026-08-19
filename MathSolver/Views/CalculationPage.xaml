@@ -45,6 +45,7 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
+                            IsVisible="True"
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
@@ -60,7 +61,8 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
-                            BackgroundColor="Transparent" />
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
                     <Grid MinimumWidthRequest="144" RowDefinitions="48,3">
@@ -75,7 +77,8 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
-                            BackgroundColor="Transparent" />
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
                     <Grid MinimumWidthRequest="92" RowDefinitions="48,3">
@@ -90,7 +93,8 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
-                            BackgroundColor="Transparent" />
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
                     <Grid MinimumWidthRequest="84" RowDefinitions="48,3">
@@ -105,7 +109,8 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
-                            BackgroundColor="Transparent" />
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
                     <Grid MinimumWidthRequest="140" RowDefinitions="48,3">
@@ -120,7 +125,8 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
-                            BackgroundColor="Transparent" />
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
                     <Grid MinimumWidthRequest="96" RowDefinitions="48,3">
@@ -135,7 +141,8 @@
                             Grid.Row="1"
                             HeightRequest="3"
                             Margin="10,0"
-                            BackgroundColor="Transparent" />
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
                 </HorizontalStackLayout>
             </ScrollView>

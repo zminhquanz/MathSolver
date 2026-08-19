@@ -1040,41 +1040,18 @@ public partial class FormulaPage : ContentPage
         button.BackgroundColor =
             Microsoft.Maui.Graphics.Colors.Transparent;
 
+        // Android Material/DevCheck state must be deterministic.  Keep the
+        // indicator permanently bound to the accent color and only toggle
+        // visibility.  This avoids the Transparent -> DynamicResource +
+        // opacity animation race that could leave later tabs with no line.
         indicator.SetDynamicResource(
             BoxView.BackgroundColorProperty,
             "PrimaryColor");
 
         indicator.CancelAnimations();
-
-        if (isSelected)
-        {
-            // Material secondary-tab motion: the selected indicator fades and
-            // grows into place instead of appearing abruptly.
-            if (indicator.Opacity < 0.99d)
-            {
-                indicator.Opacity = 0.25d;
-                indicator.Scale = 0.70d;
-
-                _ = Task.WhenAll(
-                    indicator.FadeToAsync(
-                        1d,
-                        120,
-                        Easing.CubicOut),
-                    indicator.ScaleToAsync(
-                        1d,
-                        170,
-                        Easing.CubicOut));
-            }
-            else
-            {
-                indicator.Scale = 1d;
-            }
-        }
-        else
-        {
-            indicator.Opacity = 0d;
-            indicator.Scale = 0.70d;
-        }
+        indicator.Opacity = 1d;
+        indicator.Scale = 1d;
+        indicator.IsVisible = isSelected;
     }
 
     private Button GetAndroidFormulaSubTabButton(
