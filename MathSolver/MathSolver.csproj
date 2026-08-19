@@ -58,12 +58,6 @@
 
   <!-- Android uses a composed adaptive icon so Pixel Launcher can apply
        circle/squircle masks without cropping the Math Solver artwork. -->
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <MauiIcon Include="Resources\AppIcon\appicon.svg"
-              ForegroundFile="Resources\AppIcon\appicon_android_foreground.png"
-              ForegroundScale="0.90"
-              BaseSize="1024,1024" />
-  </ItemGroup>
 
   <!-- Keep the existing icon pipeline unchanged on non-Android targets. -->
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'">
