@@ -54,9 +54,112 @@ public partial class SettingsPage : ContentPage
         LanguagePicker.ItemsSource =
             _languageOptions;
 
+#if ANDROID
+        ApplyAndroidCompactControlSurfaces();
+#endif
+
         LoadCurrentSettings();
         PreparePageEntryAnimation();
     }
+
+#if ANDROID
+    /// <summary>
+    /// Android Material 3 controls should blend with the Settings cards instead
+    /// of drawing a second opaque-white field/button surface. Keep this local to
+    /// Android so the established WinUI chrome is untouched. DynamicResource is
+    /// used so accent/theme changes continue to update these controls live.
+    /// </summary>
+    private void ApplyAndroidCompactControlSurfaces()
+    {
+        FontPickerFrame.SetDynamicResource(
+            VisualElement.BackgroundColorProperty,
+            "SurfaceAltColor");
+
+        LanguagePickerFrame.SetDynamicResource(
+            VisualElement.BackgroundColorProperty,
+            "SurfaceAltColor");
+
+        FontPicker.SetDynamicResource(
+            VisualElement.BackgroundColorProperty,
+            "SurfaceAltColor");
+
+        LanguagePicker.SetDynamicResource(
+            VisualElement.BackgroundColorProperty,
+            "SurfaceAltColor");
+
+        ConfigureAndroidSettingsPickerChrome(
+            FontPicker);
+
+        ConfigureAndroidSettingsPickerChrome(
+            LanguagePicker);
+
+        ResetSettingsButton.SetDynamicResource(
+            VisualElement.BackgroundColorProperty,
+            "PrimarySoftColor");
+
+        ResetSettingsButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "PrimaryColor");
+
+        ResetSettingsButton.SetDynamicResource(
+            Button.BorderColorProperty,
+            "PrimaryBorderColor");
+
+        ResetSettingsButton.BorderWidth =
+            1d;
+    }
+
+    private static void ConfigureAndroidSettingsPickerChrome(
+        Picker picker)
+    {
+        picker.HandlerChanged +=
+            OnAndroidSettingsPickerHandlerChanged;
+
+        ApplyAndroidSettingsPickerNativeChrome(
+            picker);
+    }
+
+    private static void OnAndroidSettingsPickerHandlerChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (sender is Picker picker)
+        {
+            ApplyAndroidSettingsPickerNativeChrome(
+                picker);
+        }
+    }
+
+    private static void ApplyAndroidSettingsPickerNativeChrome(
+        Picker picker)
+    {
+        // PickerHandler2 uses a Material text-field view on Android. Remove
+        // its opaque native field background so the MAUI Border/SurfaceAlt
+        // card remains the single visible surface. The picker interaction and
+        // native Material selection dialog stay unchanged.
+        if (picker.Handler?.PlatformView is
+            Android.Widget.EditText editText)
+        {
+            editText.Background =
+                null;
+
+            float density =
+                editText.Resources?.DisplayMetrics?.Density ??
+                1f;
+
+            int horizontalPadding =
+                (int)Math.Round(
+                    14d *
+                    density);
+
+            editText.SetPadding(
+                horizontalPadding,
+                0,
+                horizontalPadding,
+                0);
+        }
+    }
+#endif
 
     protected override bool OnBackButtonPressed()
     {

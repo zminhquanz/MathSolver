@@ -551,6 +551,7 @@
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
+                        x:Name="FontPickerFrame"
                         Padding="0"
                         BackgroundColor="{DynamicResource InputBackgroundColor}"
                         Stroke="{DynamicResource BorderBrush}"
@@ -625,6 +626,7 @@
                         TextColor="{DynamicResource TextSecondaryColor}" />
 
                         <Border
+                            x:Name="LanguagePickerFrame"
                             Padding="0"
                             BackgroundColor="{DynamicResource InputBackgroundColor}"
                             Stroke="{DynamicResource BorderBrush}"

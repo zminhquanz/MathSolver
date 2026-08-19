@@ -18,9 +18,15 @@
     </style>
 
     <style name="MathSolver.Widget.Material3.Slider.Compact" parent="Widget.Material3.Slider.Legacy">
-        <item name="trackHeight">4dp</item>
-        <item name="thumbRadius">10dp</item>
-        <item name="haloRadius">18dp</item>
+        <!-- Keep the native 48dp touch target, but make only the visual
+             geometry compact for phone layouts. Material 3's expressive
+             default thumb is a tall 4x44dp bar; Math Solver uses a small
+             circular 16dp thumb instead. -->
+        <item name="trackHeight">3dp</item>
+        <item name="thumbWidth">16dp</item>
+        <item name="thumbHeight">16dp</item>
+        <item name="thumbRadius">8dp</item>
+        <item name="haloRadius">14dp</item>
     </style>
 
     <!-- Preserve MAUI's native splash implementation. MainActivity switches

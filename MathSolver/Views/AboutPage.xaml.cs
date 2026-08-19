@@ -394,16 +394,47 @@ public partial class AboutPage : ContentPage
     {
         try
         {
+#if ANDROID
+            // Do not gate ACTION_VIEW behind Launcher.CanOpenAsync on Android.
+            // Android package visibility can make the query return false even
+            // though the system can resolve a browser when the intent is sent.
+            // Start the standard browsable ACTION_VIEW intent directly.
+            var androidUri =
+                Android.Net.Uri.Parse(
+                    url);
+
+            using var intent =
+                new Android.Content.Intent(
+                    Android.Content.Intent.ActionView,
+                    androidUri);
+
+            intent.AddCategory(
+                Android.Content.Intent.CategoryBrowsable);
+
+            var activity =
+                Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+
+            if (activity is not null)
+            {
+                activity.StartActivity(
+                    intent);
+            }
+            else
+            {
+                intent.AddFlags(
+                    Android.Content.ActivityFlags.NewTask);
+
+                Android.App.Application.Context.StartActivity(
+                    intent);
+            }
+
+            return;
+#else
             var uri =
                 new Uri(
                     url);
 
-            bool canOpen =
-                await Launcher.Default.CanOpenAsync(
-                    uri);
-
             bool opened =
-                canOpen &&
                 await Launcher.Default.OpenAsync(
                     uri);
 
@@ -411,6 +442,7 @@ public partial class AboutPage : ContentPage
             {
                 return;
             }
+#endif
         }
         catch
         {

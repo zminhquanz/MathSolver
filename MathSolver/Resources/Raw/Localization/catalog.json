@@ -1639,12 +1639,12 @@
     },
     {
       "key": "PowerRoot.CopyCompact",
-      "source": "Sao chép kết quả rút gọn",
+      "source": "Sao chép",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.CopyResult",
-      "source": "Sao chép kết quả",
+      "source": "Sao chép",
       "mode": "exact"
     },
     {
@@ -1759,7 +1759,7 @@
     },
     {
       "key": "PowerRoot.RootCopyResult",
-      "source": "Sao chép kết quả căn bậc",
+      "source": "Sao chép",
       "mode": "exact"
     },
     {
@@ -1879,7 +1879,17 @@
     },
     {
       "key": "PowerRoot.StepBitShift",
-      "source": "Bước 4. Trị tuyệt đối của cơ số là 2{3}. Áp dụng (2ᵏ)ⁿ = 2^(k × n), ta được (2{3}){4} = 2{5}, vì {0} × {1} = {2}. Do đó dùng BigInteger.One << {2} để tạo kết quả trực tiếp trên một luồng; dấu được xác định ở bước 3.",
+      "source": "Bước 4. Trị tuyệt đối của cơ số là 2{3}. Áp dụng (2ᵏ)ⁿ = 2^(k × n), ta được (2{3}){4} = 2{5}, vì {0} × {1} = {2}. Sau khi đưa về một lũy thừa của 2, ứng dụng tạo kết quả bằng phép dịch bit để tính nhanh hơn mà vẫn giữ kết quả nguyên chính xác; dấu đã được xác định ở bước 3.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepBitShiftBaseTwo",
+      "source": "Bước 4. Trị tuyệt đối của cơ số bằng 2, nên phép tính có dạng 2{1}. Về toán học, đây vẫn là tích của {0} thừa số 2. Trong hệ nhị phân, 2{1} có thể được tạo bằng cách dịch một bit 1 sang trái {0} vị trí, vì vậy ứng dụng không cần nhân số 2 lặp lại rất nhiều lần. Đây chỉ là cách máy tính tính nhanh hơn; kết quả vẫn là số nguyên chính xác. Dấu đã được xác định ở bước 3.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepBitShiftPowerOfTwo",
+      "source": "Bước 4. Trị tuyệt đối của cơ số là 2{3}. Dùng quy tắc (2ᵏ)ⁿ = 2^(k × n), ta đổi phép tính thành (2{3}){4} = 2{5}; ở đây {0} × {1} = {2}. Sau khi đã đưa về một lũy thừa của 2, ứng dụng tạo 2{5} bằng phép dịch bit thay vì thực hiện rất nhiều phép nhân. Cách làm này nhanh hơn nhưng vẫn cho cùng một kết quả nguyên chính xác. Dấu đã được xác định ở bước 3.",
       "mode": "exact"
     },
     {

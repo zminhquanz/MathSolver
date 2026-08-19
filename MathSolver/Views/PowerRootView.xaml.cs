@@ -3513,22 +3513,34 @@ public partial class PowerRootView : LocalizedSolverView
                     basePowerOfTwoExponent *
                     state.Exponent);
 
-            steps.Add(
-                Format(
-                    "PowerRoot.StepBitShift",
-                    basePowerOfTwoExponent.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture),
-                    formattedExponent,
-                    totalPowerOfTwoExponent.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture),
-                    ToSuperscript(
-                        basePowerOfTwoExponent),
-                    ToSuperscript(
-                        state.Exponent),
-                    ToSuperscript(
-                        totalPowerOfTwoExponent)));
+            if (basePowerOfTwoExponent == 1)
+            {
+                steps.Add(
+                    Format(
+                        "PowerRoot.StepBitShiftBaseTwo",
+                        formattedExponent,
+                        ToSuperscript(
+                            state.Exponent)));
+            }
+            else
+            {
+                steps.Add(
+                    Format(
+                        "PowerRoot.StepBitShiftPowerOfTwo",
+                        basePowerOfTwoExponent.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        formattedExponent,
+                        totalPowerOfTwoExponent.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        ToSuperscript(
+                            basePowerOfTwoExponent),
+                        ToSuperscript(
+                            state.Exponent),
+                        ToSuperscript(
+                            totalPowerOfTwoExponent)));
+            }
         }
         else
         {
