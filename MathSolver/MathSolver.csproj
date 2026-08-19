@@ -65,6 +65,13 @@
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- Android adaptive launcher icon: reuse the original full appicon.png as-is.
+       The native adaptive-icon XML lets Pixel Launcher apply its circular/squircle mask
+       without pre-cropping, resizing, or splitting the artwork into separate images. -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <AndroidResource Include="Resources\AppIcon\appicon.png" Link="Resources\drawable-nodpi\appicon_source.png" />
+  </ItemGroup>
+
   <ItemGroup>
     <AndroidResource Remove="Resources\Raw\**" />
     <Compile Remove="Resources\Raw\**" />
