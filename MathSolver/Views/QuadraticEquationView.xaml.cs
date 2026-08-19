@@ -1679,7 +1679,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
                     a));
 
         Step4BodyLabel.Text =
-            "Ta áp dụng công thức nghiệm của phương trình bậc hai:";
+            T("Equation.Quadratic.Step4.TwoRoots.Intro");
 
         Step4MathLayout.Children.Add(
             CreateGeneralRootFormulaPairView());
@@ -1745,7 +1745,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         formulaRow.Children.Add(
             CreateMathLabel(
-                "và",
+                T("Equation.Quadratic.Step4.TwoRoots.And"),
                 fontSize: 19,
                 bold: false));
 
@@ -1767,7 +1767,12 @@ public partial class QuadraticEquationView : LocalizedSolverView
         string deltaText)
     {
         string oneLineText =
-            $"Thay a = {aText}, b = {bText}, Δ = {deltaText} vào công thức:";
+            string.Format(
+                CultureInfo.CurrentCulture,
+                T("Equation.Quadratic.Step4.TwoRoots.SubstituteAll"),
+                aText,
+                bText,
+                deltaText);
 
         // Với hệ số/Delta ngắn, giữ cách trình bày gọn trên một dòng.
         // Khi số dài, chủ động xuống dòng thay vì để ScrollView kéo toàn bộ
@@ -1791,7 +1796,11 @@ public partial class QuadraticEquationView : LocalizedSolverView
             };
 
         string coefficientsText =
-            $"Thay a = {aText}, b = {bText},";
+            string.Format(
+                CultureInfo.CurrentCulture,
+                T("Equation.Quadratic.Step4.TwoRoots.SubstituteCoefficients"),
+                aText,
+                bText);
 
         // Nếu cả a và b đều rất dài thì tách tiếp b ra một dòng riêng để
         // phần thay số vẫn dễ đọc trên màn hình nhỏ.
@@ -1799,11 +1808,17 @@ public partial class QuadraticEquationView : LocalizedSolverView
         {
             layout.Children.Add(
                 CreateMathDescriptionLabel(
-                    $"Thay a = {aText},"));
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        T("Equation.Quadratic.Step4.TwoRoots.SubstituteA"),
+                        aText)));
 
             layout.Children.Add(
                 CreateMathDescriptionLabel(
-                    $"b = {bText},"));
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        T("Equation.Quadratic.Step4.TwoRoots.SubstituteB"),
+                        bText)));
         }
         else
         {
@@ -1814,7 +1829,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         layout.Children.Add(
             CreateMathDescriptionLabel(
-                $"Δ = {deltaText} vào công thức:"));
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    T("Equation.Quadratic.Step4.TwoRoots.SubstituteDelta"),
+                    deltaText)));
 
         return layout;
     }
@@ -1836,7 +1854,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         sectionLayout.Children.Add(
             CreateMathDescriptionLabel(
-                $"Tính {variableName}:"));
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    T("Equation.Quadratic.Step4.TwoRoots.ComputeRoot"),
+                    variableName)));
 
         sectionLayout.Children.Add(
             CreateRootFractionEquationView(
@@ -2396,7 +2417,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
                 $"√Δ = √({deltaText}) = {squareRootText}";
 
             Step4TitleLabel.Text =
-                "Bước 4. Tính hai nghiệm";
+                T("Equation.Quadratic.Step4.TwoRoots.Title");
 
             ShowDistinctRootStep4Presentation(
                 a,

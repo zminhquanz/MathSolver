@@ -1356,7 +1356,16 @@
     "About.UsageNoteTitle": "Lưu ý khi sử dụng",
     "About.UsageNoteBody": "Phần mềm được tạo ra nhằm hỗ trợ học tập, kiểm tra kết quả và giúp người học hiểu cách thực hiện phép tính, lời giải. Không nên lạm dụng phần mềm để làm thay toàn bộ bài tập hoặc sao chép kết quả mà không tự suy nghĩ.",
     "About.UsageNoteHint": "Hãy tự làm bài trước, sau đó sử dụng phần mềm để kiểm tra và tìm hiểu những bước mình chưa hiểu.",
-    "Hardware.RuntimeSimdUnavailable": "CPU hỗ trợ SIMD ARM, nhưng .NET runtime hiện tại chưa cung cấp tăng tốc SIMD. Float và Double sẽ dùng Scalar."
+    "Hardware.RuntimeSimdUnavailable": "CPU hỗ trợ SIMD ARM, nhưng .NET runtime hiện tại chưa cung cấp tăng tốc SIMD. Float và Double sẽ dùng Scalar.",
+    "Equation.Quadratic.Step4.TwoRoots.Title": "Bước 4. Tính hai nghiệm",
+    "Equation.Quadratic.Step4.TwoRoots.Intro": "Ta áp dụng công thức nghiệm của phương trình bậc hai:",
+    "Equation.Quadratic.Step4.TwoRoots.And": "và",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteAll": "Thay a = {0}, b = {1}, Δ = {2} vào công thức:",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteCoefficients": "Thay a = {0}, b = {1},",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteA": "Thay a = {0},",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteB": "b = {0},",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta": "Δ = {0} vào công thức:",
+    "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Tính {0}:"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

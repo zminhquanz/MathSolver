@@ -6161,6 +6161,51 @@
       "key": "Hardware.RuntimeSimdUnavailable",
       "source": "CPU hỗ trợ SIMD ARM, nhưng .NET runtime hiện tại chưa cung cấp tăng tốc SIMD. Float và Double sẽ dùng Scalar.",
       "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.Title",
+      "source": "Bước 4. Tính hai nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.Intro",
+      "source": "Ta áp dụng công thức nghiệm của phương trình bậc hai:",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.And",
+      "source": "và",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.SubstituteAll",
+      "source": "Thay a = {0}, b = {1}, Δ = {2} vào công thức:",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.SubstituteCoefficients",
+      "source": "Thay a = {0}, b = {1},",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.SubstituteA",
+      "source": "Thay a = {0},",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.SubstituteB",
+      "source": "b = {0},",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta",
+      "source": "Δ = {0} vào công thức:",
+      "mode": "exact"
+    },
+    {
+      "key": "Equation.Quadratic.Step4.TwoRoots.ComputeRoot",
+      "source": "Tính {0}:",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

@@ -1356,7 +1356,16 @@
     "About.UsageNoteTitle": "Responsible use",
     "About.UsageNoteBody": "Math Solver is designed to support learning, verify results, and help learners understand calculation and solution steps. It should not be used to replace doing the work yourself or to copy answers without thinking through them.",
     "About.UsageNoteHint": "Try the problem yourself first, then use Math Solver to check your work and review any steps you did not understand.",
-    "Hardware.RuntimeSimdUnavailable": "The CPU supports ARM SIMD, but the current .NET runtime does not expose SIMD acceleration. Float and Double will use Scalar."
+    "Hardware.RuntimeSimdUnavailable": "The CPU supports ARM SIMD, but the current .NET runtime does not expose SIMD acceleration. Float and Double will use Scalar.",
+    "Equation.Quadratic.Step4.TwoRoots.Title": "Step 4. Compute the two roots",
+    "Equation.Quadratic.Step4.TwoRoots.Intro": "Apply the quadratic formula:",
+    "Equation.Quadratic.Step4.TwoRoots.And": "and",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteAll": "Substitute a = {0}, b = {1}, and Δ = {2} into the formula:",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteCoefficients": "Substitute a = {0}, b = {1},",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteA": "Substitute a = {0},",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteB": "b = {0},",
+    "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta": "and Δ = {0} into the formula:",
+    "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Compute {0}:"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",
