@@ -7,7 +7,7 @@ using MathSolver.Services;
 namespace MathSolver
 {
     [Activity(
-        Theme = "@style/Maui.SplashTheme",
+        Theme = "@style/MathSolver.SplashTheme",
         MainLauncher = true,
         LaunchMode = LaunchMode.SingleTop,
         WindowSoftInputMode = SoftInput.AdjustResize,
@@ -21,9 +21,17 @@ namespace MathSolver
     {
         protected override void OnCreate(Bundle? savedInstanceState)
         {
-            // Material dynamic colors must be installed before MAUI inflates
-            // the Android activity. This branch does not exist on Windows.
+            // Android starts this Activity with MathSolver.SplashTheme so the
+            // native MAUI splash/starting window can be displayed. Switch to a
+            // real Material 3 theme before MAUI inflates any Material control.
+            // This avoids relying on postSplashScreenTheme, which isn't present
+            // in the Android resource set used by this project and fails AAPT2.
+            SetTheme(Resource.Style.MathSolver_MainTheme);
+
+            // Apply the optional Material You overlay only after MainTheme is
+            // active, but still before MAUI creates the visual tree.
             AndroidMaterialYouManager.ApplyDynamicColorsIfEnabled(this);
+
             base.OnCreate(savedInstanceState);
         }
 

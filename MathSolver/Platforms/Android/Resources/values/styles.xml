@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Android app theme used after the native splash screen.
+         Keep a real Material 3 DayNight parent at the Activity/Application
+         level so every Material component (including Shell navigation and
+         MAUI Material handlers) can resolve the required TextAppearance
+         attributes consistently on OEM ROMs such as OriginOS. -->
+    <style name="MathSolver.MainTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="windowActionModeOverlay">true</item>
+    </style>
+
+    <!-- Preserve MAUI's native splash implementation. MainActivity switches
+         to MathSolver.MainTheme in OnCreate before MAUI inflates controls.
+         Do not declare postSplashScreenTheme here: it is not available in the
+         Android resource set used by this MAUI build and causes AAPT2260. -->
+    <style name="MathSolver.SplashTheme" parent="Maui.SplashTheme" />
+
     <!-- Android-only popup themes.  The compact Settings PopupMenu is created
          with one of these contexts so it follows the effective app Light/Dark
          mode instead of inheriting a stale light framework popup theme. -->
