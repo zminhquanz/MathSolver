@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
+using System.Runtime.InteropServices;
 
 namespace MathSolver.Graphics;
 
@@ -13,8 +14,9 @@ namespace MathSolver.Graphics;
 /// trục Ox, Oy có mũi tên; trục đối xứng nét đứt;
 /// đỉnh, nghiệm thực và nhãn -b/(2a).
 /// Hệ số đầu vào là Int128. Biệt thức Δ được giữ chính xác bằng BigInteger;
-/// các phép tính hình học và nghiệm dùng OctoDouble. Chỉ bước chiếu cuối
-/// cùng sang tọa độ màn hình mới chuyển về double.
+/// các phép tính hình học, nghiệm và viewport dùng OctoDouble. Riêng dãy điểm
+/// sample để redraw đường cong được chiếu sang double một lần rồi tính theo
+/// SIMD (x86 hoặc ARM64 NEON) vì GraphicsView cuối cùng cũng vẽ theo pixel.
 /// </summary>
 public sealed class ParabolaGraphDrawable : IDrawable
 {
@@ -82,6 +84,13 @@ public sealed class ParabolaGraphDrawable : IDrawable
     private OctoDouble _a;
     private OctoDouble _b;
     private OctoDouble _c;
+
+    // Hệ số double chỉ dùng cho dãy sample khi redraw. Các giá trị này được
+    // chiếu một lần từ hệ số OctoDouble đã chuẩn hóa; nghiệm/đỉnh/viewport
+    // vẫn giữ đường OctoDouble độ chính xác cao.
+    private double _drawA;
+    private double _drawB;
+    private double _drawC;
 
     // Hệ số gốc và Δ chính xác dùng riêng cho marker nghiệm. Hệ số _a/_b/_c
     // phía trên vẫn được chuẩn hóa để viewport đồ thị không phụ thuộc độ lớn.
@@ -255,11 +264,22 @@ public sealed class ParabolaGraphDrawable : IDrawable
             rawC /
             coefficientScale;
 
+        // Projection dành riêng cho raster/sample path. Vì cả ba hệ số đã
+        // được chuẩn hóa theo cùng một scale nên chuyển sang double ở đây
+        // vẫn giữ hình dạng parabol và đủ xa ngưỡng overflow/underflow.
+        _drawA = _a.ToDouble();
+        _drawB = _b.ToDouble();
+        _drawC = _c.ToDouble();
+
         HasEquation =
             _a.IsFinite &&
             _b.IsFinite &&
             _c.IsFinite &&
-            !_a.IsZero;
+            !_a.IsZero &&
+            double.IsFinite(_drawA) &&
+            double.IsFinite(_drawB) &&
+            double.IsFinite(_drawC) &&
+            _drawA != 0d;
 
         _panX =
             0d;
@@ -615,13 +635,16 @@ public sealed class ParabolaGraphDrawable : IDrawable
             xMinimum,
             xMaximum);
 
+        // Đây là hot path của zoom/pan. Nghiệm, đỉnh và viewport đã được
+        // tính bằng OctoDouble; riêng 1K-2K điểm vẽ được batch bằng double
+        // SIMD để redraw nhanh hơn mà không ảnh hưởng độ chính xác toán học.
         ParabolaSimdEvaluator.Evaluate(
             _xSamples,
             _ySamples,
             sampleCount,
-            _a,
-            _b,
-            _c);
+            _drawA,
+            _drawB,
+            _drawC);
 
         DrawTextbookAxes(
             canvas,
@@ -2091,63 +2114,23 @@ public static class ParabolaSimdEvaluator
 {
     private enum SimdPath
     {
-        Avx2Fma,
-        Avx2,
+        AvxFma,
         Avx,
-        Sse42,
-        Sse41,
-        Ssse3,
-        Sse3,
         Sse2,
-        Neon,
+        NeonFma,
+        ArmVector128,
         Scalar
     }
 
     private static readonly SimdPath SelectedPath =
         DetectBestPath();
 
-    public static void Evaluate(
-        double[] xValues,
-        double[] yValues,
-        int count,
-        OctoDouble a,
-        OctoDouble b,
-        OctoDouble c)
-    {
-        if (xValues.Length <
-                count ||
-            yValues.Length <
-                count)
-        {
-            throw new ArgumentException(
-                "Mảng mẫu không đủ kích thước.");
-        }
-
-        // Quad Double không thể dùng trực tiếp với Vector128/Vector256.
-        // Mỗi điểm được tính bằng Horner Quad Double; chỉ kết quả cuối
-        // mới chiếu về double để GraphicsView vẽ lên tọa độ pixel.
-        for (int index = 0;
-             index < count;
-             index++)
-        {
-            OctoDouble x =
-                new(
-                    xValues[index]);
-
-            OctoDouble y =
-                OctoDouble.FusedMultiplyAdd(
-                    OctoDouble.FusedMultiplyAdd(
-                        a,
-                        x,
-                        b),
-                    x,
-                    c);
-
-            yValues[index] =
-                y.ToDouble();
-        }
-    }
-
+    /// <summary>
+    /// Tính hàng loạt y = ax² + bx + c cho dãy sample đã ở dạng double.
+    /// Đây là đường duy nhất dùng SIMD của renderer parabol. Toán học chính
+    /// (Δ, nghiệm, đỉnh, viewport) vẫn nằm trong ParabolaGraphDrawable và
+    /// dùng OctoDouble.
+    /// </summary>
     public static void Evaluate(
         double[] xValues,
         double[] yValues,
@@ -2156,13 +2139,17 @@ public static class ParabolaSimdEvaluator
         double b,
         double c)
     {
-        if (xValues.Length <
-                count ||
-            yValues.Length <
-                count)
+        if (count < 0 ||
+            xValues.Length < count ||
+            yValues.Length < count)
         {
             throw new ArgumentException(
                 "Mảng mẫu không đủ kích thước.");
+        }
+
+        if (count == 0)
+        {
+            return;
         }
 
         if (!CalculationAccelerationManager.UseSimd)
@@ -2181,7 +2168,7 @@ public static class ParabolaSimdEvaluator
 
         switch (SelectedPath)
         {
-            case SimdPath.Avx2Fma:
+            case SimdPath.AvxFma:
                 EvaluateAvxFma(
                     xValues,
                     yValues,
@@ -2189,9 +2176,8 @@ public static class ParabolaSimdEvaluator
                     a,
                     b,
                     c);
-                break;
+                return;
 
-            case SimdPath.Avx2:
             case SimdPath.Avx:
                 EvaluateAvx(
                     xValues,
@@ -2200,21 +2186,37 @@ public static class ParabolaSimdEvaluator
                     a,
                     b,
                     c);
-                break;
-            case SimdPath.Sse42:
-            case SimdPath.Sse41:
-            case SimdPath.Ssse3:
-            case SimdPath.Sse3:
+                return;
+
             case SimdPath.Sse2:
-            case SimdPath.Neon:
-                EvaluateSseNeon(
+                EvaluateSse2(
                     xValues,
                     yValues,
                     count,
                     a,
                     b,
                     c);
-                break;
+                return;
+
+            case SimdPath.NeonFma:
+                EvaluateNeonFma(
+                    xValues,
+                    yValues,
+                    count,
+                    a,
+                    b,
+                    c);
+                return;
+
+            case SimdPath.ArmVector128:
+                EvaluateArmVector128(
+                    xValues,
+                    yValues,
+                    count,
+                    a,
+                    b,
+                    c);
+                return;
 
             default:
                 EvaluateScalar(
@@ -2225,21 +2227,17 @@ public static class ParabolaSimdEvaluator
                     a,
                     b,
                     c);
-                break;
+                return;
         }
     }
 
     private static SimdPath DetectBestPath()
     {
-        if (Avx2.IsSupported &&
+        // x86: FMA + AVX là đường Horner nhanh và chính xác nhất hiện có.
+        if (Avx.IsSupported &&
             Fma.IsSupported)
         {
-            return SimdPath.Avx2Fma;
-        }
-
-        if (Avx2.IsSupported)
-        {
-            return SimdPath.Avx2;
+            return SimdPath.AvxFma;
         }
 
         if (Avx.IsSupported)
@@ -2247,34 +2245,24 @@ public static class ParabolaSimdEvaluator
             return SimdPath.Avx;
         }
 
-        if (Sse42.IsSupported)
-        {
-            return SimdPath.Sse42;
-        }
-
-        if (Sse41.IsSupported)
-        {
-            return SimdPath.Sse41;
-        }
-
-        if (Ssse3.IsSupported)
-        {
-            return SimdPath.Ssse3;
-        }
-
-        if (Sse3.IsSupported)
-        {
-            return SimdPath.Sse3;
-        }
-
         if (Sse2.IsSupported)
         {
             return SimdPath.Sse2;
         }
 
+        // ARM64: AdvSimd.Arm64 expose FMLA cho Vector128<double>.
         if (AdvSimd.Arm64.IsSupported)
         {
-            return SimdPath.Neon;
+            return SimdPath.NeonFma;
+        }
+
+        // Một số Mono build expose generic Vector128 hardware acceleration
+        // nhưng không expose AdvSimd.Arm64 trực tiếp. Trên ARM64 đây vẫn là
+        // managed SIMD 128-bit (NEON), chỉ không ép FMA intrinsic.
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
+            Vector128.IsHardwareAccelerated)
+        {
+            return SimdPath.ArmVector128;
         }
 
         return SimdPath.Scalar;
@@ -2288,37 +2276,23 @@ public static class ParabolaSimdEvaluator
         double b,
         double c)
     {
-        Vector256<double> aVector =
-            Vector256.Create(
-                a);
+        Vector256<double> aVector = Vector256.Create(a);
+        Vector256<double> bVector = Vector256.Create(b);
+        Vector256<double> cVector = Vector256.Create(c);
 
-        Vector256<double> bVector =
-            Vector256.Create(
-                b);
-
-        Vector256<double> cVector =
-            Vector256.Create(
-                c);
-
-        int index =
-            0;
-
-        int vectorizedCount =
-            count -
-            count %
-            Vector256<double>.Count;
+        int index = 0;
+        int width = Vector256<double>.Count;
+        int vectorizedCount = count - count % width;
 
         for (;
              index < vectorizedCount;
-             index +=
-                 Vector256<double>.Count)
+             index += width)
         {
             Vector256<double> xVector =
                 Vector256.LoadUnsafe(
                     ref xValues[index]);
 
-            // Horner với FMA3:
-            // y = fma(fma(a, x, b), x, c)
+            // Horner + FMA3: y = fma(fma(a, x, b), x, c)
             Vector256<double> axPlusB =
                 Fma.MultiplyAdd(
                     aVector,
@@ -2353,38 +2327,22 @@ public static class ParabolaSimdEvaluator
         double b,
         double c)
     {
-        Vector256<double> aVector =
-            Vector256.Create(
-                a);
+        Vector256<double> aVector = Vector256.Create(a);
+        Vector256<double> bVector = Vector256.Create(b);
+        Vector256<double> cVector = Vector256.Create(c);
 
-        Vector256<double> bVector =
-            Vector256.Create(
-                b);
-
-        Vector256<double> cVector =
-            Vector256.Create(
-                c);
-
-        int index =
-            0;
-
-        int vectorizedCount =
-            count -
-            count %
-            Vector256<double>.Count;
+        int index = 0;
+        int width = Vector256<double>.Count;
+        int vectorizedCount = count - count % width;
 
         for (;
              index < vectorizedCount;
-             index +=
-                 Vector256<double>.Count)
+             index += width)
         {
-            // LoadUnsafe/StoreUnsafe tải và lưu trực tiếp 4 double liên tiếp,
-            // không đóng gói từng giá trị bằng Vector256.Create.
             Vector256<double> xVector =
                 Vector256.LoadUnsafe(
                     ref xValues[index]);
 
-            // Horner: y = (a*x + b)*x + c
             Vector256<double> yVector =
                 Avx.Add(
                     Avx.Multiply(
@@ -2410,7 +2368,7 @@ public static class ParabolaSimdEvaluator
             c);
     }
 
-    private static void EvaluateSseNeon(
+    private static void EvaluateSse2(
         double[] xValues,
         double[] yValues,
         int count,
@@ -2418,67 +2376,126 @@ public static class ParabolaSimdEvaluator
         double b,
         double c)
     {
-        Vector128<double> aVector =
-            Vector128.Create(
-                a);
+        Vector128<double> aVector = Vector128.Create(a);
+        Vector128<double> bVector = Vector128.Create(b);
+        Vector128<double> cVector = Vector128.Create(c);
 
-        Vector128<double> bVector =
-            Vector128.Create(
-                b);
-
-        Vector128<double> cVector =
-            Vector128.Create(
-                c);
-
-        int index =
-            0;
-
-        int vectorizedCount =
-            count -
-            count %
-            Vector128<double>.Count;
+        int index = 0;
+        int width = Vector128<double>.Count;
+        int vectorizedCount = count - count % width;
 
         for (;
              index < vectorizedCount;
-             index +=
-                 Vector128<double>.Count)
+             index += width)
         {
             Vector128<double> xVector =
                 Vector128.LoadUnsafe(
                     ref xValues[index]);
 
-            Vector128<double> yVector;
+            Vector128<double> yVector =
+                Sse2.Add(
+                    Sse2.Multiply(
+                        Sse2.Add(
+                            Sse2.Multiply(
+                                aVector,
+                                xVector),
+                            bVector),
+                        xVector),
+                    cVector);
 
-            if (SelectedPath ==
-                SimdPath.Neon)
-            {
-                // ARM64 NEON có FMA cho double. Thứ tự API là
-                // addend + left * right.
-                Vector128<double> axPlusB =
-                    AdvSimd.Arm64.FusedMultiplyAdd(
-                        bVector,
-                        aVector,
-                        xVector);
+            yVector.StoreUnsafe(
+                ref yValues[index]);
+        }
 
-                yVector =
-                    AdvSimd.Arm64.FusedMultiplyAdd(
-                        cVector,
-                        axPlusB,
-                        xVector);
-            }
-            else
-            {
-                yVector =
-                    Sse2.Add(
-                        Sse2.Multiply(
-                            Sse2.Add(
-                                Sse2.Multiply(
-                                    aVector,
-                                    xVector),
-                                bVector),
-                            xVector),
-                        cVector);
-            }
+        EvaluateScalar(
+            xValues,
+            yValues,
+            index,
+            count,
+            a,
+            b,
+            c);
+    }
+
+    private static void EvaluateNeonFma(
+        double[] xValues,
+        double[] yValues,
+        int count,
+        double a,
+        double b,
+        double c)
+    {
+        Vector128<double> aVector = Vector128.Create(a);
+        Vector128<double> bVector = Vector128.Create(b);
+        Vector128<double> cVector = Vector128.Create(c);
+
+        int index = 0;
+        int width = Vector128<double>.Count;
+        int vectorizedCount = count - count % width;
+
+        for (;
+             index < vectorizedCount;
+             index += width)
+        {
+            Vector128<double> xVector =
+                Vector128.LoadUnsafe(
+                    ref xValues[index]);
+
+            // AArch64 FMLA, API order: addend + left * right.
+            Vector128<double> axPlusB =
+                AdvSimd.Arm64.FusedMultiplyAdd(
+                    bVector,
+                    aVector,
+                    xVector);
+
+            Vector128<double> yVector =
+                AdvSimd.Arm64.FusedMultiplyAdd(
+                    cVector,
+                    axPlusB,
+                    xVector);
+
+            yVector.StoreUnsafe(
+                ref yValues[index]);
+        }
+
+        EvaluateScalar(
+            xValues,
+            yValues,
+            index,
+            count,
+            a,
+            b,
+            c);
+    }
+
+    private static void EvaluateArmVector128(
+        double[] xValues,
+        double[] yValues,
+        int count,
+        double a,
+        double b,
+        double c)
+    {
+        Vector128<double> aVector = Vector128.Create(a);
+        Vector128<double> bVector = Vector128.Create(b);
+        Vector128<double> cVector = Vector128.Create(c);
+
+        int index = 0;
+        int width = Vector128<double>.Count;
+        int vectorizedCount = count - count % width;
+
+        for (;
+             index < vectorizedCount;
+             index += width)
+        {
+            Vector128<double> xVector =
+                Vector128.LoadUnsafe(
+                    ref xValues[index]);
+
+            // Generic Vector128 vẫn là managed SIMD 128-bit trên ARM64.
+            // Không giả FMA nếu Mono chưa expose AdvSimd.Arm64.
+            Vector128<double> yVector =
+                ((aVector * xVector) + bVector) * xVector + cVector;
 
             yVector.StoreUnsafe(
                 ref yValues[index]);
@@ -2507,8 +2524,7 @@ public static class ParabolaSimdEvaluator
              index < count;
              index++)
         {
-            double x =
-                xValues[index];
+            double x = xValues[index];
 
             yValues[index] =
                 Math.FusedMultiplyAdd(
