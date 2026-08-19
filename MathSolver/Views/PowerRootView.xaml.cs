@@ -4205,8 +4205,11 @@ public partial class PowerRootView : LocalizedSolverView
                         .GetResult();
                 };
 
+            // Read the shared Hardware acceleration switch at export start.
+            // Windows dispatches to AVX2 when available; Android ARM64 dispatches
+            // to NEON/AdvSIMD. Turning the switch off forces the scalar formatter.
             bool useSimdForExport =
-                CalculationAccelerationManager.UseSimd;
+                CalculationAccelerationManager.UsePowerExportSimd;
 
             await Task.Run(
                 () => WriteFullResultFile(

@@ -16,7 +16,7 @@ The heart of the application's computation engine:
 - **Multiplication**: Large products use two exact NTTs and CRT; butterfly work inside every transform is shared by the configured logical-processor worker budget.
 - **Bit-shift shortcut**: `|a| = 2^k` powers use `BigInteger.One << (k * n)` — single-threaded, exact result. Binary BigInteger intermediate results are imported into the same base-10,000 representation before TXT export. A 1,024-limb leaf is exactly 4,096 decimal digits, matching the export block size and keeping each leaf conversion small.
 - **TXT preparation**: For results requiring TXT export (`>= 100_001` digits), phase 3 prepares the reusable base-10,000 magnitude through the same `ParallelBigUnsigned.Pow(|a|, n, workers, ...)` NTT/CRT pipeline used by normal parallel powers.
-- **TXT export**: Unified through `ParallelBigUnsigned.WriteDecimalBlocks()` and the optional AVX2 decimal formatter.
+- **TXT export**: Unified through `ParallelBigUnsigned.WriteDecimalBlocks()`. Decimal formatting uses AVX2 on Windows/x86 when available, NEON/AdvSIMD on Android ARM64, and scalar fallback otherwise. Both SIMD paths are controlled by the shared Hardware acceleration switch.
 
 The old giant `BigInteger` binary-to-decimal `DivRem` import is no longer used by the bit-shift calculation path.
 
@@ -97,7 +97,7 @@ Detects hardware capabilities and exposes:
 | `AvxAvx2` | AVX/AVX-512 support |
 | `Avx512` | AVX-512 + hardware acceleration |
 
-**Usage policy**: NTT/CRT arithmetic: **scalar only**. SIMD production path currently only used for decimal formatting after Carry normalization, where the base-10,000 limbs are fully independent. Benchmark mode selection is controlled via settings and does not alter runtime algorithm behavior.
+**Usage policy**: NTT/CRT arithmetic: **scalar only**. SIMD production paths are used for the Parabola evaluator and decimal formatting after Carry normalization, where the base-10,000 limbs are fully independent. TXT export dispatches AVX2 on Windows/x86 and NEON/AdvSIMD on Android ARM64. The shared Hardware acceleration switch enables/disables these production SIMD paths; benchmark mode selection itself does not alter runtime algorithm behavior.
 
 ---
 
@@ -165,7 +165,7 @@ The most performance-critical UI component:
 - **Power mode**: Base ^ Exponent → uses `ParallelBigUnsigned.Pow()` with full worker budget.
 - **Root mode**: Root(n, d) → solves x^d = n via binary search over QuadDouble range; precision controlled by `MaxRootDecimalPlaces`.
 - **Cancellation**: `CancellationTokenSource` shared across the entire power operation and any active TXT export token. Cancellation is confirmed with a dialog before terminating worker teams.
-- **TXT export**: For results >= 100,001 digits, the engine prepares base-10,000 magnitude through the parallel NTT/CRT pipeline, then streams decimal blocks via `ParallelBigUnsigned.WriteDecimalBlocks()`. A progress bar shows the worker count during preparation.
+- **TXT export**: For results >= 100,001 digits, the engine prepares base-10,000 magnitude through the parallel NTT/CRT pipeline, then streams decimal blocks via `ParallelBigUnsigned.WriteDecimalBlocks()`. With Hardware acceleration enabled, formatting uses AVX2 on Windows/x86 or NEON/AdvSIMD on Android ARM64; disabling it forces scalar formatting. A progress bar shows the worker count during preparation.
 
 Key thresholds:
 - `MaxBaseInputDigits = 19` (fits in Int64 magnitude check)

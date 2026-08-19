@@ -25,8 +25,9 @@ public enum CalculationSimdMode
 /// Lưu trạng thái bật/tắt SIMD và tập lệnh benchmark đã chọn.
 /// Tùy chọn mode chỉ điều khiển benchmark. Các thuật toán khác vẫn có thể
 /// kiểm tra UseSimd để tự chọn đường xử lý thích hợp. Engine NTT/CRT lũy thừa
-/// giữ scalar; đường SIMD production hiện chỉ được dùng cho decimal formatting
-/// base-10,000 sau Carry khi phần tử đã hoàn toàn độc lập.
+/// giữ scalar; đường SIMD production dùng cho đồ thị Parabol và decimal
+/// formatting base-10,000 sau Carry. TXT export dùng AVX2 trên Windows/x86 và
+/// NEON/AdvSIMD trên Android ARM64, cùng chịu công tắc Hardware acceleration.
 /// </summary>
 public static class CalculationAccelerationManager
 {
@@ -165,6 +166,20 @@ public static class CalculationAccelerationManager
                 IsSimdAvailable;
         }
     }
+
+    /// <summary>
+    /// Effective SIMD state for the base-10,000 decimal formatter used by
+    /// large-power TXT export. It is driven by the same Hardware acceleration
+    /// switch as the Parabola evaluator, but also requires the concrete
+    /// production backend needed by the current platform.
+    /// </summary>
+    public static bool UsePowerExportSimd =>
+        UseSimd &&
+#if ANDROID
+        AdvSimd.Arm64.IsSupported;
+#else
+        Avx2.IsSupported;
+#endif
 
     public static CalculationSimdMode SelectedSimdMode
     {

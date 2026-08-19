@@ -7,6 +7,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+#if ANDROID
+using System.Runtime.Intrinsics.Arm;
+#endif
 using System.Runtime.Intrinsics.X86;
 
 namespace MathSolver.Numerics;
@@ -9349,11 +9352,29 @@ while (leftIndex + 1 < butterflyEnd)
         Vector256.Create(
             (ushort)'0');
 
+#if ANDROID
+    // Android ARM64 NEON uses the same exact reciprocal divide-by-10 as the
+    // AVX2 formatter.  Limbs are normalized to 0..9,999, so ushort lanes are
+    // sufficient and every conversion remains exact integer arithmetic.
+    private static readonly Vector128<ushort> NeonDivideBy10MagicU16 =
+        Vector128.Create(
+            (ushort)0xCCCD);
+
+    private static readonly Vector128<ushort> NeonTenU16 =
+        Vector128.Create(
+            (ushort)10);
+
+    private static readonly Vector128<ushort> NeonAsciiZeroU16 =
+        Vector128.Create(
+            (ushort)'0');
+#endif
+
     /// <summary>
     /// Formats fixed-width base-10,000 limbs in most-significant-first order.
-    /// AVX2 processes 16 limbs -> 64 UTF-16 characters per iteration using
-    /// exact reciprocal /10 in 16-bit lanes.  There is no floating-point
-    /// conversion and no modulo-prime arithmetic in this path.
+    /// Windows/x86 AVX2 processes 16 limbs -> 64 UTF-16 characters per
+    /// iteration. Android ARM64 NEON processes 8 limbs -> 32 UTF-16 characters
+    /// per iteration. Both paths use exact reciprocal /10 integer arithmetic;
+    /// scalar remains the final fallback when SIMD is disabled or unavailable.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void WriteFixedLimbsDescending(
@@ -9411,6 +9432,35 @@ while (leftIndex + 1 < butterflyEnd)
                 vectorizedLimbCount *
                 DigitsPerLimb;
         }
+#if ANDROID
+        else if (useSimd &&
+                 AdvSimd.Arm64.IsSupported &&
+                 remaining >= 8)
+        {
+            int vectorizedLimbCount =
+                remaining &
+                ~7;
+
+            WriteFixedLimbsDescendingNeon(
+                source,
+                sourceHigh,
+                vectorizedLimbCount,
+                destination.Slice(
+                    destinationOffset,
+                    vectorizedLimbCount *
+                    DigitsPerLimb));
+
+            sourceHigh -=
+                vectorizedLimbCount;
+
+            remaining -=
+                vectorizedLimbCount;
+
+            destinationOffset +=
+                vectorizedLimbCount *
+                DigitsPerLimb;
+        }
+#endif
 
         while (remaining > 0)
         {
@@ -9641,6 +9691,221 @@ while (leftIndex + 1 < butterflyEnd)
             outputOffset += 64;
         }
     }
+
+#if ANDROID
+    /// <summary>
+    /// ARM64 NEON formatter for Android TXT export. Eight base-10,000 limbs are
+    /// expanded into 32 UTF-16 digits per iteration. Source limbs are assembled
+    /// directly in descending order, then all /10, digit extraction and digit
+    /// interleaving is performed in 128-bit AdvSIMD registers.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WriteFixedLimbsDescendingNeon(
+        uint[] source,
+        int highestSourceIndex,
+        int limbCount,
+        Span<char> destination)
+    {
+        Span<ushort> outputCharacters =
+            MemoryMarshal.Cast<char, ushort>(
+                destination);
+
+        int sourceHigh =
+            highestSourceIndex;
+
+        int outputOffset = 0;
+
+        for (int processed = 0;
+             processed < limbCount;
+             processed += 8)
+        {
+            // ParallelBigUnsigned limbs are little-endian. Build the NEON
+            // lanes high -> low so the final character vectors can be stored
+            // directly without a scalar reversal pass.
+            Vector128<ushort> values =
+                Vector128.Create(
+                    (ushort)source[sourceHigh],
+                    (ushort)source[sourceHigh - 1],
+                    (ushort)source[sourceHigh - 2],
+                    (ushort)source[sourceHigh - 3],
+                    (ushort)source[sourceHigh - 4],
+                    (ushort)source[sourceHigh - 5],
+                    (ushort)source[sourceHigh - 6],
+                    (ushort)source[sourceHigh - 7]);
+
+            Vector128<ushort> q10 =
+                DivideBy10U16Neon(
+                    values);
+
+            Vector128<ushort> q100 =
+                DivideBy10U16Neon(
+                    q10);
+
+            Vector128<ushort> q1000 =
+                DivideBy10U16Neon(
+                    q100);
+
+            Vector128<ushort> ones =
+                AdvSimd.Subtract(
+                    values,
+                    AdvSimd.Multiply(
+                        q10,
+                        NeonTenU16));
+
+            Vector128<ushort> tens =
+                AdvSimd.Subtract(
+                    q10,
+                    AdvSimd.Multiply(
+                        q100,
+                        NeonTenU16));
+
+            Vector128<ushort> hundreds =
+                AdvSimd.Subtract(
+                    q100,
+                    AdvSimd.Multiply(
+                        q1000,
+                        NeonTenU16));
+
+            Vector128<ushort> thousands =
+                q1000;
+
+            thousands =
+                AdvSimd.Add(
+                    thousands,
+                    NeonAsciiZeroU16);
+
+            hundreds =
+                AdvSimd.Add(
+                    hundreds,
+                    NeonAsciiZeroU16);
+
+            tens =
+                AdvSimd.Add(
+                    tens,
+                    NeonAsciiZeroU16);
+
+            ones =
+                AdvSimd.Add(
+                    ones,
+                    NeonAsciiZeroU16);
+
+            // ZIP 16-bit lanes into [thousands,hundreds] and [tens,ones].
+            // Reinterpret each digit-pair as a 32-bit lane, then ZIP again so
+            // each output vector contains two complete 4-digit limbs.
+            Vector128<ushort> firstPairLow =
+                AdvSimd.Arm64.ZipLow(
+                    thousands,
+                    hundreds);
+
+            Vector128<ushort> secondPairLow =
+                AdvSimd.Arm64.ZipLow(
+                    tens,
+                    ones);
+
+            Vector128<ushort> firstPairHigh =
+                AdvSimd.Arm64.ZipHigh(
+                    thousands,
+                    hundreds);
+
+            Vector128<ushort> secondPairHigh =
+                AdvSimd.Arm64.ZipHigh(
+                    tens,
+                    ones);
+
+            Vector128<ushort> output0 =
+                AdvSimd.Arm64.ZipLow(
+                        firstPairLow.AsUInt32(),
+                        secondPairLow.AsUInt32())
+                    .AsUInt16();
+
+            Vector128<ushort> output1 =
+                AdvSimd.Arm64.ZipHigh(
+                        firstPairLow.AsUInt32(),
+                        secondPairLow.AsUInt32())
+                    .AsUInt16();
+
+            Vector128<ushort> output2 =
+                AdvSimd.Arm64.ZipLow(
+                        firstPairHigh.AsUInt32(),
+                        secondPairHigh.AsUInt32())
+                    .AsUInt16();
+
+            Vector128<ushort> output3 =
+                AdvSimd.Arm64.ZipHigh(
+                        firstPairHigh.AsUInt32(),
+                        secondPairHigh.AsUInt32())
+                    .AsUInt16();
+
+            output0.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset,
+                    8));
+
+            output1.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset + 8,
+                    8));
+
+            output2.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset + 16,
+                    8));
+
+            output3.CopyTo(
+                outputCharacters.Slice(
+                    outputOffset + 24,
+                    8));
+
+            sourceHigh -= 8;
+            outputOffset += 32;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<ushort> DivideBy10U16Neon(
+        Vector128<ushort> value)
+    {
+        // Exact for every normalized base-10,000 limb:
+        // floor(x / 10) = (x * 0xCCCD) >> 19.
+        // NEON widens four ushort lanes at a time to uint so the product does
+        // not overflow, shifts the 32-bit products, then narrows back to ushort.
+        Vector128<uint> lowerProduct =
+            AdvSimd.MultiplyWideningLower(
+                Vector128.GetLower(
+                    value),
+                Vector128.GetLower(
+                    NeonDivideBy10MagicU16));
+
+        Vector128<uint> upperProduct =
+            AdvSimd.MultiplyWideningLower(
+                Vector128.GetUpper(
+                    value),
+                Vector128.GetUpper(
+                    NeonDivideBy10MagicU16));
+
+        Vector128<uint> lowerQuotient =
+            AdvSimd.ShiftRightLogical(
+                lowerProduct,
+                19);
+
+        Vector128<uint> upperQuotient =
+            AdvSimd.ShiftRightLogical(
+                upperProduct,
+                19);
+
+        Vector64<ushort> lowerNarrow =
+            AdvSimd.ExtractNarrowingLower(
+                lowerQuotient);
+
+        Vector64<ushort> upperNarrow =
+            AdvSimd.ExtractNarrowingLower(
+                upperQuotient);
+
+        return Vector128.Create(
+            lowerNarrow,
+            upperNarrow);
+    }
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector256<ushort> DivideBy10U16(
