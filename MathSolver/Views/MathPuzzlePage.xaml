@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentPage
     x:Class="MathSolver.Views.MathPuzzlePage"
@@ -35,12 +35,23 @@
                             Style="{StaticResource SolverHeroTitleStyle}" />
 
                         <Label
+                            IsVisible="{OnPlatform Android=False, Default=True}"
                             Text="{localization:Translate Quiz.PracticeSubtitle}"
+                            Style="{StaticResource SolverHeroSubtitleStyle}" />
+
+                        <Label
+                            IsVisible="{OnPlatform Android=True, Default=False}"
+                            Text="{localization:QuizTranslate Quiz.PracticeSubtitleAlgorithmOnly}"
                             Style="{StaticResource SolverHeroSubtitleStyle}" />
 
                     </VerticalStackLayout>
 
-                    <Border Style="{StaticResource SolverCardStyle}">
+                    <!-- Android currently exposes only the deterministic Algorithm source.
+                         Hide the entire source/LLM card until the dedicated LiteRT-LM
+                         Android backend is implemented; Windows keeps the full selector. -->
+                    <Border
+                        IsVisible="{OnPlatform Android=False, Default=True}"
+                        Style="{StaticResource SolverCardStyle}">
                         <VerticalStackLayout Spacing="14">
 
                             <Label
@@ -558,7 +569,13 @@
                         <VerticalStackLayout Spacing="14">
 
                             <Label
+                                IsVisible="{OnPlatform Android=False, Default=True}"
                                 Text="{localization:Translate Quiz.ModeTitle}"
+                                Style="{StaticResource SolverSectionTitleStyle}" />
+
+                            <Label
+                                IsVisible="{OnPlatform Android=True, Default=False}"
+                                Text="{localization:QuizTranslate Quiz.ModeTitleAlgorithmOnly}"
                                 Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <Grid
@@ -606,7 +623,15 @@
                             </Grid>
 
                             <Label
+                                IsVisible="{OnPlatform Android=False, Default=True}"
                                 Text="{localization:Translate Quiz.OperationTitle}"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Label
+                                IsVisible="{OnPlatform Android=True, Default=False}"
+                                Text="{localization:QuizTranslate Quiz.OperationTitleAlgorithmOnly}"
                                 FontSize="17"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource TextPrimaryColor}" />

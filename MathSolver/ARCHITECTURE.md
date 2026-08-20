@@ -216,13 +216,13 @@ Android is now the platform-specific Material You surface while WinUI remains th
 
 ## AI/LLM platform split (2026-08-20)
 
-LLamaSharp/GGUF inference is now Windows-only. The Android target no longer restores or packages `LLamaSharp`/`LLamaSharp.Backend.Cpu.Android`, does not probe a saved GGUF model path, and hides the AI/LLM generation source. Android continues to expose the deterministic Algorithm quiz source only until a dedicated LiteRT-LM backend is implemented. Shared prompt/JSON contracts and validators remain platform-neutral so they can be reused by the future Android backend.
+LLamaSharp/GGUF inference is now Windows-only. The Android target no longer restores or packages `LLamaSharp`/`LLamaSharp.Backend.Cpu.Android`, does not probe a saved GGUF model path, and hides the entire quiz source-selection/LLM card. Android goes straight to the deterministic Algorithm workflow, with its visible steps renumbered to 1) question mode and 2) problem type, until a dedicated LiteRT-LM backend is implemented. Shared prompt/JSON contracts and validators remain platform-neutral so they can be reused by the future Android backend.
 
 ## Windows Gemma model catalog
 
 - Windows keeps LLamaSharp/GGUF as its local LLM runtime.
 - The model catalog includes Gemma 4 E2B/E4B as one-click download choices.
-- Gemma 3 1B uses the LM Studio Community `Q8_0` GGUF (`gemma-3-1b-it-Q8_0.gguf`, about 1.07 GB, quantized by bartowski). Q8_0 is preferred over the previous Q4_K_M catalog entry after app testing showed repeated/gibberish output with Q4 builds; the higher-precision quantization trades some size/speed for better output stability. On Windows, Gemma 3 now uses the same resumable in-app Hugging Face download flow and save-folder confirmation as Gemma 4. The single ↗ button in the catalog header opens the currently selected model page on Hugging Face.
+- Gemma 3 1B uses ggml-org's `Q8_0` GGUF (`gemma-3-1b-it-Q8_0.gguf`, about 1.07 GB) from `ggml-org/gemma-3-1b-it-GGUF`. Q8_0 remains preferred over the Q4 catalog entries after app testing showed more repeated/gibberish output with Q4 builds; the higher-precision quantization trades some size/speed for better output stability. On Windows, Gemma 3 uses the same resumable in-app Hugging Face download flow and save-folder confirmation as Gemma 4. The single ↗ button in the catalog header opens the currently selected model page on Hugging Face.
 - Gemma 3 1B basic-arithmetic generation uses a compact, operation-specific semantic scaffold. The scaffold fixes the roles of the two C# numbers (add/remove/groups/share equally), forbids third numeric facts and unrelated measurement units, and requires an unambiguous operation relationship. For Gemma 3 only, `solution_lead` for basic arithmetic is normalized by C# from the trusted operation + answer unit before validation, so the 1B model cannot leak a calculation/result or change the requested quantity. Gemma 4 keeps the existing more flexible prompt path.
 
 ## AI generation cancellation

@@ -53,18 +53,18 @@ public sealed class Gemma4ModelDownloadService
             Timeout = Timeout.InfiniteTimeSpan
         };
 
-    // Gemma 3 1B uses the LM Studio Community Q8_0 GGUF quantization
-    // (quantized by bartowski). The public Hugging Face resolve URL is handled
-    // by the same resumable in-app downloader used by Gemma 4.
+    // Gemma 3 1B uses ggml-org's Q8_0 GGUF build. The public Hugging Face
+    // resolve URL is handled by the same resumable in-app downloader used by
+    // Gemma 4, while the catalog header opens the ggml-org model card.
     public static Gemma4ModelDescriptor Gemma3_1B { get; } =
         new(
             Gemma4ModelVariant.Gemma3_1B,
             "Gemma 3 1B Q8_0",
             "gemma-3-1b-it-Q8_0.gguf",
             new Uri(
-                "https://huggingface.co/lmstudio-community/gemma-3-1b-it-GGUF"),
+                "https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF"),
             new Uri(
-                "https://huggingface.co/lmstudio-community/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q8_0.gguf?download=true"),
+                "https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q8_0.gguf?download=true"),
             1_070_000_000L);
 
     public static Gemma4ModelDescriptor E2B { get; } =
