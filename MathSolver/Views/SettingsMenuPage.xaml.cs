@@ -797,6 +797,31 @@ public partial class SettingsMenuPage : ContentView
             nameof(AboutPage));
     }
 
+    private void OnResetTapped(
+        object? sender,
+        TappedEventArgs e)
+    {
+        // Keep the quick-menu reset behavior identical to the full Settings
+        // page. XAML references this handler directly, so it must exist with
+        // the exact TapGestureRecognizer signature for Release XAML compilation.
+        AppThemeManager.ResetToDefault();
+        AppFontManager.ResetToDefault();
+        AppLanguageManager.ResetToDefault();
+        DeveloperModeManager.ResetToDefault();
+        ResultNumberDisplayMode.ResetToDefault();
+
+#if ANDROID
+        // Dynamic Material You color is also part of the appearance reset.
+        // This may recreate the Android activity when dynamic color was active.
+        AndroidMaterialYouManager.SetDynamicColorEnabled(false);
+#endif
+
+        RefreshPopupThemeResources();
+        RefreshVectorThemeIcons();
+        LocalizationService.RefreshAll();
+        UpdateState();
+    }
+
     private async void OnAdvancedColorClicked(
         object? sender,
         EventArgs e)
