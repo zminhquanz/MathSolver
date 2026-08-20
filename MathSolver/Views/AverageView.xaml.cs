@@ -15,6 +15,9 @@ public partial class AverageView : LocalizedSolverView
     private const int ResultSignificantDigits =
         OctoDouble.SignificantDigits;
 
+    private const int AverageResultMaxDecimalPlaces =
+        10;
+
     private static readonly BigInteger MinInt128Value =
         (BigInteger)Int128.MinValue;
 
@@ -417,7 +420,7 @@ public partial class AverageView : LocalizedSolverView
                 calculation.SumDenominator);
 
         string resultText =
-            FormatRational(
+            FormatAverageResult(
                 calculation.SumNumerator,
                 calculation.AverageDenominator);
 
@@ -601,6 +604,144 @@ public partial class AverageView : LocalizedSolverView
         }
 
         return DecimalParseError.None;
+    }
+
+    /// <summary>
+    /// Kết quả trung bình cộng dùng tối đa 10 chữ số sau dấu thập phân khi
+    /// phép chia tạo số thập phân vô hạn tuần hoàn. Các kết quả hữu hạn
+    /// (ví dụ 1.5, 0.125) vẫn được giữ chính xác, không thêm số 0 thừa.
+    /// Đây là formatter dùng chung cho Windows và Android.
+    /// </summary>
+    private static string FormatAverageResult(
+        BigInteger numerator,
+        BigInteger denominator)
+    {
+        if (denominator.IsZero ||
+            numerator.IsZero)
+        {
+            return FormatRational(
+                numerator,
+                denominator);
+        }
+
+        BigInteger gcd =
+            BigInteger.GreatestCommonDivisor(
+                BigInteger.Abs(numerator),
+                BigInteger.Abs(denominator));
+
+        BigInteger reducedDenominator =
+            BigInteger.Abs(denominator) / gcd;
+
+        // Một phân số tối giản chỉ có thừa số 2 và 5 ở mẫu thì có biểu
+        // diễn thập phân hữu hạn. Những trường hợp đó giữ formatter chính
+        // xác hiện tại; chỉ số tuần hoàn mới cần giới hạn 10 chữ số.
+        while ((reducedDenominator & 1) == 0)
+        {
+            reducedDenominator >>= 1;
+        }
+
+        while (reducedDenominator % 5 == 0)
+        {
+            reducedDenominator /= 5;
+        }
+
+        if (reducedDenominator.IsOne)
+        {
+            return FormatRational(
+                numerator,
+                denominator);
+        }
+
+        return FormatRationalWithMaxDecimalPlaces(
+            numerator,
+            denominator,
+            AverageResultMaxDecimalPlaces);
+    }
+
+    /// <summary>
+    /// Làm tròn chính xác bằng BigInteger, không đi qua double/decimal nên
+    /// không phát sinh sai số nhị phân. Chữ số 11 dùng để quyết định làm
+    /// tròn; phần hiển thị sau đó được cắt số 0 tận cùng.
+    /// </summary>
+    private static string FormatRationalWithMaxDecimalPlaces(
+        BigInteger numerator,
+        BigInteger denominator,
+        int maxDecimalPlaces)
+    {
+        if (denominator.IsZero ||
+            numerator.IsZero ||
+            maxDecimalPlaces <= 0)
+        {
+            return FormatRational(
+                numerator,
+                denominator);
+        }
+
+        bool negative =
+            numerator.Sign !=
+            denominator.Sign;
+
+        BigInteger absoluteNumerator =
+            BigInteger.Abs(numerator);
+
+        BigInteger absoluteDenominator =
+            BigInteger.Abs(denominator);
+
+        BigInteger scale =
+            BigInteger.Pow(
+                10,
+                maxDecimalPlaces);
+
+        BigInteger scaledValue =
+            BigInteger.DivRem(
+                absoluteNumerator * scale,
+                absoluteDenominator,
+                out BigInteger remainder);
+
+        // Round half-up ở chữ số thập phân tiếp theo. Vì đang làm việc với
+        // trị tuyệt đối, dấu âm chỉ được gắn lại sau khi làm tròn.
+        if ((remainder << 1) >=
+            absoluteDenominator)
+        {
+            scaledValue++;
+        }
+
+        BigInteger integerPart =
+            BigInteger.DivRem(
+                scaledValue,
+                scale,
+                out BigInteger fractionalPart);
+
+        string sign =
+            negative && !scaledValue.IsZero
+                ? "−"
+                : string.Empty;
+
+        string integerText =
+            integerPart.ToString(
+                CultureInfo.InvariantCulture);
+
+        if (fractionalPart.IsZero)
+        {
+            return
+                IntegerInputFormatter
+                    .AddThousandsSeparatorsToPlainNumber(
+                        sign + integerText);
+        }
+
+        string fractionalText =
+            fractionalPart
+                .ToString(
+                    CultureInfo.InvariantCulture)
+                .PadLeft(
+                    maxDecimalPlaces,
+                    '0')
+                .TrimEnd('0');
+
+        return
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    $"{sign}{integerText}.{fractionalText}");
     }
 
     /// <summary>
