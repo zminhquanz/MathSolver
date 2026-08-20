@@ -127,15 +127,10 @@
                     ColumnSpacing="16"
                     RowSpacing="16">
 
-                    <ScrollView
-                        x:Name="ModelListScrollView"
+                    <VerticalStackLayout
+                        x:Name="ModelListPanel"
                         Grid.Column="0"
-                        Orientation="Vertical"
-                        VerticalScrollBarVisibility="Always">
-                        <VerticalStackLayout
-                            x:Name="ModelListPanel"
-                            Padding="0,0,4,8"
-                            Spacing="{OnPlatform Android=10, WinUI=12, Default=12}">
+                        Spacing="{OnPlatform Android=10, WinUI=12, Default=12}">
 
                         <Border
                             IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
@@ -167,79 +162,6 @@
                             FontSize="14"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextSecondaryColor}" />
-
-                        <Border
-                            x:Name="Gemma3ModelBorder"
-                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                            Padding="16"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="1">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="18" />
-                            </Border.StrokeShape>
-
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="10">
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
-                                    <Label
-                                        x:Name="Gemma3TitleLabel"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
-                                    <Label
-                                        x:Name="Gemma3DescriptionLabel"
-                                        FontSize="13"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
-                                </VerticalStackLayout>
-
-                                <Button
-                                    x:Name="DownloadGemma3Button"
-                                    Grid.RowSpan="3"
-                                    Grid.Column="1"
-                                    Text="↓ Tải"
-                                    WidthRequest="92"
-                                    HeightRequest="40"
-                                    Padding="0"
-                                    CornerRadius="18"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource PrimaryColor}"
-                                    TextColor="{DynamicResource OnPrimaryColor}"
-                                    VerticalOptions="Center"
-                                    Clicked="OnDownloadGemma3Clicked" />
-
-                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
-                                    <Border
-                                        Padding="10,4"
-                                        BackgroundColor="{DynamicResource SurfaceColor}"
-                                        Stroke="{DynamicResource PrimaryBorderBrush}"
-                                        StrokeThickness="1">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="999" />
-                                        </Border.StrokeShape>
-                                        <Label
-                                            x:Name="Gemma3MetadataLabel"
-                                            FontSize="11"
-                                            FontAttributes="Bold"
-                                            TextColor="{DynamicResource PrimaryColor}" />
-                                    </Border>
-                                </HorizontalStackLayout>
-
-                                <Label
-                                    Grid.Row="2"
-                                    Grid.Column="0"
-                                    x:Name="Gemma3CardHintLabel"
-                                    FontSize="12"
-                                    LineHeight="1.25"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
-
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnGemma3RowTapped" />
-                                </Grid.GestureRecognizers>
-                            </Grid>
-                        </Border>
 
                         <Border
                             x:Name="E2BModelBorder"
@@ -400,8 +322,7 @@
                                 LineHeight="1.25"
                                 TextColor="{DynamicResource WarningColor}" />
                         </Border>
-                        </VerticalStackLayout>
-                    </ScrollView>
+                    </VerticalStackLayout>
 
                     <Grid
                         x:Name="ReadmePanel"

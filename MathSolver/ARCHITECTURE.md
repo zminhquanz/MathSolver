@@ -1,4 +1,4 @@
-﻿# Math Solver Architecture Reference
+# Math Solver Architecture Reference
 
 ## Overview
 
@@ -216,22 +216,13 @@ Android is now the platform-specific Material You surface while WinUI remains th
 
 ## AI/LLM platform split (2026-08-20)
 
-LLamaSharp/GGUF inference is now Windows-only. The Android target no longer restores or packages `LLamaSharp`/`LLamaSharp.Backend.Cpu.Android`, does not probe a saved GGUF model path, and hides the entire quiz source-selection/LLM card. Android goes straight to the deterministic Algorithm workflow, with its visible steps renumbered to 1) question mode and 2) problem type, until a dedicated LiteRT-LM backend is implemented. Shared prompt/JSON contracts and validators remain platform-neutral so they can be reused by the future Android backend.
+LLamaSharp/GGUF inference is Windows-only. The Android target does not restore or package LLamaSharp, does not probe a saved GGUF model path, and hides the entire quiz source-selection / AI card. Android goes directly to the deterministic Algorithm workflow, with visible steps renumbered to question mode and problem type, until a dedicated LiteRT-LM backend is implemented. The obsolete non-Windows LocalLlmQuizGenerator placeholder is removed; all live LocalLlmQuizGenerator references are guarded by `#if WINDOWS`.
 
-## Windows Gemma model catalog
 
-- Windows keeps LLamaSharp/GGUF as its local LLM runtime.
-- The model catalog includes Gemma 4 E2B/E4B as one-click download choices.
-- Gemma 3 1B uses ggml-org's `Q8_0` GGUF (`gemma-3-1b-it-Q8_0.gguf`, about 1.07 GB) from `ggml-org/gemma-3-1b-it-GGUF`. Q8_0 remains preferred over the Q4 catalog entries after app testing showed more repeated/gibberish output with Q4 builds; the higher-precision quantization trades some size/speed for better output stability. On Windows, Gemma 3 uses the same resumable in-app Hugging Face download flow and save-folder confirmation as Gemma 4. The single ↗ button in the catalog header opens the currently selected model page on Hugging Face.
-- Gemma 3 1B basic-arithmetic generation uses a compact, operation-specific semantic scaffold. The scaffold fixes the roles of the two C# numbers (add/remove/groups/share equally), forbids third numeric facts and unrelated measurement units, and requires an unambiguous operation relationship. For Gemma 3 only, `solution_lead` for basic arithmetic is normalized by C# from the trusted operation + answer unit before validation, so the 1B model cannot leak a calculation/result or change the requested quantity. Gemma 4 keeps the existing more flexible prompt path.
 
-## AI generation cancellation
+## Windows local-LLM baseline
 
-On Windows, the shared **Create with AI** action becomes a red **Stop generation** button while Local LLM inference is active. The stop action cancels the existing generation `CancellationTokenSource`; it does not unload the model. When cancellation completes, the button returns to the normal primary-color Create with AI state so the loaded Gemma model can be reused immediately.
-
-### Gemma 3 1B arithmetic wording guard (Windows)
-- Gemma 3 subtraction prompts now choose one context-appropriate removal action instead of presenting a slash-separated synonym list. Pet contexts use ownership-transfer wording (for example, giving animals to another family to care for); ornamental plants use gifting wording; fruit/sweets use giving-to-a-friend wording; school supplies/books/comics/toys use a single gifting action.
-- `cắt bỏ` is intentionally not used by the basic counting catalog because these contracts count whole objects; cutting would change the semantic unit rather than remove a counted object.
-- The Gemma 3 arithmetic validator rejects leaked prompt/contract labels and slash-separated instruction text, then retries from a clean context with the authoritative contract.
-- Gemma 3 addition prompts now mirror the contextual subtraction guard: each story category gets one natural acquisition action instead of the previous `THÊM/NHẬN THÊM` synonym pair. Examples include buying more school supplies/books, receiving toys as gifts, picking more fruit, being given more sweets, adopting more pets, and buying more ornamental plants. The validator requires that contextual action and rejects slash-separated instruction leakage before retrying.
-- Gemma 3 now uses the same full `BuildSystemPrompt` policy as Gemma 4. Because Gemma 3 IT has no system role, the policy is embedded verbatim in the first user turn by the Gemma 3 chat formatter; the operation-specific arithmetic scaffold remains an additional constraint rather than a replacement system policy.
+- The supported GGUF family is Gemma 4 only (E2B/E4B QAT Q4_0).
+- The Hugging Face model catalog contains only the E2B and E4B one-click download cards.
+- The main download action is labeled generically as “Download AI model from HuggingFace” / “Tải model AI từ HuggingFace”.
+- While local inference is active, the Create-with-AI button becomes a red Stop-generation button that cancels the current token generation without unloading the selected model.

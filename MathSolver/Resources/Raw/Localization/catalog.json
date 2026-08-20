@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 1,
   "sourceCulture": "vi-VN",
   "entries": [
@@ -754,7 +754,7 @@
     },
     {
       "key": "Quiz.ChooseDownloadModelTitle",
-      "source": "Chọn model Gemma",
+      "source": "Chọn model Gemma 4",
       "mode": "exact"
     },
     {
@@ -779,12 +779,12 @@
     },
     {
       "key": "Quiz.ModelCatalogTitle",
-      "source": "Thư viện model Gemma",
+      "source": "Thư viện model Gemma 4",
       "mode": "exact"
     },
     {
       "key": "Quiz.ModelCatalogSubtitle",
-      "source": "Chọn model để xem chi tiết. Tất cả model trong thư viện đều tải trực tiếp trong ứng dụng; nút ↗ phía trên mở trang model đã chọn trên Hugging Face.",
+      "source": "Chọn model để xem chi tiết. Khi bấm Tải, ứng dụng sẽ hiện bước xác nhận nơi lưu file trước khi bắt đầu tải.",
       "mode": "exact"
     },
     {
@@ -884,7 +884,7 @@
     },
     {
       "key": "Quiz.ModelCatalogDownloadModel",
-      "source": "Tải {0}",
+      "source": "Tải Gemma 4 {0}",
       "mode": "exact"
     },
     {

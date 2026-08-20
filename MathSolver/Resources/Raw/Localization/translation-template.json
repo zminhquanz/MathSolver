@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 1,
   "culture": "xx-XX",
   "languageName": "Your language in English",
@@ -146,13 +146,13 @@
     "Quiz.LlmSettingsDescription": "AI viết đề theo chương trình tiểu học Việt Nam. Ứng dụng tự tính đáp án và kiểm tra lại trước khi hiển thị.",
     "Quiz.DownloadGemma4": "⬇️ Tải model AI từ HuggingFace",
     "Quiz.StopModelDownload": "⏹️ Dừng tải model",
-    "Quiz.ChooseDownloadModelTitle": "Chọn model Gemma",
+    "Quiz.ChooseDownloadModelTitle": "Chọn model Gemma 4",
     "Quiz.DownloadE2BOption": "E2B • Nhẹ hơn • 3,35 GB",
     "Quiz.DownloadE4BOption": "E4B • Chất lượng tốt hơn • 5,15 GB",
     "Quiz.OpenModelWebsiteOption": "Mở trang {0} trên Hugging Face",
     "Quiz.OpenModelWebsiteFailed": "Không thể mở trang model trên Hugging Face.",
-    "Quiz.ModelCatalogTitle": "Thư viện model Gemma",
-    "Quiz.ModelCatalogSubtitle": "Chọn model để xem chi tiết. Tất cả model trong thư viện đều tải trực tiếp trong ứng dụng; nút ↗ phía trên mở trang model đã chọn trên Hugging Face.",
+    "Quiz.ModelCatalogTitle": "Thư viện model Gemma 4",
+    "Quiz.ModelCatalogSubtitle": "Chọn model để xem chi tiết. Khi bấm Tải, ứng dụng sẽ hiện bước xác nhận nơi lưu file trước khi bắt đầu tải.",
     "Quiz.ModelCatalogModelsHeading": "MODEL PHÙ HỢP",
     "Quiz.ModelCatalogReadmeHeading": "CHI TIẾT",
     "Quiz.ModelCatalogGuideTitle": "Chọn model phù hợp thiết bị",
@@ -172,7 +172,7 @@
     "Quiz.ModelCatalogFileHeading": "Thông tin bản tải",
     "Quiz.ModelCatalogFileBody": "{0}\nKhoảng {1} GB • GGUF • QAT Q4_0\nNguồn: Google DeepMind trên Hugging Face • Apache 2.0",
     "Quiz.ModelCatalogOpenPage": "Mở trang {0} trên Hugging Face",
-    "Quiz.ModelCatalogDownloadModel": "Tải {0}",
+    "Quiz.ModelCatalogDownloadModel": "Tải Gemma 4 {0}",
     "Quiz.ModelCatalogOpenFailedTitle": "Không thể mở trang",
     "Quiz.ModelCatalogClose": "Đóng",
     "Quiz.ModelCatalogFooterHint": "Sau khi bấm Tải, bạn có thể chọn thư mục lưu model bằng trình chọn thư mục của hệ điều hành rồi mới bắt đầu tải.",
@@ -203,7 +203,6 @@
     "Quiz.ModelRecommendation": "Ứng dụng chỉ hỗ trợ Gemma 4. Nên chọn E2B/E4B Instruct bản Q4 vì tạo câu tiếng Việt tự nhiên, đủ tốt cho toán tiểu học và nhẹ hơn để tiết kiệm pin.",
     "Quiz.RecommendedModelDetected": "Gemma 4 bản gọn nhẹ đã sẵn sàng để tạo đề.",
     "Quiz.CreateWithAi": "✨ Tạo đề bằng AI",
-    "Quiz.StopAiGeneration": "⏹️ Dừng tạo đề",
     "Quiz.ShowAiDiagnostics": "Hiện JSON & Log",
     "Quiz.HideAiDiagnostics": "Ẩn JSON & Log",
     "Quiz.AiDiagnosticsTitle": "JSON và log kiểm tra AI",
@@ -1294,7 +1293,8 @@
     "Equation.Quadratic.Step4.TwoRoots.SubstituteA": "Thay a = {0},",
     "Equation.Quadratic.Step4.TwoRoots.SubstituteB": "b = {0},",
     "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta": "Δ = {0} vào công thức:",
-    "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Tính {0}:"
+    "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Tính {0}:",
+    "Quiz.StopAiGeneration": "⏹️ Dừng tạo đề"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

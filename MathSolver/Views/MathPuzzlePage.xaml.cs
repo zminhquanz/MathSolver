@@ -12,6 +12,8 @@ namespace MathSolver.Views;
 
 public partial class MathPuzzlePage : ContentPage
 {
+    private const int LlmMaximumAttempts = 3;
+
     private static readonly JsonSerializerOptions PrettyJsonOptions =
         new()
         {
@@ -34,7 +36,9 @@ public partial class MathPuzzlePage : ContentPage
     private readonly SortedDictionary<int, string> _llmRawOutputs = new();
     private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
     private readonly EssayAnswerValidator _essayAnswerValidator;
+#if WINDOWS
     private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
+#endif
     private readonly QuizLlmModelStore _llmModelStore = new();
     private readonly Gemma4ModelDownloadService
         _gemma4ModelDownloadService = new();
@@ -131,6 +135,7 @@ public partial class MathPuzzlePage : ContentPage
         _motionQuizGenerator =
             new MotionQuizGenerator();
 
+#if WINDOWS
         _localLlmQuizGenerator =
             new LocalLlmQuizGenerator(
                 _quizGenerator,
@@ -140,6 +145,7 @@ public partial class MathPuzzlePage : ContentPage
                 _findXQuizGenerator,
                 _proportionQuizGenerator,
                 _motionQuizGenerator);
+#endif
 
 #if WINDOWS
         _llmModelPath =
@@ -192,9 +198,11 @@ public partial class MathPuzzlePage : ContentPage
         RefreshStatefulButtonTheme();
         UpdateAiTeacherState();
 
+#if WINDOWS
         // Nếu quay lại trong grace period thì giữ nguyên GGUF weights đang
         // nằm trong RAM; câu kế tiếp chỉ cần tạo context/KV mới.
         _localLlmQuizGenerator.CancelScheduledModelUnload();
+#endif
 
         BeginMainTabTransitionIfPending();
 
@@ -252,8 +260,10 @@ public partial class MathPuzzlePage : ContentPage
         // Không unload weights ngay khi đổi tab. Context/KV của lượt sinh
         // hiện tại sẽ được hủy khi cancellation hoàn tất; weights chỉ được
         // giải phóng nếu người dùng không quay lại sau 60 giây.
+#if WINDOWS
         _localLlmQuizGenerator.ScheduleModelUnload(
             ClearLlmQuestionAfterDelayedUnloadAsync);
+#endif
 
         // Mỗi lần rời tab lớn Toán đố là kết thúc toàn bộ phiên luyện tập.
         // Model đã chọn và weights cache vẫn tuân theo grace period 60 giây;
@@ -1216,8 +1226,10 @@ public partial class MathPuzzlePage : ContentPage
                         ? StringComparison.OrdinalIgnoreCase
                         : StringComparison.Ordinal))
             {
+#if WINDOWS
                 await _localLlmQuizGenerator.UnloadModelAsync(
                     cancellation.Token);
+#endif
             }
 
             _llmModelPath = selectedModelPath;
@@ -1372,8 +1384,10 @@ public partial class MathPuzzlePage : ContentPage
                         ? StringComparison.OrdinalIgnoreCase
                         : StringComparison.Ordinal))
             {
+#if WINDOWS
                 await _localLlmQuizGenerator.UnloadModelAsync(
                     cancellation.Token);
+#endif
             }
 
             cancellation.Token.ThrowIfCancellationRequested();
@@ -1525,8 +1539,10 @@ public partial class MathPuzzlePage : ContentPage
 
         try
         {
+#if WINDOWS
             await _localLlmQuizGenerator.UnloadModelAsync(
                 cancellation.Token);
+#endif
 
             cancellation.Token.ThrowIfCancellationRequested();
 
@@ -1642,6 +1658,7 @@ public partial class MathPuzzlePage : ContentPage
             questionNumberOnSuccess: null);
     }
 
+#if WINDOWS
     private async Task GenerateLlmQuestionAsync(
         int? questionNumberOnSuccess)
     {
@@ -1735,25 +1752,6 @@ public partial class MathPuzzlePage : ContentPage
 
             LlmQuizGenerationResult result;
 
-#if ANDROID
-            // llama.cpp context creation + prompt prefill are native CPU work.
-            // Không để phần này chạy trên MAUI UI SynchronizationContext: trên
-            // điện thoại ARM64 nó có thể khóa main thread trước token đầu tiên
-            // dù ActivityIndicator native vẫn còn animation. Progress<T> được
-            // tạo ở UI thread phía trên nên callback vẫn marshal về UI đúng.
-            result =
-                await Task.Run(
-                    async () =>
-                        await _localLlmQuizGenerator.GenerateAsync(
-                            _llmModelPath,
-                            _selectedMode,
-                            problemRequest,
-                            AppLanguageManager.CurrentLanguage,
-                            progress,
-                            cancellation.Token)
-                            .ConfigureAwait(false),
-                    cancellation.Token);
-#else
             result =
                 await _localLlmQuizGenerator.GenerateAsync(
                     _llmModelPath,
@@ -1762,7 +1760,6 @@ public partial class MathPuzzlePage : ContentPage
                     AppLanguageManager.CurrentLanguage,
                     progress,
                     cancellation.Token);
-#endif
 
             // Vô hiệu hóa callback Progress<T> đang chờ trên UI thread trước
             // khi hiển thị trạng thái cuối. Nếu không, ModelLoaded/Validating
@@ -1782,7 +1779,7 @@ public partial class MathPuzzlePage : ContentPage
                     new(
                         LlmQuizDiagnosticEvent.RuntimeError,
                         Math.Max(1, result.Attempts),
-                        LocalLlmQuizGenerator.MaximumAttempts,
+                        LlmMaximumAttempts,
                         result.ErrorCode));
             }
 
@@ -1845,6 +1842,11 @@ public partial class MathPuzzlePage : ContentPage
             cancellation.Dispose();
         }
     }
+#else
+    private Task GenerateLlmQuestionAsync(
+        int? questionNumberOnSuccess) =>
+        Task.CompletedTask;
+#endif
 
     private void UpdateLlmProgress(
         LlmQuizProgress progress)
@@ -1942,7 +1944,7 @@ public partial class MathPuzzlePage : ContentPage
                 "NotEnoughMemory" => "Quiz.NotEnoughMemory",
                 "ModelRuntimeError" => "Quiz.ModelRuntimeError",
                 _ when result.Attempts >=
-                    LocalLlmQuizGenerator.MaximumAttempts =>
+                    LlmMaximumAttempts =>
                     "Quiz.GenerationFailedAfterRetries",
                 _ => "Quiz.GenerationError"
             };
@@ -2042,10 +2044,14 @@ public partial class MathPuzzlePage : ContentPage
         bool hasSelectedModel =
             !string.IsNullOrWhiteSpace(_llmModelPath);
 
+#if WINDOWS
         bool modelIsLoaded =
             hasSelectedModel &&
             _localLlmQuizGenerator.IsModelLoaded(
                 _llmModelPath);
+#else
+        bool modelIsLoaded = false;
+#endif
 
         string key;
         string colorKey;

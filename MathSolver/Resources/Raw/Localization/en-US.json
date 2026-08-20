@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 1,
   "culture": "en-US",
   "languageName": "English",
@@ -162,13 +162,13 @@
     "Quiz.LlmSettingsDescription": "AI writes elementary math problems. The app calculates the answer and checks each problem before showing it.",
     "Quiz.DownloadGemma4": "⬇️ Download AI model from HuggingFace",
     "Quiz.StopModelDownload": "⏹️ Stop model download",
-    "Quiz.ChooseDownloadModelTitle": "Choose a Gemma model",
+    "Quiz.ChooseDownloadModelTitle": "Choose a Gemma 4 model",
     "Quiz.DownloadE2BOption": "E2B • Lighter • 3.35 GB",
     "Quiz.DownloadE4BOption": "E4B • Better quality • 5.15 GB",
     "Quiz.OpenModelWebsiteOption": "Open the {0} page on Hugging Face",
     "Quiz.OpenModelWebsiteFailed": "The model page on Hugging Face could not be opened.",
-    "Quiz.ModelCatalogTitle": "Gemma model library",
-    "Quiz.ModelCatalogSubtitle": "Select a model to read its details. Every model in the library downloads directly inside the app; the ↗ button above opens the selected model page on Hugging Face.",
+    "Quiz.ModelCatalogTitle": "Gemma 4 model library",
+    "Quiz.ModelCatalogSubtitle": "Select a model to read its details. When you press Download, the app first shows where the file will be stored.",
     "Quiz.ModelCatalogModelsHeading": "BEST-FIT MODELS",
     "Quiz.ModelCatalogReadmeHeading": "DETAILS",
     "Quiz.ModelCatalogGuideTitle": "Pick the model that fits your device",
@@ -188,7 +188,7 @@
     "Quiz.ModelCatalogFileHeading": "Download information",
     "Quiz.ModelCatalogFileBody": "{0}\nAbout {1} GB • GGUF • QAT Q4_0\nSource: Google DeepMind on Hugging Face • Apache 2.0",
     "Quiz.ModelCatalogOpenPage": "Open the {0} page on Hugging Face",
-    "Quiz.ModelCatalogDownloadModel": "Download {0}",
+    "Quiz.ModelCatalogDownloadModel": "Download Gemma 4 {0}",
     "Quiz.ModelCatalogOpenFailedTitle": "Could not open page",
     "Quiz.ModelCatalogClose": "Close",
     "Quiz.ModelCatalogFooterHint": "After you press Download, you can choose the model folder with the system folder picker before the transfer begins.",
@@ -219,7 +219,6 @@
     "Quiz.ModelRecommendation": "The app supports Gemma 4 only. E2B/E4B Instruct Q4 is recommended because it writes natural questions, is strong enough for elementary math, and uses less battery.",
     "Quiz.RecommendedModelDetected": "A lightweight Gemma 4 model is ready to create questions.",
     "Quiz.CreateWithAi": "✨ Create with AI",
-    "Quiz.StopAiGeneration": "⏹️ Stop generation",
     "Quiz.ShowAiDiagnostics": "Show JSON & Log",
     "Quiz.HideAiDiagnostics": "Hide JSON & Log",
     "Quiz.AiDiagnosticsTitle": "AI JSON and validation log",
@@ -1368,7 +1367,8 @@
     "Equation.Quadratic.Step4.TwoRoots.SubstituteA": "Substitute a = {0},",
     "Equation.Quadratic.Step4.TwoRoots.SubstituteB": "b = {0},",
     "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta": "and Δ = {0} into the formula:",
-    "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Compute {0}:"
+    "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Compute {0}:",
+    "Quiz.StopAiGeneration": "⏹️ Stop generation"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

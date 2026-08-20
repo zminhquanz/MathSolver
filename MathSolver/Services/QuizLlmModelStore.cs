@@ -2,12 +2,6 @@ using System.Text;
 
 namespace MathSolver.Services;
 
-public enum QuizLlmModelArchitecture
-{
-    Gemma3,
-    Gemma4
-}
-
 /// <summary>
 /// Lưu đường dẫn model cục bộ. Trên thiết bị di động, file do document picker
 /// trả về được sao chép vào AppData để quyền truy cập không mất sau khi app đóng.
@@ -155,9 +149,6 @@ public sealed class QuizLlmModelStore
             Path.GetFileNameWithoutExtension(modelPath);
 
         return name.Contains(
-                   "Q8_0",
-                   StringComparison.OrdinalIgnoreCase) ||
-               name.Contains(
                    "Q4_K_M",
                    StringComparison.OrdinalIgnoreCase) ||
                name.Contains(
@@ -169,10 +160,6 @@ public sealed class QuizLlmModelStore
     }
 
     public static bool IsSupportedModelPath(
-        string? path) =>
-        GetModelArchitecture(path) is not null;
-
-    public static QuizLlmModelArchitecture? GetModelArchitecture(
         string? path)
     {
         if (string.IsNullOrWhiteSpace(path) ||
@@ -182,7 +169,7 @@ public sealed class QuizLlmModelStore
                 ".gguf",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return null;
+            return false;
         }
 
         try
@@ -191,18 +178,18 @@ public sealed class QuizLlmModelStore
 
             if (fileInfo.Length > MaximumModelFileSizeBytes)
             {
-                return null;
+                return false;
             }
 
             using Stream stream = File.OpenRead(path);
             string architecture =
                 ReadGgufArchitecture(stream);
 
-            return ParseSupportedArchitecture(architecture);
+            return IsGemma4Architecture(architecture);
         }
         catch
         {
-            return null;
+            return false;
         }
     }
 
@@ -224,32 +211,19 @@ public sealed class QuizLlmModelStore
         string architecture =
             ReadGgufArchitecture(stream);
 
-        if (ParseSupportedArchitecture(architecture) is null)
+        if (!IsGemma4Architecture(architecture))
         {
             throw new UnsupportedQuizLlmModelException();
         }
     }
 
-    private static QuizLlmModelArchitecture? ParseSupportedArchitecture(
+    private static bool IsGemma4Architecture(
         string architecture)
     {
-        if (string.Equals(
-                architecture,
-                "gemma3",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return QuizLlmModelArchitecture.Gemma3;
-        }
-
-        if (string.Equals(
-                architecture,
-                "gemma4",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return QuizLlmModelArchitecture.Gemma4;
-        }
-
-        return null;
+        return string.Equals(
+            architecture,
+            "gemma4",
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ReadGgufArchitecture(
