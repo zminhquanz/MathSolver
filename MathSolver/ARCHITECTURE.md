@@ -1,4 +1,4 @@
-# Math Solver Architecture Reference
+﻿# Math Solver Architecture Reference
 
 ## Overview
 
@@ -214,16 +214,16 @@ Android is now the platform-specific Material You surface while WinUI remains th
 - Custom SGK/math renderers and `GraphicsView` content remain shared and are not Materialized.
 - WinUI values are preserved through `#if ANDROID` and `OnPlatform ... WinUI=<previous value>` branches.
 
-## Android local LLM CPU performance profile (2026-08-20)
+## AI/LLM platform split (2026-08-20)
 
-Gemma 4 generation remains CPU-only through `LLamaSharp.Backend.Cpu.Android`; no Vulkan/GPU offload is enabled. After the Android first-token stability fix, `LocalLlmQuizGenerator` uses a mobile-specific performance profile:
+LLamaSharp/GGUF inference is now Windows-only. The Android target no longer restores or packages `LLamaSharp`/`LLamaSharp.Backend.Cpu.Android`, does not probe a saved GGUF model path, and hides the AI/LLM generation source. Android continues to expose the deterministic Algorithm quiz source only until a dedicated LiteRT-LM backend is implemented. Shared prompt/JSON contracts and validators remain platform-neutral so they can be reused by the future Android backend.
 
-- decode threads: up to 6 on 8-core Android devices;
-- prompt-prefill threads: up to 8 on Android;
-- Android batch / micro-batch: 128 / 64 (middle ground between the stable 64 / 32 fallback and the desktop 256 / 128 profile);
-- GGUF loading: memory mapping enabled again for faster model startup;
-- Flash Attention: enabled only on Android to improve token decode; Windows keeps its previous `false` baseline;
-- KV cache remains at LLamaSharp's default precision in this phase to avoid mixing KV quantization into the first performance tuning pass;
-- live UI progress is throttled on Android and full raw output snapshots are no longer cloned for speed-only updates.
+## Windows Gemma model catalog
 
-The context remains 2048 tokens, model weights remain cached for the existing grace period, and the Android generation call stays on the worker path introduced by the first-token stability fix.
+- Windows keeps LLamaSharp/GGUF as its local LLM runtime.
+- The model catalog includes Gemma 4 E2B/E4B as one-click download choices.
+- Gemma 3 1B uses the LM Studio Community `Q8_0` GGUF (`gemma-3-1b-it-Q8_0.gguf`, about 1.07 GB, quantized by bartowski). Q8_0 is preferred over the previous Q4_K_M catalog entry after app testing showed repeated/gibberish output with Q4 builds; the higher-precision quantization trades some size/speed for better output stability. On Windows, Gemma 3 now uses the same resumable in-app Hugging Face download flow and save-folder confirmation as Gemma 4. The single ↗ button in the catalog header opens the currently selected model page on Hugging Face.
+
+## AI generation cancellation
+
+On Windows, the shared **Create with AI** action becomes a red **Stop generation** button while Local LLM inference is active. The stop action cancels the existing generation `CancellationTokenSource`; it does not unload the model. When cancellation completes, the button returns to the normal primary-color Create with AI state so the loaded Gemma model can be reused immediately.

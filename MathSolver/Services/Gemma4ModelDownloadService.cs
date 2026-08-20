@@ -7,6 +7,7 @@ namespace MathSolver.Services;
 
 public enum Gemma4ModelVariant
 {
+    Gemma3_1B,
     E2B,
     E4B
 }
@@ -17,7 +18,8 @@ public sealed record Gemma4ModelDescriptor(
     string FileName,
     Uri ModelPageUri,
     Uri DownloadUri,
-    long ApproximateSizeBytes);
+    long ApproximateSizeBytes,
+    bool SupportsDirectDownload = true);
 
 public sealed record Gemma4ModelDownloadSelection(
     Gemma4ModelDescriptor Model,
@@ -37,8 +39,9 @@ public sealed record Gemma4ModelDownloadProgress(
 }
 
 /// <summary>
-/// Tải đúng hai checkpoint Gemma 4 QAT Q4_0 chính chủ mà Math Solver hỗ trợ.
-/// File mmproj không được tải vì tính năng Toán đố chỉ dùng văn bản.
+/// Catalog/download helper for the supported Gemma GGUF checkpoints.
+/// All catalog models use the same resumable in-app HTTP download pipeline.
+/// The model page button remains available for README/license information.
 /// </summary>
 public sealed class Gemma4ModelDownloadService
 {
@@ -49,6 +52,20 @@ public sealed class Gemma4ModelDownloadService
         {
             Timeout = Timeout.InfiniteTimeSpan
         };
+
+    // Gemma 3 1B uses the LM Studio Community Q8_0 GGUF quantization
+    // (quantized by bartowski). The public Hugging Face resolve URL is handled
+    // by the same resumable in-app downloader used by Gemma 4.
+    public static Gemma4ModelDescriptor Gemma3_1B { get; } =
+        new(
+            Gemma4ModelVariant.Gemma3_1B,
+            "Gemma 3 1B Q8_0",
+            "gemma-3-1b-it-Q8_0.gguf",
+            new Uri(
+                "https://huggingface.co/lmstudio-community/gemma-3-1b-it-GGUF"),
+            new Uri(
+                "https://huggingface.co/lmstudio-community/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q8_0.gguf?download=true"),
+            1_070_000_000L);
 
     public static Gemma4ModelDescriptor E2B { get; } =
         new(
@@ -74,9 +91,12 @@ public sealed class Gemma4ModelDownloadService
 
     public static Gemma4ModelDescriptor GetDescriptor(
         Gemma4ModelVariant variant) =>
-        variant == Gemma4ModelVariant.E2B
-            ? E2B
-            : E4B;
+        variant switch
+        {
+            Gemma4ModelVariant.Gemma3_1B => Gemma3_1B,
+            Gemma4ModelVariant.E2B => E2B,
+            _ => E4B
+        };
 
     public static string GetDefaultModelsDirectory() =>
         Path.Combine(
@@ -106,6 +126,12 @@ public sealed class Gemma4ModelDownloadService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
+
+        if (!model.SupportsDirectDownload)
+        {
+            throw new NotSupportedException(
+                "This model requires opening its Hugging Face page and accepting the Gemma terms before downloading.");
+        }
 
         string modelsDirectory =
             string.IsNullOrWhiteSpace(destinationDirectory)
@@ -239,7 +265,7 @@ public sealed class Gemma4ModelDownloadService
             {
                 File.Delete(partialPath);
                 throw new InvalidDataException(
-                    "The downloaded file is not a supported Gemma 4 GGUF model.");
+                    "The downloaded file is not a supported Gemma GGUF model.");
             }
 
             File.Move(

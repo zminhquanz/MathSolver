@@ -1,4 +1,4 @@
-using MathSolver.Controls;
+﻿using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
@@ -54,6 +54,7 @@ public partial class MathPuzzlePage : ContentPage
     private bool _questionAnswered;
     private bool? _lastAnswerWasCorrect;
     private bool _isGeneratingWithLlm;
+    private bool _isLlmQuestionGenerationActive;
     private bool _isDownloadingModel;
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
@@ -140,8 +141,15 @@ public partial class MathPuzzlePage : ContentPage
                 _proportionQuizGenerator,
                 _motionQuizGenerator);
 
+#if WINDOWS
         _llmModelPath =
             _llmModelStore.GetSavedModelPath();
+#else
+        // Android/iOS/MacCatalyst do not use LLamaSharp/GGUF. Keep the path
+        // empty so no legacy local-model file is probed before LiteRT-LM is
+        // implemented for Android.
+        _llmModelPath = null;
+#endif
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(
             this);
@@ -362,13 +370,30 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
+#if WINDOWS
         SelectGenerationSource(
             QuizGenerationSource.LocalLlm);
+#else
+        // AI/LLM is intentionally unavailable on non-Windows targets until
+        // the Android LiteRT-LM backend is integrated.
+        SelectGenerationSource(
+            QuizGenerationSource.Algorithm);
+#endif
     }
 
     private void SelectGenerationSource(
         QuizGenerationSource source)
     {
+#if !WINDOWS
+        // LLamaSharp is Windows-only. Never let a restored/programmatic state
+        // switch Android (or another non-Windows target) onto the legacy GGUF
+        // path while the AI source is hidden.
+        if (source == QuizGenerationSource.LocalLlm)
+        {
+            source = QuizGenerationSource.Algorithm;
+        }
+#endif
+
         if (_generationSource == source)
         {
             return;
@@ -1585,6 +1610,16 @@ public partial class MathPuzzlePage : ContentPage
         object? sender,
         EventArgs e)
     {
+        // Khi AI đang sinh đề, cùng nút này trở thành nút Dừng. Hủy qua
+        // CancellationToken để LLamaSharp/llama.cpp thoát khỏi vòng InferAsync
+        // an toàn thay vì unload model hoặc chặn UI thread.
+        if (_generationSource == QuizGenerationSource.LocalLlm &&
+            _isLlmQuestionGenerationActive)
+        {
+            CancelLlmGeneration();
+            return;
+        }
+
         if (_questionAnswered)
         {
             UpdateCreateOrRegenerateQuestionButtonState();
@@ -1674,6 +1709,7 @@ public partial class MathPuzzlePage : ContentPage
         ClearMultipleChoiceAnswers();
         UpdateModeStyles();
         SetAnswerControlsEnabled(false);
+        _isLlmQuestionGenerationActive = true;
         SetLlmBusy(true);
 
         QuestionPromptLabel.Text =
@@ -1774,6 +1810,15 @@ public partial class MathPuzzlePage : ContentPage
         catch (OperationCanceledException)
         {
             CompleteLlmProgress(progressVersion);
+
+            // Bỏ phần preview đang sinh dở và đưa vùng đề về trạng thái sẵn
+            // sàng. JSON/log chẩn đoán vẫn được giữ để Developer Mode có thể
+            // xem những gì model đã phát ra trước khi người dùng bấm Dừng.
+            SetQuestionContent(
+                Translate("Quiz.LlmReady"),
+                20,
+                "TextSecondaryColor",
+                useFractionFormatting: false);
             ShowLlmStatus(
                 Translate("Quiz.GenerationCancelled"),
                 isRunning: false);
@@ -1781,6 +1826,7 @@ public partial class MathPuzzlePage : ContentPage
         finally
         {
             CompleteLlmProgress(progressVersion);
+            _isLlmQuestionGenerationActive = false;
 
             if (ReferenceEquals(
                     _llmGenerationCancellation,
@@ -1788,6 +1834,12 @@ public partial class MathPuzzlePage : ContentPage
             {
                 _llmGenerationCancellation = null;
                 SetLlmBusy(false);
+            }
+            else
+            {
+                // Defensive refresh in case another operation replaced the CTS
+                // while this generation was unwinding.
+                UpdateCreateOrRegenerateQuestionButtonState();
             }
 
             cancellation.Dispose();
@@ -2047,11 +2099,26 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateCreateOrRegenerateQuestionButtonState()
     {
+        bool canStopAiGeneration =
+            _generationSource == QuizGenerationSource.LocalLlm &&
+            _isLlmQuestionGenerationActive;
+
+        // Riêng lúc AI đang sinh, nút phải vẫn bấm được để gửi Cancel. Các
+        // trạng thái busy khác (chọn/tải/eject model) vẫn khóa nút như cũ.
         CreateOrRegenerateQuestionButton.IsEnabled =
-            !_isGeneratingWithLlm &&
-            (_generationSource == QuizGenerationSource.Algorithm ||
-             _llmModelPath is not null) &&
-            !_questionAnswered;
+            canStopAiGeneration ||
+            (!_isGeneratingWithLlm &&
+             (_generationSource == QuizGenerationSource.Algorithm ||
+              _llmModelPath is not null) &&
+             !_questionAnswered);
+
+        CreateOrRegenerateQuestionButton.Text =
+            TranslateQuiz(
+                canStopAiGeneration
+                    ? "Quiz.StopAiGeneration"
+                    : _generationSource == QuizGenerationSource.LocalLlm
+                        ? "Quiz.CreateWithAi"
+                        : "Quiz.RegenerateQuestion");
 
         // Reapply after the Enabled/Disabled transition. On Windows this
         // transition can otherwise replace the DynamicResource with the
@@ -2090,7 +2157,10 @@ public partial class MathPuzzlePage : ContentPage
 
         CreateOrRegenerateQuestionButton.SetDynamicResource(
             Button.BackgroundColorProperty,
-            "PrimaryColor");
+            _generationSource == QuizGenerationSource.LocalLlm &&
+            _isLlmQuestionGenerationActive
+                ? "DangerColor"
+                : "PrimaryColor");
         CreateOrRegenerateQuestionButton.SetDynamicResource(
             Button.TextColorProperty,
             "OnPrimaryColor");

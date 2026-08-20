@@ -143,10 +143,10 @@ public partial class GemmaModelCatalogPage : ContentPage
             CatalogBodyGrid.ColumnDefinitions.Add(
                 new ColumnDefinition(GridLength.Star));
             CatalogBodyGrid.RowDefinitions.Add(
-                new RowDefinition(GridLength.Auto));
+                new RowDefinition(GridLength.Star));
 
-            Grid.SetColumn(ModelListPanel, 0);
-            Grid.SetRow(ModelListPanel, 0);
+            Grid.SetColumn(ModelListScrollView, 0);
+            Grid.SetRow(ModelListScrollView, 0);
 
 #if !ANDROID
             // Compact Windows layouts keep the README under the cards.
@@ -165,8 +165,8 @@ public partial class GemmaModelCatalogPage : ContentPage
             CatalogBodyGrid.RowDefinitions.Add(
                 new RowDefinition(GridLength.Star));
 
-            Grid.SetColumn(ModelListPanel, 0);
-            Grid.SetRow(ModelListPanel, 0);
+            Grid.SetColumn(ModelListScrollView, 0);
+            Grid.SetRow(ModelListScrollView, 0);
             Grid.SetColumn(ReadmePanel, 1);
             Grid.SetRow(ReadmePanel, 0);
         }
@@ -211,10 +211,16 @@ public partial class GemmaModelCatalogPage : ContentPage
         ModelsHeadingLabel.Text = T("Quiz.ModelCatalogModelsHeading");
         ReadmeHeadingLabel.Text = T("Quiz.ModelCatalogReadmeHeading");
 
+        Gemma3TitleLabel.Text = T("Quiz.ModelCatalogGemma3Title");
+        Gemma3DescriptionLabel.Text = T("Quiz.ModelCatalogGemma3Description");
         E2BTitleLabel.Text = T("Quiz.ModelCatalogE2BTitle");
         E2BDescriptionLabel.Text = T("Quiz.ModelCatalogE2BDescription");
         E4BTitleLabel.Text = T("Quiz.ModelCatalogE4BTitle");
         E4BDescriptionLabel.Text = T("Quiz.ModelCatalogE4BDescription");
+
+        Gemma3MetadataLabel.Text =
+            FormatModelMetadata(
+                Gemma4ModelDownloadService.Gemma3_1B);
 
         E2BMetadataLabel.Text =
             FormatModelMetadata(
@@ -224,6 +230,7 @@ public partial class GemmaModelCatalogPage : ContentPage
             FormatModelMetadata(
                 Gemma4ModelDownloadService.E4B);
 
+        Gemma3CardHintLabel.Text = T("Quiz.ModelCatalogGemma3Recommendation");
         E2BCardHintLabel.Text = T("Quiz.ModelCatalogE2BRecommendation");
         E4BCardHintLabel.Text = T("Quiz.ModelCatalogE4BRecommendation");
 
@@ -239,6 +246,7 @@ public partial class GemmaModelCatalogPage : ContentPage
         ReadmeFileHeadingLabel.Text = T("Quiz.ModelCatalogFileHeading");
         FooterHintLabel.Text = T("Quiz.ModelCatalogFooterHint");
 
+        DownloadGemma3Button.Text = T("Quiz.DownloadActionShort");
         DownloadE2BButton.Text = T("Quiz.DownloadActionShort");
         DownloadE4BButton.Text = T("Quiz.DownloadActionShort");
 
@@ -260,10 +268,15 @@ public partial class GemmaModelCatalogPage : ContentPage
     {
         _selectedModel = model;
 
-        bool isE2B = model.Variant == Gemma4ModelVariant.E2B;
-
-        ApplyRowStyle(E2BModelBorder, isE2B);
-        ApplyRowStyle(E4BModelBorder, !isE2B);
+        ApplyRowStyle(
+            Gemma3ModelBorder,
+            model.Variant == Gemma4ModelVariant.Gemma3_1B);
+        ApplyRowStyle(
+            E2BModelBorder,
+            model.Variant == Gemma4ModelVariant.E2B);
+        ApplyRowStyle(
+            E4BModelBorder,
+            model.Variant == Gemma4ModelVariant.E4B);
 
         UpdateReadme();
         UpdateAccessibilityText();
@@ -290,24 +303,44 @@ public partial class GemmaModelCatalogPage : ContentPage
 
     private void UpdateReadme()
     {
-        bool isE2B =
-            _selectedModel.Variant == Gemma4ModelVariant.E2B;
+        bool isGemma3 =
+            _selectedModel.Variant == Gemma4ModelVariant.Gemma3_1B;
 
         ReadmeModelTitleLabel.Text = _selectedModel.DisplayName;
         ReadmeSummaryLabel.Text =
-            T(isE2B
-                ? "Quiz.ModelCatalogE2BSummary"
-                : "Quiz.ModelCatalogE4BSummary");
+            T(_selectedModel.Variant switch
+            {
+                Gemma4ModelVariant.Gemma3_1B =>
+                    "Quiz.ModelCatalogGemma3Summary",
+                Gemma4ModelVariant.E2B =>
+                    "Quiz.ModelCatalogE2BSummary",
+                _ => "Quiz.ModelCatalogE4BSummary"
+            });
+
+        ReadmeMathSolverBodyLabel.Text =
+            T(isGemma3
+                ? "Quiz.ModelCatalogGemma3MathSolverBody"
+                : "Quiz.ModelCatalogMathSolverBody");
 
         ReadmeRecommendationBodyLabel.Text =
-            T(isE2B
-                ? "Quiz.ModelCatalogE2BRecommendation"
-                : "Quiz.ModelCatalogE4BRecommendation");
+            T(_selectedModel.Variant switch
+            {
+                Gemma4ModelVariant.Gemma3_1B =>
+                    "Quiz.ModelCatalogGemma3Recommendation",
+                Gemma4ModelVariant.E2B =>
+                    "Quiz.ModelCatalogE2BRecommendation",
+                _ => "Quiz.ModelCatalogE4BRecommendation"
+            });
+
+        string fileBodyKey =
+            isGemma3
+                ? "Quiz.ModelCatalogGemma3FileBody"
+                : "Quiz.ModelCatalogFileBody";
 
         ReadmeFileBodyLabel.Text =
             string.Format(
                 CultureInfo.CurrentCulture,
-                T("Quiz.ModelCatalogFileBody"),
+                T(fileBodyKey),
                 _selectedModel.FileName,
                 FormatGigabytes(_selectedModel.ApproximateSizeBytes));
     }
@@ -347,6 +380,10 @@ public partial class GemmaModelCatalogPage : ContentPage
         SemanticProperties.SetDescription(OpenModelPageButton, openPageText);
 
         SetDownloadAccessibility(
+            DownloadGemma3Button,
+            Gemma4ModelDownloadService.Gemma3_1B);
+
+        SetDownloadAccessibility(
             DownloadE2BButton,
             Gemma4ModelDownloadService.E2B);
 
@@ -368,6 +405,17 @@ public partial class GemmaModelCatalogPage : ContentPage
         ToolTipProperties.SetText(button, text);
         SemanticProperties.SetDescription(button, text);
     }
+
+    private void OnGemma3RowTapped(
+        object? sender,
+        TappedEventArgs e) =>
+        SelectModel(Gemma4ModelDownloadService.Gemma3_1B);
+
+    private async void OnDownloadGemma3Clicked(
+        object? sender,
+        EventArgs e) =>
+        await ShowDownloadConfirmationAsync(
+            Gemma4ModelDownloadService.Gemma3_1B);
 
     private void OnE2BRowTapped(
         object? sender,
@@ -607,17 +655,25 @@ public partial class GemmaModelCatalogPage : ContentPage
 
     private async void OnOpenModelPageClicked(
         object? sender,
-        EventArgs e)
+        EventArgs e) =>
+        await OpenSelectedModelPageAsync();
+
+    private async Task OpenSelectedModelPageAsync() =>
+        await OpenExternalUriAsync(
+            _selectedModel.ModelPageUri,
+            "Gemma model website");
+
+    private async Task OpenExternalUriAsync(
+        Uri uri,
+        string diagnosticName)
     {
         try
         {
             bool canOpen =
-                await Launcher.Default.CanOpenAsync(
-                    _selectedModel.ModelPageUri);
+                await Launcher.Default.CanOpenAsync(uri);
 
             if (canOpen &&
-                await Launcher.Default.OpenAsync(
-                    _selectedModel.ModelPageUri))
+                await Launcher.Default.OpenAsync(uri))
             {
                 return;
             }
@@ -625,7 +681,7 @@ public partial class GemmaModelCatalogPage : ContentPage
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(
-                $"Could not open the Gemma 4 model website: {exception}");
+                $"Could not open the {diagnosticName}: {exception}");
         }
 
         await MaterialDialogService.ShowAlertAsync(
@@ -732,9 +788,12 @@ public partial class GemmaModelCatalogPage : ContentPage
     }
 
     private static string GetVariantName(Gemma4ModelDescriptor model) =>
-        model.Variant == Gemma4ModelVariant.E2B
-            ? "E2B"
-            : "E4B";
+        model.Variant switch
+        {
+            Gemma4ModelVariant.Gemma3_1B => "Gemma 3 1B",
+            Gemma4ModelVariant.E2B => "Gemma 4 E2B",
+            _ => "Gemma 4 E4B"
+        };
 
     private static string FormatGigabytes(long bytes) =>
         (bytes / 1_000_000_000d).ToString(
@@ -742,8 +801,15 @@ public partial class GemmaModelCatalogPage : ContentPage
             CultureInfo.CurrentCulture);
 
     private static string FormatModelMetadata(
-        Gemma4ModelDescriptor model) =>
-        $"GGUF • QAT Q4_0 • {FormatGigabytes(model.ApproximateSizeBytes)} GB";
+        Gemma4ModelDescriptor model)
+    {
+        string quantization =
+            model.Variant == Gemma4ModelVariant.Gemma3_1B
+                ? "Q8_0"
+                : "QAT Q4_0";
+
+        return $"GGUF • {quantization} • {FormatGigabytes(model.ApproximateSizeBytes)} GB";
+    }
 
     private static string T(string key) =>
         LocalizationService.TranslateKey(key);

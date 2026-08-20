@@ -54,6 +54,7 @@
                                 <Button
                                     x:Name="AlgorithmSourceButton"
                                     Grid.Column="0"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, iOS=2, MacCatalyst=2, Default=2}"
                                     Text="{localization:Translate Quiz.AlgorithmSource}"
                                     HeightRequest="48"
                                     CornerRadius="12"
@@ -66,6 +67,7 @@
                                 <Button
                                     x:Name="LocalLlmSourceButton"
                                     Grid.Column="1"
+                                    IsVisible="{OnPlatform Android=False, WinUI=True, iOS=False, MacCatalyst=False, Default=False}"
                                     Text="{localization:Translate Quiz.LocalLlmSource}"
                                     HeightRequest="48"
                                     CornerRadius="12"

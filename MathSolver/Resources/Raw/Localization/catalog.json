@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "sourceCulture": "vi-VN",
   "entries": [
@@ -744,7 +744,7 @@
     },
     {
       "key": "Quiz.DownloadGemma4",
-      "source": "⬇️ Tải Gemma 4 từ Hugging Face",
+      "source": "⬇️ Tải model AI từ HuggingFace",
       "mode": "exact"
     },
     {
@@ -754,7 +754,7 @@
     },
     {
       "key": "Quiz.ChooseDownloadModelTitle",
-      "source": "Chọn model Gemma 4",
+      "source": "Chọn model Gemma",
       "mode": "exact"
     },
     {
@@ -779,12 +779,12 @@
     },
     {
       "key": "Quiz.ModelCatalogTitle",
-      "source": "Thư viện model Gemma 4",
+      "source": "Thư viện model Gemma",
       "mode": "exact"
     },
     {
       "key": "Quiz.ModelCatalogSubtitle",
-      "source": "Chọn model để xem chi tiết. Khi bấm Tải, ứng dụng sẽ hiện bước xác nhận nơi lưu file trước khi bắt đầu tải.",
+      "source": "Chọn model để xem chi tiết. Tất cả model trong thư viện đều tải trực tiếp trong ứng dụng; nút ↗ phía trên mở trang model đã chọn trên Hugging Face.",
       "mode": "exact"
     },
     {
@@ -884,7 +884,7 @@
     },
     {
       "key": "Quiz.ModelCatalogDownloadModel",
-      "source": "Tải Gemma 4 {0}",
+      "source": "Tải {0}",
       "mode": "exact"
     },
     {
@@ -1035,6 +1035,11 @@
     {
       "key": "Quiz.CreateWithAi",
       "source": "✨ Tạo đề bằng AI",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.StopAiGeneration",
+      "source": "⏹️ Dừng tạo đề",
       "mode": "exact"
     },
     {

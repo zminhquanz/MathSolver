@@ -1,6 +1,8 @@
+#if WINDOWS
 using LLama;
 using LLama.Common;
 using LLama.Sampling;
+#endif
 using MathSolver.Models;
 using MathSolver.Services.Core;
 using System.Globalization;
@@ -17,24 +19,18 @@ namespace MathSolver.Services;
 /// sở hữu thành toán đố. Model chỉ viết ngôn ngữ tự nhiên; dữ kiện và đáp án
 /// do C# giữ.
 /// </summary>
+#if WINDOWS
 public sealed class LocalLlmQuizGenerator
 {
     /// <summary>
-    /// Số luồng decode. Windows giữ policy cũ. Android ARM64 dùng tối đa 6
-    /// worker trên SoC 8-core: đủ để kéo các core hiệu năng vào llama.cpp mà
-    /// không ép toàn bộ 8 core cùng tranh băng thông bộ nhớ khi decode từng
-    /// token.
+    /// LLamaSharp/GGUF is a Windows-only runtime. Keep the established desktop
+    /// CPU policy; Android uses a separate future LiteRT-LM backend.
     /// </summary>
     public static int CpuThreadCount { get; } =
         ResolveDecodeThreadCount();
 
-    /// <summary>
-    /// Prompt-prefill là workload theo batch nên scale tốt hơn decode. Android
-    /// được phép dùng tối đa 8 core ở pha này; Windows vẫn dùng cùng số thread
-    /// với decode để giữ nguyên hành vi desktop hiện tại.
-    /// </summary>
     public static int CpuBatchThreadCount { get; } =
-        ResolveBatchThreadCount();
+        CpuThreadCount;
     public const int MaximumAttempts = 3;
     public const int MaximumOutputTokens = 320;
     public const int ModelUnloadGracePeriodSeconds = 60;
@@ -43,11 +39,6 @@ public sealed class LocalLlmQuizGenerator
     // được cache giữa các lần thử và giữa các câu hỏi.
     public const uint ContextSize = 2048;
 
-    // Sau khi worker-thread fix đã loại bỏ tình trạng kẹt trước token đầu tiên,
-    // tăng vừa phải batch Android để prompt-prefill nhanh hơn. Không quay thẳng
-    // lên mức desktop 256/128 nhằm giữ khoảng an toàn RAM cho điện thoại.
-    private const uint AndroidBatchSize = 128;
-    private const uint AndroidMicroBatchSize = 64;
     private const uint DesktopBatchSize = 256;
     private const uint DesktopMicroBatchSize = 128;
 
@@ -270,14 +261,13 @@ public sealed class LocalLlmQuizGenerator
             // vừa nạp từ GGUF hay được tái sử dụng từ câu trước.
             modelWasLoaded = true;
 
-            // Gemma 4 stores a Jinja template that currently cannot be
-            // evaluated by LLamaSharp's chat-template bridge. The model
-            // weights themselves are supported by the 0.27 backend, so use
-            // Gemma 4's documented control-token format directly.
-            // QuizLlmModelStore đã xác nhận metadata kiến trúc Gemma 4 trước
-            // khi đến đây, nên luôn dùng control-token template tương ứng và
-            // không phụ thuộc vào cách người dùng đặt tên file.
-            const bool useManualGemma4Template = true;
+            // Select the prompt formatter from GGUF metadata rather than
+            // from the file name. Gemma 3 uses the classic
+            // <start_of_turn>/<end_of_turn> user/model format and has no
+            // system role; Gemma 4 uses its newer <|turn>/<turn|> roles.
+            QuizLlmModelArchitecture modelArchitecture =
+                QuizLlmModelStore.GetModelArchitecture(modelPath) ??
+                QuizLlmModelArchitecture.Gemma4;
 
             string systemPrompt =
                 LlmQuizPromptBuilder.BuildSystemPrompt(
@@ -376,15 +366,14 @@ public sealed class LocalLlmQuizGenerator
                             language,
                             previousValidationFeedback);
 
-                string prompt = useManualGemma4Template
-                    ? LlmQuizPromptBuilder.BuildGemma4Prompt(
-                        systemPrompt,
-                        attemptUserPrompt)
-                    : string.Concat(
-                        systemPrompt,
-                        Environment.NewLine,
-                        Environment.NewLine,
-                        attemptUserPrompt);
+                string prompt =
+                    modelArchitecture == QuizLlmModelArchitecture.Gemma3
+                        ? LlmQuizPromptBuilder.BuildGemma3Prompt(
+                            systemPrompt,
+                            attemptUserPrompt)
+                        : LlmQuizPromptBuilder.BuildGemma4Prompt(
+                            systemPrompt,
+                            attemptUserPrompt);
 
                 // Mỗi attempt có KV sạch. JSON sai, EOS và control token của
                 // lượt trước không thể làm lượt sau trả rỗng hoặc bị cắt.
@@ -429,10 +418,8 @@ public sealed class LocalLlmQuizGenerator
                     System.Diagnostics.Stopwatch.StartNew();
                 var speedReportTimer =
                     System.Diagnostics.Stopwatch.StartNew();
-                int previewIntervalMilliseconds =
-                    OperatingSystem.IsAndroid() ? 120 : 80;
-                int speedReportIntervalMilliseconds =
-                    OperatingSystem.IsAndroid() ? 500 : 250;
+                const int previewIntervalMilliseconds = 80;
+                const int speedReportIntervalMilliseconds = 250;
                 var generationTimer =
                     new System.Diagnostics.Stopwatch();
                 var firstTokenTimer =
@@ -829,72 +816,28 @@ public sealed class LocalLlmQuizGenerator
     }
 
     private static ModelParams CreateModelParameters(
-        string modelPath)
-    {
-        bool isAndroid =
-            OperatingSystem.IsAndroid();
-
-        return new(modelPath)
+        string modelPath) =>
+        new(modelPath)
         {
             ContextSize = ContextSize,
             GpuLayerCount = 0,
             Threads = CpuThreadCount,
-            BatchThreads = isAndroid
-                ? CpuBatchThreadCount
-                : CpuThreadCount,
-            BatchSize = isAndroid
-                ? AndroidBatchSize
-                : DesktopBatchSize,
-            UBatchSize = isAndroid
-                ? AndroidMicroBatchSize
-                : DesktopMicroBatchSize,
-
-            // mmap là đường load mặc định/tối ưu của llama.cpp. Worker-thread
-            // + batch Android nhỏ hơn đã xử lý lỗi first-token trước đó, nên
-            // bật lại mmap để tránh copy toàn bộ GGUF 3+ GB vào RAM mỗi lần
-            // model được nạp.
+            BatchThreads = CpuBatchThreadCount,
+            BatchSize = DesktopBatchSize,
+            UBatchSize = DesktopMicroBatchSize,
             UseMemorymap = true,
             UseMemoryLock = false,
-
-            // Trên ARM CPU, flash attention ưu tiên decode/token generation.
-            // Windows giữ false như baseline cũ để lần tối ưu này chỉ thay đổi
-            // Android. KV vẫn để F16 mặc định, tránh thêm biến số quant-cache.
-            FlashAttention = isAndroid
+            FlashAttention = false
         };
-    }
 
     private static int ResolveDecodeThreadCount()
     {
         int processorCount =
             Math.Max(1, Environment.ProcessorCount);
 
-        if (OperatingSystem.IsAndroid())
-        {
-            return processorCount switch
-            {
-                >= 8 => 6,
-                >= 6 => 5,
-                >= 4 => 4,
-                _ => processorCount
-            };
-        }
-
         return processorCount > 8
             ? 8
             : Math.Min(4, processorCount);
-    }
-
-    private static int ResolveBatchThreadCount()
-    {
-        int processorCount =
-            Math.Max(1, Environment.ProcessorCount);
-
-        if (OperatingSystem.IsAndroid())
-        {
-            return Math.Min(8, processorCount);
-        }
-
-        return CpuThreadCount;
     }
 
     private async Task UnloadModelAfterGracePeriodAsync(
@@ -1067,6 +1010,7 @@ public sealed class LocalLlmQuizGenerator
             : 0d;
     }
 }
+#endif
 
 internal static class LlmQuizPromptBuilder
 {
@@ -1079,6 +1023,22 @@ internal static class LlmQuizPromptBuilder
         return language == AppLanguage.Vietnamese
             ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Thông thường solution_lead không chứa số; RIÊNG bài tỉ lệ thuận/nghịch, được phép nhắc lại duy nhất dữ kiện C nếu số đó chỉ dùng để xác định đại lượng cần tìm, ví dụ “Trọng lượng của 9 bao gạo là:”. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
             : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+    }
+
+    public static string BuildGemma3Prompt(
+        string systemPrompt,
+        string userPrompt)
+    {
+        // Gemma 3 IT supports user/model roles only. Google recommends
+        // placing system-level instructions directly in the first user turn.
+        return string.Concat(
+            "<start_of_turn>user\n",
+            systemPrompt,
+            Environment.NewLine,
+            Environment.NewLine,
+            userPrompt,
+            "<end_of_turn>\n",
+            "<start_of_turn>model\n");
     }
 
     public static string BuildGemma4Prompt(
