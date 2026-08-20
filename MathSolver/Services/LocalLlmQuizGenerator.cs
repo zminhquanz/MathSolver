@@ -270,8 +270,11 @@ public sealed class LocalLlmQuizGenerator
                 QuizLlmModelArchitecture.Gemma4;
 
             string systemPrompt =
-                LlmQuizPromptBuilder.BuildSystemPrompt(
-                    language);
+                modelArchitecture == QuizLlmModelArchitecture.Gemma3
+                    ? LlmQuizPromptBuilder.BuildGemma3SystemPrompt(
+                        language)
+                    : LlmQuizPromptBuilder.BuildSystemPrompt(
+                        language);
 
             // Đây là nguồn sự thật bất biến của cả ba lần thử. Retry luôn
             // replay prompt này; không dựa vào token của JSON sai trước đó.
@@ -306,6 +309,12 @@ public sealed class LocalLlmQuizGenerator
                         motion,
                         language,
                         previousErrorCode: null)
+                    : modelArchitecture == QuizLlmModelArchitecture.Gemma3
+                    ? LlmQuizPromptBuilder.BuildGemma3ArithmeticUserPrompt(
+                        contract.Expression,
+                        language,
+                        selectedStudent,
+                        selectedStoryContext)
                     : LlmQuizPromptBuilder.BuildUserPrompt(
                         contract.Expression,
                         language,
@@ -585,6 +594,25 @@ public sealed class LocalLlmQuizGenerator
                         LlmQuizProgressStage.Validating,
                         rawModelOutput: rawOutput);
 
+                    // Gemma 3 1B is intentionally treated as a constrained
+                    // wording model. C# owns the arithmetic solution lead so
+                    // a small model cannot leak a calculation/result or swap
+                    // the requested quantity while the story itself remains
+                    // subject to full semantic validation below.
+                    if (modelArchitecture == QuizLlmModelArchitecture.Gemma3 &&
+                        contract.FindXProblem is null &&
+                        contract.GeometryProblem is null &&
+                        contract.FractionProblem is null &&
+                        contract.ProportionProblem is null &&
+                        contract.MotionProblem is null)
+                    {
+                        draft = LlmQuizPromptBuilder.NormalizeGemma3ArithmeticDraft(
+                            draft!,
+                            contract.Expression.Operation,
+                            selectedStoryContext,
+                            language);
+                    }
+
                     LlmWordProblemValidationResult validation =
                         contract.FindXProblem is FindXQuizContract validatedFindX
                             ? _wordProblemValidator.ValidateFindX(
@@ -622,7 +650,9 @@ public sealed class LocalLlmQuizGenerator
                                 contract.Expression,
                                 contract.CorrectAnswer,
                                 selectedStoryContext,
-                                language);
+                                language,
+                                requireUnambiguousOperationMeaning:
+                                    modelArchitecture == QuizLlmModelArchitecture.Gemma3);
 
                     if (validation.IsValid &&
                         validation.WordProblem is not null)
@@ -1025,6 +1055,15 @@ internal static class LlmQuizPromptBuilder
             : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
+    public static string BuildGemma3SystemPrompt(
+        AppLanguage language)
+    {
+        // Keep Gemma 3 on the same authoritative system policy as Gemma 4.
+        // Gemma 3 has no system role, so BuildGemma3Prompt embeds this text
+        // into the first user turn while preserving the exact policy.
+        return BuildSystemPrompt(language);
+    }
+
     public static string BuildGemma3Prompt(
         string systemPrompt,
         string userPrompt)
@@ -1039,6 +1078,263 @@ internal static class LlmQuizPromptBuilder
             userPrompt,
             "<end_of_turn>\n",
             "<start_of_turn>model\n");
+    }
+
+    public static string BuildGemma3ArithmeticUserPrompt(
+        IntegerArithmeticExpression expression,
+        AppLanguage language,
+        WordProblemStudent? selectedStudent,
+        WordProblemStoryContext selectedStoryContext)
+    {
+        string unit = selectedStoryContext.AnswerUnit;
+        string item = selectedStoryContext.NaturalReference;
+        string solutionLead = BuildGemma3ArithmeticSolutionLead(
+            expression.Operation,
+            unit,
+            language);
+
+        string subjectRule =
+            selectedStudent is null
+                ? language == AppLanguage.Vietnamese
+                    ? "Dùng một chủ thể đơn giản như một bạn học sinh hoặc người thân; không cần tên riêng."
+                    : "Use one simple subject such as a student or family member; a personal name is not required."
+                : language == AppLanguage.Vietnamese
+                    ? $"Nếu cần tên riêng, chỉ dùng \"{selectedStudent.NaturalReference}\"."
+                    : $"If a personal name is useful, use only \"{selectedStudent.NaturalReference}\".";
+
+        string relationship =
+            language == AppLanguage.Vietnamese
+                ? expression.Operation switch
+                {
+                    ArithmeticOperation.Add =>
+                        BuildGemma3AdditionRelationship(
+                            expression,
+                            selectedStoryContext,
+                            language),
+                    ArithmeticOperation.Subtract =>
+                        BuildGemma3SubtractionRelationship(
+                            expression,
+                            selectedStoryContext,
+                            language),
+                    ArithmeticOperation.Multiply =>
+                        $"QUAN HỆ BẮT BUỘC: có đúng {expression.RightOperand} nhóm/dãy/khu vực; MỖI nhóm có đúng {expression.LeftOperand} {unit}; câu hỏi phải hỏi TẤT CẢ bao nhiêu {unit}. Đồ vật \"{item}\" không được dùng làm tên nhóm. Không đổi thành phép cộng, trừ hoặc chia.",
+                    ArithmeticOperation.Divide =>
+                        $"QUAN HỆ BẮT BUỘC: có tổng cộng đúng {expression.LeftOperand} {unit}; CHIA ĐỀU vào đúng {expression.RightOperand} nhóm/phần; câu hỏi phải hỏi MỖI nhóm/phần có bao nhiêu {unit}. Không đổi thành thêm, bớt hoặc phép nhân.",
+                    _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                }
+                : expression.Operation switch
+                {
+                    ArithmeticOperation.Add =>
+                        BuildGemma3AdditionRelationship(
+                            expression,
+                            selectedStoryContext,
+                            language),
+                    ArithmeticOperation.Subtract =>
+                        BuildGemma3SubtractionRelationship(
+                            expression,
+                            selectedStoryContext,
+                            language),
+                    ArithmeticOperation.Multiply =>
+                        $"REQUIRED RELATIONSHIP: there are exactly {expression.RightOperand} groups/rows/areas; EACH group contains exactly {expression.LeftOperand} {unit}; ask how many {unit} there are IN ALL. The item \"{item}\" must not be the group noun. Do not turn this into addition, subtraction, or division.",
+                    ArithmeticOperation.Divide =>
+                        $"REQUIRED RELATIONSHIP: start with exactly {expression.LeftOperand} {unit} in total; SHARE EQUALLY into exactly {expression.RightOperand} groups/parts; ask how many {unit} are in EACH group/part. Do not turn this into addition, subtraction, or multiplication.",
+                    _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                };
+
+        return language == AppLanguage.Vietnamese
+            ? $$"""
+              Viết đúng MỘT bài toán đố tiểu học ngắn, tự nhiên bằng tiếng Việt.
+              Đồ vật bắt buộc: "{{item}}".
+              answer_unit bắt buộc: "{{unit}}".
+              {{relationship}}
+              {{subjectRule}}
+
+              RÀNG BUỘC CỨNG CHO GEMMA 3 1B:
+              - problem_text chỉ được có đúng hai dữ kiện số {{expression.LeftOperand}} và {{expression.RightOperand}}, mỗi số xuất hiện đúng một lần. Không thêm số thứ ba, không dùng tên lớp/khối có số.
+              - Đây là bài ĐẾM số lượng của "{{item}}" theo đơn vị "{{unit}}". Không được đổi sang chiều dài, khối lượng, thể tích, tiền, số bộ phận của đồ vật hoặc một đơn vị đo khác như cm, m, kg, lít.
+              - Không tính hoặc ghi đáp án trong problem_text.
+              - Giữ đúng vai trò của hai số theo dòng QUAN HỆ BẮT BUỘC; không sáng tác quan hệ khác.
+              - Dòng QUAN HỆ BẮT BUỘC chỉ là hướng dẫn nội bộ. problem_text phải là một câu chuyện tự nhiên; tuyệt đối không chép các cụm như “Đồ vật bắt buộc”, “QUAN HỆ BẮT BUỘC”, “Không dùng ...” hoặc chuỗi động từ nối bằng dấu / vào đề.
+              - answer_unit phải ghi đúng "{{unit}}", không có số hay phép tính.
+              - solution_lead BẮT BUỘC ghi đúng nguyên văn: "{{solutionLead}}". Không thêm số, phép tính, kết quả hoặc đáp án.
+              - Chỉ trả về một JSON object; không Markdown, không lời chào, không giải thích.
+
+              JSON:
+              {
+                "problem_text": "...?",
+                "subject_name": "...",
+                "answer_unit": "{{unit}}",
+                "solution_lead": "{{solutionLead}}"
+              }
+              """
+            : $$"""
+              Write exactly ONE short, natural elementary-school word problem in English.
+              Required story item: "{{item}}".
+              Required answer_unit: "{{unit}}".
+              {{relationship}}
+              {{subjectRule}}
+
+              HARD CONSTRAINTS FOR GEMMA 3 1B:
+              - problem_text must contain exactly the two numeric facts {{expression.LeftOperand}} and {{expression.RightOperand}}, each exactly once. Do not add a third number or a numbered class/grade label.
+              - This is a COUNTING problem about "{{item}}" using the unit "{{unit}}". Do not turn it into length, mass, volume, money, parts of the object, or another measurement unit such as cm, m, kg, or litres.
+              - Do not calculate or reveal the answer in problem_text.
+              - Preserve the roles of both numbers exactly as stated in REQUIRED RELATIONSHIP; do not invent a different relationship.
+              - REQUIRED RELATIONSHIP is internal guidance only. problem_text must be a natural story; never copy phrases such as “Required story item”, “REQUIRED RELATIONSHIP”, “Do not use ...”, or a slash-separated verb list into the problem.
+              - answer_unit must be exactly "{{unit}}" with no number or equation.
+              - solution_lead MUST be exactly: "{{solutionLead}}". Do not add a number, calculation, result, or answer.
+              - Return one JSON object only; no Markdown, greeting, or explanation.
+
+              JSON:
+              {
+                "problem_text": "...?",
+                "subject_name": "...",
+                "answer_unit": "{{unit}}",
+                "solution_lead": "{{solutionLead}}"
+              }
+              """;
+    }
+
+    public static LlmWordProblemDraft NormalizeGemma3ArithmeticDraft(
+        LlmWordProblemDraft draft,
+        ArithmeticOperation operation,
+        WordProblemStoryContext selectedStoryContext,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentNullException.ThrowIfNull(selectedStoryContext);
+
+        return new LlmWordProblemDraft
+        {
+            ProblemText = draft.ProblemText,
+            SubjectName = draft.SubjectName,
+            AnswerUnit = draft.AnswerUnit,
+            SolutionLead = BuildGemma3ArithmeticSolutionLead(
+                operation,
+                selectedStoryContext.AnswerUnit,
+                language)
+        };
+    }
+
+    private static string BuildGemma3AdditionRelationship(
+        IntegerArithmeticExpression expression,
+        WordProblemStoryContext selectedStoryContext,
+        AppLanguage language)
+    {
+        string unit = selectedStoryContext.AnswerUnit;
+        string action = GetGemma3AdditionAction(
+            selectedStoryContext,
+            language);
+
+        return language == AppLanguage.Vietnamese
+            ? $"QUAN HỆ BẮT BUỘC: ban đầu có {expression.LeftOperand} {unit}; sau đó {action} đúng {expression.RightOperand} {unit}; câu hỏi phải hỏi có TẤT CẢ bao nhiêu {unit}. Chỉ dùng MỘT hành động “{action.ToLowerInvariant()}” phù hợp với đồ vật này; không ghép nhiều động từ cùng nghĩa, không liệt kê từ đồng nghĩa bằng dấu / và không chép nguyên văn dòng hướng dẫn vào problem_text. Không dùng bớt, cắt, cho đi, còn lại, mỗi, chia hoặc chia đều."
+            : $"REQUIRED RELATIONSHIP: start with {expression.LeftOperand} {unit}; then {action} exactly {expression.RightOperand} more {unit}; ask how many {unit} there are IN TOTAL. Use only the ONE action “{action.ToLowerInvariant()}” that fits this item; do not combine synonymous actions, do not list alternative verbs with /, and do not copy this instruction line into problem_text. Do not use remove, cut, give away, left, each, divide, or share equally.";
+    }
+
+    internal static string GetGemma3AdditionAction(
+        WordProblemStoryContext selectedStoryContext,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(selectedStoryContext);
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return selectedStoryContext.Category switch
+            {
+                WordProblemContextCategory.SchoolSupply or
+                WordProblemContextCategory.Comic or
+                WordProblemContextCategory.Book => "MUA THÊM",
+                WordProblemContextCategory.Toy => "ĐƯỢC TẶNG THÊM",
+                WordProblemContextCategory.Fruit => "HÁI THÊM",
+                WordProblemContextCategory.Sweet => "ĐƯỢC CHO THÊM",
+                WordProblemContextCategory.Pet => "NHẬN NUÔI THÊM",
+                WordProblemContextCategory.OrnamentalPlant => "MUA THÊM",
+                _ => "CÓ THÊM"
+            };
+        }
+
+        return selectedStoryContext.Category switch
+        {
+            WordProblemContextCategory.SchoolSupply or
+            WordProblemContextCategory.Comic or
+            WordProblemContextCategory.Book => "BOUGHT",
+            WordProblemContextCategory.Toy => "WAS GIVEN",
+            WordProblemContextCategory.Fruit => "PICKED",
+            WordProblemContextCategory.Sweet => "WAS GIVEN",
+            WordProblemContextCategory.Pet => "ADOPTED",
+            WordProblemContextCategory.OrnamentalPlant => "BOUGHT",
+            _ => "GOT"
+        };
+    }
+
+    private static string BuildGemma3SubtractionRelationship(
+        IntegerArithmeticExpression expression,
+        WordProblemStoryContext selectedStoryContext,
+        AppLanguage language)
+    {
+        string unit = selectedStoryContext.AnswerUnit;
+        string action = GetGemma3SubtractionAction(
+            selectedStoryContext,
+            language);
+
+        return language == AppLanguage.Vietnamese
+            ? $"QUAN HỆ BẮT BUỘC: ban đầu có {expression.LeftOperand} {unit}; sau đó {action} đúng {expression.RightOperand} {unit}; câu hỏi phải hỏi CÒN LẠI bao nhiêu {unit}. Chỉ dùng MỘT hành động “{action.ToLowerInvariant()}” phù hợp với đồ vật này; không viết danh sách từ đồng nghĩa bằng dấu / và không chép nguyên văn dòng hướng dẫn vào problem_text. Không dùng thêm, nhận thêm, tổng cộng, mỗi hoặc chia đều."
+            : $"REQUIRED RELATIONSHIP: start with {expression.LeftOperand} {unit}; then {action} exactly {expression.RightOperand} {unit}; ask how many {unit} are LEFT. Use only the ONE action “{action.ToLowerInvariant()}” that fits this item; do not list alternative verbs with / and do not copy this instruction line into problem_text. Do not use add, receive more, in total, each, or share equally.";
+    }
+
+    internal static string GetGemma3SubtractionAction(
+        WordProblemStoryContext selectedStoryContext,
+        AppLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(selectedStoryContext);
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return selectedStoryContext.Category switch
+            {
+                WordProblemContextCategory.Pet => "CHO NGƯỜI KHÁC NUÔI",
+                WordProblemContextCategory.OrnamentalPlant => "ĐEM TẶNG",
+                WordProblemContextCategory.Fruit or WordProblemContextCategory.Sweet => "CHO BẠN",
+                WordProblemContextCategory.SchoolSupply or
+                WordProblemContextCategory.Comic or
+                WordProblemContextCategory.Book or
+                WordProblemContextCategory.Toy => "TẶNG BẠN",
+                _ => "CHO ĐI"
+            };
+        }
+
+        return selectedStoryContext.Category switch
+        {
+            WordProblemContextCategory.Pet => "GAVE TO ANOTHER FAMILY TO CARE FOR",
+            WordProblemContextCategory.OrnamentalPlant => "GAVE AWAY AS GIFTS",
+            _ => "GAVE TO A FRIEND"
+        };
+    }
+
+    private static string BuildGemma3ArithmeticSolutionLead(
+        ArithmeticOperation operation,
+        string answerUnit,
+        AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+        {
+            return operation switch
+            {
+                ArithmeticOperation.Add => $"Số {answerUnit} có tất cả là:",
+                ArithmeticOperation.Subtract => $"Số {answerUnit} còn lại là:",
+                ArithmeticOperation.Multiply => $"Số {answerUnit} có tất cả là:",
+                ArithmeticOperation.Divide => $"Số {answerUnit} trong mỗi nhóm là:",
+                _ => $"Số {answerUnit} cần tìm là:"
+            };
+        }
+
+        return operation switch
+        {
+            ArithmeticOperation.Add => $"The total number of {answerUnit} is:",
+            ArithmeticOperation.Subtract => $"The number of {answerUnit} left is:",
+            ArithmeticOperation.Multiply => $"The total number of {answerUnit} is:",
+            ArithmeticOperation.Divide => $"The number of {answerUnit} in each group is:",
+            _ => $"The requested number of {answerUnit} is:"
+        };
     }
 
     public static string BuildGemma4Prompt(
@@ -2170,6 +2466,10 @@ internal static class LlmQuizPromptBuilder
                     "Viết lại solution_lead bằng đúng cụm answer_unit; không thay đơn vị cụ thể bằng một từ khái quát hơn.",
                 "MultiplicationGroupItemConflict" =>
                     "Tách rõ số nhóm và số đồ vật mỗi nhóm. Dùng một danh từ nhóm như nhóm, dãy hoặc khu vực; không dùng chính answer_unit làm vật chứa nhiều vật cùng loại.",
+                "Gemma3InstructionLeak" =>
+                    "Viết lại problem_text thành câu chuyện tự nhiên; không chép nhãn contract, câu cấm hoặc danh sách nhiều động từ. Chỉ dùng một hành động phù hợp với ngữ cảnh mà validator đã nêu.",
+                "Gemma3ContextualActionMismatch" =>
+                    "Dùng đúng một hành động theo ngữ cảnh mà validator đã nêu cho dữ kiện thay đổi; không thay bằng từ chung chung hoặc ghép nhiều cách diễn đạt.",
                 "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                     "Bỏ cụm từ gây suy ra sai phép toán và thay bằng hành động tiểu học thể hiện đúng phép tính bắt buộc.",
                 "InvalidClassLabel" =>
@@ -2218,6 +2518,10 @@ internal static class LlmQuizPromptBuilder
                 "Rewrite solution_lead with the exact answer_unit noun phrase instead of a broader category.",
             "MultiplicationGroupItemConflict" =>
                 "Separate the group count from the item count per group. Use a distinct group noun such as group, row, or area; never make the answer_unit contain more items of itself.",
+            "Gemma3InstructionLeak" =>
+                "Rewrite problem_text as a natural story; do not copy contract labels, prohibitions, or lists of alternative verbs. Use only the single context-appropriate action named by the validator.",
+            "Gemma3ContextualActionMismatch" =>
+                "Use exactly one context-appropriate action named by the validator for the changed quantity; do not replace it with generic wording or combine alternatives.",
             "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                 "Remove wording that implies the wrong operation and replace it with a clear elementary-school action for the required operation.",
             "InvalidClassLabel" =>
@@ -2748,7 +3052,8 @@ internal sealed partial class LlmWordProblemValidator
         IntegerArithmeticExpression expression,
         BigInteger correctAnswer,
         WordProblemStoryContext requiredStoryContext,
-        AppLanguage language)
+        AppLanguage language,
+        bool requireUnambiguousOperationMeaning = false)
     {
         ArgumentNullException.ThrowIfNull(requiredStoryContext);
 
@@ -2855,11 +3160,13 @@ internal sealed partial class LlmWordProblemValidator
         }
 
         if (numbers.Length < 2 ||
+            (requireUnambiguousOperationMeaning && numbers.Length != 2) ||
             numbers.Any(number =>
                 number != left && number != right) ||
             !numbers.Contains(left) ||
             !numbers.Contains(right) ||
-            (left == right && numbers.Count(number => number == left) < 2))
+            (left == right &&
+             numbers.Count(number => number == left) < 2))
         {
             return LlmWordProblemValidationResult.Invalid(
                 "ProblemNumbersMismatch",
@@ -2874,6 +3181,86 @@ internal sealed partial class LlmWordProblemValidator
 
         string lowerProblem =
             problem.ToLowerInvariant();
+
+        if (requireUnambiguousOperationMeaning)
+        {
+            string[] instructionMarkers =
+                language == AppLanguage.Vietnamese
+                    ? ["đồ vật bắt buộc", "quan hệ bắt buộc", "ràng buộc cứng", "answer_unit", "solution_lead", "problem_text", "không dùng thêm", "không dùng bớt", "thêm/nhận thêm"]
+                    : ["required story item", "required relationship", "hard constraints", "answer_unit", "solution_lead", "problem_text", "do not use add", "do not use remove", "add/receive"];
+            string? leakedMarker = instructionMarkers.FirstOrDefault(marker =>
+                lowerProblem.Contains(marker, StringComparison.Ordinal));
+            bool hasSlashSeparatedInstruction =
+                (expression.Operation is ArithmeticOperation.Add or ArithmeticOperation.Subtract) &&
+                problem.Contains('/');
+
+            if (leakedMarker is not null || hasSlashSeparatedInstruction)
+            {
+                string contextualAction =
+                    expression.Operation switch
+                    {
+                        ArithmeticOperation.Add =>
+                            LlmQuizPromptBuilder.GetGemma3AdditionAction(
+                                requiredStoryContext,
+                                language).ToLowerInvariant(),
+                        ArithmeticOperation.Subtract =>
+                            LlmQuizPromptBuilder.GetGemma3SubtractionAction(
+                                requiredStoryContext,
+                                language).ToLowerInvariant(),
+                        _ => string.Empty
+                    };
+
+                return LlmWordProblemValidationResult.Invalid(
+                    "Gemma3InstructionLeak",
+                    language == AppLanguage.Vietnamese
+                        ? expression.Operation switch
+                        {
+                            ArithmeticOperation.Add =>
+                                $"problem_text đang chép lại câu hướng dẫn/contract thay vì viết đề tự nhiên. Với đồ vật “{requiredStoryContext.NaturalReference}”, chỉ dùng một hành động cộng phù hợp là “{contextualAction}” cho dữ kiện {right}, rồi hỏi tất cả bao nhiêu; không ghép nhiều động từ cùng nghĩa, không liệt kê nhiều động từ bằng dấu /, không ghi “bắt buộc” hay “không dùng”.",
+                            ArithmeticOperation.Subtract =>
+                                $"problem_text đang chép lại câu hướng dẫn/contract thay vì viết đề tự nhiên. Với đồ vật “{requiredStoryContext.NaturalReference}”, chỉ dùng một hành động phù hợp là “{contextualAction}” cho dữ kiện {right}, rồi hỏi còn lại bao nhiêu; không liệt kê nhiều động từ bằng dấu /, không ghi “bắt buộc” hay “không dùng”.",
+                            _ =>
+                                "problem_text đang chép lại câu hướng dẫn/contract. Hãy viết lại thành một bài toán tự nhiên và không đưa các nhãn như “Đồ vật bắt buộc”, “QUAN HỆ BẮT BUỘC”, “RÀNG BUỘC CỨNG”, answer_unit, solution_lead hoặc problem_text vào đề."
+                        }
+                        : expression.Operation switch
+                        {
+                            ArithmeticOperation.Add =>
+                                $"problem_text copied internal contract text instead of a natural story. For “{requiredStoryContext.NaturalReference}”, use only the contextual addition action “{contextualAction}” for the {right} items and then ask how many there are in total; do not combine synonymous actions, list alternatives with /, or copy words such as REQUIRED or DO NOT USE.",
+                            ArithmeticOperation.Subtract =>
+                                $"problem_text copied internal contract text instead of a natural story. For “{requiredStoryContext.NaturalReference}”, use only the contextual action “{contextualAction}” for the {right} items and then ask how many are left; do not list alternatives with / or copy words such as REQUIRED or DO NOT USE.",
+                            _ =>
+                                "problem_text copied internal contract text. Rewrite it as a natural word problem and do not expose labels such as Required story item, REQUIRED RELATIONSHIP, HARD CONSTRAINTS, answer_unit, solution_lead, or problem_text."
+                        });
+            }
+        }
+
+        if (requireUnambiguousOperationMeaning &&
+            (expression.Operation is ArithmeticOperation.Add or ArithmeticOperation.Subtract))
+        {
+            string contextualAction =
+                expression.Operation == ArithmeticOperation.Add
+                    ? LlmQuizPromptBuilder.GetGemma3AdditionAction(
+                        requiredStoryContext,
+                        language).ToLowerInvariant()
+                    : LlmQuizPromptBuilder.GetGemma3SubtractionAction(
+                        requiredStoryContext,
+                        language).ToLowerInvariant();
+
+            if (!ContainsKeyword(
+                    lowerProblem,
+                    contextualAction))
+            {
+                return LlmWordProblemValidationResult.Invalid(
+                    "Gemma3ContextualActionMismatch",
+                    language == AppLanguage.Vietnamese
+                        ? expression.Operation == ArithmeticOperation.Add
+                            ? $"Cách thêm đồ vật chưa đúng ngữ cảnh. Với “{requiredStoryContext.NaturalReference}”, hãy dùng đúng một hành động tự nhiên là “{contextualAction}” cho dữ kiện {right}, sau đó hỏi tất cả bao nhiêu. Không ghép hai cách diễn đạt cùng nghĩa hoặc liệt kê nhiều cách diễn đạt."
+                            : $"Cách bớt đồ vật chưa đúng ngữ cảnh. Với “{requiredStoryContext.NaturalReference}”, hãy dùng đúng một hành động tự nhiên là “{contextualAction}” cho dữ kiện {right}, sau đó hỏi còn lại bao nhiêu. Không liệt kê nhiều cách diễn đạt."
+                        : expression.Operation == ArithmeticOperation.Add
+                            ? $"The addition action does not fit the required context. For “{requiredStoryContext.NaturalReference}”, use exactly one natural action: “{contextualAction}” for the {right} items, then ask for the total. Do not list alternative verbs."
+                            : $"The subtraction action does not fit the required context. For “{requiredStoryContext.NaturalReference}”, use exactly one natural action: “{contextualAction}” for the {right} items, then ask how many are left. Do not list alternative verbs.");
+            }
+        }
 
         if (expression.Operation == ArithmeticOperation.Multiply)
         {
@@ -2915,6 +3302,25 @@ internal sealed partial class LlmWordProblemValidator
                 return LlmWordProblemValidationResult.Invalid(
                     "OperationMeaningConflict",
                     conflictFeedback);
+            }
+
+            if (requireUnambiguousOperationMeaning)
+            {
+                string expectedName =
+                    GetOperationDisplayName(
+                        expression.Operation,
+                        language);
+                string preferredPhrases =
+                    FormatQuotedList(
+                        GetPreferredOperationPhrases(
+                            expression.Operation,
+                            language));
+
+                return LlmWordProblemValidationResult.Invalid(
+                    "OperationMeaningUnclear",
+                    language == AppLanguage.Vietnamese
+                        ? $"problem_text có đủ hai số nhưng chưa thể hiện rõ quan hệ {expectedName} giữa {left} và {right}. Với Gemma 3 1B, hãy bám sát quan hệ contract và dùng cách diễn đạt rõ như {preferredPhrases}; không dùng từ gợi phép toán khác."
+                        : $"problem_text has both numbers but does not express an unambiguous {expectedName} relationship between {left} and {right}. For Gemma 3 1B, follow the contract relationship closely and use clear wording such as {preferredPhrases}; do not use wording that implies another operation.");
             }
 
             System.Diagnostics.Debug.WriteLine(
@@ -5020,7 +5426,7 @@ internal sealed partial class LlmWordProblemValidator
             (ArithmeticOperation.Divide, AppLanguage.Vietnamese) =>
                 ["chia đều", "đều cho", "xếp đều", "phân đều", "chia thành", "mỗi nhóm", "mỗi phần", "một nhóm", "một phần", "chia", "mỗi"],
             (ArithmeticOperation.Add, _) =>
-                ["in total", "how many", "altogether", "received", "added", "bought", "found", "joined", "more", "and"],
+                ["in total", "how many", "altogether", "received", "added", "bought", "picked", "was given", "adopted", "found", "joined", "more", "and"],
             (ArithmeticOperation.Subtract, _) =>
                 ["took away", "remain", "removed", "gave", "used", "lost", "ate", "sold", "left"],
             (ArithmeticOperation.Multiply, _) =>
@@ -5091,11 +5497,11 @@ internal sealed partial class LlmWordProblemValidator
             return operation switch
             {
                 ArithmeticOperation.Add =>
-                    ContainsAny(problem, "thêm", "nhận", "được cho", "và", "gộp", "mua thêm", "hái thêm", "nhặt thêm", "có thêm") &&
+                    ContainsAny(problem, "thêm", "nhận thêm", "được cho thêm", "gộp", "mua thêm", "hái thêm", "nhặt thêm", "có thêm") &&
                     ContainsAny(problem, "tất cả", "tổng cộng", "có bao nhiêu"),
 
                 ArithmeticOperation.Subtract =>
-                    ContainsAny(problem, "cho", "tặng", "bớt", "mất", "dùng", "ăn", "bán", "lấy đi", "lấy ra", "bỏ đi", "rời đi", "bay đi") &&
+                    ContainsAny(problem, "cho đi", "tặng", "bớt", "mất", "dùng", "ăn", "bán", "lấy đi", "lấy ra", "bỏ đi", "cắt bỏ", "rời đi", "bay đi") &&
                     ContainsAny(problem, "còn lại", "còn bao nhiêu"),
 
                 ArithmeticOperation.Multiply =>
@@ -5113,7 +5519,7 @@ internal sealed partial class LlmWordProblemValidator
         return operation switch
         {
             ArithmeticOperation.Add =>
-                ContainsAny(problem, "more", "received", "added", "and", "bought", "found", "joined") &&
+                ContainsAny(problem, "more", "received more", "received", "added", "bought more", "bought", "found more", "picked", "was given", "adopted", "joined") &&
                 ContainsAny(problem, "altogether", "in total", "how many"),
 
             ArithmeticOperation.Subtract =>
