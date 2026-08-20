@@ -20,14 +20,21 @@ namespace MathSolver.Services;
 public sealed class LocalLlmQuizGenerator
 {
     /// <summary>
-    /// Giữ 4 luồng trên CPU tối đa 8 logical threads; CPU lớn hơn dùng tối đa
-    /// 8 luồng để tăng tốc sinh đề mà vẫn chừa tài nguyên cho giao diện, hệ
-    /// điều hành và các tác vụ nền. Máy dưới 4 threads không bị oversubscribe.
+    /// Số luồng decode. Windows giữ policy cũ. Android ARM64 dùng tối đa 6
+    /// worker trên SoC 8-core: đủ để kéo các core hiệu năng vào llama.cpp mà
+    /// không ép toàn bộ 8 core cùng tranh băng thông bộ nhớ khi decode từng
+    /// token.
     /// </summary>
     public static int CpuThreadCount { get; } =
-        Environment.ProcessorCount > 8
-            ? 8
-            : Math.Min(4, Environment.ProcessorCount);
+        ResolveDecodeThreadCount();
+
+    /// <summary>
+    /// Prompt-prefill là workload theo batch nên scale tốt hơn decode. Android
+    /// được phép dùng tối đa 8 core ở pha này; Windows vẫn dùng cùng số thread
+    /// với decode để giữ nguyên hành vi desktop hiện tại.
+    /// </summary>
+    public static int CpuBatchThreadCount { get; } =
+        ResolveBatchThreadCount();
     public const int MaximumAttempts = 3;
     public const int MaximumOutputTokens = 320;
     public const int ModelUnloadGracePeriodSeconds = 60;
@@ -35,6 +42,14 @@ public sealed class LocalLlmQuizGenerator
     // mới nhất, nên 2K chỉ cần chứa đúng một lượt sinh hoàn chỉnh. Weights vẫn
     // được cache giữa các lần thử và giữa các câu hỏi.
     public const uint ContextSize = 2048;
+
+    // Sau khi worker-thread fix đã loại bỏ tình trạng kẹt trước token đầu tiên,
+    // tăng vừa phải batch Android để prompt-prefill nhanh hơn. Không quay thẳng
+    // lên mức desktop 256/128 nhằm giữ khoảng an toàn RAM cho điện thoại.
+    private const uint AndroidBatchSize = 128;
+    private const uint AndroidMicroBatchSize = 64;
+    private const uint DesktopBatchSize = 256;
+    private const uint DesktopMicroBatchSize = 128;
 
     private readonly ArithmeticQuizGenerator _quizGenerator;
     private readonly FractionQuizGenerator _fractionQuizGenerator;
@@ -373,8 +388,23 @@ public sealed class LocalLlmQuizGenerator
 
                 // Mỗi attempt có KV sạch. JSON sai, EOS và control token của
                 // lượt trước không thể làm lượt sau trả rỗng hoặc bị cắt.
+                // Trên Android đây cũng là mốc quan trọng để phân biệt lỗi
+                // CreateContext với lỗi prompt-prefill nếu cần xem logcat.
+                System.Diagnostics.Debug.WriteLine(
+                    $"Local LLM attempt {attempt}: creating context " +
+                    $"(ctx={modelParameters.ContextSize}, " +
+                    $"batch={modelParameters.BatchSize}, " +
+                    $"ubatch={modelParameters.UBatchSize}, " +
+                    $"threads={modelParameters.Threads}, " +
+                    $"batchThreads={modelParameters.BatchThreads}, " +
+                    $"mmap={modelParameters.UseMemorymap}, " +
+                    $"flashAttention={modelParameters.FlashAttention}).");
+
                 using LLamaContext attemptContext =
                     weights.CreateContext(modelParameters);
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"Local LLM attempt {attempt}: context ready; starting prompt prefill.");
 
                 var executor =
                     new InteractiveExecutor(attemptContext);
@@ -399,8 +429,14 @@ public sealed class LocalLlmQuizGenerator
                     System.Diagnostics.Stopwatch.StartNew();
                 var speedReportTimer =
                     System.Diagnostics.Stopwatch.StartNew();
+                int previewIntervalMilliseconds =
+                    OperatingSystem.IsAndroid() ? 120 : 80;
+                int speedReportIntervalMilliseconds =
+                    OperatingSystem.IsAndroid() ? 500 : 250;
                 var generationTimer =
                     new System.Diagnostics.Stopwatch();
+                var firstTokenTimer =
+                    System.Diagnostics.Stopwatch.StartNew();
                 int attemptGeneratedTokenCount = 0;
 
                 await foreach (string token in
@@ -417,14 +453,19 @@ public sealed class LocalLlmQuizGenerator
                     // or prompt-prefill time.
                     if (attemptGeneratedTokenCount == 1)
                     {
+                        firstTokenTimer.Stop();
                         generationTimer.Start();
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Local LLM attempt {attempt}: first token received " +
+                            $"after {firstTokenTimer.ElapsedMilliseconds} ms prefill.");
                     }
 
                     output.Append(token);
 
                     string? previewToReport = null;
 
-                    if (previewTimer.ElapsedMilliseconds >= 80)
+                    if (previewTimer.ElapsedMilliseconds >=
+                        previewIntervalMilliseconds)
                     {
                         previewTimer.Restart();
 
@@ -442,7 +483,8 @@ public sealed class LocalLlmQuizGenerator
                     }
 
                     bool shouldReportSpeed =
-                        speedReportTimer.ElapsedMilliseconds >= 250;
+                        speedReportTimer.ElapsedMilliseconds >=
+                        speedReportIntervalMilliseconds;
 
                     if (shouldReportSpeed)
                     {
@@ -460,6 +502,15 @@ public sealed class LocalLlmQuizGenerator
                             totalGenerationTime +
                             generationTimer.Elapsed;
 
+                        // Trên Android không clone toàn bộ StringBuilder mỗi
+                        // 500 ms chỉ để cập nhật token/s. Raw output live chỉ
+                        // cần khi preview thật sự đổi; bản đầy đủ vẫn được gửi
+                        // ở cuối attempt cho Developer Mode/validator.
+                        string? rawOutputSnapshot =
+                            previewToReport is not null
+                                ? output.ToString()
+                                : null;
+
                         progress?.Report(
                             new(
                                 LlmQuizProgressStage.Generating,
@@ -470,7 +521,7 @@ public sealed class LocalLlmQuizGenerator
                                 CalculateTokensPerSecond(
                                     currentGeneratedTokenCount,
                                     currentGenerationTime),
-                                RawModelOutput: output.ToString()));
+                                RawModelOutput: rawOutputSnapshot));
                     }
                 }
 
@@ -486,6 +537,11 @@ public sealed class LocalLlmQuizGenerator
                     CalculateTokensPerSecond(
                         generatedTokenCount,
                         totalGenerationTime);
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"Local LLM attempt {attempt}: decoded " +
+                    $"{attemptGeneratedTokenCount} chunks at " +
+                    $"{tokensPerSecond:F2} token/s.");
 
                 string rawOutput = output.ToString();
 
@@ -773,18 +829,73 @@ public sealed class LocalLlmQuizGenerator
     }
 
     private static ModelParams CreateModelParameters(
-        string modelPath) =>
-        new(modelPath)
+        string modelPath)
+    {
+        bool isAndroid =
+            OperatingSystem.IsAndroid();
+
+        return new(modelPath)
         {
             ContextSize = ContextSize,
             GpuLayerCount = 0,
             Threads = CpuThreadCount,
-            BatchThreads = CpuThreadCount,
-            BatchSize = 256,
-            UBatchSize = 128,
+            BatchThreads = isAndroid
+                ? CpuBatchThreadCount
+                : CpuThreadCount,
+            BatchSize = isAndroid
+                ? AndroidBatchSize
+                : DesktopBatchSize,
+            UBatchSize = isAndroid
+                ? AndroidMicroBatchSize
+                : DesktopMicroBatchSize,
+
+            // mmap là đường load mặc định/tối ưu của llama.cpp. Worker-thread
+            // + batch Android nhỏ hơn đã xử lý lỗi first-token trước đó, nên
+            // bật lại mmap để tránh copy toàn bộ GGUF 3+ GB vào RAM mỗi lần
+            // model được nạp.
             UseMemorymap = true,
-            UseMemoryLock = false
+            UseMemoryLock = false,
+
+            // Trên ARM CPU, flash attention ưu tiên decode/token generation.
+            // Windows giữ false như baseline cũ để lần tối ưu này chỉ thay đổi
+            // Android. KV vẫn để F16 mặc định, tránh thêm biến số quant-cache.
+            FlashAttention = isAndroid
         };
+    }
+
+    private static int ResolveDecodeThreadCount()
+    {
+        int processorCount =
+            Math.Max(1, Environment.ProcessorCount);
+
+        if (OperatingSystem.IsAndroid())
+        {
+            return processorCount switch
+            {
+                >= 8 => 6,
+                >= 6 => 5,
+                >= 4 => 4,
+                _ => processorCount
+            };
+        }
+
+        return processorCount > 8
+            ? 8
+            : Math.Min(4, processorCount);
+    }
+
+    private static int ResolveBatchThreadCount()
+    {
+        int processorCount =
+            Math.Max(1, Environment.ProcessorCount);
+
+        if (OperatingSystem.IsAndroid())
+        {
+            return Math.Min(8, processorCount);
+        }
+
+        return CpuThreadCount;
+    }
 
     private async Task UnloadModelAfterGracePeriodAsync(
         CancellationTokenSource cancellation,
@@ -974,13 +1085,14 @@ internal static class LlmQuizPromptBuilder
         string systemPrompt,
         string userPrompt)
     {
-        // E2B/E4B with thinking disabled use a user turn followed by a model
-        // turn. Put the role instruction inside that user turn; a separate
-        // system turn is the thinking-enabled shape for these small models.
+        // Gemma 4 có system/user/model role riêng. Dùng đúng control-token
+        // format chính thức thay vì nhét system instruction vào user turn;
+        // điều này cũng làm prompt prefill nhất quán giữa desktop và Android.
         return string.Concat(
-            "<|turn>user\n",
+            "<|turn>system\n",
             systemPrompt,
-            "\n\n",
+            "<turn|>\n",
+            "<|turn>user\n",
             userPrompt,
             "<turn|>\n",
             "<|turn>model");

@@ -1697,7 +1697,28 @@ public partial class MathPuzzlePage : ContentPage
                     cancellation,
                     progressVersion);
 
-            LlmQuizGenerationResult result =
+            LlmQuizGenerationResult result;
+
+#if ANDROID
+            // llama.cpp context creation + prompt prefill are native CPU work.
+            // Không để phần này chạy trên MAUI UI SynchronizationContext: trên
+            // điện thoại ARM64 nó có thể khóa main thread trước token đầu tiên
+            // dù ActivityIndicator native vẫn còn animation. Progress<T> được
+            // tạo ở UI thread phía trên nên callback vẫn marshal về UI đúng.
+            result =
+                await Task.Run(
+                    async () =>
+                        await _localLlmQuizGenerator.GenerateAsync(
+                            _llmModelPath,
+                            _selectedMode,
+                            problemRequest,
+                            AppLanguageManager.CurrentLanguage,
+                            progress,
+                            cancellation.Token)
+                            .ConfigureAwait(false),
+                    cancellation.Token);
+#else
+            result =
                 await _localLlmQuizGenerator.GenerateAsync(
                     _llmModelPath,
                     _selectedMode,
@@ -1705,6 +1726,7 @@ public partial class MathPuzzlePage : ContentPage
                     AppLanguageManager.CurrentLanguage,
                     progress,
                     cancellation.Token);
+#endif
 
             // Vô hiệu hóa callback Progress<T> đang chờ trên UI thread trước
             // khi hiển thị trạng thái cuối. Nếu không, ModelLoaded/Validating

@@ -213,3 +213,17 @@ Android is now the platform-specific Material You surface while WinUI remains th
 - Android application chrome uses Material typography metrics, surface containers, subtle elevation, native ripple/state layers, and larger Material shape tokens.
 - Custom SGK/math renderers and `GraphicsView` content remain shared and are not Materialized.
 - WinUI values are preserved through `#if ANDROID` and `OnPlatform ... WinUI=<previous value>` branches.
+
+## Android local LLM CPU performance profile (2026-08-20)
+
+Gemma 4 generation remains CPU-only through `LLamaSharp.Backend.Cpu.Android`; no Vulkan/GPU offload is enabled. After the Android first-token stability fix, `LocalLlmQuizGenerator` uses a mobile-specific performance profile:
+
+- decode threads: up to 6 on 8-core Android devices;
+- prompt-prefill threads: up to 8 on Android;
+- Android batch / micro-batch: 128 / 64 (middle ground between the stable 64 / 32 fallback and the desktop 256 / 128 profile);
+- GGUF loading: memory mapping enabled again for faster model startup;
+- Flash Attention: enabled only on Android to improve token decode; Windows keeps its previous `false` baseline;
+- KV cache remains at LLamaSharp's default precision in this phase to avoid mixing KV quantization into the first performance tuning pass;
+- live UI progress is throttled on Android and full raw output snapshots are no longer cloned for speed-only updates.
+
+The context remains 2048 tokens, model weights remain cached for the existing grace period, and the Android generation call stays on the worker path introduced by the first-token stability fix.
