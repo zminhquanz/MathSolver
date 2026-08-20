@@ -491,12 +491,17 @@ public sealed class LocalLlmQuizGenerator
                             totalGenerationTime +
                             generationTimer.Elapsed;
 
-                        // Trên Android không clone toàn bộ StringBuilder mỗi
-                        // 500 ms chỉ để cập nhật token/s. Raw output live chỉ
-                        // cần khi preview thật sự đổi; bản đầy đủ vẫn được gửi
-                        // ở cuối attempt cho Developer Mode/validator.
+                        // Developer Mode phải tiếp tục thấy toàn bộ JSON
+                        // đang stream, kể cả sau khi problem_text đã đóng và
+                        // preview câu hỏi không còn thay đổi. Trước đây raw
+                        // output chỉ được snapshot khi ProblemPreview đổi, nên
+                        // panel JSON trông như bị đứng ở problem_text cho tới
+                        // khi attempt kết thúc. Speed timer (250 ms) là nhịp
+                        // đủ mượt để cập nhật live JSON mà không refresh UI ở
+                        // từng token.
                         string? rawOutputSnapshot =
-                            previewToReport is not null
+                            previewToReport is not null ||
+                            shouldReportSpeed
                                 ? output.ToString()
                                 : null;
 
