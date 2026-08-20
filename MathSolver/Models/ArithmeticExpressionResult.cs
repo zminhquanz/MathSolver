@@ -32,7 +32,8 @@ public sealed class ArithmeticExpressionException : FormatException
 
 public sealed record IntegerExpressionResult(
     string NormalizedExpression,
-    BigInteger Result,
+    BigInteger ResultNumerator,
+    BigInteger ResultDenominator,
     IReadOnlyList<string> Steps);
 
 public sealed record DecimalExpressionResult(

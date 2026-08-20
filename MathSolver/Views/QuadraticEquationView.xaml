@@ -26,9 +26,15 @@
                         Text="{localization:Translate Equation.ChooseType}"
                         Style="{StaticResource SolverSectionTitleStyle}" />
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Grid
+                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                        ColumnSpacing="{OnPlatform Android=0, WinUI=10, Default=10}"
+                        RowSpacing="{OnPlatform Android=8, WinUI=0, Default=0}">
+
                         <Button
                             x:Name="LinearModeButton"
+                            Grid.Row="0"
                             Grid.Column="0"
                             Text="{localization:Translate Equation.Mode.Linear}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
@@ -38,7 +44,8 @@
 
                         <Button
                             x:Name="QuadraticModeButton"
-                            Grid.Column="1"
+                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                             Text="{localization:Translate Equation.Mode.Quadratic}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             BackgroundColor="{DynamicResource PrimaryColor}"

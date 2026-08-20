@@ -402,6 +402,9 @@ public partial class MathPuzzlePage : ContentPage
         bool isLocalLlm =
             _generationSource == QuizGenerationSource.LocalLlm;
 
+        UpdateQuestionModeLayout(
+            isLocalLlm);
+
         LlmSettingsBorder.IsVisible = isLocalLlm;
         CreateOrRegenerateQuestionButton.Text =
             TranslateQuiz(
@@ -418,6 +421,57 @@ public partial class MathPuzzlePage : ContentPage
         UpdateEssayAnswerPresentation();
         UpdateCreateOrRegenerateQuestionButtonState();
         UpdateAiDiagnosticsVisibility();
+    }
+
+    private void UpdateQuestionModeLayout(
+        bool isLocalLlm)
+    {
+#if ANDROID
+        // Android phone layout is shared by both Algorithm and AI/LLM:
+        // True/False + Multiple Choice on the first row, Essay full-width on
+        // the second row. This prevents translated labels from being squeezed
+        // on narrow screens regardless of the generation source.
+        _ = isLocalLlm;
+
+        QuestionModeGrid.ColumnDefinitions.Clear();
+        QuestionModeGrid.RowDefinitions.Clear();
+
+        QuestionModeGrid.ColumnDefinitions.Add(
+            new ColumnDefinition
+            {
+                Width = GridLength.Star
+            });
+
+        QuestionModeGrid.ColumnDefinitions.Add(
+            new ColumnDefinition
+            {
+                Width = GridLength.Star
+            });
+
+        QuestionModeGrid.RowDefinitions.Add(
+            new RowDefinition
+            {
+                Height = GridLength.Auto
+            });
+
+        QuestionModeGrid.RowDefinitions.Add(
+            new RowDefinition
+            {
+                Height = GridLength.Auto
+            });
+
+        Grid.SetRow(TrueFalseModeButton, 0);
+        Grid.SetColumn(TrueFalseModeButton, 0);
+        Grid.SetColumnSpan(TrueFalseModeButton, 1);
+
+        Grid.SetRow(MultipleChoiceModeButton, 0);
+        Grid.SetColumn(MultipleChoiceModeButton, 1);
+        Grid.SetColumnSpan(MultipleChoiceModeButton, 1);
+
+        Grid.SetRow(EssayModeButton, 1);
+        Grid.SetColumn(EssayModeButton, 0);
+        Grid.SetColumnSpan(EssayModeButton, 2);
+#endif
     }
 
     private void OnTrueFalseModeClicked(

@@ -584,7 +584,9 @@ public partial class CalculationPage : ContentPage
                     _arithmeticEngine.EvaluateIntegerExpression(expression);
 
                 string resultText =
-                    FormatIntegerForDisplay(evaluation.Result);
+                    FormatIntegerExpressionResultForDisplay(
+                        evaluation.ResultNumerator,
+                        evaluation.ResultDenominator);
 
                 ShowArithmeticExpressionResult(
                     evaluation.NormalizedExpression,
@@ -1812,6 +1814,22 @@ public partial class CalculationPage : ContentPage
         };
     }
 
+    private static string FormatIntegerExpressionResultForDisplay(
+        BigInteger numerator,
+        BigInteger denominator)
+    {
+        string plainText =
+            RationalDecimalFormatter.Format(
+                numerator,
+                denominator,
+                MaxDecimalPlaces);
+
+        return
+            IntegerInputFormatter
+                .AddThousandsSeparatorsToPlainNumber(
+                    plainText);
+    }
+
     private string FormatOperationResult(
         decimal firstNumber,
         decimal secondNumber,
@@ -2854,6 +2872,22 @@ public partial class CalculationPage : ContentPage
         {
             return FormatIntegerForDisplay(
                 integerValue);
+        }
+
+        if (_selectedNumberType ==
+                NumberInputType.Integer &&
+            decimalPointCount == 1 &&
+            !numberText.Contains(
+                "e",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            // Integer-expression divisions are evaluated as exact rationals.
+            // Keep terminating decimals exactly as produced by the engine;
+            // repeating decimals have already been rounded to 10 places.
+            return
+                IntegerInputFormatter
+                    .AddThousandsSeparatorsToPlainNumber(
+                        numberText);
         }
 
         if (decimalPointCount <= 1 &&

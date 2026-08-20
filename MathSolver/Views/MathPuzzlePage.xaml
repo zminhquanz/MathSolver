@@ -560,8 +560,10 @@
                                 Style="{StaticResource SolverSectionTitleStyle}" />
 
                             <Grid
+                                x:Name="QuestionModeGrid"
                                 ColumnDefinitions="*,*,*"
-                                ColumnSpacing="8">
+                                ColumnSpacing="8"
+                                RowSpacing="8">
 
                                 <Button
                                     x:Name="TrueFalseModeButton"

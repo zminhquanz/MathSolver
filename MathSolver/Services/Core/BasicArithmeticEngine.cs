@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Numerics;
+using MathSolver.Services;
 using System.Globalization;
 using System.Numerics;
 
@@ -100,8 +101,12 @@ public sealed class BasicArithmeticEngine
         IReadOnlyList<ExpressionToken> postfix =
             ConvertToPostfix(expression);
 
+        // Integer-expression input still accepts integer literals only, but an
+        // intermediate division is allowed to become an exact rational value.
+        // This avoids forcing students to switch to Decimal just because a
+        // division does not divide evenly.
         var values =
-            new Stack<BigInteger>();
+            new Stack<ExactExpressionRational>();
 
         var steps =
             new List<string>();
@@ -128,47 +133,51 @@ public sealed class BasicArithmeticEngine
                         ArithmeticExpressionError.NumberOutOfRange);
                 }
 
-                values.Push(number);
+                values.Push(
+                    ExactExpressionRational.FromInteger(
+                        number));
                 continue;
             }
 
             if (token.IsUnary)
             {
-                BigInteger operand = PopInteger(values);
-                values.Push(token.Text == "u-" ? -operand : operand);
+                ExactExpressionRational operand =
+                    PopExpressionRational(values);
+
+                values.Push(
+                    token.Text == "u-"
+                        ? operand.Negate()
+                        : operand);
                 continue;
             }
 
-            BigInteger right = PopInteger(values);
-            BigInteger left = PopInteger(values);
-            ArithmeticOperation operation = ToOperation(token.Text);
+            ExactExpressionRational right =
+                PopExpressionRational(values);
 
-            IntegerArithmeticResult calculation;
+            ExactExpressionRational left =
+                PopExpressionRational(values);
 
-            try
-            {
-                calculation = CalculateInteger(
-                    new IntegerArithmeticExpression(
-                        left,
-                        operation,
-                        right));
-            }
-            catch (DivideByZeroException)
+            ArithmeticOperation operation =
+                ToOperation(token.Text);
+
+            if (operation == ArithmeticOperation.Divide &&
+                right.Numerator.IsZero)
             {
                 throw new ArithmeticExpressionException(
                     ArithmeticExpressionError.DivisionByZero);
             }
 
-            if (operation == ArithmeticOperation.Divide &&
-                !calculation.Remainder.IsZero)
-            {
-                throw new ArithmeticExpressionException(
-                    ArithmeticExpressionError.NonIntegralDivision);
-            }
+            ExactExpressionRational result =
+                CalculateExpressionRational(
+                    left,
+                    operation,
+                    right);
 
-            values.Push(calculation.Result);
+            values.Push(result);
             steps.Add(
-                $"{left} {GetSymbol(operation)} {right} = {calculation.Result}");
+                $"{FormatExpressionRational(left)} {GetSymbol(operation)} " +
+                $"{FormatExpressionRational(right)} = " +
+                $"{FormatExpressionRational(result)}");
         }
 
         if (values.Count != 1)
@@ -177,10 +186,122 @@ public sealed class BasicArithmeticEngine
                 ArithmeticExpressionError.MissingOperator);
         }
 
+        ExactExpressionRational finalResult =
+            values.Pop();
+
         return new IntegerExpressionResult(
             NormalizeExpressionForDisplay(expression),
-            values.Pop(),
+            finalResult.Numerator,
+            finalResult.Denominator,
             steps);
+    }
+
+    private static ExactExpressionRational CalculateExpressionRational(
+        ExactExpressionRational left,
+        ArithmeticOperation operation,
+        ExactExpressionRational right)
+    {
+        return operation switch
+        {
+            ArithmeticOperation.Add =>
+                ExactExpressionRational.Create(
+                    left.Numerator * right.Denominator +
+                    right.Numerator * left.Denominator,
+                    left.Denominator * right.Denominator),
+
+            ArithmeticOperation.Subtract =>
+                ExactExpressionRational.Create(
+                    left.Numerator * right.Denominator -
+                    right.Numerator * left.Denominator,
+                    left.Denominator * right.Denominator),
+
+            ArithmeticOperation.Multiply =>
+                ExactExpressionRational.Create(
+                    left.Numerator * right.Numerator,
+                    left.Denominator * right.Denominator),
+
+            ArithmeticOperation.Divide =>
+                ExactExpressionRational.Create(
+                    left.Numerator * right.Denominator,
+                    left.Denominator * right.Numerator),
+
+            _ =>
+                throw new ArgumentOutOfRangeException(
+                    nameof(operation),
+                    operation,
+                    "Unsupported arithmetic operation.")
+        };
+    }
+
+    private static ExactExpressionRational PopExpressionRational(
+        Stack<ExactExpressionRational> values)
+    {
+        if (!values.TryPop(
+                out ExactExpressionRational value))
+        {
+            throw new ArithmeticExpressionException(
+                ArithmeticExpressionError.MissingOperand);
+        }
+
+        return value;
+    }
+
+    private static string FormatExpressionRational(
+        ExactExpressionRational value)
+    {
+        return RationalDecimalFormatter.Format(
+            value.Numerator,
+            value.Denominator,
+            maxRepeatingDecimalPlaces: 10);
+    }
+
+    private readonly record struct ExactExpressionRational(
+        BigInteger Numerator,
+        BigInteger Denominator)
+    {
+        public static ExactExpressionRational FromInteger(
+            BigInteger value) =>
+            new(
+                value,
+                BigInteger.One);
+
+        public static ExactExpressionRational Create(
+            BigInteger numerator,
+            BigInteger denominator)
+        {
+            if (denominator.IsZero)
+            {
+                throw new ArithmeticExpressionException(
+                    ArithmeticExpressionError.DivisionByZero);
+            }
+
+            if (numerator.IsZero)
+            {
+                return new ExactExpressionRational(
+                    BigInteger.Zero,
+                    BigInteger.One);
+            }
+
+            if (denominator.Sign < 0)
+            {
+                numerator = -numerator;
+                denominator = -denominator;
+            }
+
+            BigInteger gcd =
+                BigInteger.GreatestCommonDivisor(
+                    BigInteger.Abs(numerator),
+                    denominator);
+
+            return new ExactExpressionRational(
+                numerator / gcd,
+                denominator / gcd);
+        }
+
+        public ExactExpressionRational Negate() =>
+            new(
+                -Numerator,
+                Denominator);
     }
 
     public DecimalExpressionResult EvaluateDecimalExpression(
