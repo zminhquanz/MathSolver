@@ -6,8 +6,9 @@ namespace MathSolver.Graphics;
 
 /// <summary>
 /// Reusable vertical bar chart for raw hardware benchmark comparisons.
-/// Supports one or more bars per category and nullable values so an
-/// unsupported SIMD width can remain visible as N/A instead of disappearing.
+/// Supports one or more bars per category. Nullable values remain supported
+/// for generic callers, while SIMD comparison filters unsupported ISA groups
+/// before they are passed to the chart.
 /// </summary>
 public sealed class BenchmarkVerticalChartDrawable : IDrawable
 {

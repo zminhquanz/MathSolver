@@ -61,7 +61,7 @@
                             Grid.Column="1"
                             Text="{localization:Translate PowerRoot.RootMode}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnRootModeClicked" />
 
@@ -77,8 +77,8 @@
 
                 <Border
                     Padding="{OnPlatform Android=12, WinUI=14, Default=14}"
-                    BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource BorderBrush}"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperBorderBrush}"
                     StrokeThickness="1">
 
                     <Border.StrokeShape>
@@ -112,8 +112,8 @@
 
                                 <Border
                                     Padding="12,4"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1">
 
                                     <Border.StrokeShape>
@@ -147,8 +147,8 @@
 
                                 <Border
                                     Padding="12,4"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1">
 
                                     <Border.StrokeShape>
@@ -175,7 +175,7 @@
                             x:Name="ErrorBorder"
                             IsVisible="False"
                             Padding="12,10"
-                            BackgroundColor="{DynamicResource DangerSoftColor}"
+                            BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
                             Stroke="{DynamicResource DangerBorderBrush}"
                             StrokeThickness="1">
 
@@ -219,7 +219,7 @@
                                 Grid.Column="1"
                                 Text="{localization:Translate Actions.Clear}"
                                 Style="{StaticResource SolverSecondaryActionStyle}"
-                                BackgroundColor="{DynamicResource DividerColor}"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 Clicked="OnClearClicked" />
 
                         </Grid>
@@ -232,8 +232,8 @@
                     x:Name="ProgressBorder"
                     IsVisible="False"
                     Padding="16"
-                    BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                     StrokeThickness="1">
 
                     <Border.StrokeShape>
@@ -312,8 +312,8 @@
                     x:Name="ResultBorder"
                     IsVisible="False"
                     Padding="16"
-                    BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                     StrokeThickness="1">
 
                     <Border.StrokeShape>
@@ -330,7 +330,7 @@
 
                         <Border
                             Padding="14"
-                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                             StrokeThickness="0">
 
                             <Border.StrokeShape>
@@ -362,7 +362,7 @@
                                     CornerRadius="12"
                                     FontSize="15"
                                     FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource DividerColor}"
+                                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                     TextColor="Transparent"
                                     Clicked="OnCopyResultClicked" />
 
@@ -407,8 +407,8 @@
                             x:Name="ExportStatusBorder"
                             IsVisible="False"
                             Padding="14"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
 
                             <Border.StrokeShape>
@@ -463,7 +463,7 @@
                             CornerRadius="9"
                             FontSize="12"
                             FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             TextColor="{DynamicResource TextSecondaryColor}"
                             Clicked="OnDiagnosticsToggleClicked" />
 
@@ -471,8 +471,8 @@
                             x:Name="LargeResultInfoBorder"
                             IsVisible="False"
                             Padding="14"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
 
                             <Border.StrokeShape>
@@ -539,8 +539,8 @@
 
                                 <Border
                                     Padding="12,4"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1">
 
                                     <Border.StrokeShape>
@@ -575,8 +575,8 @@
 
                                 <Border
                                     Padding="12,4"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1">
 
                                     <Border.StrokeShape>
@@ -604,7 +604,7 @@
                             x:Name="RootErrorBorder"
                             IsVisible="False"
                             Padding="12,10"
-                            BackgroundColor="{DynamicResource DangerSoftColor}"
+                            BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
                             Stroke="{DynamicResource DangerBorderBrush}"
                             StrokeThickness="1">
 
@@ -646,7 +646,7 @@
                             <Button
                                 x:Name="RootClearButton"
                                 Grid.Column="1"
-                                BackgroundColor="{DynamicResource DividerColor}"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 Text="{localization:Translate Actions.Clear}"
                                 Style="{StaticResource SolverSecondaryActionStyle}"
                                 Clicked="OnRootClearClicked" />
@@ -661,8 +661,8 @@
                     x:Name="RootResultBorder"
                     IsVisible="False"
                     Padding="16"
-                    BackgroundColor="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                     StrokeThickness="1">
 
                     <Border.StrokeShape>
@@ -679,7 +679,7 @@
 
                         <Border
                             Padding="14"
-                            BackgroundColor="{DynamicResource PrimarySoftColor}"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                             StrokeThickness="0">
 
                             <Border.StrokeShape>
@@ -748,7 +748,7 @@
                                 x:Name="RootCopyResultButton"
                                 Text="{localization:Translate PowerRoot.RootCopyResult}"
                                 Style="{StaticResource SolverSecondaryActionStyle}"
-                                BackgroundColor="{DynamicResource DividerColor}"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 TextColor="Transparent"
                                 Clicked="OnRootCopyResultClicked" />
 

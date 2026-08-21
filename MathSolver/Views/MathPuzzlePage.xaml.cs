@@ -1,4 +1,4 @@
-﻿using MathSolver.Controls;
+using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
@@ -183,6 +183,8 @@ public partial class MathPuzzlePage : ContentPage
     {
         base.OnAppearing();
 
+        LiveWallpaper.Resume();
+
         // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
         // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
         // re-assert này sửa chrome ngay trong lifecycle của trang chính.
@@ -233,6 +235,8 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        LiveWallpaper.Pause();
+
         UnsubscribeDeveloperModeChanged();
 
         // Settings và thư viện Gemma chỉ là overlay trong suốt phủ lên trang.
@@ -295,6 +299,7 @@ public partial class MathPuzzlePage : ContentPage
         UpdateModeStyles();
         UpdateProblemOperationPanel();
         RefreshTrueFalseAnswerButtonTheme();
+        RefreshLlmActionButtonTheme();
     }
 
     private void RefreshTrueFalseAnswerButtonTheme()
@@ -306,12 +311,12 @@ public partial class MathPuzzlePage : ContentPage
         // cập nhật ngay cả khi câu hỏi đã được render trước lúc đổi theme.
         ApplySemanticAnswerButtonTheme(
             TrueAnswerButton,
-            "SuccessSoftColor",
+            "WallpaperSuccessSoftColor",
             "SuccessColor");
 
         ApplySemanticAnswerButtonTheme(
             FalseAnswerButton,
-            "DangerSoftColor",
+            "WallpaperDangerSoftColor",
             "DangerColor");
     }
 
@@ -323,7 +328,7 @@ public partial class MathPuzzlePage : ContentPage
         button.BackgroundColor =
             ThemeResource.GetColor(
                 backgroundResourceKey,
-                backgroundResourceKey == "SuccessSoftColor"
+                backgroundResourceKey == "WallpaperSuccessSoftColor"
                     ? "#F0FDF4"
                     : "#FEF2F2");
 
@@ -2169,6 +2174,7 @@ public partial class MathPuzzlePage : ContentPage
 
         UpdateCreateOrRegenerateQuestionButtonState();
         UpdateAiTeacherState();
+        RefreshLlmActionButtonTheme();
     }
 
     private void UpdateAiTeacherState()
@@ -2283,15 +2289,46 @@ public partial class MathPuzzlePage : ContentPage
             Button.TextColorProperty,
             "OnPrimaryColor");
 
-        OpenLlmModelFolderButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "SurfaceColor");
-        OpenLlmModelFolderButton.SetDynamicResource(
-            Button.BorderColorProperty,
-            "PrimaryBorderColor");
-        OpenLlmModelFolderButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "PrimaryColor");
+        // WinUI can keep a previous Enabled/Disabled brush across a theme
+        // transition. Resolve these secondary model actions directly from the
+        // current adaptive palette, just like the semantic Eject action below.
+        Color modelActionBackground = ThemeResource.GetColor(
+            "WallpaperSurfaceStrongColor",
+            AppThemeManager.IsDarkThemeEffective
+                ? "#111827"
+                : "#FFFFFF");
+        Color modelActionBorder = ThemeResource.GetColor(
+            "WallpaperPrimaryBorderColor",
+            "#C4B5FD");
+        Color modelActionText = ThemeResource.GetColor(
+            "PrimaryColor",
+            "#6D28D9");
+
+        OpenLlmModelFolderButton.BackgroundColor = modelActionBackground;
+        OpenLlmModelFolderButton.BorderColor = modelActionBorder;
+        OpenLlmModelFolderButton.TextColor = modelActionText;
+
+        SelectLlmModelButton.BackgroundColor = modelActionBackground;
+        SelectLlmModelButton.BorderColor = modelActionBorder;
+        SelectLlmModelButton.TextColor = modelActionText;
+
+        // Eject is a semantic Danger button. WinUI can cache the brush of
+        // the Disabled visual state across a theme switch, so resolve the
+        // current palette directly instead of relying only on the original
+        // XAML DynamicResource. This keeps Dark -> Light and Light -> Dark
+        // transitions correct even while a model is selected.
+        EjectLlmModelButton.BackgroundColor =
+            ThemeResource.GetColor(
+                "WallpaperDangerSoftColor",
+                "#FEF2F2");
+        EjectLlmModelButton.BorderColor =
+            ThemeResource.GetColor(
+                "DangerBorderColor",
+                "#FECACA");
+        EjectLlmModelButton.TextColor =
+            ThemeResource.GetColor(
+                "DangerColor",
+                "#B91C1C");
 
         CreateOrRegenerateQuestionButton.SetDynamicResource(
             Button.BackgroundColorProperty,
@@ -2552,8 +2589,8 @@ public partial class MathPuzzlePage : ContentPage
                         TranslateQuiz("Quiz.AiValidationCheckingDetail"),
                         diagnostic.Attempt,
                         diagnostic.MaximumAttempts),
-                    "PrimarySoftColor",
-                    "PrimaryBorderBrush",
+                    "WallpaperPrimarySoftColor",
+                    "WallpaperPrimaryBorderBrush",
                     "PrimaryColor");
                 break;
 
@@ -2564,7 +2601,7 @@ public partial class MathPuzzlePage : ContentPage
                     "Quiz.AiValidationInvalidTitle",
                     diagnostic.Detail ??
                         TranslateQuiz("Quiz.AiValidationInvalidFallback"),
-                    "DangerSoftColor",
+                    "WallpaperDangerSoftColor",
                     "DangerBorderBrush",
                     "DangerColor");
                 break;
@@ -2575,7 +2612,7 @@ public partial class MathPuzzlePage : ContentPage
                     "Quiz.AiValidationRetryTitle",
                     diagnostic.Detail ??
                         TranslateQuiz("Quiz.AiValidationInvalidFallback"),
-                    "WarningSoftColor",
+                    "WallpaperWarningSoftColor",
                     "WarningBorderBrush",
                     "WarningColor");
                 break;
@@ -2589,7 +2626,7 @@ public partial class MathPuzzlePage : ContentPage
                         TranslateQuiz("Quiz.AiValidationValidDetail"),
                         diagnostic.Attempt,
                         diagnostic.MaximumAttempts),
-                    "SuccessSoftColor",
+                    "WallpaperSuccessSoftColor",
                     "SuccessBorderBrush",
                     "SuccessColor");
                 break;
@@ -2600,7 +2637,7 @@ public partial class MathPuzzlePage : ContentPage
                     "Quiz.AiValidationGenerationFailedTitle",
                     diagnostic.Detail ??
                         TranslateQuiz("Quiz.AiValidationInvalidFallback"),
-                    "DangerSoftColor",
+                    "WallpaperDangerSoftColor",
                     "DangerBorderBrush",
                     "DangerColor");
                 break;
@@ -2611,7 +2648,7 @@ public partial class MathPuzzlePage : ContentPage
                     "Quiz.AiValidationRuntimeErrorTitle",
                     diagnostic.Detail ??
                         TranslateQuiz("Quiz.AiValidationRuntimeErrorFallback"),
-                    "DangerSoftColor",
+                    "WallpaperDangerSoftColor",
                     "DangerBorderBrush",
                     "DangerColor");
                 break;
@@ -3568,8 +3605,8 @@ public partial class MathPuzzlePage : ContentPage
         FeedbackBorder.SetDynamicResource(
             Border.BackgroundColorProperty,
             isCorrect
-                ? "SuccessSoftColor"
-                : "DangerSoftColor");
+                ? "WallpaperSuccessSoftColor"
+                : "WallpaperDangerSoftColor");
 
         FeedbackBorder.SetDynamicResource(
             Border.StrokeProperty,
@@ -3736,10 +3773,10 @@ public partial class MathPuzzlePage : ContentPage
     {
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
-            "SurfaceAltColor");
+            "WallpaperSurfaceAltColor");
         button.SetDynamicResource(
             Button.BorderColorProperty,
-            "BorderColor");
+            "WallpaperBorderColor");
         button.SetDynamicResource(
             Button.TextColorProperty,
             "TextPrimaryColor");
@@ -3751,7 +3788,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
-            "SuccessSoftColor");
+            "WallpaperSuccessSoftColor");
         button.SetDynamicResource(
             Button.BorderColorProperty,
             "SuccessColor");
@@ -3766,7 +3803,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
-            "DangerSoftColor");
+            "WallpaperDangerSoftColor");
         button.SetDynamicResource(
             Button.BorderColorProperty,
             "DangerColor");

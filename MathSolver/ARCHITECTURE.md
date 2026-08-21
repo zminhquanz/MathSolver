@@ -1,4 +1,4 @@
-﻿# Math Solver Architecture Reference
+# Math Solver Architecture Reference
 
 ## Overview
 
@@ -259,7 +259,25 @@ On Windows, the existing `WindowStateManager` close guard also owns X / Alt+F4 d
 The Hardware Information → Raw performance tab exposes its benchmark variants through one compact localized Picker instead of three stacked cards. Windows offers **Calculation performance**, **Single-thread / Multi-thread**, and **SIMD 128 / 256 / 512-bit**; Android keeps the applicable non-x86 choices.
 
 - **Scalar thread comparison** runs the same four-type benchmark twice, once with one worker and once with the recommended multi-thread worker count. SIMD is forced off so the vertical chart measures CPU thread scaling without vector-width changes.
-- **Windows x86 SIMD comparison** benchmarks floating point only (Float + Double), because the existing Int32/Int64 paths are intentionally scalar. It runs each supported tier — 128-bit SSE, 256-bit AVX/AVX2, and 512-bit AVX-512 — once single-threaded and once multi-threaded, for up to six passes. Unsupported tiers remain visible as N/A and are never executed.
+- **Windows x86 SIMD comparison** benchmarks floating point only (Float + Double), because the existing Int32/Int64 paths are intentionally scalar. It runs each supported tier — 128-bit SSE, 256-bit AVX/AVX2, and 512-bit AVX-512 — once single-threaded and once multi-threaded, for up to six passes. Unsupported tiers are never executed and are omitted from both the comparison chart and the score summary; the availability status shows a cross mark for unsupported tiers.
 - Both comparison charts use `Graphics/BenchmarkVerticalChartDrawable.cs`; the Picker, raw benchmark controls, and the AI/LLM benchmark tab are locked while a raw benchmark is running, and the existing cancellation/close guard is reused.
 - Benchmark buttons use red only while active and explicitly clear that local brush before restoring the theme `PrimaryColor`, preventing WinUI from leaving a completed/cancelled button red.
 - Human-facing ISA text is standardized as **AVX-512** (the internal enum remains `Avx512`).
+
+## Animated wallpaper (MP4)
+
+- Settings can import one user-selected MP4 into `FileSystem.AppDataDirectory/Wallpapers/live_wallpaper.mp4`; the original external path is never required after import.
+- The optimized wallpaper path accepts H.264 / AVC video only. New imports are inspected before replacing the current wallpaper; legacy wallpapers are validated once on first use after upgrade.
+- Windows playback stays on CommunityToolkit `MediaElement` -> WinUI `MediaPlayer` / Media Foundation, which uses the OS hardware-accelerated DXVA/D3D decode path when the GPU/driver/profile supports it. Android playback stays on `MediaElement` -> ExoPlayer / MediaCodec and requires an H.264 hardware decoder to be present. No FFmpeg/software decoder is added to Math Solver.
+- `LiveWallpaperView` is layered behind the four main learning tabs (Calculation, Math Puzzle, Formula, Multiplication Table), loops silently, hides playback controls and releases its media source whenever the owning tab disappears. Android keeps `TextureView` because the glass UI requires correct sibling Z-order/transparency.
+- `LiveWallpaperPlaybackCoordinator` pauses native wallpaper playback while Windows local-LLM generation owns the inference gate. The Hardware AI/LLM benchmark holds one outer suspension for the entire run, so the wallpaper does not resume between its independent samples. This prevents video decode/composition from competing with LLamaSharp for CPU/GPU/memory bandwidth; playback resumes without rebuilding the source.
+- A theme-aware `LiveWallpaperScrimColor` sits above the video for readability; Light uses a lighter veil and Dark uses a darker veil. Future wallpaper formats/intensity controls should extend this service/control boundary instead of duplicating player logic in pages.
+
+
+## Live wallpaper glass surfaces (2026-08)
+- The four main learning tabs use adaptive `Wallpaper*` resource keys for cards, inputs, inactive sub-tabs and secondary actions.
+- Wallpaper OFF maps those keys exactly to the normal opaque palette; wallpaper ON maps them to translucent Light/Dark glass surfaces. Settings and Hardware stay opaque.
+- `LiveWallpaperScrimColor` is theme-aware and replaces the previous fixed `PageBackgroundColor` + 0.52 opacity overlay.
+- Primary actions stay solid accent for hierarchy. Secondary surfaces, soft semantic states and section cards become translucent while preserving readable text/input surfaces.
+- `LiveWallpaperManager` refreshes visual resources immediately after enable/import/remove.
+- WinUI model actions (`Select model`, `Open in File Explorer`, `Eject model`) explicitly re-resolve current palette colors after visual-state/theme transitions to avoid cached Light/Dark brushes.

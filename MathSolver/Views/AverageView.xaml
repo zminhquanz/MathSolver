@@ -61,7 +61,7 @@
                             Grid.Column="1"
                             Text="{localization:Translate Numbers.Decimal}"
                             Style="{StaticResource SolverNumberTypeButtonStyle}"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             TextColor="{DynamicResource TextPrimaryColor}"
                             Clicked="OnDecimalTypeClicked" />
 
@@ -75,8 +75,8 @@
 
                     <Border
                         Padding="12,8"
-                        BackgroundColor="{DynamicResource SurfaceAltColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
 
                         <Border.StrokeShape>
@@ -107,7 +107,7 @@
                         x:Name="ErrorBorder"
                         IsVisible="False"
                         Padding="12,10"
-                        BackgroundColor="{DynamicResource DangerSoftColor}"
+                        BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
                         Stroke="{DynamicResource DangerBorderBrush}"
                         StrokeThickness="1">
 
@@ -149,7 +149,7 @@
                             Grid.Column="1"
                             Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
-                            BackgroundColor="{DynamicResource DividerColor}"
+                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
                             Clicked="OnClearClicked" />
 
                     </Grid>
@@ -162,8 +162,8 @@
                 x:Name="ResultBorder"
                 IsVisible="False"
                 Padding="16"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource PrimaryBorderBrush}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                 StrokeThickness="1">
 
                 <Border.StrokeShape>
@@ -180,7 +180,7 @@
 
                     <Border
                         Padding="14"
-                        BackgroundColor="{DynamicResource PrimarySoftColor}"
+                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                         StrokeThickness="0">
 
                         <Border.StrokeShape>
@@ -206,7 +206,7 @@
                             CornerRadius="12"
                             FontSize="15"
                             FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource DividerColor}"
+                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
                             TextColor="Transparent"
                             Clicked="OnAverageCopyResultClicked" />
 
@@ -238,8 +238,8 @@
                         <Border
                             Grid.Column="0"
                             Padding="12"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
 
                             <Border.StrokeShape>
@@ -263,8 +263,8 @@
                         <Border
                             Grid.Column="1"
                             Padding="12"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
 
                             <Border.StrokeShape>
@@ -290,7 +290,7 @@
 
                     <BoxView
                         HeightRequest="1"
-                        BackgroundColor="{DynamicResource DividerColor}" />
+                        BackgroundColor="{DynamicResource WallpaperDividerColor}" />
 
                     <Label
                         Text="{localization:Translate Average.SolutionTitle}"

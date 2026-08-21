@@ -253,6 +253,11 @@ public partial class HardwareLlmBenchmarkView : ContentView
         string modelPath,
         CancellationToken cancellationToken)
     {
+        // Keep the wallpaper suspended for the whole benchmark instead of
+        // letting it resume briefly between the 60 independent generations.
+        using IDisposable wallpaperSuspension =
+            LiveWallpaperPlaybackCoordinator.SuspendForHighPriorityWork();
+
         var categoryResults =
             new List<LlmBenchmarkCategoryResult>();
 

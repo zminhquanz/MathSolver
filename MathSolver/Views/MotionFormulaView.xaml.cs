@@ -152,11 +152,11 @@ public partial class MotionFormulaView : ContentView
             "#F97316");
 
         Color primaryBorder = ThemeResource.GetColor(
-            "PrimaryBorderColor",
+            "WallpaperPrimaryBorderColor",
             "#FDBA74");
 
         Color sliderBackground = ThemeResource.GetColor(
-            "SurfaceAltColor",
+            "WallpaperSurfaceAltColor",
             AppThemeManager.IsDarkThemeEffective
                 ? "#172033"
                 : "#F4F8FF");

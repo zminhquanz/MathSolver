@@ -11,11 +11,17 @@ internal static class SelectionButtonStyler
 
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
-            isSelected ? "PrimaryColor" : "SurfaceAltColor");
+            isSelected ? "PrimaryColor" : "WallpaperSurfaceAltColor");
 
         button.SetDynamicResource(
             Button.TextColorProperty,
             isSelected ? "OnPrimaryColor" : "TextPrimaryColor");
+
+        button.SetDynamicResource(
+            Button.BorderColorProperty,
+            isSelected ? "PrimaryColor" : "WallpaperBorderColor");
+
+        button.BorderWidth = isSelected ? 0d : 1d;
     }
 
     public static void Select(Button selectedButton, params Button[] buttons)

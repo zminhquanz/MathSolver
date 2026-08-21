@@ -657,7 +657,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             Button.BackgroundColorProperty,
             selected
                 ? "PrimaryColor"
-                : "SurfaceAltColor");
+                : "WallpaperSurfaceAltColor");
 
         button.SetDynamicResource(
             Button.TextColorProperty,

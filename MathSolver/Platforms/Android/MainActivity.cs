@@ -9,6 +9,7 @@ namespace MathSolver
     [Activity(
         Theme = "@style/MathSolver.SplashTheme",
         MainLauncher = true,
+        ResizeableActivity = true,
         LaunchMode = LaunchMode.SingleTop,
         WindowSoftInputMode = SoftInput.AdjustResize,
         ConfigurationChanges = ConfigChanges.ScreenSize |

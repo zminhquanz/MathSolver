@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
@@ -45,6 +45,27 @@
     <Color x:Key="ShellForegroundColor">#6D28D9</Color>
     <Color x:Key="ShellUnselectedColor">#64748B</Color>
 
+    <!--
+        Adaptive live-wallpaper presentation tokens. AppThemeManager maps
+        these back to the normal opaque palette while wallpaper is disabled,
+        and to translucent glass surfaces while an MP4 wallpaper is active.
+        Only the four main learning tabs consume these keys; Settings and
+        Hardware keep their existing opaque surfaces.
+    -->
+    <Color x:Key="LiveWallpaperScrimColor">#4DFFFFFF</Color>
+    <Color x:Key="WallpaperSurfaceStrongColor">#E6FFFFFF</Color>
+    <Color x:Key="WallpaperSurfaceColor">#D9FFFFFF</Color>
+    <Color x:Key="WallpaperSurfaceAltColor">#BFFFFFFF</Color>
+    <Color x:Key="WallpaperInputBackgroundColor">#EBFFFFFF</Color>
+    <Color x:Key="WallpaperBorderColor">#BFD8E2EF</Color>
+    <Color x:Key="WallpaperDividerColor">#99E2E8F0</Color>
+    <Color x:Key="WallpaperPrimarySoftColor">#CCEDE9FE</Color>
+    <Color x:Key="WallpaperPrimaryBorderColor">#D9C4B5FD</Color>
+    <Color x:Key="WallpaperSuccessSoftColor">#D9F0FDF4</Color>
+    <Color x:Key="WallpaperWarningSoftColor">#D9FFF7ED</Color>
+    <Color x:Key="WallpaperDangerSoftColor">#D9FEF2F2</Color>
+    <Color x:Key="WallpaperInfoSoftColor">#D9EFF6FF</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="#6D28D9" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#5B21B6" />
     <SolidColorBrush x:Key="PrimarySoftBrush" Color="#EDE9FE" />
@@ -83,6 +104,20 @@
     <SolidColorBrush x:Key="ShellBackgroundBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="ShellForegroundBrush" Color="#6D28D9" />
     <SolidColorBrush x:Key="ShellUnselectedBrush" Color="#64748B" />
+
+    <SolidColorBrush x:Key="LiveWallpaperScrimBrush" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="WallpaperSurfaceStrongBrush" Color="#E6FFFFFF" />
+    <SolidColorBrush x:Key="WallpaperSurfaceBrush" Color="#D9FFFFFF" />
+    <SolidColorBrush x:Key="WallpaperSurfaceAltBrush" Color="#BFFFFFFF" />
+    <SolidColorBrush x:Key="WallpaperInputBackgroundBrush" Color="#EBFFFFFF" />
+    <SolidColorBrush x:Key="WallpaperBorderBrush" Color="#BFD8E2EF" />
+    <SolidColorBrush x:Key="WallpaperDividerBrush" Color="#99E2E8F0" />
+    <SolidColorBrush x:Key="WallpaperPrimarySoftBrush" Color="#CCEDE9FE" />
+    <SolidColorBrush x:Key="WallpaperPrimaryBorderBrush" Color="#D9C4B5FD" />
+    <SolidColorBrush x:Key="WallpaperSuccessSoftBrush" Color="#D9F0FDF4" />
+    <SolidColorBrush x:Key="WallpaperWarningSoftBrush" Color="#D9FFF7ED" />
+    <SolidColorBrush x:Key="WallpaperDangerSoftBrush" Color="#D9FEF2F2" />
+    <SolidColorBrush x:Key="WallpaperInfoSoftBrush" Color="#D9EFF6FF" />
 
     <!-- Các key cũ được giữ lại để không phá style hoặc control chưa di chuyển. -->
     <Color x:Key="Primary">#6D28D9</Color>

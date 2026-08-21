@@ -1,4 +1,4 @@
-﻿using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Storage;
@@ -148,6 +148,21 @@ public static class AppThemeManager
         ApplyCurrentTheme(savePreferences: false);
     }
 
+    /// <summary>
+    /// Rebuild dynamic visual resources after a presentation setting changes.
+    /// LiveWallpaperManager calls this after enable/import/remove so all open
+    /// learning pages switch between opaque and glass surfaces immediately.
+    /// </summary>
+    public static void RefreshVisualResources()
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        ApplyCurrentTheme(savePreferences: false);
+    }
+
     public static bool TryParseHexColor(
         string? input,
         out Color color,
@@ -247,6 +262,10 @@ public static class AppThemeManager
             }
 
             ApplyPalette(application.Resources, palette);
+            ApplyWallpaperVisualPalette(
+                application.Resources,
+                palette,
+                effectiveTheme);
 
             if (savePreferences)
             {
@@ -475,6 +494,75 @@ public static class AppThemeManager
         resources["Tertiary"] = palette.AccentDark;
         resources["Magenta"] = palette.Accent;
         resources["MidnightBlue"] = palette.TextPrimary;
+    }
+
+    private static void ApplyWallpaperVisualPalette(
+        ResourceDictionary resources,
+        ThemePalette palette,
+        AppTheme effectiveTheme)
+    {
+        bool wallpaperEnabled = LiveWallpaperManager.IsEnabled;
+
+        if (!wallpaperEnabled)
+        {
+            // Exact opaque mapping: no visual regression when wallpaper is off.
+            SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", palette.Surface);
+            SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", palette.Surface);
+            SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", palette.SurfaceAlt);
+            SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", palette.InputBackground);
+            SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", palette.Border);
+            SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", palette.Divider);
+            SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", palette.AccentSoft);
+            SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", palette.AccentBorder);
+            SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", palette.SuccessSoft);
+            SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", palette.WarningSoft);
+            SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", palette.DangerSoft);
+            SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", palette.InfoSoft);
+            SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", Colors.Transparent);
+            return;
+        }
+
+        bool dark = effectiveTheme == AppTheme.Dark;
+
+        Color surfaceStrong = WithAlpha(palette.Surface, dark ? 0.86 : 0.84);
+        Color surface = WithAlpha(palette.Surface, dark ? 0.76 : 0.74);
+        Color surfaceAlt = WithAlpha(palette.SurfaceAlt, dark ? 0.64 : 0.60);
+        Color input = WithAlpha(palette.InputBackground, dark ? 0.90 : 0.88);
+
+        Color borderBase = dark
+            ? Mix(palette.Border, Colors.White, 0.20)
+            : Mix(palette.Border, Colors.White, 0.38);
+        Color dividerBase = dark
+            ? Mix(palette.Divider, Colors.White, 0.12)
+            : Mix(palette.Divider, Colors.White, 0.26);
+
+        SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", surfaceStrong);
+        SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", surface);
+        SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", surfaceAlt);
+        SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", input);
+        SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", WithAlpha(borderBase, dark ? 0.76 : 0.82));
+        SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", WithAlpha(dividerBase, dark ? 0.58 : 0.66));
+        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", WithAlpha(palette.AccentSoft, dark ? 0.72 : 0.76));
+        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(palette.AccentBorder, 0.90));
+        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", WithAlpha(palette.SuccessSoft, dark ? 0.76 : 0.80));
+        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", WithAlpha(palette.WarningSoft, dark ? 0.76 : 0.80));
+        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(palette.DangerSoft, dark ? 0.76 : 0.80));
+        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(palette.InfoSoft, dark ? 0.76 : 0.80));
+
+        Color scrim = dark
+            ? new Color(0.015f, 0.027f, 0.055f, 0.42f)
+            : new Color(1f, 1f, 1f, 0.30f);
+
+        SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", scrim);
+    }
+
+    private static Color WithAlpha(Color color, double alpha)
+    {
+        return new Color(
+            color.Red,
+            color.Green,
+            color.Blue,
+            (float)Math.Clamp(alpha, 0d, 1d));
     }
 
     private static void SetColorAndBrush(

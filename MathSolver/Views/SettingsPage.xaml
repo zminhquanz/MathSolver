@@ -536,6 +536,127 @@
                 </Border>
 
 
+                <!-- HÌNH NỀN ĐỘNG -->
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="13">
+                        <Label
+                            x:Name="LiveWallpaperSectionTitleLabel"
+                            Text="Hình nền động"
+                            FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="LiveWallpaperSectionDescriptionLabel"
+                            Text="Dùng video MP4 của bạn làm hình nền chuyển động cho các tab học toán."
+                            FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Grid
+                            ColumnDefinitions="*,Auto"
+                            ColumnSpacing="12">
+                            <VerticalStackLayout
+                                Grid.Column="0"
+                                Spacing="2"
+                                VerticalOptions="Center">
+                                <Label
+                                    x:Name="LiveWallpaperEnabledTitleLabel"
+                                    Text="Bật hình nền động"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    x:Name="LiveWallpaperEnabledSummaryLabel"
+                                    Text="Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và tạm dừng khi AI local tạo sinh."
+                                    FontSize="12"
+                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch
+                                x:Name="LiveWallpaperSwitch"
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Toggled="OnLiveWallpaperToggled" />
+                        </Grid>
+
+                        <Border
+                            Padding="12,10"
+                            BackgroundColor="{DynamicResource SurfaceAltColor}"
+                            Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="11" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="🎞️"
+                                    FontSize="20"
+                                    VerticalTextAlignment="Center" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label
+                                        x:Name="LiveWallpaperFileTitleLabel"
+                                        Text="File MP4"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="LiveWallpaperFileNameLabel"
+                                        Text="Chưa chọn file MP4"
+                                        FontSize="12"
+                                        LineBreakMode="MiddleTruncation"
+                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Label
+                                x:Name="LiveWallpaperDecodeTitleLabel"
+                                Grid.Column="0"
+                                Text="Giải mã video"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+                            <Label
+                                x:Name="LiveWallpaperDecodeValueLabel"
+                                Grid.Column="1"
+                                Text="H.264 / AVC • phần cứng ưu tiên"
+                                HorizontalTextAlignment="End"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource PrimaryColor}" />
+                        </Grid>
+
+                        <Grid
+                            ColumnDefinitions="{OnPlatform Android='*', WinUI='*,Auto', Default='*,Auto'}"
+                            RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                            ColumnSpacing="10"
+                            RowSpacing="8">
+                            <Button
+                                x:Name="SelectLiveWallpaperButton"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Text="Chọn MP4"
+                                Style="{StaticResource ThemePrimaryButtonStyle}"
+                                Clicked="OnSelectLiveWallpaperClicked" />
+
+                            <Button
+                                x:Name="RemoveLiveWallpaperButton"
+                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                Text="Gỡ hình nền"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                Clicked="OnRemoveLiveWallpaperClicked" />
+                        </Grid>
+
+                        <Label
+                            x:Name="LiveWallpaperNoteLabel"
+                            Text="Hình nền MP4 phải dùng H.264 / AVC. Video dùng native hardware-preferred decode và tạm dừng khi AI local tạo sinh."
+                            FontSize="11"
+                            FontAttributes="Italic"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                    </VerticalStackLayout>
+                </Border>
+
+
                 <!-- TÙY CHỈNH PHÔNG CHỮ -->
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="13">

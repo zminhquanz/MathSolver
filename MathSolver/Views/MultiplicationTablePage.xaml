@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     Title="{localization:Translate Tabs.TimesTables}"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
@@ -11,24 +12,34 @@
         <Style x:Key="SectionBorderStyle" TargetType="Border">
             <Setter Property="StrokeShape" Value="RoundRectangle 16" />
             <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
+            <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
             <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=16, Default=16}" />
-        </Style>
+                    <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="#33000000" Offset="0,2" Radius="8" Opacity="{OnPlatform Android=0.10, WinUI=0.08, Default=0.08}" />
+                </Setter.Value>
+            </Setter>
+</Style>
 
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="StrokeShape" Value="RoundRectangle 14" />
             <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceColor}" />
+            <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
             <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=14, Default=14}" />
-        </Style>
+                    <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="#33000000" Offset="0,2" Radius="8" Opacity="{OnPlatform Android=0.10, WinUI=0.08, Default=0.08}" />
+                </Setter.Value>
+            </Setter>
+</Style>
 
         <Style x:Key="TableLineBorderStyle" TargetType="Border">
             <Setter Property="StrokeShape" Value="RoundRectangle 10" />
             <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
+            <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceAltColor}" />
             <Setter Property="Padding" Value="{OnPlatform Android='8,7', WinUI='10,8', Default='10,8'}" />
         </Style>
 
@@ -95,8 +106,8 @@
                     HeightRequest="20"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    Fill="{DynamicResource SurfaceColor}"
-                    Stroke="{DynamicResource BorderColor}"
+                    Fill="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperBorderColor}"
                     StrokeThickness="2" />
 
                 <Grid
@@ -136,6 +147,9 @@
     <Grid
         x:Name="MultiplicationPageContentRoot"
         Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16', Default='20,16'}">
+        <controls:LiveWallpaperView
+            x:Name="LiveWallpaper"
+            Margin="{OnPlatform Android='-12,-10,-12,-20', WinUI='-20,-16', Default='-20,-16'}" />
         <CollectionView
             x:Name="TablesCollectionView"
             ItemsSource="{Binding TableCards}"
@@ -216,7 +230,7 @@
                             <BoxView
                                 Margin="0,2"
                                 HeightRequest="1"
-                                BackgroundColor="{DynamicResource DividerColor}" />
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}" />
 
                             <!-- 2. Chọn phạm vi -->
                             <VerticalStackLayout Spacing="10">
@@ -343,7 +357,7 @@
                                 StrokeShape="RoundRectangle 12"
                                 StrokeThickness="1"
                                 Stroke="{DynamicResource PrimaryColor}"
-                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 Padding="14,10">
                                 <Label
                                     x:Name="StatusLabel"
@@ -391,7 +405,7 @@
 
                             <BoxView
                                 HeightRequest="1"
-                                Color="{DynamicResource DividerColor}" />
+                                Color="{DynamicResource WallpaperDividerColor}" />
 
                             <VerticalStackLayout
                                 Spacing="8"

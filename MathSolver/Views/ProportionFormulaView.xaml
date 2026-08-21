@@ -47,8 +47,8 @@
             <!-- 1. Mối quan hệ -->
             <Border
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource PrimaryBorderBrush}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                 StrokeThickness="1">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
@@ -70,8 +70,8 @@
                             x:Name="DirectRelationshipCard"
                             Grid.Column="0"
                             Padding="14"
-                            BackgroundColor="{DynamicResource PrimarySoftColor}"
-                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="11" />
@@ -101,8 +101,8 @@
                             x:Name="InverseRelationshipCard"
                             Grid.Column="1"
                             Padding="14"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="11" />
@@ -132,8 +132,8 @@
 
                     <Border
                         Padding="14"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="11" />
@@ -165,8 +165,8 @@
             <Border
                 x:Name="InteractiveSectionBorder"
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource PrimaryBorderBrush}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                 StrokeThickness="1">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
@@ -212,8 +212,8 @@
                             x:Name="InteractiveExplanationPanel"
                             Grid.Column="0"
                             Padding="16"
-                            BackgroundColor="{DynamicResource PrimarySoftColor}"
-                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
@@ -230,7 +230,7 @@
                                     TextColor="{DynamicResource TextPrimaryColor}" />
                                 <BoxView
                                     HeightRequest="1"
-                                    Color="{DynamicResource PrimaryBorderColor}" />
+                                    Color="{DynamicResource WallpaperPrimaryBorderColor}" />
                                 <Label
                                     x:Name="GraphXValueLabel"
                                     FontSize="17"
@@ -253,8 +253,8 @@
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1"
                                     VerticalOptions="Center">
                                     <Border.StrokeShape>
@@ -269,7 +269,7 @@
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Center"
                                         MinimumTrackColor="{DynamicResource PrimaryColor}"
-                                        MaximumTrackColor="{DynamicResource PrimaryBorderColor}"
+                                        MaximumTrackColor="{DynamicResource WallpaperPrimaryBorderColor}"
                                         ThumbColor="{DynamicResource PrimaryColor}"
                                         ValueChanged="OnProportionXSliderValueChanged" />
                                 </Border>
@@ -280,8 +280,8 @@
                             x:Name="InteractiveGraphPanel"
                             Grid.Column="1"
                             Padding="8"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
@@ -304,8 +304,8 @@
                             x:Name="CompoundExplanationPanel"
                             Grid.Column="0"
                             Padding="16"
-                            BackgroundColor="{DynamicResource PrimarySoftColor}"
-                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
@@ -325,14 +325,14 @@
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
-                                <BoxView HeightRequest="1" Color="{DynamicResource PrimaryBorderColor}" />
+                                <BoxView HeightRequest="1" Color="{DynamicResource WallpaperPrimaryBorderColor}" />
 
                                 <Label x:Name="CompoundProductValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1"
                                     VerticalOptions="Center">
                                     <Border.StrokeShape>
@@ -347,7 +347,7 @@
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Center"
                                         MinimumTrackColor="{DynamicResource PrimaryColor}"
-                                        MaximumTrackColor="{DynamicResource PrimaryBorderColor}"
+                                        MaximumTrackColor="{DynamicResource WallpaperPrimaryBorderColor}"
                                         ThumbColor="{DynamicResource PrimaryColor}"
                                         ValueChanged="OnCompoundSliderValueChanged" />
                                 </Border>
@@ -356,8 +356,8 @@
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1"
                                     VerticalOptions="Center">
                                     <Border.StrokeShape>
@@ -372,7 +372,7 @@
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Center"
                                         MinimumTrackColor="{DynamicResource PrimaryColor}"
-                                        MaximumTrackColor="{DynamicResource PrimaryBorderColor}"
+                                        MaximumTrackColor="{DynamicResource WallpaperPrimaryBorderColor}"
                                         ThumbColor="{DynamicResource PrimaryColor}"
                                         ValueChanged="OnCompoundSliderValueChanged" />
                                 </Border>
@@ -381,8 +381,8 @@
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
-                                    BackgroundColor="{DynamicResource SurfaceAltColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1"
                                     VerticalOptions="Center">
                                     <Border.StrokeShape>
@@ -397,15 +397,15 @@
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Center"
                                         MinimumTrackColor="{DynamicResource PrimaryColor}"
-                                        MaximumTrackColor="{DynamicResource PrimaryBorderColor}"
+                                        MaximumTrackColor="{DynamicResource WallpaperPrimaryBorderColor}"
                                         ThumbColor="{DynamicResource PrimaryColor}"
                                         ValueChanged="OnCompoundSliderValueChanged" />
                                 </Border>
 
                                 <Border
                                     Padding="12"
-                                    BackgroundColor="{DynamicResource SurfaceColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1">
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="10" />
@@ -432,8 +432,8 @@
                             x:Name="CompoundGraphPanel"
                             Grid.Column="1"
                             Padding="8"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
@@ -451,8 +451,8 @@
             <!-- 2. Công thức -->
             <Border
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperBorderBrush}"
                 StrokeThickness="1">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
@@ -467,8 +467,8 @@
 
                     <Border
                         Padding="14,11"
-                        BackgroundColor="{DynamicResource PrimarySoftColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="10" />
@@ -484,8 +484,8 @@
 
                     <Border
                         Padding="14,11"
-                        BackgroundColor="{DynamicResource SurfaceAltColor}"
-                        Stroke="{DynamicResource BorderBrush}"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                        Stroke="{DynamicResource WallpaperBorderBrush}"
                         StrokeThickness="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="10" />
@@ -501,8 +501,8 @@
 
                     <Border
                         Padding="14,11"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="10" />
@@ -528,8 +528,8 @@
             <!-- 3. Tính chất -->
             <Border
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource BorderBrush}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperBorderBrush}"
                 StrokeThickness="1">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
@@ -571,8 +571,8 @@
             <!-- 4. Cách giải -->
             <Border
                 Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceColor}"
-                Stroke="{DynamicResource PrimaryBorderBrush}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                 StrokeThickness="1">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="14" />
@@ -599,8 +599,8 @@
                             x:Name="DirectExampleCard"
                             Grid.Column="0"
                             Padding="14"
-                            BackgroundColor="{DynamicResource PrimarySoftColor}"
-                            Stroke="{DynamicResource PrimaryBorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="10" />
@@ -614,8 +614,8 @@
 
                                 <Border
                                     Padding="12"
-                                    BackgroundColor="{DynamicResource SurfaceColor}"
-                                    Stroke="{DynamicResource PrimaryBorderBrush}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                     StrokeThickness="1">
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="9" />
@@ -648,7 +648,7 @@
                                             <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
                                         </Grid>
 
-                                        <BoxView HeightRequest="1" Color="{DynamicResource PrimaryBorderColor}" />
+                                        <BoxView HeightRequest="1" Color="{DynamicResource WallpaperPrimaryBorderColor}" />
                                         <Label Text="{localization:Translate Formula.Proportion.Direct.Calculation}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
                                     </VerticalStackLayout>
                                 </Border>
@@ -662,8 +662,8 @@
                             x:Name="InverseExampleCard"
                             Grid.Column="1"
                             Padding="14"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="10" />
@@ -671,7 +671,7 @@
                             <VerticalStackLayout Spacing="10">
                                 <Label Text="{localization:Translate Formula.Proportion.Inverse.ExampleTitle}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
 
-                                <Border Padding="12" BackgroundColor="{DynamicResource SurfaceColor}" Stroke="{DynamicResource BorderBrush}" StrokeThickness="1">
+                                <Border Padding="12" BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
@@ -688,7 +688,7 @@
                                             <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
                                         </Grid>
 
-                                        <BoxView HeightRequest="1" Color="{DynamicResource DividerColor}" />
+                                        <BoxView HeightRequest="1" Color="{DynamicResource WallpaperDividerColor}" />
                                         <Label Text="{localization:Translate Formula.Proportion.Inverse.Calculation}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
                                     </VerticalStackLayout>
                                 </Border>
@@ -701,8 +701,8 @@
 
                     <Border
                         Padding="14"
-                        BackgroundColor="{DynamicResource SurfaceColor}"
-                        Stroke="{DynamicResource PrimaryBorderBrush}"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="10" />
@@ -722,8 +722,8 @@
                                 TextColor="{DynamicResource TextPrimaryColor}" />
                             <Border
                                 Padding="12"
-                                BackgroundColor="{DynamicResource PrimarySoftColor}"
-                                Stroke="{DynamicResource PrimaryBorderBrush}"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                 StrokeThickness="1">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="9" />

@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Core;
 using MathSolver.Controls;
 using MathSolver.Services;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,23 @@ namespace MathSolver
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseMauiCommunityToolkitMediaElement(
+                    isAndroidForegroundServiceEnabled: false,
+                    static options =>
+                    {
+                        // Live wallpaper never plays as background audio/video.
+                        // Set this both on the builder and MediaElement options
+                        // because MediaElement 10.x otherwise may still merge
+                        // the Android foreground-service path.
+                        options.SetIsAndroidForegroundServiceEnabled(false);
+#if ANDROID
+                        // A background video must obey MAUI sibling Z-order.
+                        // TextureView is required here so controls/cards stay
+                        // above the video instead of SurfaceView punching through.
+                        options.SetDefaultAndroidViewType(
+                            AndroidViewType.TextureView);
+#endif
+                    })
                 .ConfigureFonts(fonts =>
                 {
                     // Toàn bộ font được quản lý tại AppFontCatalog.

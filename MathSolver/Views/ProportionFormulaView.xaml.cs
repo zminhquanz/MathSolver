@@ -223,9 +223,9 @@ public partial class ProportionFormulaView : ContentView
     private void RefreshControlTheme()
     {
         Color primary = ThemeResource.GetColor("PrimaryColor", "#6D28D9");
-        Color primaryBorder = ThemeResource.GetColor("PrimaryBorderColor", "#C4B5FD");
+        Color primaryBorder = ThemeResource.GetColor("WallpaperPrimaryBorderColor", "#C4B5FD");
         Color sliderBackground = ThemeResource.GetColor(
-            "SurfaceAltColor",
+            "WallpaperSurfaceAltColor",
             AppThemeManager.IsDarkThemeEffective ? "#172033" : "#F4F8FF");
 
         ProportionXSlider.MinimumTrackColor = primary;
@@ -252,7 +252,7 @@ public partial class ProportionFormulaView : ContentView
     {
         Color primary = ThemeResource.GetColor("PrimaryColor", "#6D28D9");
         Color surfaceAlt = ThemeResource.GetColor(
-            "SurfaceAltColor",
+            "WallpaperSurfaceAltColor",
             AppThemeManager.IsDarkThemeEffective ? "#172033" : "#F8FAFC");
         Color textPrimary = ThemeResource.GetColor(
             "TextPrimaryColor",

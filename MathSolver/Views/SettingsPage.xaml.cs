@@ -12,6 +12,7 @@ public partial class SettingsPage : ContentPage
     private bool _updatingFullNumberDisplaySwitch;
     private bool _updatingDeveloperModeSwitch;
     private bool _updatingDynamicColorSwitch;
+    private bool _updatingLiveWallpaperSwitch;
 
     // Picker.ItemsSource yêu cầu IList, trong khi AppFontCatalog.Options
     // được khai báo là IReadOnlyList. Tạo một List dùng chung để vừa
@@ -21,6 +22,16 @@ public partial class SettingsPage : ContentPage
 
     private readonly List<AppLanguageOption> _languageOptions =
         AppLanguageCatalog.Options.ToList();
+
+    private static readonly FilePickerFileType Mp4WallpaperFileType =
+        new(
+            new Dictionary<DevicePlatform, IEnumerable<string>>
+            {
+                [DevicePlatform.WinUI] = [".mp4"],
+                [DevicePlatform.Android] = ["video/mp4"],
+                [DevicePlatform.iOS] = ["public.mpeg-4"],
+                [DevicePlatform.MacCatalyst] = ["public.mpeg-4"]
+            });
 
     public SettingsPage()
     {
@@ -114,8 +125,15 @@ public partial class SettingsPage : ContentPage
         LocalizationService.CultureChanged += OnLocalizationCultureChanged;
         DeveloperModeManager.DeveloperModeChanged += OnDeveloperModeChanged;
         ResultNumberDisplayMode.DisplayModeChanged += OnResultNumberDisplayModeChanged;
+        LiveWallpaperManager.SettingsChanged += OnLiveWallpaperSettingsChanged;
 
         LoadCurrentSettings();
+
+        if (LiveWallpaperManager.HasWallpaper &&
+            !LiveWallpaperManager.IsHardwareH264Validated)
+        {
+            _ = ValidateExistingLiveWallpaperAsync();
+        }
 
         if (!_hasPlayedEntryAnimation)
         {
@@ -136,6 +154,7 @@ public partial class SettingsPage : ContentPage
         LocalizationService.CultureChanged -= OnLocalizationCultureChanged;
         DeveloperModeManager.DeveloperModeChanged -= OnDeveloperModeChanged;
         ResultNumberDisplayMode.DisplayModeChanged -= OnResultNumberDisplayModeChanged;
+        LiveWallpaperManager.SettingsChanged -= OnLiveWallpaperSettingsChanged;
 
         Shell.SetTabBarIsVisible(
             this,
@@ -244,6 +263,14 @@ public partial class SettingsPage : ContentPage
     private void OnThemeChanged(object? sender, EventArgs e)
     {
         LoadCurrentSettings();
+    }
+
+    private void OnLiveWallpaperSettingsChanged(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            UpdateLiveWallpaperSettings);
     }
 
     private void OnFontChanged(
@@ -378,6 +405,7 @@ public partial class SettingsPage : ContentPage
         AppLanguageManager.ResetToDefault();
         DeveloperModeManager.ResetToDefault();
         ResultNumberDisplayMode.ResetToDefault();
+        LiveWallpaperManager.ResetToDefault();
 #if ANDROID
         AndroidMaterialYouManager.SetDynamicColorEnabled(false);
 #endif
@@ -432,6 +460,158 @@ public partial class SettingsPage : ContentPage
         AndroidMaterialYouManager.SetDynamicColorEnabled(
             e.Value);
 #endif
+    }
+
+    private async Task ValidateExistingLiveWallpaperAsync()
+    {
+        await LiveWallpaperManager.EnsureOptimizedWallpaperAsync();
+
+        if (Dispatcher.IsDispatchRequired)
+        {
+            Dispatcher.Dispatch(UpdateLiveWallpaperSettings);
+        }
+        else
+        {
+            UpdateLiveWallpaperSettings();
+        }
+    }
+
+    private void OnLiveWallpaperToggled(
+        object? sender,
+        ToggledEventArgs e)
+    {
+        if (_updatingLiveWallpaperSwitch)
+        {
+            return;
+        }
+
+        LiveWallpaperManager.SetEnabled(
+            e.Value);
+
+        UpdateLiveWallpaperSettings();
+    }
+
+    private async void OnSelectLiveWallpaperClicked(
+        object? sender,
+        EventArgs e)
+    {
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        try
+        {
+            FileResult? selected =
+                await FilePicker.Default.PickAsync(
+                    new PickOptions
+                    {
+                        PickerTitle = useEnglish
+                            ? "Choose an MP4 wallpaper"
+                            : "Chọn hình nền động MP4",
+                        FileTypes = Mp4WallpaperFileType
+                    });
+
+            if (selected is null)
+            {
+                return;
+            }
+
+            await LiveWallpaperManager.ImportMp4Async(
+                selected);
+
+            UpdateLiveWallpaperSettings();
+        }
+        catch (LiveWallpaperVideoValidationException exception)
+        {
+            string message =
+                exception.Error switch
+                {
+                    LiveWallpaperVideoValidationError.NotH264 =>
+                        useEnglish
+                            ? "The MP4 video stream must use H.264 / AVC so Math Solver can use the native hardware-decoding path."
+                            : "Luồng video trong MP4 phải dùng H.264 / AVC để Math Solver sử dụng đường giải mã phần cứng native.",
+                    LiveWallpaperVideoValidationError.HardwareH264DecoderUnavailable =>
+                        useEnglish
+                            ? "No compatible H.264 decoder is available for the hardware-preferred wallpaper path on this device."
+                            : "Thiết bị không có bộ giải mã H.264 tương thích cho đường hình nền ưu tiên phần cứng.",
+                    _ =>
+                        useEnglish
+                            ? "The selected MP4 is not compatible with the optimized wallpaper path."
+                            : "MP4 đã chọn không tương thích với đường hình nền đã tối ưu."
+                };
+
+            await MaterialDialogService.ShowAlertAsync(
+                this,
+                useEnglish ? "Unsupported video" : "Video không hỗ trợ",
+                message,
+                "OK");
+        }
+        catch (InvalidDataException)
+        {
+            await MaterialDialogService.ShowAlertAsync(
+                this,
+                useEnglish ? "Unsupported file" : "File không hỗ trợ",
+                useEnglish
+                    ? "Math Solver currently supports MP4 video wallpapers only."
+                    : "Hiện tại Math Solver chỉ hỗ trợ hình nền động bằng video MP4.",
+                "OK");
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Unable to import live wallpaper: {exception}");
+
+            await MaterialDialogService.ShowAlertAsync(
+                this,
+                useEnglish ? "Unable to use wallpaper" : "Không thể dùng hình nền",
+                useEnglish
+                    ? "The selected MP4 could not be copied into Math Solver's app storage."
+                    : "Không thể sao chép file MP4 đã chọn vào bộ nhớ của Math Solver.",
+                "OK");
+        }
+    }
+
+    private void OnRemoveLiveWallpaperClicked(
+        object? sender,
+        EventArgs e)
+    {
+        LiveWallpaperManager.RemoveWallpaper();
+        UpdateLiveWallpaperSettings();
+    }
+
+    private void UpdateLiveWallpaperSettings()
+    {
+        bool hasWallpaper =
+            LiveWallpaperManager.HasWallpaper;
+
+        _updatingLiveWallpaperSwitch = true;
+
+        try
+        {
+            LiveWallpaperSwitch.IsEnabled =
+                hasWallpaper;
+            LiveWallpaperSwitch.IsToggled =
+                LiveWallpaperManager.IsEnabled;
+        }
+        finally
+        {
+            _updatingLiveWallpaperSwitch = false;
+        }
+
+        RemoveLiveWallpaperButton.IsEnabled =
+            hasWallpaper;
+
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        LiveWallpaperFileNameLabel.Text =
+            hasWallpaper
+                ? LiveWallpaperManager.OriginalFileName ??
+                    Path.GetFileName(LiveWallpaperManager.WallpaperPath)
+                : (useEnglish
+                    ? "No MP4 selected"
+                    : "Chưa chọn file MP4");
     }
 
     private void OnDeveloperModeToggled(
@@ -497,6 +677,56 @@ public partial class SettingsPage : ContentPage
             useEnglish
                 ? "Appearance, result display, and developer tools"
                 : "Giao diện, kết quả hiển thị và công cụ nhà phát triển";
+
+        LiveWallpaperSectionTitleLabel.Text =
+            useEnglish
+                ? "Animated wallpaper"
+                : "Hình nền động";
+
+        LiveWallpaperSectionDescriptionLabel.Text =
+            useEnglish
+                ? "Use your own MP4 video as an animated background for the main learning tabs."
+                : "Dùng video MP4 của bạn làm hình nền chuyển động cho các tab học toán.";
+
+        LiveWallpaperEnabledTitleLabel.Text =
+            useEnglish
+                ? "Enable animated wallpaper"
+                : "Bật hình nền động";
+
+        LiveWallpaperEnabledSummaryLabel.Text =
+            useEnglish
+                ? "H.264 video loops silently with native hardware-preferred decoding and pauses for local AI inference."
+                : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và tạm dừng khi AI local tạo sinh.";
+
+        LiveWallpaperDecodeTitleLabel.Text =
+            useEnglish
+                ? "Video decoding"
+                : "Giải mã video";
+
+        LiveWallpaperDecodeValueLabel.Text =
+            useEnglish
+                ? "H.264 / AVC • hardware preferred"
+                : "H.264 / AVC • phần cứng ưu tiên";
+
+        LiveWallpaperFileTitleLabel.Text =
+            useEnglish
+                ? "MP4 file"
+                : "File MP4";
+
+        SelectLiveWallpaperButton.Text =
+            useEnglish
+                ? "Choose MP4"
+                : "Chọn MP4";
+
+        RemoveLiveWallpaperButton.Text =
+            useEnglish
+                ? "Remove wallpaper"
+                : "Gỡ hình nền";
+
+        LiveWallpaperNoteLabel.Text =
+            useEnglish
+                ? "MP4 wallpapers must use H.264 / AVC. Windows uses MediaPlayer/Media Foundation and Android uses ExoPlayer/MediaCodec; playback is paused while local AI is generating to reserve compute and memory bandwidth."
+                : "Hình nền MP4 phải dùng H.264 / AVC. Windows dùng MediaPlayer/Media Foundation, Android dùng ExoPlayer/MediaCodec; video sẽ tạm dừng khi AI local tạo sinh để nhường compute và băng thông bộ nhớ.";
 
         ResultDisplaySectionTitleLabel.Text =
             useEnglish
@@ -649,6 +879,7 @@ public partial class SettingsPage : ContentPage
         UpdateThemeModeButtons();
         LoadLanguageSettings();
         LoadFontSettings();
+        UpdateLiveWallpaperSettings();
         UpdateAdvancedSettingsState();
     }
 

@@ -61,6 +61,8 @@ public partial class MultiplicationTablePage : ContentPage
     {
         base.OnAppearing();
 
+        LiveWallpaper.Resume();
+
         // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
         // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
         // re-assert này sửa chrome ngay trong lifecycle của trang chính.
@@ -78,6 +80,8 @@ public partial class MultiplicationTablePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        LiveWallpaper.Pause();
+
         // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
         // một phiếu mới sẽ tạo một animation mới thay vì nối tiếp animation cũ.
         _mainTabAnimationVersion++;
@@ -399,7 +403,7 @@ public partial class MultiplicationTablePage : ContentPage
             Button.BackgroundColorProperty,
             isSelected
                 ? "PrimaryColor"
-                : "SurfaceAltColor");
+                : "WallpaperSurfaceAltColor");
 
         button.SetDynamicResource(
             Button.TextColorProperty,
@@ -411,7 +415,7 @@ public partial class MultiplicationTablePage : ContentPage
             Button.BorderColorProperty,
             isSelected
                 ? "PrimaryColor"
-                : "BorderColor");
+                : "WallpaperBorderColor");
 
         button.BorderWidth =
             1;
@@ -445,14 +449,14 @@ public partial class MultiplicationTablePage : ContentPage
         border.SetDynamicResource(
             Border.BackgroundColorProperty,
             isSelected
-                ? "SurfaceAltColor"
-                : "SurfaceColor");
+                ? "WallpaperSurfaceAltColor"
+                : "WallpaperSurfaceColor");
 
         border.SetDynamicResource(
             Border.StrokeProperty,
             isSelected
                 ? "PrimaryColor"
-                : "BorderBrush");
+                : "WallpaperBorderBrush");
 
         border.StrokeThickness =
             isSelected

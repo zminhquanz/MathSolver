@@ -148,6 +148,8 @@ public partial class CalculationPage : ContentPage
     {
         base.OnAppearing();
 
+        LiveWallpaper.Resume();
+
         // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
         // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
         // re-assert này sửa chrome ngay trong lifecycle của trang chính.
@@ -306,6 +308,8 @@ public partial class CalculationPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        LiveWallpaper.Pause();
+
         // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
         // một phiếu mới sẽ tạo một animation mới thay vì nối tiếp animation cũ.
         _mainTabAnimationVersion++;
@@ -4376,14 +4380,14 @@ public partial class CalculationPage : ContentPage
         border.SetDynamicResource(
             Border.BackgroundColorProperty,
             selected
-                ? "PrimarySoftColor"
-                : "SurfaceColor");
+                ? "WallpaperPrimarySoftColor"
+                : "WallpaperSurfaceColor");
 
         border.SetDynamicResource(
             Border.StrokeProperty,
             selected
                 ? "PrimaryBrush"
-                : "BorderBrush");
+                : "WallpaperBorderBrush");
 
         border.StrokeThickness =
             selected ? 1.5 : 1;

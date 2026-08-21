@@ -100,6 +100,8 @@ public partial class FormulaPage : ContentPage
     {
         base.OnAppearing();
 
+        LiveWallpaper.Resume();
+
         // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
         // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
         // re-assert này sửa chrome ngay trong lifecycle của trang chính.
@@ -126,6 +128,8 @@ public partial class FormulaPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        LiveWallpaper.Pause();
+
         _mainTabAnimationVersion++;
         _isMainTabTransitioning =
             false;
@@ -1022,6 +1026,11 @@ public partial class FormulaPage : ContentPage
         selectedButton.SetDynamicResource(
             Button.TextColorProperty,
             "OnPrimaryColor");
+
+        selectedButton.SetDynamicResource(
+            Button.BorderColorProperty,
+            "PrimaryColor");
+        selectedButton.BorderWidth = 0d;
 #endif
     }
 
@@ -1087,11 +1096,16 @@ public partial class FormulaPage : ContentPage
     {
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
-            "SurfaceAltColor");
+            "WallpaperSurfaceAltColor");
 
         button.SetDynamicResource(
             Button.TextColorProperty,
             "TextPrimaryColor");
+
+        button.SetDynamicResource(
+            Button.BorderColorProperty,
+            "WallpaperBorderColor");
+        button.BorderWidth = 1d;
     }
 #endif
 

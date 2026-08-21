@@ -204,6 +204,12 @@ public sealed class LocalLlmQuizGenerator
         CancelScheduledModelUnload();
         await _generationGate.WaitAsync(cancellationToken);
 
+        // Local GGUF inference is latency-sensitive and CPU/memory-bandwidth
+        // heavy. Pause the live wallpaper while this generation owns the gate
+        // so video decode/composition never steals cycles from LLamaSharp.
+        using IDisposable wallpaperSuspension =
+            LiveWallpaperPlaybackCoordinator.SuspendForHighPriorityWork();
+
         bool modelWasLoaded = false;
         int completedAttempts = 0;
         int generatedTokenCount = 0;

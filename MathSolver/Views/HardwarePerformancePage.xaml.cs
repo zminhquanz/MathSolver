@@ -2126,10 +2126,23 @@ public partial class HardwarePerformancePage : ContentPage
                 ? "Đo Float và Double với SSE 128-bit, AVX 256-bit và AVX-512 512-bit; mỗi loại chạy một lần đơn luồng và một lần đa luồng."
                 : "Benchmark Float and Double with 128-bit SSE, 256-bit AVX and 512-bit AVX-512; each width runs once single-threaded and once multi-threaded.";
 
+#if WINDOWS
+        int availableSimdGroupCount =
+            GetAvailableSimdComparisonModes().Length;
+
+        int simdPassCount =
+            availableSimdGroupCount * 2;
+
         SimdComparisonNoteLabel.Text =
             IsVietnamese
-                ? "Tối đa 6 lượt: 3 độ rộng SIMD × đơn luồng / đa luồng. Nhóm CPU không hỗ trợ sẽ hiển thị N/A và được bỏ qua."
-                : "Up to 6 passes: 3 SIMD widths × single-thread / multi-thread. Unsupported CPU groups are shown as N/A and skipped.";
+                ? $"Bài đo chạy {simdPassCount} lượt: {availableSimdGroupCount} nhóm SIMD được CPU hỗ trợ × đơn luồng / đa luồng. Nhóm không hỗ trợ được ẩn khỏi biểu đồ và điểm số."
+                : $"The test runs {simdPassCount} passes: {availableSimdGroupCount} CPU-supported SIMD groups × single-thread / multi-thread. Unsupported groups are hidden from the chart and score.";
+#else
+        SimdComparisonNoteLabel.Text =
+            IsVietnamese
+                ? "Bài so sánh SIMD x86 chỉ khả dụng trên Windows."
+                : "The x86 SIMD comparison is available only on Windows.";
+#endif
 
         SimdComparisonAvailabilityLabel.Text =
             BuildSimdComparisonAvailabilityText();
@@ -2243,7 +2256,7 @@ public partial class HardwarePerformancePage : ContentPage
     {
 #if WINDOWS
         static string State(bool available) =>
-            available ? "✓" : "N/A";
+            available ? "✓" : "✕";
 
         return IsVietnamese
             ? $"Khả dụng: 128-bit SSE {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.Sse))} • 256-bit AVX/AVX2 {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.AvxAvx2))} • 512-bit AVX-512 {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.Avx512))}"
@@ -2252,6 +2265,25 @@ public partial class HardwarePerformancePage : ContentPage
         return IsVietnamese
             ? "Bài so sánh SSE / AVX / AVX-512 chỉ khả dụng trên Windows x86/x64."
             : "The SSE / AVX / AVX-512 comparison is available only on Windows x86/x64.";
+#endif
+    }
+
+    private static CalculationSimdMode[]
+        GetAvailableSimdComparisonModes()
+    {
+#if WINDOWS
+        CalculationSimdMode[] candidates =
+        [
+            CalculationSimdMode.Sse,
+            CalculationSimdMode.AvxAvx2,
+            CalculationSimdMode.Avx512
+        ];
+
+        return candidates
+            .Where(CalculationAccelerationManager.IsModeAvailable)
+            .ToArray();
+#else
+        return Array.Empty<CalculationSimdMode>();
 #endif
     }
 
@@ -2274,17 +2306,8 @@ public partial class HardwarePerformancePage : ContentPage
             canRunWhenIdle:
                 CalculationThreadingManager.IsMultithreadingAvailable);
 
-#if WINDOWS
         bool simdComparisonAvailable =
-            CalculationAccelerationManager.IsModeAvailable(
-                CalculationSimdMode.Sse) ||
-            CalculationAccelerationManager.IsModeAvailable(
-                CalculationSimdMode.AvxAvx2) ||
-            CalculationAccelerationManager.IsModeAvailable(
-                CalculationSimdMode.Avx512);
-#else
-        bool simdComparisonAvailable = false;
-#endif
+            GetAvailableSimdComparisonModes().Length > 0;
 
         ConfigureRawBenchmarkButton(
             RunSimdComparisonButton,
@@ -2419,6 +2442,16 @@ public partial class HardwarePerformancePage : ContentPage
             double? multiScore =
                 mode.MultiThread?.Score;
 
+            // A SIMD width that is not supported by the current CPU must not
+            // occupy chart space or appear in the score summary. Successful
+            // benchmark results always contain both single- and multi-thread
+            // scores, so incomplete entries are ignored defensively as well.
+            if (!singleScore.HasValue ||
+                !multiScore.HasValue)
+            {
+                continue;
+            }
+
             string groupLabel =
                 mode.Mode switch
                 {
@@ -2438,24 +2471,27 @@ public partial class HardwarePerformancePage : ContentPage
             groups.Add(
                 new BenchmarkVerticalChartGroup(
                     groupLabel,
-                    [singleScore, multiScore]));
+                    [singleScore.Value, multiScore.Value]));
 
             string singleText =
-                singleScore.HasValue
-                    ? singleScore.Value.ToString(
-                        "N0",
-                        CultureInfo.CurrentCulture)
-                    : "N/A";
+                singleScore.Value.ToString(
+                    "N0",
+                    CultureInfo.CurrentCulture);
 
             string multiText =
-                multiScore.HasValue
-                    ? multiScore.Value.ToString(
-                        "N0",
-                        CultureInfo.CurrentCulture)
-                    : "N/A";
+                multiScore.Value.ToString(
+                    "N0",
+                    CultureInfo.CurrentCulture);
 
             detailParts.Add(
                 $"{mode.VectorWidthBits}-bit: {singleText} / {multiText}");
+        }
+
+        if (groups.Count == 0)
+        {
+            SimdComparisonChartView.IsVisible = false;
+            SimdComparisonResultLabel.IsVisible = false;
+            return;
         }
 
         SimdComparisonChartView.Drawable =
@@ -2632,14 +2668,9 @@ public partial class HardwarePerformancePage : ContentPage
         }
 
         CalculationSimdMode[] modes =
-        [
-            CalculationSimdMode.Sse,
-            CalculationSimdMode.AvxAvx2,
-            CalculationSimdMode.Avx512
-        ];
+            GetAvailableSimdComparisonModes();
 
-        if (!modes.Any(
-                CalculationAccelerationManager.IsModeAvailable))
+        if (modes.Length == 0)
         {
             SimdComparisonStatusLabel.Text =
                 IsVietnamese
@@ -2666,9 +2697,7 @@ public partial class HardwarePerformancePage : ContentPage
                 new List<SimdComparisonModeResult>();
 
             int totalPasses =
-                modes.Count(
-                    CalculationAccelerationManager.IsModeAvailable) *
-                2;
+                modes.Length * 2;
 
             int passIndex = 0;
 
@@ -2676,17 +2705,6 @@ public partial class HardwarePerformancePage : ContentPage
             {
                 int vectorWidth =
                     GetSimdModeVectorWidthBits(mode);
-
-                if (!CalculationAccelerationManager.IsModeAvailable(mode))
-                {
-                    results.Add(
-                        new SimdComparisonModeResult(
-                            mode,
-                            vectorWidth,
-                            null,
-                            null));
-                    continue;
-                }
 
                 string modeName =
                     CalculationAccelerationManager
