@@ -136,15 +136,11 @@ public partial class MathPuzzlePage : ContentPage
             new MotionQuizGenerator();
 
 #if WINDOWS
+        // Reuse one Windows LLamaSharp runtime across Math Puzzle and the
+        // Hardware AI/LLM benchmark. This prevents the same GGUF model from
+        // being loaded twice when users move between the two screens.
         _localLlmQuizGenerator =
-            new LocalLlmQuizGenerator(
-                _quizGenerator,
-                _arithmeticEngine,
-                _fractionQuizGenerator,
-                _geometryQuizGenerator,
-                _findXQuizGenerator,
-                _proportionQuizGenerator,
-                _motionQuizGenerator);
+            LocalLlmRuntime.Generator;
 #endif
 
 #if WINDOWS

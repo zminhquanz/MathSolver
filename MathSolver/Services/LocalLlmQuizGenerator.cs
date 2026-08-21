@@ -187,8 +187,15 @@ public sealed class LocalLlmQuizGenerator
         QuizProblemRequest problemRequest,
         AppLanguage language,
         IProgress<LlmQuizProgress>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int maximumAttempts = MaximumAttempts)
     {
+        int effectiveMaximumAttempts =
+            Math.Clamp(
+                maximumAttempts,
+                1,
+                MaximumAttempts);
+
         if (!IsValidModelPath(modelPath))
         {
             return new(null, 0, "ModelFileNotFound", false);
@@ -245,9 +252,10 @@ public sealed class LocalLlmQuizGenerator
             // Chọn đúng một nhóm đồ vật cho cả lượt sinh và mọi lần retry.
             // Catalog đầy đủ ở C# không bị ghép vào prompt.
             WordProblemStoryContext selectedStoryContext =
-                contract.FractionProblem is not null
+                contract.FractionProblem is FractionQuizContract fractionContract
                     ? LlmQuizPromptBuilder.SelectFractionStoryContext(
-                        language)
+                        language,
+                        fractionContract.Operation)
                     : LlmQuizPromptBuilder.SelectStoryContext(
                         language);
 
@@ -318,7 +326,7 @@ public sealed class LocalLlmQuizGenerator
             string? previousValidationFeedback = null;
 
             for (int attempt = 1;
-                 attempt <= MaximumAttempts;
+                 attempt <= effectiveMaximumAttempts;
                  attempt++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -339,7 +347,7 @@ public sealed class LocalLlmQuizGenerator
                         new LlmQuizDiagnostic(
                             diagnosticEvent,
                             attempt,
-                            MaximumAttempts,
+                            effectiveMaximumAttempts,
                             detail,
                             characterCount);
 
@@ -349,7 +357,7 @@ public sealed class LocalLlmQuizGenerator
                         new(
                             stage,
                             attempt,
-                            MaximumAttempts,
+                            effectiveMaximumAttempts,
                             RawModelOutput: rawModelOutput,
                             Diagnostic: diagnostic));
                 }
@@ -509,7 +517,7 @@ public sealed class LocalLlmQuizGenerator
                             new(
                                 LlmQuizProgressStage.Generating,
                                 attempt,
-                                MaximumAttempts,
+                                effectiveMaximumAttempts,
                                 previewToReport,
                                 currentGeneratedTokenCount,
                                 CalculateTokensPerSecond(
@@ -547,7 +555,7 @@ public sealed class LocalLlmQuizGenerator
                         new(
                             LlmQuizProgressStage.Generating,
                             attempt,
-                            MaximumAttempts,
+                            effectiveMaximumAttempts,
                             completedPreview,
                             generatedTokenCount,
                             tokensPerSecond,
@@ -642,7 +650,7 @@ public sealed class LocalLlmQuizGenerator
                         attemptReports.Add(
                             new(
                                 attempt,
-                                MaximumAttempts,
+                                effectiveMaximumAttempts,
                                 rawOutput,
                                 attemptDiagnostics.ToArray()));
 
@@ -677,7 +685,7 @@ public sealed class LocalLlmQuizGenerator
                         $"Local LLM attempt {attempt} rejected by validator: {previousErrorCode}");
                 }
 
-                if (attempt < MaximumAttempts)
+                if (attempt < effectiveMaximumAttempts)
                 {
                     ReportDiagnostic(
                         LlmQuizDiagnosticEvent.RetryScheduled,
@@ -701,7 +709,7 @@ public sealed class LocalLlmQuizGenerator
                 attemptReports.Add(
                     new(
                         attempt,
-                        MaximumAttempts,
+                        effectiveMaximumAttempts,
                         rawOutput,
                         attemptDiagnostics.ToArray()));
             }
@@ -1213,7 +1221,7 @@ internal static class LlmQuizPromptBuilder
             (FractionOperation.Multiply, AppLanguage.Vietnamese) =>
                 "Hỏi một phân số của một lượng phân số; phải dùng từ “của” để thể hiện phép nhân.",
             (FractionOperation.Divide, AppLanguage.Vietnamese) =>
-                "Chia một lượng phân số thành các phần có kích thước bằng phân số còn lại; hỏi được bao nhiêu phần.",
+                "Phân số thứ nhất là tổng lượng có sẵn, phân số thứ hai là kích thước của mỗi phần bằng nhau; hỏi tạo được bao nhiêu đơn vị theo đúng answer_unit bắt buộc.",
             (FractionOperation.Add, _) =>
                 "Combine the two parts and ask for the total.",
             (FractionOperation.Subtract, _) =>
@@ -1221,7 +1229,7 @@ internal static class LlmQuizPromptBuilder
             (FractionOperation.Multiply, _) =>
                 "Ask for one fraction of another fractional amount; use the word 'of'.",
             (FractionOperation.Divide, _) =>
-                "Divide one fractional amount into portions of the other fractional size and ask how many portions.",
+                "Treat the first fraction as the total amount and the second as the size of each equal portion; ask how many portions/items are obtained using the required answer_unit.",
             _ => throw new ArgumentOutOfRangeException(nameof(contract))
         };
 
@@ -1242,7 +1250,7 @@ internal static class LlmQuizPromptBuilder
                 - Diễn đạt rõ đúng phép tính bắt buộc; không tính hoặc làm lộ đáp án.
                 - {{operationRule}}
                 - Dùng đúng đồ vật bắt buộc. {{characterRule}}
-                - answer_unit phải đúng nguyên cụm bắt buộc, không chứa số.
+                - answer_unit phải đúng nguyên cụm bắt buộc, không chứa số. Với phép chia, answer_unit là đơn vị đếm của các phần tạo được, không phải đơn vị đo của hai phân số.
                 - solution_lead là một câu dẫn ngắn kết thúc bằng dấu hai chấm, nhắc lại answer_unit và không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
                 - Chỉ trả đúng JSON bốn trường sau, không thêm nội dung khác:
                 {
@@ -1270,7 +1278,7 @@ internal static class LlmQuizPromptBuilder
             - Use the required operation unambiguously; do not calculate or reveal the answer.
             - {{operationRule}}
             - Use the required story item exactly. {{characterRule}}
-            - answer_unit must be exactly the required noun phrase without a number.
+            - answer_unit must be exactly the required noun phrase without a number. For division, answer_unit is the count of portions/items obtained, not the measurement unit used by the two fractions.
             - solution_lead is one short sentence ending with a colon. It repeats answer_unit and contains no number, calculation, equals sign, result, or answer.
             - Return exactly this four-field JSON schema and nothing else:
             {
@@ -2092,26 +2100,56 @@ internal static class LlmQuizPromptBuilder
     }
 
     public static WordProblemStoryContext SelectFractionStoryContext(
-        AppLanguage language)
+        AppLanguage language,
+        FractionOperation operation)
     {
-        WordProblemStoryContext[] contexts =
-            language == AppLanguage.Vietnamese
-                ?
-                [
-                    new(WordProblemContextCategory.SchoolSupply, "dây ruy băng", "mét dây ruy băng"),
-                    new(WordProblemContextCategory.SchoolSupply, "tấm vải", "mét vải"),
-                    new(WordProblemContextCategory.Sweet, "bình nước", "lít nước"),
-                    new(WordProblemContextCategory.Sweet, "túi bột", "ki-lô-gam bột"),
-                    new(WordProblemContextCategory.Sweet, "chiếc bánh", "chiếc bánh")
-                ]
-                :
-                [
-                    new(WordProblemContextCategory.SchoolSupply, "ribbon", "metres of ribbon"),
-                    new(WordProblemContextCategory.SchoolSupply, "fabric", "metres of fabric"),
-                    new(WordProblemContextCategory.Sweet, "water", "litres of water"),
-                    new(WordProblemContextCategory.Sweet, "flour", "kilograms of flour"),
-                    new(WordProblemContextCategory.Sweet, "cake", "cakes")
-                ];
+        // Keep the story noun and answer unit dimensionally consistent.
+        // Division is special: the operands are measured quantities but the
+        // answer is a count of equal portions, not another length/volume/mass.
+        WordProblemStoryContext[] contexts;
+
+        if (operation == FractionOperation.Divide)
+        {
+            contexts =
+                language == AppLanguage.Vietnamese
+                    ?
+                    [
+                        new(WordProblemContextCategory.SchoolSupply, "mét dây ruy băng", "đoạn dây ruy băng"),
+                        new(WordProblemContextCategory.SchoolSupply, "mét vải", "mảnh vải"),
+                        new(WordProblemContextCategory.Sweet, "lít nước", "cốc nước"),
+                        new(WordProblemContextCategory.Sweet, "ki-lô-gam bột", "phần bột"),
+                        new(WordProblemContextCategory.Sweet, "chiếc bánh", "phần bánh")
+                    ]
+                    :
+                    [
+                        new(WordProblemContextCategory.SchoolSupply, "metres of ribbon", "pieces of ribbon"),
+                        new(WordProblemContextCategory.SchoolSupply, "metres of fabric", "pieces of fabric"),
+                        new(WordProblemContextCategory.Sweet, "litres of water", "cups of water"),
+                        new(WordProblemContextCategory.Sweet, "kilograms of flour", "portions of flour"),
+                        new(WordProblemContextCategory.Sweet, "cake", "pieces of cake")
+                    ];
+        }
+        else
+        {
+            contexts =
+                language == AppLanguage.Vietnamese
+                    ?
+                    [
+                        new(WordProblemContextCategory.SchoolSupply, "mét dây ruy băng", "mét dây ruy băng"),
+                        new(WordProblemContextCategory.SchoolSupply, "mét vải", "mét vải"),
+                        new(WordProblemContextCategory.Sweet, "lít nước", "lít nước"),
+                        new(WordProblemContextCategory.Sweet, "ki-lô-gam bột", "ki-lô-gam bột"),
+                        new(WordProblemContextCategory.Sweet, "chiếc bánh", "chiếc bánh")
+                    ]
+                    :
+                    [
+                        new(WordProblemContextCategory.SchoolSupply, "metres of ribbon", "metres of ribbon"),
+                        new(WordProblemContextCategory.SchoolSupply, "metres of fabric", "metres of fabric"),
+                        new(WordProblemContextCategory.Sweet, "litres of water", "litres of water"),
+                        new(WordProblemContextCategory.Sweet, "kilograms of flour", "kilograms of flour"),
+                        new(WordProblemContextCategory.Sweet, "cake", "cakes")
+                    ];
+        }
 
         return contexts[Random.Shared.Next(contexts.Length)];
     }
@@ -3711,7 +3749,8 @@ internal sealed partial class LlmWordProblemValidator
                 FractionOperation.Multiply =>
                     ContainsAny(problem, "của", "phần của", "số đó"),
                 FractionOperation.Divide =>
-                    ContainsAny(problem, "chia", "mỗi phần", "được bao nhiêu", "bao nhiêu phần"),
+                    ContainsAny(problem, "chia", "cắt", "rót", "múc", "mỗi") &&
+                    ContainsAny(problem, "bao nhiêu", "được bao nhiêu", "mấy phần", "mấy đoạn", "mấy cốc"),
                 _ => false
             };
         }
@@ -3726,7 +3765,8 @@ internal sealed partial class LlmWordProblemValidator
             FractionOperation.Multiply =>
                 ContainsAny(problem, "of", "fraction of", "part of"),
             FractionOperation.Divide =>
-                ContainsAny(problem, "divide", "divided", "how many portions", "each portion"),
+                ContainsAny(problem, "divide", "divided", "cut", "pour", "each") &&
+                ContainsAny(problem, "how many", "portions", "pieces", "cups"),
             _ => false
         };
     }

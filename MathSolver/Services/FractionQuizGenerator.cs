@@ -47,7 +47,15 @@ public sealed class FractionQuizGenerator
         ReducedFraction right;
         ReducedFraction answer;
 
-        do
+        if (operation == FractionOperation.Divide)
+        {
+            // Word-problem division should map cleanly to "how many equal
+            // portions?". Generate an exact integer quotient so the story does
+            // not end up asking for a fractional number of physical portions.
+            (left, right) = CreateExactDivisionOperands();
+            answer = Calculate(left, right, operation);
+        }
+        else
         {
             left = CreateOperand();
             right = CreateOperand();
@@ -60,8 +68,6 @@ public sealed class FractionQuizGenerator
 
             answer = Calculate(left, right, operation);
         }
-        while (operation == FractionOperation.Divide &&
-               right.Numerator.IsZero);
 
         bool? equationIsCorrect = null;
         ReducedFraction? presented = null;
@@ -110,6 +116,39 @@ public sealed class FractionQuizGenerator
                 answer,
                 presented,
                 choices));
+    }
+
+    private (ReducedFraction Left, ReducedFraction Right)
+        CreateExactDivisionOperands()
+    {
+        while (true)
+        {
+            int denominator = _random.Next(4, 13);
+            int quotient = _random.Next(2, Math.Min(5, denominator - 1) + 1);
+            int maxRightNumerator = (denominator - 1) / quotient;
+
+            if (maxRightNumerator < 1)
+            {
+                continue;
+            }
+
+            int rightNumerator =
+                _random.Next(1, maxRightNumerator + 1);
+
+            var right =
+                new ReducedFraction(
+                    rightNumerator,
+                    denominator);
+            var left =
+                new ReducedFraction(
+                    rightNumerator * quotient,
+                    denominator);
+
+            if (Compare(left, right) > 0)
+            {
+                return (left, right);
+            }
+        }
     }
 
     private ReducedFraction CreateOperand()

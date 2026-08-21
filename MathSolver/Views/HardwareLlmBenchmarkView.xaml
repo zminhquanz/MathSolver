@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MathSolver.Views.HardwareLlmBenchmarkView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <VerticalStackLayout Spacing="14">
+        <Border Style="{StaticResource HardwareSectionStyle}">
+            <VerticalStackLayout Spacing="10">
+                <Label
+                    x:Name="SectionTitleLabel"
+                    Text="Benchmark AI / LLM"
+                    Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                <Label
+                    x:Name="SectionDescriptionLabel"
+                    Text="Đo tốc độ decode và độ chính xác tạo đề bằng validator C# hiện có. Mỗi dạng chạy 10 câu độc lập."
+                    Style="{StaticResource HardwareDescriptionStyle}" />
+
+                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Label x:Name="ModelNameLabel" Text="Model" Style="{StaticResource HardwareInfoNameStyle}" />
+                    <Label x:Name="ModelValueLabel" Grid.Column="1" LineBreakMode="TailTruncation" Style="{StaticResource HardwareInfoValueStyle}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Label x:Name="EngineNameLabel" Text="Engine" Style="{StaticResource HardwareInfoNameStyle}" />
+                    <Label x:Name="EngineValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Label x:Name="IsaNameLabel" Text="LLamaSharp CPU ISA khả dụng" Style="{StaticResource HardwareInfoNameStyle}" />
+                    <Label x:Name="IsaValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Label x:Name="ThreadsNameLabel" Text="Luồng inference" Style="{StaticResource HardwareInfoNameStyle}" />
+                    <Label x:Name="ThreadsValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Label x:Name="SampleNameLabel" Text="Bộ kiểm thử" Style="{StaticResource HardwareInfoNameStyle}" />
+                    <Label x:Name="SampleValueLabel" Grid.Column="1" Text="6 dạng × 10 câu = 60 câu" Style="{StaticResource HardwareInfoValueStyle}" />
+                </Grid>
+
+                <Button
+                    x:Name="RunLlmBenchmarkButton"
+                    HeightRequest="46"
+                    CornerRadius="12"
+                    FontAttributes="Bold"
+                    BackgroundColor="{DynamicResource PrimaryColor}"
+                    TextColor="{DynamicResource OnPrimaryColor}"
+                    Text="Chạy benchmark AI / LLM"
+                    Clicked="OnRunLlmBenchmarkClicked" />
+
+                <ProgressBar
+                    x:Name="LlmBenchmarkProgressBar"
+                    Progress="0"
+                    IsVisible="False" />
+
+                <ActivityIndicator
+                    x:Name="LlmBenchmarkActivity"
+                    IsVisible="False"
+                    IsRunning="False"
+                    Color="{DynamicResource PrimaryColor}" />
+
+                <Label
+                    x:Name="LlmBenchmarkStatusLabel"
+                    Text="Chưa chạy benchmark AI / LLM."
+                    HorizontalTextAlignment="Center"
+                    Style="{StaticResource HardwareDescriptionStyle}" />
+
+                <Label
+                    x:Name="LlmLiveSpeedLabel"
+                    IsVisible="False"
+                    HorizontalTextAlignment="Center"
+                    FontAttributes="Bold"
+                    TextColor="{DynamicResource PrimaryColor}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="LlmBenchmarkResultsBorder"
+            IsVisible="False"
+            Style="{StaticResource HardwareSectionStyle}">
+            <VerticalStackLayout Spacing="10">
+                <Label
+                    x:Name="ResultTitleLabel"
+                    Text="Kết quả benchmark AI / LLM"
+                    Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Label x:Name="DecodeSpeedNameLabel" Text="Tốc độ tạo sinh trung bình" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                    <Label x:Name="DecodeSpeedValueLabel" Grid.Column="1" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Label x:Name="OverallAccuracyNameLabel" Text="Độ chính xác tổng" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                    <Label x:Name="OverallAccuracyValueLabel" Grid.Column="1" FontSize="20" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                </Grid>
+
+                <Label
+                    x:Name="AccuracyExplanationLabel"
+                    Text="Mỗi câu chỉ sinh đúng 1 lần rồi được validator C# chấm. Không retry để tránh làm sai lệch độ chính xác của model."
+                    Style="{StaticResource HardwareDescriptionStyle}" />
+
+                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                <Grid ColumnDefinitions="2*,Auto,Auto,Auto" ColumnSpacing="18">
+                    <Label x:Name="CategoryHeaderLabel" Text="Dạng đề" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
+                    <Label x:Name="CorrectHeaderLabel" Grid.Column="1" Text="Đúng" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
+                    <Label x:Name="AccuracyHeaderLabel" Grid.Column="2" Text="Chính xác" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
+                    <Label x:Name="SpeedHeaderLabel" Grid.Column="3" Text="token/s" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
+                </Grid>
+
+                <VerticalStackLayout x:Name="CategoryResultsContainer" Spacing="7" />
+            </VerticalStackLayout>
+        </Border>
+    </VerticalStackLayout>
+</ContentView>

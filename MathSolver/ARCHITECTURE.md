@@ -226,3 +226,11 @@ LLamaSharp/GGUF inference is Windows-only. The Android target does not restore o
 - The Hugging Face model catalog contains only the E2B and E4B one-click download cards.
 - The main download action is labeled generically as “Download AI model from HuggingFace” / “Tải model AI từ HuggingFace”.
 - While local inference is active, the Create-with-AI button becomes a red Stop-generation button that cancels the current token generation without unloading the selected model.
+
+## Hardware AI/LLM benchmark (2026-08-21)
+
+The Hardware Information page has two benchmark modes on Windows: **Raw performance** and **AI/LLM**. Android keeps Raw performance only because LLamaSharp is not packaged there.
+
+The AI/LLM benchmark reuses the shared `LocalLlmRuntime.Generator`, so Math Puzzle and Hardware benchmarking share one GGUF weight cache instead of loading the model twice. It reports the Windows LLamaSharp/llama.cpp CPU backend, the highest available x86 ISA tier (AVX, AVX2/FMA, or AVX-512), configured decode/batch thread counts, and average decode throughput in token/s.
+
+Accuracy is measured with the same C# contracts, parser, and `LlmWordProblemValidator` used by production generation. Six categories are tested: basic arithmetic, fractions, Find x, geometry, direct/inverse proportion, and motion. Each category runs exactly 10 independent samples. Benchmark generation forces `maximumAttempts = 1`, so every sample is scored from one model response and retry logic cannot inflate the measured accuracy. Results are shown as valid questions / 10 and percentage for each category, plus overall valid questions / 60 and overall percentage.

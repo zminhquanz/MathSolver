@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MathSolver.Controls"
+    xmlns:local="clr-namespace:MathSolver.Views"
     Title="Thông tin phần cứng"
     Shell.NavBarIsVisible="True"
     Shell.TabBarIsVisible="False"
@@ -191,6 +192,35 @@
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
+
+                <Grid
+                    x:Name="BenchmarkModeTabs"
+                    IsVisible="{OnPlatform WinUI=True, Default=False}"
+                    ColumnDefinitions="*,*"
+                    ColumnSpacing="8">
+                    <Button
+                        x:Name="RawPerformanceTabButton"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                        HeightRequest="44"
+                        CornerRadius="12"
+                        FontAttributes="Bold"
+                        Text="⚙ Hiệu năng thuần"
+                        Clicked="OnRawPerformanceTabClicked" />
+                    <Button
+                        x:Name="LlmPerformanceTabButton"
+                        Grid.Column="1"
+                        IsVisible="{OnPlatform WinUI=True, Default=False}"
+                        HeightRequest="44"
+                        CornerRadius="12"
+                        FontAttributes="Bold"
+                        Text="🤖 AI / LLM"
+                        Clicked="OnLlmPerformanceTabClicked" />
+                </Grid>
+
+                <VerticalStackLayout
+                    x:Name="RawPerformanceContent"
+                    Spacing="{OnPlatform Android=10, WinUI=14, Default=14}">
 
                 <Border Style="{StaticResource HardwareSectionStyle}">
                     <VerticalStackLayout Spacing="12">
@@ -455,6 +485,11 @@
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </Border>
+                </VerticalStackLayout>
+
+                <local:HardwareLlmBenchmarkView
+                    x:Name="LlmBenchmarkView"
+                    IsVisible="False" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

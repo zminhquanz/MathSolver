@@ -95,6 +95,9 @@
     <Compile Update="Views\MathPuzzlePage.xaml.cs">
       <DependentUpon>MathPuzzlePage.xaml</DependentUpon>
     </Compile>
+    <Compile Update="Views\HardwareLlmBenchmarkView.xaml.cs">
+      <DependentUpon>HardwareLlmBenchmarkView.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Views\GemmaModelCatalogPage.xaml.cs">
       <DependentUpon>GemmaModelCatalogPage.xaml</DependentUpon>
     </Compile>
@@ -123,6 +126,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\MathPuzzlePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Views\HardwareLlmBenchmarkView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\GemmaModelCatalogPage.xaml">
