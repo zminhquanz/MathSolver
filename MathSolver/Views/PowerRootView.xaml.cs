@@ -19,6 +19,8 @@ namespace MathSolver.Views;
 
 public partial class PowerRootView : LocalizedSolverView
 {
+    public event Action<bool>? CalculationInteractionLockChanged;
+
     private readonly PowerRootEngine _powerRootEngine = new();
     private const long MaxBaseMagnitude =
         1_000_000_000_000_000_000L;
@@ -2047,8 +2049,8 @@ public partial class PowerRootView : LocalizedSolverView
         _isCalculating = true;
         UpdateWindowsCloseGuard();
 
-        SetInputEnabled(
-            enabled: false);
+        SetCalculationInteractionLocked(
+            isLocked: true);
 
         // Every new calculation starts with developer diagnostics collapsed.
         _isDiagnosticsVisible = false;
@@ -2433,8 +2435,8 @@ public partial class PowerRootView : LocalizedSolverView
                 CalculationActivityIndicator.IsRunning = false;
                 CalculationActivityIndicator.IsVisible = false;
 
-                SetInputEnabled(
-                    enabled: true);
+                SetCalculationInteractionLocked(
+                    isLocked: false);
             }
 
             calculationCompletionSource.TrySetResult(
@@ -5078,6 +5080,27 @@ public partial class PowerRootView : LocalizedSolverView
 
         return isBaseValid &&
                isExponentValid;
+    }
+
+    private void SetCalculationInteractionLocked(
+        bool isLocked)
+    {
+        SetInputEnabled(
+            enabled: !isLocked);
+
+        // These actions normally live inside the result/diagnostics surface and
+        // are hidden when a new calculation starts, but keep their enabled state
+        // synchronized too so Stop remains the only state-changing action even
+        // if a layout update makes one of them visible during a long operation.
+        CopyResultButton.IsEnabled =
+            !isLocked;
+        ExportTextButton.IsEnabled =
+            !isLocked;
+        DiagnosticsToggleButton.IsEnabled =
+            !isLocked;
+
+        CalculationInteractionLockChanged?.Invoke(
+            isLocked);
     }
 
     private void SetInputEnabled(

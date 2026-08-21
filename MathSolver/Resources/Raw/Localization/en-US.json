@@ -353,7 +353,7 @@
     "PowerRoot.ConfirmStopTitle": "Confirm stop",
     "PowerRoot.ConfirmStopCalculation": "Do you want to stop the calculation?",
     "PowerRoot.ConfirmStopExport": "Do you want to stop creating the TXT file?",
-    "PowerRoot.ConfirmCloseCalculation": "A calculation is still running. Do you want to stop it and exit the app?",
+    "PowerRoot.ConfirmCloseCalculation": "Do you want to stop the calculation and exit the application?",
     "PowerRoot.ConfirmCloseExport": "A TXT file is still being created. Do you want to stop it and exit the app?",
     "PowerRoot.ConfirmYes": "Yes",
     "PowerRoot.ConfirmNo": "No",

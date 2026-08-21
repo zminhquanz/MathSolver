@@ -353,7 +353,7 @@
     "PowerRoot.ConfirmStopTitle": "Xác nhận dừng",
     "PowerRoot.ConfirmStopCalculation": "Bạn có muốn dừng tính toán không?",
     "PowerRoot.ConfirmStopExport": "Bạn có muốn dừng tạo file TXT không?",
-    "PowerRoot.ConfirmCloseCalculation": "Ứng dụng đang tính toán. Bạn có muốn dừng tính toán và thoát ứng dụng không?",
+    "PowerRoot.ConfirmCloseCalculation": "Bạn có muốn dừng tính toán và thoát chương trình không?",
     "PowerRoot.ConfirmCloseExport": "Ứng dụng đang tạo file TXT. Bạn có muốn dừng tạo file và thoát ứng dụng không?",
     "PowerRoot.ConfirmYes": "Có",
     "PowerRoot.ConfirmNo": "Không",

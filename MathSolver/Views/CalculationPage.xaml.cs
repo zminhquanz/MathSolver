@@ -88,6 +88,7 @@ public partial class CalculationPage : ContentPage
     private CalculationSubTab _selectedSubTab = CalculationSubTab.Basic;
 
     private bool _isSubTabTransitioning;
+    private bool _isPowerRootCalculationInteractionLocked;
 
     private const double CalculationSubTabSpacing =
         6d;
@@ -128,6 +129,9 @@ public partial class CalculationPage : ContentPage
 
         CalculationSubTabScrollView.SizeChanged +=
             OnCalculationSubTabScrollViewSizeChanged;
+
+        PowerRootSolverView.CalculationInteractionLockChanged +=
+            OnPowerRootCalculationInteractionLockChanged;
 
         SelectNumberType(
             NumberInputType.Integer,
@@ -3789,7 +3793,8 @@ public partial class CalculationPage : ContentPage
     private async Task SwitchSubTabAsync(
         CalculationSubTab selectedTab)
     {
-        if (_isSubTabTransitioning)
+        if (_isPowerRootCalculationInteractionLocked ||
+            _isSubTabTransitioning)
         {
             return;
         }
@@ -3898,6 +3903,58 @@ public partial class CalculationPage : ContentPage
         {
             _isSubTabTransitioning =
                 false;
+        }
+    }
+
+    private void OnPowerRootCalculationInteractionLockChanged(
+        bool isLocked)
+    {
+        _isPowerRootCalculationInteractionLocked =
+            isLocked;
+
+        Button[] desktopButtons =
+        [
+            BasicTabButton,
+            AverageTabButton,
+            PowerRootTabButton,
+            FractionTabButton,
+            FindXTabButton,
+            QuadraticTabButton,
+            GeometryTabButton
+        ];
+
+        Button[] androidButtons =
+        [
+            AndroidBasicTabButton,
+            AndroidAverageTabButton,
+            AndroidPowerRootTabButton,
+            AndroidFractionTabButton,
+            AndroidFindXTabButton,
+            AndroidQuadraticTabButton,
+            AndroidGeometryTabButton
+        ];
+
+        foreach (Button button in desktopButtons)
+        {
+            button.IsEnabled =
+                !isLocked;
+        }
+
+        foreach (Button button in androidButtons)
+        {
+            button.IsEnabled =
+                !isLocked;
+        }
+
+        if (!isLocked)
+        {
+            UpdateSubTabButtonStyles();
+        }
+
+        if (Shell.Current is AppShell appShell)
+        {
+            appShell.SetPowerRootCalculationInteractionLocked(
+                isLocked);
         }
     }
 

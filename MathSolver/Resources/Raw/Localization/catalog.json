@@ -1694,7 +1694,7 @@
     },
     {
       "key": "PowerRoot.ConfirmCloseCalculation",
-      "source": "Ứng dụng đang tính toán. Bạn có muốn dừng tính toán và thoát ứng dụng không?",
+      "source": "Bạn có muốn dừng tính toán và thoát chương trình không?",
       "mode": "exact"
     },
     {
