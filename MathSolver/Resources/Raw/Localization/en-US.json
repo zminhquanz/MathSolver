@@ -1368,7 +1368,11 @@
     "Equation.Quadratic.Step4.TwoRoots.SubstituteB": "b = {0},",
     "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta": "and Δ = {0} into the formula:",
     "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Compute {0}:",
-    "Quiz.StopAiGeneration": "⏹️ Stop generation"
+    "Quiz.StopAiGeneration": "⏹️ Stop generation",
+    "Quiz.AiExitConfirmTitle": "AI generation in progress",
+    "Quiz.AiExitConfirmMessage": "Do you want to stop AI question generation and exit the application?",
+    "Quiz.AiExitConfirmYes": "Yes",
+    "Quiz.AiExitConfirmNo": "No"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

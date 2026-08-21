@@ -54,6 +54,11 @@ public partial class MathPuzzlePage : ContentPage
     private ArithmeticQuizQuestion? _currentQuestion;
     private QuizProblemRequest? _activeProblemRequest;
     private CancellationTokenSource? _llmGenerationCancellation;
+#if WINDOWS
+    // Lets the native Windows close guard wait until llama.cpp has actually
+    // observed cancellation and GenerateLlmQuestionAsync has fully unwound.
+    private TaskCompletionSource<bool>? _llmGenerationCompletionSource;
+#endif
     private string? _llmModelPath;
     private bool _questionAnswered;
     private bool? _lastAnswerWasCorrect;
@@ -1704,6 +1709,13 @@ public partial class MathPuzzlePage : ContentPage
         int progressVersion =
             BeginLlmProgress(cancellation);
 
+        var generationCompletionSource =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _llmGenerationCompletionSource =
+            generationCompletionSource;
+
         _localLlmQuizGenerator.CancelScheduledModelUnload();
         _showFriendlyGreetingForCurrentLoad =
             !_localLlmQuizGenerator.IsModelLoaded(
@@ -1724,6 +1736,7 @@ public partial class MathPuzzlePage : ContentPage
         SetAnswerControlsEnabled(false);
         _isLlmQuestionGenerationActive = true;
         SetLlmBusy(true);
+        SetAiGenerationInteractionLocked(true);
 
         QuestionPromptLabel.Text =
             Translate("Quiz.WordProblemTitle");
@@ -1827,17 +1840,68 @@ public partial class MathPuzzlePage : ContentPage
             {
                 _llmGenerationCancellation = null;
                 SetLlmBusy(false);
+                SetAiGenerationInteractionLocked(false);
             }
             else
             {
                 // Defensive refresh in case another operation replaced the CTS
-                // while this generation was unwinding.
+                // while this generation was unwinding. Phiên inference hiện tại
+                // đã kết thúc nên navigation và toàn bộ controls phải được mở lại.
+                SetAiGenerationInteractionLocked(false);
                 UpdateCreateOrRegenerateQuestionButtonState();
             }
 
             cancellation.Dispose();
+
+            if (ReferenceEquals(
+                    _llmGenerationCompletionSource,
+                    generationCompletionSource))
+            {
+                _llmGenerationCompletionSource = null;
+            }
+
+            // Complete last: the close guard may now safely reissue X/Alt+F4.
+            // At this point InferAsync has returned, UI state is unlocked, and
+            // the generation CancellationTokenSource has been disposed.
+            generationCompletionSource.TrySetResult(true);
         }
     }
+    private async Task<bool> ConfirmWindowsCloseDuringAiGenerationAsync()
+    {
+        // If generation already completed between the native Closing event and
+        // this callback, there is nothing left to stop. Close normally.
+        if (!_isLlmQuestionGenerationActive)
+        {
+            return true;
+        }
+
+        bool shouldStopAndExit =
+            await MaterialDialogService.ConfirmAsync(
+                this,
+                Translate("Quiz.AiExitConfirmTitle"),
+                Translate("Quiz.AiExitConfirmMessage"),
+                Translate("Quiz.AiExitConfirmYes"),
+                Translate("Quiz.AiExitConfirmNo"));
+
+        if (!shouldStopAndExit)
+        {
+            // Keep inference alive exactly where it is.
+            return false;
+        }
+
+        Task? generationCompletionTask =
+            _llmGenerationCompletionSource?.Task;
+
+        CancelLlmGeneration();
+
+        if (generationCompletionTask is not null)
+        {
+            await generationCompletionTask;
+        }
+
+        return true;
+    }
+
 #else
     private Task GenerateLlmQuestionAsync(
         int? questionNumberOnSuccess) =>
@@ -2003,6 +2067,78 @@ public partial class MathPuzzlePage : ContentPage
 
         RefreshLlmActionButtonTheme();
         UpdateAiTeacherState();
+    }
+
+    private void SetAiGenerationInteractionLocked(
+        bool isLocked)
+    {
+        // Chỉ dùng cho giai đoạn InferAsync thật sự. Các thao tác chọn/tải/eject
+        // model vẫn dùng SetLlmBusy riêng và không khóa navigation toàn app.
+        if (Shell.Current is AppShell appShell)
+        {
+            appShell.SetMathPuzzleAiInteractionLocked(
+                isLocked);
+        }
+
+#if WINDOWS
+        if (isLocked)
+        {
+            MathSolver.Platforms.Windows.WindowStateManager.SetCloseGuard(
+                this,
+                ConfirmWindowsCloseDuringAiGenerationAsync);
+        }
+        else
+        {
+            MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
+                this);
+        }
+#endif
+
+        AlgorithmSourceButton.IsEnabled = !isLocked;
+        LocalLlmSourceButton.IsEnabled = !isLocked;
+
+        DownloadGemma4Button.IsEnabled = !isLocked;
+        OpenLlmModelFolderButton.IsEnabled =
+            !isLocked && _llmModelPath is not null;
+        SelectLlmModelButton.IsEnabled = !isLocked;
+        EjectLlmModelButton.IsEnabled =
+            !isLocked && _llmModelPath is not null;
+
+        // JSON & Log is intentionally still interactive while generation is
+        // running. It is a read-only diagnostics surface and is useful for
+        // watching streamed raw JSON/validation without mutating AI state.
+        AiDiagnosticsToggleButton.IsEnabled = true;
+        TrueFalseModeButton.IsEnabled = !isLocked;
+        MultipleChoiceModeButton.IsEnabled = !isLocked;
+        EssayModeButton.IsEnabled = !isLocked;
+        OperationPicker.IsEnabled = !isLocked;
+
+        ProblemAddButton.IsEnabled = !isLocked;
+        ProblemSubtractButton.IsEnabled = !isLocked;
+        ProblemMultiplyButton.IsEnabled = !isLocked;
+        ProblemDivideButton.IsEnabled = !isLocked;
+        DirectProportionButton.IsEnabled = !isLocked;
+        InverseProportionButton.IsEnabled = !isLocked;
+
+        // Trong lúc AI chạy, không cho trả lời câu cũ hay chuyển sang câu kế
+        // tiếp. Nút CreateOrRegenerate không bị khóa vì nó chính là nút Dừng.
+        if (isLocked)
+        {
+            NextQuestionButton.IsEnabled = false;
+            SetAnswerControlsEnabled(false);
+        }
+        else
+        {
+            NextQuestionButton.IsEnabled =
+                _questionAnswered && _currentQuestion is not null;
+
+            SetAnswerControlsEnabled(
+                _currentQuestion is not null &&
+                !_questionAnswered);
+        }
+
+        UpdateCreateOrRegenerateQuestionButtonState();
+        RefreshLlmActionButtonTheme();
     }
 
     private void SetLlmBusy(

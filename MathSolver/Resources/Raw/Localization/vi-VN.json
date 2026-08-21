@@ -1368,7 +1368,11 @@
     "Equation.Quadratic.Step4.TwoRoots.SubstituteB": "b = {0},",
     "Equation.Quadratic.Step4.TwoRoots.SubstituteDelta": "Δ = {0} vào công thức:",
     "Equation.Quadratic.Step4.TwoRoots.ComputeRoot": "Tính {0}:",
-    "Quiz.StopAiGeneration": "⏹️ Dừng tạo đề"
+    "Quiz.StopAiGeneration": "⏹️ Dừng tạo đề",
+    "Quiz.AiExitConfirmTitle": "AI đang tạo đề",
+    "Quiz.AiExitConfirmMessage": "Bạn có muốn dừng tạo đề bằng AI và thoát chương trình không?",
+    "Quiz.AiExitConfirmYes": "Có",
+    "Quiz.AiExitConfirmNo": "Không"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

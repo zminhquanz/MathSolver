@@ -6221,6 +6221,26 @@
       "key": "Equation.Quadratic.Step4.TwoRoots.ComputeRoot",
       "source": "Tính {0}:",
       "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiExitConfirmTitle",
+      "source": "AI đang tạo đề",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiExitConfirmMessage",
+      "source": "Bạn có muốn dừng tạo đề bằng AI và thoát chương trình không?",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiExitConfirmYes",
+      "source": "Có",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AiExitConfirmNo",
+      "source": "Không",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

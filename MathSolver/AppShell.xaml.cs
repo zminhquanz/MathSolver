@@ -1,9 +1,12 @@
-using MathSolver.Views;
+﻿using MathSolver.Views;
 using MathSolver.Services;
 using System.Collections.Generic;
 
 #if WINDOWS
 using Microsoft.Maui.Platform;
+using WindowsShellItemHandler = Microsoft.Maui.Controls.Handlers.ShellItemHandler;
+using WinUINavigationView = Microsoft.UI.Xaml.Controls.NavigationView;
+using WinUINavigationViewItem = Microsoft.UI.Xaml.Controls.NavigationViewItem;
 using WinUIFrameworkElement = Microsoft.UI.Xaml.FrameworkElement;
 using WinUIPopup = Microsoft.UI.Xaml.Controls.Primitives.Popup;
 using WinUIWindow = Microsoft.UI.Xaml.Window;
@@ -66,6 +69,13 @@ public partial class AppShell : Shell
     private string _activeMainRoute =
         "CalculationPage";
 
+    // Khi Math Puzzle đang tạo đề bằng local AI, khóa toàn bộ đường rời khỏi
+    // tab hiện tại. Không đổi SelectedItem của Shell trong lúc khóa vì việc
+    // disable chính ShellContent đang được chọn có thể khiến native Shell tự
+    // chuyển tab. MathPuzzleShellContent vì vậy vẫn enabled, còn ba tab khác
+    // và nút Settings bị khóa.
+    private bool _isMathPuzzleAiInteractionLocked;
+
 
     public AppShell()
     {
@@ -115,6 +125,13 @@ public partial class AppShell : Shell
             nameof(AboutPage),
             typeof(AboutPage));
 
+        // Chặn navigation ở cấp Shell trước khi native TabBar commit route.
+        // IsEnabled trên ShellContent không đủ tin cậy trên WinUI: native tab
+        // đôi lúc vẫn phát navigation dù item đã disabled. Navigating là hard guard
+        // cho click, keyboard và mọi route change trong lúc local AI đang chạy.
+        Navigating +=
+            OnShellNavigating;
+
         // Các trang cài đặt chi tiết là global route nằm ngoài cây Shell.
         // Menu cài đặt nhanh không còn là route; nó là visual-tree overlay của tab hiện tại.
         Navigated +=
@@ -124,11 +141,149 @@ public partial class AppShell : Shell
         ApplyShellChromeAppearance();
     }
 
+    private void OnShellNavigating(
+        object? sender,
+        ShellNavigatingEventArgs args)
+    {
+        if (!_isMathPuzzleAiInteractionLocked ||
+            !args.CanCancel)
+        {
+            return;
+        }
+
+        // Hard navigation lock for the whole main Shell while AI inference is
+        // active. This catches WinUI tab clicks even when the native TabBar
+        // ignores ShellContent.IsEnabled, as well as keyboard navigation and
+        // programmatic GoToAsync calls. The current Math Puzzle page itself is
+        // not navigated during generation, so every new Shell navigation is
+        // intentionally cancelled until inference/cancellation fully unwinds.
+        args.Cancel();
+    }
+
+    public void SetMathPuzzleAiInteractionLocked(
+        bool isLocked)
+    {
+        _isMathPuzzleAiInteractionLocked = isLocked;
+
+        // TabBar của MAUI không render trực tiếp ShellContent trên WinUI. Mỗi
+        // ShellContent nằm trong một ShellSection (implicit section) và chính
+        // ShellSection mới là native tab item mà người dùng click. Chỉ đổi
+        // ShellContent.IsEnabled khiến tab vẫn bấm được ở lần chạy đầu tiên và
+        // có thể làm native selection lệch khỏi logical Shell navigation.
+        //
+        // Vì vậy khóa/mở khóa cả ShellContent lẫn ShellSection tương ứng. Giữ
+        // riêng section Toán đố enabled để không làm Shell tự chọn tab khác.
+        // OnShellNavigating bên trên vẫn là guard lớp hai cho keyboard hay
+        // navigation programmatic trong đúng khoảng inference đang hoạt động.
+        SetMainTabEnabled(
+            CalculationShellContent,
+            !isLocked);
+        SetMainTabEnabled(
+            FormulaShellContent,
+            !isLocked);
+        SetMainTabEnabled(
+            MultiplicationShellContent,
+            !isLocked);
+        SetMainTabEnabled(
+            MathPuzzleShellContent,
+            true);
+
+        // .NET MAUI 10.0.60/WinUI keeps a cached NavigationView model for
+        // top-level TabBar items. With direct ShellContent children, MAUI
+        // subscribes PropertyChanged to the implicit ShellSection but stores
+        // the ShellContent in that native model. Therefore changing either
+        // ShellContent.IsEnabled or ShellSection.IsEnabled after the tab bar
+        // is realized does not refresh NavigationViewItem.IsEnabled by itself.
+        // Force ShellItemHandler to remap the menu model now so the three
+        // disabled tabs are really non-clickable even on the first AI run.
+        RefreshWindowsMainTabEnabledState();
+
+        SettingsButton.IsEnabled = !isLocked;
+        SettingsButton.InputTransparent = isLocked;
+    }
+
+    private void SetMainTabEnabled(
+        ShellContent shellContent,
+        bool isEnabled)
+    {
+        shellContent.IsEnabled = isEnabled;
+
+        // Direct ShellContent children in XAML are represented by implicit
+        // ShellSection items at runtime. Keep the wrapper in sync too, both as
+        // a logical guard and for compatibility if the TabBar is later changed
+        // to explicit ShellSection nodes. Native WinUI refresh is handled once
+        // for all tabs by RefreshWindowsMainTabEnabledState().
+        foreach (ShellSection section in MainTabBar.Items)
+        {
+            foreach (ShellContent item in section.Items)
+            {
+                if (!ReferenceEquals(
+                        item,
+                        shellContent))
+                {
+                    continue;
+                }
+
+                section.IsEnabled = isEnabled;
+                return;
+            }
+        }
+    }
+
+    private void RefreshWindowsMainTabEnabledState()
+    {
+#if WINDOWS
+        // ShellItemHandler.MapTitle() calls MapMenuItems() on WinUI. Although
+        // the method name sounds title-specific, MAUI 10.0.60 uses this mapper
+        // to rebuild the cached top NavigationView models, including their
+        // IsEnabled values. This fixes the implicit ShellSection/ShellContent
+        // notification mismatch without replacing MAUI's Shell renderer.
+        if (MainTabBar.Handler is not WindowsShellItemHandler shellItemHandler)
+        {
+            return;
+        }
+
+        WindowsShellItemHandler.MapTitle(
+            shellItemHandler,
+            MainTabBar);
+
+        // Belt-and-suspenders for already-realized WinUI containers. The mapper
+        // above updates the cached view models (so future containers are also
+        // correct); this additionally updates the live NavigationViewItem now.
+        // Keep only the currently selected Math Puzzle tab enabled while the AI
+        // lock is active. No reflection and no custom Shell handler is required.
+        if (shellItemHandler.PlatformView is not WinUINavigationView navigationView ||
+            navigationView.MenuItemsSource is not System.Collections.IEnumerable menuItems)
+        {
+            return;
+        }
+
+        foreach (object? menuItem in menuItems)
+        {
+            if (menuItem is null ||
+                navigationView.ContainerFromMenuItem(menuItem) is not WinUINavigationViewItem container)
+            {
+                continue;
+            }
+
+            bool isCurrentTab =
+                ReferenceEquals(
+                    menuItem,
+                    navigationView.SelectedItem);
+
+            container.IsEnabled =
+                !_isMathPuzzleAiInteractionLocked ||
+                isCurrentTab;
+        }
+#endif
+    }
+
     private async void OnSettingsClicked(
         object? sender,
         EventArgs e)
     {
-        if (_openingSettings ||
+        if (_isMathPuzzleAiInteractionLocked ||
+            _openingSettings ||
             _returningFromSettings ||
             Shell.Current is null)
         {
@@ -1191,7 +1346,9 @@ public partial class AppShell : Shell
             !visible;
 
         SettingsButton.IsEnabled =
-            visible;
+            visible && !_isMathPuzzleAiInteractionLocked;
+        SettingsButton.InputTransparent =
+            !visible || _isMathPuzzleAiInteractionLocked;
 
     }
 
