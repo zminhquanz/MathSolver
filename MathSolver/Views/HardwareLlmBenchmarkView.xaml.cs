@@ -1,3 +1,4 @@
+using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Services;
 using System.Globalization;
@@ -11,8 +12,14 @@ namespace MathSolver.Views;
 public partial class HardwareLlmBenchmarkView : ContentView
 {
     private const int SamplesPerCategory = 10;
-    private const int CategoryCount = 6;
-    private const int TotalSamples = SamplesPerCategory * CategoryCount;
+    private static readonly int CategoryCount =
+        Enum.GetValues<LlmBenchmarkCategory>().Length;
+    private static readonly int TotalSamples =
+        SamplesPerCategory * CategoryCount;
+
+    private const double AccuracyChartRowHeight = 44d;
+    private const double AccuracyChartTopAxisHeight = 28d;
+    private const double AccuracyChartBottomPadding = 4d;
 
     private CancellationTokenSource? _benchmarkCancellation;
     private TaskCompletionSource<bool>? _benchmarkCompletion;
@@ -48,9 +55,14 @@ public partial class HardwareLlmBenchmarkView : ContentView
         IsaNameLabel.Text = vietnamese ? "LLamaSharp CPU ISA khả dụng" : "Available LLamaSharp CPU ISA";
         ThreadsNameLabel.Text = vietnamese ? "Luồng inference" : "Inference threads";
         SampleNameLabel.Text = vietnamese ? "Bộ kiểm thử" : "Test set";
-        SampleValueLabel.Text = vietnamese
-            ? "6 dạng × 10 câu = 60 câu"
-            : "6 categories × 10 samples = 60 samples";
+        SampleValueLabel.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            vietnamese
+                ? "{0} dạng × {1} câu = {2} câu"
+                : "{0} categories × {1} samples = {2} samples",
+            CategoryCount,
+            SamplesPerCategory,
+            TotalSamples);
 
         ResultTitleLabel.Text = vietnamese
             ? "Kết quả benchmark AI / LLM"
@@ -64,6 +76,9 @@ public partial class HardwareLlmBenchmarkView : ContentView
         AccuracyExplanationLabel.Text = vietnamese
             ? "Mỗi câu chỉ sinh đúng 1 lần rồi được validator C# chấm. Không retry để tránh làm sai lệch độ chính xác thực của model."
             : "Each sample is generated exactly once and scored by the C# validator. Retries are disabled so model accuracy is not inflated.";
+        AccuracyChartTitleLabel.Text = vietnamese
+            ? "Độ chính xác theo dạng toán"
+            : "Accuracy by math category";
         CategoryHeaderLabel.Text = vietnamese ? "Dạng đề" : "Category";
         CorrectHeaderLabel.Text = vietnamese ? "Đúng" : "Valid";
         AccuracyHeaderLabel.Text = vietnamese ? "Chính xác" : "Accuracy";
@@ -407,6 +422,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
             result.TotalSamples,
             accuracy);
 
+        RenderAccuracyChart(result.Categories);
         CategoryResultsContainer.Children.Clear();
 
         foreach (LlmBenchmarkCategoryResult category in
@@ -423,9 +439,9 @@ public partial class HardwareLlmBenchmarkView : ContentView
                 ColumnDefinitions =
                 {
                     new ColumnDefinition { Width = GridLength.Star },
-                    new ColumnDefinition { Width = GridLength.Auto },
-                    new ColumnDefinition { Width = GridLength.Auto },
-                    new ColumnDefinition { Width = GridLength.Auto }
+                    new ColumnDefinition { Width = new GridLength(72) },
+                    new ColumnDefinition { Width = new GridLength(88) },
+                    new ColumnDefinition { Width = new GridLength(72) }
                 },
                 ColumnSpacing = 18
             };
@@ -433,12 +449,15 @@ public partial class HardwareLlmBenchmarkView : ContentView
             var name = new Label
             {
                 Text = GetCategoryName(category.Category),
+                LineBreakMode = LineBreakMode.TailTruncation,
+                MaxLines = 1,
                 TextColor = GetResourceColor("TextPrimaryColor")
             };
             var correct = new Label
             {
                 Text = $"{category.Valid}/{category.Total}",
                 FontAttributes = FontAttributes.Bold,
+                HorizontalTextAlignment = TextAlignment.End,
                 TextColor = GetResourceColor("TextPrimaryColor")
             };
             var percent = new Label
@@ -448,6 +467,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
                     "{0:F0}%",
                     categoryAccuracy),
                 FontAttributes = FontAttributes.Bold,
+                HorizontalTextAlignment = TextAlignment.End,
                 TextColor = GetResourceColor("PrimaryColor")
             };
             var speed = new Label
@@ -456,6 +476,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
                     CultureInfo.CurrentCulture,
                     "{0:F1}",
                     category.TokensPerSecond),
+                HorizontalTextAlignment = TextAlignment.End,
                 TextColor = GetResourceColor("TextPrimaryColor")
             };
 
@@ -468,6 +489,38 @@ public partial class HardwareLlmBenchmarkView : ContentView
             row.Children.Add(speed);
             CategoryResultsContainer.Children.Add(row);
         }
+    }
+
+    private void RenderAccuracyChart(
+        IReadOnlyList<LlmBenchmarkCategoryResult> categories)
+    {
+        var items =
+            categories
+                .Select(category =>
+                {
+                    double accuracy =
+                        category.Total == 0
+                            ? 0d
+                            : category.Valid * 100d / category.Total;
+
+                    return new LlmAccuracyChartItem(
+                        GetCategoryName(category.Category),
+                        accuracy);
+                })
+                .ToArray();
+
+        AccuracyChartView.HeightRequest =
+            AccuracyChartTopAxisHeight +
+            items.Length * AccuracyChartRowHeight +
+            AccuracyChartBottomPadding;
+
+        AccuracyChartView.Drawable =
+            new LlmAccuracyHorizontalChartDrawable
+            {
+                Items = items
+            };
+
+        AccuracyChartView.Invalidate();
     }
 
     private static QuizProblemRequest CreateRequest(

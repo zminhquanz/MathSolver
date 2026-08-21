@@ -297,7 +297,7 @@ public static class CalculationAccelerationManager
         return mode switch
         {
             CalculationSimdMode.Avx512 =>
-                "AVX512",
+                "AVX-512",
 
             CalculationSimdMode.AvxAvx2 =>
                 "AVX/AVX2",

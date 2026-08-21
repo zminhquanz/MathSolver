@@ -1,3 +1,4 @@
+using MathSolver.Graphics;
 using MathSolver.Services;
 using MathSolver.Services.Localization;
 using System.Diagnostics;
@@ -44,6 +45,46 @@ public partial class HardwarePerformancePage : ContentPage
         long deadlineTimestamp,
         CancellationToken cancellationToken);
 
+    private enum RawBenchmarkKind
+    {
+        None,
+        Standard,
+        ThreadComparison,
+        SimdComparison
+    }
+
+    private sealed class FloatingPointBenchmarkResult
+    {
+        public required double FloatMops { get; init; }
+
+        public required double DoubleMops { get; init; }
+
+        public required double Score { get; init; }
+
+        public required CalculationSimdMode SimdMode { get; init; }
+
+        public required bool UsedMultithreading { get; init; }
+
+        public required int WorkerCount { get; init; }
+
+        public required double ElapsedMilliseconds { get; init; }
+
+        public required double Checksum { get; init; }
+    }
+
+    private sealed record ThreadComparisonResult(
+        BenchmarkResult SingleThread,
+        BenchmarkResult MultiThread);
+
+    private sealed record SimdComparisonModeResult(
+        CalculationSimdMode Mode,
+        int VectorWidthBits,
+        FloatingPointBenchmarkResult? SingleThread,
+        FloatingPointBenchmarkResult? MultiThread);
+
+    private sealed record SimdComparisonResult(
+        IReadOnlyList<SimdComparisonModeResult> Modes);
+
     private sealed class BenchmarkResult
     {
         public required double Int32Mops { get; init; }
@@ -70,6 +111,9 @@ public partial class HardwarePerformancePage : ContentPage
     }
 
     private BenchmarkResult? _lastBenchmarkResult;
+    private ThreadComparisonResult? _lastThreadComparisonResult;
+    private SimdComparisonResult? _lastSimdComparisonResult;
+    private RawBenchmarkKind _activeRawBenchmarkKind;
     private bool _isBenchmarkRunning;
     private bool _isLoadingAccelerationState;
     private bool _hasPlayedEntryAnimation;
@@ -79,6 +123,7 @@ public partial class HardwarePerformancePage : ContentPage
     private CancellationTokenSource? _benchmarkCancellationTokenSource;
     private TaskCompletionSource<bool>? _benchmarkCompletionSource;
     private bool _showLlmPerformance;
+    private bool _isUpdatingBenchmarkTestPicker;
 
     private readonly List<SimdModeOption>
         _simdModeOptions =
@@ -94,6 +139,8 @@ public partial class HardwarePerformancePage : ContentPage
 #if ANDROID
         AndroidPickerVisualHelper.Attach(
             SimdModePicker);
+        AndroidPickerVisualHelper.Attach(
+            BenchmarkTestPicker);
 #endif
 
         Shell.SetNavBarIsVisible(
@@ -109,6 +156,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         LoadHardwareInformation();
         RenderBenchmarkResult();
+        RefreshExtendedBenchmarkUi();
         UpdateBenchmarkModeTabs();
         LlmBenchmarkView.RefreshState();
         PreparePageEntryAnimation();
@@ -133,6 +181,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         LoadHardwareInformation();
         RenderBenchmarkResult();
+        RefreshExtendedBenchmarkUi();
         UpdateBenchmarkModeTabs();
         LlmBenchmarkView.RefreshState();
 
@@ -318,6 +367,7 @@ public partial class HardwarePerformancePage : ContentPage
         LocalizationService.RefreshAll();
         LoadHardwareInformation();
         RenderBenchmarkResult();
+        RefreshExtendedBenchmarkUi();
         UpdateBenchmarkModeTabs();
         LlmBenchmarkView.RefreshState();
         SetBenchmarkButtonRunningState(
@@ -766,6 +816,11 @@ public partial class HardwarePerformancePage : ContentPage
         bool isLocked =
             _isBenchmarkRunning;
 
+        BenchmarkTestPicker.IsEnabled =
+            !isLocked;
+        BenchmarkTestPicker.Opacity =
+            isLocked ? 0.55d : 1d;
+
         UpdateBenchmarkTabLockState();
 
         bool useEnglish =
@@ -972,7 +1027,7 @@ public partial class HardwarePerformancePage : ContentPage
             Vector512.IsHardwareAccelerated)
         {
             supportedSets.Add(
-                "AVX512");
+                "AVX-512");
         }
 
         if (System.Runtime.Intrinsics.Arm.AdvSimd.IsSupported)
@@ -2009,12 +2064,888 @@ public partial class HardwarePerformancePage : ContentPage
             availableMegabytes);
     }
 
+    private bool IsVietnamese =>
+        AppLanguageManager.CurrentLanguage ==
+        AppLanguage.Vietnamese;
+
+    private Label ActiveBenchmarkStatusLabel =>
+        _activeRawBenchmarkKind switch
+        {
+            RawBenchmarkKind.ThreadComparison =>
+                ThreadComparisonStatusLabel,
+
+            RawBenchmarkKind.SimdComparison =>
+                SimdComparisonStatusLabel,
+
+            _ =>
+                BenchmarkStatusLabel
+        };
+
+    private Label ActiveBenchmarkCountdownLabel =>
+        _activeRawBenchmarkKind switch
+        {
+            RawBenchmarkKind.ThreadComparison =>
+                ThreadComparisonCountdownLabel,
+
+            RawBenchmarkKind.SimdComparison =>
+                SimdComparisonCountdownLabel,
+
+            _ =>
+                BenchmarkCountdownLabel
+        };
+
+    private void RefreshExtendedBenchmarkUi()
+    {
+        BenchmarkTestSectionTitleLabel.Text =
+            IsVietnamese
+                ? "Bài kiểm tra hiệu năng"
+                : "Performance test";
+
+        StandardBenchmarkDescriptionLabel.Text =
+            IsVietnamese
+                ? "Mỗi kiểu được đo liên tiếp trong 10 giây và lấy kết quả cao nhất. Float/Double hiển thị MFLOPS/GFLOPS; Int32/Int64 hiển thị MOPS/GOPS."
+                : "Each data type is measured continuously for 10 seconds and the best result is kept. Float/Double are shown in MFLOPS/GFLOPS; Int32/Int64 in MOPS/GOPS.";
+
+        StandardBenchmarkNoteLabel.Text =
+            IsVietnamese
+                ? "Bài đo kéo dài khoảng 40 giây, chưa tính thời gian khởi động ngắn giữa các kiểu dữ liệu."
+                : "The benchmark takes about 40 seconds, excluding the short warm-up between data types.";
+
+        ThreadComparisonDescriptionLabel.Text =
+            IsVietnamese
+                ? "Chạy cùng bài đo Scalar hai lần: một luồng và đa luồng. Điểm là trung bình nhân của Int32, Int64, Float và Double."
+                : "Run the same Scalar benchmark twice: single-threaded and multi-threaded. The score is the geometric mean of Int32, Int64, Float and Double.";
+
+        ThreadComparisonNoteLabel.Text =
+            IsVietnamese
+                ? "Bài đo chạy 2 lượt, mỗi lượt giữ nguyên chuẩn 4 kiểu dữ liệu × 10 giây."
+                : "The test runs 2 passes; each pass keeps the standard 4 data types × 10 seconds.";
+
+        SimdComparisonDescriptionLabel.Text =
+            IsVietnamese
+                ? "Đo Float và Double với SSE 128-bit, AVX 256-bit và AVX-512 512-bit; mỗi loại chạy một lần đơn luồng và một lần đa luồng."
+                : "Benchmark Float and Double with 128-bit SSE, 256-bit AVX and 512-bit AVX-512; each width runs once single-threaded and once multi-threaded.";
+
+        SimdComparisonNoteLabel.Text =
+            IsVietnamese
+                ? "Tối đa 6 lượt: 3 độ rộng SIMD × đơn luồng / đa luồng. Nhóm CPU không hỗ trợ sẽ hiển thị N/A và được bỏ qua."
+                : "Up to 6 passes: 3 SIMD widths × single-thread / multi-thread. Unsupported CPU groups are shown as N/A and skipped.";
+
+        SimdComparisonAvailabilityLabel.Text =
+            BuildSimdComparisonAvailabilityText();
+
+        if (!_isBenchmarkRunning)
+        {
+            if (_lastThreadComparisonResult is null)
+            {
+                ThreadComparisonStatusLabel.Text =
+                    IsVietnamese
+                        ? "Chưa chạy so sánh đơn luồng / đa luồng."
+                        : "Single-thread / multi-thread comparison has not been run yet.";
+            }
+
+            if (_lastSimdComparisonResult is null)
+            {
+                SimdComparisonStatusLabel.Text =
+                    IsVietnamese
+                        ? "Chưa chạy so sánh SIMD."
+                        : "SIMD comparison has not been run yet.";
+            }
+        }
+
+        RefreshBenchmarkTestPicker();
+        RenderThreadComparisonResult();
+        RenderSimdComparisonResult();
+        UpdateRawBenchmarkButtonsState();
+    }
+
+    private void RefreshBenchmarkTestPicker()
+    {
+        int selectedIndex =
+            BenchmarkTestPicker.SelectedIndex >= 0
+                ? BenchmarkTestPicker.SelectedIndex
+                : 0;
+
+        _isUpdatingBenchmarkTestPicker = true;
+
+        try
+        {
+            BenchmarkTestPickerLabel.Text =
+                IsVietnamese
+                    ? "Chọn bài kiểm tra"
+                    : "Choose a test";
+
+            BenchmarkTestPicker.Items.Clear();
+            BenchmarkTestPicker.Items.Add(
+                IsVietnamese
+                    ? "Đo hiệu năng phép tính"
+                    : "Calculation performance");
+            BenchmarkTestPicker.Items.Add(
+                IsVietnamese
+                    ? "Đơn luồng / Đa luồng"
+                    : "Single-thread / Multi-thread");
+
+#if WINDOWS
+            BenchmarkTestPicker.Items.Add(
+                "SIMD 128 / 256 / 512-bit");
+#endif
+
+            int maximumIndex =
+                Math.Max(
+                    0,
+                    BenchmarkTestPicker.Items.Count - 1);
+
+            BenchmarkTestPicker.SelectedIndex =
+                Math.Min(
+                    selectedIndex,
+                    maximumIndex);
+        }
+        finally
+        {
+            _isUpdatingBenchmarkTestPicker = false;
+        }
+
+        UpdateBenchmarkTestPanels();
+    }
+
+    private void OnBenchmarkTestPickerSelectedIndexChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isUpdatingBenchmarkTestPicker)
+        {
+            return;
+        }
+
+        UpdateBenchmarkTestPanels();
+    }
+
+    private void UpdateBenchmarkTestPanels()
+    {
+        int selectedIndex =
+            BenchmarkTestPicker.SelectedIndex;
+
+        StandardBenchmarkPanel.IsVisible =
+            selectedIndex <= 0;
+
+        ThreadComparisonPanel.IsVisible =
+            selectedIndex == 1;
+
+#if WINDOWS
+        SimdComparisonPanel.IsVisible =
+            selectedIndex == 2;
+#else
+        SimdComparisonPanel.IsVisible = false;
+#endif
+    }
+
+    private string BuildSimdComparisonAvailabilityText()
+    {
+#if WINDOWS
+        static string State(bool available) =>
+            available ? "✓" : "N/A";
+
+        return IsVietnamese
+            ? $"Khả dụng: 128-bit SSE {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.Sse))} • 256-bit AVX/AVX2 {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.AvxAvx2))} • 512-bit AVX-512 {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.Avx512))}"
+            : $"Available: 128-bit SSE {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.Sse))} • 256-bit AVX/AVX2 {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.AvxAvx2))} • 512-bit AVX-512 {State(CalculationAccelerationManager.IsModeAvailable(CalculationSimdMode.Avx512))}";
+#else
+        return IsVietnamese
+            ? "Bài so sánh SSE / AVX / AVX-512 chỉ khả dụng trên Windows x86/x64."
+            : "The SSE / AVX / AVX-512 comparison is available only on Windows x86/x64.";
+#endif
+    }
+
+    private void UpdateRawBenchmarkButtonsState()
+    {
+        ConfigureRawBenchmarkButton(
+            RunBenchmarkButton,
+            RawBenchmarkKind.Standard,
+            IsVietnamese
+                ? "Chạy đo sức mạnh"
+                : "Run benchmark",
+            canRunWhenIdle: true);
+
+        ConfigureRawBenchmarkButton(
+            RunThreadComparisonButton,
+            RawBenchmarkKind.ThreadComparison,
+            IsVietnamese
+                ? "Chạy so sánh đơn / đa luồng"
+                : "Run thread comparison",
+            canRunWhenIdle:
+                CalculationThreadingManager.IsMultithreadingAvailable);
+
+#if WINDOWS
+        bool simdComparisonAvailable =
+            CalculationAccelerationManager.IsModeAvailable(
+                CalculationSimdMode.Sse) ||
+            CalculationAccelerationManager.IsModeAvailable(
+                CalculationSimdMode.AvxAvx2) ||
+            CalculationAccelerationManager.IsModeAvailable(
+                CalculationSimdMode.Avx512);
+#else
+        bool simdComparisonAvailable = false;
+#endif
+
+        ConfigureRawBenchmarkButton(
+            RunSimdComparisonButton,
+            RawBenchmarkKind.SimdComparison,
+            IsVietnamese
+                ? "Chạy so sánh SIMD"
+                : "Run SIMD comparison",
+            canRunWhenIdle:
+                simdComparisonAvailable);
+    }
+
+    private void ConfigureRawBenchmarkButton(
+        Button button,
+        RawBenchmarkKind kind,
+        string idleText,
+        bool canRunWhenIdle)
+    {
+        bool isActive =
+            _isBenchmarkRunning &&
+            _activeRawBenchmarkKind == kind;
+
+        button.IsEnabled =
+            isActive ||
+            (!_isBenchmarkRunning && canRunWhenIdle);
+
+        button.Text =
+            isActive
+                ? (IsVietnamese
+                    ? "Dừng đo sức mạnh"
+                    : "Stop benchmark")
+                : idleText;
+
+        // The red running color is a local value. Clear it before restoring
+        // PrimaryColor so WinUI cannot keep the old red brush after finish/cancel.
+        button.ClearValue(
+            Button.BackgroundColorProperty);
+
+        if (isActive)
+        {
+            button.BackgroundColor =
+                Color.FromArgb(
+                    "#DC2626");
+        }
+        else
+        {
+            button.SetDynamicResource(
+                Button.BackgroundColorProperty,
+                "PrimaryColor");
+        }
+    }
+
+    private void RenderThreadComparisonResult()
+    {
+        if (_lastThreadComparisonResult is null)
+        {
+            ThreadComparisonChartView.IsVisible = false;
+            ThreadComparisonResultLabel.IsVisible = false;
+            return;
+        }
+
+        double singleScore =
+            _lastThreadComparisonResult.SingleThread.Score;
+
+        double multiScore =
+            _lastThreadComparisonResult.MultiThread.Score;
+
+        ThreadComparisonChartView.Drawable =
+            new BenchmarkVerticalChartDrawable
+            {
+                SeriesLabels =
+                    [IsVietnamese ? "Điểm" : "Score"],
+
+                Groups =
+                [
+                    new BenchmarkVerticalChartGroup(
+                        IsVietnamese ? "Đơn luồng" : "Single",
+                        [singleScore]),
+
+                    new BenchmarkVerticalChartGroup(
+                        IsVietnamese ? "Đa luồng" : "Multi",
+                        [multiScore])
+                ]
+            };
+
+        ThreadComparisonChartView.IsVisible = true;
+        ThreadComparisonChartView.Invalidate();
+
+        double scaling =
+            singleScore <= 0d
+                ? 0d
+                : multiScore / singleScore;
+
+        ThreadComparisonResultLabel.Text =
+            IsVietnamese
+                ? string.Format(
+                    CultureInfo.CurrentCulture,
+                    "Đơn luồng: {0:N0} • Đa luồng: {1:N0} • Tăng tốc: {2:N2}×",
+                    singleScore,
+                    multiScore,
+                    scaling)
+                : string.Format(
+                    CultureInfo.CurrentCulture,
+                    "Single: {0:N0} • Multi: {1:N0} • Scaling: {2:N2}×",
+                    singleScore,
+                    multiScore,
+                    scaling);
+
+        ThreadComparisonResultLabel.IsVisible = true;
+    }
+
+    private void RenderSimdComparisonResult()
+    {
+        if (_lastSimdComparisonResult is null)
+        {
+            SimdComparisonChartView.IsVisible = false;
+            SimdComparisonResultLabel.IsVisible = false;
+            return;
+        }
+
+        var groups =
+            new List<BenchmarkVerticalChartGroup>();
+
+        var detailParts =
+            new List<string>();
+
+        foreach (SimdComparisonModeResult mode
+                 in _lastSimdComparisonResult.Modes)
+        {
+            double? singleScore =
+                mode.SingleThread?.Score;
+
+            double? multiScore =
+                mode.MultiThread?.Score;
+
+            string groupLabel =
+                mode.Mode switch
+                {
+                    CalculationSimdMode.Sse =>
+                        "128-bit SSE",
+
+                    CalculationSimdMode.AvxAvx2 =>
+                        "256-bit AVX",
+
+                    CalculationSimdMode.Avx512 =>
+                        "512-bit AVX-512",
+
+                    _ =>
+                        $"{mode.VectorWidthBits}-bit"
+                };
+
+            groups.Add(
+                new BenchmarkVerticalChartGroup(
+                    groupLabel,
+                    [singleScore, multiScore]));
+
+            string singleText =
+                singleScore.HasValue
+                    ? singleScore.Value.ToString(
+                        "N0",
+                        CultureInfo.CurrentCulture)
+                    : "N/A";
+
+            string multiText =
+                multiScore.HasValue
+                    ? multiScore.Value.ToString(
+                        "N0",
+                        CultureInfo.CurrentCulture)
+                    : "N/A";
+
+            detailParts.Add(
+                $"{mode.VectorWidthBits}-bit: {singleText} / {multiText}");
+        }
+
+        SimdComparisonChartView.Drawable =
+            new BenchmarkVerticalChartDrawable
+            {
+                SeriesLabels =
+                [
+                    IsVietnamese ? "Đơn luồng" : "Single",
+                    IsVietnamese ? "Đa luồng" : "Multi"
+                ],
+
+                Groups = groups
+            };
+
+        SimdComparisonChartView.IsVisible = true;
+        SimdComparisonChartView.Invalidate();
+
+        SimdComparisonResultLabel.Text =
+            (IsVietnamese
+                ? "Điểm FP (Float/Double) — Đơn / Đa: "
+                : "FP score (Float/Double) — Single / Multi: ") +
+            string.Join(
+                " • ",
+                detailParts);
+
+        SimdComparisonResultLabel.IsVisible = true;
+    }
+
+    private async void OnRunThreadComparisonClicked(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isBenchmarkRunning)
+        {
+            if (_activeRawBenchmarkKind !=
+                RawBenchmarkKind.ThreadComparison)
+            {
+                return;
+            }
+
+            bool shouldStop =
+                await ConfirmStopBenchmarkAsync();
+
+            if (shouldStop &&
+                _isBenchmarkRunning)
+            {
+                RequestBenchmarkStop();
+            }
+
+            return;
+        }
+
+        if (!CalculationThreadingManager.IsMultithreadingAvailable)
+        {
+            ThreadComparisonStatusLabel.Text =
+                IsVietnamese
+                    ? "CPU chỉ có một luồng logic nên không thể chạy phép so sánh này."
+                    : "The CPU exposes only one logical processor, so this comparison cannot run.";
+            return;
+        }
+
+        BeginExtendedRawBenchmark(
+            RawBenchmarkKind.ThreadComparison,
+            ThreadComparisonProgress,
+            ThreadComparisonCountdownLabel);
+
+        _lastThreadComparisonResult = null;
+        ThreadComparisonChartView.IsVisible = false;
+        ThreadComparisonResultLabel.IsVisible = false;
+
+        CancellationToken cancellationToken =
+            _benchmarkCancellationTokenSource!.Token;
+
+        try
+        {
+            BenchmarkResult single =
+                await RunCalculationBenchmarkAsync(
+                    useSimd: false,
+                    simdMode: CalculationSimdMode.Portable,
+                    useMultithreading: false,
+                    cancellationToken: cancellationToken,
+                    runLabel: IsVietnamese
+                        ? "Lượt 1/2 • Đơn luồng"
+                        : "Pass 1/2 • Single-thread");
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            BenchmarkResult multi =
+                await RunCalculationBenchmarkAsync(
+                    useSimd: false,
+                    simdMode: CalculationSimdMode.Portable,
+                    useMultithreading: true,
+                    cancellationToken: cancellationToken,
+                    runLabel: IsVietnamese
+                        ? "Lượt 2/2 • Đa luồng"
+                        : "Pass 2/2 • Multi-thread");
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _lastThreadComparisonResult =
+                new ThreadComparisonResult(
+                    single,
+                    multi);
+
+            ThreadComparisonStatusLabel.Text =
+                IsVietnamese
+                    ? "So sánh đơn luồng / đa luồng hoàn tất."
+                    : "Single-thread / multi-thread comparison completed.";
+
+            RenderThreadComparisonResult();
+        }
+        catch (OperationCanceledException)
+        {
+            _lastThreadComparisonResult = null;
+            ThreadComparisonChartView.IsVisible = false;
+            ThreadComparisonResultLabel.IsVisible = false;
+
+            if (!_isPageDisappearing)
+            {
+                ThreadComparisonStatusLabel.Text =
+                    IsVietnamese
+                        ? "Đã hủy so sánh đơn luồng / đa luồng."
+                        : "Thread comparison was cancelled.";
+            }
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Thread comparison benchmark failed: {exception}");
+
+            _lastThreadComparisonResult = null;
+            ThreadComparisonChartView.IsVisible = false;
+            ThreadComparisonResultLabel.IsVisible = false;
+
+            if (!_isPageDisappearing)
+            {
+                ThreadComparisonStatusLabel.Text =
+                    IsVietnamese
+                        ? "Không thể chạy so sánh đơn luồng / đa luồng trên thiết bị này."
+                        : "The thread comparison could not run on this device.";
+            }
+        }
+        finally
+        {
+            EndExtendedRawBenchmark(
+                ThreadComparisonProgress,
+                ThreadComparisonCountdownLabel);
+        }
+    }
+
+    private async void OnRunSimdComparisonClicked(
+        object? sender,
+        EventArgs e)
+    {
+#if WINDOWS
+        if (_isBenchmarkRunning)
+        {
+            if (_activeRawBenchmarkKind !=
+                RawBenchmarkKind.SimdComparison)
+            {
+                return;
+            }
+
+            bool shouldStop =
+                await ConfirmStopBenchmarkAsync();
+
+            if (shouldStop &&
+                _isBenchmarkRunning)
+            {
+                RequestBenchmarkStop();
+            }
+
+            return;
+        }
+
+        CalculationSimdMode[] modes =
+        [
+            CalculationSimdMode.Sse,
+            CalculationSimdMode.AvxAvx2,
+            CalculationSimdMode.Avx512
+        ];
+
+        if (!modes.Any(
+                CalculationAccelerationManager.IsModeAvailable))
+        {
+            SimdComparisonStatusLabel.Text =
+                IsVietnamese
+                    ? "CPU không hỗ trợ các nhóm SIMD x86 dùng cho bài đo này."
+                    : "The CPU does not support the x86 SIMD groups used by this benchmark.";
+            return;
+        }
+
+        BeginExtendedRawBenchmark(
+            RawBenchmarkKind.SimdComparison,
+            SimdComparisonProgress,
+            SimdComparisonCountdownLabel);
+
+        _lastSimdComparisonResult = null;
+        SimdComparisonChartView.IsVisible = false;
+        SimdComparisonResultLabel.IsVisible = false;
+
+        CancellationToken cancellationToken =
+            _benchmarkCancellationTokenSource!.Token;
+
+        try
+        {
+            var results =
+                new List<SimdComparisonModeResult>();
+
+            int totalPasses =
+                modes.Count(
+                    CalculationAccelerationManager.IsModeAvailable) *
+                2;
+
+            int passIndex = 0;
+
+            foreach (CalculationSimdMode mode in modes)
+            {
+                int vectorWidth =
+                    GetSimdModeVectorWidthBits(mode);
+
+                if (!CalculationAccelerationManager.IsModeAvailable(mode))
+                {
+                    results.Add(
+                        new SimdComparisonModeResult(
+                            mode,
+                            vectorWidth,
+                            null,
+                            null));
+                    continue;
+                }
+
+                string modeName =
+                    CalculationAccelerationManager
+                        .GetModeDisplayName(mode);
+
+                FloatingPointBenchmarkResult single =
+                    await RunFloatingPointBenchmarkAsync(
+                        simdMode: mode,
+                        useMultithreading: false,
+                        cancellationToken: cancellationToken,
+                        runLabel:
+                        (IsVietnamese
+                            ? $"Lượt {++passIndex}/{totalPasses} • "
+                            : $"Pass {++passIndex}/{totalPasses} • ") +
+                        $"{vectorWidth}-bit {modeName} • " +
+                        (IsVietnamese
+                            ? "Đơn luồng"
+                            : "Single-thread"));
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                FloatingPointBenchmarkResult multi =
+                    await RunFloatingPointBenchmarkAsync(
+                        simdMode: mode,
+                        useMultithreading: true,
+                        cancellationToken: cancellationToken,
+                        runLabel:
+                        (IsVietnamese
+                            ? $"Lượt {++passIndex}/{totalPasses} • "
+                            : $"Pass {++passIndex}/{totalPasses} • ") +
+                        $"{vectorWidth}-bit {modeName} • " +
+                        (IsVietnamese
+                            ? "Đa luồng"
+                            : "Multi-thread"));
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                results.Add(
+                    new SimdComparisonModeResult(
+                        mode,
+                        vectorWidth,
+                        single,
+                        multi));
+            }
+
+            _lastSimdComparisonResult =
+                new SimdComparisonResult(
+                    results);
+
+            SimdComparisonStatusLabel.Text =
+                IsVietnamese
+                    ? "So sánh SIMD hoàn tất."
+                    : "SIMD comparison completed.";
+
+            RenderSimdComparisonResult();
+        }
+        catch (OperationCanceledException)
+        {
+            _lastSimdComparisonResult = null;
+            SimdComparisonChartView.IsVisible = false;
+            SimdComparisonResultLabel.IsVisible = false;
+
+            if (!_isPageDisappearing)
+            {
+                SimdComparisonStatusLabel.Text =
+                    IsVietnamese
+                        ? "Đã hủy so sánh SIMD."
+                        : "SIMD comparison was cancelled.";
+            }
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"SIMD comparison benchmark failed: {exception}");
+
+            _lastSimdComparisonResult = null;
+            SimdComparisonChartView.IsVisible = false;
+            SimdComparisonResultLabel.IsVisible = false;
+
+            if (!_isPageDisappearing)
+            {
+                SimdComparisonStatusLabel.Text =
+                    IsVietnamese
+                        ? "Không thể chạy so sánh SIMD trên thiết bị này."
+                        : "The SIMD comparison could not run on this device.";
+            }
+        }
+        finally
+        {
+            EndExtendedRawBenchmark(
+                SimdComparisonProgress,
+                SimdComparisonCountdownLabel);
+        }
+#endif
+    }
+
+    private void BeginExtendedRawBenchmark(
+        RawBenchmarkKind kind,
+        ActivityIndicator progress,
+        Label countdownLabel)
+    {
+        _activeRawBenchmarkKind = kind;
+        _isBenchmarkRunning = true;
+
+        _benchmarkCompletionSource =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _benchmarkCancellationTokenSource?.Dispose();
+        _benchmarkCancellationTokenSource =
+            new CancellationTokenSource();
+
+        HardwareAccelerationSwitch.IsEnabled = false;
+        SimdModePicker.IsEnabled = false;
+        MultithreadingSwitch.IsEnabled = false;
+
+        progress.IsVisible = true;
+        progress.IsRunning = true;
+        countdownLabel.IsVisible = true;
+        countdownLabel.Text = string.Empty;
+
+        UpdateRawBenchmarkButtonsState();
+        UpdateBenchmarkControlLockState();
+    }
+
+    private void EndExtendedRawBenchmark(
+        ActivityIndicator progress,
+        Label countdownLabel)
+    {
+        _isBenchmarkRunning = false;
+        _activeRawBenchmarkKind =
+            RawBenchmarkKind.None;
+
+        if (!_isPageDisappearing)
+        {
+            progress.IsRunning = false;
+            progress.IsVisible = false;
+            countdownLabel.IsVisible = false;
+            countdownLabel.Text = string.Empty;
+
+            HardwareAccelerationSwitch.IsEnabled =
+                CalculationAccelerationManager.IsSimdAvailable;
+
+            MultithreadingSwitch.IsEnabled =
+                CalculationThreadingManager.IsMultithreadingAvailable;
+
+            UpdateSimdModeSelectorVisibility();
+            UpdateBenchmarkControlLockState();
+            UpdateRawBenchmarkButtonsState();
+        }
+
+        _benchmarkCancellationTokenSource?.Dispose();
+        _benchmarkCancellationTokenSource = null;
+
+        _benchmarkCompletionSource?.TrySetResult(true);
+        _benchmarkCompletionSource = null;
+    }
+
+    private static int GetSimdModeVectorWidthBits(
+        CalculationSimdMode mode) =>
+        mode switch
+        {
+            CalculationSimdMode.Sse => 128,
+            CalculationSimdMode.AvxAvx2 => 256,
+            CalculationSimdMode.Avx512 => 512,
+            _ => 0
+        };
+
+    private async Task<FloatingPointBenchmarkResult>
+        RunFloatingPointBenchmarkAsync(
+            CalculationSimdMode simdMode,
+            bool useMultithreading,
+            CancellationToken cancellationToken,
+            string runLabel)
+    {
+        if (!CalculationAccelerationManager.IsModeAvailable(
+                simdMode))
+        {
+            throw new NotSupportedException(
+                $"SIMD mode {simdMode} is not available.");
+        }
+
+        bool actualUseMultithreading =
+            useMultithreading &&
+            CalculationThreadingManager.IsMultithreadingAvailable;
+
+        int workerCount =
+            actualUseMultithreading
+                ? CalculationThreadingManager.RecommendedWorkerCount
+                : 1;
+
+        var totalStopwatch =
+            Stopwatch.StartNew();
+
+        TimedBenchmarkResult floatResult =
+            await RunBenchmarkStageAsync(
+                "Float",
+                1,
+                progress => RunFloatBenchmark(
+                    useSimd: true,
+                    simdMode: simdMode,
+                    workerCount: workerCount,
+                    countdownProgress: progress,
+                    cancellationToken: cancellationToken),
+                cancellationToken,
+                runLabel,
+                stageCount: 2);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        TimedBenchmarkResult doubleResult =
+            await RunBenchmarkStageAsync(
+                "Double",
+                2,
+                progress => RunDoubleBenchmark(
+                    useSimd: true,
+                    simdMode: simdMode,
+                    workerCount: workerCount,
+                    countdownProgress: progress,
+                    cancellationToken: cancellationToken),
+                cancellationToken,
+                runLabel,
+                stageCount: 2);
+
+        totalStopwatch.Stop();
+
+        double score =
+            Math.Sqrt(
+                Math.Max(floatResult.BestMops, 1e-9d) *
+                Math.Max(doubleResult.BestMops, 1e-9d));
+
+        return new FloatingPointBenchmarkResult
+        {
+            FloatMops = floatResult.BestMops,
+            DoubleMops = doubleResult.BestMops,
+            Score = score,
+            SimdMode = simdMode,
+            UsedMultithreading = actualUseMultithreading,
+            WorkerCount = workerCount,
+            ElapsedMilliseconds =
+                totalStopwatch.Elapsed.TotalMilliseconds,
+            Checksum =
+                floatResult.Checksum +
+                doubleResult.Checksum
+        };
+    }
+
     private async void OnRunBenchmarkClicked(
         object? sender,
         EventArgs e)
     {
         if (_isBenchmarkRunning)
         {
+            if (_activeRawBenchmarkKind !=
+                RawBenchmarkKind.Standard)
+            {
+                return;
+            }
+
             bool shouldStop =
                 await ConfirmStopBenchmarkAsync();
 
@@ -2043,6 +2974,9 @@ public partial class HardwarePerformancePage : ContentPage
             return;
         }
 #endif
+
+        _activeRawBenchmarkKind =
+            RawBenchmarkKind.Standard;
 
         _isBenchmarkRunning =
             true;
@@ -2171,6 +3105,9 @@ public partial class HardwarePerformancePage : ContentPage
             _isBenchmarkRunning =
                 false;
 
+            _activeRawBenchmarkKind =
+                RawBenchmarkKind.None;
+
             if (!_isPageDisappearing)
             {
                 BenchmarkProgress.IsRunning =
@@ -2248,9 +3185,10 @@ public partial class HardwarePerformancePage : ContentPage
             return;
         }
 
-        BenchmarkStatusLabel.Text =
-            LocalizationService.Translate(
-                "Đang dừng đo sức mạnh…");
+        ActiveBenchmarkStatusLabel.Text =
+            IsVietnamese
+                ? "Đang dừng đo sức mạnh…"
+                : "Stopping benchmark…";
 
         _benchmarkCancellationTokenSource?.Cancel();
     }
@@ -2271,24 +3209,11 @@ public partial class HardwarePerformancePage : ContentPage
     private void SetBenchmarkButtonRunningState(
         bool isRunning)
     {
-        RunBenchmarkButton.Text =
-            LocalizationService.Translate(
-                isRunning
-                    ? "Dừng đo sức mạnh"
-                    : "Chạy đo sức mạnh");
-
-        if (isRunning)
-        {
-            RunBenchmarkButton.BackgroundColor =
-                Color.FromArgb(
-                    "#DC2626");
-        }
-        else
-        {
-            RunBenchmarkButton.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "PrimaryColor");
-        }
+        // The active benchmark kind determines which of the three buttons
+        // becomes the red Stop button. The parameter is retained so existing
+        // call sites remain simple.
+        _ = isRunning;
+        UpdateRawBenchmarkButtonsState();
     }
 
     private void RenderBenchmarkResult()
@@ -2387,7 +3312,8 @@ public partial class HardwarePerformancePage : ContentPage
         bool useSimd,
         CalculationSimdMode simdMode,
         bool useMultithreading,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? runLabel = null)
     {
         bool actualUseSimd =
             useSimd &&
@@ -2415,7 +3341,8 @@ public partial class HardwarePerformancePage : ContentPage
                     workerCount,
                     progress,
                     cancellationToken),
-                cancellationToken);
+                cancellationToken,
+                runLabel);
 
 
         TimedBenchmarkResult int64Result =
@@ -2426,7 +3353,8 @@ public partial class HardwarePerformancePage : ContentPage
                     workerCount,
                     progress,
                     cancellationToken),
-                cancellationToken);
+                cancellationToken,
+                runLabel);
 
 
         TimedBenchmarkResult floatResult =
@@ -2439,7 +3367,8 @@ public partial class HardwarePerformancePage : ContentPage
                     workerCount,
                     progress,
                     cancellationToken),
-                cancellationToken);
+                cancellationToken,
+                runLabel);
 
 
         TimedBenchmarkResult doubleResult =
@@ -2452,7 +3381,8 @@ public partial class HardwarePerformancePage : ContentPage
                     workerCount,
                     progress,
                     cancellationToken),
-                cancellationToken);
+                cancellationToken,
+                runLabel);
 
         totalStopwatch.Stop();
 
@@ -2524,7 +3454,9 @@ public partial class HardwarePerformancePage : ContentPage
         string dataTypeName,
         int stageNumber,
         Func<IProgress<int>, TimedBenchmarkResult> benchmark,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? runLabel = null,
+        int stageCount = 4)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -2541,20 +3473,29 @@ public partial class HardwarePerformancePage : ContentPage
                         return;
                     }
 
-                    BenchmarkCountdownLabel.Text =
+                    Label countdownLabel =
+                        ActiveBenchmarkCountdownLabel;
+
+                    Label statusLabel =
+                        ActiveBenchmarkStatusLabel;
+
+                    countdownLabel.Text =
                         string.Format(
                             CultureInfo.CurrentCulture,
-                            LocalizationService.Translate(
-                                "{0} giây"),
+                            IsVietnamese
+                                ? "{0} giây"
+                                : "{0} seconds",
                             remainingSeconds);
 
-                    BenchmarkStatusLabel.Text =
-                        string.Format(
-                            CultureInfo.CurrentCulture,
-                            LocalizationService.Translate(
-                                "Đang đo {0} ({1}/4)"),
-                            dataTypeName,
-                            stageNumber);
+                    string stageText =
+                        IsVietnamese
+                            ? $"Đang đo {dataTypeName} ({stageNumber}/{stageCount})"
+                            : $"Benchmarking {dataTypeName} ({stageNumber}/{stageCount})";
+
+                    statusLabel.Text =
+                        string.IsNullOrWhiteSpace(runLabel)
+                            ? stageText
+                            : $"{runLabel} • {stageText}";
                 });
 
         return await Task.Run(

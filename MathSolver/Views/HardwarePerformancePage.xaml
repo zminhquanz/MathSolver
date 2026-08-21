@@ -383,106 +383,287 @@
                 <Border Style="{StaticResource HardwareSectionStyle}">
                     <VerticalStackLayout Spacing="12">
                         <Label
-                            Text="Đo hiệu năng phép tính"
+                            x:Name="BenchmarkTestSectionTitleLabel"
+                            Text="Bài kiểm tra hiệu năng"
                             Style="{StaticResource HardwareSectionTitleStyle}" />
 
-                        <Label
-                            Text="Mỗi kiểu được đo liên tiếp trong 10 giây và lấy kết quả cao nhất. Float/Double hiển thị MFLOPS/GFLOPS; Int32/Int64 hiển thị MOPS/GOPS."
-                            Style="{StaticResource HardwareDescriptionStyle}" />
+                        <VerticalStackLayout Spacing="6">
+                            <Label
+                                x:Name="BenchmarkTestPickerLabel"
+                                Text="Chọn bài kiểm tra"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
 
-                        <Button
-                            x:Name="RunBenchmarkButton"
-                            Text="Chạy đo sức mạnh"
-                            HeightRequest="46"
-                            CornerRadius="12"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
-                            FontAttributes="Bold"
-                            Clicked="OnRunBenchmarkClicked" />
+                            <Border
+                                Padding="0"
+                                BackgroundColor="{DynamicResource InputBackgroundColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
 
-                        <ActivityIndicator
-                            x:Name="BenchmarkProgress"
-                            IsVisible="False"
-                            IsRunning="False"
-                            Color="{DynamicResource PrimaryColor}" />
-
-                        <Label
-                            x:Name="BenchmarkCountdownLabel"
-                            IsVisible="False"
-                            FontSize="30"
-                            FontAttributes="Bold"
-                            HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource PrimaryColor}" />
-
-                        <Label
-                            x:Name="BenchmarkStatusLabel"
-                            Text="Chưa chạy đo sức mạnh."
-                            HorizontalTextAlignment="Center"
-                            Style="{StaticResource HardwareDescriptionStyle}" />
-
-                        <Border
-                            x:Name="BenchmarkResultsBorder"
-                            IsVisible="False"
-                            Padding="14"
-                            BackgroundColor="{DynamicResource SurfaceAltColor}"
-                            Stroke="{DynamicResource BorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="8">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <Label
-                                        Text="Điểm tham khảo"
+                                <Grid>
+                                    <Picker
+                                        x:Name="BenchmarkTestPicker"
+                                        SelectedIndex="0"
+                                        HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
                                         FontAttributes="Bold"
+                                        FontSize="15"
+                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        SelectedIndexChanged="OnBenchmarkTestPickerSelectedIndexChanged" />
+
+                                    <Path
+                                        IsVisible="{OnPlatform Android=True, Default=False}"
+                                        Data="M4,7 L10,13 L16,7 Z"
+                                        Fill="{DynamicResource TextSecondaryBrush}"
+                                        WidthRequest="14"
+                                        HeightRequest="14"
+                                        Margin="0,0,18,0"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Center"
+                                        InputTransparent="True" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <VerticalStackLayout
+                            x:Name="StandardBenchmarkPanel"
+                            Spacing="12">
+                            <Label
+                                x:Name="StandardBenchmarkDescriptionLabel"
+                                Text="Mỗi kiểu được đo liên tiếp trong 10 giây và lấy kết quả cao nhất. Float/Double hiển thị MFLOPS/GFLOPS; Int32/Int64 hiển thị MOPS/GOPS."
+                                Style="{StaticResource HardwareDescriptionStyle}" />
+
+                            <Button
+                                x:Name="RunBenchmarkButton"
+                                Text="Chạy đo sức mạnh"
+                                HeightRequest="46"
+                                CornerRadius="12"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
+                                FontAttributes="Bold"
+                                Clicked="OnRunBenchmarkClicked" />
+
+                            <ActivityIndicator
+                                x:Name="BenchmarkProgress"
+                                IsVisible="False"
+                                IsRunning="False"
+                                Color="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="BenchmarkCountdownLabel"
+                                IsVisible="False"
+                                FontSize="30"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="BenchmarkStatusLabel"
+                                Text="Chưa chạy đo sức mạnh."
+                                HorizontalTextAlignment="Center"
+                                Style="{StaticResource HardwareDescriptionStyle}" />
+
+                            <Border
+                                x:Name="BenchmarkResultsBorder"
+                                IsVisible="False"
+                                Padding="14"
+                                BackgroundColor="{DynamicResource SurfaceAltColor}"
+                                Stroke="{DynamicResource BorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label
+                                            Text="Điểm tham khảo"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label
+                                            x:Name="BenchmarkScoreValueLabel"
+                                            Grid.Column="1"
+                                            FontSize="22"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource PrimaryColor}" />
+                                    </Grid>
+
+                                    <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                                    <Label
+                                        x:Name="BenchmarkFloatingModeResultLabel"
                                         TextColor="{DynamicResource TextPrimaryColor}" />
                                     <Label
-                                        x:Name="BenchmarkScoreValueLabel"
-                                        Grid.Column="1"
-                                        FontSize="22"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
-                                </Grid>
+                                        x:Name="BenchmarkIntegerModeResultLabel"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
 
-                                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+                                    <BoxView Style="{StaticResource HardwareDividerStyle}" />
 
-                                <Label
-                                    x:Name="BenchmarkFloatingModeResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label
-                                    x:Name="BenchmarkIntegerModeResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="Int32ResultLabel"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="Int64ResultLabel"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="FloatResultLabel"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="DoubleResultLabel"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
 
-                                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+                                    <BoxView Style="{StaticResource HardwareDividerStyle}" />
 
-                                <Label
-                                    x:Name="Int32ResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label
-                                    x:Name="Int64ResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label
-                                    x:Name="FloatResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label
-                                    x:Name="DoubleResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label
+                                        x:Name="ElapsedResultLabel"
+                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                </VerticalStackLayout>
+                            </Border>
 
-                                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+                            <Label
+                                x:Name="StandardBenchmarkNoteLabel"
+                                Text="Bài đo kéo dài khoảng 40 giây, chưa tính thời gian khởi động ngắn giữa các kiểu dữ liệu."
+                                FontSize="11"
+                                FontAttributes="Italic"
+                                TextColor="{DynamicResource TextSecondaryColor}"
+                                HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
 
-                                <Label
-                                    x:Name="ElapsedResultLabel"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
-                            </VerticalStackLayout>
-                        </Border>
+                        <VerticalStackLayout
+                            x:Name="ThreadComparisonPanel"
+                            IsVisible="False"
+                            Spacing="12">
+                            <Label
+                                x:Name="ThreadComparisonDescriptionLabel"
+                                Text="Chạy cùng bài đo Scalar hai lần: một luồng và đa luồng. Điểm là trung bình nhân của Int32, Int64, Float và Double."
+                                Style="{StaticResource HardwareDescriptionStyle}" />
 
-                        <Label
-                            Text="Bài đo kéo dài khoảng 40 giây, chưa tính thời gian khởi động ngắn giữa các kiểu dữ liệu."
-                            FontSize="11"
-                            FontAttributes="Italic"
-                            TextColor="{DynamicResource TextSecondaryColor}"
-                            HorizontalTextAlignment="Center" />
+                            <Button
+                                x:Name="RunThreadComparisonButton"
+                                Text="Chạy so sánh đơn / đa luồng"
+                                HeightRequest="46"
+                                CornerRadius="12"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
+                                FontAttributes="Bold"
+                                Clicked="OnRunThreadComparisonClicked" />
+
+                            <ActivityIndicator
+                                x:Name="ThreadComparisonProgress"
+                                IsVisible="False"
+                                IsRunning="False"
+                                Color="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="ThreadComparisonCountdownLabel"
+                                IsVisible="False"
+                                FontSize="30"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="ThreadComparisonStatusLabel"
+                                Text="Chưa chạy so sánh đơn luồng / đa luồng."
+                                HorizontalTextAlignment="Center"
+                                Style="{StaticResource HardwareDescriptionStyle}" />
+
+                            <GraphicsView
+                                x:Name="ThreadComparisonChartView"
+                                IsVisible="False"
+                                HeightRequest="300"
+                                HorizontalOptions="Fill"
+                                InputTransparent="True" />
+
+                            <Label
+                                x:Name="ThreadComparisonResultLabel"
+                                IsVisible="False"
+                                HorizontalTextAlignment="Center"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Label
+                                x:Name="ThreadComparisonNoteLabel"
+                                Text="Bài đo chạy 2 lượt, mỗi lượt giữ nguyên chuẩn 4 kiểu dữ liệu × 10 giây."
+                                FontSize="11"
+                                FontAttributes="Italic"
+                                TextColor="{DynamicResource TextSecondaryColor}"
+                                HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout
+                            x:Name="SimdComparisonPanel"
+                            IsVisible="False"
+                            Spacing="12">
+                            <Label
+                                x:Name="SimdComparisonDescriptionLabel"
+                                Text="Đo Float và Double với SSE 128-bit, AVX 256-bit và AVX-512 512-bit; mỗi loại chạy một lần đơn luồng và một lần đa luồng."
+                                Style="{StaticResource HardwareDescriptionStyle}" />
+
+                            <Label
+                                x:Name="SimdComparisonAvailabilityLabel"
+                                FontSize="12"
+                                TextColor="{DynamicResource TextSecondaryColor}" />
+
+                            <Button
+                                x:Name="RunSimdComparisonButton"
+                                Text="Chạy so sánh SIMD"
+                                HeightRequest="46"
+                                CornerRadius="12"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
+                                FontAttributes="Bold"
+                                Clicked="OnRunSimdComparisonClicked" />
+
+                            <ActivityIndicator
+                                x:Name="SimdComparisonProgress"
+                                IsVisible="False"
+                                IsRunning="False"
+                                Color="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="SimdComparisonCountdownLabel"
+                                IsVisible="False"
+                                FontSize="30"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="SimdComparisonStatusLabel"
+                                Text="Chưa chạy so sánh SIMD."
+                                HorizontalTextAlignment="Center"
+                                Style="{StaticResource HardwareDescriptionStyle}" />
+
+                            <GraphicsView
+                                x:Name="SimdComparisonChartView"
+                                IsVisible="False"
+                                HeightRequest="320"
+                                HorizontalOptions="Fill"
+                                InputTransparent="True" />
+
+                            <Label
+                                x:Name="SimdComparisonResultLabel"
+                                IsVisible="False"
+                                HorizontalTextAlignment="Center"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource TextPrimaryColor}" />
+
+                            <Label
+                                x:Name="SimdComparisonNoteLabel"
+                                Text="Tối đa 6 lượt: 3 độ rộng SIMD × đơn luồng / đa luồng. Nhóm CPU không hỗ trợ sẽ hiển thị N/A và được bỏ qua."
+                                FontSize="11"
+                                FontAttributes="Italic"
+                                TextColor="{DynamicResource TextSecondaryColor}"
+                                HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
                 </VerticalStackLayout>

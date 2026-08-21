@@ -41,7 +41,7 @@
 
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                     <Label x:Name="SampleNameLabel" Text="Bộ kiểm thử" Style="{StaticResource HardwareInfoNameStyle}" />
-                    <Label x:Name="SampleValueLabel" Grid.Column="1" Text="6 dạng × 10 câu = 60 câu" Style="{StaticResource HardwareInfoValueStyle}" />
+                    <Label x:Name="SampleValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
                 </Grid>
 
                 <Button
@@ -107,11 +107,47 @@
 
                 <BoxView Style="{StaticResource HardwareDividerStyle}" />
 
-                <Grid ColumnDefinitions="2*,Auto,Auto,Auto" ColumnSpacing="18">
-                    <Label x:Name="CategoryHeaderLabel" Text="Dạng đề" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
-                    <Label x:Name="CorrectHeaderLabel" Grid.Column="1" Text="Đúng" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
-                    <Label x:Name="AccuracyHeaderLabel" Grid.Column="2" Text="Chính xác" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
-                    <Label x:Name="SpeedHeaderLabel" Grid.Column="3" Text="token/s" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
+                <Label
+                    x:Name="AccuracyChartTitleLabel"
+                    Text="Độ chính xác theo dạng toán"
+                    FontAttributes="Bold"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <GraphicsView
+                    x:Name="AccuracyChartView"
+                    HeightRequest="320"
+                    HorizontalOptions="Fill"
+                    InputTransparent="True" />
+
+                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                <Grid ColumnDefinitions="*,72,88,72" ColumnSpacing="18">
+                    <Label
+                        x:Name="CategoryHeaderLabel"
+                        Text="Dạng đề"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+                    <Label
+                        x:Name="CorrectHeaderLabel"
+                        Grid.Column="1"
+                        Text="Đúng"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="End"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+                    <Label
+                        x:Name="AccuracyHeaderLabel"
+                        Grid.Column="2"
+                        Text="Chính xác"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="End"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
+                    <Label
+                        x:Name="SpeedHeaderLabel"
+                        Grid.Column="3"
+                        Text="token/s"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="End"
+                        TextColor="{DynamicResource TextSecondaryColor}" />
                 </Grid>
 
                 <VerticalStackLayout x:Name="CategoryResultsContainer" Spacing="7" />
