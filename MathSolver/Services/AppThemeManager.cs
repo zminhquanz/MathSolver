@@ -160,7 +160,65 @@ public static class AppThemeManager
             return;
         }
 
-        ApplyCurrentTheme(savePreferences: false);
+        void ApplyWallpaperOnly()
+        {
+            Application? application =
+                _application ??
+                Application.Current;
+
+            if (application is null)
+            {
+                return;
+            }
+
+            AppTheme effectiveTheme =
+                CurrentMode switch
+                {
+                    AppThemeMode.Light => AppTheme.Light,
+                    AppThemeMode.Dark => AppTheme.Dark,
+                    _ => application.RequestedTheme == AppTheme.Dark
+                        ? AppTheme.Dark
+                        : AppTheme.Light
+                };
+
+            ThemePalette palette;
+
+#if ANDROID
+            if (AndroidMaterialYouManager.TryGetCurrentColorScheme(
+                    out AndroidMaterialColorScheme materialScheme))
+            {
+                palette = CreateMaterialYouPalette(
+                    effectiveTheme,
+                    materialScheme);
+            }
+            else
+#endif
+            {
+                palette = CreatePalette(
+                    effectiveTheme,
+                    CurrentAccentColor);
+            }
+
+            // Wallpaper mode/enable changes only affect glass/scrim tokens.
+            // Do not assign UserAppTheme, rebuild the whole palette, or raise
+            // ThemeChanged while a WinUI Picker/ComboBox is closing. Reapplying
+            // the full theme here caused re-entrant layout and native media
+            // transitions during Math <-> MP4 switching.
+            ApplyWallpaperVisualPalette(
+                application.Resources,
+                palette,
+                effectiveTheme);
+        }
+
+        if (MainThread.IsMainThread)
+        {
+            ApplyWallpaperOnly();
+        }
+        else
+        {
+            MainThread.BeginInvokeOnMainThread(
+                ApplyWallpaperOnly);
+        }
     }
 
     public static bool TryParseHexColor(
@@ -549,9 +607,20 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(palette.DangerSoft, dark ? 0.76 : 0.80));
         SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(palette.InfoSoft, dark ? 0.76 : 0.80));
 
-        Color scrim = dark
-            ? new Color(0.015f, 0.027f, 0.055f, 0.42f)
-            : new Color(1f, 1f, 1f, 0.30f);
+        bool mathAnimation =
+            LiveWallpaperManager.Mode ==
+            LiveWallpaperMode.MathAnimation;
+
+        // The built-in GraphicsView background already uses restrained theme
+        // colors, so it needs a much lighter veil than a user-supplied video.
+        // This keeps the math symbols visible without sacrificing text contrast.
+        Color scrim = mathAnimation
+            ? (dark
+                ? new Color(0.015f, 0.027f, 0.055f, 0.18f)
+                : new Color(1f, 1f, 1f, 0.12f))
+            : (dark
+                ? new Color(0.015f, 0.027f, 0.055f, 0.42f)
+                : new Color(1f, 1f, 1f, 0.30f));
 
         SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", scrim);
     }

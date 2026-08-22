@@ -12,11 +12,11 @@ using Windows.Storage;
 
 namespace MathSolver.Services;
 
-
 public enum LiveWallpaperVideoValidationError
 {
     NotH264,
-    HardwareH264DecoderUnavailable
+    HardwareH264DecoderUnavailable,
+    DurationTooLong
 }
 
 public sealed class LiveWallpaperVideoValidationException : Exception
@@ -35,15 +35,20 @@ public readonly record struct LiveWallpaperVideoInspection(
     bool IsH264,
     bool CanUseHardwarePreferredH264Path,
     string CodecDisplayName,
-    string? HardwareDecoderName);
+    string? HardwareDecoderName,
+    TimeSpan Duration);
 
 /// <summary>
 /// Validates the MP4 wallpaper before it replaces the currently working file.
 /// H.264/AVC is intentionally required because it has the broadest dedicated
-/// hardware-decoder coverage on Windows and Android.
+/// hardware-decoder coverage on Windows and Android. Wallpaper clips are also
+/// capped at 120 seconds so this feature stays a wallpaper path rather than a
+/// general-purpose movie player.
 /// </summary>
 public static class LiveWallpaperVideoInspector
 {
+    public const double MaximumDurationSeconds = 120d;
+
     public static async Task<LiveWallpaperVideoInspection> InspectAsync(
         string path,
         CancellationToken cancellationToken = default)
@@ -64,9 +69,14 @@ public static class LiveWallpaperVideoInspector
             IsH264: true,
             CanUseHardwarePreferredH264Path: true,
             CodecDisplayName: "H.264 / AVC",
-            HardwareDecoderName: null);
+            HardwareDecoderName: null,
+            Duration: TimeSpan.Zero);
 #endif
     }
+
+    public static bool IsDurationAllowed(TimeSpan duration) =>
+        duration <= TimeSpan.Zero ||
+        duration.TotalSeconds <= MaximumDurationSeconds;
 
 #if WINDOWS
     private static async Task<LiveWallpaperVideoInspection> InspectWindowsAsync(
@@ -125,7 +135,8 @@ public static class LiveWallpaperVideoInspector
             isH264,
             hasDecoder,
             "H.264 / AVC",
-            decoderName);
+            decoderName,
+            clip.OriginalDuration);
     }
 #endif
 
@@ -142,6 +153,7 @@ public static class LiveWallpaperVideoInspector
         bool isH264 = false;
         bool foundVideoTrack = false;
         MediaFormat? h264Format = null;
+        TimeSpan duration = TimeSpan.Zero;
 
         for (int index = 0; index < extractor.TrackCount; index++)
         {
@@ -167,6 +179,19 @@ public static class LiveWallpaperVideoInspector
                 H264Mime,
                 StringComparison.OrdinalIgnoreCase);
 
+            if (format is not null &&
+                format.ContainsKey(MediaFormat.KeyDuration))
+            {
+                long durationMicroseconds =
+                    format.GetLong(MediaFormat.KeyDuration);
+
+                if (durationMicroseconds > 0)
+                {
+                    duration = TimeSpan.FromTicks(
+                        durationMicroseconds * 10L);
+                }
+            }
+
             if (isH264)
             {
                 h264Format = format;
@@ -181,7 +206,8 @@ public static class LiveWallpaperVideoInspector
                 IsH264: false,
                 CanUseHardwarePreferredH264Path: false,
                 CodecDisplayName: "H.264 / AVC",
-                HardwareDecoderName: null);
+                HardwareDecoderName: null,
+                Duration: duration);
         }
 
         string? hardwareDecoderName = null;
@@ -261,7 +287,8 @@ public static class LiveWallpaperVideoInspector
             CanUseHardwarePreferredH264Path:
                 !string.IsNullOrWhiteSpace(hardwareDecoderName),
             CodecDisplayName: "H.264 / AVC",
-            HardwareDecoderName: hardwareDecoderName);
+            HardwareDecoderName: hardwareDecoderName,
+            Duration: duration);
     }
 #endif
 }

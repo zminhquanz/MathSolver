@@ -270,7 +270,7 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 - The optimized wallpaper path accepts H.264 / AVC video only. New imports are inspected before replacing the current wallpaper; legacy wallpapers are validated once on first use after upgrade.
 - Windows playback stays on CommunityToolkit `MediaElement` -> WinUI `MediaPlayer` / Media Foundation, which uses the OS hardware-accelerated DXVA/D3D decode path when the GPU/driver/profile supports it. Android playback stays on `MediaElement` -> ExoPlayer / MediaCodec and requires an H.264 hardware decoder to be present. No FFmpeg/software decoder is added to Math Solver.
 - `LiveWallpaperView` is layered behind the four main learning tabs (Calculation, Math Puzzle, Formula, Multiplication Table), loops silently, hides playback controls and releases its media source whenever the owning tab disappears. Android keeps `TextureView` because the glass UI requires correct sibling Z-order/transparency.
-- `LiveWallpaperPlaybackCoordinator` pauses native wallpaper playback while Windows local-LLM generation owns the inference gate. The Hardware AI/LLM benchmark holds one outer suspension for the entire run, so the wallpaper does not resume between its independent samples. This prevents video decode/composition from competing with LLamaSharp for CPU/GPU/memory bandwidth; playback resumes without rebuilding the source.
+- `LiveWallpaperPlaybackCoordinator` now suspends only cooperative `GraphicsView` Math Animation while Windows local-LLM generation owns the inference gate. MP4 mode is available only after H.264/hardware-path validation and therefore remains playing during local AI inference. The AI benchmark keeps one outer suspension so Math Animation does not restart between samples.
 - A theme-aware `LiveWallpaperScrimColor` sits above the video for readability; Light uses a lighter veil and Dark uses a darker veil. Future wallpaper formats/intensity controls should extend this service/control boundary instead of duplicating player logic in pages.
 
 
@@ -281,3 +281,20 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 - Primary actions stay solid accent for hierarchy. Secondary surfaces, soft semantic states and section cards become translucent while preserving readable text/input surfaces.
 - `LiveWallpaperManager` refreshes visual resources immediately after enable/import/remove.
 - WinUI model actions (`Select model`, `Open in File Explorer`, `Eject model`) explicitly re-resolve current palette colors after visual-state/theme transitions to avoid cached Light/Dark brushes.
+
+## Animated background modes (2026-08-22)
+
+`LiveWallpaperManager` now supports two mutually exclusive animated-background modes for the four main learning tabs:
+
+- `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. The timer stops when the owning tab is inactive and while `LiveWallpaperPlaybackCoordinator` suspends background work for local AI inference.
+- MP4 runtime memory is intentionally bounded by lifecycle: `MediaElement` is created lazily only on an active MP4 page, its `Source` is detached as soon as that page becomes inactive, and the player object is retired after a short grace period when MP4 mode is no longer needed. This returns decoder surfaces/video textures without reintroducing the WinUI Picker source-switch race.
+- `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 2 forces older saved wallpapers to be rechecked against the duration rule.
+
+The Settings UI exposes the mode with one Picker. MP4 controls are shown only for MP4 mode; the Choose MP4 and Remove wallpaper buttons use equal 50/50 columns on Windows and Android. Glass resources remain driven by `LiveWallpaperManager.IsEnabled`; the built-in math animation uses a lighter readability scrim than arbitrary user video.
+
+### Animated wallpaper runtime mode switching
+
+- Switching between the built-in `GraphicsView` math animation and H.264 MP4 is applied live without restarting the app.
+- `LiveWallpaperView` coalesces settings/policy refreshes to the next UI frame so WinUI Picker selection, MediaElement state changes, and the GraphicsView timer do not run re-entrantly.
+- A mode switch pauses the inactive backend but does not synchronously call `MediaElement.Stop()`/detach the MP4 source. The source is released when the page becomes inactive or unloads, avoiding WinUI native-player stalls during rapid Math ↔ MP4 switching.
+- `AppThemeManager.RefreshVisualResources()` refreshes only wallpaper/glass/scrim resources. It must not reapply `UserAppTheme` or raise the global `ThemeChanged` event for a wallpaper-only setting change.

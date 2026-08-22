@@ -13,6 +13,7 @@ public partial class SettingsPage : ContentPage
     private bool _updatingDeveloperModeSwitch;
     private bool _updatingDynamicColorSwitch;
     private bool _updatingLiveWallpaperSwitch;
+    private bool _updatingLiveWallpaperModePicker;
 
     // Picker.ItemsSource yêu cầu IList, trong khi AppFontCatalog.Options
     // được khai báo là IReadOnlyList. Tạo một List dùng chung để vừa
@@ -85,6 +86,9 @@ public partial class SettingsPage : ContentPage
 
         AndroidPickerVisualHelper.Attach(
             LanguagePicker);
+
+        AndroidPickerVisualHelper.Attach(
+            LiveWallpaperModePicker);
 
         ResetSettingsButton.SetDynamicResource(
             VisualElement.BackgroundColorProperty,
@@ -491,6 +495,25 @@ public partial class SettingsPage : ContentPage
         UpdateLiveWallpaperSettings();
     }
 
+    private void OnLiveWallpaperModeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_updatingLiveWallpaperModePicker ||
+            LiveWallpaperModePicker.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        LiveWallpaperMode selectedMode =
+            LiveWallpaperModePicker.SelectedIndex == 1
+                ? LiveWallpaperMode.Mp4
+                : LiveWallpaperMode.MathAnimation;
+
+        LiveWallpaperManager.SetMode(selectedMode);
+        UpdateLiveWallpaperSettings();
+    }
+
     private async void OnSelectLiveWallpaperClicked(
         object? sender,
         EventArgs e)
@@ -534,6 +557,10 @@ public partial class SettingsPage : ContentPage
                         useEnglish
                             ? "No compatible H.264 decoder is available for the hardware-preferred wallpaper path on this device."
                             : "Thiết bị không có bộ giải mã H.264 tương thích cho đường hình nền ưu tiên phần cứng.",
+                    LiveWallpaperVideoValidationError.DurationTooLong =>
+                        useEnglish
+                            ? "Live wallpaper videos are limited to 120 seconds. Choose a shorter MP4 clip."
+                            : "Video hình nền động được giới hạn tối đa 120 giây. Hãy chọn một MP4 ngắn hơn.",
                     _ =>
                         useEnglish
                             ? "The selected MP4 is not compatible with the optimized wallpaper path."
@@ -583,13 +610,38 @@ public partial class SettingsPage : ContentPage
     {
         bool hasWallpaper =
             LiveWallpaperManager.HasWallpaper;
+        LiveWallpaperMode mode =
+            LiveWallpaperManager.Mode;
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
+        _updatingLiveWallpaperModePicker = true;
+        try
+        {
+            if (LiveWallpaperModePicker.Items.Count >= 2)
+            {
+                LiveWallpaperModePicker.SelectedIndex =
+                    mode == LiveWallpaperMode.Mp4
+                        ? 1
+                        : 0;
+            }
+        }
+        finally
+        {
+            _updatingLiveWallpaperModePicker = false;
+        }
+
+        bool canEnable =
+            mode == LiveWallpaperMode.MathAnimation ||
+            (hasWallpaper &&
+             LiveWallpaperManager.IsHardwareH264Validated);
 
         _updatingLiveWallpaperSwitch = true;
-
         try
         {
             LiveWallpaperSwitch.IsEnabled =
-                hasWallpaper;
+                canEnable;
             LiveWallpaperSwitch.IsToggled =
                 LiveWallpaperManager.IsEnabled;
         }
@@ -598,12 +650,13 @@ public partial class SettingsPage : ContentPage
             _updatingLiveWallpaperSwitch = false;
         }
 
+        MathAnimationInfoBorder.IsVisible =
+            mode == LiveWallpaperMode.MathAnimation;
+        Mp4WallpaperOptionsLayout.IsVisible =
+            mode == LiveWallpaperMode.Mp4;
+
         RemoveLiveWallpaperButton.IsEnabled =
             hasWallpaper;
-
-        bool useEnglish =
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English;
 
         LiveWallpaperFileNameLabel.Text =
             hasWallpaper
@@ -612,6 +665,15 @@ public partial class SettingsPage : ContentPage
                 : (useEnglish
                     ? "No MP4 selected"
                     : "Chưa chọn file MP4");
+
+        LiveWallpaperEnabledSummaryLabel.Text =
+            mode == LiveWallpaperMode.MathAnimation
+                ? (useEnglish
+                    ? "The lightweight 24 FPS GraphicsView animation pauses when the tab is inactive or local AI is generating."
+                    : "Animation GraphicsView nhẹ ở 24 FPS sẽ dừng khi tab không hoạt động hoặc khi AI local tạo sinh.")
+                : (useEnglish
+                    ? "H.264 video loops silently with native hardware-preferred decoding and keeps playing during local AI inference."
+                    : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và vẫn phát khi AI local tạo sinh.");
     }
 
     private void OnDeveloperModeToggled(
@@ -685,8 +747,8 @@ public partial class SettingsPage : ContentPage
 
         LiveWallpaperSectionDescriptionLabel.Text =
             useEnglish
-                ? "Use your own MP4 video as an animated background for the main learning tabs."
-                : "Dùng video MP4 của bạn làm hình nền chuyển động cho các tab học toán.";
+                ? "Choose Math Solver's lightweight math animation or your own H.264 MP4 for the main learning tabs."
+                : "Chọn animation toán học nhẹ của Math Solver hoặc video MP4 H.264 của bạn cho các tab học toán.";
 
         LiveWallpaperEnabledTitleLabel.Text =
             useEnglish
@@ -695,8 +757,47 @@ public partial class SettingsPage : ContentPage
 
         LiveWallpaperEnabledSummaryLabel.Text =
             useEnglish
-                ? "H.264 video loops silently with native hardware-preferred decoding and pauses for local AI inference."
-                : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và tạm dừng khi AI local tạo sinh.";
+                ? "Backgrounds stop on inactive tabs; the Math animation also pauses during local AI inference, while validated hardware H.264 keeps playing."
+                : "Hình nền dừng khi tab không hoạt động; Math Animation cũng tạm dừng khi AI local tạo sinh, còn H.264 đã xác nhận giải mã phần cứng vẫn tiếp tục phát.";
+
+        LiveWallpaperModeTitleLabel.Text =
+            useEnglish
+                ? "Animated background type"
+                : "Kiểu hình nền động";
+
+        _updatingLiveWallpaperModePicker = true;
+        try
+        {
+            int selectedMode =
+                LiveWallpaperManager.Mode == LiveWallpaperMode.Mp4
+                    ? 1
+                    : 0;
+
+            LiveWallpaperModePicker.Items.Clear();
+            LiveWallpaperModePicker.Items.Add(
+                useEnglish
+                    ? "Math Solver animation (GraphicsView)"
+                    : "Animation Math Solver (GraphicsView)");
+            LiveWallpaperModePicker.Items.Add(
+                useEnglish
+                    ? "MP4 live wallpaper"
+                    : "Live Wallpaper MP4");
+            LiveWallpaperModePicker.SelectedIndex = selectedMode;
+        }
+        finally
+        {
+            _updatingLiveWallpaperModePicker = false;
+        }
+
+        MathAnimationTitleLabel.Text =
+            useEnglish
+                ? "Math Solver Animation"
+                : "Animation Math Solver";
+
+        MathAnimationSummaryLabel.Text =
+            useEnglish
+                ? "GraphicsView • 24 FPS • no external file • lighter than video"
+                : "GraphicsView • 24 FPS • không cần file • nhẹ hơn video";
 
         LiveWallpaperDecodeTitleLabel.Text =
             useEnglish
@@ -725,8 +826,8 @@ public partial class SettingsPage : ContentPage
 
         LiveWallpaperNoteLabel.Text =
             useEnglish
-                ? "MP4 wallpapers must use H.264 / AVC. Windows uses MediaPlayer/Media Foundation and Android uses ExoPlayer/MediaCodec; playback is paused while local AI is generating to reserve compute and memory bandwidth."
-                : "Hình nền MP4 phải dùng H.264 / AVC. Windows dùng MediaPlayer/Media Foundation, Android dùng ExoPlayer/MediaCodec; video sẽ tạm dừng khi AI local tạo sinh để nhường compute và băng thông bộ nhớ.";
+                ? "MP4 wallpapers must use H.264 / AVC and be no longer than 120 seconds. Windows uses MediaPlayer/Media Foundation and Android uses ExoPlayer/MediaCodec; validated hardware-decoded playback stays active during local AI inference."
+                : "Hình nền MP4 phải dùng H.264 / AVC và dài tối đa 120 giây. Windows dùng MediaPlayer/Media Foundation, Android dùng ExoPlayer/MediaCodec; video đã xác nhận giải mã phần cứng vẫn tiếp tục phát khi AI local tạo sinh.";
 
         ResultDisplaySectionTitleLabel.Text =
             useEnglish
@@ -851,6 +952,10 @@ public partial class SettingsPage : ContentPage
             useEnglish
                 ? "Turn developer mode on or off"
                 : "Bật hoặc tắt chế độ nhà phát triển");
+
+        // Mode-specific summary/visibility is applied after localization so a
+        // language refresh does not overwrite the active background details.
+        UpdateLiveWallpaperSettings();
     }
 
     private void LoadCurrentSettings()

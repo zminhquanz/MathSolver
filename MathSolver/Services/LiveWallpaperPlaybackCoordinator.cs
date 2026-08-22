@@ -1,10 +1,10 @@
 namespace MathSolver.Services;
 
 /// <summary>
-/// Coordinates optional live-wallpaper playback with short, latency-sensitive
-/// work such as local LLM inference. A suspended wallpaper keeps its source
-/// loaded for a fast resume, but the native player is paused so video decode,
-/// composition and texture updates stop competing for compute/bandwidth.
+/// Coordinates cooperative background animation with short, latency-sensitive
+/// work such as local LLM inference. The built-in GraphicsView math animation
+/// observes this suspension. Validated hardware-decoded H.264 MP4 playback does
+/// not pause for it, because its fixed-function decoder path has low CPU cost.
 /// </summary>
 public static class LiveWallpaperPlaybackCoordinator
 {

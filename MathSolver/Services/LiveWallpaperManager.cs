@@ -1,9 +1,16 @@
 namespace MathSolver.Services;
 
+public enum LiveWallpaperMode
+{
+    MathAnimation = 0,
+    Mp4 = 1
+}
+
 /// <summary>
-/// Stores the user's optional animated wallpaper in Math Solver's private app
-/// data directory. Keeping our own copy avoids Android content-URI permission
-/// loss after an app restart and gives Windows/Android the same stable path.
+/// Stores the user's animated-background preference. MP4 wallpapers are copied
+/// into Math Solver's private app-data directory so Android does not lose URI
+/// permissions after restart. The built-in Math animation uses GraphicsView and
+/// needs no external file.
 /// </summary>
 public static class LiveWallpaperManager
 {
@@ -13,6 +20,12 @@ public static class LiveWallpaperManager
         "LiveWallpaper.FileName";
     private const string HardwareH264ValidatedPreferenceKey =
         "LiveWallpaper.HardwareH264Validated";
+    private const string ValidationVersionPreferenceKey =
+        "LiveWallpaper.ValidationVersion";
+    private const string ModePreferenceKey =
+        "LiveWallpaper.Mode";
+
+    private const int CurrentValidationVersion = 2;
 
     private static readonly SemaphoreSlim ValidationGate =
         new(1, 1);
@@ -21,6 +34,9 @@ public static class LiveWallpaperManager
         "Wallpapers";
     private const string WallpaperFileName =
         "live_wallpaper.mp4";
+
+    public const double MaximumMp4DurationSeconds =
+        LiveWallpaperVideoInspector.MaximumDurationSeconds;
 
     public static event EventHandler? SettingsChanged;
 
@@ -33,18 +49,67 @@ public static class LiveWallpaperManager
     public static bool HasWallpaper =>
         File.Exists(WallpaperPath);
 
-    public static bool IsEnabled =>
-        HasWallpaper &&
-        IsHardwareH264Validated &&
-        Preferences.Default.Get(
-            EnabledPreferenceKey,
-            false);
+    public static LiveWallpaperMode Mode
+    {
+        get
+        {
+            int stored = Preferences.Default.Get(
+                ModePreferenceKey,
+                -1);
+
+            if (Enum.IsDefined(
+                    typeof(LiveWallpaperMode),
+                    stored))
+            {
+                return (LiveWallpaperMode)stored;
+            }
+
+            // Preserve the behavior of installations that already had an MP4
+            // before the Math GraphicsView mode was introduced.
+            return HasWallpaper
+                ? LiveWallpaperMode.Mp4
+                : LiveWallpaperMode.MathAnimation;
+        }
+    }
+
+    public static bool IsEnabled
+    {
+        get
+        {
+            if (!Preferences.Default.Get(
+                    EnabledPreferenceKey,
+                    false))
+            {
+                return false;
+            }
+
+            return Mode switch
+            {
+                LiveWallpaperMode.MathAnimation => true,
+                LiveWallpaperMode.Mp4 =>
+                    HasWallpaper &&
+                    IsHardwareH264Validated,
+                _ => false
+            };
+        }
+    }
+
+    public static bool IsMathAnimationEnabled =>
+        IsEnabled &&
+        Mode == LiveWallpaperMode.MathAnimation;
+
+    public static bool IsMp4Enabled =>
+        IsEnabled &&
+        Mode == LiveWallpaperMode.Mp4;
 
     public static bool IsHardwareH264Validated =>
         HasWallpaper &&
         Preferences.Default.Get(
             HardwareH264ValidatedPreferenceKey,
-            false);
+            false) &&
+        Preferences.Default.Get(
+            ValidationVersionPreferenceKey,
+            0) == CurrentValidationVersion;
 
     public static string? OriginalFileName
     {
@@ -90,13 +155,21 @@ public static class LiveWallpaperManager
 
             bool isOptimized =
                 inspection.IsH264 &&
-                inspection.CanUseHardwarePreferredH264Path;
+                inspection.CanUseHardwarePreferredH264Path &&
+                LiveWallpaperVideoInspector.IsDurationAllowed(
+                    inspection.Duration);
 
             Preferences.Default.Set(
                 HardwareH264ValidatedPreferenceKey,
                 isOptimized);
+            Preferences.Default.Set(
+                ValidationVersionPreferenceKey,
+                isOptimized
+                    ? CurrentValidationVersion
+                    : 0);
 
-            if (!isOptimized)
+            if (!isOptimized &&
+                Mode == LiveWallpaperMode.Mp4)
             {
                 Preferences.Default.Set(
                     EnabledPreferenceKey,
@@ -117,8 +190,15 @@ public static class LiveWallpaperManager
                 HardwareH264ValidatedPreferenceKey,
                 false);
             Preferences.Default.Set(
-                EnabledPreferenceKey,
-                false);
+                ValidationVersionPreferenceKey,
+                0);
+
+            if (Mode == LiveWallpaperMode.Mp4)
+            {
+                Preferences.Default.Set(
+                    EnabledPreferenceKey,
+                    false);
+            }
 
             AppThemeManager.RefreshVisualResources();
             SettingsChanged?.Invoke(null, EventArgs.Empty);
@@ -130,12 +210,45 @@ public static class LiveWallpaperManager
         }
     }
 
+    public static void SetMode(
+        LiveWallpaperMode mode)
+    {
+        if (Mode == mode &&
+            Preferences.Default.Get(
+                ModePreferenceKey,
+                -1) == (int)mode)
+        {
+            return;
+        }
+
+        Preferences.Default.Set(
+            ModePreferenceKey,
+            (int)mode);
+
+        // Do not silently switch to a non-working MP4 background. The user can
+        // still choose MP4 mode first, then import a valid clip.
+        if (mode == LiveWallpaperMode.Mp4 &&
+            (!HasWallpaper || !IsHardwareH264Validated))
+        {
+            Preferences.Default.Set(
+                EnabledPreferenceKey,
+                false);
+        }
+
+        AppThemeManager.RefreshVisualResources();
+        SettingsChanged?.Invoke(null, EventArgs.Empty);
+    }
+
     public static void SetEnabled(bool enabled)
     {
+        bool canEnable =
+            Mode == LiveWallpaperMode.MathAnimation ||
+            (Mode == LiveWallpaperMode.Mp4 &&
+             HasWallpaper &&
+             IsHardwareH264Validated);
+
         bool normalized =
-            enabled &&
-            HasWallpaper &&
-            IsHardwareH264Validated;
+            enabled && canEnable;
 
         if (Preferences.Default.Get(
                 EnabledPreferenceKey,
@@ -216,6 +329,13 @@ public static class LiveWallpaperManager
                     temporaryPath,
                     cancellationToken);
 
+            if (!LiveWallpaperVideoInspector.IsDurationAllowed(
+                    inspection.Duration))
+            {
+                throw new LiveWallpaperVideoValidationException(
+                    LiveWallpaperVideoValidationError.DurationTooLong);
+            }
+
             if (!inspection.IsH264)
             {
                 throw new LiveWallpaperVideoValidationException(
@@ -239,6 +359,12 @@ public static class LiveWallpaperManager
             Preferences.Default.Set(
                 HardwareH264ValidatedPreferenceKey,
                 true);
+            Preferences.Default.Set(
+                ValidationVersionPreferenceKey,
+                CurrentValidationVersion);
+            Preferences.Default.Set(
+                ModePreferenceKey,
+                (int)LiveWallpaperMode.Mp4);
             Preferences.Default.Set(
                 EnabledPreferenceKey,
                 true);
@@ -274,6 +400,11 @@ public static class LiveWallpaperManager
             FileNamePreferenceKey);
         Preferences.Default.Remove(
             HardwareH264ValidatedPreferenceKey);
+        Preferences.Default.Remove(
+            ValidationVersionPreferenceKey);
+        Preferences.Default.Set(
+            ModePreferenceKey,
+            (int)LiveWallpaperMode.MathAnimation);
 
         AppThemeManager.RefreshVisualResources();
 
@@ -298,8 +429,6 @@ public static class LiveWallpaperManager
             }
         }
 
-        // Refresh Settings again after deletion so HasWallpaper/button state
-        // reflects the actual file-system result.
         SettingsChanged?.Invoke(
             null,
             EventArgs.Empty);
@@ -307,6 +436,10 @@ public static class LiveWallpaperManager
 
     public static void ResetToDefault()
     {
+        Preferences.Default.Remove(
+            ModePreferenceKey);
         RemoveWallpaper();
+        Preferences.Default.Remove(
+            ModePreferenceKey);
     }
 }

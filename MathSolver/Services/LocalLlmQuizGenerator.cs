@@ -204,9 +204,9 @@ public sealed class LocalLlmQuizGenerator
         CancelScheduledModelUnload();
         await _generationGate.WaitAsync(cancellationToken);
 
-        // Local GGUF inference is latency-sensitive and CPU/memory-bandwidth
-        // heavy. Pause the live wallpaper while this generation owns the gate
-        // so video decode/composition never steals cycles from LLamaSharp.
+        // Local GGUF inference is latency-sensitive. Suspend cooperative
+        // GraphicsView background animation while this generation owns the
+        // gate. Validated hardware-decoded H.264 MP4 wallpaper keeps playing.
         using IDisposable wallpaperSuspension =
             LiveWallpaperPlaybackCoordinator.SuspendForHighPriorityWork();
 

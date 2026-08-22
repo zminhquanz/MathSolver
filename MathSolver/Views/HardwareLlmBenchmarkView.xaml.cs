@@ -253,8 +253,9 @@ public partial class HardwareLlmBenchmarkView : ContentView
         string modelPath,
         CancellationToken cancellationToken)
     {
-        // Keep the wallpaper suspended for the whole benchmark instead of
-        // letting it resume briefly between the 60 independent generations.
+        // Keep cooperative Math GraphicsView animation suspended for the
+        // whole benchmark instead of resuming between independent samples.
+        // Validated hardware-decoded H.264 MP4 wallpaper keeps playing.
         using IDisposable wallpaperSuspension =
             LiveWallpaperPlaybackCoordinator.SuspendForHighPriorityWork();
 
