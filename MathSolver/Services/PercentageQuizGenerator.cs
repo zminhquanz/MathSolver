@@ -22,7 +22,11 @@ public sealed class PercentageQuizGenerator
         new("quyển sách", "books", "số sách", "number of books", "quyển truyện", "story books"),
         new("cây", "trees", "số cây", "number of trees", "cây xoài", "mango trees"),
         new("học sinh", "students", "số học sinh", "number of students", "học sinh nữ", "female students"),
-        new("viên bi", "marbles", "số viên bi", "number of marbles", "viên bi đỏ", "red marbles")
+        new("viên bi", "marbles", "số viên bi", "number of marbles", "viên bi đỏ", "red marbles"),
+        new("bông hoa", "flowers", "số hoa", "number of flowers", "bông hoa hồng", "roses"),
+        new("chiếc bút", "pens", "số bút", "number of pens", "chiếc bút xanh", "blue pens"),
+        new("quả cam", "oranges", "số cam", "number of oranges", "quả cam loại A", "grade-A oranges"),
+        new("vé", "tickets", "số vé", "number of tickets", "vé trẻ em", "children's tickets")
     ];
 
     private readonly Random _random;
@@ -102,14 +106,14 @@ public sealed class PercentageQuizGenerator
         int whole = PickMultipleOf(100, 100, 600);
         int value = whole * percentage / 100;
         ItemContext item = Contexts[_random.Next(Contexts.Length)];
-        string unit = language == AppLanguage.Vietnamese ? item.ViUnit : item.EnUnit;
-        string subject = language == AppLanguage.Vietnamese ? item.ViSubject : item.EnSubject;
+        string unit = language == AppLanguage.Vietnamese ? item.ViRatioPart : item.EnRatioPart;
+        string subject = language == AppLanguage.Vietnamese ? $"số {item.ViRatioPart}" : $"number of {item.EnRatioPart}";
         string problem = language == AppLanguage.Vietnamese
-            ? $"Có tất cả {whole} {item.ViUnit}. Số được chọn bằng {percentage}% tổng số. Hỏi số được chọn là bao nhiêu {item.ViUnit}?"
-            : $"There are {whole} {item.EnUnit} in total. The selected amount is {percentage}% of the total. How many {item.EnUnit} are selected?";
+            ? $"Có tất cả {whole} {item.ViUnit}, trong đó {percentage}% là {item.ViRatioPart}. Hỏi có bao nhiêu {item.ViRatioPart}?"
+            : $"There are {whole} {item.EnUnit} in total, and {percentage}% are {item.EnRatioPart}. How many {item.EnRatioPart} are there?";
         string solution = language == AppLanguage.Vietnamese
-            ? $"Giá trị {percentage}% của {whole}: {whole} ÷ 100 × {percentage} = {value} {item.ViUnit}"
-            : $"{percentage}% of {whole}: {whole} ÷ 100 × {percentage} = {value} {item.EnUnit}";
+            ? $"Số {item.ViRatioPart}: {whole} ÷ 100 × {percentage} = {value} {item.ViRatioPart}"
+            : $"Number of {item.EnRatioPart}: {whole} ÷ 100 × {percentage} = {value} {item.EnRatioPart}";
 
         return new(
             PercentageQuizType.FindPercentageValue,
@@ -135,11 +139,11 @@ public sealed class PercentageQuizGenerator
         string unit = language == AppLanguage.Vietnamese ? item.ViUnit : item.EnUnit;
         string subject = language == AppLanguage.Vietnamese ? $"tổng {item.ViSubject}" : $"total {item.EnSubject}";
         string problem = language == AppLanguage.Vietnamese
-            ? $"{value} {item.ViUnit} chiếm {percentage}% tổng số. Hỏi có tất cả bao nhiêu {item.ViUnit}?"
-            : $"{value} {item.EnUnit} make up {percentage}% of the total. How many {item.EnUnit} are there altogether?";
+            ? $"Có {value} {item.ViRatioPart}, bằng {percentage}% tổng số {item.ViUnit}. Hỏi có tất cả bao nhiêu {item.ViUnit}?"
+            : $"There are {value} {item.EnRatioPart}, which make up {percentage}% of all {item.EnUnit}. How many {item.EnUnit} are there altogether?";
         string solution = language == AppLanguage.Vietnamese
-            ? $"Toàn bộ số lượng: {value} × 100 ÷ {percentage} = {whole} {item.ViUnit}"
-            : $"Whole amount: {value} × 100 ÷ {percentage} = {whole} {item.EnUnit}";
+            ? $"Tổng số {item.ViUnit}: {value} × 100 ÷ {percentage} = {whole} {item.ViUnit}"
+            : $"Total {item.EnUnit}: {value} × 100 ÷ {percentage} = {whole} {item.EnUnit}";
 
         return new(
             PercentageQuizType.FindWholeFromPercentageValue,

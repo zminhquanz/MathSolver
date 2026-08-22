@@ -33,14 +33,15 @@ public sealed class FindXQuizGenerator
     }
 
     public ArithmeticQuizQuestion Generate(
-        ArithmeticQuizMode mode)
+        ArithmeticQuizMode mode,
+        ArithmeticOperation? requestedOperation = null)
     {
         for (int attempt = 0;
              attempt < MaximumGenerationAttempts;
              attempt++)
         {
             FindXQuizContract contract =
-                CreateContract();
+                CreateContract(requestedOperation);
 
             if (!IsVerifiedContract(contract))
             {
@@ -56,9 +57,10 @@ public sealed class FindXQuizGenerator
             "Could not generate a verified Find X quiz contract.");
     }
 
-    private FindXQuizContract CreateContract()
+    private FindXQuizContract CreateContract(
+        ArithmeticOperation? requestedOperation)
     {
-        ArithmeticOperation operation =
+        ArithmeticOperation operation = requestedOperation ??
             Operations[_random.Next(Operations.Length)];
         bool unknownIsLeftOperand =
             _random.Next(2) == 0;

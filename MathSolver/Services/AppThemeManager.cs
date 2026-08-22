@@ -29,6 +29,19 @@ public static class AppThemeManager
     private const double LiveWallpaperDarkTextThreshold = 0.60d;
     private const double LiveWallpaperInitialThreshold = 0.53d;
 
+    // Wallpaper resources can be refreshed by Switch/Picker callbacks, frame
+    // contrast updates and import completion in very quick succession. Always
+    // coalesce them onto a later UI turn so WinUI has time to disconnect the
+    // outgoing MediaElement/GraphicsView handler before DynamicResource targets
+    // are updated. This prevents transient COMException failures when turning
+    // the animated background off.
+    private static int _wallpaperVisualRefreshGeneration;
+    private static readonly TimeSpan WallpaperVisualRefreshDelay =
+        TimeSpan.FromMilliseconds(48);
+    private static readonly TimeSpan WallpaperVisualRefreshRetryDelay =
+        TimeSpan.FromMilliseconds(80);
+    private const int WallpaperVisualRefreshMaxRetries = 2;
+
     public static event EventHandler? ThemeChanged;
 
     public static AppThemeMode CurrentMode { get; private set; } =
@@ -167,65 +180,110 @@ public static class AppThemeManager
             return;
         }
 
-        void ApplyWallpaperOnly()
+        Application? application =
+            _application ??
+            Application.Current;
+
+        if (application is null)
         {
-            Application? application =
-                _application ??
-                Application.Current;
+            return;
+        }
 
-            if (application is null)
+        int generation = Interlocked.Increment(
+            ref _wallpaperVisualRefreshGeneration);
+
+        QueueWallpaperVisualRefresh(
+            application,
+            generation,
+            WallpaperVisualRefreshDelay,
+            retryCount: 0);
+    }
+
+    private static void QueueWallpaperVisualRefresh(
+        Application application,
+        int generation,
+        TimeSpan delay,
+        int retryCount)
+    {
+        application.Dispatcher.DispatchDelayed(
+            delay,
+            () =>
             {
-                return;
-            }
-
-            AppTheme effectiveTheme =
-                CurrentMode switch
+                if (generation != Volatile.Read(
+                        ref _wallpaperVisualRefreshGeneration))
                 {
-                    AppThemeMode.Light => AppTheme.Light,
-                    AppThemeMode.Dark => AppTheme.Dark,
-                    _ => application.RequestedTheme == AppTheme.Dark
-                        ? AppTheme.Dark
-                        : AppTheme.Light
-                };
+                    return;
+                }
 
-            ThemePalette palette;
+                try
+                {
+                    ApplyWallpaperVisualResourcesCore(application);
+                }
+#if WINDOWS
+                catch (System.Runtime.InteropServices.COMException exception)
+                {
+                    if (retryCount < WallpaperVisualRefreshMaxRetries)
+                    {
+                        // A WinUI control may still be completing native handler
+                        // teardown for one dispatcher turn. Retry the latest state
+                        // only; stale refreshes remain discarded by generation.
+                        QueueWallpaperVisualRefresh(
+                            application,
+                            generation,
+                            WallpaperVisualRefreshRetryDelay,
+                            retryCount + 1);
+                        return;
+                    }
+
+                    // Presentation-resource refresh is best-effort. Never crash
+                    // the app just because WinUI is still disposing a stale
+                    // DynamicResource target; the next normal visual refresh
+                    // (theme/accent/wallpaper change) will reconcile the tokens.
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Wallpaper resource refresh deferred: {exception}");
+                }
+#endif
+            });
+    }
+
+    private static void ApplyWallpaperVisualResourcesCore(
+        Application application)
+    {
+        AppTheme effectiveTheme =
+            CurrentMode switch
+            {
+                AppThemeMode.Light => AppTheme.Light,
+                AppThemeMode.Dark => AppTheme.Dark,
+                _ => application.RequestedTheme == AppTheme.Dark
+                    ? AppTheme.Dark
+                    : AppTheme.Light
+            };
+
+        ThemePalette palette;
 
 #if ANDROID
-            if (AndroidMaterialYouManager.TryGetCurrentColorScheme(
-                    out AndroidMaterialColorScheme materialScheme))
-            {
-                palette = CreateMaterialYouPalette(
-                    effectiveTheme,
-                    materialScheme);
-            }
-            else
-#endif
-            {
-                palette = CreatePalette(
-                    effectiveTheme,
-                    CurrentAccentColor);
-            }
-
-            // Wallpaper mode/enable changes only affect glass/scrim tokens.
-            // Do not assign UserAppTheme, rebuild the whole palette, or raise
-            // ThemeChanged while a WinUI Picker/ComboBox is closing. Reapplying
-            // the full theme here caused re-entrant layout and native media
-            // transitions during Math <-> MP4 switching.
-            ApplyWallpaperVisualPalette(
-                application.Resources,
-                palette,
-                effectiveTheme);
-        }
-
-        if (MainThread.IsMainThread)
+        if (AndroidMaterialYouManager.TryGetCurrentColorScheme(
+                out AndroidMaterialColorScheme materialScheme))
         {
-            ApplyWallpaperOnly();
+            palette = CreateMaterialYouPalette(
+                effectiveTheme,
+                materialScheme);
         }
         else
+#endif
         {
-            MainThread.BeginInvokeOnMainThread(
-                ApplyWallpaperOnly);
+            palette = CreatePalette(
+                effectiveTheme,
+                CurrentAccentColor);
         }
+
+        // Wallpaper mode/enable changes only affect glass/scrim tokens.
+        // Do not assign UserAppTheme, rebuild the whole palette, or raise
+        // ThemeChanged while native video/drawing handlers are transitioning.
+        ApplyWallpaperVisualPalette(
+            application.Resources,
+            palette,
+            effectiveTheme);
     }
 
     public static void SetLiveWallpaperFrameLuminance(
@@ -726,8 +784,46 @@ public static class AppThemeManager
         string brushKey,
         Color color)
     {
-        resources[colorKey] = color;
+        // Avoid replacing resource objects when nothing changed. Adaptive MP4
+        // contrast can touch these tokens many times during a session; keeping
+        // the existing SolidColorBrush removes needless allocations and reduces
+        // DynamicResource churn on WinUI/Android.
+        if (!resources.TryGetValue(
+                colorKey,
+                out object? currentColorResource) ||
+            currentColorResource is not Color currentColor ||
+            !AreColorsEquivalent(currentColor, color))
+        {
+            resources[colorKey] = color;
+        }
+
+        if (resources.TryGetValue(
+                brushKey,
+                out object? currentBrushResource) &&
+            currentBrushResource is SolidColorBrush currentBrush)
+        {
+            if (!AreColorsEquivalent(currentBrush.Color, color))
+            {
+                currentBrush.Color = color;
+            }
+
+            return;
+        }
+
         resources[brushKey] = new SolidColorBrush(color);
+    }
+
+    private static bool AreColorsEquivalent(
+        Color left,
+        Color right)
+    {
+        const float epsilon = 0.0001f;
+
+        return
+            Math.Abs(left.Red - right.Red) <= epsilon &&
+            Math.Abs(left.Green - right.Green) <= epsilon &&
+            Math.Abs(left.Blue - right.Blue) <= epsilon &&
+            Math.Abs(left.Alpha - right.Alpha) <= epsilon;
     }
 
     private static AppThemeMode ReadThemeMode(string? value)

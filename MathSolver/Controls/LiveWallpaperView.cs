@@ -20,7 +20,13 @@ public sealed class LiveWallpaperView : Grid
         TimeSpan.FromMilliseconds(500);
 
     private static readonly TimeSpan MediaElementReleaseDelay =
-        TimeSpan.FromMilliseconds(750);
+        TimeSpan.FromMilliseconds(250);
+
+    // Shell caches the four learning pages. Keep a single global owner so a
+    // stale OnDisappearing/OnAppearing sequence can never leave two native
+    // video decoders (or two animation timers) alive at the same time.
+    private static readonly object PlaybackOwnerLock = new();
+    private static WeakReference<LiveWallpaperView>? s_playbackOwner;
 
     private MathAnimatedBackgroundDrawable? _mathDrawable;
     private GraphicsView? _mathAnimationView;
@@ -35,6 +41,8 @@ public sealed class LiveWallpaperView : Grid
     private string? _loadedPath;
     private int _refreshGeneration;
     private int _mediaReleaseGeneration;
+    private bool _ownsPlayback;
+    private bool _mp4PlaybackReportedActive;
 
     public LiveWallpaperView()
     {
@@ -52,6 +60,7 @@ public sealed class LiveWallpaperView : Grid
     public void Resume()
     {
         _isPageActive = true;
+        ClaimPlaybackOwnership();
         RefreshPlayback();
     }
 
@@ -60,16 +69,11 @@ public sealed class LiveWallpaperView : Grid
         _isPageActive = false;
         _refreshGeneration++;
 
-        ReleaseMathAnimationResources();
-        StopAdaptiveContrast();
-        ReleaseScrim();
-
-        // Detaching Source releases decoder buffers/video textures/file handles.
-        ReleaseSource();
-        ScheduleMediaElementRelease();
+        ReleasePlaybackOwnership();
+        ReleaseAllAnimatedResources(immediateMediaRelease: true);
     }
 
-    private async void OnLoaded(object? sender, EventArgs e)
+    private void OnLoaded(object? sender, EventArgs e)
     {
         if (!_isSubscribed)
         {
@@ -78,12 +82,9 @@ public sealed class LiveWallpaperView : Grid
             _isSubscribed = true;
         }
 
-        if (LiveWallpaperManager.HasWallpaper &&
-            LiveWallpaperManager.Mode == LiveWallpaperMode.Mp4)
-        {
-            await LiveWallpaperManager.EnsureOptimizedWallpaperAsync();
-        }
-
+        // Existing wallpapers are validated by Settings/import. Do not open a
+        // metadata/thumbnail decoder merely because Shell preloads an inactive
+        // learning page.
         RefreshPlayback();
     }
 
@@ -100,10 +101,8 @@ public sealed class LiveWallpaperView : Grid
         _refreshGeneration++;
         _mediaReleaseGeneration++;
 
-        ReleaseMathAnimationResources();
-        StopAdaptiveContrast();
-        ReleaseScrim();
-        ReleaseMediaElement();
+        ReleasePlaybackOwnership();
+        ReleaseAllAnimatedResources(immediateMediaRelease: true);
     }
 
     private void OnWallpaperSettingsChanged(
@@ -138,13 +137,12 @@ public sealed class LiveWallpaperView : Grid
 
         if (!LiveWallpaperManager.IsEnabled || !_isPageActive)
         {
-            ReleaseMathAnimationResources();
-            StopAdaptiveContrast();
-            ReleaseScrim();
-            PauseMediaPlayback();
+            ReleasePlaybackOwnership();
+            ReleaseAllAnimatedResources(immediateMediaRelease: true);
             return;
         }
 
+        ClaimPlaybackOwnership();
         EnsureScrim();
 
         LiveWallpaperMode mode =
@@ -157,16 +155,22 @@ public sealed class LiveWallpaperView : Grid
             StopAdaptiveContrast();
             AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
 
-            PauseMediaPlayback();
+            // Drop the media source immediately so decoder surfaces are
+            // returned even though the MediaElement shell itself is released
+            // on a short delay to keep Picker mode switching re-entrancy safe.
+            ReleaseSource();
             ScheduleMediaElementRelease();
             StartMathAnimation();
             return;
         }
 
         // MP4 mode was accepted only after H.264/hardware-path validation.
-        // Keep playback uninterrupted during AI/LLM inference.
+        // Keep playback uninterrupted during AI/LLM inference. Tell the manager
+        // before creating the player so optional frame analysis cannot overlap
+        // a second native decoder with live playback.
         ReleaseMathAnimationResources();
         CancelScheduledMediaElementRelease();
+        SetMp4PlaybackReportedActive(true);
 
         MediaElement mediaElement =
             EnsureMediaElement();
@@ -251,7 +255,75 @@ public sealed class LiveWallpaperView : Grid
         if (!showMp4)
         {
             StopAdaptiveContrast();
-            PauseMediaPlayback();
+            ReleaseSource();
+            ScheduleMediaElementRelease();
+        }
+    }
+
+    private void ClaimPlaybackOwnership()
+    {
+        LiveWallpaperView? previousOwner = null;
+
+        lock (PlaybackOwnerLock)
+        {
+            if (s_playbackOwner is not null &&
+                s_playbackOwner.TryGetTarget(out LiveWallpaperView? current) &&
+                !ReferenceEquals(current, this))
+            {
+                previousOwner = current;
+            }
+
+            s_playbackOwner = new WeakReference<LiveWallpaperView>(this);
+            _ownsPlayback = true;
+        }
+
+        // Never tear down a previous native handler while holding the static
+        // lock. A Shell tab transition can otherwise deadlock the UI thread.
+        previousOwner?.DeactivateForOwnershipTransfer();
+    }
+
+    private void ReleasePlaybackOwnership()
+    {
+        lock (PlaybackOwnerLock)
+        {
+            if (!_ownsPlayback)
+            {
+                return;
+            }
+
+            if (s_playbackOwner is not null &&
+                s_playbackOwner.TryGetTarget(out LiveWallpaperView? current) &&
+                ReferenceEquals(current, this))
+            {
+                s_playbackOwner = null;
+            }
+
+            _ownsPlayback = false;
+        }
+    }
+
+    private void DeactivateForOwnershipTransfer()
+    {
+        _isPageActive = false;
+        _refreshGeneration++;
+        _mediaReleaseGeneration++;
+        _ownsPlayback = false;
+        ReleaseAllAnimatedResources(immediateMediaRelease: true);
+    }
+
+    private void ReleaseAllAnimatedResources(bool immediateMediaRelease)
+    {
+        ReleaseMathAnimationResources();
+        StopAdaptiveContrast();
+        ReleaseScrim();
+
+        if (immediateMediaRelease)
+        {
+            ReleaseMediaElement();
+        }
+        else
+        {
+            ReleaseSource();
             ScheduleMediaElementRelease();
         }
     }
@@ -408,6 +480,17 @@ public sealed class LiveWallpaperView : Grid
             }
         }
 
+        if (view is not null)
+        {
+            try
+            {
+                view.Handler?.DisconnectHandler();
+            }
+            catch
+            {
+            }
+        }
+
         _mathAnimationView = null;
         _mathDrawable = null;
     }
@@ -520,6 +603,17 @@ public sealed class LiveWallpaperView : Grid
         }
     }
 
+    private void SetMp4PlaybackReportedActive(bool active)
+    {
+        if (_mp4PlaybackReportedActive == active)
+        {
+            return;
+        }
+
+        _mp4PlaybackReportedActive = active;
+        LiveWallpaperManager.NotifyMp4PlaybackState(active);
+    }
+
     private void PauseMediaPlayback()
     {
         MediaElement? mediaElement =
@@ -543,6 +637,8 @@ public sealed class LiveWallpaperView : Grid
 
     private void ReleaseSource()
     {
+        SetMp4PlaybackReportedActive(false);
+
         MediaElement? mediaElement =
             _mediaElement;
 
@@ -618,10 +714,26 @@ public sealed class LiveWallpaperView : Grid
         StopAdaptiveContrast();
         ReleaseSource();
 
+        // Prevent the native player from scheduling another loop/autoplay
+        // transition while its handler is being disconnected.
         try
         {
+            mediaElement.ShouldAutoPlay = false;
+            mediaElement.ShouldLoopPlayback = false;
             mediaElement.IsVisible = false;
             Children.Remove(mediaElement);
+        }
+        catch
+        {
+        }
+
+        // Removing a MAUI view from the visual tree does not guarantee that a
+        // cached Shell page immediately disconnects its native handler. Force
+        // the disconnect here so MediaPlayer/ExoPlayer can release decoder
+        // surfaces, queues and textures without waiting for a future GC.
+        try
+        {
+            mediaElement.Handler?.DisconnectHandler();
         }
         catch
         {

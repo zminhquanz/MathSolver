@@ -79,7 +79,9 @@ public sealed class QuizProblemTypeCatalog
         FractionOperation fractionOperation,
         ProportionQuizType proportionType,
         AverageQuizType? averageType,
-        PercentageQuizType? percentageType)
+        PercentageQuizType? percentageType,
+        ArithmeticOperation? findXOperation,
+        GeometryQuizShape? geometryShape)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -113,6 +115,16 @@ public sealed class QuizProblemTypeCatalog
                     fixedRequest with
                     {
                         PercentageType = percentageType
+                    },
+                QuizProblemKind.FindX =>
+                    fixedRequest with
+                    {
+                        FindXOperation = findXOperation
+                    },
+                QuizProblemKind.Geometry =>
+                    fixedRequest with
+                    {
+                        GeometryShape = geometryShape
                     },
                 _ => fixedRequest
             };

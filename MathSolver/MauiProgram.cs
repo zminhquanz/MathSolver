@@ -313,6 +313,19 @@ namespace MathSolver
                 new Microsoft.UI.Xaml.Media.SolidColorBrush(
                     nativeColor);
 
+            // MAUI Picker.TextColor can change dynamically while MP4 adaptive
+            // contrast is running. WinUI ComboBox does not always propagate a
+            // resource-only Foreground change to its selected-content TextBlock,
+            // so push the same brush into the native control and its visual-state
+            // resources. This keeps both the selected text and chevron readable
+            // when wallpaper polarity flips independently of the app theme.
+            comboBox.Foreground = glyphBrush;
+            comboBox.Resources["ComboBoxForeground"] = glyphBrush;
+            comboBox.Resources["ComboBoxForegroundPointerOver"] = glyphBrush;
+            comboBox.Resources["ComboBoxForegroundPressed"] = glyphBrush;
+            comboBox.Resources["ComboBoxForegroundDisabled"] = glyphBrush;
+            comboBox.Resources["ComboBoxPlaceholderForeground"] = glyphBrush;
+
             comboBox.Resources["ComboBoxDropDownGlyphForeground"] =
                 glyphBrush;
             comboBox.Resources["ComboBoxDropDownGlyphForegroundFocused"] =

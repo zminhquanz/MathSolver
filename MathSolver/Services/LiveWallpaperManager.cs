@@ -25,7 +25,7 @@ public static class LiveWallpaperManager
     private const string ModePreferenceKey =
         "LiveWallpaper.Mode";
 
-    private const int CurrentValidationVersion = 2;
+    private const int CurrentValidationVersion = 3;
 
     private static readonly SemaphoreSlim ValidationGate =
         new(1, 1);
@@ -34,6 +34,8 @@ public static class LiveWallpaperManager
     private static CancellationTokenSource? _frameAnalysisCancellation;
     private static int _frameAnalysisGeneration;
     private static bool _isFrameAnalysisRunning;
+    private static bool _isMp4PlaybackActive;
+    private static TimeSpan _pendingFrameAnalysisDuration;
 
     private const string WallpaperFolderName =
         "Wallpapers";
@@ -184,7 +186,8 @@ public static class LiveWallpaperManager
                 inspection.IsH264 &&
                 inspection.CanUseHardwarePreferredH264Path &&
                 LiveWallpaperVideoInspector.IsDurationAllowed(
-                    inspection.Duration);
+                    inspection.Duration) &&
+                LiveWallpaperVideoInspector.IsResolutionAllowed(inspection);
 
             Preferences.Default.Set(
                 HardwareH264ValidatedPreferenceKey,
@@ -267,6 +270,12 @@ public static class LiveWallpaperManager
 
         AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
 
+        if (mode != LiveWallpaperMode.Mp4)
+        {
+            CancelFrameAnalysis();
+            _pendingFrameAnalysisDuration = TimeSpan.Zero;
+        }
+
         // Do not silently switch to a non-working MP4 background. The user can
         // still choose MP4 mode first, then import a valid clip.
         if (mode == LiveWallpaperMode.Mp4 &&
@@ -306,6 +315,8 @@ public static class LiveWallpaperManager
         if (!normalized)
         {
             AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            CancelFrameAnalysis();
+            _pendingFrameAnalysisDuration = TimeSpan.Zero;
         }
 
         AppThemeManager.RefreshVisualResources();
@@ -388,6 +399,12 @@ public static class LiveWallpaperManager
             {
                 throw new LiveWallpaperVideoValidationException(
                     LiveWallpaperVideoValidationError.DurationTooLong);
+            }
+
+            if (!LiveWallpaperVideoInspector.IsResolutionAllowed(inspection))
+            {
+                throw new LiveWallpaperVideoValidationException(
+                    LiveWallpaperVideoValidationError.ResolutionTooHigh);
             }
 
             if (!inspection.IsH264)
@@ -519,6 +536,19 @@ public static class LiveWallpaperManager
             return;
         }
 
+        lock (FrameAnalysisLock)
+        {
+            _pendingFrameAnalysisDuration = duration;
+
+            // Never open a second decoder while MediaElement/ExoPlayer is
+            // already rendering the live wallpaper. Adaptive contrast metadata
+            // is optional; it can be generated the next time playback stops.
+            if (_isMp4PlaybackActive)
+            {
+                return;
+            }
+        }
+
         CancellationTokenSource cancellation = new();
         int generation;
 
@@ -566,6 +596,14 @@ public static class LiveWallpaperManager
                     cancellation.Token)
                 .ConfigureAwait(false);
 
+            lock (FrameAnalysisLock)
+            {
+                if (_isMp4PlaybackActive)
+                {
+                    return;
+                }
+            }
+
             LiveWallpaperFrameProfile? profile =
                 await LiveWallpaperFrameAnalysis.AnalyzeAsync(
                         WallpaperPath,
@@ -586,6 +624,14 @@ public static class LiveWallpaperManager
                     profile,
                     cancellation.Token)
                 .ConfigureAwait(false);
+
+            lock (FrameAnalysisLock)
+            {
+                if (generation == _frameAnalysisGeneration)
+                {
+                    _pendingFrameAnalysisDuration = TimeSpan.Zero;
+                }
+            }
         }
         catch (OperationCanceledException)
         {
@@ -641,6 +687,52 @@ public static class LiveWallpaperManager
             {
                 SettingsChanged?.Invoke(null, EventArgs.Empty);
             }
+        }
+    }
+
+    public static void NotifyMp4PlaybackState(bool isActive)
+    {
+        TimeSpan deferredDuration = TimeSpan.Zero;
+        CancellationTokenSource? cancellation = null;
+
+        lock (FrameAnalysisLock)
+        {
+            if (_isMp4PlaybackActive == isActive)
+            {
+                return;
+            }
+
+            _isMp4PlaybackActive = isActive;
+
+            if (isActive)
+            {
+                cancellation = _frameAnalysisCancellation;
+                if (cancellation is not null)
+                {
+                    _frameAnalysisGeneration++;
+                    _frameAnalysisCancellation = null;
+                    _isFrameAnalysisRunning = false;
+                }
+            }
+            else if (_pendingFrameAnalysisDuration > TimeSpan.Zero &&
+                     !LiveWallpaperFrameAnalysis.HasCurrentProfile &&
+                     HasWallpaper)
+            {
+                deferredDuration = _pendingFrameAnalysisDuration;
+            }
+        }
+
+        try
+        {
+            cancellation?.Cancel();
+        }
+        catch
+        {
+        }
+
+        if (!isActive && deferredDuration > TimeSpan.Zero)
+        {
+            ScheduleFrameAnalysis(deferredDuration);
         }
     }
 

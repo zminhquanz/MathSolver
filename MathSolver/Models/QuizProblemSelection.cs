@@ -17,6 +17,22 @@ public enum QuizProblemKind
 }
 
 /// <summary>
+/// Các hình hiện được hỗ trợ trong Toán đố. null ở QuizProblemRequest nghĩa
+/// là Hỗn hợp và generator sẽ chọn ngẫu nhiên một hình khả dụng.
+/// </summary>
+public enum GeometryQuizShape
+{
+    Square,
+    Rectangle,
+    Triangle,
+    Trapezoid,
+    Rhombus,
+    Parallelogram,
+    Cube,
+    RectangularPrism
+}
+
+/// <summary>
 /// Yêu cầu đã được phân giải cho đúng một câu hỏi. Nguồn Thuật toán và AI
 /// cùng nhận đối tượng này để không tự diễn giải lựa chọn Hỗn hợp khác nhau.
 /// </summary>
@@ -26,7 +42,9 @@ public readonly record struct QuizProblemRequest(
     FractionOperation? FractionOperation = null,
     ProportionQuizType? ProportionType = null,
     AverageQuizType? AverageType = null,
-    PercentageQuizType? PercentageType = null);
+    PercentageQuizType? PercentageType = null,
+    ArithmeticOperation? FindXOperation = null,
+    GeometryQuizShape? GeometryShape = null);
 
 /// <summary>
 /// Một mục nhóm hiển thị trong danh sách dạng đề. FixedRequest bằng null dành

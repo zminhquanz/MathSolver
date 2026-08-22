@@ -25,10 +25,25 @@ public sealed class GeometryQuizGenerator
 
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode,
-        AppLanguage language)
+        AppLanguage language,
+        GeometryQuizShape? requestedShape = null)
     {
+        string? requestedShapeId = requestedShape is null
+            ? null
+            : GetShapeId(requestedShape.Value);
+
+        GeometryStoryTemplate[] eligibleTemplates = requestedShapeId is null
+            ? Templates
+            : Templates.Where(template => template.ShapeId == requestedShapeId).ToArray();
+
+        if (eligibleTemplates.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "No geometry template is registered for the selected shape.");
+        }
+
         GeometryStoryTemplate template =
-            Templates[_random.Next(Templates.Length)];
+            eligibleTemplates[_random.Next(eligibleTemplates.Length)];
 
         IReadOnlyDictionary<string, BigInteger> dimensions =
             CreateDimensions(template.ShapeId);
@@ -79,10 +94,11 @@ public sealed class GeometryQuizGenerator
     /// </summary>
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
-        AppLanguage language)
+        AppLanguage language,
+        GeometryQuizShape? requestedShape = null)
     {
         ArithmeticQuizQuestion question =
-            Generate(mode, language);
+            Generate(mode, language, requestedShape);
 
         GeometryQuizContract contract =
             question.GeometryProblem ??
@@ -96,6 +112,21 @@ public sealed class GeometryQuizGenerator
                 language)
         };
     }
+
+
+    private static string GetShapeId(GeometryQuizShape shape) =>
+        shape switch
+        {
+            GeometryQuizShape.Square => "square",
+            GeometryQuizShape.Rectangle => "rectangle",
+            GeometryQuizShape.Triangle => "triangle",
+            GeometryQuizShape.Trapezoid => "trapezoid",
+            GeometryQuizShape.Rhombus => "rhombus",
+            GeometryQuizShape.Parallelogram => "parallelogram",
+            GeometryQuizShape.Cube => "cube",
+            GeometryQuizShape.RectangularPrism => "rectangular_prism",
+            _ => throw new ArgumentOutOfRangeException(nameof(shape))
+        };
 
     private static MathWordProblem BuildAlgorithmProblem(
         GeometryQuizContract contract,
@@ -113,6 +144,18 @@ public sealed class GeometryQuizGenerator
         string h = value.TryGetValue("h", out BigInteger hv)
             ? hv.ToString()
             : string.Empty;
+        string c = value.TryGetValue("c", out BigInteger cv)
+            ? cv.ToString()
+            : string.Empty;
+        string d = value.TryGetValue("d", out BigInteger dv)
+            ? dv.ToString()
+            : string.Empty;
+        string d1 = value.TryGetValue("d1", out BigInteger d1v)
+            ? d1v.ToString()
+            : string.Empty;
+        string d2 = value.TryGetValue("d2", out BigInteger d2v)
+            ? d2v.ToString()
+            : string.Empty;
         string unit = contract.LengthUnitSymbol;
 
         string problemText = language == AppLanguage.Vietnamese
@@ -126,6 +169,22 @@ public sealed class GeometryQuizGenerator
                     $"Tính chu vi của hình chữ nhật có chiều dài {a} {unit} và chiều rộng {b} {unit}.",
                 ("rectangle", GeometryMeasurement.Area) =>
                     $"Tính diện tích của hình chữ nhật có chiều dài {a} {unit} và chiều rộng {b} {unit}.",
+                ("triangle", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình tam giác có ba cạnh {a} {unit}, {b} {unit}, {c} {unit}.",
+                ("triangle", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình tam giác có đáy {a} {unit} và chiều cao {h} {unit}.",
+                ("trapezoid", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình thang có bốn cạnh {a} {unit}, {b} {unit}, {c} {unit}, {d} {unit}.",
+                ("trapezoid", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình thang có hai đáy {a} {unit}, {b} {unit} và chiều cao {h} {unit}.",
+                ("rhombus", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình thoi có cạnh {a} {unit}.",
+                ("rhombus", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình thoi có hai đường chéo {d1} {unit} và {d2} {unit}.",
+                ("parallelogram", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình bình hành có hai cạnh {a} {unit} và {b} {unit}.",
+                ("parallelogram", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình bình hành có đáy {a} {unit} và chiều cao {h} {unit}.",
                 ("cube", GeometryMeasurement.TotalArea) =>
                     $"Tính diện tích toàn phần của hình lập phương có cạnh {a} {unit}.",
                 ("cube", GeometryMeasurement.Volume) =>
@@ -147,6 +206,22 @@ public sealed class GeometryQuizGenerator
                     $"Calculate the perimeter of a rectangle with length {a} {unit} and width {b} {unit}.",
                 ("rectangle", GeometryMeasurement.Area) =>
                     $"Calculate the area of a rectangle with length {a} {unit} and width {b} {unit}.",
+                ("triangle", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the perimeter of a triangle with sides {a} {unit}, {b} {unit}, and {c} {unit}.",
+                ("triangle", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a triangle with base {a} {unit} and height {h} {unit}.",
+                ("trapezoid", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the perimeter of a trapezoid with sides {a} {unit}, {b} {unit}, {c} {unit}, and {d} {unit}.",
+                ("trapezoid", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a trapezoid with bases {a} {unit}, {b} {unit}, and height {h} {unit}.",
+                ("rhombus", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the perimeter of a rhombus with side length {a} {unit}.",
+                ("rhombus", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a rhombus with diagonals {d1} {unit} and {d2} {unit}.",
+                ("parallelogram", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the perimeter of a parallelogram with side lengths {a} {unit} and {b} {unit}.",
+                ("parallelogram", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a parallelogram with base {a} {unit} and height {h} {unit}.",
                 ("cube", GeometryMeasurement.TotalArea) =>
                     $"Calculate the total surface area of a cube with side length {a} {unit}.",
                 ("cube", GeometryMeasurement.Volume) =>
@@ -322,6 +397,32 @@ public sealed class GeometryQuizGenerator
                     ["a"] = Value(4, 31),
                     ["b"] = Value(2, 20)
                 },
+            "triangle" =>
+                CreateTriangleDimensions(),
+            "trapezoid" =>
+                new Dictionary<string, BigInteger>
+                {
+                    ["a"] = Value(4, 18) * 2,
+                    ["b"] = Value(3, 15) * 2,
+                    ["c"] = Value(4, 20),
+                    ["d"] = Value(4, 20),
+                    ["h"] = Value(2, 14)
+                },
+            "rhombus" =>
+                new Dictionary<string, BigInteger>
+                {
+                    ["a"] = Value(3, 18),
+                    ["d1"] = Value(3, 15) * 2,
+                    ["d2"] = Value(2, 14),
+                    ["h"] = Value(2, 14)
+                },
+            "parallelogram" =>
+                new Dictionary<string, BigInteger>
+                {
+                    ["a"] = Value(4, 24),
+                    ["b"] = Value(3, 20),
+                    ["h"] = Value(2, 16)
+                },
             "cube" =>
                 new Dictionary<string, BigInteger>
                 {
@@ -335,6 +436,21 @@ public sealed class GeometryQuizGenerator
                     ["h"] = Value(2, 13)
                 },
             _ => throw new ArgumentOutOfRangeException(nameof(shapeId))
+        };
+    }
+
+    private IReadOnlyDictionary<string, BigInteger> CreateTriangleDimensions()
+    {
+        int a = _random.Next(6, 19) * 2;
+        int b = a + _random.Next(-3, 4);
+        int c = a + _random.Next(-3, 4);
+        int h = _random.Next(2, Math.Max(3, a));
+        return new Dictionary<string, BigInteger>
+        {
+            ["a"] = a,
+            ["b"] = b,
+            ["c"] = c,
+            ["h"] = h
         };
     }
 
@@ -352,6 +468,18 @@ public sealed class GeometryQuizGenerator
         string h = value.TryGetValue("h", out BigInteger hv)
             ? hv.ToString()
             : string.Empty;
+        string c = value.TryGetValue("c", out BigInteger cv)
+            ? cv.ToString()
+            : string.Empty;
+        string d = value.TryGetValue("d", out BigInteger dv)
+            ? dv.ToString()
+            : string.Empty;
+        string d1 = value.TryGetValue("d1", out BigInteger d1v)
+            ? d1v.ToString()
+            : string.Empty;
+        string d2 = value.TryGetValue("d2", out BigInteger d2v)
+            ? d2v.ToString()
+            : string.Empty;
 
         return (shapeId, measurement) switch
         {
@@ -363,6 +491,22 @@ public sealed class GeometryQuizGenerator
                 $"({a} + {b}) × 2",
             ("rectangle", GeometryMeasurement.Area) =>
                 $"{a} × {b}",
+            ("triangle", GeometryMeasurement.Perimeter) =>
+                $"{a} + {b} + {c}",
+            ("triangle", GeometryMeasurement.Area) =>
+                $"({a} × {h}) ÷ 2",
+            ("trapezoid", GeometryMeasurement.Perimeter) =>
+                $"{a} + {b} + {c} + {d}",
+            ("trapezoid", GeometryMeasurement.Area) =>
+                $"(({a} + {b}) × {h}) ÷ 2",
+            ("rhombus", GeometryMeasurement.Perimeter) =>
+                $"{a} × 4",
+            ("rhombus", GeometryMeasurement.Area) =>
+                $"({d1} × {d2}) ÷ 2",
+            ("parallelogram", GeometryMeasurement.Perimeter) =>
+                $"({a} + {b}) × 2",
+            ("parallelogram", GeometryMeasurement.Area) =>
+                $"{a} × {h}",
             ("cube", GeometryMeasurement.TotalArea) =>
                 $"6 × {a} × {a}",
             ("cube", GeometryMeasurement.Volume) =>
@@ -393,6 +537,22 @@ public sealed class GeometryQuizGenerator
             "viên gạch", "tile", "hình vuông", "square"),
         new("square", GeometryMeasurement.Area, GeometryLengthUnit.Millimeter,
             "miếng nhãn", "label", "hình vuông", "square"),
+        new("triangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
+            "mảnh đất", "plot of land", "hình tam giác", "triangle"),
+        new("triangle", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
+            "tấm bìa", "cardboard piece", "hình tam giác", "triangle"),
+        new("trapezoid", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
+            "khu vườn", "garden", "hình thang", "trapezoid"),
+        new("trapezoid", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
+            "thửa ruộng", "field", "hình thang", "trapezoid"),
+        new("rhombus", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
+            "miếng trang trí", "decoration", "hình thoi", "rhombus"),
+        new("rhombus", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
+            "tấm bìa", "cardboard piece", "hình thoi", "rhombus"),
+        new("parallelogram", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
+            "khung trang trí", "decorative frame", "hình bình hành", "parallelogram"),
+        new("parallelogram", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
+            "mảnh sân", "yard section", "hình bình hành", "parallelogram"),
         new("cube", GeometryMeasurement.TotalArea, GeometryLengthUnit.Decimeter,
             "thùng hình lập phương", "cube-shaped box", "hình lập phương", "cube"),
         new("cube", GeometryMeasurement.Volume, GeometryLengthUnit.Centimeter,

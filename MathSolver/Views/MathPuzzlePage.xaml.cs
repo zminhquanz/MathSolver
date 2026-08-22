@@ -77,6 +77,8 @@ public partial class MathPuzzlePage : ContentPage
         ProportionQuizType.Direct;
     private AverageQuizType? _selectedAverageType;
     private PercentageQuizType? _selectedPercentageType;
+    private ArithmeticOperation? _selectedFindXOperation;
+    private GeometryQuizShape? _selectedGeometryShape;
     private bool _isUpdatingSubtypePickers;
     private bool _isAiDiagnosticsVisible;
     private bool _isDeveloperModeSubscribed;
@@ -117,6 +119,10 @@ public partial class MathPuzzlePage : ContentPage
             AverageTypePicker);
         AndroidPickerVisualHelper.Attach(
             PercentageTypePicker);
+        AndroidPickerVisualHelper.Attach(
+            FindXTypePicker);
+        AndroidPickerVisualHelper.Attach(
+            GeometryShapePicker);
 #endif
 
         InteractiveButtonAnimation.SetIsScopeEnabled(
@@ -830,6 +836,60 @@ public partial class MathPuzzlePage : ContentPage
                 PercentageQuizType.FindWholeFromPercentageValue => 3,
                 _ => 0
             };
+
+            FindXTypePicker.Items.Clear();
+            string[] findXKeys =
+            [
+                "Quiz.SubtypeMixed",
+                "Quiz.FindXSum",
+                "Quiz.FindXDifference",
+                "Quiz.FindXProduct",
+                "Quiz.FindXQuotient"
+            ];
+            foreach (string key in findXKeys)
+            {
+                FindXTypePicker.Items.Add(TranslateQuiz(key));
+            }
+            FindXTypePicker.SelectedIndex = _selectedFindXOperation switch
+            {
+                null => 0,
+                ArithmeticOperation.Add => 1,
+                ArithmeticOperation.Subtract => 2,
+                ArithmeticOperation.Multiply => 3,
+                ArithmeticOperation.Divide => 4,
+                _ => 0
+            };
+
+            GeometryShapePicker.Items.Clear();
+            string[] geometryKeys =
+            [
+                "Quiz.SubtypeMixed",
+                "Quiz.GeometrySquare",
+                "Quiz.GeometryRectangle",
+                "Quiz.GeometryTriangle",
+                "Quiz.GeometryTrapezoid",
+                "Quiz.GeometryRhombus",
+                "Quiz.GeometryParallelogram",
+                "Quiz.GeometryCube",
+                "Quiz.GeometryRectangularPrism"
+            ];
+            foreach (string key in geometryKeys)
+            {
+                GeometryShapePicker.Items.Add(TranslateQuiz(key));
+            }
+            GeometryShapePicker.SelectedIndex = _selectedGeometryShape switch
+            {
+                null => 0,
+                GeometryQuizShape.Square => 1,
+                GeometryQuizShape.Rectangle => 2,
+                GeometryQuizShape.Triangle => 3,
+                GeometryQuizShape.Trapezoid => 4,
+                GeometryQuizShape.Rhombus => 5,
+                GeometryQuizShape.Parallelogram => 6,
+                GeometryQuizShape.Cube => 7,
+                GeometryQuizShape.RectangularPrism => 8,
+                _ => 0
+            };
         }
         finally
         {
@@ -886,6 +946,60 @@ public partial class MathPuzzlePage : ContentPage
 
         _selectedPercentageType = selected;
         OnSubtypeSelectionChanged(QuizProblemKind.Percentage);
+    }
+
+    private void OnFindXTypeChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers)
+        {
+            return;
+        }
+
+        ArithmeticOperation? selected = FindXTypePicker.SelectedIndex switch
+        {
+            1 => ArithmeticOperation.Add,
+            2 => ArithmeticOperation.Subtract,
+            3 => ArithmeticOperation.Multiply,
+            4 => ArithmeticOperation.Divide,
+            _ => null
+        };
+
+        if (_selectedFindXOperation == selected)
+        {
+            return;
+        }
+
+        _selectedFindXOperation = selected;
+        OnSubtypeSelectionChanged(QuizProblemKind.FindX);
+    }
+
+    private void OnGeometryShapeChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers)
+        {
+            return;
+        }
+
+        GeometryQuizShape? selected = GeometryShapePicker.SelectedIndex switch
+        {
+            1 => GeometryQuizShape.Square,
+            2 => GeometryQuizShape.Rectangle,
+            3 => GeometryQuizShape.Triangle,
+            4 => GeometryQuizShape.Trapezoid,
+            5 => GeometryQuizShape.Rhombus,
+            6 => GeometryQuizShape.Parallelogram,
+            7 => GeometryQuizShape.Cube,
+            8 => GeometryQuizShape.RectangularPrism,
+            _ => null
+        };
+
+        if (_selectedGeometryShape == selected)
+        {
+            return;
+        }
+
+        _selectedGeometryShape = selected;
+        OnSubtypeSelectionChanged(QuizProblemKind.Geometry);
     }
 
     private void OnSubtypeSelectionChanged(QuizProblemKind expectedKind)
@@ -953,7 +1067,9 @@ public partial class MathPuzzlePage : ContentPage
             _selectedFractionOperation,
             _selectedProportionType,
             _selectedAverageType,
-            _selectedPercentageType);
+            _selectedPercentageType,
+            _selectedFindXOperation,
+            _selectedGeometryShape);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -988,6 +1104,16 @@ public partial class MathPuzzlePage : ContentPage
                 {
                     PercentageType = _selectedPercentageType
                 },
+            QuizProblemKind.FindX =>
+                request.Value with
+                {
+                    FindXOperation = _selectedFindXOperation
+                },
+            QuizProblemKind.Geometry =>
+                request.Value with
+                {
+                    GeometryShape = _selectedGeometryShape
+                },
             _ => request
         };
     }
@@ -1007,11 +1133,17 @@ public partial class MathPuzzlePage : ContentPage
             kind == QuizProblemKind.Average;
         bool showPercentageType =
             kind == QuizProblemKind.Percentage;
+        bool showFindXType =
+            kind == QuizProblemKind.FindX;
+        bool showGeometryShape =
+            kind == QuizProblemKind.Geometry;
 
         ProblemOperationPanel.IsVisible = showOperations;
         ProportionTypePanel.IsVisible = showProportionType;
         AverageTypePanel.IsVisible = showAverageType;
         PercentageTypePanel.IsVisible = showPercentageType;
+        FindXTypePanel.IsVisible = showFindXType;
+        GeometryShapePanel.IsVisible = showGeometryShape;
 
         if (showProportionType)
         {
@@ -1268,7 +1400,8 @@ public partial class MathPuzzlePage : ContentPage
                     QuizProblemKind.Geometry =>
                         _geometryQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
-                            AppLanguageManager.CurrentLanguage),
+                            AppLanguageManager.CurrentLanguage,
+                            problemRequest.GeometryShape),
                     QuizProblemKind.Arithmetic =>
                         _quizGenerator.Generate(
                             _selectedMode,
@@ -1279,7 +1412,8 @@ public partial class MathPuzzlePage : ContentPage
                             problemRequest.FractionOperation),
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(
-                            _selectedMode),
+                            _selectedMode,
+                            problemRequest.FindXOperation),
                     QuizProblemKind.Proportion =>
                         _proportionQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
@@ -2311,6 +2445,8 @@ public partial class MathPuzzlePage : ContentPage
         OperationPicker.IsEnabled = !isLocked;
         AverageTypePicker.IsEnabled = !isLocked;
         PercentageTypePicker.IsEnabled = !isLocked;
+        FindXTypePicker.IsEnabled = !isLocked;
+        GeometryShapePicker.IsEnabled = !isLocked;
 
         ProblemAddButton.IsEnabled = !isLocked;
         ProblemSubtractButton.IsEnabled = !isLocked;
@@ -2367,6 +2503,8 @@ public partial class MathPuzzlePage : ContentPage
         OperationPicker.IsEnabled = !isBusy;
         AverageTypePicker.IsEnabled = !isBusy;
         PercentageTypePicker.IsEnabled = !isBusy;
+        FindXTypePicker.IsEnabled = !isBusy;
+        GeometryShapePicker.IsEnabled = !isBusy;
 
         UpdateCreateOrRegenerateQuestionButtonState();
         UpdateAiTeacherState();

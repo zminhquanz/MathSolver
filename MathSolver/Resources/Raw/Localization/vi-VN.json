@@ -1388,7 +1388,21 @@
     "Quiz.PercentageValue": "Tìm giá trị của một số phần trăm",
     "Quiz.PercentageWhole": "Biết giá trị phần trăm → tìm toàn bộ",
     "Quiz.AverageQuestionTitle": "Bài toán trung bình cộng",
-    "Quiz.PercentageQuestionTitle": "Bài toán phần trăm"
+    "Quiz.PercentageQuestionTitle": "Bài toán phần trăm",
+    "Quiz.FindXTypeTitle": "Chọn dạng Tìm x",
+    "Quiz.FindXSum": "Tổng",
+    "Quiz.FindXDifference": "Hiệu",
+    "Quiz.FindXProduct": "Tích",
+    "Quiz.FindXQuotient": "Thương",
+    "Quiz.GeometryShapeTitle": "Chọn loại hình",
+    "Quiz.GeometrySquare": "Hình vuông",
+    "Quiz.GeometryRectangle": "Hình chữ nhật",
+    "Quiz.GeometryCube": "Hình lập phương",
+    "Quiz.GeometryRectangularPrism": "Hình hộp chữ nhật",
+    "Quiz.GeometryTriangle": "Hình tam giác",
+    "Quiz.GeometryTrapezoid": "Hình thang",
+    "Quiz.GeometryRhombus": "Hình thoi",
+    "Quiz.GeometryParallelogram": "Hình bình hành"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

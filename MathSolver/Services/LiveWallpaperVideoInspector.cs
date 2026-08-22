@@ -16,7 +16,8 @@ public enum LiveWallpaperVideoValidationError
 {
     NotH264,
     HardwareH264DecoderUnavailable,
-    DurationTooLong
+    DurationTooLong,
+    ResolutionTooHigh
 }
 
 public sealed class LiveWallpaperVideoValidationException : Exception
@@ -36,7 +37,9 @@ public readonly record struct LiveWallpaperVideoInspection(
     bool CanUseHardwarePreferredH264Path,
     string CodecDisplayName,
     string? HardwareDecoderName,
-    TimeSpan Duration);
+    TimeSpan Duration,
+    int Width,
+    int Height);
 
 /// <summary>
 /// Validates the MP4 wallpaper before it replaces the currently working file.
@@ -48,6 +51,11 @@ public readonly record struct LiveWallpaperVideoInspection(
 public static class LiveWallpaperVideoInspector
 {
     public const double MaximumDurationSeconds = 120d;
+
+    // Mobile wallpaper decoding is capped at a 1440p-class pixel budget. This
+    // still covers 1080p and common 1.5K phone panels while preventing 4K
+    // decoder surface pools from consuming hundreds of MB in the app process.
+    public const long AndroidMaximumDecodedPixels = 2560L * 1440L;
 
 #if WINDOWS
     private static readonly SemaphoreSlim WindowsCodecQueryGate = new(1, 1);
@@ -77,13 +85,31 @@ public static class LiveWallpaperVideoInspector
             CanUseHardwarePreferredH264Path: true,
             CodecDisplayName: "H.264 / AVC",
             HardwareDecoderName: null,
-            Duration: TimeSpan.Zero);
+            Duration: TimeSpan.Zero,
+            Width: 0,
+            Height: 0);
 #endif
     }
 
     public static bool IsDurationAllowed(TimeSpan duration) =>
         duration <= TimeSpan.Zero ||
         duration.TotalSeconds <= MaximumDurationSeconds;
+
+    public static bool IsResolutionAllowed(
+        LiveWallpaperVideoInspection inspection)
+    {
+#if ANDROID
+        if (inspection.Width <= 0 || inspection.Height <= 0)
+        {
+            return true;
+        }
+
+        return (long)inspection.Width * inspection.Height <=
+            AndroidMaximumDecodedPixels;
+#else
+        return true;
+#endif
+    }
 
 #if WINDOWS
     private static async Task<LiveWallpaperVideoInspection> InspectWindowsAsync(
@@ -135,7 +161,9 @@ public static class LiveWallpaperVideoInspector
             hasDecoder,
             "H.264 / AVC",
             decoderName,
-            clip.OriginalDuration);
+            clip.OriginalDuration,
+            checked((int)properties.Width),
+            checked((int)properties.Height));
     }
 
     private static async Task<(bool HasDecoder, string? DecoderName)>
@@ -188,6 +216,8 @@ public static class LiveWallpaperVideoInspector
         bool foundVideoTrack = false;
         MediaFormat? h264Format = null;
         TimeSpan duration = TimeSpan.Zero;
+        int width = 0;
+        int height = 0;
 
         for (int index = 0; index < extractor.TrackCount; index++)
         {
@@ -226,6 +256,19 @@ public static class LiveWallpaperVideoInspector
                 }
             }
 
+            if (format is not null)
+            {
+                if (format.ContainsKey(MediaFormat.KeyWidth))
+                {
+                    width = format.GetInteger(MediaFormat.KeyWidth);
+                }
+
+                if (format.ContainsKey(MediaFormat.KeyHeight))
+                {
+                    height = format.GetInteger(MediaFormat.KeyHeight);
+                }
+            }
+
             if (isH264)
             {
                 h264Format = format;
@@ -241,7 +284,9 @@ public static class LiveWallpaperVideoInspector
                 CanUseHardwarePreferredH264Path: false,
                 CodecDisplayName: "H.264 / AVC",
                 HardwareDecoderName: null,
-                Duration: duration);
+                Duration: duration,
+                Width: width,
+                Height: height);
         }
 
         string? hardwareDecoderName = null;
@@ -322,7 +367,9 @@ public static class LiveWallpaperVideoInspector
                 !string.IsNullOrWhiteSpace(hardwareDecoderName),
             CodecDisplayName: "H.264 / AVC",
             HardwareDecoderName: hardwareDecoderName,
-            Duration: duration);
+            Duration: duration,
+            Width: width,
+            Height: height);
     }
 #endif
 }

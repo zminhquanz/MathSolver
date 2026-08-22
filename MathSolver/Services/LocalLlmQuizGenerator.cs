@@ -231,7 +231,8 @@ public sealed class LocalLlmQuizGenerator
                     QuizProblemKind.Geometry =>
                         _geometryQuizGenerator.Generate(
                             mode,
-                            language),
+                            language,
+                            problemRequest.GeometryShape),
                     QuizProblemKind.Arithmetic =>
                         CreateNaturalLanguageContract(
                             mode,
@@ -241,7 +242,9 @@ public sealed class LocalLlmQuizGenerator
                             mode,
                             problemRequest.FractionOperation),
                     QuizProblemKind.FindX =>
-                        _findXQuizGenerator.Generate(mode),
+                        _findXQuizGenerator.Generate(
+                            mode,
+                            problemRequest.FindXOperation),
                     QuizProblemKind.Proportion =>
                         _proportionQuizGenerator.GenerateContract(
                             mode,

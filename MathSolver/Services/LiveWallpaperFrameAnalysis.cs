@@ -63,7 +63,10 @@ public static class LiveWallpaperFrameAnalysis
 {
     private const int CurrentProfileVersion = 1;
     private const double MinimumSampleIntervalSeconds = 1.0d;
-    private const int MaximumSampleCount = 48;
+    // Adaptive text only needs coarse scene brightness, not video-rate data.
+    // Keeping this small is important on mobile because thumbnail extraction
+    // opens a second native decode path during one-time profile generation.
+    private const int MaximumSampleCount = 16;
     private const int SampleWidth = 24;
     private const int SampleHeight = 14;
 
@@ -140,10 +143,19 @@ public static class LiveWallpaperFrameAnalysis
         }
 
 #if WINDOWS
-        return await AnalyzeWindowsAsync(
-            path,
-            duration,
-            cancellationToken);
+        LiveWallpaperFrameProfile? profile =
+            await AnalyzeWindowsAsync(
+                path,
+                duration,
+                cancellationToken);
+
+        // MediaComposition/MediaClip are WinRT objects whose native decoder
+        // surfaces can otherwise remain accounted to the process until a much
+        // later GC. The analysis is rare (once per imported wallpaper), so a
+        // background cleanup after the method's native locals have gone out of
+        // scope trades a tiny one-time cost for a much lower steady RAM floor.
+        ScheduleWindowsNativeMediaCleanup();
+        return profile;
 #elif ANDROID
         return await Task.Run(
             () => AnalyzeAndroid(
@@ -230,10 +242,10 @@ public static class LiveWallpaperFrameAnalysis
             return MinimumSampleIntervalSeconds;
         }
 
-        // Cap thumbnail decodes to 48 per video. Short clips still sample at
-        // one-second resolution; a 120-second clip samples about every 2.5 s.
-        // This cuts native decoder/thumbnail memory churn substantially while
-        // remaining responsive enough for wallpaper contrast changes.
+        // Cap thumbnail decodes to 16 per video. Short clips still sample at
+        // one-second resolution; a 120-second clip samples about every 7.5 s.
+        // Text polarity uses hysteresis, so this is enough to follow major scene
+        // changes without retaining dozens of native thumbnail decode surfaces.
         return Math.Max(
             MinimumSampleIntervalSeconds,
             duration.TotalSeconds / MaximumSampleCount);
@@ -271,6 +283,25 @@ public static class LiveWallpaperFrameAnalysis
     }
 
 #if WINDOWS
+    private static void ScheduleWindowsNativeMediaCleanup()
+    {
+        _ = Task.Run(
+            () =>
+            {
+                try
+                {
+                    GC.Collect(
+                        1,
+                        GCCollectionMode.Optimized,
+                        blocking: false,
+                        compacting: false);
+                }
+                catch
+                {
+                }
+            });
+    }
+
     private static async Task<LiveWallpaperFrameProfile?> AnalyzeWindowsAsync(
         string path,
         TimeSpan duration,

@@ -136,7 +136,8 @@ public partial class SettingsPage : ContentPage
         LoadCurrentSettings();
 
         if (LiveWallpaperManager.HasWallpaper &&
-            !LiveWallpaperManager.IsHardwareH264Validated)
+            (!LiveWallpaperManager.IsHardwareH264Validated ||
+             !LiveWallpaperFrameAnalysis.HasCurrentProfile))
         {
             _ = ValidateExistingLiveWallpaperAsync();
         }
@@ -569,6 +570,10 @@ public partial class SettingsPage : ContentPage
                         useEnglish
                             ? "Live wallpaper videos are limited to 120 seconds. Choose a shorter MP4 clip."
                             : "Video hình nền động được giới hạn tối đa 120 giây. Hãy chọn một MP4 ngắn hơn.",
+                    LiveWallpaperVideoValidationError.ResolutionTooHigh =>
+                        useEnglish
+                            ? "On Android, MP4 live wallpapers are limited to a 1440p-class pixel budget to keep decoder memory low. Choose a 1080p or 1440p-class H.264 video."
+                            : "Trên Android, MP4 hình nền động được giới hạn ở mức điểm ảnh tương đương 1440p để giảm RAM của bộ giải mã. Hãy chọn video H.264 1080p hoặc mức 1440p.",
                     _ =>
                         useEnglish
                             ? "The selected MP4 is not compatible with the optimized wallpaper path."
@@ -878,8 +883,8 @@ public partial class SettingsPage : ContentPage
 
         LiveWallpaperNoteLabel.Text =
             useEnglish
-                ? "MP4 wallpapers must use H.264 / AVC and be no longer than 120 seconds. Math Solver accepts a validated file first, then builds the low-resolution brightness timeline in the background and automatically switches the learning UI between light and dark text/glass while playback stays hardware-preferred."
-                : "Hình nền MP4 phải dùng H.264 / AVC và dài tối đa 120 giây. Math Solver nhận file H.264 hợp lệ trước, sau đó phân tích timeline độ sáng độ phân giải thấp ở nền rồi tự chuyển chữ/kính sáng hoặc tối khi phát; video vẫn ưu tiên giải mã phần cứng.";
+                ? "MP4 wallpapers must use H.264 / AVC and be no longer than 120 seconds. Android also rejects 4K-class clips to keep decoder RAM low. Brightness analysis is deferred whenever live playback is active, so Math Solver never keeps two video decoder pipelines alive at once."
+                : "Hình nền MP4 phải dùng H.264 / AVC và dài tối đa 120 giây. Android cũng chặn video cỡ 4K để giữ RAM bộ giải mã thấp. Phân tích độ sáng sẽ hoãn khi live wallpaper đang phát, nên Math Solver không giữ hai pipeline giải mã video cùng lúc.";
 
         ResultDisplaySectionTitleLabel.Text =
             useEnglish

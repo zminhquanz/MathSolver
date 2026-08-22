@@ -301,7 +301,7 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 
 - `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. It keeps running during local AI inference and stops only when the owning tab is inactive or animated backgrounds are disabled.
 - Runtime memory is lifecycle-bound for both backends. `GraphicsView`, its drawable, and its 24 FPS timer are now created lazily and removed entirely when unused; `MediaElement` is created lazily only on an active MP4 page, its `Source` is detached as soon as that page becomes inactive, and the player object is retired after a short grace period when MP4 mode is no longer needed.
-- `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 2 forces older saved wallpapers to be rechecked against the duration rule.
+- `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 3 forces older saved wallpapers to be rechecked against the duration rule and the Android decoded-pixel memory budget.
 
 The Settings UI exposes the mode with one Picker. MP4 controls are shown only for MP4 mode; the Choose MP4 and Remove wallpaper buttons use equal 50/50 columns on Windows and Android. Glass resources remain driven by `LiveWallpaperManager.IsEnabled`; the built-in math animation uses a lighter readability scrim than arbitrary user video.
 
@@ -309,7 +309,7 @@ The Settings UI exposes the mode with one Picker. MP4 controls are shown only fo
 ### MP4 adaptive frame contrast
 
 - MP4 import uses a two-stage fast-accept path: copy + H.264/duration/hardware validation is awaited, then the valid wallpaper is committed and the Settings UI updates immediately. Low-resolution luminance analysis is optional background work and must never block file acceptance. On WinUI, native metadata inspection starts in parallel with the OS-level file copy and the system H.264 codec query is cached after the first use.
-- Brightness analysis caps native thumbnail extraction at 48 samples per clip: short clips keep ~1-second resolution while longer clips increase the interval automatically (about 2.5 seconds for a 120-second clip). This reduces transient decoder buffers/RAM churn. Windows uses MediaComposition thumbnails and clears composition clip references promptly; Android uses MediaMetadataRetriever scaled frames when available.
+- Brightness analysis caps native thumbnail extraction at 16 samples per clip: short clips keep ~1-second resolution while longer clips increase the interval automatically (about 7.5 seconds for a 120-second clip). This keeps adaptive polarity useful while sharply reducing native decoder/thumbnail churn. Optional analysis is never allowed to overlap live MP4 playback; if playback starts, analysis is canceled/deferred until the player becomes inactive. Windows clears composition clip references and requests a post-analysis managed/native-wrapper cleanup; Android disposes MediaMetadataRetriever/bitmaps promptly.
 - The timeline is stored beside the private wallpaper file. Runtime playback does **not** decode a second video stream: `LiveWallpaperView` only reads `MediaElement.Position` every 500 ms and looks up the nearest precomputed luminance byte.
 - `AppThemeManager` uses hysteresis before switching polarity, preventing bright/dark text from flickering around a threshold. Only wallpaper-specific resources are updated: `WallpaperTextPrimary/Secondary`, glass surfaces, borders, and the readability scrim. The global app theme, Settings, and Hardware UI are not changed.
 - When MP4 is dark, the learning area uses light text + dark glass; on bright frames it uses dark text + light glass. Math Animation continues to follow the selected app Light/Dark theme.
@@ -318,8 +318,15 @@ The Settings UI exposes the mode with one Picker. MP4 controls are shown only fo
 
 - Switching between the built-in `GraphicsView` math animation and H.264 MP4 is applied live without restarting the app.
 - `LiveWallpaperView` coalesces settings/policy refreshes to the next UI frame so WinUI Picker selection, MediaElement state changes, and the GraphicsView timer do not run re-entrantly.
-- A mode switch never tears down the native player synchronously while the Picker is closing. When leaving MP4, playback pauses first and a 750 ms grace period retires `MediaElement` + `Source` if MP4 is still unused; switching back quickly cancels that retirement. Page inactivity/unload releases the source immediately.
+- A mode switch never tears down the native player synchronously while the Picker is closing. When leaving MP4 for Math Animation, the source is detached immediately and only the empty `MediaElement` shell gets a short 250 ms grace period so Picker switching stays re-entrancy-safe. Page inactivity/unload tears down the player immediately.
 - `AppThemeManager.RefreshVisualResources()` refreshes only wallpaper/glass/scrim resources. It must not reapply `UserAppTheme` or raise the global `ThemeChanged` event for a wallpaper-only setting change.
+
+### Live wallpaper memory ownership (2026-08-22)
+
+- Shell keeps multiple learning pages cached, but only **one** `LiveWallpaperView` may own an animated background at a time. Ownership is guarded by a static weak reference; a newly appearing tab immediately retires native resources held by a stale previous owner. This prevents multiple cached `MediaElement`/ExoPlayer/MediaPlayer decoders from accumulating.
+- Removing a MediaElement from the MAUI visual tree is not treated as sufficient cleanup. Math Solver first detaches `Source`, disables autoplay/loop, removes the view, then explicitly disconnects its MAUI handler so native decoder queues, surfaces and textures are released without waiting for GC. GraphicsView handlers are also disconnected when Math Animation is disabled/inactive.
+- Android MP4 wallpapers use a 1440p-class decoded-pixel cap (3,686,400 pixels). 4K clips are rejected on Android because their decoder surface pools are wasteful for an in-app background and can cause RAM pressure/UI jank even with hardware decode. Windows keeps its desktop resolution freedom.
+- Frame-profile generation and live MP4 playback are mutually exclusive decoder workloads. Adaptive metadata is deferred while the wallpaper is actively playing and resumes only when playback becomes inactive, avoiding a second decoder competing for RAM.
 
 ### Adaptive wallpaper text polarity fine-tuning (2026-08)
 
@@ -343,3 +350,17 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 - Ratio reference contexts use a concrete subset noun (for example female students, story books, mango trees, red marbles) and ask for that subset's percentage of the whole without repeating the numeric values in the final question.
 - The LLM prompt explicitly forbids inventing a complementary/secondary subgroup or assigning another count to it.
 - `ValidatePercentageRatioFacts` rejects any extra/repeated numeric occurrence with `PercentageRatioFactsMismatch`; this prevents internally inconsistent stories such as total 200 students + 50 female + 50 male unless the remaining 100 students are explained (such extra partition data is not part of this basic ratio contract).
+
+## Math Puzzle subtype expansion (2026-08-22)
+
+- Find X now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Sum, Difference, Product, and Quotient. `QuizProblemRequest.FindXOperation` carries the selected relationship through `QuizProblemTypeCatalog` into both `FindXQuizGenerator` and `LocalLlmQuizGenerator`; Mixed keeps it null so C# chooses randomly.
+- Geometry now has a second-level shape Picker shared by Algorithm and AI/LLM: Mixed, Square, Rectangle, Triangle, Trapezoid, Rhombus, Parallelogram, Cube, and Rectangular Prism. `QuizProblemRequest.GeometryShape` filters the C# geometry story-template catalog before the contract is generated, so the AI cannot silently switch to a different shape. Only exact-integer-friendly quiz shapes are included; pi-based circle/sphere/cylinder/cone questions remain outside this quiz path for now.
+- Average and Percentage generators use broader C# context catalogs. Average problems rotate through notebooks/books/fruit mass/pen boxes, distribution contexts, names, indirect-data objects, and two-group contexts while preserving the same six mathematical contracts. Percentage problems rotate through books, trees, students, marbles, flowers, pens, oranges, and tickets, with concrete subset nouns for ratio/value/whole problems.
+- Diversity is owned by C#, not by free-form model creativity. The LLM continues to receive one authoritative reference contract and the existing role-aware validators still own numeric facts, requested quantity, unit, and semantic family.
+
+### Live wallpaper static-restore resource safety
+
+- Wallpaper glass/scrim resource refreshes are coalesced and dispatched after a short UI-frame delay instead of mutating the application `ResourceDictionary` inline from Switch/Picker callbacks.
+- This allows `LiveWallpaperView` to disconnect `MediaElement`/`GraphicsView` native handlers before WinUI `DynamicResource` targets are repainted when animated wallpaper is disabled.
+- Transient WinUI `COMException` during native teardown is retried on the dispatcher and is never allowed to crash the app.
+- Existing `SolidColorBrush` instances are reused and only updated when their color actually changes, reducing allocations and resource churn during adaptive MP4 contrast transitions.
