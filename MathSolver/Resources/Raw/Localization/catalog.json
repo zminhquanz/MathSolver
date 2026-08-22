@@ -18,6 +18,11 @@
       "mode": "exact"
     },
     {
+      "key": "Formula.Tabs.Average",
+      "source": "x̄  Trung bình cộng",
+      "mode": "exact"
+    },
+    {
       "key": "Formula.Tabs.Geometry",
       "source": "△  Hình học",
       "mode": "exact"

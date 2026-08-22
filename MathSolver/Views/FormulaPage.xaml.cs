@@ -191,6 +191,9 @@ public partial class FormulaPage : ContentPage
             MotionContent);
 
         ResetTransitionTransform(
+            AverageContent);
+
+        ResetTransitionTransform(
             FormulaSubTabAnimationHost);
 
         // Root không còn là animation host. Giữ root ở trạng thái chuẩn để
@@ -220,6 +223,10 @@ public partial class FormulaPage : ContentPage
         MotionContent.IsVisible =
             _selectedSubTab ==
             FormulaSubTab.Motion;
+
+        AverageContent.IsVisible =
+            _selectedSubTab ==
+            FormulaSubTab.Average;
 
         GeometryContent.IsVisible =
             _selectedSubTab ==
@@ -558,6 +565,7 @@ public partial class FormulaPage : ContentPage
         UnknownComponentContent.CancelAnimations();
         ProportionContent.CancelAnimations();
         MotionContent.CancelAnimations();
+        AverageContent.CancelAnimations();
         GeometryContent.CancelAnimations();
     }
 
@@ -741,6 +749,14 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.Motion);
     }
 
+    private async void OnAverageTabClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await SwitchFormulaSubTabAsync(
+            FormulaSubTab.Average);
+    }
+
     private async Task SwitchFormulaSubTabAsync(
         FormulaSubTab selectedTab)
     {
@@ -885,6 +901,10 @@ public partial class FormulaPage : ContentPage
             selectedTab ==
             FormulaSubTab.Motion;
 
+        AverageContent.IsVisible =
+            selectedTab ==
+            FormulaSubTab.Average;
+
         GeometryContent.IsVisible =
             selectedTab ==
             FormulaSubTab.Geometry;
@@ -897,6 +917,9 @@ public partial class FormulaPage : ContentPage
 
         ResetTransitionTransform(
             MotionContent);
+
+        ResetTransitionTransform(
+            AverageContent);
 
         ResetTransitionTransform(
             GeometryContent);
@@ -920,6 +943,13 @@ public partial class FormulaPage : ContentPage
 
             RefreshUnknownComponentLayout(
                 force: true);
+            return;
+        }
+
+        if (selectedTab ==
+            FormulaSubTab.Average)
+        {
+            AverageFormulaViewControl.RefreshLocalization();
             return;
         }
 
@@ -959,6 +989,9 @@ public partial class FormulaPage : ContentPage
 
             FormulaSubTab.Motion =>
                 MotionContent,
+
+            FormulaSubTab.Average =>
+                AverageContent,
 
             FormulaSubTab.Geometry =>
                 GeometryContent,
@@ -1000,6 +1033,11 @@ public partial class FormulaPage : ContentPage
             _selectedSubTab == FormulaSubTab.Motion);
 
         ApplyAndroidSubTabState(
+            AndroidAverageTabButton,
+            AndroidAverageTabIndicator,
+            _selectedSubTab == FormulaSubTab.Average);
+
+        ApplyAndroidSubTabState(
             AndroidFormulaGeometryTabButton,
             AndroidFormulaGeometryTabIndicator,
             _selectedSubTab == FormulaSubTab.Geometry);
@@ -1007,6 +1045,7 @@ public partial class FormulaPage : ContentPage
         ResetSubTabButton(UnknownComponentTabButton);
         ResetSubTabButton(ProportionTabButton);
         ResetSubTabButton(MotionTabButton);
+        ResetSubTabButton(AverageTabButton);
         ResetSubTabButton(GeometryTabButton);
 
         Button selectedButton =
@@ -1015,6 +1054,7 @@ public partial class FormulaPage : ContentPage
                 FormulaSubTab.UnknownComponent => UnknownComponentTabButton,
                 FormulaSubTab.Proportion => ProportionTabButton,
                 FormulaSubTab.Motion => MotionTabButton,
+                FormulaSubTab.Average => AverageTabButton,
                 FormulaSubTab.Geometry => GeometryTabButton,
                 _ => UnknownComponentTabButton
             };
@@ -1071,6 +1111,7 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.UnknownComponent => AndroidUnknownComponentTabButton,
             FormulaSubTab.Proportion => AndroidProportionTabButton,
             FormulaSubTab.Motion => AndroidMotionTabButton,
+            FormulaSubTab.Average => AndroidAverageTabButton,
             FormulaSubTab.Geometry => AndroidFormulaGeometryTabButton,
             _ => AndroidUnknownComponentTabButton
         };
@@ -1662,6 +1703,8 @@ public partial class FormulaPage : ContentPage
                         force: true);
                 }
 
+                AverageFormulaViewControl.RefreshLocalization();
+
                 LocalizationService.Attach(
                     this);
             });
@@ -1852,6 +1895,7 @@ public partial class FormulaPage : ContentPage
         UnknownComponent,
         Proportion,
         Motion,
+        Average,
         Geometry
     }
 }

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentView
+    x:Class="MathSolver.Views.AverageFormulaView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:MathSolver.Models"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
+    BackgroundColor="Transparent"
+    HorizontalOptions="Fill"
+    VerticalOptions="Fill">
+
+    <ScrollView
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill"
+        VerticalScrollBarVisibility="Default">
+
+        <VerticalStackLayout
+            Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,28', Default='20,16,20,28'}"
+            Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
+            HorizontalOptions="Fill">
+
+            <VerticalStackLayout
+                Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
+                Spacing="2">
+
+                <Label
+                    Text="x̄  ∑  ÷"
+                    FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource PrimaryColor}" />
+
+                <Label
+                    x:Name="PageTitleLabel"
+                    FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                <Label
+                    x:Name="PageSubtitleLabel"
+                    FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
+                    HorizontalTextAlignment="Center"
+                    LineBreakMode="WordWrap"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+            </VerticalStackLayout>
+
+            <!-- Minh họa chia đều -->
+            <Border
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        x:Name="InteractiveTitleLabel"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Label
+                        x:Name="InteractiveSubtitleLabel"
+                        FontSize="16"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                    <Border
+                        Padding="12"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                        StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+
+                        <GraphicsView
+                            x:Name="AverageGraphicsView"
+                            HeightRequest="{OnPlatform Android=230, WinUI=285, Default=260}"
+                            HorizontalOptions="Fill"
+                            InputTransparent="True" />
+                    </Border>
+
+                    <Border
+                        Padding="14,11"
+                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                        StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label
+                                x:Name="InteractiveSumLabel"
+                                FontSize="16"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                            <controls:FractionExpressionView
+                                x:Name="InteractiveFormulaView"
+                                MathFontSize="{OnPlatform Android=20, WinUI=24, Default=22}"
+                                HorizontalTextAlignment="Center"
+                                WrapContent="True"
+                                TokenSpacing="7" />
+
+                            <Label
+                                x:Name="InteractiveMeaningLabel"
+                                FontSize="15"
+                                HorizontalTextAlignment="Center"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <VerticalStackLayout
+                        x:Name="ValueSliderContainer"
+                        Spacing="8" />
+
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10">
+                        <Button
+                            x:Name="RemoveValueButton"
+                            Grid.Column="0"
+                            HeightRequest="44"
+                            FontAttributes="Bold"
+                            CornerRadius="11"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            BorderColor="{DynamicResource WallpaperBorderColor}"
+                            BorderWidth="1"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            Clicked="OnRemoveValueClicked" />
+
+                        <Button
+                            x:Name="AddValueButton"
+                            Grid.Column="1"
+                            HeightRequest="44"
+                            FontAttributes="Bold"
+                            CornerRadius="11"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            BorderColor="{DynamicResource WallpaperBorderColor}"
+                            BorderWidth="1"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            Clicked="OnAddValueClicked" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Sáu dạng toán -->
+            <Border
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        x:Name="SixTypesTitleLabel"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Label
+                        x:Name="SixTypesSubtitleLabel"
+                        FontSize="16"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                    <VerticalStackLayout
+                        x:Name="FormulaCardsLayout"
+                        BindableLayout.ItemsSource="{Binding FormulaItems}"
+                        Spacing="10">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:AverageFormulaItem">
+                                <Border
+                                    Padding="14"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="7">
+                                        <Label
+                                            Text="{Binding Title}"
+                                            FontSize="18"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                        <Border
+                                            Padding="11,8"
+                                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                            StrokeThickness="1">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="9" />
+                                            </Border.StrokeShape>
+                                            <Label
+                                                Text="{Binding Formula}"
+                                                FontSize="18"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="Center"
+                                                LineBreakMode="WordWrap"
+                                                TextColor="{DynamicResource PrimaryColor}" />
+                                        </Border>
+
+                                        <Label
+                                            Text="{Binding Rule}"
+                                            FontSize="15"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                        <Label
+                                            Text="{Binding Example}"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                        <Label
+                                            Text="{Binding Solution}"
+                                            FontSize="15"
+                                            LineHeight="1.2"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

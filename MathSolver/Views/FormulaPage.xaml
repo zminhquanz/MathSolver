@@ -87,6 +87,22 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
+                    <Grid MinimumWidthRequest="138" RowDefinitions="48,3">
+                        <Button
+                            x:Name="AndroidAverageTabButton"
+                            Grid.Row="0"
+                            Text="{localization:Translate Formula.Tabs.Average}"
+                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                            Clicked="OnAverageTabClicked" />
+                        <BoxView
+                            x:Name="AndroidAverageTabIndicator"
+                            Grid.Row="1"
+                            HeightRequest="3"
+                            Margin="10,0"
+                            IsVisible="False"
+                            BackgroundColor="{DynamicResource PrimaryColor}" />
+                    </Grid>
+
                     <Grid MinimumWidthRequest="102" RowDefinitions="48,3">
                         <Button
                             x:Name="AndroidFormulaGeometryTabButton"
@@ -127,7 +143,7 @@
 
             <Grid
                 x:Name="FormulaSubTabGrid"
-                ColumnDefinitions="{OnPlatform Android='*,*', WinUI='*,*,*,*', Default='*,*,*,*'}"
+                ColumnDefinitions="{OnPlatform Android='*,*', WinUI='*,*,*,*,*', Default='*,*,*,*,*'}"
                 RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
                 ColumnSpacing="6"
                 RowSpacing="6">
@@ -178,9 +194,25 @@
                     Clicked="OnMotionTabClicked" />
 
                 <Button
-                    x:Name="GeometryTabButton"
+                    x:Name="AverageTabButton"
                     Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
                     Grid.Column="{OnPlatform Android=1, WinUI=3, Default=3}"
+                    Text="{localization:Translate Formula.Tabs.Average}"
+                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    Padding="8,0"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                    BorderColor="{DynamicResource WallpaperBorderColor}"
+                    BorderWidth="1"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
+                    Clicked="OnAverageTabClicked" />
+
+                <Button
+                    x:Name="GeometryTabButton"
+                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                    Grid.Column="{OnPlatform Android=1, WinUI=4, Default=4}"
                     Text="{localization:Translate Formula.Tabs.Geometry}"
                     HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
                     Padding="8,0"
@@ -724,6 +756,13 @@
                 x:Name="MotionContent"
                 IsVisible="False">
                 <views:MotionFormulaView />
+            </Grid>
+
+            <!-- TAB: TRUNG BÌNH CỘNG -->
+            <Grid
+                x:Name="AverageContent"
+                IsVisible="False">
+                <views:AverageFormulaView x:Name="AverageFormulaViewControl" />
             </Grid>
 
             <!-- TAB: HÌNH HỌC -->

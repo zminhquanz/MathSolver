@@ -304,11 +304,11 @@ public static class AppThemeManager
                 }
 #endif
 
+#if WINDOWS
                 try
                 {
                     ApplyWallpaperVisualResourcesCore(application);
                 }
-#if WINDOWS
                 catch (System.Runtime.InteropServices.COMException exception)
                 {
                     if (retryCount < WallpaperVisualRefreshMaxRetries)
@@ -325,6 +325,8 @@ public static class AppThemeManager
                     System.Diagnostics.Debug.WriteLine(
                         $"Wallpaper resource refresh deferred: {exception}");
                 }
+#else
+                ApplyWallpaperVisualResourcesCore(application);
 #endif
             });
     }
@@ -585,11 +587,11 @@ public static class AppThemeManager
         }
 #endif
 
+#if WINDOWS
         try
         {
             ApplyCurrentThemeCore(application);
         }
-#if WINDOWS
         catch (System.Runtime.InteropServices.COMException exception)
         {
             if (retryCount < ThemeVisualRefreshMaxRetries)
@@ -609,6 +611,8 @@ public static class AppThemeManager
             System.Diagnostics.Debug.WriteLine(
                 $"Theme resource refresh deferred: {exception}");
         }
+#else
+        ApplyCurrentThemeCore(application);
 #endif
     }
 

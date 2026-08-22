@@ -380,3 +380,9 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 - When MP4/Math animated wallpaper is disabled or its backend is switched on Windows, `AppThemeManager` opens a short native-transition gate before mutating `Application.Resources`.
 - Full Light/Dark/accent palette application and wallpaper glass-token refreshes are generation-coalesced behind that gate, so `MediaElement.Handler.DisconnectHandler()` / Media Foundation teardown cannot race `DynamicResource` propagation.
 - Theme preferences are persisted immediately; only the visual resource mutation is deferred. Transient WinUI `COMException` is retried and never allowed to terminate the app.
+
+### Formula / Arithmetic Mean tab
+- `FormulaPage` now exposes a fifth sub-tab, `Average`, on Windows and Android.
+- `AverageFormulaView` is a study/reference view (not quiz state). It reuses the six `AverageQuizType` concepts already used by Math Puzzle: Direct, TotalToAverage, AverageToTotal, MissingValue, IndirectData, and TwoGroups.
+- The top interactive `GraphicsView` (`AverageDistributionDrawable`) visualizes arithmetic mean as conservation of the same total redistributed into equal shares. Users can adjust 2–5 integer values with sliders; the displayed fraction/mixed-number result updates immediately.
+- Formula cards provide a rule, formula, word-problem example, and worked solution in Vietnamese and English. The view uses wallpaper-aware `Wallpaper*` resources so it remains readable with static themes, Math Animation, and adaptive MP4 live wallpaper.
