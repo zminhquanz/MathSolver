@@ -79,6 +79,7 @@ public partial class MathPuzzlePage : ContentPage
     private PercentageQuizType? _selectedPercentageType;
     private ArithmeticOperation? _selectedFindXOperation;
     private GeometryQuizShape? _selectedGeometryShape;
+    private MotionQuizType? _selectedMotionType;
     private bool _isUpdatingSubtypePickers;
     private bool _isAiDiagnosticsVisible;
     private bool _isDeveloperModeSubscribed;
@@ -123,6 +124,8 @@ public partial class MathPuzzlePage : ContentPage
             FindXTypePicker);
         AndroidPickerVisualHelper.Attach(
             GeometryShapePicker);
+        AndroidPickerVisualHelper.Attach(
+            MotionTypePicker);
 #endif
 
         InteractiveButtonAnimation.SetIsScopeEnabled(
@@ -837,6 +840,29 @@ public partial class MathPuzzlePage : ContentPage
                 _ => 0
             };
 
+            MotionTypePicker.Items.Clear();
+            string[] motionKeys =
+            [
+                "Quiz.SubtypeMixed",
+                "Quiz.MotionBasic",
+                "Quiz.MotionChasing",
+                "Quiz.MotionMeeting",
+                "Quiz.MotionRiver"
+            ];
+            foreach (string key in motionKeys)
+            {
+                MotionTypePicker.Items.Add(TranslateQuiz(key));
+            }
+            MotionTypePicker.SelectedIndex = _selectedMotionType switch
+            {
+                null => 0,
+                MotionQuizType.Basic => 1,
+                MotionQuizType.Chasing => 2,
+                MotionQuizType.Meeting => 3,
+                MotionQuizType.River => 4,
+                _ => 0
+            };
+
             FindXTypePicker.Items.Clear();
             string[] findXKeys =
             [
@@ -946,6 +972,31 @@ public partial class MathPuzzlePage : ContentPage
 
         _selectedPercentageType = selected;
         OnSubtypeSelectionChanged(QuizProblemKind.Percentage);
+    }
+
+    private void OnMotionTypeChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers)
+        {
+            return;
+        }
+
+        MotionQuizType? selected = MotionTypePicker.SelectedIndex switch
+        {
+            1 => MotionQuizType.Basic,
+            2 => MotionQuizType.Chasing,
+            3 => MotionQuizType.Meeting,
+            4 => MotionQuizType.River,
+            _ => null
+        };
+
+        if (_selectedMotionType == selected)
+        {
+            return;
+        }
+
+        _selectedMotionType = selected;
+        OnSubtypeSelectionChanged(QuizProblemKind.Motion);
     }
 
     private void OnFindXTypeChanged(object? sender, EventArgs e)
@@ -1069,7 +1120,8 @@ public partial class MathPuzzlePage : ContentPage
             _selectedAverageType,
             _selectedPercentageType,
             _selectedFindXOperation,
-            _selectedGeometryShape);
+            _selectedGeometryShape,
+            _selectedMotionType);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -1114,6 +1166,11 @@ public partial class MathPuzzlePage : ContentPage
                 {
                     GeometryShape = _selectedGeometryShape
                 },
+            QuizProblemKind.Motion =>
+                request.Value with
+                {
+                    MotionType = _selectedMotionType
+                },
             _ => request
         };
     }
@@ -1137,6 +1194,8 @@ public partial class MathPuzzlePage : ContentPage
             kind == QuizProblemKind.FindX;
         bool showGeometryShape =
             kind == QuizProblemKind.Geometry;
+        bool showMotionType =
+            kind == QuizProblemKind.Motion;
 
         ProblemOperationPanel.IsVisible = showOperations;
         ProportionTypePanel.IsVisible = showProportionType;
@@ -1144,6 +1203,7 @@ public partial class MathPuzzlePage : ContentPage
         PercentageTypePanel.IsVisible = showPercentageType;
         FindXTypePanel.IsVisible = showFindXType;
         GeometryShapePanel.IsVisible = showGeometryShape;
+        MotionTypePanel.IsVisible = showMotionType;
 
         if (showProportionType)
         {
@@ -1422,7 +1482,8 @@ public partial class MathPuzzlePage : ContentPage
                     QuizProblemKind.Motion =>
                         _motionQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
-                            AppLanguageManager.CurrentLanguage),
+                            AppLanguageManager.CurrentLanguage,
+                            problemRequest.MotionType),
                     QuizProblemKind.Average =>
                         _averageQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
@@ -2447,6 +2508,7 @@ public partial class MathPuzzlePage : ContentPage
         PercentageTypePicker.IsEnabled = !isLocked;
         FindXTypePicker.IsEnabled = !isLocked;
         GeometryShapePicker.IsEnabled = !isLocked;
+        MotionTypePicker.IsEnabled = !isLocked;
 
         ProblemAddButton.IsEnabled = !isLocked;
         ProblemSubtractButton.IsEnabled = !isLocked;
@@ -2505,6 +2567,7 @@ public partial class MathPuzzlePage : ContentPage
         PercentageTypePicker.IsEnabled = !isBusy;
         FindXTypePicker.IsEnabled = !isBusy;
         GeometryShapePicker.IsEnabled = !isBusy;
+        MotionTypePicker.IsEnabled = !isBusy;
 
         UpdateCreateOrRegenerateQuestionButtonState();
         UpdateAiTeacherState();

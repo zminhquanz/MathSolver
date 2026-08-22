@@ -44,6 +44,49 @@
                     <Label x:Name="SampleValueLabel" Grid.Column="1" Style="{StaticResource HardwareInfoValueStyle}" />
                 </Grid>
 
+                <VerticalStackLayout Spacing="6">
+                    <Label
+                        x:Name="BenchmarkScopeLabel"
+                        Text="Chế độ chấm"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource TextPrimaryColor}" />
+
+                    <Border
+                        Padding="0"
+                        BackgroundColor="{DynamicResource InputBackgroundColor}"
+                        Stroke="{DynamicResource BorderBrush}"
+                        StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+
+                        <Grid>
+                            <Picker
+                                x:Name="BenchmarkScopePicker"
+                                SelectedIndex="0"
+                                HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
+                                FontAttributes="Bold"
+                                FontSize="15"
+                                TextColor="{DynamicResource TextPrimaryColor}"
+                                SelectedIndexChanged="OnBenchmarkScopePickerSelectedIndexChanged" />
+
+                            <Path
+                                IsVisible="{OnPlatform Android=True, Default=False}"
+                                Data="M4,7 L10,13 L16,7 Z"
+                                Fill="{DynamicResource TextSecondaryBrush}"
+                                WidthRequest="14"
+                                HeightRequest="14"
+                                Margin="0,0,18,0"
+                                HorizontalOptions="End"
+                                VerticalOptions="Center"
+                                InputTransparent="True" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
                 <Button
                     x:Name="RunLlmBenchmarkButton"
                     HeightRequest="46"
@@ -105,52 +148,56 @@
                     Text="Mỗi câu chỉ sinh đúng 1 lần rồi được validator C# chấm. Không retry để tránh làm sai lệch độ chính xác của model."
                     Style="{StaticResource HardwareDescriptionStyle}" />
 
-                <BoxView Style="{StaticResource HardwareDividerStyle}" />
+                <VerticalStackLayout
+                    x:Name="AccuracyBreakdownContainer"
+                    Spacing="10">
+                    <BoxView Style="{StaticResource HardwareDividerStyle}" />
 
-                <Label
-                    x:Name="AccuracyChartTitleLabel"
-                    Text="Độ chính xác theo dạng toán"
-                    FontAttributes="Bold"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
-
-                <GraphicsView
-                    x:Name="AccuracyChartView"
-                    HeightRequest="320"
-                    HorizontalOptions="Fill"
-                    InputTransparent="True" />
-
-                <BoxView Style="{StaticResource HardwareDividerStyle}" />
-
-                <Grid ColumnDefinitions="*,72,88,72" ColumnSpacing="18">
                     <Label
-                        x:Name="CategoryHeaderLabel"
-                        Text="Dạng đề"
+                        x:Name="AccuracyChartTitleLabel"
+                        Text="Độ chính xác theo dạng toán"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-                    <Label
-                        x:Name="CorrectHeaderLabel"
-                        Grid.Column="1"
-                        Text="Đúng"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="End"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-                    <Label
-                        x:Name="AccuracyHeaderLabel"
-                        Grid.Column="2"
-                        Text="Chính xác"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="End"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-                    <Label
-                        x:Name="SpeedHeaderLabel"
-                        Grid.Column="3"
-                        Text="token/s"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="End"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
-                </Grid>
+                        TextColor="{DynamicResource TextPrimaryColor}" />
 
-                <VerticalStackLayout x:Name="CategoryResultsContainer" Spacing="7" />
+                    <GraphicsView
+                        x:Name="AccuracyChartView"
+                        HeightRequest="320"
+                        HorizontalOptions="Fill"
+                        InputTransparent="True" />
+
+                    <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                    <Grid ColumnDefinitions="*,72,88,72" ColumnSpacing="18">
+                        <Label
+                            x:Name="CategoryHeaderLabel"
+                            Text="Dạng đề"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Label
+                            x:Name="CorrectHeaderLabel"
+                            Grid.Column="1"
+                            Text="Đúng"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="End"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Label
+                            x:Name="AccuracyHeaderLabel"
+                            Grid.Column="2"
+                            Text="Chính xác"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="End"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Label
+                            x:Name="SpeedHeaderLabel"
+                            Grid.Column="3"
+                            Text="token/s"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="End"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+                    </Grid>
+
+                    <VerticalStackLayout x:Name="CategoryResultsContainer" Spacing="7" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
         </Border>
     </VerticalStackLayout>

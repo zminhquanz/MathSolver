@@ -81,7 +81,8 @@ public sealed class QuizProblemTypeCatalog
         AverageQuizType? averageType,
         PercentageQuizType? percentageType,
         ArithmeticOperation? findXOperation,
-        GeometryQuizShape? geometryShape)
+        GeometryQuizShape? geometryShape,
+        MotionQuizType? motionType)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -125,6 +126,11 @@ public sealed class QuizProblemTypeCatalog
                     fixedRequest with
                     {
                         GeometryShape = geometryShape
+                    },
+                QuizProblemKind.Motion =>
+                    fixedRequest with
+                    {
+                        MotionType = motionType
                     },
                 _ => fixedRequest
             };

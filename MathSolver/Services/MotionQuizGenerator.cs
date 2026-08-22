@@ -103,17 +103,22 @@ public sealed class MotionQuizGenerator
 
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
-        AppLanguage language) =>
-        CreateQuestion(mode, CreateContract(language));
+        AppLanguage language,
+        MotionQuizType? requestedType = null) =>
+        CreateQuestion(mode, CreateContract(language, requestedType));
 
     public ArithmeticQuizQuestion GenerateContract(
         ArithmeticQuizMode mode,
-        AppLanguage language) =>
-        CreateQuestion(mode, CreateContract(language));
+        AppLanguage language,
+        MotionQuizType? requestedType = null) =>
+        CreateQuestion(mode, CreateContract(language, requestedType));
 
-    private MotionQuizContract CreateContract(AppLanguage language)
+    private MotionQuizContract CreateContract(
+        AppLanguage language,
+        MotionQuizType? requestedType)
     {
-        MotionQuizType type = (MotionQuizType)_random.Next(4);
+        MotionQuizType type =
+            requestedType ?? (MotionQuizType)_random.Next(4);
 
         return type switch
         {

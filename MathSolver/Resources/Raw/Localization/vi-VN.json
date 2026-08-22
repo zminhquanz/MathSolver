@@ -1402,7 +1402,12 @@
     "Quiz.GeometryTriangle": "Hình tam giác",
     "Quiz.GeometryTrapezoid": "Hình thang",
     "Quiz.GeometryRhombus": "Hình thoi",
-    "Quiz.GeometryParallelogram": "Hình bình hành"
+    "Quiz.GeometryParallelogram": "Hình bình hành",
+    "Quiz.MotionTypeTitle": "Chọn dạng chuyển động",
+    "Quiz.MotionBasic": "Cơ bản – Một vật chuyển động",
+    "Quiz.MotionChasing": "Hai vật cùng chiều (đuổi nhau / đuổi kịp)",
+    "Quiz.MotionMeeting": "Hai vật ngược chiều (gặp nhau)",
+    "Quiz.MotionRiver": "Chuyển động trên dòng nước (xuôi dòng – ngược dòng)"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

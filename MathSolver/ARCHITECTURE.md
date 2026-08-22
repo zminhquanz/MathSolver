@@ -246,11 +246,11 @@ The Hardware Information page has two benchmark modes on Windows: **Raw performa
 
 The AI/LLM benchmark reuses the shared `LocalLlmRuntime.Generator`, so Math Puzzle and Hardware benchmarking share one GGUF weight cache instead of loading the model twice. It reports the Windows LLamaSharp/llama.cpp CPU backend, the highest available x86 ISA tier (AVX, AVX2/FMA, or AVX-512), configured decode/batch thread counts, and average decode throughput in token/s.
 
-Accuracy is measured with the same C# contracts, parser, and `LlmWordProblemValidator` used by production generation. Six categories are tested: basic arithmetic, fractions, Find x, geometry, direct/inverse proportion, and motion. Each category runs exactly 10 independent samples. Benchmark generation forces `maximumAttempts = 1`, so every sample is scored from one model response and retry logic cannot inflate the measured accuracy. Results are shown as valid questions / 10 and percentage for each category, plus overall valid questions / 60 and overall percentage.
+Accuracy is measured with the same C# contracts, parser, and `LlmWordProblemValidator` used by production generation. Eight categories are tested: basic arithmetic, fractions, Find x, geometry, direct/inverse proportion, motion, arithmetic mean, and percentage. Each category runs exactly 10 independent samples. The AI/LLM Hardware view has a benchmark-scope picker: **Overall** runs all 8 categories (80 samples total), while selecting one category runs only its 10 samples. Benchmark generation forces `maximumAttempts = 1`, so every sample is scored from one model response and retry logic cannot inflate measured accuracy. Overall mode reports valid questions / 80 plus the per-category chart/table; single-category mode reports valid questions / 10 for the selected category only. Subtypes are cycled deterministically within each 10-sample set (for example Find x operations, Geometry shapes, Motion scenarios, Average types, and Percentage types) so a category benchmark covers its internal domain instead of depending entirely on random selection.
 
 ## AI generation interaction lock (2026-08-21)
 
-While a Windows local-LLM question is actively generating, Math Puzzle enters an interaction lock. The three other Shell main tabs and the Settings action are disabled, and Math Puzzle disables source selection, model download/open/select/eject, question mode, problem type, basic-operation/proportion/average/percentage subtype selectors, answer controls, and Next Question. The JSON & Log diagnostics toggle intentionally remains available because it is read-only. The only state-changing generation action left enabled is the primary Create-with-AI button, which switches to the red Stop action and cancels through the existing inference `CancellationToken`.
+While a Windows local-LLM question is actively generating, Math Puzzle enters an interaction lock. The three other Shell main tabs and the Settings action are disabled, and Math Puzzle disables source selection, model download/open/select/eject, question mode, problem type, basic-operation/proportion/motion/average/percentage subtype selectors, answer controls, and Next Question. The JSON & Log diagnostics toggle intentionally remains available because it is read-only. The only state-changing generation action left enabled is the primary Create-with-AI button, which switches to the red Stop action and cancels through the existing inference `CancellationToken`.
 
 The lock stays active across all validator retries in the same generation request and is released only after generation succeeds, is cancelled, or exhausts its attempts and returns a failure. Model import/download/eject busy states continue to use the existing local busy handling and do not use this app-wide AI-generation lock.
 
@@ -321,6 +321,12 @@ The Settings UI exposes the mode with one Picker. MP4 controls are shown only fo
 - A mode switch never tears down the native player synchronously while the Picker is closing. When leaving MP4 for Math Animation, the source is detached immediately and only the empty `MediaElement` shell gets a short 250 ms grace period so Picker switching stays re-entrancy-safe. Page inactivity/unload tears down the player immediately.
 - `AppThemeManager.RefreshVisualResources()` refreshes only wallpaper/glass/scrim resources. It must not reapply `UserAppTheme` or raise the global `ThemeChanged` event for a wallpaper-only setting change.
 
+### Windows minimize / restore wallpaper lifecycle (2026-08-22)
+
+- `WindowStateManager` now reports native minimize/restore transitions through `LiveWallpaperManager` without changing the user's enabled/mode preference.
+- On minimize, the active `LiveWallpaperView` releases transient `MediaElement`/GraphicsView resources and native handlers while preserving the active-page state. This reduces minimized RAM and avoids WinUI/Media Foundation retaining a composition surface that Windows may invalidate during a long minimize.
+- On restore/maximize, the active owner recreates the background after a short dispatcher delay. MP4 therefore receives a fresh `MediaElement` + H.264 surface/source instead of calling `Play()` on a reclaimed native surface; Math Animation recreates its GraphicsView/timer similarly. No Settings round-trip is required.
+
 ### Live wallpaper memory ownership (2026-08-22)
 
 - Shell keeps multiple learning pages cached, but only **one** `LiveWallpaperView` may own an animated background at a time. Ownership is guarded by a static weak reference; a newly appearing tab immediately retires native resources held by a stale previous owner. This prevents multiple cached `MediaElement`/ExoPlayer/MediaPlayer decoders from accumulating.
@@ -353,6 +359,7 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 
 ## Math Puzzle subtype expansion (2026-08-22)
 
+- Motion now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Basic single-object motion, same-direction catch-up, opposite-direction meeting, and river downstream/upstream motion. `QuizProblemRequest.MotionType` carries the requested `MotionQuizType?` into the existing `MotionQuizGenerator`; null preserves mixed random generation. The generator already owns all four mathematical contracts, and the LLM validator continues to enforce the generated contract's exact motion family.
 - Find X now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Sum, Difference, Product, and Quotient. `QuizProblemRequest.FindXOperation` carries the selected relationship through `QuizProblemTypeCatalog` into both `FindXQuizGenerator` and `LocalLlmQuizGenerator`; Mixed keeps it null so C# chooses randomly.
 - Geometry now has a second-level shape Picker shared by Algorithm and AI/LLM: Mixed, Square, Rectangle, Triangle, Trapezoid, Rhombus, Parallelogram, Cube, and Rectangular Prism. `QuizProblemRequest.GeometryShape` filters the C# geometry story-template catalog before the contract is generated, so the AI cannot silently switch to a different shape. Only exact-integer-friendly quiz shapes are included; pi-based circle/sphere/cylinder/cone questions remain outside this quiz path for now.
 - Average and Percentage generators use broader C# context catalogs. Average problems rotate through notebooks/books/fruit mass/pen boxes, distribution contexts, names, indirect-data objects, and two-group contexts while preserving the same six mathematical contracts. Percentage problems rotate through books, trees, students, marbles, flowers, pens, oranges, and tickets, with concrete subset nouns for ratio/value/whole problems.
@@ -364,3 +371,12 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 - This allows `LiveWallpaperView` to disconnect `MediaElement`/`GraphicsView` native handlers before WinUI `DynamicResource` targets are repainted when animated wallpaper is disabled.
 - Transient WinUI `COMException` during native teardown is retried on the dispatcher and is never allowed to crash the app.
 - Existing `SolidColorBrush` instances are reused and only updated when their color actually changes, reducing allocations and resource churn during adaptive MP4 contrast transitions.
+
+### Hardware AI/LLM benchmark scope display
+- The per-category 10-sample benchmark intentionally hides the category-breakdown chart/table because the selected scope already represents exactly one category; only average decode speed and that category's `x/10 • %` accuracy remain visible.
+- The horizontal accuracy chart and 8-row category breakdown are rendered only for the overall 80-sample benchmark (`8 categories × 10 samples`).
+
+### WinUI theme restore after live wallpaper teardown
+- When MP4/Math animated wallpaper is disabled or its backend is switched on Windows, `AppThemeManager` opens a short native-transition gate before mutating `Application.Resources`.
+- Full Light/Dark/accent palette application and wallpaper glass-token refreshes are generation-coalesced behind that gate, so `MediaElement.Handler.DisconnectHandler()` / Media Foundation teardown cannot race `DynamicResource` propagation.
+- Theme preferences are persisted immediately; only the visual resource mutation is deferred. Transient WinUI `COMException` is retried and never allowed to terminate the app.

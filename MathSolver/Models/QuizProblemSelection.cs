@@ -44,7 +44,8 @@ public readonly record struct QuizProblemRequest(
     AverageQuizType? AverageType = null,
     PercentageQuizType? PercentageType = null,
     ArithmeticOperation? FindXOperation = null,
-    GeometryQuizShape? GeometryShape = null);
+    GeometryQuizShape? GeometryShape = null,
+    MotionQuizType? MotionType = null);
 
 /// <summary>
 /// Một mục nhóm hiển thị trong danh sách dạng đề. FixedRequest bằng null dành

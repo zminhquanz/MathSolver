@@ -253,7 +253,8 @@ public sealed class LocalLlmQuizGenerator
                     QuizProblemKind.Motion =>
                         _motionQuizGenerator.GenerateContract(
                             mode,
-                            language),
+                            language,
+                            problemRequest.MotionType),
                     QuizProblemKind.Average =>
                         _averageQuizGenerator.GenerateContract(
                             mode,

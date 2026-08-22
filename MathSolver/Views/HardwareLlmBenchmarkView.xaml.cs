@@ -14,9 +14,6 @@ public partial class HardwareLlmBenchmarkView : ContentView
     private const int SamplesPerCategory = 10;
     private static readonly int CategoryCount =
         Enum.GetValues<LlmBenchmarkCategory>().Length;
-    private static readonly int TotalSamples =
-        SamplesPerCategory * CategoryCount;
-
     private const double AccuracyChartRowHeight = 44d;
     private const double AccuracyChartTopAxisHeight = 28d;
     private const double AccuracyChartBottomPadding = 4d;
@@ -25,6 +22,8 @@ public partial class HardwareLlmBenchmarkView : ContentView
     private TaskCompletionSource<bool>? _benchmarkCompletion;
     private bool _isRunning;
     private int _progressVersion;
+    private bool _isUpdatingScopePicker;
+    private LlmBenchmarkCategory? _selectedBenchmarkCategory;
 #if WINDOWS
     private LlmBenchmarkRunResult? _lastBenchmarkResult;
 #endif
@@ -36,6 +35,11 @@ public partial class HardwareLlmBenchmarkView : ContentView
     public HardwareLlmBenchmarkView()
     {
         InitializeComponent();
+
+#if ANDROID
+        AndroidPickerVisualHelper.Attach(BenchmarkScopePicker);
+#endif
+
         RefreshState();
     }
 
@@ -47,22 +51,19 @@ public partial class HardwareLlmBenchmarkView : ContentView
 
         SectionTitleLabel.Text = "Benchmark AI / LLM";
         SectionDescriptionLabel.Text = vietnamese
-            ? "Đo tốc độ decode và độ chính xác tạo đề bằng chính validator C# của Math Solver. Mỗi dạng chạy 10 câu độc lập."
-            : "Measure decode speed and word-problem accuracy with Math Solver's existing C# validator. Each category runs 10 independent samples.";
+            ? "Đo tốc độ decode và độ chính xác tạo đề bằng validator C# của Math Solver. Có thể chấm tổng thể 8 dạng (80 câu) hoặc chấm riêng một dạng (10 câu)."
+            : "Measure decode speed and word-problem accuracy with Math Solver's C# validator. Run all 8 categories (80 samples) or benchmark one category (10 samples).";
 
         ModelNameLabel.Text = vietnamese ? "Model" : "Model";
         EngineNameLabel.Text = vietnamese ? "Engine" : "Engine";
         IsaNameLabel.Text = vietnamese ? "LLamaSharp CPU ISA khả dụng" : "Available LLamaSharp CPU ISA";
         ThreadsNameLabel.Text = vietnamese ? "Luồng inference" : "Inference threads";
         SampleNameLabel.Text = vietnamese ? "Bộ kiểm thử" : "Test set";
-        SampleValueLabel.Text = string.Format(
-            CultureInfo.CurrentCulture,
-            vietnamese
-                ? "{0} dạng × {1} câu = {2} câu"
-                : "{0} categories × {1} samples = {2} samples",
-            CategoryCount,
-            SamplesPerCategory,
-            TotalSamples);
+        BenchmarkScopeLabel.Text = vietnamese
+            ? "Chế độ chấm"
+            : "Benchmark scope";
+        RefreshBenchmarkScopePicker(vietnamese);
+        UpdateScopeDependentUi(vietnamese);
 
         ResultTitleLabel.Text = vietnamese
             ? "Kết quả benchmark AI / LLM"
@@ -71,14 +72,22 @@ public partial class HardwareLlmBenchmarkView : ContentView
             ? "Tốc độ tạo sinh trung bình"
             : "Average decode speed";
         OverallAccuracyNameLabel.Text = vietnamese
-            ? "Độ chính xác tổng"
-            : "Overall accuracy";
+            ? (_selectedBenchmarkCategory is null
+                ? "Độ chính xác tổng thể"
+                : "Độ chính xác dạng")
+            : (_selectedBenchmarkCategory is null
+                ? "Overall accuracy"
+                : "Category accuracy");
         AccuracyExplanationLabel.Text = vietnamese
             ? "Mỗi câu chỉ sinh đúng 1 lần rồi được validator C# chấm. Không retry để tránh làm sai lệch độ chính xác thực của model."
             : "Each sample is generated exactly once and scored by the C# validator. Retries are disabled so model accuracy is not inflated.";
         AccuracyChartTitleLabel.Text = vietnamese
-            ? "Độ chính xác theo dạng toán"
-            : "Accuracy by math category";
+            ? (_selectedBenchmarkCategory is null
+                ? $"Độ chính xác theo {CategoryCount} dạng toán"
+                : "Độ chính xác dạng toán")
+            : (_selectedBenchmarkCategory is null
+                ? $"Accuracy across {CategoryCount} math categories"
+                : "Math-category accuracy");
         CategoryHeaderLabel.Text = vietnamese ? "Dạng đề" : "Category";
         CorrectHeaderLabel.Text = vietnamese ? "Đúng" : "Valid";
         AccuracyHeaderLabel.Text = vietnamese ? "Chính xác" : "Accuracy";
@@ -109,9 +118,8 @@ public partial class HardwareLlmBenchmarkView : ContentView
         {
             RunLlmBenchmarkButton.IsEnabled =
                 QuizLlmModelStore.IsSupportedModelPath(modelPath);
-            RunLlmBenchmarkButton.Text = vietnamese
-                ? "Chạy benchmark AI / LLM"
-                : "Run AI / LLM benchmark";
+            RunLlmBenchmarkButton.Text =
+                GetIdleRunButtonText(vietnamese);
             RunLlmBenchmarkButton.SetDynamicResource(
                 Button.BackgroundColorProperty,
                 "PrimaryColor");
@@ -140,8 +148,114 @@ public partial class HardwareLlmBenchmarkView : ContentView
         EngineValueLabel.Text = "—";
         IsaValueLabel.Text = "—";
         ThreadsValueLabel.Text = "—";
+        BenchmarkScopePicker.IsEnabled = false;
         RunLlmBenchmarkButton.IsEnabled = false;
 #endif
+    }
+
+    private void RefreshBenchmarkScopePicker(bool vietnamese)
+    {
+        int selectedIndex = _selectedBenchmarkCategory is null
+            ? 0
+            : (int)_selectedBenchmarkCategory.Value + 1;
+
+        var items = new List<string>(CategoryCount + 1)
+        {
+            vietnamese
+                ? $"Chấm tổng thể ({CategoryCount * SamplesPerCategory} câu)"
+                : $"Overall ({CategoryCount * SamplesPerCategory} samples)"
+        };
+
+        foreach (LlmBenchmarkCategory category in
+            Enum.GetValues<LlmBenchmarkCategory>())
+        {
+            items.Add(
+                vietnamese
+                    ? $"{GetCategoryName(category)} ({SamplesPerCategory} câu)"
+                    : $"{GetCategoryName(category)} ({SamplesPerCategory} samples)");
+        }
+
+        _isUpdatingScopePicker = true;
+        try
+        {
+            BenchmarkScopePicker.ItemsSource = items;
+            BenchmarkScopePicker.SelectedIndex =
+                Math.Clamp(selectedIndex, 0, items.Count - 1);
+        }
+        finally
+        {
+            _isUpdatingScopePicker = false;
+        }
+    }
+
+    private void UpdateScopeDependentUi(bool vietnamese)
+    {
+        bool overall = _selectedBenchmarkCategory is null;
+        AccuracyBreakdownContainer.IsVisible = overall;
+
+        if (_selectedBenchmarkCategory is LlmBenchmarkCategory category)
+        {
+            SampleValueLabel.Text = vietnamese
+                ? $"{GetCategoryName(category)} • {SamplesPerCategory} câu"
+                : $"{GetCategoryName(category)} • {SamplesPerCategory} samples";
+
+            OverallAccuracyNameLabel.Text = vietnamese
+                ? "Độ chính xác dạng"
+                : "Category accuracy";
+            AccuracyChartTitleLabel.Text = vietnamese
+                ? "Độ chính xác dạng toán"
+                : "Math-category accuracy";
+        }
+        else
+        {
+            int totalSamples = CategoryCount * SamplesPerCategory;
+            SampleValueLabel.Text = string.Format(
+                CultureInfo.CurrentCulture,
+                vietnamese
+                    ? "{0} dạng × {1} câu = {2} câu"
+                    : "{0} categories × {1} samples = {2} samples",
+                CategoryCount,
+                SamplesPerCategory,
+                totalSamples);
+
+            OverallAccuracyNameLabel.Text = vietnamese
+                ? "Độ chính xác tổng thể"
+                : "Overall accuracy";
+            AccuracyChartTitleLabel.Text = vietnamese
+                ? $"Độ chính xác theo {CategoryCount} dạng toán"
+                : $"Accuracy across {CategoryCount} math categories";
+        }
+    }
+
+    private void OnBenchmarkScopePickerSelectedIndexChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_isUpdatingScopePicker || _isRunning)
+        {
+            return;
+        }
+
+        int index = BenchmarkScopePicker.SelectedIndex;
+        _selectedBenchmarkCategory = index <= 0
+            ? null
+            : (LlmBenchmarkCategory)(index - 1);
+
+#if WINDOWS
+        _lastBenchmarkResult = null;
+#endif
+        LlmBenchmarkResultsBorder.IsVisible = false;
+        CategoryResultsContainer.Children.Clear();
+        AccuracyChartView.Drawable = null;
+        AccuracyChartView.Invalidate();
+
+        bool vietnamese = IsVietnamese;
+        UpdateScopeDependentUi(vietnamese);
+        LlmBenchmarkStatusLabel.Text = vietnamese
+            ? "Chưa chạy benchmark AI / LLM."
+            : "AI / LLM benchmark has not been run yet.";
+
+        RefreshState();
     }
 
     public void CancelBenchmark()
@@ -253,16 +367,23 @@ public partial class HardwareLlmBenchmarkView : ContentView
         string modelPath,
         CancellationToken cancellationToken)
     {
+        LlmBenchmarkCategory[] categories =
+            _selectedBenchmarkCategory is LlmBenchmarkCategory selected
+                ? [selected]
+                : Enum.GetValues<LlmBenchmarkCategory>();
+
+        int totalSamples =
+            categories.Length * SamplesPerCategory;
+
         var categoryResults =
-            new List<LlmBenchmarkCategoryResult>();
+            new List<LlmBenchmarkCategoryResult>(categories.Length);
 
         int totalValid = 0;
         int totalGeneratedTokens = 0;
         double totalDecodeSeconds = 0d;
         int completedSamples = 0;
 
-        foreach (LlmBenchmarkCategory category in
-            Enum.GetValues<LlmBenchmarkCategory>())
+        foreach (LlmBenchmarkCategory category in categories)
         {
             int categoryValid = 0;
             int categoryTokens = 0;
@@ -279,6 +400,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
                     category,
                     displaySample,
                     completedSamples,
+                    totalSamples,
                     currentSpeed: 0d);
 
                 int progressVersion =
@@ -299,6 +421,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
                                 category,
                                 displaySample,
                                 completedSamples,
+                                totalSamples,
                                 value.TokensPerSecond);
                         }
                     });
@@ -347,7 +470,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
 
                 completedSamples++;
                 LlmBenchmarkProgressBar.Progress =
-                    completedSamples / (double)TotalSamples;
+                    completedSamples / (double)totalSamples;
             }
 
             categoryResults.Add(
@@ -363,7 +486,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
         return new(
             categoryResults,
             totalValid,
-            TotalSamples,
+            totalSamples,
             totalGeneratedTokens,
             CalculateAggregateTokensPerSecond(
                 totalGeneratedTokens,
@@ -374,14 +497,15 @@ public partial class HardwareLlmBenchmarkView : ContentView
         LlmBenchmarkCategory category,
         int sample,
         int completedSamples,
+        int totalSamples,
         double currentSpeed)
     {
         string categoryName =
             GetCategoryName(category);
 
         LlmBenchmarkStatusLabel.Text = IsVietnamese
-            ? $"{categoryName} • câu {sample}/{SamplesPerCategory} • tổng {completedSamples + 1}/{TotalSamples}"
-            : $"{categoryName} • sample {sample}/{SamplesPerCategory} • total {completedSamples + 1}/{TotalSamples}";
+            ? $"{categoryName} • câu {sample}/{SamplesPerCategory} • tổng {completedSamples + 1}/{totalSamples}"
+            : $"{categoryName} • sample {sample}/{SamplesPerCategory} • total {completedSamples + 1}/{totalSamples}";
 
         if (currentSpeed > 0d)
         {
@@ -403,7 +527,19 @@ public partial class HardwareLlmBenchmarkView : ContentView
     private void RenderResult(
         LlmBenchmarkRunResult result)
     {
+        bool overall = result.Categories.Count > 1;
         LlmBenchmarkResultsBorder.IsVisible = true;
+
+        ResultTitleLabel.Text = overall
+            ? (IsVietnamese
+                ? "Kết quả benchmark AI / LLM • tổng thể"
+                : "AI / LLM benchmark results • overall")
+            : (IsVietnamese
+                ? $"Kết quả benchmark • {GetCategoryName(result.Categories[0].Category)}"
+                : $"Benchmark results • {GetCategoryName(result.Categories[0].Category)}");
+        OverallAccuracyNameLabel.Text = overall
+            ? (IsVietnamese ? "Độ chính xác tổng thể" : "Overall accuracy")
+            : (IsVietnamese ? "Độ chính xác dạng" : "Category accuracy");
         DecodeSpeedValueLabel.Text = string.Format(
             CultureInfo.CurrentCulture,
             "{0:F1} token/s",
@@ -422,8 +558,17 @@ public partial class HardwareLlmBenchmarkView : ContentView
             result.TotalSamples,
             accuracy);
 
-        RenderAccuracyChart(result.Categories);
+        AccuracyBreakdownContainer.IsVisible = overall;
         CategoryResultsContainer.Children.Clear();
+
+        if (!overall)
+        {
+            AccuracyChartView.Drawable = null;
+            AccuracyChartView.Invalidate();
+            return;
+        }
+
+        RenderAccuracyChart(result.Categories);
 
         foreach (LlmBenchmarkCategoryResult category in
             result.Categories)
@@ -542,25 +687,51 @@ public partial class HardwareLlmBenchmarkView : ContentView
                         (FractionOperation)(sampleIndex % 4)),
 
             LlmBenchmarkCategory.FindX =>
-                new(QuizProblemKind.FindX),
+                new(
+                    QuizProblemKind.FindX,
+                    FindXOperation:
+                        CycleEnum<ArithmeticOperation>(sampleIndex)),
 
             LlmBenchmarkCategory.Geometry =>
-                new(QuizProblemKind.Geometry),
+                new(
+                    QuizProblemKind.Geometry,
+                    GeometryShape:
+                        CycleEnum<GeometryQuizShape>(sampleIndex)),
 
             LlmBenchmarkCategory.Proportion =>
                 new(
                     QuizProblemKind.Proportion,
                     ProportionType:
-                        sampleIndex % 2 == 0
-                            ? ProportionQuizType.Direct
-                            : ProportionQuizType.Inverse),
+                        CycleEnum<ProportionQuizType>(sampleIndex)),
 
             LlmBenchmarkCategory.Motion =>
-                new(QuizProblemKind.Motion),
+                new(
+                    QuizProblemKind.Motion,
+                    MotionType:
+                        CycleEnum<MotionQuizType>(sampleIndex)),
+
+            LlmBenchmarkCategory.Average =>
+                new(
+                    QuizProblemKind.Average,
+                    AverageType:
+                        CycleEnum<AverageQuizType>(sampleIndex)),
+
+            LlmBenchmarkCategory.Percentage =>
+                new(
+                    QuizProblemKind.Percentage,
+                    PercentageType:
+                        CycleEnum<PercentageQuizType>(sampleIndex)),
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(category))
         };
+    }
+
+    private static TEnum CycleEnum<TEnum>(int sampleIndex)
+        where TEnum : struct, Enum
+    {
+        TEnum[] values = Enum.GetValues<TEnum>();
+        return values[sampleIndex % values.Length];
     }
 
     private static double CalculateAggregateTokensPerSecond(
@@ -595,17 +766,31 @@ public partial class HardwareLlmBenchmarkView : ContentView
     }
 #endif
 
+    private string GetIdleRunButtonText(bool vietnamese)
+    {
+        if (_selectedBenchmarkCategory is null)
+        {
+            int totalSamples = CategoryCount * SamplesPerCategory;
+            return vietnamese
+                ? $"Chạy chấm tổng thể • {totalSamples} câu"
+                : $"Run overall benchmark • {totalSamples} samples";
+        }
+
+        return vietnamese
+            ? $"Chạy chấm dạng này • {SamplesPerCategory} câu"
+            : $"Run this category • {SamplesPerCategory} samples";
+    }
+
     private void SetRunningState(
         bool running)
     {
+        BenchmarkScopePicker.IsEnabled = !running;
         RunLlmBenchmarkButton.IsEnabled = true;
         RunLlmBenchmarkButton.Text = running
             ? (IsVietnamese
                 ? "■ Dừng benchmark AI / LLM"
                 : "■ Stop AI / LLM benchmark")
-            : (IsVietnamese
-                ? "Chạy benchmark AI / LLM"
-                : "Run AI / LLM benchmark");
+            : GetIdleRunButtonText(IsVietnamese);
 
         if (running)
         {
@@ -631,12 +816,16 @@ public partial class HardwareLlmBenchmarkView : ContentView
             (LlmBenchmarkCategory.Geometry, true) => "Hình học",
             (LlmBenchmarkCategory.Proportion, true) => "Tỉ lệ thuận / nghịch",
             (LlmBenchmarkCategory.Motion, true) => "Chuyển động",
+            (LlmBenchmarkCategory.Average, true) => "Trung bình cộng",
+            (LlmBenchmarkCategory.Percentage, true) => "Phần trăm",
             (LlmBenchmarkCategory.Arithmetic, false) => "Basic arithmetic",
             (LlmBenchmarkCategory.Fraction, false) => "Fractions",
             (LlmBenchmarkCategory.FindX, false) => "Find x",
             (LlmBenchmarkCategory.Geometry, false) => "Geometry",
             (LlmBenchmarkCategory.Proportion, false) => "Direct / inverse proportion",
             (LlmBenchmarkCategory.Motion, false) => "Motion",
+            (LlmBenchmarkCategory.Average, false) => "Arithmetic mean",
+            (LlmBenchmarkCategory.Percentage, false) => "Percentage",
             _ => category.ToString()
         };
 
@@ -665,7 +854,9 @@ public partial class HardwareLlmBenchmarkView : ContentView
         FindX,
         Geometry,
         Proportion,
-        Motion
+        Motion,
+        Average,
+        Percentage
     }
 
     private sealed record LlmBenchmarkCategoryResult(

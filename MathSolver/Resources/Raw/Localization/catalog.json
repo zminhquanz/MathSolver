@@ -6321,6 +6321,31 @@
       "key": "Quiz.PercentageQuestionTitle",
       "source": "Bài toán phần trăm",
       "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionTypeTitle",
+      "source": "Chọn dạng chuyển động",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionBasic",
+      "source": "Cơ bản – Một vật chuyển động",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionChasing",
+      "source": "Hai vật cùng chiều (đuổi nhau / đuổi kịp)",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionMeeting",
+      "source": "Hai vật ngược chiều (gặp nhau)",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.MotionRiver",
+      "source": "Chuyển động trên dòng nước (xuôi dòng – ngược dòng)",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

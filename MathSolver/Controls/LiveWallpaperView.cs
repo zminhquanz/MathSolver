@@ -43,6 +43,7 @@ public sealed class LiveWallpaperView : Grid
     private int _mediaReleaseGeneration;
     private bool _ownsPlayback;
     private bool _mp4PlaybackReportedActive;
+    private bool _isHostSuspended;
 
     public LiveWallpaperView()
     {
@@ -79,6 +80,10 @@ public sealed class LiveWallpaperView : Grid
         {
             LiveWallpaperManager.SettingsChanged +=
                 OnWallpaperSettingsChanged;
+            LiveWallpaperManager.HostSuspended +=
+                OnHostSuspended;
+            LiveWallpaperManager.HostResumed +=
+                OnHostResumed;
             _isSubscribed = true;
         }
 
@@ -94,6 +99,10 @@ public sealed class LiveWallpaperView : Grid
         {
             LiveWallpaperManager.SettingsChanged -=
                 OnWallpaperSettingsChanged;
+            LiveWallpaperManager.HostSuspended -=
+                OnHostSuspended;
+            LiveWallpaperManager.HostResumed -=
+                OnHostResumed;
             _isSubscribed = false;
         }
 
@@ -110,6 +119,63 @@ public sealed class LiveWallpaperView : Grid
         EventArgs e)
     {
         QueuePlaybackRefresh();
+    }
+
+    private void OnHostSuspended(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                if (_isHostSuspended)
+                {
+                    return;
+                }
+
+                _isHostSuspended = true;
+                _refreshGeneration++;
+                _mediaReleaseGeneration++;
+
+                // Keep page/activity state and ownership intact, but drop every
+                // transient native surface while the window is minimized. This
+                // lowers minimized RAM and avoids Windows invalidating an old
+                // MediaPlayer surface behind our back.
+                ReleaseAllAnimatedResources(immediateMediaRelease: true);
+            });
+    }
+
+    private void OnHostResumed(
+        object? sender,
+        EventArgs e)
+    {
+        Dispatcher.Dispatch(
+            () =>
+            {
+                if (!_isHostSuspended)
+                {
+                    return;
+                }
+
+                _isHostSuspended = false;
+
+                // Recreate the native player/GraphicsView from scratch instead
+                // of calling Play() on a MediaElement whose composition surface
+                // may have been reclaimed during a long minimize.
+                int generation = ++_refreshGeneration;
+                Dispatcher.DispatchDelayed(
+                    TimeSpan.FromMilliseconds(48),
+                    () =>
+                    {
+                        if (generation != _refreshGeneration ||
+                            _isHostSuspended)
+                        {
+                            return;
+                        }
+
+                        RefreshPlayback();
+                    });
+            });
     }
 
     private void QueuePlaybackRefresh()
@@ -135,7 +201,9 @@ public sealed class LiveWallpaperView : Grid
     {
         RefreshVisibility();
 
-        if (!LiveWallpaperManager.IsEnabled || !_isPageActive)
+        if (!LiveWallpaperManager.IsEnabled ||
+            !_isPageActive ||
+            _isHostSuspended)
         {
             ReleasePlaybackOwnership();
             ReleaseAllAnimatedResources(immediateMediaRelease: true);
@@ -221,19 +289,19 @@ public sealed class LiveWallpaperView : Grid
         if (_mathAnimationView is not null)
         {
             _mathAnimationView.IsVisible =
-                showMath && _isPageActive;
+                showMath && _isPageActive && !_isHostSuspended;
         }
 
         if (_readabilityScrim is not null)
         {
             _readabilityScrim.IsVisible =
-                shouldShow && _isPageActive;
+                shouldShow && _isPageActive && !_isHostSuspended;
         }
 
         if (_mediaElement is not null)
         {
             _mediaElement.IsVisible =
-                showMp4 && _isPageActive;
+                showMp4 && _isPageActive && !_isHostSuspended;
         }
 
         if (!shouldShow)

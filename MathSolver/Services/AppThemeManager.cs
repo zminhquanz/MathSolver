@@ -36,11 +36,27 @@ public static class AppThemeManager
     // are updated. This prevents transient COMException failures when turning
     // the animated background off.
     private static int _wallpaperVisualRefreshGeneration;
+    private static int _themeVisualRefreshGeneration;
+
     private static readonly TimeSpan WallpaperVisualRefreshDelay =
         TimeSpan.FromMilliseconds(48);
     private static readonly TimeSpan WallpaperVisualRefreshRetryDelay =
-        TimeSpan.FromMilliseconds(80);
-    private const int WallpaperVisualRefreshMaxRetries = 2;
+        TimeSpan.FromMilliseconds(96);
+    private const int WallpaperVisualRefreshMaxRetries = 3;
+
+#if WINDOWS
+    // DisconnectHandler() returns before every WinUI/Media Foundation object has
+    // necessarily completed its native teardown. If the user turns wallpaper
+    // off and immediately changes Light/Dark, DynamicResource propagation can
+    // otherwise hit a stale native target and throw COMException. Hold all
+    // ResourceDictionary mutations behind a short transition gate.
+    private static long _nativeVisualTransitionNotBeforeTick;
+    private static readonly TimeSpan NativeVisualTransitionGrace =
+        TimeSpan.FromMilliseconds(320);
+    private static readonly TimeSpan ThemeVisualRefreshRetryDelay =
+        TimeSpan.FromMilliseconds(120);
+    private const int ThemeVisualRefreshMaxRetries = 3;
+#endif
 
     public static event EventHandler? ThemeChanged;
 
@@ -168,6 +184,59 @@ public static class AppThemeManager
         ApplyCurrentTheme(savePreferences: false);
     }
 
+#if WINDOWS
+    /// <summary>
+    /// Marks a short WinUI native-surface transition window. Theme and wallpaper
+    /// ResourceDictionary updates are deferred until this window expires.
+    /// </summary>
+    public static void NotifyLiveWallpaperNativeTransition()
+    {
+        long target =
+            Environment.TickCount64 +
+            (long)NativeVisualTransitionGrace.TotalMilliseconds;
+
+        while (true)
+        {
+            long current = Volatile.Read(
+                ref _nativeVisualTransitionNotBeforeTick);
+
+            if (current >= target)
+            {
+                break;
+            }
+
+            if (Interlocked.CompareExchange(
+                    ref _nativeVisualTransitionNotBeforeTick,
+                    target,
+                    current) == current)
+            {
+                break;
+            }
+        }
+
+        // Invalidate a wallpaper refresh that may already be queued for an
+        // earlier visual state. The caller will queue the current state again.
+        Interlocked.Increment(
+            ref _wallpaperVisualRefreshGeneration);
+    }
+
+    private static TimeSpan GetNativeVisualTransitionDelay(
+        TimeSpan minimumDelay)
+    {
+        long remainingMilliseconds =
+            Volatile.Read(ref _nativeVisualTransitionNotBeforeTick) -
+            Environment.TickCount64;
+
+        double delayMilliseconds = Math.Max(
+            minimumDelay.TotalMilliseconds,
+            remainingMilliseconds > 0
+                ? remainingMilliseconds + 16d
+                : 0d);
+
+        return TimeSpan.FromMilliseconds(delayMilliseconds);
+    }
+#endif
+
     /// <summary>
     /// Rebuild dynamic visual resources after a presentation setting changes.
     /// LiveWallpaperManager calls this after enable/import/remove so all open
@@ -192,10 +261,15 @@ public static class AppThemeManager
         int generation = Interlocked.Increment(
             ref _wallpaperVisualRefreshGeneration);
 
+        TimeSpan delay = WallpaperVisualRefreshDelay;
+#if WINDOWS
+        delay = GetNativeVisualTransitionDelay(delay);
+#endif
+
         QueueWallpaperVisualRefresh(
             application,
             generation,
-            WallpaperVisualRefreshDelay,
+            delay,
             retryCount: 0);
     }
 
@@ -215,6 +289,21 @@ public static class AppThemeManager
                     return;
                 }
 
+#if WINDOWS
+                TimeSpan transitionDelay =
+                    GetNativeVisualTransitionDelay(TimeSpan.Zero);
+
+                if (transitionDelay > TimeSpan.Zero)
+                {
+                    QueueWallpaperVisualRefresh(
+                        application,
+                        generation,
+                        transitionDelay,
+                        retryCount);
+                    return;
+                }
+#endif
+
                 try
                 {
                     ApplyWallpaperVisualResourcesCore(application);
@@ -224,21 +313,15 @@ public static class AppThemeManager
                 {
                     if (retryCount < WallpaperVisualRefreshMaxRetries)
                     {
-                        // A WinUI control may still be completing native handler
-                        // teardown for one dispatcher turn. Retry the latest state
-                        // only; stale refreshes remain discarded by generation.
                         QueueWallpaperVisualRefresh(
                             application,
                             generation,
-                            WallpaperVisualRefreshRetryDelay,
+                            GetNativeVisualTransitionDelay(
+                                WallpaperVisualRefreshRetryDelay),
                             retryCount + 1);
                         return;
                     }
 
-                    // Presentation-resource refresh is best-effort. Never crash
-                    // the app just because WinUI is still disposing a stale
-                    // DynamicResource target; the next normal visual refresh
-                    // (theme/accent/wallpaper change) will reconcile the tokens.
                     System.Diagnostics.Debug.WriteLine(
                         $"Wallpaper resource refresh deferred: {exception}");
                 }
@@ -370,82 +453,189 @@ public static class AppThemeManager
 
     private static void ApplyCurrentTheme(bool savePreferences)
     {
-        void Apply()
-        {
-            Application? application =
-                _application ??
-                Application.Current;
+        Application? application =
+            _application ??
+            Application.Current;
 
-            if (application is null)
+        if (application is null)
+        {
+            return;
+        }
+
+        // Persist the user's choice immediately even when visual application
+        // must wait for a native wallpaper teardown to finish.
+        if (savePreferences)
+        {
+            Preferences.Default.Set(
+                ThemeModePreferenceKey,
+                CurrentMode.ToString());
+
+            Preferences.Default.Set(
+                AccentColorPreferenceKey,
+                CurrentAccentHex);
+        }
+
+        int generation = Interlocked.Increment(
+            ref _themeVisualRefreshGeneration);
+
+#if WINDOWS
+        TimeSpan transitionDelay =
+            GetNativeVisualTransitionDelay(TimeSpan.Zero);
+
+        if (transitionDelay > TimeSpan.Zero)
+        {
+            QueueThemeVisualRefresh(
+                application,
+                generation,
+                transitionDelay,
+                retryCount: 0);
+            return;
+        }
+#endif
+
+        void ApplyNow()
+        {
+            if (generation != Volatile.Read(
+                    ref _themeVisualRefreshGeneration))
             {
                 return;
             }
 
-            application.UserAppTheme =
-                CurrentMode switch
-                {
-                    AppThemeMode.Light => AppTheme.Light,
-                    AppThemeMode.Dark => AppTheme.Dark,
-                    _ => AppTheme.Unspecified
-                };
-
-            AppTheme effectiveTheme =
-                CurrentMode switch
-                {
-                    AppThemeMode.Light => AppTheme.Light,
-                    AppThemeMode.Dark => AppTheme.Dark,
-                    _ => application.RequestedTheme == AppTheme.Dark
-                        ? AppTheme.Dark
-                        : AppTheme.Light
-                };
-
-            ThemePalette palette;
-
-#if ANDROID
-            if (AndroidMaterialYouManager.TryGetCurrentColorScheme(
-                    out AndroidMaterialColorScheme materialScheme))
-            {
-                palette = CreateMaterialYouPalette(
-                    effectiveTheme,
-                    materialScheme);
-            }
-            else
-#endif
-            {
-                palette = CreatePalette(
-                    effectiveTheme,
-                    CurrentAccentColor);
-            }
-
-            ApplyPalette(application.Resources, palette);
-            ApplyWallpaperVisualPalette(
-                application.Resources,
-                palette,
-                effectiveTheme);
-
-            if (savePreferences)
-            {
-                Preferences.Default.Set(
-                    ThemeModePreferenceKey,
-                    CurrentMode.ToString());
-
-                Preferences.Default.Set(
-                    AccentColorPreferenceKey,
-                    CurrentAccentHex);
-            }
-
-            ThemeChanged?.Invoke(null, EventArgs.Empty);
+            TryApplyCurrentThemeCore(
+                application,
+                generation,
+                retryCount: 0);
         }
 
         if (MainThread.IsMainThread)
         {
-            Apply();
+            ApplyNow();
         }
         else
         {
-            MainThread.BeginInvokeOnMainThread(Apply);
+            MainThread.BeginInvokeOnMainThread(ApplyNow);
         }
     }
+
+    private static void ApplyCurrentThemeCore(
+        Application application)
+    {
+        application.UserAppTheme =
+            CurrentMode switch
+            {
+                AppThemeMode.Light => AppTheme.Light,
+                AppThemeMode.Dark => AppTheme.Dark,
+                _ => AppTheme.Unspecified
+            };
+
+        AppTheme effectiveTheme =
+            CurrentMode switch
+            {
+                AppThemeMode.Light => AppTheme.Light,
+                AppThemeMode.Dark => AppTheme.Dark,
+                _ => application.RequestedTheme == AppTheme.Dark
+                    ? AppTheme.Dark
+                    : AppTheme.Light
+            };
+
+        ThemePalette palette;
+
+#if ANDROID
+        if (AndroidMaterialYouManager.TryGetCurrentColorScheme(
+                out AndroidMaterialColorScheme materialScheme))
+        {
+            palette = CreateMaterialYouPalette(
+                effectiveTheme,
+                materialScheme);
+        }
+        else
+#endif
+        {
+            palette = CreatePalette(
+                effectiveTheme,
+                CurrentAccentColor);
+        }
+
+        ApplyPalette(application.Resources, palette);
+        ApplyWallpaperVisualPalette(
+            application.Resources,
+            palette,
+            effectiveTheme);
+
+        ThemeChanged?.Invoke(null, EventArgs.Empty);
+    }
+
+    private static void TryApplyCurrentThemeCore(
+        Application application,
+        int generation,
+        int retryCount)
+    {
+#if WINDOWS
+        TimeSpan transitionDelay =
+            GetNativeVisualTransitionDelay(TimeSpan.Zero);
+
+        if (transitionDelay > TimeSpan.Zero)
+        {
+            QueueThemeVisualRefresh(
+                application,
+                generation,
+                transitionDelay,
+                retryCount);
+            return;
+        }
+#endif
+
+        try
+        {
+            ApplyCurrentThemeCore(application);
+        }
+#if WINDOWS
+        catch (System.Runtime.InteropServices.COMException exception)
+        {
+            if (retryCount < ThemeVisualRefreshMaxRetries)
+            {
+                QueueThemeVisualRefresh(
+                    application,
+                    generation,
+                    GetNativeVisualTransitionDelay(
+                        ThemeVisualRefreshRetryDelay),
+                    retryCount + 1);
+                return;
+            }
+
+            // A resource update must never terminate the app. The next normal
+            // theme/wallpaper refresh will reconcile any token that WinUI could
+            // not update while a stale native target was being destroyed.
+            System.Diagnostics.Debug.WriteLine(
+                $"Theme resource refresh deferred: {exception}");
+        }
+#endif
+    }
+
+#if WINDOWS
+    private static void QueueThemeVisualRefresh(
+        Application application,
+        int generation,
+        TimeSpan delay,
+        int retryCount)
+    {
+        application.Dispatcher.DispatchDelayed(
+            delay,
+            () =>
+            {
+                if (generation != Volatile.Read(
+                        ref _themeVisualRefreshGeneration))
+                {
+                    return;
+                }
+
+                TryApplyCurrentThemeCore(
+                    application,
+                    generation,
+                    retryCount);
+            });
+    }
+#endif
 
     private static void OnRequestedThemeChanged(
         object? sender,

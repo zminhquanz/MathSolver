@@ -733,6 +733,55 @@
 
                             </VerticalStackLayout>
 
+
+                            <VerticalStackLayout
+                                x:Name="MotionTypePanel"
+                                IsVisible="False"
+                                Spacing="8">
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.MotionTypeTitle}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Border
+                                    Padding="0"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <Grid>
+                                        <Picker
+                                            x:Name="MotionTypePicker"
+                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            SelectedIndexChanged="OnMotionTypeChanged" />
+
+                                        <Path
+                                            IsVisible="{OnPlatform Android=True, Default=False}"
+                                            Data="M4,7 L10,13 L16,7 Z"
+                                            Fill="{DynamicResource WallpaperTextSecondaryBrush}"
+                                            WidthRequest="14"
+                                            HeightRequest="14"
+                                            Margin="0,0,18,0"
+                                            HorizontalOptions="End"
+                                            VerticalOptions="Center"
+                                            InputTransparent="True" />
+                                    </Grid>
+
+                                </Border>
+                            </VerticalStackLayout>
+
                             <VerticalStackLayout
                                 x:Name="AverageTypePanel"
                                 IsVisible="False"

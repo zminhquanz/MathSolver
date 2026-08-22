@@ -1402,7 +1402,12 @@
     "Quiz.GeometryTriangle": "Triangle",
     "Quiz.GeometryTrapezoid": "Trapezoid",
     "Quiz.GeometryRhombus": "Rhombus",
-    "Quiz.GeometryParallelogram": "Parallelogram"
+    "Quiz.GeometryParallelogram": "Parallelogram",
+    "Quiz.MotionTypeTitle": "Choose a motion type",
+    "Quiz.MotionBasic": "Basic – One moving object",
+    "Quiz.MotionChasing": "Two objects in the same direction (catch-up)",
+    "Quiz.MotionMeeting": "Two objects in opposite directions (meeting)",
+    "Quiz.MotionRiver": "River motion (downstream / upstream)"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

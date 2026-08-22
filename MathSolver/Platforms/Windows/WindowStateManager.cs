@@ -286,9 +286,23 @@ public static class WindowStateManager
             return;
         }
 
+        PersistedWindowState previousState =
+            _lastObservedState;
+
         PersistedWindowState currentState =
             GetCurrentState(
                 sender);
+
+        if (currentState == PersistedWindowState.Minimized &&
+            previousState != PersistedWindowState.Minimized)
+        {
+            LiveWallpaperManager.NotifyHostSuspended();
+        }
+        else if (previousState == PersistedWindowState.Minimized &&
+                 currentState != PersistedWindowState.Minimized)
+        {
+            LiveWallpaperManager.NotifyHostResumed();
+        }
 
         if (currentState ==
             PersistedWindowState.Restored)

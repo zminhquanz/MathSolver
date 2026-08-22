@@ -35,6 +35,7 @@ public static class LiveWallpaperManager
     private static int _frameAnalysisGeneration;
     private static bool _isFrameAnalysisRunning;
     private static bool _isMp4PlaybackActive;
+    private static bool _isHostSuspended;
     private static TimeSpan _pendingFrameAnalysisDuration;
 
     private const string WallpaperFolderName =
@@ -61,6 +62,37 @@ public static class LiveWallpaperManager
     }
 
     public static event EventHandler? SettingsChanged;
+
+    // Native hosts can temporarily lose their composition/video surface while
+    // the app window is minimized. These events deliberately do not change the
+    // user's wallpaper preference; active LiveWallpaperView instances only
+    // release/recreate transient rendering resources around the host state.
+    public static event EventHandler? HostSuspended;
+    public static event EventHandler? HostResumed;
+
+    public static void NotifyHostSuspended()
+    {
+        lock (FrameAnalysisLock)
+        {
+            _isHostSuspended = true;
+        }
+
+        // A minimized app should not replace the live decoder with the optional
+        // thumbnail-analysis decoder. Keep pending work deferred until playback
+        // later becomes inactive while the host is visible again.
+        CancelFrameAnalysis();
+        HostSuspended?.Invoke(null, EventArgs.Empty);
+    }
+
+    public static void NotifyHostResumed()
+    {
+        lock (FrameAnalysisLock)
+        {
+            _isHostSuspended = false;
+        }
+
+        HostResumed?.Invoke(null, EventArgs.Empty);
+    }
 
     public static string WallpaperPath =>
         Path.Combine(
@@ -264,6 +296,13 @@ public static class LiveWallpaperManager
             return;
         }
 
+#if WINDOWS
+        if (IsEnabled)
+        {
+            AppThemeManager.NotifyLiveWallpaperNativeTransition();
+        }
+#endif
+
         Preferences.Default.Set(
             ModePreferenceKey,
             (int)mode);
@@ -286,8 +325,11 @@ public static class LiveWallpaperManager
                 false);
         }
 
-        AppThemeManager.RefreshVisualResources();
+        // Let active wallpaper hosts start their teardown/switch before glass
+        // resources are reconciled. AppThemeManager also gates the actual WinUI
+        // ResourceDictionary mutation until native surfaces are safe.
         SettingsChanged?.Invoke(null, EventArgs.Empty);
+        AppThemeManager.RefreshVisualResources();
     }
 
     public static void SetEnabled(bool enabled)
@@ -308,6 +350,13 @@ public static class LiveWallpaperManager
             return;
         }
 
+#if WINDOWS
+        if (!normalized)
+        {
+            AppThemeManager.NotifyLiveWallpaperNativeTransition();
+        }
+#endif
+
         Preferences.Default.Set(
             EnabledPreferenceKey,
             normalized);
@@ -319,11 +368,13 @@ public static class LiveWallpaperManager
             _pendingFrameAnalysisDuration = TimeSpan.Zero;
         }
 
-        AppThemeManager.RefreshVisualResources();
-
+        // Signal hosts first so MediaElement/GraphicsView teardown begins before
+        // opaque Light/Dark resources are restored.
         SettingsChanged?.Invoke(
             null,
             EventArgs.Empty);
+
+        AppThemeManager.RefreshVisualResources();
     }
 
     public static async Task ImportMp4Async(
@@ -714,7 +765,8 @@ public static class LiveWallpaperManager
                     _isFrameAnalysisRunning = false;
                 }
             }
-            else if (_pendingFrameAnalysisDuration > TimeSpan.Zero &&
+            else if (!_isHostSuspended &&
+                     _pendingFrameAnalysisDuration > TimeSpan.Zero &&
                      !LiveWallpaperFrameAnalysis.HasCurrentProfile &&
                      HasWallpaper)
             {
@@ -773,6 +825,13 @@ public static class LiveWallpaperManager
 
     public static void RemoveWallpaper()
     {
+#if WINDOWS
+        if (IsEnabled)
+        {
+            AppThemeManager.NotifyLiveWallpaperNativeTransition();
+        }
+#endif
+
         Preferences.Default.Remove(
             EnabledPreferenceKey);
         Preferences.Default.Remove(
@@ -788,14 +847,15 @@ public static class LiveWallpaperManager
         CancelFrameAnalysis();
         LiveWallpaperFrameAnalysis.Delete();
         AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
-        AppThemeManager.RefreshVisualResources();
 
         // First notify active views so MediaElement releases its source/file
         // handle. This matters on Windows, where MediaPlayer can keep the MP4
-        // locked until Source is cleared.
+        // locked until Source is cleared. Resource restoration is queued only
+        // after teardown has begun.
         SettingsChanged?.Invoke(
             null,
             EventArgs.Empty);
+        AppThemeManager.RefreshVisualResources();
 
         if (File.Exists(WallpaperPath))
         {
