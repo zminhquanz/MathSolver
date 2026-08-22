@@ -1160,7 +1160,7 @@ public partial class MathPuzzlePage : ContentPage
         SetQuestionContent(
             readyMessage,
             20,
-            "TextSecondaryColor",
+            "WallpaperTextSecondaryColor",
             useFractionFormatting: false);
 
         PresentedAnswerLabel.IsVisible = false;
@@ -1748,7 +1748,7 @@ public partial class MathPuzzlePage : ContentPage
         SetQuestionContent(
             Translate("Quiz.LoadingModel"),
             21,
-            "TextPrimaryColor",
+            "WallpaperTextPrimaryColor",
             useFractionFormatting: false);
 
         ResetLlmTokenSpeed();
@@ -1828,7 +1828,7 @@ public partial class MathPuzzlePage : ContentPage
             SetQuestionContent(
                 Translate("Quiz.LlmReady"),
                 20,
-                "TextSecondaryColor",
+                "WallpaperTextSecondaryColor",
                 useFractionFormatting: false);
             ShowLlmStatus(
                 Translate("Quiz.GenerationCancelled"),
@@ -1988,7 +1988,7 @@ public partial class MathPuzzlePage : ContentPage
         SetQuestionContent(
             problemText,
             21,
-            "TextPrimaryColor",
+            "WallpaperTextPrimaryColor",
             useFractionFormatting:
                 IsFractionProblemSelected());
 
@@ -2212,7 +2212,7 @@ public partial class MathPuzzlePage : ContentPage
         else
         {
             key = "Quiz.AiTeacherStateNoModel";
-            colorKey = "TextSecondaryColor";
+            colorKey = "WallpaperTextSecondaryColor";
         }
 
         AiTeacherStateLabel.Text =
@@ -2935,7 +2935,7 @@ public partial class MathPuzzlePage : ContentPage
             SetQuestionContent(
                 wordProblem.ProblemText,
                 21,
-                "TextPrimaryColor",
+                "WallpaperTextPrimaryColor",
                 useFractionFormatting:
                     fractionProblem is not null);
 
@@ -2981,7 +2981,7 @@ public partial class MathPuzzlePage : ContentPage
             SetQuestionContent(
                 proportionProblem.ProblemText,
                 21,
-                "TextPrimaryColor",
+                "WallpaperTextPrimaryColor",
                 useFractionFormatting: false);
 
             if (_currentQuestion.Mode ==
@@ -3013,7 +3013,7 @@ public partial class MathPuzzlePage : ContentPage
             SetQuestionContent(
                 motionProblem.ProblemText,
                 21,
-                "TextPrimaryColor",
+                "WallpaperTextPrimaryColor",
                 useFractionFormatting: false);
 
             if (_currentQuestion.Mode ==
@@ -3779,8 +3779,8 @@ public partial class MathPuzzlePage : ContentPage
             "WallpaperBorderColor");
         button.SetDynamicResource(
             Button.TextColorProperty,
-            "TextPrimaryColor");
-        SetChoiceFractionColor(button, "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
+        SetChoiceFractionColor(button, "WallpaperTextPrimaryColor");
     }
 
     private void ApplyCorrectAnswerStyle(

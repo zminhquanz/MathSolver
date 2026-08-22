@@ -2043,7 +2043,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         fractionBar.SetDynamicResource(
             BoxView.BackgroundColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         fractionGrid.Add(
             numeratorCell,
@@ -2104,7 +2104,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         label.SetDynamicResource(
             Label.TextColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         return label;
     }
@@ -2123,7 +2123,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         label.SetDynamicResource(
             Label.TextColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         return label;
     }
@@ -2146,11 +2146,11 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         radicalView.SetDynamicResource(
             TextbookRadicalExpressionView.LineColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         radicalView.SetDynamicResource(
             TextbookRadicalExpressionView.TextColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         return radicalView;
     }
@@ -2638,7 +2638,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         RootsLabel.SetDynamicResource(
             Label.TextColorProperty,
             hasRealRoots
-                ? "TextPrimaryColor"
+                ? "WallpaperTextPrimaryColor"
                 : "ErrorColor");
     }
 

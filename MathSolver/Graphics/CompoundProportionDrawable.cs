@@ -25,13 +25,13 @@ public sealed class CompoundProportionDrawable : IDrawable
                 : "#DB2777");
 
     private static Color AxisColor =>
-        ThemeResource.GetColor("TextSecondaryColor", "#64748B");
+        ThemeResource.GetColor("WallpaperTextSecondaryColor", "#64748B");
 
     private static Color GridColor =>
         ThemeResource.GetColor("DividerColor", "#E2E8F0");
 
     private static Color TextColor =>
-        ThemeResource.GetColor("TextPrimaryColor", "#1E293B");
+        ThemeResource.GetColor("WallpaperTextPrimaryColor", "#1E293B");
 
     private static Color SurfaceColor =>
         ThemeResource.GetColor("SurfaceColor", "#FFFFFF");

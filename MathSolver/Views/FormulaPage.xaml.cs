@@ -1044,7 +1044,7 @@ public partial class FormulaPage : ContentPage
             Button.TextColorProperty,
             isSelected
                 ? "PrimaryColor"
-                : "TextSecondaryColor");
+                : "WallpaperTextSecondaryColor");
 
         button.BackgroundColor =
             Microsoft.Maui.Graphics.Colors.Transparent;
@@ -1100,7 +1100,7 @@ public partial class FormulaPage : ContentPage
 
         button.SetDynamicResource(
             Button.TextColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         button.SetDynamicResource(
             Button.BorderColorProperty,

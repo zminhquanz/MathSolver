@@ -94,7 +94,7 @@ public sealed class FractionExpressionView : ContentView
     {
         SetDynamicResource(
             MathColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         Rebuild();
     }

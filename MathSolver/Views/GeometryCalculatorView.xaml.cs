@@ -663,7 +663,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             Button.TextColorProperty,
             selected
                 ? "OnPrimaryColor"
-                : "TextPrimaryColor");
+                : "WallpaperTextPrimaryColor");
 
         // Bốn nút chọn loại hình học và kiểu số dùng màu nền để thể hiện
         // trạng thái. Không vẽ thêm viền để bố cục liền lạc với các tab khác.

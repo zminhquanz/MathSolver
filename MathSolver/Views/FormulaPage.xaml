@@ -158,7 +158,7 @@
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnProportionTabClicked" />
 
                 <Button
@@ -174,7 +174,7 @@
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnMotionTabClicked" />
 
                 <Button
@@ -190,7 +190,7 @@
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 
             </Grid>
@@ -239,14 +239,14 @@
                                 FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                                 x:Name="UnknownPageSubtitle"
                                 Text="Dạng tổng quát • Quy tắc • Ví dụ minh họa"
                                 FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -318,7 +318,7 @@
                                                     FontAttributes="Bold"
                                                     VerticalTextAlignment="Center"
                                                     LineBreakMode="WordWrap"
-                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             </Grid>
 
@@ -343,7 +343,7 @@
                                                         FontSize="20"
                                                         FontAttributes="Bold"
                                                         VerticalTextAlignment="Center"
-                                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                     <Label
                                                         Grid.Column="1"
@@ -367,7 +367,7 @@
                                                     Text="Quy tắc"
                                                     FontSize="20"
                                                     FontAttributes="Bold"
-                                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                 <Label
                                                     Text="{Binding Rule}"
@@ -375,7 +375,7 @@
                                                     FontAttributes="Bold"
                                                     LineHeight="1.1"
                                                     LineBreakMode="WordWrap"
-                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             </VerticalStackLayout>
 
@@ -410,13 +410,13 @@
                                                             FontSize="17"
                                                             LineHeight="1.4"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                         <Label
                                                             Text="{Binding ExampleSolution}"
                                                             FontSize="17"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                     </VerticalStackLayout>
 
@@ -460,7 +460,7 @@
                                         LineHeight="1.25"
                                         HorizontalTextAlignment="Center"
                                         LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 </VerticalStackLayout>
 
                                 <!-- Phép cộng -->
@@ -485,21 +485,21 @@
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Kết hợp: (a + b) + c = a + (b + c). Có thể nhóm các số hạng theo cách thuận tiện."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Phần tử trung hòa: a + 0 = 0 + a = a."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Tìm số hạng chưa biết: x + b = c thì x = c − b."
@@ -507,7 +507,7 @@
                                             FontAttributes="Bold"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="Ví dụ: x + 18 = 45 ⇒ x = 45 − 18 = 27. Kiểm tra: 27 + 18 = 45."
@@ -541,21 +541,21 @@
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Không kết hợp: (a − b) − c thường khác a − (b − c). Cần thực hiện đúng thứ tự."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Tính chất cơ bản: a − 0 = a và a − a = 0."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Tìm số bị trừ: x − b = c thì x = c + b. Tìm số trừ: a − x = c thì x = a − c."
@@ -563,7 +563,7 @@
                                             FontAttributes="Bold"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="Ví dụ: 52 − x = 19 ⇒ x = 52 − 19 = 33. Kiểm tra: 52 − 33 = 19."
@@ -597,21 +597,21 @@
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Kết hợp: (a × b) × c = a × (b × c). Có thể nhóm các thừa số theo cách thuận tiện."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Phần tử đơn vị và phần tử hấp thụ: a × 1 = a; a × 0 = 0."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Tìm thừa số chưa biết: x × b = c thì x = c ÷ b, với b ≠ 0."
@@ -619,7 +619,7 @@
                                             FontAttributes="Bold"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="Ví dụ: x × 7 = 56 ⇒ x = 56 ÷ 7 = 8. Kiểm tra: 8 × 7 = 56."
@@ -653,14 +653,14 @@
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Tính chất cơ bản: a ÷ 1 = a; a ÷ a = 1 với a ≠ 0; 0 ÷ a = 0 với a ≠ 0."
                                             FontSize="17"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="• Không bao giờ được chia cho 0. Mọi giá trị làm số chia hoặc mẫu số bằng 0 đều không hợp lệ."
@@ -676,7 +676,7 @@
                                             FontAttributes="Bold"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Text="Ví dụ: 72 ÷ x = 9 ⇒ x = 72 ÷ 9 = 8. Kiểm tra: 72 ÷ 8 = 9."
@@ -806,7 +806,7 @@
                                                     FontSize="16"
                                                     FontAttributes="Bold"
                                                     LineBreakMode="WordWrap"
-                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             </Border>
 
@@ -869,7 +869,7 @@
                                             Text="Tính chất chung"
                                             FontSize="15"
                                             FontAttributes="Bold"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <VerticalStackLayout
                                             BindableLayout.ItemsSource="{Binding Properties}"
@@ -882,7 +882,7 @@
                                                         Text="{Binding ., StringFormat='• {0}'}"
                                                         FontSize="14"
                                                         LineBreakMode="WordWrap"
-                                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                 </DataTemplate>
                                             </BindableLayout.ItemTemplate>
@@ -925,14 +925,14 @@
                                 FontSize="27"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                                 x:Name="GeometryPageSubtitle"
                                 Text="Hình học mặt phẳng • Hình học không gian • Công thức thường dùng"
                                 FontSize="17"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -972,7 +972,7 @@
                                     <Label
                                         Text="Các hình hai chiều • Chu vi và diện tích"
                                         FontSize="15"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 </VerticalStackLayout>
                             </Grid>
@@ -1028,7 +1028,7 @@
                                     <Label
                                         Text="Các khối ba chiều • Diện tích và thể tích"
                                         FontSize="15"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 </VerticalStackLayout>
                             </Grid>

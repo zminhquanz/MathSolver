@@ -38,7 +38,7 @@ public sealed class ProportionComparisonDrawable : IDrawable
 
     private static Color AxisColor =>
         ThemeResource.GetColor(
-            "TextSecondaryColor",
+            "WallpaperTextSecondaryColor",
             "#64748B");
 
     private static Color GridColor =>
@@ -48,7 +48,7 @@ public sealed class ProportionComparisonDrawable : IDrawable
 
     private static Color TextColor =>
         ThemeResource.GetColor(
-            "TextPrimaryColor",
+            "WallpaperTextPrimaryColor",
             "#1E293B");
 
     private static Color SurfaceColor =>

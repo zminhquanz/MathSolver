@@ -255,7 +255,7 @@ public partial class ProportionFormulaView : ContentView
             "WallpaperSurfaceAltColor",
             AppThemeManager.IsDarkThemeEffective ? "#172033" : "#F8FAFC");
         Color textPrimary = ThemeResource.GetColor(
-            "TextPrimaryColor",
+            "WallpaperTextPrimaryColor",
             AppThemeManager.IsDarkThemeEffective ? "#F8FAFC" : "#0F172A");
         Color white = Colors.White;
 

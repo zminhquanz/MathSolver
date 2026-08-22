@@ -36,12 +36,12 @@ public sealed class MotionAverageSpeedDrawable : IDrawable
 
     private static Color TextPrimaryColor =>
         ThemeResource.GetColor(
-            "TextPrimaryColor",
+            "WallpaperTextPrimaryColor",
             "#0F172A");
 
     private static Color TextSecondaryColor =>
         ThemeResource.GetColor(
-            "TextSecondaryColor",
+            "WallpaperTextSecondaryColor",
             "#64748B");
 
     public void Draw(ICanvas canvas, RectF dirtyRect)

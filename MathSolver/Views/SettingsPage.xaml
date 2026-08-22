@@ -567,7 +567,7 @@
                                     TextColor="{DynamicResource TextPrimaryColor}" />
                                 <Label
                                     x:Name="LiveWallpaperEnabledSummaryLabel"
-                                    Text="Hình nền dừng khi tab không hoạt động; Math Animation tạm dừng khi AI local tạo sinh, H.264 phần cứng vẫn phát."
+                                    Text="Hình nền chỉ dừng khi tab không hoạt động; Math Animation và H.264 phần cứng đều tiếp tục chạy khi AI local tạo sinh."
                                     FontSize="12"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
                             </VerticalStackLayout>
@@ -662,7 +662,7 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="11" />
                                 </Border.StrokeShape>
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                     <Label
                                         Grid.Column="0"
                                         Text="🎞️"
@@ -681,6 +681,15 @@
                                             LineBreakMode="MiddleTruncation"
                                             TextColor="{DynamicResource TextSecondaryColor}" />
                                     </VerticalStackLayout>
+                                    <ActivityIndicator
+                                        x:Name="LiveWallpaperImportActivity"
+                                        Grid.Column="2"
+                                        IsVisible="False"
+                                        IsRunning="False"
+                                        Color="{DynamicResource PrimaryColor}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        VerticalOptions="Center" />
                                 </Grid>
                             </Border>
 
@@ -720,7 +729,7 @@
 
                             <Label
                                 x:Name="LiveWallpaperNoteLabel"
-                                Text="MP4 phải dùng H.264 / AVC và dài tối đa 120 giây. Video đã xác nhận giải mã phần cứng vẫn tiếp tục phát khi AI local tạo sinh."
+                                Text="MP4 phải dùng H.264 / AVC và dài tối đa 120 giây. File hợp lệ được nhận trước; timeline độ sáng được tối ưu ở nền để tự chọn chữ/kính sáng hoặc tối khi phát."
                                 FontSize="11"
                                 FontAttributes="Italic"
                                 TextColor="{DynamicResource TextSecondaryColor}" />

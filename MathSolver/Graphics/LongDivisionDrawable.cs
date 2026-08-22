@@ -661,7 +661,7 @@ public sealed class LongDivisionDrawable : IDrawable
 
         Color primaryText =
             ThemeResource.GetColor(
-                "TextPrimaryColor",
+                "WallpaperTextPrimaryColor",
                 "#172033");
 
         canvas.FontColor =
@@ -682,7 +682,7 @@ public sealed class LongDivisionDrawable : IDrawable
     {
         canvas.FontColor =
             ThemeResource.GetColor(
-                "TextSecondaryColor",
+                "WallpaperTextSecondaryColor",
                 "#64748B");
 
         canvas.FontSize = 14;

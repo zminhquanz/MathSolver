@@ -120,12 +120,12 @@
                                 Text="2. Chọn hình"
                                 FontSize="20"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                                 Text="Chọn một hình để xem công thức và nhập dữ liệu."
                                 FontSize="16"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                             <Border
                                 Padding="0"
                                 BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
@@ -145,8 +145,8 @@
                                         VerticalOptions="Fill"
                                         FontSize="15"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        TitleColor="{DynamicResource TextSecondaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        TitleColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         ItemsSource="{Binding GeometryItems}"
                                         SelectedIndexChanged="OnGeometryShapeSelected"
                                         ItemDisplayBinding="{Binding Path=Name}" />
@@ -154,7 +154,7 @@
                                     <Path
                                         IsVisible="{OnPlatform Android=True, Default=False}"
                                         Data="M4,7 L10,13 L16,7 Z"
-                                        Fill="{DynamicResource TextSecondaryBrush}"
+                                        Fill="{DynamicResource WallpaperTextSecondaryBrush}"
                                         WidthRequest="14"
                                         HeightRequest="14"
                                         Margin="0,0,18,0"
@@ -225,7 +225,7 @@
                             Text="Công thức và hình minh họa"
                             FontSize="20"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <!--
                             Bố cục này được đổi bằng code-behind:
@@ -320,7 +320,7 @@
                                                         LineBreakMode="WordWrap"
                                                         HorizontalTextAlignment="Center"
                                                         VerticalTextAlignment="Center"
-                                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                 </Border>
 
@@ -386,7 +386,7 @@
                                                 FontSize="16"
                                                 FontAttributes="Bold"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <VerticalStackLayout
                                                 Spacing="5"
@@ -400,7 +400,7 @@
                                                             FontSize="14"
                                                             LineHeight="1.15"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>
@@ -439,12 +439,12 @@
                         Text="4. Nhập kích thước"
                         FontSize="20"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Label
                         Text="Tất cả kích thước phải lớn hơn 0."
                         FontSize="15"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <FlexLayout
                         x:Name="GeometryInputFlexLayout"
@@ -484,7 +484,7 @@
                                             FontSize="16"
                                             FontAttributes="Bold"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Border
                                             HeightRequest="48"
@@ -500,14 +500,14 @@
                                             <Entry
                                                 Text="{Binding Text, Mode=TwoWay}"
                                                 Placeholder="{Binding Placeholder}"
-                                                PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                                PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                                 Keyboard="Numeric"
                                                 FontSize="18"
                                                 HorizontalOptions="Fill"
                                                 VerticalOptions="Fill"
                                                 VerticalTextAlignment="Center"
                                                 BackgroundColor="Transparent"
-                                                TextColor="{DynamicResource TextPrimaryColor}"
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                 ClearButtonVisibility="WhileEditing"
                                                 Focused="OnGeometryEntryFocused"
                                                 Unfocused="OnGeometryEntryUnfocused"
@@ -626,7 +626,7 @@
                         x:Name="ResultShapeLabel"
                         FontSize="19"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <VerticalStackLayout
                         Spacing="8"
@@ -657,7 +657,7 @@
                                             Text="{Binding Title}"
                                             FontSize="17"
                                             FontAttributes="Bold"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Label
                                             Grid.Row="0"
@@ -676,7 +676,7 @@
                                             Text="{Binding Formula}"
                                             FontSize="15"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                     </Grid>
 
@@ -714,7 +714,7 @@
                                 Text="{Binding Text, Source={x:Reference GeometryCopyResultButton}}"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
                         </HorizontalStackLayout>
@@ -744,7 +744,7 @@
                                 FontSize="16"
                                 LineHeight="1.35"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
 

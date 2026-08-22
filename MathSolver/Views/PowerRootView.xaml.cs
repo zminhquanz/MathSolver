@@ -1572,7 +1572,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         label.SetDynamicResource(
             Label.TextColorProperty,
-            "TextPrimaryColor");
+            "WallpaperTextPrimaryColor");
 
         return label;
     }
@@ -1607,13 +1607,13 @@ public partial class PowerRootView : LocalizedSolverView
             TextbookRadicalExpressionView.LineColorProperty,
             isConclusion
                 ? "SuccessColor"
-                : "TextPrimaryColor");
+                : "WallpaperTextPrimaryColor");
 
         radicalExpression.SetDynamicResource(
             TextbookRadicalExpressionView.TextColorProperty,
             isConclusion
                 ? "SuccessColor"
-                : "TextPrimaryColor");
+                : "WallpaperTextPrimaryColor");
 
         var equationLayout =
             new HorizontalStackLayout
@@ -1647,7 +1647,7 @@ public partial class PowerRootView : LocalizedSolverView
                 Label.TextColorProperty,
                 isConclusion
                     ? "SuccessColor"
-                    : "TextPrimaryColor");
+                    : "WallpaperTextPrimaryColor");
 
             equationLayout.Children.Add(
                 resultLabel);

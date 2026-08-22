@@ -194,7 +194,7 @@
                     Text="{localization:Translate Calculation.Tabs.Average}"
                     MinimumWidthRequest="{OnPlatform Android=126, WinUI=180, Default=180}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnAverageTabClicked" />
 
                 <Button
@@ -203,7 +203,7 @@
                     MinimumWidthRequest="{OnPlatform Android=154, WinUI=214, Default=214}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     FontSize="15"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnPowerRootTabClicked" />
 
                 <Button
@@ -211,7 +211,7 @@
                     Text="{localization:Translate Calculation.Tabs.Fraction}"
                     MinimumWidthRequest="{OnPlatform Android=98, WinUI=132, Default=132}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnFractionTabClicked" />
 
                 <Button
@@ -219,7 +219,7 @@
                     Text="{localization:Translate Calculation.Tabs.FindX}"
                     MinimumWidthRequest="{OnPlatform Android=92, WinUI=126, Default=126}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnFindXTabClicked" />
 
                 <Button
@@ -229,7 +229,7 @@
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     Padding="6,0"
                     FontSize="15"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnQuadraticTabClicked" />
 
                 <Button
@@ -237,7 +237,7 @@
                     Text="{localization:Translate Calculation.Tabs.Geometry}"
                     MinimumWidthRequest="{OnPlatform Android=102, WinUI=138, Default=138}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
-                    TextColor="{DynamicResource TextSecondaryColor}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 
                 </HorizontalStackLayout>
@@ -296,7 +296,7 @@
                                 Text="+"
                                 Style="{StaticResource SolverOperationButtonStyle}"
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 Clicked="OnAddClicked" />
 
                                 <Button
@@ -305,7 +305,7 @@
                                 Text="−"
                                 Style="{StaticResource SolverOperationButtonStyle}"
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 Clicked="OnSubtractClicked" />
 
                                 <Button
@@ -314,7 +314,7 @@
                                 Text="×"
                                 Style="{StaticResource SolverOperationButtonStyle}"
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 Clicked="OnMultiplyClicked" />
 
                                 <Button
@@ -335,7 +335,7 @@
                                 Style="{StaticResource SolverOperationButtonStyle}"
                                 FontSize="15"
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 Clicked="OnExpressionClicked" />
 
                             </Grid>
@@ -382,7 +382,7 @@
                                     Text="{localization:Translate Numbers.Decimal}"
                                     Style="{StaticResource SolverNumberTypeButtonStyle}"
                                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     Clicked="OnDecimalTypeClicked" />
 
                             </Grid>
@@ -402,7 +402,7 @@
                                     Grid.Column="0"
                                     Text="Số thứ nhất"
                                     FontSize="16"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
                                     x:Name="FirstNumberBorder"
@@ -421,14 +421,14 @@
                                     <Entry
                                         x:Name="FirstNumberEntry"
                                         Placeholder="Ví dụ: 25"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         ClearButtonVisibility="WhileEditing"
                                         TextChanged="OnNumberEntryTextChanged" />
 
@@ -452,7 +452,7 @@
                                     Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                                     Text="Số thứ hai"
                                     FontSize="16"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
                                     x:Name="SecondNumberBorder"
@@ -471,14 +471,14 @@
                                     <Entry
                                     x:Name="SecondNumberEntry"
                                     Placeholder="Ví dụ: 15"
-                                    PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                    PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                     Keyboard="Numeric"
                                     FontSize="19"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
@@ -494,7 +494,7 @@
                                     FontSize="15"
                                     LineHeight="1.25"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
                                     Padding="12,8"
@@ -511,8 +511,8 @@
                                         AutoSize="TextChanges"
                                         MinimumHeightRequest="132"
                                         FontSize="19"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         BackgroundColor="Transparent"
                                         Focused="OnArithmeticExpressionFocused"
                                         Unfocused="OnArithmeticExpressionUnfocused"
@@ -532,7 +532,7 @@
                                         FontSize="14"
                                         LineHeight="1.25"
                                         LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource TextPrimaryColor}" />
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </Border>
 
                             </VerticalStackLayout>
@@ -609,7 +609,7 @@
                             Text="3. Kết quả"
                             FontSize="19"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                             x:Name="ExpressionLabel"
@@ -626,14 +626,14 @@
                             Text="Đáp số"
                             FontSize="15"
                             HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <Label
                             x:Name="ResultLabel"
                             FontSize="32"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Grid HeightRequest="48">
 
@@ -662,7 +662,7 @@
                                         Text="{Binding Text, Source={x:Reference BasicCopyResultButton}}"
                                         FontSize="15"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         VerticalTextAlignment="Center" />
 
                                 </HorizontalStackLayout>
@@ -712,7 +712,7 @@
                                                 Text="Thương"
                                                 FontSize="16"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                 <Label
                                                 x:Name="QuotientLabel"
@@ -742,7 +742,7 @@
                                         Text="Số dư"
                                         FontSize="16"
                                         HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource TextSecondaryColor}" />
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                 <Label
                                         x:Name="RemainderLabel"
@@ -779,7 +779,7 @@
                                 x:Name="ExplanationLabel"
                                 FontSize="18"
                                 LineHeight="1.3"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 </VerticalStackLayout>
                             </Border>
@@ -802,12 +802,12 @@
                                     Text="Phép chia đặt tính"
                                     FontSize="19"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                     <Label
                                     Text="Các bước thực hiện phép chia theo cách trình bày ở tiểu học."
                                     FontSize="15"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                     <!-- Chọn cách hiển thị riêng cho phép chia đặt tính -->
                                     <Border
@@ -826,7 +826,7 @@
                                             Text="Hiển thị phép chia"
                                             FontSize="17"
                                             FontAttributes="Bold"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Grid
                                             ColumnDefinitions="*,*"
@@ -873,7 +873,7 @@
                                                             <Label
                                                             Text="Thương và số dư"
                                                             FontSize="14"
-                                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                         </VerticalStackLayout>
 
@@ -914,13 +914,13 @@
                                                             Text="Theo số thập phân"
                                                             FontSize="16"
                                                             FontAttributes="Bold"
-                                                            TextColor="{DynamicResource TextPrimaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                             <Label
                                                             Text="Tiếp tục chia đến kết quả thập phân"
                                                             FontSize="14"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                                         </VerticalStackLayout>
 
@@ -977,7 +977,7 @@
                                         x:Name="AdditionalLabel"
                                         FontSize="18"
                                         LineHeight="1.3"
-                                        TextColor="{DynamicResource TextPrimaryColor}"/>
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"/>
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>

@@ -30,6 +30,11 @@ public static class LiveWallpaperManager
     private static readonly SemaphoreSlim ValidationGate =
         new(1, 1);
 
+    private static readonly object FrameAnalysisLock = new();
+    private static CancellationTokenSource? _frameAnalysisCancellation;
+    private static int _frameAnalysisGeneration;
+    private static bool _isFrameAnalysisRunning;
+
     private const string WallpaperFolderName =
         "Wallpapers";
     private const string WallpaperFileName =
@@ -37,6 +42,21 @@ public static class LiveWallpaperManager
 
     public const double MaximumMp4DurationSeconds =
         LiveWallpaperVideoInspector.MaximumDurationSeconds;
+
+    /// <summary>
+    /// True only while the optional low-resolution luminance timeline is being
+    /// built. MP4 validation/import is already complete at this point.
+    /// </summary>
+    public static bool IsFrameAnalysisRunning
+    {
+        get
+        {
+            lock (FrameAnalysisLock)
+            {
+                return _isFrameAnalysisRunning;
+            }
+        }
+    }
 
     public static event EventHandler? SettingsChanged;
 
@@ -134,7 +154,9 @@ public static class LiveWallpaperManager
             return false;
         }
 
-        if (IsHardwareH264Validated)
+        if (IsHardwareH264Validated &&
+            (LiveWallpaperFrameAnalysis.HasCurrentProfile ||
+             IsFrameAnalysisRunning))
         {
             return true;
         }
@@ -143,11 +165,16 @@ public static class LiveWallpaperManager
 
         try
         {
-            if (IsHardwareH264Validated)
+            if (IsHardwareH264Validated &&
+                (LiveWallpaperFrameAnalysis.HasCurrentProfile ||
+                 IsFrameAnalysisRunning))
             {
                 return true;
             }
 
+            // Metadata/codec validation is intentionally the only awaited
+            // work here. The more expensive brightness timeline is optional
+            // visual metadata and is queued after the wallpaper is accepted.
             LiveWallpaperVideoInspection inspection =
                 await LiveWallpaperVideoInspector.InspectAsync(
                     WallpaperPath,
@@ -168,12 +195,23 @@ public static class LiveWallpaperManager
                     ? CurrentValidationVersion
                     : 0);
 
-            if (!isOptimized &&
-                Mode == LiveWallpaperMode.Mp4)
+            if (isOptimized &&
+                !LiveWallpaperFrameAnalysis.HasCurrentProfile)
             {
-                Preferences.Default.Set(
-                    EnabledPreferenceKey,
-                    false);
+                ScheduleFrameAnalysis(inspection.Duration);
+            }
+
+            if (!isOptimized)
+            {
+                CancelFrameAnalysis();
+                LiveWallpaperFrameAnalysis.Delete();
+
+                if (Mode == LiveWallpaperMode.Mp4)
+                {
+                    Preferences.Default.Set(
+                        EnabledPreferenceKey,
+                        false);
+                }
             }
 
             AppThemeManager.RefreshVisualResources();
@@ -192,6 +230,8 @@ public static class LiveWallpaperManager
             Preferences.Default.Set(
                 ValidationVersionPreferenceKey,
                 0);
+            CancelFrameAnalysis();
+            LiveWallpaperFrameAnalysis.Delete();
 
             if (Mode == LiveWallpaperMode.Mp4)
             {
@@ -224,6 +264,8 @@ public static class LiveWallpaperManager
         Preferences.Default.Set(
             ModePreferenceKey,
             (int)mode);
+
+        AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
 
         // Do not silently switch to a non-working MP4 background. The user can
         // still choose MP4 mode first, then import a valid clip.
@@ -260,6 +302,11 @@ public static class LiveWallpaperManager
         Preferences.Default.Set(
             EnabledPreferenceKey,
             normalized);
+
+        if (!normalized)
+        {
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+        }
 
         AppThemeManager.RefreshVisualResources();
 
@@ -301,33 +348,40 @@ public static class LiveWallpaperManager
 
         try
         {
-            await using Stream source =
-                await selectedFile.OpenReadAsync();
+            // Stop only stale analysis from an older import. The currently
+            // working wallpaper/profile remains intact until the new file has
+            // passed H.264, duration and hardware-decoder validation.
+            CancelFrameAnalysis();
 
-            await using (var destination =
-                new FileStream(
-                    temporaryPath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.None,
-                    bufferSize: 1024 * 128,
-                    useAsync: true))
+            Task<LiveWallpaperVideoInspection>? directInspection = null;
+#if WINDOWS
+            // On WinUI FilePicker exposes the real source path. Start the cheap
+            // metadata/codec inspection in parallel with the OS file copy so
+            // valid local clips become ready sooner.
+            string? directSourcePath = selectedFile.FullPath;
+            if (!string.IsNullOrWhiteSpace(directSourcePath) &&
+                File.Exists(directSourcePath))
             {
-                await source.CopyToAsync(
-                    destination,
-                    1024 * 128,
-                    cancellationToken);
-
-                await destination.FlushAsync(
-                    cancellationToken);
+                directInspection =
+                    LiveWallpaperVideoInspector.InspectAsync(
+                        directSourcePath,
+                        cancellationToken);
             }
+#endif
+
+            await CopySelectedFileAsync(
+                selectedFile,
+                temporaryPath,
+                cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
             LiveWallpaperVideoInspection inspection =
-                await LiveWallpaperVideoInspector.InspectAsync(
-                    temporaryPath,
-                    cancellationToken);
+                directInspection is not null
+                    ? await directInspection
+                    : await LiveWallpaperVideoInspector.InspectAsync(
+                        temporaryPath,
+                        cancellationToken);
 
             if (!LiveWallpaperVideoInspector.IsDurationAllowed(
                     inspection.Duration))
@@ -348,6 +402,9 @@ public static class LiveWallpaperManager
                     LiveWallpaperVideoValidationError.HardwareH264DecoderUnavailable);
             }
 
+            // Acceptance happens here. Do NOT block it on thumbnail/frame
+            // analysis: that used to make a valid file appear unresponsive for
+            // several seconds and temporarily retained native decoder buffers.
             File.Move(
                 temporaryPath,
                 WallpaperPath,
@@ -369,8 +426,16 @@ public static class LiveWallpaperManager
                 EnabledPreferenceKey,
                 true);
 
+            // Never let the old video's luminance profile affect the newly
+            // accepted wallpaper while the replacement profile is built.
+            LiveWallpaperFrameAnalysis.Delete();
+            ScheduleFrameAnalysis(inspection.Duration);
+
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
             AppThemeManager.RefreshVisualResources();
 
+            // Notify immediately: filename, switch and playback update now. The
+            // adaptive contrast profile arrives later through the same event.
             SettingsChanged?.Invoke(
                 null,
                 EventArgs.Empty);
@@ -392,6 +457,228 @@ public static class LiveWallpaperManager
         }
     }
 
+    private static async Task CopySelectedFileAsync(
+        FileResult selectedFile,
+        string destinationPath,
+        CancellationToken cancellationToken)
+    {
+#if WINDOWS
+        // WinUI FilePicker normally returns a real filesystem path. Let the OS
+        // perform the copy in a worker thread; this is faster and avoids an
+        // extra managed copy buffer for large clips.
+        string? fullPath = selectedFile.FullPath;
+        if (!string.IsNullOrWhiteSpace(fullPath) &&
+            File.Exists(fullPath))
+        {
+            await Task.Run(
+                () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    File.Copy(
+                        fullPath,
+                        destinationPath,
+                        overwrite: true);
+                    cancellationToken.ThrowIfCancellationRequested();
+                },
+                cancellationToken);
+            return;
+        }
+#endif
+
+        await using Stream source =
+            await selectedFile.OpenReadAsync();
+
+        await using var destination =
+            new FileStream(
+                destinationPath,
+                new FileStreamOptions
+                {
+                    Mode = FileMode.Create,
+                    Access = FileAccess.Write,
+                    Share = FileShare.None,
+                    BufferSize = 64 * 1024,
+                    Options =
+                        FileOptions.Asynchronous |
+                        FileOptions.SequentialScan
+                });
+
+        // 256 KiB is large enough for good sequential throughput without
+        // creating a multi-megabyte transient allocation on mobile.
+        await source.CopyToAsync(
+            destination,
+            256 * 1024,
+            cancellationToken);
+
+        await destination.FlushAsync(cancellationToken);
+    }
+
+    private static void ScheduleFrameAnalysis(TimeSpan duration)
+    {
+        if (duration <= TimeSpan.Zero || !HasWallpaper)
+        {
+            return;
+        }
+
+        CancellationTokenSource cancellation = new();
+        int generation;
+
+        CancellationTokenSource? previous;
+
+        lock (FrameAnalysisLock)
+        {
+            previous = _frameAnalysisCancellation;
+            _frameAnalysisCancellation = cancellation;
+            generation = ++_frameAnalysisGeneration;
+            _isFrameAnalysisRunning = true;
+        }
+
+        // Let the superseded task own/dispose its CTS in finally; disposing it
+        // here can race with native frame extraction still observing Token.
+        try
+        {
+            previous?.Cancel();
+        }
+        catch
+        {
+        }
+
+        // Tell Settings that the file is already accepted but contrast metadata
+        // is still being optimized in the background.
+        SettingsChanged?.Invoke(null, EventArgs.Empty);
+
+        _ = RunFrameAnalysisAsync(
+            generation,
+            duration,
+            cancellation);
+    }
+
+    private static async Task RunFrameAnalysisAsync(
+        int generation,
+        TimeSpan duration,
+        CancellationTokenSource cancellation)
+    {
+        try
+        {
+            // Let the picker close and the accepted filename/playback render
+            // before opening the optional thumbnail decoder pipeline.
+            await Task.Delay(
+                    TimeSpan.FromMilliseconds(900),
+                    cancellation.Token)
+                .ConfigureAwait(false);
+
+            LiveWallpaperFrameProfile? profile =
+                await LiveWallpaperFrameAnalysis.AnalyzeAsync(
+                        WallpaperPath,
+                        duration,
+                        cancellation.Token)
+                    .ConfigureAwait(false);
+
+            lock (FrameAnalysisLock)
+            {
+                if (generation != _frameAnalysisGeneration ||
+                    cancellation.IsCancellationRequested)
+                {
+                    return;
+                }
+            }
+
+            await LiveWallpaperFrameAnalysis.SaveAsync(
+                    profile,
+                    cancellation.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            // Adaptive contrast is optional. Persist an empty current profile
+            // so a decoder failure is not retried on every page load.
+            try
+            {
+                lock (FrameAnalysisLock)
+                {
+                    if (generation != _frameAnalysisGeneration ||
+                        cancellation.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                }
+
+                await LiveWallpaperFrameAnalysis.SaveAsync(
+                    null,
+                    CancellationToken.None);
+            }
+            catch
+            {
+                LiveWallpaperFrameAnalysis.InvalidateCache();
+            }
+        }
+        finally
+        {
+            bool notify = false;
+
+            lock (FrameAnalysisLock)
+            {
+                if (generation == _frameAnalysisGeneration)
+                {
+                    _isFrameAnalysisRunning = false;
+
+                    if (ReferenceEquals(
+                            _frameAnalysisCancellation,
+                            cancellation))
+                    {
+                        _frameAnalysisCancellation = null;
+                    }
+
+                    notify = true;
+                }
+            }
+
+            cancellation.Dispose();
+
+            if (notify)
+            {
+                SettingsChanged?.Invoke(null, EventArgs.Empty);
+            }
+        }
+    }
+
+    private static void CancelFrameAnalysis()
+    {
+        CancellationTokenSource? cancellation = null;
+        bool notify = false;
+
+        lock (FrameAnalysisLock)
+        {
+            _frameAnalysisGeneration++;
+            cancellation = _frameAnalysisCancellation;
+            _frameAnalysisCancellation = null;
+
+            if (_isFrameAnalysisRunning)
+            {
+                _isFrameAnalysisRunning = false;
+                notify = true;
+            }
+        }
+
+        if (cancellation is not null)
+        {
+            try
+            {
+                cancellation.Cancel();
+            }
+            catch
+            {
+            }
+        }
+
+        if (notify)
+        {
+            SettingsChanged?.Invoke(null, EventArgs.Empty);
+        }
+    }
+
     public static void RemoveWallpaper()
     {
         Preferences.Default.Remove(
@@ -406,6 +693,9 @@ public static class LiveWallpaperManager
             ModePreferenceKey,
             (int)LiveWallpaperMode.MathAnimation);
 
+        CancelFrameAnalysis();
+        LiveWallpaperFrameAnalysis.Delete();
+        AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
         AppThemeManager.RefreshVisualResources();
 
         // First notify active views so MediaElement releases its source/file

@@ -4195,7 +4195,7 @@ public partial class CalculationPage : ContentPage
             Button.TextColorProperty,
             isSelected
                 ? "PrimaryColor"
-                : "TextSecondaryColor");
+                : "WallpaperTextSecondaryColor");
 
         button.BackgroundColor =
             Microsoft.Maui.Graphics.Colors.Transparent;

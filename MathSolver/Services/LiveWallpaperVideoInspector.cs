@@ -49,6 +49,13 @@ public static class LiveWallpaperVideoInspector
 {
     public const double MaximumDurationSeconds = 120d;
 
+#if WINDOWS
+    private static readonly SemaphoreSlim WindowsCodecQueryGate = new(1, 1);
+    private static bool _windowsCodecQueryCompleted;
+    private static bool _windowsHasH264Decoder;
+    private static string? _windowsH264DecoderName;
+#endif
+
     public static async Task<LiveWallpaperVideoInspection> InspectAsync(
         string path,
         CancellationToken cancellationToken = default)
@@ -113,23 +120,15 @@ public static class LiveWallpaperVideoInspector
                 "AVC",
                 StringComparison.OrdinalIgnoreCase);
 
-        var query = new CodecQuery();
-        var decoders =
-            await query.FindAllAsync(
-                CodecKind.Video,
-                CodecCategory.Decoder,
-                MediaEncodingSubtypes.H264);
-
-        cancellationToken.ThrowIfCancellationRequested();
+        (bool hasDecoder, string? decoderName) =
+            await GetWindowsH264DecoderAsync(cancellationToken);
 
         // Windows MediaPlayer is backed by Media Foundation. Media Foundation
         // enables DXVA/D3D video acceleration when the GPU/driver and the H.264
         // profile support it. CodecQuery does not expose a hardware/software
         // flag, so decoder presence is the strongest public WinRT preflight;
-        // playback itself remains hardware-preferred by the OS.
-        bool hasDecoder = decoders.Count > 0;
-        string? decoderName =
-            decoders.FirstOrDefault()?.DisplayName;
+        // playback itself remains hardware-preferred by the OS. The expensive
+        // system codec enumeration is cached after the first import.
 
         return new(
             isH264,
@@ -137,6 +136,41 @@ public static class LiveWallpaperVideoInspector
             "H.264 / AVC",
             decoderName,
             clip.OriginalDuration);
+    }
+
+    private static async Task<(bool HasDecoder, string? DecoderName)>
+        GetWindowsH264DecoderAsync(CancellationToken cancellationToken)
+    {
+        if (_windowsCodecQueryCompleted)
+        {
+            return (_windowsHasH264Decoder, _windowsH264DecoderName);
+        }
+
+        await WindowsCodecQueryGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!_windowsCodecQueryCompleted)
+            {
+                var query = new CodecQuery();
+                var decoders =
+                    await query.FindAllAsync(
+                        CodecKind.Video,
+                        CodecCategory.Decoder,
+                        MediaEncodingSubtypes.H264);
+
+                cancellationToken.ThrowIfCancellationRequested();
+                _windowsHasH264Decoder = decoders.Count > 0;
+                _windowsH264DecoderName =
+                    decoders.FirstOrDefault()?.DisplayName;
+                _windowsCodecQueryCompleted = true;
+            }
+
+            return (_windowsHasH264Decoder, _windowsH264DecoderName);
+        }
+        finally
+        {
+            WindowsCodecQueryGate.Release();
+        }
     }
 #endif
 

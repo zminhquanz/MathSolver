@@ -34,13 +34,13 @@
                     FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                 <Label
                     Text="{localization:Translate Formula.Proportion.Subtitle}"
                     FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
             </VerticalStackLayout>
 
@@ -87,7 +87,7 @@
                                     FontSize="16"
                                     LineHeight="1.25"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     Text="y = k × x"
                                     FontSize="20"
@@ -112,13 +112,13 @@
                                     Text="{localization:Translate Formula.Proportion.Inverse.Title}"
                                     FontSize="19"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     Text="{localization:Translate Formula.Proportion.Inverse.Relationship}"
                                     FontSize="16"
                                     LineHeight="1.25"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     Text="y = k ÷ x"
                                     FontSize="20"
@@ -149,7 +149,7 @@
                                 FontSize="16"
                                 LineHeight="1.25"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             <Label
                                 Text="D₂ = D₁ × (Q₂ ÷ Q₁) × (W₁ ÷ W₂) × (H₁ ÷ H₂)"
                                 FontSize="20"
@@ -182,7 +182,7 @@
                         Text="{localization:Translate Formula.Proportion.Graph.Subtitle}"
                         FontSize="16"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                         <Button
@@ -227,7 +227,7 @@
                                     FontSize="25"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <BoxView
                                     HeightRequest="1"
                                     Color="{DynamicResource WallpaperPrimaryBorderColor}" />
@@ -240,16 +240,16 @@
                                     x:Name="GraphDirectValueLabel"
                                     FontSize="16"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     x:Name="GraphInverseValueLabel"
                                     FontSize="16"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     Text="{localization:Translate Formula.Proportion.Graph.SliderHint}"
                                     FontSize="14"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
@@ -324,10 +324,10 @@
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <BoxView HeightRequest="1" Color="{DynamicResource WallpaperPrimaryBorderColor}" />
 
-                                <Label x:Name="CompoundProductValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="CompoundProductValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
@@ -352,7 +352,7 @@
                                         ValueChanged="OnCompoundSliderValueChanged" />
                                 </Border>
 
-                                <Label x:Name="CompoundWorkersValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="CompoundWorkersValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
@@ -377,7 +377,7 @@
                                         ValueChanged="OnCompoundSliderValueChanged" />
                                 </Border>
 
-                                <Label x:Name="CompoundHoursValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="CompoundHoursValueLabel" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Border
                                     HeightRequest="50"
                                     Padding="10,0"
@@ -422,7 +422,7 @@
                                             FontSize="14"
                                             HorizontalTextAlignment="Center"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </VerticalStackLayout>
@@ -479,7 +479,7 @@
                             FontAttributes="Bold"
                             LineHeight="1.35"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     </Border>
 
                     <Border
@@ -496,7 +496,7 @@
                             FontAttributes="Bold"
                             LineHeight="1.35"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     </Border>
 
                     <Border
@@ -513,7 +513,7 @@
                             FontAttributes="Bold"
                             LineHeight="1.35"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     </Border>
 
                     <Label
@@ -521,7 +521,7 @@
                         FontSize="15"
                         FontAttributes="Italic"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                 </VerticalStackLayout>
             </Border>
 
@@ -546,25 +546,25 @@
                         FontSize="17"
                         LineHeight="1.3"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     <Label
                         Text="{localization:Translate Formula.Proportion.Inverse.Properties}"
                         FontSize="17"
                         LineHeight="1.3"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     <Label
                         Text="{localization:Translate Formula.Proportion.Compound.Properties}"
                         FontSize="17"
                         LineHeight="1.3"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     <Label
                         Text="{localization:Translate Formula.Proportion.GraphProperties}"
                         FontSize="17"
                         LineHeight="1.3"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                 </VerticalStackLayout>
             </Border>
 
@@ -589,7 +589,7 @@
                         FontSize="17"
                         LineHeight="1.35"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Grid
                         x:Name="ExamplesGrid"
@@ -642,19 +642,19 @@
                                             RowDefinitions="Auto,Auto"
                                             RowSpacing="7"
                                             ColumnSpacing="10">
-                                            <Label Grid.Row="0" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Direct.LeftTop}" FontSize="16" TextColor="{DynamicResource TextPrimaryColor}" />
-                                            <Label Grid.Row="0" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightTop}" FontSize="16" HorizontalTextAlignment="End" TextColor="{DynamicResource TextPrimaryColor}" />
+                                            <Label Grid.Row="0" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Direct.LeftTop}" FontSize="16" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                            <Label Grid.Row="0" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightTop}" FontSize="16" HorizontalTextAlignment="End" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                             <Label Grid.Row="1" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Direct.LeftBottom}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
                                             <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
                                         </Grid>
 
                                         <BoxView HeightRequest="1" Color="{DynamicResource WallpaperPrimaryBorderColor}" />
-                                        <Label Text="{localization:Translate Formula.Proportion.Direct.Calculation}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label Text="{localization:Translate Formula.Proportion.Direct.Calculation}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                     </VerticalStackLayout>
                                 </Border>
 
-                                <Label Text="{localization:Translate Formula.Proportion.Summary.Solution}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
-                                <Label Text="{localization:Translate Formula.Proportion.Direct.Example}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Proportion.Summary.Solution}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                <Label Text="{localization:Translate Formula.Proportion.Direct.Example}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -669,7 +669,7 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="10">
-                                <Label Text="{localization:Translate Formula.Proportion.Inverse.ExampleTitle}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Proportion.Inverse.ExampleTitle}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border Padding="12" BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
                                     <Border.StrokeShape>
@@ -682,19 +682,19 @@
                                         </Grid>
 
                                         <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="7" ColumnSpacing="10">
-                                            <Label Grid.Row="0" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Inverse.LeftTop}" FontSize="16" TextColor="{DynamicResource TextPrimaryColor}" />
-                                            <Label Grid.Row="0" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightTop}" FontSize="16" HorizontalTextAlignment="End" TextColor="{DynamicResource TextPrimaryColor}" />
+                                            <Label Grid.Row="0" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Inverse.LeftTop}" FontSize="16" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                            <Label Grid.Row="0" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightTop}" FontSize="16" HorizontalTextAlignment="End" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                             <Label Grid.Row="1" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Inverse.LeftBottom}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
                                             <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
                                         </Grid>
 
                                         <BoxView HeightRequest="1" Color="{DynamicResource WallpaperDividerColor}" />
-                                        <Label Text="{localization:Translate Formula.Proportion.Inverse.Calculation}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                        <Label Text="{localization:Translate Formula.Proportion.Inverse.Calculation}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                     </VerticalStackLayout>
                                 </Border>
 
-                                <Label Text="{localization:Translate Formula.Proportion.Summary.Solution}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource TextSecondaryColor}" />
-                                <Label Text="{localization:Translate Formula.Proportion.Inverse.Example}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Proportion.Summary.Solution}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                <Label Text="{localization:Translate Formula.Proportion.Inverse.Example}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
@@ -719,7 +719,7 @@
                                 FontAttributes="Bold"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             <Border
                                 Padding="12"
                                 BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
@@ -734,14 +734,14 @@
                                     FontAttributes="Bold"
                                     LineHeight="1.35"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </Border>
                             <Label
                                 Text="{localization:Translate Formula.Proportion.Compound.Example}"
                                 FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>

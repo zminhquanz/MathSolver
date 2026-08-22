@@ -39,7 +39,7 @@
                             Text="{localization:Translate Equation.Mode.Linear}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnLinearModeClicked" />
 
                         <Button
@@ -119,14 +119,14 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Label
                                     x:Name="CoefficientADescriptionLabel"
                                     Text="Hệ số của x²"
                                     FontSize="14"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
                                     HeightRequest="48"
@@ -142,14 +142,14 @@
                                     <Entry
                                         x:Name="CoefficientAEntry"
                                         Placeholder="Ví dụ: 1"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Text"
                                         MaxLength="52"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         TextChanged="OnCoefficientEntryTextChanged"
                                         Focused="OnCoefficientEntryFocused"
                                         Unfocused="OnCoefficientEntryUnfocused" />
@@ -182,14 +182,14 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Label
                                     x:Name="CoefficientBDescriptionLabel"
                                     Text="Hệ số của x"
                                     FontSize="14"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
                                     HeightRequest="48"
@@ -205,14 +205,14 @@
                                     <Entry
                                         x:Name="CoefficientBEntry"
                                         Placeholder="Ví dụ: −3"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Text"
                                         MaxLength="52"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         TextChanged="OnCoefficientEntryTextChanged"
                                         Focused="OnCoefficientEntryFocused"
                                         Unfocused="OnCoefficientEntryUnfocused" />
@@ -245,13 +245,13 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Label
                                     Text="Hệ số tự do"
                                     FontSize="14"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
                                     HeightRequest="48"
@@ -267,14 +267,14 @@
                                     <Entry
                                         x:Name="CoefficientCEntry"
                                         Placeholder="Ví dụ: 2"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Text"
                                         MaxLength="52"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         TextChanged="OnCoefficientEntryTextChanged"
                                         Focused="OnCoefficientEntryFocused"
                                         Unfocused="OnCoefficientEntryUnfocused" />
@@ -314,7 +314,7 @@
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -398,7 +398,7 @@
                         Text="2. Kết quả"
                         FontSize="20"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Label
                         x:Name="ResultEquationLabel"
@@ -425,7 +425,7 @@
                                 Text="Biệt thức"
                                 FontSize="15"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <Label
                                 x:Name="DeltaValueLabel"
@@ -455,7 +455,7 @@
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -488,7 +488,7 @@
                                 Text="{Binding Text, Source={x:Reference QuadraticCopyResultButton}}"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
                         </HorizontalStackLayout>
@@ -521,7 +521,7 @@
                         Text="3. Lời giải chi tiết"
                         FontSize="20"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Border
                         Padding="14"
@@ -546,7 +546,7 @@
                                 FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -575,7 +575,7 @@
                                 FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -605,7 +605,7 @@
                                 FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -639,7 +639,7 @@
                                     FontSize="16"
                                     LineHeight="1.3"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <ScrollView
                                     x:Name="Step4MathScrollView"
@@ -693,13 +693,13 @@
                                 Text="Đồ thị parabol"
                                 FontSize="20"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                                 x:Name="GraphStatusLabel"
                                 FontSize="14"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                         </VerticalStackLayout>
 
@@ -713,7 +713,7 @@
                             FontSize="24"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             SemanticProperties.Description="Thu nhỏ đồ thị"
                             Clicked="OnGraphZoomOutClicked" />
 
@@ -742,7 +742,7 @@
                             FontSize="22"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             SemanticProperties.Description="Phóng to đồ thị"
                             Clicked="OnGraphZoomInClicked" />
 
@@ -777,7 +777,7 @@
                         FontSize="14"
                         HorizontalTextAlignment="Center"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                 </VerticalStackLayout>
 

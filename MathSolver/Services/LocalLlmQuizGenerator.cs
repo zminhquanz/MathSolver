@@ -204,12 +204,6 @@ public sealed class LocalLlmQuizGenerator
         CancelScheduledModelUnload();
         await _generationGate.WaitAsync(cancellationToken);
 
-        // Local GGUF inference is latency-sensitive. Suspend cooperative
-        // GraphicsView background animation while this generation owns the
-        // gate. Validated hardware-decoded H.264 MP4 wallpaper keeps playing.
-        using IDisposable wallpaperSuspension =
-            LiveWallpaperPlaybackCoordinator.SuspendForHighPriorityWork();
-
         bool modelWasLoaded = false;
         int completedAttempts = 0;
         int generatedTokenCount = 0;
@@ -1256,6 +1250,7 @@ internal static class LlmQuizPromptBuilder
                 - Diễn đạt rõ đúng phép tính bắt buộc; không tính hoặc làm lộ đáp án.
                 - {{operationRule}}
                 - Dùng đúng đồ vật bắt buộc. {{characterRule}}
+                - Câu hỏi cuối phải hỏi đúng đồ vật/answer_unit "{{selectedStoryContext.AnswerUnit}}"; không được đổi sang đồ vật khác ở vế hỏi.
                 - answer_unit phải đúng nguyên cụm bắt buộc, không chứa số. Với phép chia, answer_unit là đơn vị đếm của các phần tạo được, không phải đơn vị đo của hai phân số.
                 - solution_lead là một câu dẫn ngắn kết thúc bằng dấu hai chấm, nhắc lại answer_unit và không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
                 - Chỉ trả đúng JSON bốn trường sau, không thêm nội dung khác:
@@ -1284,6 +1279,7 @@ internal static class LlmQuizPromptBuilder
             - Use the required operation unambiguously; do not calculate or reveal the answer.
             - {{operationRule}}
             - Use the required story item exactly. {{characterRule}}
+            - The final question must explicitly ask for the same required story item/answer_unit "{{selectedStoryContext.AnswerUnit}}"; never substitute a different object in the question.
             - answer_unit must be exactly the required noun phrase without a number. For division, answer_unit is the count of portions/items obtained, not the measurement unit used by the two fractions.
             - solution_lead is one short sentence ending with a colon. It repeats answer_unit and contains no number, calculation, equals sign, result, or answer.
             - Return exactly this four-field JSON schema and nothing else:
@@ -1690,6 +1686,11 @@ internal static class LlmQuizPromptBuilder
                 selectedStoryContext,
                 language);
 
+        string questionObjectRule =
+            language == AppLanguage.Vietnamese
+                ? $"- Câu hỏi cuối bắt buộc phải hỏi đúng đồ vật/answer_unit \"{selectedStoryContext.AnswerUnit}\". Không được đổi sang một đồ vật khác ở vế hỏi, kể cả khi dữ kiện phía trước đã dùng đúng đồ vật."
+                : $"- The final question must explicitly ask for the same required story item/answer_unit \"{selectedStoryContext.AnswerUnit}\". Never switch to a different object in the question even if the earlier facts use the correct item.";
+
         string multiplicationRoleRule =
             expression.Operation == ArithmeticOperation.Multiply
                 ? language == AppLanguage.Vietnamese
@@ -1710,6 +1711,7 @@ internal static class LlmQuizPromptBuilder
             - Use a realistic elementary-school situation and make the operation unambiguous.
             - {{characterRule}}
             - {{storyContextRule}}
+            {{questionObjectRule}}
             - {{classroomRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             {{multiplicationRoleRule}}
@@ -2201,6 +2203,8 @@ internal static class LlmQuizPromptBuilder
                     "Giữ nguyên phương trình Tìm x, dùng đúng đồ vật và answer_unit mà validator đã nêu; không đổi vai trò của số đã biết, kết quả hoặc đại lượng x.",
                 "StoryItemMismatch" or "AnswerUnitMismatch" =>
                     "Dùng đúng đồ vật và answer_unit validator đã nêu. Với bút, cây/cái/chiếc là tương đương nhưng phải giữ nguyên phần tên bút.",
+                "QuestionAnswerUnitMismatch" =>
+                    "Viết lại riêng câu hỏi cuối để hỏi đúng chính đồ vật/answer_unit của dữ kiện; tuyệt đối không đổi sang đồ vật khác như sách, vở, tem, bút... ở vế hỏi.",
                 "SolutionLeadUnitMismatch" =>
                     "Viết lại solution_lead bằng đúng cụm answer_unit; không thay đơn vị cụ thể bằng một từ khái quát hơn.",
                 "MultiplicationGroupItemConflict" =>
@@ -2249,6 +2253,8 @@ internal static class LlmQuizPromptBuilder
                 "Preserve the Find-x equation and use the exact story item and answer_unit named by the validator; do not swap the known value, result, or meaning of x.",
             "StoryItemMismatch" or "AnswerUnitMismatch" =>
                 "Use the exact required story item and answer_unit named by the validator.",
+            "QuestionAnswerUnitMismatch" =>
+                "Rewrite the final question so it explicitly asks for the same story item/answer_unit used by the facts; never substitute another object in the question.",
             "SolutionLeadUnitMismatch" =>
                 "Rewrite solution_lead with the exact answer_unit noun phrase instead of a broader category.",
             "MultiplicationGroupItemConflict" =>
@@ -2335,6 +2341,17 @@ internal static class LlmWordProblemParser
 
         string normalizedOutput =
             StripModelControlText(rawOutput);
+
+        // Gemma can occasionally emit only control/channel tokens and EOS.
+        // rawOutput is then technically non-empty, but there is no user JSON
+        // to validate. Treat this exactly like an empty generation so the
+        // normal retry path recreates a fresh context and regenerates it.
+        if (string.IsNullOrWhiteSpace(normalizedOutput))
+        {
+            errorCode = "EmptyModelOutput";
+            errorDetail = "control tokens only";
+            return false;
+        }
 
         List<string> jsonObjects =
             ExtractCompleteJsonObjects(normalizedOutput);
@@ -2981,6 +2998,14 @@ internal sealed partial class LlmWordProblemValidator
                 language == AppLanguage.Vietnamese
                     ? $"Trường answer_unit đang là “{unit}”, nhưng đồ vật bắt buộc là “{requiredStoryContext.AnswerUnit}”. Hãy dùng đúng đơn vị này; riêng bút có thể đổi tương đương giữa cây bút, cái bút và chiếc bút nhưng phải giữ nguyên phần tên bút."
                     : $"answer_unit is “{unit}”, but the required unit is “{requiredStoryContext.AnswerUnit}”. Use that exact unit without a number or equation.");
+        }
+
+        if (!QuestionMentionsAnswerUnit(problem, unit, language))
+        {
+            return BuildQuestionAnswerUnitMismatch(
+                problem,
+                unit,
+                language);
         }
 
         if (string.IsNullOrWhiteSpace(subject) ||
@@ -3658,6 +3683,14 @@ internal sealed partial class LlmWordProblemValidator
             problem = problem.TrimEnd('.', '!', ';', ':') + "?";
         }
 
+        if (!QuestionMentionsAnswerUnit(problem, unit, language))
+        {
+            return BuildQuestionAnswerUnitMismatch(
+                problem,
+                unit,
+                language);
+        }
+
         solutionLead = ElementaryWordProblemSolutionFormatter
             .NormalizeSolutionLeadPunctuation(solutionLead);
 
@@ -3943,6 +3976,14 @@ internal sealed partial class LlmWordProblemValidator
                     : $"answer_unit is “{unit}”, but x counts “{requiredAnswerUnit}” in this context. Set answer_unit exactly to “{requiredAnswerUnit}”; do not add a number or use the unit of a different fact.");
         }
 
+        if (!QuestionMentionsAnswerUnit(problem, unit, language))
+        {
+            return BuildQuestionAnswerUnitMismatch(
+                problem,
+                unit,
+                language);
+        }
+
         if (!HasUnambiguousOperationMeaning(
                 lowerProblem,
                 contract.Operation,
@@ -4034,6 +4075,103 @@ internal sealed partial class LlmWordProblemValidator
                 solutionLead,
                 unit,
                 subject));
+    }
+
+    private static bool QuestionMentionsAnswerUnit(
+        string problem,
+        string answerUnit,
+        AppLanguage language)
+    {
+        string questionClause =
+            ExtractFinalQuestionClause(problem, language);
+
+        if (string.IsNullOrWhiteSpace(questionClause) ||
+            string.IsNullOrWhiteSpace(answerUnit))
+        {
+            return false;
+        }
+
+        // Reuse the same unit equivalence rules as the rest of validation.
+        // For Vietnamese this ignores only the classifier (cây/cái/chiếc...)
+        // while keeping the actual object noun, so “con tem” cannot match
+        // “cuốn sách đố vui”.
+        return ProblemContainsRequiredStoryItem(
+            questionClause,
+            answerUnit,
+            language);
+    }
+
+    private static LlmWordProblemValidationResult
+        BuildQuestionAnswerUnitMismatch(
+            string problem,
+            string answerUnit,
+            AppLanguage language)
+    {
+        string questionClause =
+            ExtractFinalQuestionClause(problem, language);
+        string shownQuestion =
+            questionClause.Length == 0
+                ? problem
+                : questionClause;
+
+        return LlmWordProblemValidationResult.Invalid(
+            "QuestionAnswerUnitMismatch",
+            language == AppLanguage.Vietnamese
+                ? $"Vế câu hỏi đang là “{shownQuestion}” nhưng phải hỏi đúng đồ vật/đơn vị “{answerUnit}” đã dùng trong dữ kiện. Không được đổi sang một đồ vật khác ở câu hỏi."
+                : $"The final question is “{shownQuestion}”, but it must explicitly ask for the same story item/answer_unit “{answerUnit}” used by the facts. Do not substitute a different object in the question.");
+    }
+
+    private static string ExtractFinalQuestionClause(
+        string problem,
+        AppLanguage language)
+    {
+        string text = NormalizeSingleLine(problem);
+
+        if (text.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        int questionEnd = text.LastIndexOf('?');
+        int endExclusive =
+            questionEnd >= 0
+                ? questionEnd + 1
+                : text.Length;
+
+        int start = 0;
+
+        for (int index = endExclusive - 2; index >= 0; index--)
+        {
+            char character = text[index];
+
+            if (character is '.' or '!' or ';')
+            {
+                start = index + 1;
+                break;
+            }
+        }
+
+        string[] starters =
+            language == AppLanguage.Vietnamese
+                ? ["hỏi ", "hãy cho biết ", "bao nhiêu "]
+                : ["how many ", "how much ", "what is ", "find "];
+
+        foreach (string starter in starters)
+        {
+            int index = text.LastIndexOf(
+                starter,
+                endExclusive - 1,
+                endExclusive,
+                StringComparison.OrdinalIgnoreCase);
+
+            if (index >= start)
+            {
+                start = index;
+                break;
+            }
+        }
+
+        return text[start..endExclusive].Trim();
     }
 
     private static bool ProblemContainsRequiredStoryItem(

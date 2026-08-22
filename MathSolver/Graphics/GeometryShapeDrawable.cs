@@ -38,12 +38,12 @@ public sealed class GeometryShapeDrawable : IDrawable
 
     private static Color AuxiliaryColor =>
         ThemeResource.GetColor(
-            "TextSecondaryColor",
+            "WallpaperTextSecondaryColor",
             "#94A3B8");
 
     private static Color LabelColor =>
         ThemeResource.GetColor(
-            "TextPrimaryColor",
+            "WallpaperTextPrimaryColor",
             "#334155");
 
     public void Draw(ICanvas canvas, RectF dirtyRect)

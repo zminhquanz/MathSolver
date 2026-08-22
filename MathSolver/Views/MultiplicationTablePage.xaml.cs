@@ -409,7 +409,7 @@ public partial class MultiplicationTablePage : ContentPage
             Button.TextColorProperty,
             isSelected
                 ? "OnPrimaryColor"
-                : "TextPrimaryColor");
+                : "WallpaperTextPrimaryColor");
 
         button.SetDynamicResource(
             Button.BorderColorProperty,

@@ -270,7 +270,7 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 - The optimized wallpaper path accepts H.264 / AVC video only. New imports are inspected before replacing the current wallpaper; legacy wallpapers are validated once on first use after upgrade.
 - Windows playback stays on CommunityToolkit `MediaElement` -> WinUI `MediaPlayer` / Media Foundation, which uses the OS hardware-accelerated DXVA/D3D decode path when the GPU/driver/profile supports it. Android playback stays on `MediaElement` -> ExoPlayer / MediaCodec and requires an H.264 hardware decoder to be present. No FFmpeg/software decoder is added to Math Solver.
 - `LiveWallpaperView` is layered behind the four main learning tabs (Calculation, Math Puzzle, Formula, Multiplication Table), loops silently, hides playback controls and releases its media source whenever the owning tab disappears. Android keeps `TextureView` because the glass UI requires correct sibling Z-order/transparency.
-- `LiveWallpaperPlaybackCoordinator` now suspends only cooperative `GraphicsView` Math Animation while Windows local-LLM generation owns the inference gate. MP4 mode is available only after H.264/hardware-path validation and therefore remains playing during local AI inference. The AI benchmark keeps one outer suspension so Math Animation does not restart between samples.
+- Local AI/LLM inference no longer suspends either animated-background backend. Validated H.264 MP4 stays on its hardware-preferred video path, and the 24 FPS Math GraphicsView animation is lightweight enough to remain active during generation/benchmark runs. Both backends still stop when their owning learning tab is inactive.
 - A theme-aware `LiveWallpaperScrimColor` sits above the video for readability; Light uses a lighter veil and Dark uses a darker veil. Future wallpaper formats/intensity controls should extend this service/control boundary instead of duplicating player logic in pages.
 
 
@@ -286,15 +286,36 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 
 `LiveWallpaperManager` now supports two mutually exclusive animated-background modes for the four main learning tabs:
 
-- `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. The timer stops when the owning tab is inactive and while `LiveWallpaperPlaybackCoordinator` suspends background work for local AI inference.
-- MP4 runtime memory is intentionally bounded by lifecycle: `MediaElement` is created lazily only on an active MP4 page, its `Source` is detached as soon as that page becomes inactive, and the player object is retired after a short grace period when MP4 mode is no longer needed. This returns decoder surfaces/video textures without reintroducing the WinUI Picker source-switch race.
+- `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. It keeps running during local AI inference and stops only when the owning tab is inactive or animated backgrounds are disabled.
+- Runtime memory is lifecycle-bound for both backends. `GraphicsView`, its drawable, and its 24 FPS timer are now created lazily and removed entirely when unused; `MediaElement` is created lazily only on an active MP4 page, its `Source` is detached as soon as that page becomes inactive, and the player object is retired after a short grace period when MP4 mode is no longer needed.
 - `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 2 forces older saved wallpapers to be rechecked against the duration rule.
 
 The Settings UI exposes the mode with one Picker. MP4 controls are shown only for MP4 mode; the Choose MP4 and Remove wallpaper buttons use equal 50/50 columns on Windows and Android. Glass resources remain driven by `LiveWallpaperManager.IsEnabled`; the built-in math animation uses a lighter readability scrim than arbitrary user video.
+
+
+### MP4 adaptive frame contrast
+
+- MP4 import uses a two-stage fast-accept path: copy + H.264/duration/hardware validation is awaited, then the valid wallpaper is committed and the Settings UI updates immediately. Low-resolution luminance analysis is optional background work and must never block file acceptance. On WinUI, native metadata inspection starts in parallel with the OS-level file copy and the system H.264 codec query is cached after the first use.
+- Brightness analysis caps native thumbnail extraction at 48 samples per clip: short clips keep ~1-second resolution while longer clips increase the interval automatically (about 2.5 seconds for a 120-second clip). This reduces transient decoder buffers/RAM churn. Windows uses MediaComposition thumbnails and clears composition clip references promptly; Android uses MediaMetadataRetriever scaled frames when available.
+- The timeline is stored beside the private wallpaper file. Runtime playback does **not** decode a second video stream: `LiveWallpaperView` only reads `MediaElement.Position` every 500 ms and looks up the nearest precomputed luminance byte.
+- `AppThemeManager` uses hysteresis before switching polarity, preventing bright/dark text from flickering around a threshold. Only wallpaper-specific resources are updated: `WallpaperTextPrimary/Secondary`, glass surfaces, borders, and the readability scrim. The global app theme, Settings, and Hardware UI are not changed.
+- When MP4 is dark, the learning area uses light text + dark glass; on bright frames it uses dark text + light glass. Math Animation continues to follow the selected app Light/Dark theme.
 
 ### Animated wallpaper runtime mode switching
 
 - Switching between the built-in `GraphicsView` math animation and H.264 MP4 is applied live without restarting the app.
 - `LiveWallpaperView` coalesces settings/policy refreshes to the next UI frame so WinUI Picker selection, MediaElement state changes, and the GraphicsView timer do not run re-entrantly.
-- A mode switch pauses the inactive backend but does not synchronously call `MediaElement.Stop()`/detach the MP4 source. The source is released when the page becomes inactive or unloads, avoiding WinUI native-player stalls during rapid Math ↔ MP4 switching.
+- A mode switch never tears down the native player synchronously while the Picker is closing. When leaving MP4, playback pauses first and a 750 ms grace period retires `MediaElement` + `Source` if MP4 is still unused; switching back quickly cancels that retirement. Page inactivity/unload releases the source immediately.
 - `AppThemeManager.RefreshVisualResources()` refreshes only wallpaper/glass/scrim resources. It must not reapply `UserAppTheme` or raise the global `ThemeChanged` event for a wallpaper-only setting change.
+
+### Adaptive wallpaper text polarity fine-tuning (2026-08)
+
+- Wallpaper-area neutral text must bind to `WallpaperTextPrimaryColor` / `WallpaperTextSecondaryColor`, never directly to the app-wide `TextPrimaryColor` / `TextSecondaryColor`. This includes shared solver hero/section styles and unselected buttons styled by `SelectionButtonStyler`.
+- MP4 adaptive contrast uses hard text polarity: dark frame/glass -> primary text is pure white and secondary text is near-white; bright frame/glass -> primary text is pure black and secondary text is near-black. Selected/primary actions continue to use `OnPrimaryColor` so accent buttons keep their intended contrast.
+- When animated backgrounds are disabled, the wallpaper text tokens map back to the ordinary app palette, so these bindings do not alter the static Light/Dark appearance.
+
+## Local LLM semantic question validation (2026-08-22)
+
+For item-based word problems (basic arithmetic, fractions, and Find X), validator acceptance now requires the **final interrogative clause itself** to name the same `answer_unit`/story item used by the C# contract. It is no longer enough for the required item to appear somewhere in the facts. This prevents mixed-object outputs such as facts about stamps followed by a question asking for books. Vietnamese matching reuses `WordProblemUnitEquivalence`, so classifier variants such as `cây/cái/chiếc bút` remain valid while a different noun is rejected. Retry feedback explicitly tells the model to rewrite the final question with the contract item.
+
+`LlmWordProblemParser` also classifies output that contains only Gemma control/channel tokens after stripping as `EmptyModelOutput`. Production generation therefore follows the existing fresh-context retry path instead of treating control-token-only output as generic malformed JSON. Hardware accuracy benchmarking still preserves its explicit `maximumAttempts: 1` no-retry behavior.

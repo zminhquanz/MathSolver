@@ -46,12 +46,12 @@
         <Style x:Key="TitleLabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="{OnPlatform Android=16, WinUI=17, Default=17}" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
         </Style>
 
         <Style x:Key="SubLabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=15, Default=15}" />
-            <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
+            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextSecondaryColor}" />
         </Style>
 
         <Style x:Key="TableLineStyle" TargetType="Label">
@@ -59,7 +59,7 @@
             <Setter Property="VerticalTextAlignment" Value="Center" />
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
         </Style>
 
 
@@ -173,13 +173,13 @@
                             FontSize="{OnPlatform Android=24, WinUI=30, Default=30}"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             Text="{localization:Translate TimesTables.Subtitle}"
                             FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                             HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
 
                     <!-- Control panel -->
@@ -270,12 +270,12 @@
                                                     Text="{localization:Translate TimesTables.Range1To10Title}"
                                                     FontSize="16"
                                                     FontAttributes="Bold"
-                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                 <Label
                                                     Text="{localization:Translate TimesTables.Range1To10Subtitle}"
                                                     FontSize="14"
-                                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                             </VerticalStackLayout>
 
                                         </HorizontalStackLayout>
@@ -304,12 +304,12 @@
                                                     Text="{localization:Translate TimesTables.Range11To20Title}"
                                                     FontSize="16"
                                                     FontAttributes="Bold"
-                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                 <Label
                                                     Text="{localization:Translate TimesTables.Range11To20Subtitle}"
                                                     FontSize="14"
-                                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                             </VerticalStackLayout>
 
                                         </HorizontalStackLayout>
@@ -338,12 +338,12 @@
                                                     Text="{localization:Translate TimesTables.RangeAllTitle}"
                                                     FontSize="16"
                                                     FontAttributes="Bold"
-                                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                 <Label
                                                     Text="{localization:Translate TimesTables.RangeAllSubtitle}"
                                                     FontSize="14"
-                                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                             </VerticalStackLayout>
 
                                         </HorizontalStackLayout>
@@ -374,12 +374,12 @@
                             Text="{localization:Translate TimesTables.ListTitle}"
                             FontSize="18"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             Text="{localization:Translate TimesTables.ListDescription}"
                             FontSize="15"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </CollectionView.Header>

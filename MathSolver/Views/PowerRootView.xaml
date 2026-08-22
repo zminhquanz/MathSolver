@@ -62,7 +62,7 @@
                             Text="{localization:Translate PowerRoot.RootMode}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnRootModeClicked" />
 
                     </Grid>
@@ -91,7 +91,7 @@
                             Text="{localization:Translate PowerRoot.InputTitle}"
                             FontSize="20"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Grid
                             ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
@@ -108,7 +108,7 @@
                                     Text="{localization:Translate PowerRoot.BaseLabel}"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border
                                     Padding="12,4"
@@ -125,8 +125,8 @@
                                         Placeholder="Ví dụ : 1,000,000,000,000,000,000"
                                         Keyboard="Numeric"
                                         FontSize="18"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         TextChanged="OnInputTextChanged"
                                         Unfocused="OnIntegerEntryUnfocused" />
 
@@ -143,7 +143,7 @@
                                     Text="{localization:Translate PowerRoot.ExponentLabel}"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border
                                     Padding="12,4"
@@ -160,8 +160,8 @@
                                         Placeholder="{localization:Translate PowerRoot.ExponentPlaceholder}"
                                         Keyboard="Numeric"
                                         FontSize="18"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         TextChanged="OnInputTextChanged"
                                         Unfocused="OnIntegerEntryUnfocused" />
 
@@ -263,7 +263,7 @@
                                 FontSize="18"
                                 FontAttributes="Bold"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </Grid>
 
@@ -291,7 +291,7 @@
                         <Label
                             x:Name="ProgressStepsLabel"
                             FontSize="15"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                         <Button
                             x:Name="StopButton"
@@ -326,7 +326,7 @@
                             Text="{localization:Translate PowerRoot.ResultTitle}"
                             FontSize="20"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Border
                             Padding="14"
@@ -380,7 +380,7 @@
                                         Text="{Binding Text, Source={x:Reference CopyResultButton}}"
                                         FontSize="15"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         VerticalTextAlignment="Center" />
 
                                 </HorizontalStackLayout>
@@ -438,7 +438,7 @@
                                     VerticalTextAlignment="Center"
                                     FontSize="14"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <ProgressBar
                                     x:Name="ExportProgressBar"
@@ -464,7 +464,7 @@
                             FontSize="12"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextSecondaryColor}"
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                             Clicked="OnDiagnosticsToggleClicked" />
 
                         <Border
@@ -484,7 +484,7 @@
                                 FontSize="15"
                                 LineHeight="1.25"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </Border>
 
@@ -492,14 +492,14 @@
                             Text="{localization:Translate PowerRoot.SolutionTitle}"
                             FontSize="18"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             x:Name="SolutionLabel"
                             FontSize="16"
                             LineHeight="1.3"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     </VerticalStackLayout>
 
@@ -535,7 +535,7 @@
                                     Text="{localization:Translate PowerRoot.RadicandLabel}"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border
                                     Padding="12,4"
@@ -552,8 +552,8 @@
                                         Placeholder="{localization:Translate PowerRoot.RadicandPlaceholder}"
                                         Keyboard="Numeric"
                                         FontSize="18"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Focused="OnRootRadicandFocused"
                                         TextChanged="OnRootInputTextChanged"
                                         Unfocused="OnRootRadicandUnfocused" />
@@ -571,7 +571,7 @@
                                     Text="{localization:Translate PowerRoot.DegreeLabel}"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border
                                     Padding="12,4"
@@ -589,8 +589,8 @@
                                         Keyboard="Text"
                                         MaxLength="4"
                                         FontSize="18"
-                                        TextColor="{DynamicResource TextPrimaryColor}"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         TextChanged="OnRootInputTextChanged"
                                         Unfocused="OnRootDegreeUnfocused" />
 
@@ -675,7 +675,7 @@
                             Text="{localization:Translate PowerRoot.RootResultTitle}"
                             FontSize="20"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Border
                             Padding="14"
@@ -736,7 +736,7 @@
                                     FontSize="13"
                                     FontAttributes="Italic"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             </VerticalStackLayout>
 
@@ -766,7 +766,7 @@
                                     Text="{Binding Text, Source={x:Reference RootCopyResultButton}}"
                                     FontSize="15"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     VerticalTextAlignment="Center" />
 
                             </HorizontalStackLayout>
@@ -777,7 +777,7 @@
                             Text="{localization:Translate PowerRoot.SolutionTitle}"
                             FontSize="18"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <VerticalStackLayout
                             x:Name="RootSolutionStack"

@@ -6,27 +6,30 @@ using Microsoft.Maui.Dispatching;
 namespace MathSolver.Controls;
 
 /// <summary>
-/// Shared animated-background host for the four main learning tabs. The built-in
-/// GraphicsView animation yields to latency-sensitive local AI work. A validated
-/// H.264 MP4 keeps playing because its native hardware-decoder path does not use
-/// the CPU-heavy software decode path that originally motivated the AI pause.
-/// Native media objects are created lazily and released when they are not needed
-/// so inactive tabs do not retain decoder buffers or video textures.
+/// Shared animated-background host for the four learning tabs. Both the built-in
+/// GraphicsView animation and validated hardware-decoded H.264 MP4 keep running
+/// during local AI inference. All native/drawing resources are allocated lazily
+/// and are released when the background or owning tab is inactive.
 /// </summary>
 public sealed class LiveWallpaperView : Grid
 {
     private static readonly TimeSpan AnimationInterval =
         TimeSpan.FromMilliseconds(1000d / 24d);
 
+    private static readonly TimeSpan ContrastUpdateInterval =
+        TimeSpan.FromMilliseconds(500);
+
     private static readonly TimeSpan MediaElementReleaseDelay =
         TimeSpan.FromMilliseconds(750);
 
-    private readonly MathAnimatedBackgroundDrawable _mathDrawable;
-    private readonly GraphicsView _mathAnimationView;
-    private readonly BoxView _readabilityScrim;
-
+    private MathAnimatedBackgroundDrawable? _mathDrawable;
+    private GraphicsView? _mathAnimationView;
+    private BoxView? _readabilityScrim;
     private MediaElement? _mediaElement;
     private IDispatcherTimer? _animationTimer;
+    private IDispatcherTimer? _contrastTimer;
+    private LiveWallpaperFrameProfile? _frameProfile;
+
     private bool _isPageActive;
     private bool _isSubscribed;
     private string? _loadedPath;
@@ -38,37 +41,8 @@ public sealed class LiveWallpaperView : Grid
         InputTransparent = true;
         ZIndex = -100;
 
-        _mathDrawable =
-            new MathAnimatedBackgroundDrawable();
-
-        _mathAnimationView = new GraphicsView
-        {
-            Drawable = _mathDrawable,
-            InputTransparent = true,
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Fill,
-            IsVisible = false,
-            ZIndex = 0
-        };
-
-        _readabilityScrim = new BoxView
-        {
-            Opacity = 1d,
-            InputTransparent = true,
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Fill,
-            ZIndex = 2
-        };
-        _readabilityScrim.SetDynamicResource(
-            BoxView.ColorProperty,
-            "LiveWallpaperScrimColor");
-
-        // MediaElement is intentionally not created here. Most users can use
-        // the lightweight Math animation without allocating a native player,
-        // decoder surfaces, or video textures on every main page instance.
-        Children.Add(_mathAnimationView);
-        Children.Add(_readabilityScrim);
-
+        // No GraphicsView, drawable, timer, MediaElement, or scrim is created
+        // here. With wallpaper disabled the control stays almost allocation-free.
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
 
@@ -85,11 +59,12 @@ public sealed class LiveWallpaperView : Grid
     {
         _isPageActive = false;
         _refreshGeneration++;
-        StopMathAnimation();
 
-        // Detaching Source immediately releases the expensive decoder buffers
-        // and file handle. The MediaElement shell itself is retired shortly
-        // afterwards so fast tab switches do not churn native player creation.
+        ReleaseMathAnimationResources();
+        StopAdaptiveContrast();
+        ReleaseScrim();
+
+        // Detaching Source releases decoder buffers/video textures/file handles.
         ReleaseSource();
         ScheduleMediaElementRelease();
     }
@@ -100,14 +75,9 @@ public sealed class LiveWallpaperView : Grid
         {
             LiveWallpaperManager.SettingsChanged +=
                 OnWallpaperSettingsChanged;
-            LiveWallpaperPlaybackCoordinator.PlaybackPolicyChanged +=
-                OnPlaybackPolicyChanged;
             _isSubscribed = true;
         }
 
-        // Existing MP4 wallpapers from versions before the duration/hardware
-        // policy are validated once on first load. The GraphicsView mode has no
-        // file to validate.
         if (LiveWallpaperManager.HasWallpaper &&
             LiveWallpaperManager.Mode == LiveWallpaperMode.Mp4)
         {
@@ -123,15 +93,16 @@ public sealed class LiveWallpaperView : Grid
         {
             LiveWallpaperManager.SettingsChanged -=
                 OnWallpaperSettingsChanged;
-            LiveWallpaperPlaybackCoordinator.PlaybackPolicyChanged -=
-                OnPlaybackPolicyChanged;
             _isSubscribed = false;
         }
 
         _isPageActive = false;
         _refreshGeneration++;
         _mediaReleaseGeneration++;
-        StopMathAnimation();
+
+        ReleaseMathAnimationResources();
+        StopAdaptiveContrast();
+        ReleaseScrim();
         ReleaseMediaElement();
     }
 
@@ -142,21 +113,12 @@ public sealed class LiveWallpaperView : Grid
         QueuePlaybackRefresh();
     }
 
-    private void OnPlaybackPolicyChanged(
-        object? sender,
-        EventArgs e)
-    {
-        QueuePlaybackRefresh();
-    }
-
     private void QueuePlaybackRefresh()
     {
         int generation = ++_refreshGeneration;
 
-        // Do not tear down/start native media while the Picker is still inside
-        // its SelectionChanged call stack. Coalescing to the next UI frame also
-        // makes rapid Math <-> MP4 switching deterministic instead of letting
-        // stale refreshes race each other.
+        // Picker mode changes are coalesced to the next frame so WinUI does not
+        // tear down/create native media while ComboBox is closing its popup.
         Dispatcher.DispatchDelayed(
             TimeSpan.FromMilliseconds(16),
             () =>
@@ -174,36 +136,36 @@ public sealed class LiveWallpaperView : Grid
     {
         RefreshVisibility();
 
-        if (!IsVisible || !_isPageActive)
+        if (!LiveWallpaperManager.IsEnabled || !_isPageActive)
         {
-            StopMathAnimation();
+            ReleaseMathAnimationResources();
+            StopAdaptiveContrast();
+            ReleaseScrim();
             PauseMediaPlayback();
             return;
         }
+
+        EnsureScrim();
 
         LiveWallpaperMode mode =
             LiveWallpaperManager.Mode;
 
         if (mode == LiveWallpaperMode.MathAnimation)
         {
+            // Math Animation is intentionally allowed to continue during AI/LLM
+            // inference. At 24 FPS its ambient drawing overhead is very small.
+            StopAdaptiveContrast();
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+
             PauseMediaPlayback();
             ScheduleMediaElementRelease();
-
-            if (LiveWallpaperPlaybackCoordinator.IsPlaybackSuspended)
-            {
-                StopMathAnimation();
-                return;
-            }
-
             StartMathAnimation();
             return;
         }
 
-        // MP4 mode is only considered enabled after H.264 + hardware-path
-        // validation. Keep it running during local LLM inference; the fixed
-        // function video decoder has a much smaller CPU cost than software
-        // decode, and this avoids an unnecessary visual pause for the user.
-        StopMathAnimation();
+        // MP4 mode was accepted only after H.264/hardware-path validation.
+        // Keep playback uninterrupted during AI/LLM inference.
+        ReleaseMathAnimationResources();
         CancelScheduledMediaElementRelease();
 
         MediaElement mediaElement =
@@ -230,9 +192,11 @@ public sealed class LiveWallpaperView : Grid
             }
             catch
             {
-                // AutoPlay will start it once the native source is ready.
+                // AutoPlay starts playback once the native source is ready.
             }
         }
+
+        StartAdaptiveContrast();
     }
 
     private void RefreshVisibility()
@@ -249,8 +213,18 @@ public sealed class LiveWallpaperView : Grid
                 LiveWallpaperMode.Mp4;
 
         IsVisible = shouldShow;
-        _mathAnimationView.IsVisible = showMath;
-        _readabilityScrim.IsVisible = shouldShow;
+
+        if (_mathAnimationView is not null)
+        {
+            _mathAnimationView.IsVisible =
+                showMath && _isPageActive;
+        }
+
+        if (_readabilityScrim is not null)
+        {
+            _readabilityScrim.IsVisible =
+                shouldShow && _isPageActive;
+        }
 
         if (_mediaElement is not null)
         {
@@ -258,16 +232,96 @@ public sealed class LiveWallpaperView : Grid
                 showMp4 && _isPageActive;
         }
 
+        if (!shouldShow)
+        {
+            ReleaseMathAnimationResources();
+            StopAdaptiveContrast();
+            ReleaseScrim();
+            ReleaseSource();
+            ScheduleMediaElementRelease();
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            return;
+        }
+
         if (!showMath)
         {
-            StopMathAnimation();
+            ReleaseMathAnimationResources();
         }
 
         if (!showMp4)
         {
+            StopAdaptiveContrast();
             PauseMediaPlayback();
             ScheduleMediaElementRelease();
         }
+    }
+
+    private GraphicsView EnsureMathAnimationView()
+    {
+        if (_mathAnimationView is not null)
+        {
+            return _mathAnimationView;
+        }
+
+        _mathDrawable =
+            new MathAnimatedBackgroundDrawable();
+
+        _mathAnimationView = new GraphicsView
+        {
+            Drawable = _mathDrawable,
+            InputTransparent = true,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill,
+            IsVisible = false,
+            ZIndex = 0
+        };
+
+        Children.Add(_mathAnimationView);
+        return _mathAnimationView;
+    }
+
+    private void EnsureScrim()
+    {
+        if (_readabilityScrim is not null)
+        {
+            _readabilityScrim.IsVisible = true;
+            return;
+        }
+
+        _readabilityScrim = new BoxView
+        {
+            Opacity = 1d,
+            InputTransparent = true,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill,
+            IsVisible = true,
+            ZIndex = 2
+        };
+
+        _readabilityScrim.SetDynamicResource(
+            BoxView.ColorProperty,
+            "LiveWallpaperScrimColor");
+
+        Children.Add(_readabilityScrim);
+    }
+
+    private void ReleaseScrim()
+    {
+        BoxView? scrim = _readabilityScrim;
+        if (scrim is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Children.Remove(scrim);
+        }
+        catch
+        {
+        }
+
+        _readabilityScrim = null;
     }
 
     private MediaElement EnsureMediaElement()
@@ -292,9 +346,6 @@ public sealed class LiveWallpaperView : Grid
         };
 
         _mediaElement = mediaElement;
-
-        // ZIndex keeps video above the Math drawable and below the readability
-        // scrim, so the player can be added lazily without reshuffling children.
         Children.Add(mediaElement);
         return mediaElement;
     }
@@ -314,6 +365,10 @@ public sealed class LiveWallpaperView : Grid
 
     private void StartMathAnimation()
     {
+        GraphicsView view =
+            EnsureMathAnimationView();
+        view.IsVisible = true;
+
         EnsureAnimationTimer();
 
         if (_animationTimer?.IsRunning == false)
@@ -321,15 +376,40 @@ public sealed class LiveWallpaperView : Grid
             _animationTimer.Start();
         }
 
-        _mathAnimationView.Invalidate();
+        view.Invalidate();
     }
 
-    private void StopMathAnimation()
+    private void ReleaseMathAnimationResources()
     {
-        if (_animationTimer?.IsRunning == true)
+        if (_animationTimer is not null)
         {
-            _animationTimer.Stop();
+            try
+            {
+                _animationTimer.Stop();
+                _animationTimer.Tick -= OnAnimationTick;
+            }
+            catch
+            {
+            }
+
+            _animationTimer = null;
         }
+
+        GraphicsView? view = _mathAnimationView;
+        if (view is not null)
+        {
+            try
+            {
+                view.IsVisible = false;
+                Children.Remove(view);
+            }
+            catch
+            {
+            }
+        }
+
+        _mathAnimationView = null;
+        _mathDrawable = null;
     }
 
     private void OnAnimationTick(
@@ -337,16 +417,107 @@ public sealed class LiveWallpaperView : Grid
         EventArgs e)
     {
         if (!_isPageActive ||
-            !_mathAnimationView.IsVisible ||
-            LiveWallpaperPlaybackCoordinator.IsPlaybackSuspended)
+            !LiveWallpaperManager.IsMathAnimationEnabled ||
+            _mathAnimationView is null ||
+            _mathDrawable is null)
         {
-            StopMathAnimation();
+            ReleaseMathAnimationResources();
             return;
         }
 
         _mathDrawable.TimeSeconds +=
             AnimationInterval.TotalSeconds;
         _mathAnimationView.Invalidate();
+    }
+
+    private void StartAdaptiveContrast()
+    {
+        _frameProfile ??=
+            LiveWallpaperFrameAnalysis.TryLoad();
+
+        if (_frameProfile is null ||
+            _frameProfile.LuminanceSamples.Length == 0)
+        {
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            return;
+        }
+
+        ApplyAdaptiveContrastForCurrentPosition();
+
+        if (_contrastTimer is null)
+        {
+            _contrastTimer = Dispatcher.CreateTimer();
+            _contrastTimer.Interval = ContrastUpdateInterval;
+            _contrastTimer.IsRepeating = true;
+            _contrastTimer.Tick += OnContrastTick;
+        }
+
+        if (!_contrastTimer.IsRunning)
+        {
+            _contrastTimer.Start();
+        }
+    }
+
+    private void StopAdaptiveContrast()
+    {
+        if (_contrastTimer is not null)
+        {
+            try
+            {
+                _contrastTimer.Stop();
+                _contrastTimer.Tick -= OnContrastTick;
+            }
+            catch
+            {
+            }
+
+            _contrastTimer = null;
+        }
+
+        _frameProfile = null;
+    }
+
+    private void OnContrastTick(
+        object? sender,
+        EventArgs e)
+    {
+        if (!_isPageActive ||
+            !LiveWallpaperManager.IsMp4Enabled ||
+            _mediaElement is null ||
+            _frameProfile is null)
+        {
+            StopAdaptiveContrast();
+            return;
+        }
+
+        ApplyAdaptiveContrastForCurrentPosition();
+    }
+
+    private void ApplyAdaptiveContrastForCurrentPosition()
+    {
+        MediaElement? mediaElement =
+            _mediaElement;
+        LiveWallpaperFrameProfile? profile =
+            _frameProfile;
+
+        if (mediaElement is null || profile is null)
+        {
+            return;
+        }
+
+        try
+        {
+            double luminance =
+                profile.GetLuminance(mediaElement.Position);
+
+            AppThemeManager.SetLiveWallpaperFrameLuminance(
+                luminance);
+        }
+        catch
+        {
+            // Playback must not be affected if position metadata is unavailable
+            // for a frame while the native player is changing state.
+        }
     }
 
     private void PauseMediaPlayback()
@@ -383,10 +554,6 @@ public sealed class LiveWallpaperView : Grid
             return;
         }
 
-        // Pause first, then detach the source. Avoid MediaElement.Stop() here:
-        // on WinUI the native MediaPlayer can synchronously transition state
-        // during rapid source changes and stall the UI thread. Source=null is
-        // enough to release decoder buffers, textures, and the file handle.
         PauseMediaPlayback();
 
         try
@@ -448,6 +615,7 @@ public sealed class LiveWallpaperView : Grid
             return;
         }
 
+        StopAdaptiveContrast();
         ReleaseSource();
 
         try

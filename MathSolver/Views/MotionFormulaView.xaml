@@ -34,13 +34,13 @@
                     FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                 <Label
                     Text="{localization:Translate Formula.Motion.Subtitle}"
                     FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
             </VerticalStackLayout>
 
@@ -65,7 +65,7 @@
                         FontSize="17"
                         LineHeight="1.3"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Border
                         Padding="15,12"
@@ -115,7 +115,7 @@
                                 Text="{localization:Translate Formula.Motion.SymbolLegend}"
                                 FontSize="16"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
                                 <Border Grid.Column="0" Padding="10,8" BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}" Stroke="{DynamicResource WallpaperPrimaryBorderBrush}" StrokeThickness="1">
                                     <Border.StrokeShape>
@@ -127,13 +127,13 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
-                                    <Label Text="{localization:Translate Formula.Motion.Symbol.Speed}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Symbol.Speed}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </Border>
                                 <Border Grid.Column="2" Padding="10,8" BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="9" />
                                     </Border.StrokeShape>
-                                    <Label Text="{localization:Translate Formula.Motion.Symbol.Time}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Symbol.Time}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </Border>
                             </Grid>
                         </VerticalStackLayout>
@@ -144,7 +144,7 @@
                         FontSize="15"
                         FontAttributes="Italic"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                 </VerticalStackLayout>
             </Border>
 
@@ -168,7 +168,7 @@
                         Text="{localization:Translate Formula.Motion.Graph.Subtitle}"
                         FontSize="16"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <Grid
                         x:Name="MotionInteractiveGrid"
@@ -194,22 +194,22 @@
                                     FontSize="28"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     x:Name="MotionAverageFormulaLabel"
                                     FontSize="20"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 <BoxView
                                     HeightRequest="1"
                                     Color="{DynamicResource WallpaperPrimaryBorderColor}" />
 
                                 <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
-                                    <Label Grid.Column="0" Text="d" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label Grid.Column="0" Text="d" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                     <Label Grid.Column="1" x:Name="MotionDistanceValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                    <Label Grid.Column="2" Text="m" FontSize="18" TextColor="{DynamicResource TextSecondaryColor}" />
+                                    <Label Grid.Column="2" Text="m" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 </Grid>
                                 <Border
                                     Padding="10,0"
@@ -229,9 +229,9 @@
                                 </Border>
 
                                 <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
-                                    <Label Grid.Column="0" Text="t" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                    <Label Grid.Column="0" Text="t" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                     <Label Grid.Column="1" x:Name="MotionTimeValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                    <Label Grid.Column="2" Text="s" FontSize="18" TextColor="{DynamicResource TextSecondaryColor}" />
+                                    <Label Grid.Column="2" Text="s" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 </Grid>
                                 <Border
                                     Padding="10,0"
@@ -255,7 +255,7 @@
                                     FontSize="17"
                                     FontAttributes="Bold"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -301,7 +301,7 @@
                         Text="{localization:Translate Formula.Motion.Types.Subtitle}"
                         FontSize="16"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <Grid
                         ColumnDefinitions="*,*"
@@ -321,7 +321,7 @@
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="6">
                                 <Label Text="{localization:Translate Formula.Motion.Types.Basic.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                <Label Text="{localization:Translate Formula.Motion.Types.Basic.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Basic.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -336,8 +336,8 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="6">
-                                <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -352,8 +352,8 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="6">
-                                <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -368,8 +368,8 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="6">
-                                <Label Text="{localization:Translate Formula.Motion.Types.River.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="{localization:Translate Formula.Motion.Types.River.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.River.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.River.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -385,8 +385,8 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
                             <VerticalStackLayout Spacing="6">
-                                <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                                <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
@@ -432,7 +432,7 @@
                                 FontAttributes="Bold"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
 
                         <Border
@@ -451,7 +451,7 @@
                                 FontAttributes="Bold"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
 
                         <Border
@@ -470,7 +470,7 @@
                                 FontAttributes="Bold"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
 
                         <Border
@@ -489,7 +489,7 @@
                                 FontAttributes="Bold"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
 
                     </Grid>
@@ -517,7 +517,7 @@
                         FontSize="17"
                         LineHeight="1.35"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     <Border
                         Padding="13,10"
                         BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
@@ -557,7 +557,7 @@
                         FontSize="17"
                         LineHeight="1.35"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Grid
                         ColumnDefinitions="*,*"
@@ -582,7 +582,7 @@
                                     FontSize="16"
                                     LineHeight="1.3"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -600,13 +600,13 @@
                                     Text="{localization:Translate Formula.Motion.ChasingExampleTitle}"
                                     FontSize="18"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Label
                                     Text="{localization:Translate Formula.Motion.ChasingExample}"
                                     FontSize="16"
                                     LineHeight="1.3"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>

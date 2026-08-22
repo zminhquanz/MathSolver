@@ -62,7 +62,7 @@
                             Text="{localization:Translate Numbers.Decimal}"
                             Style="{StaticResource SolverNumberTypeButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnDecimalTypeClicked" />
 
                     </Grid>
@@ -71,7 +71,7 @@
                         Text="{localization:Translate Average.InputHelp}"
                         FontSize="15"
                         LineHeight="1.2"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <Border
                         Padding="12,8"
@@ -89,8 +89,8 @@
                             AutoSize="TextChanges"
                             MinimumHeightRequest="132"
                             FontSize="18"
-                            TextColor="{DynamicResource TextPrimaryColor}"
-                            PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                             BackgroundColor="Transparent"
                             TextChanged="OnValuesTextChanged" />
 
@@ -101,7 +101,7 @@
                         FontSize="14"
                         FontAttributes="Italic"
                         LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <Border
                         x:Name="ErrorBorder"
@@ -176,7 +176,7 @@
                         Text="{localization:Translate Average.ResultTitle}"
                         FontSize="20"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Border
                         Padding="14"
@@ -224,7 +224,7 @@
                                 Text="{Binding Text, Source={x:Reference AverageCopyResultButton}}"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
                         </HorizontalStackLayout>
@@ -250,12 +250,12 @@
                                 <Label
                                     Text="{localization:Translate Average.CountLabel}"
                                     FontSize="14"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 <Label
                                     x:Name="CountValueLabel"
                                     FontSize="18"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
 
                         </Border>
@@ -275,13 +275,13 @@
                                 <Label
                                     Text="{localization:Translate Average.SumLabel}"
                                     FontSize="14"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                 <Label
                                     x:Name="SumValueLabel"
                                     FontSize="18"
                                     FontAttributes="Bold"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
 
                         </Border>
@@ -296,7 +296,7 @@
                         Text="{localization:Translate Average.SolutionTitle}"
                         FontSize="19"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <VerticalStackLayout Spacing="10">
 
@@ -305,21 +305,21 @@
                             FontSize="16"
                             LineHeight="1.25"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             x:Name="CountStepLabel"
                             FontSize="16"
                             LineHeight="1.25"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             x:Name="SumStepLabel"
                             FontSize="16"
                             LineHeight="1.25"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             x:Name="AverageStepLabel"

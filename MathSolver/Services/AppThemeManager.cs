@@ -22,6 +22,13 @@ public static class AppThemeManager
     private static bool _initialized;
     private static Application? _application;
 
+    // Adaptive contrast for MP4 live wallpaper. null = follow the app theme,
+    // true = use light text/dark glass, false = use dark text/light glass.
+    private static bool? _liveWallpaperUseLightText;
+    private const double LiveWallpaperLightTextThreshold = 0.46d;
+    private const double LiveWallpaperDarkTextThreshold = 0.60d;
+    private const double LiveWallpaperInitialThreshold = 0.53d;
+
     public static event EventHandler? ThemeChanged;
 
     public static AppThemeMode CurrentMode { get; private set; } =
@@ -219,6 +226,39 @@ public static class AppThemeManager
             MainThread.BeginInvokeOnMainThread(
                 ApplyWallpaperOnly);
         }
+    }
+
+    public static void SetLiveWallpaperFrameLuminance(
+        double luminance)
+    {
+        luminance = Math.Clamp(luminance, 0d, 1d);
+
+        bool nextUseLightText =
+            _liveWallpaperUseLightText switch
+            {
+                true => luminance < LiveWallpaperDarkTextThreshold,
+                false => luminance <= LiveWallpaperLightTextThreshold,
+                null => luminance < LiveWallpaperInitialThreshold
+            };
+
+        if (_liveWallpaperUseLightText == nextUseLightText)
+        {
+            return;
+        }
+
+        _liveWallpaperUseLightText = nextUseLightText;
+        RefreshVisualResources();
+    }
+
+    public static void ResetLiveWallpaperAdaptiveContrast()
+    {
+        if (_liveWallpaperUseLightText is null)
+        {
+            return;
+        }
+
+        _liveWallpaperUseLightText = null;
+        RefreshVisualResources();
     }
 
     public static bool TryParseHexColor(
@@ -576,51 +616,97 @@ public static class AppThemeManager
             SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", palette.WarningSoft);
             SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", palette.DangerSoft);
             SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", palette.InfoSoft);
+            SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", palette.TextPrimary);
+            SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", palette.TextSecondary);
             SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", Colors.Transparent);
             return;
         }
-
-        bool dark = effectiveTheme == AppTheme.Dark;
-
-        Color surfaceStrong = WithAlpha(palette.Surface, dark ? 0.86 : 0.84);
-        Color surface = WithAlpha(palette.Surface, dark ? 0.76 : 0.74);
-        Color surfaceAlt = WithAlpha(palette.SurfaceAlt, dark ? 0.64 : 0.60);
-        Color input = WithAlpha(palette.InputBackground, dark ? 0.90 : 0.88);
-
-        Color borderBase = dark
-            ? Mix(palette.Border, Colors.White, 0.20)
-            : Mix(palette.Border, Colors.White, 0.38);
-        Color dividerBase = dark
-            ? Mix(palette.Divider, Colors.White, 0.12)
-            : Mix(palette.Divider, Colors.White, 0.26);
-
-        SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", surfaceStrong);
-        SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", surface);
-        SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", surfaceAlt);
-        SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", input);
-        SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", WithAlpha(borderBase, dark ? 0.76 : 0.82));
-        SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", WithAlpha(dividerBase, dark ? 0.58 : 0.66));
-        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", WithAlpha(palette.AccentSoft, dark ? 0.72 : 0.76));
-        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(palette.AccentBorder, 0.90));
-        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", WithAlpha(palette.SuccessSoft, dark ? 0.76 : 0.80));
-        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", WithAlpha(palette.WarningSoft, dark ? 0.76 : 0.80));
-        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(palette.DangerSoft, dark ? 0.76 : 0.80));
-        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(palette.InfoSoft, dark ? 0.76 : 0.80));
 
         bool mathAnimation =
             LiveWallpaperManager.Mode ==
             LiveWallpaperMode.MathAnimation;
 
-        // The built-in GraphicsView background already uses restrained theme
-        // colors, so it needs a much lighter veil than a user-supplied video.
-        // This keeps the math symbols visible without sacrificing text contrast.
+        bool themeIsDark =
+            effectiveTheme == AppTheme.Dark;
+
+        // Math Animation deliberately follows the selected app theme. MP4 can
+        // override the learning-area glass/text polarity from its precomputed
+        // frame-brightness timeline without changing the app-wide theme.
+        bool darkGlass;
+
+        if (mathAnimation ||
+            _liveWallpaperUseLightText is null)
+        {
+            darkGlass = themeIsDark;
+        }
+        else
+        {
+            darkGlass = _liveWallpaperUseLightText.Value;
+        }
+
+        Color surfaceBase = darkGlass
+            ? Color.FromArgb("#101827")
+            : Colors.White;
+        Color surfaceAltBase = darkGlass
+            ? Color.FromArgb("#182235")
+            : Color.FromArgb("#F6F8FC");
+        Color inputBase = darkGlass
+            ? Color.FromArgb("#1B263A")
+            : Colors.White;
+        Color borderBase = darkGlass
+            ? Color.FromArgb("#A9B8CF")
+            : Color.FromArgb("#7B8BA5");
+        Color dividerBase = darkGlass
+            ? Color.FromArgb("#8392AA")
+            : Color.FromArgb("#A7B2C3");
+
+        // Wallpaper text uses a hard polarity rather than inheriting the app
+        // theme. A dark video frame must always produce light text and a
+        // bright frame must always produce dark text. This keeps titles,
+        // neutral buttons, labels and placeholders readable even when the
+        // wallpaper theme is the opposite of the selected app theme.
+        Color textPrimary = darkGlass
+            ? Colors.White
+            : Colors.Black;
+        Color textSecondary = darkGlass
+            ? Color.FromArgb("#F1F5F9")
+            : Color.FromArgb("#1F2937");
+
+        Color surfaceStrong =
+            WithAlpha(surfaceBase, darkGlass ? 0.86 : 0.84);
+        Color surface =
+            WithAlpha(surfaceBase, darkGlass ? 0.76 : 0.74);
+        Color surfaceAlt =
+            WithAlpha(surfaceAltBase, darkGlass ? 0.66 : 0.62);
+        Color input =
+            WithAlpha(inputBase, darkGlass ? 0.90 : 0.88);
+
+        SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", surfaceStrong);
+        SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", surface);
+        SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", surfaceAlt);
+        SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", input);
+        SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", WithAlpha(borderBase, darkGlass ? 0.46 : 0.42));
+        SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", WithAlpha(dividerBase, darkGlass ? 0.34 : 0.38));
+        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", WithAlpha(palette.AccentSoft, darkGlass ? 0.70 : 0.76));
+        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(palette.AccentBorder, 0.90));
+        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", WithAlpha(palette.SuccessSoft, darkGlass ? 0.74 : 0.80));
+        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", WithAlpha(palette.WarningSoft, darkGlass ? 0.74 : 0.80));
+        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(palette.DangerSoft, darkGlass ? 0.74 : 0.80));
+        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(palette.InfoSoft, darkGlass ? 0.74 : 0.80));
+        SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", textPrimary);
+        SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", textSecondary);
+
+        // The built-in animation already uses restrained theme colors, so it
+        // only needs a light veil. MP4 uses a veil matched to the current frame
+        // polarity. Runtime only changes resources when hysteresis crosses a
+        // threshold, avoiding flicker and per-frame layout churn.
         Color scrim = mathAnimation
-            ? (dark
+            ? (darkGlass
                 ? new Color(0.015f, 0.027f, 0.055f, 0.18f)
                 : new Color(1f, 1f, 1f, 0.12f))
-            : (dark
-                ? new Color(0.015f, 0.027f, 0.055f, 0.42f)
-                : new Color(1f, 1f, 1f, 0.30f));
+            : (darkGlass
+                ? new Color(0.015f, 0.027f, 0.055f, 0.28f)
+                : new Color(1f, 1f, 1f, 0.22f));
 
         SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", scrim);
     }

@@ -60,7 +60,7 @@
                             Text="+"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnFindXAddClicked" />
 
                         <Button
@@ -69,7 +69,7 @@
                             Text="−"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnFindXSubtractClicked" />
 
                         <Button
@@ -78,7 +78,7 @@
                             Text="×"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnFindXMultiplyClicked" />
 
                         <Button
@@ -87,7 +87,7 @@
                             Text="÷"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnFindXDivideClicked" />
 
                     </Grid>
@@ -103,13 +103,13 @@
                             Text="Vị trí của x"
                             FontSize="17"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             x:Name="FindXPositionDescriptionLabel"
                             FontSize="15"
                             LineHeight="1.2"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     </VerticalStackLayout>
 
@@ -129,7 +129,7 @@
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             Clicked="OnFindXUnknownLeftClicked" />
 
@@ -143,7 +143,7 @@
                             FontAttributes="Bold"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Style="{StaticResource SolverChoiceButtonStyle}"
                             Clicked="OnFindXUnknownRightClicked" />
 
@@ -171,7 +171,7 @@
                             Text="{localization:Translate Numbers.Integer}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Style="{StaticResource SolverNumberTypeButtonStyle}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnFindXIntegerTypeClicked" />
 
                         <Button
@@ -180,7 +180,7 @@
                             Text="{localization:Translate Numbers.Decimal}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Style="{StaticResource SolverNumberTypeButtonStyle}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnFindXDecimalTypeClicked" />
 
                     </Grid>
@@ -203,7 +203,7 @@
                                 x:Name="FindXKnownValueLabel"
                                 Text="Số hạng đã biết"
                                 FontSize="16"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <Border
                                 HeightRequest="48"
@@ -219,14 +219,14 @@
                                 <Entry
                                     x:Name="FindXKnownValueEntry"
                                     Placeholder="Ví dụ: 8"
-                                    PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                    PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                     Keyboard="Numeric"
                                     FontSize="19"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnFindXNumberEntryTextChanged" />
 
@@ -243,7 +243,7 @@
                                 x:Name="FindXResultValueLabel"
                                 Text="Tổng"
                                 FontSize="16"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <Border
                                 HeightRequest="48"
@@ -260,14 +260,14 @@
                                     x:Name="FindXResultValueEntry"
                                     Placeholder="Ví dụ: 20"
 
-                                    PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                    PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                     Keyboard="Numeric"
                                     FontSize="19"
                                     VerticalTextAlignment="Center"
                                     BackgroundColor="Transparent"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
-                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     ClearButtonVisibility="WhileEditing"
                                     TextChanged="OnFindXNumberEntryTextChanged" />
 
@@ -293,7 +293,7 @@
                                 Text="Phương trình đang nhập"
                                 FontSize="15"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <Label
                                 x:Name="FindXEquationPreviewLabel"
@@ -382,7 +382,7 @@
                         Text="3. Kết quả"
                         FontSize="20"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <Label
                         x:Name="FindXResultEquationLabel"
@@ -419,14 +419,14 @@
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                                 x:Name="FindXApproximationLabel"
                                 IsVisible="False"
                                 FontSize="16"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource TextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                         </VerticalStackLayout>
                     </Border>
@@ -458,7 +458,7 @@
                                 Text="{Binding Text, Source={x:Reference FindXCopyResultButton}}"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
                         </HorizontalStackLayout>
@@ -487,7 +487,7 @@
                                 x:Name="FindXRuleLabel"
                                 FontSize="17"
                                 LineHeight="1.25"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
                     </Border>
@@ -508,13 +508,13 @@
                                 Text="Lời giải chi tiết"
                                 FontSize="18"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Label
                                 x:Name="FindXSolutionStepsLabel"
                                 FontSize="17"
                                 LineHeight="1.3"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
                     </Border>
@@ -542,7 +542,7 @@
                                 x:Name="FindXVerificationLabel"
                                 FontSize="17"
                                 LineHeight="1.25"
-                                TextColor="{DynamicResource TextPrimaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         </VerticalStackLayout>
                     </Border>

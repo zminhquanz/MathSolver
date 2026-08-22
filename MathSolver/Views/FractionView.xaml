@@ -65,7 +65,7 @@
                             Text="+"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnAddClicked" />
 
                         <Button
@@ -75,7 +75,7 @@
                             Text="−"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnSubtractClicked" />
 
                         <Button
@@ -85,7 +85,7 @@
                             Text="×"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnMultiplyClicked" />
 
                         <Button
@@ -95,7 +95,7 @@
                             Text="÷"
                             Style="{StaticResource SolverOperationButtonStyle}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnDivideClicked" />
 
                         <Button
@@ -110,7 +110,7 @@
                             Padding="10,0"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnCommonDenominatorClicked" />
 
                     </Grid>
@@ -157,7 +157,7 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border
                                     HeightRequest="46"
@@ -172,14 +172,14 @@
 
                                     <Entry
                                         x:Name="FirstNumeratorEntry"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Placeholder="Tử số"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" 
                                         TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
@@ -201,14 +201,14 @@
 
                                     <Entry
                                         x:Name="FirstDenominatorEntry"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" 
                                         TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
@@ -250,7 +250,7 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Border
                                     HeightRequest="46"
@@ -266,13 +266,13 @@
                                     <Entry
                                         x:Name="SecondNumeratorEntry"
                                         Placeholder="Tử số"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" 
                                         TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
@@ -294,14 +294,14 @@
 
                                     <Entry
                                         x:Name="SecondDenominatorEntry"
-                                        PlaceholderColor="{DynamicResource TextSecondaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Placeholder="Mẫu số"
                                         Keyboard="Numeric"
                                         FontSize="19"
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource TextPrimaryColor}" 
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" 
                                         TextChanged="OnNumberEntryTextChanged" />
                                 </Border>
 
@@ -332,7 +332,7 @@
                             Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                            TextColor="{DynamicResource TextPrimaryColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             Clicked="OnClearClicked" />
 
                     </Grid>
@@ -393,7 +393,7 @@
                         Text="3. Kết quả"
                         FontSize="19"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <controls:FractionExpressionView
                         x:Name="FullExpressionMathView"
@@ -409,12 +409,12 @@
                         Text="Đáp số"
                         FontSize="15"
                         HorizontalTextAlignment="Center"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                     <controls:FractionExpressionView
                         x:Name="AnswerMathView"
                         MathFontSize="32"
-                        MathColor="{DynamicResource TextPrimaryColor}"
+                        MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                         HorizontalOptions="Center" />
 
                     <Grid HeightRequest="48">
@@ -444,7 +444,7 @@
                                 Text="{Binding Text, Source={x:Reference FractionCopyResultButton}}"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource TextPrimaryColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
                         </HorizontalStackLayout>
@@ -500,7 +500,7 @@
                                                     FontSize="16"
                                                     LineHeight="1.25"
                                                     LineBreakMode="WordWrap"
-                                                    TextColor="{DynamicResource TextPrimaryColor}">
+                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}">
 
                                                     <Label.Triggers>
                                                         <DataTrigger
@@ -523,7 +523,7 @@
                                                             <controls:FractionExpressionView
                                                                 Expression="{Binding .}"
                                                                 MathFontSize="19"
-                                                                MathColor="{DynamicResource TextPrimaryColor}"
+                                                                MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                                 HorizontalOptions="Start" />
                                                         </DataTemplate>
                                                     </BindableLayout.ItemTemplate>
