@@ -733,6 +733,70 @@
 
                             </VerticalStackLayout>
 
+                            <VerticalStackLayout
+                                x:Name="AverageTypePanel"
+                                IsVisible="False"
+                                Spacing="8">
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.AverageTypeTitle}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Border
+                                    Padding="0"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+                                    <Picker
+                                        x:Name="AverageTypePicker"
+                                        HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                        Margin="{OnPlatform Android='0', WinUI='12,0', Default='12,0'}"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        SelectedIndexChanged="OnAverageTypeChanged" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout
+                                x:Name="PercentageTypePanel"
+                                IsVisible="False"
+                                Spacing="8">
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.PercentageTypeTitle}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Border
+                                    Padding="0"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+                                    <Picker
+                                        x:Name="PercentageTypePicker"
+                                        HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                        Margin="{OnPlatform Android='0', WinUI='12,0', Default='12,0'}"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        SelectedIndexChanged="OnPercentageTypeChanged" />
+                                </Border>
+                            </VerticalStackLayout>
+
                         </VerticalStackLayout>
                     </Border>
 

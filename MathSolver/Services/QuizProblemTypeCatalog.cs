@@ -30,7 +30,13 @@ public sealed class QuizProblemTypeCatalog
             new(QuizProblemKind.Proportion)),
         new(
             "Quiz.ProblemMotion",
-            new(QuizProblemKind.Motion))
+            new(QuizProblemKind.Motion)),
+        new(
+            "Quiz.ProblemAverage",
+            new(QuizProblemKind.Average)),
+        new(
+            "Quiz.ProblemPercentage",
+            new(QuizProblemKind.Percentage))
     ];
 
     private static readonly QuizProblemRequest[] MixedRequests =
@@ -47,7 +53,9 @@ public sealed class QuizProblemTypeCatalog
         new(QuizProblemKind.FindX),
         new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Direct),
         new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Inverse),
-        new(QuizProblemKind.Motion)
+        new(QuizProblemKind.Motion),
+        new(QuizProblemKind.Average),
+        new(QuizProblemKind.Percentage)
     ];
 
     private static readonly IReadOnlyList<QuizProblemOption>
@@ -69,7 +77,9 @@ public sealed class QuizProblemTypeCatalog
         int selectedIndex,
         ArithmeticOperation basicOperation,
         FractionOperation fractionOperation,
-        ProportionQuizType proportionType)
+        ProportionQuizType proportionType,
+        AverageQuizType? averageType,
+        PercentageQuizType? percentageType)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -93,6 +103,16 @@ public sealed class QuizProblemTypeCatalog
                     fixedRequest with
                     {
                         ProportionType = proportionType
+                    },
+                QuizProblemKind.Average =>
+                    fixedRequest with
+                    {
+                        AverageType = averageType
+                    },
+                QuizProblemKind.Percentage =>
+                    fixedRequest with
+                    {
+                        PercentageType = percentageType
                     },
                 _ => fixedRequest
             };

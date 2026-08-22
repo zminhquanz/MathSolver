@@ -32,6 +32,8 @@ public partial class MathPuzzlePage : ContentPage
     private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly ProportionQuizGenerator _proportionQuizGenerator;
     private readonly MotionQuizGenerator _motionQuizGenerator;
+    private readonly AverageQuizGenerator _averageQuizGenerator;
+    private readonly PercentageQuizGenerator _percentageQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
     private readonly SortedDictionary<int, string> _llmRawOutputs = new();
     private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
@@ -73,6 +75,9 @@ public partial class MathPuzzlePage : ContentPage
         FractionOperation.Add;
     private ProportionQuizType _selectedProportionType =
         ProportionQuizType.Direct;
+    private AverageQuizType? _selectedAverageType;
+    private PercentageQuizType? _selectedPercentageType;
+    private bool _isUpdatingSubtypePickers;
     private bool _isAiDiagnosticsVisible;
     private bool _isDeveloperModeSubscribed;
     private int _llmProgressVersion;
@@ -108,6 +113,10 @@ public partial class MathPuzzlePage : ContentPage
 #if ANDROID
         AndroidPickerVisualHelper.Attach(
             OperationPicker);
+        AndroidPickerVisualHelper.Attach(
+            AverageTypePicker);
+        AndroidPickerVisualHelper.Attach(
+            PercentageTypePicker);
 #endif
 
         InteractiveButtonAnimation.SetIsScopeEnabled(
@@ -139,6 +148,12 @@ public partial class MathPuzzlePage : ContentPage
 
         _motionQuizGenerator =
             new MotionQuizGenerator();
+
+        _averageQuizGenerator =
+            new AverageQuizGenerator();
+
+        _percentageQuizGenerator =
+            new PercentageQuizGenerator();
 
 #if WINDOWS
         // Reuse one Windows LLamaSharp runtime across Math Puzzle and the
@@ -630,6 +645,18 @@ public partial class MathPuzzlePage : ContentPage
             return TranslateQuiz("Quiz.MotionQuestionTitle");
         }
 
+        if (_currentQuestion?.AverageProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return TranslateQuiz("Quiz.AverageQuestionTitle");
+        }
+
+        if (_currentQuestion?.PercentageProblem is not null &&
+            _generationSource == QuizGenerationSource.Algorithm)
+        {
+            return TranslateQuiz("Quiz.PercentageQuestionTitle");
+        }
+
         if (_currentQuestion?.WordProblem is not null)
         {
             return Translate("Quiz.WordProblemTitle");
@@ -738,6 +765,8 @@ public partial class MathPuzzlePage : ContentPage
                     0,
                     OperationPicker.Items.Count - 1);
 
+            UpdateSubtypePickerItems();
+
             _activeProblemRequest =
                 GetSelectedFixedProblemRequest();
 
@@ -746,6 +775,141 @@ public partial class MathPuzzlePage : ContentPage
         finally
         {
             _isUpdatingOperationPicker = false;
+        }
+    }
+
+    private void UpdateSubtypePickerItems()
+    {
+        _isUpdatingSubtypePickers = true;
+        try
+        {
+            AverageTypePicker.Items.Clear();
+            string[] averageKeys =
+            [
+                "Quiz.SubtypeMixed",
+                "Quiz.AverageDirect",
+                "Quiz.AverageTotalToAverage",
+                "Quiz.AverageAverageToTotal",
+                "Quiz.AverageMissingValue",
+                "Quiz.AverageIndirectData",
+                "Quiz.AverageTwoGroups"
+            ];
+            foreach (string key in averageKeys)
+            {
+                AverageTypePicker.Items.Add(TranslateQuiz(key));
+            }
+            AverageTypePicker.SelectedIndex = _selectedAverageType switch
+            {
+                null => 0,
+                AverageQuizType.Direct => 1,
+                AverageQuizType.TotalToAverage => 2,
+                AverageQuizType.AverageToTotal => 3,
+                AverageQuizType.MissingValue => 4,
+                AverageQuizType.IndirectData => 5,
+                AverageQuizType.TwoGroups => 6,
+                _ => 0
+            };
+
+            PercentageTypePicker.Items.Clear();
+            string[] percentageKeys =
+            [
+                "Quiz.SubtypeMixed",
+                "Quiz.PercentageRatio",
+                "Quiz.PercentageValue",
+                "Quiz.PercentageWhole"
+            ];
+            foreach (string key in percentageKeys)
+            {
+                PercentageTypePicker.Items.Add(TranslateQuiz(key));
+            }
+            PercentageTypePicker.SelectedIndex = _selectedPercentageType switch
+            {
+                null => 0,
+                PercentageQuizType.FindPercentageRatio => 1,
+                PercentageQuizType.FindPercentageValue => 2,
+                PercentageQuizType.FindWholeFromPercentageValue => 3,
+                _ => 0
+            };
+        }
+        finally
+        {
+            _isUpdatingSubtypePickers = false;
+        }
+    }
+
+    private void OnAverageTypeChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers)
+        {
+            return;
+        }
+
+        AverageQuizType? selected = AverageTypePicker.SelectedIndex switch
+        {
+            1 => AverageQuizType.Direct,
+            2 => AverageQuizType.TotalToAverage,
+            3 => AverageQuizType.AverageToTotal,
+            4 => AverageQuizType.MissingValue,
+            5 => AverageQuizType.IndirectData,
+            6 => AverageQuizType.TwoGroups,
+            _ => null
+        };
+
+        if (_selectedAverageType == selected)
+        {
+            return;
+        }
+
+        _selectedAverageType = selected;
+        OnSubtypeSelectionChanged(QuizProblemKind.Average);
+    }
+
+    private void OnPercentageTypeChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers)
+        {
+            return;
+        }
+
+        PercentageQuizType? selected = PercentageTypePicker.SelectedIndex switch
+        {
+            1 => PercentageQuizType.FindPercentageRatio,
+            2 => PercentageQuizType.FindPercentageValue,
+            3 => PercentageQuizType.FindWholeFromPercentageValue,
+            _ => null
+        };
+
+        if (_selectedPercentageType == selected)
+        {
+            return;
+        }
+
+        _selectedPercentageType = selected;
+        OnSubtypeSelectionChanged(QuizProblemKind.Percentage);
+    }
+
+    private void OnSubtypeSelectionChanged(QuizProblemKind expectedKind)
+    {
+        QuizProblemKind? kind = _quizProblemTypeCatalog
+            .GetFixedRequest(OperationPicker.SelectedIndex)
+            ?.Kind;
+        if (kind != expectedKind)
+        {
+            return;
+        }
+
+        CancelLlmGeneration();
+        ResetQuizSessionState();
+        _activeProblemRequest = GetSelectedFixedProblemRequest();
+        UpdateEssayAnswerPresentation();
+
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
         }
     }
 
@@ -787,7 +951,9 @@ public partial class MathPuzzlePage : ContentPage
             OperationPicker.SelectedIndex,
             _selectedBasicOperation,
             _selectedFractionOperation,
-            _selectedProportionType);
+            _selectedProportionType,
+            _selectedAverageType,
+            _selectedPercentageType);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -812,6 +978,16 @@ public partial class MathPuzzlePage : ContentPage
                 {
                     ProportionType = _selectedProportionType
                 },
+            QuizProblemKind.Average =>
+                request.Value with
+                {
+                    AverageType = _selectedAverageType
+                },
+            QuizProblemKind.Percentage =>
+                request.Value with
+                {
+                    PercentageType = _selectedPercentageType
+                },
             _ => request
         };
     }
@@ -827,9 +1003,15 @@ public partial class MathPuzzlePage : ContentPage
             kind is QuizProblemKind.Arithmetic or QuizProblemKind.Fraction;
         bool showProportionType =
             kind == QuizProblemKind.Proportion;
+        bool showAverageType =
+            kind == QuizProblemKind.Average;
+        bool showPercentageType =
+            kind == QuizProblemKind.Percentage;
 
         ProblemOperationPanel.IsVisible = showOperations;
         ProportionTypePanel.IsVisible = showProportionType;
+        AverageTypePanel.IsVisible = showAverageType;
+        PercentageTypePanel.IsVisible = showPercentageType;
 
         if (showProportionType)
         {
@@ -1106,6 +1288,16 @@ public partial class MathPuzzlePage : ContentPage
                     QuizProblemKind.Motion =>
                         _motionQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
+                            AppLanguageManager.CurrentLanguage),
+                    QuizProblemKind.Average =>
+                        _averageQuizGenerator.GenerateAlgorithm(
+                            _selectedMode,
+                            problemRequest.AverageType,
+                            AppLanguageManager.CurrentLanguage),
+                    QuizProblemKind.Percentage =>
+                        _percentageQuizGenerator.GenerateAlgorithm(
+                            _selectedMode,
+                            problemRequest.PercentageType,
                             AppLanguageManager.CurrentLanguage),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
@@ -2117,6 +2309,8 @@ public partial class MathPuzzlePage : ContentPage
         MultipleChoiceModeButton.IsEnabled = !isLocked;
         EssayModeButton.IsEnabled = !isLocked;
         OperationPicker.IsEnabled = !isLocked;
+        AverageTypePicker.IsEnabled = !isLocked;
+        PercentageTypePicker.IsEnabled = !isLocked;
 
         ProblemAddButton.IsEnabled = !isLocked;
         ProblemSubtractButton.IsEnabled = !isLocked;
@@ -2171,6 +2365,8 @@ public partial class MathPuzzlePage : ContentPage
         MultipleChoiceModeButton.IsEnabled = !isBusy;
         EssayModeButton.IsEnabled = !isBusy;
         OperationPicker.IsEnabled = !isBusy;
+        AverageTypePicker.IsEnabled = !isBusy;
+        PercentageTypePicker.IsEnabled = !isBusy;
 
         UpdateCreateOrRegenerateQuestionButtonState();
         UpdateAiTeacherState();
@@ -2927,6 +3123,10 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.ProportionProblem;
         MotionQuizContract? motionProblem =
             _currentQuestion.MotionProblem;
+        AverageQuizContract? averageProblem =
+            _currentQuestion.AverageProblem;
+        PercentageQuizContract? percentageProblem =
+            _currentQuestion.PercentageProblem;
 
         if (wordProblem is not null)
         {
@@ -3038,6 +3238,28 @@ public partial class MathPuzzlePage : ContentPage
                 PresentedAnswerFractionView.IsVisible = false;
             }
         }
+        else if (averageProblem is not null)
+        {
+            QuestionPromptLabel.Text = GetQuestionPromptTitle();
+            SetQuestionContent(
+                averageProblem.ProblemText,
+                21,
+                "WallpaperTextPrimaryColor",
+                useFractionFormatting: false);
+
+            RenderPresentedContractAnswer(averageProblem.AnswerUnit);
+        }
+        else if (percentageProblem is not null)
+        {
+            QuestionPromptLabel.Text = GetQuestionPromptTitle();
+            SetQuestionContent(
+                percentageProblem.ProblemText,
+                21,
+                "WallpaperTextPrimaryColor",
+                useFractionFormatting: false);
+
+            RenderPresentedContractAnswer(percentageProblem.AnswerUnit);
+        }
         else if (fractionProblem is not null)
         {
             PresentedAnswerLabel.IsVisible = false;
@@ -3121,7 +3343,11 @@ public partial class MathPuzzlePage : ContentPage
                             ? $" {proportionProblem.AnswerUnit}"
                             : motionProblem is not null
                                 ? $" {motionProblem.AnswerUnit}"
-                                : string.Empty;
+                                : averageProblem is not null
+                                    ? $" {averageProblem.AnswerUnit}"
+                                    : percentageProblem is not null
+                                        ? $" {percentageProblem.AnswerUnit}"
+                                        : string.Empty;
 
                 if (fractionProblem is not null)
                 {
@@ -3171,6 +3397,29 @@ public partial class MathPuzzlePage : ContentPage
         FeedbackBorder.IsVisible = false;
         SolutionBorder.IsVisible = false;
         NextQuestionButton.IsEnabled = false;
+    }
+
+    private void RenderPresentedContractAnswer(string answerUnit)
+    {
+        if (_currentQuestion is null ||
+            _currentQuestion.Mode != ArithmeticQuizMode.TrueFalse)
+        {
+            PresentedAnswerLabel.IsVisible = false;
+            PresentedAnswerFractionView.IsVisible = false;
+            return;
+        }
+
+        string presentedAnswer = _currentQuestion.PresentedAnswer
+            .GetValueOrDefault()
+            .ToString("N0", CultureInfo.CurrentCulture);
+
+        PresentedAnswerFractionView.IsVisible = false;
+        PresentedAnswerLabel.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            Translate("Quiz.PresentedAnswer"),
+            presentedAnswer,
+            answerUnit);
+        PresentedAnswerLabel.IsVisible = true;
     }
 
     private void OnTrueFalseAnswerClicked(
@@ -3341,6 +3590,24 @@ public partial class MathPuzzlePage : ContentPage
                 useFractionFormatting: false);
             SolutionBorder.IsVisible = true;
         }
+        else if (_currentQuestion.WordProblem is MathWordProblem generatedWordProblem &&
+                 (_currentQuestion.AverageProblem is not null ||
+                  _currentQuestion.PercentageProblem is not null))
+        {
+            string answerLabel = AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
+                ? "Đáp số"
+                : "Answer";
+            string calculation = _currentQuestion.AverageProblem?.SolutionText ??
+                                 _currentQuestion.PercentageProblem?.SolutionText ??
+                                 string.Empty;
+            string solutionText =
+                $"{generatedWordProblem.SolutionLead}{Environment.NewLine}" +
+                $"{calculation}{Environment.NewLine}" +
+                $"{answerLabel}: {_currentQuestion.CorrectAnswer:N0} {generatedWordProblem.AnswerUnit}";
+
+            SetSolutionContent(solutionText, useFractionFormatting: false);
+            SolutionBorder.IsVisible = true;
+        }
         else if (_currentQuestion.WordProblem is not null)
         {
             string solutionText =
@@ -3357,6 +3624,8 @@ public partial class MathPuzzlePage : ContentPage
         }
         else if (_currentQuestion.ProportionProblem is not null ||
                  _currentQuestion.MotionProblem is not null ||
+                 _currentQuestion.AverageProblem is not null ||
+                 _currentQuestion.PercentageProblem is not null ||
                  _currentQuestion.Mode == ArithmeticQuizMode.Essay)
         {
             string solutionText =
@@ -3432,6 +3701,16 @@ public partial class MathPuzzlePage : ContentPage
                 $"{fraction.ExpressionText} = {fraction.CorrectAnswer}" +
                 Environment.NewLine +
                 $"{fractionAnswerLabel}: {fraction.CorrectAnswer}";
+        }
+
+        if (question.AverageProblem is AverageQuizContract average)
+        {
+            return average.SolutionText;
+        }
+
+        if (question.PercentageProblem is PercentageQuizContract percentage)
+        {
+            return percentage.SolutionText;
         }
 
         if (question.ProportionProblem is ProportionQuizContract proportion)
@@ -3575,6 +3854,16 @@ public partial class MathPuzzlePage : ContentPage
         {
             answerText +=
                 $" {motionProblem.AnswerUnit}";
+        }
+        else if (_currentQuestion?.AverageProblem is
+                 AverageQuizContract averageProblem)
+        {
+            answerText += $" {averageProblem.AnswerUnit}";
+        }
+        else if (_currentQuestion?.PercentageProblem is
+                 PercentageQuizContract percentageProblem)
+        {
+            answerText += $" {percentageProblem.AnswerUnit}";
         }
 
         string feedbackText = string.Format(

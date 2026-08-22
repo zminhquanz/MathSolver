@@ -82,6 +82,22 @@ public sealed partial class EssayAnswerValidator
                 ? ValidateMotionEquation(
                     motion,
                     equationText)
+                : question.AverageProblem is AverageQuizContract average
+                ? ValidateContractEquation(
+                    average.EquationText,
+                    average.RepresentativeLeft,
+                    average.RepresentativeOperation,
+                    average.RepresentativeRight,
+                    average.CorrectAnswer,
+                    equationText)
+                : question.PercentageProblem is PercentageQuizContract percentage
+                ? ValidateContractEquation(
+                    percentage.EquationText,
+                    percentage.RepresentativeLeft,
+                    percentage.RepresentativeOperation,
+                    percentage.RepresentativeRight,
+                    percentage.CorrectAnswer,
+                    equationText)
                 : ValidateEquation(
                     question,
                     equationText);
@@ -280,7 +296,9 @@ public sealed partial class EssayAnswerValidator
                  expectedUnit,
                  question.WordProblem?.ProblemText ??
                  question.ProportionProblem?.ProblemText ??
-                 question.MotionProblem?.ProblemText)))
+                 question.MotionProblem?.ProblemText ??
+                 question.AverageProblem?.ProblemText ??
+                 question.PercentageProblem?.ProblemText)))
         {
             return (false, EssayAnswerError.WrongAnswerUnit);
         }
@@ -408,6 +426,42 @@ public sealed partial class EssayAnswerValidator
         accepted.Add(
             NormalizeMotionEquation(
                 $"{contract.RepresentativeLeft} {symbol} {contract.RepresentativeRight} = {contract.CorrectAnswer}"));
+
+        return accepted.Contains(entered)
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongOperandsOrOperation);
+    }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateContractEquation(
+            string equationText,
+            BigInteger representativeLeft,
+            ArithmeticOperation representativeOperation,
+            BigInteger representativeRight,
+            BigInteger correctAnswer,
+            string? enteredEquation)
+    {
+        string entered = NormalizeProportionEquation(enteredEquation);
+        if (entered.Length == 0 || !entered.Contains('='))
+        {
+            return (false, EssayAnswerError.InvalidEquationFormat);
+        }
+
+        string symbol = representativeOperation switch
+        {
+            ArithmeticOperation.Add => "+",
+            ArithmeticOperation.Subtract => "-",
+            ArithmeticOperation.Multiply => "×",
+            ArithmeticOperation.Divide => "÷",
+            _ => string.Empty
+        };
+
+        var accepted = new HashSet<string>(StringComparer.Ordinal)
+        {
+            NormalizeProportionEquation(equationText),
+            NormalizeProportionEquation(
+                $"{representativeLeft} {symbol} {representativeRight} = {correctAnswer}")
+        };
 
         return accepted.Contains(entered)
             ? (true, EssayAnswerError.None)
@@ -570,13 +624,17 @@ public sealed partial class EssayAnswerValidator
 
         string enteredUnit =
             NormalizeUnit(
-                match.Groups["unit"].Value);
+                match.Groups["percent"].Success
+                    ? "%"
+                    : match.Groups["unit"].Value);
 
         string expectedUnit =
             NormalizeUnit(
                 question.WordProblem?.AnswerUnit ??
                 question.ProportionProblem?.AnswerUnit ??
-                question.MotionProblem?.AnswerUnit);
+                question.MotionProblem?.AnswerUnit ??
+                question.AverageProblem?.AnswerUnit ??
+                question.PercentageProblem?.AnswerUnit);
 
         // Bài toán đố có đơn vị thì đáp số phải ghi đúng đơn vị như một bài
         // giải tiểu học. Câu do thuật toán tạo chỉ là biểu thức nên không ép
@@ -588,7 +646,9 @@ public sealed partial class EssayAnswerValidator
                  expectedUnit,
                  question.WordProblem?.ProblemText ??
                  question.ProportionProblem?.ProblemText ??
-                 question.MotionProblem?.ProblemText)))
+                 question.MotionProblem?.ProblemText ??
+                 question.AverageProblem?.ProblemText ??
+                 question.PercentageProblem?.ProblemText)))
         {
             return (false, EssayAnswerError.WrongAnswerUnit);
         }
@@ -936,7 +996,7 @@ public sealed partial class EssayAnswerValidator
     private static partial Regex GroupedIntegerRegex();
 
     [GeneratedRegex(
-        @"^\s*(?:(?:đáp\s*số|answer)\s*:?)?\s*(?<value>\+?\d(?:[\d.,\u00A0\u202F ]*\d)?)(?:\s+(?<unit>.*?))?\s*[.!]?\s*$",
+        @"^\s*(?:(?:đáp\s*số|answer)\s*:?)?\s*(?<value>\+?\d(?:[\d.,\u00A0\u202F ]*\d)?)(?:(?:\s+(?<unit>.*?))|(?<percent>%))?\s*[.!]?\s*$",
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase)]
     private static partial Regex AnswerRegex();

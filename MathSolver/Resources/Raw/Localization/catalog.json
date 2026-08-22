@@ -6241,6 +6241,86 @@
       "key": "Quiz.AiExitConfirmNo",
       "source": "Không",
       "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemAverage",
+      "source": "Trung bình cộng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemPercentage",
+      "source": "Phần trăm",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.SubtypeMixed",
+      "source": "Hỗn hợp các dạng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageTypeTitle",
+      "source": "Chọn dạng trung bình cộng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageDirect",
+      "source": "Tìm TBC trực tiếp",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageTotalToAverage",
+      "source": "Biết tổng → tìm TBC",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageAverageToTotal",
+      "source": "Biết TBC → tìm tổng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageMissingValue",
+      "source": "TBC + giá trị → tìm số còn thiếu",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageIndirectData",
+      "source": "Dữ kiện gián tiếp",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageTwoGroups",
+      "source": "TBC hai nhóm",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageTypeTitle",
+      "source": "Chọn dạng phần trăm",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageRatio",
+      "source": "Tìm tỉ số phần trăm",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageValue",
+      "source": "Tìm giá trị của một số phần trăm",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageWhole",
+      "source": "Biết giá trị phần trăm → tìm toàn bộ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageQuestionTitle",
+      "source": "Bài toán trung bình cộng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageQuestionTitle",
+      "source": "Bài toán phần trăm",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

@@ -135,6 +135,19 @@ practice questions. Quiz questions are accepted only after
 invariants: exact division, correct answer key, true/false flag consistency,
 and four unique multiple-choice answers containing the correct answer once.
 
+### Average & Percentage Word Problems
+
+`AverageQuizGenerator` and `PercentageQuizGenerator` are shared by the Algorithm
+and Windows AI/LLM paths. C# owns all numeric facts, subtype semantics, answer
+unit, equation and correct answer; the local model may only rewrite the supplied
+contract into natural `problem_text`. Average supports direct average, total to
+average, average to total, missing value, indirect data and two-group weighted
+average. Percentage supports percentage ratio, percentage value and whole from
+a known percentage value. The UI exposes a subtype Picker for each family, with
+a mixed-subtype option. `LlmWordProblemValidator` checks every numeric occurrence
+in order, the final-question semantic family, and the final-question answer unit
+before an AI question can reach the learner.
+
 ### Localization — `Services/LocalizationService.cs` / `TRANSLATING.md`
 
 Language packs are UTF-8 JSON files following `culture.json` format: metadata + strings + templates. Placeholders (`{field}`) are preserved in all template files for runtime interpolation.
@@ -237,7 +250,7 @@ Accuracy is measured with the same C# contracts, parser, and `LlmWordProblemVali
 
 ## AI generation interaction lock (2026-08-21)
 
-While a Windows local-LLM question is actively generating, Math Puzzle enters an interaction lock. The three other Shell main tabs and the Settings action are disabled, and Math Puzzle disables source selection, model download/open/select/eject, question mode, problem type, basic-operation/proportion selectors, answer controls, and Next Question. The JSON & Log diagnostics toggle intentionally remains available because it is read-only. The only state-changing generation action left enabled is the primary Create-with-AI button, which switches to the red Stop action and cancels through the existing inference `CancellationToken`.
+While a Windows local-LLM question is actively generating, Math Puzzle enters an interaction lock. The three other Shell main tabs and the Settings action are disabled, and Math Puzzle disables source selection, model download/open/select/eject, question mode, problem type, basic-operation/proportion/average/percentage subtype selectors, answer controls, and Next Question. The JSON & Log diagnostics toggle intentionally remains available because it is read-only. The only state-changing generation action left enabled is the primary Create-with-AI button, which switches to the red Stop action and cancels through the existing inference `CancellationToken`.
 
 The lock stays active across all validator retries in the same generation request and is released only after generation succeeds, is cancelled, or exhausts its attempts and returns a failure. Model import/download/eject busy states continue to use the existing local busy handling and do not use this app-wide AI-generation lock.
 
@@ -319,3 +332,14 @@ The Settings UI exposes the mode with one Picker. MP4 controls are shown only fo
 For item-based word problems (basic arithmetic, fractions, and Find X), validator acceptance now requires the **final interrogative clause itself** to name the same `answer_unit`/story item used by the C# contract. It is no longer enough for the required item to appear somewhere in the facts. This prevents mixed-object outputs such as facts about stamps followed by a question asking for books. Vietnamese matching reuses `WordProblemUnitEquivalence`, so classifier variants such as `cây/cái/chiếc bút` remain valid while a different noun is rejected. Retry feedback explicitly tells the model to rewrite the final question with the contract item.
 
 `LlmWordProblemParser` also classifies output that contains only Gemma control/channel tokens after stripping as `EmptyModelOutput`. Production generation therefore follows the existing fresh-context retry path instead of treating control-token-only output as generic malformed JSON. Hardware accuracy benchmarking still preserves its explicit `maximumAttempts: 1` no-retry behavior.
+
+### Average missing-value LLM validation refinement
+- `AverageQuizType.MissingValue` no longer requires the structural test count/index to be repeated an identical number of times in `problem_text`; natural phrasing may mention the `4` once or twice.
+- The three known scores and the target average remain immutable contract facts. A model output that substitutes the test index/count for the target average is still rejected because it changes the mathematics and can invalidate the C# answer/options.
+- Retry feedback is role-aware and explicitly distinguishes known-test count, score values, test index/total test count, and target average.
+
+## Percentage ratio semantic consistency (2026-08-22)
+- `FindPercentageRatio` now stores only the two real numeric facts `[whole, part]`; repeated copies of the same numbers are no longer part of the LLM contract.
+- Ratio reference contexts use a concrete subset noun (for example female students, story books, mango trees, red marbles) and ask for that subset's percentage of the whole without repeating the numeric values in the final question.
+- The LLM prompt explicitly forbids inventing a complementary/secondary subgroup or assigning another count to it.
+- `ValidatePercentageRatioFacts` rejects any extra/repeated numeric occurrence with `PercentageRatioFactsMismatch`; this prevents internally inconsistent stories such as total 200 students + 50 female + 50 male unless the remaining 100 students are explained (such extra partition data is not part of this basic ratio contract).

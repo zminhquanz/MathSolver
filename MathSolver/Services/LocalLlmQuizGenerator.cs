@@ -48,6 +48,8 @@ public sealed class LocalLlmQuizGenerator
     private readonly FindXQuizGenerator _findXQuizGenerator;
     private readonly ProportionQuizGenerator _proportionQuizGenerator;
     private readonly MotionQuizGenerator _motionQuizGenerator;
+    private readonly AverageQuizGenerator _averageQuizGenerator;
+    private readonly PercentageQuizGenerator _percentageQuizGenerator;
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
@@ -65,7 +67,9 @@ public sealed class LocalLlmQuizGenerator
         GeometryQuizGenerator geometryQuizGenerator,
         FindXQuizGenerator findXQuizGenerator,
         ProportionQuizGenerator proportionQuizGenerator,
-        MotionQuizGenerator motionQuizGenerator)
+        MotionQuizGenerator motionQuizGenerator,
+        AverageQuizGenerator averageQuizGenerator,
+        PercentageQuizGenerator percentageQuizGenerator)
     {
         _quizGenerator =
             quizGenerator ??
@@ -94,6 +98,14 @@ public sealed class LocalLlmQuizGenerator
         _motionQuizGenerator =
             motionQuizGenerator ??
             throw new ArgumentNullException(nameof(motionQuizGenerator));
+
+        _averageQuizGenerator =
+            averageQuizGenerator ??
+            throw new ArgumentNullException(nameof(averageQuizGenerator));
+
+        _percentageQuizGenerator =
+            percentageQuizGenerator ??
+            throw new ArgumentNullException(nameof(percentageQuizGenerator));
     }
 
     /// <summary>
@@ -239,6 +251,16 @@ public sealed class LocalLlmQuizGenerator
                         _motionQuizGenerator.GenerateContract(
                             mode,
                             language),
+                    QuizProblemKind.Average =>
+                        _averageQuizGenerator.GenerateContract(
+                            mode,
+                            problemRequest.AverageType,
+                            language),
+                    QuizProblemKind.Percentage =>
+                        _percentageQuizGenerator.GenerateContract(
+                            mode,
+                            problemRequest.PercentageType,
+                            language),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -313,6 +335,16 @@ public sealed class LocalLlmQuizGenerator
                     : contract.MotionProblem is MotionQuizContract motion
                     ? LlmQuizPromptBuilder.BuildMotionUserPrompt(
                         motion,
+                        language,
+                        previousErrorCode: null)
+                    : contract.AverageProblem is AverageQuizContract average
+                    ? LlmQuizPromptBuilder.BuildAverageUserPrompt(
+                        average,
+                        language,
+                        previousErrorCode: null)
+                    : contract.PercentageProblem is PercentageQuizContract percentage
+                    ? LlmQuizPromptBuilder.BuildPercentageUserPrompt(
+                        percentage,
                         language,
                         previousErrorCode: null)
                     : LlmQuizPromptBuilder.BuildUserPrompt(
@@ -631,6 +663,16 @@ public sealed class LocalLlmQuizGenerator
                             ? _wordProblemValidator.ValidateMotion(
                                 draft,
                                 validatedMotion,
+                                language)
+                            : contract.AverageProblem is AverageQuizContract validatedAverage
+                            ? _wordProblemValidator.ValidateAverage(
+                                draft,
+                                validatedAverage,
+                                language)
+                            : contract.PercentageProblem is PercentageQuizContract validatedPercentage
+                            ? _wordProblemValidator.ValidatePercentage(
+                                draft,
+                                validatedPercentage,
                                 language)
                             : _wordProblemValidator.Validate(
                                 draft,
@@ -1036,8 +1078,8 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Thông thường solution_lead không chứa số; RIÊNG bài tỉ lệ thuận/nghịch, được phép nhắc lại duy nhất dữ kiện C nếu số đó chỉ dùng để xác định đại lượng cần tìm, ví dụ “Trọng lượng của 9 bao gạo là:”. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, trung bình cộng, phần trăm, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Thông thường solution_lead không chứa số; RIÊNG bài tỉ lệ thuận/nghịch, được phép nhắc lại duy nhất dữ kiện C nếu số đó chỉ dùng để xác định đại lượng cần tìm, ví dụ “Trọng lượng của 9 bao gạo là:”. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, average, percentage, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
     }
 
     public static string BuildGemma4Prompt(
@@ -1411,6 +1453,221 @@ internal static class LlmQuizPromptBuilder
             - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
             - subject_name is a short phrase describing the main object/quantity and must fit problem_text.
             - solution_lead is one short sentence before the calculation and clearly names the requested quantity; it does not have to repeat answer_unit when the requested quantity is already unambiguous. It contains no calculation, equals sign, result, or answer. For this proportion problem only, solution_lead MAY repeat the single C fact = {{contract.C}} when that number merely identifies the requested object/quantity, for example “The weight of {{contract.C}} rice bags is:”. Do not use A, B, or any other number.
+            - Return exactly this four-field JSON schema and nothing else:
+            {
+              "problem_text": "...",
+              "subject_name": "...",
+              "answer_unit": "{{contract.AnswerUnit}}",
+              "solution_lead": "...:"
+            }
+            {{retry}}
+            """);
+    }
+
+    public static string BuildAverageUserPrompt(
+        AverageQuizContract contract,
+        AppLanguage language,
+        string? previousErrorCode)
+    {
+        string retry = string.IsNullOrWhiteSpace(previousErrorCode)
+            ? string.Empty
+            : BuildRetryInstruction(previousErrorCode, language);
+        string facts = string.Join(
+            ", ",
+            contract.Facts.Select(value =>
+                value.ToString(CultureInfo.InvariantCulture)));
+        string typeName = contract.Type switch
+        {
+            AverageQuizType.Direct => language == AppLanguage.Vietnamese ? "tìm trung bình cộng trực tiếp" : "direct average",
+            AverageQuizType.TotalToAverage => language == AppLanguage.Vietnamese ? "biết tổng để tìm trung bình cộng" : "find an average from a total",
+            AverageQuizType.AverageToTotal => language == AppLanguage.Vietnamese ? "biết trung bình cộng để tìm tổng" : "find a total from an average",
+            AverageQuizType.MissingValue => language == AppLanguage.Vietnamese ? "biết trung bình cộng để tìm giá trị còn thiếu" : "find a missing value from an average",
+            AverageQuizType.IndirectData => language == AppLanguage.Vietnamese ? "trung bình cộng với dữ kiện gián tiếp" : "average with indirect facts",
+            AverageQuizType.TwoGroups => language == AppLanguage.Vietnamese ? "trung bình cộng của hai nhóm" : "combined average of two groups",
+            _ => "average"
+        };
+
+        string numericRule;
+        string roleGuide = string.Empty;
+        if (contract.Type == AverageQuizType.MissingValue)
+        {
+            int a;
+            int b;
+            int c;
+            int knownCount;
+            int testIndex;
+            int totalCount;
+            int targetAverage;
+
+            if (language == AppLanguage.Vietnamese)
+            {
+                knownCount = contract.Facts[0];
+                a = contract.Facts[1];
+                b = contract.Facts[2];
+                c = contract.Facts[3];
+                testIndex = contract.Facts[4];
+                totalCount = contract.Facts[5];
+                targetAverage = contract.Facts[6];
+                roleGuide = FormattableString.Invariant(
+                    $"Vai trò số bắt buộc: có {knownCount} bài đã biết; ba điểm lần lượt là {a}, {b}, {c}; cần tìm điểm bài thứ {testIndex}; tổng cộng {totalCount} bài; TBC mục tiêu là {targetAverage}. ĐẶC BIỆT: {testIndex} là số thứ tự/số lượng bài, KHÔNG phải TBC mục tiêu. Tuyệt đối không đổi TBC {targetAverage} thành {testIndex}.");
+                numericRule = FormattableString.Invariant(
+                    $"- Với dạng tìm số còn thiếu: phải giữ nguyên ba điểm {a}, {b}, {c} và TBC mục tiêu {targetAverage}. Số cấu trúc {knownCount}/{testIndex}/{totalCount} có thể được nhắc tự nhiên một lần hoặc lặp khi cần, nhưng không được dùng chúng thay cho TBC mục tiêu và không thêm dữ kiện số học khác.");
+            }
+            else
+            {
+                a = contract.Facts[0];
+                b = contract.Facts[1];
+                c = contract.Facts[2];
+                knownCount = contract.Facts[3];
+                testIndex = contract.Facts[4];
+                targetAverage = contract.Facts[5];
+                totalCount = contract.Facts[6];
+                roleGuide = FormattableString.Invariant(
+                    $"Required number roles: {knownCount} known tests; scores {a}, {b}, {c}; find the score on test {testIndex}; {totalCount} tests total; target average {targetAverage}. IMPORTANT: {testIndex} is the test index/count, NOT the target average. Never replace target average {targetAverage} with {testIndex}.");
+                numericRule = FormattableString.Invariant(
+                    $"- For a missing-value average problem: preserve the three scores {a}, {b}, {c} and target average {targetAverage}. Structural counts {knownCount}/{testIndex}/{totalCount} may be mentioned naturally once or repeated when needed, but never substitute them for the target average and add no other arithmetic fact.");
+            }
+        }
+        else
+        {
+            numericRule = language == AppLanguage.Vietnamese
+                ? $"- problem_text phải giữ đúng tất cả các lần xuất hiện số trong [{facts}], đúng vai trò và đúng thứ tự như mẫu; không thêm, bớt hay đổi số."
+                : $"- problem_text must preserve every numeric occurrence in [{facts}] with the same role and order as the reference; add, remove, or change no number.";
+        }
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return FormattableString.Invariant(
+                $$"""
+                Viết một bài toán {{typeName}} tự nhiên cho học sinh tiểu học/THCS Việt Nam.
+                Các lần xuất hiện số bắt buộc theo đúng thứ tự: [{{facts}}]
+                Mẫu C# tham chiếu bắt buộc giữ nguyên ý nghĩa và vai trò từng số:
+                {{contract.ProblemText}}
+                {{roleGuide}}
+                answer_unit bắt buộc: {{contract.AnswerUnit}}
+
+                Quy tắc cứng:
+                - Mọi dữ kiện số phải viết bằng chữ số 0-9, không viết số bằng chữ.
+                {{numericRule}}
+                - Bắt buộc giữ đúng dạng {{typeName}}; không biến thành một bài cộng/trừ/nhân/chia khác.
+                - Nếu là tìm trung bình, câu hỏi cuối phải hỏi rõ trung bình/trung bình cộng. Nếu là biết trung bình tìm tổng, câu hỏi cuối phải hỏi tổng/tất cả. Nếu là tìm giá trị còn thiếu, phải hỏi đúng giá trị còn thiếu.
+                - Không làm lộ đáp án {{contract.CorrectAnswer}} trong problem_text nếu đáp án không phải một dữ kiện cho sẵn.
+                - Không đổi đồ vật, đơn vị hoặc đại lượng cần tìm so với mẫu C#.
+                - answer_unit phải đúng "{{contract.AnswerUnit}}" và không chứa số hay phép tính.
+                - subject_name là cụm ngắn mô tả đúng đại lượng cần tìm.
+                - solution_lead là một câu dẫn ngắn trước phép tính, nêu đúng đại lượng cần tìm, không chứa số, phép tính, dấu bằng hay đáp án.
+                - Chỉ trả đúng JSON bốn trường, không Markdown hay giải thích:
+                {
+                  "problem_text": "...",
+                  "subject_name": "...",
+                  "answer_unit": "{{contract.AnswerUnit}}",
+                  "solution_lead": "...:"
+                }
+                {{retry}}
+                """);
+        }
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural {{typeName}} word problem for an elementary/middle-school learner.
+            Required numeric occurrences in exact reference order: [{{facts}}]
+            Preserve the exact meaning and role of every number in this C# reference:
+            {{contract.ProblemText}}
+            {{roleGuide}}
+            Required answer_unit: {{contract.AnswerUnit}}
+
+            Hard rules:
+            - Every numeric fact must use Arabic digits 0-9; never spell numbers out as words.
+            {{numericRule}}
+            - Keep the exact {{typeName}} structure. Do not replace it with unrelated arithmetic.
+            - If the task asks for an average, the final question must explicitly ask for an average. If it asks for a total from an average, the final question must ask for the total. If it asks for a missing value, ask for that missing value.
+            - Do not reveal answer {{contract.CorrectAnswer}} unless it is already an input fact in the reference.
+            - Preserve the object, unit, and requested quantity from the C# reference.
+            - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
+            - subject_name is a short phrase naming the requested quantity.
+            - solution_lead is one short lead-in sentence before calculation and contains no number, calculation, equals sign, result, or answer.
+            - Return exactly this four-field JSON schema and nothing else:
+            {
+              "problem_text": "...",
+              "subject_name": "...",
+              "answer_unit": "{{contract.AnswerUnit}}",
+              "solution_lead": "...:"
+            }
+            {{retry}}
+            """);
+    }
+
+    public static string BuildPercentageUserPrompt(
+        PercentageQuizContract contract,
+        AppLanguage language,
+        string? previousErrorCode)
+    {
+        string retry = string.IsNullOrWhiteSpace(previousErrorCode)
+            ? string.Empty
+            : BuildRetryInstruction(previousErrorCode, language);
+        string facts = string.Join(
+            ", ",
+            contract.Facts.Select(value =>
+                value.ToString(CultureInfo.InvariantCulture)));
+        string typeName = contract.Type switch
+        {
+            PercentageQuizType.FindPercentageRatio => language == AppLanguage.Vietnamese ? "tìm tỉ số phần trăm" : "find a percentage ratio",
+            PercentageQuizType.FindPercentageValue => language == AppLanguage.Vietnamese ? "tìm giá trị của một số phần trăm" : "find a percentage of a quantity",
+            PercentageQuizType.FindWholeFromPercentageValue => language == AppLanguage.Vietnamese ? "biết giá trị phần trăm để tìm toàn bộ" : "find the whole from a percentage value",
+            _ => "percentage"
+        };
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return FormattableString.Invariant(
+                $$"""
+                Viết một bài toán {{typeName}} tự nhiên cho học sinh tiểu học/THCS Việt Nam.
+                Các lần xuất hiện số bắt buộc theo đúng thứ tự: [{{facts}}]
+                Mẫu C# tham chiếu bắt buộc giữ nguyên ý nghĩa và vai trò từng số:
+                {{contract.ProblemText}}
+                answer_unit bắt buộc: {{contract.AnswerUnit}}
+
+                Quy tắc cứng:
+                - Mọi dữ kiện số phải viết bằng chữ số 0-9.
+                - problem_text phải giữ đúng mọi lần xuất hiện số trong [{{facts}}], đúng vai trò và thứ tự; không thêm, bớt hay đổi số.
+                - Giữ nguyên dấu % và đúng quan hệ phần-trăm/toàn-bộ theo mẫu C#.
+                - Với dạng tìm tỉ số phần trăm, chỉ có hai dữ kiện số thật sự: tổng số và số thuộc nhóm cần tính tỉ lệ. Không tự tạo thêm một nhóm đối lập/phụ khác (ví dụ tự thêm học sinh nam, loại sách khác, màu bi khác) và không gán thêm số lượng cho nhóm khác.
+                - Dạng tìm tỉ số phần trăm phải hỏi "bao nhiêu phần trăm". Dạng tìm giá trị phải hỏi số lượng ứng với phần trăm đã cho. Dạng tìm toàn bộ phải hỏi tổng/toàn bộ ban đầu.
+                - Không được đổi từ dạng phần trăm này sang dạng phần trăm khác.
+                - Không làm lộ đáp án {{contract.CorrectAnswer}} trong problem_text nếu đáp án không phải dữ kiện.
+                - answer_unit phải đúng "{{contract.AnswerUnit}}"; với tỉ số phần trăm phải là "%".
+                - subject_name phải mô tả đúng đại lượng cần tìm.
+                - solution_lead là câu dẫn ngắn, không chứa số, phép tính, dấu bằng hay đáp án.
+                - Chỉ trả đúng JSON bốn trường:
+                {
+                  "problem_text": "...",
+                  "subject_name": "...",
+                  "answer_unit": "{{contract.AnswerUnit}}",
+                  "solution_lead": "...:"
+                }
+                {{retry}}
+                """);
+        }
+
+        return FormattableString.Invariant(
+            $$"""
+            Write one natural {{typeName}} word problem for an elementary/middle-school learner.
+            Required numeric occurrences in exact reference order: [{{facts}}]
+            Preserve the exact meaning and role of every number in this C# reference:
+            {{contract.ProblemText}}
+            Required answer_unit: {{contract.AnswerUnit}}
+
+            Hard rules:
+            - Every numeric fact must use Arabic digits 0-9.
+            - problem_text must preserve every numeric occurrence in [{{facts}}] with the same role and order; add, remove, or change no number.
+            - Preserve the % sign and the exact part/whole relationship from the C# reference.
+            - For a percentage-ratio problem there are only two numeric facts: the whole and the part whose ratio is requested. Do not invent a second/complementary subgroup (for example male students, another book type, or another marble color) or assign it another count.
+            - Percentage-ratio problems must ask what percent one quantity is of another. Percentage-value problems must ask for the quantity represented by the given percent. Whole-from-percent problems must ask for the original whole/total.
+            - Do not switch among the three percentage families.
+            - Do not reveal answer {{contract.CorrectAnswer}} unless it is already an input fact.
+            - answer_unit must be exactly "{{contract.AnswerUnit}}"; percentage-ratio problems must use "%".
+            - subject_name must name the requested quantity.
+            - solution_lead is a short lead-in sentence with no number, equation, equals sign, result, or answer.
             - Return exactly this four-field JSON schema and nothing else:
             {
               "problem_text": "...",
@@ -2177,6 +2434,16 @@ internal static class LlmQuizPromptBuilder
                     "Bỏ phản hồi cũ và tạo lại toàn bộ một JSON object hoàn chỉnh, đủ đúng bốn trường bắt buộc, không thêm trường khác.",
                 "ProblemNumbersMismatch" =>
                     "Sửa đúng các dữ kiện số mà validator đã chỉ ra; dùng đủ từng số bắt buộc và không thêm số khác.",
+                "ContractFactsMismatch" =>
+                    "Giữ nguyên từng lần xuất hiện số theo đúng thứ tự của contract C#; không thêm, bỏ, gộp, lặp hay đổi số.",
+                "AverageMissingValueFactsMismatch" =>
+                    "Ở dạng tìm số còn thiếu, giữ nguyên ba điểm đã biết và TBC mục tiêu mà validator nêu. Số thứ tự/số lượng bài chỉ là dữ kiện cấu trúc; tuyệt đối không dùng nó thay cho TBC mục tiêu.",
+                "AverageRelationshipMismatch" =>
+                    "Giữ đúng dạng trung bình cộng mà contract yêu cầu: tìm trung bình, tìm tổng từ trung bình, tìm số còn thiếu, dữ kiện gián tiếp hoặc trung bình hai nhóm.",
+                "PercentageRatioFactsMismatch" =>
+                    "Ở dạng tìm tỉ số phần trăm, chỉ giữ đúng hai dữ kiện: tổng số và số thuộc nhóm cần tính tỉ lệ. Không tự thêm nhóm đối lập/phụ, không thêm số lượng khác và không lặp lại hai số đó trong câu hỏi cuối.",
+                "PercentageRelationshipMismatch" =>
+                    "Giữ đúng một trong ba dạng phần trăm của contract: tìm tỉ số phần trăm, tìm giá trị phần trăm hoặc biết giá trị phần trăm để tìm toàn bộ.",
                 "ProportionFactsMismatch" =>
                     "Bài tỉ lệ bắt buộc ghi mọi dữ kiện bằng chữ số 0-9. Hãy dùng đúng ba giá trị contract dưới dạng số, ví dụ 10 chứ không viết “mười”; không thêm, bỏ, đổi hoặc viết lại số bằng chữ.",
                 "ProportionRelationshipMismatch" =>
@@ -2227,6 +2494,16 @@ internal static class LlmQuizPromptBuilder
                 "Discard the previous response and regenerate one complete JSON object with exactly the four required fields and no others.",
             "ProblemNumbersMismatch" =>
                 "Correct the exact numeric facts named by the validator; use every required value and no other value.",
+            "ContractFactsMismatch" =>
+                "Preserve every numeric occurrence in the exact C# contract order; do not add, omit, merge, repeat, or change a number.",
+            "AverageMissingValueFactsMismatch" =>
+                "For a missing-value average problem, preserve the three known scores and the target average named by the validator. The test index/count is only structural and must never replace the target average.",
+            "AverageRelationshipMismatch" =>
+                "Preserve the required average-problem family: find an average, find a total from an average, find a missing value, use indirect facts, or combine two groups.",
+            "PercentageRatioFactsMismatch" =>
+                "For a percentage-ratio problem, keep exactly two numeric facts: the whole and the part whose ratio is requested. Do not invent a complementary subgroup, add another count, or repeat those numbers in the final question.",
+            "PercentageRelationshipMismatch" =>
+                "Preserve the exact percentage family: percentage ratio, percentage value, or find the whole from a percentage value.",
             "ProportionFactsMismatch" =>
                 "A proportion problem must write every arithmetic fact with digits 0-9. Use exactly the three contract values as digits, for example 10 rather than “ten”; do not add, omit, change, or spell out any numeric fact.",
             "ProportionRelationshipMismatch" =>
@@ -3075,6 +3352,436 @@ internal sealed partial class LlmWordProblemValidator
                 unit,
                 subject));
     }
+
+    public LlmWordProblemValidationResult ValidateAverage(
+        LlmWordProblemDraft draft,
+        AverageQuizContract contract,
+        AppLanguage language)
+    {
+        bool flexibleMissingValueFacts =
+            contract.Type == AverageQuizType.MissingValue;
+
+        LlmWordProblemValidationResult? common = ValidateContractDraftCommon(
+            draft,
+            contract.Facts,
+            contract.AnswerUnit,
+            contract.SubjectName,
+            contract.CorrectAnswer,
+            language,
+            out string problem,
+            out string subject,
+            out string unit,
+            out string solutionLead,
+            skipFactsValidation: flexibleMissingValueFacts);
+        if (common is not null)
+        {
+            return common;
+        }
+
+        if (contract.Type == AverageQuizType.MissingValue)
+        {
+            LlmWordProblemValidationResult? missingFacts =
+                ValidateAverageMissingValueFacts(
+                    problem,
+                    contract,
+                    language);
+            if (missingFacts is not null)
+            {
+                return missingFacts;
+            }
+        }
+
+        string questionClause =
+            ExtractFinalQuestionClause(problem, language)
+                .ToLowerInvariant();
+        bool semanticMatch = contract.Type switch
+        {
+            AverageQuizType.AverageToTotal =>
+                ContainsAny(questionClause, language == AppLanguage.Vietnamese
+                    ? ["tất cả", "tổng số", "cả "]
+                    : ["altogether", "total", "in all"]),
+            AverageQuizType.MissingValue =>
+                ContainsAny(questionClause, language == AppLanguage.Vietnamese
+                    ? ["cần bao nhiêu", "bài thứ", "còn thiếu"]
+                    : ["needed", "need", "missing", "test"]),
+            _ =>
+                ContainsAny(questionClause, language == AppLanguage.Vietnamese
+                    ? ["trung bình", "trung bình cộng"]
+                    : ["average"])
+        };
+
+        if (!semanticMatch)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AverageRelationshipMismatch",
+                language == AppLanguage.Vietnamese
+                    ? "Vế hỏi không còn đúng dạng trung bình cộng mà contract C# yêu cầu. Giữ nguyên kiểu hỏi: tìm trung bình, tìm tổng từ trung bình, hoặc tìm giá trị còn thiếu theo đúng mẫu tham chiếu."
+                    : "The final question no longer matches the average-problem family required by the C# contract. Preserve whether it asks for an average, a total from an average, or a missing value.");
+        }
+
+        bool allowPointsSemantic =
+            contract.Type is AverageQuizType.MissingValue or AverageQuizType.TwoGroups ||
+            string.Equals(unit, "điểm", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(unit, "points", StringComparison.OrdinalIgnoreCase);
+
+        if (!QuestionMatchesContractUnit(problem, unit, allowPointsSemantic, language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "QuestionAnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Câu hỏi cuối phải hỏi đúng đại lượng/đơn vị “{unit}”, không được đổi sang đồ vật hoặc đại lượng khác."
+                    : $"The final question must ask for the required quantity/unit “{unit}” and must not switch to another object or quantity.");
+        }
+
+        return new(
+            true,
+            null,
+            null,
+            new MathWordProblem(problem, solutionLead, unit, subject));
+    }
+
+    public LlmWordProblemValidationResult ValidatePercentage(
+        LlmWordProblemDraft draft,
+        PercentageQuizContract contract,
+        AppLanguage language)
+    {
+        bool ratioFactsNeedRoleAwareValidation =
+            contract.Type == PercentageQuizType.FindPercentageRatio;
+
+        LlmWordProblemValidationResult? common = ValidateContractDraftCommon(
+            draft,
+            contract.Facts,
+            contract.AnswerUnit,
+            contract.SubjectName,
+            contract.CorrectAnswer,
+            language,
+            out string problem,
+            out string subject,
+            out string unit,
+            out string solutionLead,
+            skipFactsValidation: ratioFactsNeedRoleAwareValidation);
+        if (common is not null)
+        {
+            return common;
+        }
+
+        if (ratioFactsNeedRoleAwareValidation)
+        {
+            LlmWordProblemValidationResult? ratioFacts =
+                ValidatePercentageRatioFacts(problem, contract, language);
+            if (ratioFacts is not null)
+            {
+                return ratioFacts;
+            }
+        }
+
+        string questionClause =
+            ExtractFinalQuestionClause(problem, language)
+                .ToLowerInvariant();
+        bool asksForWhole = ContainsAny(
+            questionClause,
+            language == AppLanguage.Vietnamese
+                ? ["tất cả", "tổng số", "toàn bộ"]
+                : ["altogether", "total", "whole", "in all"]);
+        bool semanticMatch = contract.Type switch
+        {
+            PercentageQuizType.FindPercentageRatio =>
+                ContainsAny(questionClause, language == AppLanguage.Vietnamese
+                    ? ["bao nhiêu phần trăm", "tỉ số phần trăm"]
+                    : ["what percentage", "what percent", "percentage is"]),
+            PercentageQuizType.FindPercentageValue =>
+                !asksForWhole &&
+                ContainsAny(questionClause, language == AppLanguage.Vietnamese
+                    ? ["bao nhiêu", "số được chọn", "số lượng"]
+                    : ["how many", "how much", "selected amount", "quantity"]),
+            PercentageQuizType.FindWholeFromPercentageValue =>
+                asksForWhole,
+            _ => false
+        };
+
+        if (!semanticMatch)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "PercentageRelationshipMismatch",
+                language == AppLanguage.Vietnamese
+                    ? "Vế hỏi đã đổi sai dạng phần trăm. Giữ đúng một trong ba dạng: tìm tỉ số phần trăm, tìm giá trị của một số phần trăm, hoặc biết giá trị phần trăm để tìm toàn bộ."
+                    : "The final question switched to the wrong percentage family. Preserve whether the contract asks for a percentage ratio, a percentage value, or the whole from a percentage value.");
+        }
+
+        if (contract.Type == PercentageQuizType.FindPercentageRatio)
+        {
+            if (!string.Equals(unit, "%", StringComparison.Ordinal))
+            {
+                return LlmWordProblemValidationResult.Invalid(
+                    "AnswerUnitMismatch",
+                    language == AppLanguage.Vietnamese
+                        ? "Dạng tìm tỉ số phần trăm bắt buộc answer_unit là %."
+                        : "A percentage-ratio problem must use % as answer_unit.");
+            }
+        }
+        else if (!QuestionMatchesContractUnit(problem, unit, false, language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "QuestionAnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Câu hỏi cuối phải hỏi đúng đồ vật/đơn vị “{unit}”, không được đổi sang đối tượng khác."
+                    : $"The final question must ask for the required item/unit “{unit}” and must not switch to another object.");
+        }
+
+        return new(
+            true,
+            null,
+            null,
+            new MathWordProblem(problem, solutionLead, unit, subject));
+    }
+
+    private LlmWordProblemValidationResult? ValidateContractDraftCommon(
+        LlmWordProblemDraft draft,
+        IReadOnlyList<int> requiredFacts,
+        string requiredUnit,
+        string fallbackSubject,
+        BigInteger correctAnswer,
+        AppLanguage language,
+        out string problem,
+        out string subject,
+        out string unit,
+        out string solutionLead,
+        bool skipFactsValidation = false)
+    {
+        problem = NormalizeSingleLine(draft.ProblemText);
+        subject = NormalizeSingleLine(draft.SubjectName);
+        unit = NormalizeSingleLine(draft.AnswerUnit);
+        solutionLead = NormalizeSingleLine(draft.SolutionLead);
+
+        if (problem.Length is < 18 or > 800 ||
+            subject.Length > 100 ||
+            unit.Length is < 1 or > 80 ||
+            solutionLead.Length is < 1 or > 220)
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "InvalidTextLength",
+                language == AppLanguage.Vietnamese
+                    ? "Một trường JSON đang rỗng hoặc có độ dài không hợp lệ. Hãy trả đủ problem_text, subject_name, answer_unit và solution_lead."
+                    : "A JSON field is empty or has an invalid length. Return complete problem_text, subject_name, answer_unit, and solution_lead fields.");
+        }
+
+        if (!IsQuestionSentence(problem, language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "MissingQuestion",
+                language == AppLanguage.Vietnamese
+                    ? "problem_text phải có câu hỏi cuối rõ ràng."
+                    : "problem_text must contain a clear final question.");
+        }
+        if (!problem.Contains('?'))
+        {
+            problem = problem.TrimEnd('.', '!', ';', ':') + "?";
+        }
+
+        string normalizedForNumbers = Regex.Replace(
+            problem,
+            @"(?<=\d)[, .\u00A0\u202F](?=\d{3}(?:\D|$))",
+            string.Empty,
+            RegexOptions.CultureInvariant);
+        int[] actualFacts = NumberRegex()
+            .Matches(normalizedForNumbers)
+            .Select(match => int.TryParse(
+                match.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int parsed)
+                    ? parsed
+                    : int.MinValue)
+            .ToArray();
+
+        if (!skipFactsValidation &&
+            !actualFacts.SequenceEqual(requiredFacts))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "ContractFactsMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"Các số trong problem_text phải giữ đúng từng lần xuất hiện và đúng thứ tự [{string.Join(", ", requiredFacts)}]. Model đang trả [{string.Join(", ", actualFacts)}]."
+                    : $"problem_text must preserve each numeric occurrence in exact order [{string.Join(", ", requiredFacts)}]. The model returned [{string.Join(", ", actualFacts)}].");
+        }
+
+        if (!string.Equals(
+                NormalizeContractUnit(unit),
+                NormalizeContractUnit(requiredUnit),
+                StringComparison.OrdinalIgnoreCase) ||
+            NumberRegex().IsMatch(unit) ||
+            unit.Contains('='))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "AnswerUnitMismatch",
+                language == AppLanguage.Vietnamese
+                    ? $"answer_unit bắt buộc phải là “{requiredUnit}”."
+                    : $"answer_unit must be exactly “{requiredUnit}”.");
+        }
+
+        string? disclosure = BuildSolutionLeadDisclosureFeedback(
+            solutionLead,
+            correctAnswer,
+            language);
+        if (!string.IsNullOrWhiteSpace(disclosure) ||
+            NumberRegex().IsMatch(solutionLead) ||
+            SolutionLeadForbiddenOperatorRegex().IsMatch(solutionLead))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "SolutionLeadRevealsAnswer",
+                disclosure ?? (language == AppLanguage.Vietnamese
+                    ? "solution_lead chỉ được là câu dẫn, không chứa số hoặc phép tính."
+                    : "solution_lead must be only a lead-in sentence with no number or calculation."));
+        }
+
+        solutionLead = ElementaryWordProblemSolutionFormatter
+            .NormalizeSolutionLeadPunctuation(solutionLead);
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            subject = fallbackSubject;
+        }
+
+        return null;
+    }
+
+    private static LlmWordProblemValidationResult? ValidatePercentageRatioFacts(
+        string problem,
+        PercentageQuizContract contract,
+        AppLanguage language)
+    {
+        string normalizedForNumbers = Regex.Replace(
+            problem,
+            @"(?<=\d)[, .\u00A0\u202F](?=\d{3}(?:\D|$))",
+            string.Empty,
+            RegexOptions.CultureInvariant);
+        int[] actual = NumberRegex()
+            .Matches(normalizedForNumbers)
+            .Select(match => int.TryParse(
+                match.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int parsed)
+                    ? parsed
+                    : int.MinValue)
+            .ToArray();
+
+        if (contract.Facts.Count >= 2 &&
+            actual.Length == 2 &&
+            actual[0] == contract.Facts[0] &&
+            actual[1] == contract.Facts[1])
+        {
+            return null;
+        }
+
+        int whole = contract.Facts.Count > 0 ? contract.Facts[0] : 0;
+        int part = contract.Facts.Count > 1 ? contract.Facts[1] : 0;
+        return LlmWordProblemValidationResult.Invalid(
+            "PercentageRatioFactsMismatch",
+            language == AppLanguage.Vietnamese
+                ? $"Dạng tìm tỉ số phần trăm chỉ được có hai dữ kiện số: tổng số {whole} và phần cần tính tỉ lệ {part}. Không được tự thêm số lượng cho nhóm khác hoặc lặp lại các số trong câu hỏi. Validator đọc được [{string.Join(", ", actual)}]."
+                : $"A percentage-ratio problem may contain only two numeric facts: whole {whole} and requested part {part}. Do not invent another subgroup count or repeat the numbers in the final question. The validator read [{string.Join(", ", actual)}].");
+    }
+
+    private static LlmWordProblemValidationResult? ValidateAverageMissingValueFacts(
+        string problem,
+        AverageQuizContract contract,
+        AppLanguage language)
+    {
+        string normalizedForNumbers = Regex.Replace(
+            problem,
+            @"(?<=\d)[, .\u00A0\u202F](?=\d{3}(?:\D|$))",
+            string.Empty,
+            RegexOptions.CultureInvariant);
+        int[] actual = NumberRegex()
+            .Matches(normalizedForNumbers)
+            .Select(match => int.TryParse(
+                match.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int parsed)
+                    ? parsed
+                    : int.MinValue)
+            .ToArray();
+
+        int knownCount;
+        int a;
+        int b;
+        int c;
+        int testIndex;
+        int totalCount;
+        int targetAverage;
+        int[] canonical;
+        int[] compact;
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            knownCount = contract.Facts[0];
+            a = contract.Facts[1];
+            b = contract.Facts[2];
+            c = contract.Facts[3];
+            testIndex = contract.Facts[4];
+            totalCount = contract.Facts[5];
+            targetAverage = contract.Facts[6];
+            canonical = [knownCount, a, b, c, testIndex, totalCount, targetAverage];
+            compact = [knownCount, a, b, c, testIndex, targetAverage];
+        }
+        else
+        {
+            a = contract.Facts[0];
+            b = contract.Facts[1];
+            c = contract.Facts[2];
+            knownCount = contract.Facts[3];
+            testIndex = contract.Facts[4];
+            targetAverage = contract.Facts[5];
+            totalCount = contract.Facts[6];
+            canonical = [a, b, c, knownCount, testIndex, targetAverage, totalCount];
+            compact = [a, b, c, knownCount, testIndex, targetAverage];
+        }
+
+        if (actual.SequenceEqual(canonical) ||
+            actual.SequenceEqual(compact))
+        {
+            return null;
+        }
+
+        return LlmWordProblemValidationResult.Invalid(
+            "AverageMissingValueFactsMismatch",
+            language == AppLanguage.Vietnamese
+                ? $"Dạng tìm số còn thiếu cho phép diễn đạt tự nhiên số lượng bài, nhưng các vai trò toán học không được đổi: ba điểm phải là {a}, {b}, {c}; bài cần tìm là bài thứ {testIndex}; TBC mục tiêu bắt buộc là {targetAverage}. Số {testIndex} là số thứ tự/số lượng bài, không phải TBC. Validator đọc được [{string.Join(", ", actual)}]."
+                : $"A missing-value average problem may phrase the test count naturally, but the mathematical roles cannot change: the three scores must be {a}, {b}, {c}; the missing score is for test {testIndex}; and the target average must remain {targetAverage}. The number {testIndex} is a test index/count, not the target average. The validator read [{string.Join(", ", actual)}].");
+    }
+
+    private static bool QuestionMatchesContractUnit(
+        string problem,
+        string unit,
+        bool allowPointsSemantic,
+        AppLanguage language)
+    {
+        if (QuestionMentionsAnswerUnit(problem, unit, language))
+        {
+            return true;
+        }
+
+        if (!allowPointsSemantic)
+        {
+            return false;
+        }
+
+        string questionClause =
+            ExtractFinalQuestionClause(problem, language)
+                .ToLowerInvariant();
+        return language == AppLanguage.Vietnamese
+            ? questionClause.Contains("điểm", StringComparison.Ordinal)
+            : questionClause.Contains("score", StringComparison.Ordinal) ||
+              questionClause.Contains("points", StringComparison.Ordinal);
+    }
+
+    private static string NormalizeContractUnit(string value) =>
+        WhitespaceRegex().Replace(
+            value.Trim().ToLowerInvariant(),
+            " ");
+
+    private static bool ContainsAny(string text, IReadOnlyList<string> values) =>
+        values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
 
     public LlmWordProblemValidationResult ValidateProportion(
         LlmWordProblemDraft draft,
@@ -4151,10 +4858,17 @@ internal sealed partial class LlmWordProblemValidator
             }
         }
 
+        // Only trim imperative prefixes that cannot carry the mathematical
+        // relationship. Do NOT trim at generic quantity phrases such as
+        // “bao nhiêu” / “how many” / “how much”. In questions like
+        // “Trung bình mỗi ngày ... bao nhiêu ...?” or
+        // “On average, how many ...?”, those phrases occur after the
+        // semantic keyword. Trimming there would discard “trung bình” /
+        // “average” and incorrectly reject a valid problem.
         string[] starters =
             language == AppLanguage.Vietnamese
-                ? ["hỏi ", "hãy cho biết ", "bao nhiêu "]
-                : ["how many ", "how much ", "what is ", "find "];
+                ? ["hỏi ", "hãy cho biết "]
+                : ["what is ", "find "];
 
         foreach (string starter in starters)
         {

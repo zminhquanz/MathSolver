@@ -24,7 +24,9 @@ public sealed record ArithmeticQuizQuestion(
     FindXQuizContract? FindXProblem = null,
     FractionQuizContract? FractionProblem = null,
     ProportionQuizContract? ProportionProblem = null,
-    MotionQuizContract? MotionProblem = null);
+    MotionQuizContract? MotionProblem = null,
+    AverageQuizContract? AverageProblem = null,
+    PercentageQuizContract? PercentageProblem = null);
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,

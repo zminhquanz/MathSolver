@@ -23,6 +23,8 @@ public static class LocalLlmRuntime
             new GeometryQuizGenerator(SharedGeometryEngine),
             new FindXQuizGenerator(SharedFindXEngine),
             new ProportionQuizGenerator(),
-            new MotionQuizGenerator());
+            new MotionQuizGenerator(),
+            new AverageQuizGenerator(),
+            new PercentageQuizGenerator());
 }
 #endif

@@ -11,7 +11,9 @@ public enum QuizProblemKind
     Geometry,
     FindX,
     Proportion,
-    Motion
+    Motion,
+    Average,
+    Percentage
 }
 
 /// <summary>
@@ -22,7 +24,9 @@ public readonly record struct QuizProblemRequest(
     QuizProblemKind Kind,
     ArithmeticOperation? ArithmeticOperation = null,
     FractionOperation? FractionOperation = null,
-    ProportionQuizType? ProportionType = null);
+    ProportionQuizType? ProportionType = null,
+    AverageQuizType? AverageType = null,
+    PercentageQuizType? PercentageType = null);
 
 /// <summary>
 /// Một mục nhóm hiển thị trong danh sách dạng đề. FixedRequest bằng null dành
