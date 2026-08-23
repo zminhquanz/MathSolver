@@ -118,6 +118,45 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         SelectNumberType(
             GeometryNumberType.Integer,
             clearInputs: false);
+
+        ApplyAdaptiveVisualTheme();
+    }
+
+    private void ApplyAdaptiveVisualTheme()
+    {
+        // Geometry text/picker colors are already DynamicResource-bound in XAML.
+        // Do not assign TextColor/TitleColor directly here: on WinUI a live
+        // wallpaper transition can temporarily rebuild/disconnect the native
+        // ComboBox and direct property writes can throw COMException.
+        // AppThemeManager updates the wallpaper resource tokens after its native
+        // transition gate, and the bindings propagate safely from there.
+
+        ClearGeometryButton.SetDynamicResource(
+            Button.BackgroundColorProperty,
+            "WallpaperSurfaceAltColor");
+
+        ClearGeometryButton.SetDynamicResource(
+            Button.TextColorProperty,
+            "WallpaperTextPrimaryColor");
+
+        ClearGeometryButton.SetDynamicResource(
+            Button.BorderColorProperty,
+            "WallpaperBorderColor");
+
+        ClearGeometryButton.BorderWidth =
+            1d;
+
+        UpdateCategoryButtonStyles();
+
+        ApplySelectionButtonStyle(
+            IntegerNumberButton,
+            _selectedNumberType ==
+            GeometryNumberType.Integer);
+
+        ApplySelectionButtonStyle(
+            DecimalNumberButton,
+            _selectedNumberType ==
+            GeometryNumberType.Decimal);
     }
 
     protected override void OnSolverLoaded()
@@ -656,19 +695,26 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         button.SetDynamicResource(
             Button.BackgroundColorProperty,
             selected
-                ? "PrimaryColor"
+                ? "WallpaperSelectionBackgroundColor"
                 : "WallpaperSurfaceAltColor");
 
         button.SetDynamicResource(
             Button.TextColorProperty,
             selected
-                ? "OnPrimaryColor"
+                ? "WallpaperSelectionTextColor"
                 : "WallpaperTextPrimaryColor");
 
-        // Bốn nút chọn loại hình học và kiểu số dùng màu nền để thể hiện
-        // trạng thái. Không vẽ thêm viền để bố cục liền lạc với các tab khác.
+        button.SetDynamicResource(
+            Button.BorderColorProperty,
+            selected
+                ? "WallpaperSelectionBorderColor"
+                : "WallpaperBorderColor");
+
+        // Trên nền Live Wallpaper sáng, trạng thái chọn vẫn cần giữ độ tương phản
+        // tốt nhưng không được đậm kiểu Dark cũ. Dùng bộ màu adaptive riêng cho
+        // wallpaper và luôn giữ viền mảnh để hai trạng thái sáng/tối đồng nhất.
         button.BorderWidth =
-            0d;
+            1d;
     }
 
     private void OnGeometryEntryTextChanged(

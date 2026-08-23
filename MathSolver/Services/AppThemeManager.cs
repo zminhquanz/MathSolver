@@ -25,9 +25,13 @@ public static class AppThemeManager
     // Adaptive contrast for MP4 live wallpaper. null = follow the app theme,
     // true = use light text/dark glass, false = use dark text/light glass.
     private static bool? _liveWallpaperUseLightText;
-    private const double LiveWallpaperLightTextThreshold = 0.46d;
-    private const double LiveWallpaperDarkTextThreshold = 0.60d;
-    private const double LiveWallpaperInitialThreshold = 0.53d;
+    // Bright videos were sticking too long in the light-text branch,
+    // especially when the first analyzed frame was a bit darker than the
+    // steady-state scene. Shift the hysteresis window down so bright MP4
+    // wallpapers flip to dark text earlier and stay readable.
+    private const double LiveWallpaperLightTextThreshold = 0.38d;
+    private const double LiveWallpaperDarkTextThreshold = 0.48d;
+    private const double LiveWallpaperInitialThreshold = 0.45d;
 
     // Wallpaper resources can be refreshed by Switch/Picker callbacks, frame
     // contrast updates and import completion in very quick succession. Always
@@ -130,6 +134,14 @@ public static class AppThemeManager
 
         application.RequestedThemeChanged +=
             OnRequestedThemeChanged;
+
+        // Bootstrap MP4 adaptive contrast before the very first palette is
+        // applied. Without this, a saved bright wallpaper can render its first
+        // frame using the app's Dark theme (white text) until LiveWallpaperView
+        // later starts its contrast timer. Reading the persisted luminance
+        // profile is tiny synchronous JSON I/O only; it does not open a video
+        // decoder or allocate a native media surface.
+        PrimeLiveWallpaperAdaptiveContrastFromPersistedProfile();
 
         ApplyCurrentTheme(savePreferences: false);
     }
@@ -334,6 +346,12 @@ public static class AppThemeManager
     private static void ApplyWallpaperVisualResourcesCore(
         Application application)
     {
+        // Enabling MP4 after startup resets adaptive contrast to null while the
+        // native player is being rebuilt. If a persisted profile already exists,
+        // restore its initial polarity before computing wallpaper resources so
+        // the UI never flashes white text over a bright video.
+        PrimeLiveWallpaperAdaptiveContrastFromPersistedProfile();
+
         AppTheme effectiveTheme =
             CurrentMode switch
             {
@@ -371,6 +389,46 @@ public static class AppThemeManager
             effectiveTheme);
     }
 
+    private static void PrimeLiveWallpaperAdaptiveContrastFromPersistedProfile()
+    {
+        if (_liveWallpaperUseLightText is not null ||
+            !LiveWallpaperManager.IsMp4Enabled)
+        {
+            return;
+        }
+
+        try
+        {
+            LiveWallpaperFrameProfile? profile =
+                LiveWallpaperFrameAnalysis.TryLoad();
+
+            if (profile is null ||
+                profile.LuminanceSamples.Length == 0)
+            {
+                return;
+            }
+
+            double initialLuminance =
+                Math.Clamp(
+                    profile.GetLuminance(TimeSpan.Zero),
+                    0d,
+                    1d);
+
+            // This is startup/bootstrap only, so use the initial threshold
+            // directly instead of the hysteresis branch that depends on a
+            // previous state. Bright wallpaper -> dark text; dark wallpaper ->
+            // light text before the first learning-page frame is presented.
+            _liveWallpaperUseLightText =
+                initialLuminance < LiveWallpaperInitialThreshold;
+        }
+        catch
+        {
+            // Adaptive contrast is optional. If the small persisted profile is
+            // unavailable/corrupt, keep the existing app-theme fallback and let
+            // LiveWallpaperView recover when a valid profile becomes available.
+        }
+    }
+
     public static void SetLiveWallpaperFrameLuminance(
         double luminance)
     {
@@ -393,7 +451,8 @@ public static class AppThemeManager
         RefreshVisualResources();
     }
 
-    public static void ResetLiveWallpaperAdaptiveContrast()
+    public static void ResetLiveWallpaperAdaptiveContrast(
+        bool refreshVisualResources = true)
     {
         if (_liveWallpaperUseLightText is null)
         {
@@ -401,7 +460,11 @@ public static class AppThemeManager
         }
 
         _liveWallpaperUseLightText = null;
-        RefreshVisualResources();
+
+        if (refreshVisualResources)
+        {
+            RefreshVisualResources();
+        }
     }
 
     public static bool TryParseHexColor(
@@ -855,6 +918,21 @@ public static class AppThemeManager
 
         if (!wallpaperEnabled)
         {
+            // Wallpaper OFF must be an absolute return to the app theme. Never
+            // carry the last MP4 luminance polarity into the static UI.
+            _liveWallpaperUseLightText = null;
+
+            // IMPORTANT (WinUI): apply text tokens FIRST. Resource propagation
+            // can transiently throw while the outgoing MediaElement native
+            // surface is completing teardown. If a refresh is interrupted, the
+            // worst acceptable partial state is light text on a not-yet-dark
+            // card — never dark text on an already-dark card. The queued retry
+            // then completes the remaining surface tokens.
+            SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", palette.TextPrimary);
+            SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", palette.TextSecondary);
+            SetColorAndBrush(resources, "WallpaperSelectionTextColor", "WallpaperSelectionTextBrush", palette.OnAccent);
+            SetColorAndBrush(resources, "WallpaperDangerActionTextColor", "WallpaperDangerActionTextBrush", palette.Danger);
+
             // Exact opaque mapping: no visual regression when wallpaper is off.
             SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", palette.Surface);
             SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", palette.Surface);
@@ -868,8 +946,10 @@ public static class AppThemeManager
             SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", palette.WarningSoft);
             SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", palette.DangerSoft);
             SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", palette.InfoSoft);
-            SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", palette.TextPrimary);
-            SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", palette.TextSecondary);
+            SetColorAndBrush(resources, "WallpaperSelectionBackgroundColor", "WallpaperSelectionBackgroundBrush", palette.Accent);
+            SetColorAndBrush(resources, "WallpaperSelectionBorderColor", "WallpaperSelectionBorderBrush", palette.Accent);
+            SetColorAndBrush(resources, "WallpaperDangerActionBackgroundColor", "WallpaperDangerActionBackgroundBrush", palette.DangerSoft);
+            SetColorAndBrush(resources, "WallpaperDangerActionBorderColor", "WallpaperDangerActionBorderBrush", palette.DangerBorder);
             SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", Colors.Transparent);
             return;
         }
@@ -933,18 +1013,75 @@ public static class AppThemeManager
         Color input =
             WithAlpha(inputBase, darkGlass ? 0.90 : 0.88);
 
+        // On bright MP4 frames the app can still be in Dark theme. Do not use
+        // the dark-theme soft palette directly for in-content chips/actions,
+        // otherwise selected pills and semantic buttons stay visually dark.
+        Color accentSoftBase = darkGlass
+            ? palette.AccentSoft
+            : Mix(palette.Accent, Colors.White, 0.88);
+        Color accentBorderBase = darkGlass
+            ? palette.AccentBorder
+            : Mix(palette.Accent, Colors.White, 0.62);
+        Color successSoftBase = darkGlass
+            ? palette.SuccessSoft
+            : Mix(palette.Success, Colors.White, 0.88);
+        Color warningSoftBase = darkGlass
+            ? palette.WarningSoft
+            : Mix(palette.Warning, Colors.White, 0.88);
+        Color dangerSoftBase = darkGlass
+            ? palette.DangerSoft
+            : Mix(palette.Danger, Colors.White, 0.88);
+        Color dangerBorderBase = darkGlass
+            ? palette.DangerBorder
+            : Mix(palette.Danger, Colors.White, 0.62);
+        Color infoSoftBase = darkGlass
+            ? palette.InfoSoft
+            : Mix(palette.Info, Colors.White, 0.88);
+
+        Color selectedBackground = darkGlass
+            ? WithAlpha(palette.Accent, 0.96)
+            : WithAlpha(accentSoftBase, 0.92);
+        Color selectedBorder = darkGlass
+            ? WithAlpha(palette.Accent, 0.96)
+            : WithAlpha(accentBorderBase, 0.96);
+        Color selectedText = darkGlass
+            ? palette.OnAccent
+            : Colors.Black;
+
+        Color dangerActionBackground = darkGlass
+            ? WithAlpha(dangerSoftBase, 0.78)
+            : WithAlpha(dangerSoftBase, 0.92);
+        Color dangerActionBorder = darkGlass
+            ? WithAlpha(dangerBorderBase, 0.92)
+            : WithAlpha(dangerBorderBase, 0.96);
+        Color dangerActionText = darkGlass
+            ? EnsureVisibleOnSurface(
+                palette.Danger,
+                dangerActionBackground,
+                preferLighter: true)
+            : EnsureVisibleOnSurface(
+                palette.Danger,
+                dangerActionBackground,
+                preferLighter: false);
+
         SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", surfaceStrong);
         SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", surface);
         SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", surfaceAlt);
         SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", input);
         SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", WithAlpha(borderBase, darkGlass ? 0.46 : 0.42));
         SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", WithAlpha(dividerBase, darkGlass ? 0.34 : 0.38));
-        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", WithAlpha(palette.AccentSoft, darkGlass ? 0.70 : 0.76));
-        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(palette.AccentBorder, 0.90));
-        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", WithAlpha(palette.SuccessSoft, darkGlass ? 0.74 : 0.80));
-        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", WithAlpha(palette.WarningSoft, darkGlass ? 0.74 : 0.80));
-        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(palette.DangerSoft, darkGlass ? 0.74 : 0.80));
-        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(palette.InfoSoft, darkGlass ? 0.74 : 0.80));
+        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", WithAlpha(accentSoftBase, darkGlass ? 0.70 : 0.80));
+        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(accentBorderBase, 0.92));
+        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", WithAlpha(successSoftBase, darkGlass ? 0.74 : 0.82));
+        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", WithAlpha(warningSoftBase, darkGlass ? 0.74 : 0.82));
+        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(dangerSoftBase, darkGlass ? 0.74 : 0.82));
+        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(infoSoftBase, darkGlass ? 0.74 : 0.82));
+        SetColorAndBrush(resources, "WallpaperSelectionBackgroundColor", "WallpaperSelectionBackgroundBrush", selectedBackground);
+        SetColorAndBrush(resources, "WallpaperSelectionTextColor", "WallpaperSelectionTextBrush", selectedText);
+        SetColorAndBrush(resources, "WallpaperSelectionBorderColor", "WallpaperSelectionBorderBrush", selectedBorder);
+        SetColorAndBrush(resources, "WallpaperDangerActionBackgroundColor", "WallpaperDangerActionBackgroundBrush", dangerActionBackground);
+        SetColorAndBrush(resources, "WallpaperDangerActionTextColor", "WallpaperDangerActionTextBrush", dangerActionText);
+        SetColorAndBrush(resources, "WallpaperDangerActionBorderColor", "WallpaperDangerActionBorderBrush", dangerActionBorder);
         SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", textPrimary);
         SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", textSecondary);
 

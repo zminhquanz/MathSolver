@@ -11,6 +11,8 @@
     HorizontalOptions="Fill"
     VerticalOptions="Fill">
 
+
+
     <ScrollView
         HorizontalOptions="Fill"
         VerticalOptions="Fill"
@@ -31,11 +33,13 @@
 
                 <Label
                     Text="HÌNH HỌC"
-                    Style="{StaticResource SolverHeroTitleStyle}" />
+                    Style="{StaticResource SolverHeroTitleStyle}"
+                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                 <Label
                     Text="Tính chu vi, diện tích, diện tích bề mặt và thể tích"
-                    Style="{StaticResource SolverHeroSubtitleStyle}" />
+                    Style="{StaticResource SolverHeroSubtitleStyle}"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
             </VerticalStackLayout>
 
@@ -70,7 +74,8 @@
 
                             <Label
                                 Text="1. Chọn loại hình học"
-                                Style="{StaticResource SolverSectionTitleStyle}" />
+                                Style="{StaticResource SolverSectionTitleStyle}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Grid
                                 RowDefinitions="Auto,Auto"
@@ -105,6 +110,7 @@
 
                     <!-- 2. Chọn hình -->
                     <Border
+                        x:Name="ShapeSelectorBorder"
                         Padding="16"
                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -125,7 +131,7 @@
                             <Label
                                 Text="Chọn một hình để xem công thức và nhập dữ liệu."
                                 FontSize="16"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             <Border
                                 Padding="0"
                                 BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
@@ -146,7 +152,7 @@
                                         FontSize="15"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        TitleColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                        TitleColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         ItemsSource="{Binding GeometryItems}"
                                         SelectedIndexChanged="OnGeometryShapeSelected"
                                         ItemDisplayBinding="{Binding Path=Name}" />
@@ -154,7 +160,7 @@
                                     <Path
                                         IsVisible="{OnPlatform Android=True, Default=False}"
                                         Data="M4,7 L10,13 L16,7 Z"
-                                        Fill="{DynamicResource WallpaperTextSecondaryBrush}"
+                                        Fill="{DynamicResource WallpaperTextPrimaryBrush}"
                                         WidthRequest="14"
                                         HeightRequest="14"
                                         Margin="0,0,18,0"
@@ -167,13 +173,14 @@
                     </Border>
 
                     <!-- 3. Kiểu số -->
-                    <Border Style="{StaticResource SolverCardStyle}">
+                    <Border x:Name="NumberTypeBorder" Style="{StaticResource SolverCardStyle}">
 
                         <VerticalStackLayout Spacing="12">
 
                             <Label
                                 Text="3. Chọn kiểu số"
-                                Style="{StaticResource SolverSectionTitleStyle}" />
+                                Style="{StaticResource SolverSectionTitleStyle}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             <Grid
                                 ColumnDefinitions="*,*"
@@ -258,7 +265,7 @@
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="TailTruncation"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <GraphicsView
                                     x:Name="GeometryDiagramView"
@@ -358,7 +365,7 @@
                                                         LineBreakMode="WordWrap"
                                                         HorizontalTextAlignment="Center"
                                                         VerticalTextAlignment="Center"
-                                                        TextColor="{DynamicResource PrimaryColor}" />
+                                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                 </DataTemplate>
                                             </BindableLayout.ItemTemplate>
@@ -400,7 +407,7 @@
                                                             FontSize="14"
                                                             LineHeight="1.15"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>
@@ -424,6 +431,7 @@
 
             <!-- 4. Kích thước -->
             <Border
+                x:Name="InputFieldsBorder"
                 Padding="14"
                 BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                 Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -444,7 +452,7 @@
                     <Label
                         Text="Tất cả kích thước phải lớn hơn 0."
                         FontSize="15"
-                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                     <FlexLayout
                         x:Name="GeometryInputFlexLayout"
@@ -500,7 +508,7 @@
                                             <Entry
                                                 Text="{Binding Text, Mode=TwoWay}"
                                                 Placeholder="{Binding Placeholder}"
-                                                PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                                PlaceholderColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                 Keyboard="Numeric"
                                                 FontSize="18"
                                                 HorizontalOptions="Fill"
@@ -548,7 +556,10 @@
                             Grid.Column="1"
                             Text="{localization:Translate Actions.Clear}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
-                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            BorderColor="{DynamicResource WallpaperBorderColor}"
+                            BorderWidth="1"
                             Clicked="OnClearClicked" />
 
                     </Grid>
@@ -676,7 +687,7 @@
                                             Text="{Binding Formula}"
                                             FontSize="15"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                     </Grid>
 

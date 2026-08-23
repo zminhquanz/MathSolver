@@ -2716,16 +2716,30 @@ public partial class MathPuzzlePage : ContentPage
         // transitions correct even while a model is selected.
         EjectLlmModelButton.BackgroundColor =
             ThemeResource.GetColor(
-                "WallpaperDangerSoftColor",
+                "WallpaperDangerActionBackgroundColor",
                 "#FEF2F2");
         EjectLlmModelButton.BorderColor =
             ThemeResource.GetColor(
-                "DangerBorderColor",
-                "#FECACA");
+                "WallpaperDangerActionBorderColor",
+                "#FCA5A5");
         EjectLlmModelButton.TextColor =
             ThemeResource.GetColor(
-                "DangerColor",
+                "WallpaperDangerActionTextColor",
                 "#B91C1C");
+
+        AiDiagnosticsToggleButton.BackgroundColor =
+            ThemeResource.GetColor(
+                "WallpaperSelectionBackgroundColor",
+                "#6D28D9");
+        AiDiagnosticsToggleButton.BorderColor =
+            ThemeResource.GetColor(
+                "WallpaperSelectionBorderColor",
+                "#6D28D9");
+        AiDiagnosticsToggleButton.TextColor =
+            ThemeResource.GetColor(
+                "WallpaperSelectionTextColor",
+                "#FFFFFF");
+        AiDiagnosticsToggleButton.BorderWidth = 1d;
 
         CreateOrRegenerateQuestionButton.SetDynamicResource(
             Button.BackgroundColorProperty,

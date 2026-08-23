@@ -6269,22 +6269,22 @@
     },
     {
       "key": "Quiz.AverageDirect",
-      "source": "Tìm TBC trực tiếp",
+      "source": "Tìm trung bình cộng trực tiếp",
       "mode": "exact"
     },
     {
       "key": "Quiz.AverageTotalToAverage",
-      "source": "Biết tổng → tìm TBC",
+      "source": "Biết tổng → tìm trung bình cộng",
       "mode": "exact"
     },
     {
       "key": "Quiz.AverageAverageToTotal",
-      "source": "Biết TBC → tìm tổng",
+      "source": "Biết trung bình cộng → tìm tổng",
       "mode": "exact"
     },
     {
       "key": "Quiz.AverageMissingValue",
-      "source": "TBC + giá trị → tìm số còn thiếu",
+      "source": "Trung bình cộng + giá trị → tìm số còn thiếu",
       "mode": "exact"
     },
     {
@@ -6294,7 +6294,7 @@
     },
     {
       "key": "Quiz.AverageTwoGroups",
-      "source": "TBC hai nhóm",
+      "source": "Trung bình cộng hai nhóm",
       "mode": "exact"
     },
     {

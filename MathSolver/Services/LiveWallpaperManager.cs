@@ -363,7 +363,11 @@ public static class LiveWallpaperManager
 
         if (!normalized)
         {
-            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            // Clear the MP4 polarity immediately, but do not queue a resource
+            // refresh yet. Hosts must begin native teardown first; one single
+            // refresh is queued below after SettingsChanged.
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
+                refreshVisualResources: false);
             CancelFrameAnalysis();
             _pendingFrameAnalysisDuration = TimeSpan.Zero;
         }

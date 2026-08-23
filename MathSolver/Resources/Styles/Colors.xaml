@@ -65,6 +65,12 @@
     <Color x:Key="WallpaperWarningSoftColor">#D9FFF7ED</Color>
     <Color x:Key="WallpaperDangerSoftColor">#D9FEF2F2</Color>
     <Color x:Key="WallpaperInfoSoftColor">#D9EFF6FF</Color>
+    <Color x:Key="WallpaperSelectionBackgroundColor">#6D28D9</Color>
+    <Color x:Key="WallpaperSelectionTextColor">#FFFFFF</Color>
+    <Color x:Key="WallpaperSelectionBorderColor">#6D28D9</Color>
+    <Color x:Key="WallpaperDangerActionBackgroundColor">#FEF2F2</Color>
+    <Color x:Key="WallpaperDangerActionTextColor">#B91C1C</Color>
+    <Color x:Key="WallpaperDangerActionBorderColor">#FCA5A5</Color>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="#6D28D9" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#5B21B6" />
@@ -118,6 +124,12 @@
     <SolidColorBrush x:Key="WallpaperWarningSoftBrush" Color="#D9FFF7ED" />
     <SolidColorBrush x:Key="WallpaperDangerSoftBrush" Color="#D9FEF2F2" />
     <SolidColorBrush x:Key="WallpaperInfoSoftBrush" Color="#D9EFF6FF" />
+    <SolidColorBrush x:Key="WallpaperSelectionBackgroundBrush" Color="#6D28D9" />
+    <SolidColorBrush x:Key="WallpaperSelectionTextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="WallpaperSelectionBorderBrush" Color="#6D28D9" />
+    <SolidColorBrush x:Key="WallpaperDangerActionBackgroundBrush" Color="#FEF2F2" />
+    <SolidColorBrush x:Key="WallpaperDangerActionTextBrush" Color="#B91C1C" />
+    <SolidColorBrush x:Key="WallpaperDangerActionBorderBrush" Color="#FCA5A5" />
 
     <!-- Các key cũ được giữ lại để không phá style hoặc control chưa di chuyển. -->
     <Color x:Key="Primary">#6D28D9</Color>

@@ -75,46 +75,46 @@ public partial class AverageFormulaView : ContentView
             [
                 new(
                     AverageQuizType.Direct,
-                    "1. Tìm TBC trực tiếp",
+                    "1. Tìm trung bình cộng trực tiếp",
                     "x̄ = (x₁ + x₂ + … + xₙ) ÷ n",
                     "Cộng tất cả các giá trị rồi chia cho số lượng giá trị.",
                     "Ví dụ: Ba ngày cửa hàng bán 120, 150, 180 quyển vở. Trung bình mỗi ngày bán bao nhiêu?",
                     "(120 + 150 + 180) ÷ 3 = 450 ÷ 3 = 150 quyển vở."),
                 new(
                     AverageQuizType.TotalToAverage,
-                    "2. Biết tổng → tìm TBC",
+                    "2. Biết tổng → tìm trung bình cộng",
                     "x̄ = S ÷ n",
                     "Biết tổng S và số nhóm/phần tử n thì lấy tổng chia cho số nhóm.",
                     "Ví dụ: 5 lớp trồng tổng cộng 175 cây. Trung bình mỗi lớp trồng bao nhiêu cây?",
                     "175 ÷ 5 = 35 cây mỗi lớp."),
                 new(
                     AverageQuizType.AverageToTotal,
-                    "3. Biết TBC → tìm tổng",
+                    "3. Biết trung bình cộng → tìm tổng",
                     "S = x̄ × n",
                     "Biết trung bình và số lượng phần tử thì lấy trung bình nhân số phần tử để tìm tổng.",
                     "Ví dụ: 4 bạn trung bình có 18 viên bi. Cả 4 bạn có bao nhiêu viên?",
                     "18 × 4 = 72 viên bi."),
                 new(
                     AverageQuizType.MissingValue,
-                    "4. Biết TBC + các giá trị → tìm số còn thiếu",
+                    "4. Biết trung bình cộng + các giá trị → tìm số còn thiếu",
                     "x thiếu = x̄ × n − tổng các giá trị đã biết",
-                    "Tìm tổng cần có từ TBC trước, rồi trừ tổng những giá trị đã biết.",
-                    "Ví dụ: An được 8, 9, 7 điểm. Bài thứ tư cần bao nhiêu điểm để TBC 4 bài là 8?",
+                    "Tìm tổng cần có từ trung bình cộng trước, rồi trừ tổng những giá trị đã biết.",
+                    "Ví dụ: An được 8, 9, 7 điểm. Bài thứ tư cần bao nhiêu điểm để trung bình cộng 4 bài là 8?",
                     "Tổng cần có: 8 × 4 = 32. Tổng đã biết: 8 + 9 + 7 = 24. Điểm còn thiếu: 32 − 24 = 8."),
                 new(
                     AverageQuizType.IndirectData,
                     "5. Dữ kiện gián tiếp",
                     "Suy ra từng giá trị → x̄ = tổng các giá trị ÷ số giá trị",
-                    "Khi đề cho quan hệ hơn/kém thay vì cho trực tiếp tất cả số liệu, cần tìm từng giá trị trước rồi mới tính TBC.",
+                    "Khi đề cho quan hệ hơn/kém thay vì cho trực tiếp tất cả số liệu, cần tìm từng giá trị trước rồi mới tính trung bình cộng.",
                     "Ví dụ: Lan có 20 quyển, Mai nhiều hơn Lan 4 quyển, Hoa ít hơn Mai 3 quyển. Trung bình mỗi bạn có bao nhiêu?",
-                    "Mai = 24, Hoa = 21. TBC = (20 + 24 + 21) ÷ 3 = 65/3 = 21 2/3 quyển."),
+                    "Mai = 24, Hoa = 21. Trung bình cộng = (20 + 24 + 21) ÷ 3 = 65/3 = 21 2/3 quyển."),
                 new(
                     AverageQuizType.TwoGroups,
-                    "6. TBC hai nhóm",
+                    "6. Trung bình cộng hai nhóm",
                     "x̄ chung = (x̄₁ × n₁ + x̄₂ × n₂) ÷ (n₁ + n₂)",
-                    "Không lấy trung bình của hai TBC nếu hai nhóm có số người khác nhau. Phải đổi mỗi nhóm về tổng trước.",
-                    "Ví dụ: Nhóm A có 4 bạn, TBC 8 điểm; nhóm B có 6 bạn, TBC 7 điểm. Tìm TBC chung.",
-                    "Tổng A = 8 × 4 = 32; tổng B = 7 × 6 = 42. TBC chung = (32 + 42) ÷ 10 = 7.4 điểm.")
+                    "Không lấy trung bình của hai trung bình cộng nếu hai nhóm có số người khác nhau. Phải đổi mỗi nhóm về tổng trước.",
+                    "Ví dụ: Nhóm A có 4 bạn, trung bình cộng 8 điểm; nhóm B có 6 bạn, trung bình cộng 7 điểm. Tìm trung bình cộng chung.",
+                    "Tổng A = 8 × 4 = 32; tổng B = 7 × 6 = 42. Trung bình cộng chung = (32 + 42) ÷ 10 = 7.4 điểm.")
             ];
         }
 
