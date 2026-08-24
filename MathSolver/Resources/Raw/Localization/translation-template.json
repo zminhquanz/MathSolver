@@ -1340,7 +1340,8 @@
     "PowerRoot.LargeExponentContinue": "Tiếp tục",
     "PowerRoot.LargeExponentCancel": "Hủy",
     "PowerRoot.InfoEngineParallelNttLarge": "• Engine: NTT/CRT chính xác giới hạn RAM cho số mũ > 10 triệu (NTT uint32 in-place/phân đoạn)",
-    "PowerRoot.InfoLargeNttMode": "• NTT quy mô lớn: chunk thuật toán cũ ≤ {0}; {1} lần ghép phân đoạn; {2} convolution theo cặp segment • residue uint32 / tích tạm uint64",
+    "PowerRoot.InfoLargeNttMode": "• NTT quy mô lớn: chunk thuật toán cũ ≤ {0}; {1} lần ghép phân đoạn; {2} convolution theo cặp segment; forward-cache tiết kiệm {3} lượt biến đổi thuận • residue uint32 / tích tạm uint64",
+    "PowerRoot.InfoLargeNttScheduler": "• Scheduler NTT lớn: {0} thế hệ static trên worker pool sống xuyên suốt; {1} range tĩnh liên tục; MemoryBudgetGate tối đa {2} buffer transform đang thuê",
     "PowerRoot.StepLargeNttMemoryBounded": "Vì số mũ lớn hơn 10,000,000, ứng dụng giữ nguyên kernel NTT/CRT đã ổn định cho từng chunk không quá {0}, sau đó ghép các kết quả bằng NTT/CRT in-place và phân đoạn để giới hạn RAM. Residue của transform vẫn dùng số nguyên 32-bit; chỉ phép nhân modulo tạm thời dùng 64-bit."
   },
   "templates": {

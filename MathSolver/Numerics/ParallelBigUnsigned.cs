@@ -769,16 +769,18 @@ internal sealed class ParallelBigUnsigned
             exponent %
             chunkExponent;
 
+        // Large mode owns one persistent worker team for the complete power.
+        // Public Pow() at <=10M is untouched; only the >10M orchestration uses
+        // persistent static scheduling instead of creating separate worker
+        // teams for seed, remainder and merge phases.
         int chunkOperationCount =
-            GetPowReportedOperationCount(
-                chunkExponent,
-                workerCount);
+            CountMultiplications(
+                chunkExponent);
 
         int remainderOperationCount =
             remainderExponent > 0
-                ? GetPowReportedOperationCount(
-                    remainderExponent,
-                    workerCount)
+                ? CountMultiplications(
+                    remainderExponent)
                 : 0;
 
         int mergeOperationCount =
@@ -837,74 +839,15 @@ internal sealed class ParallelBigUnsigned
         var diagnostics =
             new PowerDiagnosticsCollector();
 
-        // Compute the reusable a^10,000,000 seed with the existing production
-        // engine. No arithmetic, scheduling, primes, DIF/DIT stages or CRT
-        // behavior in Pow() is changed for the <=10M range.
-        ParallelPowerResult chunkPower =
-            Pow(
-                baseValue,
-                chunkExponent,
-                workerCount,
-                (completed, total) =>
-                    ReportMappedProgress(
-                        0,
-                        chunkOperationCount,
-                        completed,
-                        total),
-                cancellationToken);
-
-        diagnostics.AccumulateSnapshot(
-            chunkPower.Diagnostics);
-
-        completedOffset +=
-            chunkOperationCount;
-
-        // Do not let dead legacy NTT workspaces from the 10M seed overlap an
-        // optional second <=10M remainder calculation.
-        CollectReleasedLargeModeWorkspaces();
-
-        ParallelPowerResult? remainderPower =
-            null;
-
-        if (remainderExponent > 0)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            int remainderOffset =
-                completedOffset;
-
-            remainderPower =
-                Pow(
-                    baseValue,
-                    remainderExponent,
-                    workerCount,
-                    (completed, total) =>
-                        ReportMappedProgress(
-                            remainderOffset,
-                            remainderOperationCount,
-                            completed,
-                            total),
-                    cancellationToken);
-
-            diagnostics.AccumulateSnapshot(
-                remainderPower.Diagnostics);
-
-            completedOffset +=
-                remainderOperationCount;
-        }
-
-        // Pow() has already dropped every pool reference, but its 128-256 MiB
-        // LOH arrays can remain committed until a later Gen2 collection. Large
-        // mode intentionally performs one blocking collection at this phase
-        // boundary so dead legacy workspaces do not overlap the segmented
-        // accumulator/workspaces and inflate the peak by several gigabytes.
-        CollectReleasedLargeModeWorkspaces();
-
-        // All <=10M Pow-scoped buffers are already released here. The merge
-        // owns one independent pool whose 2^26 uint32 workspaces are recycled
-        // across every segment pair and every higher-level multiplication.
+        // Three retained 2^26 uint buffers preserve the measured ~6 GB class
+        // forward-cache behavior. Four simultaneously leased buffers is the
+        // hard large-mode ceiling. The transform graph is deliberately
+        // serialized at the large-NTT level, so this gate is a safety ceiling
+        // rather than permission to run competing memory-bound transforms.
         using var nttBufferPool =
-            new NttBufferPool();
+            new NttBufferPool(
+                maximumRetainedBufferCount: 3,
+                maximumLeasedBufferCount: 4);
 
         using var nttTwiddleBufferPool =
             new NttTwiddleBufferPool();
@@ -919,13 +862,71 @@ internal sealed class ParallelBigUnsigned
                new FixedWorkerTeam(
                    workerCount,
                    nttBufferPool,
-                   sharedNttTwiddlePlans))
+                   sharedNttTwiddlePlans,
+                   persistentStaticScheduling: true))
         {
+            // Seed a^10,000,000 is still the same arithmetic kernel used by
+            // Pow(); the difference is lifetime only. The same 24-worker team
+            // remains alive through seed/remainder/merge, while every hot NTT
+            // generation uses one contiguous static span per worker. The whole
+            // team moves to the next LargePowTaskGraph node together instead of
+            // stealing butterfly ranges and disturbing cache locality.
+            ParallelBigUnsigned chunkMagnitude =
+                PowWithTeam(
+                    baseValue,
+                    chunkExponent,
+                    workers,
+                    diagnostics,
+                    (completed, total) =>
+                        ReportMappedProgress(
+                            0,
+                            chunkOperationCount,
+                            completed,
+                            total),
+                    cancellationToken);
+
+            completedOffset +=
+                chunkOperationCount;
+
+            CollectReleasedLargeModeWorkspaces();
+
+            ParallelBigUnsigned? remainderMagnitude =
+                null;
+
+            if (remainderExponent > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                int remainderOffset =
+                    completedOffset;
+
+                remainderMagnitude =
+                    PowWithTeam(
+                        baseValue,
+                        remainderExponent,
+                        workers,
+                        diagnostics,
+                        (completed, total) =>
+                            ReportMappedProgress(
+                                remainderOffset,
+                                remainderOperationCount,
+                                completed,
+                                total),
+                        cancellationToken);
+
+                completedOffset +=
+                    remainderOperationCount;
+            }
+
+            // Reclaim dead magnitudes, but keep the persistent worker threads,
+            // cached NTT buffers and shared twiddles alive for the merge graph.
+            CollectReleasedLargeModeWorkspaces();
+
             int mergeCompleted = 0;
 
             magnitude =
                 PowExistingMagnitudeMemoryBounded(
-                    chunkPower.Magnitude,
+                    chunkMagnitude,
                     quotient,
                     workers,
                     diagnostics,
@@ -948,14 +949,14 @@ internal sealed class ParallelBigUnsigned
             completedOffset +=
                 mergeOperationCount;
 
-            if (remainderPower is not null)
+            if (remainderMagnitude is not null)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 magnitude =
                     MultiplyMemoryBounded(
                         magnitude,
-                        remainderPower.Magnitude,
+                        remainderMagnitude,
                         workers,
                         diagnostics,
                         cancellationToken);
@@ -968,6 +969,11 @@ internal sealed class ParallelBigUnsigned
                         completedOffset),
                     totalOperationCount);
             }
+
+            diagnostics.ConfigureLargePersistentStaticScheduler(
+                workers.PersistentGenerationCount,
+                workers.PersistentStaticRangeCount,
+                memoryBudgetBufferLimit: 4);
         }
 
         diagnostics.ConfigureLargeMemoryBoundedMode(
@@ -980,10 +986,8 @@ internal sealed class ParallelBigUnsigned
         sharedNttTwiddlePlans.ReleasePlans();
         nttTwiddleBufferPool.ReleaseCachedBuffers();
 
-        // The final magnitude must stay alive, but the 2^26 transform pool,
-        // twiddle arrays and reusable segment product are dead now. Large mode
-        // pays one last Gen2 boundary so those hundreds of MiB do not overlap
-        // the UI/export preparation that follows this method.
+        // The final magnitude remains alive. Everything else belonging to the
+        // persistent large-mode execution graph is collectible at this point.
         CollectReleasedLargeModeWorkspaces();
 
         progress?.Invoke(
@@ -1716,6 +1720,18 @@ internal sealed class ParallelBigUnsigned
                 left,
                 right);
 
+        // Large-mode v2 forward-cache policy: for a non-square product, keep
+        // the operand with fewer segments on the outer loop. The outer segment
+        // is the one whose forward spectra can be reused across every matching
+        // pair, so this minimizes the number of one-time cached transforms.
+        // The <=10M production path never enters this method.
+        if (!isSquare &&
+            left._limbCount > right._limbCount)
+        {
+            (left, right) =
+                (right, left);
+        }
+
         int leftSegmentCount =
             checked(
                 (left._limbCount +
@@ -1739,10 +1755,6 @@ internal sealed class ParallelBigUnsigned
                     SegmentedNttLimbLength,
                     right._limbCount));
 
-        // One reusable compact P1/result buffer is sufficient for every pair.
-        // It is overwritten by inverse P1, then CRT/carry normalizes the same
-        // prefix to base-10,000 before that product is added to the global
-        // result. No per-pair 256 MiB result allocation is left for GC.
         uint[] segmentProduct =
             workers.GetSegmentedProductScratch(
                 maximumSegmentProductLength);
@@ -1753,99 +1765,1010 @@ internal sealed class ParallelBigUnsigned
                 right._limbCount +
                 2);
 
-        // The final magnitude is the only large zero-initialized array needed
-        // by segmented accumulation. Every NTT pair is added here immediately.
         var resultLimbs =
             new uint[resultCapacity];
 
         int segmentPairCount = 0;
+        int savedForwardTransformCount = 0;
 
-        for (int leftSegmentIndex = 0;
-             leftSegmentIndex < leftSegmentCount;
-             leftSegmentIndex++)
+        // Forward-cache v3: a 3-segment square has one otherwise-unavoidable
+        // diagonal at outer segment 2. The final pair of outer segment 1 is
+        // (1,2); while processing that pair we preserve segment 2's P1/P2
+        // forward spectra and hand them to diagonal (2,2). The old left cache
+        // is consumed destructively, so the hand-off never exceeds the same
+        // three active 2^26 uint32 buffers used by forward-cache v2.
+        uint[]? carriedFirstSpectrum =
+            null;
+        uint[]? carriedSecondSpectrum =
+            null;
+        int carriedSegmentIndex =
+            -1;
+        int carriedTransformLength =
+            0;
+
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            int leftOffset =
-                checked(
-                    leftSegmentIndex *
-                    SegmentedNttLimbLength);
-
-            int leftLength =
-                Math.Min(
-                    SegmentedNttLimbLength,
-                    left._limbCount -
-                    leftOffset);
-
-            int firstRightSegmentIndex =
-                isSquare
-                    ? leftSegmentIndex
-                    : 0;
-
-            for (int rightSegmentIndex = firstRightSegmentIndex;
-                 rightSegmentIndex < rightSegmentCount;
-                 rightSegmentIndex++)
+            for (int leftSegmentIndex = 0;
+                 leftSegmentIndex < leftSegmentCount;
+                 leftSegmentIndex++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                int rightOffset =
+                int leftOffset =
                     checked(
-                        rightSegmentIndex *
+                        leftSegmentIndex *
                         SegmentedNttLimbLength);
 
-                int rightLength =
+                int leftLength =
                     Math.Min(
                         SegmentedNttLimbLength,
-                        right._limbCount -
-                        rightOffset);
+                        left._limbCount -
+                        leftOffset);
 
-                int productLength =
-                    ConvolveSegmentIntoReusableBuffer(
-                        left._limbs,
-                        leftOffset,
+                int firstRightSegmentIndex =
+                    isSquare
+                        ? leftSegmentIndex
+                        : 0;
+
+                int cachedTransformLength =
+                    SelectReusableSegmentTransformLength(
                         leftLength,
-                        right._limbs,
-                        rightOffset,
-                        rightLength,
-                        segmentProduct,
-                        isSquare &&
-                        leftSegmentIndex ==
-                        rightSegmentIndex,
-                        workers,
-                        diagnostics,
-                        cancellationToken);
+                        right._limbCount,
+                        firstRightSegmentIndex,
+                        rightSegmentCount);
 
-                int destinationOffset =
-                    checked(
-                        leftOffset +
-                        rightOffset);
+                uint[]? cachedFirstSpectrum =
+                    null;
+                uint[]? cachedSecondSpectrum =
+                    null;
 
-                int multiplicity =
+                bool usingCarriedSpectra =
                     isSquare &&
-                    leftSegmentIndex !=
-                    rightSegmentIndex
-                        ? 2
-                        : 1;
+                    leftSegmentCount == 3 &&
+                    leftSegmentIndex == carriedSegmentIndex &&
+                    carriedFirstSpectrum is not null &&
+                    carriedSecondSpectrum is not null;
 
-                AddNormalizedSegmentProduct(
-                    resultLimbs,
-                    segmentProduct,
-                    productLength,
-                    destinationOffset,
-                    multiplicity,
-                    cancellationToken);
+                if (usingCarriedSpectra)
+                {
+                    cachedFirstSpectrum =
+                        carriedFirstSpectrum;
+                    cachedSecondSpectrum =
+                        carriedSecondSpectrum;
+                    cachedTransformLength =
+                        carriedTransformLength;
 
-                segmentPairCount++;
+                    carriedFirstSpectrum =
+                        null;
+                    carriedSecondSpectrum =
+                        null;
+                    carriedSegmentIndex =
+                        -1;
+                    carriedTransformLength =
+                        0;
+                }
+
+                try
+                {
+                    int cachedPairCountForOuter = 0;
+                    bool countedCarriedSave =
+                        false;
+
+                    if (!usingCarriedSpectra &&
+                        cachedTransformLength > 0)
+                    {
+                        cachedFirstSpectrum =
+                            CreateSegmentForwardSpectrum(
+                                left._limbs,
+                                leftOffset,
+                                leftLength,
+                                cachedTransformLength,
+                                FirstModulus,
+                                FirstPrimitiveRoot,
+                                workers,
+                                diagnostics,
+                                cancellationToken);
+
+                        cachedSecondSpectrum =
+                            CreateSegmentForwardSpectrum(
+                                left._limbs,
+                                leftOffset,
+                                leftLength,
+                                cachedTransformLength,
+                                SecondModulus,
+                                SecondPrimitiveRoot,
+                                workers,
+                                diagnostics,
+                                cancellationToken);
+                    }
+
+                    for (int rightSegmentIndex = firstRightSegmentIndex;
+                         rightSegmentIndex < rightSegmentCount;
+                         rightSegmentIndex++)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        int rightOffset =
+                            checked(
+                                rightSegmentIndex *
+                                SegmentedNttLimbLength);
+
+                        int rightLength =
+                            Math.Min(
+                                SegmentedNttLimbLength,
+                                right._limbCount -
+                                rightOffset);
+
+                        int transformLength =
+                            GetSegmentTransformLength(
+                                leftLength,
+                                rightLength);
+
+                        bool diagonalSquare =
+                            isSquare &&
+                            leftSegmentIndex ==
+                            rightSegmentIndex;
+
+                        int productLength;
+
+                        bool carryRightSpectra =
+                            isSquare &&
+                            leftSegmentCount == 3 &&
+                            leftSegmentIndex == 1 &&
+                            rightSegmentIndex == 2 &&
+                            cachedFirstSpectrum is not null &&
+                            cachedSecondSpectrum is not null &&
+                            transformLength == cachedTransformLength;
+
+                        if (carryRightSpectra)
+                        {
+                            productLength =
+                                ConvolveSegmentWithCachedLeftSpectraAndCarryRight(
+                                    ref cachedFirstSpectrum,
+                                    ref cachedSecondSpectrum,
+                                    right._limbs,
+                                    rightOffset,
+                                    rightLength,
+                                    leftLength,
+                                    segmentProduct,
+                                    workers,
+                                    diagnostics,
+                                    cancellationToken,
+                                    out carriedFirstSpectrum,
+                                    out carriedSecondSpectrum);
+
+                            carriedSegmentIndex =
+                                rightSegmentIndex;
+                            carriedTransformLength =
+                                transformLength;
+
+                            cachedPairCountForOuter++;
+                        }
+                        else if (cachedFirstSpectrum is not null &&
+                                 cachedSecondSpectrum is not null &&
+                                 transformLength == cachedTransformLength)
+                        {
+                            productLength =
+                                ConvolveSegmentWithCachedLeftSpectra(
+                                    cachedFirstSpectrum,
+                                    cachedSecondSpectrum,
+                                    right._limbs,
+                                    rightOffset,
+                                    rightLength,
+                                    leftLength,
+                                    segmentProduct,
+                                    diagonalSquare,
+                                    workers,
+                                    diagnostics,
+                                    cancellationToken);
+
+                            cachedPairCountForOuter++;
+
+                            if (usingCarriedSpectra &&
+                                !countedCarriedSave)
+                            {
+                                // These P1/P2 spectra were produced as the
+                                // right side of (1,2), so diagonal (2,2) needs
+                                // zero new forward transforms. This is a real
+                                // +2 save, not a diagnostic adjustment.
+                                savedForwardTransformCount =
+                                    checked(
+                                        savedForwardTransformCount +
+                                        2);
+
+                                countedCarriedSave =
+                                    true;
+                            }
+                        }
+                        else
+                        {
+                            productLength =
+                                ConvolveSegmentIntoReusableBuffer(
+                                    left._limbs,
+                                    leftOffset,
+                                    leftLength,
+                                    right._limbs,
+                                    rightOffset,
+                                    rightLength,
+                                    segmentProduct,
+                                    diagonalSquare,
+                                    workers,
+                                    diagnostics,
+                                    cancellationToken);
+                        }
+
+                        int destinationOffset =
+                            checked(
+                                leftOffset +
+                                rightOffset);
+
+                        int multiplicity =
+                            isSquare &&
+                            leftSegmentIndex !=
+                            rightSegmentIndex
+                                ? 2
+                                : 1;
+
+                        AddNormalizedSegmentProduct(
+                            resultLimbs,
+                            segmentProduct,
+                            productLength,
+                            destinationOffset,
+                            multiplicity,
+                            cancellationToken);
+
+                        segmentPairCount++;
+                    }
+
+                    if (!usingCarriedSpectra &&
+                        cachedPairCountForOuter >= 2)
+                    {
+                        savedForwardTransformCount =
+                            checked(
+                                savedForwardTransformCount +
+                                2 *
+                                (cachedPairCountForOuter - 1));
+                    }
+                }
+                finally
+                {
+                    if (cachedSecondSpectrum is not null)
+                    {
+                        workers.ReturnNttBuffer(
+                            cachedSecondSpectrum);
+                    }
+
+                    if (cachedFirstSpectrum is not null)
+                    {
+                        workers.ReturnNttBuffer(
+                            cachedFirstSpectrum);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            if (carriedSecondSpectrum is not null)
+            {
+                workers.ReturnNttBuffer(
+                    carriedSecondSpectrum);
+            }
+
+            if (carriedFirstSpectrum is not null)
+            {
+                workers.ReturnNttBuffer(
+                    carriedFirstSpectrum);
             }
         }
 
         diagnostics.ConfigureSegmentedNttMultiplication(
             segmentPairCount);
 
+        diagnostics.ConfigureLargeForwardSpectrumCache(
+            savedForwardTransformCount);
+
         return new ParallelBigUnsigned(
             resultLimbs,
             takeOwnership: true,
             logicalLength: resultCapacity);
+    }
+
+    /// <summary>
+    /// Chooses one transform length worth caching for the current outer segment.
+    /// A cache is created only when at least two pair convolutions can reuse it;
+    /// otherwise the ordinary segmented kernel avoids holding the extra active
+    /// spectrum. In normal large products almost every full segment uses 2^26.
+    /// </summary>
+    private static int SelectReusableSegmentTransformLength(
+        int leftLength,
+        int rightLimbCount,
+        int firstRightSegmentIndex,
+        int rightSegmentCount)
+    {
+        int bestLength = 0;
+        int bestCount = 1;
+
+        int candidateLength = 0;
+        int candidateCount = 0;
+
+        for (int rightSegmentIndex = firstRightSegmentIndex;
+             rightSegmentIndex < rightSegmentCount;
+             rightSegmentIndex++)
+        {
+            int rightOffset =
+                checked(
+                    rightSegmentIndex *
+                    SegmentedNttLimbLength);
+
+            int rightLength =
+                Math.Min(
+                    SegmentedNttLimbLength,
+                    rightLimbCount -
+                    rightOffset);
+
+            int transformLength =
+                GetSegmentTransformLength(
+                    leftLength,
+                    rightLength);
+
+            if (transformLength == candidateLength)
+            {
+                candidateCount++;
+            }
+            else
+            {
+                if (candidateCount > bestCount)
+                {
+                    bestLength =
+                        candidateLength;
+                    bestCount =
+                        candidateCount;
+                }
+
+                candidateLength =
+                    transformLength;
+                candidateCount = 1;
+            }
+        }
+
+        if (candidateCount > bestCount)
+        {
+            bestLength =
+                candidateLength;
+            bestCount =
+                candidateCount;
+        }
+
+        return bestCount >= 2
+            ? bestLength
+            : 0;
+    }
+
+    private static int GetSegmentTransformLength(
+        int leftLength,
+        int rightLength)
+    {
+        int coefficientCount =
+            checked(
+                leftLength +
+                rightLength -
+                1);
+
+        int transformLength = 1;
+
+        while (transformLength <
+               coefficientCount)
+        {
+            transformLength =
+                checked(
+                    transformLength << 1);
+        }
+
+        if (transformLength >
+            MaximumTransformLength)
+        {
+            throw new InvalidOperationException(
+                "A segmented NTT pair exceeded the supported 2^26 transform length.");
+        }
+
+        return transformLength;
+    }
+
+    private static uint[] CreateSegmentForwardSpectrum(
+        uint[] source,
+        int sourceOffset,
+        int sourceLength,
+        int transformLength,
+        uint modulus,
+        uint primitiveRoot,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        uint[] spectrum =
+            workers.RentNttBuffer(
+                transformLength,
+                out _);
+
+        try
+        {
+            PrepareNttBuffer(
+                spectrum,
+                source,
+                sourceOffset,
+                sourceLength);
+
+            int fusedNttBlockLength =
+                SelectFusedNttBlockLength();
+
+            int l2NttTileLength =
+                SelectL2NttTileLength(
+                    fusedNttBlockLength);
+
+            int l3NttTileLength =
+                SelectL3NttTileLength(
+                    l2NttTileLength);
+
+            NttTwiddlePlan twiddlePlan =
+                workers.GetTwiddlePlan(
+                    modulus);
+
+            ForwardDifTransform(
+                spectrum,
+                modulus,
+                primitiveRoot,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
+                true,
+                diagnostics,
+                cancellationToken);
+
+            return spectrum;
+        }
+        catch
+        {
+            workers.ReturnNttBuffer(
+                spectrum);
+            throw;
+        }
+    }
+
+    private static int ConvolveSegmentWithCachedLeftSpectra(
+        uint[] cachedFirstSpectrum,
+        uint[] cachedSecondSpectrum,
+        uint[] right,
+        int rightOffset,
+        int rightLength,
+        int leftLength,
+        uint[] segmentProduct,
+        bool diagonalSquare,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        int coefficientCount =
+            checked(
+                leftLength +
+                rightLength -
+                1);
+
+        int transformLength =
+            cachedFirstSpectrum.Length;
+
+        Debug.Assert(
+            cachedSecondSpectrum.Length ==
+            transformLength);
+
+        Debug.Assert(
+            GetSegmentTransformLength(
+                leftLength,
+                rightLength) ==
+            transformLength);
+
+        if (segmentProduct.Length <
+            coefficientCount + 1)
+        {
+            throw new InvalidOperationException(
+                "The reusable segmented NTT result buffer is too small.");
+        }
+
+        diagnostics.NttMultiplicationCount++;
+
+        ConvolveModulusWithCachedLeftSpectrum(
+            cachedFirstSpectrum,
+            right,
+            rightOffset,
+            rightLength,
+            coefficientCount,
+            FirstModulus,
+            FirstPrimitiveRoot,
+            diagonalSquare,
+            true,
+            segmentProduct,
+            workers,
+            diagnostics,
+            cancellationToken,
+            static (_, _) =>
+            {
+            });
+
+        ulong trailingCarry = 0;
+
+        ConvolveModulusWithCachedLeftSpectrum(
+            cachedSecondSpectrum,
+            right,
+            rightOffset,
+            rightLength,
+            coefficientCount,
+            SecondModulus,
+            SecondPrimitiveRoot,
+            diagonalSquare,
+            false,
+            null,
+            workers,
+            diagnostics,
+            cancellationToken,
+            (transformedSecond, _) =>
+            {
+                trailingCarry =
+                    ReconstructCarryStreamingIntoFirstResidues(
+                        transformedSecond,
+                        segmentProduct,
+                        coefficientCount,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+            });
+
+        int resultLength =
+            coefficientCount;
+
+        if (trailingCarry > 0)
+        {
+            if (trailingCarry >= LimbBase)
+            {
+                throw new InvalidOperationException(
+                    "Normalized segmented NTT carry exceeded one base-10,000 limb.");
+            }
+
+            segmentProduct[resultLength++] =
+                (uint)trailingCarry;
+        }
+
+        return resultLength;
+    }
+
+    private static int ConvolveSegmentWithCachedLeftSpectraAndCarryRight(
+        ref uint[]? cachedFirstSpectrum,
+        ref uint[]? cachedSecondSpectrum,
+        uint[] right,
+        int rightOffset,
+        int rightLength,
+        int leftLength,
+        uint[] segmentProduct,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken,
+        out uint[] carriedFirstSpectrum,
+        out uint[] carriedSecondSpectrum)
+    {
+        uint[] firstLeft =
+            cachedFirstSpectrum ??
+            throw new ArgumentNullException(
+                nameof(cachedFirstSpectrum));
+
+        uint[] secondLeft =
+            cachedSecondSpectrum ??
+            throw new ArgumentNullException(
+                nameof(cachedSecondSpectrum));
+
+        int coefficientCount =
+            checked(
+                leftLength +
+                rightLength -
+                1);
+
+        int transformLength =
+            firstLeft.Length;
+
+        if (secondLeft.Length != transformLength ||
+            GetSegmentTransformLength(
+                leftLength,
+                rightLength) != transformLength)
+        {
+            throw new InvalidOperationException(
+                "Forward-spectrum carry requires matching segment transform lengths.");
+        }
+
+        if (segmentProduct.Length <
+            coefficientCount + 1)
+        {
+            throw new InvalidOperationException(
+                "The reusable segmented NTT result buffer is too small.");
+        }
+
+        diagnostics.NttMultiplicationCount++;
+
+        uint[]? firstCarry =
+            null;
+        uint[]? secondCarry =
+            null;
+
+        try
+        {
+            firstCarry =
+                ConvolveModulusPreserveRightSpectrum(
+                    firstLeft,
+                    right,
+                    rightOffset,
+                    rightLength,
+                    coefficientCount,
+                    FirstModulus,
+                    FirstPrimitiveRoot,
+                    compactFinalInverseOutput: true,
+                    compactInverseOutputDestination: segmentProduct,
+                    workers,
+                    diagnostics,
+                    cancellationToken,
+                    static (_, _) =>
+                    {
+                    });
+
+            // P1 left cache has served its final pair and has been overwritten
+            // by inverse output. Return it before renting the P2 right spectrum
+            // so active transform storage remains capped at three buffers.
+            workers.ReturnNttBuffer(
+                firstLeft);
+            cachedFirstSpectrum =
+                null;
+
+            ulong trailingCarry = 0;
+
+            secondCarry =
+                ConvolveModulusPreserveRightSpectrum(
+                    secondLeft,
+                    right,
+                    rightOffset,
+                    rightLength,
+                    coefficientCount,
+                    SecondModulus,
+                    SecondPrimitiveRoot,
+                    compactFinalInverseOutput: false,
+                    compactInverseOutputDestination: null,
+                    workers,
+                    diagnostics,
+                    cancellationToken,
+                    (transformedSecond, _) =>
+                    {
+                        trailingCarry =
+                            ReconstructCarryStreamingIntoFirstResidues(
+                                transformedSecond,
+                                segmentProduct,
+                                coefficientCount,
+                                workers,
+                                diagnostics,
+                                cancellationToken);
+                    });
+
+            workers.ReturnNttBuffer(
+                secondLeft);
+            cachedSecondSpectrum =
+                null;
+
+            int resultLength =
+                coefficientCount;
+
+            if (trailingCarry > 0)
+            {
+                if (trailingCarry >= LimbBase)
+                {
+                    throw new InvalidOperationException(
+                        "Normalized segmented NTT carry exceeded one base-10,000 limb.");
+                }
+
+                segmentProduct[resultLength++] =
+                    (uint)trailingCarry;
+            }
+
+            carriedFirstSpectrum =
+                firstCarry;
+            carriedSecondSpectrum =
+                secondCarry;
+
+            firstCarry =
+                null;
+            secondCarry =
+                null;
+
+            return resultLength;
+        }
+        finally
+        {
+            if (secondCarry is not null)
+            {
+                workers.ReturnNttBuffer(
+                    secondCarry);
+            }
+
+            if (firstCarry is not null)
+            {
+                workers.ReturnNttBuffer(
+                    firstCarry);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Final-pair variant used by the 3-segment square carry. The cached left
+    /// spectrum is intentionally consumed as the pointwise/inverse workspace,
+    /// leaving the freshly transformed right spectrum untouched so it can be
+    /// reused as the next outer segment's diagonal cache.
+    /// </summary>
+    private static uint[] ConvolveModulusPreserveRightSpectrum(
+        uint[] cachedLeftSpectrum,
+        uint[] right,
+        int rightOffset,
+        int rightLength,
+        int validOutputLength,
+        uint modulus,
+        uint primitiveRoot,
+        bool compactFinalInverseOutput,
+        uint[]? compactInverseOutputDestination,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken,
+        Action<uint[], uint[]?> consumeInverseTransform)
+    {
+        int transformLength =
+            cachedLeftSpectrum.Length;
+
+        int fusedNttBlockLength =
+            SelectFusedNttBlockLength();
+
+        int l2NttTileLength =
+            SelectL2NttTileLength(
+                fusedNttBlockLength);
+
+        int l3NttTileLength =
+            SelectL3NttTileLength(
+                l2NttTileLength);
+
+        NttTwiddlePlan twiddlePlan =
+            workers.GetTwiddlePlan(
+                modulus);
+
+        uint[] transformedRight =
+            workers.RentNttBuffer(
+                transformLength,
+                out _);
+
+        try
+        {
+            PrepareNttBuffer(
+                transformedRight,
+                right,
+                rightOffset,
+                rightLength);
+
+            ForwardDifTransform(
+                transformedRight,
+                modulus,
+                primitiveRoot,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
+                false,
+                diagnostics,
+                cancellationToken);
+
+            long pointwiseStarted =
+                Stopwatch.GetTimestamp();
+
+            ExecuteRanges(
+                transformLength,
+                workers,
+                cancellationToken,
+                (start, end) =>
+                {
+                    for (int index = start;
+                         index < end;
+                         index++)
+                    {
+                        cachedLeftSpectrum[index] =
+                            (uint)((ulong)cachedLeftSpectrum[index] *
+                                   transformedRight[index] %
+                                   modulus);
+                    }
+                });
+
+            diagnostics.PointwiseTicks +=
+                Stopwatch.GetTimestamp() -
+                pointwiseStarted;
+
+            uint[]? compactInverseOutput =
+                InverseDitTransform(
+                    cachedLeftSpectrum,
+                    modulus,
+                    primitiveRoot,
+                    validOutputLength,
+                    compactFinalInverseOutput,
+                    compactInverseOutputDestination,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
+                    diagnostics,
+                    cancellationToken);
+
+            consumeInverseTransform(
+                cachedLeftSpectrum,
+                compactInverseOutput);
+
+            uint[] result =
+                transformedRight;
+
+            transformedRight =
+                null!;
+
+            return result;
+        }
+        finally
+        {
+            if (transformedRight is not null)
+            {
+                workers.ReturnNttBuffer(
+                    transformedRight);
+            }
+        }
+    }
+
+    private static void ConvolveModulusWithCachedLeftSpectrum(
+        uint[] cachedLeftSpectrum,
+        uint[] right,
+        int rightOffset,
+        int rightLength,
+        int validOutputLength,
+        uint modulus,
+        uint primitiveRoot,
+        bool diagonalSquare,
+        bool compactFinalInverseOutput,
+        uint[]? compactInverseOutputDestination,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken,
+        Action<uint[], uint[]?> consumeInverseTransform)
+    {
+        int transformLength =
+            cachedLeftSpectrum.Length;
+
+        int fusedNttBlockLength =
+            SelectFusedNttBlockLength();
+
+        int l2NttTileLength =
+            SelectL2NttTileLength(
+                fusedNttBlockLength);
+
+        int l3NttTileLength =
+            SelectL3NttTileLength(
+                l2NttTileLength);
+
+        NttTwiddlePlan twiddlePlan =
+            workers.GetTwiddlePlan(
+                modulus);
+
+        uint[] transformedProduct =
+            workers.RentNttBuffer(
+                transformLength,
+                out _);
+
+        try
+        {
+            if (diagonalSquare)
+            {
+                long pointwiseStarted =
+                    Stopwatch.GetTimestamp();
+
+                ExecuteRanges(
+                    transformLength,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
+                    {
+                        for (int index = start;
+                             index < end;
+                             index++)
+                        {
+                            ulong value =
+                                cachedLeftSpectrum[index];
+
+                            transformedProduct[index] =
+                                (uint)(value *
+                                       value %
+                                       modulus);
+                        }
+                    });
+
+                diagnostics.PointwiseTicks +=
+                    Stopwatch.GetTimestamp() -
+                    pointwiseStarted;
+            }
+            else
+            {
+                PrepareNttBuffer(
+                    transformedProduct,
+                    right,
+                    rightOffset,
+                    rightLength);
+
+                ForwardDifTransform(
+                    transformedProduct,
+                    modulus,
+                    primitiveRoot,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
+                    false,
+                    diagnostics,
+                    cancellationToken);
+
+                long pointwiseStarted =
+                    Stopwatch.GetTimestamp();
+
+                ExecuteRanges(
+                    transformLength,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
+                    {
+                        for (int index = start;
+                             index < end;
+                             index++)
+                        {
+                            transformedProduct[index] =
+                                (uint)((ulong)transformedProduct[index] *
+                                       cachedLeftSpectrum[index] %
+                                       modulus);
+                        }
+                    });
+
+                diagnostics.PointwiseTicks +=
+                    Stopwatch.GetTimestamp() -
+                    pointwiseStarted;
+            }
+
+            uint[]? compactInverseOutput =
+                InverseDitTransform(
+                    transformedProduct,
+                    modulus,
+                    primitiveRoot,
+                    validOutputLength,
+                    compactFinalInverseOutput,
+                    compactInverseOutputDestination,
+                    workers,
+                    twiddlePlan,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
+                    diagnostics,
+                    cancellationToken);
+
+            consumeInverseTransform(
+                transformedProduct,
+                compactInverseOutput);
+        }
+        finally
+        {
+            workers.ReturnNttBuffer(
+                transformedProduct);
+        }
     }
 
     private static int ConvolveSegmentIntoReusableBuffer(
@@ -1867,26 +2790,10 @@ internal sealed class ParallelBigUnsigned
                 rightLength -
                 1);
 
-        int transformLength = 1;
-
-        while (transformLength <
-               coefficientCount)
-        {
-            transformLength =
-                checked(
-                    transformLength << 1);
-        }
-
-        Debug.Assert(
-            transformLength <=
-            MaximumTransformLength);
-
-        if (transformLength >
-            MaximumTransformLength)
-        {
-            throw new InvalidOperationException(
-                "A segmented NTT pair exceeded the supported 2^26 transform length.");
-        }
+        int transformLength =
+            GetSegmentTransformLength(
+                leftLength,
+                rightLength);
 
         if (segmentProduct.Length <
             coefficientCount + 1)
@@ -9305,6 +10212,10 @@ while (leftIndex + 1 < butterflyEnd)
         private int _largePowerChunkExponent;
         private int _segmentedNttMultiplicationCount;
         private int _segmentedNttPairCount;
+        private int _largeForwardTransformSavedCount;
+        private long _largePersistentGenerationCount;
+        private long _largePersistentStaticRangeCount;
+        private int _largeMemoryBudgetBufferLimit;
 
         private bool _usedExponentSplit;
         private int _firstExponent;
@@ -9401,6 +10312,11 @@ while (leftIndex + 1 < butterflyEnd)
                 checked(
                     _nttBufferReuseCount +
                     snapshot.NttBufferReuseCount);
+
+            _largeForwardTransformSavedCount =
+                checked(
+                    _largeForwardTransformSavedCount +
+                    snapshot.LargeForwardTransformSavedCount);
         }
 
         public void ConfigureSegmentedNttMultiplication(
@@ -9415,6 +10331,38 @@ while (leftIndex + 1 < butterflyEnd)
                 checked(
                     _segmentedNttPairCount +
                     segmentPairCount);
+        }
+
+        public void ConfigureLargeForwardSpectrumCache(
+            int savedForwardTransformCount)
+        {
+            _largeForwardTransformSavedCount =
+                checked(
+                    _largeForwardTransformSavedCount +
+                    Math.Max(
+                        0,
+                        savedForwardTransformCount));
+        }
+
+        public void ConfigureLargePersistentStaticScheduler(
+            long generationCount,
+            long staticRangeCount,
+            int memoryBudgetBufferLimit)
+        {
+            _largePersistentGenerationCount =
+                Math.Max(
+                    0L,
+                    generationCount);
+
+            _largePersistentStaticRangeCount =
+                Math.Max(
+                    0L,
+                    staticRangeCount);
+
+            _largeMemoryBudgetBufferLimit =
+                Math.Max(
+                    0,
+                    memoryBudgetBufferLimit);
         }
 
         public void ConfigureLargeMemoryBoundedMode(
@@ -9505,7 +10453,11 @@ while (leftIndex + 1 < butterflyEnd)
                 _usedMemoryBoundedLargePower,
                 _largePowerChunkExponent,
                 _segmentedNttMultiplicationCount,
-                _segmentedNttPairCount);
+                _segmentedNttPairCount,
+                _largeForwardTransformSavedCount,
+                _largePersistentGenerationCount,
+                _largePersistentStaticRangeCount,
+                _largeMemoryBudgetBufferLimit);
         }
 
         private static long ToTimestampTicks(
@@ -9770,10 +10722,12 @@ while (leftIndex + 1 < butterflyEnd)
         int ReuseCount);
 
     /// <summary>
-    /// Reuses the two large temporary uint[] workspaces needed by an NTT
+    /// Reuses the large temporary uint[] workspaces needed by an NTT
     /// convolution. Only arrays of the largest transform length observed so
-    /// far are retained, and at most two are cached because a non-square
-    /// convolution can have exactly two transforms live at once.
+    /// far are retained. The production <=10M path keeps the historical cap of
+    /// two buffers; memory-bounded segmented mode opts into three so two cached
+    /// outer spectra plus one mutable product workspace can be reused without
+    /// creating a fresh 256 MiB array for every outer segment.
     ///
     /// The pool is scoped to exactly one Pow operation. Split branches and the
     /// final combine share it while the calculation is active; Dispose then
@@ -9782,13 +10736,14 @@ while (leftIndex + 1 < butterflyEnd)
     /// </summary>
     private sealed class NttBufferPool : IDisposable
     {
-        private const int MaximumRetainedBufferCount = 2;
+        private const int DefaultMaximumRetainedBufferCount = 2;
 
         private readonly object _gate =
             new();
 
-        private readonly Stack<uint[]> _buffers =
-            new(MaximumRetainedBufferCount);
+        private readonly Stack<uint[]> _buffers;
+        private readonly int _maximumRetainedBufferCount;
+        private readonly SemaphoreSlim? _leaseGate;
 
         private int _retainedLength;
         private long _currentLeasedBytes;
@@ -9799,6 +10754,40 @@ while (leftIndex + 1 < butterflyEnd)
         private int _leasedBufferCount;
         private bool _disposed;
 
+        public NttBufferPool(
+            int maximumRetainedBufferCount =
+                DefaultMaximumRetainedBufferCount,
+            int maximumLeasedBufferCount =
+                int.MaxValue)
+        {
+            if (maximumRetainedBufferCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maximumRetainedBufferCount));
+            }
+
+            if (maximumLeasedBufferCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maximumLeasedBufferCount));
+            }
+
+            _maximumRetainedBufferCount =
+                maximumRetainedBufferCount;
+
+            if (maximumLeasedBufferCount != int.MaxValue)
+            {
+                _leaseGate =
+                    new SemaphoreSlim(
+                        maximumLeasedBufferCount,
+                        maximumLeasedBufferCount);
+            }
+
+            _buffers =
+                new Stack<uint[]>(
+                    maximumRetainedBufferCount);
+        }
+
         public uint[] Rent(
             int length,
             out bool reused)
@@ -9806,62 +10795,79 @@ while (leftIndex + 1 < butterflyEnd)
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
                 length);
 
-            lock (_gate)
+            _leaseGate?.Wait();
+            bool leaseGateHeld =
+                _leaseGate is not null;
+
+            try
             {
-                ObjectDisposedException.ThrowIf(
-                    _disposed,
-                    this);
-
-                if (length >
-                    _retainedLength)
+                lock (_gate)
                 {
-                    _buffers.Clear();
-                    _retainedLength =
-                        length;
-                }
+                    ObjectDisposedException.ThrowIf(
+                        _disposed,
+                        this);
 
-                uint[] buffer;
+                    if (length >
+                        _retainedLength)
+                    {
+                        _buffers.Clear();
+                        _retainedLength =
+                            length;
+                    }
 
-                if (length ==
-                        _retainedLength &&
-                    _buffers.Count > 0)
-                {
-                    reused =
-                        true;
+                    uint[] buffer;
 
-                    buffer =
-                        _buffers.Pop();
+                    if (length ==
+                            _retainedLength &&
+                        _buffers.Count > 0)
+                    {
+                        reused =
+                            true;
 
-                    _reuseCount++;
-                }
-                else
-                {
-                    reused =
+                        buffer =
+                            _buffers.Pop();
+
+                        _reuseCount++;
+                    }
+                    else
+                    {
+                        reused =
+                            false;
+
+                        // PrepareNttBuffer overwrites the source prefix and
+                        // explicitly clears only the required zero-padding tail.
+                        // Avoid zeroing the entire 128-256 MiB workspace here.
+                        buffer =
+                            GC.AllocateUninitializedArray<uint>(
+                                length);
+                    }
+
+                    _rentCount++;
+                    _leasedBufferCount++;
+
+                    _currentLeasedBytes =
+                        checked(
+                            _currentLeasedBytes +
+                            (long)buffer.Length *
+                            sizeof(uint));
+
+                    _peakLeasedBytes =
+                        Math.Max(
+                            _peakLeasedBytes,
+                            _currentLeasedBytes);
+
+                    leaseGateHeld =
                         false;
 
-                    // PrepareNttBuffer overwrites the source prefix and
-                    // explicitly clears only the required zero-padding tail.
-                    // Avoid zeroing the entire 128-256 MiB workspace here.
-                    buffer =
-                        GC.AllocateUninitializedArray<uint>(
-                            length);
+                    return buffer;
                 }
-
-                _rentCount++;
-                _leasedBufferCount++;
-
-                _currentLeasedBytes =
-                    checked(
-                        _currentLeasedBytes +
-                        (long)buffer.Length *
-                        sizeof(uint));
-
-                _peakLeasedBytes =
-                    Math.Max(
-                        _peakLeasedBytes,
-                        _currentLeasedBytes);
-
-                return buffer;
+            }
+            finally
+            {
+                if (leaseGateHeld)
+                {
+                    _leaseGate!.Release();
+                }
             }
         }
 
@@ -9870,6 +10876,9 @@ while (leftIndex + 1 < butterflyEnd)
         {
             ArgumentNullException.ThrowIfNull(
                 buffer);
+
+            bool releaseLeaseGate =
+                false;
 
             lock (_gate)
             {
@@ -9901,7 +10910,7 @@ while (leftIndex + 1 < butterflyEnd)
                 if (buffer.Length ==
                         _retainedLength &&
                     _buffers.Count <
-                        MaximumRetainedBufferCount)
+                        _maximumRetainedBufferCount)
                 {
                     _buffers.Push(
                         buffer);
@@ -9913,6 +10922,14 @@ while (leftIndex + 1 < butterflyEnd)
                             _retainedLength *
                             sizeof(uint));
                 }
+
+                releaseLeaseGate =
+                    _leaseGate is not null;
+            }
+
+            if (releaseLeaseGate)
+            {
+                _leaseGate!.Release();
             }
         }
 
@@ -9965,6 +10982,8 @@ while (leftIndex + 1 < butterflyEnd)
                 _retainedLength =
                     0;
             }
+
+            _leaseGate?.Dispose();
         }
     }
 
@@ -9986,6 +11005,20 @@ while (leftIndex + 1 < butterflyEnd)
         private int _generation;
         private int _itemCount;
         private bool _stopping;
+
+        // Large-mode scheduler policy. Public <=10M Pow() leaves this disabled
+        // and therefore keeps the historical worker-team lifetime. Large mode
+        // reuses one physical worker team across seed/remainder/merge phases,
+        // but each hot NTT/CRT generation is deliberately partitioned into one
+        // contiguous static range per worker. This preserves cache locality and
+        // avoids the queue/atomic/cache-line traffic measured with work stealing
+        // and tail-help on the HX 370.
+        private const int PersistentStageSpinCount =
+            16;
+
+        private readonly bool _persistentStaticScheduling;
+        private long _persistentGenerationCount;
+        private long _persistentStaticRangeCount;
 
         // v31: twiddle plans are Pow-scoped and shared by every worker team.
         // The hot NTT kernels still receive the same NttTwiddlePlan object; only
@@ -10013,7 +11046,8 @@ while (leftIndex + 1 < butterflyEnd)
         public FixedWorkerTeam(
             int workerCount,
             NttBufferPool nttBufferPool,
-            SharedNttTwiddlePlans sharedNttTwiddlePlans)
+            SharedNttTwiddlePlans sharedNttTwiddlePlans,
+            bool persistentStaticScheduling = false)
         {
             _nttBufferPool =
                 nttBufferPool ??
@@ -10029,6 +11063,10 @@ while (leftIndex + 1 < butterflyEnd)
                 Math.Max(
                     1,
                     workerCount);
+
+            _persistentStaticScheduling =
+                persistentStaticScheduling &&
+                WorkerCount > 1;
 
             _threads =
                 WorkerCount == 1
@@ -10060,6 +11098,14 @@ while (leftIndex + 1 < butterflyEnd)
         }
 
         public int WorkerCount { get; }
+
+        public long PersistentGenerationCount =>
+            Interlocked.Read(
+                ref _persistentGenerationCount);
+
+        public long PersistentStaticRangeCount =>
+            Interlocked.Read(
+                ref _persistentStaticRangeCount);
 
         public uint[] RentNttBuffer(
             int length,
@@ -10163,6 +11209,11 @@ while (leftIndex + 1 < butterflyEnd)
             int itemCount,
             Action<int, int> body)
         {
+            if (itemCount <= 0)
+            {
+                return;
+            }
+
             if (WorkerCount == 1)
             {
                 body(
@@ -10186,6 +11237,21 @@ while (leftIndex + 1 < butterflyEnd)
                 _failure =
                     null;
 
+                if (_persistentStaticScheduling)
+                {
+                    _persistentGenerationCount =
+                        checked(
+                            _persistentGenerationCount +
+                            1);
+
+                    _persistentStaticRangeCount =
+                        checked(
+                            _persistentStaticRangeCount +
+                            Math.Min(
+                                WorkerCount,
+                                itemCount));
+                }
+
                 _completed.Reset(
                     WorkerCount);
 
@@ -10200,11 +11266,6 @@ while (leftIndex + 1 < butterflyEnd)
             // still touch buffers that the caller is about to release.
             _completed.Wait();
 
-            // v32: every worker has finished touching the scheduled buffers at
-            // this point. Do not let the team field retain the last closure
-            // until the next NTT stage (or until Dispose), because that closure
-            // can capture 128-256 MiB transform arrays. Keep only a local
-            // exception reference long enough to rethrow it.
             _body =
                 null;
 
@@ -10272,6 +11333,32 @@ while (leftIndex + 1 < butterflyEnd)
                 Action<int, int>? body;
                 int itemCount;
 
+                if (_persistentStaticScheduling &&
+                    observedGeneration ==
+                    Volatile.Read(
+                        ref _generation))
+                {
+                    // Most adjacent NTT stages are separated by only a tiny
+                    // coordinator hand-off. Keep the first few iterations in
+                    // the CPU PAUSE/yield region, then park normally. The old
+                    // 96-iteration spin was too aggressive for memory-bound
+                    // transforms and could add scheduler/cache pressure.
+                    var spin =
+                        new SpinWait();
+
+                    for (int iteration = 0;
+                         iteration < PersistentStageSpinCount &&
+                         observedGeneration ==
+                         Volatile.Read(
+                             ref _generation) &&
+                         !Volatile.Read(
+                             ref _stopping);
+                         iteration++)
+                    {
+                        spin.SpinOnce();
+                    }
+                }
+
                 lock (_gate)
                 {
                     while (!_stopping &&
@@ -10300,14 +11387,16 @@ while (leftIndex + 1 < butterflyEnd)
                 try
                 {
                     int start =
-                        workerIndex *
-                        itemCount /
-                        WorkerCount;
+                        (int)(
+                            (long)workerIndex *
+                            itemCount /
+                            WorkerCount);
 
                     int end =
-                        (workerIndex + 1) *
-                        itemCount /
-                        WorkerCount;
+                        (int)(
+                            (long)(workerIndex + 1) *
+                            itemCount /
+                            WorkerCount);
 
                     if (start < end)
                     {
@@ -10326,11 +11415,6 @@ while (leftIndex + 1 < butterflyEnd)
                 }
                 finally
                 {
-                    // Release the per-thread delegate reference before the
-                    // completion signal tells the caller it may recycle the
-                    // captured NTT buffers. This complements clearing _body in
-                    // Execute() and makes the end of every scheduled range a
-                    // hard lifetime boundary for large array closures.
                     body =
                         null;
 
@@ -10338,6 +11422,8 @@ while (leftIndex + 1 < butterflyEnd)
                 }
             }
         }
+
+
     }
 
     private static int CountMultiplications(
@@ -11177,4 +12263,8 @@ internal sealed record ParallelPowerDiagnostics(
     bool UsedMemoryBoundedLargePower,
     int LargePowerChunkExponent,
     int SegmentedNttMultiplicationCount,
-    int SegmentedNttPairCount);
+    int SegmentedNttPairCount,
+    int LargeForwardTransformSavedCount,
+    long LargePersistentGenerationCount,
+    long LargePersistentStaticRangeCount,
+    int LargeMemoryBudgetBufferLimit);

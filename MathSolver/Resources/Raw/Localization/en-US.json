@@ -1414,7 +1414,8 @@
     "PowerRoot.LargeExponentContinue": "Continue",
     "PowerRoot.LargeExponentCancel": "Cancel",
     "PowerRoot.InfoEngineParallelNttLarge": "• Engine: memory-bounded exact NTT/CRT for exponent > 10M (segmented/in-place uint32 NTT)",
-    "PowerRoot.InfoLargeNttMode": "• Large-scale NTT: legacy chunk ≤ {0}; segmented merges {1}; segment-pair convolutions {2} • uint32 residues / temporary uint64 products",
+    "PowerRoot.InfoLargeNttMode": "• Large-scale NTT: legacy chunk ≤ {0}; segmented merges {1}; segment-pair convolutions {2}; forward cache avoids {3} forward transforms • uint32 residues / temporary uint64 products",
+    "PowerRoot.InfoLargeNttScheduler": "• Large NTT scheduler: {0} persistent static generations; {1} contiguous static ranges; MemoryBudgetGate allows at most {2} leased transform buffers",
     "PowerRoot.StepLargeNttMemoryBounded": "Because the exponent is above 10,000,000, the app keeps the proven ≤10M NTT/CRT kernel unchanged, computes exponent chunks no larger than {0}, then merges them with memory-bounded segmented in-place NTT/CRT. Transform residues stay 32-bit; only temporary modular products use 64-bit arithmetic."
   },
   "templates": {

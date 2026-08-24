@@ -4004,7 +4004,20 @@ public partial class PowerRootView : LocalizedSolverView
                             "N0",
                             CultureInfo.InvariantCulture),
                         diagnostics.SegmentedNttMultiplicationCount,
-                        diagnostics.SegmentedNttPairCount));
+                        diagnostics.SegmentedNttPairCount,
+                        diagnostics.LargeForwardTransformSavedCount));
+
+                lines.Insert(
+                    7,
+                    Format(
+                        "PowerRoot.InfoLargeNttScheduler",
+                        diagnostics.LargePersistentGenerationCount.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        diagnostics.LargePersistentStaticRangeCount.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        diagnostics.LargeMemoryBudgetBufferLimit));
             }
 
             if (diagnostics.UsedExponentSplit)
