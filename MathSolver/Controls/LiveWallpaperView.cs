@@ -28,7 +28,7 @@ public sealed class LiveWallpaperView : Grid
     private static readonly object PlaybackOwnerLock = new();
     private static WeakReference<LiveWallpaperView>? s_playbackOwner;
 
-    private MathAnimatedBackgroundDrawable? _mathDrawable;
+    private ITimeDrivenDrawable? _mathDrawable;
     private GraphicsView? _mathAnimationView;
     private BoxView? _readabilityScrim;
     private MediaElement? _mediaElement;
@@ -216,10 +216,11 @@ public sealed class LiveWallpaperView : Grid
         LiveWallpaperMode mode =
             LiveWallpaperManager.Mode;
 
-        if (mode == LiveWallpaperMode.MathAnimation)
+        if (mode != LiveWallpaperMode.Mp4)
         {
-            // Math Animation is intentionally allowed to continue during AI/LLM
-            // inference. At 24 FPS its ambient drawing overhead is very small.
+            // Built-in animations are intentionally allowed to continue during
+            // AI/LLM inference. At 24 FPS their ambient drawing overhead is
+            // very small and they do not allocate a native media decoder.
             StopAdaptiveContrast();
             AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
                 refreshVisualResources: false);
@@ -229,7 +230,7 @@ public sealed class LiveWallpaperView : Grid
             // on a short delay to keep Picker mode switching re-entrancy safe.
             ReleaseSource();
             ScheduleMediaElementRelease();
-            StartMathAnimation();
+            StartMathAnimation(mode);
             return;
         }
 
@@ -278,8 +279,8 @@ public sealed class LiveWallpaperView : Grid
             LiveWallpaperManager.IsEnabled;
         bool showMath =
             shouldShow &&
-            LiveWallpaperManager.Mode ==
-                LiveWallpaperMode.MathAnimation;
+            LiveWallpaperManager.Mode !=
+                LiveWallpaperMode.Mp4;
         bool showMp4 =
             shouldShow &&
             LiveWallpaperManager.Mode ==
@@ -398,15 +399,23 @@ public sealed class LiveWallpaperView : Grid
         }
     }
 
-    private GraphicsView EnsureMathAnimationView()
+    private GraphicsView EnsureMathAnimationView(
+        LiveWallpaperMode mode)
     {
-        if (_mathAnimationView is not null)
+        ITimeDrivenDrawable drawable =
+            mode == LiveWallpaperMode.MathAnimation2
+                ? new MathNeuralBackgroundDrawable()
+                : new MathAnimatedBackgroundDrawable();
+
+        if (_mathAnimationView is not null &&
+            _mathDrawable is not null &&
+            _mathDrawable.GetType() == drawable.GetType())
         {
             return _mathAnimationView;
         }
 
-        _mathDrawable =
-            new MathAnimatedBackgroundDrawable();
+        ReleaseMathAnimationResources();
+        _mathDrawable = drawable;
 
         _mathAnimationView = new GraphicsView
         {
@@ -505,10 +514,11 @@ public sealed class LiveWallpaperView : Grid
         _animationTimer.Tick += OnAnimationTick;
     }
 
-    private void StartMathAnimation()
+    private void StartMathAnimation(
+        LiveWallpaperMode mode)
     {
         GraphicsView view =
-            EnsureMathAnimationView();
+            EnsureMathAnimationView(mode);
         view.IsVisible = true;
 
         EnsureAnimationTimer();
@@ -570,7 +580,7 @@ public sealed class LiveWallpaperView : Grid
         EventArgs e)
     {
         if (!_isPageActive ||
-            !LiveWallpaperManager.IsMathAnimationEnabled ||
+            !LiveWallpaperManager.IsBuiltInAnimationEnabled ||
             _mathAnimationView is null ||
             _mathDrawable is null)
         {

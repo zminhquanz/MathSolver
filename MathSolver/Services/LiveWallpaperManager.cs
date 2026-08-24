@@ -3,7 +3,8 @@ namespace MathSolver.Services;
 public enum LiveWallpaperMode
 {
     MathAnimation = 0,
-    Mp4 = 1
+    Mp4 = 1,
+    MathAnimation2 = 2
 }
 
 /// <summary>
@@ -140,6 +141,7 @@ public static class LiveWallpaperManager
             return Mode switch
             {
                 LiveWallpaperMode.MathAnimation => true,
+                LiveWallpaperMode.MathAnimation2 => true,
                 LiveWallpaperMode.Mp4 =>
                     HasWallpaper &&
                     IsHardwareH264Validated,
@@ -148,9 +150,13 @@ public static class LiveWallpaperManager
         }
     }
 
-    public static bool IsMathAnimationEnabled =>
+    public static bool IsBuiltInAnimationEnabled =>
         IsEnabled &&
-        Mode == LiveWallpaperMode.MathAnimation;
+        (Mode == LiveWallpaperMode.MathAnimation ||
+         Mode == LiveWallpaperMode.MathAnimation2);
+
+    public static bool IsMathAnimationEnabled =>
+        IsBuiltInAnimationEnabled;
 
     public static bool IsMp4Enabled =>
         IsEnabled &&
@@ -336,6 +342,7 @@ public static class LiveWallpaperManager
     {
         bool canEnable =
             Mode == LiveWallpaperMode.MathAnimation ||
+            Mode == LiveWallpaperMode.MathAnimation2 ||
             (Mode == LiveWallpaperMode.Mp4 &&
              HasWallpaper &&
              IsHardwareH264Validated);

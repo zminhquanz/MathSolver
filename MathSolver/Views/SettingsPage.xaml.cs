@@ -509,9 +509,13 @@ public partial class SettingsPage : ContentPage
         }
 
         LiveWallpaperMode selectedMode =
-            LiveWallpaperModePicker.SelectedIndex == 1
-                ? LiveWallpaperMode.Mp4
-                : LiveWallpaperMode.MathAnimation;
+            LiveWallpaperModePicker.SelectedIndex switch
+            {
+                0 => LiveWallpaperMode.MathAnimation,
+                1 => LiveWallpaperMode.MathAnimation2,
+                2 => LiveWallpaperMode.Mp4,
+                _ => LiveWallpaperMode.MathAnimation
+            };
 
         LiveWallpaperManager.SetMode(selectedMode);
         UpdateLiveWallpaperSettings();
@@ -641,12 +645,15 @@ public partial class SettingsPage : ContentPage
         _updatingLiveWallpaperModePicker = true;
         try
         {
-            if (LiveWallpaperModePicker.Items.Count >= 2)
+            if (LiveWallpaperModePicker.Items.Count >= 3)
             {
-                LiveWallpaperModePicker.SelectedIndex =
-                    mode == LiveWallpaperMode.Mp4
-                        ? 1
-                        : 0;
+                LiveWallpaperModePicker.SelectedIndex = mode switch
+                {
+                    LiveWallpaperMode.MathAnimation => 0,
+                    LiveWallpaperMode.MathAnimation2 => 1,
+                    LiveWallpaperMode.Mp4 => 2,
+                    _ => 0
+                };
             }
         }
         finally
@@ -656,6 +663,7 @@ public partial class SettingsPage : ContentPage
 
         bool canEnable =
             mode == LiveWallpaperMode.MathAnimation ||
+            mode == LiveWallpaperMode.MathAnimation2 ||
             (hasWallpaper &&
              LiveWallpaperManager.IsHardwareH264Validated);
 
@@ -673,7 +681,7 @@ public partial class SettingsPage : ContentPage
         }
 
         MathAnimationInfoBorder.IsVisible =
-            mode == LiveWallpaperMode.MathAnimation;
+            mode != LiveWallpaperMode.Mp4;
         Mp4WallpaperOptionsLayout.IsVisible =
             mode == LiveWallpaperMode.Mp4;
 
@@ -719,14 +727,54 @@ public partial class SettingsPage : ContentPage
                         : "H.264 / AVC • phần cứng ưu tiên");
         }
 
-        LiveWallpaperEnabledSummaryLabel.Text =
-            mode == LiveWallpaperMode.MathAnimation
-                ? (useEnglish
+        if (mode == LiveWallpaperMode.MathAnimation)
+        {
+            MathAnimationTitleLabel.Text =
+                useEnglish
+                    ? "Math Solver Animation (Mathematical Style)"
+                    : "Animation Math Solver (Mathematical Style)";
+            MathAnimationSummaryLabel.Text =
+                useEnglish
+                    ? "GraphicsView • 24 FPS • geometry 2D/3D • Find X • linear/quadratic equations"
+                    : "GraphicsView • 24 FPS • hình học phẳng/không gian • Tìm X • phương trình bậc 1/2";
+
+            LiveWallpaperEnabledSummaryLabel.Text =
+                useEnglish
                     ? "The lightweight 24 FPS GraphicsView animation keeps running during local AI inference and stops only when the tab is inactive."
-                    : "Animation GraphicsView nhẹ ở 24 FPS vẫn chạy khi AI local tạo sinh và chỉ dừng khi tab không hoạt động.")
-                : (useEnglish
+                    : "Animation GraphicsView nhẹ ở 24 FPS vẫn chạy khi AI local tạo sinh và chỉ dừng khi tab không hoạt động.";
+        }
+        else if (mode == LiveWallpaperMode.MathAnimation2)
+        {
+            MathAnimationTitleLabel.Text =
+                useEnglish
+                    ? "Math Solver Animation 2 (Neural Network + Mathematical Space)"
+                    : "Animation Math Solver 2 (Neural network + Mathematical Space)";
+            MathAnimationSummaryLabel.Text =
+                useEnglish
+                    ? "GraphicsView • 24 FPS • soft neural network • mathematical space • AI brain + open book"
+                    : "GraphicsView • 24 FPS • neural network mờ nhẹ • mathematical space • bộ não AI + cuốn sách";
+
+            LiveWallpaperEnabledSummaryLabel.Text =
+                useEnglish
+                    ? "The neural-math GraphicsView animation keeps running during local AI inference and stops only when the tab is inactive."
+                    : "Animation neural-math bằng GraphicsView vẫn chạy khi AI local tạo sinh và chỉ dừng khi tab không hoạt động.";
+        }
+        else
+        {
+            MathAnimationTitleLabel.Text =
+                useEnglish
+                    ? "Math Solver Animation (Mathematical Style)"
+                    : "Animation Math Solver (Mathematical Style)";
+            MathAnimationSummaryLabel.Text =
+                useEnglish
+                    ? "GraphicsView • 24 FPS • no external file • lighter than video"
+                    : "GraphicsView • 24 FPS • không cần file • nhẹ hơn video";
+
+            LiveWallpaperEnabledSummaryLabel.Text =
+                useEnglish
                     ? "H.264 video loops silently with native hardware-preferred decoding and keeps playing during local AI inference."
-                    : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và vẫn phát khi AI local tạo sinh.");
+                    : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và vẫn phát khi AI local tạo sinh.";
+        }
     }
 
     private void OnDeveloperModeToggled(
@@ -821,16 +869,23 @@ public partial class SettingsPage : ContentPage
         _updatingLiveWallpaperModePicker = true;
         try
         {
-            int selectedMode =
-                LiveWallpaperManager.Mode == LiveWallpaperMode.Mp4
-                    ? 1
-                    : 0;
+            int selectedMode = LiveWallpaperManager.Mode switch
+            {
+                LiveWallpaperMode.MathAnimation => 0,
+                LiveWallpaperMode.MathAnimation2 => 1,
+                LiveWallpaperMode.Mp4 => 2,
+                _ => 0
+            };
 
             LiveWallpaperModePicker.Items.Clear();
             LiveWallpaperModePicker.Items.Add(
                 useEnglish
-                    ? "Math Solver animation (GraphicsView)"
-                    : "Animation Math Solver (GraphicsView)");
+                    ? "Math Solver animation (Mathematical Style)"
+                    : "Animation Math Solver (Mathematical Style)");
+            LiveWallpaperModePicker.Items.Add(
+                useEnglish
+                    ? "Math Solver animation 2 (Neural network + Mathematical Space)"
+                    : "Animation Math Solver 2 (Neural network + Mathematical Space)");
             LiveWallpaperModePicker.Items.Add(
                 useEnglish
                     ? "MP4 live wallpaper"
@@ -842,15 +897,30 @@ public partial class SettingsPage : ContentPage
             _updatingLiveWallpaperModePicker = false;
         }
 
-        MathAnimationTitleLabel.Text =
-            useEnglish
-                ? "Math Solver Animation"
-                : "Animation Math Solver";
+        if (LiveWallpaperManager.Mode == LiveWallpaperMode.MathAnimation2)
+        {
+            MathAnimationTitleLabel.Text =
+                useEnglish
+                    ? "Math Solver Animation 2 (Neural Network + Mathematical Space)"
+                    : "Animation Math Solver 2 (Neural network + Mathematical Space)";
 
-        MathAnimationSummaryLabel.Text =
-            useEnglish
-                ? "GraphicsView • 24 FPS • no external file • lighter than video"
-                : "GraphicsView • 24 FPS • không cần file • nhẹ hơn video";
+            MathAnimationSummaryLabel.Text =
+                useEnglish
+                    ? "GraphicsView • 24 FPS • soft neural network • mathematical space • AI brain + open book"
+                    : "GraphicsView • 24 FPS • neural network mờ nhẹ • mathematical space • bộ não AI + cuốn sách";
+        }
+        else
+        {
+            MathAnimationTitleLabel.Text =
+                useEnglish
+                    ? "Math Solver Animation (Mathematical Style)"
+                    : "Animation Math Solver (Mathematical Style)";
+
+            MathAnimationSummaryLabel.Text =
+                useEnglish
+                    ? "GraphicsView • 24 FPS • geometry 2D/3D • Find X • linear/quadratic equations"
+                    : "GraphicsView • 24 FPS • hình học phẳng/không gian • Tìm X • phương trình bậc 1/2";
+        }
 
         LiveWallpaperDecodeTitleLabel.Text =
             useEnglish

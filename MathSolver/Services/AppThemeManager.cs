@@ -1058,9 +1058,9 @@ public static class AppThemeManager
             return;
         }
 
-        bool mathAnimation =
-            LiveWallpaperManager.Mode ==
-            LiveWallpaperMode.MathAnimation;
+        bool builtInAnimation =
+            LiveWallpaperManager.Mode !=
+            LiveWallpaperMode.Mp4;
 
         bool themeIsDark =
             effectiveTheme == AppTheme.Dark;
@@ -1070,7 +1070,7 @@ public static class AppThemeManager
         // frame-brightness timeline without changing the app-wide theme.
         bool darkGlass;
 
-        if (mathAnimation ||
+        if (builtInAnimation ||
             _liveWallpaperUseLightText is null)
         {
             darkGlass = themeIsDark;
@@ -1197,7 +1197,7 @@ public static class AppThemeManager
         // only needs a light veil. MP4 uses a veil matched to the current frame
         // polarity. Runtime only changes resources when hysteresis crosses a
         // threshold, avoiding flicker and per-frame layout churn.
-        Color scrim = mathAnimation
+        Color scrim = builtInAnimation
             ? (darkGlass
                 ? new Color(0.015f, 0.027f, 0.055f, 0.18f)
                 : new Color(1f, 1f, 1f, 0.12f))
