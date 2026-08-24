@@ -1619,12 +1619,12 @@
     },
     {
       "key": "PowerRoot.ExponentPlaceholder",
-      "source": "Ví dụ: 10,000,000",
+      "source": "Ví dụ: 100,000,000",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.ExponentHint",
-      "source": "Số nguyên không âm, tối đa 10,000,000.",
+      "source": "Số nguyên không âm, tối đa 100,000,000.",
       "mode": "exact"
     },
     {
@@ -1799,7 +1799,7 @@
     },
     {
       "key": "PowerRoot.ExponentRangeError",
-      "source": "Số mũ phải là số nguyên không âm từ 0 đến 10,000,000.",
+      "source": "Số mũ phải là số nguyên không âm từ 0 đến 100,000,000.",
       "mode": "exact"
     },
     {
@@ -6350,6 +6350,41 @@
     {
       "key": "Quiz.MotionRiver",
       "source": "Chuyển động trên dòng nước (xuôi dòng – ngược dòng)",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.LargeExponentWarningTitle",
+      "source": "Số mũ rất lớn • Cảnh báo RAM",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.LargeExponentWarningMessage",
+      "source": "Số mũ {0} lớn hơn 10,000,000. Kết quả ước tính có {1} chữ số. Ở quy mô này, NTT/CRT chính xác có thể dùng nhiều GB RAM. Kể cả đường tắt ghép số 0 của ±10^k hoặc bitshift khi |a| = 2^k có phép tính trung gian nhẹ hơn, kết quả hoặc bước chuẩn bị xuất vẫn cực lớn nên ứng dụng vẫn hiển thị cảnh báo này. Hãy bảo đảm thiết bị còn đủ RAM và dung lượng lưu trữ trước khi tiếp tục.",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.LargeExponentContinue",
+      "source": "Tiếp tục",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.LargeExponentCancel",
+      "source": "Hủy",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoEngineParallelNttLarge",
+      "source": "• Engine: NTT/CRT chính xác giới hạn RAM cho số mũ > 10 triệu (NTT uint32 in-place/phân đoạn)",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoLargeNttMode",
+      "source": "• NTT quy mô lớn: chunk thuật toán cũ ≤ {0}; {1} lần ghép phân đoạn; {2} convolution theo cặp segment • residue uint32 / tích tạm uint64",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.StepLargeNttMemoryBounded",
+      "source": "Vì số mũ lớn hơn 10,000,000, ứng dụng giữ nguyên kernel NTT/CRT đã ổn định cho từng chunk không quá {0}, sau đó ghép các kết quả bằng NTT/CRT in-place và phân đoạn để giới hạn RAM. Residue của transform vẫn dùng số nguyên 32-bit; chỉ phép nhân modulo tạm thời dùng 64-bit.",
       "mode": "exact"
     }
   ],

@@ -28,11 +28,14 @@ public partial class PowerRootView : LocalizedSolverView
     private const int MaxBaseInputDigits =
         19;
 
-    private const int MaxExponent =
+    private const int LegacyNttMaximumExponent =
         10_000_000;
 
+    private const int MaxExponent =
+        100_000_000;
+
     private const int MaxExponentInputDigits =
-        8;
+        9;
 
     private const int FullResultDigitThreshold =
         18;
@@ -85,9 +88,9 @@ public partial class PowerRootView : LocalizedSolverView
     private static readonly BigInteger MaxRootRadicand =
         (BigInteger)Int128.MaxValue;
 
-    // Decimal constants keep enough fractional precision to distinguish
-    // (10^18 - 1)^10,000,000 from 10^180,000,000. A double loses that
-    // distinction because its ULP is already much larger at this scale.
+    // Decimal constants keep enough fractional precision for leading-digit
+    // and digit-count estimates through the 100,000,000 exponent ceiling. A
+    // double loses useful low-order logarithm detail for near-10^18 bases.
     private const decimal NaturalLogarithmOfTwo =
         0.6931471805599453094172321215m;
 
@@ -489,9 +492,66 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
+        if (exponent > LegacyNttMaximumExponent &&
+            !await ConfirmVeryLargePowerAsync(
+                baseValue,
+                exponent))
+        {
+            return;
+        }
+
         await CalculatePowerAsync(
             baseValue,
             exponent);
+    }
+
+    private async Task<bool> ConfirmVeryLargePowerAsync(
+        long baseValue,
+        int exponent)
+    {
+        int estimatedDigitCount =
+            EstimateDecimalDigitCount(
+                baseValue,
+                exponent);
+
+        string estimatedDigits =
+            estimatedDigitCount.ToString(
+                "N0",
+                CultureInfo.InvariantCulture);
+
+        return await MaterialDialogService.ConfirmAsync(
+            GetOwningPage(),
+            Translate(
+                "PowerRoot.LargeExponentWarningTitle"),
+            Format(
+                "PowerRoot.LargeExponentWarningMessage",
+                exponent.ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture),
+                estimatedDigits),
+            Translate(
+                "PowerRoot.LargeExponentContinue"),
+            Translate(
+                "PowerRoot.LargeExponentCancel"));
+    }
+
+    private Page GetOwningPage()
+    {
+        Element? current = this;
+
+        while (current is not null)
+        {
+            if (current is Page page)
+            {
+                return page;
+            }
+
+            current = current.Parent;
+        }
+
+        return Shell.Current ??
+               throw new InvalidOperationException(
+                   "Unable to resolve the owning page for the RAM warning dialog.");
     }
 
     private bool TryReadInputs(
@@ -2021,10 +2081,29 @@ public partial class PowerRootView : LocalizedSolverView
 
         if (strategy ==
                 PowerComputationStrategy.SingleThreadedBigIntegerPower &&
-            estimatedDigitCount >=
-                ParallelComputationDigitThreshold &&
-            CalculationThreadingManager.UseMultithreading)
+            baseValue != 0 &&
+            exponent > LegacyNttMaximumExponent)
         {
+            // The 10,000,001..100,000,000 range deliberately uses the new
+            // memory-bounded NTT/CRT path. The legacy <=10M path below is left
+            // untouched. If multithreading is disabled, the same exact engine
+            // runs with one worker instead of falling back to a giant
+            // single-threaded BigInteger power.
+            activeWorkerCount =
+                CalculationThreadingManager.UseMultithreading
+                    ? CalculationThreadingManager.RecommendedWorkerCount
+                    : 1;
+
+            strategy =
+                PowerComputationStrategy.ParallelNttPower;
+        }
+        else if (strategy ==
+                     PowerComputationStrategy.SingleThreadedBigIntegerPower &&
+                 estimatedDigitCount >=
+                     ParallelComputationDigitThreshold &&
+                 CalculationThreadingManager.UseMultithreading)
+        {
+            // Legacy <=10M selection rule: do not change its NTT/CRT behavior.
             activeWorkerCount =
                 CalculationThreadingManager.RecommendedWorkerCount;
 
@@ -2123,19 +2202,33 @@ public partial class PowerRootView : LocalizedSolverView
                     1);
 
                 ParallelPowerResult parallelResult =
-                    await _powerRootEngine.ComputeParallelPowerAsync(
-                        baseValue,
-                        exponent,
-                        activeWorkerCount,
-                        (completed, total) =>
-                            ReportCalculationPhase(
-                                baseValue,
-                                exponent,
-                                CalculationProgressPhase.Computing,
-                                completed,
-                                total,
-                                calculationVersion),
-                        cancellationToken);
+                    exponent > LegacyNttMaximumExponent
+                        ? await _powerRootEngine.ComputeMemoryBoundedParallelPowerAsync(
+                            baseValue,
+                            exponent,
+                            activeWorkerCount,
+                            (completed, total) =>
+                                ReportCalculationPhase(
+                                    baseValue,
+                                    exponent,
+                                    CalculationProgressPhase.Computing,
+                                    completed,
+                                    total,
+                                    calculationVersion),
+                            cancellationToken)
+                        : await _powerRootEngine.ComputeParallelPowerAsync(
+                            baseValue,
+                            exponent,
+                            activeWorkerCount,
+                            (completed, total) =>
+                                ReportCalculationPhase(
+                                    baseValue,
+                                    exponent,
+                                    CalculationProgressPhase.Computing,
+                                    completed,
+                                    total,
+                                    calculationVersion),
+                            cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -2168,7 +2261,11 @@ public partial class PowerRootView : LocalizedSolverView
             }
             else
             {
-                BigInteger result;
+                BigInteger result =
+                    BigInteger.Zero;
+
+                long virtualBitShiftExponent =
+                    0L;
 
                 if (strategy ==
                     PowerComputationStrategy.BitShift)
@@ -2188,17 +2285,32 @@ public partial class PowerRootView : LocalizedSolverView
                             "The bit-shift strategy requires |base| = 2^k.");
                     }
 
-                    int totalBitShift =
+                    long totalBitShift =
                         checked(
-                            basePowerOfTwoExponent *
+                            (long)basePowerOfTwoExponent *
                             exponent);
 
-                    result =
-                        await _powerRootEngine.ComputeBitShiftPowerAsync(
-                            baseValue,
-                            exponent,
-                            totalBitShift,
-                            cancellationToken);
+                    if (PowerRootEngine.CanMaterializePowerOfTwoAsBigInteger(
+                            totalBitShift))
+                    {
+                        result =
+                            await _powerRootEngine.ComputeBitShiftPowerAsync(
+                                baseValue,
+                                exponent,
+                                totalBitShift,
+                                cancellationToken);
+                    }
+                    else
+                    {
+                        // .NET 9+ caps BigInteger at Int32.MaxValue significant
+                        // bits. Keep an exact virtual 2^k representation instead
+                        // of attempting a BigInteger allocation that is guaranteed
+                        // to throw OverflowException. The compact UI result and
+                        // mathematical explanation need only k; full decimal TXT
+                        // generation is deferred until the user explicitly exports.
+                        virtualBitShiftExponent =
+                            totalBitShift;
+                    }
 
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -2266,6 +2378,7 @@ public partial class PowerRootView : LocalizedSolverView
 
                 if (strategy ==
                         PowerComputationStrategy.BitShift &&
+                    virtualBitShiftExponent == 0L &&
                     estimatedDigitCount >=
                         ExportDigitThreshold)
                 {
@@ -2288,19 +2401,33 @@ public partial class PowerRootView : LocalizedSolverView
 
                     ParallelPowerResult preparedDecimalResult =
                         await Task.Run(
-                            () => ParallelBigUnsigned.Pow(
-                                unsignedBase,
-                                exponent,
-                                decimalPreparationWorkerCount,
-                                (completed, total) =>
-                                    ReportCalculationPhase(
-                                        baseValue,
-                                        exponent,
-                                        CalculationProgressPhase.Formatting,
-                                        completed,
-                                        total,
-                                        calculationVersion),
-                                cancellationToken),
+                            () => exponent > LegacyNttMaximumExponent
+                                ? ParallelBigUnsigned.PowMemoryBounded(
+                                    unsignedBase,
+                                    exponent,
+                                    decimalPreparationWorkerCount,
+                                    (completed, total) =>
+                                        ReportCalculationPhase(
+                                            baseValue,
+                                            exponent,
+                                            CalculationProgressPhase.Formatting,
+                                            completed,
+                                            total,
+                                            calculationVersion),
+                                    cancellationToken)
+                                : ParallelBigUnsigned.Pow(
+                                    unsignedBase,
+                                    exponent,
+                                    decimalPreparationWorkerCount,
+                                    (completed, total) =>
+                                        ReportCalculationPhase(
+                                            baseValue,
+                                            exponent,
+                                            CalculationProgressPhase.Formatting,
+                                            completed,
+                                            total,
+                                            calculationVersion),
+                                    cancellationToken),
                             cancellationToken);
 
                     preparedBitShiftMagnitude =
@@ -2313,15 +2440,21 @@ public partial class PowerRootView : LocalizedSolverView
                 }
 
                 state =
-                    await Task.Run(
-                        () => CreateBigIntegerCalculationState(
+                    virtualBitShiftExponent > 0L
+                        ? CreateVirtualBitShiftCalculationState(
                             baseValue,
                             exponent,
-                            result,
-                            strategy,
-                            stopwatch.Elapsed,
-                            preparedBitShiftMagnitude),
-                        cancellationToken);
+                            virtualBitShiftExponent,
+                            stopwatch.Elapsed)
+                        : await Task.Run(
+                            () => CreateBigIntegerCalculationState(
+                                baseValue,
+                                exponent,
+                                result,
+                                strategy,
+                                stopwatch.Elapsed,
+                                preparedBitShiftMagnitude),
+                            cancellationToken);
             }
 
             stopwatch.Stop();
@@ -2582,7 +2715,7 @@ public partial class PowerRootView : LocalizedSolverView
                 _ => 1
             };
 
-        int totalBitShift = exponent;
+        long totalBitShift = exponent;
 
         if (phase == CalculationProgressPhase.BitShift &&
             _powerRootEngine.TryGetPowerOfTwoExponent(
@@ -2591,7 +2724,7 @@ public partial class PowerRootView : LocalizedSolverView
         {
             totalBitShift =
                 checked(
-                    basePowerOfTwoExponent *
+                    (long)basePowerOfTwoExponent *
                     exponent);
         }
 
@@ -2655,6 +2788,53 @@ public partial class PowerRootView : LocalizedSolverView
         };
     }
 
+    private static PowerCalculationState CreateVirtualBitShiftCalculationState(
+        long baseValue,
+        int exponent,
+        long totalBitShift,
+        TimeSpan elapsed)
+    {
+        int digitCount =
+            EstimateDecimalDigitCount(
+                baseValue,
+                exponent);
+
+        bool isNegative =
+            baseValue < 0 &&
+            (exponent & 1) != 0;
+
+        string compactResult =
+            CreateCompactResult(
+                isNegative,
+                baseValue,
+                exponent,
+                digitCount,
+                exactResultText: null);
+
+        // No giant BigInteger or NTT workspace is materialized during the
+        // calculation. The exact value is represented as sign + 2^k. Keep a
+        // small conservative allowance for UI/logarithm/formatting work; the
+        // process-private-memory diagnostic below remains authoritative.
+        const long VirtualBitShiftWorkingSetAllowance =
+            16L * 1024L * 1024L;
+
+        return new PowerCalculationState(
+            baseValue,
+            exponent,
+            BigInteger.Zero,
+            digitCount,
+            compactResult,
+            ActiveWorkerCount: 1,
+            Strategy: PowerComputationStrategy.BitShift,
+            DecimalZeroCount: 0,
+            IsNegative: isNegative,
+            EstimatedPeakRamBytes: VirtualBitShiftWorkingSetAllowance,
+            Elapsed: elapsed,
+            ParallelMagnitude: null,
+            ParallelDiagnostics: null,
+            VirtualBitShiftExponent: totalBitShift);
+    }
+
     private static PowerCalculationState CreateBigIntegerCalculationState(
         long baseValue,
         int exponent,
@@ -2715,10 +2895,17 @@ public partial class PowerRootView : LocalizedSolverView
                     preparedBitShiftMagnitude.StorageBytes);
         }
 
+        BigInteger retainedResult =
+            strategy == PowerComputationStrategy.BitShift &&
+            exponent > LegacyNttMaximumExponent &&
+            preparedBitShiftMagnitude is not null
+                ? BigInteger.Zero
+                : result;
+
         return new PowerCalculationState(
             baseValue,
             exponent,
-            result,
+            retainedResult,
             digitCount,
             compactResult,
             ActiveWorkerCount: 1,
@@ -2778,21 +2965,42 @@ public partial class PowerRootView : LocalizedSolverView
         // tail as CRT scratch when possible, but keep this estimate deliberately
         // conservative rather than subtracting a workload-dependent few MiB.
         // Split mode still keeps both partial powers alive before final combine.
-        long parallelStorageMultiplier =
-            diagnostics.UsedExponentSplit
-                ? 16L
-                : 12L;
+        long estimatedPeakRamBytes;
 
-        long estimatedPeakRamBytes =
-            checked(
-                magnitude.StorageBytes *
-                parallelStorageMultiplier +
-                (exactResultText is not null
-                    ? (long)exactResultText.Length *
-                      sizeof(char)
-                    : 0L));
+        if (diagnostics.UsedMemoryBoundedLargePower)
+        {
+            // Large mode keeps uint32 operands/results plus at most bounded
+            // 2^26 NTT segments resident. A 4x final-magnitude envelope tracks
+            // the accumulator + live operands conservatively, then adds the
+            // measured peak NTT lease and a modest runtime/twiddle headroom.
+            estimatedPeakRamBytes =
+                checked(
+                    magnitude.StorageBytes * 4L +
+                    diagnostics.NttWorkspacePeakBytes +
+                    256L * 1024L * 1024L +
+                    (exactResultText is not null
+                        ? (long)exactResultText.Length * sizeof(char)
+                        : 0L));
+        }
+        else
+        {
+            long parallelStorageMultiplier =
+                diagnostics.UsedExponentSplit
+                    ? 16L
+                    : 12L;
 
-        if (diagnostics.UsedExponentSplit)
+            estimatedPeakRamBytes =
+                checked(
+                    magnitude.StorageBytes *
+                    parallelStorageMultiplier +
+                    (exactResultText is not null
+                        ? (long)exactResultText.Length *
+                          sizeof(char)
+                        : 0L));
+        }
+
+        if (!diagnostics.UsedMemoryBoundedLargePower &&
+            diagnostics.UsedExponentSplit)
         {
             // v31 shares one P1/P2 twiddle-plan set across both concurrent
             // PowSplit branches. v30 held one identical set per branch. Each
@@ -3510,9 +3718,9 @@ public partial class PowerRootView : LocalizedSolverView
                     "The bit-shift strategy requires |base| = 2^k.");
             }
 
-            int totalPowerOfTwoExponent =
+            long totalPowerOfTwoExponent =
                 checked(
-                    basePowerOfTwoExponent *
+                    (long)basePowerOfTwoExponent *
                     state.Exponent);
 
             if (basePowerOfTwoExponent == 1)
@@ -3549,6 +3757,17 @@ public partial class PowerRootView : LocalizedSolverView
             steps.Add(
                 Translate(
                     "PowerRoot.StepRepeatedSquaring"));
+
+            if (state.ParallelDiagnostics?.UsedMemoryBoundedLargePower ==
+                true)
+            {
+                steps.Add(
+                    Format(
+                        "PowerRoot.StepLargeNttMemoryBounded",
+                        state.ParallelDiagnostics.LargePowerChunkExponent.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture)));
+            }
 
             int[] selectedPowers =
                 GetSelectedBinaryPowers(
@@ -3700,6 +3919,10 @@ public partial class PowerRootView : LocalizedSolverView
                     PowerComputationStrategy.DecimalPowerOfTen =>
                         "PowerRoot.InfoEnginePowerOfTen",
                     PowerComputationStrategy.ParallelNttPower
+                        when state.ParallelDiagnostics?.UsedMemoryBoundedLargePower ==
+                             true =>
+                        "PowerRoot.InfoEngineParallelNttLarge",
+                    PowerComputationStrategy.ParallelNttPower
                         when state.ParallelDiagnostics?.UsedExponentSplit ==
                              true =>
                         "PowerRoot.InfoEngineParallelNttSplit",
@@ -3770,6 +3993,19 @@ public partial class PowerRootView : LocalizedSolverView
                         diagnostics.NttPoolPeakRetainedBytes),
                     diagnostics.NttBufferReuseCount,
                     diagnostics.NttBufferRentCount));
+
+            if (diagnostics.UsedMemoryBoundedLargePower)
+            {
+                lines.Insert(
+                    6,
+                    Format(
+                        "PowerRoot.InfoLargeNttMode",
+                        diagnostics.LargePowerChunkExponent.ToString(
+                            "N0",
+                            CultureInfo.InvariantCulture),
+                        diagnostics.SegmentedNttMultiplicationCount,
+                        diagnostics.SegmentedNttPairCount));
+            }
 
             if (diagnostics.UsedExponentSplit)
             {
@@ -4624,6 +4860,59 @@ public partial class PowerRootView : LocalizedSolverView
         ParallelBigUnsigned? exportMagnitude =
             state.ParallelMagnitude;
 
+        if (state.Strategy ==
+                PowerComputationStrategy.BitShift &&
+            state.VirtualBitShiftExponent >
+                PowerRootEngine.MaximumBigIntegerPowerOfTwoExponent &&
+            exportMagnitude is null)
+        {
+            // The UI calculation intentionally keeps 2^k virtual once k exceeds
+            // the .NET BigInteger limit. Only an explicit full-TXT export pays
+            // the cost of materializing base-10,000 limbs. Reuse the existing
+            // exact memory-bounded NTT/CRT engine on the original |base|^n so
+            // the export stays exact without ever constructing an oversized
+            // BigInteger.
+            int exportWorkerCount =
+                CalculationThreadingManager.UseMultithreading
+                    ? CalculationThreadingManager.RecommendedWorkerCount
+                    : 1;
+
+            ulong unsignedBase =
+                state.BaseValue < 0
+                    ? unchecked((ulong)(-(state.BaseValue + 1))) + 1UL
+                    : (ulong)state.BaseValue;
+
+            ParallelPowerResult prepared =
+                state.Exponent > LegacyNttMaximumExponent
+                    ? ParallelBigUnsigned.PowMemoryBounded(
+                        unsignedBase,
+                        state.Exponent,
+                        exportWorkerCount,
+                        (completed, total) =>
+                            progress?.Invoke(
+                                new ExportFileProgress(
+                                    ExportFilePhase.Preparing,
+                                    completed,
+                                    Math.Max(1, total))),
+                        cancellationToken)
+                    : ParallelBigUnsigned.Pow(
+                        unsignedBase,
+                        state.Exponent,
+                        exportWorkerCount,
+                        (completed, total) =>
+                            progress?.Invoke(
+                                new ExportFileProgress(
+                                    ExportFilePhase.Preparing,
+                                    completed,
+                                    Math.Max(1, total))),
+                        cancellationToken);
+
+            exportMagnitude =
+                prepared.Magnitude;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
         int totalBlocks =
             state.Strategy ==
                 PowerComputationStrategy.DecimalPowerOfTen
@@ -4689,10 +4978,15 @@ public partial class PowerRootView : LocalizedSolverView
                 ? "Engine: direct decimal power-of-ten generation"
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
-                    ? "Engine: parallel exact NTT/CRT power"
+                    ? state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true
+                        ? "Engine: memory-bounded segmented/in-place exact NTT/CRT power"
+                        : "Engine: parallel exact NTT/CRT power"
                     : state.Strategy ==
                       PowerComputationStrategy.BitShift
-                        ? "Engine: BigInteger bit shift + prepared base-10,000 export"
+                        ? state.VirtualBitShiftExponent >
+                          PowerRootEngine.MaximumBigIntegerPowerOfTwoExponent
+                            ? "Engine: virtual exact 2^k bit shift + on-demand memory-bounded NTT/CRT TXT export"
+                            : "Engine: BigInteger bit shift + prepared base-10,000 export"
                         : "Engine: BigInteger");
 
         int exactExportDigitCount =
@@ -5265,7 +5559,7 @@ public partial class PowerRootView : LocalizedSolverView
     }
 
     private static string ToSuperscript(
-        int value)
+        long value)
     {
         const string NormalDigits =
             "0123456789";
@@ -5314,8 +5608,16 @@ public partial class PowerRootView : LocalizedSolverView
                 ? "Engine: direct decimal power-of-ten generation"
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
-                    ? "Engine: parallel exact NTT/CRT power"
-                    : "Engine: BigInteger";
+                    ? state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true
+                        ? "Engine: memory-bounded segmented/in-place exact NTT/CRT power"
+                        : "Engine: parallel exact NTT/CRT power"
+                    : state.Strategy ==
+                      PowerComputationStrategy.BitShift
+                        ? state.VirtualBitShiftExponent >
+                          PowerRootEngine.MaximumBigIntegerPowerOfTwoExponent
+                            ? "Engine: virtual exact 2^k bit shift + on-demand memory-bounded NTT/CRT TXT export"
+                            : "Engine: BigInteger bit shift"
+                        : "Engine: BigInteger";
 
         string header =
             $"Expression: {FormatPlainExpression(state.BaseValue, state.Exponent)}" +
@@ -5453,6 +5755,7 @@ public partial class PowerRootView : LocalizedSolverView
         TimeSpan Elapsed,
         ParallelBigUnsigned? ParallelMagnitude,
         ParallelPowerDiagnostics? ParallelDiagnostics,
+        long VirtualBitShiftExponent = 0L,
         long ProcessPrivateMemoryBytes = 0L,
         long ProcessPrivateMemoryBeforeCleanupBytes = 0L);
 

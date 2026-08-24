@@ -37,6 +37,18 @@ public sealed record RootCalculationResult(
 /// </summary>
 public sealed class PowerRootEngine
 {
+    // Starting with .NET 9, BigInteger is capped at Int32.MaxValue bits.
+    // A value 2^k has k + 1 significant bits, so k must be <=
+    // Int32.MaxValue - 1 if we want to materialize it as BigInteger.
+    public const long MaximumBigIntegerPowerOfTwoExponent =
+        (long)int.MaxValue - 1L;
+
+    public static bool CanMaterializePowerOfTwoAsBigInteger(
+        long powerOfTwoExponent) =>
+        powerOfTwoExponent >= 0L &&
+        powerOfTwoExponent <=
+        MaximumBigIntegerPowerOfTwoExponent;
+
     public RootCalculationResult CalculateRoot(
         Int128 radicand,
         sbyte degree)
@@ -174,18 +186,31 @@ public sealed class PowerRootEngine
     public Task<BigInteger> ComputeBitShiftPowerAsync(
         long baseValue,
         int exponent,
-        int totalBitShift,
+        long totalBitShift,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (!CanMaterializePowerOfTwoAsBigInteger(
+                totalBitShift))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(totalBitShift),
+                "The exact power-of-two result exceeds the .NET BigInteger maximum bit length. Use the virtual bit-shift result path instead.");
+        }
 
         return Task.Factory.StartNew(
             () =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // totalBitShift is now guaranteed to fit the runtime's
+                // BigInteger bit-length ceiling, and the shift operand itself
+                // also fits Int32. One shift avoids repeated immutable
+                // BigInteger copies.
                 BigInteger result =
-                    BigInteger.One << totalBitShift;
+                    BigInteger.One <<
+                    checked((int)totalBitShift);
 
                 if (baseValue < 0 && (exponent & 1) != 0)
                 {
@@ -277,6 +302,33 @@ public sealed class PowerRootEngine
 
         return Task.Factory.StartNew(
             () => ParallelBigUnsigned.Pow(
+                magnitude,
+                exponent,
+                workerCount,
+                progress,
+                cancellationToken),
+            cancellationToken,
+            TaskCreationOptions.LongRunning |
+            TaskCreationOptions.DenyChildAttach,
+            TaskScheduler.Default);
+    }
+
+
+    internal Task<ParallelPowerResult> ComputeMemoryBoundedParallelPowerAsync(
+        long baseValue,
+        int exponent,
+        int workerCount,
+        Action<int, int> progress,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ulong magnitude =
+            (ulong)Math.Abs(baseValue);
+
+        return Task.Factory.StartNew(
+            () => ParallelBigUnsigned.PowMemoryBounded(
                 magnitude,
                 exponent,
                 workerCount,

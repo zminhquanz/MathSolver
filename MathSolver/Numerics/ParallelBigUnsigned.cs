@@ -28,6 +28,19 @@ internal sealed class ParallelBigUnsigned
     private const int SchoolbookWorkLimit = 250_000;
     private const int MaximumTransformLength = 1 << 26;
 
+    // The production <=10M engine stays exactly on its existing path. Larger
+    // exponents are orchestrated by PowMemoryBounded(): compute <=10M chunks
+    // with the proven engine, then merge them with bounded segmented NTTs.
+    private const int LegacyMaximumExponent = 10_000_000;
+    private const int MaximumMemoryBoundedExponent = 100_000_000;
+
+    // Two full segments produce at most 2^26 - 1 convolution coefficients, so
+    // every pair remains compatible with the existing two exact 32-bit NTT
+    // primes. Persistent NTT storage therefore stays uint32; only modular
+    // products/reconstruction use temporary ulong arithmetic.
+    private const int SegmentedNttLimbLength =
+        MaximumTransformLength >> 1;
+
     // Binary BigInteger results (notably the |a| = 2^k bit-shift shortcut)
     // are imported into the same base-10,000 representation used by NTT/CRT
     // before TXT export.  A 1,024-limb leaf is exactly 4,096 decimal digits,
@@ -86,8 +99,8 @@ internal sealed class ParallelBigUnsigned
     private const int CrtCarryStreamingBlockLength = 1 << 20;
 
     // Both primes support transforms through 2^26. Their product is large
-    // enough to recover every base-10,000 convolution coefficient required by
-    // an 18-digit base raised to the maximum exponent of 10,000,000.
+    // enough to recover every base-10,000 convolution coefficient in the
+    // legacy <=10M engine and in each 2^25-limb pair of large segmented NTT.
     private const uint FirstModulus = 2_013_265_921;
     private const uint SecondModulus = 469_762_049;
     private const uint FirstPrimitiveRoot = 31;
@@ -714,6 +727,389 @@ internal sealed class ParallelBigUnsigned
                 actualWorkerCount));
     }
 
+    /// <summary>
+    /// Memory-bounded exact power path for exponents above the production
+    /// 10,000,000 limit and up to 100,000,000. It deliberately does not modify
+    /// Pow(): the first <=10M chunk (and optional remainder) is calculated by
+    /// the proven legacy engine, then a small Int32 quotient is merged through
+    /// sequential in-place/segmented NTT multiplications. This prevents the
+    /// large PowSplit branches from keeping multiple multi-gigabyte magnitudes
+    /// and transform workspaces alive concurrently.
+    /// </summary>
+    public static ParallelPowerResult PowMemoryBounded(
+        ulong baseValue,
+        int exponent,
+        int workerCount,
+        Action<int, int>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (exponent <= LegacyMaximumExponent ||
+            exponent > MaximumMemoryBoundedExponent)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(exponent),
+                $"Memory-bounded NTT power supports exponents from {LegacyMaximumExponent + 1:N0} through {MaximumMemoryBoundedExponent:N0}.");
+        }
+
+        workerCount =
+            Math.Max(
+                1,
+                workerCount);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        int chunkExponent =
+            LegacyMaximumExponent;
+
+        int quotient =
+            exponent /
+            chunkExponent;
+
+        int remainderExponent =
+            exponent %
+            chunkExponent;
+
+        int chunkOperationCount =
+            GetPowReportedOperationCount(
+                chunkExponent,
+                workerCount);
+
+        int remainderOperationCount =
+            remainderExponent > 0
+                ? GetPowReportedOperationCount(
+                    remainderExponent,
+                    workerCount)
+                : 0;
+
+        int mergeOperationCount =
+            CountMultiplications(
+                quotient);
+
+        int finalRemainderCombineCount =
+            remainderExponent > 0
+                ? 1
+                : 0;
+
+        int totalOperationCount =
+            Math.Max(
+                1,
+                checked(
+                    chunkOperationCount +
+                    remainderOperationCount +
+                    mergeOperationCount +
+                    finalRemainderCombineCount));
+
+        int completedOffset = 0;
+
+        void ReportMappedProgress(
+            int offset,
+            int expectedSubTotal,
+            int completed,
+            int reportedSubTotal)
+        {
+            int normalizedTotal =
+                Math.Max(
+                    1,
+                    reportedSubTotal);
+
+            int normalizedCompleted =
+                Math.Clamp(
+                    completed,
+                    0,
+                    normalizedTotal);
+
+            int mapped =
+                expectedSubTotal == normalizedTotal
+                    ? normalizedCompleted
+                    : (int)Math.Round(
+                        normalizedCompleted /
+                        (double)normalizedTotal *
+                        expectedSubTotal,
+                        MidpointRounding.AwayFromZero);
+
+            progress?.Invoke(
+                Math.Min(
+                    totalOperationCount,
+                    offset + mapped),
+                totalOperationCount);
+        }
+
+        var diagnostics =
+            new PowerDiagnosticsCollector();
+
+        // Compute the reusable a^10,000,000 seed with the existing production
+        // engine. No arithmetic, scheduling, primes, DIF/DIT stages or CRT
+        // behavior in Pow() is changed for the <=10M range.
+        ParallelPowerResult chunkPower =
+            Pow(
+                baseValue,
+                chunkExponent,
+                workerCount,
+                (completed, total) =>
+                    ReportMappedProgress(
+                        0,
+                        chunkOperationCount,
+                        completed,
+                        total),
+                cancellationToken);
+
+        diagnostics.AccumulateSnapshot(
+            chunkPower.Diagnostics);
+
+        completedOffset +=
+            chunkOperationCount;
+
+        // Do not let dead legacy NTT workspaces from the 10M seed overlap an
+        // optional second <=10M remainder calculation.
+        CollectReleasedLargeModeWorkspaces();
+
+        ParallelPowerResult? remainderPower =
+            null;
+
+        if (remainderExponent > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int remainderOffset =
+                completedOffset;
+
+            remainderPower =
+                Pow(
+                    baseValue,
+                    remainderExponent,
+                    workerCount,
+                    (completed, total) =>
+                        ReportMappedProgress(
+                            remainderOffset,
+                            remainderOperationCount,
+                            completed,
+                            total),
+                    cancellationToken);
+
+            diagnostics.AccumulateSnapshot(
+                remainderPower.Diagnostics);
+
+            completedOffset +=
+                remainderOperationCount;
+        }
+
+        // Pow() has already dropped every pool reference, but its 128-256 MiB
+        // LOH arrays can remain committed until a later Gen2 collection. Large
+        // mode intentionally performs one blocking collection at this phase
+        // boundary so dead legacy workspaces do not overlap the segmented
+        // accumulator/workspaces and inflate the peak by several gigabytes.
+        CollectReleasedLargeModeWorkspaces();
+
+        // All <=10M Pow-scoped buffers are already released here. The merge
+        // owns one independent pool whose 2^26 uint32 workspaces are recycled
+        // across every segment pair and every higher-level multiplication.
+        using var nttBufferPool =
+            new NttBufferPool();
+
+        using var nttTwiddleBufferPool =
+            new NttTwiddleBufferPool();
+
+        using var sharedNttTwiddlePlans =
+            new SharedNttTwiddlePlans(
+                nttTwiddleBufferPool);
+
+        ParallelBigUnsigned magnitude;
+
+        using (var workers =
+               new FixedWorkerTeam(
+                   workerCount,
+                   nttBufferPool,
+                   sharedNttTwiddlePlans))
+        {
+            int mergeCompleted = 0;
+
+            magnitude =
+                PowExistingMagnitudeMemoryBounded(
+                    chunkPower.Magnitude,
+                    quotient,
+                    workers,
+                    diagnostics,
+                    (completed, total) =>
+                    {
+                        mergeCompleted =
+                            Math.Max(
+                                mergeCompleted,
+                                completed);
+
+                        progress?.Invoke(
+                            Math.Min(
+                                totalOperationCount,
+                                completedOffset +
+                                mergeCompleted),
+                            totalOperationCount);
+                    },
+                    cancellationToken);
+
+            completedOffset +=
+                mergeOperationCount;
+
+            if (remainderPower is not null)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                magnitude =
+                    MultiplyMemoryBounded(
+                        magnitude,
+                        remainderPower.Magnitude,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+
+                completedOffset++;
+
+                progress?.Invoke(
+                    Math.Min(
+                        totalOperationCount,
+                        completedOffset),
+                    totalOperationCount);
+            }
+        }
+
+        diagnostics.ConfigureLargeMemoryBoundedMode(
+            chunkExponent);
+
+        diagnostics.ConfigureNttBufferPool(
+            nttBufferPool.CreateStatisticsSnapshot());
+
+        nttBufferPool.ReleaseCachedBuffers();
+        sharedNttTwiddlePlans.ReleasePlans();
+        nttTwiddleBufferPool.ReleaseCachedBuffers();
+
+        // The final magnitude must stay alive, but the 2^26 transform pool,
+        // twiddle arrays and reusable segment product are dead now. Large mode
+        // pays one last Gen2 boundary so those hundreds of MiB do not overlap
+        // the UI/export preparation that follows this method.
+        CollectReleasedLargeModeWorkspaces();
+
+        progress?.Invoke(
+            totalOperationCount,
+            totalOperationCount);
+
+        return new ParallelPowerResult(
+            magnitude,
+            diagnostics.CreateSnapshot(
+                workerCount));
+    }
+
+    private static void CollectReleasedLargeModeWorkspaces()
+    {
+        GC.Collect(
+            GC.MaxGeneration,
+            GCCollectionMode.Forced,
+            blocking: true,
+            compacting: false);
+
+        GC.WaitForPendingFinalizers();
+    }
+
+    private static ParallelBigUnsigned PowExistingMagnitudeMemoryBounded(
+        ParallelBigUnsigned baseMagnitude,
+        int exponent,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        Action<int, int>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (exponent <= 0)
+        {
+            return One;
+        }
+
+        ParallelBigUnsigned factor =
+            baseMagnitude;
+
+        ParallelBigUnsigned result =
+            One;
+
+        bool resultInitialized =
+            false;
+
+        int totalOperations =
+            CountMultiplications(
+                exponent);
+
+        int completedOperations = 0;
+        int remainingExponent = exponent;
+
+        while (remainingExponent > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if ((remainingExponent & 1) != 0)
+            {
+                if (!resultInitialized)
+                {
+                    result = factor;
+                    resultInitialized = true;
+                }
+                else
+                {
+                    result =
+                        MultiplyMemoryBounded(
+                            result,
+                            factor,
+                            workers,
+                            diagnostics,
+                            cancellationToken);
+
+                    progress?.Invoke(
+                        ++completedOperations,
+                        totalOperations);
+                }
+            }
+
+            remainingExponent >>= 1;
+
+            if (remainingExponent > 0)
+            {
+                factor =
+                    MultiplyMemoryBounded(
+                        factor,
+                        factor,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+
+                progress?.Invoke(
+                    ++completedOperations,
+                    totalOperations);
+            }
+        }
+
+        progress?.Invoke(
+            totalOperations,
+            totalOperations);
+
+        return resultInitialized
+            ? result
+            : One;
+    }
+
+    private static int GetPowReportedOperationCount(
+        int exponent,
+        int workerCount)
+    {
+        if (TryCreateExponentSplit(
+                exponent,
+                workerCount,
+                out int firstExponent,
+                out int secondExponent))
+        {
+            return checked(
+                CountMultiplications(firstExponent) +
+                CountMultiplications(secondExponent) +
+                1);
+        }
+
+        return CountMultiplications(
+            exponent);
+    }
+
     private static ParallelPowerResult PowSplit(
         ulong baseValue,
         int originalExponent,
@@ -1259,6 +1655,399 @@ internal sealed class ParallelBigUnsigned
             cancellationToken);
     }
 
+    private static ParallelBigUnsigned MultiplyMemoryBounded(
+        ParallelBigUnsigned left,
+        ParallelBigUnsigned right,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (left.IsOne)
+        {
+            return right;
+        }
+
+        if (right.IsOne)
+        {
+            return left;
+        }
+
+        int coefficientCount =
+            checked(
+                left._limbCount +
+                right._limbCount -
+                1);
+
+        if (coefficientCount <=
+            MaximumTransformLength)
+        {
+            // Still use the exact production multiplication kernel while the
+            // full transform fits 2^26. The segmented path starts only at the
+            // first multiplication that would exceed the legacy prime limit.
+            return Multiply(
+                left,
+                right,
+                workers,
+                diagnostics,
+                cancellationToken);
+        }
+
+        return MultiplySegmentedNtt(
+            left,
+            right,
+            workers,
+            diagnostics,
+            cancellationToken);
+    }
+
+    private static ParallelBigUnsigned MultiplySegmentedNtt(
+        ParallelBigUnsigned left,
+        ParallelBigUnsigned right,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        bool isSquare =
+            ReferenceEquals(
+                left,
+                right);
+
+        int leftSegmentCount =
+            checked(
+                (left._limbCount +
+                 SegmentedNttLimbLength - 1) /
+                SegmentedNttLimbLength);
+
+        int rightSegmentCount =
+            isSquare
+                ? leftSegmentCount
+                : checked(
+                    (right._limbCount +
+                     SegmentedNttLimbLength - 1) /
+                    SegmentedNttLimbLength);
+
+        int maximumSegmentProductLength =
+            checked(
+                Math.Min(
+                    SegmentedNttLimbLength,
+                    left._limbCount) +
+                Math.Min(
+                    SegmentedNttLimbLength,
+                    right._limbCount));
+
+        // One reusable compact P1/result buffer is sufficient for every pair.
+        // It is overwritten by inverse P1, then CRT/carry normalizes the same
+        // prefix to base-10,000 before that product is added to the global
+        // result. No per-pair 256 MiB result allocation is left for GC.
+        uint[] segmentProduct =
+            workers.GetSegmentedProductScratch(
+                maximumSegmentProductLength);
+
+        int resultCapacity =
+            checked(
+                left._limbCount +
+                right._limbCount +
+                2);
+
+        // The final magnitude is the only large zero-initialized array needed
+        // by segmented accumulation. Every NTT pair is added here immediately.
+        var resultLimbs =
+            new uint[resultCapacity];
+
+        int segmentPairCount = 0;
+
+        for (int leftSegmentIndex = 0;
+             leftSegmentIndex < leftSegmentCount;
+             leftSegmentIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int leftOffset =
+                checked(
+                    leftSegmentIndex *
+                    SegmentedNttLimbLength);
+
+            int leftLength =
+                Math.Min(
+                    SegmentedNttLimbLength,
+                    left._limbCount -
+                    leftOffset);
+
+            int firstRightSegmentIndex =
+                isSquare
+                    ? leftSegmentIndex
+                    : 0;
+
+            for (int rightSegmentIndex = firstRightSegmentIndex;
+                 rightSegmentIndex < rightSegmentCount;
+                 rightSegmentIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                int rightOffset =
+                    checked(
+                        rightSegmentIndex *
+                        SegmentedNttLimbLength);
+
+                int rightLength =
+                    Math.Min(
+                        SegmentedNttLimbLength,
+                        right._limbCount -
+                        rightOffset);
+
+                int productLength =
+                    ConvolveSegmentIntoReusableBuffer(
+                        left._limbs,
+                        leftOffset,
+                        leftLength,
+                        right._limbs,
+                        rightOffset,
+                        rightLength,
+                        segmentProduct,
+                        isSquare &&
+                        leftSegmentIndex ==
+                        rightSegmentIndex,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+
+                int destinationOffset =
+                    checked(
+                        leftOffset +
+                        rightOffset);
+
+                int multiplicity =
+                    isSquare &&
+                    leftSegmentIndex !=
+                    rightSegmentIndex
+                        ? 2
+                        : 1;
+
+                AddNormalizedSegmentProduct(
+                    resultLimbs,
+                    segmentProduct,
+                    productLength,
+                    destinationOffset,
+                    multiplicity,
+                    cancellationToken);
+
+                segmentPairCount++;
+            }
+        }
+
+        diagnostics.ConfigureSegmentedNttMultiplication(
+            segmentPairCount);
+
+        return new ParallelBigUnsigned(
+            resultLimbs,
+            takeOwnership: true,
+            logicalLength: resultCapacity);
+    }
+
+    private static int ConvolveSegmentIntoReusableBuffer(
+        uint[] left,
+        int leftOffset,
+        int leftLength,
+        uint[] right,
+        int rightOffset,
+        int rightLength,
+        uint[] segmentProduct,
+        bool isSquare,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        int coefficientCount =
+            checked(
+                leftLength +
+                rightLength -
+                1);
+
+        int transformLength = 1;
+
+        while (transformLength <
+               coefficientCount)
+        {
+            transformLength =
+                checked(
+                    transformLength << 1);
+        }
+
+        Debug.Assert(
+            transformLength <=
+            MaximumTransformLength);
+
+        if (transformLength >
+            MaximumTransformLength)
+        {
+            throw new InvalidOperationException(
+                "A segmented NTT pair exceeded the supported 2^26 transform length.");
+        }
+
+        if (segmentProduct.Length <
+            coefficientCount + 1)
+        {
+            throw new InvalidOperationException(
+                "The reusable segmented NTT result buffer is too small.");
+        }
+
+        diagnostics.NttMultiplicationCount++;
+
+        ConvolveModulusCore(
+            left,
+            leftOffset,
+            leftLength,
+            right,
+            rightOffset,
+            rightLength,
+            transformLength,
+            FirstModulus,
+            FirstPrimitiveRoot,
+            isSquare,
+            true,
+            segmentProduct,
+            workers,
+            diagnostics,
+            cancellationToken,
+            static (_, _) =>
+            {
+                // P1 compact output is supplied by segmentProduct, so no
+                // returned array needs to be captured here.
+            });
+
+        ulong trailingCarry = 0;
+
+        ConvolveModulusCore(
+            left,
+            leftOffset,
+            leftLength,
+            right,
+            rightOffset,
+            rightLength,
+            transformLength,
+            SecondModulus,
+            SecondPrimitiveRoot,
+            isSquare,
+            false,
+            null,
+            workers,
+            diagnostics,
+            cancellationToken,
+            (transformedSecond, _) =>
+            {
+                trailingCarry =
+                    ReconstructCarryStreamingIntoFirstResidues(
+                        transformedSecond,
+                        segmentProduct,
+                        coefficientCount,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+            });
+
+        int resultLength =
+            coefficientCount;
+
+        if (trailingCarry > 0)
+        {
+            if (trailingCarry >= LimbBase)
+            {
+                throw new InvalidOperationException(
+                    "Normalized segmented NTT carry exceeded one base-10,000 limb.");
+            }
+
+            segmentProduct[resultLength++] =
+                (uint)trailingCarry;
+        }
+
+        return resultLength;
+    }
+
+    private static void AddNormalizedSegmentProduct(
+        uint[] destination,
+        uint[] product,
+        int productLength,
+        int destinationOffset,
+        int multiplicity,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(
+            multiplicity is 1 or 2);
+
+        ulong carry = 0;
+        int destinationIndex =
+            destinationOffset;
+
+        for (int index = 0;
+             index < productLength;
+             index++, destinationIndex++)
+        {
+            if ((index & 0xFFFF) == 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if ((uint)destinationIndex >=
+                (uint)destination.Length)
+            {
+                throw new InvalidOperationException(
+                    "Segmented NTT accumulation exceeded the result buffer.");
+            }
+
+            ulong value =
+                destination[destinationIndex] +
+                (ulong)product[index] *
+                (uint)multiplicity +
+                carry;
+
+            ulong quotient =
+                value /
+                LimbBase;
+
+            destination[destinationIndex] =
+                (uint)(value -
+                       quotient *
+                       LimbBase);
+
+            carry =
+                quotient;
+        }
+
+        while (carry > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if ((uint)destinationIndex >=
+                (uint)destination.Length)
+            {
+                throw new InvalidOperationException(
+                    "Segmented NTT carry exceeded the result buffer.");
+            }
+
+            ulong value =
+                destination[destinationIndex] +
+                carry;
+
+            ulong quotient =
+                value /
+                LimbBase;
+
+            destination[destinationIndex] =
+                (uint)(value -
+                       quotient *
+                       LimbBase);
+
+            carry =
+                quotient;
+
+            destinationIndex++;
+        }
+    }
+
     private static ParallelBigUnsigned MultiplySchoolbook(
         ParallelBigUnsigned left,
         ParallelBigUnsigned right,
@@ -1679,14 +2468,17 @@ internal sealed class ParallelBigUnsigned
 
         ConvolveModulusCore(
             left,
+            0,
             leftLength,
             right,
+            0,
             rightLength,
             transformLength,
             modulus,
             primitiveRoot,
             isSquare,
             true,
+            null,
             workers,
             diagnostics,
             cancellationToken,
@@ -1724,14 +2516,17 @@ internal sealed class ParallelBigUnsigned
 
         ConvolveModulusCore(
             left,
+            0,
             leftLength,
             right,
+            0,
             rightLength,
             transformLength,
             SecondModulus,
             SecondPrimitiveRoot,
             isSquare,
             false,
+            null,
             workers,
             diagnostics,
             cancellationToken,
@@ -1970,16 +2765,261 @@ internal sealed class ParallelBigUnsigned
         return trailingCarry;
     }
 
+    private static ulong ReconstructCarryStreamingIntoFirstResidues(
+        uint[] transformedSecond,
+        uint[] firstResidues,
+        int coefficientCount,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        ulong trailingCarry = 0;
+        int scratchLength =
+            Math.Min(
+                coefficientCount,
+                CrtCarryStreamingBlockLength);
+
+        // v32: after the inverse P2 transform, indices at and above
+        // coefficientCount are outside the valid linear-convolution
+        // prefix and will never be read again.  When that dead tail is
+        // large enough, reinterpret it as the bounded ulong CRT block
+        // scratch instead of allocating/retaining another 8 MiB array.
+        // Align to an even uint index so ulong elements start on an
+        // 8-byte boundary.  Exact/full transforms simply fall back to
+        // the team's reusable scratch array.
+        int inverseTailScratchStart =
+            checked(
+                (coefficientCount + 1) & ~1);
+
+        int requiredTailUIntCount =
+            checked(
+                scratchLength * 2);
+
+        bool useInverseTailScratch =
+            inverseTailScratchStart <= transformedSecond.Length &&
+            transformedSecond.Length - inverseTailScratchStart >=
+            requiredTailUIntCount;
+
+        if (useInverseTailScratch)
+        {
+            // A branch may have grown a fallback scratch during earlier
+            // smaller transforms where the dead tail could not fit it.
+            // Once the current inverse buffer supplies the scratch, drop
+            // that stale team reference immediately rather than carrying
+            // an otherwise-unused 8 MiB array through later NTT stages.
+            workers.ReleaseCrtCarryScratch();
+        }
+
+        ulong[]? crtScratch =
+            useInverseTailScratch
+                ? null
+                : workers.GetCrtCarryScratch(
+                    scratchLength);
+
+        ulong carry = 0;
+        long crtTicks = 0;
+        long carryTicks = 0;
+
+        for (int blockStart = 0;
+             blockStart < coefficientCount;
+             blockStart += scratchLength)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int blockCount =
+                Math.Min(
+                    scratchLength,
+                    coefficientCount -
+                    blockStart);
+
+            long crtStarted =
+                Stopwatch.GetTimestamp();
+
+            // CRT stays parallel. Each worker writes only its own
+            // range in the bounded scratch block, and the barrier at
+            // ExecuteRanges completion guarantees the source residues
+            // can then be overwritten safely by the sequential carry.
+            ExecuteRanges(
+                blockCount,
+                workers,
+                cancellationToken,
+                (start, end) =>
+                {
+                    int count =
+                        end - start;
+
+                    int sourceStart =
+                        blockStart +
+                        start;
+
+                    ReadOnlySpan<uint> firstSpan =
+                        firstResidues.AsSpan(
+                            sourceStart,
+                            count);
+
+                    // The inverse P2 transform remains leased only
+                    // while its valid convolution prefix is consumed.
+                    ReadOnlySpan<uint> secondSpan =
+                        transformedSecond.AsSpan(
+                            sourceStart,
+                            count);
+
+                    Span<ulong> scratchSpan;
+
+                    if (useInverseTailScratch)
+                    {
+                        scratchSpan =
+                            MemoryMarshal.Cast<uint, ulong>(
+                                transformedSecond.AsSpan(
+                                    checked(
+                                        inverseTailScratchStart +
+                                        start * 2),
+                                    checked(
+                                        count * 2)));
+                    }
+                    else
+                    {
+                        scratchSpan =
+                            crtScratch!.AsSpan(
+                                start,
+                                count);
+                    }
+
+                    for (int offset = 0;
+                         offset < count;
+                         offset++)
+                    {
+                        uint first =
+                            firstSpan[offset];
+
+                        uint reducedFirst =
+                            first;
+
+                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+
+                        long difference =
+                            (long)secondSpan[offset] -
+                            reducedFirst;
+
+                        if (difference < 0)
+                        {
+                            difference +=
+                                SecondModulus;
+                        }
+
+                        // Preserve the scalar modulo expression that
+                        // won the previous benchmark experiments.
+                        ulong multiplier =
+                            (ulong)difference *
+                            FirstModulusInverseInSecond %
+                            SecondModulus;
+
+                        scratchSpan[offset] =
+                            first +
+                            (ulong)FirstModulus *
+                            multiplier;
+                    }
+                });
+
+            crtTicks +=
+                Stopwatch.GetTimestamp() -
+                crtStarted;
+
+            long carryStarted =
+                Stopwatch.GetTimestamp();
+
+            ReadOnlySpan<ulong> source;
+
+            if (useInverseTailScratch)
+            {
+                source =
+                    MemoryMarshal.Cast<uint, ulong>(
+                        transformedSecond.AsSpan(
+                            inverseTailScratchStart,
+                            checked(
+                                blockCount * 2)));
+            }
+            else
+            {
+                source =
+                    crtScratch!.AsSpan(
+                        0,
+                        blockCount);
+            }
+
+            // The CRT values for this block are now fully detached
+            // from P1. Reuse the corresponding P1 storage in place as
+            // the normalized base-10,000 result, avoiding another
+            // coefficientCount-sized uint[] allocation.
+            Span<uint> destination =
+                firstResidues.AsSpan(
+                    blockStart,
+                    blockCount);
+
+            for (int offset = 0;
+                 offset < blockCount;
+                 offset++)
+            {
+                int coefficientIndex =
+                    blockStart +
+                    offset;
+
+                if ((coefficientIndex & 0xFFFF) == 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                ulong value =
+                    source[offset] +
+                    carry;
+
+                ulong quotient =
+                    value /
+                    LimbBase;
+
+                destination[offset] =
+                    (uint)(value -
+                           quotient *
+                           LimbBase);
+
+                carry =
+                    quotient;
+            }
+
+            carryTicks +=
+                Stopwatch.GetTimestamp() -
+                carryStarted;
+        }
+
+        trailingCarry =
+            carry;
+
+        diagnostics.CrtTicks +=
+            crtTicks;
+
+        diagnostics.CarryTicks +=
+            carryTicks;
+            
+
+        return trailingCarry;
+    }
+
     private static void ConvolveModulusCore(
         uint[] left,
+        int leftOffset,
         int leftLength,
         uint[] right,
+        int rightOffset,
         int rightLength,
         int transformLength,
         uint modulus,
         uint primitiveRoot,
         bool isSquare,
         bool compactFinalInverseOutput,
+        uint[]? compactInverseOutputDestination,
         FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken,
@@ -2006,6 +3046,7 @@ internal sealed class ParallelBigUnsigned
             PrepareNttBuffer(
                 transformedLeft,
                 left,
+                leftOffset,
                 leftLength);
 
             NttTwiddlePlan twiddlePlan =
@@ -2059,6 +3100,7 @@ internal sealed class ParallelBigUnsigned
                 MultiplyForwardRightSpectrumInPlace(
                     transformedLeft,
                     right,
+                    rightOffset,
                     rightLength,
                     transformLength,
                     modulus,
@@ -2085,6 +3127,7 @@ internal sealed class ParallelBigUnsigned
                     primitiveRoot,
                     validOutputLength,
                     compactFinalInverseOutput,
+                    compactInverseOutputDestination,
                     workers,
                     twiddlePlan,
                     fusedNttBlockLength,
@@ -2115,6 +3158,7 @@ internal sealed class ParallelBigUnsigned
     private static void MultiplyForwardRightSpectrumInPlace(
         uint[] transformedLeft,
         uint[] right,
+        int rightOffset,
         int rightLength,
         int transformLength,
         uint modulus,
@@ -2137,6 +3181,7 @@ internal sealed class ParallelBigUnsigned
             PrepareNttBuffer(
                 rightTransform,
                 right,
+                rightOffset,
                 rightLength);
 
             ForwardDifTransform(
@@ -2196,11 +3241,13 @@ internal sealed class ParallelBigUnsigned
     private static void PrepareNttBuffer(
         uint[] destination,
         uint[] source,
+        int sourceOffset,
         int sourceLength)
     {
         Debug.Assert(
+            sourceOffset >= 0 &&
             sourceLength > 0 &&
-            sourceLength <= source.Length);
+            sourceOffset <= source.Length - sourceLength);
 
         Debug.Assert(
             destination.Length >=
@@ -2218,7 +3265,7 @@ internal sealed class ParallelBigUnsigned
 
         Array.Copy(
             source,
-            0,
+            sourceOffset,
             destination,
             0,
             sourceLength);
@@ -2708,6 +3755,7 @@ internal sealed class ParallelBigUnsigned
         uint primitiveRoot,
         int validOutputLength,
         bool compactFinalOutput,
+        uint[]? compactOutputDestination,
         FixedWorkerTeam workers,
         NttTwiddlePlan twiddlePlan,
         int fusedNttBlockLength,
@@ -2856,20 +3904,35 @@ internal sealed class ParallelBigUnsigned
 
                 if (compactFinalOutput)
                 {
-                    long allocationStarted =
-                        Stopwatch.GetTimestamp();
+                    if (compactOutputDestination is not null)
+                    {
+                        if (compactOutputDestination.Length <
+                            validOutputLength + 1)
+                        {
+                            throw new InvalidOperationException(
+                                "The supplied compact inverse output buffer is too small.");
+                        }
 
-                    // One spare slot is reserved for the only possible final
-                    // base-10,000 carry.  The final DIT writes every logical
-                    // prefix element, so zero initialization is unnecessary.
-                    compactOutput =
-                        GC.AllocateUninitializedArray<uint>(
-                            checked(
-                                validOutputLength + 1));
+                        compactOutput =
+                            compactOutputDestination;
+                    }
+                    else
+                    {
+                        long allocationStarted =
+                            Stopwatch.GetTimestamp();
 
-                    excludedAllocationTicks +=
-                        Stopwatch.GetTimestamp() -
-                        allocationStarted;
+                        // One spare slot is reserved for the only possible final
+                        // base-10,000 carry. The final DIT writes every logical
+                        // prefix element, so zero initialization is unnecessary.
+                        compactOutput =
+                            GC.AllocateUninitializedArray<uint>(
+                                checked(
+                                    validOutputLength + 1));
+
+                        excludedAllocationTicks +=
+                            Stopwatch.GetTimestamp() -
+                            allocationStarted;
+                    }
 
                     finalOutput =
                         compactOutput;
@@ -8238,6 +9301,11 @@ while (leftIndex + 1 < butterflyEnd)
         private int _nttBufferRentCount;
         private int _nttBufferReuseCount;
 
+        private bool _usedMemoryBoundedLargePower;
+        private int _largePowerChunkExponent;
+        private int _segmentedNttMultiplicationCount;
+        private int _segmentedNttPairCount;
+
         private bool _usedExponentSplit;
         private int _firstExponent;
         private int _secondExponent;
@@ -8287,6 +9355,78 @@ while (leftIndex + 1 < butterflyEnd)
             };
         }
 
+        public void AccumulateSnapshot(
+            ParallelPowerDiagnostics snapshot)
+        {
+            NttMultiplicationCount =
+                checked(
+                    NttMultiplicationCount +
+                    snapshot.NttMultiplicationCount);
+
+            BitReversalTicks +=
+                ToTimestampTicks(
+                    snapshot.BitReversal);
+            ForwardTransformTicks +=
+                ToTimestampTicks(
+                    snapshot.ForwardTransform);
+            PointwiseTicks +=
+                ToTimestampTicks(
+                    snapshot.Pointwise);
+            InverseTransformTicks +=
+                ToTimestampTicks(
+                    snapshot.InverseTransform);
+            CrtTicks +=
+                ToTimestampTicks(
+                    snapshot.Crt);
+            CarryTicks +=
+                ToTimestampTicks(
+                    snapshot.Carry);
+
+            _nttWorkspacePeakBytes =
+                Math.Max(
+                    _nttWorkspacePeakBytes,
+                    snapshot.NttWorkspacePeakBytes);
+
+            _nttPoolPeakRetainedBytes =
+                Math.Max(
+                    _nttPoolPeakRetainedBytes,
+                    snapshot.NttPoolPeakRetainedBytes);
+
+            _nttBufferRentCount =
+                checked(
+                    _nttBufferRentCount +
+                    snapshot.NttBufferRentCount);
+
+            _nttBufferReuseCount =
+                checked(
+                    _nttBufferReuseCount +
+                    snapshot.NttBufferReuseCount);
+        }
+
+        public void ConfigureSegmentedNttMultiplication(
+            int segmentPairCount)
+        {
+            _segmentedNttMultiplicationCount =
+                checked(
+                    _segmentedNttMultiplicationCount +
+                    1);
+
+            _segmentedNttPairCount =
+                checked(
+                    _segmentedNttPairCount +
+                    segmentPairCount);
+        }
+
+        public void ConfigureLargeMemoryBoundedMode(
+            int chunkExponent)
+        {
+            _usedMemoryBoundedLargePower =
+                true;
+
+            _largePowerChunkExponent =
+                chunkExponent;
+        }
+
         public void ConfigureExponentSplit(
             int originalExponent,
             int firstExponent,
@@ -8318,16 +9458,24 @@ while (leftIndex + 1 < butterflyEnd)
             NttBufferPoolStatistics statistics)
         {
             _nttWorkspacePeakBytes =
-                statistics.PeakLeasedBytes;
+                Math.Max(
+                    _nttWorkspacePeakBytes,
+                    statistics.PeakLeasedBytes);
 
             _nttPoolPeakRetainedBytes =
-                statistics.PeakRetainedBytes;
+                Math.Max(
+                    _nttPoolPeakRetainedBytes,
+                    statistics.PeakRetainedBytes);
 
             _nttBufferRentCount =
-                statistics.RentCount;
+                checked(
+                    _nttBufferRentCount +
+                    statistics.RentCount);
 
             _nttBufferReuseCount =
-                statistics.ReuseCount;
+                checked(
+                    _nttBufferReuseCount +
+                    statistics.ReuseCount);
         }
 
         public ParallelPowerDiagnostics CreateSnapshot(
@@ -8353,7 +9501,21 @@ while (leftIndex + 1 < butterflyEnd)
                 _nttWorkspacePeakBytes,
                 _nttPoolPeakRetainedBytes,
                 _nttBufferRentCount,
-                _nttBufferReuseCount);
+                _nttBufferReuseCount,
+                _usedMemoryBoundedLargePower,
+                _largePowerChunkExponent,
+                _segmentedNttMultiplicationCount,
+                _segmentedNttPairCount);
+        }
+
+        private static long ToTimestampTicks(
+            TimeSpan duration)
+        {
+            return checked(
+                (long)Math.Round(
+                    duration.TotalSeconds *
+                    Stopwatch.Frequency,
+                    MidpointRounding.AwayFromZero));
         }
 
         private static TimeSpan ToTimeSpan(
@@ -8838,6 +10000,11 @@ while (leftIndex + 1 < butterflyEnd)
         // worker-team lifetime.
         private ulong[]? _crtCarryScratch;
 
+        // Large-mode segmented multiplication reuses one compact P1/result
+        // buffer across every segment pair and merge. The legacy <=10M path
+        // never requests this scratch, so its memory/lifetime is unchanged.
+        private uint[]? _segmentedProductScratch;
+
         // The temporary value arrays are owned by one pool for the complete
         // Pow operation.  Split branches intentionally share the same pool;
         // the pool itself is synchronized and caps retention to two arrays.
@@ -8941,6 +10108,29 @@ while (leftIndex + 1 < butterflyEnd)
         {
             _crtCarryScratch =
                 null;
+        }
+
+        public uint[] GetSegmentedProductScratch(
+            int minimumLength)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+                minimumLength);
+
+            uint[]? scratch =
+                _segmentedProductScratch;
+
+            if (scratch is null ||
+                scratch.Length < minimumLength)
+            {
+                scratch =
+                    GC.AllocateUninitializedArray<uint>(
+                        minimumLength);
+
+                _segmentedProductScratch =
+                    scratch;
+            }
+
+            return scratch;
         }
 
         // FixedWorkerTeam itself is private to ParallelBigUnsigned, so this
@@ -9060,6 +10250,7 @@ while (leftIndex + 1 < butterflyEnd)
             _firstTwiddlePlanRef = null;
             _secondTwiddlePlanRef = null;
             _crtCarryScratch = null;
+            _segmentedProductScratch = null;
 
             // The last scheduled lambda can capture a very large transform
             // buffer. Drop scheduler references explicitly before the Gen2/LOH
@@ -9982,4 +11173,8 @@ internal sealed record ParallelPowerDiagnostics(
     long NttWorkspacePeakBytes,
     long NttPoolPeakRetainedBytes,
     int NttBufferRentCount,
-    int NttBufferReuseCount);
+    int NttBufferReuseCount,
+    bool UsedMemoryBoundedLargePower,
+    int LargePowerChunkExponent,
+    int SegmentedNttMultiplicationCount,
+    int SegmentedNttPairCount);

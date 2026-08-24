@@ -182,7 +182,10 @@ The most performance-critical UI component:
 
 Key thresholds:
 - `MaxBaseInputDigits = 19` (fits in Int64 magnitude check)
-- `MaxExponent = 10,000,000`
+- `MaxExponent = 100,000,000`
+- `LegacyNttMaximumExponent = 10,000,000`: exponents at or below this keep the existing production NTT/CRT path unchanged.
+- `10,000,001..100,000,000`: `PowMemoryBounded()` computes <=10M exponent chunks with the legacy kernel, then merges them sequentially. Full transforms that exceed 2^26 are decomposed into 2^25-limb segment pairs; every pair reuses the existing exact two-prime uint32 DIF/DIT NTT/CRT kernel. One reusable segment-result scratch buffer and the existing transform pool bound temporary RAM, while CRT/carry is streamed into the segment buffer before shifted accumulation into the final base-10,000 result. A forced Gen2 collection is used only at large-mode phase boundaries after legacy workspaces have been released.
+- Every exponent above 10,000,000 shows an explicit RAM/storage confirmation, including direct ±10^k zero generation and |a| = 2^k bit-shift shortcuts.
 - `ExportDigitThreshold = 100_001` → triggers parallel preparation
 - `FullResultDigitThreshold = 18` → below this, results are cached and displayed immediately without export
 
@@ -386,3 +389,11 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 - `AverageFormulaView` is a study/reference view (not quiz state). It reuses the six `AverageQuizType` concepts already used by Math Puzzle: Direct, TotalToAverage, AverageToTotal, MissingValue, IndirectData, and TwoGroups.
 - The top interactive `GraphicsView` (`AverageDistributionDrawable`) visualizes arithmetic mean as conservation of the same total redistributed into equal shares. Users can adjust 2–5 integer values with sliders; the displayed fraction/mixed-number result updates immediately.
 - Formula cards provide a rule, formula, word-problem example, and worked solution in Vietnamese and English. The view uses wallpaper-aware `Wallpaper*` resources so it remains readable with static themes, Math Animation, and adaptive MP4 live wallpaper.
+
+### Power-of-two results beyond the .NET BigInteger bit ceiling (2026-08-24)
+
+- .NET 9+ caps `BigInteger` values at `Int32.MaxValue` significant bits. Therefore a shortcut such as `(2^36)^100,000,000 = 2^3,600,000,000` cannot be materialized as `BigInteger`, even though the mathematical bit-shift strategy itself is valid.
+- `PowerRootEngine` now treats `2^k` with `k <= Int32.MaxValue - 1` as the normal materialized `BigInteger` bit-shift path. Larger `k` uses an exact virtual representation (`sign + 2^k`) for calculation/result UI, so the calculation never attempts the guaranteed-overflow `BigInteger` allocation.
+- The virtual path still reports the exact decimal digit count/compact scientific preview and keeps the existing >10M RAM warning. It does not allocate an NTT workspace merely to show the result.
+- Full TXT export is intentionally deferred: if the user explicitly exports a virtual `2^k` result, the existing exact memory-bounded segmented/in-place NTT/CRT engine materializes base-10,000 limbs from the original `|base|^exponent`, streams them to TXT, then releases the temporary large workspace. This preserves exact export without creating an oversized `BigInteger`.
+- The production <=10M NTT/CRT path is unchanged.
