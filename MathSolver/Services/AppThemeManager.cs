@@ -55,14 +55,23 @@ public static class AppThemeManager
     // otherwise hit a stale native target and throw COMException. Hold all
     // ResourceDictionary mutations behind a short transition gate.
     private static long _nativeVisualTransitionNotBeforeTick;
+    private static long _nativeExceptionGuardNotBeforeTick;
     private static readonly TimeSpan NativeVisualTransitionGrace =
-        TimeSpan.FromMilliseconds(320);
+        TimeSpan.FromMilliseconds(450);
+    private static readonly TimeSpan NativeExceptionGuardGrace =
+        TimeSpan.FromMilliseconds(1800);
     private static readonly TimeSpan ThemeVisualRefreshRetryDelay =
         TimeSpan.FromMilliseconds(120);
     private const int ThemeVisualRefreshMaxRetries = 3;
 #endif
 
     public static event EventHandler? ThemeChanged;
+
+    // Raised only after the wallpaper-aware ResourceDictionary tokens have
+    // been applied successfully. GeometryCalculatorView uses this as a
+    // deterministic post-refresh hook to repair WinUI DynamicResource targets
+    // that can miss one notification while an MP4 MediaElement is tearing down.
+    internal static event EventHandler? WallpaperVisualResourcesChanged;
 
     public static AppThemeMode CurrentMode { get; private set; } =
         AppThemeMode.System;
@@ -226,6 +235,29 @@ public static class AppThemeManager
             }
         }
 
+        long guardTarget =
+            Environment.TickCount64 +
+            (long)NativeExceptionGuardGrace.TotalMilliseconds;
+
+        while (true)
+        {
+            long current = Volatile.Read(
+                ref _nativeExceptionGuardNotBeforeTick);
+
+            if (current >= guardTarget)
+            {
+                break;
+            }
+
+            if (Interlocked.CompareExchange(
+                    ref _nativeExceptionGuardNotBeforeTick,
+                    guardTarget,
+                    current) == current)
+            {
+                break;
+            }
+        }
+
         // Invalidate a wallpaper refresh that may already be queued for an
         // earlier visual state. The caller will queue the current state again.
         Interlocked.Increment(
@@ -246,6 +278,60 @@ public static class AppThemeManager
                 : 0d);
 
         return TimeSpan.FromMilliseconds(delayMilliseconds);
+    }
+
+    internal static TimeSpan GetWindowsPickerVisualUpdateDelay(
+        TimeSpan minimumDelay)
+    {
+        return GetNativeVisualTransitionDelay(minimumDelay);
+    }
+
+    internal static bool IsLiveWallpaperNativeExceptionGuardActive =>
+        Volatile.Read(ref _nativeExceptionGuardNotBeforeTick) >
+        Environment.TickCount64;
+
+    internal static void RecoverFromLiveWallpaperNativeException(
+        Exception exception)
+    {
+        System.Diagnostics.Debug.WriteLine(
+            $"Live wallpaper native transition recovered: {exception}");
+
+        Application? application =
+            _application ??
+            Application.Current;
+
+        if (application is null)
+        {
+            return;
+        }
+
+        // Give the WinUI control that threw one more compositor turn to finish
+        // detaching, then recompute the *current* wallpaper/static target. This
+        // is deliberately a wallpaper-only refresh; user theme preferences are
+        // never changed by transient native failures.
+        long recoveryTarget =
+            Environment.TickCount64 + 220L;
+
+        while (true)
+        {
+            long currentTarget = Volatile.Read(
+                ref _nativeVisualTransitionNotBeforeTick);
+
+            if (currentTarget >= recoveryTarget)
+            {
+                break;
+            }
+
+            if (Interlocked.CompareExchange(
+                    ref _nativeVisualTransitionNotBeforeTick,
+                    recoveryTarget,
+                    currentTarget) == currentTarget)
+            {
+                break;
+            }
+        }
+
+        RefreshVisualResources();
     }
 #endif
 
@@ -387,6 +473,20 @@ public static class AppThemeManager
             application.Resources,
             palette,
             effectiveTheme);
+
+        WallpaperVisualResourcesChanged?.Invoke(
+            null,
+            EventArgs.Empty);
+    }
+
+    internal static void PrepareLiveWallpaperAdaptiveContrastForCurrentState()
+    {
+        // Every enable/disable/mode transition starts from the target state, not
+        // from whatever luminance polarity happened to be active previously.
+        // OFF/MathAnimation -> null (static/theme policy). MP4 -> bootstrap from
+        // the persisted timeline before SettingsChanged creates native hosts.
+        _liveWallpaperUseLightText = null;
+        PrimeLiveWallpaperAdaptiveContrastFromPersistedProfile();
     }
 
     private static void PrimeLiveWallpaperAdaptiveContrastFromPersistedProfile()
@@ -626,6 +726,10 @@ public static class AppThemeManager
             application.Resources,
             palette,
             effectiveTheme);
+
+        WallpaperVisualResourcesChanged?.Invoke(
+            null,
+            EventArgs.Empty);
 
         ThemeChanged?.Invoke(null, EventArgs.Empty);
     }
@@ -1064,6 +1168,14 @@ public static class AppThemeManager
                 dangerActionBackground,
                 preferLighter: false);
 
+        // Apply polarity-critical tokens first. If a WinUI target is still
+        // completing a native transition and rejects a later surface update, the
+        // visible text has already moved to the correct bright/dark policy.
+        SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", textPrimary);
+        SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", textSecondary);
+        SetColorAndBrush(resources, "WallpaperSelectionTextColor", "WallpaperSelectionTextBrush", selectedText);
+        SetColorAndBrush(resources, "WallpaperDangerActionTextColor", "WallpaperDangerActionTextBrush", dangerActionText);
+
         SetColorAndBrush(resources, "WallpaperSurfaceStrongColor", "WallpaperSurfaceStrongBrush", surfaceStrong);
         SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", surface);
         SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", surfaceAlt);
@@ -1077,13 +1189,9 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(dangerSoftBase, darkGlass ? 0.74 : 0.82));
         SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(infoSoftBase, darkGlass ? 0.74 : 0.82));
         SetColorAndBrush(resources, "WallpaperSelectionBackgroundColor", "WallpaperSelectionBackgroundBrush", selectedBackground);
-        SetColorAndBrush(resources, "WallpaperSelectionTextColor", "WallpaperSelectionTextBrush", selectedText);
         SetColorAndBrush(resources, "WallpaperSelectionBorderColor", "WallpaperSelectionBorderBrush", selectedBorder);
         SetColorAndBrush(resources, "WallpaperDangerActionBackgroundColor", "WallpaperDangerActionBackgroundBrush", dangerActionBackground);
-        SetColorAndBrush(resources, "WallpaperDangerActionTextColor", "WallpaperDangerActionTextBrush", dangerActionText);
         SetColorAndBrush(resources, "WallpaperDangerActionBorderColor", "WallpaperDangerActionBorderBrush", dangerActionBorder);
-        SetColorAndBrush(resources, "WallpaperTextPrimaryColor", "WallpaperTextPrimaryBrush", textPrimary);
-        SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush", textSecondary);
 
         // The built-in animation already uses restrained theme colors, so it
         // only needs a light veil. MP4 uses a veil matched to the current frame

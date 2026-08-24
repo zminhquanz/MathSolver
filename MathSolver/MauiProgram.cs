@@ -259,9 +259,7 @@ namespace MathSolver
                     // theo Picker.TextColor để WinUI ComboBox giữ chevron native.
                     if (view is Microsoft.Maui.Controls.Picker picker)
                     {
-                        ApplyWindowsPickerGlyphColor(
-                            comboBox,
-                            picker.TextColor);
+                        AttachWindowsPickerVisualSync(picker);
                     }
 #elif ANDROID
                     var editText = handler.PlatformView;
@@ -274,24 +272,210 @@ namespace MathSolver
 #endif
                 });
 
-            // Khi DynamicResource đổi TextColor (ví dụ đổi Light/Dark ngay khi
-            // menu đang mở), cập nhật lại chevron native cùng lúc.
-            PickerHandler.Mapper.AppendToMapping(
-                nameof(Microsoft.Maui.Controls.Picker.TextColor),
-                static (handler, view) =>
-                {
-#if WINDOWS
-                    if (view is Microsoft.Maui.Controls.Picker picker)
-                    {
-                        ApplyWindowsPickerGlyphColor(
-                            handler.PlatformView,
-                            picker.TextColor);
-                    }
-#endif
-                });
+            // Do not mutate WinUI ComboBox resources synchronously from the
+            // MAUI TextColor mapper. DynamicResource propagation can run while a
+            // live-wallpaper native surface or ComboBox popup is being rebuilt;
+            // synchronous native resource writes here were the remaining source
+            // of intermittent COMException crashes. Windows Picker visual sync is
+            // attached above and performs a coalesced deferred update instead.
         }
 
 #if WINDOWS
+        private sealed class WindowsPickerVisualSyncState
+        {
+            public WindowsPickerVisualSyncState()
+            {
+            }
+
+            public int Generation;
+            public bool Attached;
+            public EventHandler? VisualResourcesChangedHandler;
+            public WeakReference<Microsoft.Maui.Controls.Picker>? PickerReference;
+        }
+
+        private static readonly
+            System.Runtime.CompilerServices.ConditionalWeakTable<
+                Microsoft.Maui.Controls.Picker,
+                WindowsPickerVisualSyncState>
+            WindowsPickerVisualSyncStates = new();
+
+        private static void AttachWindowsPickerVisualSync(
+            Microsoft.Maui.Controls.Picker picker)
+        {
+            WindowsPickerVisualSyncState state =
+                WindowsPickerVisualSyncStates.GetOrCreateValue(picker);
+
+            if (!state.Attached)
+            {
+                picker.PropertyChanged +=
+                    OnWindowsPickerPropertyChanged;
+                picker.HandlerChanged +=
+                    OnWindowsPickerHandlerChanged;
+
+                var weakPicker =
+                    new WeakReference<Microsoft.Maui.Controls.Picker>(picker);
+                state.PickerReference = weakPicker;
+
+                EventHandler? visualResourcesChangedHandler = null;
+                visualResourcesChangedHandler = (_, _) =>
+                {
+                    if (weakPicker.TryGetTarget(out var livePicker))
+                    {
+                        // AppThemeManager raises WallpaperVisualResourcesChanged
+                        // only after the wallpaper-aware palette transaction has
+                        // completed. Queue from here so WinUI ComboBox receives the final
+                        // adaptive polarity even when MAUI did not raise a
+                        // Picker.TextColor PropertyChanged notification.
+                        QueueWindowsPickerVisualSync(livePicker);
+                        return;
+                    }
+
+                    if (visualResourcesChangedHandler is not null)
+                    {
+                        AppThemeManager.WallpaperVisualResourcesChanged -=
+                            visualResourcesChangedHandler;
+                    }
+                };
+
+                state.VisualResourcesChangedHandler = visualResourcesChangedHandler;
+                AppThemeManager.WallpaperVisualResourcesChanged +=
+                    visualResourcesChangedHandler;
+                state.Attached = true;
+            }
+
+            QueueWindowsPickerVisualSync(picker);
+        }
+
+        private static void OnWindowsPickerPropertyChanged(
+            object? sender,
+            System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (sender is not Microsoft.Maui.Controls.Picker picker ||
+                e.PropertyName !=
+                Microsoft.Maui.Controls.Picker.TextColorProperty.PropertyName)
+            {
+                return;
+            }
+
+            // Only queue managed work here. Never touch ComboBox.Resources from
+            // inside DynamicResource/TextColor propagation itself.
+            QueueWindowsPickerVisualSync(picker);
+        }
+
+        private static void OnWindowsPickerHandlerChanged(
+            object? sender,
+            EventArgs e)
+        {
+            if (sender is Microsoft.Maui.Controls.Picker picker)
+            {
+                QueueWindowsPickerVisualSync(picker);
+            }
+        }
+
+        private static void QueueWindowsPickerVisualSync(
+            Microsoft.Maui.Controls.Picker picker)
+        {
+            WindowsPickerVisualSyncState state =
+                WindowsPickerVisualSyncStates.GetOrCreateValue(picker);
+
+            int generation =
+                Interlocked.Increment(ref state.Generation);
+
+            TimeSpan delay =
+                AppThemeManager.GetWindowsPickerVisualUpdateDelay(
+                    TimeSpan.FromMilliseconds(96));
+
+            picker.Dispatcher.DispatchDelayed(
+                delay,
+                () =>
+                {
+                    if (generation != Volatile.Read(ref state.Generation))
+                    {
+                        return;
+                    }
+
+                    TimeSpan remaining =
+                        AppThemeManager.GetWindowsPickerVisualUpdateDelay(
+                            TimeSpan.Zero);
+
+                    if (remaining > TimeSpan.Zero)
+                    {
+                        QueueWindowsPickerVisualSync(picker);
+                        return;
+                    }
+
+                    if (picker.Handler?.PlatformView
+                        is not Microsoft.UI.Xaml.Controls.ComboBox comboBox)
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        ApplyWindowsPickerGlyphColor(
+                            comboBox,
+                            ResolveWindowsPickerAdaptiveTextColor(
+                                picker.TextColor));
+                    }
+                    catch (System.Runtime.InteropServices.COMException exception)
+                    {
+                        // A stale WinUI ComboBox can survive for a few compositor
+                        // turns after a page/live-wallpaper transition. Ignore the
+                        // stale native target and let the current handler receive
+                        // the next queued color. Never terminate the app for a
+                        // cosmetic chevron refresh.
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Picker visual sync deferred: {exception}");
+
+                        if (AppThemeManager.IsLiveWallpaperNativeExceptionGuardActive)
+                        {
+                            AppThemeManager.RecoverFromLiveWallpaperNativeException(
+                                exception);
+                        }
+                    }
+                    catch (ObjectDisposedException exception)
+                    {
+                        // ObjectDisposedException derives from InvalidOperationException,
+                        // so it must be caught first to keep this handler reachable.
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Picker visual sync skipped: {exception}");
+                    }
+                    catch (InvalidOperationException exception)
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Picker visual sync skipped: {exception}");
+                    }
+                });
+        }
+
+        private static Microsoft.Maui.Graphics.Color
+            ResolveWindowsPickerAdaptiveTextColor(
+                Microsoft.Maui.Graphics.Color fallback)
+        {
+            // DynamicResource normally updates Picker.TextColor itself, but
+            // WinUI ComboBox can retain the old selected-content Foreground
+            // across a native live-wallpaper transition. Read the authoritative
+            // adaptive token after AppThemeManager's transaction instead of
+            // trusting the potentially stale managed Picker.TextColor value.
+            if (Application.Current?.Resources is ResourceDictionary resources &&
+                resources.TryGetValue(
+                    "WallpaperTextPrimaryColor",
+                    out object? value))
+            {
+                if (value is Microsoft.Maui.Graphics.Color color)
+                {
+                    return color;
+                }
+
+                if (value is Microsoft.Maui.Controls.SolidColorBrush brush)
+                {
+                    return brush.Color;
+                }
+            }
+
+            return fallback;
+        }
+
         private static void ApplyWindowsPickerGlyphColor(
             Microsoft.UI.Xaml.Controls.ComboBox comboBox,
             Microsoft.Maui.Graphics.Color color)

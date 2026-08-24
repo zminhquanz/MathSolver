@@ -221,7 +221,8 @@ public sealed class LiveWallpaperView : Grid
             // Math Animation is intentionally allowed to continue during AI/LLM
             // inference. At 24 FPS its ambient drawing overhead is very small.
             StopAdaptiveContrast();
-            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
+                refreshVisualResources: false);
 
             // Drop the media source immediately so decoder surfaces are
             // returned even though the MediaElement shell itself is released
@@ -311,7 +312,8 @@ public sealed class LiveWallpaperView : Grid
             ReleaseScrim();
             ReleaseSource();
             ScheduleMediaElementRelease();
-            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
+                refreshVisualResources: false);
             return;
         }
 
@@ -589,7 +591,9 @@ public sealed class LiveWallpaperView : Grid
         if (_frameProfile is null ||
             _frameProfile.LuminanceSamples.Length == 0)
         {
-            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+            AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
+                refreshVisualResources: false);
+            AppThemeManager.RefreshVisualResources();
             return;
         }
 

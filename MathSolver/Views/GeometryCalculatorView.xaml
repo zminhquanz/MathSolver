@@ -32,11 +32,13 @@
                     />
 
                 <Label
+                    x:Name="GeometryHeroTitleLabel"
                     Text="HÌNH HỌC"
                     Style="{StaticResource SolverHeroTitleStyle}"
                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                 <Label
+                    x:Name="GeometryHeroSubtitleLabel"
                     Text="Tính chu vi, diện tích, diện tích bề mặt và thể tích"
                     Style="{StaticResource SolverHeroSubtitleStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />

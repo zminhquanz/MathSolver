@@ -297,17 +297,15 @@ public static class LiveWallpaperManager
         }
 
 #if WINDOWS
-        if (IsEnabled)
-        {
-            AppThemeManager.NotifyLiveWallpaperNativeTransition();
-        }
+        // Both directions rebuild native presentation state: MP4 -> static/math
+        // tears a MediaElement down, while static/math -> MP4 creates one. Gate
+        // resource propagation in both cases.
+        AppThemeManager.NotifyLiveWallpaperNativeTransition();
 #endif
 
         Preferences.Default.Set(
             ModePreferenceKey,
             (int)mode);
-
-        AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
 
         if (mode != LiveWallpaperMode.Mp4)
         {
@@ -324,6 +322,8 @@ public static class LiveWallpaperManager
                 EnabledPreferenceKey,
                 false);
         }
+
+        AppThemeManager.PrepareLiveWallpaperAdaptiveContrastForCurrentState();
 
         // Let active wallpaper hosts start their teardown/switch before glass
         // resources are reconciled. AppThemeManager also gates the actual WinUI
@@ -351,23 +351,23 @@ public static class LiveWallpaperManager
         }
 
 #if WINDOWS
-        if (!normalized)
-        {
-            AppThemeManager.NotifyLiveWallpaperNativeTransition();
-        }
+        // Enabling is just as much a native transition as disabling: a new
+        // MediaElement/WinUI composition surface is created immediately after
+        // SettingsChanged. Gate DynamicResource propagation for both directions.
+        AppThemeManager.NotifyLiveWallpaperNativeTransition();
 #endif
 
         Preferences.Default.Set(
             EnabledPreferenceKey,
             normalized);
 
+        // Resolve the target polarity *before* active views react to
+        // SettingsChanged. OFF follows the static app theme; MP4 bootstraps its
+        // first-frame polarity from the persisted luminance profile.
+        AppThemeManager.PrepareLiveWallpaperAdaptiveContrastForCurrentState();
+
         if (!normalized)
         {
-            // Clear the MP4 polarity immediately, but do not queue a resource
-            // refresh yet. Hosts must begin native teardown first; one single
-            // refresh is queued below after SettingsChanged.
-            AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
-                refreshVisualResources: false);
             CancelFrameAnalysis();
             _pendingFrameAnalysisDuration = TimeSpan.Zero;
         }
@@ -477,6 +477,9 @@ public static class LiveWallpaperManager
             // Acceptance happens here. Do NOT block it on thumbnail/frame
             // analysis: that used to make a valid file appear unresponsive for
             // several seconds and temporarily retained native decoder buffers.
+#if WINDOWS
+            AppThemeManager.NotifyLiveWallpaperNativeTransition();
+#endif
             File.Move(
                 temporaryPath,
                 WallpaperPath,
@@ -501,16 +504,20 @@ public static class LiveWallpaperManager
             // Never let the old video's luminance profile affect the newly
             // accepted wallpaper while the replacement profile is built.
             LiveWallpaperFrameAnalysis.Delete();
-            ScheduleFrameAnalysis(inspection.Duration);
 
-            AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
-            AppThemeManager.RefreshVisualResources();
+            AppThemeManager.PrepareLiveWallpaperAdaptiveContrastForCurrentState();
 
-            // Notify immediately: filename, switch and playback update now. The
-            // adaptive contrast profile arrives later through the same event.
+            // Notify hosts first so the newly accepted player begins native
+            // setup; the gated resource refresh follows after that transition.
             SettingsChanged?.Invoke(
                 null,
                 EventArgs.Empty);
+            AppThemeManager.RefreshVisualResources();
+
+            // Optional luminance analysis is started only after the transition
+            // target has been prepared. If playback wins the race, the manager
+            // defers analysis rather than opening a second decoder.
+            ScheduleFrameAnalysis(inspection.Duration);
         }
         finally
         {
@@ -850,7 +857,7 @@ public static class LiveWallpaperManager
 
         CancelFrameAnalysis();
         LiveWallpaperFrameAnalysis.Delete();
-        AppThemeManager.ResetLiveWallpaperAdaptiveContrast();
+        AppThemeManager.PrepareLiveWallpaperAdaptiveContrastForCurrentState();
 
         // First notify active views so MediaElement releases its source/file
         // handle. This matters on Windows, where MediaPlayer can keep the MP4

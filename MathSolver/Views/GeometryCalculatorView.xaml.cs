@@ -69,6 +69,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private readonly Dictionary<Entry, string> _pendingRestoredEntryTexts = [];
     private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
+    private bool _isWallpaperVisualSyncSubscribed;
 
     public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } =
         [];
@@ -161,6 +162,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
     protected override void OnSolverLoaded()
     {
+        SubscribeWallpaperVisualSync();
+        RebindWallpaperAdaptiveResources();
         GeometryDiagramView.Invalidate();
 
         Dispatcher.Dispatch(
@@ -178,6 +181,108 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                         SynchronizeFormulaPreviewHeight();
                     });
             });
+    }
+
+    protected override void OnSolverUnloaded()
+    {
+        UnsubscribeWallpaperVisualSync();
+    }
+
+    private void SubscribeWallpaperVisualSync()
+    {
+        if (_isWallpaperVisualSyncSubscribed)
+        {
+            return;
+        }
+
+        AppThemeManager.WallpaperVisualResourcesChanged +=
+            OnWallpaperVisualResourcesChanged;
+        _isWallpaperVisualSyncSubscribed = true;
+    }
+
+    private void UnsubscribeWallpaperVisualSync()
+    {
+        if (!_isWallpaperVisualSyncSubscribed)
+        {
+            return;
+        }
+
+        AppThemeManager.WallpaperVisualResourcesChanged -=
+            OnWallpaperVisualResourcesChanged;
+        _isWallpaperVisualSyncSubscribed = false;
+    }
+
+    private void OnWallpaperVisualResourcesChanged(
+        object? sender,
+        EventArgs e)
+    {
+        // AppThemeManager raises this only after the target wallpaper palette
+        // has been committed. Rebinding on the next dispatcher turn repairs a
+        // WinUI edge case where a few DynamicResource listeners can retain the
+        // previous bright-MP4 foreground if MediaElement teardown interrupted
+        // the first resource notification.
+        Dispatcher.Dispatch(
+            RebindWallpaperAdaptiveResources);
+    }
+
+    private void RebindWallpaperAdaptiveResources()
+    {
+        GeometryHeroTitleLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "WallpaperTextPrimaryColor");
+
+        GeometryHeroSubtitleLabel.SetDynamicResource(
+            Label.TextColorProperty,
+            "WallpaperTextSecondaryColor");
+
+        // These three regions intentionally use the wallpaper primary text for
+        // all neutral labels. Rebinding the DynamicResource expression itself
+        // is important: assigning a Color value would make the fix one-shot and
+        // would break the next bright/dark MP4 frame transition.
+        RebindPrimaryTextResources(
+            GeometryControlColumn);
+        RebindPrimaryTextResources(
+            FormulaPreviewBorder);
+        RebindPrimaryTextResources(
+            InputFieldsBorder);
+
+        ApplyAdaptiveVisualTheme();
+        GeometryDiagramView.Invalidate();
+    }
+
+    private static void RebindPrimaryTextResources(
+        Element root)
+    {
+        if (root is Label label)
+        {
+            label.SetDynamicResource(
+                Label.TextColorProperty,
+                "WallpaperTextPrimaryColor");
+        }
+        else if (root is Entry entry)
+        {
+            entry.SetDynamicResource(
+                Entry.TextColorProperty,
+                "WallpaperTextPrimaryColor");
+            entry.SetDynamicResource(
+                Entry.PlaceholderColorProperty,
+                "WallpaperTextPrimaryColor");
+        }
+
+        if (root is not Microsoft.Maui.IVisualTreeElement visualTreeElement)
+        {
+            return;
+        }
+
+        foreach (Microsoft.Maui.IVisualTreeElement child
+                 in visualTreeElement.GetVisualChildren())
+        {
+            if (child is Element childElement)
+            {
+                RebindPrimaryTextResources(
+                    childElement);
+            }
+        }
     }
 
     protected override void RefreshLocalizedContent()
