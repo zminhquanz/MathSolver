@@ -2018,6 +2018,11 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.InfoForwardNttProfile",
+      "source": "• Forward NTT:\n  Local/cache SIMD stages: {0} giây\n  Global cached scalar stages: {1} giây\n  Global uncached scalar stages: {2} giây",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.InfoNttPostProfile",
       "source": "• Hậu xử lý NTT: nhân điểm {0} giây; CRT {1} giây; carry {2} giây",
       "mode": "exact"

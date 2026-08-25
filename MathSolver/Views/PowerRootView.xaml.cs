@@ -4067,6 +4067,34 @@ public partial class PowerRootView : LocalizedSolverView
                     FormatProfileSeconds(
                         diagnostics.InverseTransform)));
 
+            // Detailed Forward buckets are meaningful only for the <=10M
+            // hardware-accelerated hybrid path. Global pair kernels are timed
+            // outside their hot loops; Local/cache SIMD is the remaining
+            // Forward critical-path time, so profiling does not instrument the
+            // cache-resident AVX2 kernels themselves.
+            if (diagnostics.UsedAvx2NttButterflies &&
+                !diagnostics.UsedMemoryBoundedLargePower)
+            {
+                TimeSpan localCacheSimd =
+                    diagnostics.ForwardTransform -
+                    diagnostics.ForwardGlobalCached -
+                    diagnostics.ForwardGlobalUncached;
+
+                if (localCacheSimd < TimeSpan.Zero)
+                {
+                    localCacheSimd = TimeSpan.Zero;
+                }
+
+                lines.Add(
+                    Format(
+                        "PowerRoot.InfoForwardNttProfile",
+                        FormatProfileSeconds(localCacheSimd),
+                        FormatProfileSeconds(
+                            diagnostics.ForwardGlobalCached),
+                        FormatProfileSeconds(
+                            diagnostics.ForwardGlobalUncached)));
+            }
+
             lines.Add(
                 Format(
                     "PowerRoot.InfoNttPostProfile",

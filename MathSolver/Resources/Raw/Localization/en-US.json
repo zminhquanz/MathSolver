@@ -456,6 +456,7 @@
     "PowerRoot.InfoExponentSplitProfile": "• Split profile: branch m {0}s; branch n {1}s; final multiply {2}s",
     "PowerRoot.InfoTime": "• Time: {0} seconds",
     "PowerRoot.InfoNttProfile": "• NTT profile ({0} large products): bit permutation {1}s (DIF/DIT = 0); forward transforms {2}s; inverse transforms {3}s",
+    "PowerRoot.InfoForwardNttProfile": "• Forward NTT:\n  Local/cache SIMD stages: {0}s\n  Global cached scalar stages: {1}s\n  Global uncached scalar stages: {2}s",
     "PowerRoot.InfoNttPostProfile": "• NTT post-processing: pointwise {0}s; CRT {1}s; carry {2}s",
     "PowerRoot.Copied": "Copied",
     "PowerRoot.ExportPreparing": "Creating TXT…",

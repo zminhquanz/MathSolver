@@ -4270,7 +4270,7 @@ internal sealed class ParallelBigUnsigned
                         workers,
                         cancellationToken);
 
-                ExecuteForwardCachedStagePairByGroups(
+                ExecuteForwardCachedStagePairByGroupsProfiled(
                     values,
                     modulus,
                     twiddlePlan.ForwardTwiddles,
@@ -4283,6 +4283,7 @@ internal sealed class ParallelBigUnsigned
                     secondTwiddleOffset,
                     stageLength,
                     workers,
+                    diagnostics,
                     cancellationToken);
 
                 // The for-loop update performs the second shift, thereby
@@ -4304,12 +4305,13 @@ internal sealed class ParallelBigUnsigned
                     stageLength,
                     twiddlePlan))
             {
-                ExecuteForwardUncachedStagePairSegmented(
+                ExecuteForwardUncachedStagePairSegmentedProfiled(
                     values,
                     modulus,
                     primitiveRoot,
                     stageLength,
                     workers,
+                    diagnostics,
                     cancellationToken);
 
                 stageLength >>= 1;
@@ -8394,6 +8396,68 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+
+    // Forward profiling wrappers deliberately sit outside the arithmetic kernels.
+    // This keeps the measured baseline kernels byte-for-byte unchanged and avoids
+    // extending Stopwatch/live diagnostic state through their hot loops.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteForwardCachedStagePairByGroupsProfiled(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[]? shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteForwardCachedStagePairByGroups(
+            values,
+            modulus,
+            twiddles,
+            shoupTwiddles,
+            firstTwiddleOffset,
+            secondTwiddleOffset,
+            stageLength,
+            workers,
+            cancellationToken);
+
+        diagnostics.ForwardGlobalCachedTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteForwardUncachedStagePairSegmentedProfiled(
+        uint[] values,
+        uint modulus,
+        uint primitiveRoot,
+        int stageLength,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteForwardUncachedStagePairSegmented(
+            values,
+            modulus,
+            primitiveRoot,
+            stageLength,
+            workers,
+            cancellationToken);
+
+        diagnostics.ForwardGlobalUncachedTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
     }
 
 
@@ -13834,6 +13898,8 @@ while (leftIndex + 1 < butterflyEnd)
         public int NttMultiplicationCount;
         public long BitReversalTicks;
         public long ForwardTransformTicks;
+        public long ForwardGlobalCachedTicks;
+        public long ForwardGlobalUncachedTicks;
         public long PointwiseTicks;
         public long InverseTransformTicks;
         public long CrtTicks;
@@ -13870,6 +13936,14 @@ while (leftIndex + 1 < butterflyEnd)
             // The two branches run at the same time. For each phase, the
             // critical-path estimate is the slower branch rather than the sum
             // of both CPU times; the final combine is added normally later.
+            // Forward sub-profile buckets must come from that same critical
+            // branch; taking Max() per bucket could mix two different branches.
+            PowerDiagnosticsCollector forwardCriticalBranch =
+                first.ForwardTransformTicks >=
+                second.ForwardTransformTicks
+                    ? first
+                    : second;
+
             return new PowerDiagnosticsCollector
             {
                 NttMultiplicationCount =
@@ -13884,6 +13958,10 @@ while (leftIndex + 1 < butterflyEnd)
                     Math.Max(
                         first.ForwardTransformTicks,
                         second.ForwardTransformTicks),
+                ForwardGlobalCachedTicks =
+                    forwardCriticalBranch.ForwardGlobalCachedTicks,
+                ForwardGlobalUncachedTicks =
+                    forwardCriticalBranch.ForwardGlobalUncachedTicks,
                 PointwiseTicks =
                     Math.Max(
                         first.PointwiseTicks,
@@ -13920,6 +13998,12 @@ while (leftIndex + 1 < butterflyEnd)
             ForwardTransformTicks +=
                 ToTimestampTicks(
                     snapshot.ForwardTransform);
+            ForwardGlobalCachedTicks +=
+                ToTimestampTicks(
+                    snapshot.ForwardGlobalCached);
+            ForwardGlobalUncachedTicks +=
+                ToTimestampTicks(
+                    snapshot.ForwardGlobalUncached);
             PointwiseTicks +=
                 ToTimestampTicks(
                     snapshot.Pointwise);
@@ -14085,6 +14169,8 @@ while (leftIndex + 1 < butterflyEnd)
                 NttMultiplicationCount,
                 ToTimeSpan(BitReversalTicks),
                 ToTimeSpan(ForwardTransformTicks),
+                ToTimeSpan(ForwardGlobalCachedTicks),
+                ToTimeSpan(ForwardGlobalUncachedTicks),
                 ToTimeSpan(PointwiseTicks),
                 ToTimeSpan(InverseTransformTicks),
                 ToTimeSpan(CrtTicks),
@@ -15910,6 +15996,8 @@ internal sealed record ParallelPowerDiagnostics(
     int NttMultiplicationCount,
     TimeSpan BitReversal,
     TimeSpan ForwardTransform,
+    TimeSpan ForwardGlobalCached,
+    TimeSpan ForwardGlobalUncached,
     TimeSpan Pointwise,
     TimeSpan InverseTransform,
     TimeSpan Crt,
