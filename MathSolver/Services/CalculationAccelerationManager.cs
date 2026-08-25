@@ -25,9 +25,12 @@ public enum CalculationSimdMode
 /// Lưu trạng thái bật/tắt SIMD và tập lệnh benchmark đã chọn.
 /// Tùy chọn mode chỉ điều khiển benchmark. Các thuật toán khác vẫn có thể
 /// kiểm tra UseSimd để tự chọn đường xử lý thích hợp. Engine NTT/CRT lũy thừa
-/// giữ scalar; đường SIMD production dùng cho đồ thị Parabol và decimal
-/// formatting base-10,000 sau Carry. TXT export dùng AVX2 trên Windows/x86 và
-/// NEON/AdvSIMD trên Android ARM64, cùng chịu công tắc Hardware acceleration.
+/// dùng scalar khi Hardware acceleration tắt. Khi bật trên Windows/x86 có
+/// AVX2, NTT/CRT <=10M có thể dùng butterfly AVX2 + cached Shoup twiddle;
+/// large-mode >10M vẫn giữ kernel scalar PersistentStatic hiện tại. Đường SIMD
+/// production khác dùng cho đồ thị Parabol và decimal formatting base-10,000
+/// sau Carry. TXT export dùng AVX2 trên Windows/x86 và NEON/AdvSIMD trên
+/// Android ARM64, tất cả cùng chịu công tắc Hardware acceleration.
 /// </summary>
 public static class CalculationAccelerationManager
 {
@@ -179,6 +182,24 @@ public static class CalculationAccelerationManager
         AdvSimd.Arm64.IsSupported;
 #else
         Avx2.IsSupported;
+#endif
+
+    /// <summary>
+    /// AVX2 butterfly backend for the production in-place DIF/DIT NTT used by
+    /// powers up to 10,000,000. The Hardware acceleration switch is the only
+    /// user-facing gate. Benchmark mode selection remains independent.
+    /// Large memory-bounded powers intentionally keep their scalar NTT kernel
+    /// until this <=10M experiment has been benchmarked and accepted.
+    /// </summary>
+    public static bool UsePowerNttAvx2 =>
+#if ANDROID
+        false;
+#else
+        UseSimd &&
+        Avx2.IsSupported &&
+        Vector256.IsHardwareAccelerated &&
+        (RuntimeInformation.ProcessArchitecture == Architecture.X64 ||
+         RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
 
     public static CalculationSimdMode SelectedSimdMode

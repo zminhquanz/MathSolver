@@ -6391,6 +6391,31 @@
       "key": "PowerRoot.StepLargeNttMemoryBounded",
       "source": "Vì số mũ lớn hơn 10,000,000, ứng dụng giữ nguyên kernel NTT/CRT đã ổn định cho từng chunk không quá {0}, sau đó ghép các kết quả bằng NTT/CRT in-place và phân đoạn để giới hạn RAM. Residue của transform vẫn dùng số nguyên 32-bit; chỉ phép nhân modulo tạm thời dùng 64-bit.",
       "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoNttKernelAvx2",
+      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + radix-8/3-stage riêng cho Forward DIF + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + twiddle recurrence gọn, không tạo Shoup global (Tăng tốc phần cứng bật)",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoNttKernelScalar",
+      "source": "• NTT kernel ≤10M: Scalar DIF/DIT (Tăng tốc phần cứng tắt hoặc AVX2 không khả dụng)",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.AccelerationDescription",
+      "source": "Bật SIMD cho benchmark và AVX2 256-bit cho NTT/CRT ≤ 10 triệu khi CPU hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.NttAccelerationAvx2On",
+      "source": "NTT/CRT ≤10M: AVX2 256-bit đang bật.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.NttAccelerationScalar",
+      "source": "NTT/CRT ≤10M: Scalar (AVX2 đang tắt hoặc không khả dụng).",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

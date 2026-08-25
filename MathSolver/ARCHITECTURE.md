@@ -97,7 +97,7 @@ Detects hardware capabilities and exposes:
 | `AvxAvx2` | AVX/AVX-512 support |
 | `Avx512` | AVX-512 + hardware acceleration |
 
-**Usage policy**: NTT/CRT arithmetic: **scalar only**. SIMD production paths are used for the Parabola evaluator and decimal formatting after Carry normalization, where the base-10,000 limbs are fully independent. TXT export dispatches AVX2 on Windows/x86 and NEON/AdvSIMD on Android ARM64. The shared Hardware acceleration switch enables/disables these production SIMD paths; benchmark mode selection itself does not alter runtime algorithm behavior.
+**Usage policy**: the proven in-place DIF/DIT scalar kernel remains the exact fallback. For powers `<= 10,000,000`, Windows x86/x64 can optionally dispatch cached butterfly work to an AVX2 256-bit kernel when the shared **Hardware acceleration** switch is enabled and `Avx2.IsSupported` is true. The AVX2 path keeps the existing uint32 layout, L1/L2/L3 cache blocking and fused DIF/DIT traversal; cached twiddles gain uint32 Shoup companions so eight residue lanes can perform exact modular twiddle multiplication without scalar `%` in the vector body. Small tails and uncached/global edge stages retain the proven scalar arithmetic. Turning Hardware acceleration off does not allocate Shoup companion tables and follows the original scalar scheduling/arithmetic path. The memory-bounded `>10M` PersistentStatic engine deliberately remains scalar until the <=10M AVX2 experiment is benchmarked and accepted. SIMD production paths for Parabola evaluation and decimal TXT formatting remain unchanged. Benchmark SIMD mode selection does not select the production NTT backend; only the Hardware acceleration switch plus actual CPU capability does.
 
 ---
 
@@ -403,3 +403,45 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 - The virtual path still reports the exact decimal digit count/compact scientific preview and keeps the existing >10M RAM warning. It does not allocate an NTT workspace merely to show the result.
 - Full TXT export is intentionally deferred: if the user explicitly exports a virtual `2^k` result, the existing exact memory-bounded segmented/in-place NTT/CRT engine materializes base-10,000 limbs from the original `|base|^exponent`, streams them to TXT, then releases the temporary large workspace. This preserves exact export without creating an oversized `BigInteger`.
 - The production <=10M NTT/CRT path is unchanged.
+
+### AVX2 cache-resident stage-pair fusion experiment (<=10M)
+
+When Hardware acceleration is enabled on AVX2-capable x86/x64 CPUs, the <=10M NTT path keeps the original 24-logical-worker policy from the measured ~26.5 s AVX2 baseline, but reduces value-buffer traffic inside the existing L1/L2/L3 hierarchy. Adjacent DIF stages (`S` then `S/2`) and the matching DIT stages (`S` then `2S`) are fused inside each already-owned cache tile. Four quarter streams remain live in AVX2 registers across both stages, so the intermediate residues are not written and then reloaded between the paired stages. Scalar DIF/DIT, Hardware acceleration OFF, and the >10M PersistentStatic/100-cache path remain unchanged.
+
+
+## AVX2 <=10M cache-locality experiment (2026-08-25)
+
+The accepted AVX2 comparison baseline is the 24-logical-worker cache-resident stage-pair build (~25.3 s on the HX 370 test case). This experiment keeps that worker policy and does not touch the >10M PersistentStatic/100-forward-cache path.
+
+The next AVX2 pass reduces twiddle/Shoup traffic inside cache-resident regions by changing L1/L2/L3 local traversal from group-major to twiddle-major when a tile contains multiple independent groups. One 8-lane twiddle + Shoup block is loaded once and reused across all groups/parents in the resident tile. Global stages remain group-partitioned so value locality and worker occupancy are not traded away for twiddle reuse.
+
+Inside each L1 block, every stage from the block size down through length 8 is now consumed as an adjacent stage pair. The remaining DIF 4+2 and inverse DIT 2+4 stages use a fused radix-4 scalar tail, removing the final intermediate value round trip. This is deliberately AVX2-only; Hardware acceleration OFF retains the scalar DIF/DIT baseline unchanged.
+
+
+## AVX2 <=10M hybrid cache-resident pass (2026-08-25)
+
+The measured AVX2 baseline after tile-local twiddle/Shoup reuse and L1 multi-stage fusion is ~23.03 s on the HX 370 reference case. The remaining gap to the ~21.705 s scalar baseline is concentrated mostly in Forward DIF.
+
+This pass keeps AVX2 only where the existing L1/L2/L3 blocking guarantees cache residency. Global stages above the LLC boundary deliberately use the lower-traffic scalar cached DIF/DIT kernels, so they no longer stream the extra Shoup companion table through DRAM. The AVX2 cache-resident kernels still reuse twiddle/Shoup vectors tile-locally and keep the existing stage-pair/radix-4 fusion.
+
+AVX2 modular add/sub and the final Shoup correction now use unsigned `VPMINUD` selection. Because both NTT primes satisfy `2p < 2^32`, `min(sum, sum-p)` and `min(diff, diff+p)` are exact modulo-p reductions with uint32 wraparound. This replaces compare/xor/mask correction chains with add/sub/min sequences while preserving exact residues. The Shoup product remains exact and still reduces back below `p` before values leave the butterfly.
+
+Scalar Hardware-acceleration-OFF behavior and the >10M PersistentStatic/100-forward-cache engine remain unchanged.
+
+### <=10M AVX2 local-Shoup-only experiment
+
+The <=10M AVX2 kernel remains cache-resident only. `NttTwiddlePlan` now exposes a
+`MaximumShoupHalfLength` equal to half the selected L3 NTT tile. Cached global
+DIF/DIT stages still build/reuse the normal uint32 twiddle table, but they no
+longer generate or write Shoup companions that the scalar global kernel never
+reads. L1/L2/L3 stages keep the same Shoup layout and AVX2 arithmetic. This is a
+forward-setup/memory-traffic optimization only; transform mathematics, worker
+count, CRT/carry, and the >10M PersistentStatic path are unchanged.
+
+### <=10M AVX2 Forward-DIF radix-8 cache fusion experiment
+
+The <=10M hardware-accelerated NTT keeps the proven hybrid policy: global stages remain scalar to avoid Shoup/DRAM traffic, while AVX2 is confined to cache-resident L1/L2/L3 work.  Forward DIF now has an additional L1-local three-stage (radix-8 style) micro-kernel for stage triples with at most eight groups per fused block.  For stages S, S/2 and S/4 it keeps the four upper S-stage sums in YMM registers, writes only the four lower twiddled residues, completes the upper two child stages, then reloads the lower half once and completes the same child stages.  This reduces value-buffer traffic without requiring all eight value vectors plus seven twiddle/Shoup vectors to remain live simultaneously on AVX2's 16 architectural YMM registers.  When group count grows beyond eight, the engine returns to the existing twiddle-major stage-pair kernels because cross-group twiddle reuse becomes more valuable.  The inverse DIT path is intentionally unchanged so this experiment isolates the remaining Forward NTT bottleneck.
+
+### <=10M AVX2 hybrid: global Forward scalar stage-pair fusion
+
+The <=10M hardware-accelerated path keeps AVX2 restricted to cache-resident L1/L2/L3 work, but the RAM-sized Forward-DIF stages above the LLC boundary now avoid redundant whole-array sweeps as well.  When both global stages fit the bounded twiddle cache, cached stage-pair fusion can split one large group into independent quarter-stream segments, so the full worker team remains occupied even before group count reaches the worker budget.  For the earliest stages that are too large for the twiddle cache, a separate scalar segmented pair kernel fuses S and S/2 while maintaining only three per-segment twiddle recurrences: w^j, w^(j+S/4), and (w^2)^j.  This removes one value-buffer pass and one stage barrier per fused pair without allocating a DRAM-sized twiddle or Shoup companion stream.  Scalar-only <=10M and >10M PersistentStatic plans retain their previous global-stage policy; this experimental fusion is gated by the AVX2 hardware-acceleration plan.

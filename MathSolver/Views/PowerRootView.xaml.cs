@@ -3994,6 +3994,16 @@ public partial class PowerRootView : LocalizedSolverView
                     diagnostics.NttBufferReuseCount,
                     diagnostics.NttBufferRentCount));
 
+            if (!diagnostics.UsedMemoryBoundedLargePower)
+            {
+                lines.Insert(
+                    6,
+                    Format(
+                        diagnostics.UsedAvx2NttButterflies
+                            ? "PowerRoot.InfoNttKernelAvx2"
+                            : "PowerRoot.InfoNttKernelScalar"));
+            }
+
             if (diagnostics.UsedMemoryBoundedLargePower)
             {
                 lines.Insert(

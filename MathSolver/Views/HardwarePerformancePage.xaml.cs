@@ -771,7 +771,7 @@ public partial class HardwarePerformancePage : ContentPage
             false;
 #endif
 
-        AccelerationStatusLabel.Text =
+        string accelerationStatus =
 #if ANDROID
             hasSimd &&
             !runtimeCanExecuteSimd
@@ -796,6 +796,18 @@ public partial class HardwarePerformancePage : ContentPage
                                     selectedMode))
                         : LocalizationService.Translate(
                             "Float và Double đang dùng Scalar.");
+
+#if !ANDROID
+        accelerationStatus +=
+            Environment.NewLine +
+            LocalizationService.TranslateKey(
+                CalculationAccelerationManager.UsePowerNttAvx2
+                    ? "Hardware.NttAccelerationAvx2On"
+                    : "Hardware.NttAccelerationScalar");
+#endif
+
+        AccelerationStatusLabel.Text =
+            accelerationStatus;
 
         MultithreadingStatusLabel.Text =
             !hasMultipleThreads
