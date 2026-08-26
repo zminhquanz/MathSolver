@@ -6399,7 +6399,7 @@
     },
     {
       "key": "PowerRoot.InfoNttKernelAvx2",
-      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + radix-8/3-stage riêng cho Forward DIF + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + twiddle recurrence gọn, không tạo Shoup global (Tăng tốc phần cứng bật)",
+      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + radix-8/3-stage riêng cho Forward DIF + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + managed byref + unroll 2 + dual-lane twiddle recurrence, không tạo Shoup global (Tăng tốc phần cứng bật)",
       "mode": "exact"
     },
     {

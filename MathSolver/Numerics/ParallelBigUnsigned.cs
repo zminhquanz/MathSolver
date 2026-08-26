@@ -8465,11 +8465,11 @@ internal sealed class ParallelBigUnsigned
 
 
     /// <summary>
-    /// Fuses two cached global DIF stages S and S/2.  For each butterfly index
-    /// one worker consumes the four corresponding quarter streams, performs
-    /// both stages while those values are live, and writes the final four
-    /// outputs once.  Arithmetic is unchanged; one complete memory sweep and
-    /// one stage barrier disappear.
+    /// Fuses two cached global DIF stages S and S/2.  The scalar path uses
+    /// managed byrefs for each residue slot so the same checked element
+    /// reference is reused for the load and final store, and consumes two
+    /// adjacent butterflies per loop iteration.  No Unsafe.Add, pointer
+    /// arithmetic or unmanaged memory access is used.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardCachedStagePairByGroups(
@@ -8505,11 +8505,6 @@ internal sealed class ParallelBigUnsigned
             values.Length /
             stageLength;
 
-        // Unlike the original whole-group-only fusion, a global scalar pair
-        // can safely split one group by butterfly position: every j owns four
-        // independent quarter-stream residues through both DIF stages.  This
-        // keeps the full worker team occupied for groupCount < workerCount and
-        // still performs only one read/write pass over the value buffer.
         int segmentsPerGroup =
             GetSegmentsPerGroup(
                 quarterLength,
@@ -8582,114 +8577,123 @@ internal sealed class ParallelBigUnsigned
                                 remaining,
                                 CancellationStride);
 
-                        int chunkEnd =
-                            index0 +
-                            chunkLength;
+                        int pairCount =
+                            chunkLength >> 1;
 
-                        for (;
-                             index0 < chunkEnd;
-                             index0++,
-                             index1++,
-                             index2++,
-                             index3++,
-                             firstTwiddleIndex0++,
-                             firstTwiddleIndex1++,
-                             secondTwiddleIndex++)
+                        for (int pair = 0;
+                             pair < pairCount;
+                             pair++)
                         {
-                            uint value0 =
-                                values[index0];
+                            // Load both butterflies' twiddles first.  This gives
+                            // the OoO core independent cache hits to overlap with
+                            // the scalar modular multiplies while keeping only
+                            // one butterfly's residue byrefs live at a time.
+                            uint firstTwiddle00 =
+                                twiddles[firstTwiddleIndex0];
 
-                            uint value1 =
-                                values[index1];
+                            uint firstTwiddle10 =
+                                twiddles[firstTwiddleIndex1];
 
-                            uint value2 =
-                                values[index2];
-
-                            uint value3 =
-                                values[index3];
-
-                            uint topSum0 =
-                                value0 + value2;
-
-                            uint topSum1 =
-                                value1 + value3;
-
-                            if (topSum0 >= modulus)
-                            {
-                                topSum0 -= modulus;
-                            }
-
-                            if (topSum1 >= modulus)
-                            {
-                                topSum1 -= modulus;
-                            }
-
-                            uint topDifference0 =
-                                value0 >= value2
-                                    ? value0 - value2
-                                    : value0 + modulus - value2;
-
-                            uint topDifference1 =
-                                value1 >= value3
-                                    ? value1 - value3
-                                    : value1 + modulus - value3;
-
-                            uint lower0 =
-                                (uint)((ulong)topDifference0 *
-                                       twiddles[firstTwiddleIndex0] %
-                                       modulus);
-
-                            uint lower1 =
-                                (uint)((ulong)topDifference1 *
-                                       twiddles[firstTwiddleIndex1] %
-                                       modulus);
-
-                            uint upperSum =
-                                topSum0 +
-                                topSum1;
-
-                            if (upperSum >= modulus)
-                            {
-                                upperSum -= modulus;
-                            }
-
-                            uint upperDifference =
-                                topSum0 >= topSum1
-                                    ? topSum0 - topSum1
-                                    : topSum0 + modulus - topSum1;
-
-                            uint lowerSum =
-                                lower0 +
-                                lower1;
-
-                            if (lowerSum >= modulus)
-                            {
-                                lowerSum -= modulus;
-                            }
-
-                            uint lowerDifference =
-                                lower0 >= lower1
-                                    ? lower0 - lower1
-                                    : lower0 + modulus - lower1;
-
-                            uint secondTwiddle =
+                            uint secondTwiddle0 =
                                 twiddles[secondTwiddleIndex];
 
-                            values[index0] =
-                                upperSum;
+                            uint firstTwiddle01 =
+                                twiddles[firstTwiddleIndex0 + 1];
 
-                            values[index1] =
-                                (uint)((ulong)upperDifference *
-                                       secondTwiddle %
-                                       modulus);
+                            uint firstTwiddle11 =
+                                twiddles[firstTwiddleIndex1 + 1];
 
-                            values[index2] =
-                                lowerSum;
+                            uint secondTwiddle1 =
+                                twiddles[secondTwiddleIndex + 1];
 
-                            values[index3] =
-                                (uint)((ulong)lowerDifference *
-                                       secondTwiddle %
-                                       modulus);
+                            {
+                                ref uint value0 =
+                                    ref values[index0];
+
+                                ref uint value1 =
+                                    ref values[index1];
+
+                                ref uint value2 =
+                                    ref values[index2];
+
+                                ref uint value3 =
+                                    ref values[index3];
+
+                                ProcessForwardStagePairButterflyByrefScalar(
+                                    ref value0,
+                                    ref value1,
+                                    ref value2,
+                                    ref value3,
+                                    modulus,
+                                    firstTwiddle00,
+                                    firstTwiddle10,
+                                    secondTwiddle0);
+                            }
+
+                            {
+                                ref uint value0 =
+                                    ref values[index0 + 1];
+
+                                ref uint value1 =
+                                    ref values[index1 + 1];
+
+                                ref uint value2 =
+                                    ref values[index2 + 1];
+
+                                ref uint value3 =
+                                    ref values[index3 + 1];
+
+                                ProcessForwardStagePairButterflyByrefScalar(
+                                    ref value0,
+                                    ref value1,
+                                    ref value2,
+                                    ref value3,
+                                    modulus,
+                                    firstTwiddle01,
+                                    firstTwiddle11,
+                                    secondTwiddle1);
+                            }
+
+                            index0 += 2;
+                            index1 += 2;
+                            index2 += 2;
+                            index3 += 2;
+                            firstTwiddleIndex0 += 2;
+                            firstTwiddleIndex1 += 2;
+                            secondTwiddleIndex += 2;
+                        }
+
+                        if ((chunkLength & 1) != 0)
+                        {
+                            ref uint value0 =
+                                ref values[index0];
+
+                            ref uint value1 =
+                                ref values[index1];
+
+                            ref uint value2 =
+                                ref values[index2];
+
+                            ref uint value3 =
+                                ref values[index3];
+
+                            ProcessForwardStagePairButterflyByrefScalar(
+                                ref value0,
+                                ref value1,
+                                ref value2,
+                                ref value3,
+                                modulus,
+                                twiddles[firstTwiddleIndex0],
+                                twiddles[firstTwiddleIndex1],
+                                twiddles[secondTwiddleIndex]);
+
+                            index0++;
+                            index1++;
+                            index2++;
+                            index3++;
+                            firstTwiddleIndex0++;
+                            firstTwiddleIndex1++;
+                            secondTwiddleIndex++;
                         }
 
                         remaining -=
@@ -8702,11 +8706,10 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Fuses two uncached global Forward-DIF stages S and S/2 while keeping
-    /// only three twiddle recurrences per worker segment.  This is used solely
-    /// by the <=10M AVX2 hybrid path for the early RAM-sized scalar stages:
-    /// it avoids allocating/streaming giant twiddle tables yet removes one
-    /// complete value-buffer sweep and one stage synchronization.
+    /// Fuses two uncached global Forward-DIF stages S and S/2.  Two independent
+    /// recurrence lanes process adjacent butterflies: the first-stage chains
+    /// advance by root^2 and the second-stage chains by root^4.  Residue access
+    /// uses ordinary managed byrefs only; there is no Unsafe.Add or pointer path.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardUncachedStagePairSegmented(
@@ -8717,9 +8720,6 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        const int CancellationStride =
-            1 << 14;
-
         int halfLength =
             stageLength >> 1;
 
@@ -8742,9 +8742,6 @@ internal sealed class ParallelBigUnsigned
                    firstRoot %
                    modulus);
 
-        // root^(S/4) is the fixed phase offset between the two quarter
-        // streams in the first DIF stage.  Compute it once for the stage pair
-        // rather than restarting a separate power chain for every worker.
         uint quarterPhase =
             (uint)ModPow(
                 firstRoot,
@@ -8775,183 +8772,392 @@ internal sealed class ParallelBigUnsigned
                         out int butterflyStart,
                         out int butterflyEnd);
 
-                    int groupOffset =
-                        groupIndex *
-                        stageLength;
-
-                    int index0 =
-                        groupOffset +
-                        butterflyStart;
-
-                    int index1 =
-                        groupOffset +
-                        quarterLength +
-                        butterflyStart;
-
-                    int index2 =
-                        groupOffset +
-                        halfLength +
-                        butterflyStart;
-
-                    int index3 =
-                        groupOffset +
-                        halfLength +
-                        quarterLength +
-                        butterflyStart;
-
-                    ulong firstTwiddle0 =
-                        butterflyStart == 0
-                            ? 1UL
-                            : ModPow(
-                                firstRoot,
-                                (uint)butterflyStart,
-                                modulus);
-
-                    ulong firstTwiddle1 =
-                        firstTwiddle0 *
-                        quarterPhase %
-                        modulus;
-
-                    // (root^j)^2 == (root^2)^j, so the second-stage starting
-                    // twiddle costs one multiply instead of another ModPow.
-                    ulong secondTwiddle =
-                        firstTwiddle0 *
-                        firstTwiddle0 %
-                        modulus;
-
-                    int butterfly =
-                        butterflyStart;
-
-                    while (butterfly < butterflyEnd)
-                    {
-                        int chunkEnd =
-                            Math.Min(
-                                butterflyEnd,
-                                butterfly + CancellationStride);
-
-                        for (;
-                             butterfly < chunkEnd;
-                             butterfly++,
-                             index0++,
-                             index1++,
-                             index2++,
-                             index3++)
-                        {
-                            uint value0 =
-                                values[index0];
-
-                            uint value1 =
-                                values[index1];
-
-                            uint value2 =
-                                values[index2];
-
-                            uint value3 =
-                                values[index3];
-
-                            uint topSum0 =
-                                value0 + value2;
-
-                            uint topSum1 =
-                                value1 + value3;
-
-                            if (topSum0 >= modulus)
-                            {
-                                topSum0 -= modulus;
-                            }
-
-                            if (topSum1 >= modulus)
-                            {
-                                topSum1 -= modulus;
-                            }
-
-                            uint topDifference0 =
-                                value0 >= value2
-                                    ? value0 - value2
-                                    : value0 + modulus - value2;
-
-                            uint topDifference1 =
-                                value1 >= value3
-                                    ? value1 - value3
-                                    : value1 + modulus - value3;
-
-                            uint lower0 =
-                                (uint)((ulong)topDifference0 *
-                                       firstTwiddle0 %
-                                       modulus);
-
-                            uint lower1 =
-                                (uint)((ulong)topDifference1 *
-                                       firstTwiddle1 %
-                                       modulus);
-
-                            uint upperSum =
-                                topSum0 +
-                                topSum1;
-
-                            if (upperSum >= modulus)
-                            {
-                                upperSum -= modulus;
-                            }
-
-                            uint upperDifference =
-                                topSum0 >= topSum1
-                                    ? topSum0 - topSum1
-                                    : topSum0 + modulus - topSum1;
-
-                            uint lowerSum =
-                                lower0 +
-                                lower1;
-
-                            if (lowerSum >= modulus)
-                            {
-                                lowerSum -= modulus;
-                            }
-
-                            uint lowerDifference =
-                                lower0 >= lower1
-                                    ? lower0 - lower1
-                                    : lower0 + modulus - lower1;
-
-                            values[index0] =
-                                upperSum;
-
-                            values[index1] =
-                                (uint)((ulong)upperDifference *
-                                       secondTwiddle %
-                                       modulus);
-
-                            values[index2] =
-                                lowerSum;
-
-                            values[index3] =
-                                (uint)((ulong)lowerDifference *
-                                       secondTwiddle %
-                                       modulus);
-
-                            if (butterfly + 1 < butterflyEnd)
-                            {
-                                firstTwiddle0 =
-                                    firstTwiddle0 *
-                                    firstRoot %
-                                    modulus;
-
-                                firstTwiddle1 =
-                                    firstTwiddle1 *
-                                    firstRoot %
-                                    modulus;
-
-                                secondTwiddle =
-                                    secondTwiddle *
-                                    secondRoot %
-                                    modulus;
-                            }
-                        }
-
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
+                    ProcessForwardUncachedStagePairSegmentByrefDualLane(
+                        values,
+                        modulus,
+                        firstRoot,
+                        secondRoot,
+                        quarterPhase,
+                        stageLength,
+                        groupIndex,
+                        butterflyStart,
+                        butterflyEnd,
+                        cancellationToken);
                 }
             });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStagePairSegmentByrefDualLane(
+        uint[] values,
+        uint modulus,
+        uint firstRoot,
+        uint secondRoot,
+        uint quarterPhase,
+        int stageLength,
+        int groupIndex,
+        int butterflyStart,
+        int butterflyEnd,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 14;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int quarterLength =
+            halfLength >> 1;
+
+        int groupOffset =
+            groupIndex *
+            stageLength;
+
+        int index0 =
+            groupOffset +
+            butterflyStart;
+
+        int index1 =
+            groupOffset +
+            quarterLength +
+            butterflyStart;
+
+        int index2 =
+            groupOffset +
+            halfLength +
+            butterflyStart;
+
+        int index3 =
+            groupOffset +
+            halfLength +
+            quarterLength +
+            butterflyStart;
+
+        int remaining =
+            butterflyEnd -
+            butterflyStart;
+
+        if (remaining <= 0)
+        {
+            return;
+        }
+
+        uint firstTwiddleEven =
+            butterflyStart == 0
+                ? 1u
+                : (uint)ModPow(
+                    firstRoot,
+                    (uint)butterflyStart,
+                    modulus);
+
+        uint firstTwiddleOdd =
+            (uint)((ulong)firstTwiddleEven *
+                   firstRoot %
+                   modulus);
+
+        uint firstPhaseEven =
+            (uint)((ulong)firstTwiddleEven *
+                   quarterPhase %
+                   modulus);
+
+        uint firstPhaseOdd =
+            (uint)((ulong)firstTwiddleOdd *
+                   quarterPhase %
+                   modulus);
+
+        uint secondTwiddleEven =
+            (uint)((ulong)firstTwiddleEven *
+                   firstTwiddleEven %
+                   modulus);
+
+        uint secondTwiddleOdd =
+            (uint)((ulong)firstTwiddleOdd *
+                   firstTwiddleOdd %
+                   modulus);
+
+        uint firstStepTwo =
+            secondRoot;
+
+        uint secondStepTwo =
+            (uint)((ulong)secondRoot *
+                   secondRoot %
+                   modulus);
+
+        while (remaining > 0)
+        {
+            int chunkLength =
+                Math.Min(
+                    remaining,
+                    CancellationStride);
+
+            int pairCount =
+                chunkLength >> 1;
+
+            for (int pair = 0;
+                 pair < pairCount;
+                 pair++)
+            {
+                {
+                    ref uint value0 =
+                        ref values[index0];
+
+                    ref uint value1 =
+                        ref values[index1];
+
+                    ref uint value2 =
+                        ref values[index2];
+
+                    ref uint value3 =
+                        ref values[index3];
+
+                    ProcessForwardStagePairButterflyByrefScalar(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        modulus,
+                        firstTwiddleEven,
+                        firstPhaseEven,
+                        secondTwiddleEven);
+                }
+
+                {
+                    ref uint value0 =
+                        ref values[index0 + 1];
+
+                    ref uint value1 =
+                        ref values[index1 + 1];
+
+                    ref uint value2 =
+                        ref values[index2 + 1];
+
+                    ref uint value3 =
+                        ref values[index3 + 1];
+
+                    ProcessForwardStagePairButterflyByrefScalar(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        modulus,
+                        firstTwiddleOdd,
+                        firstPhaseOdd,
+                        secondTwiddleOdd);
+                }
+
+                index0 += 2;
+                index1 += 2;
+                index2 += 2;
+                index3 += 2;
+
+                bool hasMore =
+                    pair + 1 < pairCount ||
+                    (chunkLength & 1) != 0 ||
+                    remaining > chunkLength;
+
+                if (hasMore)
+                {
+                    firstTwiddleEven =
+                        (uint)((ulong)firstTwiddleEven *
+                               firstStepTwo %
+                               modulus);
+
+                    firstTwiddleOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               firstStepTwo %
+                               modulus);
+
+                    firstPhaseEven =
+                        (uint)((ulong)firstPhaseEven *
+                               firstStepTwo %
+                               modulus);
+
+                    firstPhaseOdd =
+                        (uint)((ulong)firstPhaseOdd *
+                               firstStepTwo %
+                               modulus);
+
+                    secondTwiddleEven =
+                        (uint)((ulong)secondTwiddleEven *
+                               secondStepTwo %
+                               modulus);
+
+                    secondTwiddleOdd =
+                        (uint)((ulong)secondTwiddleOdd *
+                               secondStepTwo %
+                               modulus);
+                }
+            }
+
+            if ((chunkLength & 1) != 0)
+            {
+                ref uint value0 =
+                    ref values[index0];
+
+                ref uint value1 =
+                    ref values[index1];
+
+                ref uint value2 =
+                    ref values[index2];
+
+                ref uint value3 =
+                    ref values[index3];
+
+                ProcessForwardStagePairButterflyByrefScalar(
+                    ref value0,
+                    ref value1,
+                    ref value2,
+                    ref value3,
+                    modulus,
+                    firstTwiddleEven,
+                    firstPhaseEven,
+                    secondTwiddleEven);
+
+                index0++;
+                index1++;
+                index2++;
+                index3++;
+
+                // CancellationStride is even, so a non-final odd chunk is not
+                // expected.  Keep the recurrence exact anyway if the stride is
+                // changed later.
+                if (remaining > chunkLength)
+                {
+                    firstTwiddleEven =
+                        firstTwiddleOdd;
+
+                    firstPhaseEven =
+                        firstPhaseOdd;
+
+                    secondTwiddleEven =
+                        secondTwiddleOdd;
+
+                    firstTwiddleOdd =
+                        (uint)((ulong)firstTwiddleEven *
+                               firstRoot %
+                               modulus);
+
+                    firstPhaseOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               quarterPhase %
+                               modulus);
+
+                    secondTwiddleOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               firstTwiddleOdd %
+                               modulus);
+                }
+            }
+
+            remaining -=
+                chunkLength;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ProcessForwardStagePairButterflyByrefScalar(
+        ref uint value0Reference,
+        ref uint value1Reference,
+        ref uint value2Reference,
+        ref uint value3Reference,
+        uint modulus,
+        uint firstTwiddle0,
+        uint firstTwiddle1,
+        uint secondTwiddle)
+    {
+        uint value0 =
+            value0Reference;
+
+        uint value1 =
+            value1Reference;
+
+        uint value2 =
+            value2Reference;
+
+        uint value3 =
+            value3Reference;
+
+        uint topSum0 =
+            value0 + value2;
+
+        uint topSum1 =
+            value1 + value3;
+
+        if (topSum0 >= modulus)
+        {
+            topSum0 -= modulus;
+        }
+
+        if (topSum1 >= modulus)
+        {
+            topSum1 -= modulus;
+        }
+
+        uint topDifference0 =
+            value0 >= value2
+                ? value0 - value2
+                : value0 + modulus - value2;
+
+        uint topDifference1 =
+            value1 >= value3
+                ? value1 - value3
+                : value1 + modulus - value3;
+
+        uint lower0 =
+            (uint)((ulong)topDifference0 *
+                   firstTwiddle0 %
+                   modulus);
+
+        uint lower1 =
+            (uint)((ulong)topDifference1 *
+                   firstTwiddle1 %
+                   modulus);
+
+        uint upperSum =
+            topSum0 +
+            topSum1;
+
+        if (upperSum >= modulus)
+        {
+            upperSum -= modulus;
+        }
+
+        uint upperDifference =
+            topSum0 >= topSum1
+                ? topSum0 - topSum1
+                : topSum0 + modulus - topSum1;
+
+        uint lowerSum =
+            lower0 +
+            lower1;
+
+        if (lowerSum >= modulus)
+        {
+            lowerSum -= modulus;
+        }
+
+        uint lowerDifference =
+            lower0 >= lower1
+                ? lower0 - lower1
+                : lower0 + modulus - lower1;
+
+        value0Reference =
+            upperSum;
+
+        value1Reference =
+            (uint)((ulong)upperDifference *
+                   secondTwiddle %
+                   modulus);
+
+        value2Reference =
+            lowerSum;
+
+        value3Reference =
+            (uint)((ulong)lowerDifference *
+                   secondTwiddle %
+                   modulus);
     }
 
     /// <summary>
