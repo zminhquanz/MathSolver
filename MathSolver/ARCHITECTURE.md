@@ -478,3 +478,25 @@ Inverse diagnostics split the critical path into L3-local, L2-local, L1-fused, g
 
 No scalar-Shoup normalization experiment, Inverse context-hoist experiment, or inverse radix-4 unroll is present in this build. No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced. Forward managed-byref/unroll-2/dual-lane, packed small-stage L1 optimization, 24/24 workers, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
 
+### <=10M AVX2 inverse L1 packed 8+16 stage-pair experiment (2026-08-26)
+
+The 17.7–17.8 s checkpoint keeps Forward NTT unchanged and targets only the
+first Inverse DIT L1 stage-pair.  The 8+16 pair exposes four butterflies per
+16-value parent, too narrow for a single Vector256; the generic AVX2 parent
+kernel therefore fell through to scalar `uint64 % modulus` arithmetic for this
+pair.  Two adjacent parents are now packed into the low/high 128-bit halves of
+one Vector256 and processed with the existing cached Shoup AVX2 arithmetic.
+Twiddle/Shoup vectors are invariant across the complete L1 block, while output
+pairs are stored as soon as their second-stage multiply completes to keep YMM
+live ranges bounded.  No Inverse normalization, L2/L3 traversal, global stage,
+Forward kernel, worker topology, or >10M PersistentStatic policy is changed.
+No `Unsafe.Add` or pointer arithmetic is introduced.
+
+
+### <=10M AVX2 inverse cache stage-pair bounded-register schedule (2026-08-26)
+
+Starting from the accepted 17.6–17.7 s packed-8+16 checkpoint, the generic cache-resident Inverse DIT stage-pair keeps exactly the same AVX2 Shoup arithmetic, twiddle-major traversal, value loads/stores, and worker topology, but shortens the live range of value-side vectors inside each parent.  The first child pair is loaded and reduced before the second child pair is loaded; after the even parent merge completes, its two output vectors are stored immediately before the odd merge starts.  Six cached twiddle/Shoup vectors still remain invariant across the parent loop, but fewer temporary value vectors compete with them for the 16 architectural YMM registers.  No extra unrolling, no additional memory traffic, no new `Unsafe.Add`, and no pointer arithmetic are introduced.  Forward NTT, the packed Inverse 8+16 kernel, global stages, normalization, CRT/carry, 24/24 workers, and the >10M PersistentStatic/100-forward-cache engine remain unchanged.
+
+### <=10M AVX2 Forward L1 stage-pair/radix-4-only experiment (2026-08-26)
+
+The measured HX 370 checkpoint before this experiment is approximately 17.5-17.6 s for `999,999,999,999,999,999^10,000,000`.  Forward NTT remains the largest transform hot path.  To test a simpler L1 policy matching the successful inverse DIT structure, the Forward DIF L1 traversal no longer dispatches the radix-8/three-stage micro-kernel.  All cache-resident Forward stages from the L1 block boundary down through length 8 are consumed by the existing AVX2 stage-pair path (including the packed 16+8 specialization), followed by the existing fused radix-4/radix-2 scalar-Shoup tail.  The radix-8 implementation is retained but unreachable in this experiment for quick rollback.  L2/L3 traversal, global Forward managed-byref/unroll-2/dual-lane kernels, Inverse NTT bounded-register scheduling, worker topology, twiddle/Shoup layout, and the >10M PersistentStatic/100-forward-cache path are unchanged.
