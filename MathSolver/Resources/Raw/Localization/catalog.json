@@ -6404,7 +6404,7 @@
     },
     {
       "key": "PowerRoot.InfoNttKernelAvx2",
-      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + Forward L1 chỉ stage-pair/radix-4 (radix-8 tắt thử nghiệm) + Forward L1 stage-pair dùng bounded-register scheduling + Forward L1 stage 16+8 ghép 2 group/Vector256 + Inverse L1 stage 8+16 ghép 2 parent/Vector256 + Inverse stage-pair cache dùng bounded-register scheduling + radix-4 tail dùng scalar Shoup + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + managed byref + unroll 2 + dual-lane twiddle recurrence; Inverse global cached scalar dùng managed byref + unroll 2; không tạo Shoup global (Tăng tốc phần cứng bật)",
+      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + Forward L1 chỉ stage-pair/radix-4 (radix-8 tắt thử nghiệm) + Forward L1/L2 stage-pair dùng bounded-register scheduling + Forward L1 stage 16+8 ghép 2 group/Vector256 + Inverse L1 stage 8+16 ghép 2 parent/Vector256 + Inverse stage-pair cache dùng bounded-register scheduling + radix-4 tail dùng scalar Shoup + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + managed byref + unroll 2 + dual-lane twiddle recurrence; Inverse global cached scalar dùng managed byref + unroll 2; không tạo Shoup global (Tăng tốc phần cứng bật)",
       "mode": "exact"
     },
     {

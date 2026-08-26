@@ -7868,9 +7868,9 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// L1-only twiddle-major Forward DIF stage-pair using bounded value-side
-    /// register lifetimes.  Twiddle/Shoup vectors remain invariant across the
-    /// region exactly as in the accepted twiddle-major kernel, while one
+    /// Cache-resident twiddle-major Forward DIF stage-pair using bounded
+    /// value-side register lifetimes.  Twiddle/Shoup vectors remain invariant
+    /// across the region exactly as in the accepted twiddle-major kernel, while one
     /// quarter-pair is completed before the next is loaded and the upper
     /// second-stage outputs are stored before the lower merge.  No arithmetic,
     /// memory traffic, or twiddle ordering changes are introduced.
@@ -12350,7 +12350,11 @@ internal sealed class ParallelBigUnsigned
                 int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
                 int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
 
-                ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                // L2 experiment: reuse the accepted bounded-register schedule
+                // while the complete parent tile is still cache-resident.  L3
+                // intentionally keeps the previous twiddle-major schedule so
+                // this change can be benchmarked in isolation.
+                ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
                     values, modulus, twiddles, shoupTwiddles,
                     firstTwiddleOffset, secondTwiddleOffset,
                     tileOffset, l2NttTileLength, stageLength, context);
@@ -12460,7 +12464,9 @@ internal sealed class ParallelBigUnsigned
                 int secondTwiddleOffset =
                     twiddlePlan.GetOffset(stageLength >> 2);
 
-                ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                // Same L2-only bounded-register schedule as the profiled path.
+                // L3 remains on the accepted twiddle-major kernel.
+                ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
                     values,
                     modulus,
                     twiddles,
