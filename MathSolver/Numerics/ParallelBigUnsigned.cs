@@ -4768,7 +4768,7 @@ internal sealed class ParallelBigUnsigned
                 l3NttTileLength,
                 workers.WorkerCount))
         {
-            ExecuteInverseL3CacheBlockedHead(
+            ExecuteInverseL3CacheBlockedHeadProfiled(
                 values,
                 modulus,
                 workers,
@@ -4776,6 +4776,7 @@ internal sealed class ParallelBigUnsigned
                 fusedNttBlockLength,
                 l2NttTileLength,
                 l3NttTileLength,
+                diagnostics,
                 cancellationToken);
 
             firstStageLength =
@@ -4786,13 +4787,14 @@ internal sealed class ParallelBigUnsigned
                      l2NttTileLength,
                      workers.WorkerCount))
         {
-            ExecuteInverseL2CacheBlockedHead(
+            ExecuteInverseL2CacheBlockedHeadProfiled(
                 values,
                 modulus,
                 workers,
                 twiddlePlan,
                 fusedNttBlockLength,
                 l2NttTileLength,
+                diagnostics,
                 cancellationToken);
 
             firstStageLength =
@@ -4800,12 +4802,13 @@ internal sealed class ParallelBigUnsigned
         }
         else if (length > fusedNttBlockLength)
         {
-            ExecuteInverseFusedHead(
+            ExecuteInverseFusedHeadProfiled(
                 values,
                 modulus,
                 workers,
                 twiddlePlan,
                 fusedNttBlockLength,
+                diagnostics,
                 cancellationToken);
 
             firstStageLength =
@@ -4839,7 +4842,7 @@ internal sealed class ParallelBigUnsigned
                     twiddlePlan,
                     workers.WorkerCount))
             {
-                ExecuteInverseCachedStagePairByGroups(
+                ExecuteInverseCachedStagePairByGroupsProfiled(
                     values,
                     modulus,
                     twiddlePlan.InverseTwiddles,
@@ -4852,6 +4855,7 @@ internal sealed class ParallelBigUnsigned
                         stageLength),
                     stageLength,
                     workers,
+                    diagnostics,
                     cancellationToken);
 
                 // Skip the second stage consumed by the fused DIT kernel.
@@ -4932,7 +4936,7 @@ internal sealed class ParallelBigUnsigned
                         (uint)length,
                         modulus);
 
-                ExecuteFinalInversePrefix(
+                ExecuteFinalInversePrefixProfiled(
                     values,
                     finalOutput,
                     validOutputLength,
@@ -4940,6 +4944,7 @@ internal sealed class ParallelBigUnsigned
                     finalRoot,
                     inverseLength,
                     workers,
+                    diagnostics,
                     cancellationToken);
 
                 continue;
@@ -5006,7 +5011,7 @@ internal sealed class ParallelBigUnsigned
             if (useTwiddleCache &&
                 segmentsPerGroup == 1)
             {
-                ExecuteInverseCachedStageByGroups(
+                ExecuteInverseCachedStageByGroupsProfiled(
                     values,
                     modulus,
                     twiddlePlan.InverseTwiddles,
@@ -5018,10 +5023,14 @@ internal sealed class ParallelBigUnsigned
                     halfLength,
                     groupCount,
                     workers,
+                    diagnostics,
                     cancellationToken);
 
                 continue;
             }
+
+            long inverseGlobalStageStarted =
+                Stopwatch.GetTimestamp();
 
             ExecuteRanges(
                 checked(groupCount * segmentsPerGroup),
@@ -5257,6 +5266,30 @@ internal sealed class ParallelBigUnsigned
                         }
                     }
                 });
+
+            long inverseGlobalStageTicks =
+                Stopwatch.GetTimestamp() -
+                inverseGlobalStageStarted;
+
+            if (normalizeOutput)
+            {
+                // When the final stage cannot use the compact-prefix helper,
+                // its normalization remains part of the original generic
+                // kernel. Account it as final work instead of mixing it into
+                // the uncached-global bucket.
+                diagnostics.InverseFinalPrefixTicks +=
+                    inverseGlobalStageTicks;
+            }
+            else if (useTwiddleCache)
+            {
+                diagnostics.InverseGlobalCachedTicks +=
+                    inverseGlobalStageTicks;
+            }
+            else
+            {
+                diagnostics.InverseGlobalUncachedTicks +=
+                    inverseGlobalStageTicks;
+            }
         }
 
         diagnostics.InverseTransformTicks +=
@@ -5265,6 +5298,106 @@ internal sealed class ParallelBigUnsigned
             excludedAllocationTicks;
 
         return compactOutput;
+    }
+
+
+    // Inverse profiling wrappers stay outside arithmetic kernels. They add only
+    // phase-boundary timestamps; the existing butterfly implementations and
+    // twiddle arithmetic remain byte-for-byte unchanged.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteInverseCachedStagePairByGroupsProfiled(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[]? shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteInverseCachedStagePairByGroups(
+            values,
+            modulus,
+            twiddles,
+            shoupTwiddles,
+            firstTwiddleOffset,
+            secondTwiddleOffset,
+            stageLength,
+            workers,
+            cancellationToken);
+
+        diagnostics.InverseGlobalCachedTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteInverseCachedStageByGroupsProfiled(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[]? shoupTwiddles,
+        int twiddleOffset,
+        int stageLength,
+        int halfLength,
+        int groupCount,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteInverseCachedStageByGroups(
+            values,
+            modulus,
+            twiddles,
+            shoupTwiddles,
+            twiddleOffset,
+            stageLength,
+            halfLength,
+            groupCount,
+            workers,
+            cancellationToken);
+
+        diagnostics.InverseGlobalCachedTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteFinalInversePrefixProfiled(
+        uint[] values,
+        uint[] output,
+        int validOutputLength,
+        uint modulus,
+        uint root,
+        uint inverseLength,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteFinalInversePrefix(
+            values,
+            output,
+            validOutputLength,
+            modulus,
+            root,
+            inverseLength,
+            workers,
+            cancellationToken);
+
+        diagnostics.InverseFinalPrefixTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
     }
 
     /// <summary>
@@ -6293,6 +6426,41 @@ internal sealed class ParallelBigUnsigned
             context);
     }
 
+    /// <summary>
+    /// Exact scalar Shoup multiply for one cached twiddle.  This is used by
+    /// the tiny L1 radix-4 tail where vector setup would cost more than the
+    /// four-residue butterfly, but a variable 64-bit remainder would still be
+    /// disproportionately expensive.  For value, twiddle &lt; p and the cached
+    /// floor(twiddle * 2^32 / p) companion, the provisional remainder is below
+    /// 2p and therefore needs at most one correction.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static uint MultiplyShoupScalar(
+        uint value,
+        uint twiddle,
+        uint shoup,
+        uint modulus)
+    {
+        ulong product =
+            (ulong)value *
+            twiddle;
+
+        ulong quotient =
+            ((ulong)value *
+             shoup) >> 32;
+
+        uint remainder =
+            (uint)(product -
+                   quotient * modulus);
+
+        if (remainder >= modulus)
+        {
+            remainder -= modulus;
+        }
+
+        return remainder;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ExecuteForwardCachedDifGroupAvx2(
         uint[] values,
@@ -7080,6 +7248,230 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Specialized S=16/S=8 Forward DIF stage-pair for cache-resident regions.
+    /// A single 16-value group only has four butterflies, which is too narrow
+    /// for one Vector256.  Pack the same four lanes from two adjacent groups
+    /// into the low/high 128-bit halves and run the existing eight-lane Shoup
+    /// arithmetic once.  Twiddle vectors are duplicated once outside the group
+    /// loop, removing the scalar variable-modulus remainder path that otherwise
+    /// dominates the smallest L1 stage-pair.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairRegionQuarter4Avx2(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        in Avx2NttModContext context)
+    {
+        const int StageLength = 16;
+        const int QuarterLength = 4;
+        const int HalfLength = 8;
+        const int TwoGroupStride = StageLength * 2;
+
+        int regionEnd =
+            regionOffset + regionLength;
+
+        // Managed byrefs only.  The arrays are guaranteed non-empty by the
+        // cached NTT plan; take one checked element reference here and let the
+        // intrinsic load/store helpers use element offsets from it.
+        ref uint valuesReference =
+            ref values[0];
+        ref uint twiddleReference =
+            ref twiddles[0];
+        ref uint shoupReference =
+            ref shoupTwiddles[0];
+
+        Vector128<uint> firstTwiddle0Half =
+            Vector128.LoadUnsafe(
+                ref twiddleReference,
+                (nuint)firstTwiddleOffset);
+        Vector128<uint> firstShoup0Half =
+            Vector128.LoadUnsafe(
+                ref shoupReference,
+                (nuint)firstTwiddleOffset);
+        Vector128<uint> firstTwiddle1Half =
+            Vector128.LoadUnsafe(
+                ref twiddleReference,
+                (nuint)(firstTwiddleOffset + QuarterLength));
+        Vector128<uint> firstShoup1Half =
+            Vector128.LoadUnsafe(
+                ref shoupReference,
+                (nuint)(firstTwiddleOffset + QuarterLength));
+        Vector128<uint> secondTwiddleHalf =
+            Vector128.LoadUnsafe(
+                ref twiddleReference,
+                (nuint)secondTwiddleOffset);
+        Vector128<uint> secondShoupHalf =
+            Vector128.LoadUnsafe(
+                ref shoupReference,
+                (nuint)secondTwiddleOffset);
+
+        Vector256<uint> firstTwiddle0 =
+            Vector256.Create(
+                firstTwiddle0Half,
+                firstTwiddle0Half);
+        Vector256<uint> firstShoup0 =
+            Vector256.Create(
+                firstShoup0Half,
+                firstShoup0Half);
+        Vector256<uint> firstTwiddle1 =
+            Vector256.Create(
+                firstTwiddle1Half,
+                firstTwiddle1Half);
+        Vector256<uint> firstShoup1 =
+            Vector256.Create(
+                firstShoup1Half,
+                firstShoup1Half);
+        Vector256<uint> secondTwiddle =
+            Vector256.Create(
+                secondTwiddleHalf,
+                secondTwiddleHalf);
+        Vector256<uint> secondShoup =
+            Vector256.Create(
+                secondShoupHalf,
+                secondShoupHalf);
+
+        int groupOffset = regionOffset;
+        int pairedEnd = regionEnd - StageLength;
+
+        for (; groupOffset < pairedEnd; groupOffset += TwoGroupStride)
+        {
+            int nextGroupOffset =
+                groupOffset + StageLength;
+
+            Vector256<uint> value0 =
+                Vector256.Create(
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)groupOffset),
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)nextGroupOffset));
+
+            Vector256<uint> value1 =
+                Vector256.Create(
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)(groupOffset + QuarterLength)),
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)(nextGroupOffset + QuarterLength)));
+
+            Vector256<uint> value2 =
+                Vector256.Create(
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)(groupOffset + HalfLength)),
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)(nextGroupOffset + HalfLength)));
+
+            Vector256<uint> value3 =
+                Vector256.Create(
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)(groupOffset + HalfLength + QuarterLength)),
+                    Vector128.LoadUnsafe(
+                        ref valuesReference,
+                        (nuint)(nextGroupOffset + HalfLength + QuarterLength)));
+
+            Vector256<uint> topSum0 =
+                AddModuloAvx2(value0, value2, context);
+            Vector256<uint> topSum1 =
+                AddModuloAvx2(value1, value3, context);
+            Vector256<uint> topDifference0 =
+                SubtractModuloAvx2(value0, value2, context);
+            Vector256<uint> topDifference1 =
+                SubtractModuloAvx2(value1, value3, context);
+
+            Vector256<uint> lower0 =
+                MultiplyShoupAvx2(
+                    topDifference0,
+                    firstTwiddle0,
+                    firstShoup0,
+                    context);
+            Vector256<uint> lower1 =
+                MultiplyShoupAvx2(
+                    topDifference1,
+                    firstTwiddle1,
+                    firstShoup1,
+                    context);
+
+            Vector256<uint> upperSum =
+                AddModuloAvx2(topSum0, topSum1, context);
+            Vector256<uint> upperDifference =
+                SubtractModuloAvx2(topSum0, topSum1, context);
+            Vector256<uint> lowerSum =
+                AddModuloAvx2(lower0, lower1, context);
+            Vector256<uint> lowerDifference =
+                SubtractModuloAvx2(lower0, lower1, context);
+
+            Vector256<uint> output1 =
+                MultiplyShoupAvx2(
+                    upperDifference,
+                    secondTwiddle,
+                    secondShoup,
+                    context);
+            Vector256<uint> output3 =
+                MultiplyShoupAvx2(
+                    lowerDifference,
+                    secondTwiddle,
+                    secondShoup,
+                    context);
+
+            upperSum.GetLower().StoreUnsafe(
+                ref valuesReference,
+                (nuint)groupOffset);
+            upperSum.GetUpper().StoreUnsafe(
+                ref valuesReference,
+                (nuint)nextGroupOffset);
+
+            output1.GetLower().StoreUnsafe(
+                ref valuesReference,
+                (nuint)(groupOffset + QuarterLength));
+            output1.GetUpper().StoreUnsafe(
+                ref valuesReference,
+                (nuint)(nextGroupOffset + QuarterLength));
+
+            lowerSum.GetLower().StoreUnsafe(
+                ref valuesReference,
+                (nuint)(groupOffset + HalfLength));
+            lowerSum.GetUpper().StoreUnsafe(
+                ref valuesReference,
+                (nuint)(nextGroupOffset + HalfLength));
+
+            output3.GetLower().StoreUnsafe(
+                ref valuesReference,
+                (nuint)(groupOffset + HalfLength + QuarterLength));
+            output3.GetUpper().StoreUnsafe(
+                ref valuesReference,
+                (nuint)(nextGroupOffset + HalfLength + QuarterLength));
+        }
+
+        // Cache tiles are powers of two, so the production L1 path consumes an
+        // even number of S=16 groups.  Keep the exact existing group kernel as
+        // a defensive fallback for any future odd-sized region.
+        if (groupOffset < regionEnd)
+        {
+            ExecuteForwardCachedStagePairGroupAvx2(
+                values,
+                modulus,
+                twiddles,
+                shoupTwiddles,
+                firstTwiddleOffset,
+                secondTwiddleOffset,
+                groupOffset,
+                StageLength,
+                context);
+        }
+    }
+
+    /// <summary>
     /// Twiddle-major version of the fused DIF stage-pair kernel for a complete
     /// cache-resident region.  Six immutable AVX2 vectors (three twiddle and
     /// three Shoup) are fetched once per eight butterfly lanes and reused over
@@ -7103,6 +7495,24 @@ internal sealed class ParallelBigUnsigned
         int quarterLength = halfLength >> 1;
         int regionEnd = regionOffset + regionLength;
         int groupCount = regionLength / stageLength;
+
+        // The S=16/S=8 pair has only four butterflies per group.  Pack two
+        // adjacent groups into one Vector256 so this hot L1 stage stays on the
+        // Shoup/AVX2 path instead of falling back to scalar uint64 remainder.
+        if (quarterLength == 4 && groupCount >= 2)
+        {
+            ExecuteForwardCachedStagePairRegionQuarter4Avx2(
+                values,
+                modulus,
+                twiddles,
+                shoupTwiddles,
+                firstTwiddleOffset,
+                secondTwiddleOffset,
+                regionOffset,
+                regionLength,
+                context);
+            return;
+        }
 
         // With one group there is no cross-group twiddle reuse.  Keep the
         // compact register-resident group kernel in that case.
@@ -10553,6 +10963,449 @@ internal sealed class ParallelBigUnsigned
             });
     }
 
+    // Diagnostic Inverse local/cache profiler. Existing arithmetic kernels
+    // remain unchanged; only phase boundaries are timestamped.
+    private sealed class InverseLocalProfileCall
+    {
+        public long L3MaxTicks;
+        public long L2MaxTicks;
+        public long L1MaxTicks;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteInverseL3CacheBlockedHeadProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        int tileCount =
+            values.Length /
+            l3NttTileLength;
+
+        uint[] twiddles =
+            twiddlePlan.InverseTwiddles;
+
+        uint[]? shoupTwiddles =
+            workers.UseAvx2Ntt
+                ? twiddlePlan.InverseShoupTwiddles
+                : null;
+
+        Avx2NttModContext avx2Context =
+            shoupTwiddles is not null
+                ? new Avx2NttModContext(modulus)
+                : default;
+
+        var profile =
+            new InverseLocalProfileCall();
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (startTile, endTile) =>
+            {
+                long localL3Ticks = 0;
+                long localL2Ticks = 0;
+                long localL1Ticks = 0;
+
+                for (int tileIndex = startTile;
+                     tileIndex < endTile;
+                     tileIndex++)
+                {
+                    int tileOffset =
+                        tileIndex *
+                        l3NttTileLength;
+
+                    int tileEnd =
+                        tileOffset +
+                        l3NttTileLength;
+
+                    // Keep the accepted baseline dispatch exactly as-is:
+                    // every L2 tile creates/uses its context through the same
+                    // ExecuteInverseL2TileSequential path. The profiler only
+                    // timestamps the L1/L2 phase boundaries.
+                    for (int l2TileOffset = tileOffset;
+                         l2TileOffset < tileEnd;
+                         l2TileOffset += l2NttTileLength)
+                    {
+                        ExecuteInverseL2TileSequentialProfiled(
+                            values,
+                            modulus,
+                            twiddles,
+                            twiddlePlan,
+                            fusedNttBlockLength,
+                            l2NttTileLength,
+                            l2TileOffset,
+                            out long l1Ticks,
+                            out long l2Ticks);
+
+                        localL1Ticks +=
+                            l1Ticks;
+
+                        localL2Ticks +=
+                            l2Ticks;
+                    }
+
+                    long l3Started =
+                        Stopwatch.GetTimestamp();
+
+                    // Exact baseline LLC merge loop: no context hoist into L2,
+                    // no arithmetic changes, and no butterfly-level timestamps.
+                    for (int stageLength = l2NttTileLength << 1;
+                         stageLength <= l3NttTileLength;
+                         stageLength <<= 1)
+                    {
+                        int secondStageLength = stageLength << 1;
+
+                        if (shoupTwiddles is not null &&
+                            secondStageLength <= l3NttTileLength &&
+                            stageLength >= 16)
+                        {
+                            int firstTwiddleOffset =
+                                twiddlePlan.GetOffset(stageLength >> 1);
+                            int secondTwiddleOffset =
+                                twiddlePlan.GetOffset(stageLength);
+
+                            ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                                values,
+                                modulus,
+                                twiddles,
+                                shoupTwiddles,
+                                firstTwiddleOffset,
+                                secondTwiddleOffset,
+                                tileOffset,
+                                l3NttTileLength,
+                                stageLength,
+                                avx2Context);
+
+                            stageLength <<= 1;
+                            continue;
+                        }
+
+                        int halfLength = stageLength >> 1;
+                        int twiddleOffset =
+                            twiddlePlan.GetOffset(halfLength);
+
+                        if (shoupTwiddles is not null)
+                        {
+                            ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                                values,
+                                modulus,
+                                twiddles,
+                                shoupTwiddles,
+                                twiddleOffset,
+                                tileOffset,
+                                l3NttTileLength,
+                                stageLength,
+                                avx2Context);
+                        }
+                        else
+                        {
+                            for (int groupOffset = tileOffset;
+                                 groupOffset < tileEnd;
+                                 groupOffset += stageLength)
+                            {
+                                ExecuteInverseCachedDitGroup(
+                                    values,
+                                    modulus,
+                                    twiddles,
+                                    twiddleOffset,
+                                    groupOffset,
+                                    halfLength);
+                            }
+                        }
+                    }
+
+                    localL3Ticks +=
+                        Stopwatch.GetTimestamp() -
+                        l3Started;
+
+                    if ((tileIndex & 0x07) == 0x07)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+
+                UpdateMaximum(
+                    ref profile.L3MaxTicks,
+                    localL3Ticks);
+
+                UpdateMaximum(
+                    ref profile.L2MaxTicks,
+                    localL2Ticks);
+
+                UpdateMaximum(
+                    ref profile.L1MaxTicks,
+                    localL1Ticks);
+            });
+
+        diagnostics.InverseLocalL3Ticks +=
+            profile.L3MaxTicks;
+
+        diagnostics.InverseLocalL2Ticks +=
+            profile.L2MaxTicks;
+
+        diagnostics.InverseLocalL1Ticks +=
+            profile.L1MaxTicks;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteInverseL2CacheBlockedHeadProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteInverseL2CacheBlockedHead(
+            values,
+            modulus,
+            workers,
+            twiddlePlan,
+            fusedNttBlockLength,
+            l2NttTileLength,
+            cancellationToken);
+
+        // The accepted direct-L2 fallback is left untouched. For the 10M AVX2
+        // benchmark the L3 path above is used and yields the full L3/L2/L1
+        // split; smaller transforms retain this coarse local timing only.
+        diagnostics.InverseLocalL2Ticks +=
+            Stopwatch.GetTimestamp() -
+            started;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteInverseFusedHeadProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteInverseFusedHead(
+            values,
+            modulus,
+            workers,
+            twiddlePlan,
+            fusedNttBlockLength,
+            cancellationToken);
+
+        diagnostics.InverseLocalL1Ticks +=
+            Stopwatch.GetTimestamp() -
+            started;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseL2TileSequentialAvx2Profiled(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int tileOffset,
+        out long l1Ticks,
+        out long l2Ticks)
+    {
+        uint[] shoupTwiddles =
+            twiddlePlan.InverseShoupTwiddles!;
+
+        var context =
+            new Avx2NttModContext(modulus);
+
+        int tileEnd =
+            tileOffset + l2NttTileLength;
+
+        long l1Started =
+            Stopwatch.GetTimestamp();
+
+        for (int blockOffset = tileOffset;
+             blockOffset < tileEnd;
+             blockOffset += fusedNttBlockLength)
+        {
+            // Inverse of the forward radix-4 tail: finish DIT stages 2 and 4
+            // in one local pass before building larger cache-resident parents.
+            ExecuteInverseLengthTwoAndFourFusedBlock(
+                values,
+                modulus,
+                twiddles[twiddlePlan.GetOffset(2) + 1],
+                blockOffset,
+                blockOffset + fusedNttBlockLength);
+
+            // Starting at stage 8 leaves an even number of L1-local stages, so
+            // every remaining DIT stage can participate in a pair: 8+16,
+            // 32+64, ... 2048+4096 on the HX-370-class 4096-value block.
+            for (int stageLength = 8;
+                 stageLength <= fusedNttBlockLength;
+                 stageLength <<= 1)
+            {
+                int secondStageLength = stageLength << 1;
+
+                if (secondStageLength <= fusedNttBlockLength)
+                {
+                    int firstTwiddleOffset =
+                        twiddlePlan.GetOffset(stageLength >> 1);
+                    int secondTwiddleOffset =
+                        twiddlePlan.GetOffset(stageLength);
+
+                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                        values,
+                        modulus,
+                        twiddles,
+                        shoupTwiddles,
+                        firstTwiddleOffset,
+                        secondTwiddleOffset,
+                        blockOffset,
+                        fusedNttBlockLength,
+                        stageLength,
+                        context);
+
+                    stageLength <<= 1;
+                    continue;
+                }
+
+                int halfLength = stageLength >> 1;
+                int twiddleOffset = twiddlePlan.GetOffset(halfLength);
+
+                ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                    values,
+                    modulus,
+                    twiddles,
+                    shoupTwiddles,
+                    twiddleOffset,
+                    blockOffset,
+                    fusedNttBlockLength,
+                    stageLength,
+                    context);
+            }
+        }
+
+        l1Ticks =
+            Stopwatch.GetTimestamp() -
+            l1Started;
+
+        long l2Started =
+            Stopwatch.GetTimestamp();
+
+        // L2-local merge stages.  Reuse each twiddle/Shoup vector across every
+        // parent in the resident L2 tile before advancing to the next lanes.
+        for (int stageLength = fusedNttBlockLength << 1;
+             stageLength <= l2NttTileLength;
+             stageLength <<= 1)
+        {
+            int secondStageLength = stageLength << 1;
+
+            if (secondStageLength <= l2NttTileLength)
+            {
+                int firstTwiddleOffset =
+                    twiddlePlan.GetOffset(stageLength >> 1);
+                int secondTwiddleOffset =
+                    twiddlePlan.GetOffset(stageLength);
+
+                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                    values,
+                    modulus,
+                    twiddles,
+                    shoupTwiddles,
+                    firstTwiddleOffset,
+                    secondTwiddleOffset,
+                    tileOffset,
+                    l2NttTileLength,
+                    stageLength,
+                    context);
+
+                stageLength <<= 1;
+                continue;
+            }
+
+            int halfLength = stageLength >> 1;
+            int twiddleOffset = twiddlePlan.GetOffset(halfLength);
+
+            ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                values,
+                modulus,
+                twiddles,
+                shoupTwiddles,
+                twiddleOffset,
+                tileOffset,
+                l2NttTileLength,
+                stageLength,
+                context);
+        }
+
+        l2Ticks =
+            Stopwatch.GetTimestamp() -
+            l2Started;
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseL2TileSequentialProfiled(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int tileOffset,
+        out long l1Ticks,
+        out long l2Ticks)
+    {
+        if (twiddlePlan.InverseShoupTwiddles is not null &&
+            Avx2.IsSupported)
+        {
+            ExecuteInverseL2TileSequentialAvx2Profiled(
+                values,
+                modulus,
+                twiddles,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                tileOffset,
+                out l1Ticks,
+                out l2Ticks);
+            return;
+        }
+
+        long started =
+            Stopwatch.GetTimestamp();
+
+        ExecuteInverseL2TileSequential(
+            values,
+            modulus,
+            twiddles,
+            twiddlePlan,
+            fusedNttBlockLength,
+            l2NttTileLength,
+            tileOffset);
+
+        // The scalar fallback is not the production AVX2 target of this
+        // diagnostic build. Keep its exact arithmetic/traversal and report the
+        // combined local time under L1 so no second implementation is created.
+        l1Ticks =
+            Stopwatch.GetTimestamp() -
+            started;
+
+        l2Ticks = 0;
+    }
+
     /// <summary>
     /// Three-level DIT head, inverse of ExecuteForwardL3CacheBlockedTail.
     /// Complete each L2/L1 subtree first, merge those subtrees through the
@@ -10734,9 +11587,15 @@ internal sealed class ParallelBigUnsigned
 
         long l1Started = Stopwatch.GetTimestamp();
 
-        // Invariant across every 4096-value L1 block in this L2 tile.
+        // Invariant across every L1 block in this L2 tile.  The AVX2 plan
+        // already owns the exact Shoup companion, so the radix-4 tail can
+        // avoid one variable-modulus remainder per four residues.
+        int quarterTurnIndex =
+            twiddlePlan.GetOffset(2) + 1;
         uint quarterTurnTwiddle =
-            twiddles[twiddlePlan.GetOffset(2) + 1];
+            twiddles[quarterTurnIndex];
+        uint quarterTurnShoup =
+            shoupTwiddles[quarterTurnIndex];
 
         for (int blockOffset = tileOffset;
              blockOffset < tileEnd;
@@ -10795,8 +11654,9 @@ internal sealed class ParallelBigUnsigned
                     stageLength, context);
             }
 
-            ExecuteForwardLengthFourAndTwoFusedBlock(
-                values, modulus, quarterTurnTwiddle, blockOffset, blockEnd);
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                blockOffset, blockEnd);
         }
 
         l1Ticks = Stopwatch.GetTimestamp() - l1Started;
@@ -10868,6 +11728,13 @@ internal sealed class ParallelBigUnsigned
                 stageLength,
                 context);
         }
+
+        int quarterTurnIndex =
+            twiddlePlan.GetOffset(2) + 1;
+        uint quarterTurnTwiddle =
+            twiddles[quarterTurnIndex];
+        uint quarterTurnShoup =
+            shoupTwiddles[quarterTurnIndex];
 
         for (int blockOffset = tileOffset;
              blockOffset < tileEnd;
@@ -10964,10 +11831,11 @@ internal sealed class ParallelBigUnsigned
 
             // Finish the two smallest stages as one radix-4 DIF kernel.  This
             // removes the last stage-4 -> stage-2 intermediate round trip.
-            ExecuteForwardLengthFourAndTwoFusedBlock(
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
                 values,
                 modulus,
-                twiddles[twiddlePlan.GetOffset(2) + 1],
+                quarterTurnTwiddle,
+                quarterTurnShoup,
                 blockOffset,
                 blockOffset + fusedNttBlockLength);
         }
@@ -11106,6 +11974,175 @@ internal sealed class ParallelBigUnsigned
     /// are consumed immediately by the two length-2 butterflies, so the block
     /// is read once and only the final four residues are written back.
     /// </summary>
+    /// <summary>
+    /// AVX2-plan L1 radix-4 tail.  The arithmetic is still scalar because each
+    /// independent radix-4 group is only four uint32 residues, but the single
+    /// variable-modulus division in every group is replaced by the already
+    /// cached Shoup companion.  Two independent groups are consumed per loop
+    /// iteration to expose ILP without increasing YMM pressure.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd)
+    {
+        int index = blockOffset;
+        int unrolledEnd = blockEnd - 7;
+
+        for (; index < unrolledEnd; index += 8)
+        {
+            uint value0 = values[index];
+            uint value1 = values[index + 1];
+            uint value2 = values[index + 2];
+            uint value3 = values[index + 3];
+
+            uint topSum0 = value0 + value2;
+            uint topSum1 = value1 + value3;
+            if (topSum0 >= modulus) topSum0 -= modulus;
+            if (topSum1 >= modulus) topSum1 -= modulus;
+
+            uint lower0 =
+                value0 >= value2
+                    ? value0 - value2
+                    : value0 + modulus - value2;
+
+            uint lower1Raw =
+                value1 >= value3
+                    ? value1 - value3
+                    : value1 + modulus - value3;
+
+            uint lower1 =
+                MultiplyShoupScalar(
+                    lower1Raw,
+                    quarterTurnTwiddle,
+                    quarterTurnShoup,
+                    modulus);
+
+            uint output0 = topSum0 + topSum1;
+            if (output0 >= modulus) output0 -= modulus;
+
+            uint output1 =
+                topSum0 >= topSum1
+                    ? topSum0 - topSum1
+                    : topSum0 + modulus - topSum1;
+
+            uint output2 = lower0 + lower1;
+            if (output2 >= modulus) output2 -= modulus;
+
+            uint output3 =
+                lower0 >= lower1
+                    ? lower0 - lower1
+                    : lower0 + modulus - lower1;
+
+            uint value4 = values[index + 4];
+            uint value5 = values[index + 5];
+            uint value6 = values[index + 6];
+            uint value7 = values[index + 7];
+
+            uint topSum4 = value4 + value6;
+            uint topSum5 = value5 + value7;
+            if (topSum4 >= modulus) topSum4 -= modulus;
+            if (topSum5 >= modulus) topSum5 -= modulus;
+
+            uint lower4 =
+                value4 >= value6
+                    ? value4 - value6
+                    : value4 + modulus - value6;
+
+            uint lower5Raw =
+                value5 >= value7
+                    ? value5 - value7
+                    : value5 + modulus - value7;
+
+            uint lower5 =
+                MultiplyShoupScalar(
+                    lower5Raw,
+                    quarterTurnTwiddle,
+                    quarterTurnShoup,
+                    modulus);
+
+            uint output4 = topSum4 + topSum5;
+            if (output4 >= modulus) output4 -= modulus;
+
+            uint output5 =
+                topSum4 >= topSum5
+                    ? topSum4 - topSum5
+                    : topSum4 + modulus - topSum5;
+
+            uint output6 = lower4 + lower5;
+            if (output6 >= modulus) output6 -= modulus;
+
+            uint output7 =
+                lower4 >= lower5
+                    ? lower4 - lower5
+                    : lower4 + modulus - lower5;
+
+            values[index] = output0;
+            values[index + 1] = output1;
+            values[index + 2] = output2;
+            values[index + 3] = output3;
+            values[index + 4] = output4;
+            values[index + 5] = output5;
+            values[index + 6] = output6;
+            values[index + 7] = output7;
+        }
+
+        for (; index < blockEnd; index += 4)
+        {
+            uint value0 = values[index];
+            uint value1 = values[index + 1];
+            uint value2 = values[index + 2];
+            uint value3 = values[index + 3];
+
+            uint topSum0 = value0 + value2;
+            uint topSum1 = value1 + value3;
+            if (topSum0 >= modulus) topSum0 -= modulus;
+            if (topSum1 >= modulus) topSum1 -= modulus;
+
+            uint lower0 =
+                value0 >= value2
+                    ? value0 - value2
+                    : value0 + modulus - value2;
+
+            uint lower1Raw =
+                value1 >= value3
+                    ? value1 - value3
+                    : value1 + modulus - value3;
+
+            uint lower1 =
+                MultiplyShoupScalar(
+                    lower1Raw,
+                    quarterTurnTwiddle,
+                    quarterTurnShoup,
+                    modulus);
+
+            uint output0 = topSum0 + topSum1;
+            if (output0 >= modulus) output0 -= modulus;
+
+            uint output1 =
+                topSum0 >= topSum1
+                    ? topSum0 - topSum1
+                    : topSum0 + modulus - topSum1;
+
+            uint output2 = lower0 + lower1;
+            if (output2 >= modulus) output2 -= modulus;
+
+            uint output3 =
+                lower0 >= lower1
+                    ? lower0 - lower1
+                    : lower0 + modulus - lower1;
+
+            values[index] = output0;
+            values[index + 1] = output1;
+            values[index + 2] = output2;
+            values[index + 3] = output3;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardLengthFourAndTwoFusedBlock(
         uint[] values,
@@ -13257,6 +14294,13 @@ while (leftIndex + 1 < butterflyEnd)
         uint[] shoupTwiddles = twiddlePlan.ForwardShoupTwiddles!;
         var context = new Avx2NttModContext(modulus);
 
+        int quarterTurnIndex =
+            twiddlePlan.GetOffset(2) + 1;
+        uint quarterTurnTwiddle =
+            twiddles[quarterTurnIndex];
+        uint quarterTurnShoup =
+            shoupTwiddles[quarterTurnIndex];
+
         ExecuteRanges(
             blockCount, workers, cancellationToken,
             (startBlock, endBlock) =>
@@ -13335,10 +14379,11 @@ while (leftIndex + 1 < butterflyEnd)
                         }
                     }
 
-                    ExecuteForwardLengthFourAndTwoFusedBlock(
+                    ExecuteForwardLengthFourAndTwoFusedBlockShoup(
                         values,
                         modulus,
-                        twiddles[twiddlePlan.GetOffset(2) + 1],
+                        quarterTurnTwiddle,
+                        quarterTurnShoup,
                         blockOffset,
                         blockEnd);
                     if ((blockIndex & 0x3F) == 0x3F) cancellationToken.ThrowIfCancellationRequested();
@@ -14494,6 +15539,12 @@ while (leftIndex + 1 < butterflyEnd)
         public long ForwardGlobalUncachedTicks;
         public long PointwiseTicks;
         public long InverseTransformTicks;
+        public long InverseLocalL3Ticks;
+        public long InverseLocalL2Ticks;
+        public long InverseLocalL1Ticks;
+        public long InverseGlobalCachedTicks;
+        public long InverseGlobalUncachedTicks;
+        public long InverseFinalPrefixTicks;
         public long CrtTicks;
         public long CarryTicks;
 
@@ -14536,6 +15587,12 @@ while (leftIndex + 1 < butterflyEnd)
                     ? first
                     : second;
 
+            PowerDiagnosticsCollector inverseCriticalBranch =
+                first.InverseTransformTicks >=
+                second.InverseTransformTicks
+                    ? first
+                    : second;
+
             return new PowerDiagnosticsCollector
             {
                 NttMultiplicationCount =
@@ -14568,6 +15625,18 @@ while (leftIndex + 1 < butterflyEnd)
                     Math.Max(
                         first.InverseTransformTicks,
                         second.InverseTransformTicks),
+                InverseLocalL3Ticks =
+                    inverseCriticalBranch.InverseLocalL3Ticks,
+                InverseLocalL2Ticks =
+                    inverseCriticalBranch.InverseLocalL2Ticks,
+                InverseLocalL1Ticks =
+                    inverseCriticalBranch.InverseLocalL1Ticks,
+                InverseGlobalCachedTicks =
+                    inverseCriticalBranch.InverseGlobalCachedTicks,
+                InverseGlobalUncachedTicks =
+                    inverseCriticalBranch.InverseGlobalUncachedTicks,
+                InverseFinalPrefixTicks =
+                    inverseCriticalBranch.InverseFinalPrefixTicks,
                 CrtTicks =
                     Math.Max(
                         first.CrtTicks,
@@ -14617,6 +15686,24 @@ while (leftIndex + 1 < butterflyEnd)
             InverseTransformTicks +=
                 ToTimestampTicks(
                     snapshot.InverseTransform);
+            InverseLocalL3Ticks +=
+                ToTimestampTicks(
+                    snapshot.InverseLocalL3);
+            InverseLocalL2Ticks +=
+                ToTimestampTicks(
+                    snapshot.InverseLocalL2);
+            InverseLocalL1Ticks +=
+                ToTimestampTicks(
+                    snapshot.InverseLocalL1);
+            InverseGlobalCachedTicks +=
+                ToTimestampTicks(
+                    snapshot.InverseGlobalCached);
+            InverseGlobalUncachedTicks +=
+                ToTimestampTicks(
+                    snapshot.InverseGlobalUncached);
+            InverseFinalPrefixTicks +=
+                ToTimestampTicks(
+                    snapshot.InverseFinalPrefix);
             CrtTicks +=
                 ToTimestampTicks(
                     snapshot.Crt);
@@ -14783,6 +15870,12 @@ while (leftIndex + 1 < butterflyEnd)
                 ToTimeSpan(ForwardGlobalUncachedTicks),
                 ToTimeSpan(PointwiseTicks),
                 ToTimeSpan(InverseTransformTicks),
+                ToTimeSpan(InverseLocalL3Ticks),
+                ToTimeSpan(InverseLocalL2Ticks),
+                ToTimeSpan(InverseLocalL1Ticks),
+                ToTimeSpan(InverseGlobalCachedTicks),
+                ToTimeSpan(InverseGlobalUncachedTicks),
+                ToTimeSpan(InverseFinalPrefixTicks),
                 ToTimeSpan(CrtTicks),
                 ToTimeSpan(CarryTicks),
                 _usedExponentSplit,
@@ -16613,6 +17706,12 @@ internal sealed record ParallelPowerDiagnostics(
     TimeSpan ForwardGlobalUncached,
     TimeSpan Pointwise,
     TimeSpan InverseTransform,
+    TimeSpan InverseLocalL3,
+    TimeSpan InverseLocalL2,
+    TimeSpan InverseLocalL1,
+    TimeSpan InverseGlobalCached,
+    TimeSpan InverseGlobalUncached,
+    TimeSpan InverseFinalPrefix,
     TimeSpan Crt,
     TimeSpan Carry,
     bool UsedExponentSplit,

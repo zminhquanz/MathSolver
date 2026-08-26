@@ -2023,6 +2023,11 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.InfoInverseNttProfile",
+      "source": "• Inverse NTT:\n  Local/cache SIMD stages: {0} giây\n    L3-local SIMD stages: {1} giây\n    L2-local SIMD stages: {2} giây\n    L1 fused stages (stage-pair/radix-4): {3} giây\n  Global cached scalar stages: {4} giây\n  Global uncached scalar stages: {5} giây\n  Final prefix + normalization: {6} giây\n  Setup/other: {7} giây",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.InfoNttPostProfile",
       "source": "• Hậu xử lý NTT: nhân điểm {0} giây; CRT {1} giây; carry {2} giây",
       "mode": "exact"
@@ -6399,7 +6404,7 @@
     },
     {
       "key": "PowerRoot.InfoNttKernelAvx2",
-      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + radix-8/3-stage riêng cho Forward DIF + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + managed byref + unroll 2 + dual-lane twiddle recurrence, không tạo Shoup global (Tăng tốc phần cứng bật)",
+      "source": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + radix-8/3-stage riêng cho Forward DIF + L1 stage 16+8 ghép 2 group/Vector256 + radix-4 tail dùng scalar Shoup + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + managed byref + unroll 2 + dual-lane twiddle recurrence, không tạo Shoup global (Tăng tốc phần cứng bật)",
       "mode": "exact"
     },
     {

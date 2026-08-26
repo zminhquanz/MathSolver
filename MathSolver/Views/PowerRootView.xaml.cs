@@ -4114,6 +4114,46 @@ public partial class PowerRootView : LocalizedSolverView
                             diagnostics.ForwardGlobalCached),
                         FormatProfileSeconds(
                             diagnostics.ForwardGlobalUncached)));
+
+                // Inverse profiler-only build: all arithmetic kernels are the
+                // accepted baseline. Timers sit at phase boundaries only.
+                TimeSpan inverseLocalCache =
+                    diagnostics.InverseLocalL3 +
+                    diagnostics.InverseLocalL2 +
+                    diagnostics.InverseLocalL1;
+
+                TimeSpan inverseProfiled =
+                    inverseLocalCache +
+                    diagnostics.InverseGlobalCached +
+                    diagnostics.InverseGlobalUncached +
+                    diagnostics.InverseFinalPrefix;
+
+                TimeSpan inverseOther =
+                    diagnostics.InverseTransform -
+                    inverseProfiled;
+
+                if (inverseOther < TimeSpan.Zero)
+                {
+                    inverseOther = TimeSpan.Zero;
+                }
+
+                lines.Add(
+                    Format(
+                        "PowerRoot.InfoInverseNttProfile",
+                        FormatProfileSeconds(inverseLocalCache),
+                        FormatProfileSeconds(
+                            diagnostics.InverseLocalL3),
+                        FormatProfileSeconds(
+                            diagnostics.InverseLocalL2),
+                        FormatProfileSeconds(
+                            diagnostics.InverseLocalL1),
+                        FormatProfileSeconds(
+                            diagnostics.InverseGlobalCached),
+                        FormatProfileSeconds(
+                            diagnostics.InverseGlobalUncached),
+                        FormatProfileSeconds(
+                            diagnostics.InverseFinalPrefix),
+                        FormatProfileSeconds(inverseOther)));
             }
 
             lines.Add(

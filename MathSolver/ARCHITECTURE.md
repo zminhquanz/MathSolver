@@ -462,3 +462,19 @@ The cached global scalar pair now consumes two adjacent butterflies per loop ite
 The uncached global scalar pair uses two independent even/odd twiddle recurrence lanes.  First-stage twiddles advance by `root^2`; second-stage twiddles advance by `root^4`.  The recurrence state is kept as uint32 residues and widens only for the exact uint64 modular product.  This shortens the serial recurrence dependency chain while retaining the existing segmented stage-pair memory topology and cancellation cadence.
 
 No new `Unsafe.Add`, unsafe block, pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced by this experiment.  The existing AVX2 baseline intrinsics remain untouched.  Hardware acceleration OFF, the 24/24 worker policy, global no-Shoup policy, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
+
+
+### <=10M AVX2 L1 small-stage packing + scalar-Shoup tail (2026-08-26)
+
+The accepted ~17.9 s HX 370 checkpoint still spends most Forward time inside the L1 fused tail.  The hot S=16/S=8 stage-pair is only four butterflies wide per group, so the old generic path could not fill a 256-bit vector and fell back to scalar `% modulus` arithmetic.  The Forward-only L1 path now packs two adjacent 16-value groups into the low/high 128-bit halves of one `Vector256<uint>`, duplicates the same four cached twiddle/Shoup lanes into both halves, and executes the existing eight-lane AVX2 Shoup butterfly once for both groups.  This keeps the small stage pair on the SIMD path without increasing the live YMM set beyond the existing stage-pair kernel.
+
+The final fused stages 4+2 remain scalar because each radix-4 group is tiny, but their one quarter-turn multiplication now uses the already-cached scalar Shoup companion instead of a variable 64-bit remainder.  Two independent radix-4 groups are consumed per loop iteration for modest ILP.  Global cached/uncached Forward kernels, 24/24 worker topology, Inverse DIT, CRT/carry, memory topology, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
+
+### <=10M AVX2 Inverse-DIT profiler-only checkpoint (2026-08-26)
+
+The accepted HX 370 production checkpoint remains the ~17.7-17.8 s build. This diagnostic variant adds **Inverse NTT profiling only** and deliberately leaves all Inverse arithmetic, twiddle recurrence, normalization, cache traversal, worker topology, and Forward kernels unchanged.
+
+Inverse diagnostics split the critical path into L3-local, L2-local, L1-fused, global cached scalar, global uncached scalar, final-prefix/normalization, and derived setup/other buckets. The 10M AVX2 L3 path uses phase-boundary timestamps around the existing L3 merge and around an exact copy of the existing L2-tile AVX2 traversal; no butterfly-level timing is inserted. Global cached/uncached and final-prefix measurements are coarse wrappers around the existing kernels.
+
+No scalar-Shoup normalization experiment, Inverse context-hoist experiment, or inverse radix-4 unroll is present in this build. No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced. Forward managed-byref/unroll-2/dual-lane, packed small-stage L1 optimization, 24/24 workers, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
+
