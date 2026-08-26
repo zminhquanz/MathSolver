@@ -6888,6 +6888,184 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Forward DIF stage-pair variant used only by the L1 stage-pair/radix-4
+    /// policy.  Arithmetic and memory traffic are identical to the regular
+    /// group kernel, but value-side live ranges are deliberately shortened:
+    /// finish the first quarter-pair before loading the second, then store the
+    /// completed upper outputs before opening the lower second-stage multiply.
+    /// This mirrors the bounded-register schedule that proved useful in the
+    /// Inverse DIT cache stage-pair and avoids adding another unrolled group.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairGroupBoundedAvx2(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int groupOffset,
+        int stageLength,
+        in Avx2NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int quarterLength = halfLength >> 1;
+
+        int index0 = groupOffset;
+        int index1 = groupOffset + quarterLength;
+        int index2 = groupOffset + halfLength;
+        int index3 = index2 + quarterLength;
+        int end0 = groupOffset + quarterLength;
+
+        int firstTwiddleIndex0 = firstTwiddleOffset;
+        int firstTwiddleIndex1 = firstTwiddleOffset + quarterLength;
+        int secondTwiddleIndex = secondTwiddleOffset;
+
+        ref uint valuesReference =
+            ref values[0];
+        ref uint twiddleReference =
+            ref twiddles[0];
+        ref uint shoupReference =
+            ref shoupTwiddles[0];
+
+        while (index0 + 7 < end0)
+        {
+            // First quarter pair: complete its S-stage work before touching the
+            // second pair.  That keeps value0/value2 and their temporaries from
+            // overlapping the value1/value3 load set.
+            Vector256<uint> value0 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index0);
+            Vector256<uint> value2 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index2);
+
+            Vector256<uint> topSum0 =
+                AddModuloAvx2(value0, value2, context);
+            Vector256<uint> topDifference0 =
+                SubtractModuloAvx2(value0, value2, context);
+
+            Vector256<uint> firstTwiddle0 =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex0);
+            Vector256<uint> firstShoup0 =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex0);
+            Vector256<uint> lower0 =
+                MultiplyShoupAvx2(
+                    topDifference0, firstTwiddle0, firstShoup0, context);
+
+            // Second quarter pair is opened only after the first pair's value
+            // inputs are dead.  This is intentionally scheduling, not unroll.
+            Vector256<uint> value1 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index1);
+            Vector256<uint> value3 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index3);
+
+            Vector256<uint> topSum1 =
+                AddModuloAvx2(value1, value3, context);
+            Vector256<uint> topDifference1 =
+                SubtractModuloAvx2(value1, value3, context);
+
+            Vector256<uint> firstTwiddle1 =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex1);
+            Vector256<uint> firstShoup1 =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex1);
+            Vector256<uint> lower1 =
+                MultiplyShoupAvx2(
+                    topDifference1, firstTwiddle1, firstShoup1, context);
+
+            Vector256<uint> secondTwiddle =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex);
+            Vector256<uint> secondShoup =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex);
+
+            // Finish and store the upper S/2 branch first.  Once written,
+            // topSum0/topSum1 and the upper multiply result no longer compete
+            // with the lower branch for YMM registers.
+            Vector256<uint> upperSum =
+                AddModuloAvx2(topSum0, topSum1, context);
+            Vector256<uint> upperDifference =
+                SubtractModuloAvx2(topSum0, topSum1, context);
+            Vector256<uint> output1 =
+                MultiplyShoupAvx2(
+                    upperDifference, secondTwiddle, secondShoup, context);
+
+            upperSum.StoreUnsafe(ref valuesReference, (nuint)index0);
+            output1.StoreUnsafe(ref valuesReference, (nuint)index1);
+
+            Vector256<uint> lowerSum =
+                AddModuloAvx2(lower0, lower1, context);
+            Vector256<uint> lowerDifference =
+                SubtractModuloAvx2(lower0, lower1, context);
+            Vector256<uint> output3 =
+                MultiplyShoupAvx2(
+                    lowerDifference, secondTwiddle, secondShoup, context);
+
+            lowerSum.StoreUnsafe(ref valuesReference, (nuint)index2);
+            output3.StoreUnsafe(ref valuesReference, (nuint)index3);
+
+            index0 += 8;
+            index1 += 8;
+            index2 += 8;
+            index3 += 8;
+            firstTwiddleIndex0 += 8;
+            firstTwiddleIndex1 += 8;
+            secondTwiddleIndex += 8;
+        }
+
+        // Tiny tails keep the exact scalar ordering used by the accepted
+        // stage-pair kernel.  The L1 packed 16+8 specialization handles the
+        // important quarterLength==4 case before this helper is selected.
+        for (; index0 < end0;
+             index0++, index1++, index2++, index3++,
+             firstTwiddleIndex0++, firstTwiddleIndex1++, secondTwiddleIndex++)
+        {
+            uint value0 = values[index0];
+            uint value1 = values[index1];
+            uint value2 = values[index2];
+            uint value3 = values[index3];
+
+            uint topSum0 = value0 + value2;
+            uint topSum1 = value1 + value3;
+            if (topSum0 >= modulus) topSum0 -= modulus;
+            if (topSum1 >= modulus) topSum1 -= modulus;
+
+            uint topDifference0 =
+                value0 >= value2
+                    ? value0 - value2
+                    : value0 + modulus - value2;
+            uint topDifference1 =
+                value1 >= value3
+                    ? value1 - value3
+                    : value1 + modulus - value3;
+
+            uint lower0 =
+                (uint)((ulong)topDifference0 * twiddles[firstTwiddleIndex0] % modulus);
+            uint lower1 =
+                (uint)((ulong)topDifference1 * twiddles[firstTwiddleIndex1] % modulus);
+
+            uint upperSum = topSum0 + topSum1;
+            if (upperSum >= modulus) upperSum -= modulus;
+            uint upperDifference =
+                topSum0 >= topSum1
+                    ? topSum0 - topSum1
+                    : topSum0 + modulus - topSum1;
+
+            uint lowerSum = lower0 + lower1;
+            if (lowerSum >= modulus) lowerSum -= modulus;
+            uint lowerDifference =
+                lower0 >= lower1
+                    ? lower0 - lower1
+                    : lower0 + modulus - lower1;
+
+            uint secondTwiddle = twiddles[secondTwiddleIndex];
+            values[index0] = upperSum;
+            values[index1] =
+                (uint)((ulong)upperDifference * secondTwiddle % modulus);
+            values[index2] = lowerSum;
+            values[index3] =
+                (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+        }
+    }
+
+    /// <summary>
     /// AVX2 cache-resident DIT counterpart of
     /// ExecuteForwardCachedStagePairGroupAvx2. The S and 2S stages are merged
     /// inside one parent group, so intermediate residues never make a second
@@ -7623,6 +7801,232 @@ internal sealed class ParallelBigUnsigned
             }
         }
 
+        for (; butterfly < quarterLength; butterfly++)
+        {
+            uint firstTwiddle0 =
+                twiddles[firstTwiddleOffset + butterfly];
+            uint firstTwiddle1 =
+                twiddles[firstTwiddleOffset + quarterLength + butterfly];
+            uint secondTwiddle =
+                twiddles[secondTwiddleOffset + butterfly];
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int index0 = groupOffset + butterfly;
+                int index1 = index0 + quarterLength;
+                int index2 = index0 + halfLength;
+                int index3 = index2 + quarterLength;
+
+                uint value0 = values[index0];
+                uint value1 = values[index1];
+                uint value2 = values[index2];
+                uint value3 = values[index3];
+
+                uint topSum0 = value0 + value2;
+                uint topSum1 = value1 + value3;
+                if (topSum0 >= modulus) topSum0 -= modulus;
+                if (topSum1 >= modulus) topSum1 -= modulus;
+
+                uint topDifference0 =
+                    value0 >= value2
+                        ? value0 - value2
+                        : value0 + modulus - value2;
+                uint topDifference1 =
+                    value1 >= value3
+                        ? value1 - value3
+                        : value1 + modulus - value3;
+
+                uint lower0 =
+                    (uint)((ulong)topDifference0 * firstTwiddle0 % modulus);
+                uint lower1 =
+                    (uint)((ulong)topDifference1 * firstTwiddle1 % modulus);
+
+                uint upperSum = topSum0 + topSum1;
+                if (upperSum >= modulus) upperSum -= modulus;
+                uint upperDifference =
+                    topSum0 >= topSum1
+                        ? topSum0 - topSum1
+                        : topSum0 + modulus - topSum1;
+
+                uint lowerSum = lower0 + lower1;
+                if (lowerSum >= modulus) lowerSum -= modulus;
+                uint lowerDifference =
+                    lower0 >= lower1
+                        ? lower0 - lower1
+                        : lower0 + modulus - lower1;
+
+                values[index0] = upperSum;
+                values[index1] =
+                    (uint)((ulong)upperDifference * secondTwiddle % modulus);
+                values[index2] = lowerSum;
+                values[index3] =
+                    (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+            }
+        }
+    }
+
+    /// <summary>
+    /// L1-only twiddle-major Forward DIF stage-pair using bounded value-side
+    /// register lifetimes.  Twiddle/Shoup vectors remain invariant across the
+    /// region exactly as in the accepted twiddle-major kernel, while one
+    /// quarter-pair is completed before the next is loaded and the upper
+    /// second-stage outputs are stored before the lower merge.  No arithmetic,
+    /// memory traffic, or twiddle ordering changes are introduced.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx2NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int quarterLength = halfLength >> 1;
+        int regionEnd = regionOffset + regionLength;
+        int groupCount = regionLength / stageLength;
+
+        // Keep the accepted packed 16+8 specialization unchanged.  It already
+        // fills one Vector256 from two adjacent groups and is narrower than the
+        // generic stage-pair schedule targeted by this experiment.
+        if (quarterLength == 4 && groupCount >= 2)
+        {
+            ExecuteForwardCachedStagePairRegionQuarter4Avx2(
+                values,
+                modulus,
+                twiddles,
+                shoupTwiddles,
+                firstTwiddleOffset,
+                secondTwiddleOffset,
+                regionOffset,
+                regionLength,
+                context);
+            return;
+        }
+
+        if (groupCount <= 1 || quarterLength < 8)
+        {
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                ExecuteForwardCachedStagePairGroupBoundedAvx2(
+                    values,
+                    modulus,
+                    twiddles,
+                    shoupTwiddles,
+                    firstTwiddleOffset,
+                    secondTwiddleOffset,
+                    groupOffset,
+                    stageLength,
+                    context);
+            }
+
+            return;
+        }
+
+        ref uint valuesReference =
+            ref values[0];
+        ref uint twiddleReference =
+            ref twiddles[0];
+        ref uint shoupReference =
+            ref shoupTwiddles[0];
+
+        int butterfly = 0;
+
+        for (; butterfly + 7 < quarterLength; butterfly += 8)
+        {
+            int firstTwiddleIndex0 = firstTwiddleOffset + butterfly;
+            int firstTwiddleIndex1 =
+                firstTwiddleOffset + quarterLength + butterfly;
+            int secondTwiddleIndex = secondTwiddleOffset + butterfly;
+
+            // Six immutable vectors are intentionally kept outside the group
+            // loop for the same twiddle-major locality as the accepted kernel.
+            Vector256<uint> firstTwiddle0 =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex0);
+            Vector256<uint> firstShoup0 =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex0);
+            Vector256<uint> firstTwiddle1 =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex1);
+            Vector256<uint> firstShoup1 =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex1);
+            Vector256<uint> secondTwiddle =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex);
+            Vector256<uint> secondShoup =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex);
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int index0 = groupOffset + butterfly;
+                int index1 = index0 + quarterLength;
+                int index2 = index0 + halfLength;
+                int index3 = index2 + quarterLength;
+
+                Vector256<uint> value0 =
+                    Vector256.LoadUnsafe(ref valuesReference, (nuint)index0);
+                Vector256<uint> value2 =
+                    Vector256.LoadUnsafe(ref valuesReference, (nuint)index2);
+
+                Vector256<uint> topSum0 =
+                    AddModuloAvx2(value0, value2, context);
+                Vector256<uint> topDifference0 =
+                    SubtractModuloAvx2(value0, value2, context);
+                Vector256<uint> lower0 =
+                    MultiplyShoupAvx2(
+                        topDifference0, firstTwiddle0, firstShoup0, context);
+
+                Vector256<uint> value1 =
+                    Vector256.LoadUnsafe(ref valuesReference, (nuint)index1);
+                Vector256<uint> value3 =
+                    Vector256.LoadUnsafe(ref valuesReference, (nuint)index3);
+
+                Vector256<uint> topSum1 =
+                    AddModuloAvx2(value1, value3, context);
+                Vector256<uint> topDifference1 =
+                    SubtractModuloAvx2(value1, value3, context);
+                Vector256<uint> lower1 =
+                    MultiplyShoupAvx2(
+                        topDifference1, firstTwiddle1, firstShoup1, context);
+
+                // Upper branch is closed and stored before the lower S/2
+                // branch opens.  This is the key bounded-register change.
+                Vector256<uint> upperSum =
+                    AddModuloAvx2(topSum0, topSum1, context);
+                Vector256<uint> upperDifference =
+                    SubtractModuloAvx2(topSum0, topSum1, context);
+                Vector256<uint> output1 =
+                    MultiplyShoupAvx2(
+                        upperDifference, secondTwiddle, secondShoup, context);
+
+                upperSum.StoreUnsafe(ref valuesReference, (nuint)index0);
+                output1.StoreUnsafe(ref valuesReference, (nuint)index1);
+
+                Vector256<uint> lowerSum =
+                    AddModuloAvx2(lower0, lower1, context);
+                Vector256<uint> lowerDifference =
+                    SubtractModuloAvx2(lower0, lower1, context);
+                Vector256<uint> output3 =
+                    MultiplyShoupAvx2(
+                        lowerDifference, secondTwiddle, secondShoup, context);
+
+                lowerSum.StoreUnsafe(ref valuesReference, (nuint)index2);
+                output3.StoreUnsafe(ref valuesReference, (nuint)index3);
+            }
+        }
+
+        // Scalar tails are byte-for-byte equivalent in arithmetic/order to the
+        // accepted twiddle-major kernel and are rarely taken for power-of-two
+        // cache stages wider than the packed 16+8 specialization.
         for (; butterfly < quarterLength; butterfly++)
         {
             uint firstTwiddle0 =
@@ -9945,118 +10349,105 @@ internal sealed class ParallelBigUnsigned
                             index0 +
                             chunkLength;
 
+                        // Two adjacent scalar butterflies are consumed per loop
+                        // iteration.  Each butterfly is completed before the next
+                        // one starts so the managed byrefs can be reused for load
+                        // and store without keeping two complete scalar states live
+                        // at once.  This mirrors the Forward global-cache win while
+                        // keeping register pressure bounded on the Inverse path.
+                        int pairEnd =
+                            chunkEnd - 1;
+
                         for (;
-                             index0 < chunkEnd;
-                             index0++,
-                             index1++,
-                             index2++,
-                             index3++,
-                             firstTwiddleIndex++,
-                             secondTwiddleIndex0++,
-                             secondTwiddleIndex1++)
+                             index0 < pairEnd;
+                             index0 += 2,
+                             index1 += 2,
+                             index2 += 2,
+                             index3 += 2,
+                             firstTwiddleIndex += 2,
+                             secondTwiddleIndex0 += 2,
+                             secondTwiddleIndex1 += 2)
                         {
-                            uint value0 =
-                                values[index0];
-
-                            uint value1 =
-                                values[index1];
-
-                            uint value2 =
-                                values[index2];
-
-                            uint value3 =
-                                values[index3];
-
-                            uint firstTwiddle =
-                                twiddles[firstTwiddleIndex];
-
-                            uint right0 =
-                                (uint)((ulong)value1 *
-                                       firstTwiddle %
-                                       modulus);
-
-                            uint right1 =
-                                (uint)((ulong)value3 *
-                                       firstTwiddle %
-                                       modulus);
-
-                            uint firstSum0 =
-                                value0 +
-                                right0;
-
-                            uint firstSum1 =
-                                value2 +
-                                right1;
-
-                            if (firstSum0 >= modulus)
                             {
-                                firstSum0 -= modulus;
+                                ref uint value0 =
+                                    ref values[index0];
+
+                                ref uint value1 =
+                                    ref values[index1];
+
+                                ref uint value2 =
+                                    ref values[index2];
+
+                                ref uint value3 =
+                                    ref values[index3];
+
+                                ProcessInverseStagePairButterflyByrefScalar(
+                                    ref value0,
+                                    ref value1,
+                                    ref value2,
+                                    ref value3,
+                                    modulus,
+                                    twiddles[firstTwiddleIndex],
+                                    twiddles[secondTwiddleIndex0],
+                                    twiddles[secondTwiddleIndex1]);
                             }
 
-                            if (firstSum1 >= modulus)
                             {
-                                firstSum1 -= modulus;
+                                ref uint value0 =
+                                    ref values[index0 + 1];
+
+                                ref uint value1 =
+                                    ref values[index1 + 1];
+
+                                ref uint value2 =
+                                    ref values[index2 + 1];
+
+                                ref uint value3 =
+                                    ref values[index3 + 1];
+
+                                ProcessInverseStagePairButterflyByrefScalar(
+                                    ref value0,
+                                    ref value1,
+                                    ref value2,
+                                    ref value3,
+                                    modulus,
+                                    twiddles[firstTwiddleIndex + 1],
+                                    twiddles[secondTwiddleIndex0 + 1],
+                                    twiddles[secondTwiddleIndex1 + 1]);
                             }
+                        }
 
-                            uint firstDifference0 =
-                                value0 >= right0
-                                    ? value0 - right0
-                                    : value0 + modulus - right0;
+                        if (index0 < chunkEnd)
+                        {
+                            ref uint value0 =
+                                ref values[index0];
 
-                            uint firstDifference1 =
-                                value2 >= right1
-                                    ? value2 - right1
-                                    : value2 + modulus - right1;
+                            ref uint value1 =
+                                ref values[index1];
 
-                            uint mergedRight0 =
-                                (uint)((ulong)firstSum1 *
-                                       twiddles[secondTwiddleIndex0] %
-                                       modulus);
+                            ref uint value2 =
+                                ref values[index2];
 
-                            uint mergedRight1 =
-                                (uint)((ulong)firstDifference1 *
-                                       twiddles[secondTwiddleIndex1] %
-                                       modulus);
+                            ref uint value3 =
+                                ref values[index3];
 
-                            uint finalSum0 =
-                                firstSum0 +
-                                mergedRight0;
+                            ProcessInverseStagePairButterflyByrefScalar(
+                                ref value0,
+                                ref value1,
+                                ref value2,
+                                ref value3,
+                                modulus,
+                                twiddles[firstTwiddleIndex],
+                                twiddles[secondTwiddleIndex0],
+                                twiddles[secondTwiddleIndex1]);
 
-                            uint finalSum1 =
-                                firstDifference0 +
-                                mergedRight1;
-
-                            if (finalSum0 >= modulus)
-                            {
-                                finalSum0 -= modulus;
-                            }
-
-                            if (finalSum1 >= modulus)
-                            {
-                                finalSum1 -= modulus;
-                            }
-
-                            uint finalDifference0 =
-                                firstSum0 >= mergedRight0
-                                    ? firstSum0 - mergedRight0
-                                    : firstSum0 + modulus - mergedRight0;
-
-                            uint finalDifference1 =
-                                firstDifference0 >= mergedRight1
-                                    ? firstDifference0 - mergedRight1
-                                    : firstDifference0 + modulus - mergedRight1;
-
-                            values[index0] =
-                                finalSum0;
-
-                            values[index1] =
-                                finalSum1;
-
-                            values[index2] =
-                                finalDifference0;
-
-                            values[index3] =
-                                finalDifference1;
+                            index0++;
+                            index1++;
+                            index2++;
+                            index3++;
+                            firstTwiddleIndex++;
+                            secondTwiddleIndex0++;
+                            secondTwiddleIndex1++;
                         }
 
                         remaining -=
@@ -10066,6 +10457,113 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ProcessInverseStagePairButterflyByrefScalar(
+        ref uint value0Reference,
+        ref uint value1Reference,
+        ref uint value2Reference,
+        ref uint value3Reference,
+        uint modulus,
+        uint firstTwiddle,
+        uint secondTwiddle0,
+        uint secondTwiddle1)
+    {
+        uint value0 =
+            value0Reference;
+
+        uint value1 =
+            value1Reference;
+
+        uint value2 =
+            value2Reference;
+
+        uint value3 =
+            value3Reference;
+
+        uint right0 =
+            (uint)((ulong)value1 *
+                   firstTwiddle %
+                   modulus);
+
+        uint right1 =
+            (uint)((ulong)value3 *
+                   firstTwiddle %
+                   modulus);
+
+        uint firstSum0 =
+            value0 +
+            right0;
+
+        uint firstSum1 =
+            value2 +
+            right1;
+
+        if (firstSum0 >= modulus)
+        {
+            firstSum0 -= modulus;
+        }
+
+        if (firstSum1 >= modulus)
+        {
+            firstSum1 -= modulus;
+        }
+
+        uint firstDifference0 =
+            value0 >= right0
+                ? value0 - right0
+                : value0 + modulus - right0;
+
+        uint firstDifference1 =
+            value2 >= right1
+                ? value2 - right1
+                : value2 + modulus - right1;
+
+        uint mergedRight0 =
+            (uint)((ulong)firstSum1 *
+                   secondTwiddle0 %
+                   modulus);
+
+        uint mergedRight1 =
+            (uint)((ulong)firstDifference1 *
+                   secondTwiddle1 %
+                   modulus);
+
+        uint finalSum0 =
+            firstSum0 +
+            mergedRight0;
+
+        uint finalSum1 =
+            firstDifference0 +
+            mergedRight1;
+
+        if (finalSum0 >= modulus)
+        {
+            finalSum0 -= modulus;
+        }
+
+        if (finalSum1 >= modulus)
+        {
+            finalSum1 -= modulus;
+        }
+
+        value0Reference =
+            finalSum0;
+
+        value1Reference =
+            finalSum1;
+
+        value2Reference =
+            firstSum0 >= mergedRight0
+                ? firstSum0 - mergedRight0
+                : firstSum0 + modulus - mergedRight0;
+
+        value3Reference =
+            firstDifference0 >= mergedRight1
+                ? firstDifference0 - mergedRight1
+                : firstDifference0 + modulus - mergedRight1;
     }
 
     /// <summary>
@@ -11900,7 +12398,7 @@ internal sealed class ParallelBigUnsigned
                     int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
                     int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
 
-                    ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
                         values, modulus, twiddles, shoupTwiddles,
                         firstTwiddleOffset, secondTwiddleOffset,
                         blockOffset, fusedNttBlockLength, stageLength, context);
@@ -12024,7 +12522,7 @@ internal sealed class ParallelBigUnsigned
                     int secondTwiddleOffset =
                         twiddlePlan.GetOffset(stageLength >> 2);
 
-                    ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
                         values,
                         modulus,
                         twiddles,
@@ -14551,7 +15049,7 @@ while (leftIndex + 1 < butterflyEnd)
                                  groupOffset < blockEnd;
                                  groupOffset += stageLength)
                             {
-                                ExecuteForwardCachedStagePairGroupAvx2(
+                                ExecuteForwardCachedStagePairGroupBoundedAvx2(
                                     values, modulus, twiddles, shoupTwiddles,
                                     firstTwiddleOffset, secondTwiddleOffset,
                                     groupOffset, stageLength, context);
