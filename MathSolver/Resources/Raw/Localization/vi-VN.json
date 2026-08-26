@@ -456,7 +456,7 @@
     "PowerRoot.InfoExponentSplitProfile": "• Hồ sơ phân nhánh: nhánh m {0} giây; nhánh n {1} giây; nhân ghép cuối {2} giây",
     "PowerRoot.InfoTime": "• Thời gian: {0} giây",
     "PowerRoot.InfoNttProfile": "• Hồ sơ NTT ({0} phép nhân lớn): hoán vị bit {1} giây (DIF/DIT = 0); biến đổi thuận {2} giây; biến đổi nghịch {3} giây",
-    "PowerRoot.InfoForwardNttProfile": "• Forward NTT:\n  Local/cache SIMD stages: {0} giây\n  Global cached scalar stages: {1} giây\n  Global uncached scalar stages: {2} giây",
+    "PowerRoot.InfoForwardNttProfile": "• Forward NTT:\n  Local/cache SIMD stages: {0} giây\n    L3-local SIMD stages: {1} giây\n    L2-local SIMD stages: {2} giây\n    L1 fused stages (radix-8/stage-pair/radix-4): {3} giây\n    Local setup/other: {4} giây\n  Global cached scalar stages: {5} giây\n  Global uncached scalar stages: {6} giây",
     "PowerRoot.InfoNttPostProfile": "• Hậu xử lý NTT: nhân điểm {0} giây; CRT {1} giây; carry {2} giây",
     "PowerRoot.Copied": "Đã sao chép",
     "PowerRoot.ExportPreparing": "Đang tạo TXT…",

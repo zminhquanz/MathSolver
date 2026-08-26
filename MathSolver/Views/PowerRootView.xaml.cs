@@ -4069,9 +4069,9 @@ public partial class PowerRootView : LocalizedSolverView
 
             // Detailed Forward buckets are meaningful only for the <=10M
             // hardware-accelerated hybrid path. Global pair kernels are timed
-            // outside their hot loops; Local/cache SIMD is the remaining
-            // Forward critical-path time, so profiling does not instrument the
-            // cache-resident AVX2 kernels themselves.
+            // outside their hot loops. Cache-local detail times only L3/L2/L1
+            // phase boundaries and reduces fixed-worker totals by critical path;
+            // no butterfly-level Stopwatch call is inserted.
             if (diagnostics.UsedAvx2NttButterflies &&
                 !diagnostics.UsedMemoryBoundedLargePower)
             {
@@ -4085,10 +4085,31 @@ public partial class PowerRootView : LocalizedSolverView
                     localCacheSimd = TimeSpan.Zero;
                 }
 
+                TimeSpan localProfiled =
+                    diagnostics.ForwardLocalL3 +
+                    diagnostics.ForwardLocalL2 +
+                    diagnostics.ForwardLocalL1;
+
+                TimeSpan localOther =
+                    localCacheSimd -
+                    localProfiled;
+
+                if (localOther < TimeSpan.Zero)
+                {
+                    localOther = TimeSpan.Zero;
+                }
+
                 lines.Add(
                     Format(
                         "PowerRoot.InfoForwardNttProfile",
                         FormatProfileSeconds(localCacheSimd),
+                        FormatProfileSeconds(
+                            diagnostics.ForwardLocalL3),
+                        FormatProfileSeconds(
+                            diagnostics.ForwardLocalL2),
+                        FormatProfileSeconds(
+                            diagnostics.ForwardLocalL1),
+                        FormatProfileSeconds(localOther),
                         FormatProfileSeconds(
                             diagnostics.ForwardGlobalCached),
                         FormatProfileSeconds(

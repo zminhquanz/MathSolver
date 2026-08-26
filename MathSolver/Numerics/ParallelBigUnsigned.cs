@@ -4339,7 +4339,7 @@ internal sealed class ParallelBigUnsigned
                         cancellationToken);
                 }
 
-                ExecuteForwardL3CacheBlockedTail(
+                ExecuteForwardL3CacheBlockedTailProfiled(
                     values,
                     modulus,
                     workers,
@@ -4347,6 +4347,7 @@ internal sealed class ParallelBigUnsigned
                     fusedNttBlockLength,
                     l2NttTileLength,
                     l3NttTileLength,
+                    diagnostics,
                     cancellationToken);
 
                 break;
@@ -4373,13 +4374,14 @@ internal sealed class ParallelBigUnsigned
                         cancellationToken);
                 }
 
-                ExecuteForwardL2CacheBlockedTail(
+                ExecuteForwardL2CacheBlockedTailProfiled(
                     values,
                     modulus,
                     workers,
                     twiddlePlan,
                     fusedNttBlockLength,
                     l2NttTileLength,
+                    diagnostics,
                     cancellationToken);
 
                 break;
@@ -4404,12 +4406,13 @@ internal sealed class ParallelBigUnsigned
                         cancellationToken);
                 }
 
-                ExecuteForwardFusedTail(
+                ExecuteForwardFusedTailProfiled(
                     values,
                     modulus,
                     workers,
                     twiddlePlan,
                     fusedNttBlockLength,
+                    diagnostics,
                     cancellationToken);
 
                 break;
@@ -10026,6 +10029,186 @@ internal sealed class ParallelBigUnsigned
         }
     }
 
+    // Diagnostic Forward local/cache profiler. Arithmetic helper kernels remain
+    // unchanged. Each worker accumulates its own phase time; the call reduces
+    // those totals with Max() so concurrent worker CPU time is not summed.
+    private sealed class ForwardLocalProfileCall
+    {
+        public long L3MaxTicks;
+        public long L2MaxTicks;
+        public long L1MaxTicks;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void UpdateMaximum(
+        ref long location,
+        long value)
+    {
+        long observed =
+            Volatile.Read(
+                ref location);
+
+        while (value > observed)
+        {
+            long previous =
+                Interlocked.CompareExchange(
+                    ref location,
+                    value,
+                    observed);
+
+            if (previous == observed)
+            {
+                return;
+            }
+
+            observed =
+                previous;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteForwardL3CacheBlockedTailProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        uint[]? shoupTwiddles =
+            workers.UseAvx2Ntt &&
+            Avx2.IsSupported
+                ? twiddlePlan.ForwardShoupTwiddles
+                : null;
+
+        if (shoupTwiddles is null)
+        {
+            ExecuteForwardL3CacheBlockedTail(
+                values,
+                modulus,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
+                cancellationToken);
+            return;
+        }
+
+        int tileCount =
+            values.Length /
+            l3NttTileLength;
+
+        uint[] twiddles =
+            twiddlePlan.ForwardTwiddles;
+
+        var profile =
+            new ForwardLocalProfileCall();
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (startTile, endTile) =>
+            {
+                long localL3Ticks = 0;
+                long localL2Ticks = 0;
+                long localL1Ticks = 0;
+
+                var context =
+                    new Avx2NttModContext(
+                        modulus);
+
+                for (int tileIndex = startTile;
+                     tileIndex < endTile;
+                     tileIndex++)
+                {
+                    int tileOffset =
+                        tileIndex *
+                        l3NttTileLength;
+
+                    int tileEnd =
+                        tileOffset +
+                        l3NttTileLength;
+
+                    long l3Started =
+                        Stopwatch.GetTimestamp();
+
+                    for (int stageLength = l3NttTileLength;
+                         stageLength > l2NttTileLength;
+                         stageLength >>= 1)
+                    {
+                        int secondStageLength =
+                            stageLength >> 1;
+
+                        if (secondStageLength > l2NttTileLength &&
+                            stageLength >= 32)
+                        {
+                            int firstTwiddleOffset =
+                                twiddlePlan.GetOffset(
+                                    stageLength >> 1);
+                            int secondTwiddleOffset =
+                                twiddlePlan.GetOffset(
+                                    stageLength >> 2);
+
+                            ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                                values, modulus, twiddles, shoupTwiddles,
+                                firstTwiddleOffset, secondTwiddleOffset,
+                                tileOffset, l3NttTileLength, stageLength, context);
+
+                            stageLength >>= 1;
+                            continue;
+                        }
+
+                        int halfLength = stageLength >> 1;
+                        int twiddleOffset = twiddlePlan.GetOffset(halfLength);
+
+                        ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                            values, modulus, twiddles, shoupTwiddles,
+                            twiddleOffset, tileOffset, l3NttTileLength,
+                            stageLength, context);
+                    }
+
+                    localL3Ticks +=
+                        Stopwatch.GetTimestamp() -
+                        l3Started;
+
+                    // Optimization under test: the worker/L3 scope already has
+                    // the Shoup table and vector modulus context, so pass both
+                    // directly to every L2 tile instead of redispatching AVX2
+                    // and rebuilding Vector256(modulus) once per tile.
+                    for (int l2TileOffset = tileOffset;
+                         l2TileOffset < tileEnd;
+                         l2TileOffset += l2NttTileLength)
+                    {
+                        ExecuteForwardL2TileSequentialAvx2Profiled(
+                            values, modulus, twiddles, shoupTwiddles, twiddlePlan,
+                            fusedNttBlockLength, l2NttTileLength, l2TileOffset,
+                            context, out long l2Ticks, out long l1Ticks);
+
+                        localL2Ticks += l2Ticks;
+                        localL1Ticks += l1Ticks;
+                    }
+
+                    if ((tileIndex & 0x07) == 0x07)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+
+                UpdateMaximum(ref profile.L3MaxTicks, localL3Ticks);
+                UpdateMaximum(ref profile.L2MaxTicks, localL2Ticks);
+                UpdateMaximum(ref profile.L1MaxTicks, localL1Ticks);
+            });
+
+        diagnostics.ForwardLocalL3Ticks += profile.L3MaxTicks;
+        diagnostics.ForwardLocalL2Ticks += profile.L2MaxTicks;
+        diagnostics.ForwardLocalL1Ticks += profile.L1MaxTicks;
+    }
+
     /// <summary>
     /// Three-level DIF tail. Once a stage reaches the selected last-level-cache
     /// tile size, every later stage is independent inside that tile. Complete
@@ -10293,6 +10476,124 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardL2TileSequentialAvx2Profiled(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int tileOffset,
+        in Avx2NttModContext context,
+        out long l2Ticks,
+        out long l1Ticks)
+    {
+        int tileEnd = tileOffset + l2NttTileLength;
+
+        long l2Started = Stopwatch.GetTimestamp();
+
+        for (int stageLength = l2NttTileLength;
+             stageLength > fusedNttBlockLength;
+             stageLength >>= 1)
+        {
+            int secondStageLength = stageLength >> 1;
+
+            if (secondStageLength > fusedNttBlockLength && stageLength >= 32)
+            {
+                int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
+                int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
+
+                ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                    values, modulus, twiddles, shoupTwiddles,
+                    firstTwiddleOffset, secondTwiddleOffset,
+                    tileOffset, l2NttTileLength, stageLength, context);
+
+                stageLength >>= 1;
+                continue;
+            }
+
+            int halfLength = stageLength >> 1;
+            int twiddleOffset = twiddlePlan.GetOffset(halfLength);
+
+            ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                values, modulus, twiddles, shoupTwiddles,
+                twiddleOffset, tileOffset, l2NttTileLength, stageLength, context);
+        }
+
+        l2Ticks = Stopwatch.GetTimestamp() - l2Started;
+
+        long l1Started = Stopwatch.GetTimestamp();
+
+        // Invariant across every 4096-value L1 block in this L2 tile.
+        uint quarterTurnTwiddle =
+            twiddles[twiddlePlan.GetOffset(2) + 1];
+
+        for (int blockOffset = tileOffset;
+             blockOffset < tileEnd;
+             blockOffset += fusedNttBlockLength)
+        {
+            int blockEnd = blockOffset + fusedNttBlockLength;
+
+            for (int stageLength = fusedNttBlockLength;
+                 stageLength >= 8;
+                 stageLength >>= 1)
+            {
+                int groupCount = fusedNttBlockLength / stageLength;
+
+                if (stageLength >= 64 && groupCount <= 8)
+                {
+                    int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
+                    int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
+                    int thirdTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 3);
+
+                    for (int groupOffset = blockOffset;
+                         groupOffset < blockEnd;
+                         groupOffset += stageLength)
+                    {
+                        ExecuteForwardCachedStageTripleGroupAvx2(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            thirdTwiddleOffset, groupOffset, stageLength, context);
+                    }
+
+                    stageLength >>= 2;
+                    continue;
+                }
+
+                int secondStageLength = stageLength >> 1;
+
+                if (stageLength >= 16 && secondStageLength >= 8)
+                {
+                    int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
+                    int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
+
+                    ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstTwiddleOffset, secondTwiddleOffset,
+                        blockOffset, fusedNttBlockLength, stageLength, context);
+
+                    stageLength >>= 1;
+                    continue;
+                }
+
+                int halfLength = stageLength >> 1;
+                int twiddleOffset = twiddlePlan.GetOffset(halfLength);
+
+                ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                    values, modulus, twiddles, shoupTwiddles,
+                    twiddleOffset, blockOffset, fusedNttBlockLength,
+                    stageLength, context);
+            }
+
+            ExecuteForwardLengthFourAndTwoFusedBlock(
+                values, modulus, quarterTurnTwiddle, blockOffset, blockEnd);
+        }
+
+        l1Ticks = Stopwatch.GetTimestamp() - l1Started;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -11866,6 +12167,68 @@ while (leftIndex + 1 < butterflyEnd)
         }
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteForwardL2CacheBlockedTailProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        uint[]? shoupTwiddles =
+            workers.UseAvx2Ntt && Avx2.IsSupported
+                ? twiddlePlan.ForwardShoupTwiddles
+                : null;
+
+        if (shoupTwiddles is null)
+        {
+            ExecuteForwardL2CacheBlockedTail(
+                values, modulus, workers, twiddlePlan,
+                fusedNttBlockLength, l2NttTileLength, cancellationToken);
+            return;
+        }
+
+        int tileCount = values.Length / l2NttTileLength;
+        uint[] twiddles = twiddlePlan.ForwardTwiddles;
+        var profile = new ForwardLocalProfileCall();
+
+        ExecuteRanges(
+            tileCount, workers, cancellationToken,
+            (startTile, endTile) =>
+            {
+                long localL2Ticks = 0;
+                long localL1Ticks = 0;
+                var context = new Avx2NttModContext(modulus);
+
+                for (int tileIndex = startTile; tileIndex < endTile; tileIndex++)
+                {
+                    int tileOffset = tileIndex * l2NttTileLength;
+
+                    ExecuteForwardL2TileSequentialAvx2Profiled(
+                        values, modulus, twiddles, shoupTwiddles, twiddlePlan,
+                        fusedNttBlockLength, l2NttTileLength, tileOffset, context,
+                        out long l2Ticks, out long l1Ticks);
+
+                    localL2Ticks += l2Ticks;
+                    localL1Ticks += l1Ticks;
+
+                    if ((tileIndex & 0x0F) == 0x0F)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+
+                UpdateMaximum(ref profile.L2MaxTicks, localL2Ticks);
+                UpdateMaximum(ref profile.L1MaxTicks, localL1Ticks);
+            });
+
+        diagnostics.ForwardLocalL2Ticks += profile.L2MaxTicks;
+        diagnostics.ForwardLocalL1Ticks += profile.L1MaxTicks;
+    }
+
     /// <summary>
     /// Hierarchical DIF tail: keep one L2-sized tile resident while completing
     /// the stages down to the L1 fused-block boundary, then finish each L1 block
@@ -12850,6 +13213,26 @@ while (leftIndex + 1 < butterflyEnd)
                     if ((blockIndex & 0x3F) == 0x3F) cancellationToken.ThrowIfCancellationRequested();
                 }
             });
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteForwardFusedTailProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started = Stopwatch.GetTimestamp();
+
+        ExecuteForwardFusedTail(
+            values, modulus, workers, twiddlePlan,
+            fusedNttBlockLength, cancellationToken);
+
+        diagnostics.ForwardLocalL1Ticks +=
+            Stopwatch.GetTimestamp() - started;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -13898,6 +14281,9 @@ while (leftIndex + 1 < butterflyEnd)
         public int NttMultiplicationCount;
         public long BitReversalTicks;
         public long ForwardTransformTicks;
+        public long ForwardLocalL3Ticks;
+        public long ForwardLocalL2Ticks;
+        public long ForwardLocalL1Ticks;
         public long ForwardGlobalCachedTicks;
         public long ForwardGlobalUncachedTicks;
         public long PointwiseTicks;
@@ -13958,6 +14344,12 @@ while (leftIndex + 1 < butterflyEnd)
                     Math.Max(
                         first.ForwardTransformTicks,
                         second.ForwardTransformTicks),
+                ForwardLocalL3Ticks =
+                    forwardCriticalBranch.ForwardLocalL3Ticks,
+                ForwardLocalL2Ticks =
+                    forwardCriticalBranch.ForwardLocalL2Ticks,
+                ForwardLocalL1Ticks =
+                    forwardCriticalBranch.ForwardLocalL1Ticks,
                 ForwardGlobalCachedTicks =
                     forwardCriticalBranch.ForwardGlobalCachedTicks,
                 ForwardGlobalUncachedTicks =
@@ -13998,6 +14390,15 @@ while (leftIndex + 1 < butterflyEnd)
             ForwardTransformTicks +=
                 ToTimestampTicks(
                     snapshot.ForwardTransform);
+            ForwardLocalL3Ticks +=
+                ToTimestampTicks(
+                    snapshot.ForwardLocalL3);
+            ForwardLocalL2Ticks +=
+                ToTimestampTicks(
+                    snapshot.ForwardLocalL2);
+            ForwardLocalL1Ticks +=
+                ToTimestampTicks(
+                    snapshot.ForwardLocalL1);
             ForwardGlobalCachedTicks +=
                 ToTimestampTicks(
                     snapshot.ForwardGlobalCached);
@@ -14169,6 +14570,9 @@ while (leftIndex + 1 < butterflyEnd)
                 NttMultiplicationCount,
                 ToTimeSpan(BitReversalTicks),
                 ToTimeSpan(ForwardTransformTicks),
+                ToTimeSpan(ForwardLocalL3Ticks),
+                ToTimeSpan(ForwardLocalL2Ticks),
+                ToTimeSpan(ForwardLocalL1Ticks),
                 ToTimeSpan(ForwardGlobalCachedTicks),
                 ToTimeSpan(ForwardGlobalUncachedTicks),
                 ToTimeSpan(PointwiseTicks),
@@ -15996,6 +16400,9 @@ internal sealed record ParallelPowerDiagnostics(
     int NttMultiplicationCount,
     TimeSpan BitReversal,
     TimeSpan ForwardTransform,
+    TimeSpan ForwardLocalL3,
+    TimeSpan ForwardLocalL2,
+    TimeSpan ForwardLocalL1,
     TimeSpan ForwardGlobalCached,
     TimeSpan ForwardGlobalUncached,
     TimeSpan Pointwise,

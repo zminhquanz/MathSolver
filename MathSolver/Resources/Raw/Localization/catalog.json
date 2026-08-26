@@ -2019,7 +2019,7 @@
     },
     {
       "key": "PowerRoot.InfoForwardNttProfile",
-      "source": "• Forward NTT:\n  Local/cache SIMD stages: {0} giây\n  Global cached scalar stages: {1} giây\n  Global uncached scalar stages: {2} giây",
+      "source": "• Forward NTT:\n  Local/cache SIMD stages: {0} giây\n    L3-local SIMD stages: {1} giây\n    L2-local SIMD stages: {2} giây\n    L1 fused stages (radix-8/stage-pair/radix-4): {3} giây\n    Local setup/other: {4} giây\n  Global cached scalar stages: {5} giây\n  Global uncached scalar stages: {6} giây",
       "mode": "exact"
     },
     {
