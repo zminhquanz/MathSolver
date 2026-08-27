@@ -534,3 +534,16 @@ The accepted Forward global-cached bounded-register-twiddle checkpoint is kept u
 The accepted <=10M topology still uses the same fixed worker counts and the accepted Forward L1/L2 bounded-register kernels; L3 itself remains on the previous twiddle-major schedule because L3 bounded-register regressed. The otherwise-unpaired DIF stage at exactly `2 * L3TileLength` is now fused with the complete L3 -> L2 -> L1 tail. One worker owns each 2×L3 parent, executes the parent stage with the existing cached AVX2/Shoup group kernel, then immediately completes both independent L3 children. This removes one separate whole-transform dispatch/barrier and is intended to turn the former Forward local `Dispatch/barrier/other` residual into useful cache-resident work without changing worker topology, global Shoup policy, or >10M PersistentStatic behavior.
 
 - Correctness guard: the bridge half-length is L3, but Shoup companions are intentionally generated only through L3/2. The bridge therefore uses the exact cached scalar DIF group and only its L3 descendants enter AVX2/Shoup; this prevents reading uninitialized Shoup companion slots while retaining the fused parent traversal/barrier reduction.
+
+
+### Forward L3 bounded-register retest on the Bridge baseline
+
+The correctness-fixed 2×L3 bridge remains unchanged: the bridge stage itself stays on the exact cached scalar DIF path because the Shoup companion cache intentionally begins below that boundary. This experiment changes only cache-resident Forward L3 stage-pairs beneath the bridge and in the standalone L3 tail. They now use the same bounded-register value-side schedule already accepted for L1/L2, while retaining the existing twiddle-major traversal, AVX2/Shoup arithmetic, worker topology, bridge ownership, global cached/uncached kernels, and memory policy. The retest is motivated by the slower Core i7-8700, where run-to-run scheduler/boost noise is lower and small L3 differences are easier to distinguish than on the heterogeneous HX 370. No new Unsafe.Add, unsafe pointer arithmetic, or MemoryMarshal path is introduced.
+
+### <=10M Inverse global cached bounded-register scalar pass (2026-08-27)
+
+- Keeps the existing managed-byref + unroll-2 global cached Inverse DIT stage-pair path.
+- Each unrolled butterfly now loads only its own three cached twiddles, completes, and stores before the next butterfly is opened.
+- The scalar inverse stage-pair helper completes the even second-stage merge and stores its two outputs before opening the odd merge, reducing simultaneous modular-multiply live state.
+- Arithmetic, twiddle order, worker topology, memory topology, and global Shoup policy are unchanged.
+- No new `Unsafe.Add`, pointer arithmetic, unsafe block, or `MemoryMarshal.GetArrayDataReference` use is introduced.
