@@ -4078,7 +4078,8 @@ public partial class PowerRootView : LocalizedSolverView
                 TimeSpan localCacheSimd =
                     diagnostics.ForwardTransform -
                     diagnostics.ForwardGlobalCached -
-                    diagnostics.ForwardGlobalUncached;
+                    diagnostics.ForwardGlobalUncached -
+                    diagnostics.ForwardGlobalTwiddlePreparation;
 
                 if (localCacheSimd < TimeSpan.Zero)
                 {
@@ -4088,7 +4089,8 @@ public partial class PowerRootView : LocalizedSolverView
                 TimeSpan localProfiled =
                     diagnostics.ForwardLocalL3 +
                     diagnostics.ForwardLocalL2 +
-                    diagnostics.ForwardLocalL1;
+                    diagnostics.ForwardLocalL1 +
+                    diagnostics.ForwardLocalTwiddlePreparation;
 
                 TimeSpan localOther =
                     localCacheSimd -
@@ -4102,6 +4104,12 @@ public partial class PowerRootView : LocalizedSolverView
                 lines.Add(
                     Format(
                         "PowerRoot.InfoForwardNttProfile",
+                        FormatProfileSeconds(
+                            diagnostics.ForwardGlobalTwiddlePreparation),
+                        diagnostics.ForwardGlobalTwiddleBuildCount,
+                        FormatProfileSeconds(
+                            diagnostics.ForwardLocalTwiddlePreparation),
+                        diagnostics.ForwardLocalTwiddleBuildCount,
                         FormatProfileSeconds(localCacheSimd),
                         FormatProfileSeconds(
                             diagnostics.ForwardLocalL3),

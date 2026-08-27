@@ -3092,10 +3092,6 @@ internal sealed class ParallelBigUnsigned
             long carryStarted =
                 Stopwatch.GetTimestamp();
 
-            Debug.Assert(
-                trailingCarry <
-                LimbBase);
-
             if (trailingCarry >= LimbBase)
             {
                 throw new InvalidOperationException(
@@ -3925,7 +3921,7 @@ internal sealed class ParallelBigUnsigned
 
         diagnostics.CarryTicks +=
             carryTicks;
-            
+
 
         return trailingCarry;
     }
@@ -4253,21 +4249,23 @@ internal sealed class ParallelBigUnsigned
                     twiddlePlan.HasAvx2Twiddles))
             {
                 int firstTwiddleOffset =
-                    EnsureCachedStageTwiddles(
+                    EnsureForwardCachedStageTwiddlesProfiled(
                         twiddlePlan,
                         primitiveRoot,
                         modulus,
                         stageLength,
                         workers,
+                        diagnostics,
                         cancellationToken);
 
                 int secondTwiddleOffset =
-                    EnsureCachedStageTwiddles(
+                    EnsureForwardCachedStageTwiddlesProfiled(
                         twiddlePlan,
                         primitiveRoot,
                         modulus,
                         nextStageLength,
                         workers,
+                        diagnostics,
                         cancellationToken);
 
                 ExecuteForwardCachedStagePairByGroupsProfiled(
@@ -4318,6 +4316,64 @@ internal sealed class ParallelBigUnsigned
                 continue;
             }
 
+            // <=10M experiment: fuse the otherwise-unpaired 2*L3 DIF
+            // transition stage with the complete L3 -> L2 -> L1 tail.  The
+            // bridge itself stays on the cached scalar path because Shoup
+            // companions intentionally begin at L3/2; descendants remain
+            // AVX2/Shoup. Each
+            // worker owns one 2*L3 parent, performs its top butterfly stage,
+            // then immediately completes both independent L3 children while
+            // those values are still warm.  This removes one whole-array
+            // dispatch/barrier and avoids classifying that transition sweep as
+            // opaque local setup/other.  Worker count/topology is unchanged.
+            if (stageLength == (l3NttTileLength << 1) &&
+                twiddlePlan.HasAvx2Twiddles &&
+                twiddlePlan.ForwardShoupTwiddles is not null &&
+                twiddlePlan.CanCache(l3NttTileLength) &&
+                CanUseL3CacheBlocking(
+                    length,
+                    l3NttTileLength,
+                    workers.WorkerCount) &&
+                length / (l3NttTileLength << 1) >=
+                    Math.Max(1, workers.WorkerCount))
+            {
+                int bridgeTwiddleOffset =
+                    EnsureForwardCachedStageTwiddlesProfiled(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        stageLength,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+
+                if (buildCachedTwiddles)
+                {
+                    ProfileForwardFusedTwiddlePreparation(
+                        twiddlePlan,
+                        primitiveRoot,
+                        modulus,
+                        l3NttTileLength,
+                        workers,
+                        diagnostics,
+                        cancellationToken);
+                }
+
+                ExecuteForwardL3BridgeAndTailProfiled(
+                    values,
+                    modulus,
+                    workers,
+                    twiddlePlan,
+                    bridgeTwiddleOffset,
+                    fusedNttBlockLength,
+                    l2NttTileLength,
+                    l3NttTileLength,
+                    diagnostics,
+                    cancellationToken);
+
+                break;
+            }
+
             // Enter the last-level-cache hierarchy first.  Once DIF reaches
             // l3NttTileLength, all remaining butterflies are independent inside
             // each LLC tile, so complete L3 -> L2 -> L1 locally and avoid the
@@ -4330,12 +4386,13 @@ internal sealed class ParallelBigUnsigned
             {
                 if (buildCachedTwiddles)
                 {
-                    PrepareFusedTwiddleTables(
+                    ProfileForwardFusedTwiddlePreparation(
                         twiddlePlan,
                         primitiveRoot,
                         modulus,
                         l3NttTileLength,
                         workers,
+                        diagnostics,
                         cancellationToken);
                 }
 
@@ -4365,12 +4422,13 @@ internal sealed class ParallelBigUnsigned
             {
                 if (buildCachedTwiddles)
                 {
-                    PrepareFusedTwiddleTables(
+                    ProfileForwardFusedTwiddlePreparation(
                         twiddlePlan,
                         primitiveRoot,
                         modulus,
                         l2NttTileLength,
                         workers,
+                        diagnostics,
                         cancellationToken);
                 }
 
@@ -4397,12 +4455,13 @@ internal sealed class ParallelBigUnsigned
             {
                 if (buildCachedTwiddles)
                 {
-                    PrepareFusedTwiddleTables(
+                    ProfileForwardFusedTwiddlePreparation(
                         twiddlePlan,
                         primitiveRoot,
                         modulus,
                         fusedNttBlockLength,
                         workers,
+                        diagnostics,
                         cancellationToken);
                 }
 
@@ -4470,6 +4529,9 @@ internal sealed class ParallelBigUnsigned
 
             if (needTwiddleBuild)
             {
+                long twiddleBuildStarted =
+                    Stopwatch.GetTimestamp();
+
                 BuildTwiddleTables(
                     twiddlePlan,
                     twiddleOffset,
@@ -4481,6 +4543,12 @@ internal sealed class ParallelBigUnsigned
 
                 twiddlePlan.MarkStageReady(
                     halfLength);
+
+                diagnostics.ForwardGlobalTwiddlePreparationTicks +=
+                    Stopwatch.GetTimestamp() -
+                    twiddleBuildStarted;
+
+                diagnostics.ForwardGlobalTwiddleBuildCount++;
             }
 
             int segmentsPerGroup =
@@ -6238,6 +6306,50 @@ internal sealed class ParallelBigUnsigned
             halfLength);
 
         return twiddleOffset;
+    }
+
+    // Forward-only diagnostic wrapper.  The cached global butterfly timer
+    // intentionally excludes table construction; record that setup separately
+    // so "local setup/other" is not polluted by global twiddle generation.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int EnsureForwardCachedStageTwiddlesProfiled(
+        NttTwiddlePlan twiddlePlan,
+        uint primitiveRoot,
+        uint modulus,
+        int stageLength,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        int halfLength =
+            stageLength >> 1;
+
+        if (twiddlePlan.IsStageReady(
+                halfLength))
+        {
+            return twiddlePlan.GetOffset(
+                halfLength);
+        }
+
+        long started =
+            Stopwatch.GetTimestamp();
+
+        int offset =
+            EnsureCachedStageTwiddles(
+                twiddlePlan,
+                primitiveRoot,
+                modulus,
+                stageLength,
+                workers,
+                cancellationToken);
+
+        diagnostics.ForwardGlobalTwiddlePreparationTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
+
+        diagnostics.ForwardGlobalTwiddleBuildCount++;
+
+        return offset;
     }
 
     private readonly struct Avx2NttModContext
@@ -9684,29 +9796,26 @@ internal sealed class ParallelBigUnsigned
                              pair < pairCount;
                              pair++)
                         {
-                            // Load both butterflies' twiddles first.  This gives
-                            // the OoO core independent cache hits to overlap with
-                            // the scalar modular multiplies while keeping only
-                            // one butterfly's residue byrefs live at a time.
-                            uint firstTwiddle00 =
-                                twiddles[firstTwiddleIndex0];
-
-                            uint firstTwiddle10 =
-                                twiddles[firstTwiddleIndex1];
-
-                            uint secondTwiddle0 =
-                                twiddles[secondTwiddleIndex];
-
-                            uint firstTwiddle01 =
-                                twiddles[firstTwiddleIndex0 + 1];
-
-                            uint firstTwiddle11 =
-                                twiddles[firstTwiddleIndex1 + 1];
-
-                            uint secondTwiddle1 =
-                                twiddles[secondTwiddleIndex + 1];
-
+                            // Bounded-register global cached schedule: keep the
+                            // unroll-2 loop/index reduction, but finish and store
+                            // one butterfly before loading the next butterfly's
+                            // three twiddles.  The previous preload-six schedule
+                            // exposed more memory-level parallelism at the cost of
+                            // extending six scalar twiddle lifetimes across the
+                            // first modular pipeline.  Above LLC that extra live
+                            // state can force spills/reloads in the scalar kernel.
+                            // Twiddle order, residue traffic and arithmetic are
+                            // unchanged; this only shortens register lifetimes.
                             {
+                                uint firstTwiddle0 =
+                                    twiddles[firstTwiddleIndex0];
+
+                                uint firstTwiddle1 =
+                                    twiddles[firstTwiddleIndex1];
+
+                                uint secondTwiddle =
+                                    twiddles[secondTwiddleIndex];
+
                                 ref uint value0 =
                                     ref values[index0];
 
@@ -9725,12 +9834,21 @@ internal sealed class ParallelBigUnsigned
                                     ref value2,
                                     ref value3,
                                     modulus,
-                                    firstTwiddle00,
-                                    firstTwiddle10,
-                                    secondTwiddle0);
+                                    firstTwiddle0,
+                                    firstTwiddle1,
+                                    secondTwiddle);
                             }
 
                             {
+                                uint firstTwiddle0 =
+                                    twiddles[firstTwiddleIndex0 + 1];
+
+                                uint firstTwiddle1 =
+                                    twiddles[firstTwiddleIndex1 + 1];
+
+                                uint secondTwiddle =
+                                    twiddles[secondTwiddleIndex + 1];
+
                                 ref uint value0 =
                                     ref values[index0 + 1];
 
@@ -9749,9 +9867,9 @@ internal sealed class ParallelBigUnsigned
                                     ref value2,
                                     ref value3,
                                     modulus,
-                                    firstTwiddle01,
-                                    firstTwiddle11,
-                                    secondTwiddle1);
+                                    firstTwiddle0,
+                                    firstTwiddle1,
+                                    secondTwiddle);
                             }
 
                             index0 += 2;
@@ -11386,7 +11504,7 @@ internal sealed class ParallelBigUnsigned
             });
     }
 
-    private static void PrepareFusedTwiddleTables(
+    private static int PrepareFusedTwiddleTables(
         NttTwiddlePlan twiddlePlan,
         uint primitiveRoot,
         uint modulus,
@@ -11394,6 +11512,8 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        int builtStageCount = 0;
+
         for (int stageLength = fusedNttBlockLength;
              stageLength >= 4;
              stageLength >>= 1)
@@ -11426,7 +11546,41 @@ internal sealed class ParallelBigUnsigned
 
             twiddlePlan.MarkStageReady(
                 halfLength);
+
+            builtStageCount++;
         }
+
+        return builtStageCount;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ProfileForwardFusedTwiddlePreparation(
+        NttTwiddlePlan twiddlePlan,
+        uint primitiveRoot,
+        uint modulus,
+        int fusedNttBlockLength,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        long started =
+            Stopwatch.GetTimestamp();
+
+        int builtStageCount =
+            PrepareFusedTwiddleTables(
+                twiddlePlan,
+                primitiveRoot,
+                modulus,
+                fusedNttBlockLength,
+                workers,
+                cancellationToken);
+
+        diagnostics.ForwardLocalTwiddlePreparationTicks +=
+            Stopwatch.GetTimestamp() -
+            started;
+
+        diagnostics.ForwardLocalTwiddleBuildCount +=
+            builtStageCount;
     }
 
     // Diagnostic Forward local/cache profiler. Arithmetic helper kernels remain
@@ -11464,6 +11618,174 @@ internal sealed class ParallelBigUnsigned
             observed =
                 previous;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteForwardL3BridgeAndTailProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int bridgeTwiddleOffset,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        uint[] shoupTwiddles =
+            twiddlePlan.ForwardShoupTwiddles!;
+        uint[] twiddles =
+            twiddlePlan.ForwardTwiddles;
+
+        int parentLength =
+            checked(l3NttTileLength << 1);
+        int parentCount =
+            values.Length / parentLength;
+
+        var profile =
+            new ForwardLocalProfileCall();
+
+        ExecuteRanges(
+            parentCount,
+            workers,
+            cancellationToken,
+            (startParent, endParent) =>
+            {
+                long localL3Ticks = 0;
+                long localL2Ticks = 0;
+                long localL1Ticks = 0;
+
+                var context =
+                    new Avx2NttModContext(modulus);
+
+                for (int parentIndex = startParent;
+                     parentIndex < endParent;
+                     parentIndex++)
+                {
+                    int parentOffset =
+                        parentIndex * parentLength;
+
+                    // The bridge stage is the sole DIF stage at 2*L3.  It was
+                    // previously executed as a separate global/transition
+                    // sweep.  Complete it immediately before its two L3 child
+                    // tiles so the next stages can consume warmer cache lines.
+                    long bridgeStarted =
+                        Stopwatch.GetTimestamp();
+
+                    // The bridge half-length is exactly L3, while Shoup
+                    // companions are intentionally generated only through
+                    // L3/2 (the first genuinely cache-resident stage).  Do
+                    // not feed the L3 bridge through the AVX2/Shoup helper:
+                    // those companion slots are deliberately uninitialized.
+                    // Keep the bridge mathematically exact with the proven
+                    // cached scalar DIF group, then use AVX2/Shoup normally
+                    // for the two L3 descendants and all smaller stages.
+                    ExecuteForwardCachedDifGroup(
+                        values,
+                        modulus,
+                        twiddles,
+                        bridgeTwiddleOffset,
+                        parentOffset,
+                        l3NttTileLength);
+
+                    localL3Ticks +=
+                        Stopwatch.GetTimestamp() -
+                        bridgeStarted;
+
+                    for (int child = 0;
+                         child < 2;
+                         child++)
+                    {
+                        int tileOffset =
+                            parentOffset +
+                            child * l3NttTileLength;
+                        int tileEnd =
+                            tileOffset +
+                            l3NttTileLength;
+
+                        long l3Started =
+                            Stopwatch.GetTimestamp();
+
+                        for (int localStageLength = l3NttTileLength;
+                             localStageLength > l2NttTileLength;
+                             localStageLength >>= 1)
+                        {
+                            int secondStageLength =
+                                localStageLength >> 1;
+
+                            if (secondStageLength > l2NttTileLength &&
+                                localStageLength >= 32)
+                            {
+                                int firstTwiddleOffset =
+                                    twiddlePlan.GetOffset(
+                                        localStageLength >> 1);
+                                int secondTwiddleOffset =
+                                    twiddlePlan.GetOffset(
+                                        localStageLength >> 2);
+
+                                // Keep the accepted L3 schedule.  L3 bounded-
+                                // register was benchmarked as a regression.
+                                ExecuteForwardCachedStagePairRegionTwiddleMajorAvx2(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    firstTwiddleOffset, secondTwiddleOffset,
+                                    tileOffset, l3NttTileLength,
+                                    localStageLength, context);
+
+                                localStageLength >>= 1;
+                                continue;
+                            }
+
+                            int halfLength =
+                                localStageLength >> 1;
+                            int twiddleOffset =
+                                twiddlePlan.GetOffset(halfLength);
+
+                            ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddleOffset, tileOffset, l3NttTileLength,
+                                localStageLength, context);
+                        }
+
+                        localL3Ticks +=
+                            Stopwatch.GetTimestamp() -
+                            l3Started;
+
+                        for (int l2TileOffset = tileOffset;
+                             l2TileOffset < tileEnd;
+                             l2TileOffset += l2NttTileLength)
+                        {
+                            ExecuteForwardL2TileSequentialAvx2Profiled(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddlePlan, fusedNttBlockLength,
+                                l2NttTileLength, l2TileOffset, context,
+                                out long l2Ticks, out long l1Ticks);
+
+                            localL2Ticks += l2Ticks;
+                            localL1Ticks += l1Ticks;
+                        }
+                    }
+
+                    if ((parentIndex & 0x03) == 0x03)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+
+                UpdateMaximum(ref profile.L3MaxTicks, localL3Ticks);
+                UpdateMaximum(ref profile.L2MaxTicks, localL2Ticks);
+                UpdateMaximum(ref profile.L1MaxTicks, localL1Ticks);
+            });
+
+        // The bridge stage is reported under L3-local because it is now part
+        // of the same cache-resident parent traversal rather than a separate
+        // whole-transform sweep.
+        diagnostics.ForwardLocalL3Ticks +=
+            profile.L3MaxTicks;
+        diagnostics.ForwardLocalL2Ticks +=
+            profile.L2MaxTicks;
+        diagnostics.ForwardLocalL1Ticks +=
+            profile.L1MaxTicks;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -13099,7 +13421,7 @@ internal sealed class ParallelBigUnsigned
 
                 // Cache-resident scalar kernel: expose two independent butterflies
                 // per iteration and walk the twiddle table with a direct index.
-                                if (halfLength >= AdaptiveFourWayHalfLength)
+                if (halfLength >= AdaptiveFourWayHalfLength)
                 {
                     while (leftIndex + 3 < butterflyEnd)
                     {
@@ -13173,7 +13495,7 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
 
-while (leftIndex + 1 < butterflyEnd)
+                while (leftIndex + 1 < butterflyEnd)
                 {
                     uint left0 = values[leftIndex];
                     uint right0 = values[rightIndex];
@@ -13634,7 +13956,7 @@ while (leftIndex + 1 < butterflyEnd)
                 int twiddleIndex =
                     twiddleOffset + 1;
 
-                                if (halfLength >= AdaptiveFourWayHalfLength)
+                if (halfLength >= AdaptiveFourWayHalfLength)
                 {
                     while (leftIndex + 3 < butterflyEnd)
                     {
@@ -13704,7 +14026,7 @@ while (leftIndex + 1 < butterflyEnd)
                     }
                 }
 
-while (leftIndex + 1 < butterflyEnd)
+                while (leftIndex + 1 < butterflyEnd)
                 {
                     uint left0 = values[leftIndex];
                     uint left1 = values[leftIndex + 1];
@@ -13820,7 +14142,7 @@ while (leftIndex + 1 < butterflyEnd)
 
         // Cache-resident scalar kernel: expose two independent butterflies
         // per iteration and walk the twiddle table with a direct index.
-                if (halfLength >= AdaptiveFourWayHalfLength)
+        if (halfLength >= AdaptiveFourWayHalfLength)
         {
             while (leftIndex + 3 < butterflyEnd)
             {
@@ -13894,7 +14216,7 @@ while (leftIndex + 1 < butterflyEnd)
             }
         }
 
-while (leftIndex + 1 < butterflyEnd)
+        while (leftIndex + 1 < butterflyEnd)
         {
             uint left0 = values[leftIndex];
             uint right0 = values[rightIndex];
@@ -14008,7 +14330,7 @@ while (leftIndex + 1 < butterflyEnd)
         int twiddleIndex =
             twiddleOffset + 1;
 
-                if (halfLength >= AdaptiveFourWayHalfLength)
+        if (halfLength >= AdaptiveFourWayHalfLength)
         {
             while (leftIndex + 3 < butterflyEnd)
             {
@@ -14078,7 +14400,7 @@ while (leftIndex + 1 < butterflyEnd)
             }
         }
 
-while (leftIndex + 1 < butterflyEnd)
+        while (leftIndex + 1 < butterflyEnd)
         {
             uint left0 = values[leftIndex];
             uint left1 = values[leftIndex + 1];
@@ -14302,7 +14624,7 @@ while (leftIndex + 1 < butterflyEnd)
 
                             // Cache-resident scalar kernel: expose two independent butterflies
                             // per iteration and walk the twiddle table with a direct index.
-                                                        if (halfLength >= AdaptiveFourWayHalfLength)
+                            if (halfLength >= AdaptiveFourWayHalfLength)
                             {
                                 while (leftIndex + 3 < butterflyEnd)
                                 {
@@ -14376,7 +14698,7 @@ while (leftIndex + 1 < butterflyEnd)
                                 }
                             }
 
-while (leftIndex + 1 < butterflyEnd)
+                            while (leftIndex + 1 < butterflyEnd)
                             {
                                 uint left0 = values[leftIndex];
                                 uint right0 = values[rightIndex];
@@ -14864,7 +15186,7 @@ while (leftIndex + 1 < butterflyEnd)
                             int twiddleIndex =
                                 twiddleOffset + 1;
 
-                                                        if (halfLength >= AdaptiveFourWayHalfLength)
+                            if (halfLength >= AdaptiveFourWayHalfLength)
                             {
                                 while (leftIndex + 3 < butterflyEnd)
                                 {
@@ -14934,7 +15256,7 @@ while (leftIndex + 1 < butterflyEnd)
                                 }
                             }
 
-while (leftIndex + 1 < butterflyEnd)
+                            while (leftIndex + 1 < butterflyEnd)
                             {
                                 uint left0 = values[leftIndex];
                                 uint left1 = values[leftIndex + 1];
@@ -16242,6 +16564,10 @@ while (leftIndex + 1 < butterflyEnd)
         public long ForwardLocalL3Ticks;
         public long ForwardLocalL2Ticks;
         public long ForwardLocalL1Ticks;
+        public long ForwardGlobalTwiddlePreparationTicks;
+        public long ForwardLocalTwiddlePreparationTicks;
+        public int ForwardGlobalTwiddleBuildCount;
+        public int ForwardLocalTwiddleBuildCount;
         public long ForwardGlobalCachedTicks;
         public long ForwardGlobalUncachedTicks;
         public long PointwiseTicks;
@@ -16320,6 +16646,14 @@ while (leftIndex + 1 < butterflyEnd)
                     forwardCriticalBranch.ForwardLocalL2Ticks,
                 ForwardLocalL1Ticks =
                     forwardCriticalBranch.ForwardLocalL1Ticks,
+                ForwardGlobalTwiddlePreparationTicks =
+                    forwardCriticalBranch.ForwardGlobalTwiddlePreparationTicks,
+                ForwardLocalTwiddlePreparationTicks =
+                    forwardCriticalBranch.ForwardLocalTwiddlePreparationTicks,
+                ForwardGlobalTwiddleBuildCount =
+                    forwardCriticalBranch.ForwardGlobalTwiddleBuildCount,
+                ForwardLocalTwiddleBuildCount =
+                    forwardCriticalBranch.ForwardLocalTwiddleBuildCount,
                 ForwardGlobalCachedTicks =
                     forwardCriticalBranch.ForwardGlobalCachedTicks,
                 ForwardGlobalUncachedTicks =
@@ -16381,6 +16715,20 @@ while (leftIndex + 1 < butterflyEnd)
             ForwardLocalL1Ticks +=
                 ToTimestampTicks(
                     snapshot.ForwardLocalL1);
+            ForwardGlobalTwiddlePreparationTicks +=
+                ToTimestampTicks(
+                    snapshot.ForwardGlobalTwiddlePreparation);
+            ForwardLocalTwiddlePreparationTicks +=
+                ToTimestampTicks(
+                    snapshot.ForwardLocalTwiddlePreparation);
+            ForwardGlobalTwiddleBuildCount =
+                checked(
+                    ForwardGlobalTwiddleBuildCount +
+                    snapshot.ForwardGlobalTwiddleBuildCount);
+            ForwardLocalTwiddleBuildCount =
+                checked(
+                    ForwardLocalTwiddleBuildCount +
+                    snapshot.ForwardLocalTwiddleBuildCount);
             ForwardGlobalCachedTicks +=
                 ToTimestampTicks(
                     snapshot.ForwardGlobalCached);
@@ -16573,6 +16921,10 @@ while (leftIndex + 1 < butterflyEnd)
                 ToTimeSpan(ForwardLocalL3Ticks),
                 ToTimeSpan(ForwardLocalL2Ticks),
                 ToTimeSpan(ForwardLocalL1Ticks),
+                ToTimeSpan(ForwardGlobalTwiddlePreparationTicks),
+                ToTimeSpan(ForwardLocalTwiddlePreparationTicks),
+                ForwardGlobalTwiddleBuildCount,
+                ForwardLocalTwiddleBuildCount,
                 ToTimeSpan(ForwardGlobalCachedTicks),
                 ToTimeSpan(ForwardGlobalUncachedTicks),
                 ToTimeSpan(PointwiseTicks),
@@ -18409,6 +18761,10 @@ internal sealed record ParallelPowerDiagnostics(
     TimeSpan ForwardLocalL3,
     TimeSpan ForwardLocalL2,
     TimeSpan ForwardLocalL1,
+    TimeSpan ForwardGlobalTwiddlePreparation,
+    TimeSpan ForwardLocalTwiddlePreparation,
+    int ForwardGlobalTwiddleBuildCount,
+    int ForwardLocalTwiddleBuildCount,
     TimeSpan ForwardGlobalCached,
     TimeSpan ForwardGlobalUncached,
     TimeSpan Pointwise,
