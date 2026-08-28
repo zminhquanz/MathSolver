@@ -548,5 +548,5 @@ The correctness-fixed 2×L3 bridge remains unchanged: the bridge stage itself st
 - Arithmetic, twiddle order, worker topology, memory topology, and global Shoup policy are unchanged.
 - No new `Unsafe.Add`, pointer arithmetic, unsafe block, or `MemoryMarshal.GetArrayDataReference` use is introduced.
 
-## 2026-08-28 – Inverse L1 Substage Profiler Only
-This diagnostic variant keeps the accepted Combined i7 arithmetic unchanged and splits the Inverse L1 critical path into Packed 8+16, generic stage-pair/single-stage, and radix-4 tail buckets. Timers sit only at sub-kernel boundaries; the critical worker owns all three reported sub-buckets.
+## 2026-08-28 – Combined Inverse L1 Profiler + 2×L3 Bridge
+Combines the Inverse L1 substage profiler with the Inverse 2×L3 bridge experiment on top of the accepted Combined i7 checkpoint. The bridge remains scalar/cached at 2×L3 while descendants use the existing AVX2/Shoup kernels.

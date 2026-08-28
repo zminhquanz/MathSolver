@@ -4842,10 +4842,41 @@ internal sealed class ParallelBigUnsigned
         // cache hierarchy: complete L1 and L2 work inside each L3 tile, merge
         // those subtiles through the LLC-local stages, then resume the global
         // stages.  Smaller transforms retain the proven v9 L2/L1 fallbacks.
-        if (CanUseL3CacheBlocking(
+        // Experimental inverse counterpart of the accepted Forward 2×L3
+        // bridge. Each worker owns one 2×L3 parent, completes both L3 child
+        // subtrees, then immediately performs the 2×L3 DIT merge while those
+        // values are still warm. This removes one global-stage dispatch/barrier
+        // without changing worker topology or the scalar cached merge arithmetic.
+        if (workers.UseAvx2Ntt &&
+            Avx2.IsSupported &&
+            twiddlePlan.InverseShoupTwiddles is not null &&
+            CanUseL3CacheBlocking(
                 length,
                 l3NttTileLength,
-                workers.WorkerCount))
+                workers.WorkerCount) &&
+            twiddlePlan.CanCache(l3NttTileLength) &&
+            twiddlePlan.IsStageReady(l3NttTileLength) &&
+            length / (l3NttTileLength << 1) >=
+                Math.Max(1, workers.WorkerCount))
+        {
+            ExecuteInverseL3BridgeHeadProfiled(
+                values,
+                modulus,
+                workers,
+                twiddlePlan,
+                fusedNttBlockLength,
+                l2NttTileLength,
+                l3NttTileLength,
+                diagnostics,
+                cancellationToken);
+
+            firstStageLength =
+                l3NttTileLength << 2;
+        }
+        else if (CanUseL3CacheBlocking(
+                     length,
+                     l3NttTileLength,
+                     workers.WorkerCount))
         {
             ExecuteInverseL3CacheBlockedHeadProfiled(
                 values,
@@ -12475,6 +12506,232 @@ internal sealed class ParallelBigUnsigned
             profile.L1Radix4TailTicks;
     }
 
+    /// <summary>
+    /// Inverse DIT 2×L3 bridge. Two complete L3 children are built inside one
+    /// worker-owned parent and merged immediately while the parent is still
+    /// LLC-hot. The bridge stage now has exactly one additional populated
+    /// Shoup companion stage (halfLength=L3), allowing the accepted AVX2 DIT
+    /// group kernel to replace the scalar merge without allocating a new table
+    /// or extending Shoup into the global transform.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ExecuteInverseL3BridgeHeadProfiled(
+        uint[] values,
+        uint modulus,
+        FixedWorkerTeam workers,
+        NttTwiddlePlan twiddlePlan,
+        int fusedNttBlockLength,
+        int l2NttTileLength,
+        int l3NttTileLength,
+        PowerDiagnosticsCollector diagnostics,
+        CancellationToken cancellationToken)
+    {
+        uint[] shoupTwiddles =
+            twiddlePlan.InverseShoupTwiddles!;
+
+        uint[] twiddles =
+            twiddlePlan.InverseTwiddles;
+
+        int parentLength =
+            checked(l3NttTileLength << 1);
+
+        int parentCount =
+            values.Length /
+            parentLength;
+
+        int bridgeTwiddleOffset =
+            twiddlePlan.GetOffset(
+                l3NttTileLength);
+
+        var profile =
+            new InverseLocalProfileCall();
+
+        ExecuteRanges(
+            parentCount,
+            workers,
+            cancellationToken,
+            (startParent, endParent) =>
+            {
+                long localL3Ticks = 0;
+                long localL2Ticks = 0;
+                long localL1Ticks = 0;
+                long localL1Packed816Ticks = 0;
+                long localL1GenericStagePairTicks = 0;
+                long localL1Radix4TailTicks = 0;
+
+                var context =
+                    new Avx2NttModContext(modulus);
+
+                for (int parentIndex = startParent;
+                     parentIndex < endParent;
+                     parentIndex++)
+                {
+                    int parentOffset =
+                        parentIndex *
+                        parentLength;
+
+                    for (int child = 0;
+                         child < 2;
+                         child++)
+                    {
+                        int tileOffset =
+                            parentOffset +
+                            child *
+                            l3NttTileLength;
+
+                        int tileEnd =
+                            tileOffset +
+                            l3NttTileLength;
+
+                        for (int l2TileOffset = tileOffset;
+                             l2TileOffset < tileEnd;
+                             l2TileOffset += l2NttTileLength)
+                        {
+                            ExecuteInverseL2TileSequentialAvx2Profiled(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddlePlan, fusedNttBlockLength,
+                                l2NttTileLength, l2TileOffset, context,
+                                out long l1Ticks, out long l2Ticks,
+                                out long l1Packed816Ticks,
+                                out long l1GenericStagePairTicks,
+                                out long l1Radix4TailTicks);
+
+                            localL1Ticks +=
+                                l1Ticks;
+
+                            localL2Ticks +=
+                                l2Ticks;
+
+                            localL1Packed816Ticks +=
+                                l1Packed816Ticks;
+
+                            localL1GenericStagePairTicks +=
+                                l1GenericStagePairTicks;
+
+                            localL1Radix4TailTicks +=
+                                l1Radix4TailTicks;
+                        }
+
+                        long l3Started =
+                            Stopwatch.GetTimestamp();
+
+                        for (int stageLength = l2NttTileLength << 1;
+                             stageLength <= l3NttTileLength;
+                             stageLength <<= 1)
+                        {
+                            int secondStageLength =
+                                stageLength << 1;
+
+                            if (secondStageLength <= l3NttTileLength &&
+                                stageLength >= 16)
+                            {
+                                int firstTwiddleOffset =
+                                    twiddlePlan.GetOffset(
+                                        stageLength >> 1);
+
+                                int secondTwiddleOffset =
+                                    twiddlePlan.GetOffset(
+                                        stageLength);
+
+                                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    firstTwiddleOffset, secondTwiddleOffset,
+                                    tileOffset, l3NttTileLength, stageLength,
+                                    context);
+
+                                stageLength <<= 1;
+                                continue;
+                            }
+
+                            int halfLength =
+                                stageLength >> 1;
+
+                            int twiddleOffset =
+                                twiddlePlan.GetOffset(
+                                    halfLength);
+
+                            ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddleOffset, tileOffset, l3NttTileLength,
+                                stageLength, context);
+                        }
+
+                        localL3Ticks +=
+                            Stopwatch.GetTimestamp() -
+                            l3Started;
+                    }
+
+                    // Complete the 2×L3 merge inside the same worker-owned
+                    // parent while both children are still LLC-hot.  The Shoup
+                    // companion range is extended by exactly this one local
+                    // stage, so the existing AVX2 group kernel can replace the
+                    // scalar remainder loop without a new dispatch/barrier.
+                    long bridgeStarted =
+                        Stopwatch.GetTimestamp();
+
+                    ExecuteInverseCachedDitGroupAvx2(
+                        values,
+                        modulus,
+                        twiddles,
+                        shoupTwiddles,
+                        bridgeTwiddleOffset,
+                        parentOffset,
+                        l3NttTileLength,
+                        context);
+
+                    localL3Ticks +=
+                        Stopwatch.GetTimestamp() -
+                        bridgeStarted;
+
+                    if ((parentIndex & 0x03) == 0x03)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+
+                UpdateMaximum(
+                    ref profile.L3MaxTicks,
+                    localL3Ticks);
+
+                UpdateMaximum(
+                    ref profile.L2MaxTicks,
+                    localL2Ticks);
+
+                lock (profile)
+                {
+                    if (localL1Ticks > profile.L1MaxTicks)
+                    {
+                        profile.L1MaxTicks =
+                            localL1Ticks;
+                        profile.L1Packed816Ticks =
+                            localL1Packed816Ticks;
+                        profile.L1GenericStagePairTicks =
+                            localL1GenericStagePairTicks;
+                        profile.L1Radix4TailTicks =
+                            localL1Radix4TailTicks;
+                    }
+                }
+            });
+
+        diagnostics.InverseLocalL3Ticks +=
+            profile.L3MaxTicks;
+
+        diagnostics.InverseLocalL2Ticks +=
+            profile.L2MaxTicks;
+
+        diagnostics.InverseLocalL1Ticks +=
+            profile.L1MaxTicks;
+
+        diagnostics.InverseL1Packed816Ticks +=
+            profile.L1Packed816Ticks;
+
+        diagnostics.InverseL1GenericStagePairTicks +=
+            profile.L1GenericStagePairTicks;
+
+        diagnostics.InverseL1Radix4TailTicks +=
+            profile.L1Radix4TailTicks;
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ExecuteInverseL2CacheBlockedHeadProfiled(
         uint[] values,
@@ -16866,8 +17123,14 @@ internal sealed class ParallelBigUnsigned
                 SelectL3NttTileLength(
                     l2NttTileLength);
 
+            // The accepted inverse 2×L3 bridge now consumes the L3-half
+            // twiddle stage with AVX2/Shoup as well. The companion arrays are
+            // already rented at full cached-twiddle capacity; extending the
+            // populated range by one LLC-local stage adds no allocation and
+            // avoids the scalar bridge merge. Global stages above L3 remain
+            // companion-free.
             MaximumShoupHalfLength =
-                l3NttTileLength >> 1;
+                l3NttTileLength;
 
             int capacity =
                 checked(
