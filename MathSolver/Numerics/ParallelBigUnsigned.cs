@@ -7404,38 +7404,90 @@ internal sealed class ParallelBigUnsigned
 
         while (index0 + 7 < end0)
         {
-            Vector256<uint> value0 = Vector256.LoadUnsafe(ref valuesReference, (nuint)index0);
-            Vector256<uint> value1 = Vector256.LoadUnsafe(ref valuesReference, (nuint)index1);
-            Vector256<uint> value2 = Vector256.LoadUnsafe(ref valuesReference, (nuint)index2);
-            Vector256<uint> value3 = Vector256.LoadUnsafe(ref valuesReference, (nuint)index3);
+            // Final Inverse-L1 generic stage-pair pass: keep the single-parent
+            // fallback on the same bounded-register policy that already won in
+            // the twiddle-major path.  This case is especially important for
+            // the largest L1 pair (2048+4096): parentCount == 1 bypasses the
+            // region kernel, so the previous code still kept four value
+            // vectors, both first-stage products, four first-stage outputs and
+            // all six second-stage twiddle/Shoup vectors live at once.
+            //
+            // Complete one first-stage child, then the other; open only the
+            // even second-stage merge and store it before loading the odd
+            // second-stage twiddle.  Arithmetic order, Shoup reduction and
+            // memory traffic are unchanged.  The goal is solely to shorten YMM
+            // live ranges on AVX2's 16-register machines such as Coffee Lake.
+            Vector256<uint> value0 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index0);
+            Vector256<uint> value1 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index1);
 
-            Vector256<uint> firstTwiddle = Vector256.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex);
-            Vector256<uint> firstShoup = Vector256.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex);
+            Vector256<uint> firstTwiddle =
+                Vector256.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex);
+            Vector256<uint> firstShoup =
+                Vector256.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex);
 
-            Vector256<uint> right0 = MultiplyShoupAvx2(value1, firstTwiddle, firstShoup, context);
-            Vector256<uint> right1 = MultiplyShoupAvx2(value3, firstTwiddle, firstShoup, context);
+            Vector256<uint> right0 =
+                MultiplyShoupAvx2(
+                    value1, firstTwiddle, firstShoup, context);
 
-            Vector256<uint> firstSum0 = AddModuloAvx2(value0, right0, context);
-            Vector256<uint> firstSum1 = AddModuloAvx2(value2, right1, context);
-            Vector256<uint> firstDifference0 = SubtractModuloAvx2(value0, right0, context);
-            Vector256<uint> firstDifference1 = SubtractModuloAvx2(value2, right1, context);
+            Vector256<uint> firstSum0 =
+                AddModuloAvx2(value0, right0, context);
+            Vector256<uint> firstDifference0 =
+                SubtractModuloAvx2(value0, right0, context);
 
-            Vector256<uint> secondTwiddle0 = Vector256.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex0);
-            Vector256<uint> secondShoup0 = Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex0);
-            Vector256<uint> secondTwiddle1 = Vector256.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex1);
-            Vector256<uint> secondShoup1 = Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex1);
+            Vector256<uint> value2 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index2);
+            Vector256<uint> value3 =
+                Vector256.LoadUnsafe(ref valuesReference, (nuint)index3);
 
-            Vector256<uint> mergedRight0 = MultiplyShoupAvx2(firstSum1, secondTwiddle0, secondShoup0, context);
-            Vector256<uint> mergedRight1 = MultiplyShoupAvx2(firstDifference1, secondTwiddle1, secondShoup1, context);
+            Vector256<uint> right1 =
+                MultiplyShoupAvx2(
+                    value3, firstTwiddle, firstShoup, context);
 
-            Vector256<uint> finalSum0 = AddModuloAvx2(firstSum0, mergedRight0, context);
-            Vector256<uint> finalSum1 = AddModuloAvx2(firstDifference0, mergedRight1, context);
-            Vector256<uint> finalDifference0 = SubtractModuloAvx2(firstSum0, mergedRight0, context);
-            Vector256<uint> finalDifference1 = SubtractModuloAvx2(firstDifference0, mergedRight1, context);
+            Vector256<uint> firstSum1 =
+                AddModuloAvx2(value2, right1, context);
+            Vector256<uint> firstDifference1 =
+                SubtractModuloAvx2(value2, right1, context);
+
+            // Even parent merge first.  Do not make the odd twiddle/Shoup
+            // vectors live until these two outputs have been committed.
+            Vector256<uint> secondTwiddle0 =
+                Vector256.LoadUnsafe(
+                    ref twiddleReference, (nuint)secondTwiddleIndex0);
+            Vector256<uint> secondShoup0 =
+                Vector256.LoadUnsafe(
+                    ref shoupReference, (nuint)secondTwiddleIndex0);
+
+            Vector256<uint> mergedRight0 =
+                MultiplyShoupAvx2(
+                    firstSum1, secondTwiddle0, secondShoup0, context);
+
+            Vector256<uint> finalSum0 =
+                AddModuloAvx2(firstSum0, mergedRight0, context);
+            Vector256<uint> finalDifference0 =
+                SubtractModuloAvx2(firstSum0, mergedRight0, context);
 
             finalSum0.StoreUnsafe(ref valuesReference, (nuint)index0);
-            finalSum1.StoreUnsafe(ref valuesReference, (nuint)index1);
             finalDifference0.StoreUnsafe(ref valuesReference, (nuint)index2);
+
+            Vector256<uint> secondTwiddle1 =
+                Vector256.LoadUnsafe(
+                    ref twiddleReference, (nuint)secondTwiddleIndex1);
+            Vector256<uint> secondShoup1 =
+                Vector256.LoadUnsafe(
+                    ref shoupReference, (nuint)secondTwiddleIndex1);
+
+            Vector256<uint> mergedRight1 =
+                MultiplyShoupAvx2(
+                    firstDifference1, secondTwiddle1, secondShoup1, context);
+
+            Vector256<uint> finalSum1 =
+                AddModuloAvx2(firstDifference0, mergedRight1, context);
+            Vector256<uint> finalDifference1 =
+                SubtractModuloAvx2(firstDifference0, mergedRight1, context);
+
+            finalSum1.StoreUnsafe(ref valuesReference, (nuint)index1);
             finalDifference1.StoreUnsafe(ref valuesReference, (nuint)index3);
 
             index0 += 8;
