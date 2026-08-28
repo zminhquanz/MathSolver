@@ -3925,7 +3925,7 @@ internal sealed class ParallelBigUnsigned
 
         diagnostics.CarryTicks +=
             carryTicks;
-            
+
 
         return trailingCarry;
     }
@@ -11841,6 +11841,9 @@ internal sealed class ParallelBigUnsigned
                 long localL3Ticks = 0;
                 long localL2Ticks = 0;
                 long localL1Ticks = 0;
+                long localL1Packed816Ticks = 0;
+                long localL1GenericStagePairTicks = 0;
+                long localL1Radix4TailTicks = 0;
 
                 var context =
                     new Avx2NttModContext(modulus);
@@ -12265,6 +12268,9 @@ internal sealed class ParallelBigUnsigned
         public long L3MaxTicks;
         public long L2MaxTicks;
         public long L1MaxTicks;
+        public long L1Packed816Ticks;
+        public long L1GenericStagePairTicks;
+        public long L1Radix4TailTicks;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -12321,6 +12327,9 @@ internal sealed class ParallelBigUnsigned
                 long localL3Ticks = 0;
                 long localL2Ticks = 0;
                 long localL1Ticks = 0;
+                long localL1Packed816Ticks = 0;
+                long localL1GenericStagePairTicks = 0;
+                long localL1Radix4TailTicks = 0;
 
                 var context =
                     new Avx2NttModContext(modulus);
@@ -12345,13 +12354,25 @@ internal sealed class ParallelBigUnsigned
                             values, modulus, twiddles, shoupTwiddles,
                             twiddlePlan, fusedNttBlockLength,
                             l2NttTileLength, l2TileOffset, context,
-                            out long l1Ticks, out long l2Ticks);
+                            out long l1Ticks, out long l2Ticks,
+                            out long l1Packed816Ticks,
+                            out long l1GenericStagePairTicks,
+                            out long l1Radix4TailTicks);
 
                         localL1Ticks +=
                             l1Ticks;
 
                         localL2Ticks +=
                             l2Ticks;
+
+                        localL1Packed816Ticks +=
+                            l1Packed816Ticks;
+
+                        localL1GenericStagePairTicks +=
+                            l1GenericStagePairTicks;
+
+                        localL1Radix4TailTicks +=
+                            l1Radix4TailTicks;
                     }
 
                     long l3Started =
@@ -12416,9 +12437,23 @@ internal sealed class ParallelBigUnsigned
                     ref profile.L2MaxTicks,
                     localL2Ticks);
 
-                UpdateMaximum(
-                    ref profile.L1MaxTicks,
-                    localL1Ticks);
+                // Keep the detailed L1 buckets from the same worker that
+                // owns the L1 critical path. Independent Max() calls could mix
+                // different workers and make the sub-buckets exceed wall time.
+                lock (profile)
+                {
+                    if (localL1Ticks > profile.L1MaxTicks)
+                    {
+                        profile.L1MaxTicks =
+                            localL1Ticks;
+                        profile.L1Packed816Ticks =
+                            localL1Packed816Ticks;
+                        profile.L1GenericStagePairTicks =
+                            localL1GenericStagePairTicks;
+                        profile.L1Radix4TailTicks =
+                            localL1Radix4TailTicks;
+                    }
+                }
             });
 
         diagnostics.InverseLocalL3Ticks +=
@@ -12429,6 +12464,15 @@ internal sealed class ParallelBigUnsigned
 
         diagnostics.InverseLocalL1Ticks +=
             profile.L1MaxTicks;
+
+        diagnostics.InverseL1Packed816Ticks +=
+            profile.L1Packed816Ticks;
+
+        diagnostics.InverseL1GenericStagePairTicks +=
+            profile.L1GenericStagePairTicks;
+
+        diagnostics.InverseL1Radix4TailTicks +=
+            profile.L1Radix4TailTicks;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -12483,6 +12527,9 @@ internal sealed class ParallelBigUnsigned
             {
                 long localL1Ticks = 0;
                 long localL2Ticks = 0;
+                long localL1Packed816Ticks = 0;
+                long localL1GenericStagePairTicks = 0;
+                long localL1Radix4TailTicks = 0;
 
                 var context =
                     new Avx2NttModContext(modulus);
@@ -12499,7 +12546,10 @@ internal sealed class ParallelBigUnsigned
                         values, modulus, twiddles, shoupTwiddles,
                         twiddlePlan, fusedNttBlockLength,
                         l2NttTileLength, tileOffset, context,
-                        out long l1Ticks, out long l2Ticks);
+                        out long l1Ticks, out long l2Ticks,
+                        out long l1Packed816Ticks,
+                        out long l1GenericStagePairTicks,
+                        out long l1Radix4TailTicks);
 
                     localL1Ticks +=
                         l1Ticks;
@@ -12507,15 +12557,31 @@ internal sealed class ParallelBigUnsigned
                     localL2Ticks +=
                         l2Ticks;
 
+                    localL1Packed816Ticks +=
+                        l1Packed816Ticks;
+
+                    localL1GenericStagePairTicks +=
+                        l1GenericStagePairTicks;
+
+                    localL1Radix4TailTicks +=
+                        l1Radix4TailTicks;
+
                     if ((tileIndex & 0x0F) == 0x0F)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                     }
                 }
 
-                UpdateMaximum(
-                    ref profile.L1MaxTicks,
-                    localL1Ticks);
+                lock (profile)
+                {
+                    if (localL1Ticks > profile.L1MaxTicks)
+                    {
+                        profile.L1MaxTicks = localL1Ticks;
+                        profile.L1Packed816Ticks = localL1Packed816Ticks;
+                        profile.L1GenericStagePairTicks = localL1GenericStagePairTicks;
+                        profile.L1Radix4TailTicks = localL1Radix4TailTicks;
+                    }
+                }
 
                 UpdateMaximum(
                     ref profile.L2MaxTicks,
@@ -12524,6 +12590,15 @@ internal sealed class ParallelBigUnsigned
 
         diagnostics.InverseLocalL1Ticks +=
             profile.L1MaxTicks;
+
+        diagnostics.InverseL1Packed816Ticks +=
+            profile.L1Packed816Ticks;
+
+        diagnostics.InverseL1GenericStagePairTicks +=
+            profile.L1GenericStagePairTicks;
+
+        diagnostics.InverseL1Radix4TailTicks +=
+            profile.L1Radix4TailTicks;
 
         diagnostics.InverseLocalL2Ticks +=
             profile.L2MaxTicks;
@@ -12710,7 +12785,10 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         in Avx2NttModContext context,
         out long l1Ticks,
-        out long l2Ticks)
+        out long l2Ticks,
+        out long l1Packed816Ticks,
+        out long l1GenericStagePairTicks,
+        out long l1Radix4TailTicks)
     {
         int tileEnd =
             tileOffset + l2NttTileLength;
@@ -12727,10 +12805,17 @@ internal sealed class ParallelBigUnsigned
         long l1Started =
             Stopwatch.GetTimestamp();
 
+        long packed816Ticks = 0;
+        long genericStagePairTicks = 0;
+        long radix4TailTicks = 0;
+
         for (int blockOffset = tileOffset;
              blockOffset < tileEnd;
              blockOffset += fusedNttBlockLength)
         {
+            long radix4Started =
+                Stopwatch.GetTimestamp();
+
             ExecuteInverseLengthTwoAndFourFusedBlock(
                 values,
                 modulus,
@@ -12738,6 +12823,10 @@ internal sealed class ParallelBigUnsigned
                 quarterTurnShoup,
                 blockOffset,
                 blockOffset + fusedNttBlockLength);
+
+            radix4TailTicks +=
+                Stopwatch.GetTimestamp() -
+                radix4Started;
 
             for (int stageLength = 8;
                  stageLength <= fusedNttBlockLength;
@@ -12753,11 +12842,29 @@ internal sealed class ParallelBigUnsigned
                     int secondTwiddleOffset =
                         twiddlePlan.GetOffset(stageLength);
 
+                    long stagePairStarted =
+                        Stopwatch.GetTimestamp();
+
                     ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
                         values, modulus, twiddles, shoupTwiddles,
                         firstTwiddleOffset, secondTwiddleOffset,
                         blockOffset, fusedNttBlockLength, stageLength,
                         context);
+
+                    long stagePairTicks =
+                        Stopwatch.GetTimestamp() -
+                        stagePairStarted;
+
+                    if (stageLength == 8)
+                    {
+                        packed816Ticks +=
+                            stagePairTicks;
+                    }
+                    else
+                    {
+                        genericStagePairTicks +=
+                            stagePairTicks;
+                    }
 
                     stageLength <<= 1;
                     continue;
@@ -12767,16 +12874,32 @@ internal sealed class ParallelBigUnsigned
                 int twiddleOffset =
                     twiddlePlan.GetOffset(halfLength);
 
+                long singleStageStarted =
+                    Stopwatch.GetTimestamp();
+
                 ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
                     values, modulus, twiddles, shoupTwiddles,
                     twiddleOffset, blockOffset, fusedNttBlockLength,
                     stageLength, context);
+
+                genericStagePairTicks +=
+                    Stopwatch.GetTimestamp() -
+                    singleStageStarted;
             }
         }
 
         l1Ticks =
             Stopwatch.GetTimestamp() -
             l1Started;
+
+        l1Packed816Ticks =
+            packed816Ticks;
+
+        l1GenericStagePairTicks =
+            genericStagePairTicks;
+
+        l1Radix4TailTicks =
+            radix4TailTicks;
 
         long l2Started =
             Stopwatch.GetTimestamp();
@@ -13912,7 +14035,7 @@ internal sealed class ParallelBigUnsigned
 
                 // Cache-resident scalar kernel: expose two independent butterflies
                 // per iteration and walk the twiddle table with a direct index.
-                                if (halfLength >= AdaptiveFourWayHalfLength)
+                if (halfLength >= AdaptiveFourWayHalfLength)
                 {
                     while (leftIndex + 3 < butterflyEnd)
                     {
@@ -13986,7 +14109,7 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
 
-while (leftIndex + 1 < butterflyEnd)
+                while (leftIndex + 1 < butterflyEnd)
                 {
                     uint left0 = values[leftIndex];
                     uint right0 = values[rightIndex];
@@ -14447,7 +14570,7 @@ while (leftIndex + 1 < butterflyEnd)
                 int twiddleIndex =
                     twiddleOffset + 1;
 
-                                if (halfLength >= AdaptiveFourWayHalfLength)
+                if (halfLength >= AdaptiveFourWayHalfLength)
                 {
                     while (leftIndex + 3 < butterflyEnd)
                     {
@@ -14517,7 +14640,7 @@ while (leftIndex + 1 < butterflyEnd)
                     }
                 }
 
-while (leftIndex + 1 < butterflyEnd)
+                while (leftIndex + 1 < butterflyEnd)
                 {
                     uint left0 = values[leftIndex];
                     uint left1 = values[leftIndex + 1];
@@ -14633,7 +14756,7 @@ while (leftIndex + 1 < butterflyEnd)
 
         // Cache-resident scalar kernel: expose two independent butterflies
         // per iteration and walk the twiddle table with a direct index.
-                if (halfLength >= AdaptiveFourWayHalfLength)
+        if (halfLength >= AdaptiveFourWayHalfLength)
         {
             while (leftIndex + 3 < butterflyEnd)
             {
@@ -14707,7 +14830,7 @@ while (leftIndex + 1 < butterflyEnd)
             }
         }
 
-while (leftIndex + 1 < butterflyEnd)
+        while (leftIndex + 1 < butterflyEnd)
         {
             uint left0 = values[leftIndex];
             uint right0 = values[rightIndex];
@@ -14821,7 +14944,7 @@ while (leftIndex + 1 < butterflyEnd)
         int twiddleIndex =
             twiddleOffset + 1;
 
-                if (halfLength >= AdaptiveFourWayHalfLength)
+        if (halfLength >= AdaptiveFourWayHalfLength)
         {
             while (leftIndex + 3 < butterflyEnd)
             {
@@ -14891,7 +15014,7 @@ while (leftIndex + 1 < butterflyEnd)
             }
         }
 
-while (leftIndex + 1 < butterflyEnd)
+        while (leftIndex + 1 < butterflyEnd)
         {
             uint left0 = values[leftIndex];
             uint left1 = values[leftIndex + 1];
@@ -15115,7 +15238,7 @@ while (leftIndex + 1 < butterflyEnd)
 
                             // Cache-resident scalar kernel: expose two independent butterflies
                             // per iteration and walk the twiddle table with a direct index.
-                                                        if (halfLength >= AdaptiveFourWayHalfLength)
+                            if (halfLength >= AdaptiveFourWayHalfLength)
                             {
                                 while (leftIndex + 3 < butterflyEnd)
                                 {
@@ -15189,7 +15312,7 @@ while (leftIndex + 1 < butterflyEnd)
                                 }
                             }
 
-while (leftIndex + 1 < butterflyEnd)
+                            while (leftIndex + 1 < butterflyEnd)
                             {
                                 uint left0 = values[leftIndex];
                                 uint right0 = values[rightIndex];
@@ -15677,7 +15800,7 @@ while (leftIndex + 1 < butterflyEnd)
                             int twiddleIndex =
                                 twiddleOffset + 1;
 
-                                                        if (halfLength >= AdaptiveFourWayHalfLength)
+                            if (halfLength >= AdaptiveFourWayHalfLength)
                             {
                                 while (leftIndex + 3 < butterflyEnd)
                                 {
@@ -15747,7 +15870,7 @@ while (leftIndex + 1 < butterflyEnd)
                                 }
                             }
 
-while (leftIndex + 1 < butterflyEnd)
+                            while (leftIndex + 1 < butterflyEnd)
                             {
                                 uint left0 = values[leftIndex];
                                 uint left1 = values[leftIndex + 1];
@@ -17066,6 +17189,9 @@ while (leftIndex + 1 < butterflyEnd)
         public long InverseLocalL3Ticks;
         public long InverseLocalL2Ticks;
         public long InverseLocalL1Ticks;
+        public long InverseL1Packed816Ticks;
+        public long InverseL1GenericStagePairTicks;
+        public long InverseL1Radix4TailTicks;
         public long InverseGlobalCachedTicks;
         public long InverseGlobalUncachedTicks;
         public long InverseFinalPrefixTicks;
@@ -17163,6 +17289,12 @@ while (leftIndex + 1 < butterflyEnd)
                     inverseCriticalBranch.InverseLocalL2Ticks,
                 InverseLocalL1Ticks =
                     inverseCriticalBranch.InverseLocalL1Ticks,
+                InverseL1Packed816Ticks =
+                    inverseCriticalBranch.InverseL1Packed816Ticks,
+                InverseL1GenericStagePairTicks =
+                    inverseCriticalBranch.InverseL1GenericStagePairTicks,
+                InverseL1Radix4TailTicks =
+                    inverseCriticalBranch.InverseL1Radix4TailTicks,
                 InverseGlobalCachedTicks =
                     inverseCriticalBranch.InverseGlobalCachedTicks,
                 InverseGlobalUncachedTicks =
@@ -17241,6 +17373,15 @@ while (leftIndex + 1 < butterflyEnd)
             InverseLocalL1Ticks +=
                 ToTimestampTicks(
                     snapshot.InverseLocalL1);
+            InverseL1Packed816Ticks +=
+                ToTimestampTicks(
+                    snapshot.InverseL1Packed816);
+            InverseL1GenericStagePairTicks +=
+                ToTimestampTicks(
+                    snapshot.InverseL1GenericStagePair);
+            InverseL1Radix4TailTicks +=
+                ToTimestampTicks(
+                    snapshot.InverseL1Radix4Tail);
             InverseGlobalCachedTicks +=
                 ToTimestampTicks(
                     snapshot.InverseGlobalCached);
@@ -17423,6 +17564,9 @@ while (leftIndex + 1 < butterflyEnd)
                 ToTimeSpan(InverseLocalL3Ticks),
                 ToTimeSpan(InverseLocalL2Ticks),
                 ToTimeSpan(InverseLocalL1Ticks),
+                ToTimeSpan(InverseL1Packed816Ticks),
+                ToTimeSpan(InverseL1GenericStagePairTicks),
+                ToTimeSpan(InverseL1Radix4TailTicks),
                 ToTimeSpan(InverseGlobalCachedTicks),
                 ToTimeSpan(InverseGlobalUncachedTicks),
                 ToTimeSpan(InverseFinalPrefixTicks),
@@ -19263,6 +19407,9 @@ internal sealed record ParallelPowerDiagnostics(
     TimeSpan InverseLocalL3,
     TimeSpan InverseLocalL2,
     TimeSpan InverseLocalL1,
+    TimeSpan InverseL1Packed816,
+    TimeSpan InverseL1GenericStagePair,
+    TimeSpan InverseL1Radix4Tail,
     TimeSpan InverseGlobalCached,
     TimeSpan InverseGlobalUncached,
     TimeSpan InverseFinalPrefix,

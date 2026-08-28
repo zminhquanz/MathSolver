@@ -4156,6 +4156,12 @@ public partial class PowerRootView : LocalizedSolverView
                         FormatProfileSeconds(
                             diagnostics.InverseLocalL1),
                         FormatProfileSeconds(
+                            diagnostics.InverseL1Packed816),
+                        FormatProfileSeconds(
+                            diagnostics.InverseL1GenericStagePair),
+                        FormatProfileSeconds(
+                            diagnostics.InverseL1Radix4Tail),
+                        FormatProfileSeconds(
                             diagnostics.InverseGlobalCached),
                         FormatProfileSeconds(
                             diagnostics.InverseGlobalUncached),

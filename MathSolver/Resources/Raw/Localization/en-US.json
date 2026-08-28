@@ -457,7 +457,7 @@
     "PowerRoot.InfoTime": "• Time: {0} seconds",
     "PowerRoot.InfoNttProfile": "• NTT profile ({0} large products): bit permutation {1}s (DIF/DIT = 0); forward transforms {2}s; inverse transforms {3}s",
     "PowerRoot.InfoForwardNttProfile": "• Forward NTT:\n  Twiddle preparation:\n    Global cached tables: {0}s ({1} stages)\n    Local fused twiddle/Shoup: {2}s ({3} stages)\n  Local/cache SIMD stages: {4}s\n    L3-local SIMD stages (+ 2×L3 bridge when active): {5}s\n    L2-local SIMD stages: {6}s\n    L1 fused stages (stage-pair/radix-4): {7}s\n    Dispatch/barrier/other: {8}s\n  Global cached scalar stages: {9}s\n  Global uncached scalar stages: {10}s",
-    "PowerRoot.InfoInverseNttProfile": "• Inverse NTT:\n  Local/cache SIMD stages: {0}s\n    L3-local SIMD stages: {1}s\n    L2-local SIMD stages: {2}s\n    L1 fused stages (stage-pair/radix-4): {3}s\n  Global cached scalar stages: {4}s\n  Global uncached scalar stages: {5}s\n  Final prefix + normalization: {6}s\n  Setup/other: {7}s",
+    "PowerRoot.InfoInverseNttProfile": "• Inverse NTT:\n  Local/cache SIMD stages: {0}s\n    L3-local SIMD stages: {1}s\n    L2-local SIMD stages: {2}s\n    L1 fused stages (stage-pair/radix-4): {3}s\n      Packed 8+16: {4}s\n      Generic stage-pair/single: {5}s\n      Radix-4 tail: {6}s\n  Global cached scalar stages: {7}s\n  Global uncached scalar stages: {8}s\n  Final prefix + normalization: {9}s\n  Setup/other: {10}s",
     "PowerRoot.InfoNttPostProfile": "• NTT post-processing: pointwise {0}s; CRT {1}s; carry {2}s",
     "PowerRoot.Copied": "Copied",
     "PowerRoot.ExportPreparing": "Creating TXT…",

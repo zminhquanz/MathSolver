@@ -547,3 +547,6 @@ The correctness-fixed 2×L3 bridge remains unchanged: the bridge stage itself st
 - The scalar inverse stage-pair helper completes the even second-stage merge and stores its two outputs before opening the odd merge, reducing simultaneous modular-multiply live state.
 - Arithmetic, twiddle order, worker topology, memory topology, and global Shoup policy are unchanged.
 - No new `Unsafe.Add`, pointer arithmetic, unsafe block, or `MemoryMarshal.GetArrayDataReference` use is introduced.
+
+## 2026-08-28 – Inverse L1 Substage Profiler Only
+This diagnostic variant keeps the accepted Combined i7 arithmetic unchanged and splits the Inverse L1 critical path into Packed 8+16, generic stage-pair/single-stage, and radix-4 tail buckets. Timers sit only at sub-kernel boundaries; the critical worker owns all three reported sub-buckets.
