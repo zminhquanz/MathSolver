@@ -3994,20 +3994,17 @@ public partial class PowerRootView : LocalizedSolverView
                     diagnostics.NttBufferReuseCount,
                     diagnostics.NttBufferRentCount));
 
-            if (!diagnostics.UsedMemoryBoundedLargePower)
-            {
-                lines.Insert(
-                    6,
-                    Format(
-                        diagnostics.UsedAvx2NttButterflies
-                            ? "PowerRoot.InfoNttKernelAvx2"
-                            : "PowerRoot.InfoNttKernelScalar"));
-            }
+            lines.Insert(
+                6,
+                Format(
+                    diagnostics.UsedAvx2NttButterflies
+                        ? "PowerRoot.InfoNttKernelAvx2"
+                        : "PowerRoot.InfoNttKernelScalar"));
 
             if (diagnostics.UsedMemoryBoundedLargePower)
             {
                 lines.Insert(
-                    6,
+                    7,
                     Format(
                         "PowerRoot.InfoLargeNttMode",
                         diagnostics.LargePowerChunkExponent.ToString(
@@ -4018,7 +4015,7 @@ public partial class PowerRootView : LocalizedSolverView
                         diagnostics.LargeForwardTransformSavedCount));
 
                 lines.Insert(
-                    7,
+                    8,
                     Format(
                         "PowerRoot.InfoLargeNttScheduler",
                         diagnostics.LargePersistentGenerationCount.ToString(
@@ -4067,13 +4064,10 @@ public partial class PowerRootView : LocalizedSolverView
                     FormatProfileSeconds(
                         diagnostics.InverseTransform)));
 
-            // Detailed Forward buckets are meaningful only for the <=10M
-            // hardware-accelerated hybrid path. Global pair kernels are timed
-            // outside their hot loops. Cache-local detail times only L3/L2/L1
-            // phase boundaries and reduces fixed-worker totals by critical path;
-            // no butterfly-level Stopwatch call is inserted.
-            if (diagnostics.UsedAvx2NttButterflies &&
-                !diagnostics.UsedMemoryBoundedLargePower)
+            // Detailed Forward buckets are meaningful for every calculation
+            // that selected the AVX2/Shoup hybrid NTT, including segmented large
+            // mode. The same phase counters accumulate across segment pairs.
+            if (diagnostics.UsedAvx2NttButterflies)
             {
                 TimeSpan localCacheSimd =
                     diagnostics.ForwardTransform -

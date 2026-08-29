@@ -99,6 +99,14 @@ internal sealed class ParallelBigUnsigned
     // is retained only as the fallback when the tail is too short.
     private const int CrtCarryStreamingBlockLength = 1 << 20;
 
+    // Large-mode pipeline flattening: carry/segment accumulation is split into
+    // L2-friendly tiles and executed by the same persistent logical-worker
+    // team. Each tile normalizes with an independent zero carry; a tiny
+    // boundary-reconciliation pass then injects the true carry between tiles.
+    // This preserves exact base-10,000 arithmetic while replacing long
+    // single-core valleys between NTT waves with useful parallel work.
+    private const int ParallelCarryTileLength = 1 << 14; // 16,384 coefficients
+
     // Both primes support transforms through 2^26. Their product is large
     // enough to recover every base-10,000 convolution coefficient in the
     // legacy <=10M engine and in each 2^25-limb pair of large segmented NTT.
@@ -647,9 +655,9 @@ internal sealed class ParallelBigUnsigned
         }
 
         // Capture the shared Hardware acceleration switch exactly once at
-        // calculation start.  The <=10M production path may use the AVX2
-        // butterfly backend on x86/x64, while large memory-bounded powers keep
-        // their measured scalar PersistentStatic kernel until AVX2 is accepted.
+        // calculation start. The production <=10M path and the segmented >10M
+        // path can both use the accepted AVX2/Shoup cache-resident kernels on
+        // x86/x64; large mode still keeps PersistentStatic scheduling.
         bool useAvx2Ntt =
             CalculationAccelerationManager.UsePowerNttAvx2;
 
@@ -770,6 +778,14 @@ internal sealed class ParallelBigUnsigned
 
         cancellationToken.ThrowIfCancellationRequested();
 
+        // Capture the shared Hardware acceleration switch once for the complete
+        // >10M transaction. The 20M-chain A/B benchmark showed that the accepted
+        // AVX2/Shoup cache-resident kernels materially reduce large-mode time on
+        // the i7-8700, so the original fast exponent topology now uses them too.
+        // Global memory-bound stages remain on their proven scalar/byref path.
+        bool useAvx2Ntt =
+            CalculationAccelerationManager.UsePowerNttAvx2;
+
         int chunkExponent =
             LegacyMaximumExponent;
 
@@ -851,6 +867,9 @@ internal sealed class ParallelBigUnsigned
         var diagnostics =
             new PowerDiagnosticsCollector();
 
+        diagnostics.ConfigureNttAvx2(
+            useAvx2Ntt);
+
         // Three retained 2^26 uint buffers preserve the measured ~6 GB class
         // forward-cache behavior. Four simultaneously leased buffers is the
         // hard large-mode ceiling. The transform graph is deliberately
@@ -867,7 +886,7 @@ internal sealed class ParallelBigUnsigned
         using var sharedNttTwiddlePlans =
             new SharedNttTwiddlePlans(
                 nttTwiddleBufferPool,
-                useAvx2Ntt: false);
+                useAvx2Ntt);
 
         ParallelBigUnsigned magnitude;
 
@@ -931,9 +950,15 @@ internal sealed class ParallelBigUnsigned
                     remainderOperationCount;
             }
 
-            // Reclaim dead magnitudes, but keep the persistent worker threads,
-            // cached NTT buffers and shared twiddles alive for the merge graph.
-            CollectReleasedLargeModeWorkspaces();
+            // Reclaim the remainder branch only when one was actually created.
+            // Exact 20M/40M/.../100M powers have no remainder; the previous code
+            // forced a second back-to-back Gen2/LOH sweep after the seed even
+            // though no additional large magnitude had become dead. Removing
+            // that redundant stop-the-world valley does not change memory limits.
+            if (remainderMagnitude is not null)
+            {
+                CollectReleasedLargeModeWorkspaces();
+            }
 
             int mergeCompleted = 0;
 
@@ -2031,6 +2056,7 @@ internal sealed class ParallelBigUnsigned
                             productLength,
                             destinationOffset,
                             multiplicity,
+                            workers,
                             cancellationToken);
 
                         segmentPairCount++;
@@ -2896,35 +2922,246 @@ internal sealed class ParallelBigUnsigned
         int productLength,
         int destinationOffset,
         int multiplicity,
+        FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
         Debug.Assert(
             multiplicity is 1 or 2);
 
-        ulong carry = 0;
-        int destinationIndex =
-            destinationOffset;
-
-        for (int index = 0;
-             index < productLength;
-             index++, destinationIndex++)
+        if (productLength <= 0)
         {
-            if ((index & 0xFFFF) == 0)
+            return;
+        }
+
+        int tileCount =
+            checked(
+                (productLength +
+                 ParallelCarryTileLength - 1) /
+                ParallelCarryTileLength);
+
+        // Small tails and single-worker runs keep the original one-pass carry.
+        if (workers.WorkerCount == 1 ||
+            tileCount <= 1)
+        {
+            ulong carry = 0;
+            int destinationIndex =
+                destinationOffset;
+
+            for (int index = 0;
+                 index < productLength;
+                 index++, destinationIndex++)
+            {
+                if ((index & 0xFFFF) == 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                if ((uint)destinationIndex >=
+                    (uint)destination.Length)
+                {
+                    throw new InvalidOperationException(
+                        "Segmented NTT accumulation exceeded the result buffer.");
+                }
+
+                ulong value =
+                    destination[destinationIndex] +
+                    (ulong)product[index] *
+                    (uint)multiplicity +
+                    carry;
+
+                ulong quotient =
+                    value /
+                    LimbBase;
+
+                destination[destinationIndex] =
+                    (uint)(value -
+                           quotient *
+                           LimbBase);
+
+                carry =
+                    quotient;
+            }
+
+            PropagateNormalizedCarry(
+                destination,
+                checked(
+                    destinationOffset +
+                    productLength),
+                carry,
+                cancellationToken);
+
+            return;
+        }
+
+        ulong[] tileCarries =
+            ArrayPool<ulong>.Shared.Rent(
+                tileCount);
+
+        try
+        {
+            // Phase A: every worker owns whole contiguous tiles and normalizes
+            // them with carry-in zero. There are no overlapping destination
+            // writes, so all logical workers can stay busy while the previous
+            // implementation used only the coordinator core here.
+            ExecuteRanges(
+                tileCount,
+                workers,
+                cancellationToken,
+                (tileStart, tileEnd) =>
+                {
+                    for (int tileIndex = tileStart;
+                         tileIndex < tileEnd;
+                         tileIndex++)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        int productStart =
+                            checked(
+                                tileIndex *
+                                ParallelCarryTileLength);
+
+                        int count =
+                            Math.Min(
+                                ParallelCarryTileLength,
+                                productLength -
+                                productStart);
+
+                        int destinationStart =
+                            checked(
+                                destinationOffset +
+                                productStart);
+
+                        ulong localCarry = 0;
+
+                        for (int offset = 0;
+                             offset < count;
+                             offset++)
+                        {
+                            if ((offset & 0xFFFF) == 0)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                            }
+
+                            int destinationIndex =
+                                destinationStart +
+                                offset;
+
+                            if ((uint)destinationIndex >=
+                                (uint)destination.Length)
+                            {
+                                throw new InvalidOperationException(
+                                    "Segmented NTT accumulation exceeded the result buffer.");
+                            }
+
+                            ulong value =
+                                destination[destinationIndex] +
+                                (ulong)product[productStart + offset] *
+                                (uint)multiplicity +
+                                localCarry;
+
+                            ulong quotient =
+                                value /
+                                LimbBase;
+
+                            destination[destinationIndex] =
+                                (uint)(value -
+                                       quotient *
+                                       LimbBase);
+
+                            localCarry =
+                                quotient;
+                        }
+
+                        tileCarries[tileIndex] =
+                            localCarry;
+                    }
+                });
+
+            // Phase B: inject the true carry between tiles. Because each tile
+            // already represents its exact raw sum modulo B^tileLength, adding
+            // the incoming carry to that normalized number is sufficient; only
+            // a short 9,999-prefix can propagate. The returned overflow is then
+            // added to the tile's precomputed high quotient. This is exact for
+            // every input, not a probabilistic/no-overflow shortcut.
+            ulong carry = 0;
+
+            for (int tileIndex = 0;
+                 tileIndex < tileCount;
+                 tileIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                int productStart =
+                    checked(
+                        tileIndex *
+                        ParallelCarryTileLength);
+
+                int count =
+                    Math.Min(
+                        ParallelCarryTileLength,
+                        productLength -
+                        productStart);
+
+                ulong overflow =
+                    carry == 0
+                        ? 0
+                        : AddCarryToNormalizedRange(
+                            destination,
+                            checked(
+                                destinationOffset +
+                                productStart),
+                            count,
+                            carry,
+                            cancellationToken);
+
+                carry =
+                    checked(
+                        tileCarries[tileIndex] +
+                        overflow);
+            }
+
+            PropagateNormalizedCarry(
+                destination,
+                checked(
+                    destinationOffset +
+                    productLength),
+                carry,
+                cancellationToken);
+        }
+        finally
+        {
+            ArrayPool<ulong>.Shared.Return(
+                tileCarries,
+                clearArray: false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ulong AddCarryToNormalizedRange(
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong carry,
+        CancellationToken cancellationToken)
+    {
+        int end =
+            checked(
+                destinationStart +
+                count);
+
+        int destinationIndex =
+            destinationStart;
+
+        while (carry > 0 &&
+               destinationIndex < end)
+        {
+            if ((destinationIndex & 0xFFFF) == 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            if ((uint)destinationIndex >=
-                (uint)destination.Length)
-            {
-                throw new InvalidOperationException(
-                    "Segmented NTT accumulation exceeded the result buffer.");
-            }
-
             ulong value =
                 destination[destinationIndex] +
-                (ulong)product[index] *
-                (uint)multiplicity +
                 carry;
 
             ulong quotient =
@@ -2938,7 +3175,21 @@ internal sealed class ParallelBigUnsigned
 
             carry =
                 quotient;
+
+            destinationIndex++;
         }
+
+        return carry;
+    }
+
+    private static void PropagateNormalizedCarry(
+        uint[] destination,
+        int destinationStart,
+        ulong carry,
+        CancellationToken cancellationToken)
+    {
+        int destinationIndex =
+            destinationStart;
 
         while (carry > 0)
         {
@@ -2970,6 +3221,7 @@ internal sealed class ParallelBigUnsigned
             destinationIndex++;
         }
     }
+
 
     private static ParallelBigUnsigned MultiplySchoolbook(
         ParallelBigUnsigned left,
@@ -3703,13 +3955,9 @@ internal sealed class ParallelBigUnsigned
                 CrtCarryStreamingBlockLength);
 
         // v32: after the inverse P2 transform, indices at and above
-        // coefficientCount are outside the valid linear-convolution
-        // prefix and will never be read again.  When that dead tail is
-        // large enough, reinterpret it as the bounded ulong CRT block
-        // scratch instead of allocating/retaining another 8 MiB array.
-        // Align to an even uint index so ulong elements start on an
-        // 8-byte boundary.  Exact/full transforms simply fall back to
-        // the team's reusable scratch array.
+        // coefficientCount are outside the valid linear-convolution prefix and
+        // can host the bounded CRT scratch. Pipeline flattening keeps that same
+        // memory policy; only the carry phase becomes worker-parallel.
         int inverseTailScratchStart =
             checked(
                 (coefficientCount + 1) & ~1);
@@ -3725,11 +3973,6 @@ internal sealed class ParallelBigUnsigned
 
         if (useInverseTailScratch)
         {
-            // A branch may have grown a fallback scratch during earlier
-            // smaller transforms where the dead tail could not fit it.
-            // Once the current inverse buffer supplies the scratch, drop
-            // that stale team reference immediately rather than carrying
-            // an otherwise-unused 8 MiB array through later NTT stages.
             workers.ReleaseCrtCarryScratch();
         }
 
@@ -3758,10 +4001,6 @@ internal sealed class ParallelBigUnsigned
             long crtStarted =
                 Stopwatch.GetTimestamp();
 
-            // CRT stays parallel. Each worker writes only its own
-            // range in the bounded scratch block, and the barrier at
-            // ExecuteRanges completion guarantees the source residues
-            // can then be overwritten safely by the sequential carry.
             ExecuteRanges(
                 blockCount,
                 workers,
@@ -3780,8 +4019,6 @@ internal sealed class ParallelBigUnsigned
                             sourceStart,
                             count);
 
-                    // The inverse P2 transform remains leased only
-                    // while its valid convolution prefix is consumed.
                     ReadOnlySpan<uint> secondSpan =
                         transformedSecond.AsSpan(
                             sourceStart,
@@ -3833,8 +4070,6 @@ internal sealed class ParallelBigUnsigned
                                 SecondModulus;
                         }
 
-                        // Preserve the scalar modulo expression that
-                        // won the previous benchmark experiments.
                         ulong multiplier =
                             (ulong)difference *
                             FirstModulusInverseInSecond %
@@ -3854,63 +4089,18 @@ internal sealed class ParallelBigUnsigned
             long carryStarted =
                 Stopwatch.GetTimestamp();
 
-            ReadOnlySpan<ulong> source;
-
-            if (useInverseTailScratch)
-            {
-                source =
-                    MemoryMarshal.Cast<uint, ulong>(
-                        transformedSecond.AsSpan(
-                            inverseTailScratchStart,
-                            checked(
-                                blockCount * 2)));
-            }
-            else
-            {
-                source =
-                    crtScratch!.AsSpan(
-                        0,
-                        blockCount);
-            }
-
-            // The CRT values for this block are now fully detached
-            // from P1. Reuse the corresponding P1 storage in place as
-            // the normalized base-10,000 result, avoiding another
-            // coefficientCount-sized uint[] allocation.
-            Span<uint> destination =
-                firstResidues.AsSpan(
+            carry =
+                NormalizeCrtCarryBlockParallel(
+                    transformedSecond,
+                    crtScratch,
+                    useInverseTailScratch,
+                    inverseTailScratchStart,
+                    firstResidues,
                     blockStart,
-                    blockCount);
-
-            for (int offset = 0;
-                 offset < blockCount;
-                 offset++)
-            {
-                int coefficientIndex =
-                    blockStart +
-                    offset;
-
-                if ((coefficientIndex & 0xFFFF) == 0)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
-                ulong value =
-                    source[offset] +
-                    carry;
-
-                ulong quotient =
-                    value /
-                    LimbBase;
-
-                destination[offset] =
-                    (uint)(value -
-                           quotient *
-                           LimbBase);
-
-                carry =
-                    quotient;
-            }
+                    blockCount,
+                    carry,
+                    workers,
+                    cancellationToken);
 
             carryTicks +=
                 Stopwatch.GetTimestamp() -
@@ -3926,9 +4116,212 @@ internal sealed class ParallelBigUnsigned
         diagnostics.CarryTicks +=
             carryTicks;
 
-
         return trailingCarry;
     }
+
+    private static ulong NormalizeCrtCarryBlockParallel(
+        uint[] transformedSecond,
+        ulong[]? crtScratch,
+        bool useInverseTailScratch,
+        int inverseTailScratchStart,
+        uint[] destination,
+        int blockStart,
+        int blockCount,
+        ulong incomingCarry,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int tileCount =
+            checked(
+                (blockCount +
+                 ParallelCarryTileLength - 1) /
+                ParallelCarryTileLength);
+
+        if (workers.WorkerCount == 1 ||
+            tileCount <= 1)
+        {
+            ulong carry =
+                incomingCarry;
+
+            for (int offset = 0;
+                 offset < blockCount;
+                 offset++)
+            {
+                if ((offset & 0xFFFF) == 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                ulong coefficient =
+                    useInverseTailScratch
+                        ? ReadPackedUInt64(
+                            transformedSecond,
+                            checked(
+                                inverseTailScratchStart +
+                                offset * 2))
+                        : crtScratch![offset];
+
+                ulong value =
+                    coefficient +
+                    carry;
+
+                ulong quotient =
+                    value /
+                    LimbBase;
+
+                destination[blockStart + offset] =
+                    (uint)(value -
+                           quotient *
+                           LimbBase);
+
+                carry =
+                    quotient;
+            }
+
+            return carry;
+        }
+
+        ulong[] tileCarries =
+            ArrayPool<ulong>.Shared.Rent(
+                tileCount);
+
+        try
+        {
+            ExecuteRanges(
+                tileCount,
+                workers,
+                cancellationToken,
+                (tileStart, tileEnd) =>
+                {
+                    for (int tileIndex = tileStart;
+                         tileIndex < tileEnd;
+                         tileIndex++)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        int relativeStart =
+                            checked(
+                                tileIndex *
+                                ParallelCarryTileLength);
+
+                        int count =
+                            Math.Min(
+                                ParallelCarryTileLength,
+                                blockCount -
+                                relativeStart);
+
+                        ulong localCarry = 0;
+
+                        for (int offset = 0;
+                             offset < count;
+                             offset++)
+                        {
+                            if ((offset & 0xFFFF) == 0)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                            }
+
+                            int relativeIndex =
+                                relativeStart +
+                                offset;
+
+                            ulong coefficient =
+                                useInverseTailScratch
+                                    ? ReadPackedUInt64(
+                                        transformedSecond,
+                                        checked(
+                                            inverseTailScratchStart +
+                                            relativeIndex * 2))
+                                    : crtScratch![relativeIndex];
+
+                            ulong value =
+                                coefficient +
+                                localCarry;
+
+                            ulong quotient =
+                                value /
+                                LimbBase;
+
+                            destination[blockStart + relativeIndex] =
+                                (uint)(value -
+                                       quotient *
+                                       LimbBase);
+
+                            localCarry =
+                                quotient;
+                        }
+
+                        tileCarries[tileIndex] =
+                            localCarry;
+                    }
+                });
+
+            ulong carry =
+                incomingCarry;
+
+            for (int tileIndex = 0;
+                 tileIndex < tileCount;
+                 tileIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                int relativeStart =
+                    checked(
+                        tileIndex *
+                        ParallelCarryTileLength);
+
+                int count =
+                    Math.Min(
+                        ParallelCarryTileLength,
+                        blockCount -
+                        relativeStart);
+
+                ulong overflow =
+                    carry == 0
+                        ? 0
+                        : AddCarryToNormalizedRange(
+                            destination,
+                            checked(
+                                blockStart +
+                                relativeStart),
+                            count,
+                            carry,
+                            cancellationToken);
+
+                carry =
+                    checked(
+                        tileCarries[tileIndex] +
+                        overflow);
+            }
+
+            return carry;
+        }
+        finally
+        {
+            ArrayPool<ulong>.Shared.Return(
+                tileCarries,
+                clearArray: false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ulong ReadPackedUInt64(
+        uint[] source,
+        int uintIndex)
+    {
+        uint first =
+            source[uintIndex];
+
+        uint second =
+            source[uintIndex + 1];
+
+        return BitConverter.IsLittleEndian
+            ? first |
+              ((ulong)second << 32)
+            : ((ulong)first << 32) |
+              second;
+    }
+
 
     private static void ConvolveModulusCore(
         uint[] left,
@@ -17196,10 +17589,9 @@ internal sealed class ParallelBigUnsigned
                 _bufferPool.Rent(
                     capacity);
 
-            // Shoup companions are experimental and exist only when the
-            // shared Hardware acceleration switch selected the <=10M AVX2
-            // NTT path at calculation start. Large-mode plans do not rent
-            // these arrays, so the ~6 GB PersistentStatic baseline is intact.
+            // Shoup companions exist when the shared Hardware acceleration
+            // switch selects AVX2 at calculation start. They are Pow-scoped and
+            // reused by both <=10M and segmented >10M transforms.
             if (useAvx2Ntt)
             {
                 _forwardShoupTwiddles =
@@ -18061,10 +18453,9 @@ internal sealed class ParallelBigUnsigned
 
     /// <summary>
     /// Small Pow-scoped backing pool for shared twiddle tables. Scalar NTT
-    /// needs four arrays total (forward + inverse for each modulus). The <=10M
-    /// AVX2 experiment adds a Shoup companion for each table, so the same pool
-    /// may temporarily retain eight arrays. Large mode does not allocate the
-    /// companions and therefore keeps its measured memory footprint.
+    /// needs four arrays total (forward + inverse for each modulus). AVX2 adds
+    /// one Shoup companion per table, so the pool may temporarily retain eight
+    /// arrays for both <=10M and segmented >10M calculations.
     /// </summary>
     private sealed class NttTwiddleBufferPool : IDisposable
     {
