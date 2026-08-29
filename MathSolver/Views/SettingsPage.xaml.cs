@@ -135,6 +135,14 @@ public partial class SettingsPage : ContentPage
 
         LoadCurrentSettings();
 
+#if WINDOWS
+        // Also reconcile a page that is reopened after a recovered native
+        // theme transition. This is cheap and keeps the Settings foreground
+        // deterministic even if the original DynamicResource notification
+        // happened while the page was offscreen.
+        QueueThemeForegroundRepair();
+#endif
+
         if (LiveWallpaperManager.HasWallpaper &&
             (!LiveWallpaperManager.IsHardwareH264Validated ||
              !LiveWallpaperFrameAnalysis.HasCurrentProfile))
@@ -269,8 +277,255 @@ public partial class SettingsPage : ContentPage
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
+#if WINDOWS
+        // A theme change does not change language/font/wallpaper selections.
+        // Reloading every setting here needlessly rewrites WinUI Picker
+        // SelectedItem while its native ComboBox is being rebuilt, increasing
+        // the COMException window. Refresh only theme visuals on Windows.
+        UpdateThemeModeButtons();
+
+        // WinUI can throw a transient COMException while Picker/MediaElement
+        // native peers are being rebuilt. Do not re-register DynamicResource
+        // expressions here: SetDynamicResource itself walks the stale native
+        // listener and can throw. Instead, repair Settings with the committed
+        // palette values on later dispatcher turns.
+        QueueThemeForegroundRepair();
+#else
         LoadCurrentSettings();
+#endif
     }
+
+#if WINDOWS
+    private void QueueThemeForegroundRepair()
+    {
+        // The first pass fixes pure-MAUI labels immediately. Later passes catch
+        // Pickers whose native WinUI ComboBox handler is still settling after
+        // UserAppTheme changed. Every native-touching write is isolated below,
+        // so a stale peer can never abort the rest of the Settings palette.
+        Dispatcher.Dispatch(
+            RepairThemeForegroundBindings);
+
+        Dispatcher.DispatchDelayed(
+            TimeSpan.FromMilliseconds(180),
+            RepairThemeForegroundBindings);
+
+        Dispatcher.DispatchDelayed(
+            TimeSpan.FromMilliseconds(420),
+            RepairThemeForegroundBindings);
+    }
+
+    private void RepairThemeForegroundBindings()
+    {
+        if (_isClosing)
+        {
+            return;
+        }
+
+        Color primary = ResolveCommittedThemeColor(
+            "TextPrimaryColor",
+            AppThemeManager.IsDarkThemeEffective
+                ? "#F8FAFC"
+                : "#1E293B");
+        Color secondary = ResolveCommittedThemeColor(
+            "TextSecondaryColor",
+            AppThemeManager.IsDarkThemeEffective
+                ? "#CBD5E1"
+                : "#64748B");
+        Color surfaceAlt = ResolveCommittedThemeColor(
+            "SurfaceAltColor",
+            AppThemeManager.IsDarkThemeEffective
+                ? "#172033"
+                : "#F1F5F9");
+        Color border = ResolveCommittedThemeColor(
+            "BorderColor",
+            AppThemeManager.IsDarkThemeEffective
+                ? "#334155"
+                : "#CBD5E1");
+
+        // IMPORTANT: use direct BindableProperty values instead of
+        // SetDynamicResource on Windows. Setting the concrete value replaces
+        // the stale DynamicResource subscription on the affected control, so a
+        // disconnected WinUI peer is no longer revisited by the next palette
+        // mutation. ThemeChanged/WallpaperVisualResourcesChanged trigger this
+        // repair again whenever the authoritative palette changes.
+        TryApplyThemeValue(
+            () => SettingsPageTitleLabel.TextColor = primary,
+            "Settings title");
+        TryApplyThemeValue(
+            () => SettingsPageSubtitleLabel.TextColor = secondary,
+            "Settings subtitle");
+
+        ApplyNeutralThemeText(
+            SettingsPageContentRoot,
+            primary,
+            secondary);
+
+        ApplyPickerTheme(
+            FontPicker,
+            primary,
+            secondary);
+        ApplyPickerTheme(
+            LanguagePicker,
+            primary,
+            secondary);
+        ApplyPickerTheme(
+            LiveWallpaperModePicker,
+            primary,
+            secondary);
+
+        TryApplyThemeValue(
+            () => HexColorEntry.TextColor = primary,
+            "HexColorEntry.TextColor");
+        TryApplyThemeValue(
+            () => HexColorEntry.PlaceholderColor = secondary,
+            "HexColorEntry.PlaceholderColor");
+
+        TryApplyThemeValue(
+            () => ResetSettingsButton.BackgroundColor = surfaceAlt,
+            "ResetSettingsButton.BackgroundColor");
+        TryApplyThemeValue(
+            () => ResetSettingsButton.TextColor = primary,
+            "ResetSettingsButton.TextColor");
+        TryApplyThemeValue(
+            () => ResetSettingsButton.BorderColor = border,
+            "ResetSettingsButton.BorderColor");
+
+        UpdateThemeModeButtons();
+    }
+
+    private static Color ResolveCommittedThemeColor(
+        string resourceKey,
+        string fallbackHex)
+    {
+        if (Application.Current?.Resources is ResourceDictionary resources &&
+            resources.TryGetValue(resourceKey, out object? value))
+        {
+            if (value is Color color)
+            {
+                return color;
+            }
+
+            if (value is SolidColorBrush brush)
+            {
+                return brush.Color;
+            }
+        }
+
+        return Color.FromArgb(fallbackHex);
+    }
+
+    private static void ApplyPickerTheme(
+        Picker picker,
+        Color primary,
+        Color secondary)
+    {
+        // Direct assignment intentionally replaces the DynamicResource mapping
+        // for these two Picker properties. MauiProgram's deferred WinUI Picker
+        // visual sync then pushes the same committed color to ComboBox text and
+        // chevron after the native handler is valid again.
+        TryApplyThemeValue(
+            () => picker.TextColor = primary,
+            $"{picker.StyleId ?? picker.GetType().Name}.TextColor");
+        TryApplyThemeValue(
+            () => picker.TitleColor = secondary,
+            $"{picker.StyleId ?? picker.GetType().Name}.TitleColor");
+    }
+
+    private static void ApplyNeutralThemeText(
+        Element root,
+        Color primary,
+        Color secondary)
+    {
+        if (root is Label label)
+        {
+            Color current = label.TextColor;
+
+            if (IsPrimaryThemeTextColor(current))
+            {
+                TryApplyThemeValue(
+                    () => label.TextColor = primary,
+                    "Label.TextPrimary");
+            }
+            else if (IsSecondaryThemeTextColor(current))
+            {
+                TryApplyThemeValue(
+                    () => label.TextColor = secondary,
+                    "Label.TextSecondary");
+            }
+        }
+
+        if (root is not Microsoft.Maui.IVisualTreeElement visualTreeElement)
+        {
+            return;
+        }
+
+        foreach (Microsoft.Maui.IVisualTreeElement child in
+                 visualTreeElement.GetVisualChildren())
+        {
+            if (child is Element childElement)
+            {
+                ApplyNeutralThemeText(
+                    childElement,
+                    primary,
+                    secondary);
+            }
+        }
+    }
+
+    private static void TryApplyThemeValue(
+        Action apply,
+        string target)
+    {
+        try
+        {
+            apply();
+        }
+        catch (System.Runtime.InteropServices.COMException exception)
+        {
+            // A detached WinUI peer is cosmetic and transient. Keep repairing
+            // the rest of the page; the queued 180/420 ms passes will target the
+            // replacement handler without surfacing a User-Unhandled exception.
+            System.Diagnostics.Debug.WriteLine(
+                $"Settings theme value deferred ({target}): {exception}");
+        }
+        catch (ObjectDisposedException exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Settings theme value skipped ({target}): {exception}");
+        }
+        catch (InvalidOperationException exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Settings theme value skipped ({target}): {exception}");
+        }
+    }
+
+    private static bool IsPrimaryThemeTextColor(Color color)
+    {
+        return IsSameThemeColor(color, "#1E293B") ||
+               IsSameThemeColor(color, "#F8FAFC");
+    }
+
+    private static bool IsSecondaryThemeTextColor(Color color)
+    {
+        return IsSameThemeColor(color, "#64748B") ||
+               IsSameThemeColor(color, "#CBD5E1");
+    }
+
+    private static bool IsSameThemeColor(
+        Color actual,
+        string expectedHex)
+    {
+        Color expected = Color.FromArgb(expectedHex);
+        const float epsilon = 0.002f;
+
+        return Math.Abs(actual.Red - expected.Red) < epsilon &&
+               Math.Abs(actual.Green - expected.Green) < epsilon &&
+               Math.Abs(actual.Blue - expected.Blue) < epsilon &&
+               Math.Abs(actual.Alpha - expected.Alpha) < epsilon;
+    }
+#endif
+
 
     private void OnLiveWallpaperSettingsChanged(
         object? sender,
@@ -350,18 +605,27 @@ public partial class SettingsPage : ContentPage
     {
         AppThemeManager.SetThemeMode(AppThemeMode.System);
         UpdateThemeModeButtons();
+#if WINDOWS
+        QueueThemeForegroundRepair();
+#endif
     }
 
     private void OnLightThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.Light);
         UpdateThemeModeButtons();
+#if WINDOWS
+        QueueThemeForegroundRepair();
+#endif
     }
 
     private void OnDarkThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.Dark);
         UpdateThemeModeButtons();
+#if WINDOWS
+        QueueThemeForegroundRepair();
+#endif
     }
 
     private void OnPresetColorClicked(object? sender, EventArgs e)
@@ -1295,6 +1559,49 @@ public partial class SettingsPage : ContentPage
 
     private static void UpdateThemeModeButton(Button button, bool selected)
     {
+#if WINDOWS
+        // Do not create/re-create DynamicResource expressions while WinUI is
+        // transitioning UserAppTheme. A stale native Button/ComboBox listener
+        // can throw from SetDynamicResource just like the Picker shown in the
+        // debugger. Use the already committed palette value directly instead.
+        Color background = ResolveCommittedThemeColor(
+            selected
+                ? "PrimaryColor"
+                : "SurfaceAltColor",
+            selected
+                ? AppThemeManager.CurrentAccentHex
+                : (AppThemeManager.IsDarkThemeEffective
+                    ? "#172033"
+                    : "#F1F5F9"));
+        Color text = ResolveCommittedThemeColor(
+            selected
+                ? "OnPrimaryColor"
+                : "TextPrimaryColor",
+            selected
+                ? "#FFFFFF"
+                : (AppThemeManager.IsDarkThemeEffective
+                    ? "#F8FAFC"
+                    : "#1E293B"));
+        Color border = ResolveCommittedThemeColor(
+            selected
+                ? "PrimaryColor"
+                : "BorderColor",
+            selected
+                ? AppThemeManager.CurrentAccentHex
+                : (AppThemeManager.IsDarkThemeEffective
+                    ? "#334155"
+                    : "#CBD5E1"));
+
+        TryApplyThemeValue(
+            () => button.BackgroundColor = background,
+            "ThemeModeButton.BackgroundColor");
+        TryApplyThemeValue(
+            () => button.TextColor = text,
+            "ThemeModeButton.TextColor");
+        TryApplyThemeValue(
+            () => button.BorderColor = border,
+            "ThemeModeButton.BorderColor");
+#else
         if (selected)
         {
             button.SetDynamicResource(
@@ -1323,6 +1630,7 @@ public partial class SettingsPage : ContentPage
                 Button.BorderColorProperty,
                 "BorderColor");
         }
+#endif
 
         button.BorderWidth = 1;
         button.CornerRadius = 10;

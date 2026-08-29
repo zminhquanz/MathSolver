@@ -1421,9 +1421,16 @@
     "PowerRoot.StepLargeNttMemoryBounded": "Vì số mũ lớn hơn 10,000,000, ứng dụng giữ nguyên kernel NTT/CRT đã ổn định cho từng chunk không quá {0}, sau đó ghép các kết quả bằng NTT/CRT in-place và phân đoạn để giới hạn RAM. Residue của transform vẫn dùng số nguyên 32-bit; chỉ phép nhân modulo tạm thời dùng 64-bit.",
     "PowerRoot.InfoNttKernelAvx2": "• NTT kernel ≤10M: AVX2 256-bit chỉ trong cache L1/L2/L3 + twiddle/Shoup tái sử dụng theo tile + ghép stage + Forward bridge 2×L3→L3/L2/L1 + Inverse bridge 2×L3 AVX2/Shoup thử nghiệm để giảm sweep/barrier chuyển tiếp + Forward L1 chỉ stage-pair/radix-4 (radix-8 tắt thử nghiệm) + Forward L1/L2/L3 stage-pair dùng bounded-register scheduling + Forward L1 stage 16+8 ghép 2 group/Vector256 + Inverse L1 stage 8+16 ghép 2 parent/Vector256 + Inverse stage-pair cache dùng bounded-register scheduling + Inverse generic single-parent stage-pair dùng bounded-register/early-store scheduling + radix-4 tail dùng scalar Shoup + VPMINUD giảm modulo; Forward global scalar ghép cặp stage theo segment + managed byref + unroll 2 + bounded-register twiddle schedule + dual-lane twiddle recurrence; Inverse global cached scalar dùng managed byref + unroll 2 + bounded-register scheduling; retest kết hợp: Forward stage-pair software-pipeline + Inverse ShoupContext; không tạo Shoup global (Tăng tốc phần cứng bật)",
     "PowerRoot.InfoNttKernelScalar": "• NTT kernel ≤10M: Scalar DIF/DIT (Tăng tốc phần cứng tắt hoặc AVX2 không khả dụng)",
-    "Hardware.AccelerationDescription": "Bật SIMD cho benchmark và AVX2 256-bit cho NTT/CRT ≤ 10 triệu khi CPU hỗ trợ.",
-    "Hardware.NttAccelerationAvx2On": "NTT/CRT ≤10M: AVX2 256-bit đang bật.",
-    "Hardware.NttAccelerationScalar": "NTT/CRT ≤10M: Scalar (AVX2 đang tắt hoặc không khả dụng)."
+    "Hardware.AccelerationDescription": "Bật SIMD cho benchmark và toàn ứng dụng.",
+    "Hardware.AccelerationOn": "Đang bật.",
+    "Hardware.AccelerationOff": "Đang tắt.",
+    "Hardware.AccelerationUnavailable": "Không khả dụng.",
+    "Hardware.NttAccelerationOn": "NTT/CRT khi tính lũy thừa lớn: Đang bật.",
+    "Hardware.NttAccelerationOff": "NTT/CRT khi tính lũy thừa lớn: Đang tắt.",
+    "Hardware.NttAccelerationUnavailable": "NTT/CRT khi tính lũy thừa lớn: Không khả dụng.",
+    "Hardware.ParabolaAccelerationOn": "Đồ thị Parabol hàm số bậc 2: Đang bật.",
+    "Hardware.ParabolaAccelerationOff": "Đồ thị Parabol hàm số bậc 2: Đang tắt.",
+    "Hardware.ParabolaAccelerationUnavailable": "Đồ thị Parabol hàm số bậc 2: Không khả dụng."
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

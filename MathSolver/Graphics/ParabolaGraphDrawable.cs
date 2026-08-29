@@ -2125,6 +2125,9 @@ public static class ParabolaSimdEvaluator
     private static readonly SimdPath SelectedPath =
         DetectBestPath();
 
+    public static bool IsAccelerationAvailable =>
+        SelectedPath != SimdPath.Scalar;
+
     /// <summary>
     /// Tính hàng loạt y = ax² + bx + c cho dãy sample đã ở dạng double.
     /// Đây là đường duy nhất dùng SIMD của renderer parabol. Toán học chính

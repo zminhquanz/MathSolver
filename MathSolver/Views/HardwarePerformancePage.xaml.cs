@@ -771,40 +771,44 @@ public partial class HardwarePerformancePage : ContentPage
             false;
 #endif
 
-        string accelerationStatus =
+        bool accelerationUnavailable =
 #if ANDROID
-            hasSimd &&
-            !runtimeCanExecuteSimd
-                ? LocalizationService.TranslateKey(
-                    LocalizationKeys.Hardware.RuntimeSimdUnavailable)
-                :
+            (hasSimd && !runtimeCanExecuteSimd) ||
+            (!hasSimd && hasArmHardwareSimd);
+#else
+            !hasSimd;
 #endif
-            !hasSimd &&
-            hasArmHardwareSimd
-                ? LocalizationService.TranslateKey(
-                    LocalizationKeys.Hardware.RuntimeSimdUnavailable)
-                : !hasSimd
-                    ? LocalizationService.Translate(
-                        "Thiết bị không hỗ trợ SIMD. Float và Double sẽ dùng Scalar.")
-                    : effectiveUseSimd
-                        ? string.Format(
-                            CultureInfo.CurrentCulture,
-                            LocalizationService.Translate(
-                                "Float và Double đang dùng {0}."),
-                            CalculationAccelerationManager
-                                .GetModeDisplayName(
-                                    selectedMode))
-                        : LocalizationService.Translate(
-                            "Float và Double đang dùng Scalar.");
 
-#if !ANDROID
+        string accelerationStatus =
+            LocalizationService.TranslateKey(
+                accelerationUnavailable
+                    ? LocalizationKeys.Hardware.AccelerationUnavailable
+                    : effectiveUseSimd
+                        ? LocalizationKeys.Hardware.AccelerationOn
+                        : LocalizationKeys.Hardware.AccelerationOff);
+
+        string nttAccelerationStatus =
+            LocalizationService.TranslateKey(
+                !CalculationAccelerationManager
+                    .IsPowerNttAccelerationAvailable
+                    ? LocalizationKeys.Hardware.NttAccelerationUnavailable
+                    : CalculationAccelerationManager.UsePowerNttAvx2
+                        ? LocalizationKeys.Hardware.NttAccelerationOn
+                        : LocalizationKeys.Hardware.NttAccelerationOff);
+
+        string parabolaAccelerationStatus =
+            LocalizationService.TranslateKey(
+                !ParabolaSimdEvaluator.IsAccelerationAvailable
+                    ? LocalizationKeys.Hardware.ParabolaAccelerationUnavailable
+                    : effectiveUseSimd
+                        ? LocalizationKeys.Hardware.ParabolaAccelerationOn
+                        : LocalizationKeys.Hardware.ParabolaAccelerationOff);
+
         accelerationStatus +=
             Environment.NewLine +
-            LocalizationService.TranslateKey(
-                CalculationAccelerationManager.UsePowerNttAvx2
-                    ? "Hardware.NttAccelerationAvx2On"
-                    : "Hardware.NttAccelerationScalar");
-#endif
+            nttAccelerationStatus +
+            Environment.NewLine +
+            parabolaAccelerationStatus;
 
         AccelerationStatusLabel.Text =
             accelerationStatus;

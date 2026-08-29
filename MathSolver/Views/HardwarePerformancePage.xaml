@@ -236,7 +236,7 @@
                                     TextColor="{DynamicResource TextPrimaryColor}" />
 
                                 <Label
-                                    Text="Bật SIMD cho benchmark và AVX2 256-bit cho NTT/CRT ≤ 10 triệu khi CPU hỗ trợ."
+                                    Text="Bật SIMD cho benchmark và toàn ứng dụng."
                                     Style="{StaticResource HardwareDescriptionStyle}" />
 
                                 <Label

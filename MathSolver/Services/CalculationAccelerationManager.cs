@@ -191,16 +191,19 @@ public static class CalculationAccelerationManager
     /// Large memory-bounded powers intentionally keep their scalar NTT kernel
     /// until this <=10M experiment has been benchmarked and accepted.
     /// </summary>
-    public static bool UsePowerNttAvx2 =>
+    public static bool IsPowerNttAccelerationAvailable =>
 #if ANDROID
         false;
 #else
-        UseSimd &&
         Avx2.IsSupported &&
         Vector256.IsHardwareAccelerated &&
         (RuntimeInformation.ProcessArchitecture == Architecture.X64 ||
          RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
+
+    public static bool UsePowerNttAvx2 =>
+        UseSimd &&
+        IsPowerNttAccelerationAvailable;
 
     public static CalculationSimdMode SelectedSimdMode
     {

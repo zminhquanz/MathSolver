@@ -962,6 +962,13 @@ public static class AppThemeManager
         ResourceDictionary resources,
         ThemePalette palette)
     {
+        // Commit foreground tokens first. If a native WinUI target is in the
+        // middle of teardown, a later surface mutation may still fail, but the
+        // Settings page never remains with Light-theme text on a Dark surface
+        // (or the inverse) after the recovery pass.
+        SetColorAndBrush(resources, "TextPrimaryColor", "TextPrimaryBrush", palette.TextPrimary);
+        SetColorAndBrush(resources, "TextSecondaryColor", "TextSecondaryBrush", palette.TextSecondary);
+
         SetColorAndBrush(resources, "PrimaryColor", "PrimaryBrush", palette.Accent);
         SetColorAndBrush(resources, "PrimaryDarkColor", "PrimaryDarkBrush", palette.AccentDark);
         SetColorAndBrush(resources, "PrimarySoftColor", "PrimarySoftBrush", palette.AccentSoft);
@@ -982,8 +989,6 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "SurfaceContainerHighColor", "SurfaceContainerHighBrush", palette.Surface);
 #endif
         SetColorAndBrush(resources, "InputBackgroundColor", "InputBackgroundBrush", palette.InputBackground);
-        SetColorAndBrush(resources, "TextPrimaryColor", "TextPrimaryBrush", palette.TextPrimary);
-        SetColorAndBrush(resources, "TextSecondaryColor", "TextSecondaryBrush", palette.TextSecondary);
         SetColorAndBrush(resources, "BorderColor", "BorderBrush", palette.Border);
         SetColorAndBrush(resources, "DividerColor", "DividerBrush", palette.Divider);
         SetColorAndBrush(resources, "SuccessColor", "SuccessBrush", palette.Success);
@@ -1002,15 +1007,18 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "ShellForegroundColor", "ShellForegroundBrush", palette.ShellForeground);
         SetColorAndBrush(resources, "ShellUnselectedColor", "ShellUnselectedBrush", palette.ShellUnselected);
 
-        // Đồng bộ các key cũ của template MAUI.
-        resources["Primary"] = palette.Accent;
-        resources["PrimaryDark"] = palette.AccentDark;
-        resources["PrimaryDarkText"] = palette.TextPrimary;
-        resources["Secondary"] = palette.AccentSoft;
-        resources["SecondaryDarkText"] = palette.TextSecondary;
-        resources["Tertiary"] = palette.AccentDark;
-        resources["Magenta"] = palette.Accent;
-        resources["MidnightBlue"] = palette.TextPrimary;
+        // Đồng bộ các key cũ của template MAUI. Mỗi mutation được cô lập
+        // trên WinUI để một native DynamicResource target đã stale không thể
+        // chặn các token còn lại của theme transaction. Đây là phần quan trọng
+        // khi đổi Light <-> Dark trong lúc Picker/MediaElement vừa rebuild.
+        SetResourceValueResilient(resources, "Primary", palette.Accent);
+        SetResourceValueResilient(resources, "PrimaryDark", palette.AccentDark);
+        SetResourceValueResilient(resources, "PrimaryDarkText", palette.TextPrimary);
+        SetResourceValueResilient(resources, "Secondary", palette.AccentSoft);
+        SetResourceValueResilient(resources, "SecondaryDarkText", palette.TextSecondary);
+        SetResourceValueResilient(resources, "Tertiary", palette.AccentDark);
+        SetResourceValueResilient(resources, "Magenta", palette.Accent);
+        SetResourceValueResilient(resources, "MidnightBlue", palette.TextPrimary);
     }
 
     private static void ApplyWallpaperVisualPalette(
@@ -1233,7 +1241,10 @@ public static class AppThemeManager
             currentColorResource is not Color currentColor ||
             !AreColorsEquivalent(currentColor, color))
         {
-            resources[colorKey] = color;
+            SetResourceValueResilient(
+                resources,
+                colorKey,
+                color);
         }
 
         if (resources.TryGetValue(
@@ -1243,13 +1254,62 @@ public static class AppThemeManager
         {
             if (!AreColorsEquivalent(currentBrush.Color, color))
             {
+#if WINDOWS
+                try
+                {
+                    currentBrush.Color = color;
+                }
+                catch (System.Runtime.InteropServices.COMException exception)
+                {
+                    // A stale WinUI listener must not abort the whole palette.
+                    // Replace the brush resource with a fresh object so healthy
+                    // listeners can still receive the target theme color.
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Theme brush mutation recovered ({brushKey}): {exception}");
+
+                    SetResourceValueResilient(
+                        resources,
+                        brushKey,
+                        new SolidColorBrush(color));
+                }
+#else
                 currentBrush.Color = color;
+#endif
             }
 
             return;
         }
 
-        resources[brushKey] = new SolidColorBrush(color);
+        SetResourceValueResilient(
+            resources,
+            brushKey,
+            new SolidColorBrush(color));
+    }
+
+    private static void SetResourceValueResilient(
+        ResourceDictionary resources,
+        string key,
+        object value)
+    {
+#if WINDOWS
+        try
+        {
+            resources[key] = value;
+        }
+        catch (System.Runtime.InteropServices.COMException exception)
+        {
+            // ResourceDictionary stores the new value before notifying every
+            // DynamicResource target. A disconnected WinUI Picker/MediaElement
+            // can throw from one listener and would previously abort ApplyPalette,
+            // leaving TextPrimary/TextSecondary on the old theme. Isolate that
+            // listener so the remaining palette tokens and ThemeChanged repair
+            // pass still run.
+            System.Diagnostics.Debug.WriteLine(
+                $"Theme resource mutation recovered ({key}): {exception}");
+        }
+#else
+        resources[key] = value;
+#endif
     }
 
     private static bool AreColorsEquivalent(

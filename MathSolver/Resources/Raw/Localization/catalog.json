@@ -6414,17 +6414,52 @@
     },
     {
       "key": "Hardware.AccelerationDescription",
-      "source": "Bật SIMD cho benchmark và AVX2 256-bit cho NTT/CRT ≤ 10 triệu khi CPU hỗ trợ.",
+      "source": "Bật SIMD cho benchmark và toàn ứng dụng.",
       "mode": "exact"
     },
     {
-      "key": "Hardware.NttAccelerationAvx2On",
-      "source": "NTT/CRT ≤10M: AVX2 256-bit đang bật.",
+      "key": "Hardware.AccelerationOn",
+      "source": "Đang bật.",
       "mode": "exact"
     },
     {
-      "key": "Hardware.NttAccelerationScalar",
-      "source": "NTT/CRT ≤10M: Scalar (AVX2 đang tắt hoặc không khả dụng).",
+      "key": "Hardware.AccelerationOff",
+      "source": "Đang tắt.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.AccelerationUnavailable",
+      "source": "Không khả dụng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.NttAccelerationOn",
+      "source": "NTT/CRT khi tính lũy thừa lớn: Đang bật.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.NttAccelerationOff",
+      "source": "NTT/CRT khi tính lũy thừa lớn: Đang tắt.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.NttAccelerationUnavailable",
+      "source": "NTT/CRT khi tính lũy thừa lớn: Không khả dụng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.ParabolaAccelerationOn",
+      "source": "Đồ thị Parabol hàm số bậc 2: Đang bật.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.ParabolaAccelerationOff",
+      "source": "Đồ thị Parabol hàm số bậc 2: Đang tắt.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.ParabolaAccelerationUnavailable",
+      "source": "Đồ thị Parabol hàm số bậc 2: Không khả dụng.",
       "mode": "exact"
     }
   ],

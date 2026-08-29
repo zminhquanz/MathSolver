@@ -46,6 +46,33 @@ public static class LocalizationKeys
     {
         public const string RuntimeSimdUnavailable =
             "Hardware.RuntimeSimdUnavailable";
+
+        public const string AccelerationOn =
+            "Hardware.AccelerationOn";
+
+        public const string AccelerationOff =
+            "Hardware.AccelerationOff";
+
+        public const string AccelerationUnavailable =
+            "Hardware.AccelerationUnavailable";
+
+        public const string NttAccelerationOn =
+            "Hardware.NttAccelerationOn";
+
+        public const string NttAccelerationOff =
+            "Hardware.NttAccelerationOff";
+
+        public const string NttAccelerationUnavailable =
+            "Hardware.NttAccelerationUnavailable";
+
+        public const string ParabolaAccelerationOn =
+            "Hardware.ParabolaAccelerationOn";
+
+        public const string ParabolaAccelerationOff =
+            "Hardware.ParabolaAccelerationOff";
+
+        public const string ParabolaAccelerationUnavailable =
+            "Hardware.ParabolaAccelerationUnavailable";
     }
 
     public static class Languages

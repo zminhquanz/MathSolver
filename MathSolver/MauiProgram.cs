@@ -415,7 +415,7 @@ namespace MathSolver
                         ApplyWindowsPickerGlyphColor(
                             comboBox,
                             ResolveWindowsPickerAdaptiveTextColor(
-                                picker.TextColor));
+                                picker));
                     }
                     catch (System.Runtime.InteropServices.COMException exception)
                     {
@@ -450,17 +450,19 @@ namespace MathSolver
 
         private static Microsoft.Maui.Graphics.Color
             ResolveWindowsPickerAdaptiveTextColor(
-                Microsoft.Maui.Graphics.Color fallback)
+                Microsoft.Maui.Controls.Picker picker)
         {
-            // DynamicResource normally updates Picker.TextColor itself, but
-            // WinUI ComboBox can retain the old selected-content Foreground
-            // across a native live-wallpaper transition. Read the authoritative
-            // adaptive token after AppThemeManager's transaction instead of
-            // trusting the potentially stale managed Picker.TextColor value.
+            // SettingsPage intentionally follows the selected app theme even
+            // while it is configuring/previewing a live wallpaper. Its Pickers
+            // are rebound with concrete TextPrimaryColor values after a theme
+            // switch, so never override them with WallpaperTextPrimaryColor.
+            string resourceKey =
+                IsSettingsPageDescendant(picker)
+                    ? "TextPrimaryColor"
+                    : "WallpaperTextPrimaryColor";
+
             if (Application.Current?.Resources is ResourceDictionary resources &&
-                resources.TryGetValue(
-                    "WallpaperTextPrimaryColor",
-                    out object? value))
+                resources.TryGetValue(resourceKey, out object? value))
             {
                 if (value is Microsoft.Maui.Graphics.Color color)
                 {
@@ -473,7 +475,25 @@ namespace MathSolver
                 }
             }
 
-            return fallback;
+            return picker.TextColor;
+        }
+
+        private static bool IsSettingsPageDescendant(
+            Microsoft.Maui.Controls.Element element)
+        {
+            Microsoft.Maui.Controls.Element? current = element;
+
+            while (current is not null)
+            {
+                if (current is MathSolver.Views.SettingsPage)
+                {
+                    return true;
+                }
+
+                current = current.Parent;
+            }
+
+            return false;
         }
 
         private static void ApplyWindowsPickerGlyphColor(
