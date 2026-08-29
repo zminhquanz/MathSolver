@@ -9,6 +9,9 @@ public partial class SettingsPage : ContentPage
     private bool _updatingLanguageSelection;
     private bool _hasPlayedEntryAnimation;
     private bool _isClosing;
+#if WINDOWS
+    private int _themeForegroundRepairGeneration;
+#endif
     private bool _updatingFullNumberDisplaySwitch;
     private bool _updatingDeveloperModeSwitch;
     private bool _updatingDynamicColorSwitch;
@@ -298,20 +301,30 @@ public partial class SettingsPage : ContentPage
 #if WINDOWS
     private void QueueThemeForegroundRepair()
     {
-        // The first pass fixes pure-MAUI labels immediately. Later passes catch
-        // Pickers whose native WinUI ComboBox handler is still settling after
-        // UserAppTheme changed. Every native-touching write is isolated below,
-        // so a stale peer can never abort the rest of the Settings palette.
-        Dispatcher.Dispatch(
-            RepairThemeForegroundBindings);
+        // Coalesce rapid Light/Dark/wallpaper changes. A delayed callback from
+        // an older theme is never allowed to overwrite the latest committed
+        // palette. Native Pickers use the same generation principle globally.
+        int generation =
+            Interlocked.Increment(ref _themeForegroundRepairGeneration);
 
+        void RepairIfCurrent()
+        {
+            if (generation !=
+                Volatile.Read(ref _themeForegroundRepairGeneration))
+            {
+                return;
+            }
+
+            RepairThemeForegroundBindings();
+        }
+
+        Dispatcher.Dispatch(RepairIfCurrent);
         Dispatcher.DispatchDelayed(
             TimeSpan.FromMilliseconds(180),
-            RepairThemeForegroundBindings);
-
+            RepairIfCurrent);
         Dispatcher.DispatchDelayed(
             TimeSpan.FromMilliseconds(420),
-            RepairThemeForegroundBindings);
+            RepairIfCurrent);
     }
 
     private void RepairThemeForegroundBindings()
@@ -373,6 +386,17 @@ public partial class SettingsPage : ContentPage
             primary,
             secondary);
 
+        // Do not rely on Picker.TextColor PropertyChanged to reach WinUI. A
+        // Picker can already have the correct managed TextColor while its
+        // PointerOver storyboard still references the stable brush with the
+        // previous theme color. Refresh all three native Settings pickers
+        // explicitly after the committed palette repair. This path only mutates
+        // an existing SolidColorBrush.Color immediately; ResourceDictionary
+        // writes remain one-time/deferred in MauiProgram.
+        MathSolver.MauiProgram.RefreshWindowsPickerThemeVisual(FontPicker);
+        MathSolver.MauiProgram.RefreshWindowsPickerThemeVisual(LanguagePicker);
+        MathSolver.MauiProgram.RefreshWindowsPickerThemeVisual(LiveWallpaperModePicker);
+
         TryApplyThemeValue(
             () => HexColorEntry.TextColor = primary,
             "HexColorEntry.TextColor");
@@ -429,6 +453,10 @@ public partial class SettingsPage : ContentPage
         TryApplyThemeValue(
             () => picker.TitleColor = secondary,
             $"{picker.StyleId ?? picker.GetType().Name}.TitleColor");
+
+        // Windows native Picker visuals are owned exclusively by the global
+        // Picker handler mapper in MauiProgram. Keeping one writer avoids the
+        // ResourceDictionary/IMap.Insert race during native theme transitions.
     }
 
     private static void ApplyNeutralThemeText(
@@ -605,27 +633,18 @@ public partial class SettingsPage : ContentPage
     {
         AppThemeManager.SetThemeMode(AppThemeMode.System);
         UpdateThemeModeButtons();
-#if WINDOWS
-        QueueThemeForegroundRepair();
-#endif
     }
 
     private void OnLightThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.Light);
         UpdateThemeModeButtons();
-#if WINDOWS
-        QueueThemeForegroundRepair();
-#endif
     }
 
     private void OnDarkThemeClicked(object? sender, EventArgs e)
     {
         AppThemeManager.SetThemeMode(AppThemeMode.Dark);
         UpdateThemeModeButtons();
-#if WINDOWS
-        QueueThemeForegroundRepair();
-#endif
     }
 
     private void OnPresetColorClicked(object? sender, EventArgs e)
@@ -783,6 +802,14 @@ public partial class SettingsPage : ContentPage
 
         LiveWallpaperManager.SetMode(selectedMode);
         UpdateLiveWallpaperSettings();
+
+#if WINDOWS
+        // Changing the selected item causes WinUI ComboBox to realize a new
+        // selected-content TextBlock. Re-apply the committed Light/Dark
+        // foreground after that realization; otherwise the new TextBlock can
+        // inherit the foreground cached before the most recent theme switch.
+        QueueThemeForegroundRepair();
+#endif
     }
 
     private async void OnSelectLiveWallpaperClicked(
@@ -1436,6 +1463,12 @@ public partial class SettingsPage : ContentPage
 
         AppLanguageManager.SetLanguage(
             selectedLanguage.Language);
+
+#if WINDOWS
+        // A Picker selection replaces its native selected-content presenter.
+        // Refresh the foreground after localization has updated the item text.
+        QueueThemeForegroundRepair();
+#endif
     }
 
     private void LoadFontSettings()
@@ -1475,6 +1508,14 @@ public partial class SettingsPage : ContentPage
 
         UpdateFontPreview(
             selectedFont);
+
+#if WINDOWS
+        // Font changes can rebuild the selected-content TextBlock after the
+        // theme repair has already completed. Queue the same guarded repair
+        // sequence again so the freshly realized text uses the current
+        // TextPrimaryColor (black in Light, white in Dark).
+        QueueThemeForegroundRepair();
+#endif
     }
 
     private void UpdateFontPreview(
