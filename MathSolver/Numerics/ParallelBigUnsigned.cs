@@ -5606,11 +5606,65 @@ internal sealed class ParallelBigUnsigned
                 continue;
             }
 
+            // i7-8700 100M profiler: after the 24-way partition fix, the
+            // N=2^26 inverse-uncached S=2^23 stage is load-balanced but still
+            // spends about 4.2 ns/butterfly in the generic single-lane loop.
+            // Keep the proven 8 groups x 3 slices partition and specialize only
+            // the arithmetic loop: two adjacent butterflies advance on two
+            // independent twiddle lanes using root^2.  This removes the
+            // loop-carried twiddle dependency from every butterfly, halves loop
+            // control overhead, keeps ordinary managed byrefs, and deliberately
+            // retains the runtime modulus (no Barrett/UInt128/const-mod path).
+            // The target stage is non-final, so the helper also omits the
+            // normalization branch that the generic loop must carry.
+            bool useInverseUncached2p23DualLane =
+                !useTwiddleCache &&
+                !normalizeOutput &&
+                length == (1 << 26) &&
+                stageLength == (1 << 23) &&
+                groupCount == 8 &&
+                segmentsPerGroup == 3 &&
+                workers.WorkerCount == 12;
+
             long inverseGlobalStageStarted =
                 Stopwatch.GetTimestamp();
 
-            ExecuteRanges(
-                checked(groupCount * segmentsPerGroup),
+            if (useInverseUncached2p23DualLane)
+            {
+                ExecuteRanges(
+                    checked(groupCount * segmentsPerGroup),
+                    workers,
+                    cancellationToken,
+                    (segmentStart, segmentEnd) =>
+                    {
+                        for (int segmentIndex = segmentStart;
+                             segmentIndex < segmentEnd;
+                             segmentIndex++)
+                        {
+                            GetSegmentBounds(
+                                segmentIndex,
+                                segmentsPerGroup,
+                                halfLength,
+                                out int groupIndex,
+                                out int butterflyStart,
+                                out int butterflyEnd);
+
+                            ProcessInverseUncachedStageSegmentByrefDualLane(
+                                values,
+                                modulus,
+                                root,
+                                stageLength,
+                                groupIndex,
+                                butterflyStart,
+                                butterflyEnd,
+                                cancellationToken);
+                        }
+                    });
+            }
+            else
+            {
+                ExecuteRanges(
+                    checked(groupCount * segmentsPerGroup),
                 workers,
                 cancellationToken,
                 (segmentStart, segmentEnd) =>
@@ -5843,6 +5897,7 @@ internal sealed class ParallelBigUnsigned
                         }
                     }
                 });
+            }
 
             long inverseGlobalStageTicks =
                 Stopwatch.GetTimestamp() -
@@ -5889,6 +5944,291 @@ internal sealed class ParallelBigUnsigned
             excludedAllocationTicks;
 
         return compactOutput;
+    }
+
+
+    /// <summary>
+    /// Coffee-Lake specialization for the measured N=2^26 inverse-uncached
+    /// DIT S=2^23 stage.  The worker partition is already balanced (8 groups x
+    /// 3 slices); this helper changes only the per-slice scalar traversal.  Two
+    /// adjacent butterflies use independent twiddle lanes advanced by root^2,
+    /// while all modular arithmetic remains the original runtime-modulus `%`.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessInverseUncachedStageSegmentByrefDualLane(
+        uint[] values,
+        uint modulus,
+        uint root,
+        int stageLength,
+        int groupIndex,
+        int butterflyStart,
+        int butterflyEnd,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 14;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int groupOffset =
+            groupIndex *
+            stageLength;
+
+        int butterfly =
+            butterflyStart;
+
+        // j=0 has twiddle 1.  Handle it without a modular multiply, exactly as
+        // the generic DIT loop does, then let the dual-lane recurrence start at
+        // j=1.
+        if (butterfly == 0 &&
+            butterfly < butterflyEnd)
+        {
+            int leftIndex =
+                groupOffset;
+
+            int rightIndex =
+                leftIndex +
+                halfLength;
+
+            ref uint leftRef =
+                ref values[leftIndex];
+
+            ref uint rightRef =
+                ref values[rightIndex];
+
+            uint leftValue =
+                leftRef;
+
+            uint rightValue =
+                rightRef;
+
+            uint sum =
+                leftValue +
+                rightValue;
+
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                leftValue >= rightValue
+                    ? leftValue - rightValue
+                    : leftValue + modulus - rightValue;
+
+            leftRef =
+                sum;
+
+            rightRef =
+                difference;
+
+            butterfly = 1;
+        }
+
+        if (butterfly >= butterflyEnd)
+        {
+            return;
+        }
+
+        uint twiddleEven =
+            butterfly == 1 &&
+            butterflyStart == 0
+                ? root
+                : (uint)ModPow(
+                    root,
+                    (uint)butterfly,
+                    modulus);
+
+        uint twiddleOdd =
+            (uint)((ulong)twiddleEven *
+                   root %
+                   modulus);
+
+        uint twiddleStepTwo =
+            (uint)((ulong)root *
+                   root %
+                   modulus);
+
+        int leftIndexBase =
+            groupOffset +
+            butterfly;
+
+        int rightIndexBase =
+            leftIndexBase +
+            halfLength;
+
+        int remaining =
+            butterflyEnd -
+            butterfly;
+
+        while (remaining > 0)
+        {
+            int chunkLength =
+                Math.Min(
+                    remaining,
+                    CancellationStride);
+
+            int pairCount =
+                chunkLength >> 1;
+
+            for (int pair = 0;
+                 pair < pairCount;
+                 pair++)
+            {
+                {
+                    ref uint leftRef =
+                        ref values[leftIndexBase];
+
+                    ref uint rightRef =
+                        ref values[rightIndexBase];
+
+                    uint leftValue =
+                        leftRef;
+
+                    uint rightValue =
+                        (uint)((ulong)rightRef *
+                               twiddleEven %
+                               modulus);
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    uint difference =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    leftRef =
+                        sum;
+
+                    rightRef =
+                        difference;
+                }
+
+                {
+                    ref uint leftRef =
+                        ref values[leftIndexBase + 1];
+
+                    ref uint rightRef =
+                        ref values[rightIndexBase + 1];
+
+                    uint leftValue =
+                        leftRef;
+
+                    uint rightValue =
+                        (uint)((ulong)rightRef *
+                               twiddleOdd %
+                               modulus);
+
+                    uint sum =
+                        leftValue +
+                        rightValue;
+
+                    if (sum >= modulus)
+                    {
+                        sum -= modulus;
+                    }
+
+                    uint difference =
+                        leftValue >= rightValue
+                            ? leftValue - rightValue
+                            : leftValue + modulus - rightValue;
+
+                    leftRef =
+                        sum;
+
+                    rightRef =
+                        difference;
+                }
+
+                leftIndexBase += 2;
+                rightIndexBase += 2;
+
+                bool hasMore =
+                    pair + 1 < pairCount ||
+                    (chunkLength & 1) != 0 ||
+                    remaining > chunkLength;
+
+                if (hasMore)
+                {
+                    twiddleEven =
+                        (uint)((ulong)twiddleEven *
+                               twiddleStepTwo %
+                               modulus);
+
+                    twiddleOdd =
+                        (uint)((ulong)twiddleOdd *
+                               twiddleStepTwo %
+                               modulus);
+                }
+            }
+
+            if ((chunkLength & 1) != 0)
+            {
+                ref uint leftRef =
+                    ref values[leftIndexBase];
+
+                ref uint rightRef =
+                    ref values[rightIndexBase];
+
+                uint leftValue =
+                    leftRef;
+
+                uint rightValue =
+                    (uint)((ulong)rightRef *
+                           twiddleEven %
+                           modulus);
+
+                uint sum =
+                    leftValue +
+                    rightValue;
+
+                if (sum >= modulus)
+                {
+                    sum -= modulus;
+                }
+
+                uint difference =
+                    leftValue >= rightValue
+                        ? leftValue - rightValue
+                        : leftValue + modulus - rightValue;
+
+                leftRef =
+                    sum;
+
+                rightRef =
+                    difference;
+
+                leftIndexBase++;
+                rightIndexBase++;
+
+                // CancellationStride is even, so this path is normally only
+                // reached by the final partial chunk.  Preserve recurrence
+                // correctness if the stride is changed later.
+                if (remaining > chunkLength)
+                {
+                    twiddleEven =
+                        twiddleOdd;
+
+                    twiddleOdd =
+                        (uint)((ulong)twiddleEven *
+                               root %
+                               modulus);
+                }
+            }
+
+            remaining -=
+                chunkLength;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
 
