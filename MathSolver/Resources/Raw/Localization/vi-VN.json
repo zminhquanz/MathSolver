@@ -1430,7 +1430,13 @@
     "Hardware.NttAccelerationUnavailable": "NTT/CRT khi tính lũy thừa lớn: Không khả dụng.",
     "Hardware.ParabolaAccelerationOn": "Đồ thị Parabol hàm số bậc 2: Đang bật.",
     "Hardware.ParabolaAccelerationOff": "Đồ thị Parabol hàm số bậc 2: Đang tắt.",
-    "Hardware.ParabolaAccelerationUnavailable": "Đồ thị Parabol hàm số bậc 2: Không khả dụng."
+    "Hardware.ParabolaAccelerationUnavailable": "Đồ thị Parabol hàm số bậc 2: Không khả dụng.",
+    "PowerRoot.InfoGlobalStageProfiler": "• Profiler global NTT theo stage (chỉ đo boundary, không đổi kernel; sắp xếp theo thời gian nóng nhất):",
+    "PowerRoot.InfoGlobalStageForwardCached": "  Forward global cached — tổng {0} giây:",
+    "PowerRoot.InfoGlobalStageForwardUncached": "  Forward global uncached — tổng {0} giây:",
+    "PowerRoot.InfoGlobalStageInverseCached": "  Inverse global cached — tổng {0} giây:",
+    "PowerRoot.InfoGlobalStageInverseUncached": "  Inverse global uncached — tổng {0} giây:",
+    "PowerRoot.InfoGlobalStageProfilerRow": "    {0}: {1} giây | {2}% bucket | {3} lượt | {4} butterfly | {5} ms/lượt | {6} ns/butterfly"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

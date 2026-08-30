@@ -6461,6 +6461,36 @@
       "key": "Hardware.ParabolaAccelerationUnavailable",
       "source": "Đồ thị Parabol hàm số bậc 2: Không khả dụng.",
       "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoGlobalStageProfiler",
+      "source": "• Profiler global NTT theo stage (chỉ đo boundary, không đổi kernel; sắp xếp theo thời gian nóng nhất):",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoGlobalStageForwardCached",
+      "source": "  Forward global cached — tổng {0} giây:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoGlobalStageForwardUncached",
+      "source": "  Forward global uncached — tổng {0} giây:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoGlobalStageInverseCached",
+      "source": "  Inverse global cached — tổng {0} giây:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoGlobalStageInverseUncached",
+      "source": "  Inverse global uncached — tổng {0} giây:",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoGlobalStageProfilerRow",
+      "source": "    {0}: {1} giây | {2}% bucket | {3} lượt | {4} butterfly | {5} ms/lượt | {6} ns/butterfly",
+      "mode": "exact"
     }
   ],
   "capturedTerms": [

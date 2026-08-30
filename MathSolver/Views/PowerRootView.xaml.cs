@@ -4164,6 +4164,10 @@ public partial class PowerRootView : LocalizedSolverView
                         FormatProfileSeconds(inverseOther)));
             }
 
+            AppendGlobalNttStageProfile(
+                lines,
+                diagnostics);
+
             lines.Add(
                 Format(
                     "PowerRoot.InfoNttPostProfile",
@@ -4183,6 +4187,153 @@ public partial class PowerRootView : LocalizedSolverView
         return string.Join(
             Environment.NewLine,
             lines);
+    }
+
+    private static void AppendGlobalNttStageProfile(
+        List<string> lines,
+        ParallelPowerDiagnostics diagnostics)
+    {
+        if (diagnostics.GlobalStageProfiles.Count == 0)
+        {
+            return;
+        }
+
+        lines.Add(
+            Translate(
+                "PowerRoot.InfoGlobalStageProfiler"));
+
+        AppendGlobalNttStageProfileKind(
+            lines,
+            diagnostics.GlobalStageProfiles,
+            NttGlobalStageKind.ForwardCached,
+            "PowerRoot.InfoGlobalStageForwardCached");
+
+        AppendGlobalNttStageProfileKind(
+            lines,
+            diagnostics.GlobalStageProfiles,
+            NttGlobalStageKind.ForwardUncached,
+            "PowerRoot.InfoGlobalStageForwardUncached");
+
+        AppendGlobalNttStageProfileKind(
+            lines,
+            diagnostics.GlobalStageProfiles,
+            NttGlobalStageKind.InverseCached,
+            "PowerRoot.InfoGlobalStageInverseCached");
+
+        AppendGlobalNttStageProfileKind(
+            lines,
+            diagnostics.GlobalStageProfiles,
+            NttGlobalStageKind.InverseUncached,
+            "PowerRoot.InfoGlobalStageInverseUncached");
+    }
+
+    private static void AppendGlobalNttStageProfileKind(
+        List<string> lines,
+        IReadOnlyList<NttGlobalStageProfileEntry> profiles,
+        NttGlobalStageKind kind,
+        string sectionKey)
+    {
+        var selected =
+            new List<NttGlobalStageProfileEntry>();
+
+        double bucketSeconds = 0;
+
+        foreach (NttGlobalStageProfileEntry entry
+                 in profiles)
+        {
+            if (entry.Kind != kind)
+            {
+                continue;
+            }
+
+            selected.Add(
+                entry);
+
+            bucketSeconds +=
+                entry.Elapsed.TotalSeconds;
+        }
+
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        selected.Sort(
+            static (left, right) =>
+                right.Elapsed.CompareTo(
+                    left.Elapsed));
+
+        lines.Add(
+            Format(
+                sectionKey,
+                bucketSeconds.ToString(
+                    "0.###",
+                    CultureInfo.InvariantCulture)));
+
+        foreach (NttGlobalStageProfileEntry entry
+                 in selected)
+        {
+            string transformLabel =
+                entry.TransformLength.ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture);
+
+            string stageSpan =
+                entry.FusedSecondStageLength >= 2
+                    ? $"{entry.StageLength.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture)} + {entry.FusedSecondStageLength.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture)}"
+                    : entry.StageLength.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture);
+
+            string stageLabel =
+                $"N={transformLabel} | S={stageSpan}";
+
+            double sharePercent =
+                bucketSeconds > 0
+                    ? entry.Elapsed.TotalSeconds /
+                      bucketSeconds *
+                      100d
+                    : 0d;
+
+            double millisecondsPerCall =
+                entry.CallCount > 0
+                    ? entry.Elapsed.TotalMilliseconds /
+                      entry.CallCount
+                    : 0d;
+
+            double nanosecondsPerButterfly =
+                entry.ButterflyCount > 0
+                    ? entry.Elapsed.TotalSeconds *
+                      1_000_000_000d /
+                      entry.ButterflyCount
+                    : 0d;
+
+            lines.Add(
+                Format(
+                    "PowerRoot.InfoGlobalStageProfilerRow",
+                    stageLabel,
+                    FormatProfileSeconds(
+                        entry.Elapsed),
+                    sharePercent.ToString(
+                        "0.0",
+                        CultureInfo.InvariantCulture),
+                    entry.CallCount.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    entry.ButterflyCount.ToString(
+                        "N0",
+                        CultureInfo.InvariantCulture),
+                    millisecondsPerCall.ToString(
+                        "0.###",
+                        CultureInfo.InvariantCulture),
+                    nanosecondsPerButterfly.ToString(
+                        "0.###",
+                        CultureInfo.InvariantCulture)));
+        }
     }
 
     private static string FormatProfileSeconds(

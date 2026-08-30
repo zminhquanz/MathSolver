@@ -4962,6 +4962,9 @@ internal sealed class ParallelBigUnsigned
             if (useTwiddleCache &&
                 segmentsPerGroup == 1)
             {
+                long globalStageStarted =
+                    Stopwatch.GetTimestamp();
+
                 ExecuteForwardCachedStageByGroups(
                     values,
                     modulus,
@@ -4976,8 +4979,25 @@ internal sealed class ParallelBigUnsigned
                     workers,
                     cancellationToken);
 
+                long elapsedTicks =
+                    Stopwatch.GetTimestamp() -
+                    globalStageStarted;
+
+                diagnostics.ForwardGlobalCachedTicks +=
+                    elapsedTicks;
+
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardCached,
+                    stageLength,
+                    0,
+                    values.Length,
+                    elapsedTicks);
+
                 continue;
             }
+
+            long genericGlobalStageStarted =
+                Stopwatch.GetTimestamp();
 
             ExecuteRanges(
                 checked(groupCount * segmentsPerGroup),
@@ -5168,6 +5188,35 @@ internal sealed class ParallelBigUnsigned
                         }
                     }
                 });
+
+            long genericGlobalStageTicks =
+                Stopwatch.GetTimestamp() -
+                genericGlobalStageStarted;
+
+            if (useTwiddleCache)
+            {
+                diagnostics.ForwardGlobalCachedTicks +=
+                    genericGlobalStageTicks;
+
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardCached,
+                    stageLength,
+                    0,
+                    values.Length,
+                    genericGlobalStageTicks);
+            }
+            else
+            {
+                diagnostics.ForwardGlobalUncachedTicks +=
+                    genericGlobalStageTicks;
+
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardUncached,
+                    stageLength,
+                    0,
+                    values.Length,
+                    genericGlobalStageTicks);
+            }
         }
 
         diagnostics.ForwardTransformTicks +=
@@ -5512,6 +5561,30 @@ internal sealed class ParallelBigUnsigned
                     groupCount,
                     workers.WorkerCount);
 
+            // i7-8700 100M profiler: the N=2^26, inverse DIT S=2^23
+            // uncached stage is a scheduling outlier.  With 12 workers the
+            // generic ceil(worker/group) rule produces 8 groups x 2 slices =
+            // 16 work items.  Four workers therefore receive a second full
+            // 2^21-butterfly slice while the other eight go idle, extending
+            // the critical path to 2^22 butterflies on those workers.
+            //
+            // Split each of the eight independent groups into three instead.
+            // That gives 24 equal slices: exactly two slices per logical worker
+            // on the 12-thread Coffee Lake target.  Arithmetic, twiddle
+            // recurrence, memory layout, barriers and worker count are all
+            // unchanged; only work admission for this measured hot stage is
+            // rebalanced.  On 24-worker systems GetSegmentsPerGroup already
+            // returns 3, so this specialization is naturally a no-op there.
+            if (!useTwiddleCache &&
+                length == (1 << 26) &&
+                stageLength == (1 << 23) &&
+                groupCount == 8 &&
+                segmentsPerGroup == 2 &&
+                workers.WorkerCount >= 12)
+            {
+                segmentsPerGroup = 3;
+            }
+
             if (useTwiddleCache &&
                 segmentsPerGroup == 1)
             {
@@ -5788,11 +5861,25 @@ internal sealed class ParallelBigUnsigned
             {
                 diagnostics.InverseGlobalCachedTicks +=
                     inverseGlobalStageTicks;
+
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseCached,
+                    stageLength,
+                    0,
+                    values.Length,
+                    inverseGlobalStageTicks);
             }
             else
             {
                 diagnostics.InverseGlobalUncachedTicks +=
                     inverseGlobalStageTicks;
+
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseUncached,
+                    stageLength,
+                    0,
+                    values.Length,
+                    inverseGlobalStageTicks);
             }
         }
 
@@ -5835,9 +5922,19 @@ internal sealed class ParallelBigUnsigned
             workers,
             cancellationToken);
 
-        diagnostics.InverseGlobalCachedTicks +=
+        long elapsedTicks =
             Stopwatch.GetTimestamp() -
             started;
+
+        diagnostics.InverseGlobalCachedTicks +=
+            elapsedTicks;
+
+        diagnostics.RecordGlobalStageProfile(
+            NttGlobalStageKind.InverseCached,
+            stageLength,
+            stageLength << 1,
+            values.Length,
+            elapsedTicks);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -5869,9 +5966,19 @@ internal sealed class ParallelBigUnsigned
             workers,
             cancellationToken);
 
-        diagnostics.InverseGlobalCachedTicks +=
+        long elapsedTicks =
             Stopwatch.GetTimestamp() -
             started;
+
+        diagnostics.InverseGlobalCachedTicks +=
+            elapsedTicks;
+
+        diagnostics.RecordGlobalStageProfile(
+            NttGlobalStageKind.InverseCached,
+            stageLength,
+            0,
+            values.Length,
+            elapsedTicks);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -10278,9 +10385,19 @@ internal sealed class ParallelBigUnsigned
             workers,
             cancellationToken);
 
-        diagnostics.ForwardGlobalCachedTicks +=
+        long elapsedTicks =
             Stopwatch.GetTimestamp() -
             started;
+
+        diagnostics.ForwardGlobalCachedTicks +=
+            elapsedTicks;
+
+        diagnostics.RecordGlobalStageProfile(
+            NttGlobalStageKind.ForwardCached,
+            stageLength,
+            stageLength >> 1,
+            values.Length,
+            elapsedTicks);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -10304,9 +10421,19 @@ internal sealed class ParallelBigUnsigned
             workers,
             cancellationToken);
 
-        diagnostics.ForwardGlobalUncachedTicks +=
+        long elapsedTicks =
             Stopwatch.GetTimestamp() -
             started;
+
+        diagnostics.ForwardGlobalUncachedTicks +=
+            elapsedTicks;
+
+        diagnostics.RecordGlobalStageProfile(
+            NttGlobalStageKind.ForwardUncached,
+            stageLength,
+            stageLength >> 1,
+            values.Length,
+            elapsedTicks);
     }
 
 
@@ -17905,6 +18032,23 @@ internal sealed class ParallelBigUnsigned
         public long CrtTicks;
         public long CarryTicks;
 
+        // Profiler-only global-stage buckets.  Each category keeps separate
+        // single-stage and fused-pair slots indexed by log2(stageLength).
+        // Interlocked accumulation keeps the diagnostic path safe when large
+        // segmented multiplications complete on different persistent workers.
+        private const int GlobalStageProfileLogSlots = 32;
+        private const int GlobalStageProfileVariants = 8;
+        private const int GlobalStageProfileSlots =
+            GlobalStageProfileVariants *
+            GlobalStageProfileLogSlots *
+            GlobalStageProfileLogSlots;
+        private readonly long[] _globalStageProfileTicks =
+            new long[GlobalStageProfileSlots];
+        private readonly long[] _globalStageProfileCalls =
+            new long[GlobalStageProfileSlots];
+        private readonly long[] _globalStageProfileButterflies =
+            new long[GlobalStageProfileSlots];
+
         private bool _usedAvx2NttButterflies;
         private long _nttWorkspacePeakBytes;
         private long _nttPoolPeakRetainedBytes;
@@ -17929,6 +18073,238 @@ internal sealed class ParallelBigUnsigned
         private long _secondBranchTicks;
         private long _finalCombineTicks;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RecordGlobalStageProfile(
+            NttGlobalStageKind kind,
+            int stageLength,
+            int fusedSecondStageLength,
+            int transformLength,
+            long elapsedTicks)
+        {
+            if (stageLength < 2 ||
+                elapsedTicks < 0)
+            {
+                return;
+            }
+
+            bool fused =
+                fusedSecondStageLength >= 2;
+
+            int stageLog2 =
+                BitOperations.Log2(
+                    (uint)stageLength);
+
+            int transformLog2 =
+                BitOperations.Log2(
+                    (uint)transformLength);
+
+            int variant =
+                checked(
+                    ((int)kind << 1) +
+                    (fused ? 1 : 0));
+
+            int index =
+                checked(
+                    (variant *
+                     GlobalStageProfileLogSlots +
+                     transformLog2) *
+                    GlobalStageProfileLogSlots +
+                    stageLog2);
+
+            long butterflyCount =
+                Math.Max(
+                    0L,
+                    (long)transformLength / 2L *
+                    (fused ? 2L : 1L));
+
+            Interlocked.Add(
+                ref _globalStageProfileTicks[index],
+                elapsedTicks);
+
+            Interlocked.Increment(
+                ref _globalStageProfileCalls[index]);
+
+            Interlocked.Add(
+                ref _globalStageProfileButterflies[index],
+                butterflyCount);
+        }
+
+        private void AccumulateGlobalStageProfile(
+            NttGlobalStageProfileEntry entry)
+        {
+            bool fused =
+                entry.FusedSecondStageLength >= 2;
+
+            int stageLog2 =
+                BitOperations.Log2(
+                    (uint)entry.StageLength);
+
+            int transformLog2 =
+                BitOperations.Log2(
+                    (uint)entry.TransformLength);
+
+            int variant =
+                checked(
+                    ((int)entry.Kind << 1) +
+                    (fused ? 1 : 0));
+
+            int index =
+                checked(
+                    (variant *
+                     GlobalStageProfileLogSlots +
+                     transformLog2) *
+                    GlobalStageProfileLogSlots +
+                    stageLog2);
+
+            Interlocked.Add(
+                ref _globalStageProfileTicks[index],
+                ToTimestampTicks(
+                    entry.Elapsed));
+
+            Interlocked.Add(
+                ref _globalStageProfileCalls[index],
+                entry.CallCount);
+
+            Interlocked.Add(
+                ref _globalStageProfileButterflies[index],
+                entry.ButterflyCount);
+        }
+
+        private void CopyGlobalStageProfilesFrom(
+            PowerDiagnosticsCollector forwardSource,
+            PowerDiagnosticsCollector inverseSource)
+        {
+            int slotsPerKind =
+                2 *
+                GlobalStageProfileLogSlots *
+                GlobalStageProfileLogSlots;
+
+            for (int kind = 0;
+                 kind < 4;
+                 kind++)
+            {
+                PowerDiagnosticsCollector source =
+                    kind < 2
+                        ? forwardSource
+                        : inverseSource;
+
+                int start =
+                    kind *
+                    slotsPerKind;
+
+                int end =
+                    start +
+                    slotsPerKind;
+
+                for (int index = start;
+                     index < end;
+                     index++)
+                {
+                    _globalStageProfileTicks[index] =
+                        Volatile.Read(
+                            ref source._globalStageProfileTicks[index]);
+
+                    _globalStageProfileCalls[index] =
+                        Volatile.Read(
+                            ref source._globalStageProfileCalls[index]);
+
+                    _globalStageProfileButterflies[index] =
+                        Volatile.Read(
+                            ref source._globalStageProfileButterflies[index]);
+                }
+            }
+        }
+
+        private NttGlobalStageProfileEntry[]
+            CreateGlobalStageProfiles()
+        {
+            var result =
+                new List<NttGlobalStageProfileEntry>();
+
+            for (int kindValue = 0;
+                 kindValue < 4;
+                 kindValue++)
+            {
+                var kind =
+                    (NttGlobalStageKind)kindValue;
+
+                for (int fusedValue = 0;
+                     fusedValue < 2;
+                     fusedValue++)
+                {
+                    bool fused =
+                        fusedValue != 0;
+
+                    int variant =
+                        checked(
+                            (kindValue << 1) +
+                            fusedValue);
+
+                    for (int transformLog2 = 1;
+                         transformLog2 < 31;
+                         transformLog2++)
+                    {
+                        int transformLength =
+                            1 << transformLog2;
+
+                        for (int stageLog2 = 1;
+                             stageLog2 <= transformLog2;
+                             stageLog2++)
+                        {
+                            int index =
+                                checked(
+                                    (variant *
+                                     GlobalStageProfileLogSlots +
+                                     transformLog2) *
+                                    GlobalStageProfileLogSlots +
+                                    stageLog2);
+
+                            long calls =
+                                Volatile.Read(
+                                    ref _globalStageProfileCalls[index]);
+
+                            if (calls <= 0)
+                            {
+                                continue;
+                            }
+
+                            int stageLength =
+                                1 << stageLog2;
+
+                            int fusedSecondStageLength =
+                                fused
+                                    ? kind is
+                                        NttGlobalStageKind.ForwardCached or
+                                        NttGlobalStageKind.ForwardUncached
+                                        ? stageLength >> 1
+                                        : checked(stageLength << 1)
+                                    : 0;
+
+                            long ticks =
+                                Volatile.Read(
+                                    ref _globalStageProfileTicks[index]);
+
+                            long butterflies =
+                                Volatile.Read(
+                                    ref _globalStageProfileButterflies[index]);
+
+                            result.Add(
+                                new NttGlobalStageProfileEntry(
+                                    kind,
+                                    transformLength,
+                                    stageLength,
+                                    fusedSecondStageLength,
+                                    calls,
+                                    butterflies,
+                                    ToTimeSpan(ticks)));
+                        }
+                    }
+                }
+            }
+
+            return result.ToArray();
+        }
+
         public static PowerDiagnosticsCollector CombineParallelBranches(
             PowerDiagnosticsCollector first,
             PowerDiagnosticsCollector second)
@@ -17950,8 +18326,9 @@ internal sealed class ParallelBigUnsigned
                     ? first
                     : second;
 
-            return new PowerDiagnosticsCollector
-            {
+            var result =
+                new PowerDiagnosticsCollector
+                {
                 NttMultiplicationCount =
                     checked(
                         first.NttMultiplicationCount +
@@ -18019,7 +18396,13 @@ internal sealed class ParallelBigUnsigned
                 _usedAvx2NttButterflies =
                     first._usedAvx2NttButterflies ||
                     second._usedAvx2NttButterflies
-            };
+                };
+
+            result.CopyGlobalStageProfilesFrom(
+                forwardCriticalBranch,
+                inverseCriticalBranch);
+
+            return result;
         }
 
         public void AccumulateSnapshot(
@@ -18104,6 +18487,13 @@ internal sealed class ParallelBigUnsigned
             CarryTicks +=
                 ToTimestampTicks(
                     snapshot.Carry);
+
+            foreach (NttGlobalStageProfileEntry entry
+                     in snapshot.GlobalStageProfiles)
+            {
+                AccumulateGlobalStageProfile(
+                    entry);
+            }
 
             _nttWorkspacePeakBytes =
                 Math.Max(
@@ -18298,7 +18688,8 @@ internal sealed class ParallelBigUnsigned
                 _largeForwardTransformSavedCount,
                 _largePersistentGenerationCount,
                 _largePersistentStaticRangeCount,
-                _largeMemoryBudgetBufferLimit);
+                _largeMemoryBudgetBufferLimit,
+                CreateGlobalStageProfiles());
         }
 
         private static long ToTimestampTicks(
@@ -20093,6 +20484,23 @@ internal sealed record ParallelPowerResult(
     ParallelBigUnsigned Magnitude,
     ParallelPowerDiagnostics Diagnostics);
 
+internal enum NttGlobalStageKind
+{
+    ForwardCached = 0,
+    ForwardUncached = 1,
+    InverseCached = 2,
+    InverseUncached = 3
+}
+
+internal sealed record NttGlobalStageProfileEntry(
+    NttGlobalStageKind Kind,
+    int TransformLength,
+    int StageLength,
+    int FusedSecondStageLength,
+    long CallCount,
+    long ButterflyCount,
+    TimeSpan Elapsed);
+
 internal sealed record ParallelPowerDiagnostics(
     int WorkerCount,
     bool UsedAvx2NttButterflies,
@@ -20140,4 +20548,5 @@ internal sealed record ParallelPowerDiagnostics(
     int LargeForwardTransformSavedCount,
     long LargePersistentGenerationCount,
     long LargePersistentStaticRangeCount,
-    int LargeMemoryBudgetBufferLimit);
+    int LargeMemoryBudgetBufferLimit,
+    IReadOnlyList<NttGlobalStageProfileEntry> GlobalStageProfiles);

@@ -1430,7 +1430,13 @@
     "Hardware.NttAccelerationUnavailable": "NTT/CRT for large-power calculations: Unavailable.",
     "Hardware.ParabolaAccelerationOn": "Quadratic-function parabola graph: Enabled.",
     "Hardware.ParabolaAccelerationOff": "Quadratic-function parabola graph: Disabled.",
-    "Hardware.ParabolaAccelerationUnavailable": "Quadratic-function parabola graph: Unavailable."
+    "Hardware.ParabolaAccelerationUnavailable": "Quadratic-function parabola graph: Unavailable.",
+    "PowerRoot.InfoGlobalStageProfiler": "• Global NTT stage profiler (boundary-only; kernels unchanged; hottest first):",
+    "PowerRoot.InfoGlobalStageForwardCached": "  Forward global cached — total {0}s:",
+    "PowerRoot.InfoGlobalStageForwardUncached": "  Forward global uncached — total {0}s:",
+    "PowerRoot.InfoGlobalStageInverseCached": "  Inverse global cached — total {0}s:",
+    "PowerRoot.InfoGlobalStageInverseUncached": "  Inverse global uncached — total {0}s:",
+    "PowerRoot.InfoGlobalStageProfilerRow": "    {0}: {1}s | {2}% bucket | {3} calls | {4} butterflies | {5} ms/call | {6} ns/butterfly"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",
