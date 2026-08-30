@@ -13879,21 +13879,25 @@ internal sealed class ParallelBigUnsigned
                     long bridgeStarted =
                         Stopwatch.GetTimestamp();
 
-                    // The bridge half-length is exactly L3, while Shoup
-                    // companions are intentionally generated only through
-                    // L3/2 (the first genuinely cache-resident stage).  Do
-                    // not feed the L3 bridge through the AVX2/Shoup helper:
-                    // those companion slots are deliberately uninitialized.
-                    // Keep the bridge mathematically exact with the proven
-                    // cached scalar DIF group, then use AVX2/Shoup normally
-                    // for the two L3 descendants and all smaller stages.
-                    ExecuteForwardCachedDifGroup(
+                    // >10M AVX2 bridge experiment: MaximumShoupHalfLength
+                    // already extends through L3 because the inverse 2xL3
+                    // bridge consumes the same companion row.  The forward
+                    // bridge previously stayed on the scalar cached helper due
+                    // to an older L3/2 companion boundary.  Reuse the existing
+                    // L3 twiddle + Shoup row here as well so the sole 2xL3 DIF
+                    // stage is completed by the same exact eight-lane AVX2
+                    // kernel as its cache-resident descendants.  No extra
+                    // twiddle allocation/build is introduced and parent
+                    // ownership / worker partitioning remains unchanged.
+                    ExecuteForwardCachedDifGroupAvx2(
                         values,
                         modulus,
                         twiddles,
+                        shoupTwiddles,
                         bridgeTwiddleOffset,
                         parentOffset,
-                        l3NttTileLength);
+                        l3NttTileLength,
+                        context);
 
                     localL3Ticks +=
                         Stopwatch.GetTimestamp() -
