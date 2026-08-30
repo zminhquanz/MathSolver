@@ -5561,28 +5561,28 @@ internal sealed class ParallelBigUnsigned
                     groupCount,
                     workers.WorkerCount);
 
-            // i7-8700 100M profiler: the N=2^26, inverse DIT S=2^23
-            // uncached stage is a scheduling outlier.  With 12 workers the
-            // generic ceil(worker/group) rule produces 8 groups x 2 slices =
-            // 16 work items.  Four workers therefore receive a second full
-            // 2^21-butterfly slice while the other eight go idle, extending
-            // the critical path to 2^22 butterflies on those workers.
+            // The N=2^26 inverse-DIT S=2^23 stage has only eight groups.
+            // A ceil(worker/group) split can leave a static-range tail whenever
+            // groupCount * segmentsPerGroup is not divisible by the logical
+            // worker count (12T and 20T are the important examples).  Use the
+            // smallest per-group multiplier that makes the total work-item count
+            // an exact multiple of the active team: W / gcd(W, G).  This keeps
+            // every logical worker busy for the same number of contiguous slices
+            // without reducing WorkerCount or changing butterfly arithmetic.
             //
-            // Split each of the eight independent groups into three instead.
-            // That gives 24 equal slices: exactly two slices per logical worker
-            // on the 12-thread Coffee Lake target.  Arithmetic, twiddle
-            // recurrence, memory layout, barriers and worker count are all
-            // unchanged; only work admission for this measured hot stage is
-            // rebalanced.  On 24-worker systems GetSegmentsPerGroup already
-            // returns 3, so this specialization is naturally a no-op there.
+            // Examples for G=8: 8T->1, 12T->3, 16T->2, 20T->5,
+            // 24T->3.  The 12T choice is exactly the proven 24-way partition.
             if (!useTwiddleCache &&
                 length == (1 << 26) &&
                 stageLength == (1 << 23) &&
-                groupCount == 8 &&
-                segmentsPerGroup == 2 &&
-                workers.WorkerCount >= 12)
+                groupCount == 8)
             {
-                segmentsPerGroup = 3;
+                segmentsPerGroup =
+                    GetWorkerAlignedSegmentsPerGroup(
+                        halfLength,
+                        groupCount,
+                        workers.WorkerCount,
+                        segmentsPerGroup);
             }
 
             if (useTwiddleCache &&
@@ -5606,30 +5606,29 @@ internal sealed class ParallelBigUnsigned
                 continue;
             }
 
-            // i7-8700 100M profiler: after the 24-way partition fix, the
-            // N=2^26 inverse-uncached S=2^23 stage is load-balanced but still
-            // spends about 4.2 ns/butterfly in the generic single-lane loop.
-            // Keep the proven 8 groups x 3 slices partition and specialize only
-            // the arithmetic loop: two adjacent butterflies advance on two
-            // independent twiddle lanes using root^2.  This removes the
-            // loop-carried twiddle dependency from every butterfly, halves loop
-            // control overhead, keeps ordinary managed byrefs, and deliberately
-            // retains the runtime modulus (no Barrett/UInt128/const-mod path).
-            // The target stage is non-final, so the helper also omits the
-            // normalization branch that the generic loop must carry.
-            bool useInverseUncached2p23DualLane =
+            // i7-8700 100M profiler: the proven 24-way S=2^23 dual-lane
+            // specialization reduced the measured inverse-uncached hot stage
+            // substantially.  The next hot stage, S=2^24, already has a perfect
+            // 4 groups x 3 slices = 12 work-item mapping, so do not change its
+            // scheduler.  Reuse only the same arithmetic specialization there:
+            // two adjacent butterflies advance on independent twiddle lanes
+            // using root^2.  Runtime-modulus `%` is intentionally retained
+            // (no Barrett/UInt128/const-mod path), as are managed byrefs and the
+            // existing stage boundaries.  Both target stages are non-final, so
+            // the helper can also omit the generic normalization branch.
+            bool useInverseUncachedDualLane =
                 !useTwiddleCache &&
                 !normalizeOutput &&
                 length == (1 << 26) &&
-                stageLength == (1 << 23) &&
-                groupCount == 8 &&
                 segmentsPerGroup == 3 &&
-                workers.WorkerCount == 12;
+                workers.WorkerCount == 12 &&
+                ((stageLength == (1 << 23) && groupCount == 8) ||
+                 (stageLength == (1 << 24) && groupCount == 4));
 
             long inverseGlobalStageStarted =
                 Stopwatch.GetTimestamp();
 
-            if (useInverseUncached2p23DualLane)
+            if (useInverseUncachedDualLane)
             {
                 ExecuteRanges(
                     checked(groupCount * segmentsPerGroup),
@@ -5949,10 +5948,11 @@ internal sealed class ParallelBigUnsigned
 
     /// <summary>
     /// Coffee-Lake specialization for the measured N=2^26 inverse-uncached
-    /// DIT S=2^23 stage.  The worker partition is already balanced (8 groups x
-    /// 3 slices); this helper changes only the per-slice scalar traversal.  Two
-    /// adjacent butterflies use independent twiddle lanes advanced by root^2,
-    /// while all modular arithmetic remains the original runtime-modulus `%`.
+    /// DIT S=2^23 and S=2^24 stages.  Their worker partitions are already
+    /// balanced (8x3 and 4x3 respectively); this helper changes only the
+    /// per-slice scalar traversal.  Two adjacent butterflies use independent
+    /// twiddle lanes advanced by root^2, while all modular arithmetic remains
+    /// the original runtime-modulus `%`.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ProcessInverseUncachedStageSegmentByrefDualLane(
@@ -10824,51 +10824,32 @@ internal sealed class ParallelBigUnsigned
                 groupCount,
                 workers.WorkerCount);
 
-        // i7-8700 100M profiler: the hottest Forward cached stage-pair is
-        // N=2^26, DIF S=2^22 + 2^21.  It has 16 independent parent groups.
-        // The generic rule therefore emits 16 work items for 12 workers; the
-        // persistent static partition gives four workers two complete groups
-        // while the other eight finish after one group.  That leaves a 2.0x
-        // versus 1.0x tail on the critical workers even though the arithmetic
-        // inside every group is identical.
+        // Worker-aware static partition for the two measured N=2^26
+        // Forward cached hot pairs.  Keep all logical workers; only change the
+        // number of contiguous slices per group so total work items divide the
+        // team exactly.  The multiplier is W / gcd(W, G), bounded by the
+        // quarter stream length.  This preserves the proven i7-8700 choices
+        // (16x3=48 and 64x3=192) while adapting naturally to wider teams:
         //
-        // Split each parent into three quarter-stream slices instead.  The hot
-        // stage becomes 16 x 3 = 48 work items, exactly four slices per worker
-        // on the 12-thread Coffee Lake target.  The slices remain contiguous,
-        // twiddle tables and butterfly arithmetic are unchanged, and no extra
-        // barrier or worker is introduced.  Forward uncached N=2^26 stages are
-        // deliberately left alone: their existing 1x12 / 4x3 partition already
-        // produces exactly 12 equal work items and showed no partition skew.
-        if (values.Length == (1 << 26) &&
-            stageLength == (1 << 22) &&
-            groupCount == 16 &&
-            segmentsPerGroup == 1 &&
-            workers.WorkerCount == 12)
-        {
-            segmentsPerGroup = 3;
-        }
-
-        // After balancing the 2^22 + 2^21 Forward cached pair, the next
-        // dominant cached-Forward hotspot on the i7-8700 is N=2^26,
-        // DIF S=2^20 + 2^19.  This pair has 64 parent groups.  With the
-        // ordinary group-native partition those 64 work items are split over
-        // 12 logical workers as five or six complete groups per worker, so the
-        // critical workers execute roughly 20% more butterflies than the
-        // earliest finishers.
+        //   workers   G=16 pair   G=64 pair
+        //      8      16x1=16     64x1=64
+        //     12      16x3=48     64x3=192
+        //     16      16x1=16     64x1=64
+        //     20      16x5=80     64x5=320
+        //     24      16x3=48     64x3=192
         //
-        // Split every group into three independent quarter-stream slices.
-        // 64 groups x 3 = 192 work items, exactly sixteen slices per worker on
-        // the 12-thread Coffee Lake target.  ExecuteForwardCachedStagePairByGroups
-        // already maps each slice with GetSegmentBounds, so this changes only
-        // work granularity; twiddle lookup, modular arithmetic, fused DIF math,
-        // memory layout and the AVX2 cache-resident tail remain unchanged.
+        // Arithmetic, twiddle lookup, fused DIF math and AVX2 cache-resident
+        // tails are untouched.
         if (values.Length == (1 << 26) &&
-            stageLength == (1 << 20) &&
-            groupCount == 64 &&
-            segmentsPerGroup == 1 &&
-            workers.WorkerCount == 12)
+            ((stageLength == (1 << 22) && groupCount == 16) ||
+             (stageLength == (1 << 20) && groupCount == 64)))
         {
-            segmentsPerGroup = 3;
+            segmentsPerGroup =
+                GetWorkerAlignedSegmentsPerGroup(
+                    quarterLength,
+                    groupCount,
+                    workers.WorkerCount,
+                    segmentsPerGroup);
         }
 
         ExecuteRanges(
@@ -12352,141 +12333,76 @@ internal sealed class ParallelBigUnsigned
             values.Length /
             parentLength;
 
-        // i7-8700 100M profiler: the hottest cached Inverse pair is
-        // N=2^26, S=2^21 -> 2^22.  The ordinary parent-level partition has
-        // 16 parents for 12 logical workers, so four workers receive two
-        // complete 2^20-butterfly parents while eight workers receive one.
-        // That leaves a long four-worker tail at the end of every fused pair.
+        // Worker-aware static partition for the two measured N=2^26
+        // Inverse cached hot pairs.  Parent-only static scheduling is perfect
+        // only when parentCount divides WorkerCount (or vice versa).  Otherwise
+        // split each parent by the smallest exact multiplier W/gcd(W, parents)
+        // so parentCount * segmentsPerParent is divisible by the logical team.
         //
-        // Split every parent into three independent butterfly slices instead.
-        // 16 parents x 3 slices = 48 work items, exactly four slices per worker
-        // on the 12-thread Coffee Lake target.  Twiddle indices are functions
-        // only of the butterfly offset inside a parent, so the slices have no
-        // cross-dependencies and preserve the exact scalar arithmetic.  Keep
-        // this specialization i7-only until it is benchmarked independently on
-        // wider worker teams.
+        // For the proven 12T i7 path this reproduces 16x3=48 and 64x3=192.
+        // It also yields appropriate constants without reducing workers:
+        // 20T -> x5, 24T -> x3, while 8T/16T need no extra split for these
+        // power-of-two parent counts.
         if (shoupTwiddles is null &&
             values.Length == (1 << 26) &&
-            stageLength == (1 << 21) &&
-            parentCount == 16 &&
-            workers.WorkerCount == 12)
+            ((stageLength == (1 << 21) && parentCount == 16) ||
+             (stageLength == (1 << 19) && parentCount == 64)))
         {
-            const int SegmentsPerParent =
-                3;
+            int segmentsPerParent =
+                GetWorkerAlignedSegmentMultiplier(
+                    parentCount,
+                    workers.WorkerCount,
+                    halfLength);
 
-            ExecuteRanges(
-                parentCount * SegmentsPerParent,
-                workers,
-                cancellationToken,
-                (segmentStart, segmentEnd) =>
-                {
-                    for (int segmentIndex = segmentStart;
-                         segmentIndex < segmentEnd;
-                         segmentIndex++)
+            if (segmentsPerParent > 1)
+            {
+                ExecuteRanges(
+                    checked(parentCount * segmentsPerParent),
+                    workers,
+                    cancellationToken,
+                    (segmentStart, segmentEnd) =>
                     {
-                        int parentIndex =
-                            segmentIndex /
-                            SegmentsPerParent;
+                        for (int segmentIndex = segmentStart;
+                             segmentIndex < segmentEnd;
+                             segmentIndex++)
+                        {
+                            int parentIndex =
+                                segmentIndex /
+                                segmentsPerParent;
 
-                        int segmentInParent =
-                            segmentIndex -
-                            parentIndex *
-                            SegmentsPerParent;
+                            int segmentInParent =
+                                segmentIndex -
+                                parentIndex *
+                                segmentsPerParent;
 
-                        int butterflyStart =
-                            segmentInParent *
-                            halfLength /
-                            SegmentsPerParent;
+                            int butterflyStart =
+                                segmentInParent *
+                                halfLength /
+                                segmentsPerParent;
 
-                        int butterflyEnd =
-                            (segmentInParent + 1) *
-                            halfLength /
-                            SegmentsPerParent;
+                            int butterflyEnd =
+                                (segmentInParent + 1) *
+                                halfLength /
+                                segmentsPerParent;
 
-                        ProcessInverseCachedStagePairParentSliceScalar(
-                            values,
-                            modulus,
-                            twiddles,
-                            firstTwiddleOffset,
-                            secondTwiddleOffset,
-                            stageLength,
-                            parentIndex,
-                            butterflyStart,
-                            butterflyEnd,
-                            cancellationToken);
-                    }
-                });
+                            ProcessInverseCachedStagePairParentSliceScalar(
+                                values,
+                                modulus,
+                                twiddles,
+                                firstTwiddleOffset,
+                                secondTwiddleOffset,
+                                stageLength,
+                                parentIndex,
+                                butterflyStart,
+                                butterflyEnd,
+                                cancellationToken);
+                        }
+                    });
 
-            return;
+                return;
+            }
         }
 
-        // After balancing the 2^21 -> 2^22 cached pair, the next dominant
-        // i7-8700 cached Inverse pair is N=2^26, S=2^19 -> 2^20.  It has
-        // 64 parents for 12 logical workers.  Parent-only static partitioning
-        // therefore gives some workers six complete parents and others five,
-        // leaving roughly a 20% critical-tail imbalance on a stage that now
-        // accounts for about half of the cached-Inverse bucket.
-        //
-        // Split every parent into three independent butterfly slices.
-        // 64 parents x 3 slices = 192 work items, exactly 16 slices per worker
-        // on the 12-thread Coffee Lake target.  This uses the same already-
-        // validated parent-slice scalar kernel as the 2^21 specialization, so
-        // no modular arithmetic, twiddle recurrence, fused-stage math, or AVX2
-        // local/cache kernel changes are introduced by this experiment.
-        if (shoupTwiddles is null &&
-            values.Length == (1 << 26) &&
-            stageLength == (1 << 19) &&
-            parentCount == 64 &&
-            workers.WorkerCount == 12)
-        {
-            const int SegmentsPerParent =
-                3;
-
-            ExecuteRanges(
-                parentCount * SegmentsPerParent,
-                workers,
-                cancellationToken,
-                (segmentStart, segmentEnd) =>
-                {
-                    for (int segmentIndex = segmentStart;
-                         segmentIndex < segmentEnd;
-                         segmentIndex++)
-                    {
-                        int parentIndex =
-                            segmentIndex /
-                            SegmentsPerParent;
-
-                        int segmentInParent =
-                            segmentIndex -
-                            parentIndex *
-                            SegmentsPerParent;
-
-                        int butterflyStart =
-                            segmentInParent *
-                            halfLength /
-                            SegmentsPerParent;
-
-                        int butterflyEnd =
-                            (segmentInParent + 1) *
-                            halfLength /
-                            SegmentsPerParent;
-
-                        ProcessInverseCachedStagePairParentSliceScalar(
-                            values,
-                            modulus,
-                            twiddles,
-                            firstTwiddleOffset,
-                            secondTwiddleOffset,
-                            stageLength,
-                            parentIndex,
-                            butterflyStart,
-                            butterflyEnd,
-                            cancellationToken);
-                    }
-                });
-
-            return;
-        }
 
         ExecuteRanges(
             parentCount,
@@ -19366,6 +19282,80 @@ internal sealed class ParallelBigUnsigned
                 1,
                 (workerCount + groupCount - 1) /
                 groupCount));
+    }
+
+    /// <summary>
+    /// Returns the smallest per-group slice multiplier that makes the total
+    /// number of static work items exactly divisible by the active worker team.
+    /// The NTT hot groups are powers of two, but Euclid keeps this valid for
+    /// arbitrary logical-worker counts such as 8, 12, 16, 20 and 24.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetWorkerAlignedSegmentMultiplier(
+        int groupCount,
+        int workerCount,
+        int maximumSegmentsPerGroup)
+    {
+        if (groupCount <= 0 ||
+            workerCount <= 1 ||
+            maximumSegmentsPerGroup <= 1)
+        {
+            return 1;
+        }
+
+        int left =
+            groupCount;
+
+        int right =
+            workerCount;
+
+        while (right != 0)
+        {
+            int remainder =
+                left % right;
+
+            left =
+                right;
+
+            right =
+                remainder;
+        }
+
+        int greatestCommonDivisor =
+            Math.Max(
+                1,
+                left);
+
+        int exactMultiplier =
+            workerCount /
+            greatestCommonDivisor;
+
+        return Math.Min(
+            maximumSegmentsPerGroup,
+            Math.Max(
+                1,
+                exactMultiplier));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetWorkerAlignedSegmentsPerGroup(
+        int halfLength,
+        int groupCount,
+        int workerCount,
+        int currentSegmentsPerGroup)
+    {
+        int exactSegments =
+            GetWorkerAlignedSegmentMultiplier(
+                groupCount,
+                workerCount,
+                halfLength);
+
+        // Never make a previously parallel stage coarser.  The exact
+        // multiplier normally equals or exceeds the ceil(worker/group) rule,
+        // but preserving the maximum makes that invariant explicit.
+        return Math.Max(
+            currentSegmentsPerGroup,
+            exactSegments);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
