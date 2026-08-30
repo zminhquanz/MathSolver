@@ -10484,6 +10484,30 @@ internal sealed class ParallelBigUnsigned
                 groupCount,
                 workers.WorkerCount);
 
+        // i7-8700 100M profiler: the hottest Forward cached stage-pair is
+        // N=2^26, DIF S=2^22 + 2^21.  It has 16 independent parent groups.
+        // The generic rule therefore emits 16 work items for 12 workers; the
+        // persistent static partition gives four workers two complete groups
+        // while the other eight finish after one group.  That leaves a 2.0x
+        // versus 1.0x tail on the critical workers even though the arithmetic
+        // inside every group is identical.
+        //
+        // Split each parent into three quarter-stream slices instead.  The hot
+        // stage becomes 16 x 3 = 48 work items, exactly four slices per worker
+        // on the 12-thread Coffee Lake target.  The slices remain contiguous,
+        // twiddle tables and butterfly arithmetic are unchanged, and no extra
+        // barrier or worker is introduced.  Forward uncached N=2^26 stages are
+        // deliberately left alone: their existing 1x12 / 4x3 partition already
+        // produces exactly 12 equal work items and showed no partition skew.
+        if (values.Length == (1 << 26) &&
+            stageLength == (1 << 22) &&
+            groupCount == 16 &&
+            segmentsPerGroup == 1 &&
+            workers.WorkerCount == 12)
+        {
+            segmentsPerGroup = 3;
+        }
+
         ExecuteRanges(
             checked(groupCount * segmentsPerGroup),
             workers,
