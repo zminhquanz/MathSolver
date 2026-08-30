@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
@@ -10508,6 +10508,29 @@ internal sealed class ParallelBigUnsigned
             segmentsPerGroup = 3;
         }
 
+        // After balancing the 2^22 + 2^21 Forward cached pair, the next
+        // dominant cached-Forward hotspot on the i7-8700 is N=2^26,
+        // DIF S=2^20 + 2^19.  This pair has 64 parent groups.  With the
+        // ordinary group-native partition those 64 work items are split over
+        // 12 logical workers as five or six complete groups per worker, so the
+        // critical workers execute roughly 20% more butterflies than the
+        // earliest finishers.
+        //
+        // Split every group into three independent quarter-stream slices.
+        // 64 groups x 3 = 192 work items, exactly sixteen slices per worker on
+        // the 12-thread Coffee Lake target.  ExecuteForwardCachedStagePairByGroups
+        // already maps each slice with GetSegmentBounds, so this changes only
+        // work granularity; twiddle lookup, modular arithmetic, fused DIF math,
+        // memory layout and the AVX2 cache-resident tail remain unchanged.
+        if (values.Length == (1 << 26) &&
+            stageLength == (1 << 20) &&
+            groupCount == 64 &&
+            segmentsPerGroup == 1 &&
+            workers.WorkerCount == 12)
+        {
+            segmentsPerGroup = 3;
+        }
+
         ExecuteRanges(
             checked(groupCount * segmentsPerGroup),
             workers,
@@ -10757,6 +10780,26 @@ internal sealed class ParallelBigUnsigned
                 groupCount,
                 workers.WorkerCount);
 
+        // i7-8700 100M profiler: after balancing the cached global stages, the
+        // dominant Forward-uncached pair is N=2^26, DIF S=2^24 + 2^23.  Its
+        // existing 4 groups x 3 slices already maps perfectly to 12 logical
+        // workers, so further partitioning would only add scheduler/ModPow
+        // overhead.  The remaining cost is the scalar modular arithmetic.
+        //
+        // Both NTT moduli are compile-time constants.  For this measured hot
+        // pair only, dispatch to prime-specific scalar kernels so RyuJIT sees
+        // every `% modulus` as `% constant` and can strength-reduce division.
+        // Memory traversal, twiddle recurrence, fused DIF equations, worker
+        // count and stage barriers remain byte-for-byte equivalent in shape to
+        // the generic dual-lane kernel.  Keep this specialization narrow until
+        // the 100M A/B benchmark proves it on Coffee Lake.
+        bool useConstantModulusHotKernel =
+            values.Length == (1 << 26) &&
+            stageLength == (1 << 24) &&
+            groupCount == 4 &&
+            segmentsPerGroup == 3 &&
+            workers.WorkerCount == 12;
+
         ExecuteRanges(
             checked(groupCount * segmentsPerGroup),
             workers,
@@ -10775,19 +10818,580 @@ internal sealed class ParallelBigUnsigned
                         out int butterflyStart,
                         out int butterflyEnd);
 
-                    ProcessForwardUncachedStagePairSegmentByrefDualLane(
-                        values,
-                        modulus,
-                        firstRoot,
-                        secondRoot,
-                        quarterPhase,
-                        stageLength,
-                        groupIndex,
-                        butterflyStart,
-                        butterflyEnd,
-                        cancellationToken);
+                    if (useConstantModulusHotKernel &&
+                        modulus == FirstModulus)
+                    {
+                        ProcessForwardUncachedStagePairSegmentByrefDualLaneFirstModulus(
+                            values,
+                            firstRoot,
+                            secondRoot,
+                            quarterPhase,
+                            stageLength,
+                            groupIndex,
+                            butterflyStart,
+                            butterflyEnd,
+                            cancellationToken);
+                    }
+                    else if (useConstantModulusHotKernel &&
+                             modulus == SecondModulus)
+                    {
+                        ProcessForwardUncachedStagePairSegmentByrefDualLaneSecondModulus(
+                            values,
+                            firstRoot,
+                            secondRoot,
+                            quarterPhase,
+                            stageLength,
+                            groupIndex,
+                            butterflyStart,
+                            butterflyEnd,
+                            cancellationToken);
+                    }
+                    else
+                    {
+                        ProcessForwardUncachedStagePairSegmentByrefDualLane(
+                            values,
+                            modulus,
+                            firstRoot,
+                            secondRoot,
+                            quarterPhase,
+                            stageLength,
+                            groupIndex,
+                            butterflyStart,
+                            butterflyEnd,
+                            cancellationToken);
+                    }
                 }
             });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStagePairSegmentByrefDualLaneFirstModulus(
+        uint[] values,
+        uint firstRoot,
+        uint secondRoot,
+        uint quarterPhase,
+        int stageLength,
+        int groupIndex,
+        int butterflyStart,
+        int butterflyEnd,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 14;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int quarterLength =
+            halfLength >> 1;
+
+        int groupOffset =
+            groupIndex *
+            stageLength;
+
+        int index0 =
+            groupOffset +
+            butterflyStart;
+
+        int index1 =
+            groupOffset +
+            quarterLength +
+            butterflyStart;
+
+        int index2 =
+            groupOffset +
+            halfLength +
+            butterflyStart;
+
+        int index3 =
+            groupOffset +
+            halfLength +
+            quarterLength +
+            butterflyStart;
+
+        int remaining =
+            butterflyEnd -
+            butterflyStart;
+
+        if (remaining <= 0)
+        {
+            return;
+        }
+
+        uint firstTwiddleEven =
+            butterflyStart == 0
+                ? 1u
+                : (uint)ModPow(
+                    firstRoot,
+                    (uint)butterflyStart,
+                    FirstModulus);
+
+        uint firstTwiddleOdd =
+            (uint)((ulong)firstTwiddleEven *
+                   firstRoot %
+                   FirstModulus);
+
+        uint firstPhaseEven =
+            (uint)((ulong)firstTwiddleEven *
+                   quarterPhase %
+                   FirstModulus);
+
+        uint firstPhaseOdd =
+            (uint)((ulong)firstTwiddleOdd *
+                   quarterPhase %
+                   FirstModulus);
+
+        uint secondTwiddleEven =
+            (uint)((ulong)firstTwiddleEven *
+                   firstTwiddleEven %
+                   FirstModulus);
+
+        uint secondTwiddleOdd =
+            (uint)((ulong)firstTwiddleOdd *
+                   firstTwiddleOdd %
+                   FirstModulus);
+
+        uint firstStepTwo =
+            secondRoot;
+
+        uint secondStepTwo =
+            (uint)((ulong)secondRoot *
+                   secondRoot %
+                   FirstModulus);
+
+        while (remaining > 0)
+        {
+            int chunkLength =
+                Math.Min(
+                    remaining,
+                    CancellationStride);
+
+            int pairCount =
+                chunkLength >> 1;
+
+            for (int pair = 0;
+                 pair < pairCount;
+                 pair++)
+            {
+                {
+                    ref uint value0 =
+                        ref values[index0];
+
+                    ref uint value1 =
+                        ref values[index1];
+
+                    ref uint value2 =
+                        ref values[index2];
+
+                    ref uint value3 =
+                        ref values[index3];
+
+                    ProcessForwardStagePairButterflyByrefScalarFirstModulus(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        firstTwiddleEven,
+                        firstPhaseEven,
+                        secondTwiddleEven);
+                }
+
+                {
+                    ref uint value0 =
+                        ref values[index0 + 1];
+
+                    ref uint value1 =
+                        ref values[index1 + 1];
+
+                    ref uint value2 =
+                        ref values[index2 + 1];
+
+                    ref uint value3 =
+                        ref values[index3 + 1];
+
+                    ProcessForwardStagePairButterflyByrefScalarFirstModulus(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        firstTwiddleOdd,
+                        firstPhaseOdd,
+                        secondTwiddleOdd);
+                }
+
+                index0 += 2;
+                index1 += 2;
+                index2 += 2;
+                index3 += 2;
+
+                bool hasMore =
+                    pair + 1 < pairCount ||
+                    (chunkLength & 1) != 0 ||
+                    remaining > chunkLength;
+
+                if (hasMore)
+                {
+                    firstTwiddleEven =
+                        (uint)((ulong)firstTwiddleEven *
+                               firstStepTwo %
+                               FirstModulus);
+
+                    firstTwiddleOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               firstStepTwo %
+                               FirstModulus);
+
+                    firstPhaseEven =
+                        (uint)((ulong)firstPhaseEven *
+                               firstStepTwo %
+                               FirstModulus);
+
+                    firstPhaseOdd =
+                        (uint)((ulong)firstPhaseOdd *
+                               firstStepTwo %
+                               FirstModulus);
+
+                    secondTwiddleEven =
+                        (uint)((ulong)secondTwiddleEven *
+                               secondStepTwo %
+                               FirstModulus);
+
+                    secondTwiddleOdd =
+                        (uint)((ulong)secondTwiddleOdd *
+                               secondStepTwo %
+                               FirstModulus);
+                }
+            }
+
+            if ((chunkLength & 1) != 0)
+            {
+                ref uint value0 =
+                    ref values[index0];
+
+                ref uint value1 =
+                    ref values[index1];
+
+                ref uint value2 =
+                    ref values[index2];
+
+                ref uint value3 =
+                    ref values[index3];
+
+                ProcessForwardStagePairButterflyByrefScalarFirstModulus(
+                    ref value0,
+                    ref value1,
+                    ref value2,
+                    ref value3,
+                    firstTwiddleEven,
+                    firstPhaseEven,
+                    secondTwiddleEven);
+
+                index0++;
+                index1++;
+                index2++;
+                index3++;
+
+                // CancellationStride is even, so a non-final odd chunk is not
+                // expected.  Keep the recurrence exact anyway if the stride is
+                // changed later.
+                if (remaining > chunkLength)
+                {
+                    firstTwiddleEven =
+                        firstTwiddleOdd;
+
+                    firstPhaseEven =
+                        firstPhaseOdd;
+
+                    secondTwiddleEven =
+                        secondTwiddleOdd;
+
+                    firstTwiddleOdd =
+                        (uint)((ulong)firstTwiddleEven *
+                               firstRoot %
+                               FirstModulus);
+
+                    firstPhaseOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               quarterPhase %
+                               FirstModulus);
+
+                    secondTwiddleOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               firstTwiddleOdd %
+                               FirstModulus);
+                }
+            }
+
+            remaining -=
+                chunkLength;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStagePairSegmentByrefDualLaneSecondModulus(
+        uint[] values,
+        uint firstRoot,
+        uint secondRoot,
+        uint quarterPhase,
+        int stageLength,
+        int groupIndex,
+        int butterflyStart,
+        int butterflyEnd,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 14;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int quarterLength =
+            halfLength >> 1;
+
+        int groupOffset =
+            groupIndex *
+            stageLength;
+
+        int index0 =
+            groupOffset +
+            butterflyStart;
+
+        int index1 =
+            groupOffset +
+            quarterLength +
+            butterflyStart;
+
+        int index2 =
+            groupOffset +
+            halfLength +
+            butterflyStart;
+
+        int index3 =
+            groupOffset +
+            halfLength +
+            quarterLength +
+            butterflyStart;
+
+        int remaining =
+            butterflyEnd -
+            butterflyStart;
+
+        if (remaining <= 0)
+        {
+            return;
+        }
+
+        uint firstTwiddleEven =
+            butterflyStart == 0
+                ? 1u
+                : (uint)ModPow(
+                    firstRoot,
+                    (uint)butterflyStart,
+                    SecondModulus);
+
+        uint firstTwiddleOdd =
+            (uint)((ulong)firstTwiddleEven *
+                   firstRoot %
+                   SecondModulus);
+
+        uint firstPhaseEven =
+            (uint)((ulong)firstTwiddleEven *
+                   quarterPhase %
+                   SecondModulus);
+
+        uint firstPhaseOdd =
+            (uint)((ulong)firstTwiddleOdd *
+                   quarterPhase %
+                   SecondModulus);
+
+        uint secondTwiddleEven =
+            (uint)((ulong)firstTwiddleEven *
+                   firstTwiddleEven %
+                   SecondModulus);
+
+        uint secondTwiddleOdd =
+            (uint)((ulong)firstTwiddleOdd *
+                   firstTwiddleOdd %
+                   SecondModulus);
+
+        uint firstStepTwo =
+            secondRoot;
+
+        uint secondStepTwo =
+            (uint)((ulong)secondRoot *
+                   secondRoot %
+                   SecondModulus);
+
+        while (remaining > 0)
+        {
+            int chunkLength =
+                Math.Min(
+                    remaining,
+                    CancellationStride);
+
+            int pairCount =
+                chunkLength >> 1;
+
+            for (int pair = 0;
+                 pair < pairCount;
+                 pair++)
+            {
+                {
+                    ref uint value0 =
+                        ref values[index0];
+
+                    ref uint value1 =
+                        ref values[index1];
+
+                    ref uint value2 =
+                        ref values[index2];
+
+                    ref uint value3 =
+                        ref values[index3];
+
+                    ProcessForwardStagePairButterflyByrefScalarSecondModulus(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        firstTwiddleEven,
+                        firstPhaseEven,
+                        secondTwiddleEven);
+                }
+
+                {
+                    ref uint value0 =
+                        ref values[index0 + 1];
+
+                    ref uint value1 =
+                        ref values[index1 + 1];
+
+                    ref uint value2 =
+                        ref values[index2 + 1];
+
+                    ref uint value3 =
+                        ref values[index3 + 1];
+
+                    ProcessForwardStagePairButterflyByrefScalarSecondModulus(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        firstTwiddleOdd,
+                        firstPhaseOdd,
+                        secondTwiddleOdd);
+                }
+
+                index0 += 2;
+                index1 += 2;
+                index2 += 2;
+                index3 += 2;
+
+                bool hasMore =
+                    pair + 1 < pairCount ||
+                    (chunkLength & 1) != 0 ||
+                    remaining > chunkLength;
+
+                if (hasMore)
+                {
+                    firstTwiddleEven =
+                        (uint)((ulong)firstTwiddleEven *
+                               firstStepTwo %
+                               SecondModulus);
+
+                    firstTwiddleOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               firstStepTwo %
+                               SecondModulus);
+
+                    firstPhaseEven =
+                        (uint)((ulong)firstPhaseEven *
+                               firstStepTwo %
+                               SecondModulus);
+
+                    firstPhaseOdd =
+                        (uint)((ulong)firstPhaseOdd *
+                               firstStepTwo %
+                               SecondModulus);
+
+                    secondTwiddleEven =
+                        (uint)((ulong)secondTwiddleEven *
+                               secondStepTwo %
+                               SecondModulus);
+
+                    secondTwiddleOdd =
+                        (uint)((ulong)secondTwiddleOdd *
+                               secondStepTwo %
+                               SecondModulus);
+                }
+            }
+
+            if ((chunkLength & 1) != 0)
+            {
+                ref uint value0 =
+                    ref values[index0];
+
+                ref uint value1 =
+                    ref values[index1];
+
+                ref uint value2 =
+                    ref values[index2];
+
+                ref uint value3 =
+                    ref values[index3];
+
+                ProcessForwardStagePairButterflyByrefScalarSecondModulus(
+                    ref value0,
+                    ref value1,
+                    ref value2,
+                    ref value3,
+                    firstTwiddleEven,
+                    firstPhaseEven,
+                    secondTwiddleEven);
+
+                index0++;
+                index1++;
+                index2++;
+                index3++;
+
+                // CancellationStride is even, so a non-final odd chunk is not
+                // expected.  Keep the recurrence exact anyway if the stride is
+                // changed later.
+                if (remaining > chunkLength)
+                {
+                    firstTwiddleEven =
+                        firstTwiddleOdd;
+
+                    firstPhaseEven =
+                        firstPhaseOdd;
+
+                    secondTwiddleEven =
+                        secondTwiddleOdd;
+
+                    firstTwiddleOdd =
+                        (uint)((ulong)firstTwiddleEven *
+                               firstRoot %
+                               SecondModulus);
+
+                    firstPhaseOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               quarterPhase %
+                               SecondModulus);
+
+                    secondTwiddleOdd =
+                        (uint)((ulong)firstTwiddleOdd *
+                               firstTwiddleOdd %
+                               SecondModulus);
+                }
+            }
+
+            remaining -=
+                chunkLength;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -11060,6 +11664,212 @@ internal sealed class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ProcessForwardStagePairButterflyByrefScalarFirstModulus(
+        ref uint value0Reference,
+        ref uint value1Reference,
+        ref uint value2Reference,
+        ref uint value3Reference,
+        uint firstTwiddle0,
+        uint firstTwiddle1,
+        uint secondTwiddle)
+    {
+        uint value0 =
+            value0Reference;
+
+        uint value1 =
+            value1Reference;
+
+        uint value2 =
+            value2Reference;
+
+        uint value3 =
+            value3Reference;
+
+        uint topSum0 =
+            value0 + value2;
+
+        uint topSum1 =
+            value1 + value3;
+
+        if (topSum0 >= FirstModulus)
+        {
+            topSum0 -= FirstModulus;
+        }
+
+        if (topSum1 >= FirstModulus)
+        {
+            topSum1 -= FirstModulus;
+        }
+
+        uint topDifference0 =
+            value0 >= value2
+                ? value0 - value2
+                : value0 + FirstModulus - value2;
+
+        uint topDifference1 =
+            value1 >= value3
+                ? value1 - value3
+                : value1 + FirstModulus - value3;
+
+        uint lower0 =
+            (uint)((ulong)topDifference0 *
+                   firstTwiddle0 %
+                   FirstModulus);
+
+        uint lower1 =
+            (uint)((ulong)topDifference1 *
+                   firstTwiddle1 %
+                   FirstModulus);
+
+        uint upperSum =
+            topSum0 +
+            topSum1;
+
+        if (upperSum >= FirstModulus)
+        {
+            upperSum -= FirstModulus;
+        }
+
+        uint upperDifference =
+            topSum0 >= topSum1
+                ? topSum0 - topSum1
+                : topSum0 + FirstModulus - topSum1;
+
+        uint lowerSum =
+            lower0 +
+            lower1;
+
+        if (lowerSum >= FirstModulus)
+        {
+            lowerSum -= FirstModulus;
+        }
+
+        uint lowerDifference =
+            lower0 >= lower1
+                ? lower0 - lower1
+                : lower0 + FirstModulus - lower1;
+
+        value0Reference =
+            upperSum;
+
+        value1Reference =
+            (uint)((ulong)upperDifference *
+                   secondTwiddle %
+                   FirstModulus);
+
+        value2Reference =
+            lowerSum;
+
+        value3Reference =
+            (uint)((ulong)lowerDifference *
+                   secondTwiddle %
+                   FirstModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ProcessForwardStagePairButterflyByrefScalarSecondModulus(
+        ref uint value0Reference,
+        ref uint value1Reference,
+        ref uint value2Reference,
+        ref uint value3Reference,
+        uint firstTwiddle0,
+        uint firstTwiddle1,
+        uint secondTwiddle)
+    {
+        uint value0 =
+            value0Reference;
+
+        uint value1 =
+            value1Reference;
+
+        uint value2 =
+            value2Reference;
+
+        uint value3 =
+            value3Reference;
+
+        uint topSum0 =
+            value0 + value2;
+
+        uint topSum1 =
+            value1 + value3;
+
+        if (topSum0 >= SecondModulus)
+        {
+            topSum0 -= SecondModulus;
+        }
+
+        if (topSum1 >= SecondModulus)
+        {
+            topSum1 -= SecondModulus;
+        }
+
+        uint topDifference0 =
+            value0 >= value2
+                ? value0 - value2
+                : value0 + SecondModulus - value2;
+
+        uint topDifference1 =
+            value1 >= value3
+                ? value1 - value3
+                : value1 + SecondModulus - value3;
+
+        uint lower0 =
+            (uint)((ulong)topDifference0 *
+                   firstTwiddle0 %
+                   SecondModulus);
+
+        uint lower1 =
+            (uint)((ulong)topDifference1 *
+                   firstTwiddle1 %
+                   SecondModulus);
+
+        uint upperSum =
+            topSum0 +
+            topSum1;
+
+        if (upperSum >= SecondModulus)
+        {
+            upperSum -= SecondModulus;
+        }
+
+        uint upperDifference =
+            topSum0 >= topSum1
+                ? topSum0 - topSum1
+                : topSum0 + SecondModulus - topSum1;
+
+        uint lowerSum =
+            lower0 +
+            lower1;
+
+        if (lowerSum >= SecondModulus)
+        {
+            lowerSum -= SecondModulus;
+        }
+
+        uint lowerDifference =
+            lower0 >= lower1
+                ? lower0 - lower1
+                : lower0 + SecondModulus - lower1;
+
+        value0Reference =
+            upperSum;
+
+        value1Reference =
+            (uint)((ulong)upperDifference *
+                   secondTwiddle %
+                   SecondModulus);
+
+        value2Reference =
+            lowerSum;
+
+        value3Reference =
+            (uint)((ulong)lowerDifference *
+                   secondTwiddle %
+                   SecondModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ProcessForwardStagePairButterflyByrefScalar(
         ref uint value0Reference,
         ref uint value1Reference,
@@ -11201,6 +12011,142 @@ internal sealed class ParallelBigUnsigned
         int parentCount =
             values.Length /
             parentLength;
+
+        // i7-8700 100M profiler: the hottest cached Inverse pair is
+        // N=2^26, S=2^21 -> 2^22.  The ordinary parent-level partition has
+        // 16 parents for 12 logical workers, so four workers receive two
+        // complete 2^20-butterfly parents while eight workers receive one.
+        // That leaves a long four-worker tail at the end of every fused pair.
+        //
+        // Split every parent into three independent butterfly slices instead.
+        // 16 parents x 3 slices = 48 work items, exactly four slices per worker
+        // on the 12-thread Coffee Lake target.  Twiddle indices are functions
+        // only of the butterfly offset inside a parent, so the slices have no
+        // cross-dependencies and preserve the exact scalar arithmetic.  Keep
+        // this specialization i7-only until it is benchmarked independently on
+        // wider worker teams.
+        if (shoupTwiddles is null &&
+            values.Length == (1 << 26) &&
+            stageLength == (1 << 21) &&
+            parentCount == 16 &&
+            workers.WorkerCount == 12)
+        {
+            const int SegmentsPerParent =
+                3;
+
+            ExecuteRanges(
+                parentCount * SegmentsPerParent,
+                workers,
+                cancellationToken,
+                (segmentStart, segmentEnd) =>
+                {
+                    for (int segmentIndex = segmentStart;
+                         segmentIndex < segmentEnd;
+                         segmentIndex++)
+                    {
+                        int parentIndex =
+                            segmentIndex /
+                            SegmentsPerParent;
+
+                        int segmentInParent =
+                            segmentIndex -
+                            parentIndex *
+                            SegmentsPerParent;
+
+                        int butterflyStart =
+                            segmentInParent *
+                            halfLength /
+                            SegmentsPerParent;
+
+                        int butterflyEnd =
+                            (segmentInParent + 1) *
+                            halfLength /
+                            SegmentsPerParent;
+
+                        ProcessInverseCachedStagePairParentSliceScalar(
+                            values,
+                            modulus,
+                            twiddles,
+                            firstTwiddleOffset,
+                            secondTwiddleOffset,
+                            stageLength,
+                            parentIndex,
+                            butterflyStart,
+                            butterflyEnd,
+                            cancellationToken);
+                    }
+                });
+
+            return;
+        }
+
+        // After balancing the 2^21 -> 2^22 cached pair, the next dominant
+        // i7-8700 cached Inverse pair is N=2^26, S=2^19 -> 2^20.  It has
+        // 64 parents for 12 logical workers.  Parent-only static partitioning
+        // therefore gives some workers six complete parents and others five,
+        // leaving roughly a 20% critical-tail imbalance on a stage that now
+        // accounts for about half of the cached-Inverse bucket.
+        //
+        // Split every parent into three independent butterfly slices.
+        // 64 parents x 3 slices = 192 work items, exactly 16 slices per worker
+        // on the 12-thread Coffee Lake target.  This uses the same already-
+        // validated parent-slice scalar kernel as the 2^21 specialization, so
+        // no modular arithmetic, twiddle recurrence, fused-stage math, or AVX2
+        // local/cache kernel changes are introduced by this experiment.
+        if (shoupTwiddles is null &&
+            values.Length == (1 << 26) &&
+            stageLength == (1 << 19) &&
+            parentCount == 64 &&
+            workers.WorkerCount == 12)
+        {
+            const int SegmentsPerParent =
+                3;
+
+            ExecuteRanges(
+                parentCount * SegmentsPerParent,
+                workers,
+                cancellationToken,
+                (segmentStart, segmentEnd) =>
+                {
+                    for (int segmentIndex = segmentStart;
+                         segmentIndex < segmentEnd;
+                         segmentIndex++)
+                    {
+                        int parentIndex =
+                            segmentIndex /
+                            SegmentsPerParent;
+
+                        int segmentInParent =
+                            segmentIndex -
+                            parentIndex *
+                            SegmentsPerParent;
+
+                        int butterflyStart =
+                            segmentInParent *
+                            halfLength /
+                            SegmentsPerParent;
+
+                        int butterflyEnd =
+                            (segmentInParent + 1) *
+                            halfLength /
+                            SegmentsPerParent;
+
+                        ProcessInverseCachedStagePairParentSliceScalar(
+                            values,
+                            modulus,
+                            twiddles,
+                            firstTwiddleOffset,
+                            secondTwiddleOffset,
+                            stageLength,
+                            parentIndex,
+                            butterflyStart,
+                            butterflyEnd,
+                            cancellationToken);
+                    }
+                });
+
+            return;
+        }
 
         ExecuteRanges(
             parentCount,
@@ -11384,6 +12330,194 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessInverseCachedStagePairParentSliceScalar(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        int parentIndex,
+        int butterflyStart,
+        int butterflyEnd,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride =
+            1 << 15;
+
+        int halfLength =
+            stageLength >> 1;
+
+        int parentLength =
+            stageLength << 1;
+
+        int index0 =
+            parentIndex *
+            parentLength +
+            butterflyStart;
+
+        int index1 =
+            index0 +
+            halfLength;
+
+        int index2 =
+            index0 +
+            stageLength;
+
+        int index3 =
+            index2 +
+            halfLength;
+
+        int firstTwiddleIndex =
+            firstTwiddleOffset +
+            butterflyStart;
+
+        int secondTwiddleIndex0 =
+            secondTwiddleOffset +
+            butterflyStart;
+
+        int secondTwiddleIndex1 =
+            secondTwiddleOffset +
+            halfLength +
+            butterflyStart;
+
+        int remaining =
+            butterflyEnd -
+            butterflyStart;
+
+        while (remaining > 0)
+        {
+            int chunkLength =
+                Math.Min(
+                    remaining,
+                    CancellationStride);
+
+            int chunkEnd =
+                index0 +
+                chunkLength;
+
+            int pairEnd =
+                chunkEnd - 1;
+
+            for (;
+                 index0 < pairEnd;
+                 index0 += 2,
+                 index1 += 2,
+                 index2 += 2,
+                 index3 += 2,
+                 firstTwiddleIndex += 2,
+                 secondTwiddleIndex0 += 2,
+                 secondTwiddleIndex1 += 2)
+            {
+                {
+                    uint firstTwiddle =
+                        twiddles[firstTwiddleIndex];
+
+                    uint secondTwiddle0 =
+                        twiddles[secondTwiddleIndex0];
+
+                    uint secondTwiddle1 =
+                        twiddles[secondTwiddleIndex1];
+
+                    ref uint value0 =
+                        ref values[index0];
+
+                    ref uint value1 =
+                        ref values[index1];
+
+                    ref uint value2 =
+                        ref values[index2];
+
+                    ref uint value3 =
+                        ref values[index3];
+
+                    ProcessInverseStagePairButterflyByrefScalar(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        modulus,
+                        firstTwiddle,
+                        secondTwiddle0,
+                        secondTwiddle1);
+                }
+
+                {
+                    uint firstTwiddle =
+                        twiddles[firstTwiddleIndex + 1];
+
+                    uint secondTwiddle0 =
+                        twiddles[secondTwiddleIndex0 + 1];
+
+                    uint secondTwiddle1 =
+                        twiddles[secondTwiddleIndex1 + 1];
+
+                    ref uint value0 =
+                        ref values[index0 + 1];
+
+                    ref uint value1 =
+                        ref values[index1 + 1];
+
+                    ref uint value2 =
+                        ref values[index2 + 1];
+
+                    ref uint value3 =
+                        ref values[index3 + 1];
+
+                    ProcessInverseStagePairButterflyByrefScalar(
+                        ref value0,
+                        ref value1,
+                        ref value2,
+                        ref value3,
+                        modulus,
+                        firstTwiddle,
+                        secondTwiddle0,
+                        secondTwiddle1);
+                }
+            }
+
+            if (index0 < chunkEnd)
+            {
+                ref uint value0 =
+                    ref values[index0];
+
+                ref uint value1 =
+                    ref values[index1];
+
+                ref uint value2 =
+                    ref values[index2];
+
+                ref uint value3 =
+                    ref values[index3];
+
+                ProcessInverseStagePairButterflyByrefScalar(
+                    ref value0,
+                    ref value1,
+                    ref value2,
+                    ref value3,
+                    modulus,
+                    twiddles[firstTwiddleIndex],
+                    twiddles[secondTwiddleIndex0],
+                    twiddles[secondTwiddleIndex1]);
+
+                index0++;
+                index1++;
+                index2++;
+                index3++;
+                firstTwiddleIndex++;
+                secondTwiddleIndex0++;
+                secondTwiddleIndex1++;
+            }
+
+            remaining -=
+                chunkLength;
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
 
