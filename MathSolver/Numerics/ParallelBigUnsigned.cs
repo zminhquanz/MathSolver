@@ -8411,6 +8411,19 @@ internal sealed class ParallelBigUnsigned
                         values, modulus, twiddles, shoupTwiddles,
                         twiddleOffset, groupOffset, halfLength, context);
                 }
+                else if (halfLength == 4)
+                {
+                    // AVX2 has no profitable eight-lane shape for the final
+                    // S=8 DIF stage: one group contains only four butterflies.
+                    // Keep the tail scalar, but consume the Shoup companions
+                    // already resident in the AVX2 twiddle plan so the three
+                    // non-trivial butterflies avoid variable-modulus division.
+                    // The helper is fully unrolled and completes one butterfly
+                    // at a time to keep scalar register pressure bounded.
+                    ExecuteForwardLengthEightGroupShoupScalar(
+                        values, modulus, twiddles, shoupTwiddles,
+                        twiddleOffset, groupOffset);
+                }
                 else
                 {
                     ExecuteForwardCachedDifGroup(
@@ -16951,6 +16964,119 @@ internal sealed class ParallelBigUnsigned
         }
     }
 
+
+    /// <summary>
+    /// Specialized scalar/Shoup kernel for the final Forward DIF S=8 stage.
+    /// A single group has four butterflies, so packing two groups into AVX2
+    /// costs more than it saves on Coffee Lake.  Instead, retain the scalar
+    /// traversal and replace the three non-trivial variable-modulus products
+    /// with the existing exact Shoup reduction.  Butterfly zero has twiddle 1
+    /// and therefore needs no multiply.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteForwardLengthEightGroupShoupScalar(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int groupOffset)
+    {
+        // j = 0: twiddle == 1.
+        {
+            int leftIndex = groupOffset;
+            int rightIndex = groupOffset + 4;
+
+            uint left = values[leftIndex];
+            uint right = values[rightIndex];
+            uint sum = left + right;
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            values[leftIndex] = sum;
+            values[rightIndex] =
+                left >= right
+                    ? left - right
+                    : left + modulus - right;
+        }
+
+        // j = 1..3: complete each butterfly before opening the next one.
+        // This deliberately favors a small live scalar set over deeper ILP;
+        // the AVX2 experiments showed that extra live state hurts this path.
+        {
+            int leftIndex = groupOffset + 1;
+            int rightIndex = groupOffset + 5;
+            uint left = values[leftIndex];
+            uint right = values[rightIndex];
+            uint sum = left + right;
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                left >= right
+                    ? left - right
+                    : left + modulus - right;
+
+            values[leftIndex] = sum;
+            values[rightIndex] = MultiplyShoupScalar(
+                difference,
+                twiddles[twiddleOffset + 1],
+                shoupTwiddles[twiddleOffset + 1],
+                modulus);
+        }
+
+        {
+            int leftIndex = groupOffset + 2;
+            int rightIndex = groupOffset + 6;
+            uint left = values[leftIndex];
+            uint right = values[rightIndex];
+            uint sum = left + right;
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                left >= right
+                    ? left - right
+                    : left + modulus - right;
+
+            values[leftIndex] = sum;
+            values[rightIndex] = MultiplyShoupScalar(
+                difference,
+                twiddles[twiddleOffset + 2],
+                shoupTwiddles[twiddleOffset + 2],
+                modulus);
+        }
+
+        {
+            int leftIndex = groupOffset + 3;
+            int rightIndex = groupOffset + 7;
+            uint left = values[leftIndex];
+            uint right = values[rightIndex];
+            uint sum = left + right;
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                left >= right
+                    ? left - right
+                    : left + modulus - right;
+
+            values[leftIndex] = sum;
+            values[rightIndex] = MultiplyShoupScalar(
+                difference,
+                twiddles[twiddleOffset + 3],
+                shoupTwiddles[twiddleOffset + 3],
+                modulus);
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ExecuteForwardCachedDifGroup(
