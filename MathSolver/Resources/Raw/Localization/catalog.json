@@ -6463,6 +6463,21 @@
       "mode": "exact"
     },
     {
+      "key": "Hardware.BigIntegerPowerAccelerationOn",
+      "source": "Lũy thừa BigInteger đơn luồng (AVX2): Đang bật.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.BigIntegerPowerAccelerationOff",
+      "source": "Lũy thừa BigInteger đơn luồng (AVX2): Đang tắt.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.BigIntegerPowerAccelerationUnavailable",
+      "source": "Lũy thừa BigInteger đơn luồng (AVX2): Không khả dụng.",
+      "mode": "exact"
+    },
+    {
       "key": "Hardware.ParabolaAccelerationOn",
       "source": "Đồ thị Parabol hàm số bậc 2: Đang bật.",
       "mode": "exact"

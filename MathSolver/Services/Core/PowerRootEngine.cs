@@ -1,4 +1,5 @@
 using MathSolver.Numerics;
+using MathSolver.Services;
 using System.Numerics;
 
 namespace MathSolver.Services.Core;
@@ -245,12 +246,30 @@ public sealed class PowerRootEngine
                     return BigInteger.One;
                 }
 
+                int totalOperations =
+                    CountPowerMultiplications(exponent);
+
+                // Experimental single-thread AVX2 path. Keep the exact same
+                // exponentiation-by-squaring operation count/progress contract,
+                // but use a bounded base-2^16 SIMD schoolbook window before
+                // handing large operands back to System.Numerics.BigInteger.
+                // The shared Hardware acceleration switch is the only gate.
+                if (CalculationAccelerationManager
+                        .UseSingleThreadBigIntegerAvx2)
+                {
+                    return Avx2BigIntegerPower.Pow(
+                        baseValue,
+                        exponent,
+                        progress,
+                        totalOperations,
+                        cancellationToken);
+                }
+
                 BigInteger factor = new(baseValue);
                 BigInteger result = BigInteger.One;
                 bool resultInitialized = false;
                 int remainingExponent = exponent;
                 int completedOperations = 0;
-                int totalOperations = CountPowerMultiplications(exponent);
 
                 while (remainingExponent > 0)
                 {

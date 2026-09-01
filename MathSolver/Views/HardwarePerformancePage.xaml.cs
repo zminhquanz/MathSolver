@@ -815,6 +815,15 @@ public partial class HardwarePerformancePage : ContentPage
                             : LocalizationKeys.Hardware.PowerExportAccelerationOff),
                 powerExportBackend);
 
+        string bigIntegerPowerAccelerationStatus =
+            LocalizationService.TranslateKey(
+                !CalculationAccelerationManager
+                    .IsSingleThreadBigIntegerAccelerationAvailable
+                    ? LocalizationKeys.Hardware.BigIntegerPowerAccelerationUnavailable
+                    : CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2
+                        ? LocalizationKeys.Hardware.BigIntegerPowerAccelerationOn
+                        : LocalizationKeys.Hardware.BigIntegerPowerAccelerationOff);
+
         string parabolaAccelerationStatus =
             LocalizationService.TranslateKey(
                 !ParabolaSimdEvaluator.IsAccelerationAvailable
@@ -828,6 +837,8 @@ public partial class HardwarePerformancePage : ContentPage
             nttAccelerationStatus +
             Environment.NewLine +
             powerExportAccelerationStatus +
+            Environment.NewLine +
+            bigIntegerPowerAccelerationStatus +
             Environment.NewLine +
             parabolaAccelerationStatus;
 
