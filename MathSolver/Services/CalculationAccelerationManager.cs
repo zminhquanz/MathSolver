@@ -171,18 +171,29 @@ public static class CalculationAccelerationManager
     }
 
     /// <summary>
-    /// Effective SIMD state for the base-10,000 decimal formatter used by
-    /// large-power TXT export. It is driven by the same Hardware acceleration
-    /// switch as the Parabola evaluator, but also requires the concrete
-    /// production backend needed by the current platform.
+    /// Concrete SIMD backend availability for the base-10,000 decimal
+    /// formatter used by large-power TXT export. Keep this predicate shared
+    /// by both the export path and Hardware Information so the status text can
+    /// never drift from the backend that will actually be executed.
     /// </summary>
-    public static bool UsePowerExportSimd =>
-        UseSimd &&
+    public static bool IsPowerExportAccelerationAvailable =>
 #if ANDROID
         AdvSimd.Arm64.IsSupported;
 #else
-        Avx2.IsSupported;
+        Avx2.IsSupported &&
+        Vector256.IsHardwareAccelerated &&
+        (RuntimeInformation.ProcessArchitecture == Architecture.X64 ||
+         RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
+
+    /// <summary>
+    /// Effective SIMD state for the base-10,000 decimal formatter used by
+    /// large-power TXT export. The shared Hardware acceleration switch is the
+    /// only user-facing gate, exactly like the NTT/CRT and Parabola backends.
+    /// </summary>
+    public static bool UsePowerExportSimd =>
+        UseSimd &&
+        IsPowerExportAccelerationAvailable;
 
     /// <summary>
     /// AVX2 butterfly backend for the production in-place DIF/DIT NTT used by

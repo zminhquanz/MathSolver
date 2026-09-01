@@ -6448,6 +6448,21 @@
       "mode": "exact"
     },
     {
+      "key": "Hardware.PowerExportAccelerationOn",
+      "source": "Xuất file TXT kết quả lũy thừa lớn ({0}): Đang bật.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.PowerExportAccelerationOff",
+      "source": "Xuất file TXT kết quả lũy thừa lớn ({0}): Đang tắt.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.PowerExportAccelerationUnavailable",
+      "source": "Xuất file TXT kết quả lũy thừa lớn ({0}): Không khả dụng.",
+      "mode": "exact"
+    },
+    {
       "key": "Hardware.ParabolaAccelerationOn",
       "source": "Đồ thị Parabol hàm số bậc 2: Đang bật.",
       "mode": "exact"

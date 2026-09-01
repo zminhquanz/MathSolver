@@ -796,6 +796,25 @@ public partial class HardwarePerformancePage : ContentPage
                         ? LocalizationKeys.Hardware.NttAccelerationOn
                         : LocalizationKeys.Hardware.NttAccelerationOff);
 
+        string powerExportBackend =
+#if ANDROID
+            "NEON/AdvSIMD";
+#else
+            "AVX2";
+#endif
+
+        string powerExportAccelerationStatus =
+            string.Format(
+                CultureInfo.CurrentCulture,
+                LocalizationService.TranslateKey(
+                    !CalculationAccelerationManager
+                        .IsPowerExportAccelerationAvailable
+                        ? LocalizationKeys.Hardware.PowerExportAccelerationUnavailable
+                        : CalculationAccelerationManager.UsePowerExportSimd
+                            ? LocalizationKeys.Hardware.PowerExportAccelerationOn
+                            : LocalizationKeys.Hardware.PowerExportAccelerationOff),
+                powerExportBackend);
+
         string parabolaAccelerationStatus =
             LocalizationService.TranslateKey(
                 !ParabolaSimdEvaluator.IsAccelerationAvailable
@@ -807,6 +826,8 @@ public partial class HardwarePerformancePage : ContentPage
         accelerationStatus +=
             Environment.NewLine +
             nttAccelerationStatus +
+            Environment.NewLine +
+            powerExportAccelerationStatus +
             Environment.NewLine +
             parabolaAccelerationStatus;
 

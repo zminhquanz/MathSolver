@@ -65,6 +65,15 @@ public static class LocalizationKeys
         public const string NttAccelerationUnavailable =
             "Hardware.NttAccelerationUnavailable";
 
+        public const string PowerExportAccelerationOn =
+            "Hardware.PowerExportAccelerationOn";
+
+        public const string PowerExportAccelerationOff =
+            "Hardware.PowerExportAccelerationOff";
+
+        public const string PowerExportAccelerationUnavailable =
+            "Hardware.PowerExportAccelerationUnavailable";
+
         public const string ParabolaAccelerationOn =
             "Hardware.ParabolaAccelerationOn";
 
