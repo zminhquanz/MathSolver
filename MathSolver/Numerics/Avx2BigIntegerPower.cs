@@ -227,12 +227,12 @@ internal static class Avx2BigIntegerPower
 
         ulong[] rentedAccumulator =
             ArrayPool<ulong>.Shared.Rent(
-                coefficientCount + 1);
+                coefficientCount);
 
         Span<ulong> accumulator =
             rentedAccumulator.AsSpan(
                 0,
-                coefficientCount + 1);
+                coefficientCount);
 
         accumulator.Clear();
 
@@ -366,12 +366,12 @@ internal static class Avx2BigIntegerPower
 
         ulong[] rentedAccumulator =
             ArrayPool<ulong>.Shared.Rent(
-                coefficientCount + 1);
+                coefficientCount);
 
         Span<ulong> accumulator =
             rentedAccumulator.AsSpan(
                 0,
-                coefficientCount + 1);
+                coefficientCount);
 
         accumulator.Clear();
 
@@ -746,12 +746,18 @@ internal static class Avx2BigIntegerPower
         ReadOnlySpan<ulong> accumulator,
         int coefficientCount)
     {
+        // The convolution reserves one zero coefficient at the top: for an
+        // n-by-m product coefficientCount is n+m, while the highest raw
+        // product lands at n+m-2. Normal carry propagation therefore fits in
+        // exactly coefficientCount base-2^16 limbs. Allocate that exact
+        // capacity instead of coefficientCount+1; the old shape guaranteed a
+        // second trim/copy allocation on virtually every custom multiply or
+        // square even when the magnitude already occupied its full length.
         ushort[] result =
-            new ushort[
-                coefficientCount + 1];
+            GC.AllocateUninitializedArray<ushort>(
+                coefficientCount);
 
         ulong carry = 0;
-        int written = 0;
 
         for (int i = 0;
              i < coefficientCount;
@@ -766,18 +772,46 @@ internal static class Avx2BigIntegerPower
 
             carry =
                 total >> 16;
-
-            written =
-                i + 1;
         }
 
-        while (carry != 0)
+        // A mathematically valid product/square cannot overflow the reserved
+        // top coefficient. Keep a defensive path in case a future convolution
+        // kernel changes that invariant, without penalizing the normal hot path.
+        if (carry != 0)
         {
-            result[written++] =
-                (ushort)carry;
+            int extraLimbCount = 0;
+            ulong remainingCarry = carry;
 
-            carry >>= 16;
+            while (remainingCarry != 0)
+            {
+                extraLimbCount++;
+                remainingCarry >>= 16;
+            }
+
+            ushort[] expanded =
+                GC.AllocateUninitializedArray<ushort>(
+                    checked(
+                        coefficientCount +
+                        extraLimbCount));
+
+            result.AsSpan().CopyTo(expanded);
+
+            int writeIndex =
+                coefficientCount;
+
+            while (carry != 0)
+            {
+                expanded[writeIndex++] =
+                    (ushort)carry;
+
+                carry >>= 16;
+            }
+
+            return expanded;
         }
+
+        int written =
+            coefficientCount;
 
         while (written > 1 &&
                result[written - 1] == 0)
@@ -785,18 +819,19 @@ internal static class Avx2BigIntegerPower
             written--;
         }
 
-        if (written == result.Length)
+        if (written == coefficientCount)
         {
             return result;
         }
 
         ushort[] trimmed =
-            new ushort[written];
+            GC.AllocateUninitializedArray<ushort>(
+                written);
 
-        Array.Copy(
-            result,
-            trimmed,
-            written);
+        result.AsSpan(
+                0,
+                written)
+            .CopyTo(trimmed);
 
         return trimmed;
     }
