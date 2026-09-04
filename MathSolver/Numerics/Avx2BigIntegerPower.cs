@@ -8,8 +8,9 @@ namespace MathSolver.Numerics;
 /// <summary>
 /// Experimental single-threaded BigInteger power backend for x86/x64.
 ///
-/// The hot window uses unsigned base-2^16 limbs. AVX-512BW-capable CPUs batch
-/// thirty-two UInt16 products at a time; AVX2 remains the exact fallback.
+/// The hot window uses unsigned base-2^16 limbs. AVX-512-capable CPUs batch
+/// thirty-two UInt16 products at a time by widening to UInt32 and using
+/// VPMULLD; AVX2 remains the exact fallback.
 /// Multiplication accumulates carry-independent convolution coefficients in
 /// UInt64 slots without putting the carry chain
 /// inside the SIMD loop. Squaring uses symmetry (i,j == j,i), so only the upper
@@ -30,24 +31,10 @@ internal static class Avx2BigIntegerPower
     private const int VectorUShortCount = 16;
     private const int Vector512UShortCount = 32;
 
-    // AVX-512BW computes 32 UInt16 low/high products in one pair of ZMM
-    // instructions. Two permute maps repair the 128-bit-lane-local unpack
-    // order into contiguous p0..p15 / p16..p31 UInt32 product vectors.
-    // Those are widened to UInt64 only at the accumulator boundary.
-    private static readonly Vector512<uint> Avx512Products0To15Order =
-        Vector512.Create(
-            0u, 1u, 2u, 3u,
-            16u, 17u, 18u, 19u,
-            4u, 5u, 6u, 7u,
-            20u, 21u, 22u, 23u);
-
-    private static readonly Vector512<uint> Avx512Products16To31Order =
-        Vector512.Create(
-            8u, 9u, 10u, 11u,
-            24u, 25u, 26u, 27u,
-            12u, 13u, 14u, 15u,
-            28u, 29u, 30u, 31u);
-
+    // Variant 06 widens each 16-lane UInt16 half directly to UInt32 and uses
+    // AVX-512F VPMULLD. A UInt16 * UInt16 product always fits in UInt32, so
+    // the low 32-bit product is exact. This removes the old low/high UInt16
+    // reconstruction, lane-local unpack, and VPERMI2D reorder sequence.
     // Multiplication and squaring deliberately use different crossover
     // windows. Balanced/general multiplication keeps the conservative
     // 256-limb result cap. Squaring keeps the proven 1024-limb result cap.
@@ -62,6 +49,12 @@ internal static class Avx2BigIntegerPower
     private const int MaximumAsymmetricMultiplyShortLimbCount = 128;
     private const int MaximumAsymmetricMultiplyResultLimbCount = 1152;
     private const int MaximumSquareResultLimbCount = 1024;
+
+    // Variant 02: keep the proven AVX2 square cap at 1024 result limbs, but
+    // allow the AVX-512BW path to own one additional medium square stage.
+    // The shared accumulator workspace is already 1152 limbs because of the
+    // bounded asymmetric-multiply window, so this does not enlarge workspace.
+    private const int MaximumAvx512SquareResultLimbCount = 1152;
 
     // Once the custom UInt16 window hands off to System.Numerics.BigInteger,
     // consecutive left-to-right square steps can be folded into one runtime
@@ -83,13 +76,14 @@ internal static class Avx2BigIntegerPower
     private const int RuntimeWindowOptimizationMinimumExponent = 1_000_000;
     private const int MaximumRuntimeExponentWindowBitCount = 5;
 
-    // Keep AVX2 on the proven predictive handoff at 272 limbs. AVX-512 gets
-    // its own experimental crossover so the 10,000,000 prefix can keep the
-    // exact 285-limb state in the custom window before handing off. This changes
-    // only AVX-512-capable x86/x64 machines; the AVX2 fallback is byte-for-byte
-    // equivalent in schedule to the 533 s RuntimeWindow5/Predictive272 checkpoint.
+    // Keep AVX2 on the proven predictive handoff at 272 limbs. Variant 02
+    // retunes only the AVX-512 crossover to 576 limbs. On the 10,000,000
+    // exponent prefix this lets the ZMM path keep the ~285 -> ~569 square and,
+    // when the next state remains below 576 limbs, one further square up to
+    // roughly the 1152-limb result cap before handing off to BigInteger.
+    // AVX2 remains byte-for-byte equivalent in schedule to Predictive272.
     private const int PredictiveRuntimeWindowHandoffMinimumLimbCount = 272;
-    private const int PredictiveAvx512RuntimeWindowHandoffMinimumLimbCount = 286;
+    private const int PredictiveAvx512RuntimeWindowHandoffMinimumLimbCount = 576;
     private const int PredictiveRuntimeWindowHandoffMinimumRemainingBitCount = 5;
     private const int EarlyRuntimeBatchHandoffMinimumLimbCount = 448;
     private const int EarlyRuntimeBatchHandoffMinimumSquareCount = 4;
@@ -550,9 +544,16 @@ internal static class Avx2BigIntegerPower
     }
 
     private static bool CanSquareInCustomWindow(
-        int length) =>
-        checked(length * 2) <=
-        MaximumSquareResultLimbCount;
+        int length)
+    {
+        int maximumResultLimbCount =
+            IsAvx512CustomWindowActive
+                ? MaximumAvx512SquareResultLimbCount
+                : MaximumSquareResultLimbCount;
+
+        return checked(length * 2) <=
+            maximumResultLimbCount;
+    }
 
     private static ushort[] MultiplyMagnitude(
         ushort[] left,
@@ -601,11 +602,15 @@ internal static class Avx2BigIntegerPower
         int vector512Length =
             vector512Count * Vector512UShortCount;
 
-        ReadOnlySpan<Vector512<ushort>> rightVectors512 =
+        // Feed AVX-512 through two contiguous 256-bit UInt16 halves per
+        // 32-product block. VPMOVZXWD can widen each half directly to one
+        // Vector512<UInt32>, avoiding the previous ZMM UInt16 unpack/permute
+        // reconstruction path.
+        ReadOnlySpan<Vector256<ushort>> rightVectorsForAvx512 =
             vector512Count != 0
-                ? MemoryMarshal.Cast<ushort, Vector512<ushort>>(
+                ? MemoryMarshal.Cast<ushort, Vector256<ushort>>(
                     rightSpan.Slice(0, vector512Length))
-                : ReadOnlySpan<Vector512<ushort>>.Empty;
+                : ReadOnlySpan<Vector256<ushort>>.Empty;
 
         // Keep the proven AVX2 path for the remainder and for CPUs without
         // AVX-512BW. The reinterpretations are hoisted out of the outer row.
@@ -660,18 +665,22 @@ internal static class Avx2BigIntegerPower
 
             if (vector512Count != 0)
             {
-                Vector512<ushort> scalarVector512 =
-                    Vector512.Create(scalar);
+                Vector512<uint> scalarVector512 =
+                    Vector512.Create((uint)scalar);
 
                 for (int vectorIndex = 0;
                      vectorIndex < vector512Count;
                      vectorIndex++)
                 {
-                    AccumulateThirtyTwoProductsAvx512(
+                    int sourceVectorIndex =
+                        vectorIndex * 2;
+
+                    AccumulateThirtyTwoProductsAvx512UInt32(
                         accumulator,
                         i +
                         vectorIndex * Vector512UShortCount,
-                        rightVectors512[vectorIndex],
+                        rightVectorsForAvx512[sourceVectorIndex],
+                        rightVectorsForAvx512[sourceVectorIndex + 1],
                         scalarVector512,
                         doubleProducts: false);
                 }
@@ -787,22 +796,26 @@ internal static class Avx2BigIntegerPower
                     int vector512Length =
                         vector512Count * Vector512UShortCount;
 
-                    ReadOnlySpan<Vector512<ushort>> values512 =
-                        MemoryMarshal.Cast<ushort, Vector512<ushort>>(
+                    ReadOnlySpan<Vector256<ushort>> valuesForAvx512 =
+                        MemoryMarshal.Cast<ushort, Vector256<ushort>>(
                             valueSpan.Slice(j, vector512Length));
 
-                    Vector512<ushort> scalarVector512 =
-                        Vector512.Create(scalar);
+                    Vector512<uint> scalarVector512 =
+                        Vector512.Create((uint)scalar);
 
                     for (int vectorIndex = 0;
                          vectorIndex < vector512Count;
                          vectorIndex++)
                     {
-                        AccumulateThirtyTwoProductsAvx512(
+                        int sourceVectorIndex =
+                            vectorIndex * 2;
+
+                        AccumulateThirtyTwoProductsAvx512UInt32(
                             accumulator,
                             i + j +
                             vectorIndex * Vector512UShortCount,
-                            values512[vectorIndex],
+                            valuesForAvx512[sourceVectorIndex],
+                            valuesForAvx512[sourceVectorIndex + 1],
                             scalarVector512,
                             doubleProducts: true);
                     }
@@ -889,42 +902,37 @@ internal static class Avx2BigIntegerPower
             coefficientCount);
     }
 
-    private static void AccumulateThirtyTwoProductsAvx512(
+    private static void AccumulateThirtyTwoProductsAvx512UInt32(
         Span<ulong> accumulator,
         int destinationStart,
-        Vector512<ushort> values,
-        Vector512<ushort> scalar,
+        Vector256<ushort> values0To15UShort,
+        Vector256<ushort> values16To31UShort,
+        Vector512<uint> scalar,
         bool doubleProducts)
     {
-        // Recover all 32 bits of thirty-two UInt16 products. VPUNPCK is
-        // 128-bit-lane-local even in ZMM form, so repair the ordering once
-        // with two VPERMI2D operations, then widen contiguous UInt32 products
-        // to four groups of eight UInt64 accumulator coefficients.
-        Vector512<ushort> low =
-            Avx512BW.MultiplyLow(values, scalar);
+        // Variant 06: widen the two contiguous UInt16 halves directly to
+        // UInt32, then multiply with VPMULLD. Since both operands are <= 65535,
+        // every product is <= 0xFFFE0001 and therefore the low UInt32 result is
+        // the complete product. This removes two UInt16 multiply streams,
+        // two lane-local unpacks, and two VPERMI2D reorder operations from the
+        // old AVX-512BW reconstruction path.
+        Vector512<uint> values0To15 =
+            Avx512F.ConvertToVector512UInt32(
+                values0To15UShort);
 
-        Vector512<ushort> high =
-            Avx512BW.MultiplyHigh(values, scalar);
-
-        Vector512<uint> lowPacked =
-            Avx512BW.UnpackLow(low, high)
-                .AsUInt32();
-
-        Vector512<uint> highPacked =
-            Avx512BW.UnpackHigh(low, high)
-                .AsUInt32();
+        Vector512<uint> values16To31 =
+            Avx512F.ConvertToVector512UInt32(
+                values16To31UShort);
 
         Vector512<uint> products0To15 =
-            Avx512F.PermuteVar16x32x2(
-                lowPacked,
-                Avx512Products0To15Order,
-                highPacked);
+            Avx512F.MultiplyLow(
+                values0To15,
+                scalar);
 
         Vector512<uint> products16To31 =
-            Avx512F.PermuteVar16x32x2(
-                lowPacked,
-                Avx512Products16To31Order,
-                highPacked);
+            Avx512F.MultiplyLow(
+                values16To31,
+                scalar);
 
         Vector512<ulong> products0To7 =
             Vector512.WidenLower(products0To15);
