@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
@@ -119,6 +119,15 @@ internal sealed class ParallelBigUnsigned
         ModInverse(
             FirstModulus % SecondModulus,
             SecondModulus);
+
+    // Phase 8: the CRT multiplier is constant for the full reconstruction.
+    // Keep its exact 32-bit Shoup companion once so AVX-512 can replace the
+    // per-coefficient UInt64 remainder in the <=10M path without allocating
+    // another coefficient-sized table. Large-mode keeps workers.UseAvx512Ntt
+    // disabled and therefore falls back to the accepted scalar CRT loop.
+    private static readonly uint FirstModulusInverseInSecondShoup =
+        (uint)(((ulong)(uint)FirstModulusInverseInSecond << 32) /
+               SecondModulus);
 
     private readonly uint[] _limbs;
     private readonly int _limbCount;
@@ -661,6 +670,20 @@ internal sealed class ParallelBigUnsigned
         bool useAvx2Ntt =
             CalculationAccelerationManager.UsePowerNttAvx2;
 
+        // Experimental <=10M AVX-512 phase 3. Keep the existing AVX2 user
+        // switch as the public gate. Phase 1 widened the 2xL3 bridge and
+        // standalone L3 Shoup stages; phase 2 widened the L3 bounded-register
+        // stage-pair traversal; phase 3 also widens only the L2 bounded-register
+        // stage-pairs. L2 single-stage tails and all L1 kernels remain on the
+        // accepted AVX2 implementation so the new scope can be A/B isolated.
+        // PowMemoryBounded() deliberately leaves this disabled for now so the
+        // >10M production path remains on its accepted AVX2 kernels while we
+        // A/B test smaller transforms first.
+        bool useAvx512Ntt =
+            useAvx2Ntt &&
+            Avx512F.IsSupported &&
+            Vector512.IsHardwareAccelerated;
+
         // One workspace pool lives for the complete exponentiation.  In the
         // split-power path both branches and the final combine share it, so
         // the largest temporary NTT arrays can be recycled across modulus
@@ -679,7 +702,8 @@ internal sealed class ParallelBigUnsigned
         using var sharedNttTwiddlePlans =
             new SharedNttTwiddlePlans(
                 nttTwiddleBufferPool,
-                useAvx2Ntt);
+                useAvx2Ntt,
+                useAvx512Ntt);
 
         if (TryCreateExponentSplit(
                 exponent,
@@ -886,7 +910,8 @@ internal sealed class ParallelBigUnsigned
         using var sharedNttTwiddlePlans =
             new SharedNttTwiddlePlans(
                 nttTwiddleBufferPool,
-                useAvx2Ntt);
+                useAvx2Ntt,
+                useAvx512Ntt: false);
 
         ParallelBigUnsigned magnitude;
 
@@ -3753,6 +3778,10 @@ internal sealed class ParallelBigUnsigned
                 long crtTicks = 0;
                 long carryTicks = 0;
 
+                bool useAvx512Crt =
+                    workers.UseAvx512Ntt &&
+                    Avx512DQ.IsSupported;
+
                 for (int blockStart = 0;
                      blockStart < coefficientCount;
                      blockStart += scratchLength)
@@ -3818,43 +3847,11 @@ internal sealed class ParallelBigUnsigned
                                         count);
                             }
 
-                            for (int offset = 0;
-                                 offset < count;
-                                 offset++)
-                            {
-                                uint first =
-                                    firstSpan[offset];
-
-                                uint reducedFirst =
-                                    first;
-
-                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                                if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-
-                                long difference =
-                                    (long)secondSpan[offset] -
-                                    reducedFirst;
-
-                                if (difference < 0)
-                                {
-                                    difference +=
-                                        SecondModulus;
-                                }
-
-                                // Preserve the scalar modulo expression that
-                                // won the previous benchmark experiments.
-                                ulong multiplier =
-                                    (ulong)difference *
-                                    FirstModulusInverseInSecond %
-                                    SecondModulus;
-
-                                scratchSpan[offset] =
-                                    first +
-                                    (ulong)FirstModulus *
-                                    multiplier;
-                            }
+                            ReconstructCrtRange(
+                                firstSpan,
+                                secondSpan,
+                                scratchSpan,
+                                useAvx512Crt);
                         });
 
                     crtTicks +=
@@ -3986,6 +3983,10 @@ internal sealed class ParallelBigUnsigned
         long crtTicks = 0;
         long carryTicks = 0;
 
+        bool useAvx512Crt =
+            workers.UseAvx512Ntt &&
+            Avx512DQ.IsSupported;
+
         for (int blockStart = 0;
              blockStart < coefficientCount;
              blockStart += scratchLength)
@@ -4045,41 +4046,11 @@ internal sealed class ParallelBigUnsigned
                                 count);
                     }
 
-                    for (int offset = 0;
-                         offset < count;
-                         offset++)
-                    {
-                        uint first =
-                            firstSpan[offset];
-
-                        uint reducedFirst =
-                            first;
-
-                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-                        if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
-
-                        long difference =
-                            (long)secondSpan[offset] -
-                            reducedFirst;
-
-                        if (difference < 0)
-                        {
-                            difference +=
-                                SecondModulus;
-                        }
-
-                        ulong multiplier =
-                            (ulong)difference *
-                            FirstModulusInverseInSecond %
-                            SecondModulus;
-
-                        scratchSpan[offset] =
-                            first +
-                            (ulong)FirstModulus *
-                            multiplier;
-                    }
+                    ReconstructCrtRange(
+                        firstSpan,
+                        secondSpan,
+                        scratchSpan,
+                        useAvx512Crt);
                 });
 
             crtTicks +=
@@ -7384,6 +7355,511 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Experimental sixteen-lane AVX-512F modular context used only by the
+    /// <=10M phase-2 NTT A/B path. The accepted AVX2 context remains the
+    /// production fallback and the >10M path deliberately never enables this.
+    /// </summary>
+    private readonly struct Avx512NttModContext
+    {
+        public Avx512NttModContext(
+            uint modulus)
+        {
+            Modulus =
+                Vector512.Create(
+                    modulus);
+        }
+
+        public Vector512<uint> Modulus { get; }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> AddModuloAvx512(
+        Vector512<uint> left,
+        Vector512<uint> right,
+        in Avx512NttModContext context)
+    {
+        Vector512<uint> sum =
+            Vector512.Add(
+                left,
+                right);
+
+        Vector512<uint> reduced =
+            Vector512.Subtract(
+                sum,
+                context.Modulus);
+
+        return Avx512F.Min(
+            sum,
+            reduced);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> SubtractModuloAvx512(
+        Vector512<uint> left,
+        Vector512<uint> right,
+        in Avx512NttModContext context)
+    {
+        Vector512<uint> difference =
+            Vector512.Subtract(
+                left,
+                right);
+
+        Vector512<uint> corrected =
+            Vector512.Add(
+                difference,
+                context.Modulus);
+
+        return Avx512F.Min(
+            difference,
+            corrected);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> ReduceOnceAvx512(
+        Vector512<uint> value,
+        in Avx512NttModContext context)
+    {
+        Vector512<uint> reduced =
+            Vector512.Subtract(
+                value,
+                context.Modulus);
+
+        return Avx512F.Min(
+            value,
+            reduced);
+    }
+
+    /// <summary>
+    /// Sixteen-lane exact Shoup product. AVX-512F VPMULUDQ handles the even
+    /// dwords as eight widened qword products; shifting each qword by 32 bits
+    /// exposes the odd dwords for the second VPMULUDQ. This is the direct
+    /// 512-bit analogue of the accepted AVX2 kernel, so arithmetic and the
+    /// one-correction Shoup invariant are unchanged.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> MultiplyShoupAvx512(
+        Vector512<uint> value,
+        Vector512<uint> twiddle,
+        Vector512<uint> shoup,
+        in Avx512NttModContext context)
+    {
+        Vector512<ulong> productEven =
+            Avx512F.Multiply(
+                value,
+                twiddle);
+
+        Vector512<ulong> quotientEven =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    value,
+                    shoup),
+                32);
+
+        Vector512<ulong> quotientTimesModulusEven =
+            Avx512F.Multiply(
+                quotientEven.AsUInt32(),
+                context.Modulus);
+
+        Vector512<ulong> remainderEven =
+            Vector512.Subtract(
+                productEven,
+                quotientTimesModulusEven);
+
+        Vector512<uint> oddValues =
+            Avx512F.ShiftRightLogical(
+                    value.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<uint> oddTwiddles =
+            Avx512F.ShiftRightLogical(
+                    twiddle.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<uint> oddShoup =
+            Avx512F.ShiftRightLogical(
+                    shoup.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<ulong> productOdd =
+            Avx512F.Multiply(
+                oddValues,
+                oddTwiddles);
+
+        Vector512<ulong> quotientOdd =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    oddValues,
+                    oddShoup),
+                32);
+
+        Vector512<ulong> quotientTimesModulusOdd =
+            Avx512F.Multiply(
+                quotientOdd.AsUInt32(),
+                context.Modulus);
+
+        Vector512<ulong> remainderOdd =
+            Vector512.Subtract(
+                productOdd,
+                quotientTimesModulusOdd);
+
+        Vector512<uint> packed =
+            Vector512.BitwiseOr(
+                remainderEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(
+                        remainderOdd,
+                        32)
+                    .AsUInt32());
+
+        return ReduceOnceAvx512(
+            packed,
+            context);
+    }
+
+    /// <summary>
+    /// Phase 15 AVX-512 software-pipelined Shoup multiply for two independent
+    /// value vectors that share the same twiddle/Shoup vectors. Unlike the
+    /// AVX2 regression experiment, this helper is used only by the AVX-512
+    /// Phase-14 dual-group Forward stage-pair. It issues the corresponding
+    /// VPMULUDQ chains for both resident groups before consuming either result,
+    /// exposing independent multiply latency while keeping the lane layout,
+    /// arithmetic, memory traffic, and AVX2 fallback unchanged.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void MultiplyShoupPairSameTwiddleAvx512(
+        Vector512<uint> firstValue,
+        Vector512<uint> secondValue,
+        Vector512<uint> twiddle,
+        Vector512<uint> shoup,
+        in Avx512NttModContext context,
+        out Vector512<uint> firstResult,
+        out Vector512<uint> secondResult)
+    {
+        // Even dwords: start both independent product chains first.
+        Vector512<ulong> firstProductEven =
+            Avx512F.Multiply(
+                firstValue,
+                twiddle);
+        Vector512<ulong> secondProductEven =
+            Avx512F.Multiply(
+                secondValue,
+                twiddle);
+
+        // Then start both independent Shoup quotient chains before either
+        // remainder is consumed. This is the core software-pipeline step.
+        Vector512<ulong> firstQuotientEven =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    firstValue,
+                    shoup),
+                32);
+        Vector512<ulong> secondQuotientEven =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    secondValue,
+                    shoup),
+                32);
+
+        Vector512<ulong> firstQuotientTimesModulusEven =
+            Avx512F.Multiply(
+                firstQuotientEven.AsUInt32(),
+                context.Modulus);
+        Vector512<ulong> secondQuotientTimesModulusEven =
+            Avx512F.Multiply(
+                secondQuotientEven.AsUInt32(),
+                context.Modulus);
+
+        Vector512<ulong> firstRemainderEven =
+            Vector512.Subtract(
+                firstProductEven,
+                firstQuotientTimesModulusEven);
+        Vector512<ulong> secondRemainderEven =
+            Vector512.Subtract(
+                secondProductEven,
+                secondQuotientTimesModulusEven);
+
+        // Odd dwords share the shifted twiddle/Shoup constants. Keep the two
+        // independent value chains interleaved exactly as for the even lanes.
+        Vector512<uint> firstOddValues =
+            Avx512F.ShiftRightLogical(
+                    firstValue.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> secondOddValues =
+            Avx512F.ShiftRightLogical(
+                    secondValue.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> oddTwiddles =
+            Avx512F.ShiftRightLogical(
+                    twiddle.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> oddShoup =
+            Avx512F.ShiftRightLogical(
+                    shoup.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<ulong> firstProductOdd =
+            Avx512F.Multiply(
+                firstOddValues,
+                oddTwiddles);
+        Vector512<ulong> secondProductOdd =
+            Avx512F.Multiply(
+                secondOddValues,
+                oddTwiddles);
+
+        Vector512<ulong> firstQuotientOdd =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    firstOddValues,
+                    oddShoup),
+                32);
+        Vector512<ulong> secondQuotientOdd =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    secondOddValues,
+                    oddShoup),
+                32);
+
+        Vector512<ulong> firstQuotientTimesModulusOdd =
+            Avx512F.Multiply(
+                firstQuotientOdd.AsUInt32(),
+                context.Modulus);
+        Vector512<ulong> secondQuotientTimesModulusOdd =
+            Avx512F.Multiply(
+                secondQuotientOdd.AsUInt32(),
+                context.Modulus);
+
+        Vector512<ulong> firstRemainderOdd =
+            Vector512.Subtract(
+                firstProductOdd,
+                firstQuotientTimesModulusOdd);
+        Vector512<ulong> secondRemainderOdd =
+            Vector512.Subtract(
+                secondProductOdd,
+                secondQuotientTimesModulusOdd);
+
+        Vector512<uint> firstPacked =
+            Vector512.BitwiseOr(
+                firstRemainderEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(
+                        firstRemainderOdd,
+                        32)
+                    .AsUInt32());
+        Vector512<uint> secondPacked =
+            Vector512.BitwiseOr(
+                secondRemainderEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(
+                        secondRemainderOdd,
+                        32)
+                    .AsUInt32());
+
+        firstResult =
+            ReduceOnceAvx512(
+                firstPacked,
+                context);
+        secondResult =
+            ReduceOnceAvx512(
+                secondPacked,
+                context);
+    }
+
+    /// <summary>
+    /// Phase 8 CRT reconstruction kernel. The only modular multiply in the
+    /// two-prime CRT step uses the same constant inverse for every coefficient,
+    /// so one exact Shoup companion is enough for the whole pass. On AVX-512DQ
+    /// machines this removes the scalar UInt64 remainder from sixteen
+    /// coefficients at a time, then widens the two eight-lane halves to build
+    /// the exact 64-bit CRT coefficients. No coefficient-sized companion table
+    /// is created. When AVX-512 is disabled (including >10M large mode) the
+    /// caller passes false and this method executes the original scalar loop.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ReconstructCrtRange(
+        ReadOnlySpan<uint> firstSpan,
+        ReadOnlySpan<uint> secondSpan,
+        Span<ulong> scratchSpan,
+        bool useAvx512Crt)
+    {
+        int count =
+            firstSpan.Length;
+
+        Debug.Assert(
+            secondSpan.Length >= count);
+
+        Debug.Assert(
+            scratchSpan.Length >= count);
+
+        int offset = 0;
+
+        if (useAvx512Crt &&
+            count >= Vector512<uint>.Count)
+        {
+            var context =
+                new Avx512NttModContext(
+                    SecondModulus);
+
+            Vector512<uint> inverseVector =
+                Vector512.Create(
+                    (uint)FirstModulusInverseInSecond);
+
+            Vector512<uint> inverseShoupVector =
+                Vector512.Create(
+                    FirstModulusInverseInSecondShoup);
+
+            Vector512<ulong> firstModulusVector =
+                Vector512.Create(
+                    (ulong)FirstModulus);
+
+            ref uint firstReference =
+                ref MemoryMarshal.GetReference(
+                    firstSpan);
+
+            ref uint secondReference =
+                ref MemoryMarshal.GetReference(
+                    secondSpan);
+
+            ref ulong scratchReference =
+                ref MemoryMarshal.GetReference(
+                    scratchSpan);
+
+            int vectorEnd =
+                count &
+                ~(Vector512<uint>.Count - 1);
+
+            for (;
+                 offset < vectorEnd;
+                 offset += Vector512<uint>.Count)
+            {
+                Vector512<uint> first =
+                    Vector512.LoadUnsafe(
+                        ref firstReference,
+                        (nuint)offset);
+
+                // FirstModulus is below 5 * SecondModulus, so at most four
+                // subtracts are required to reduce a P1 residue into P2.
+                Vector512<uint> reducedFirst =
+                    ReduceOnceAvx512(
+                        first,
+                        context);
+
+                reducedFirst =
+                    ReduceOnceAvx512(
+                        reducedFirst,
+                        context);
+
+                reducedFirst =
+                    ReduceOnceAvx512(
+                        reducedFirst,
+                        context);
+
+                reducedFirst =
+                    ReduceOnceAvx512(
+                        reducedFirst,
+                        context);
+
+                Vector512<uint> second =
+                    Vector512.LoadUnsafe(
+                        ref secondReference,
+                        (nuint)offset);
+
+                Vector512<uint> difference =
+                    SubtractModuloAvx512(
+                        second,
+                        reducedFirst,
+                        context);
+
+                Vector512<uint> multiplier =
+                    MultiplyShoupAvx512(
+                        difference,
+                        inverseVector,
+                        inverseShoupVector,
+                        context);
+
+                Vector512<ulong> firstLow =
+                    Avx512F.ConvertToVector512UInt64(
+                        first.GetLower());
+
+                Vector512<ulong> multiplierLow =
+                    Avx512F.ConvertToVector512UInt64(
+                        multiplier.GetLower());
+
+                Vector512<ulong> reconstructedLow =
+                    Avx512F.Add(
+                        firstLow,
+                        Avx512DQ.MultiplyLow(
+                            multiplierLow,
+                            firstModulusVector));
+
+                reconstructedLow.StoreUnsafe(
+                    ref scratchReference,
+                    (nuint)offset);
+
+                Vector512<ulong> firstHigh =
+                    Avx512F.ConvertToVector512UInt64(
+                        first.GetUpper());
+
+                Vector512<ulong> multiplierHigh =
+                    Avx512F.ConvertToVector512UInt64(
+                        multiplier.GetUpper());
+
+                Vector512<ulong> reconstructedHigh =
+                    Avx512F.Add(
+                        firstHigh,
+                        Avx512DQ.MultiplyLow(
+                            multiplierHigh,
+                            firstModulusVector));
+
+                reconstructedHigh.StoreUnsafe(
+                    ref scratchReference,
+                    (nuint)(offset + 8));
+            }
+        }
+
+        // Exact fallback and vector tail. Keep this byte-for-byte arithmetic
+        // equivalent to the accepted Phase 5 CRT loop.
+        for (;
+             offset < count;
+             offset++)
+        {
+            uint first =
+                firstSpan[offset];
+
+            uint reducedFirst =
+                first;
+
+            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+            if (reducedFirst >= SecondModulus) reducedFirst -= SecondModulus;
+
+            long difference =
+                (long)secondSpan[offset] -
+                reducedFirst;
+
+            if (difference < 0)
+            {
+                difference +=
+                    SecondModulus;
+            }
+
+            ulong multiplier =
+                (ulong)difference *
+                FirstModulusInverseInSecond %
+                SecondModulus;
+
+            scratchSpan[offset] =
+                first +
+                (ulong)FirstModulus *
+                multiplier;
+        }
+    }
+
+    /// <summary>
     /// Exact scalar Shoup multiply for one cached twiddle.  This is used by
     /// the tiny L1 radix-4 tail where vector setup would cost more than the
     /// four-residue butterfly, but a variable 64-bit remainder would still be
@@ -7584,6 +8060,316 @@ internal sealed class ParallelBigUnsigned
         }
 
         return remainder;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteForwardCachedDifGroupAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int groupOffset,
+        int halfLength,
+        in Avx512NttModContext context)
+    {
+        int rightBase =
+            groupOffset +
+            halfLength;
+
+        uint leftValue =
+            values[groupOffset];
+
+        uint rightValue =
+            values[rightBase];
+
+        uint sum =
+            leftValue +
+            rightValue;
+
+        if (sum >= modulus)
+        {
+            sum -= modulus;
+        }
+
+        values[groupOffset] =
+            sum;
+
+        values[rightBase] =
+            leftValue >= rightValue
+                ? leftValue - rightValue
+                : leftValue + modulus - rightValue;
+
+        int leftIndex =
+            groupOffset + 1;
+
+        int rightIndex =
+            rightBase + 1;
+
+        int butterflyEnd =
+            groupOffset +
+            halfLength;
+
+        int twiddleIndex =
+            twiddleOffset + 1;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                values);
+
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                twiddles);
+
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                shoupTwiddles);
+
+        while (leftIndex + 15 < butterflyEnd)
+        {
+            Vector512<uint> left =
+                Vector512.LoadUnsafe(
+                    ref valuesReference,
+                    (nuint)leftIndex);
+
+            Vector512<uint> right =
+                Vector512.LoadUnsafe(
+                    ref valuesReference,
+                    (nuint)rightIndex);
+
+            Vector512<uint> sums =
+                AddModuloAvx512(
+                    left,
+                    right,
+                    context);
+
+            Vector512<uint> differences =
+                SubtractModuloAvx512(
+                    left,
+                    right,
+                    context);
+
+            Vector512<uint> twiddleVector =
+                Vector512.LoadUnsafe(
+                    ref twiddleReference,
+                    (nuint)twiddleIndex);
+
+            Vector512<uint> shoupVector =
+                Vector512.LoadUnsafe(
+                    ref shoupReference,
+                    (nuint)twiddleIndex);
+
+            Vector512<uint> multiplied =
+                MultiplyShoupAvx512(
+                    differences,
+                    twiddleVector,
+                    shoupVector,
+                    context);
+
+            sums.StoreUnsafe(
+                ref valuesReference,
+                (nuint)leftIndex);
+
+            multiplied.StoreUnsafe(
+                ref valuesReference,
+                (nuint)rightIndex);
+
+            leftIndex += 16;
+            rightIndex += 16;
+            twiddleIndex += 16;
+        }
+
+        // NTT stage sizes are powers of two, so production AVX-512 stages do
+        // not normally reach this tail. Keep exact scalar arithmetic for
+        // defensive reuse and for the first fifteen butterflies after lane 0.
+        while (leftIndex < butterflyEnd)
+        {
+            leftValue =
+                values[leftIndex];
+
+            rightValue =
+                values[rightIndex];
+
+            sum =
+                leftValue +
+                rightValue;
+
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                leftValue >= rightValue
+                    ? leftValue - rightValue
+                    : leftValue + modulus - rightValue;
+
+            values[leftIndex] =
+                sum;
+
+            values[rightIndex] =
+                MultiplyShoupScalar(
+                    difference,
+                    twiddles[twiddleIndex],
+                    shoupTwiddles[twiddleIndex],
+                    modulus);
+
+            leftIndex++;
+            rightIndex++;
+            twiddleIndex++;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteInverseCachedDitGroupAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int groupOffset,
+        int halfLength,
+        in Avx512NttModContext context)
+    {
+        int rightBase =
+            groupOffset +
+            halfLength;
+
+        uint leftValue =
+            values[groupOffset];
+
+        uint rightValue =
+            values[rightBase];
+
+        uint sum =
+            leftValue +
+            rightValue;
+
+        if (sum >= modulus)
+        {
+            sum -= modulus;
+        }
+
+        values[groupOffset] =
+            sum;
+
+        values[rightBase] =
+            leftValue >= rightValue
+                ? leftValue - rightValue
+                : leftValue + modulus - rightValue;
+
+        int leftIndex =
+            groupOffset + 1;
+
+        int rightIndex =
+            rightBase + 1;
+
+        int butterflyEnd =
+            groupOffset +
+            halfLength;
+
+        int twiddleIndex =
+            twiddleOffset + 1;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                values);
+
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                twiddles);
+
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                shoupTwiddles);
+
+        while (leftIndex + 15 < butterflyEnd)
+        {
+            Vector512<uint> left =
+                Vector512.LoadUnsafe(
+                    ref valuesReference,
+                    (nuint)leftIndex);
+
+            Vector512<uint> rawRight =
+                Vector512.LoadUnsafe(
+                    ref valuesReference,
+                    (nuint)rightIndex);
+
+            Vector512<uint> twiddleVector =
+                Vector512.LoadUnsafe(
+                    ref twiddleReference,
+                    (nuint)twiddleIndex);
+
+            Vector512<uint> shoupVector =
+                Vector512.LoadUnsafe(
+                    ref shoupReference,
+                    (nuint)twiddleIndex);
+
+            Vector512<uint> right =
+                MultiplyShoupAvx512(
+                    rawRight,
+                    twiddleVector,
+                    shoupVector,
+                    context);
+
+            Vector512<uint> sums =
+                AddModuloAvx512(
+                    left,
+                    right,
+                    context);
+
+            Vector512<uint> differences =
+                SubtractModuloAvx512(
+                    left,
+                    right,
+                    context);
+
+            sums.StoreUnsafe(
+                ref valuesReference,
+                (nuint)leftIndex);
+
+            differences.StoreUnsafe(
+                ref valuesReference,
+                (nuint)rightIndex);
+
+            leftIndex += 16;
+            rightIndex += 16;
+            twiddleIndex += 16;
+        }
+
+        while (leftIndex < butterflyEnd)
+        {
+            leftValue =
+                values[leftIndex];
+
+            rightValue =
+                MultiplyShoupScalar(
+                    values[rightIndex],
+                    twiddles[twiddleIndex],
+                    shoupTwiddles[twiddleIndex],
+                    modulus);
+
+            sum =
+                leftValue +
+                rightValue;
+
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            values[leftIndex] =
+                sum;
+
+            values[rightIndex] =
+                leftValue >= rightValue
+                    ? leftValue - rightValue
+                    : leftValue + modulus - rightValue;
+
+            leftIndex++;
+            rightIndex++;
+            twiddleIndex++;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -8377,6 +9163,250 @@ internal sealed class ParallelBigUnsigned
 
 
     /// <summary>
+    /// AVX-512F counterpart of the cached DIF twiddle-major traversal. This is
+    /// deliberately restricted to the experimental <=10M path. One 512-bit
+    /// twiddle/Shoup pair services sixteen butterflies across every group in
+    /// the resident region before advancing, preserving the same cache reuse
+    /// policy as the accepted AVX2 kernel.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedDifRegionTwiddleMajorAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx512NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int regionEnd = regionOffset + regionLength;
+        int groupCount = regionLength / stageLength;
+
+        if (groupCount <= 1 || halfLength < 16)
+        {
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                if (halfLength >= 16)
+                {
+                    ExecuteForwardCachedDifGroupAvx512(
+                        values, modulus, twiddles, shoupTwiddles,
+                        twiddleOffset, groupOffset, halfLength, context);
+                }
+                else
+                {
+                    ExecuteForwardCachedDifGroup(
+                        values, modulus, twiddles, twiddleOffset,
+                        groupOffset, halfLength);
+                }
+            }
+
+            return;
+        }
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        int butterfly = 0;
+
+        for (; butterfly + 15 < halfLength; butterfly += 16)
+        {
+            int twiddleIndex = twiddleOffset + butterfly;
+
+            Vector512<uint> twiddleVector =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)twiddleIndex);
+            Vector512<uint> shoupVector =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)twiddleIndex);
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int leftIndex = groupOffset + butterfly;
+                int rightIndex = leftIndex + halfLength;
+
+                Vector512<uint> left =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)leftIndex);
+                Vector512<uint> right =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)rightIndex);
+
+                Vector512<uint> sums =
+                    AddModuloAvx512(left, right, context);
+                Vector512<uint> differences =
+                    SubtractModuloAvx512(left, right, context);
+                Vector512<uint> multiplied =
+                    MultiplyShoupAvx512(
+                        differences,
+                        twiddleVector,
+                        shoupVector,
+                        context);
+
+                sums.StoreUnsafe(ref valuesReference, (nuint)leftIndex);
+                multiplied.StoreUnsafe(ref valuesReference, (nuint)rightIndex);
+            }
+        }
+
+        for (; butterfly < halfLength; butterfly++)
+        {
+            uint twiddle = twiddles[twiddleOffset + butterfly];
+            uint shoup = shoupTwiddles[twiddleOffset + butterfly];
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int leftIndex = groupOffset + butterfly;
+                int rightIndex = leftIndex + halfLength;
+
+                uint left = values[leftIndex];
+                uint right = values[rightIndex];
+                uint sum = left + right;
+                if (sum >= modulus) sum -= modulus;
+
+                uint difference =
+                    left >= right
+                        ? left - right
+                        : left + modulus - right;
+
+                values[leftIndex] = sum;
+                values[rightIndex] =
+                    MultiplyShoupScalar(
+                        difference,
+                        twiddle,
+                        shoup,
+                        modulus);
+            }
+        }
+    }
+
+    /// <summary>
+    /// AVX-512F DIT counterpart of the experimental twiddle-major DIF helper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx512NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int regionEnd = regionOffset + regionLength;
+        int groupCount = regionLength / stageLength;
+
+        if (groupCount <= 1 || halfLength < 16)
+        {
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                if (halfLength >= 16)
+                {
+                    ExecuteInverseCachedDitGroupAvx512(
+                        values, modulus, twiddles, shoupTwiddles,
+                        twiddleOffset, groupOffset, halfLength, context);
+                }
+                else
+                {
+                    ExecuteInverseCachedDitGroup(
+                        values, modulus, twiddles, twiddleOffset,
+                        groupOffset, halfLength);
+                }
+            }
+
+            return;
+        }
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        int butterfly = 0;
+
+        for (; butterfly + 15 < halfLength; butterfly += 16)
+        {
+            int twiddleIndex = twiddleOffset + butterfly;
+
+            Vector512<uint> twiddleVector =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)twiddleIndex);
+            Vector512<uint> shoupVector =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)twiddleIndex);
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int leftIndex = groupOffset + butterfly;
+                int rightIndex = leftIndex + halfLength;
+
+                Vector512<uint> left =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)leftIndex);
+                Vector512<uint> rawRight =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)rightIndex);
+                Vector512<uint> right =
+                    MultiplyShoupAvx512(
+                        rawRight,
+                        twiddleVector,
+                        shoupVector,
+                        context);
+
+                Vector512<uint> sums =
+                    AddModuloAvx512(left, right, context);
+                Vector512<uint> differences =
+                    SubtractModuloAvx512(left, right, context);
+
+                sums.StoreUnsafe(ref valuesReference, (nuint)leftIndex);
+                differences.StoreUnsafe(ref valuesReference, (nuint)rightIndex);
+            }
+        }
+
+        for (; butterfly < halfLength; butterfly++)
+        {
+            uint twiddle = twiddles[twiddleOffset + butterfly];
+            uint shoup = shoupTwiddles[twiddleOffset + butterfly];
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int leftIndex = groupOffset + butterfly;
+                int rightIndex = leftIndex + halfLength;
+
+                uint left = values[leftIndex];
+                uint right =
+                    MultiplyShoupScalar(
+                        values[rightIndex],
+                        twiddle,
+                        shoup,
+                        modulus);
+                uint sum = left + right;
+                if (sum >= modulus) sum -= modulus;
+
+                values[leftIndex] = sum;
+                values[rightIndex] =
+                    left >= right
+                        ? left - right
+                        : left + modulus - right;
+            }
+        }
+    }
+
+    /// <summary>
     /// Cache-resident AVX2 DIF traversal that makes the twiddle block the outer
     /// loop.  A twiddle/Shoup vector is loaded once, then reused for every
     /// independent group in the resident region.  This keeps the two immutable
@@ -8631,6 +9661,50 @@ internal sealed class ParallelBigUnsigned
         }
     }
 
+    // Phase 11: pack four independent 4-residue slices into one ZMM.  This
+    // uses the extra AVX-512 register width for the two smallest L1 stage-pairs
+    // without changing the residue representation or introducing gather/scatter
+    // buffers.  All intermediate values remain in registers until the complete
+    // stage-pair output is ready to be retired.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> LoadFourVector128AsVector512(
+        ref uint reference,
+        int offset0,
+        int offset1,
+        int offset2,
+        int offset3)
+    {
+        Vector256<uint> lower =
+            Vector256.Create(
+                Vector128.LoadUnsafe(ref reference, (nuint)offset0),
+                Vector128.LoadUnsafe(ref reference, (nuint)offset1));
+
+        Vector256<uint> upper =
+            Vector256.Create(
+                Vector128.LoadUnsafe(ref reference, (nuint)offset2),
+                Vector128.LoadUnsafe(ref reference, (nuint)offset3));
+
+        return Vector512.Create(lower, upper);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void StoreVector512AsFourVector128(
+        Vector512<uint> value,
+        ref uint reference,
+        int offset0,
+        int offset1,
+        int offset2,
+        int offset3)
+    {
+        Vector256<uint> lower = value.GetLower();
+        Vector256<uint> upper = value.GetUpper();
+
+        lower.GetLower().StoreUnsafe(ref reference, (nuint)offset0);
+        lower.GetUpper().StoreUnsafe(ref reference, (nuint)offset1);
+        upper.GetLower().StoreUnsafe(ref reference, (nuint)offset2);
+        upper.GetUpper().StoreUnsafe(ref reference, (nuint)offset3);
+    }
+
     /// <summary>
     /// Specialized S=16/S=8 Forward DIF stage-pair for cache-resident regions.
     /// A single 16-value group only has four butterflies, which is too narrow
@@ -8848,6 +9922,187 @@ internal sealed class ParallelBigUnsigned
                 groupOffset,
                 StageLength,
                 context);
+        }
+    }
+
+    /// <summary>
+    /// Phase 11 AVX-512 specialization for the packed Forward S=16/S=8 pair.
+    /// Four adjacent 16-value groups are packed into the four 128-bit quarters
+    /// of one Vector512.  Six duplicated twiddle/Shoup constants remain ZMM-
+    /// resident while all four groups complete both DIF stages.  This keeps
+    /// the same memory layout and Shoup arithmetic as the accepted AVX2 path,
+    /// but doubles the cross-group batch from two groups to four.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairRegionQuarter4Avx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        in Avx512NttModContext context)
+    {
+        const int StageLength = 16;
+        const int QuarterLength = 4;
+        const int HalfLength = 8;
+        const int FourGroupStride = StageLength * 4;
+
+        int regionEnd = regionOffset + regionLength;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        Vector128<uint> firstTwiddle0Quarter =
+            Vector128.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleOffset);
+        Vector128<uint> firstShoup0Quarter =
+            Vector128.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleOffset);
+        Vector128<uint> firstTwiddle1Quarter =
+            Vector128.LoadUnsafe(
+                ref twiddleReference,
+                (nuint)(firstTwiddleOffset + QuarterLength));
+        Vector128<uint> firstShoup1Quarter =
+            Vector128.LoadUnsafe(
+                ref shoupReference,
+                (nuint)(firstTwiddleOffset + QuarterLength));
+        Vector128<uint> secondTwiddleQuarter =
+            Vector128.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleOffset);
+        Vector128<uint> secondShoupQuarter =
+            Vector128.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleOffset);
+
+        // Vector512.Create(Vector128<T>) broadcasts the same 128-bit quarter
+        // into all four ZMM quarters.  The six invariant vectors therefore
+        // stay resident for the whole 4096-value L1 block on Zen 5's wider
+        // architectural register file.
+        Vector512<uint> firstTwiddle0 = Vector512.Create(firstTwiddle0Quarter);
+        Vector512<uint> firstShoup0 = Vector512.Create(firstShoup0Quarter);
+        Vector512<uint> firstTwiddle1 = Vector512.Create(firstTwiddle1Quarter);
+        Vector512<uint> firstShoup1 = Vector512.Create(firstShoup1Quarter);
+        Vector512<uint> secondTwiddle = Vector512.Create(secondTwiddleQuarter);
+        Vector512<uint> secondShoup = Vector512.Create(secondShoupQuarter);
+
+        int groupOffset = regionOffset;
+
+        for (; groupOffset + FourGroupStride <= regionEnd;
+             groupOffset += FourGroupStride)
+        {
+            int group1 = groupOffset + StageLength;
+            int group2 = group1 + StageLength;
+            int group3 = group2 + StageLength;
+
+            Vector512<uint> value0 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    groupOffset,
+                    group1,
+                    group2,
+                    group3);
+            Vector512<uint> value1 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    groupOffset + QuarterLength,
+                    group1 + QuarterLength,
+                    group2 + QuarterLength,
+                    group3 + QuarterLength);
+            Vector512<uint> value2 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    groupOffset + HalfLength,
+                    group1 + HalfLength,
+                    group2 + HalfLength,
+                    group3 + HalfLength);
+            Vector512<uint> value3 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    groupOffset + HalfLength + QuarterLength,
+                    group1 + HalfLength + QuarterLength,
+                    group2 + HalfLength + QuarterLength,
+                    group3 + HalfLength + QuarterLength);
+
+            Vector512<uint> topSum0 =
+                AddModuloAvx512(value0, value2, context);
+            Vector512<uint> topSum1 =
+                AddModuloAvx512(value1, value3, context);
+            Vector512<uint> topDifference0 =
+                SubtractModuloAvx512(value0, value2, context);
+            Vector512<uint> topDifference1 =
+                SubtractModuloAvx512(value1, value3, context);
+
+            Vector512<uint> lower0 =
+                MultiplyShoupAvx512(
+                    topDifference0, firstTwiddle0, firstShoup0, context);
+            Vector512<uint> lower1 =
+                MultiplyShoupAvx512(
+                    topDifference1, firstTwiddle1, firstShoup1, context);
+
+            Vector512<uint> upperSum =
+                AddModuloAvx512(topSum0, topSum1, context);
+            Vector512<uint> upperDifference =
+                SubtractModuloAvx512(topSum0, topSum1, context);
+            Vector512<uint> lowerSum =
+                AddModuloAvx512(lower0, lower1, context);
+            Vector512<uint> lowerDifference =
+                SubtractModuloAvx512(lower0, lower1, context);
+
+            Vector512<uint> output1 =
+                MultiplyShoupAvx512(
+                    upperDifference, secondTwiddle, secondShoup, context);
+            Vector512<uint> output3 =
+                MultiplyShoupAvx512(
+                    lowerDifference, secondTwiddle, secondShoup, context);
+
+            StoreVector512AsFourVector128(
+                upperSum,
+                ref valuesReference,
+                groupOffset,
+                group1,
+                group2,
+                group3);
+            StoreVector512AsFourVector128(
+                output1,
+                ref valuesReference,
+                groupOffset + QuarterLength,
+                group1 + QuarterLength,
+                group2 + QuarterLength,
+                group3 + QuarterLength);
+            StoreVector512AsFourVector128(
+                lowerSum,
+                ref valuesReference,
+                groupOffset + HalfLength,
+                group1 + HalfLength,
+                group2 + HalfLength,
+                group3 + HalfLength);
+            StoreVector512AsFourVector128(
+                output3,
+                ref valuesReference,
+                groupOffset + HalfLength + QuarterLength,
+                group1 + HalfLength + QuarterLength,
+                group2 + HalfLength + QuarterLength,
+                group3 + HalfLength + QuarterLength);
+        }
+
+        // Production 4096-value L1 blocks contain 256 groups and consume the
+        // loop exactly.  Preserve the accepted AVX2 specialization for any
+        // future region that leaves fewer than four groups.
+        if (groupOffset < regionEnd)
+        {
+            var avx2Context = new Avx2NttModContext(modulus);
+            ExecuteForwardCachedStagePairRegionQuarter4Avx2(
+                values,
+                modulus,
+                twiddles,
+                shoupTwiddles,
+                firstTwiddleOffset,
+                secondTwiddleOffset,
+                groupOffset,
+                regionEnd - groupOffset,
+                avx2Context);
         }
     }
 
@@ -9295,6 +10550,333 @@ internal sealed class ParallelBigUnsigned
                 values[index2] = lowerSum;
                 values[index3] =
                     (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+            }
+        }
+    }
+
+    /// <summary>
+    /// AVX-512F counterpart of the accepted bounded-register Forward DIF
+    /// stage-pair. Phase 2 used it for L3, Phase 3 reused it for L2, and
+    /// Phase 4 also dispatches it for the larger Forward L1 pairs. Six
+    /// twiddle/Shoup ZMM constants are reused
+    /// across the resident region while each quarter pair is completed before
+    /// the next pair is opened.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx512NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int quarterLength = halfLength >> 1;
+        int regionEnd = regionOffset + regionLength;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        int butterfly = 0;
+
+        for (; butterfly + 15 < quarterLength; butterfly += 16)
+        {
+            int firstTwiddleIndex0 = firstTwiddleOffset + butterfly;
+            int firstTwiddleIndex1 =
+                firstTwiddleOffset + quarterLength + butterfly;
+            int secondTwiddleIndex = secondTwiddleOffset + butterfly;
+
+            Vector512<uint> firstTwiddle0 =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex0);
+            Vector512<uint> firstShoup0 =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex0);
+            Vector512<uint> firstTwiddle1 =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex1);
+            Vector512<uint> firstShoup1 =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex1);
+            Vector512<uint> secondTwiddle =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex);
+            Vector512<uint> secondShoup =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex);
+
+            // Phase 15 builds on Phase 14's dual-group ILP. Two independent
+            // groups still share the same six twiddle/Shoup constants and keep
+            // the exact same lane layout, but corresponding Shoup multiplies
+            // now use an explicit AVX-512 software pipeline that issues both
+            // VPMULUDQ dependency chains before consuming either result. There
+            // is still no cross-lane permutation and no extra value traffic.
+            int groupOffset = regionOffset;
+
+            for (;
+                 groupOffset + (stageLength << 1) <= regionEnd;
+                 groupOffset += stageLength << 1)
+            {
+                int secondGroupOffset = groupOffset + stageLength;
+
+                int index0A = groupOffset + butterfly;
+                int index1A = index0A + quarterLength;
+                int index2A = index0A + halfLength;
+                int index3A = index2A + quarterLength;
+
+                int index0B = secondGroupOffset + butterfly;
+                int index1B = index0B + quarterLength;
+                int index2B = index0B + halfLength;
+                int index3B = index2B + quarterLength;
+
+                // First quarter pair, group A.
+                Vector512<uint> value0A =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0A);
+                Vector512<uint> value2A =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2A);
+                Vector512<uint> topSum0A =
+                    AddModuloAvx512(value0A, value2A, context);
+                Vector512<uint> topDifference0A =
+                    SubtractModuloAvx512(value0A, value2A, context);
+                // First quarter pair, independent group B. Phase 15 keeps
+                // both groups resident and pipelines their same-twiddle Shoup
+                // chains inside one helper rather than completing A before B.
+                Vector512<uint> value0B =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0B);
+                Vector512<uint> value2B =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2B);
+                Vector512<uint> topSum0B =
+                    AddModuloAvx512(value0B, value2B, context);
+                Vector512<uint> topDifference0B =
+                    SubtractModuloAvx512(value0B, value2B, context);
+
+                MultiplyShoupPairSameTwiddleAvx512(
+                    topDifference0A,
+                    topDifference0B,
+                    firstTwiddle0,
+                    firstShoup0,
+                    context,
+                    out Vector512<uint> lower0A,
+                    out Vector512<uint> lower0B);
+
+                // Second quarter pair, group A.
+                Vector512<uint> value1A =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index1A);
+                Vector512<uint> value3A =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3A);
+                Vector512<uint> topSum1A =
+                    AddModuloAvx512(value1A, value3A, context);
+                Vector512<uint> topDifference1A =
+                    SubtractModuloAvx512(value1A, value3A, context);
+                // Second quarter pair, group B.
+                Vector512<uint> value1B =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index1B);
+                Vector512<uint> value3B =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3B);
+                Vector512<uint> topSum1B =
+                    AddModuloAvx512(value1B, value3B, context);
+                Vector512<uint> topDifference1B =
+                    SubtractModuloAvx512(value1B, value3B, context);
+
+                MultiplyShoupPairSameTwiddleAvx512(
+                    topDifference1A,
+                    topDifference1B,
+                    firstTwiddle1,
+                    firstShoup1,
+                    context,
+                    out Vector512<uint> lower1A,
+                    out Vector512<uint> lower1B);
+
+                // Retire the sum streams before the second-stage Shoup work.
+                // Only the four difference streams remain live across the two
+                // independent long multiply chains.
+                Vector512<uint> upperSumA =
+                    AddModuloAvx512(topSum0A, topSum1A, context);
+                Vector512<uint> upperDifferenceA =
+                    SubtractModuloAvx512(topSum0A, topSum1A, context);
+                Vector512<uint> lowerSumA =
+                    AddModuloAvx512(lower0A, lower1A, context);
+                Vector512<uint> lowerDifferenceA =
+                    SubtractModuloAvx512(lower0A, lower1A, context);
+                upperSumA.StoreUnsafe(ref valuesReference, (nuint)index0A);
+                lowerSumA.StoreUnsafe(ref valuesReference, (nuint)index2A);
+
+                Vector512<uint> upperSumB =
+                    AddModuloAvx512(topSum0B, topSum1B, context);
+                Vector512<uint> upperDifferenceB =
+                    SubtractModuloAvx512(topSum0B, topSum1B, context);
+                Vector512<uint> lowerSumB =
+                    AddModuloAvx512(lower0B, lower1B, context);
+                Vector512<uint> lowerDifferenceB =
+                    SubtractModuloAvx512(lower0B, lower1B, context);
+                upperSumB.StoreUnsafe(ref valuesReference, (nuint)index0B);
+                lowerSumB.StoreUnsafe(ref valuesReference, (nuint)index2B);
+
+                MultiplyShoupPairSameTwiddleAvx512(
+                    upperDifferenceA,
+                    upperDifferenceB,
+                    secondTwiddle,
+                    secondShoup,
+                    context,
+                    out Vector512<uint> output1A,
+                    out Vector512<uint> output1B);
+                output1A.StoreUnsafe(ref valuesReference, (nuint)index1A);
+                output1B.StoreUnsafe(ref valuesReference, (nuint)index1B);
+
+                MultiplyShoupPairSameTwiddleAvx512(
+                    lowerDifferenceA,
+                    lowerDifferenceB,
+                    secondTwiddle,
+                    secondShoup,
+                    context,
+                    out Vector512<uint> output3A,
+                    out Vector512<uint> output3B);
+                output3A.StoreUnsafe(ref valuesReference, (nuint)index3A);
+                output3B.StoreUnsafe(ref valuesReference, (nuint)index3B);
+            }
+
+            // Odd group counts retain the exact accepted Phase-11 bounded
+            // schedule. This is also the only path for a one-group region.
+            for (;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int index0 = groupOffset + butterfly;
+                int index1 = index0 + quarterLength;
+                int index2 = index0 + halfLength;
+                int index3 = index2 + quarterLength;
+
+                Vector512<uint> value0 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0);
+                Vector512<uint> value2 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2);
+
+                Vector512<uint> topSum0 =
+                    AddModuloAvx512(value0, value2, context);
+                Vector512<uint> topDifference0 =
+                    SubtractModuloAvx512(value0, value2, context);
+                Vector512<uint> lower0 =
+                    MultiplyShoupAvx512(
+                        topDifference0, firstTwiddle0, firstShoup0, context);
+
+                Vector512<uint> value1 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index1);
+                Vector512<uint> value3 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3);
+
+                Vector512<uint> topSum1 =
+                    AddModuloAvx512(value1, value3, context);
+                Vector512<uint> topDifference1 =
+                    SubtractModuloAvx512(value1, value3, context);
+                Vector512<uint> lower1 =
+                    MultiplyShoupAvx512(
+                        topDifference1, firstTwiddle1, firstShoup1, context);
+
+                Vector512<uint> upperSum =
+                    AddModuloAvx512(topSum0, topSum1, context);
+                Vector512<uint> upperDifference =
+                    SubtractModuloAvx512(topSum0, topSum1, context);
+                Vector512<uint> lowerSum =
+                    AddModuloAvx512(lower0, lower1, context);
+                Vector512<uint> lowerDifference =
+                    SubtractModuloAvx512(lower0, lower1, context);
+
+                upperSum.StoreUnsafe(ref valuesReference, (nuint)index0);
+                lowerSum.StoreUnsafe(ref valuesReference, (nuint)index2);
+
+                Vector512<uint> output1 =
+                    MultiplyShoupAvx512(
+                        upperDifference, secondTwiddle, secondShoup, context);
+                output1.StoreUnsafe(ref valuesReference, (nuint)index1);
+
+                Vector512<uint> output3 =
+                    MultiplyShoupAvx512(
+                        lowerDifference, secondTwiddle, secondShoup, context);
+                output3.StoreUnsafe(ref valuesReference, (nuint)index3);
+            }
+        }
+
+        // Power-of-two L3 stage lengths are normally exact multiples of 16.
+        // Preserve a scalar tail for defensive reuse; production L2/L3 power-of-two
+        // stage lengths normally enter the 16-lane loop exactly.
+        for (; butterfly < quarterLength; butterfly++)
+        {
+            uint firstTwiddle0 =
+                twiddles[firstTwiddleOffset + butterfly];
+            uint firstTwiddle1 =
+                twiddles[firstTwiddleOffset + quarterLength + butterfly];
+            uint secondTwiddle =
+                twiddles[secondTwiddleOffset + butterfly];
+
+            for (int groupOffset = regionOffset;
+                 groupOffset < regionEnd;
+                 groupOffset += stageLength)
+            {
+                int index0 = groupOffset + butterfly;
+                int index1 = index0 + quarterLength;
+                int index2 = index0 + halfLength;
+                int index3 = index2 + quarterLength;
+
+                uint value0 = values[index0];
+                uint value1 = values[index1];
+                uint value2 = values[index2];
+                uint value3 = values[index3];
+
+                uint topSum0 = value0 + value2;
+                uint topSum1 = value1 + value3;
+                if (topSum0 >= modulus) topSum0 -= modulus;
+                if (topSum1 >= modulus) topSum1 -= modulus;
+
+                uint topDifference0 =
+                    value0 >= value2
+                        ? value0 - value2
+                        : value0 + modulus - value2;
+                uint topDifference1 =
+                    value1 >= value3
+                        ? value1 - value3
+                        : value1 + modulus - value3;
+
+                uint lower0 =
+                    MultiplyShoupScalar(
+                        topDifference0,
+                        firstTwiddle0,
+                        shoupTwiddles[firstTwiddleOffset + butterfly],
+                        modulus);
+                uint lower1 =
+                    MultiplyShoupScalar(
+                        topDifference1,
+                        firstTwiddle1,
+                        shoupTwiddles[firstTwiddleOffset + quarterLength + butterfly],
+                        modulus);
+
+                uint upperSum = topSum0 + topSum1;
+                if (upperSum >= modulus) upperSum -= modulus;
+                uint upperDifference =
+                    topSum0 >= topSum1
+                        ? topSum0 - topSum1
+                        : topSum0 + modulus - topSum1;
+
+                uint lowerSum = lower0 + lower1;
+                if (lowerSum >= modulus) lowerSum -= modulus;
+                uint lowerDifference =
+                    lower0 >= lower1
+                        ? lower0 - lower1
+                        : lower0 + modulus - lower1;
+
+                uint secondShoup =
+                    shoupTwiddles[secondTwiddleOffset + butterfly];
+
+                values[index0] = upperSum;
+                values[index1] =
+                    MultiplyShoupScalar(
+                        upperDifference, secondTwiddle, secondShoup, modulus);
+                values[index2] = lowerSum;
+                values[index3] =
+                    MultiplyShoupScalar(
+                        lowerDifference, secondTwiddle, secondShoup, modulus);
             }
         }
     }
@@ -9824,6 +11406,186 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Phase 11 AVX-512 specialization for the packed Inverse S=8/S=16 pair.
+    /// Four adjacent 16-value parents are packed into one ZMM, so the four DIT
+    /// butterflies from each parent fill all sixteen uint32 lanes.  The complete
+    /// two-stage chain stays register-resident until its four output streams are
+    /// ready, while the six twiddle/Shoup constants are broadcast once per L1
+    /// block.  AVX2 remains the defensive fallback for a short remainder.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStagePairRegionHalf4Avx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        in Avx512NttModContext context)
+    {
+        const int StageLength = 8;
+        const int HalfLength = 4;
+        const int ParentLength = StageLength * 2;
+        const int FourParentStride = ParentLength * 4;
+
+        int regionEnd = regionOffset + regionLength;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        Vector128<uint> firstTwiddleQuarter =
+            Vector128.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleOffset);
+        Vector128<uint> firstShoupQuarter =
+            Vector128.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleOffset);
+        Vector128<uint> secondTwiddle0Quarter =
+            Vector128.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleOffset);
+        Vector128<uint> secondShoup0Quarter =
+            Vector128.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleOffset);
+        Vector128<uint> secondTwiddle1Quarter =
+            Vector128.LoadUnsafe(
+                ref twiddleReference,
+                (nuint)(secondTwiddleOffset + HalfLength));
+        Vector128<uint> secondShoup1Quarter =
+            Vector128.LoadUnsafe(
+                ref shoupReference,
+                (nuint)(secondTwiddleOffset + HalfLength));
+
+        Vector512<uint> firstTwiddle = Vector512.Create(firstTwiddleQuarter);
+        Vector512<uint> firstShoup = Vector512.Create(firstShoupQuarter);
+        Vector512<uint> secondTwiddle0 = Vector512.Create(secondTwiddle0Quarter);
+        Vector512<uint> secondShoup0 = Vector512.Create(secondShoup0Quarter);
+        Vector512<uint> secondTwiddle1 = Vector512.Create(secondTwiddle1Quarter);
+        Vector512<uint> secondShoup1 = Vector512.Create(secondShoup1Quarter);
+
+        int parentOffset = regionOffset;
+
+        for (; parentOffset + FourParentStride <= regionEnd;
+             parentOffset += FourParentStride)
+        {
+            int parent1 = parentOffset + ParentLength;
+            int parent2 = parent1 + ParentLength;
+            int parent3 = parent2 + ParentLength;
+
+            Vector512<uint> value0 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    parentOffset,
+                    parent1,
+                    parent2,
+                    parent3);
+            Vector512<uint> value1 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    parentOffset + HalfLength,
+                    parent1 + HalfLength,
+                    parent2 + HalfLength,
+                    parent3 + HalfLength);
+
+            Vector512<uint> right0 =
+                MultiplyShoupAvx512(value1, firstTwiddle, firstShoup, context);
+            Vector512<uint> firstSum0 =
+                AddModuloAvx512(value0, right0, context);
+            Vector512<uint> firstDifference0 =
+                SubtractModuloAvx512(value0, right0, context);
+
+            Vector512<uint> value2 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    parentOffset + StageLength,
+                    parent1 + StageLength,
+                    parent2 + StageLength,
+                    parent3 + StageLength);
+            Vector512<uint> value3 =
+                LoadFourVector128AsVector512(
+                    ref valuesReference,
+                    parentOffset + StageLength + HalfLength,
+                    parent1 + StageLength + HalfLength,
+                    parent2 + StageLength + HalfLength,
+                    parent3 + StageLength + HalfLength);
+
+            Vector512<uint> right1 =
+                MultiplyShoupAvx512(value3, firstTwiddle, firstShoup, context);
+            Vector512<uint> firstSum1 =
+                AddModuloAvx512(value2, right1, context);
+            Vector512<uint> firstDifference1 =
+                SubtractModuloAvx512(value2, right1, context);
+
+            Vector512<uint> mergedRight0 =
+                MultiplyShoupAvx512(
+                    firstSum1, secondTwiddle0, secondShoup0, context);
+            Vector512<uint> finalSum0 =
+                AddModuloAvx512(firstSum0, mergedRight0, context);
+            Vector512<uint> finalDifference0 =
+                SubtractModuloAvx512(firstSum0, mergedRight0, context);
+
+            // Retire the even half before opening the odd second-stage chain.
+            // This bounded lifetime keeps the value-side live set modest even
+            // though Zen 5 exposes substantially more ZMM registers than AVX2.
+            StoreVector512AsFourVector128(
+                finalSum0,
+                ref valuesReference,
+                parentOffset,
+                parent1,
+                parent2,
+                parent3);
+            StoreVector512AsFourVector128(
+                finalDifference0,
+                ref valuesReference,
+                parentOffset + StageLength,
+                parent1 + StageLength,
+                parent2 + StageLength,
+                parent3 + StageLength);
+
+            Vector512<uint> mergedRight1 =
+                MultiplyShoupAvx512(
+                    firstDifference1,
+                    secondTwiddle1,
+                    secondShoup1,
+                    context);
+            Vector512<uint> finalSum1 =
+                AddModuloAvx512(firstDifference0, mergedRight1, context);
+            Vector512<uint> finalDifference1 =
+                SubtractModuloAvx512(firstDifference0, mergedRight1, context);
+
+            StoreVector512AsFourVector128(
+                finalSum1,
+                ref valuesReference,
+                parentOffset + HalfLength,
+                parent1 + HalfLength,
+                parent2 + HalfLength,
+                parent3 + HalfLength);
+            StoreVector512AsFourVector128(
+                finalDifference1,
+                ref valuesReference,
+                parentOffset + StageLength + HalfLength,
+                parent1 + StageLength + HalfLength,
+                parent2 + StageLength + HalfLength,
+                parent3 + StageLength + HalfLength);
+        }
+
+        if (parentOffset < regionEnd)
+        {
+            var avx2Context = new Avx2NttModContext(modulus);
+            ExecuteInverseCachedStagePairRegionHalf4Avx2(
+                values,
+                modulus,
+                twiddles,
+                shoupTwiddles,
+                firstTwiddleOffset,
+                secondTwiddleOffset,
+                parentOffset,
+                regionEnd - parentOffset,
+                avx2Context);
+        }
+    }
+
+    /// <summary>
     /// Twiddle-major cache-resident DIT stage-pair.  The first-stage twiddle
     /// and the two parent-stage twiddles (plus Shoup companions) are loaded
     /// once per AVX2 lane block and reused across every parent in the tile.
@@ -10031,6 +11793,196 @@ internal sealed class ParallelBigUnsigned
                     (uint)((ulong)firstSum1 * secondTwiddle0 % modulus);
                 uint mergedRight1 =
                     (uint)((ulong)firstDifference1 * secondTwiddle1 % modulus);
+
+                uint finalSum0 = firstSum0 + mergedRight0;
+                uint finalSum1 = firstDifference0 + mergedRight1;
+                if (finalSum0 >= modulus) finalSum0 -= modulus;
+                if (finalSum1 >= modulus) finalSum1 -= modulus;
+
+                values[index0] = finalSum0;
+                values[index1] = finalSum1;
+                values[index2] =
+                    firstSum0 >= mergedRight0
+                        ? firstSum0 - mergedRight0
+                        : firstSum0 + modulus - mergedRight0;
+                values[index3] =
+                    firstDifference0 >= mergedRight1
+                        ? firstDifference0 - mergedRight1
+                        : firstDifference0 + modulus - mergedRight1;
+            }
+        }
+    }
+
+    /// <summary>
+    /// AVX-512F counterpart of the accepted twiddle-major Inverse DIT
+    /// stage-pair. Phase 2 used it for L3; Phase 3 also reuses it for L2;
+    /// Phase 5 dispatches the larger Inverse L1 stage-pairs through the same
+    /// 16-lane kernel. The first child is completed before the second child is
+    /// loaded, and the completed even half is stored before the odd merge so
+    /// value-side live ranges remain bounded.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx512NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int parentLength = stageLength << 1;
+        int regionEnd = regionOffset + regionLength;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        int butterfly = 0;
+
+        for (; butterfly + 15 < halfLength; butterfly += 16)
+        {
+            int firstTwiddleIndex = firstTwiddleOffset + butterfly;
+            int secondTwiddleIndex0 = secondTwiddleOffset + butterfly;
+            int secondTwiddleIndex1 =
+                secondTwiddleOffset + halfLength + butterfly;
+
+            Vector512<uint> firstTwiddle =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex);
+            Vector512<uint> firstShoup =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex);
+            Vector512<uint> secondTwiddle0 =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex0);
+            Vector512<uint> secondShoup0 =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex0);
+            Vector512<uint> secondTwiddle1 =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex1);
+            Vector512<uint> secondShoup1 =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex1);
+
+            for (int parentOffset = regionOffset;
+                 parentOffset < regionEnd;
+                 parentOffset += parentLength)
+            {
+                int index0 = parentOffset + butterfly;
+                int index1 = index0 + halfLength;
+                int index2 = index0 + stageLength;
+                int index3 = index2 + halfLength;
+
+                Vector512<uint> value0 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0);
+                Vector512<uint> value1 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index1);
+
+                Vector512<uint> right0 =
+                    MultiplyShoupAvx512(
+                        value1, firstTwiddle, firstShoup, context);
+                Vector512<uint> firstSum0 =
+                    AddModuloAvx512(value0, right0, context);
+                Vector512<uint> firstDifference0 =
+                    SubtractModuloAvx512(value0, right0, context);
+
+                Vector512<uint> value2 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2);
+                Vector512<uint> value3 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3);
+
+                Vector512<uint> right1 =
+                    MultiplyShoupAvx512(
+                        value3, firstTwiddle, firstShoup, context);
+                Vector512<uint> firstSum1 =
+                    AddModuloAvx512(value2, right1, context);
+                Vector512<uint> firstDifference1 =
+                    SubtractModuloAvx512(value2, right1, context);
+
+                Vector512<uint> mergedRight0 =
+                    MultiplyShoupAvx512(
+                        firstSum1, secondTwiddle0, secondShoup0, context);
+                Vector512<uint> finalSum0 =
+                    AddModuloAvx512(firstSum0, mergedRight0, context);
+                Vector512<uint> finalDifference0 =
+                    SubtractModuloAvx512(firstSum0, mergedRight0, context);
+
+                finalSum0.StoreUnsafe(ref valuesReference, (nuint)index0);
+                finalDifference0.StoreUnsafe(ref valuesReference, (nuint)index2);
+
+                Vector512<uint> mergedRight1 =
+                    MultiplyShoupAvx512(
+                        firstDifference1,
+                        secondTwiddle1,
+                        secondShoup1,
+                        context);
+                Vector512<uint> finalSum1 =
+                    AddModuloAvx512(firstDifference0, mergedRight1, context);
+                Vector512<uint> finalDifference1 =
+                    SubtractModuloAvx512(firstDifference0, mergedRight1, context);
+
+                finalSum1.StoreUnsafe(ref valuesReference, (nuint)index1);
+                finalDifference1.StoreUnsafe(ref valuesReference, (nuint)index3);
+            }
+        }
+
+        for (; butterfly < halfLength; butterfly++)
+        {
+            uint firstTwiddle =
+                twiddles[firstTwiddleOffset + butterfly];
+            uint firstShoup =
+                shoupTwiddles[firstTwiddleOffset + butterfly];
+            uint secondTwiddle0 =
+                twiddles[secondTwiddleOffset + butterfly];
+            uint secondShoup0 =
+                shoupTwiddles[secondTwiddleOffset + butterfly];
+            uint secondTwiddle1 =
+                twiddles[secondTwiddleOffset + halfLength + butterfly];
+            uint secondShoup1 =
+                shoupTwiddles[secondTwiddleOffset + halfLength + butterfly];
+
+            for (int parentOffset = regionOffset;
+                 parentOffset < regionEnd;
+                 parentOffset += parentLength)
+            {
+                int index0 = parentOffset + butterfly;
+                int index1 = index0 + halfLength;
+                int index2 = index0 + stageLength;
+                int index3 = index2 + halfLength;
+
+                uint value0 = values[index0];
+                uint value1 = values[index1];
+                uint value2 = values[index2];
+                uint value3 = values[index3];
+
+                uint right0 =
+                    MultiplyShoupScalar(value1, firstTwiddle, firstShoup, modulus);
+                uint right1 =
+                    MultiplyShoupScalar(value3, firstTwiddle, firstShoup, modulus);
+
+                uint firstSum0 = value0 + right0;
+                uint firstSum1 = value2 + right1;
+                if (firstSum0 >= modulus) firstSum0 -= modulus;
+                if (firstSum1 >= modulus) firstSum1 -= modulus;
+
+                uint firstDifference0 =
+                    value0 >= right0
+                        ? value0 - right0
+                        : value0 + modulus - right0;
+                uint firstDifference1 =
+                    value2 >= right1
+                        ? value2 - right1
+                        : value2 + modulus - right1;
+
+                uint mergedRight0 =
+                    MultiplyShoupScalar(
+                        firstSum1, secondTwiddle0, secondShoup0, modulus);
+                uint mergedRight1 =
+                    MultiplyShoupScalar(
+                        firstDifference1, secondTwiddle1, secondShoup1, modulus);
 
                 uint finalSum0 = firstSum0 + mergedRight0;
                 uint finalSum1 = firstDifference0 + mergedRight1;
@@ -13878,6 +15830,16 @@ internal sealed class ParallelBigUnsigned
                 var context =
                     new Avx2NttModContext(modulus);
 
+                bool useAvx512Ntt =
+                    workers.UseAvx512Ntt &&
+                    Avx512F.IsSupported &&
+                    Vector512.IsHardwareAccelerated;
+
+                Avx512NttModContext avx512Context =
+                    useAvx512Ntt
+                        ? new Avx512NttModContext(modulus)
+                        : default;
+
                 for (int parentIndex = startParent;
                      parentIndex < endParent;
                      parentIndex++)
@@ -13902,15 +15864,30 @@ internal sealed class ParallelBigUnsigned
                     // kernel as its cache-resident descendants.  No extra
                     // twiddle allocation/build is introduced and parent
                     // ownership / worker partitioning remains unchanged.
-                    ExecuteForwardCachedDifGroupAvx2(
-                        values,
-                        modulus,
-                        twiddles,
-                        shoupTwiddles,
-                        bridgeTwiddleOffset,
-                        parentOffset,
-                        l3NttTileLength,
-                        context);
+                    if (useAvx512Ntt)
+                    {
+                        ExecuteForwardCachedDifGroupAvx512(
+                            values,
+                            modulus,
+                            twiddles,
+                            shoupTwiddles,
+                            bridgeTwiddleOffset,
+                            parentOffset,
+                            l3NttTileLength,
+                            avx512Context);
+                    }
+                    else
+                    {
+                        ExecuteForwardCachedDifGroupAvx2(
+                            values,
+                            modulus,
+                            twiddles,
+                            shoupTwiddles,
+                            bridgeTwiddleOffset,
+                            parentOffset,
+                            l3NttTileLength,
+                            context);
+                    }
 
                     localL3Ticks +=
                         Stopwatch.GetTimestamp() -
@@ -13952,11 +15929,22 @@ internal sealed class ParallelBigUnsigned
                                 // the accepted value-side bounded schedule here while
                                 // preserving the bridge stage itself on the exact cached
                                 // scalar path. Twiddle-major traversal is unchanged.
-                                ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
-                                    values, modulus, twiddles, shoupTwiddles,
-                                    firstTwiddleOffset, secondTwiddleOffset,
-                                    tileOffset, l3NttTileLength,
-                                    localStageLength, context);
+                                if (useAvx512Ntt)
+                                {
+                                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+                                        values, modulus, twiddles, shoupTwiddles,
+                                        firstTwiddleOffset, secondTwiddleOffset,
+                                        tileOffset, l3NttTileLength,
+                                        localStageLength, avx512Context);
+                                }
+                                else
+                                {
+                                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
+                                        values, modulus, twiddles, shoupTwiddles,
+                                        firstTwiddleOffset, secondTwiddleOffset,
+                                        tileOffset, l3NttTileLength,
+                                        localStageLength, context);
+                                }
 
                                 localStageLength >>= 1;
                                 continue;
@@ -13967,10 +15955,20 @@ internal sealed class ParallelBigUnsigned
                             int twiddleOffset =
                                 twiddlePlan.GetOffset(halfLength);
 
-                            ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
-                                values, modulus, twiddles, shoupTwiddles,
-                                twiddleOffset, tileOffset, l3NttTileLength,
-                                localStageLength, context);
+                            if (useAvx512Ntt)
+                            {
+                                ExecuteForwardCachedDifRegionTwiddleMajorAvx512(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    twiddleOffset, tileOffset, l3NttTileLength,
+                                    localStageLength, avx512Context);
+                            }
+                            else
+                            {
+                                ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    twiddleOffset, tileOffset, l3NttTileLength,
+                                    localStageLength, context);
+                            }
                         }
 
                         localL3Ticks +=
@@ -13985,6 +15983,7 @@ internal sealed class ParallelBigUnsigned
                                 values, modulus, twiddles, shoupTwiddles,
                                 twiddlePlan, fusedNttBlockLength,
                                 l2NttTileLength, l2TileOffset, context,
+                                useAvx512Ntt, avx512Context,
                                 out long l2Ticks, out long l1Ticks);
 
                             localL2Ticks += l2Ticks;
@@ -14070,6 +16069,16 @@ internal sealed class ParallelBigUnsigned
                     new Avx2NttModContext(
                         modulus);
 
+                bool useAvx512Ntt =
+                    workers.UseAvx512Ntt &&
+                    Avx512F.IsSupported &&
+                    Vector512.IsHardwareAccelerated;
+
+                Avx512NttModContext avx512Context =
+                    useAvx512Ntt
+                        ? new Avx512NttModContext(modulus)
+                        : default;
+
                 for (int tileIndex = startTile;
                      tileIndex < endTile;
                      tileIndex++)
@@ -14102,10 +16111,22 @@ internal sealed class ParallelBigUnsigned
                                 twiddlePlan.GetOffset(
                                     stageLength >> 2);
 
-                            ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
-                                values, modulus, twiddles, shoupTwiddles,
-                                firstTwiddleOffset, secondTwiddleOffset,
-                                tileOffset, l3NttTileLength, stageLength, context);
+                            if (useAvx512Ntt)
+                            {
+                                ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    firstTwiddleOffset, secondTwiddleOffset,
+                                    tileOffset, l3NttTileLength, stageLength,
+                                    avx512Context);
+                            }
+                            else
+                            {
+                                ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    firstTwiddleOffset, secondTwiddleOffset,
+                                    tileOffset, l3NttTileLength, stageLength,
+                                    context);
+                            }
 
                             stageLength >>= 1;
                             continue;
@@ -14114,20 +16135,31 @@ internal sealed class ParallelBigUnsigned
                         int halfLength = stageLength >> 1;
                         int twiddleOffset = twiddlePlan.GetOffset(halfLength);
 
-                        ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
-                            values, modulus, twiddles, shoupTwiddles,
-                            twiddleOffset, tileOffset, l3NttTileLength,
-                            stageLength, context);
+                        if (useAvx512Ntt)
+                        {
+                            ExecuteForwardCachedDifRegionTwiddleMajorAvx512(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddleOffset, tileOffset, l3NttTileLength,
+                                stageLength, avx512Context);
+                        }
+                        else
+                        {
+                            ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddleOffset, tileOffset, l3NttTileLength,
+                                stageLength, context);
+                        }
                     }
 
                     localL3Ticks +=
                         Stopwatch.GetTimestamp() -
                         l3Started;
 
-                    // Optimization under test: the worker/L3 scope already has
-                    // the Shoup table and vector modulus context, so pass both
-                    // directly to every L2 tile instead of redispatching AVX2
-                    // and rebuilding Vector256(modulus) once per tile.
+                    // The worker/L3 scope already owns both vector modulus
+                    // contexts. Pass them into every L2 tile so Phase 3 can
+                    // keep L2 stage-pairs wide and Phase 4 can reuse the same
+                    // context for the larger Forward L1 stage-pairs without
+                    // redispatching or rebuilding per-tile vector constants.
                     for (int l2TileOffset = tileOffset;
                          l2TileOffset < tileEnd;
                          l2TileOffset += l2NttTileLength)
@@ -14135,7 +16167,8 @@ internal sealed class ParallelBigUnsigned
                         ExecuteForwardL2TileSequentialAvx2Profiled(
                             values, modulus, twiddles, shoupTwiddles, twiddlePlan,
                             fusedNttBlockLength, l2NttTileLength, l2TileOffset,
-                            context, out long l2Ticks, out long l1Ticks);
+                            context, useAvx512Ntt, avx512Context,
+                            out long l2Ticks, out long l1Ticks);
 
                         localL2Ticks += l2Ticks;
                         localL1Ticks += l1Ticks;
@@ -14368,6 +16401,16 @@ internal sealed class ParallelBigUnsigned
                 var context =
                     new Avx2NttModContext(modulus);
 
+                bool useAvx512Ntt =
+                    workers.UseAvx512Ntt &&
+                    Avx512F.IsSupported &&
+                    Vector512.IsHardwareAccelerated;
+
+                Avx512NttModContext avx512Context =
+                    useAvx512Ntt
+                        ? new Avx512NttModContext(modulus)
+                        : default;
+
                 for (int tileIndex = startTile;
                      tileIndex < endTile;
                      tileIndex++)
@@ -14388,6 +16431,7 @@ internal sealed class ParallelBigUnsigned
                             values, modulus, twiddles, shoupTwiddles,
                             twiddlePlan, fusedNttBlockLength,
                             l2NttTileLength, l2TileOffset, context,
+                            useAvx512Ntt, avx512Context,
                             out long l1Ticks, out long l2Ticks,
                             out long l1Packed816Ticks,
                             out long l1GenericStagePairTicks,
@@ -14430,11 +16474,22 @@ internal sealed class ParallelBigUnsigned
                                 twiddlePlan.GetOffset(
                                     stageLength);
 
-                            ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
-                                values, modulus, twiddles, shoupTwiddles,
-                                firstTwiddleOffset, secondTwiddleOffset,
-                                tileOffset, l3NttTileLength, stageLength,
-                                context);
+                            if (useAvx512Ntt)
+                            {
+                                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    firstTwiddleOffset, secondTwiddleOffset,
+                                    tileOffset, l3NttTileLength, stageLength,
+                                    avx512Context);
+                            }
+                            else
+                            {
+                                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    firstTwiddleOffset, secondTwiddleOffset,
+                                    tileOffset, l3NttTileLength, stageLength,
+                                    context);
+                            }
 
                             stageLength <<= 1;
                             continue;
@@ -14447,10 +16502,20 @@ internal sealed class ParallelBigUnsigned
                             twiddlePlan.GetOffset(
                                 halfLength);
 
-                        ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
-                            values, modulus, twiddles, shoupTwiddles,
-                            twiddleOffset, tileOffset, l3NttTileLength,
-                            stageLength, context);
+                        if (useAvx512Ntt)
+                        {
+                            ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddleOffset, tileOffset, l3NttTileLength,
+                                stageLength, avx512Context);
+                        }
+                        else
+                        {
+                            ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                                values, modulus, twiddles, shoupTwiddles,
+                                twiddleOffset, tileOffset, l3NttTileLength,
+                                stageLength, context);
+                        }
                     }
 
                     localL3Ticks +=
@@ -14565,6 +16630,16 @@ internal sealed class ParallelBigUnsigned
                 var context =
                     new Avx2NttModContext(modulus);
 
+                bool useAvx512Ntt =
+                    workers.UseAvx512Ntt &&
+                    Avx512F.IsSupported &&
+                    Vector512.IsHardwareAccelerated;
+
+                Avx512NttModContext avx512Context =
+                    useAvx512Ntt
+                        ? new Avx512NttModContext(modulus)
+                        : default;
+
                 for (int parentIndex = startParent;
                      parentIndex < endParent;
                      parentIndex++)
@@ -14594,6 +16669,7 @@ internal sealed class ParallelBigUnsigned
                                 values, modulus, twiddles, shoupTwiddles,
                                 twiddlePlan, fusedNttBlockLength,
                                 l2NttTileLength, l2TileOffset, context,
+                                useAvx512Ntt, avx512Context,
                                 out long l1Ticks, out long l2Ticks,
                                 out long l1Packed816Ticks,
                                 out long l1GenericStagePairTicks,
@@ -14636,11 +16712,22 @@ internal sealed class ParallelBigUnsigned
                                     twiddlePlan.GetOffset(
                                         stageLength);
 
-                                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
-                                    values, modulus, twiddles, shoupTwiddles,
-                                    firstTwiddleOffset, secondTwiddleOffset,
-                                    tileOffset, l3NttTileLength, stageLength,
-                                    context);
+                                if (useAvx512Ntt)
+                                {
+                                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+                                        values, modulus, twiddles, shoupTwiddles,
+                                        firstTwiddleOffset, secondTwiddleOffset,
+                                        tileOffset, l3NttTileLength, stageLength,
+                                        avx512Context);
+                                }
+                                else
+                                {
+                                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                                        values, modulus, twiddles, shoupTwiddles,
+                                        firstTwiddleOffset, secondTwiddleOffset,
+                                        tileOffset, l3NttTileLength, stageLength,
+                                        context);
+                                }
 
                                 stageLength <<= 1;
                                 continue;
@@ -14653,10 +16740,20 @@ internal sealed class ParallelBigUnsigned
                                 twiddlePlan.GetOffset(
                                     halfLength);
 
-                            ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
-                                values, modulus, twiddles, shoupTwiddles,
-                                twiddleOffset, tileOffset, l3NttTileLength,
-                                stageLength, context);
+                            if (useAvx512Ntt)
+                            {
+                                ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    twiddleOffset, tileOffset, l3NttTileLength,
+                                    stageLength, avx512Context);
+                            }
+                            else
+                            {
+                                ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                                    values, modulus, twiddles, shoupTwiddles,
+                                    twiddleOffset, tileOffset, l3NttTileLength,
+                                    stageLength, context);
+                            }
                         }
 
                         localL3Ticks +=
@@ -14672,15 +16769,30 @@ internal sealed class ParallelBigUnsigned
                     long bridgeStarted =
                         Stopwatch.GetTimestamp();
 
-                    ExecuteInverseCachedDitGroupAvx2(
-                        values,
-                        modulus,
-                        twiddles,
-                        shoupTwiddles,
-                        bridgeTwiddleOffset,
-                        parentOffset,
-                        l3NttTileLength,
-                        context);
+                    if (useAvx512Ntt)
+                    {
+                        ExecuteInverseCachedDitGroupAvx512(
+                            values,
+                            modulus,
+                            twiddles,
+                            shoupTwiddles,
+                            bridgeTwiddleOffset,
+                            parentOffset,
+                            l3NttTileLength,
+                            avx512Context);
+                    }
+                    else
+                    {
+                        ExecuteInverseCachedDitGroupAvx2(
+                            values,
+                            modulus,
+                            twiddles,
+                            shoupTwiddles,
+                            bridgeTwiddleOffset,
+                            parentOffset,
+                            l3NttTileLength,
+                            context);
+                    }
 
                     localL3Ticks +=
                         Stopwatch.GetTimestamp() -
@@ -14794,6 +16906,16 @@ internal sealed class ParallelBigUnsigned
                 var context =
                     new Avx2NttModContext(modulus);
 
+                bool useAvx512Ntt =
+                    workers.UseAvx512Ntt &&
+                    Avx512F.IsSupported &&
+                    Vector512.IsHardwareAccelerated;
+
+                Avx512NttModContext avx512Context =
+                    useAvx512Ntt
+                        ? new Avx512NttModContext(modulus)
+                        : default;
+
                 for (int tileIndex = startTile;
                      tileIndex < endTile;
                      tileIndex++)
@@ -14806,6 +16928,7 @@ internal sealed class ParallelBigUnsigned
                         values, modulus, twiddles, shoupTwiddles,
                         twiddlePlan, fusedNttBlockLength,
                         l2NttTileLength, tileOffset, context,
+                        useAvx512Ntt, avx512Context,
                         out long l1Ticks, out long l2Ticks,
                         out long l1Packed816Ticks,
                         out long l1GenericStagePairTicks,
@@ -15044,6 +17167,8 @@ internal sealed class ParallelBigUnsigned
         int l2NttTileLength,
         int tileOffset,
         in Avx2NttModContext context,
+        bool useAvx512LocalStagePair,
+        in Avx512NttModContext avx512Context,
         out long l1Ticks,
         out long l2Ticks,
         out long l1Packed816Ticks,
@@ -15105,11 +17230,33 @@ internal sealed class ParallelBigUnsigned
                     long stagePairStarted =
                         Stopwatch.GetTimestamp();
 
-                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
-                        values, modulus, twiddles, shoupTwiddles,
-                        firstTwiddleOffset, secondTwiddleOffset,
-                        blockOffset, fusedNttBlockLength, stageLength,
-                        context);
+                    // Phase 11 extends Phase 5 to the packed 8+16 pair by
+                    // combining four independent 16-value parents in one ZMM.
+                    // Larger pairs keep the existing generic AVX-512 kernel;
+                    // the 8+16 pair uses its dedicated four-parent register pack.
+                    if (useAvx512LocalStagePair && stageLength >= 32)
+                    {
+                        ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, stageLength,
+                            avx512Context);
+                    }
+                    else if (useAvx512LocalStagePair && stageLength == 8)
+                    {
+                        ExecuteInverseCachedStagePairRegionHalf4Avx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, avx512Context);
+                    }
+                    else
+                    {
+                        ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, stageLength,
+                            context);
+                    }
 
                     long stagePairTicks =
                         Stopwatch.GetTimestamp() -
@@ -15137,10 +17284,23 @@ internal sealed class ParallelBigUnsigned
                 long singleStageStarted =
                     Stopwatch.GetTimestamp();
 
-                ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
-                    values, modulus, twiddles, shoupTwiddles,
-                    twiddleOffset, blockOffset, fusedNttBlockLength,
-                    stageLength, context);
+                // Normally the 4096-value L1 schedule is fully paired.
+                // Keep this residual branch AVX-512-capable for alternate
+                // fused block sizes, while preserving AVX2 for short tails.
+                if (useAvx512LocalStagePair && halfLength >= 16)
+                {
+                    ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
+                        values, modulus, twiddles, shoupTwiddles,
+                        twiddleOffset, blockOffset, fusedNttBlockLength,
+                        stageLength, avx512Context);
+                }
+                else
+                {
+                    ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                        values, modulus, twiddles, shoupTwiddles,
+                        twiddleOffset, blockOffset, fusedNttBlockLength,
+                        stageLength, context);
+                }
 
                 genericStagePairTicks +=
                     Stopwatch.GetTimestamp() -
@@ -15178,11 +17338,25 @@ internal sealed class ParallelBigUnsigned
                 int secondTwiddleOffset =
                     twiddlePlan.GetOffset(stageLength);
 
-                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
-                    values, modulus, twiddles, shoupTwiddles,
-                    firstTwiddleOffset, secondTwiddleOffset,
-                    tileOffset, l2NttTileLength, stageLength,
-                    context);
+                // Phase 3 widened the L2 stage-pair. Phase 5 also widens the
+                // larger L1 stage-pairs above, while this final unpaired L2 DIT
+                // stage still remains on the accepted AVX2 kernel.
+                if (useAvx512LocalStagePair)
+                {
+                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstTwiddleOffset, secondTwiddleOffset,
+                        tileOffset, l2NttTileLength, stageLength,
+                        avx512Context);
+                }
+                else
+                {
+                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstTwiddleOffset, secondTwiddleOffset,
+                        tileOffset, l2NttTileLength, stageLength,
+                        context);
+                }
 
                 stageLength <<= 1;
                 continue;
@@ -15192,10 +17366,23 @@ internal sealed class ParallelBigUnsigned
             int twiddleOffset =
                 twiddlePlan.GetOffset(halfLength);
 
-            ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
-                values, modulus, twiddles, shoupTwiddles,
-                twiddleOffset, tileOffset, l2NttTileLength,
-                stageLength, context);
+            // Phase 10 mirrors the Forward residual-stage policy for DIT:
+            // use one full 16-lane AVX-512 pass when possible and otherwise
+            // fall straight back to the accepted AVX2 implementation.
+            if (useAvx512LocalStagePair && halfLength >= 16)
+            {
+                ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
+                    values, modulus, twiddles, shoupTwiddles,
+                    twiddleOffset, tileOffset, l2NttTileLength,
+                    stageLength, avx512Context);
+            }
+            else
+            {
+                ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
+                    values, modulus, twiddles, shoupTwiddles,
+                    twiddleOffset, tileOffset, l2NttTileLength,
+                    stageLength, context);
+            }
         }
 
         l2Ticks =
@@ -15396,6 +17583,8 @@ internal sealed class ParallelBigUnsigned
         int l2NttTileLength,
         int tileOffset,
         in Avx2NttModContext context,
+        bool useAvx512LocalStagePair,
+        in Avx512NttModContext avx512Context,
         out long l2Ticks,
         out long l1Ticks)
     {
@@ -15414,14 +17603,24 @@ internal sealed class ParallelBigUnsigned
                 int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
                 int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
 
-                // L2 experiment: reuse the accepted bounded-register schedule
-                // while the complete parent tile is still cache-resident.  L3
-                // intentionally keeps the previous twiddle-major schedule so
-                // this change can be benchmarked in isolation.
-                ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
-                    values, modulus, twiddles, shoupTwiddles,
-                    firstTwiddleOffset, secondTwiddleOffset,
-                    tileOffset, l2NttTileLength, stageLength, context);
+                // Phase 3 keeps the L2 bounded-register stage-pair wide.
+                // Phase 4 reuses the same local AVX-512 gate for the larger
+                // Forward L1 pairs below; the final unpaired L2 stage remains
+                // AVX2 so its behavior is unchanged.
+                if (useAvx512LocalStagePair)
+                {
+                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstTwiddleOffset, secondTwiddleOffset,
+                        tileOffset, l2NttTileLength, stageLength, avx512Context);
+                }
+                else
+                {
+                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstTwiddleOffset, secondTwiddleOffset,
+                        tileOffset, l2NttTileLength, stageLength, context);
+                }
 
                 stageLength >>= 1;
                 continue;
@@ -15430,9 +17629,24 @@ internal sealed class ParallelBigUnsigned
             int halfLength = stageLength >> 1;
             int twiddleOffset = twiddlePlan.GetOffset(halfLength);
 
-            ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
-                values, modulus, twiddles, shoupTwiddles,
-                twiddleOffset, tileOffset, l2NttTileLength, stageLength, context);
+            // Phase 10: the paired L2 stages have already proved that the
+            // resident tile benefits from 16-lane AVX-512.  Widen the lone
+            // residual L2 DIF stage as well, but only when it has at least
+            // one full 16-residue half.  AVX2 remains the exact fallback.
+            if (useAvx512LocalStagePair && halfLength >= 16)
+            {
+                ExecuteForwardCachedDifRegionTwiddleMajorAvx512(
+                    values, modulus, twiddles, shoupTwiddles,
+                    twiddleOffset, tileOffset, l2NttTileLength, stageLength,
+                    avx512Context);
+            }
+            else
+            {
+                ExecuteForwardCachedDifRegionTwiddleMajorAvx2(
+                    values, modulus, twiddles, shoupTwiddles,
+                    twiddleOffset, tileOffset, l2NttTileLength, stageLength,
+                    context);
+            }
         }
 
         l2Ticks = Stopwatch.GetTimestamp() - l2Started;
@@ -15466,10 +17680,33 @@ internal sealed class ParallelBigUnsigned
                     int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
                     int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
 
-                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
-                        values, modulus, twiddles, shoupTwiddles,
-                        firstTwiddleOffset, secondTwiddleOffset,
-                        blockOffset, fusedNttBlockLength, stageLength, context);
+                    // Phase 11 keeps Phase 4's generic AVX-512 policy for
+                    // quarterLength >= 16 and adds one register-packed ZMM
+                    // specialization for the final 16+8 pair. Four independent
+                    // 16-value groups fill all sixteen lanes, so the former AVX2
+                    // packed path can be widened without entering a scalar tail.
+                    if (useAvx512LocalStagePair && stageLength >= 64)
+                    {
+                        ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, stageLength,
+                            avx512Context);
+                    }
+                    else if (useAvx512LocalStagePair && stageLength == 16)
+                    {
+                        ExecuteForwardCachedStagePairRegionQuarter4Avx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, avx512Context);
+                    }
+                    else
+                    {
+                        ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx2(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, stageLength, context);
+                    }
 
                     stageLength >>= 1;
                     continue;
@@ -17485,6 +19722,16 @@ internal sealed class ParallelBigUnsigned
                 long localL1Ticks = 0;
                 var context = new Avx2NttModContext(modulus);
 
+                bool useAvx512Ntt =
+                    workers.UseAvx512Ntt &&
+                    Avx512F.IsSupported &&
+                    Vector512.IsHardwareAccelerated;
+
+                Avx512NttModContext avx512Context =
+                    useAvx512Ntt
+                        ? new Avx512NttModContext(modulus)
+                        : default;
+
                 for (int tileIndex = startTile; tileIndex < endTile; tileIndex++)
                 {
                     int tileOffset = tileIndex * l2NttTileLength;
@@ -17492,6 +19739,7 @@ internal sealed class ParallelBigUnsigned
                     ExecuteForwardL2TileSequentialAvx2Profiled(
                         values, modulus, twiddles, shoupTwiddles, twiddlePlan,
                         fusedNttBlockLength, l2NttTileLength, tileOffset, context,
+                        useAvx512Ntt, avx512Context,
                         out long l2Ticks, out long l1Ticks);
 
                     localL2Ticks += l2Ticks;
@@ -20367,6 +22615,7 @@ internal sealed class ParallelBigUnsigned
 
         private readonly NttTwiddleBufferPool _bufferPool;
         private readonly bool _useAvx2Ntt;
+        private readonly bool _useAvx512Ntt;
 
         private NttTwiddlePlan? _firstPlan;
         private NttTwiddlePlan? _secondPlan;
@@ -20374,7 +22623,8 @@ internal sealed class ParallelBigUnsigned
 
         public SharedNttTwiddlePlans(
             NttTwiddleBufferPool bufferPool,
-            bool useAvx2Ntt)
+            bool useAvx2Ntt,
+            bool useAvx512Ntt = false)
         {
             _bufferPool =
                 bufferPool ??
@@ -20383,10 +22633,17 @@ internal sealed class ParallelBigUnsigned
 
             _useAvx2Ntt =
                 useAvx2Ntt;
+
+            _useAvx512Ntt =
+                useAvx2Ntt &&
+                useAvx512Ntt;
         }
 
         public bool UseAvx2Ntt =>
             _useAvx2Ntt;
+
+        public bool UseAvx512Ntt =>
+            _useAvx512Ntt;
 
         public NttTwiddlePlan Get(
             uint modulus)
@@ -20961,6 +23218,9 @@ internal sealed class ParallelBigUnsigned
 
         public bool UseAvx2Ntt =>
             _sharedNttTwiddlePlans.UseAvx2Ntt;
+
+        public bool UseAvx512Ntt =>
+            _sharedNttTwiddlePlans.UseAvx512Ntt;
 
         public long PersistentGenerationCount =>
             Interlocked.Read(

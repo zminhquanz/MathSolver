@@ -99,6 +99,8 @@ Detects hardware capabilities and exposes:
 
 **Usage policy**: the proven in-place DIF/DIT scalar kernel remains the exact fallback. For powers `<= 10,000,000`, Windows x86/x64 can optionally dispatch cached butterfly work to an AVX2 256-bit kernel when the shared **Hardware acceleration** switch is enabled and `Avx2.IsSupported` is true. The AVX2 path keeps the existing uint32 layout, L1/L2/L3 cache blocking and fused DIF/DIT traversal; cached twiddles gain uint32 Shoup companions so eight residue lanes can perform exact modular twiddle multiplication without scalar `%` in the vector body. Small tails and uncached/global edge stages retain the proven scalar arithmetic. Turning Hardware acceleration off does not allocate Shoup companion tables and follows the original scalar scheduling/arithmetic path. The memory-bounded `>10M` PersistentStatic engine deliberately remains scalar until the <=10M AVX2 experiment is benchmarked and accepted. SIMD production paths for Parabola evaluation and decimal TXT formatting remain unchanged. Benchmark SIMD mode selection does not select the production NTT backend; only the Hardware acceleration switch plus actual CPU capability does.
 
+**Experimental AVX-512 NTT Phase 4**: on Windows x86/x64 CPUs with `Avx512F` and hardware-accelerated `Vector512`, the same Hardware acceleration gate widens the accepted <=10M cached L3 bridge/single-stage path, L3 bounded stage-pairs, L2 bounded stage-pairs, and now the larger Forward L1 bounded stage-pairs to 16 uint32 lanes. Forward L1 pairs with stage length 32/16 and the fused radix-4/radix-2 tail remain on the accepted AVX2/scalar-Shoup path; all Inverse L1 kernels remain AVX2 so the Phase-4 A/B test is Forward-only. `PowMemoryBounded()` (>10M) explicitly disables this AVX-512 experiment and remains on the accepted AVX2 large-mode path.
+
 ---
 
 ## UI Architecture
@@ -550,3 +552,33 @@ The correctness-fixed 2×L3 bridge remains unchanged: the bridge stage itself st
 
 ## 2026-08-28 – Combined Inverse L1 Profiler + 2×L3 Bridge
 Combines the Inverse L1 substage profiler with the Inverse 2×L3 bridge experiment on top of the accepted Combined i7 checkpoint. The bridge remains scalar/cached at 2×L3 while descendants use the existing AVX2/Shoup kernels.
+
+### <=10M AVX-512 Phase 5 — Inverse L1 bounded stage-pairs (2026-09-04)
+
+Starting from the accepted Phase-4 checkpoint, the larger cache-resident Inverse DIT L1 stage-pairs now reuse the existing 16-lane AVX-512 twiddle-major stage-pair kernel already validated in L3/L2. The small packed `8+16` pair remains AVX2; only `stageLength >= 32` is widened, which guarantees at least 16 independent `halfLength` lanes for the AVX-512 helper. The fused length-2/length-4 tail, L2 final single stage, global stages, CRT/carry, 24-worker topology, twiddle/Shoup layout, buffer pools, and >10M AVX2-only policy are unchanged. No additional large workspace is allocated.
+
+### <=10M AVX-512 Phase 8 — CRT constant-Shoup reconstruction (2026-09-04)
+
+Starting again from the accepted Phase-5 checkpoint (Phase 6/7 are not carried forward), the two-prime CRT reconstruction now has an optional AVX-512DQ path. `FirstModulusInverseInSecond` is invariant for every coefficient, so one exact 32-bit Shoup companion is computed once and reused across sixteen residues per iteration. P1 residues are reduced into P2 with branch-free AVX-512 reductions, the CRT difference uses the existing AVX-512 modular subtraction, and the constant inverse multiply reuses the exact 16-lane Shoup helper. The resulting multipliers are widened in two eight-lane halves and combined with P1 using `VPMULLQ`, writing directly into the existing bounded CRT scratch. The carry normalization pass, NTT L3/L2/L1 kernels, global NTT stages, worker topology, primes, buffer pools, and memory layout are unchanged. The path is gated by `workers.UseAvx512Ntt && Avx512DQ.IsSupported`; CPUs without AVX-512DQ and all >10M `PowMemoryBounded()` work retain the Phase-5 scalar CRT path. No coefficient-sized companion table or new persistent workspace is introduced.
+
+### <=10M AVX-512 Phase 10 — residual local single-stage widening (2026-09-04)
+
+Starting from the accepted Phase-8 checkpoint, the only additional AVX-512 work is the residual/unpaired cache-resident single stage at the L2 boundary. Forward DIF and Inverse DIT dispatch this stage to the existing 16-lane cached AVX-512 single-stage helper when `halfLength >= 16`; otherwise they retain the accepted AVX2 implementation. The rare alternate-topology Inverse L1 residual single stage follows the same guard. Phase-9 pointwise Barrett is not carried forward. Global stages, packed small L1 kernels, radix tails, CRT Phase-8 constant-Shoup, 24-worker topology, memory layout, and the >10M AVX2-only path remain unchanged.
+
+AVX-512 IFMA52 is tracked separately as a future modular-arithmetic experiment. The current .NET 10 application uses only public managed intrinsics; no native shim, unsafe instruction emission, or unsupported IFMA API is introduced by Phase 10.
+
+## AVX-512 NTT Phase 11 (experimental)
+
+Phase 11 keeps the accepted Phase-10 <=10M architecture and widens only the
+packed smallest L1 stage-pairs by packing four independent 16-value
+blocks/parents into one Vector512. The arithmetic remains the current 31-bit
+Shoup representation; no IFMA/52-bit representation is introduced. AVX2
+remains the exact fallback and >10M remains AVX-512-disabled.
+
+### <=10M AVX-512 Phase 14 — Forward dual-group ILP without cross-lane fusion (2026-09-04)
+
+Starting from the accepted Phase-11 checkpoint, the generic Forward DIF AVX-512 bounded stage-pair keeps two independent resident groups in flight at once while reusing the same six twiddle/Shoup vectors. The groups never share or permute lanes: there is no VPSHUFD/VPERMI2D and no additional value-buffer traffic. The purpose is to expose two independent Shoup dependency chains to Zen 5 while using the larger ZMM register file only for instruction-level parallelism. Odd residual groups execute the exact Phase-11 bounded schedule; one-group regions are unchanged. Inverse NTT, packed small-L1 kernels, CRT Phase-8 path, global/pointwise paths, worker topology, memory layout, AVX2 fallback, and >10M AVX2-only policy are unchanged.
+
+### <=10M AVX-512 Phase 15 — Forward dual-group Shoup software pipeline (2026-09-04)
+
+Starting from accepted Phase 14, corresponding Shoup multiplications for the two resident Forward DIF groups are explicitly software-pipelined inside one AVX-512 helper. The helper issues the two independent VPMULUDQ product/quotient chains before consuming either result and shares the shifted odd twiddle/Shoup constants. Lane layout and value-buffer traffic remain unchanged; no cross-lane permutation, new workspace, IFMA/52-bit emulation, or global-path change is introduced. The AVX2 implementation and dispatch remain exactly the Phase-14 fallback, and >10M remains AVX-512-disabled.
