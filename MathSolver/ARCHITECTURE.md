@@ -582,3 +582,15 @@ Starting from the accepted Phase-11 checkpoint, the generic Forward DIF AVX-512 
 ### <=10M AVX-512 Phase 15 — Forward dual-group Shoup software pipeline (2026-09-04)
 
 Starting from accepted Phase 14, corresponding Shoup multiplications for the two resident Forward DIF groups are explicitly software-pipelined inside one AVX-512 helper. The helper issues the two independent VPMULUDQ product/quotient chains before consuming either result and shares the shifted odd twiddle/Shoup constants. Lane layout and value-buffer traffic remain unchanged; no cross-lane permutation, new workspace, IFMA/52-bit emulation, or global-path change is introduced. The AVX2 implementation and dispatch remain exactly the Phase-14 fallback, and >10M remains AVX-512-disabled.
+
+### <=10M AVX-512 Phase 16 — Inverse Shoup software pipeline (2026-09-05)
+
+Starting from accepted Phase 15, the generic cache-resident Inverse DIT AVX-512 stage-pair now software-pipelines the two independent Shoup chains already present inside one parent. The first DIT stage reuses the same-twiddle paired AVX-512 helper for `value1` and `value3`; the second DIT stage uses a new different-twiddle paired AVX-512 helper for `firstSum1` and `firstDifference1`. Corresponding VPMULUDQ product/quotient chains are issued before either result is consumed, while parent layout, lane layout and value-buffer traffic remain unchanged. The experiment does not batch multiple parents, add cross-lane permutations, or alter the packed small-L1 `8+16` path. Forward Phase 15 is retained unchanged. AVX2 helpers/dispatch remain the exact fallback, >10M remains AVX-512-disabled, and no new workspace, IFMA/52-bit emulation, pointer arithmetic, unsafe block, or `Unsafe.Add` is introduced.
+
+### <=10M AVX-512 Phase 17 — bounded Inverse dual-parent ILP (2026-09-05)
+
+Starting from the accepted Phase-16 Inverse Shoup software-pipeline, sufficiently large Inverse DIT stage-pairs (`stageLength >= 128`) may keep two adjacent parents in flight. Four same-twiddle first-stage Shoup chains and four two-row second-stage Shoup chains are opened together, then each parent is retired promptly. The smallest 32+64 pair, one-parent regions, and odd residual parents use the exact Phase-16 schedule. No cross-lane permutation, extra coefficient buffer, AVX2 dispatch change, or >10M AVX-512 enablement is introduced.
+
+### <=10M AVX-512 Phase 18 — Global dual-lane constant-modulus retune (2026-09-05)
+
+Starting from Phase 17, the Forward global-uncached fused DIF stage-pair keeps the existing scalar two-lane `root^2/root^4` recurrence and the same worker segmentation, but AVX-512-enabled <=10M teams now dispatch through the already-existing `FirstModulus`/`SecondModulus` specialized helpers for all eligible global-uncached pairs. This exposes the fixed NTT primes to RyuJIT so runtime-modulus divisions can be strength-reduced without adding a global Shoup stream, vector micro-cache, extra value pass, or workspace. AVX2 fallback, >10M policy, local AVX-512 kernels, CRT, pointwise, primes and RAM layout remain unchanged.

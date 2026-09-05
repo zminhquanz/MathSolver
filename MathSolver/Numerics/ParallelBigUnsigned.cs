@@ -7669,6 +7669,406 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Phase 16 AVX-512 software-pipelined Shoup multiply for two independent
+    /// value vectors that use different twiddle/Shoup vectors. This is used
+    /// only by the AVX-512 Inverse DIT stage-pair: both independent VPMULUDQ
+    /// dependency chains are issued before either result is consumed. The
+    /// arithmetic and lane layout are identical to two scalar helper calls;
+    /// AVX2 dispatch and helpers are untouched.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void MultiplyShoupPairDifferentTwiddleAvx512(
+        Vector512<uint> firstValue,
+        Vector512<uint> secondValue,
+        Vector512<uint> firstTwiddle,
+        Vector512<uint> secondTwiddle,
+        Vector512<uint> firstShoup,
+        Vector512<uint> secondShoup,
+        in Avx512NttModContext context,
+        out Vector512<uint> firstResult,
+        out Vector512<uint> secondResult)
+    {
+        Vector512<ulong> firstProductEven =
+            Avx512F.Multiply(
+                firstValue,
+                firstTwiddle);
+        Vector512<ulong> secondProductEven =
+            Avx512F.Multiply(
+                secondValue,
+                secondTwiddle);
+
+        Vector512<ulong> firstQuotientEven =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    firstValue,
+                    firstShoup),
+                32);
+        Vector512<ulong> secondQuotientEven =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    secondValue,
+                    secondShoup),
+                32);
+
+        Vector512<ulong> firstQuotientTimesModulusEven =
+            Avx512F.Multiply(
+                firstQuotientEven.AsUInt32(),
+                context.Modulus);
+        Vector512<ulong> secondQuotientTimesModulusEven =
+            Avx512F.Multiply(
+                secondQuotientEven.AsUInt32(),
+                context.Modulus);
+
+        Vector512<ulong> firstRemainderEven =
+            Vector512.Subtract(
+                firstProductEven,
+                firstQuotientTimesModulusEven);
+        Vector512<ulong> secondRemainderEven =
+            Vector512.Subtract(
+                secondProductEven,
+                secondQuotientTimesModulusEven);
+
+        Vector512<uint> firstOddValues =
+            Avx512F.ShiftRightLogical(
+                    firstValue.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> secondOddValues =
+            Avx512F.ShiftRightLogical(
+                    secondValue.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> firstOddTwiddle =
+            Avx512F.ShiftRightLogical(
+                    firstTwiddle.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> secondOddTwiddle =
+            Avx512F.ShiftRightLogical(
+                    secondTwiddle.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> firstOddShoup =
+            Avx512F.ShiftRightLogical(
+                    firstShoup.AsUInt64(),
+                    32)
+                .AsUInt32();
+        Vector512<uint> secondOddShoup =
+            Avx512F.ShiftRightLogical(
+                    secondShoup.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<ulong> firstProductOdd =
+            Avx512F.Multiply(
+                firstOddValues,
+                firstOddTwiddle);
+        Vector512<ulong> secondProductOdd =
+            Avx512F.Multiply(
+                secondOddValues,
+                secondOddTwiddle);
+
+        Vector512<ulong> firstQuotientOdd =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    firstOddValues,
+                    firstOddShoup),
+                32);
+        Vector512<ulong> secondQuotientOdd =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    secondOddValues,
+                    secondOddShoup),
+                32);
+
+        Vector512<ulong> firstQuotientTimesModulusOdd =
+            Avx512F.Multiply(
+                firstQuotientOdd.AsUInt32(),
+                context.Modulus);
+        Vector512<ulong> secondQuotientTimesModulusOdd =
+            Avx512F.Multiply(
+                secondQuotientOdd.AsUInt32(),
+                context.Modulus);
+
+        Vector512<ulong> firstRemainderOdd =
+            Vector512.Subtract(
+                firstProductOdd,
+                firstQuotientTimesModulusOdd);
+        Vector512<ulong> secondRemainderOdd =
+            Vector512.Subtract(
+                secondProductOdd,
+                secondQuotientTimesModulusOdd);
+
+        Vector512<uint> firstPacked =
+            Vector512.BitwiseOr(
+                firstRemainderEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(
+                        firstRemainderOdd,
+                        32)
+                    .AsUInt32());
+        Vector512<uint> secondPacked =
+            Vector512.BitwiseOr(
+                secondRemainderEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(
+                        secondRemainderOdd,
+                        32)
+                    .AsUInt32());
+
+        firstResult =
+            ReduceOnceAvx512(
+                firstPacked,
+                context);
+        secondResult =
+            ReduceOnceAvx512(
+                secondPacked,
+                context);
+    }
+
+
+    /// <summary>
+    /// Phase 17 bounded dual-parent ILP helper. Four independent residues from
+    /// two Inverse parents share one twiddle/Shoup vector. The matching even
+    /// and odd VPMULUDQ chains are opened together so Zen 5 can overlap more
+    /// multiply latency than the Phase-16 two-chain helper without changing
+    /// lane layout or touching the AVX2 fallback.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void MultiplyShoupQuadSameTwiddleAvx512(
+        Vector512<uint> value0,
+        Vector512<uint> value1,
+        Vector512<uint> value2,
+        Vector512<uint> value3,
+        Vector512<uint> twiddle,
+        Vector512<uint> shoup,
+        in Avx512NttModContext context,
+        out Vector512<uint> result0,
+        out Vector512<uint> result1,
+        out Vector512<uint> result2,
+        out Vector512<uint> result3)
+    {
+        Vector512<ulong> productEven0 = Avx512F.Multiply(value0, twiddle);
+        Vector512<ulong> productEven1 = Avx512F.Multiply(value1, twiddle);
+        Vector512<ulong> productEven2 = Avx512F.Multiply(value2, twiddle);
+        Vector512<ulong> productEven3 = Avx512F.Multiply(value3, twiddle);
+
+        Vector512<ulong> quotientEven0 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value0, shoup), 32);
+        Vector512<ulong> quotientEven1 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value1, shoup), 32);
+        Vector512<ulong> quotientEven2 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value2, shoup), 32);
+        Vector512<ulong> quotientEven3 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value3, shoup), 32);
+
+        Vector512<ulong> remainderEven0 =
+            Vector512.Subtract(
+                productEven0,
+                Avx512F.Multiply(quotientEven0.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderEven1 =
+            Vector512.Subtract(
+                productEven1,
+                Avx512F.Multiply(quotientEven1.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderEven2 =
+            Vector512.Subtract(
+                productEven2,
+                Avx512F.Multiply(quotientEven2.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderEven3 =
+            Vector512.Subtract(
+                productEven3,
+                Avx512F.Multiply(quotientEven3.AsUInt32(), context.Modulus));
+
+        Vector512<uint> oddValue0 =
+            Avx512F.ShiftRightLogical(value0.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddValue1 =
+            Avx512F.ShiftRightLogical(value1.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddValue2 =
+            Avx512F.ShiftRightLogical(value2.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddValue3 =
+            Avx512F.ShiftRightLogical(value3.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddTwiddle =
+            Avx512F.ShiftRightLogical(twiddle.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddShoup =
+            Avx512F.ShiftRightLogical(shoup.AsUInt64(), 32).AsUInt32();
+
+        Vector512<ulong> productOdd0 = Avx512F.Multiply(oddValue0, oddTwiddle);
+        Vector512<ulong> productOdd1 = Avx512F.Multiply(oddValue1, oddTwiddle);
+        Vector512<ulong> productOdd2 = Avx512F.Multiply(oddValue2, oddTwiddle);
+        Vector512<ulong> productOdd3 = Avx512F.Multiply(oddValue3, oddTwiddle);
+
+        Vector512<ulong> quotientOdd0 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue0, oddShoup), 32);
+        Vector512<ulong> quotientOdd1 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue1, oddShoup), 32);
+        Vector512<ulong> quotientOdd2 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue2, oddShoup), 32);
+        Vector512<ulong> quotientOdd3 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue3, oddShoup), 32);
+
+        Vector512<ulong> remainderOdd0 =
+            Vector512.Subtract(
+                productOdd0,
+                Avx512F.Multiply(quotientOdd0.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderOdd1 =
+            Vector512.Subtract(
+                productOdd1,
+                Avx512F.Multiply(quotientOdd1.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderOdd2 =
+            Vector512.Subtract(
+                productOdd2,
+                Avx512F.Multiply(quotientOdd2.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderOdd3 =
+            Vector512.Subtract(
+                productOdd3,
+                Avx512F.Multiply(quotientOdd3.AsUInt32(), context.Modulus));
+
+        Vector512<uint> packed0 =
+            Vector512.BitwiseOr(
+                remainderEven0.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd0, 32).AsUInt32());
+        Vector512<uint> packed1 =
+            Vector512.BitwiseOr(
+                remainderEven1.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd1, 32).AsUInt32());
+        Vector512<uint> packed2 =
+            Vector512.BitwiseOr(
+                remainderEven2.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd2, 32).AsUInt32());
+        Vector512<uint> packed3 =
+            Vector512.BitwiseOr(
+                remainderEven3.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd3, 32).AsUInt32());
+
+        result0 = ReduceOnceAvx512(packed0, context);
+        result1 = ReduceOnceAvx512(packed1, context);
+        result2 = ReduceOnceAvx512(packed2, context);
+        result3 = ReduceOnceAvx512(packed3, context);
+    }
+
+    /// <summary>
+    /// Phase 17 second-stage companion for two Inverse parents. Inputs 0/2 use
+    /// twiddle row 0 and inputs 1/3 use row 1. Opening all four independent
+    /// Shoup chains together increases ILP while retaining the exact Phase-16
+    /// arithmetic and avoiding any cross-lane permutation.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void MultiplyShoupQuadTwoTwiddleAvx512(
+        Vector512<uint> value0,
+        Vector512<uint> value1,
+        Vector512<uint> value2,
+        Vector512<uint> value3,
+        Vector512<uint> twiddle0,
+        Vector512<uint> twiddle1,
+        Vector512<uint> shoup0,
+        Vector512<uint> shoup1,
+        in Avx512NttModContext context,
+        out Vector512<uint> result0,
+        out Vector512<uint> result1,
+        out Vector512<uint> result2,
+        out Vector512<uint> result3)
+    {
+        Vector512<ulong> productEven0 = Avx512F.Multiply(value0, twiddle0);
+        Vector512<ulong> productEven1 = Avx512F.Multiply(value1, twiddle1);
+        Vector512<ulong> productEven2 = Avx512F.Multiply(value2, twiddle0);
+        Vector512<ulong> productEven3 = Avx512F.Multiply(value3, twiddle1);
+
+        Vector512<ulong> quotientEven0 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value0, shoup0), 32);
+        Vector512<ulong> quotientEven1 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value1, shoup1), 32);
+        Vector512<ulong> quotientEven2 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value2, shoup0), 32);
+        Vector512<ulong> quotientEven3 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value3, shoup1), 32);
+
+        Vector512<ulong> remainderEven0 =
+            Vector512.Subtract(
+                productEven0,
+                Avx512F.Multiply(quotientEven0.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderEven1 =
+            Vector512.Subtract(
+                productEven1,
+                Avx512F.Multiply(quotientEven1.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderEven2 =
+            Vector512.Subtract(
+                productEven2,
+                Avx512F.Multiply(quotientEven2.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderEven3 =
+            Vector512.Subtract(
+                productEven3,
+                Avx512F.Multiply(quotientEven3.AsUInt32(), context.Modulus));
+
+        Vector512<uint> oddValue0 =
+            Avx512F.ShiftRightLogical(value0.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddValue1 =
+            Avx512F.ShiftRightLogical(value1.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddValue2 =
+            Avx512F.ShiftRightLogical(value2.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddValue3 =
+            Avx512F.ShiftRightLogical(value3.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddTwiddle0 =
+            Avx512F.ShiftRightLogical(twiddle0.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddTwiddle1 =
+            Avx512F.ShiftRightLogical(twiddle1.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddShoup0 =
+            Avx512F.ShiftRightLogical(shoup0.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddShoup1 =
+            Avx512F.ShiftRightLogical(shoup1.AsUInt64(), 32).AsUInt32();
+
+        Vector512<ulong> productOdd0 = Avx512F.Multiply(oddValue0, oddTwiddle0);
+        Vector512<ulong> productOdd1 = Avx512F.Multiply(oddValue1, oddTwiddle1);
+        Vector512<ulong> productOdd2 = Avx512F.Multiply(oddValue2, oddTwiddle0);
+        Vector512<ulong> productOdd3 = Avx512F.Multiply(oddValue3, oddTwiddle1);
+
+        Vector512<ulong> quotientOdd0 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue0, oddShoup0), 32);
+        Vector512<ulong> quotientOdd1 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue1, oddShoup1), 32);
+        Vector512<ulong> quotientOdd2 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue2, oddShoup0), 32);
+        Vector512<ulong> quotientOdd3 =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue3, oddShoup1), 32);
+
+        Vector512<ulong> remainderOdd0 =
+            Vector512.Subtract(
+                productOdd0,
+                Avx512F.Multiply(quotientOdd0.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderOdd1 =
+            Vector512.Subtract(
+                productOdd1,
+                Avx512F.Multiply(quotientOdd1.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderOdd2 =
+            Vector512.Subtract(
+                productOdd2,
+                Avx512F.Multiply(quotientOdd2.AsUInt32(), context.Modulus));
+        Vector512<ulong> remainderOdd3 =
+            Vector512.Subtract(
+                productOdd3,
+                Avx512F.Multiply(quotientOdd3.AsUInt32(), context.Modulus));
+
+        Vector512<uint> packed0 =
+            Vector512.BitwiseOr(
+                remainderEven0.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd0, 32).AsUInt32());
+        Vector512<uint> packed1 =
+            Vector512.BitwiseOr(
+                remainderEven1.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd1, 32).AsUInt32());
+        Vector512<uint> packed2 =
+            Vector512.BitwiseOr(
+                remainderEven2.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd2, 32).AsUInt32());
+        Vector512<uint> packed3 =
+            Vector512.BitwiseOr(
+                remainderEven3.AsUInt32(),
+                Avx512F.ShiftLeftLogical(remainderOdd3, 32).AsUInt32());
+
+        result0 = ReduceOnceAvx512(packed0, context);
+        result1 = ReduceOnceAvx512(packed1, context);
+        result2 = ReduceOnceAvx512(packed2, context);
+        result3 = ReduceOnceAvx512(packed3, context);
+    }
+
+    /// <summary>
     /// Phase 8 CRT reconstruction kernel. The only modular multiply in the
     /// two-prime CRT step uses the same constant inverse for every coefficient,
     /// so one exact Shoup companion is enough for the whole pass. On AVX-512DQ
@@ -11817,9 +12217,10 @@ internal sealed class ParallelBigUnsigned
     /// AVX-512F counterpart of the accepted twiddle-major Inverse DIT
     /// stage-pair. Phase 2 used it for L3; Phase 3 also reuses it for L2;
     /// Phase 5 dispatches the larger Inverse L1 stage-pairs through the same
-    /// 16-lane kernel. The first child is completed before the second child is
-    /// loaded, and the completed even half is stored before the odd merge so
-    /// value-side live ranges remain bounded.
+    /// 16-lane kernel. Phase 16 software-pipelines the two independent Shoup
+    /// chains inside one parent. Phase 17 additionally keeps two sufficiently
+    /// large parents in flight together, exposing four independent multiply
+    /// chains while preserving lane layout and the exact Phase-16 fallback.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
@@ -11867,65 +12268,185 @@ internal sealed class ParallelBigUnsigned
             Vector512<uint> secondShoup1 =
                 Vector512.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex1);
 
+            // Phase 17 is deliberately bounded. The smallest 32+64 pair stays
+            // on the proven Phase-16 single-parent schedule, while stageLength
+            // >= 128 can pair adjacent parents when the resident region exposes
+            // at least two of them. This targets the larger L1/L2/L3 work where
+            // multiply latency is more likely to dominate and avoids paying a
+            // four-chain register footprint on the smallest pair.
+            bool useDualParentIlp =
+                stageLength >= 128 &&
+                regionLength >= (parentLength << 1);
+
             for (int parentOffset = regionOffset;
-                 parentOffset < regionEnd;
-                 parentOffset += parentLength)
+                 parentOffset < regionEnd;)
             {
+                if (useDualParentIlp &&
+                    parentOffset + parentLength < regionEnd)
+                {
+                    int nextParentOffset = parentOffset + parentLength;
+
+                    int index0A = parentOffset + butterfly;
+                    int index1A = index0A + halfLength;
+                    int index2A = index0A + stageLength;
+                    int index3A = index2A + halfLength;
+
+                    int index0B = nextParentOffset + butterfly;
+                    int index1B = index0B + halfLength;
+                    int index2B = index0B + stageLength;
+                    int index3B = index2B + halfLength;
+
+                    // Open the two right streams from both parents first. Four
+                    // independent Shoup chains now share one twiddle row and can
+                    // overlap before either parent's left-side arithmetic starts.
+                    Vector512<uint> value1A =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index1A);
+                    Vector512<uint> value3A =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index3A);
+                    Vector512<uint> value1B =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index1B);
+                    Vector512<uint> value3B =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index3B);
+
+                    MultiplyShoupQuadSameTwiddleAvx512(
+                        value1A,
+                        value3A,
+                        value1B,
+                        value3B,
+                        firstTwiddle,
+                        firstShoup,
+                        context,
+                        out Vector512<uint> right0A,
+                        out Vector512<uint> right1A,
+                        out Vector512<uint> right0B,
+                        out Vector512<uint> right1B);
+
+                    Vector512<uint> value0A =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index0A);
+                    Vector512<uint> value2A =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index2A);
+                    Vector512<uint> value0B =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index0B);
+                    Vector512<uint> value2B =
+                        Vector512.LoadUnsafe(ref valuesReference, (nuint)index2B);
+
+                    Vector512<uint> firstSum0A =
+                        AddModuloAvx512(value0A, right0A, context);
+                    Vector512<uint> firstDifference0A =
+                        SubtractModuloAvx512(value0A, right0A, context);
+                    Vector512<uint> firstSum1A =
+                        AddModuloAvx512(value2A, right1A, context);
+                    Vector512<uint> firstDifference1A =
+                        SubtractModuloAvx512(value2A, right1A, context);
+
+                    Vector512<uint> firstSum0B =
+                        AddModuloAvx512(value0B, right0B, context);
+                    Vector512<uint> firstDifference0B =
+                        SubtractModuloAvx512(value0B, right0B, context);
+                    Vector512<uint> firstSum1B =
+                        AddModuloAvx512(value2B, right1B, context);
+                    Vector512<uint> firstDifference1B =
+                        SubtractModuloAvx512(value2B, right1B, context);
+
+                    // Second-stage rows are identical across adjacent parents,
+                    // so the two parent merges form another four-chain window.
+                    MultiplyShoupQuadTwoTwiddleAvx512(
+                        firstSum1A,
+                        firstDifference1A,
+                        firstSum1B,
+                        firstDifference1B,
+                        secondTwiddle0,
+                        secondTwiddle1,
+                        secondShoup0,
+                        secondShoup1,
+                        context,
+                        out Vector512<uint> mergedRight0A,
+                        out Vector512<uint> mergedRight1A,
+                        out Vector512<uint> mergedRight0B,
+                        out Vector512<uint> mergedRight1B);
+
+                    // Retire parent A completely before materializing parent B's
+                    // final sums/differences. This bounds the post-pipeline live
+                    // set and gives the JIT more freedom to reuse ZMM registers.
+                    AddModuloAvx512(firstSum0A, mergedRight0A, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index0A);
+                    SubtractModuloAvx512(firstSum0A, mergedRight0A, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index2A);
+                    AddModuloAvx512(firstDifference0A, mergedRight1A, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index1A);
+                    SubtractModuloAvx512(firstDifference0A, mergedRight1A, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index3A);
+
+                    AddModuloAvx512(firstSum0B, mergedRight0B, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index0B);
+                    SubtractModuloAvx512(firstSum0B, mergedRight0B, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index2B);
+                    AddModuloAvx512(firstDifference0B, mergedRight1B, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index1B);
+                    SubtractModuloAvx512(firstDifference0B, mergedRight1B, context)
+                        .StoreUnsafe(ref valuesReference, (nuint)index3B);
+
+                    parentOffset += parentLength << 1;
+                    continue;
+                }
+
+                // Exact Phase-16 fallback: one parent, two Shoup chains at a
+                // time. It covers the small 32+64 pair, one-parent regions and
+                // any odd residual parent after the dual-parent loop.
                 int index0 = parentOffset + butterfly;
                 int index1 = index0 + halfLength;
                 int index2 = index0 + stageLength;
                 int index3 = index2 + halfLength;
 
-                Vector512<uint> value0 =
-                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0);
                 Vector512<uint> value1 =
                     Vector512.LoadUnsafe(ref valuesReference, (nuint)index1);
+                Vector512<uint> value3 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3);
 
-                Vector512<uint> right0 =
-                    MultiplyShoupAvx512(
-                        value1, firstTwiddle, firstShoup, context);
+                MultiplyShoupPairSameTwiddleAvx512(
+                    value1,
+                    value3,
+                    firstTwiddle,
+                    firstShoup,
+                    context,
+                    out Vector512<uint> right0,
+                    out Vector512<uint> right1);
+
+                Vector512<uint> value0 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0);
+                Vector512<uint> value2 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2);
+
                 Vector512<uint> firstSum0 =
                     AddModuloAvx512(value0, right0, context);
                 Vector512<uint> firstDifference0 =
                     SubtractModuloAvx512(value0, right0, context);
-
-                Vector512<uint> value2 =
-                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2);
-                Vector512<uint> value3 =
-                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3);
-
-                Vector512<uint> right1 =
-                    MultiplyShoupAvx512(
-                        value3, firstTwiddle, firstShoup, context);
                 Vector512<uint> firstSum1 =
                     AddModuloAvx512(value2, right1, context);
                 Vector512<uint> firstDifference1 =
                     SubtractModuloAvx512(value2, right1, context);
 
-                Vector512<uint> mergedRight0 =
-                    MultiplyShoupAvx512(
-                        firstSum1, secondTwiddle0, secondShoup0, context);
-                Vector512<uint> finalSum0 =
-                    AddModuloAvx512(firstSum0, mergedRight0, context);
-                Vector512<uint> finalDifference0 =
-                    SubtractModuloAvx512(firstSum0, mergedRight0, context);
+                MultiplyShoupPairDifferentTwiddleAvx512(
+                    firstSum1,
+                    firstDifference1,
+                    secondTwiddle0,
+                    secondTwiddle1,
+                    secondShoup0,
+                    secondShoup1,
+                    context,
+                    out Vector512<uint> mergedRight0,
+                    out Vector512<uint> mergedRight1);
 
-                finalSum0.StoreUnsafe(ref valuesReference, (nuint)index0);
-                finalDifference0.StoreUnsafe(ref valuesReference, (nuint)index2);
+                AddModuloAvx512(firstSum0, mergedRight0, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index0);
+                SubtractModuloAvx512(firstSum0, mergedRight0, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index2);
+                AddModuloAvx512(firstDifference0, mergedRight1, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index1);
+                SubtractModuloAvx512(firstDifference0, mergedRight1, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index3);
 
-                Vector512<uint> mergedRight1 =
-                    MultiplyShoupAvx512(
-                        firstDifference1,
-                        secondTwiddle1,
-                        secondShoup1,
-                        context);
-                Vector512<uint> finalSum1 =
-                    AddModuloAvx512(firstDifference0, mergedRight1, context);
-                Vector512<uint> finalDifference1 =
-                    SubtractModuloAvx512(firstDifference0, mergedRight1, context);
-
-                finalSum1.StoreUnsafe(ref valuesReference, (nuint)index1);
-                finalDifference1.StoreUnsafe(ref valuesReference, (nuint)index3);
+                parentOffset += parentLength;
             }
         }
 
@@ -13066,25 +13587,32 @@ internal sealed class ParallelBigUnsigned
                 groupCount,
                 workers.WorkerCount);
 
-        // i7-8700 100M profiler: after balancing the cached global stages, the
-        // dominant Forward-uncached pair is N=2^26, DIF S=2^24 + 2^23.  Its
-        // existing 4 groups x 3 slices already maps perfectly to 12 logical
-        // workers, so further partitioning would only add scheduler/ModPow
-        // overhead.  The remaining cost is the scalar modular arithmetic.
+        // Phase 18 retunes the already-proven global dual-lane recurrence for
+        // the <=10M AVX-512 path without vectorizing the DRAM-sized value pass.
+        // The two NTT primes are compile-time constants, so use the existing
+        // prime-specialized dual-lane helpers whenever AVX-512 NTT is enabled.
+        // This lets RyuJIT strength-reduce every `% modulus` in the recurrence
+        // and butterfly products while preserving the exact root^2/root^4
+        // dependency-breaking schedule, worker partitioning, memory traffic,
+        // and stage boundaries.  AVX2 fallback is deliberately untouched.
         //
-        // Both NTT moduli are compile-time constants.  For this measured hot
-        // pair only, dispatch to prime-specific scalar kernels so RyuJIT sees
-        // every `% modulus` as `% constant` and can strength-reduce division.
-        // Memory traversal, twiddle recurrence, fused DIF equations, worker
-        // count and stage barriers remain byte-for-byte equivalent in shape to
-        // the generic dual-lane kernel.  Keep this specialization narrow until
-        // the 100M A/B benchmark proves it on Coffee Lake.
-        bool useConstantModulusHotKernel =
+        // Keep the previously measured Coffee-Lake 100M specialization too:
+        // that path remains valid even though >10M does not enable AVX-512.
+        bool useAvx512ConstantModulusDualLane =
+            workers.UseAvx512Ntt &&
+            (modulus == FirstModulus ||
+             modulus == SecondModulus);
+
+        bool useLegacyConstantModulusHotKernel =
             values.Length == (1 << 26) &&
             stageLength == (1 << 24) &&
             groupCount == 4 &&
             segmentsPerGroup == 3 &&
             workers.WorkerCount == 12;
+
+        bool useConstantModulusHotKernel =
+            useAvx512ConstantModulusDualLane ||
+            useLegacyConstantModulusHotKernel;
 
         ExecuteRanges(
             checked(groupCount * segmentsPerGroup),
