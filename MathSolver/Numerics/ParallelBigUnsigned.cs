@@ -10955,6 +10955,222 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Phase 21 specialization for the exact two-sibling top-L3 region exposed
+    /// immediately below the 2xL3 bridge.  Phase 19 proved that keeping the two
+    /// siblings in flight is beneficial, while Phase 20 showed that extending
+    /// second-stage ILP to four simultaneous Shoup chains increases register
+    /// pressure enough to regress.  This variant therefore pipelines only the
+    /// two corresponding first-stage Shoup chains across siblings, then retires
+    /// sibling A completely before sibling B during the second stage.
+    ///
+    /// The helper is deliberately shape-specific: regionLength must equal
+    /// 2*stageLength and quarterLength must be an exact Vector512 lane multiple.
+    /// Any defensive/non-production shape falls back to the accepted generic
+    /// Phase-19 bounded helper.  AVX2 dispatch is never routed here.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairL3SiblingEarlyRetireAvx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx512NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int quarterLength = halfLength >> 1;
+
+        // Production L3 is a power of two and comfortably wider than 16 lanes.
+        // Keep the specialization exact so no mixed schedule can be produced.
+        if (regionLength != (stageLength << 1) ||
+            quarterLength < 16 ||
+            (quarterLength & 15) != 0)
+        {
+            ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+                values, modulus, twiddles, shoupTwiddles,
+                firstTwiddleOffset, secondTwiddleOffset,
+                regionOffset, regionLength, stageLength, context);
+            return;
+        }
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        int groupOffsetA = regionOffset;
+        int groupOffsetB = regionOffset + stageLength;
+
+        for (int butterfly = 0;
+             butterfly < quarterLength;
+             butterfly += 16)
+        {
+            int firstTwiddleIndex0 = firstTwiddleOffset + butterfly;
+            int firstTwiddleIndex1 =
+                firstTwiddleOffset + quarterLength + butterfly;
+            int secondTwiddleIndex = secondTwiddleOffset + butterfly;
+
+            Vector512<uint> firstTwiddle0 =
+                Vector512.LoadUnsafe(
+                    ref twiddleReference,
+                    (nuint)firstTwiddleIndex0);
+            Vector512<uint> firstShoup0 =
+                Vector512.LoadUnsafe(
+                    ref shoupReference,
+                    (nuint)firstTwiddleIndex0);
+            Vector512<uint> firstTwiddle1 =
+                Vector512.LoadUnsafe(
+                    ref twiddleReference,
+                    (nuint)firstTwiddleIndex1);
+            Vector512<uint> firstShoup1 =
+                Vector512.LoadUnsafe(
+                    ref shoupReference,
+                    (nuint)firstTwiddleIndex1);
+            Vector512<uint> secondTwiddle =
+                Vector512.LoadUnsafe(
+                    ref twiddleReference,
+                    (nuint)secondTwiddleIndex);
+            Vector512<uint> secondShoup =
+                Vector512.LoadUnsafe(
+                    ref shoupReference,
+                    (nuint)secondTwiddleIndex);
+
+            int index0A = groupOffsetA + butterfly;
+            int index1A = index0A + quarterLength;
+            int index2A = index0A + halfLength;
+            int index3A = index2A + quarterLength;
+
+            int index0B = groupOffsetB + butterfly;
+            int index1B = index0B + quarterLength;
+            int index2B = index0B + halfLength;
+            int index3B = index2B + quarterLength;
+
+            // Quarter 0: preserve the Phase-15/19 two-chain software pipeline.
+            Vector512<uint> value0A =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index0A);
+            Vector512<uint> value2A =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index2A);
+            Vector512<uint> topSum0A =
+                AddModuloAvx512(value0A, value2A, context);
+            Vector512<uint> topDifference0A =
+                SubtractModuloAvx512(value0A, value2A, context);
+
+            Vector512<uint> value0B =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index0B);
+            Vector512<uint> value2B =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index2B);
+            Vector512<uint> topSum0B =
+                AddModuloAvx512(value0B, value2B, context);
+            Vector512<uint> topDifference0B =
+                SubtractModuloAvx512(value0B, value2B, context);
+
+            MultiplyShoupPairSameTwiddleAvx512(
+                topDifference0A,
+                topDifference0B,
+                firstTwiddle0,
+                firstShoup0,
+                context,
+                out Vector512<uint> lower0A,
+                out Vector512<uint> lower0B);
+
+            // Quarter 1: same bounded two-chain pipeline.
+            Vector512<uint> value1A =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index1A);
+            Vector512<uint> value3A =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index3A);
+            Vector512<uint> topSum1A =
+                AddModuloAvx512(value1A, value3A, context);
+            Vector512<uint> topDifference1A =
+                SubtractModuloAvx512(value1A, value3A, context);
+
+            Vector512<uint> value1B =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index1B);
+            Vector512<uint> value3B =
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index3B);
+            Vector512<uint> topSum1B =
+                AddModuloAvx512(value1B, value3B, context);
+            Vector512<uint> topDifference1B =
+                SubtractModuloAvx512(value1B, value3B, context);
+
+            MultiplyShoupPairSameTwiddleAvx512(
+                topDifference1A,
+                topDifference1B,
+                firstTwiddle1,
+                firstShoup1,
+                context,
+                out Vector512<uint> lower1A,
+                out Vector512<uint> lower1B);
+
+            // Phase 21: do not keep both siblings' second-stage difference
+            // chains live together. Retire A completely using the proven
+            // single-vector Shoup helper, then consume B. This preserves the
+            // useful first-stage sibling ILP while shortening the peak ZMM
+            // lifetime that Phase 20 made worse.
+            Vector512<uint> upperSumA =
+                AddModuloAvx512(topSum0A, topSum1A, context);
+            Vector512<uint> upperDifferenceA =
+                SubtractModuloAvx512(topSum0A, topSum1A, context);
+            Vector512<uint> lowerSumA =
+                AddModuloAvx512(lower0A, lower1A, context);
+            Vector512<uint> lowerDifferenceA =
+                SubtractModuloAvx512(lower0A, lower1A, context);
+
+            upperSumA.StoreUnsafe(ref valuesReference, (nuint)index0A);
+            lowerSumA.StoreUnsafe(ref valuesReference, (nuint)index2A);
+
+            Vector512<uint> output1A =
+                MultiplyShoupAvx512(
+                    upperDifferenceA,
+                    secondTwiddle,
+                    secondShoup,
+                    context);
+            output1A.StoreUnsafe(ref valuesReference, (nuint)index1A);
+
+            Vector512<uint> output3A =
+                MultiplyShoupAvx512(
+                    lowerDifferenceA,
+                    secondTwiddle,
+                    secondShoup,
+                    context);
+            output3A.StoreUnsafe(ref valuesReference, (nuint)index3A);
+
+            Vector512<uint> upperSumB =
+                AddModuloAvx512(topSum0B, topSum1B, context);
+            Vector512<uint> upperDifferenceB =
+                SubtractModuloAvx512(topSum0B, topSum1B, context);
+            Vector512<uint> lowerSumB =
+                AddModuloAvx512(lower0B, lower1B, context);
+            Vector512<uint> lowerDifferenceB =
+                SubtractModuloAvx512(lower0B, lower1B, context);
+
+            upperSumB.StoreUnsafe(ref valuesReference, (nuint)index0B);
+            lowerSumB.StoreUnsafe(ref valuesReference, (nuint)index2B);
+
+            Vector512<uint> output1B =
+                MultiplyShoupAvx512(
+                    upperDifferenceB,
+                    secondTwiddle,
+                    secondShoup,
+                    context);
+            output1B.StoreUnsafe(ref valuesReference, (nuint)index1B);
+
+            Vector512<uint> output3B =
+                MultiplyShoupAvx512(
+                    lowerDifferenceB,
+                    secondTwiddle,
+                    secondShoup,
+                    context);
+            output3B.StoreUnsafe(ref valuesReference, (nuint)index3B);
+        }
+    }
+
+    /// <summary>
     /// AVX-512F counterpart of the accepted bounded-register Forward DIF
     /// stage-pair. Phase 2 used it for L3, Phase 3 reused it for L2, and
     /// Phase 4 also dispatches it for the larger Forward L1 pairs. Six
@@ -16421,6 +16637,48 @@ internal sealed class ParallelBigUnsigned
                         Stopwatch.GetTimestamp() -
                         bridgeStarted;
 
+                    // Phase 19: retest the old rejected L3 scheduling idea on
+                    // the AVX-512 path only, but use the larger ZMM register
+                    // file instead of reviving the AVX2 schedule. The two L3
+                    // children produced by this 2xL3 bridge are two adjacent,
+                    // independent groups for the top L3 stage-pair. Executing
+                    // that pair across the complete parent lets the accepted
+                    // Phase-15 dual-group Shoup software pipeline keep both
+                    // siblings in flight and reuse the same six twiddle/Shoup
+                    // vectors. There is no cross-lane permutation or extra
+                    // value-buffer pass. AVX2 deliberately keeps the exact
+                    // Phase-18 per-child traversal below.
+                    int l3SecondStageLength =
+                        l3NttTileLength >> 1;
+
+                    bool useAvx512L3SiblingTopPair =
+                        useAvx512Ntt &&
+                        l3NttTileLength >= 32 &&
+                        l3SecondStageLength > l2NttTileLength;
+
+                    if (useAvx512L3SiblingTopPair)
+                    {
+                        int firstTwiddleOffset =
+                            twiddlePlan.GetOffset(
+                                l3NttTileLength >> 1);
+                        int secondTwiddleOffset =
+                            twiddlePlan.GetOffset(
+                                l3NttTileLength >> 2);
+
+                        long siblingPairStarted =
+                            Stopwatch.GetTimestamp();
+
+                        ExecuteForwardCachedStagePairL3SiblingEarlyRetireAvx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            parentOffset, parentLength,
+                            l3NttTileLength, avx512Context);
+
+                        localL3Ticks +=
+                            Stopwatch.GetTimestamp() -
+                            siblingPairStarted;
+                    }
+
                     for (int child = 0;
                          child < 2;
                          child++)
@@ -16435,7 +16693,16 @@ internal sealed class ParallelBigUnsigned
                         long l3Started =
                             Stopwatch.GetTimestamp();
 
-                        for (int localStageLength = l3NttTileLength;
+                        // If Phase 19 consumed the top L3 pair across both
+                        // bridge siblings, continue each child at S/4. The
+                        // AVX2 path and every non-eligible AVX-512 topology
+                        // still start at S exactly as Phase 18 did.
+                        int initialLocalStageLength =
+                            useAvx512L3SiblingTopPair
+                                ? l3NttTileLength >> 2
+                                : l3NttTileLength;
+
+                        for (int localStageLength = initialLocalStageLength;
                              localStageLength > l2NttTileLength;
                              localStageLength >>= 1)
                         {

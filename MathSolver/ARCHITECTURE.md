@@ -594,3 +594,12 @@ Starting from the accepted Phase-16 Inverse Shoup software-pipeline, sufficientl
 ### <=10M AVX-512 Phase 18 — Global dual-lane constant-modulus retune (2026-09-05)
 
 Starting from Phase 17, the Forward global-uncached fused DIF stage-pair keeps the existing scalar two-lane `root^2/root^4` recurrence and the same worker segmentation, but AVX-512-enabled <=10M teams now dispatch through the already-existing `FirstModulus`/`SecondModulus` specialized helpers for all eligible global-uncached pairs. This exposes the fixed NTT primes to RyuJIT so runtime-modulus divisions can be strength-reduced without adding a global Shoup stream, vector micro-cache, extra value pass, or workspace. AVX2 fallback, >10M policy, local AVX-512 kernels, CRT, pointwise, primes and RAM layout remain unchanged.
+
+### <=10M AVX-512 Phase 19 — Forward L3 sibling-pair ILP retest (2026-09-05)
+
+Starting from accepted Phase 18, the Forward 2xL3 bridge traversal now lets the AVX-512 path execute the top L3 stage-pair across both bridge children in one region. The two children are independent groups with identical twiddle rows, so the existing Phase-15 dual-group Shoup software-pipeline can keep both sibling groups in flight and reuse the same six twiddle/Shoup ZMM vectors. After consuming `L3 + L3/2`, each child resumes at `L3/4`; the AVX2 fallback retains the exact Phase-18 per-child schedule. No cross-lane permutation, extra value-buffer pass, workspace, global-path change, Inverse change, >10M AVX-512 enablement, or IFMA/52-bit dependency is introduced.
+
+
+### <=10M AVX-512 Phase 21 — Forward L3 sibling early-retire ILP (2026-09-06)
+
+Starting from accepted Phase 19 and explicitly excluding rejected Phase 20, the exact two-sibling top-L3 AVX-512 region keeps Phase-19 first-stage dual-group Shoup software-pipelining but retires sibling A completely before running sibling B's second-stage Shoup multiplies. This shortens peak ZMM lifetimes without changing lane layout or memory traffic. The specialization is limited to the 2xL3 bridge shape; AVX2 fallback, Inverse Phase 17, Global Forward Phase 18, CRT/pointwise, worker topology, RAM policy and >10M AVX-512-off behavior are unchanged.
