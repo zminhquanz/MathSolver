@@ -611,3 +611,19 @@ Starting directly from accepted Phase 21, all Phase 22–25 Barrett/Montgomery/I
 ### Hardware Information — CPU instruction extension reporting (2026-09-06)
 
 Phase 26 remains the accepted <=10M AVX-512 NTT/CRT compute checkpoint. This UI-only follow-up expands the Hardware Information instruction row from the small benchmark-oriented SIMD subset to a CPU-Z-like CPUID capability list on x86/x64: SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, SSE4A, x86-64, AES, AVX, AVX2, AVX-VNNI, AVX-512, FMA3 and SHA when supported. MMX is deliberately omitted as legacy. Android ARM capability discovery and all calculation/benchmark dispatch remain unchanged.
+
+### <=10M AVX-512 Phase 27 — AVX-512F prime-structured pointwise reduction (2026-09-06)
+
+Starting from the accepted Phase-26 checkpoint, the first extension-isolated arithmetic retest uses AVX-512F only. The Phase-26 two-Vector512 pointwise window is retained, but full 16-lane blocks replace scalar UInt64 `% prime` with exact VPMULUDQ reduction specialized to the two production NTT primes (`15*2^27+1` and `7*2^26+1`). The quotient is derived by exact small-constant division of the high product chunk and can only be exact or one high, so one borrow-based `+p` correction finishes the residue. No AVX-512DQ, generic Barrett high64 reconstruction, Montgomery domain, floating reciprocal, masking experiment from Phase 22–25, IFMA/52-bit representation, new buffer, AVX2 dispatch change, or >10M AVX-512 enablement is introduced. Hardware Information CPU-extension reporting from the latest Phase-26 source is retained unchanged.
+
+### <=10M AVX-512 Phase 28 — DQ-assisted prime pointwise reduction (2026-09-06)
+
+Starting from accepted Phase 27, the dual-vector pointwise schedule and prime-specialized AVX-512F quotient reducers are retained.  The only new arithmetic is the final exact quotient-times-modulus product: when `Avx512DQ.IsSupported`, the qword quotient lanes use `VPMULLQ`/`Avx512DQ.MultiplyLow`; otherwise the exact Phase-27 `VPMULUDQ` path remains.  Since `q*p < p^2 < 2^62` for both NTT primes, low64 is the full product.  This phase does not widen product formation to qword lanes and does not introduce IFMA, Montgomery/Barrett representation changes, additional buffers, AVX2 changes or >10M AVX-512 enablement.
+
+### <=10M AVX-512 Phase 29 — CRT DQ low/high dual-chain ILP (2026-09-06)
+
+Starting from accepted Phase 28, the AVX-512DQ CRT reconstruction keeps the existing constant-Shoup multiplier but schedules the low and high eight-qword reconstruction halves together: both widened multiplier halves issue their independent `VPMULLQ` operations before either result is consumed. This exposes two independent DQ dependency chains while keeping memory traffic, scratch usage, residue representation, pointwise Phase-28 path, NTT kernels, AVX2 fallback and >10M AVX-512-off policy unchanged.
+
+### <=10M AVX-512 Phase 30 — VL 256-bit CRT quad-chain reconstruction (2026-09-06)
+
+Starting from accepted Phase 29, the CRT residue reduction, constant-Shoup multiplier, 512-bit widening, scratch layout and worker partition remain unchanged. On CPUs where `Avx512DQ.VL.IsSupported`, each widened eight-qword CRT half is split into two four-qword YMM halves and the final `multiplier * FirstModulus` reconstruction uses four independent `Avx512DQ.VL.MultiplyLow` / 256-bit `VPMULLQ` chains before add/store retirement. This isolates AVX-512VL as a width/scheduling experiment while retaining the exact Phase-29 512-bit DQ path as fallback. Pointwise Phase 28/27 arithmetic, Forward/Inverse NTT kernels, AVX2 fallback, memory topology and >10M AVX-512-off policy are unchanged.

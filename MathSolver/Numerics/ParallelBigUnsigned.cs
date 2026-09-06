@@ -4499,17 +4499,14 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Phase 26 pointwise experiment.  The accepted Phase-21 arithmetic stays
-    /// exact and unchanged: every residue is still computed with UInt64
-    /// multiplication followed by the normal `% prime`.  The only AVX-512
-    /// experiment is scheduling.  On the <=10M AVX-512 path, two independent
-    /// 16-residue windows (2 x Vector512<uint>.Count) are kept in flight and
-    /// the two fixed NTT primes are exposed as compile-time constants.  RyuJIT
-    /// can therefore strength-reduce the constant remainder and the core can
-    /// overlap independent multiply/reduction chains without introducing a
-    /// Barrett/Montgomery reducer, mask correction, IFMA, companion stream or
-    /// extra workspace.  Every AVX2/non-AVX-512 configuration executes the
-    /// literal Phase-21 scalar loop below.
+    /// Phase 28 AVX-512DQ follow-up, starting from the accepted Phase-27
+    /// AVX-512F prime-specialized pointwise checkpoint.  Product formation and
+    /// prime-specific quotient generation stay byte-for-byte Phase 27.  Only
+    /// the final q*p operation inside each 64-bit reducer is allowed to use
+    /// AVX-512DQ VPMULLQ when supported; AVX-512F remains the exact fallback.
+    /// No Barrett-high64 reconstruction, Montgomery domain, IFMA, floating
+    /// reciprocal, companion stream or extra workspace is introduced.
+    /// AVX2/non-AVX-512 execution remains unchanged.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool CanUsePointwiseDualVectorIlp(
@@ -4517,6 +4514,7 @@ internal sealed class ParallelBigUnsigned
         uint modulus)
     {
         return workers.UseAvx512Ntt &&
+               Avx512F.IsSupported &&
                Vector512.IsHardwareAccelerated &&
                (modulus == FirstModulus ||
                 modulus == SecondModulus);
@@ -4592,6 +4590,290 @@ internal sealed class ParallelBigUnsigned
             });
     }
 
+    // Phase 28 retains the Phase-27 AVX-512F prime reducer and selectively uses
+    // AVX-512DQ only for the final exact qword q*p products. The production NTT
+    // primes have the exact
+    // shapes
+    //
+    //   FirstModulus  = 15 * 2^27 + 1
+    //   SecondModulus =  7 * 2^26 + 1
+    //
+    // For x = a*b < p^2, write x = h*2^m + l and q0 = floor(h/k).
+    // Then x - q0*(k*2^m+1) is always in (-p,p), so q0 is either the exact
+    // quotient or one too high.  One borrow correction therefore produces the
+    // exact residue.  The only nontrivial step is exact division of h by the
+    // small constants 15/7; both are implemented with 32-bit VPMULUDQ magic
+    // division plus shifts/adds.  This avoids generic Barrett high64 and any
+    // Montgomery representation change.
+    private static readonly Vector512<ulong> PointwiseLow32MaskAvx512F =
+        Vector512.Create((ulong)uint.MaxValue);
+
+    private static readonly Vector512<ulong> PointwiseOneU64Avx512F =
+        Vector512.Create(1UL);
+
+    private static readonly Vector512<uint> FirstPointwiseModulusU32Avx512F =
+        Vector512.Create(FirstModulus);
+
+    private static readonly Vector512<ulong> FirstPointwiseModulusU64Avx512F =
+        Vector512.Create((ulong)FirstModulus);
+
+    // floor(n / 15) = (n * 0x88888889) >> 35 for every uint32 n.
+    private static readonly Vector512<uint> Divide15MagicAvx512F =
+        Vector512.Create(0x8888_8889u);
+
+    // floor(2^32 / 15).  If h = H*2^32 + L, 2^32 = 15*Q + 1, so
+    // floor(h/15) = H*Q + floor((L+H)/15).
+    private static readonly Vector512<uint> Divide15HighScaleAvx512F =
+        Vector512.Create(0x1111_1111u);
+
+    private static readonly Vector512<uint> SecondPointwiseModulusU32Avx512F =
+        Vector512.Create(SecondModulus);
+
+    private static readonly Vector512<ulong> SecondPointwiseModulusU64Avx512F =
+        Vector512.Create((ulong)SecondModulus);
+
+    // libdivide-style uint32 / 7 magic.  q0 = high32(n*M), then
+    // q = (q0 + ((n-q0)>>1)) >> 2.
+    private static readonly Vector512<uint> Divide7MagicAvx512F =
+        Vector512.Create(0x2492_4925u);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<ulong> ReducePointwiseProductFirstModulusAvx512F(
+        Vector512<ulong> product)
+    {
+        // h < 2^35 for every valid FirstModulus product.
+        Vector512<ulong> high =
+            Avx512F.ShiftRightLogical(
+                product,
+                27);
+
+        Vector512<ulong> highWord =
+            Avx512F.ShiftRightLogical(
+                high,
+                32);
+
+        Vector512<ulong> lowWord =
+            Vector512.BitwiseAnd(
+                high,
+                PointwiseLow32MaskAvx512F);
+
+        Vector512<ulong> lowQuotient =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    lowWord.AsUInt32(),
+                    Divide15MagicAvx512F),
+                35);
+
+        Vector512<ulong> lowQuotientTimes15 =
+            Vector512.Subtract(
+                Avx512F.ShiftLeftLogical(
+                    lowQuotient,
+                    4),
+                lowQuotient);
+
+        Vector512<ulong> lowRemainder =
+            Vector512.Subtract(
+                lowWord,
+                lowQuotientTimes15);
+
+        // lowRemainder is 0..14 and highWord is 0..7.  Therefore
+        // floor((lowRemainder + highWord) / 15) is exactly
+        // (lowRemainder + highWord + 1) >> 4 and is only 0 or 1.
+        Vector512<ulong> carry =
+            Avx512F.ShiftRightLogical(
+                Vector512.Add(
+                    Vector512.Add(
+                        lowRemainder,
+                        highWord),
+                    PointwiseOneU64Avx512F),
+                4);
+
+        Vector512<ulong> highContribution =
+            Avx512F.Multiply(
+                highWord.AsUInt32(),
+                Divide15HighScaleAvx512F);
+
+        Vector512<ulong> quotient =
+            Vector512.Add(
+                Vector512.Add(
+                    highContribution,
+                    lowQuotient),
+                carry);
+
+        // Phase 28: when AVX-512DQ is present, keep the quotient in native
+        // qword lanes for the final q*p product.  VPMULLQ returns exactly the
+        // low 64 bits required here (q*p < 2^62), avoiding the dword-lane
+        // reinterpretation used by the AVX-512F-only Phase-27 path.  The
+        // IsSupported branch is a JIT hardware-intrinsic constant and is
+        // folded per target CPU.
+        Vector512<ulong> quotientTimesModulus =
+            Avx512DQ.IsSupported
+                ? Avx512DQ.MultiplyLow(
+                    quotient,
+                    FirstPointwiseModulusU64Avx512F)
+                : Avx512F.Multiply(
+                    quotient.AsUInt32(),
+                    FirstPointwiseModulusU32Avx512F);
+
+        Vector512<ulong> borrowMask =
+            Avx512F.CompareGreaterThan(
+                quotientTimesModulus,
+                product);
+
+        Vector512<ulong> remainder =
+            Vector512.Subtract(
+                product,
+                quotientTimesModulus);
+
+        // q0 can only be exact or one too high.  In the latter case the
+        // unsigned subtraction wrapped by exactly one modulus interval.
+        return Vector512.Add(
+            remainder,
+            Vector512.BitwiseAnd(
+                borrowMask,
+                FirstPointwiseModulusU64Avx512F));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<ulong> ReducePointwiseProductSecondModulusAvx512F(
+        Vector512<ulong> product)
+    {
+        // h < 2^32 for every valid SecondModulus product.
+        Vector512<ulong> high =
+            Avx512F.ShiftRightLogical(
+                product,
+                26);
+
+        Vector512<ulong> initialQuotient =
+            Avx512F.ShiftRightLogical(
+                Avx512F.Multiply(
+                    high.AsUInt32(),
+                    Divide7MagicAvx512F),
+                32);
+
+        Vector512<ulong> quotient =
+            Avx512F.ShiftRightLogical(
+                Vector512.Add(
+                    initialQuotient,
+                    Avx512F.ShiftRightLogical(
+                        Vector512.Subtract(
+                            high,
+                            initialQuotient),
+                        1)),
+                2);
+
+        Vector512<ulong> quotientTimesModulus =
+            Avx512DQ.IsSupported
+                ? Avx512DQ.MultiplyLow(
+                    quotient,
+                    SecondPointwiseModulusU64Avx512F)
+                : Avx512F.Multiply(
+                    quotient.AsUInt32(),
+                    SecondPointwiseModulusU32Avx512F);
+
+        Vector512<ulong> borrowMask =
+            Avx512F.CompareGreaterThan(
+                quotientTimesModulus,
+                product);
+
+        Vector512<ulong> remainder =
+            Vector512.Subtract(
+                product,
+                quotientTimesModulus);
+
+        return Vector512.Add(
+            remainder,
+            Vector512.BitwiseAnd(
+                borrowMask,
+                SecondPointwiseModulusU64Avx512F));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> MultiplyPointwiseFirstModulusAvx512F(
+        Vector512<uint> left,
+        Vector512<uint> right)
+    {
+        Vector512<ulong> productEven =
+            Avx512F.Multiply(
+                left,
+                right);
+
+        Vector512<uint> oddLeft =
+            Avx512F.ShiftRightLogical(
+                    left.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<uint> oddRight =
+            Avx512F.ShiftRightLogical(
+                    right.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<ulong> productOdd =
+            Avx512F.Multiply(
+                oddLeft,
+                oddRight);
+
+        Vector512<ulong> remainderEven =
+            ReducePointwiseProductFirstModulusAvx512F(
+                productEven);
+
+        Vector512<ulong> remainderOdd =
+            ReducePointwiseProductFirstModulusAvx512F(
+                productOdd);
+
+        return Vector512.BitwiseOr(
+            remainderEven.AsUInt32(),
+            Avx512F.ShiftLeftLogical(
+                    remainderOdd,
+                    32)
+                .AsUInt32());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> MultiplyPointwiseSecondModulusAvx512F(
+        Vector512<uint> left,
+        Vector512<uint> right)
+    {
+        Vector512<ulong> productEven =
+            Avx512F.Multiply(
+                left,
+                right);
+
+        Vector512<uint> oddLeft =
+            Avx512F.ShiftRightLogical(
+                    left.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<uint> oddRight =
+            Avx512F.ShiftRightLogical(
+                    right.AsUInt64(),
+                    32)
+                .AsUInt32();
+
+        Vector512<ulong> productOdd =
+            Avx512F.Multiply(
+                oddLeft,
+                oddRight);
+
+        Vector512<ulong> remainderEven =
+            ReducePointwiseProductSecondModulusAvx512F(
+                productEven);
+
+        Vector512<ulong> remainderOdd =
+            ReducePointwiseProductSecondModulusAvx512F(
+                productOdd);
+
+        return Vector512.BitwiseOr(
+            remainderEven.AsUInt32(),
+            Avx512F.ShiftLeftLogical(
+                    remainderOdd,
+                    32)
+                .AsUInt32());
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ProcessPointwiseProductRangeFirstModulusDualVectorIlp(
         uint[] destination,
@@ -4600,32 +4882,89 @@ internal sealed class ParallelBigUnsigned
         int start,
         int end)
     {
+        ref uint destinationReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                destination);
+
+        ref uint leftReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                left);
+
+        ref uint rightReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                right);
+
         int index = start;
+        int dualVectorWidth = Vector512<uint>.Count * 2;
         int dualVectorEnd =
             end -
             (end - index) %
-            (Vector512<uint>.Count * 2);
+            dualVectorWidth;
 
         for (;
              index < dualVectorEnd;
-             index += Vector512<uint>.Count * 2)
+             index += dualVectorWidth)
         {
-            PointwisePairFirstModulus(destination, left, right, index + 0, index + 16);
-            PointwisePairFirstModulus(destination, left, right, index + 1, index + 17);
-            PointwisePairFirstModulus(destination, left, right, index + 2, index + 18);
-            PointwisePairFirstModulus(destination, left, right, index + 3, index + 19);
-            PointwisePairFirstModulus(destination, left, right, index + 4, index + 20);
-            PointwisePairFirstModulus(destination, left, right, index + 5, index + 21);
-            PointwisePairFirstModulus(destination, left, right, index + 6, index + 22);
-            PointwisePairFirstModulus(destination, left, right, index + 7, index + 23);
-            PointwisePairFirstModulus(destination, left, right, index + 8, index + 24);
-            PointwisePairFirstModulus(destination, left, right, index + 9, index + 25);
-            PointwisePairFirstModulus(destination, left, right, index + 10, index + 26);
-            PointwisePairFirstModulus(destination, left, right, index + 11, index + 27);
-            PointwisePairFirstModulus(destination, left, right, index + 12, index + 28);
-            PointwisePairFirstModulus(destination, left, right, index + 13, index + 29);
-            PointwisePairFirstModulus(destination, left, right, index + 14, index + 30);
-            PointwisePairFirstModulus(destination, left, right, index + 15, index + 31);
+            // Load both independent windows before opening either reduction
+            // chain.  This preserves the accepted Phase-26 two-window ILP.
+            Vector512<uint> firstLeft =
+                Vector512.LoadUnsafe(
+                    ref leftReference,
+                    (nuint)index);
+            Vector512<uint> secondLeft =
+                Vector512.LoadUnsafe(
+                    ref leftReference,
+                    (nuint)(index + Vector512<uint>.Count));
+            Vector512<uint> firstRight =
+                Vector512.LoadUnsafe(
+                    ref rightReference,
+                    (nuint)index);
+            Vector512<uint> secondRight =
+                Vector512.LoadUnsafe(
+                    ref rightReference,
+                    (nuint)(index + Vector512<uint>.Count));
+
+            Vector512<uint> firstResult =
+                MultiplyPointwiseFirstModulusAvx512F(
+                    firstLeft,
+                    firstRight);
+            Vector512<uint> secondResult =
+                MultiplyPointwiseFirstModulusAvx512F(
+                    secondLeft,
+                    secondRight);
+
+            firstResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)index);
+            secondResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)(index + Vector512<uint>.Count));
+        }
+
+        int vectorEnd =
+            end -
+            (end - index) %
+            Vector512<uint>.Count;
+
+        for (;
+             index < vectorEnd;
+             index += Vector512<uint>.Count)
+        {
+            Vector512<uint> leftValues =
+                Vector512.LoadUnsafe(
+                    ref leftReference,
+                    (nuint)index);
+            Vector512<uint> rightValues =
+                Vector512.LoadUnsafe(
+                    ref rightReference,
+                    (nuint)index);
+
+            MultiplyPointwiseFirstModulusAvx512F(
+                    leftValues,
+                    rightValues)
+                .StoreUnsafe(
+                    ref destinationReference,
+                    (nuint)index);
         }
 
         for (;
@@ -4657,32 +4996,87 @@ internal sealed class ParallelBigUnsigned
         int start,
         int end)
     {
+        ref uint destinationReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                destination);
+
+        ref uint leftReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                left);
+
+        ref uint rightReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                right);
+
         int index = start;
+        int dualVectorWidth = Vector512<uint>.Count * 2;
         int dualVectorEnd =
             end -
             (end - index) %
-            (Vector512<uint>.Count * 2);
+            dualVectorWidth;
 
         for (;
              index < dualVectorEnd;
-             index += Vector512<uint>.Count * 2)
+             index += dualVectorWidth)
         {
-            PointwisePairSecondModulus(destination, left, right, index + 0, index + 16);
-            PointwisePairSecondModulus(destination, left, right, index + 1, index + 17);
-            PointwisePairSecondModulus(destination, left, right, index + 2, index + 18);
-            PointwisePairSecondModulus(destination, left, right, index + 3, index + 19);
-            PointwisePairSecondModulus(destination, left, right, index + 4, index + 20);
-            PointwisePairSecondModulus(destination, left, right, index + 5, index + 21);
-            PointwisePairSecondModulus(destination, left, right, index + 6, index + 22);
-            PointwisePairSecondModulus(destination, left, right, index + 7, index + 23);
-            PointwisePairSecondModulus(destination, left, right, index + 8, index + 24);
-            PointwisePairSecondModulus(destination, left, right, index + 9, index + 25);
-            PointwisePairSecondModulus(destination, left, right, index + 10, index + 26);
-            PointwisePairSecondModulus(destination, left, right, index + 11, index + 27);
-            PointwisePairSecondModulus(destination, left, right, index + 12, index + 28);
-            PointwisePairSecondModulus(destination, left, right, index + 13, index + 29);
-            PointwisePairSecondModulus(destination, left, right, index + 14, index + 30);
-            PointwisePairSecondModulus(destination, left, right, index + 15, index + 31);
+            Vector512<uint> firstLeft =
+                Vector512.LoadUnsafe(
+                    ref leftReference,
+                    (nuint)index);
+            Vector512<uint> secondLeft =
+                Vector512.LoadUnsafe(
+                    ref leftReference,
+                    (nuint)(index + Vector512<uint>.Count));
+            Vector512<uint> firstRight =
+                Vector512.LoadUnsafe(
+                    ref rightReference,
+                    (nuint)index);
+            Vector512<uint> secondRight =
+                Vector512.LoadUnsafe(
+                    ref rightReference,
+                    (nuint)(index + Vector512<uint>.Count));
+
+            Vector512<uint> firstResult =
+                MultiplyPointwiseSecondModulusAvx512F(
+                    firstLeft,
+                    firstRight);
+            Vector512<uint> secondResult =
+                MultiplyPointwiseSecondModulusAvx512F(
+                    secondLeft,
+                    secondRight);
+
+            firstResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)index);
+            secondResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)(index + Vector512<uint>.Count));
+        }
+
+        int vectorEnd =
+            end -
+            (end - index) %
+            Vector512<uint>.Count;
+
+        for (;
+             index < vectorEnd;
+             index += Vector512<uint>.Count)
+        {
+            Vector512<uint> leftValues =
+                Vector512.LoadUnsafe(
+                    ref leftReference,
+                    (nuint)index);
+            Vector512<uint> rightValues =
+                Vector512.LoadUnsafe(
+                    ref rightReference,
+                    (nuint)index);
+
+            MultiplyPointwiseSecondModulusAvx512F(
+                    leftValues,
+                    rightValues)
+                .StoreUnsafe(
+                    ref destinationReference,
+                    (nuint)index);
         }
 
         for (;
@@ -4713,32 +5107,71 @@ internal sealed class ParallelBigUnsigned
         int start,
         int end)
     {
+        ref uint destinationReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                destination);
+
+        ref uint sourceReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                source);
+
         int index = start;
+        int dualVectorWidth = Vector512<uint>.Count * 2;
         int dualVectorEnd =
             end -
             (end - index) %
-            (Vector512<uint>.Count * 2);
+            dualVectorWidth;
 
         for (;
              index < dualVectorEnd;
-             index += Vector512<uint>.Count * 2)
+             index += dualVectorWidth)
         {
-            PointwiseSquarePairFirstModulus(destination, source, index + 0, index + 16);
-            PointwiseSquarePairFirstModulus(destination, source, index + 1, index + 17);
-            PointwiseSquarePairFirstModulus(destination, source, index + 2, index + 18);
-            PointwiseSquarePairFirstModulus(destination, source, index + 3, index + 19);
-            PointwiseSquarePairFirstModulus(destination, source, index + 4, index + 20);
-            PointwiseSquarePairFirstModulus(destination, source, index + 5, index + 21);
-            PointwiseSquarePairFirstModulus(destination, source, index + 6, index + 22);
-            PointwiseSquarePairFirstModulus(destination, source, index + 7, index + 23);
-            PointwiseSquarePairFirstModulus(destination, source, index + 8, index + 24);
-            PointwiseSquarePairFirstModulus(destination, source, index + 9, index + 25);
-            PointwiseSquarePairFirstModulus(destination, source, index + 10, index + 26);
-            PointwiseSquarePairFirstModulus(destination, source, index + 11, index + 27);
-            PointwiseSquarePairFirstModulus(destination, source, index + 12, index + 28);
-            PointwiseSquarePairFirstModulus(destination, source, index + 13, index + 29);
-            PointwiseSquarePairFirstModulus(destination, source, index + 14, index + 30);
-            PointwiseSquarePairFirstModulus(destination, source, index + 15, index + 31);
+            Vector512<uint> firstValues =
+                Vector512.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)index);
+            Vector512<uint> secondValues =
+                Vector512.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)(index + Vector512<uint>.Count));
+
+            Vector512<uint> firstResult =
+                MultiplyPointwiseFirstModulusAvx512F(
+                    firstValues,
+                    firstValues);
+            Vector512<uint> secondResult =
+                MultiplyPointwiseFirstModulusAvx512F(
+                    secondValues,
+                    secondValues);
+
+            firstResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)index);
+            secondResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)(index + Vector512<uint>.Count));
+        }
+
+        int vectorEnd =
+            end -
+            (end - index) %
+            Vector512<uint>.Count;
+
+        for (;
+             index < vectorEnd;
+             index += Vector512<uint>.Count)
+        {
+            Vector512<uint> values =
+                Vector512.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)index);
+
+            MultiplyPointwiseFirstModulusAvx512F(
+                    values,
+                    values)
+                .StoreUnsafe(
+                    ref destinationReference,
+                    (nuint)index);
         }
 
         for (;
@@ -4767,32 +5200,71 @@ internal sealed class ParallelBigUnsigned
         int start,
         int end)
     {
+        ref uint destinationReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                destination);
+
+        ref uint sourceReference =
+            ref MemoryMarshal.GetArrayDataReference(
+                source);
+
         int index = start;
+        int dualVectorWidth = Vector512<uint>.Count * 2;
         int dualVectorEnd =
             end -
             (end - index) %
-            (Vector512<uint>.Count * 2);
+            dualVectorWidth;
 
         for (;
              index < dualVectorEnd;
-             index += Vector512<uint>.Count * 2)
+             index += dualVectorWidth)
         {
-            PointwiseSquarePairSecondModulus(destination, source, index + 0, index + 16);
-            PointwiseSquarePairSecondModulus(destination, source, index + 1, index + 17);
-            PointwiseSquarePairSecondModulus(destination, source, index + 2, index + 18);
-            PointwiseSquarePairSecondModulus(destination, source, index + 3, index + 19);
-            PointwiseSquarePairSecondModulus(destination, source, index + 4, index + 20);
-            PointwiseSquarePairSecondModulus(destination, source, index + 5, index + 21);
-            PointwiseSquarePairSecondModulus(destination, source, index + 6, index + 22);
-            PointwiseSquarePairSecondModulus(destination, source, index + 7, index + 23);
-            PointwiseSquarePairSecondModulus(destination, source, index + 8, index + 24);
-            PointwiseSquarePairSecondModulus(destination, source, index + 9, index + 25);
-            PointwiseSquarePairSecondModulus(destination, source, index + 10, index + 26);
-            PointwiseSquarePairSecondModulus(destination, source, index + 11, index + 27);
-            PointwiseSquarePairSecondModulus(destination, source, index + 12, index + 28);
-            PointwiseSquarePairSecondModulus(destination, source, index + 13, index + 29);
-            PointwiseSquarePairSecondModulus(destination, source, index + 14, index + 30);
-            PointwiseSquarePairSecondModulus(destination, source, index + 15, index + 31);
+            Vector512<uint> firstValues =
+                Vector512.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)index);
+            Vector512<uint> secondValues =
+                Vector512.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)(index + Vector512<uint>.Count));
+
+            Vector512<uint> firstResult =
+                MultiplyPointwiseSecondModulusAvx512F(
+                    firstValues,
+                    firstValues);
+            Vector512<uint> secondResult =
+                MultiplyPointwiseSecondModulusAvx512F(
+                    secondValues,
+                    secondValues);
+
+            firstResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)index);
+            secondResult.StoreUnsafe(
+                ref destinationReference,
+                (nuint)(index + Vector512<uint>.Count));
+        }
+
+        int vectorEnd =
+            end -
+            (end - index) %
+            Vector512<uint>.Count;
+
+        for (;
+             index < vectorEnd;
+             index += Vector512<uint>.Count)
+        {
+            Vector512<uint> values =
+                Vector512.LoadUnsafe(
+                    ref sourceReference,
+                    (nuint)index);
+
+            MultiplyPointwiseSecondModulusAvx512F(
+                    values,
+                    values)
+                .StoreUnsafe(
+                    ref destinationReference,
+                    (nuint)index);
         }
 
         for (;
@@ -8603,6 +9075,10 @@ internal sealed class ParallelBigUnsigned
                 Vector512.Create(
                     (ulong)FirstModulus);
 
+            Vector256<ulong> firstModulusVectorVl =
+                Vector256.Create(
+                    (ulong)FirstModulus);
+
             ref uint firstReference =
                 ref MemoryMarshal.GetReference(
                     firstSpan);
@@ -8668,43 +9144,123 @@ internal sealed class ParallelBigUnsigned
                         inverseShoupVector,
                         context);
 
+                // Phase 30: retain the Phase-29 512-bit widen operations, but
+                // use AVX-512VL for the final qword reconstruction multiply on
+                // CPUs that expose DQ+VL. Each eight-qword half is split into
+                // two independent four-qword YMM chains. Four VPMULLQ chains
+                // are issued before any add/store so the out-of-order scheduler
+                // can overlap the narrower EVEX work without changing CRT math,
+                // loads, scratch layout, or the accepted Shoup multiplier.
                 Vector512<ulong> firstLow =
                     Avx512F.ConvertToVector512UInt64(
                         first.GetLower());
-
-                Vector512<ulong> multiplierLow =
-                    Avx512F.ConvertToVector512UInt64(
-                        multiplier.GetLower());
-
-                Vector512<ulong> reconstructedLow =
-                    Avx512F.Add(
-                        firstLow,
-                        Avx512DQ.MultiplyLow(
-                            multiplierLow,
-                            firstModulusVector));
-
-                reconstructedLow.StoreUnsafe(
-                    ref scratchReference,
-                    (nuint)offset);
 
                 Vector512<ulong> firstHigh =
                     Avx512F.ConvertToVector512UInt64(
                         first.GetUpper());
 
+                Vector512<ulong> multiplierLow =
+                    Avx512F.ConvertToVector512UInt64(
+                        multiplier.GetLower());
+
                 Vector512<ulong> multiplierHigh =
                     Avx512F.ConvertToVector512UInt64(
                         multiplier.GetUpper());
 
-                Vector512<ulong> reconstructedHigh =
-                    Avx512F.Add(
-                        firstHigh,
+                if (Avx512DQ.VL.IsSupported)
+                {
+                    Vector256<ulong> product0 =
+                        Avx512DQ.VL.MultiplyLow(
+                            multiplierLow.GetLower(),
+                            firstModulusVectorVl);
+
+                    Vector256<ulong> product1 =
+                        Avx512DQ.VL.MultiplyLow(
+                            multiplierLow.GetUpper(),
+                            firstModulusVectorVl);
+
+                    Vector256<ulong> product2 =
+                        Avx512DQ.VL.MultiplyLow(
+                            multiplierHigh.GetLower(),
+                            firstModulusVectorVl);
+
+                    Vector256<ulong> product3 =
+                        Avx512DQ.VL.MultiplyLow(
+                            multiplierHigh.GetUpper(),
+                            firstModulusVectorVl);
+
+                    Vector256<ulong> reconstructed0 =
+                        Avx2.Add(
+                                firstLow.GetLower().AsInt64(),
+                                product0.AsInt64())
+                            .AsUInt64();
+
+                    Vector256<ulong> reconstructed1 =
+                        Avx2.Add(
+                                firstLow.GetUpper().AsInt64(),
+                                product1.AsInt64())
+                            .AsUInt64();
+
+                    Vector256<ulong> reconstructed2 =
+                        Avx2.Add(
+                                firstHigh.GetLower().AsInt64(),
+                                product2.AsInt64())
+                            .AsUInt64();
+
+                    Vector256<ulong> reconstructed3 =
+                        Avx2.Add(
+                                firstHigh.GetUpper().AsInt64(),
+                                product3.AsInt64())
+                            .AsUInt64();
+
+                    reconstructed0.StoreUnsafe(
+                        ref scratchReference,
+                        (nuint)offset);
+
+                    reconstructed1.StoreUnsafe(
+                        ref scratchReference,
+                        (nuint)(offset + 4));
+
+                    reconstructed2.StoreUnsafe(
+                        ref scratchReference,
+                        (nuint)(offset + 8));
+
+                    reconstructed3.StoreUnsafe(
+                        ref scratchReference,
+                        (nuint)(offset + 12));
+                }
+                else
+                {
+                    // Literal Phase-29 fallback for AVX-512DQ machines that do
+                    // not expose AVX-512VL.
+                    Vector512<ulong> productLow =
+                        Avx512DQ.MultiplyLow(
+                            multiplierLow,
+                            firstModulusVector);
+
+                    Vector512<ulong> productHigh =
                         Avx512DQ.MultiplyLow(
                             multiplierHigh,
-                            firstModulusVector));
+                            firstModulusVector);
 
-                reconstructedHigh.StoreUnsafe(
-                    ref scratchReference,
-                    (nuint)(offset + 8));
+                    Vector512<ulong> reconstructedLow =
+                        Avx512F.Add(
+                            firstLow,
+                            productLow);
+
+                    reconstructedLow.StoreUnsafe(
+                        ref scratchReference,
+                        (nuint)offset);
+
+                    Vector512<ulong> reconstructedHigh =
+                        Avx512F.Add(
+                            firstHigh,
+                            productHigh);
+
+                    reconstructedHigh.StoreUnsafe(
+                        ref scratchReference,
+                        (nuint)(offset + 8));
+                }
             }
         }
 
