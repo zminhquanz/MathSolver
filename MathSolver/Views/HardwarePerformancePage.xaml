@@ -168,7 +168,7 @@
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                            <Label Text="Tập lệnh SIMD" Style="{StaticResource HardwareInfoNameStyle}" />
+                            <Label Text="Tập lệnh CPU" Style="{StaticResource HardwareInfoNameStyle}" />
                             <Label
                                 x:Name="SimdValueLabel"
                                 Grid.Column="1"

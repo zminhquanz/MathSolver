@@ -3369,7 +3369,7 @@
     },
     {
       "key": "legacy.exact.tap.lenh.simd.85599f26",
-      "source": "Tập lệnh SIMD",
+      "source": "Tập lệnh CPU",
       "mode": "exact"
     },
     {

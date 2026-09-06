@@ -534,7 +534,7 @@ public partial class HardwarePerformancePage : ContentPage
                     CultureInfo.CurrentCulture);
 
         SimdValueLabel.Text =
-            GetSupportedSimdInstructionSets();
+            GetSupportedCpuInstructionExtensions();
 
         bool hasSimd =
             CalculationAccelerationManager.IsSimdAvailable;
@@ -1000,7 +1000,7 @@ public partial class HardwarePerformancePage : ContentPage
         };
     }
 
-    private static string GetSupportedSimdInstructionSets()
+    private static string GetSupportedCpuInstructionExtensions()
     {
 #if ANDROID
         if (RuntimeInformation.ProcessArchitecture is
@@ -1019,64 +1019,22 @@ public partial class HardwarePerformancePage : ContentPage
         }
 #endif
 
+        if (RuntimeInformation.ProcessArchitecture is
+            Architecture.X86 or
+            Architecture.X64)
+        {
+            string x86Extensions =
+                GetSupportedX86InstructionExtensions();
+
+            if (!string.IsNullOrWhiteSpace(
+                    x86Extensions))
+            {
+                return x86Extensions;
+            }
+        }
+
         var supportedSets =
             new List<string>();
-
-        if (System.Runtime.Intrinsics.X86.Sse2.IsSupported)
-        {
-            supportedSets.Add(
-                "SSE2");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Sse3.IsSupported)
-        {
-            supportedSets.Add(
-                "SSE3");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Ssse3.IsSupported)
-        {
-            supportedSets.Add(
-                "SSSE3");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Sse41.IsSupported)
-        {
-            supportedSets.Add(
-                "SSE4.1");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Sse42.IsSupported)
-        {
-            supportedSets.Add(
-                "SSE4.2");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Avx.IsSupported)
-        {
-            supportedSets.Add(
-                "AVX");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Avx2.IsSupported)
-        {
-            supportedSets.Add(
-                "AVX2");
-        }
-
-        if (System.Runtime.Intrinsics.X86.Fma.IsSupported)
-        {
-            supportedSets.Add(
-                "FMA3");
-        }
-
-        if (CalculationAccelerationManager
-                .IsAvx512Available ||
-            Vector512.IsHardwareAccelerated)
-        {
-            supportedSets.Add(
-                "AVX-512");
-        }
 
         if (System.Runtime.Intrinsics.Arm.AdvSimd.IsSupported)
         {
@@ -1091,6 +1049,195 @@ public partial class HardwarePerformancePage : ContentPage
                 supportedSets)
             : LocalizationService.Translate(
                 "Không được hỗ trợ");
+    }
+
+    /// <summary>
+    /// Reports x86/x64 CPU instruction extensions in a CPU-Z-like order.
+    /// This is hardware-capability information, so CPUID is used rather than
+    /// only the subset of public .NET intrinsic classes consumed by Math Solver.
+    /// MMX is intentionally omitted: it is legacy state-sharing SIMD and is not
+    /// useful to any current Math Solver hot path.
+    /// </summary>
+    private static string GetSupportedX86InstructionExtensions()
+    {
+        if (!System.Runtime.Intrinsics.X86.X86Base.IsSupported)
+        {
+            return string.Empty;
+        }
+
+        var extensions =
+            new List<string>(
+                capacity: 15);
+
+        static bool HasBit(
+            int value,
+            int bit) =>
+            (((uint)value >> bit) & 1u) != 0u;
+
+        var leaf0 =
+            System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                0,
+                0);
+
+        uint maxBasicLeaf =
+            (uint)leaf0.Eax;
+
+        if (maxBasicLeaf >= 1u)
+        {
+            var leaf1 =
+                System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                    1,
+                    0);
+
+            if (HasBit(leaf1.Edx, 25))
+            {
+                extensions.Add("SSE");
+            }
+
+            if (HasBit(leaf1.Edx, 26))
+            {
+                extensions.Add("SSE2");
+            }
+
+            if (HasBit(leaf1.Ecx, 0))
+            {
+                extensions.Add("SSE3");
+            }
+
+            if (HasBit(leaf1.Ecx, 9))
+            {
+                extensions.Add("SSSE3");
+            }
+
+            if (HasBit(leaf1.Ecx, 19))
+            {
+                extensions.Add("SSE4.1");
+            }
+
+            if (HasBit(leaf1.Ecx, 20))
+            {
+                extensions.Add("SSE4.2");
+            }
+        }
+
+        int extendedBase =
+            unchecked((int)0x80000000u);
+
+        var extendedLeaf0 =
+            System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                extendedBase,
+                0);
+
+        uint maxExtendedLeaf =
+            (uint)extendedLeaf0.Eax;
+
+        if (maxExtendedLeaf >= 0x80000001u)
+        {
+            var extendedLeaf1 =
+                System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                    unchecked((int)0x80000001u),
+                    0);
+
+            if (HasBit(extendedLeaf1.Ecx, 6))
+            {
+                extensions.Add("SSE4A");
+            }
+
+            if (HasBit(extendedLeaf1.Edx, 29))
+            {
+                extensions.Add("x86-64");
+            }
+        }
+        else if (RuntimeInformation.ProcessArchitecture ==
+                 Architecture.X64)
+        {
+            // Defensive fallback for unusual virtualized CPUID filtering.
+            extensions.Add("x86-64");
+        }
+
+        if (maxBasicLeaf >= 1u)
+        {
+            var leaf1 =
+                System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                    1,
+                    0);
+
+            if (HasBit(leaf1.Ecx, 25))
+            {
+                extensions.Add("AES");
+            }
+
+            if (HasBit(leaf1.Ecx, 28))
+            {
+                extensions.Add("AVX");
+            }
+        }
+
+        if (maxBasicLeaf >= 7u)
+        {
+            var leaf7 =
+                System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                    7,
+                    0);
+
+            if (HasBit(leaf7.Ebx, 5))
+            {
+                extensions.Add("AVX2");
+            }
+
+            uint maxLeaf7SubLeaf =
+                (uint)leaf7.Eax;
+
+            if (maxLeaf7SubLeaf >= 1u)
+            {
+                var leaf7SubLeaf1 =
+                    System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                        7,
+                        1);
+
+                // CPUID.(EAX=7,ECX=1):EAX[4] = AVX-VNNI.
+                if (HasBit(leaf7SubLeaf1.Eax, 4))
+                {
+                    extensions.Add("AVX-VNNI");
+                }
+            }
+
+            if (HasBit(leaf7.Ebx, 16))
+            {
+                // CPU-Z presents the AVX-512 family as one umbrella entry.
+                extensions.Add("AVX-512");
+            }
+        }
+
+        if (maxBasicLeaf >= 1u)
+        {
+            var leaf1 =
+                System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                    1,
+                    0);
+
+            if (HasBit(leaf1.Ecx, 12))
+            {
+                extensions.Add("FMA3");
+            }
+        }
+
+        if (maxBasicLeaf >= 7u)
+        {
+            var leaf7 =
+                System.Runtime.Intrinsics.X86.X86Base.CpuId(
+                    7,
+                    0);
+
+            if (HasBit(leaf7.Ebx, 29))
+            {
+                extensions.Add("SHA");
+            }
+        }
+
+        return string.Join(
+            ", ",
+            extensions);
     }
 
     private static string GetMaximumVectorWidthText()

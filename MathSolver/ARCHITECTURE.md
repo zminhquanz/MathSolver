@@ -603,3 +603,11 @@ Starting from accepted Phase 18, the Forward 2xL3 bridge traversal now lets the 
 ### <=10M AVX-512 Phase 21 — Forward L3 sibling early-retire ILP (2026-09-06)
 
 Starting from accepted Phase 19 and explicitly excluding rejected Phase 20, the exact two-sibling top-L3 AVX-512 region keeps Phase-19 first-stage dual-group Shoup software-pipelining but retires sibling A completely before running sibling B's second-stage Shoup multiplies. This shortens peak ZMM lifetimes without changing lane layout or memory traffic. The specialization is limited to the 2xL3 bridge shape; AVX2 fallback, Inverse Phase 17, Global Forward Phase 18, CRT/pointwise, worker topology, RAM policy and >10M AVX-512-off behavior are unchanged.
+
+### <=10M AVX-512 Phase 26 — Pointwise dual-vector-sized constant-modulus ILP (2026-09-06)
+
+Starting directly from accepted Phase 21, all Phase 22–25 Barrett/Montgomery/IFMA experiments are excluded. Pointwise multiplication/squaring keeps the exact Phase-21 UInt64 `% modulus` arithmetic, but the AVX-512 <=10M path specializes the two production primes as compile-time constants and schedules two independent 16-residue windows (32 coefficients) together. Each paired lane opens two independent multiply/remainder chains before either is retired, while diagonal squares use a one-source specialization. The experiment adds no Barrett/Montgomery reducer, mask correction, IFMA, 52-bit layout, Shoup companion stream, coefficient-sized buffer, pointer path or AVX2 change. CPU paths without the <=10M AVX-512 gate execute the literal Phase-21 scalar pointwise loop.
+
+### Hardware Information — CPU instruction extension reporting (2026-09-06)
+
+Phase 26 remains the accepted <=10M AVX-512 NTT/CRT compute checkpoint. This UI-only follow-up expands the Hardware Information instruction row from the small benchmark-oriented SIMD subset to a CPU-Z-like CPUID capability list on x86/x64: SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, SSE4A, x86-64, AES, AVX, AVX2, AVX-VNNI, AVX-512, FMA3 and SHA when supported. MMX is deliberately omitted as legacy. Android ARM capability discovery and all calculation/benchmark dispatch remain unchanged.

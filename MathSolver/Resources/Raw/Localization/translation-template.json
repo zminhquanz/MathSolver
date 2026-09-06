@@ -839,7 +839,7 @@
     "legacy.exact.so.thuc.luon.chay.mot.luong.de.so.sanh.sim.68f4abb3": "Số thực luôn chạy một luồng để so sánh SIMD và Scalar công bằng. BigInteger không dùng SIMD.",
     "legacy.exact.tang.toc.phan.cung.8ff648a3": "Tăng tốc phần cứng",
     "legacy.exact.tang.toc.tinh.toan.b07129b1": "Tăng tốc tính toán",
-    "legacy.exact.tap.lenh.simd.85599f26": "Tập lệnh SIMD",
+    "legacy.exact.tap.lenh.simd.85599f26": "Tập lệnh CPU",
     "legacy.exact.tap.lenh.simd.benchmark.06948649": "Tập lệnh SIMD benchmark",
     "legacy.exact.tat.ca.1.20.5ee03423": "Tất cả 1 – 20",
     "legacy.exact.tat.ca.kich.thuoc.phai.lon.hon.0.a906e789": "Tất cả kích thước phải lớn hơn 0.",

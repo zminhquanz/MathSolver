@@ -2636,22 +2636,38 @@ internal sealed class ParallelBigUnsigned
             long pointwiseStarted =
                 Stopwatch.GetTimestamp();
 
-            ExecuteRanges(
-                transformLength,
-                workers,
-                cancellationToken,
-                (start, end) =>
-                {
-                    for (int index = start;
-                         index < end;
-                         index++)
+            if (CanUsePointwiseDualVectorIlp(
+                    workers,
+                    modulus))
+            {
+                ExecutePointwiseProductDualVectorIlp(
+                    cachedLeftSpectrum,
+                    cachedLeftSpectrum,
+                    transformedRight,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
+            else
+            {
+                ExecuteRanges(
+                    transformLength,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
                     {
-                        cachedLeftSpectrum[index] =
-                            (uint)((ulong)cachedLeftSpectrum[index] *
-                                   transformedRight[index] %
-                                   modulus);
-                    }
-                });
+                        for (int index = start;
+                             index < end;
+                             index++)
+                        {
+                            cachedLeftSpectrum[index] =
+                                (uint)((ulong)cachedLeftSpectrum[index] *
+                                       transformedRight[index] %
+                                       modulus);
+                        }
+                    });
+            }
 
             diagnostics.PointwiseTicks +=
                 Stopwatch.GetTimestamp() -
@@ -2741,25 +2757,41 @@ internal sealed class ParallelBigUnsigned
                 long pointwiseStarted =
                     Stopwatch.GetTimestamp();
 
-                ExecuteRanges(
-                    transformLength,
-                    workers,
-                    cancellationToken,
-                    (start, end) =>
-                    {
-                        for (int index = start;
-                             index < end;
-                             index++)
+                if (CanUsePointwiseDualVectorIlp(
+                        workers,
+                        modulus))
+                {
+                    ExecutePointwiseProductDualVectorIlp(
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else
+                {
+                    ExecuteRanges(
+                        transformLength,
+                        workers,
+                        cancellationToken,
+                        (start, end) =>
                         {
-                            ulong value =
-                                cachedLeftSpectrum[index];
+                            for (int index = start;
+                                 index < end;
+                                 index++)
+                            {
+                                ulong value =
+                                    cachedLeftSpectrum[index];
 
-                            transformedProduct[index] =
-                                (uint)(value *
-                                       value %
-                                       modulus);
-                        }
-                    });
+                                transformedProduct[index] =
+                                    (uint)(value *
+                                           value %
+                                           modulus);
+                            }
+                        });
+                }
 
                 diagnostics.PointwiseTicks +=
                     Stopwatch.GetTimestamp() -
@@ -2789,22 +2821,38 @@ internal sealed class ParallelBigUnsigned
                 long pointwiseStarted =
                     Stopwatch.GetTimestamp();
 
-                ExecuteRanges(
-                    transformLength,
-                    workers,
-                    cancellationToken,
-                    (start, end) =>
-                    {
-                        for (int index = start;
-                             index < end;
-                             index++)
+                if (CanUsePointwiseDualVectorIlp(
+                        workers,
+                        modulus))
+                {
+                    ExecutePointwiseProductDualVectorIlp(
+                        transformedProduct,
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else
+                {
+                    ExecuteRanges(
+                        transformLength,
+                        workers,
+                        cancellationToken,
+                        (start, end) =>
                         {
-                            transformedProduct[index] =
-                                (uint)((ulong)transformedProduct[index] *
-                                       cachedLeftSpectrum[index] %
-                                       modulus);
-                        }
-                    });
+                            for (int index = start;
+                                 index < end;
+                                 index++)
+                            {
+                                transformedProduct[index] =
+                                    (uint)((ulong)transformedProduct[index] *
+                                           cachedLeftSpectrum[index] %
+                                           modulus);
+                            }
+                        });
+                }
 
                 diagnostics.PointwiseTicks +=
                     Stopwatch.GetTimestamp() -
@@ -4358,25 +4406,41 @@ internal sealed class ParallelBigUnsigned
                 long pointwiseStarted =
                     Stopwatch.GetTimestamp();
 
-                ExecuteRanges(
-                    transformLength,
-                    workers,
-                    cancellationToken,
-                    (start, end) =>
-                    {
-                        for (int index = start;
-                             index < end;
-                             index++)
+                if (CanUsePointwiseDualVectorIlp(
+                        workers,
+                        modulus))
+                {
+                    ExecutePointwiseProductDualVectorIlp(
+                        transformedLeft,
+                        transformedLeft,
+                        transformedLeft,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else
+                {
+                    ExecuteRanges(
+                        transformLength,
+                        workers,
+                        cancellationToken,
+                        (start, end) =>
                         {
-                            ulong value =
-                                transformedLeft[index];
+                            for (int index = start;
+                                 index < end;
+                                 index++)
+                            {
+                                ulong value =
+                                    transformedLeft[index];
 
-                            transformedLeft[index] =
-                                (uint)(value *
-                                       value %
-                                       modulus);
-                        }
-                    });
+                                transformedLeft[index] =
+                                    (uint)(value *
+                                           value %
+                                           modulus);
+                            }
+                        });
+                }
 
                 diagnostics.PointwiseTicks +=
                     Stopwatch.GetTimestamp() -
@@ -4435,6 +4499,414 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Phase 26 pointwise experiment.  The accepted Phase-21 arithmetic stays
+    /// exact and unchanged: every residue is still computed with UInt64
+    /// multiplication followed by the normal `% prime`.  The only AVX-512
+    /// experiment is scheduling.  On the <=10M AVX-512 path, two independent
+    /// 16-residue windows (2 x Vector512<uint>.Count) are kept in flight and
+    /// the two fixed NTT primes are exposed as compile-time constants.  RyuJIT
+    /// can therefore strength-reduce the constant remainder and the core can
+    /// overlap independent multiply/reduction chains without introducing a
+    /// Barrett/Montgomery reducer, mask correction, IFMA, companion stream or
+    /// extra workspace.  Every AVX2/non-AVX-512 configuration executes the
+    /// literal Phase-21 scalar loop below.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanUsePointwiseDualVectorIlp(
+        FixedWorkerTeam workers,
+        uint modulus)
+    {
+        return workers.UseAvx512Ntt &&
+               Vector512.IsHardwareAccelerated &&
+               (modulus == FirstModulus ||
+                modulus == SecondModulus);
+    }
+
+    private static void ExecutePointwiseProductDualVectorIlp(
+        uint[] destination,
+        uint[] left,
+        uint[] right,
+        int length,
+        uint modulus,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        bool square =
+            ReferenceEquals(
+                left,
+                right);
+
+        if (modulus == FirstModulus)
+        {
+            ExecuteRanges(
+                length,
+                workers,
+                cancellationToken,
+                (start, end) =>
+                {
+                    if (square)
+                    {
+                        ProcessPointwiseSquareRangeFirstModulusDualVectorIlp(
+                            destination,
+                            left,
+                            start,
+                            end);
+                    }
+                    else
+                    {
+                        ProcessPointwiseProductRangeFirstModulusDualVectorIlp(
+                            destination,
+                            left,
+                            right,
+                            start,
+                            end);
+                    }
+                });
+
+            return;
+        }
+
+        ExecuteRanges(
+            length,
+            workers,
+            cancellationToken,
+            (start, end) =>
+            {
+                if (square)
+                {
+                    ProcessPointwiseSquareRangeSecondModulusDualVectorIlp(
+                        destination,
+                        left,
+                        start,
+                        end);
+                }
+                else
+                {
+                    ProcessPointwiseProductRangeSecondModulusDualVectorIlp(
+                        destination,
+                        left,
+                        right,
+                        start,
+                        end);
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessPointwiseProductRangeFirstModulusDualVectorIlp(
+        uint[] destination,
+        uint[] left,
+        uint[] right,
+        int start,
+        int end)
+    {
+        int index = start;
+        int dualVectorEnd =
+            end -
+            (end - index) %
+            (Vector512<uint>.Count * 2);
+
+        for (;
+             index < dualVectorEnd;
+             index += Vector512<uint>.Count * 2)
+        {
+            PointwisePairFirstModulus(destination, left, right, index + 0, index + 16);
+            PointwisePairFirstModulus(destination, left, right, index + 1, index + 17);
+            PointwisePairFirstModulus(destination, left, right, index + 2, index + 18);
+            PointwisePairFirstModulus(destination, left, right, index + 3, index + 19);
+            PointwisePairFirstModulus(destination, left, right, index + 4, index + 20);
+            PointwisePairFirstModulus(destination, left, right, index + 5, index + 21);
+            PointwisePairFirstModulus(destination, left, right, index + 6, index + 22);
+            PointwisePairFirstModulus(destination, left, right, index + 7, index + 23);
+            PointwisePairFirstModulus(destination, left, right, index + 8, index + 24);
+            PointwisePairFirstModulus(destination, left, right, index + 9, index + 25);
+            PointwisePairFirstModulus(destination, left, right, index + 10, index + 26);
+            PointwisePairFirstModulus(destination, left, right, index + 11, index + 27);
+            PointwisePairFirstModulus(destination, left, right, index + 12, index + 28);
+            PointwisePairFirstModulus(destination, left, right, index + 13, index + 29);
+            PointwisePairFirstModulus(destination, left, right, index + 14, index + 30);
+            PointwisePairFirstModulus(destination, left, right, index + 15, index + 31);
+        }
+
+        for (;
+             index + 1 < end;
+             index += 2)
+        {
+            PointwisePairFirstModulus(
+                destination,
+                left,
+                right,
+                index,
+                index + 1);
+        }
+
+        if (index < end)
+        {
+            destination[index] =
+                (uint)((ulong)left[index] *
+                       right[index] %
+                       FirstModulus);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessPointwiseProductRangeSecondModulusDualVectorIlp(
+        uint[] destination,
+        uint[] left,
+        uint[] right,
+        int start,
+        int end)
+    {
+        int index = start;
+        int dualVectorEnd =
+            end -
+            (end - index) %
+            (Vector512<uint>.Count * 2);
+
+        for (;
+             index < dualVectorEnd;
+             index += Vector512<uint>.Count * 2)
+        {
+            PointwisePairSecondModulus(destination, left, right, index + 0, index + 16);
+            PointwisePairSecondModulus(destination, left, right, index + 1, index + 17);
+            PointwisePairSecondModulus(destination, left, right, index + 2, index + 18);
+            PointwisePairSecondModulus(destination, left, right, index + 3, index + 19);
+            PointwisePairSecondModulus(destination, left, right, index + 4, index + 20);
+            PointwisePairSecondModulus(destination, left, right, index + 5, index + 21);
+            PointwisePairSecondModulus(destination, left, right, index + 6, index + 22);
+            PointwisePairSecondModulus(destination, left, right, index + 7, index + 23);
+            PointwisePairSecondModulus(destination, left, right, index + 8, index + 24);
+            PointwisePairSecondModulus(destination, left, right, index + 9, index + 25);
+            PointwisePairSecondModulus(destination, left, right, index + 10, index + 26);
+            PointwisePairSecondModulus(destination, left, right, index + 11, index + 27);
+            PointwisePairSecondModulus(destination, left, right, index + 12, index + 28);
+            PointwisePairSecondModulus(destination, left, right, index + 13, index + 29);
+            PointwisePairSecondModulus(destination, left, right, index + 14, index + 30);
+            PointwisePairSecondModulus(destination, left, right, index + 15, index + 31);
+        }
+
+        for (;
+             index + 1 < end;
+             index += 2)
+        {
+            PointwisePairSecondModulus(
+                destination,
+                left,
+                right,
+                index,
+                index + 1);
+        }
+
+        if (index < end)
+        {
+            destination[index] =
+                (uint)((ulong)left[index] *
+                       right[index] %
+                       SecondModulus);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessPointwiseSquareRangeFirstModulusDualVectorIlp(
+        uint[] destination,
+        uint[] source,
+        int start,
+        int end)
+    {
+        int index = start;
+        int dualVectorEnd =
+            end -
+            (end - index) %
+            (Vector512<uint>.Count * 2);
+
+        for (;
+             index < dualVectorEnd;
+             index += Vector512<uint>.Count * 2)
+        {
+            PointwiseSquarePairFirstModulus(destination, source, index + 0, index + 16);
+            PointwiseSquarePairFirstModulus(destination, source, index + 1, index + 17);
+            PointwiseSquarePairFirstModulus(destination, source, index + 2, index + 18);
+            PointwiseSquarePairFirstModulus(destination, source, index + 3, index + 19);
+            PointwiseSquarePairFirstModulus(destination, source, index + 4, index + 20);
+            PointwiseSquarePairFirstModulus(destination, source, index + 5, index + 21);
+            PointwiseSquarePairFirstModulus(destination, source, index + 6, index + 22);
+            PointwiseSquarePairFirstModulus(destination, source, index + 7, index + 23);
+            PointwiseSquarePairFirstModulus(destination, source, index + 8, index + 24);
+            PointwiseSquarePairFirstModulus(destination, source, index + 9, index + 25);
+            PointwiseSquarePairFirstModulus(destination, source, index + 10, index + 26);
+            PointwiseSquarePairFirstModulus(destination, source, index + 11, index + 27);
+            PointwiseSquarePairFirstModulus(destination, source, index + 12, index + 28);
+            PointwiseSquarePairFirstModulus(destination, source, index + 13, index + 29);
+            PointwiseSquarePairFirstModulus(destination, source, index + 14, index + 30);
+            PointwiseSquarePairFirstModulus(destination, source, index + 15, index + 31);
+        }
+
+        for (;
+             index + 1 < end;
+             index += 2)
+        {
+            PointwiseSquarePairFirstModulus(
+                destination,
+                source,
+                index,
+                index + 1);
+        }
+
+        if (index < end)
+        {
+            ulong value = source[index];
+            destination[index] =
+                (uint)(value * value % FirstModulus);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessPointwiseSquareRangeSecondModulusDualVectorIlp(
+        uint[] destination,
+        uint[] source,
+        int start,
+        int end)
+    {
+        int index = start;
+        int dualVectorEnd =
+            end -
+            (end - index) %
+            (Vector512<uint>.Count * 2);
+
+        for (;
+             index < dualVectorEnd;
+             index += Vector512<uint>.Count * 2)
+        {
+            PointwiseSquarePairSecondModulus(destination, source, index + 0, index + 16);
+            PointwiseSquarePairSecondModulus(destination, source, index + 1, index + 17);
+            PointwiseSquarePairSecondModulus(destination, source, index + 2, index + 18);
+            PointwiseSquarePairSecondModulus(destination, source, index + 3, index + 19);
+            PointwiseSquarePairSecondModulus(destination, source, index + 4, index + 20);
+            PointwiseSquarePairSecondModulus(destination, source, index + 5, index + 21);
+            PointwiseSquarePairSecondModulus(destination, source, index + 6, index + 22);
+            PointwiseSquarePairSecondModulus(destination, source, index + 7, index + 23);
+            PointwiseSquarePairSecondModulus(destination, source, index + 8, index + 24);
+            PointwiseSquarePairSecondModulus(destination, source, index + 9, index + 25);
+            PointwiseSquarePairSecondModulus(destination, source, index + 10, index + 26);
+            PointwiseSquarePairSecondModulus(destination, source, index + 11, index + 27);
+            PointwiseSquarePairSecondModulus(destination, source, index + 12, index + 28);
+            PointwiseSquarePairSecondModulus(destination, source, index + 13, index + 29);
+            PointwiseSquarePairSecondModulus(destination, source, index + 14, index + 30);
+            PointwiseSquarePairSecondModulus(destination, source, index + 15, index + 31);
+        }
+
+        for (;
+             index + 1 < end;
+             index += 2)
+        {
+            PointwiseSquarePairSecondModulus(
+                destination,
+                source,
+                index,
+                index + 1);
+        }
+
+        if (index < end)
+        {
+            ulong value = source[index];
+            destination[index] =
+                (uint)(value * value % SecondModulus);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void PointwisePairFirstModulus(
+        uint[] destination,
+        uint[] left,
+        uint[] right,
+        int firstIndex,
+        int secondIndex)
+    {
+        ulong firstProduct =
+            (ulong)left[firstIndex] *
+            right[firstIndex];
+
+        ulong secondProduct =
+            (ulong)left[secondIndex] *
+            right[secondIndex];
+
+        destination[firstIndex] =
+            (uint)(firstProduct % FirstModulus);
+
+        destination[secondIndex] =
+            (uint)(secondProduct % FirstModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void PointwisePairSecondModulus(
+        uint[] destination,
+        uint[] left,
+        uint[] right,
+        int firstIndex,
+        int secondIndex)
+    {
+        ulong firstProduct =
+            (ulong)left[firstIndex] *
+            right[firstIndex];
+
+        ulong secondProduct =
+            (ulong)left[secondIndex] *
+            right[secondIndex];
+
+        destination[firstIndex] =
+            (uint)(firstProduct % SecondModulus);
+
+        destination[secondIndex] =
+            (uint)(secondProduct % SecondModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void PointwiseSquarePairFirstModulus(
+        uint[] destination,
+        uint[] source,
+        int firstIndex,
+        int secondIndex)
+    {
+        ulong firstValue = source[firstIndex];
+        ulong secondValue = source[secondIndex];
+
+        ulong firstProduct =
+            firstValue * firstValue;
+
+        ulong secondProduct =
+            secondValue * secondValue;
+
+        destination[firstIndex] =
+            (uint)(firstProduct % FirstModulus);
+
+        destination[secondIndex] =
+            (uint)(secondProduct % FirstModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void PointwiseSquarePairSecondModulus(
+        uint[] destination,
+        uint[] source,
+        int firstIndex,
+        int secondIndex)
+    {
+        ulong firstValue = source[firstIndex];
+        ulong secondValue = source[secondIndex];
+
+        ulong firstProduct =
+            firstValue * firstValue;
+
+        ulong secondProduct =
+            secondValue * secondValue;
+
+        destination[firstIndex] =
+            (uint)(firstProduct % SecondModulus);
+
+        destination[secondIndex] =
+            (uint)(secondProduct % SecondModulus);
+    }
+
+    /// <summary>
     /// Builds the right-hand forward spectrum, multiplies it into the already
     /// transformed left spectrum, and returns the right workspace before this
     /// helper returns. Keeping that lease in a separate method makes its GC
@@ -4487,22 +4959,38 @@ internal sealed class ParallelBigUnsigned
             long pointwiseStarted =
                 Stopwatch.GetTimestamp();
 
-            ExecuteRanges(
-                transformLength,
-                workers,
-                cancellationToken,
-                (start, end) =>
-                {
-                    for (int index = start;
-                         index < end;
-                         index++)
+            if (CanUsePointwiseDualVectorIlp(
+                    workers,
+                    modulus))
+            {
+                ExecutePointwiseProductDualVectorIlp(
+                    transformedLeft,
+                    transformedLeft,
+                    rightTransform,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
+            else
+            {
+                ExecuteRanges(
+                    transformLength,
+                    workers,
+                    cancellationToken,
+                    (start, end) =>
                     {
-                        transformedLeft[index] =
-                            (uint)((ulong)transformedLeft[index] *
-                                   rightTransform[index] %
-                                   modulus);
-                    }
-                });
+                        for (int index = start;
+                             index < end;
+                             index++)
+                        {
+                            transformedLeft[index] =
+                                (uint)((ulong)transformedLeft[index] *
+                                       rightTransform[index] %
+                                       modulus);
+                        }
+                    });
+            }
 
             diagnostics.PointwiseTicks +=
                 Stopwatch.GetTimestamp() -
