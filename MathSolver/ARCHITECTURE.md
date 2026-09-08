@@ -648,3 +648,13 @@ Starting from the accepted HX-370 large-mode checkpoint (~230.469 s for `999,999
 ### >10M AVX2 L1 small-pair Low32 pass (2026-09-08)
 
 Starting from the accepted HX 370 large-mode checkpoint (~222.645 s at exponent 100,000,000), the existing large-mode Low32 gate now also covers the two packed L1 stage-pairs that were deliberately left on the older full-product Shoup kernel. Forward S=16/S=8 keeps its two-group Vector256 packing and switches its first-stage modular products plus paired second-stage products to Low32/VPMULLD. Inverse S=8/S=16 keeps its two-parent Vector256 packing, pairs the two same-twiddle first-stage products with the proven Low32 pair pipeline, and retires the two different-twiddle second-stage merges sequentially with Low32. Generic L1, global 24T scheduling, L2/L3, CRT/carry, worker topology, and <=10M/AVX-512 dispatch are unchanged.
+
+
+### >10M AVX2 L2 pass 1 — Inverse Low32 + same-twiddle pair pipeline (2026-09-08)
+
+Starting from the accepted large-mode `L1PackedLow32` checkpoint (~215 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), this pass leaves the completed L1 work unchanged and moves only the two cache-resident Inverse L2 DIT stage-pairs to the already-proven exact Low32 Shoup path. On the 64K-value HX-370 L2 tile those pairs are `8192+16384` and `32768+65536`. The existing twiddle-major traversal and bounded live-register schedule are preserved, while first-stage products that share one twiddle/Shoup vector use the same paired Low32 pipeline already accepted for Inverse L1. Forward L2, all L3/global stages, CRT/carry, scheduler, RAM topology, <=10M AVX2 fallback and <=10M AVX-512 path are unchanged.
+
+
+### >10M AVX-512 Phase 1 — Inverse L1 generic Low32 PairPipeline (2026-09-08)
+
+Starting from the accepted large-mode AVX2 checkpoint `InverseL2_Low32PairPipeline` (~208.81 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), the first >10M AVX-512 experiment widens only the generic Inverse L1 DIT stage-pairs (`32+64`, `128+256`, `512+1024`, `2048+4096`). The packed `8+16` pair remains on the accepted AVX2 Low32 specialization. The new sixteen-lane kernel preserves the winning one-parent twiddle-major schedule, uses AVX-512F `VPMULLD` for exact low32 `x*w` and `q*p`, retains `VPMULUDQ` only for the high32 Shoup quotient, and pipelines both same-twiddle first-stage products plus both different-twiddle second-stage products. SharedNttTwiddlePlans keeps its general large-mode AVX-512 flag off, so L2/L3/global NTT, Forward NTT, pointwise, CRT/carry, worker topology and memory layout remain exactly the accepted AVX2 checkpoint. CPUs without AVX-512F automatically execute the 208.81 s-class AVX2 path.

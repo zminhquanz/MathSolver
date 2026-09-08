@@ -803,10 +803,10 @@ internal sealed class ParallelBigUnsigned
         cancellationToken.ThrowIfCancellationRequested();
 
         // Capture the shared Hardware acceleration switch once for the complete
-        // >10M transaction. The 20M-chain A/B benchmark showed that the accepted
-        // AVX2/Shoup cache-resident kernels materially reduce large-mode time on
-        // the i7-8700, so the original fast exponent topology now uses them too.
-        // Global memory-bound stages remain on their proven scalar/byref path.
+        // >10M transaction. The accepted AVX2/Shoup cache-resident kernels remain
+        // the large-mode baseline. The first AVX-512 large-mode experiment is
+        // intentionally dispatched later only for generic Inverse-L1 pairs; the
+        // shared plan stays AVX2 so every other kernel keeps the proven fallback.
         bool useAvx2Ntt =
             CalculationAccelerationManager.UsePowerNttAvx2;
 
@@ -8692,9 +8692,137 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Experimental sixteen-lane AVX-512F modular context used only by the
-    /// <=10M phase-2 NTT A/B path. The accepted AVX2 context remains the
-    /// production fallback and the >10M path deliberately never enables this.
+    /// >10M Inverse-L1 exact-low32 AVX-512 Shoup multiply. Both production
+    /// NTT primes are below 2^31, so the provisional Shoup residue is below
+    /// 2p < 2^32. VPMULLD therefore needs only the exact low dword of x*w and
+    /// q*p; VPMULUDQ is retained only for high32(x*shoup).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> MultiplyShoupLow32Avx512(
+        Vector512<uint> value,
+        Vector512<uint> twiddle,
+        Vector512<uint> shoup,
+        in Avx512NttModContext context)
+    {
+        Vector512<uint> productLow = Avx512F.MultiplyLow(value, twiddle);
+        Vector512<ulong> quotientEven =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(value, shoup), 32);
+        Vector512<uint> oddValue =
+            Avx512F.ShiftRightLogical(value.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> oddShoup =
+            Avx512F.ShiftRightLogical(shoup.AsUInt64(), 32).AsUInt32();
+        Vector512<ulong> quotientOdd =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(oddValue, oddShoup), 32);
+        Vector512<uint> quotient =
+            Vector512.BitwiseOr(
+                quotientEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(quotientOdd, 32).AsUInt32());
+        Vector512<uint> quotientTimesModulusLow =
+            Avx512F.MultiplyLow(quotient, context.Modulus);
+        return ReduceOnceAvx512(
+            Vector512.Subtract(productLow, quotientTimesModulusLow), context);
+    }
+
+    /// <summary>
+    /// Two independent exact-low32 AVX-512 Shoup chains sharing one twiddle
+    /// row. Product and quotient chains are issued in pairs before reduction.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void MultiplyShoupPairSameTwiddleLow32Avx512(
+        Vector512<uint> firstValue,
+        Vector512<uint> secondValue,
+        Vector512<uint> twiddle,
+        Vector512<uint> shoup,
+        in Avx512NttModContext context,
+        out Vector512<uint> firstResult,
+        out Vector512<uint> secondResult)
+    {
+        Vector512<uint> firstProductLow = Avx512F.MultiplyLow(firstValue, twiddle);
+        Vector512<uint> secondProductLow = Avx512F.MultiplyLow(secondValue, twiddle);
+        Vector512<ulong> firstQuotientEven =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(firstValue, shoup), 32);
+        Vector512<ulong> secondQuotientEven =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(secondValue, shoup), 32);
+        Vector512<uint> oddShoup =
+            Avx512F.ShiftRightLogical(shoup.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> firstOddValue =
+            Avx512F.ShiftRightLogical(firstValue.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> secondOddValue =
+            Avx512F.ShiftRightLogical(secondValue.AsUInt64(), 32).AsUInt32();
+        Vector512<ulong> firstQuotientOdd =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(firstOddValue, oddShoup), 32);
+        Vector512<ulong> secondQuotientOdd =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(secondOddValue, oddShoup), 32);
+        Vector512<uint> firstQuotient =
+            Vector512.BitwiseOr(
+                firstQuotientEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(firstQuotientOdd, 32).AsUInt32());
+        Vector512<uint> secondQuotient =
+            Vector512.BitwiseOr(
+                secondQuotientEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(secondQuotientOdd, 32).AsUInt32());
+        Vector512<uint> firstQpLow = Avx512F.MultiplyLow(firstQuotient, context.Modulus);
+        Vector512<uint> secondQpLow = Avx512F.MultiplyLow(secondQuotient, context.Modulus);
+        firstResult = ReduceOnceAvx512(
+            Vector512.Subtract(firstProductLow, firstQpLow), context);
+        secondResult = ReduceOnceAvx512(
+            Vector512.Subtract(secondProductLow, secondQpLow), context);
+    }
+
+    /// <summary>
+    /// Two independent exact-low32 AVX-512 Shoup chains using different
+    /// twiddle rows. Used by the second DIT stage of the >10M Inverse-L1 pair.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void MultiplyShoupPairDifferentTwiddleLow32Avx512(
+        Vector512<uint> firstValue,
+        Vector512<uint> secondValue,
+        Vector512<uint> firstTwiddle,
+        Vector512<uint> secondTwiddle,
+        Vector512<uint> firstShoup,
+        Vector512<uint> secondShoup,
+        in Avx512NttModContext context,
+        out Vector512<uint> firstResult,
+        out Vector512<uint> secondResult)
+    {
+        Vector512<uint> firstProductLow = Avx512F.MultiplyLow(firstValue, firstTwiddle);
+        Vector512<uint> secondProductLow = Avx512F.MultiplyLow(secondValue, secondTwiddle);
+        Vector512<ulong> firstQuotientEven =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(firstValue, firstShoup), 32);
+        Vector512<ulong> secondQuotientEven =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(secondValue, secondShoup), 32);
+        Vector512<uint> firstOddValue =
+            Avx512F.ShiftRightLogical(firstValue.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> secondOddValue =
+            Avx512F.ShiftRightLogical(secondValue.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> firstOddShoup =
+            Avx512F.ShiftRightLogical(firstShoup.AsUInt64(), 32).AsUInt32();
+        Vector512<uint> secondOddShoup =
+            Avx512F.ShiftRightLogical(secondShoup.AsUInt64(), 32).AsUInt32();
+        Vector512<ulong> firstQuotientOdd =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(firstOddValue, firstOddShoup), 32);
+        Vector512<ulong> secondQuotientOdd =
+            Avx512F.ShiftRightLogical(Avx512F.Multiply(secondOddValue, secondOddShoup), 32);
+        Vector512<uint> firstQuotient =
+            Vector512.BitwiseOr(
+                firstQuotientEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(firstQuotientOdd, 32).AsUInt32());
+        Vector512<uint> secondQuotient =
+            Vector512.BitwiseOr(
+                secondQuotientEven.AsUInt32(),
+                Avx512F.ShiftLeftLogical(secondQuotientOdd, 32).AsUInt32());
+        Vector512<uint> firstQpLow = Avx512F.MultiplyLow(firstQuotient, context.Modulus);
+        Vector512<uint> secondQpLow = Avx512F.MultiplyLow(secondQuotient, context.Modulus);
+        firstResult = ReduceOnceAvx512(
+            Vector512.Subtract(firstProductLow, firstQpLow), context);
+        secondResult = ReduceOnceAvx512(
+            Vector512.Subtract(secondProductLow, secondQpLow), context);
+    }
+
+    /// <summary>
+    /// Sixteen-lane AVX-512F modular context. The general AVX-512 NTT gate is
+    /// still the <=10M path, while >10M Phase 1 constructs this context only
+    /// for the isolated generic Inverse-L1 experiment. AVX2 remains fallback.
     /// </summary>
     private readonly struct Avx512NttModContext
     {
@@ -15260,6 +15388,131 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// >10M-only generic Inverse-L1 DIT stage-pair using AVX-512F exact-low32
+    /// Shoup. The accepted one-parent twiddle-major PairPipeline is preserved.
+    /// Packed 8+16 remains AVX2 Low32; L2/L3/global are deliberately unchanged.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStagePairRegionTwiddleMajorLow32Avx512(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int regionOffset,
+        int regionLength,
+        int stageLength,
+        in Avx512NttModContext context)
+    {
+        int halfLength = stageLength >> 1;
+        int parentLength = stageLength << 1;
+        int regionEnd = regionOffset + regionLength;
+        ref uint valuesReference = ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference = ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+        int butterfly = 0;
+
+        for (; butterfly + 15 < halfLength; butterfly += 16)
+        {
+            int firstTwiddleIndex = firstTwiddleOffset + butterfly;
+            int secondTwiddleIndex0 = secondTwiddleOffset + butterfly;
+            int secondTwiddleIndex1 = secondTwiddleOffset + halfLength + butterfly;
+            Vector512<uint> firstTwiddle =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)firstTwiddleIndex);
+            Vector512<uint> firstShoup =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)firstTwiddleIndex);
+            Vector512<uint> secondTwiddle0 =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex0);
+            Vector512<uint> secondShoup0 =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex0);
+            Vector512<uint> secondTwiddle1 =
+                Vector512.LoadUnsafe(ref twiddleReference, (nuint)secondTwiddleIndex1);
+            Vector512<uint> secondShoup1 =
+                Vector512.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex1);
+
+            for (int parentOffset = regionOffset; parentOffset < regionEnd; parentOffset += parentLength)
+            {
+                int index0 = parentOffset + butterfly;
+                int index1 = index0 + halfLength;
+                int index2 = index0 + stageLength;
+                int index3 = index2 + halfLength;
+
+                Vector512<uint> value1 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index1);
+                Vector512<uint> value3 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index3);
+                MultiplyShoupPairSameTwiddleLow32Avx512(
+                    value1, value3, firstTwiddle, firstShoup, context,
+                    out Vector512<uint> right0, out Vector512<uint> right1);
+
+                Vector512<uint> value0 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index0);
+                Vector512<uint> value2 =
+                    Vector512.LoadUnsafe(ref valuesReference, (nuint)index2);
+                Vector512<uint> firstSum0 = AddModuloAvx512(value0, right0, context);
+                Vector512<uint> firstDifference0 = SubtractModuloAvx512(value0, right0, context);
+                Vector512<uint> firstSum1 = AddModuloAvx512(value2, right1, context);
+                Vector512<uint> firstDifference1 = SubtractModuloAvx512(value2, right1, context);
+
+                MultiplyShoupPairDifferentTwiddleLow32Avx512(
+                    firstSum1, firstDifference1,
+                    secondTwiddle0, secondTwiddle1,
+                    secondShoup0, secondShoup1, context,
+                    out Vector512<uint> mergedRight0, out Vector512<uint> mergedRight1);
+
+                AddModuloAvx512(firstSum0, mergedRight0, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index0);
+                SubtractModuloAvx512(firstSum0, mergedRight0, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index2);
+                AddModuloAvx512(firstDifference0, mergedRight1, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index1);
+                SubtractModuloAvx512(firstDifference0, mergedRight1, context)
+                    .StoreUnsafe(ref valuesReference, (nuint)index3);
+            }
+        }
+
+        for (; butterfly < halfLength; butterfly++)
+        {
+            uint firstTwiddle = twiddles[firstTwiddleOffset + butterfly];
+            uint firstShoup = shoupTwiddles[firstTwiddleOffset + butterfly];
+            uint secondTwiddle0 = twiddles[secondTwiddleOffset + butterfly];
+            uint secondShoup0 = shoupTwiddles[secondTwiddleOffset + butterfly];
+            uint secondTwiddle1 = twiddles[secondTwiddleOffset + halfLength + butterfly];
+            uint secondShoup1 = shoupTwiddles[secondTwiddleOffset + halfLength + butterfly];
+            for (int parentOffset = regionOffset; parentOffset < regionEnd; parentOffset += parentLength)
+            {
+                int index0 = parentOffset + butterfly;
+                int index1 = index0 + halfLength;
+                int index2 = index0 + stageLength;
+                int index3 = index2 + halfLength;
+                uint value0 = values[index0];
+                uint value1 = values[index1];
+                uint value2 = values[index2];
+                uint value3 = values[index3];
+                uint right0 = MultiplyShoupScalar(value1, firstTwiddle, firstShoup, modulus);
+                uint right1 = MultiplyShoupScalar(value3, firstTwiddle, firstShoup, modulus);
+                uint firstSum0 = value0 + right0;
+                uint firstSum1 = value2 + right1;
+                if (firstSum0 >= modulus) firstSum0 -= modulus;
+                if (firstSum1 >= modulus) firstSum1 -= modulus;
+                uint firstDifference0 = value0 >= right0 ? value0 - right0 : value0 + modulus - right0;
+                uint firstDifference1 = value2 >= right1 ? value2 - right1 : value2 + modulus - right1;
+                uint mergedRight0 = MultiplyShoupScalar(firstSum1, secondTwiddle0, secondShoup0, modulus);
+                uint mergedRight1 = MultiplyShoupScalar(firstDifference1, secondTwiddle1, secondShoup1, modulus);
+                uint finalSum0 = firstSum0 + mergedRight0;
+                uint finalSum1 = firstDifference0 + mergedRight1;
+                if (finalSum0 >= modulus) finalSum0 -= modulus;
+                if (finalSum1 >= modulus) finalSum1 -= modulus;
+                values[index0] = finalSum0;
+                values[index1] = finalSum1;
+                values[index2] = firstSum0 >= mergedRight0 ? firstSum0 - mergedRight0 : firstSum0 + modulus - mergedRight0;
+                values[index3] = firstDifference0 >= mergedRight1 ? firstDifference0 - mergedRight1 : firstDifference0 + modulus - mergedRight1;
+            }
+        }
+    }
+
+    /// <summary>
     /// AVX-512F counterpart of the accepted twiddle-major Inverse DIT
     /// stage-pair. Phase 2 used it for L3; Phase 3 also reuses it for L2;
     /// Phase 5 dispatches the larger Inverse L1 stage-pairs through the same
@@ -20040,8 +20293,11 @@ internal sealed class ParallelBigUnsigned
                     Avx512F.IsSupported &&
                     Vector512.IsHardwareAccelerated;
 
+                bool useLargeModeAvx512InverseL1Generic =
+                    workers.UseLargeModeAvx512InverseL1Generic;
+
                 Avx512NttModContext avx512Context =
-                    useAvx512Ntt
+                    useAvx512Ntt || useLargeModeAvx512InverseL1Generic
                         ? new Avx512NttModContext(modulus)
                         : default;
 
@@ -20066,7 +20322,9 @@ internal sealed class ParallelBigUnsigned
                             twiddlePlan, fusedNttBlockLength,
                             l2NttTileLength, l2TileOffset, context,
                             useAvx512Ntt,
+                            useLargeModeAvx512InverseL1Generic,
                             workers.UseLargeModeAvx2InverseL1Low32Shoup,
+                            workers.UseLargeModeAvx2InverseL2Low32Shoup,
                             avx512Context,
                             out long l1Ticks, out long l2Ticks,
                             out long l1Packed816Ticks,
@@ -20271,8 +20529,11 @@ internal sealed class ParallelBigUnsigned
                     Avx512F.IsSupported &&
                     Vector512.IsHardwareAccelerated;
 
+                bool useLargeModeAvx512InverseL1Generic =
+                    workers.UseLargeModeAvx512InverseL1Generic;
+
                 Avx512NttModContext avx512Context =
-                    useAvx512Ntt
+                    useAvx512Ntt || useLargeModeAvx512InverseL1Generic
                         ? new Avx512NttModContext(modulus)
                         : default;
 
@@ -20306,7 +20567,9 @@ internal sealed class ParallelBigUnsigned
                                 twiddlePlan, fusedNttBlockLength,
                                 l2NttTileLength, l2TileOffset, context,
                                 useAvx512Ntt,
+                                useLargeModeAvx512InverseL1Generic,
                                 workers.UseLargeModeAvx2InverseL1Low32Shoup,
+                                workers.UseLargeModeAvx2InverseL2Low32Shoup,
                                 avx512Context,
                                 out long l1Ticks, out long l2Ticks,
                                 out long l1Packed816Ticks,
@@ -20549,8 +20812,11 @@ internal sealed class ParallelBigUnsigned
                     Avx512F.IsSupported &&
                     Vector512.IsHardwareAccelerated;
 
+                bool useLargeModeAvx512InverseL1Generic =
+                    workers.UseLargeModeAvx512InverseL1Generic;
+
                 Avx512NttModContext avx512Context =
-                    useAvx512Ntt
+                    useAvx512Ntt || useLargeModeAvx512InverseL1Generic
                         ? new Avx512NttModContext(modulus)
                         : default;
 
@@ -20567,7 +20833,9 @@ internal sealed class ParallelBigUnsigned
                         twiddlePlan, fusedNttBlockLength,
                         l2NttTileLength, tileOffset, context,
                         useAvx512Ntt,
+                        useLargeModeAvx512InverseL1Generic,
                         workers.UseLargeModeAvx2InverseL1Low32Shoup,
+                        workers.UseLargeModeAvx2InverseL2Low32Shoup,
                         avx512Context,
                         out long l1Ticks, out long l2Ticks,
                         out long l1Packed816Ticks,
@@ -20808,7 +21076,9 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         in Avx2NttModContext context,
         bool useAvx512LocalStagePair,
+        bool useLargeModeAvx512InverseL1Generic,
         bool useLargeModeAvx2InverseL1Low32Shoup,
+        bool useLargeModeAvx2InverseL2Low32Shoup,
         in Avx512NttModContext avx512Context,
         out long l1Ticks,
         out long l2Ticks,
@@ -20890,12 +21160,20 @@ internal sealed class ParallelBigUnsigned
                             firstTwiddleOffset, secondTwiddleOffset,
                             blockOffset, fusedNttBlockLength, avx512Context);
                     }
+                    else if (useLargeModeAvx512InverseL1Generic &&
+                             stageLength >= 32)
+                    {
+                        // >10M AVX-512 phase 1: generic Inverse-L1 only.
+                        ExecuteInverseCachedStagePairRegionTwiddleMajorLow32Avx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            firstTwiddleOffset, secondTwiddleOffset,
+                            blockOffset, fusedNttBlockLength, stageLength,
+                            avx512Context);
+                    }
                     else if (useLargeModeAvx2InverseL1Low32Shoup &&
                              (stageLength == 8 || stageLength >= 32))
                     {
-                        // >10M AVX2 L1-small pass: extend the proven Low32
-                        // arithmetic to the packed 8+16 pair as well as the
-                        // generic 32+64 through 2048+4096 pairs.
+                        // Accepted >10M AVX2 Low32 path and exact fallback.
                         ExecuteInverseCachedStagePairRegionTwiddleMajorLow32Avx2(
                             values, modulus, twiddles, shoupTwiddles,
                             firstTwiddleOffset, secondTwiddleOffset,
@@ -21002,6 +21280,19 @@ internal sealed class ParallelBigUnsigned
                         tileOffset, l2NttTileLength, stageLength,
                         avx512Context);
                 }
+                else if (useLargeModeAvx2InverseL2Low32Shoup)
+                {
+                    // >10M AVX2 L2 pass: reuse the L1-proven exact Low32
+                    // Shoup arithmetic and same-twiddle first-stage pair
+                    // pipeline for the two resident L2 pairs (8192+16384 and
+                    // 32768+65536 on the HX-370 64K tile). Traversal, twiddle
+                    // reuse and the 24-worker tile topology are unchanged.
+                    ExecuteInverseCachedStagePairRegionTwiddleMajorLow32Avx2(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstTwiddleOffset, secondTwiddleOffset,
+                        tileOffset, l2NttTileLength, stageLength,
+                        context);
+                }
                 else
                 {
                     ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
@@ -21082,7 +21373,8 @@ internal sealed class ParallelBigUnsigned
             twiddlePlan,
             fusedNttBlockLength,
             l2NttTileLength,
-            tileOffset);
+            tileOffset,
+            useLargeModeAvx2InverseL2Low32Shoup: false);
 
         // The scalar fallback is not the production AVX2 target of this
         // diagnostic build. Keep its exact arithmetic/traversal and report the
@@ -21156,7 +21448,8 @@ internal sealed class ParallelBigUnsigned
                             twiddlePlan,
                             fusedNttBlockLength,
                             l2NttTileLength,
-                            l2TileOffset);
+                            l2TileOffset,
+                            workers.UseLargeModeAvx2InverseL2Low32Shoup);
                     }
 
                     // Merge the completed L2 tiles while their parent LLC tile
@@ -21565,7 +21858,8 @@ internal sealed class ParallelBigUnsigned
         NttTwiddlePlan twiddlePlan,
         int fusedNttBlockLength,
         int l2NttTileLength,
-        int tileOffset)
+        int tileOffset,
+        bool useLargeModeAvx2InverseL2Low32Shoup)
     {
         uint[] shoupTwiddles =
             twiddlePlan.InverseShoupTwiddles!;
@@ -21658,17 +21952,34 @@ internal sealed class ParallelBigUnsigned
                 int secondTwiddleOffset =
                     twiddlePlan.GetOffset(stageLength);
 
-                ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
-                    values,
-                    modulus,
-                    twiddles,
-                    shoupTwiddles,
-                    firstTwiddleOffset,
-                    secondTwiddleOffset,
-                    tileOffset,
-                    l2NttTileLength,
-                    stageLength,
-                    context);
+                if (useLargeModeAvx2InverseL2Low32Shoup)
+                {
+                    ExecuteInverseCachedStagePairRegionTwiddleMajorLow32Avx2(
+                        values,
+                        modulus,
+                        twiddles,
+                        shoupTwiddles,
+                        firstTwiddleOffset,
+                        secondTwiddleOffset,
+                        tileOffset,
+                        l2NttTileLength,
+                        stageLength,
+                        context);
+                }
+                else
+                {
+                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                        values,
+                        modulus,
+                        twiddles,
+                        shoupTwiddles,
+                        firstTwiddleOffset,
+                        secondTwiddleOffset,
+                        tileOffset,
+                        l2NttTileLength,
+                        stageLength,
+                        context);
+                }
 
                 stageLength <<= 1;
                 continue;
@@ -22528,13 +22839,15 @@ internal sealed class ParallelBigUnsigned
         NttTwiddlePlan twiddlePlan,
         int fusedNttBlockLength,
         int l2NttTileLength,
-        int tileOffset)
+        int tileOffset,
+        bool useLargeModeAvx2InverseL2Low32Shoup)
     {
         if (twiddlePlan.InverseShoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteInverseL2TileSequentialAvx2(
                 values, modulus, twiddles, twiddlePlan,
-                fusedNttBlockLength, l2NttTileLength, tileOffset);
+                fusedNttBlockLength, l2NttTileLength, tileOffset,
+                useLargeModeAvx2InverseL2Low32Shoup);
             return;
         }
 
@@ -26932,6 +27245,23 @@ internal sealed class ParallelBigUnsigned
             !UseAvx512Ntt;
 
         public bool UseLargeModeAvx2InverseL1Low32Shoup =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt &&
+            !UseAvx512Ntt;
+
+        // First >10M AVX-512 compute gate. Shared plan AVX-512 remains off,
+        // so only generic Inverse-L1 observes this; all other large-mode paths
+        // retain the accepted AVX2 checkpoint and fallback behavior.
+        public bool UseLargeModeAvx512InverseL1Generic =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt &&
+            !UseAvx512Ntt &&
+            Avx512F.IsSupported &&
+            Vector512.IsHardwareAccelerated;
+
+        // L2 pass deliberately has a separate gate from the accepted L1
+        // checkpoint so L2 can be A/B tested and rolled back independently.
+        public bool UseLargeModeAvx2InverseL2Low32Shoup =>
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt;
