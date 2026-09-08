@@ -4117,8 +4117,9 @@ public partial class PowerRootView : LocalizedSolverView
                         FormatProfileSeconds(
                             diagnostics.ForwardGlobalUncached)));
 
-                // Inverse profiler-only build: all arithmetic kernels are the
-                // accepted baseline. Timers sit at phase boundaries only.
+                // Inverse profiler: timers remain at phase boundaries. The
+                // >10M AVX2 test build may swap only generic Inverse-L1
+                // stage-pair modular products to the exact low32 Shoup kernel.
                 TimeSpan inverseLocalCache =
                     diagnostics.InverseLocalL3 +
                     diagnostics.InverseLocalL2 +

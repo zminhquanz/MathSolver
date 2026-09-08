@@ -627,3 +627,24 @@ Starting from accepted Phase 28, the AVX-512DQ CRT reconstruction keeps the exis
 ### <=10M AVX-512 Phase 30 — VL 256-bit CRT quad-chain reconstruction (2026-09-06)
 
 Starting from accepted Phase 29, the CRT residue reduction, constant-Shoup multiplier, 512-bit widening, scratch layout and worker partition remain unchanged. On CPUs where `Avx512DQ.VL.IsSupported`, each widened eight-qword CRT half is split into two four-qword YMM halves and the final `multiplier * FirstModulus` reconstruction uses four independent `Avx512DQ.VL.MultiplyLow` / 256-bit `VPMULLQ` chains before add/store retirement. This isolates AVX-512VL as a width/scheduling experiment while retaining the exact Phase-29 512-bit DQ path as fallback. Pointwise Phase 28/27 arithmetic, Forward/Inverse NTT kernels, AVX2 fallback, memory topology and >10M AVX-512-off policy are unchanged.
+
+### >10M AVX2 Forward L1 exact-low32 Shoup experiment (2026-09-08)
+
+Starting from the accepted >10M Inverse-L1 low32 checkpoint (~243.891 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), this isolated experiment applies the same exact low-dword Shoup observation to the generic **Forward L1 fused DIF stage-pairs** only. The 4096+2048, 1024+512, 256+128 and 64+32 pairs keep the existing bounded-register, twiddle-major traversal and memory traffic, while their vector modular products use VPMULLD for the low `x*w` and `q*p` terms and VPMULUDQ only for the high32 Shoup quotient. A dedicated two-value same-twiddle low32 helper preserves the accepted second-stage dual-chain software pipeline.
+
+The packed Forward 16+8 specialization, radix-4/radix-2 tail, all L2/L3/global kernels, scheduler, CRT/carry and segmentation remain unchanged. Dispatch is gated by the >10M persistent-static worker topology, so the <=10M AVX2 fallback and the <=10M AVX-512 path remain on their accepted kernels.
+
+### >10M AVX2 Inverse L1 pass 2 — same-twiddle first-stage Low32 Shoup ILP (2026-09-08)
+
+Starting from the accepted large-mode AVX2 checkpoint that combines Inverse-L1 Low32 Shoup and Forward-L1 Low32 Shoup (~240.168 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), this isolated pass changes only the generic **Inverse L1 fused DIT stage-pairs**. The two independent first-stage right-hand products inside one parent use the already-existing `MultiplyShoupPairSameTwiddleLow32Avx2` helper because both products share the same first-stage twiddle/Shoup vector. Their two high32 quotient chains are issued together and the odd-lane Shoup vector is derived once, while the left operands are deliberately loaded only after the paired multiply returns to keep the AVX2 live-register set bounded.
+
+The different-twiddle second-stage products remain on the accepted sequential Low32/early-store schedule; no second parent is opened and no extra unroll, cross-lane permutation, temporary buffer or workspace is introduced. The packed Inverse 8+16 path, radix-4 tail, Forward L1 Low32 checkpoint, L2/L3/global NTT, CRT/carry, scheduler, primes, segmentation, <=10M AVX2 fallback and <=10M AVX-512 path are unchanged.
+
+### >10M AVX2 Inverse global 24T balance + pair/dual-lane pass (2026-09-08)
+
+Starting from the accepted HX-370 large-mode checkpoint (~230.469 s for `999,999,999,999,999,999^100,000,000`), this experiment changes only the measured N=2^26 Inverse global stages on the persistent 24-worker AVX2 path. The cached `S=2^20 + 2^21` fused pair now uses worker-aligned parent slicing (32 parents × 3 slices = 96 work items); the cached `S=2^22` single stage uses 16 groups × 3 slices = 48 work items instead of the imbalanced 32-item ceil split and runs a managed-byref two-butterfly scalar pair kernel without allocating a global Shoup companion stream. The three non-final uncached stages `S=2^23`, `S=2^24`, and `S=2^25` reuse the existing exact dual-lane root² recurrence with the natural 8×3, 4×6, and 2×12 24-item partitions. Existing Coffee-Lake 12T specializations, <=10M behavior, Forward NTT, local L1/L2/L3 kernels, CRT/carry, memory layout, primes, and AVX-512 policy are unchanged.
+
+
+### >10M AVX2 L1 small-pair Low32 pass (2026-09-08)
+
+Starting from the accepted HX 370 large-mode checkpoint (~222.645 s at exponent 100,000,000), the existing large-mode Low32 gate now also covers the two packed L1 stage-pairs that were deliberately left on the older full-product Shoup kernel. Forward S=16/S=8 keeps its two-group Vector256 packing and switches its first-stage modular products plus paired second-stage products to Low32/VPMULLD. Inverse S=8/S=16 keeps its two-parent Vector256 packing, pairs the two same-twiddle first-stage products with the proven Low32 pair pipeline, and retires the two different-twiddle second-stage merges sequentially with Low32. Generic L1, global 24T scheduling, L2/L3, CRT/carry, worker topology, and <=10M/AVX-512 dispatch are unchanged.
