@@ -4567,7 +4567,7 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         uint modulus)
     {
-        return workers.UseAvx512Ntt &&
+        return (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Pointwise) &&
                Avx512F.IsSupported &&
                Vector512.IsHardwareAccelerated &&
                (modulus == FirstModulus ||
@@ -5657,9 +5657,13 @@ internal sealed class ParallelBigUnsigned
                     workers.UseAvx512Ntt ||
                     (workers.UseLargeModeAvx512ForwardGlobalCached &&
                     workers.WorkerCount == 24 &&
-                    length == (1 << 26) &&
+                    length >= (1 << 22) &&
                     (stageLength == (1 << 22) ||
                      stageLength == (1 << 20)));
+
+                // Per-stage 100M profiles also show these pairs in smaller
+                // seed transforms at N=2^22..2^25. Include eligible remainders
+                // too; keep other stage shapes and worker counts unchanged.
 
                 if (useAvx512ForwardGlobalCached)
                 {
@@ -7741,6 +7745,10 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        // Small scalar slices can finish before their periodic cancellation
+        // check. Observe a pending cancellation before any output is written.
+        cancellationToken.ThrowIfCancellationRequested();
+
         int length =
             values.Length;
 
@@ -7758,7 +7766,8 @@ internal sealed class ParallelBigUnsigned
             validOutputLength -
             halfLength;
 
-        if (workers.UseAvx512Ntt && halfLength >= 256)
+        if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512FinalInversePrefix) &&
+            halfLength >= 256)
         {
             ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
             {
@@ -18249,7 +18258,7 @@ internal sealed class ParallelBigUnsigned
             (workers.UseAvx512Ntt ||
             (workers.UseLargeModeAvx512ForwardGlobalCached &&
             workers.WorkerCount == 24 &&
-            values.Length == (1 << 26) &&
+            values.Length >= (1 << 22) &&
             (stageLength == (1 << 22) ||
              stageLength == (1 << 20)))))
         {
@@ -21784,6 +21793,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512ForwardL2 ||
                     workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512ForwardL1Generic
                         ? new Avx512NttModContext(modulus)
@@ -21983,7 +21993,8 @@ internal sealed class ParallelBigUnsigned
                                 values, modulus, twiddles, shoupTwiddles,
                                 twiddlePlan, fusedNttBlockLength,
                                 l2NttTileLength, l2TileOffset, context,
-                               useAvx512Ntt,
+                                useAvx512Ntt,
+                                workers.UseLargeModeAvx512ForwardL2,
                                 workers.UseLargeModeAvx512Radix4,
                                 workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                                 useLargeModeAvx512ForwardL1Generic,
@@ -22083,6 +22094,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512ForwardL2 ||
                     workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512ForwardL1Generic
                         ? new Avx512NttModContext(modulus)
@@ -22177,6 +22189,7 @@ internal sealed class ParallelBigUnsigned
                             values, modulus, twiddles, shoupTwiddles, twiddlePlan,
                             fusedNttBlockLength, l2NttTileLength, l2TileOffset,
                             context, useAvx512Ntt,
+                            workers.UseLargeModeAvx512ForwardL2,
                             workers.UseLargeModeAvx512Radix4,
                             workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                             useLargeModeAvx512ForwardL1Generic,
@@ -22336,7 +22349,8 @@ internal sealed class ParallelBigUnsigned
                             l2TileOffset,
                             workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                             useLargeModeAvx512ForwardL1Generic,
-                            workers.UseLargeModeAvx512Radix4);
+                            workers.UseLargeModeAvx512Radix4,
+                            workers.UseLargeModeAvx512ForwardL2);
                     }
 
                     if ((tileIndex & 0x07) == 0x07)
@@ -23754,6 +23768,7 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         in Avx2NttModContext context,
         bool useAvx512LocalStagePair,
+        bool useLargeModeAvx512ForwardL2,
         bool useLargeModeAvx512Radix4,
         bool useLargeModeAvx2ForwardL1Low32Shoup,
         bool useLargeModeAvx512ForwardL1Generic,
@@ -23776,11 +23791,9 @@ internal sealed class ParallelBigUnsigned
                 int firstTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 1);
                 int secondTwiddleOffset = twiddlePlan.GetOffset(stageLength >> 2);
 
-                // Phase 3 keeps the L2 bounded-register stage-pair wide.
-                // Phase 4 reuses the same local AVX-512 gate for the larger
-                // Forward L1 pairs below; the final unpaired L2 stage remains
-                // AVX2 so its behavior is unchanged.
-                if (useAvx512LocalStagePair)
+                // The separate large-mode gate widens only L2; packed and
+                // generic L1 below retain their independently measured policy.
+                if (useAvx512LocalStagePair || useLargeModeAvx512ForwardL2)
                 {
                     ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
                         values, modulus, twiddles, shoupTwiddles,
@@ -23806,7 +23819,7 @@ internal sealed class ParallelBigUnsigned
             // resident tile benefits from 16-lane AVX-512.  Widen the lone
             // residual L2 DIF stage as well, but only when it has at least
             // one full 16-residue half.  AVX2 remains the exact fallback.
-            if (useAvx512LocalStagePair && halfLength >= 16)
+            if ((useAvx512LocalStagePair || useLargeModeAvx512ForwardL2) && halfLength >= 16)
             {
                 ExecuteForwardCachedDifRegionTwiddleMajorAvx512(
                     values, modulus, twiddles, shoupTwiddles,
@@ -23947,7 +23960,8 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         bool useLargeModeAvx2ForwardL1Low32Shoup,
         bool useLargeModeAvx512ForwardL1Generic,
-        bool useLargeModeAvx512Radix4)
+        bool useLargeModeAvx512Radix4,
+        bool useLargeModeAvx512ForwardL2)
     {
         uint[] shoupTwiddles =
             twiddlePlan.ForwardShoupTwiddles!;
@@ -23956,7 +23970,8 @@ internal sealed class ParallelBigUnsigned
             new Avx2NttModContext(modulus);
 
         Avx512NttModContext avx512Context =
-            useLargeModeAvx512ForwardL1Generic || useLargeModeAvx512Radix4
+            useLargeModeAvx512ForwardL1Generic || useLargeModeAvx512Radix4 ||
+            useLargeModeAvx512ForwardL2
                 ? new Avx512NttModContext(modulus)
                 : default;
 
@@ -23971,6 +23986,26 @@ internal sealed class ParallelBigUnsigned
              stageLength >>= 1)
         {
             int secondStageLength = stageLength >> 1;
+
+            if (useLargeModeAvx512ForwardL2)
+            {
+                int firstOffset = twiddlePlan.GetOffset(stageLength >> 1);
+                if (secondStageLength > fusedNttBlockLength && stageLength >= 32)
+                {
+                    ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
+                        values, modulus, twiddles, shoupTwiddles,
+                        firstOffset, twiddlePlan.GetOffset(stageLength >> 2),
+                        tileOffset, l2NttTileLength, stageLength, avx512Context);
+                    stageLength >>= 1;
+                }
+                else
+                {
+                    ExecuteForwardCachedDifRegionTwiddleMajorAvx512(
+                        values, modulus, twiddles, shoupTwiddles, firstOffset,
+                        tileOffset, l2NttTileLength, stageLength, avx512Context);
+                }
+                continue;
+            }
 
             if (secondStageLength > fusedNttBlockLength &&
                 stageLength >= 32)
@@ -24891,7 +24926,8 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         bool useLargeModeAvx2ForwardL1Low32Shoup,
         bool useLargeModeAvx512ForwardL1Generic,
-        bool useLargeModeAvx512Radix4)
+        bool useLargeModeAvx512Radix4,
+        bool useLargeModeAvx512ForwardL2)
     {
         if (twiddlePlan.ForwardShoupTwiddles is not null && Avx2.IsSupported)
         {
@@ -24900,7 +24936,8 @@ internal sealed class ParallelBigUnsigned
                 fusedNttBlockLength, l2NttTileLength, tileOffset,
                 useLargeModeAvx2ForwardL1Low32Shoup,
                 useLargeModeAvx512ForwardL1Generic,
-                useLargeModeAvx512Radix4);
+                useLargeModeAvx512Radix4,
+                useLargeModeAvx512ForwardL2);
             return;
         }
 
@@ -26172,6 +26209,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512ForwardL2 ||
                     workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512ForwardL1Generic
                         ? new Avx512NttModContext(modulus)
@@ -26185,6 +26223,7 @@ internal sealed class ParallelBigUnsigned
                         values, modulus, twiddles, shoupTwiddles, twiddlePlan,
                         fusedNttBlockLength, l2NttTileLength, tileOffset, context,
                         useAvx512Ntt,
+                        workers.UseLargeModeAvx512ForwardL2,
                         workers.UseLargeModeAvx512Radix4,
                         workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                         useLargeModeAvx512ForwardL1Generic,
@@ -29801,9 +29840,9 @@ internal sealed class ParallelBigUnsigned
             Avx512F.IsSupported &&
             Vector512.IsHardwareAccelerated;
 
-        // Phase 5A is deliberately cached-global-only. It does not enable the
-        // shared AVX-512 plan flag and therefore cannot alter uncached Forward,
-        // Inverse global, local tails, CRT, or the <=10M fallback hierarchy.
+        // Cached-global policy is independent of all other large-mode gates.
+        // Callers select the measured 24-worker S=2^22 / S=2^20 pairs, including
+        // seed/remainder transforms at N>=2^22, without enabling the shared flag.
         public bool UseLargeModeAvx512ForwardGlobalCached =>
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
@@ -29853,6 +29892,26 @@ internal sealed class ParallelBigUnsigned
             UseAvx2Ntt && !UseAvx512Ntt &&
             Avx512F.IsSupported && Vector512.IsHardwareAccelerated &&
             Avx512DQ.IsSupported;
+
+        // Keep prefix normalization independent of the global-stage policy.
+        // The existing kernel supports compact outputs and in-place prefixes;
+        // its unwritten inverse tail remains available to CRT scratch reuse.
+        public bool UseLargeModeAvx512FinalInversePrefix =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+
+        // The prime-specific reducer handles products and squares, including
+        // aliased destinations. DQ is optional inside the exact F kernel.
+        public bool UseLargeModeAvx512Pointwise =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+
+        public bool UseLargeModeAvx512ForwardL2 =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
 
         public long PersistentGenerationCount =>
             Interlocked.Read(
