@@ -670,15 +670,12 @@ internal sealed class ParallelBigUnsigned
         bool useAvx2Ntt =
             CalculationAccelerationManager.UsePowerNttAvx2;
 
-        // Experimental <=10M AVX-512 phase 3. Keep the existing AVX2 user
-        // switch as the public gate. Phase 1 widened the 2xL3 bridge and
-        // standalone L3 Shoup stages; phase 2 widened the L3 bounded-register
-        // stage-pair traversal; phase 3 also widens only the L2 bounded-register
-        // stage-pairs. L2 single-stage tails and all L1 kernels remain on the
-        // accepted AVX2 implementation so the new scope can be A/B isolated.
-        // PowMemoryBounded() deliberately leaves this disabled for now so the
-        // >10M production path remains on its accepted AVX2 kernels while we
-        // A/B test smaller transforms first.
+        // The <=10M AVX-512 path shares the AVX2 user switch and covers the
+        // cached/uncached NTT stages, packed L1 pairs, radix-4, final inverse
+        // normalization, pointwise work and tiled carry (CRT requires DQ).
+        // PowMemoryBounded() keeps this shared
+        // flag off and selects its large-mode experiments through separate
+        // worker gates, so the radix-4 dispatch below is confined to <=10M.
         bool useAvx512Ntt =
             useAvx2Ntt &&
             Avx512F.IsSupported &&
@@ -3909,6 +3906,20 @@ internal sealed class ParallelBigUnsigned
                     long carryStarted =
                         Stopwatch.GetTimestamp();
 
+                    // Reuse the exact tiled carry algorithm on large <=10M
+                    // AVX-512 blocks. Smaller blocks keep the sequential loop
+                    // so a worker barrier cannot dominate a short carry chain.
+                    if (workers.UseAvx512Ntt && workers.WorkerCount > 1 &&
+                        blockCount >= (long)ParallelCarryTileLength * workers.WorkerCount)
+                    {
+                        carry = NormalizeCrtCarryBlockParallel(
+                            transformedSecond, crtScratch, useInverseTailScratch,
+                            inverseTailScratchStart, firstResidues, blockStart,
+                            blockCount, carry, workers, cancellationToken);
+                        carryTicks += Stopwatch.GetTimestamp() - carryStarted;
+                        continue;
+                    }
+
                     ReadOnlySpan<ulong> source;
 
                     if (useInverseTailScratch)
@@ -5599,18 +5610,19 @@ internal sealed class ParallelBigUnsigned
                 uint[]? forwardGlobalShoupTwiddles =
                     null;
 
-                bool useLargeModeAvx512ForwardGlobalCached =
-                    workers.UseLargeModeAvx512ForwardGlobalCached &&
+                bool useAvx512ForwardGlobalCached =
+                    workers.UseAvx512Ntt ||
+                    (workers.UseLargeModeAvx512ForwardGlobalCached &&
                     workers.WorkerCount == 24 &&
                     length == (1 << 26) &&
                     (stageLength == (1 << 22) ||
-                     stageLength == (1 << 20));
+                     stageLength == (1 << 20)));
 
-                if (useLargeModeAvx512ForwardGlobalCached)
+                if (useAvx512ForwardGlobalCached)
                 {
-                    // Keep this Phase-5A experiment strictly on the two
-                    // measured cached-global fused pairs. The uncached global
-                    // recurrence remains the accepted AVX2/scalar path.
+                    // Reuse the cached-global Low32 kernel for <=10M as well.
+                    // Publish companions lazily in the existing pooled backing;
+                    // the separate >10M Phase-5A shape policy stays intact.
                     EnsureForwardGlobalShoupStageProfiled(
                         twiddlePlan,
                         stageLength >> 1,
@@ -5908,6 +5920,23 @@ internal sealed class ParallelBigUnsigned
                     twiddleBuildStarted;
 
                 diagnostics.ForwardGlobalTwiddleBuildCount++;
+            }
+
+            if (workers.UseAvx512Ntt && useTwiddleCache)
+            {
+                EnsureForwardGlobalShoupStageProfiled(
+                    twiddlePlan, halfLength, modulus, workers,
+                    diagnostics, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageAvx512(
+                    values, modulus, twiddlePlan.ForwardTwiddles,
+                    twiddlePlan.ForwardShoupTwiddles!, twiddleOffset,
+                    stageLength, false, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardCached, stageLength, 0, length, elapsed);
+                continue;
             }
 
             int segmentsPerGroup =
@@ -6254,6 +6283,10 @@ internal sealed class ParallelBigUnsigned
         if (workers.UseAvx2Ntt &&
             Avx2.IsSupported &&
             twiddlePlan.InverseShoupTwiddles is not null &&
+            // The bridge is unnormalized. Leave the final stage to the
+            // prefix/compact-output kernel even when a single worker could
+            // otherwise consume the entire transform as one 2xL3 parent.
+            length > (l3NttTileLength << 1) &&
             CanUseL3CacheBlocking(
                 length,
                 l3NttTileLength,
@@ -6356,13 +6389,21 @@ internal sealed class ParallelBigUnsigned
                     twiddlePlan,
                     workers.WorkerCount))
             {
+                uint[]? globalShoupTwiddles = null;
+                if (workers.UseAvx512Ntt)
+                {
+                    EnsureInverseGlobalShoupStage(
+                        twiddlePlan, halfLength, modulus, workers, cancellationToken);
+                    EnsureInverseGlobalShoupStage(
+                        twiddlePlan, stageLength, modulus, workers, cancellationToken);
+                    globalShoupTwiddles = twiddlePlan.InverseShoupTwiddles;
+                }
+
                 ExecuteInverseCachedStagePairByGroupsProfiled(
                     values,
                     modulus,
                     twiddlePlan.InverseTwiddles,
-                    // Do not add a second twiddle/Shoup memory stream once DIT
-                    // has left the LLC-resident hierarchy.
-                    null,
+                    globalShoupTwiddles,
                     twiddlePlan.GetOffset(
                         halfLength),
                     twiddlePlan.GetOffset(
@@ -6523,6 +6564,22 @@ internal sealed class ParallelBigUnsigned
                     groupCount,
                     workers.WorkerCount);
 
+            if (workers.UseAvx512Ntt && useTwiddleCache)
+            {
+                EnsureInverseGlobalShoupStage(
+                    twiddlePlan, halfLength, modulus, workers, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageAvx512(
+                    values, modulus, twiddlePlan.InverseTwiddles,
+                    twiddlePlan.InverseShoupTwiddles!, twiddleOffset,
+                    stageLength, true, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.InverseGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
             // The N=2^26 inverse-DIT S=2^23 stage has only eight groups.
             // A ceil(worker/group) split can leave a static-range tail whenever
             // groupCount * segmentsPerGroup is not divisible by the logical
@@ -6637,7 +6694,12 @@ internal sealed class ParallelBigUnsigned
             long inverseGlobalStageStarted =
                 Stopwatch.GetTimestamp();
 
-            if (useInverseUncachedDualLane)
+            if (workers.UseAvx512Ntt && !useTwiddleCache && !normalizeOutput)
+            {
+                ExecuteInverseUncachedStageAvx512(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+            }
+            else if (useInverseUncachedDualLane)
             {
                 ExecuteRanges(
                     checked(groupCount * segmentsPerGroup),
@@ -7635,6 +7697,24 @@ internal sealed class ParallelBigUnsigned
             validOutputLength -
             halfLength;
 
+        if (workers.UseAvx512Ntt && halfLength >= 256)
+        {
+            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
+            {
+                int bothEnd = Math.Min(end, validRightCount);
+                if (start < bothEnd)
+                    ProcessFinalInversePrefixAvx512(
+                        values, output, halfLength, start, bothEnd, true,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+                int leftStart = Math.Max(start, validRightCount);
+                if (leftStart < end)
+                    ProcessFinalInversePrefixAvx512(
+                        values, output, halfLength, leftStart, end, false,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+            });
+            return;
+        }
+
         // Small transforms keep the exact v33 scalar final-stage path. The
         // four-lane kernel is intentionally enabled only at the same adaptive
         // threshold that already proved worthwhile for the global NTT path.
@@ -8454,7 +8534,7 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// >10M AVX-512 Forward-global Phase 5A: lazily populate only the Forward
+    /// AVX-512 cached global stages: lazily populate only the Forward
     /// Shoup companion row for one cached global stage. The companion backing
     /// buffer is already Pow-scoped/rented for the accepted AVX2 local path, so
     /// this adds no coefficient-sized allocation. A separate publication flag
@@ -8529,6 +8609,35 @@ internal sealed class ParallelBigUnsigned
         diagnostics.ForwardGlobalTwiddlePreparationTicks +=
             Stopwatch.GetTimestamp() -
             started;
+    }
+
+    // Inverse companions have a separate publication flag because forward
+    // and inverse global schedules may consume different cached stage rows.
+    private static void EnsureInverseGlobalShoupStage(
+        NttTwiddlePlan twiddlePlan,
+        int halfLength,
+        uint modulus,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        if (twiddlePlan.IsInverseGlobalShoupStageReady(halfLength))
+            return;
+
+        Debug.Assert(twiddlePlan.IsStageReady(halfLength));
+        int offset = twiddlePlan.GetOffset(halfLength);
+        uint[] twiddles = twiddlePlan.InverseTwiddles;
+        uint[] shoup = twiddlePlan.InverseShoupTwiddles!;
+        double scale = 4_294_967_296.0 / modulus;
+        ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
+        {
+            for (int i = start; i < end; i++)
+            {
+                shoup[offset + i] = ComputeShoupCompanion(twiddles[offset + i], modulus, scale);
+                if ((i & 0xFFFF) == 0xFFFF)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        });
+        twiddlePlan.MarkInverseGlobalShoupStageReady(halfLength);
     }
 
     private readonly struct Avx2NttModContext
@@ -17623,11 +17732,10 @@ internal sealed class ParallelBigUnsigned
 
 
     /// <summary>
-    /// >10M AVX-512 Forward-global Phase 5A. Preserve the accepted 24T
-    /// worker-aligned group slicing for the two measured cached DIF pairs and
-    /// change only arithmetic inside each slice to exact sixteen-lane Low32
-    /// Shoup. No uncached-global path, scheduler topology, or stage boundary is
-    /// changed by this helper.
+    /// Cached global DIF pairs for <=10M and the separate >10M Phase-5A
+    /// shapes. Worker-aligned slices keep every team member busy, including
+    /// transforms with fewer groups than workers. Each slice uses exact
+    /// sixteen-lane Low32 Shoup with scalar residual butterflies.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardCachedStagePairByGroupsLow32Avx512(
@@ -18072,11 +18180,12 @@ internal sealed class ParallelBigUnsigned
         CancellationToken cancellationToken)
     {
         if (shoupTwiddles is not null &&
-            workers.UseLargeModeAvx512ForwardGlobalCached &&
+            (workers.UseAvx512Ntt ||
+            (workers.UseLargeModeAvx512ForwardGlobalCached &&
             workers.WorkerCount == 24 &&
             values.Length == (1 << 26) &&
             (stageLength == (1 << 22) ||
-             stageLength == (1 << 20)))
+             stageLength == (1 << 20)))))
         {
             ExecuteForwardCachedStagePairByGroupsLow32Avx512(
                 values, modulus, twiddles, shoupTwiddles,
@@ -18435,7 +18544,14 @@ internal sealed class ParallelBigUnsigned
                         out int butterflyStart,
                         out int butterflyEnd);
 
-                    if (useConstantModulusHotKernel &&
+                    if (workers.UseAvx512Ntt)
+                    {
+                        ProcessForwardUncachedStagePairAvx512(
+                            values, modulus, firstRoot, secondRoot, quarterPhase,
+                            stageLength, groupIndex, butterflyStart, butterflyEnd,
+                            cancellationToken);
+                    }
+                    else if (useConstantModulusHotKernel &&
                         modulus == FirstModulus)
                     {
                         ProcessForwardUncachedStagePairSegmentByrefDualLaneFirstModulus(
@@ -18479,6 +18595,189 @@ internal sealed class ParallelBigUnsigned
                     }
                 }
             });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStagePairAvx512(
+        uint[] values, uint modulus, uint firstRoot, uint secondRoot, uint quarterPhase,
+        int stageLength, int groupIndex, int first, int last,
+        CancellationToken cancellationToken)
+    {
+        int quarterLength = stageLength >> 2;
+        int groupOffset = groupIndex * stageLength;
+        var context = new Avx512NttModContext(modulus);
+        Vector512<uint> twiddle0 = CreateTwiddleSequenceAvx512(firstRoot, first, modulus);
+        Vector512<uint> twiddle1 = MultiplyResiduesAvx512(twiddle0, Vector512.Create(quarterPhase), modulus);
+        Vector512<uint> twiddle2 = CreateTwiddleSequenceAvx512(secondRoot, first, modulus);
+        uint step0 = (uint)ModPow(firstRoot, 16, modulus);
+        uint step2 = (uint)ModPow(secondRoot, 16, modulus);
+        Vector512<uint> advance0 = Vector512.Create(step0);
+        Vector512<uint> advance2 = Vector512.Create(step2);
+        Vector512<uint> shoup0 = Vector512.Create((uint)(((ulong)step0 << 32) / modulus));
+        Vector512<uint> shoup2 = Vector512.Create((uint)(((ulong)step2 << 32) / modulus));
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        int i = first;
+        int sinceCancellation = 0;
+        for (; i + 15 < last; i += 16)
+        {
+            int index0 = groupOffset + i;
+            int index1 = index0 + quarterLength;
+            int index2 = index1 + quarterLength;
+            int index3 = index2 + quarterLength;
+            Vector512<uint> value0 = Vector512.LoadUnsafe(ref data, (nuint)index0);
+            Vector512<uint> value1 = Vector512.LoadUnsafe(ref data, (nuint)index1);
+            Vector512<uint> value2 = Vector512.LoadUnsafe(ref data, (nuint)index2);
+            Vector512<uint> value3 = Vector512.LoadUnsafe(ref data, (nuint)index3);
+            Vector512<uint> sum0 = AddModuloAvx512(value0, value2, context);
+            Vector512<uint> sum1 = AddModuloAvx512(value1, value3, context);
+            Vector512<uint> lower0 = MultiplyResiduesAvx512(SubtractModuloAvx512(value0, value2, context), twiddle0, modulus);
+            Vector512<uint> lower1 = MultiplyResiduesAvx512(SubtractModuloAvx512(value1, value3, context), twiddle1, modulus);
+            AddModuloAvx512(sum0, sum1, context).StoreUnsafe(ref data, (nuint)index0);
+            MultiplyResiduesAvx512(SubtractModuloAvx512(sum0, sum1, context), twiddle2, modulus).StoreUnsafe(ref data, (nuint)index1);
+            AddModuloAvx512(lower0, lower1, context).StoreUnsafe(ref data, (nuint)index2);
+            MultiplyResiduesAvx512(SubtractModuloAvx512(lower0, lower1, context), twiddle2, modulus).StoreUnsafe(ref data, (nuint)index3);
+            MultiplyShoupPairSameTwiddleLow32Avx512(
+                twiddle0, twiddle1, advance0, shoup0, context, out twiddle0, out twiddle1);
+            twiddle2 = MultiplyShoupLow32Avx512(twiddle2, advance2, shoup2, context);
+            sinceCancellation += 16;
+            if (sinceCancellation >= (1 << 14))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                sinceCancellation = 0;
+            }
+        }
+        if (i < last)
+            ProcessForwardUncachedStagePairSegmentByrefDualLane(
+                values, modulus, firstRoot, secondRoot, quarterPhase,
+                stageLength, groupIndex, i, last, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    // Final DIT normalization shares the uncached sixteen-lane recurrence.
+    // The caller splits the valid-prefix boundary once per worker, so this
+    // loop never reads or writes past a compact destination or its live suffix.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessFinalInversePrefixAvx512(
+        uint[] values, uint[] output, int halfLength, int first, int last,
+        bool writeRight, uint modulus, uint root, uint inverseLength,
+        uint inverseLengthShoup, CancellationToken cancellationToken)
+    {
+        var context = new Avx512NttModContext(modulus);
+        Vector512<uint> twiddle = CreateTwiddleSequenceAvx512(root, first, modulus);
+        uint step = (uint)ModPow(root, 16, modulus);
+        Vector512<uint> advance = Vector512.Create(step);
+        Vector512<uint> advanceShoup = Vector512.Create((uint)(((ulong)step << 32) / modulus));
+        Vector512<uint> scale = Vector512.Create(inverseLength);
+        Vector512<uint> scaleShoup = Vector512.Create(inverseLengthShoup);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint destination = ref MemoryMarshal.GetArrayDataReference(output);
+        int i = first;
+        int sinceCancellation = 0;
+        for (; i + 15 < last; i += 16)
+        {
+            Vector512<uint> left = Vector512.LoadUnsafe(ref data, (nuint)i);
+            Vector512<uint> right = MultiplyResiduesAvx512(
+                Vector512.LoadUnsafe(ref data, (nuint)(i + halfLength)), twiddle, modulus);
+            MultiplyShoupLow32Avx512(AddModuloAvx512(left, right, context), scale, scaleShoup, context)
+                .StoreUnsafe(ref destination, (nuint)i);
+            if (writeRight)
+                MultiplyShoupLow32Avx512(SubtractModuloAvx512(left, right, context), scale, scaleShoup, context)
+                    .StoreUnsafe(ref destination, (nuint)(i + halfLength));
+            twiddle = MultiplyShoupLow32Avx512(twiddle, advance, advanceShoup, context);
+            sinceCancellation += 16;
+            if (sinceCancellation >= (1 << 14))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                sinceCancellation = 0;
+            }
+        }
+        ulong scalarTwiddle = ModPow(root, (uint)i, modulus);
+        for (; i < last; i++)
+        {
+            uint left = values[i];
+            uint right = (uint)(values[i + halfLength] * scalarTwiddle % modulus);
+            uint sum = left + right;
+            if (sum >= modulus) sum -= modulus;
+            output[i] = MultiplyShoupScalar(sum, inverseLength, inverseLengthShoup, modulus);
+            if (writeRight)
+            {
+                uint difference = left >= right ? left - right : left + modulus - right;
+                output[i + halfLength] = MultiplyShoupScalar(difference, inverseLength, inverseLengthShoup, modulus);
+            }
+            scalarTwiddle = scalarTwiddle * root % modulus;
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    // Advance sixteen independent twiddle lanes by root^16. Only this tiny
+    // seed lives on the stack; no transform-sized twiddle table is introduced.
+    private static Vector512<uint> CreateTwiddleSequenceAvx512(uint root, int first, uint modulus)
+    {
+        Span<uint> seed = stackalloc uint[16];
+        ulong current = ModPow(root, (uint)first, modulus);
+        for (int lane = 0; lane < seed.Length; lane++)
+        {
+            seed[lane] = (uint)current;
+            current = current * root % modulus;
+        }
+        return Vector512.LoadUnsafe(ref MemoryMarshal.GetReference(seed));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<uint> MultiplyResiduesAvx512(
+        Vector512<uint> left, Vector512<uint> right, uint modulus) =>
+        modulus == FirstModulus
+            ? MultiplyPointwiseFirstModulusAvx512F(left, right)
+            : MultiplyPointwiseSecondModulusAvx512F(left, right);
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseUncachedStageAvx512(
+        uint[] values, uint modulus, uint root, int stageLength,
+        FixedWorkerTeam workers, CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength, groupCount, workers.WorkerCount,
+            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        var context = new Avx512NttModContext(modulus);
+        uint step = (uint)ModPow(root, 16, modulus);
+        Vector512<uint> advance = Vector512.Create(step);
+        Vector512<uint> shoup = Vector512.Create((uint)(((ulong)step << 32) / modulus));
+        ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
+        {
+            ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+            for (int segment = start; segment < end; segment++)
+            {
+                GetSegmentBounds(segment, segments, halfLength,
+                    out int group, out int first, out int last);
+                int groupOffset = group * stageLength;
+                Vector512<uint> twiddle = CreateTwiddleSequenceAvx512(root, first, modulus);
+                int i = first;
+                int sinceCancellation = 0;
+                for (; i + 15 < last; i += 16)
+                {
+                    int leftIndex = groupOffset + i;
+                    int rightIndex = leftIndex + halfLength;
+                    Vector512<uint> left = Vector512.LoadUnsafe(ref data, (nuint)leftIndex);
+                    Vector512<uint> right = MultiplyResiduesAvx512(
+                        Vector512.LoadUnsafe(ref data, (nuint)rightIndex), twiddle, modulus);
+                    AddModuloAvx512(left, right, context).StoreUnsafe(ref data, (nuint)leftIndex);
+                    SubtractModuloAvx512(left, right, context).StoreUnsafe(ref data, (nuint)rightIndex);
+                    twiddle = MultiplyShoupLow32Avx512(twiddle, advance, shoup, context);
+                    sinceCancellation += 16;
+                    if (sinceCancellation >= (1 << 14))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        sinceCancellation = 0;
+                    }
+                }
+                if (i < last)
+                    ProcessInverseUncachedStageSegmentByrefDualLane(
+                        values, modulus, root, stageLength, group, i, last, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        });
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -19591,6 +19890,161 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Cached global single stage for <=10M. Split the butterfly stream of
+    /// each group across workers so even the largest stages use the full team.
+    /// Companions are published before entry; all arithmetic stays below p.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteCachedGlobalStageAvx512(
+        uint[] values, uint modulus, uint[] twiddles, uint[] shoupTwiddles,
+        int twiddleOffset, int stageLength, bool inverse,
+        FixedWorkerTeam workers, CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength, groupCount, workers.WorkerCount,
+            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        var context = new Avx512NttModContext(modulus);
+        ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
+        {
+            ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+            ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
+            ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+            for (int segment = start; segment < end; segment++)
+            {
+                GetSegmentBounds(segment, segments, halfLength,
+                    out int group, out int first, out int last);
+                int groupOffset = group * stageLength;
+                int i = first;
+                int sinceCancellation = 0;
+                for (; i + 15 < last; i += 16)
+                {
+                    int leftIndex = groupOffset + i;
+                    int rightIndex = leftIndex + halfLength;
+                    Vector512<uint> left = Vector512.LoadUnsafe(ref data, (nuint)leftIndex);
+                    Vector512<uint> right = Vector512.LoadUnsafe(ref data, (nuint)rightIndex);
+                    Vector512<uint> root = Vector512.LoadUnsafe(ref roots, (nuint)(twiddleOffset + i));
+                    Vector512<uint> shoup = Vector512.LoadUnsafe(ref companions, (nuint)(twiddleOffset + i));
+                    if (inverse)
+                        right = MultiplyShoupLow32Avx512(right, root, shoup, context);
+                    Vector512<uint> sum = AddModuloAvx512(left, right, context);
+                    Vector512<uint> difference = SubtractModuloAvx512(left, right, context);
+                    if (!inverse)
+                        difference = MultiplyShoupLow32Avx512(difference, root, shoup, context);
+                    sum.StoreUnsafe(ref data, (nuint)leftIndex);
+                    difference.StoreUnsafe(ref data, (nuint)rightIndex);
+                    sinceCancellation += 16;
+                    if (sinceCancellation >= (1 << 14))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        sinceCancellation = 0;
+                    }
+                }
+                for (; i < last; i++)
+                {
+                    int leftIndex = groupOffset + i;
+                    int rightIndex = leftIndex + halfLength;
+                    uint left = values[leftIndex];
+                    uint right = values[rightIndex];
+                    uint root = twiddles[twiddleOffset + i];
+                    uint shoup = shoupTwiddles[twiddleOffset + i];
+                    if (inverse) right = MultiplyShoupScalar(right, root, shoup, modulus);
+                    uint sum = left + right;
+                    if (sum >= modulus) sum -= modulus;
+                    uint difference = left >= right ? left - right : left + modulus - right;
+                    values[leftIndex] = sum;
+                    values[rightIndex] = inverse ? difference : MultiplyShoupScalar(difference, root, shoup, modulus);
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        });
+    }
+
+    // Two cached inverse stages with the same segmented scheduling as the
+    // forward global kernel. Reuse Phase 6's register-only arithmetic primitive.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStagePairByGroupsLow32Avx512(
+        uint[] values, uint modulus, uint[] twiddles, uint[] shoupTwiddles,
+        int firstTwiddleOffset, int secondTwiddleOffset, int stageLength,
+        FixedWorkerTeam workers, CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int parentLength = stageLength << 1;
+        int parentCount = values.Length / parentLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength, parentCount, workers.WorkerCount,
+            GetSegmentsPerGroup(halfLength, parentCount, workers.WorkerCount));
+        var context = new Avx512NttModContext(modulus);
+        ExecuteRanges(checked(parentCount * segments), workers, cancellationToken, (start, end) =>
+        {
+            ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+            ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
+            ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+            for (int segment = start; segment < end; segment++)
+            {
+                GetSegmentBounds(segment, segments, halfLength,
+                    out int parent, out int first, out int last);
+                int parentOffset = parent * parentLength;
+                int i = first;
+                int sinceCancellation = 0;
+                for (; i + 15 < last; i += 16)
+                {
+                    int index0 = parentOffset + i;
+                    int index1 = index0 + halfLength;
+                    int index2 = index0 + stageLength;
+                    int index3 = index2 + halfLength;
+                    TransformInverseStagePairRegistersLow32Avx512(
+                        Vector512.LoadUnsafe(ref data, (nuint)index0),
+                        Vector512.LoadUnsafe(ref data, (nuint)index1),
+                        Vector512.LoadUnsafe(ref data, (nuint)index2),
+                        Vector512.LoadUnsafe(ref data, (nuint)index3),
+                        ref roots, ref companions, firstTwiddleOffset + i,
+                        secondTwiddleOffset + i, secondTwiddleOffset + halfLength + i,
+                        context, out Vector512<uint> output0, out Vector512<uint> output1,
+                        out Vector512<uint> output2, out Vector512<uint> output3);
+                    output0.StoreUnsafe(ref data, (nuint)index0);
+                    output1.StoreUnsafe(ref data, (nuint)index1);
+                    output2.StoreUnsafe(ref data, (nuint)index2);
+                    output3.StoreUnsafe(ref data, (nuint)index3);
+                    sinceCancellation += 16;
+                    if (sinceCancellation >= (1 << 14))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        sinceCancellation = 0;
+                    }
+                }
+                for (; i < last; i++)
+                {
+                    int index0 = parentOffset + i;
+                    int index1 = index0 + halfLength;
+                    int index2 = index0 + stageLength;
+                    int index3 = index2 + halfLength;
+                    uint right0 = MultiplyShoupScalar(values[index1], twiddles[firstTwiddleOffset + i], shoupTwiddles[firstTwiddleOffset + i], modulus);
+                    uint right1 = MultiplyShoupScalar(values[index3], twiddles[firstTwiddleOffset + i], shoupTwiddles[firstTwiddleOffset + i], modulus);
+                    uint sum0 = values[index0] + right0;
+                    uint sum1 = values[index2] + right1;
+                    if (sum0 >= modulus) sum0 -= modulus;
+                    if (sum1 >= modulus) sum1 -= modulus;
+                    uint difference0 = values[index0] >= right0 ? values[index0] - right0 : values[index0] + modulus - right0;
+                    uint difference1 = values[index2] >= right1 ? values[index2] - right1 : values[index2] + modulus - right1;
+                    uint merged0 = MultiplyShoupScalar(sum1, twiddles[secondTwiddleOffset + i], shoupTwiddles[secondTwiddleOffset + i], modulus);
+                    uint merged1 = MultiplyShoupScalar(difference1, twiddles[secondTwiddleOffset + halfLength + i], shoupTwiddles[secondTwiddleOffset + halfLength + i], modulus);
+                    uint output0 = sum0 + merged0;
+                    uint output1 = difference0 + merged1;
+                    if (output0 >= modulus) output0 -= modulus;
+                    if (output1 >= modulus) output1 -= modulus;
+                    values[index0] = output0;
+                    values[index1] = output1;
+                    values[index2] = sum0 >= merged0 ? sum0 - merged0 : sum0 + modulus - merged0;
+                    values[index3] = difference0 >= merged1 ? difference0 - merged1 : difference0 + modulus - merged1;
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        });
+    }
+
+    /// <summary>
     /// Fuses cached inverse DIT stages S and 2S.  Two adjacent S-sized groups
     /// are completed and immediately merged while their four quarter streams
     /// are hot, matching the forward pair fusion in reverse.
@@ -19607,6 +20061,15 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        if (shoupTwiddles is not null && workers.UseAvx512Ntt)
+        {
+            ExecuteInverseCachedStagePairByGroupsLow32Avx512(
+                values, modulus, twiddles, shoupTwiddles,
+                firstTwiddleOffset, secondTwiddleOffset, stageLength,
+                workers, cancellationToken);
+            return;
+        }
+
         if (shoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteInverseCachedStagePairByGroupsAvx2(
@@ -22649,13 +23112,19 @@ internal sealed class ParallelBigUnsigned
             long radix4Started =
                 Stopwatch.GetTimestamp();
 
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values,
-                modulus,
-                quarterTurnTwiddle,
-                quarterTurnShoup,
-                blockOffset,
-                blockOffset + fusedNttBlockLength);
+            if (useAvx512LocalStagePair)
+            {
+                ExecuteInverseLengthTwoAndFourFusedBlockAvx512(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockOffset + fusedNttBlockLength,
+                    avx512Context);
+            }
+            else
+            {
+                ExecuteInverseLengthTwoAndFourFusedBlock(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockOffset + fusedNttBlockLength);
+            }
 
             radix4TailTicks +=
                 Stopwatch.GetTimestamp() -
@@ -22667,12 +23136,13 @@ internal sealed class ParallelBigUnsigned
             {
                 int secondStageLength = stageLength << 1;
 
-                // Phase 6: on the accepted >10M AVX-512 path, fuse the four
-                // generic L1 pairs into two register-resident four-stage
-                // super-passes. The 4096-value production block is the only
-                // enabled shape; every alternate shape keeps Phase-2 behavior.
-                if (!useAvx512LocalStagePair &&
-                    useLargeModeAvx512InverseL1Generic &&
+                // Reuse the four-stage register-resident kernel in both
+                // AVX-512 engines. Both use canonical residues and the same
+                // exact Shoup companions for the two primes below 2^31.
+                // Only the proven 4096-value shape consumes these pairs in
+                // two super-passes; other block sizes retain their schedule.
+                if ((useAvx512LocalStagePair ||
+                     useLargeModeAvx512InverseL1Generic) &&
                     fusedNttBlockLength == 4096 &&
                     (stageLength == 32 || stageLength == 512))
                 {
@@ -23289,9 +23759,18 @@ internal sealed class ParallelBigUnsigned
                     stageLength, context);
             }
 
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                blockOffset, blockEnd);
+            if (useAvx512LocalStagePair)
+            {
+                ExecuteForwardLengthFourAndTwoFusedBlockAvx512(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockEnd, avx512Context);
+            }
+            else
+            {
+                ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockEnd);
+            }
         }
 
         l1Ticks = Stopwatch.GetTimestamp() - l1Started;
@@ -23633,16 +24112,166 @@ internal sealed class ParallelBigUnsigned
 
 
     /// <summary>
-    /// Fuses the final DIF stages 4 and 2.  The stage-4 intermediate residues
-    /// are consumed immediately by the two length-2 butterflies, so the block
-    /// is read once and only the final four residues are written back.
+    /// Transpose four radix-4 groups within each 128-bit lane. Four contiguous
+    /// ZMM loads contain sixteen groups; the transpose puts the same position
+    /// from every group into one vector, filling all sixteen arithmetic lanes.
+    /// Applying the same transpose to the outputs restores their memory order.
+    /// Only AVX-512F unpacks are needed; no gather or temporary array is used.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void TransposeRadix4Avx512(
+        Vector512<uint> row0,
+        Vector512<uint> row1,
+        Vector512<uint> row2,
+        Vector512<uint> row3,
+        out Vector512<uint> column0,
+        out Vector512<uint> column1,
+        out Vector512<uint> column2,
+        out Vector512<uint> column3)
+    {
+        Vector512<ulong> low01 = Avx512F.UnpackLow(row0, row1).AsUInt64();
+        Vector512<ulong> high01 = Avx512F.UnpackHigh(row0, row1).AsUInt64();
+        Vector512<ulong> low23 = Avx512F.UnpackLow(row2, row3).AsUInt64();
+        Vector512<ulong> high23 = Avx512F.UnpackHigh(row2, row3).AsUInt64();
+
+        column0 = Avx512F.UnpackLow(low01, low23).AsUInt32();
+        column1 = Avx512F.UnpackHigh(low01, low23).AsUInt32();
+        column2 = Avx512F.UnpackLow(high01, high23).AsUInt32();
+        column3 = Avx512F.UnpackHigh(high01, high23).AsUInt32();
+    }
+
     /// <summary>
-    /// AVX2-plan L1 radix-4 tail.  The arithmetic is still scalar because each
-    /// independent radix-4 group is only four uint32 residues, but the single
-    /// variable-modulus division in every group is replaced by the already
-    /// cached Shoup companion.  Two independent groups are consumed per loop
-    /// iteration to expose ILP without increasing YMM pressure.
+    /// <=10M Forward DIF stages 4+2 across sixteen independent radix-4 groups.
+    /// Inputs and outputs are canonical residues below p. Both primes are
+    /// below 2^31, so the existing AVX-512 modular add/subtract and full-product
+    /// Shoup helpers preserve the scalar arithmetic exactly. The shared NTT
+    /// AVX-512 gate is checked by the caller; short residuals stay scalar.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardLengthFourAndTwoFusedBlockAvx512(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd,
+        in Avx512NttModContext context)
+    {
+        Debug.Assert(blockOffset >= 0 && blockOffset <= blockEnd && blockEnd <= values.Length);
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+
+        ref uint valuesReference = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector512<uint> twiddle = Vector512.Create(quarterTurnTwiddle);
+        Vector512<uint> shoup = Vector512.Create(quarterTurnShoup);
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 63;
+
+        for (; index < vectorEnd; index += 64)
+        {
+            TransposeRadix4Avx512(
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index),
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)(index + 16)),
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)(index + 32)),
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)(index + 48)),
+                out Vector512<uint> value0, out Vector512<uint> value1,
+                out Vector512<uint> value2, out Vector512<uint> value3);
+
+            Vector512<uint> topSum0 = AddModuloAvx512(value0, value2, context);
+            Vector512<uint> topSum1 = AddModuloAvx512(value1, value3, context);
+            Vector512<uint> lower0 = SubtractModuloAvx512(value0, value2, context);
+            Vector512<uint> lower1 = MultiplyShoupAvx512(
+                SubtractModuloAvx512(value1, value3, context),
+                twiddle, shoup, context);
+
+            TransposeRadix4Avx512(
+                AddModuloAvx512(topSum0, topSum1, context),
+                SubtractModuloAvx512(topSum0, topSum1, context),
+                AddModuloAvx512(lower0, lower1, context),
+                SubtractModuloAvx512(lower0, lower1, context),
+                out Vector512<uint> output0, out Vector512<uint> output1,
+                out Vector512<uint> output2, out Vector512<uint> output3);
+
+            output0.StoreUnsafe(ref valuesReference, (nuint)index);
+            output1.StoreUnsafe(ref valuesReference, (nuint)(index + 16));
+            output2.StoreUnsafe(ref valuesReference, (nuint)(index + 32));
+            output3.StoreUnsafe(ref valuesReference, (nuint)(index + 48));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
+    /// <summary>
+    /// <=10M Inverse DIT stages 2+4 using the same sixteen-group transpose.
+    /// The caller supplies the inverse quarter-turn and its Shoup companion.
+    /// Inverse-length normalization remains in the existing final NTT stage.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseLengthTwoAndFourFusedBlockAvx512(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd,
+        in Avx512NttModContext context)
+    {
+        Debug.Assert(blockOffset >= 0 && blockOffset <= blockEnd && blockEnd <= values.Length);
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+
+        ref uint valuesReference = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector512<uint> twiddle = Vector512.Create(quarterTurnTwiddle);
+        Vector512<uint> shoup = Vector512.Create(quarterTurnShoup);
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 63;
+
+        for (; index < vectorEnd; index += 64)
+        {
+            TransposeRadix4Avx512(
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)index),
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)(index + 16)),
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)(index + 32)),
+                Vector512.LoadUnsafe(ref valuesReference, (nuint)(index + 48)),
+                out Vector512<uint> value0, out Vector512<uint> value1,
+                out Vector512<uint> value2, out Vector512<uint> value3);
+
+            Vector512<uint> leftSum = AddModuloAvx512(value0, value1, context);
+            Vector512<uint> rightSum = AddModuloAvx512(value2, value3, context);
+            Vector512<uint> leftDifference = SubtractModuloAvx512(value0, value1, context);
+            Vector512<uint> rightDifference = MultiplyShoupAvx512(
+                SubtractModuloAvx512(value2, value3, context),
+                twiddle, shoup, context);
+
+            TransposeRadix4Avx512(
+                AddModuloAvx512(leftSum, rightSum, context),
+                AddModuloAvx512(leftDifference, rightDifference, context),
+                SubtractModuloAvx512(leftSum, rightSum, context),
+                SubtractModuloAvx512(leftDifference, rightDifference, context),
+                out Vector512<uint> output0, out Vector512<uint> output1,
+                out Vector512<uint> output2, out Vector512<uint> output3);
+
+            output0.StoreUnsafe(ref valuesReference, (nuint)index);
+            output1.StoreUnsafe(ref valuesReference, (nuint)(index + 16));
+            output2.StoreUnsafe(ref valuesReference, (nuint)(index + 32));
+            output3.StoreUnsafe(ref valuesReference, (nuint)(index + 48));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteInverseLengthTwoAndFourFusedBlock(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
+    /// <summary>
+    /// Scalar L1 radix-4 fallback with the cached Shoup companion. Two groups
+    /// are consumed per iteration to expose ILP. This also handles residuals
+    /// shorter than the sixteen-group AVX-512 batch.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardLengthFourAndTwoFusedBlockShoup(
@@ -27107,11 +27736,13 @@ internal sealed class ParallelBigUnsigned
         private readonly int[] _readyStages =
             new int[32];
 
-        // Global Forward Shoup rows are populated only by the isolated >10M
-        // AVX-512 cached-global experiment. Plain twiddle publication remains
-        // independent because the accepted global path intentionally omits
-        // companion writes.
+        // Global companions are populated lazily by AVX-512 cached stages.
+        // Plain twiddle publication stays separate because scalar/AVX2 global
+        // paths do not consume these rows. Each direction publishes separately.
         private readonly int[] _forwardGlobalShoupReadyStages =
+            new int[32];
+
+        private readonly int[] _inverseGlobalShoupReadyStages =
             new int[32];
 
         public NttTwiddlePlan(
@@ -27271,6 +27902,18 @@ internal sealed class ParallelBigUnsigned
                     GetStageIndex(
                         halfLength)],
                 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsInverseGlobalShoupStageReady(int halfLength) =>
+            halfLength <= MaximumShoupHalfLength
+                ? IsStageReady(halfLength)
+                : Volatile.Read(ref _inverseGlobalShoupReadyStages[GetStageIndex(halfLength)]) != 0;
+
+        public void MarkInverseGlobalShoupStageReady(int halfLength)
+        {
+            if (halfLength > MaximumShoupHalfLength)
+                Volatile.Write(ref _inverseGlobalShoupReadyStages[GetStageIndex(halfLength)], 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
