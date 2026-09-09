@@ -1422,6 +1422,11 @@ internal sealed class ParallelBigUnsigned
         Action<int, int>? progress,
         CancellationToken cancellationToken)
     {
+        if (workers.UseAvx512Ntt && exponent > 0)
+        {
+            return PowLeftToRightWithTeam(
+                baseValue, exponent, workers, diagnostics, progress, cancellationToken);
+        }
 
         ParallelBigUnsigned factor =
             FromUInt64(
@@ -1493,6 +1498,44 @@ internal sealed class ParallelBigUnsigned
         return resultInitialized
             ? result
             : One;
+    }
+
+    // Keep the growing value in one left-to-right chain. Set bits multiply
+    // only by the original UInt64 base, avoiding result x large-factor NTTs.
+    // The square/popcount operation total and split-branch progress contract
+    // are identical to the right-to-left fallback above.
+    private static ParallelBigUnsigned PowLeftToRightWithTeam(
+        ulong baseValue,
+        int exponent,
+        FixedWorkerTeam workers,
+        PowerDiagnosticsCollector diagnostics,
+        Action<int, int>? progress,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(exponent > 0 && workers.UseAvx512Ntt);
+        cancellationToken.ThrowIfCancellationRequested();
+        ParallelBigUnsigned smallBase = FromUInt64(baseValue);
+        ParallelBigUnsigned result = smallBase;
+        int totalOperations = CountMultiplications(exponent);
+        int completedOperations = 0;
+        for (int bitIndex = BitOperations.Log2((uint)exponent) - 1;
+             bitIndex >= 0;
+             bitIndex--)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            result = Multiply(result, result, workers, diagnostics, cancellationToken);
+            progress?.Invoke(++completedOperations, totalOperations);
+            if (((exponent >> bitIndex) & 1) != 0)
+            {
+                // A UInt64 has at most five base-10,000 limbs. This O(5*n)
+                // product stays bounded in operand width even at large n;
+                // the general Multiply work threshold would select an NTT.
+                result = MultiplySchoolbook(smallBase, result, diagnostics, cancellationToken);
+                progress?.Invoke(++completedOperations, totalOperations);
+            }
+        }
+        progress?.Invoke(totalOperations, totalOperations);
+        return result;
     }
 
     public string ToDecimalString(
@@ -6387,7 +6430,8 @@ internal sealed class ParallelBigUnsigned
                     length,
                     stageLength,
                     twiddlePlan,
-                    workers.WorkerCount))
+                    workers.WorkerCount,
+                    allowSegmentedGroups: workers.UseAvx512Ntt))
             {
                 uint[]? globalShoupTwiddles = null;
                 if (workers.UseAvx512Ntt)
@@ -8418,7 +8462,8 @@ internal sealed class ParallelBigUnsigned
         int transformLength,
         int stageLength,
         NttTwiddlePlan twiddlePlan,
-        int workerCount)
+        int workerCount,
+        bool allowSegmentedGroups = false)
     {
         int halfLength =
             stageLength >> 1;
@@ -8438,7 +8483,11 @@ internal sealed class ParallelBigUnsigned
             nextStageLength;
 
         return groupCount >= 2 &&
-               nextGroupCount >= Math.Max(1, workerCount) &&
+               nextGroupCount >= 1 &&
+               // The AVX-512 global kernel partitions each parent into
+               // independent worker-aligned slices. It does not require one
+               // whole parent per worker to keep the team occupied.
+               (allowSegmentedGroups || nextGroupCount >= Math.Max(1, workerCount)) &&
                twiddlePlan.CanCache(halfLength) &&
                twiddlePlan.CanCache(nextHalfLength) &&
                twiddlePlan.IsStageReady(halfLength) &&
@@ -18669,19 +18718,24 @@ internal sealed class ParallelBigUnsigned
         Vector512<uint> advanceShoup = Vector512.Create((uint)(((ulong)step << 32) / modulus));
         Vector512<uint> scale = Vector512.Create(inverseLength);
         Vector512<uint> scaleShoup = Vector512.Create(inverseLengthShoup);
+        // Fold normalization into the recurring right-hand twiddle once:
+        // (left +/- right*w)/N = left/N +/- right*(w/N) modulo p.
+        // Advancing w/N by root^16 preserves this invariant. Both live outputs
+        // now share one scaled left vector instead of two output multiplies.
+        twiddle = MultiplyShoupLow32Avx512(twiddle, scale, scaleShoup, context);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
         ref uint destination = ref MemoryMarshal.GetArrayDataReference(output);
         int i = first;
         int sinceCancellation = 0;
         for (; i + 15 < last; i += 16)
         {
-            Vector512<uint> left = Vector512.LoadUnsafe(ref data, (nuint)i);
+            Vector512<uint> left = MultiplyShoupLow32Avx512(
+                Vector512.LoadUnsafe(ref data, (nuint)i), scale, scaleShoup, context);
             Vector512<uint> right = MultiplyResiduesAvx512(
                 Vector512.LoadUnsafe(ref data, (nuint)(i + halfLength)), twiddle, modulus);
-            MultiplyShoupLow32Avx512(AddModuloAvx512(left, right, context), scale, scaleShoup, context)
-                .StoreUnsafe(ref destination, (nuint)i);
+            AddModuloAvx512(left, right, context).StoreUnsafe(ref destination, (nuint)i);
             if (writeRight)
-                MultiplyShoupLow32Avx512(SubtractModuloAvx512(left, right, context), scale, scaleShoup, context)
+                SubtractModuloAvx512(left, right, context)
                     .StoreUnsafe(ref destination, (nuint)(i + halfLength));
             twiddle = MultiplyShoupLow32Avx512(twiddle, advance, advanceShoup, context);
             sinceCancellation += 16;

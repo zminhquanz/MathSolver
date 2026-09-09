@@ -33,15 +33,26 @@ internal static class Program
                 return 0;
             }
 
+            if (args.Contains("--prefix-benchmark"))
+            {
+                if (!avx512) throw new InvalidOperationException("Prefix benchmark requires AVX-512.");
+                FinalInverseValidation.Benchmark();
+                return 0;
+            }
+
             if (!args.Contains("--powers-only"))
             {
                 ValidateKernels(avx512);
+                if (avx512) FinalInverseValidation.Validate();
                 if (avx512 && args.Contains("--benchmark"))
                     BenchmarkKernels();
             }
 
             if (!args.Contains("--kernels-only"))
+            {
                 ValidatePowers();
+                ValidatePowerCancellation();
+            }
 
             Console.WriteLine("PASS: all requested checks completed.");
             return 0;
@@ -198,6 +209,7 @@ internal static class Program
         [
             (0, 0), (0, 17), (1, 42), (2, 4096), (123_456_789, 321),
             (3, 40_000), (9_999, 20_000), (123_456_789, 10_000), (ulong.MaxValue, 4096),
+            (ulong.MaxValue, 1), (9_999, 65_535), (9_999, 65_536), (9_999, 65_537),
             (999_999_999_999_999_999, 100_000)
         ];
         int checkedPowers = 0;
@@ -210,7 +222,22 @@ internal static class Program
             foreach (bool acceleration in new[] { false, true })
             {
                 CalculationAccelerationManager.Enabled = acceleration;
-                ParallelPowerResult result = ParallelBigUnsigned.Pow(baseValue, exponent, workers, null, CancellationToken.None);
+                int lastCompleted = 0;
+                int reportedTotal = 0;
+                object progressGate = new();
+                ParallelPowerResult result = ParallelBigUnsigned.Pow(baseValue, exponent, workers, (completed, total) =>
+                {
+                    lock (progressGate)
+                    {
+                        if (total <= 0 || (reportedTotal != 0 && total != reportedTotal) ||
+                            completed < lastCompleted || completed > total)
+                            throw new InvalidOperationException($"Invalid power progress: {completed}/{total}, previous={lastCompleted}/{reportedTotal}.");
+                        lastCompleted = completed;
+                        reportedTotal = total;
+                    }
+                }, CancellationToken.None);
+                if (exponent > 0 && (reportedTotal == 0 || lastCompleted != reportedTotal))
+                    throw new InvalidOperationException("Power progress did not reach completion.");
                 BigInteger actual = ToBigInteger(result.Magnitude);
                 if (actual != expected)
                     throw new InvalidOperationException($"Power mismatch: {baseValue}^{exponent}, workers={workers}, acceleration={acceleration}.");
@@ -227,6 +254,31 @@ internal static class Program
             throw new InvalidOperationException("Power checks failed to exercise the profiled L2 path containing the radix-4 dispatch.");
         Console.WriteLine($"PASS: {checkedPowers} powers equal BigInteger; {nttPowers} use NTT; " +
                           $"{acceleratedL2Powers} accelerated powers exercise profiled L2 radix-4; acceleration on/off and varied worker counts.");
+    }
+
+    private static void ValidatePowerCancellation()
+    {
+        int cases = 0;
+        foreach (bool acceleration in new[] { false, true })
+        foreach (int workers in new[] { 1, 4 })
+        foreach ((int exponent, bool cancelBeforeStart) in new[] { (1, true), (65_535, true), (65_535, false) })
+        {
+            CalculationAccelerationManager.Enabled = acceleration;
+            using var cancellation = new CancellationTokenSource();
+            if (cancelBeforeStart) cancellation.Cancel();
+            try
+            {
+                ParallelBigUnsigned.Pow(99_999_999, exponent, workers,
+                    (_, _) => cancellation.Cancel(), cancellation.Token);
+            }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+            {
+                cases++;
+                continue;
+            }
+            throw new InvalidOperationException($"Power ignored cancellation: exponent={exponent}, workers={workers}, acceleration={acceleration}, beforeStart={cancelBeforeStart}.");
+        }
+        Console.WriteLine($"PASS: {cases} power cancellation cases (pre-cancelled exponent 1, split/single chains and cancellation from progress).");
     }
 
     private static void BenchmarkKernels()
