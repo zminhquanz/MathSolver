@@ -123,8 +123,8 @@ internal sealed class ParallelBigUnsigned
     // Phase 8: the CRT multiplier is constant for the full reconstruction.
     // Keep its exact 32-bit Shoup companion once so AVX-512 can replace the
     // per-coefficient UInt64 remainder in the <=10M path without allocating
-    // another coefficient-sized table. Large-mode keeps workers.UseAvx512Ntt
-    // disabled and therefore falls back to the accepted scalar CRT loop.
+    // another coefficient-sized table. Large mode enables this reconstruction
+    // through its separate DQ gate while keeping the shared AVX-512 flag off.
     private static readonly uint FirstModulusInverseInSecondShoup =
         (uint)(((ulong)(uint)FirstModulusInverseInSecond << 32) /
                SecondModulus);
@@ -801,9 +801,9 @@ internal sealed class ParallelBigUnsigned
 
         // Capture the shared Hardware acceleration switch once for the complete
         // >10M transaction. The accepted AVX2/Shoup cache-resident kernels remain
-        // the large-mode baseline. The first AVX-512 large-mode experiment is
-        // intentionally dispatched later only for generic Inverse-L1 pairs; the
-        // shared plan stays AVX2 so every other kernel keeps the proven fallback.
+        // the large-mode baseline. Separate AVX-512 gates select local kernels,
+        // radix-4, inverse global, forward uncached global and DQ CRT without
+        // changing the shared plan or persistent worker/buffer policy.
         bool useAvx2Ntt =
             CalculationAccelerationManager.UsePowerNttAvx2;
 
@@ -3867,7 +3867,7 @@ internal sealed class ParallelBigUnsigned
                 long carryTicks = 0;
 
                 bool useAvx512Crt =
-                    workers.UseAvx512Ntt &&
+                    (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
                     Avx512DQ.IsSupported;
 
                 for (int blockStart = 0;
@@ -4086,7 +4086,7 @@ internal sealed class ParallelBigUnsigned
         long carryTicks = 0;
 
         bool useAvx512Crt =
-            workers.UseAvx512Ntt &&
+            (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
             Avx512DQ.IsSupported;
 
         for (int blockStart = 0;
@@ -6030,6 +6030,21 @@ internal sealed class ParallelBigUnsigned
                 continue;
             }
 
+            // A transform can leave one uncached DIF stage after the paired
+            // stages. Cover that residual stage with the same 16-lane root
+            // recurrence, without creating a global twiddle table.
+            if (workers.UseLargeModeAvx512ForwardGlobalUncached && !useTwiddleCache)
+            {
+                long started = Stopwatch.GetTimestamp();
+                ExecuteForwardUncachedStageAvx512(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalUncachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardUncached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
             long genericGlobalStageStarted =
                 Stopwatch.GetTimestamp();
 
@@ -6431,10 +6446,11 @@ internal sealed class ParallelBigUnsigned
                     stageLength,
                     twiddlePlan,
                     workers.WorkerCount,
-                    allowSegmentedGroups: workers.UseAvx512Ntt))
+                    allowSegmentedGroups: workers.UseAvx512Ntt ||
+                        workers.UseLargeModeAvx512InverseGlobal))
             {
                 uint[]? globalShoupTwiddles = null;
-                if (workers.UseAvx512Ntt)
+                if (workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal)
                 {
                     EnsureInverseGlobalShoupStage(
                         twiddlePlan, halfLength, modulus, workers, cancellationToken);
@@ -6608,7 +6624,7 @@ internal sealed class ParallelBigUnsigned
                     groupCount,
                     workers.WorkerCount);
 
-            if (workers.UseAvx512Ntt && useTwiddleCache)
+            if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal) && useTwiddleCache)
             {
                 EnsureInverseGlobalShoupStage(
                     twiddlePlan, halfLength, modulus, workers, cancellationToken);
@@ -6738,7 +6754,8 @@ internal sealed class ParallelBigUnsigned
             long inverseGlobalStageStarted =
                 Stopwatch.GetTimestamp();
 
-            if (workers.UseAvx512Ntt && !useTwiddleCache && !normalizeOutput)
+            if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal) &&
+                !useTwiddleCache && !normalizeOutput)
             {
                 ExecuteInverseUncachedStageAvx512(
                     values, modulus, root, stageLength, workers, cancellationToken);
@@ -18593,7 +18610,7 @@ internal sealed class ParallelBigUnsigned
                         out int butterflyStart,
                         out int butterflyEnd);
 
-                    if (workers.UseAvx512Ntt)
+                    if (workers.UseAvx512Ntt || workers.UseLargeModeAvx512ForwardGlobalUncached)
                     {
                         ProcessForwardUncachedStagePairAvx512(
                             values, modulus, firstRoot, secondRoot, quarterPhase,
@@ -18783,6 +18800,80 @@ internal sealed class ParallelBigUnsigned
         modulus == FirstModulus
             ? MultiplyPointwiseFirstModulusAvx512F(left, right)
             : MultiplyPointwiseSecondModulusAvx512F(left, right);
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardUncachedStageAvx512(
+        uint[] values, uint modulus, uint root, int stageLength,
+        FixedWorkerTeam workers, CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength, groupCount, workers.WorkerCount,
+            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
+        {
+            for (int segment = start; segment < end; segment++)
+            {
+                GetSegmentBounds(segment, segments, halfLength,
+                    out int group, out int first, out int last);
+                ProcessForwardUncachedStageSegmentAvx512(
+                    values, modulus, root, stageLength, group, first, last, cancellationToken);
+            }
+        });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStageSegmentAvx512(
+        uint[] values, uint modulus, uint root, int stageLength,
+        int groupIndex, int first, int last, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int halfLength = stageLength >> 1;
+        int groupOffset = groupIndex * stageLength;
+        var context = new Avx512NttModContext(modulus);
+        Vector512<uint> twiddle = CreateTwiddleSequenceAvx512(root, first, modulus);
+        uint step = (uint)ModPow(root, 16, modulus);
+        Vector512<uint> advance = Vector512.Create(step);
+        Vector512<uint> shoup = Vector512.Create((uint)(((ulong)step << 32) / modulus));
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        int i = first;
+        int sinceCancellation = 0;
+        for (; i + 15 < last; i += 16)
+        {
+            int leftIndex = groupOffset + i;
+            int rightIndex = leftIndex + halfLength;
+            Vector512<uint> left = Vector512.LoadUnsafe(ref data, (nuint)leftIndex);
+            Vector512<uint> right = Vector512.LoadUnsafe(ref data, (nuint)rightIndex);
+            AddModuloAvx512(left, right, context).StoreUnsafe(ref data, (nuint)leftIndex);
+            MultiplyResiduesAvx512(SubtractModuloAvx512(left, right, context), twiddle, modulus)
+                .StoreUnsafe(ref data, (nuint)rightIndex);
+            twiddle = MultiplyShoupLow32Avx512(twiddle, advance, shoup, context);
+            sinceCancellation += 16;
+            if (sinceCancellation >= (1 << 14))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                sinceCancellation = 0;
+            }
+        }
+        // Worker slices can begin or end at any butterfly. Restart the scalar
+        // recurrence at the first remaining index, including slices <16 wide.
+        uint scalarTwiddle = (uint)ModPow(root, (uint)i, modulus);
+        for (; i < last; i++)
+        {
+            int leftIndex = groupOffset + i;
+            int rightIndex = leftIndex + halfLength;
+            uint left = values[leftIndex];
+            uint right = values[rightIndex];
+            uint sum = left + right;
+            if (sum >= modulus) sum -= modulus;
+            uint difference = left >= right ? left - right : left + modulus - right;
+            values[leftIndex] = sum;
+            values[rightIndex] = (uint)((ulong)difference * scalarTwiddle % modulus);
+            scalarTwiddle = (uint)((ulong)scalarTwiddle * root % modulus);
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteInverseUncachedStageAvx512(
@@ -20115,7 +20206,8 @@ internal sealed class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        if (shoupTwiddles is not null && workers.UseAvx512Ntt)
+        if (shoupTwiddles is not null &&
+            (workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal))
         {
             ExecuteInverseCachedStagePairByGroupsLow32Avx512(
                 values, modulus, twiddles, shoupTwiddles,
@@ -21692,6 +21784,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512ForwardL1Generic
                         ? new Avx512NttModContext(modulus)
                         : default;
@@ -21890,7 +21983,8 @@ internal sealed class ParallelBigUnsigned
                                 values, modulus, twiddles, shoupTwiddles,
                                 twiddlePlan, fusedNttBlockLength,
                                 l2NttTileLength, l2TileOffset, context,
-                                useAvx512Ntt,
+                               useAvx512Ntt,
+                                workers.UseLargeModeAvx512Radix4,
                                 workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                                 useLargeModeAvx512ForwardL1Generic,
                                 avx512Context,
@@ -21989,6 +22083,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512ForwardL1Generic
                         ? new Avx512NttModContext(modulus)
                         : default;
@@ -22082,6 +22177,7 @@ internal sealed class ParallelBigUnsigned
                             values, modulus, twiddles, shoupTwiddles, twiddlePlan,
                             fusedNttBlockLength, l2NttTileLength, l2TileOffset,
                             context, useAvx512Ntt,
+                            workers.UseLargeModeAvx512Radix4,
                             workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                             useLargeModeAvx512ForwardL1Generic,
                             avx512Context,
@@ -22239,7 +22335,8 @@ internal sealed class ParallelBigUnsigned
                             l2NttTileLength,
                             l2TileOffset,
                             workers.UseLargeModeAvx2ForwardL1Low32Shoup,
-                            useLargeModeAvx512ForwardL1Generic);
+                            useLargeModeAvx512ForwardL1Generic,
+                            workers.UseLargeModeAvx512Radix4);
                     }
 
                     if ((tileIndex & 0x07) == 0x07)
@@ -22336,6 +22433,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512InverseL1Generic ||
                     useLargeModeAvx512InverseL2StagePair
                         ? new Avx512NttModContext(modulus)
@@ -22362,6 +22460,7 @@ internal sealed class ParallelBigUnsigned
                             twiddlePlan, fusedNttBlockLength,
                             l2NttTileLength, l2TileOffset, context,
                             useAvx512Ntt,
+                            workers.UseLargeModeAvx512Radix4,
                             useLargeModeAvx512InverseL1Generic,
                             useLargeModeAvx512InverseL2StagePair,
                             workers.UseLargeModeAvx2InverseL1Low32Shoup,
@@ -22578,6 +22677,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512InverseL1Generic ||
                     useLargeModeAvx512InverseL2StagePair
                         ? new Avx512NttModContext(modulus)
@@ -22613,6 +22713,7 @@ internal sealed class ParallelBigUnsigned
                                 twiddlePlan, fusedNttBlockLength,
                                 l2NttTileLength, l2TileOffset, context,
                                 useAvx512Ntt,
+                                workers.UseLargeModeAvx512Radix4,
                                 useLargeModeAvx512InverseL1Generic,
                                 useLargeModeAvx512InverseL2StagePair,
                                 workers.UseLargeModeAvx2InverseL1Low32Shoup,
@@ -22867,6 +22968,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512InverseL1Generic ||
                     useLargeModeAvx512InverseL2StagePair
                         ? new Avx512NttModContext(modulus)
@@ -22885,6 +22987,7 @@ internal sealed class ParallelBigUnsigned
                         twiddlePlan, fusedNttBlockLength,
                         l2NttTileLength, tileOffset, context,
                         useAvx512Ntt,
+                        workers.UseLargeModeAvx512Radix4,
                         useLargeModeAvx512InverseL1Generic,
                         useLargeModeAvx512InverseL2StagePair,
                         workers.UseLargeModeAvx2InverseL1Low32Shoup,
@@ -23129,6 +23232,7 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         in Avx2NttModContext context,
         bool useAvx512LocalStagePair,
+        bool useLargeModeAvx512Radix4,
         bool useLargeModeAvx512InverseL1Generic,
         bool useLargeModeAvx512InverseL2StagePair,
         bool useLargeModeAvx2InverseL1Low32Shoup,
@@ -23166,7 +23270,7 @@ internal sealed class ParallelBigUnsigned
             long radix4Started =
                 Stopwatch.GetTimestamp();
 
-            if (useAvx512LocalStagePair)
+            if (useAvx512LocalStagePair || useLargeModeAvx512Radix4)
             {
                 ExecuteInverseLengthTwoAndFourFusedBlockAvx512(
                     values, modulus, quarterTurnTwiddle, quarterTurnShoup,
@@ -23568,7 +23672,8 @@ internal sealed class ParallelBigUnsigned
                             fusedNttBlockLength,
                             l2NttTileLength,
                             l2TileOffset,
-                            workers.UseLargeModeAvx2InverseL2Low32Shoup);
+                            workers.UseLargeModeAvx2InverseL2Low32Shoup,
+                            workers.UseLargeModeAvx512Radix4);
                     }
 
                     // Merge the completed L2 tiles while their parent LLC tile
@@ -23649,6 +23754,7 @@ internal sealed class ParallelBigUnsigned
         int tileOffset,
         in Avx2NttModContext context,
         bool useAvx512LocalStagePair,
+        bool useLargeModeAvx512Radix4,
         bool useLargeModeAvx2ForwardL1Low32Shoup,
         bool useLargeModeAvx512ForwardL1Generic,
         in Avx512NttModContext avx512Context,
@@ -23813,7 +23919,7 @@ internal sealed class ParallelBigUnsigned
                     stageLength, context);
             }
 
-            if (useAvx512LocalStagePair)
+            if (useAvx512LocalStagePair || useLargeModeAvx512Radix4)
             {
                 ExecuteForwardLengthFourAndTwoFusedBlockAvx512(
                     values, modulus, quarterTurnTwiddle, quarterTurnShoup,
@@ -23840,7 +23946,8 @@ internal sealed class ParallelBigUnsigned
         int l2NttTileLength,
         int tileOffset,
         bool useLargeModeAvx2ForwardL1Low32Shoup,
-        bool useLargeModeAvx512ForwardL1Generic)
+        bool useLargeModeAvx512ForwardL1Generic,
+        bool useLargeModeAvx512Radix4)
     {
         uint[] shoupTwiddles =
             twiddlePlan.ForwardShoupTwiddles!;
@@ -23849,7 +23956,7 @@ internal sealed class ParallelBigUnsigned
             new Avx2NttModContext(modulus);
 
         Avx512NttModContext avx512Context =
-            useLargeModeAvx512ForwardL1Generic
+            useLargeModeAvx512ForwardL1Generic || useLargeModeAvx512Radix4
                 ? new Avx512NttModContext(modulus)
                 : default;
 
@@ -24003,13 +24110,18 @@ internal sealed class ParallelBigUnsigned
 
             // Finish the two smallest stages as one radix-4 DIF kernel.  This
             // removes the last stage-4 -> stage-2 intermediate round trip.
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                values,
-                modulus,
-                quarterTurnTwiddle,
-                quarterTurnShoup,
-                blockOffset,
-                blockOffset + fusedNttBlockLength);
+            if (useLargeModeAvx512Radix4)
+            {
+                ExecuteForwardLengthFourAndTwoFusedBlockAvx512(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockOffset + fusedNttBlockLength, avx512Context);
+            }
+            else
+            {
+                ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockOffset + fusedNttBlockLength);
+            }
         }
     }
 
@@ -24022,13 +24134,17 @@ internal sealed class ParallelBigUnsigned
         int fusedNttBlockLength,
         int l2NttTileLength,
         int tileOffset,
-        bool useLargeModeAvx2InverseL2Low32Shoup)
+        bool useLargeModeAvx2InverseL2Low32Shoup,
+        bool useLargeModeAvx512Radix4)
     {
         uint[] shoupTwiddles =
             twiddlePlan.InverseShoupTwiddles!;
 
         var context =
             new Avx2NttModContext(modulus);
+
+        Avx512NttModContext avx512Context = useLargeModeAvx512Radix4
+            ? new Avx512NttModContext(modulus) : default;
 
         int tileEnd =
             tileOffset + l2NttTileLength;
@@ -24044,13 +24160,18 @@ internal sealed class ParallelBigUnsigned
              blockOffset < tileEnd;
              blockOffset += fusedNttBlockLength)
         {
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values,
-                modulus,
-                quarterTurnTwiddle,
-                quarterTurnShoup,
-                blockOffset,
-                blockOffset + fusedNttBlockLength);
+            if (useLargeModeAvx512Radix4)
+            {
+                ExecuteInverseLengthTwoAndFourFusedBlockAvx512(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockOffset + fusedNttBlockLength, avx512Context);
+            }
+            else
+            {
+                ExecuteInverseLengthTwoAndFourFusedBlock(
+                    values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                    blockOffset, blockOffset + fusedNttBlockLength);
+            }
 
             // Starting at stage 8 leaves an even number of L1-local stages, so
             // every remaining DIT stage can participate in a pair: 8+16,
@@ -24769,7 +24890,8 @@ internal sealed class ParallelBigUnsigned
         int l2NttTileLength,
         int tileOffset,
         bool useLargeModeAvx2ForwardL1Low32Shoup,
-        bool useLargeModeAvx512ForwardL1Generic)
+        bool useLargeModeAvx512ForwardL1Generic,
+        bool useLargeModeAvx512Radix4)
     {
         if (twiddlePlan.ForwardShoupTwiddles is not null && Avx2.IsSupported)
         {
@@ -24777,7 +24899,8 @@ internal sealed class ParallelBigUnsigned
                 values, modulus, twiddles, twiddlePlan,
                 fusedNttBlockLength, l2NttTileLength, tileOffset,
                 useLargeModeAvx2ForwardL1Low32Shoup,
-                useLargeModeAvx512ForwardL1Generic);
+                useLargeModeAvx512ForwardL1Generic,
+                useLargeModeAvx512Radix4);
             return;
         }
 
@@ -25155,14 +25278,16 @@ internal sealed class ParallelBigUnsigned
         int fusedNttBlockLength,
         int l2NttTileLength,
         int tileOffset,
-        bool useLargeModeAvx2InverseL2Low32Shoup)
+        bool useLargeModeAvx2InverseL2Low32Shoup,
+        bool useLargeModeAvx512Radix4 = false)
     {
         if (twiddlePlan.InverseShoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteInverseL2TileSequentialAvx2(
                 values, modulus, twiddles, twiddlePlan,
                 fusedNttBlockLength, l2NttTileLength, tileOffset,
-                useLargeModeAvx2InverseL2Low32Shoup);
+                useLargeModeAvx2InverseL2Low32Shoup,
+                useLargeModeAvx512Radix4);
             return;
         }
 
@@ -26047,6 +26172,7 @@ internal sealed class ParallelBigUnsigned
 
                 Avx512NttModContext avx512Context =
                     useAvx512Ntt ||
+                    workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512ForwardL1Generic
                         ? new Avx512NttModContext(modulus)
                         : default;
@@ -26059,6 +26185,7 @@ internal sealed class ParallelBigUnsigned
                         values, modulus, twiddles, shoupTwiddles, twiddlePlan,
                         fusedNttBlockLength, l2NttTileLength, tileOffset, context,
                         useAvx512Ntt,
+                        workers.UseLargeModeAvx512Radix4,
                         workers.UseLargeModeAvx2ForwardL1Low32Shoup,
                         useLargeModeAvx512ForwardL1Generic,
                         avx512Context,
@@ -26902,6 +27029,9 @@ internal sealed class ParallelBigUnsigned
         uint[] twiddles = twiddlePlan.ForwardTwiddles;
         uint[] shoupTwiddles = twiddlePlan.ForwardShoupTwiddles!;
         var context = new Avx2NttModContext(modulus);
+        bool useLargeModeAvx512Radix4 = workers.UseLargeModeAvx512Radix4;
+        Avx512NttModContext avx512Context = useLargeModeAvx512Radix4
+            ? new Avx512NttModContext(modulus) : default;
 
         int quarterTurnIndex =
             twiddlePlan.GetOffset(2) + 1;
@@ -26976,13 +27106,18 @@ internal sealed class ParallelBigUnsigned
                         }
                     }
 
-                    ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                        values,
-                        modulus,
-                        quarterTurnTwiddle,
-                        quarterTurnShoup,
-                        blockOffset,
-                        blockEnd);
+                    if (useLargeModeAvx512Radix4)
+                    {
+                        ExecuteForwardLengthFourAndTwoFusedBlockAvx512(
+                            values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                            blockOffset, blockEnd, avx512Context);
+                    }
+                    else
+                    {
+                        ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                            values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                            blockOffset, blockEnd);
+                    }
                     if ((blockIndex & 0x3F) == 0x3F) cancellationToken.ThrowIfCancellationRequested();
                 }
             });
@@ -27001,6 +27136,10 @@ internal sealed class ParallelBigUnsigned
         uint[] twiddles = twiddlePlan.InverseTwiddles;
         uint[] shoupTwiddles = twiddlePlan.InverseShoupTwiddles!;
         var context = new Avx2NttModContext(modulus);
+        bool useLargeModeAvx512Radix4 = workers.UseLargeModeAvx512Radix4;
+        Avx512NttModContext avx512Context = useLargeModeAvx512Radix4
+            ? new Avx512NttModContext(modulus) : default;
+        int quarterTurnIndex = twiddlePlan.GetOffset(2) + 1;
 
         ExecuteRanges(
             blockCount, workers, cancellationToken,
@@ -27010,9 +27149,19 @@ internal sealed class ParallelBigUnsigned
                 {
                     int blockOffset = blockIndex * fusedNttBlockLength;
                     int blockEnd = blockOffset + fusedNttBlockLength;
-                    ExecuteLengthTwoSequentialBlock(values, modulus, blockOffset, blockEnd);
+                    if (useLargeModeAvx512Radix4)
+                    {
+                        ExecuteInverseLengthTwoAndFourFusedBlockAvx512(
+                            values, modulus, twiddles[quarterTurnIndex],
+                            shoupTwiddles[quarterTurnIndex], blockOffset, blockEnd,
+                            avx512Context);
+                    }
+                    else
+                    {
+                        ExecuteLengthTwoSequentialBlock(values, modulus, blockOffset, blockEnd);
+                    }
 
-                    for (int stageLength = 4;
+                    for (int stageLength = useLargeModeAvx512Radix4 ? 8 : 4;
                          stageLength <= fusedNttBlockLength;
                          stageLength <<= 1)
                     {
@@ -29662,6 +29811,15 @@ internal sealed class ParallelBigUnsigned
             Avx512F.IsSupported &&
             Vector512.IsHardwareAccelerated;
 
+        // Widen only the fused 4+2 DIF / 2+4 DIT kernels. Keep packed and
+        // generic local-stage policies independent of this large-mode gate.
+        public bool UseLargeModeAvx512Radix4 =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt &&
+            !UseAvx512Ntt &&
+            Avx512F.IsSupported &&
+            Vector512.IsHardwareAccelerated;
+
         // L2 pass deliberately has a separate gate from the accepted L1
         // checkpoint so L2 can be A/B tested and rolled back independently.
         public bool UseLargeModeAvx2InverseL2Low32Shoup =>
@@ -29677,6 +29835,24 @@ internal sealed class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt;
+
+        // Independent large-mode gates preserve the accepted local kernels,
+        // persistent worker schedule and shared-plan AVX2 fallback policy.
+        public bool UseLargeModeAvx512InverseGlobal =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+
+        public bool UseLargeModeAvx512ForwardGlobalUncached =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+
+        public bool UseLargeModeAvx512Crt =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated &&
+            Avx512DQ.IsSupported;
 
         public long PersistentGenerationCount =>
             Interlocked.Read(
