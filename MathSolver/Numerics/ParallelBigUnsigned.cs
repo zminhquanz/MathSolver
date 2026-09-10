@@ -1422,7 +1422,11 @@ internal sealed class ParallelBigUnsigned
         Action<int, int>? progress,
         CancellationToken cancellationToken)
     {
-        if (workers.UseAvx512Ntt && exponent > 0)
+        // The power chain is an algorithm choice, independent of SIMD width.
+        // Measured AVX2/scalar runs also benefit from multiplying set bits by
+        // the original small base instead of issuing large result-factor NTTs.
+        // Exponents 0 and 1 retain the no-multiplication path below.
+        if (exponent > 1)
         {
             return PowLeftToRightWithTeam(
                 baseValue, exponent, workers, diagnostics, progress, cancellationToken);
@@ -1512,7 +1516,7 @@ internal sealed class ParallelBigUnsigned
         Action<int, int>? progress,
         CancellationToken cancellationToken)
     {
-        Debug.Assert(exponent > 0 && workers.UseAvx512Ntt);
+        Debug.Assert(exponent > 0);
         cancellationToken.ThrowIfCancellationRequested();
         ParallelBigUnsigned smallBase = FromUInt64(baseValue);
         ParallelBigUnsigned result = smallBase;
