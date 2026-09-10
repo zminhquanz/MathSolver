@@ -170,7 +170,7 @@
                 <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
-            <ScrollView
+            <controls:MouseDragScrollView
                 x:Name="CalculationSubTabScrollView"
                 Orientation="Horizontal"
                 HorizontalOptions="Fill"
@@ -242,7 +242,7 @@
 
                 </HorizontalStackLayout>
 
-            </ScrollView>
+            </controls:MouseDragScrollView>
 
         </Border>
 
