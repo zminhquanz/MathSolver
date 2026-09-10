@@ -216,10 +216,8 @@ public static class CalculationAccelerationManager
         IsPowerNttAccelerationAvailable;
 
     /// <summary>
-    /// Experimental AVX2 backend for the single-threaded BigInteger power
-    /// strategy. The implementation uses a bounded base-2^16 SIMD
-    /// multiplication/squaring window and falls back to System.Numerics
-    /// BigInteger when operands grow beyond that window.
+    /// Hardware capability for the experimental single-threaded AVX2 kernels.
+    /// Availability is separate from the measured production dispatch policy.
     /// </summary>
     public static bool IsSingleThreadBigIntegerAccelerationAvailable =>
 #if ANDROID
@@ -231,8 +229,17 @@ public static class CalculationAccelerationManager
          RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
 
+    // The 1M audit found no material whole-power benefit from the custom SIMD
+    // prefix over the shared runtime schedule. Small-power checks also favored
+    // BigInteger once workspace allocation and normalization were included.
+    // Keep the kernels available for controlled benchmarks, but use the runtime
+    // backend in production until a new kernel demonstrates a repeatable gain.
+    // See SINGLE_THREAD_POWER_SIMD_AUDIT_20260910.md.
+    private const bool EnableSingleThreadBigIntegerAvx2 = false;
+
     public static bool UseSingleThreadBigIntegerAvx2 =>
         UseSimd &&
+        EnableSingleThreadBigIntegerAvx2 &&
         IsSingleThreadBigIntegerAccelerationAvailable;
 
     public static CalculationSimdMode SelectedSimdMode
