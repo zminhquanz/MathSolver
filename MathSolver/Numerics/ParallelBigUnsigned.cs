@@ -22623,12 +22623,10 @@ internal sealed class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Inverse DIT 2×L3 bridge. Two complete L3 children are built inside one
-    /// worker-owned parent and merged immediately while the parent is still
-    /// LLC-hot. The bridge stage now has exactly one additional populated
-    /// Shoup companion stage (halfLength=L3), allowing the accepted AVX2 DIT
-    /// group kernel to replace the scalar merge without allocating a new table
-    /// or extending Shoup into the global transform.
+    /// Completes inverse L3 work inside one worker-owned 2xL3 parent. Eligible
+    /// large-mode shapes defer both children's L3 stages and fuse them with
+    /// the bridge. Other shapes retain the per-child L3 traversal and merge.
+    /// Both paths reuse the populated Shoup rows through halfLength=L3.
     /// </summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ExecuteInverseL3BridgeHeadProfiled(
@@ -22689,8 +22687,12 @@ internal sealed class ParallelBigUnsigned
                 bool useLargeModeAvx512InverseL2StagePair =
                     workers.UseLargeModeAvx512InverseL2StagePair;
 
+                bool useFusedL3Bridge = workers.UseLargeModeAvx512InverseL3Bridge &&
+                    l3NttTileLength == 4 * l2NttTileLength &&
+                    l2NttTileLength >= 16;
+
                 Avx512NttModContext avx512Context =
-                    useAvx512Ntt ||
+                    useAvx512Ntt || useFusedL3Bridge ||
                     workers.UseLargeModeAvx512Radix4 ||
                     useLargeModeAvx512InverseL1Generic ||
                     useLargeModeAvx512InverseL2StagePair
@@ -22754,85 +22756,95 @@ internal sealed class ParallelBigUnsigned
                                 l1Radix4TailTicks;
                         }
 
-                        long l3Started =
-                            Stopwatch.GetTimestamp();
-
-                        for (int stageLength = l2NttTileLength << 1;
-                             stageLength <= l3NttTileLength;
-                             stageLength <<= 1)
+                        if (!useFusedL3Bridge)
                         {
-                            int secondStageLength =
-                                stageLength << 1;
+                            long l3Started =
+                                Stopwatch.GetTimestamp();
 
-                            if (secondStageLength <= l3NttTileLength &&
-                                stageLength >= 16)
+                            for (int stageLength = l2NttTileLength << 1;
+                                 stageLength <= l3NttTileLength;
+                                 stageLength <<= 1)
                             {
-                                int firstTwiddleOffset =
-                                    twiddlePlan.GetOffset(
-                                        stageLength >> 1);
+                                int secondStageLength =
+                                    stageLength << 1;
 
-                                int secondTwiddleOffset =
+                                if (secondStageLength <= l3NttTileLength &&
+                                    stageLength >= 16)
+                                {
+                                    int firstTwiddleOffset =
+                                        twiddlePlan.GetOffset(
+                                            stageLength >> 1);
+
+                                    int secondTwiddleOffset =
+                                        twiddlePlan.GetOffset(
+                                            stageLength);
+
+                                    if (useAvx512Ntt)
+                                    {
+                                        ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+                                            values, modulus, twiddles, shoupTwiddles,
+                                            firstTwiddleOffset, secondTwiddleOffset,
+                                            tileOffset, l3NttTileLength, stageLength,
+                                            avx512Context);
+                                    }
+                                    else
+                                    {
+                                        ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                                            values, modulus, twiddles, shoupTwiddles,
+                                            firstTwiddleOffset, secondTwiddleOffset,
+                                            tileOffset, l3NttTileLength, stageLength,
+                                            context);
+                                    }
+
+                                    stageLength <<= 1;
+                                    continue;
+                                }
+
+                                int halfLength =
+                                    stageLength >> 1;
+
+                                int twiddleOffset =
                                     twiddlePlan.GetOffset(
-                                        stageLength);
+                                        halfLength);
 
                                 if (useAvx512Ntt)
                                 {
-                                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx512(
+                                    ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
                                         values, modulus, twiddles, shoupTwiddles,
-                                        firstTwiddleOffset, secondTwiddleOffset,
-                                        tileOffset, l3NttTileLength, stageLength,
-                                        avx512Context);
+                                        twiddleOffset, tileOffset, l3NttTileLength,
+                                        stageLength, avx512Context);
                                 }
                                 else
                                 {
-                                    ExecuteInverseCachedStagePairRegionTwiddleMajorAvx2(
+                                    ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
                                         values, modulus, twiddles, shoupTwiddles,
-                                        firstTwiddleOffset, secondTwiddleOffset,
-                                        tileOffset, l3NttTileLength, stageLength,
-                                        context);
+                                        twiddleOffset, tileOffset, l3NttTileLength,
+                                        stageLength, context);
                                 }
-
-                                stageLength <<= 1;
-                                continue;
                             }
 
-                            int halfLength =
-                                stageLength >> 1;
-
-                            int twiddleOffset =
-                                twiddlePlan.GetOffset(
-                                    halfLength);
-
-                            if (useAvx512Ntt)
-                            {
-                                ExecuteInverseCachedDitRegionTwiddleMajorAvx512(
-                                    values, modulus, twiddles, shoupTwiddles,
-                                    twiddleOffset, tileOffset, l3NttTileLength,
-                                    stageLength, avx512Context);
-                            }
-                            else
-                            {
-                                ExecuteInverseCachedDitRegionTwiddleMajorAvx2(
-                                    values, modulus, twiddles, shoupTwiddles,
-                                    twiddleOffset, tileOffset, l3NttTileLength,
-                                    stageLength, context);
-                            }
+                            localL3Ticks +=
+                                Stopwatch.GetTimestamp() -
+                                l3Started;
                         }
-
-                        localL3Ticks +=
-                            Stopwatch.GetTimestamp() -
-                            l3Started;
                     }
 
-                    // Complete the 2×L3 merge inside the same worker-owned
-                    // parent while both children are still LLC-hot.  The Shoup
-                    // companion range is extended by exactly this one local
-                    // stage, so the existing AVX2 group kernel can replace the
-                    // scalar remainder loop without a new dispatch/barrier.
+                    // Complete deferred L3 stages and the bridge together, or
+                    // merge the already-complete children on the fallback path.
+                    // No additional twiddle row, buffer or worker barrier.
                     long bridgeStarted =
                         Stopwatch.GetTimestamp();
 
-                    if (useAvx512Ntt)
+                    if (useFusedL3Bridge)
+                    {
+                        ExecuteInverseL3ThreeStageBridgeLow32Avx512(
+                            values, modulus, twiddles, shoupTwiddles,
+                            twiddlePlan.GetOffset(l2NttTileLength),
+                            twiddlePlan.GetOffset(l2NttTileLength << 1),
+                            bridgeTwiddleOffset, parentOffset, l2NttTileLength,
+                            avx512Context);
+                    }
+                    else if (useAvx512Ntt)
                     {
                         ExecuteInverseCachedDitGroupAvx512(
                             values,
@@ -22908,6 +22920,66 @@ internal sealed class ParallelBigUnsigned
 
         diagnostics.InverseL1Radix4TailTicks +=
             profile.L1Radix4TailTicks;
+    }
+
+    /// <summary>
+    /// Combines the two inverse L3 stages and the 2xL3 bridge after both
+    /// children's L2 subtrees are complete. Eight streams stay in vectors
+    /// through all three stages, avoiding intermediate value-buffer stores.
+    /// The caller admits only L3=4*L2 with a full sixteen-lane half-length.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseL3ThreeStageBridgeLow32Avx512(
+        uint[] values, uint modulus, uint[] twiddles, uint[] shoupTwiddles,
+        int firstTwiddleOffset, int secondTwiddleOffset, int bridgeTwiddleOffset,
+        int parentOffset, int halfLength, in Avx512NttModContext context)
+    {
+        Debug.Assert(halfLength >= 16 && (halfLength & 15) == 0);
+        Debug.Assert(parentOffset >= 0 && parentOffset + 8 * halfLength <= values.Length);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+        for (int i = 0; i < halfLength; i += 16)
+        {
+            Vector512<uint> value0 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + i));
+            Vector512<uint> value1 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + halfLength + i));
+            Vector512<uint> value2 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + 2 * halfLength + i));
+            Vector512<uint> value3 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + 3 * halfLength + i));
+            TransformInverseStagePairRegistersLow32Avx512(
+                value0, value1, value2, value3, ref roots, ref companions,
+                firstTwiddleOffset + i, secondTwiddleOffset + i,
+                secondTwiddleOffset + halfLength + i, context,
+                out value0, out value1, out value2, out value3);
+            Vector512<uint> value4 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + 4 * halfLength + i));
+            Vector512<uint> value5 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + 5 * halfLength + i));
+            Vector512<uint> value6 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + 6 * halfLength + i));
+            Vector512<uint> value7 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + 7 * halfLength + i));
+            TransformInverseStagePairRegistersLow32Avx512(
+                value4, value5, value6, value7, ref roots, ref companions,
+                firstTwiddleOffset + i, secondTwiddleOffset + i,
+                secondTwiddleOffset + halfLength + i, context,
+                out value4, out value5, out value6, out value7);
+            Vector512<uint> right0 = MultiplyShoupLow32Avx512(value4,
+                Vector512.LoadUnsafe(ref roots, (nuint)(bridgeTwiddleOffset + i)),
+                Vector512.LoadUnsafe(ref companions, (nuint)(bridgeTwiddleOffset + i)), context);
+            AddModuloAvx512(value0, right0, context).StoreUnsafe(ref data, (nuint)(parentOffset + i));
+            SubtractModuloAvx512(value0, right0, context).StoreUnsafe(ref data, (nuint)(parentOffset + 4 * halfLength + i));
+            Vector512<uint> right1 = MultiplyShoupLow32Avx512(value5,
+                Vector512.LoadUnsafe(ref roots, (nuint)(bridgeTwiddleOffset + halfLength + i)),
+                Vector512.LoadUnsafe(ref companions, (nuint)(bridgeTwiddleOffset + halfLength + i)), context);
+            AddModuloAvx512(value1, right1, context).StoreUnsafe(ref data, (nuint)(parentOffset + halfLength + i));
+            SubtractModuloAvx512(value1, right1, context).StoreUnsafe(ref data, (nuint)(parentOffset + 5 * halfLength + i));
+            Vector512<uint> right2 = MultiplyShoupLow32Avx512(value6,
+                Vector512.LoadUnsafe(ref roots, (nuint)(bridgeTwiddleOffset + 2 * halfLength + i)),
+                Vector512.LoadUnsafe(ref companions, (nuint)(bridgeTwiddleOffset + 2 * halfLength + i)), context);
+            AddModuloAvx512(value2, right2, context).StoreUnsafe(ref data, (nuint)(parentOffset + 2 * halfLength + i));
+            SubtractModuloAvx512(value2, right2, context).StoreUnsafe(ref data, (nuint)(parentOffset + 6 * halfLength + i));
+            Vector512<uint> right3 = MultiplyShoupLow32Avx512(value7,
+                Vector512.LoadUnsafe(ref roots, (nuint)(bridgeTwiddleOffset + 3 * halfLength + i)),
+                Vector512.LoadUnsafe(ref companions, (nuint)(bridgeTwiddleOffset + 3 * halfLength + i)), context);
+            AddModuloAvx512(value3, right3, context).StoreUnsafe(ref data, (nuint)(parentOffset + 3 * halfLength + i));
+            SubtractModuloAvx512(value3, right3, context).StoreUnsafe(ref data, (nuint)(parentOffset + 7 * halfLength + i));
+        }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -29909,6 +29981,13 @@ internal sealed class ParallelBigUnsigned
             Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
 
         public bool UseLargeModeAvx512ForwardL2 =>
+            _persistentStaticScheduling &&
+            UseAvx2Ntt && !UseAvx512Ntt &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+
+        // Keep three-stage L3/bridge fusion separate from the shared <=10M
+        // policy. The caller additionally checks the exact L3=4*L2 shape.
+        public bool UseLargeModeAvx512InverseL3Bridge =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
             Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
