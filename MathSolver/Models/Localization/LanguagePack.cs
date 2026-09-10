@@ -29,6 +29,13 @@ public sealed class LocalizationCatalog
 
     public string SourceCulture { get; init; } = "vi-VN";
 
+    // Editorial metadata shared by all languages; never used as translated UI text.
+    public Dictionary<string, string> TranslationGroups { get; init; } = new();
+
+    public Dictionary<string, LocalizationTranslationNote> TranslationNotes { get; init; } = new();
+
+    public Dictionary<string, string> PlaceholderNotes { get; init; } = new();
+
     public List<LocalizationCatalogEntry> Entries { get; init; } =
         [];
 
@@ -37,6 +44,19 @@ public sealed class LocalizationCatalog
 
     public List<LocalizationDynamicRule> DynamicRules { get; init; } =
         [];
+}
+
+public sealed class LocalizationTranslationNote
+{
+    public string Context { get; init; } = string.Empty;
+
+    public string Description { get; init; } = string.Empty;
+
+    public string TranslatorNote { get; init; } = string.Empty;
+
+    public string Screenshot { get; init; } = string.Empty;
+
+    public Dictionary<string, string> Placeholders { get; init; } = new();
 }
 
 public sealed class LocalizationCatalogEntry

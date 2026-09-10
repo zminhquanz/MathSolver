@@ -1,6 +1,81 @@
 {
   "schemaVersion": 1,
   "sourceCulture": "vi-VN",
+  "translationGroups": {
+    "Formula": "Công thức toán học — nội dung hướng dẫn và minh họa.",
+    "Quiz": "Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",
+    "PowerRoot": "Lũy thừa và căn — nhập dữ liệu, kết quả và lời giải.",
+    "Equation": "Giải phương trình — nhập dữ liệu và lời giải.",
+    "Calculation": "Tính toán — chọn dạng phép tính và nhập dữ liệu.",
+    "Geometry": "Hình học — đại lượng, công thức và kết quả.",
+    "Average": "Trung bình cộng — nhập số liệu và giải bài toán.",
+    "About": "Thông tin giới thiệu ứng dụng.",
+    "Hardware": "Thông tin phần cứng thiết bị.",
+    "TimesTables": "Bảng cửu chương — học phép nhân và chia.",
+    "Quadratic": "Phương trình bậc hai — hệ số và nghiệm.",
+    "Tabs": "Tên các mục điều hướng chính của ứng dụng.",
+    "Settings": "Cài đặt ứng dụng.",
+    "SettingsMenu": "Menu mở các mục cài đặt.",
+    "Common": "Nhãn dùng chung — kiểm tra các vị trí sử dụng trước khi dịch.",
+    "Actions": "Thao tác trên giao diện.",
+    "Language": "Lựa chọn và quản lý ngôn ngữ.",
+    "Numbers": "Tên gọi và cách biểu diễn số.",
+    "FindX": "Tìm số chưa biết trong phép tính.",
+    "App": "Tên và thông tin chung của ứng dụng.",
+    "Validation": "Thông báo kiểm tra dữ liệu nhập.",
+    "captured": "Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.",
+    "dynamic": "Câu có biến được app thay bằng dữ liệu — giữ nguyên các placeholder.",
+    "legacy": "Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển."
+  },
+  "translationNotes": {
+    "Formula.Tabs.UnknownComponent": {
+      "context": "Trang Công thức → tab Tìm thành phần chưa biết (Android và Windows).",
+      "description": "Mở hướng dẫn tìm số chưa biết trong phép cộng, trừ, nhân, chia; không nói về thành phần phần mềm.",
+      "translatorNote": "Giữ ký hiệu 𝑥. Dịch ngắn gọn vì đây là nhãn tab."
+    },
+    "Formula.Tabs.Proportion": {
+      "context": "Trang Công thức → tab Tỉ lệ thuận – nghịch – kép.",
+      "description": "Mở hướng dẫn quan hệ tỉ lệ giữa các đại lượng.",
+      "translatorNote": "Giữ ký hiệu ↗↘⤢. Dùng nhãn ngắn gọn."
+    },
+    "Formula.Tabs.Motion": {
+      "context": "Trang Công thức → tab Chuyển động.",
+      "description": "Mở công thức quãng đường, vận tốc và thời gian.",
+      "translatorNote": "Giữ ký hiệu ➜. Dùng thuật ngữ chuyển động trong toán học."
+    },
+    "Formula.Tabs.Average": {
+      "context": "Trang Công thức → tab Trung bình cộng.",
+      "description": "Mở hướng dẫn tính tổng các giá trị chia cho số lượng giá trị.",
+      "translatorNote": "Giữ ký hiệu x̄. Đây là trung bình cộng, không phải mức độ trung bình."
+    },
+    "Formula.Tabs.Geometry": {
+      "context": "Trang Công thức → tab Hình học.",
+      "description": "Mở phần công thức hình học.",
+      "translatorNote": "Giữ ký hiệu △. Dùng nhãn ngắn gọn."
+    },
+    "Quiz.CorrectFeedback": {
+      "context": "Toán đố → phản hồi khi trả lời đúng.",
+      "placeholders": { "0": "Đáp án của bài toán, ví dụ: 12." }
+    },
+    "Quiz.IncorrectFeedback": {
+      "context": "Toán đố → phản hồi khi trả lời sai.",
+      "placeholders": { "0": "Đáp án đúng của bài toán, ví dụ: 12." }
+    },
+    "Quiz.QuestionCounter": {
+      "context": "Toán đố → số thứ tự câu hỏi đang làm.",
+      "placeholders": { "0": "Số thứ tự câu hỏi, ví dụ: 3." }
+    }
+  },
+  "placeholderNotes": {
+    "field": "Tên trường nhập hoặc đại lượng, ví dụ: Số bị chia. Với |translate, app dịch tên trước khi chèn vào câu.",
+    "digits": "Số chữ số cho phép, ví dụ: 12.",
+    "places": "Số vị trí chữ số (phần thập phân hoặc số vị trí dịch dấu phẩy tùy câu), ví dụ: 2.",
+    "result": "Kết quả phép tính, ví dụ: 15.",
+    "example": "Ví dụ dữ liệu nhập, ví dụ: 1.25.",
+    "value": "Giá trị đang được xử lý hoặc kiểm tra, ví dụ: 123.",
+    "left": "Giá trị vế trái của phương trình, ví dụ: 4.",
+    "right": "Giá trị vế phải của phương trình, ví dụ: 4."
+  },
   "entries": [
     {
       "key": "Formula.Tabs.UnknownComponent",

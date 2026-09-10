@@ -77,6 +77,8 @@ _Payload/
 *.pfx
 
 # Temporary files
+__pycache__/
+*.pyc
 *.tmp
 *.temp
 *.bak
