@@ -10,16 +10,41 @@ namespace MathSolver.Numerics;
 internal sealed partial class ParallelBigUnsigned
 {
     // Separate representation: these arrays NEVER enter decimal-limb arithmetic.
-    // At most 2^21 terms of (2^16-1)^2 per pair, far below P1*P2.
-    // Two leased transforms are capped at 32 MiB combined, independent of workers.
-    internal const int MaximumBinaryTransformLength = 1 << 22;
+    // Both primes support 2^26. Even 2^25 terms of 65535^2 fit below P1*P2.
+    internal const int MaximumBinaryTransformLength = 1 << 26;
+    internal const int SmallBinaryTransformLength = 1 << 22;
     private readonly record struct BinaryMagnitude(uint[] Limbs, int Count);
+
+    internal static int SelectBinaryTransformLength(int exponent, long availableBytes)
+    {
+        long limbs = ((long)exponent * 232193 / 100000 + 31) / 16 + 2;
+        int length = SmallBinaryTransformLength;
+        // Account for live magnitudes, four transform slots, pair output and
+        // twiddles. Reserve half the available memory for runtime/UI/GC. This
+        // is a conservative selection policy, not a hard process memory limit.
+        while (length < MaximumBinaryTransformLength && length < limbs)
+        {
+            int next = length * 2;
+            long workingBytes = limbs * 12 + next * 20L + (128L << 20);
+            if (workingBytes > availableBytes / 2) break;
+            length = next;
+        }
+        return length;
+    }
 
     internal static PowerOfTenResult PowFiveAndShift(int exponent, int workerCount,
         Action<int, int>? progress, CancellationToken token,
-        int maximumTransformLength = MaximumBinaryTransformLength)
+        int maximumTransformLength = 0, bool forceLargeResult = false,
+        bool cacheForward = true, bool? persistentScheduling = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(exponent);
+        if (maximumTransformLength == 0)
+        {
+            var memory = GC.GetGCMemoryInfo();
+            long available = Math.Max(0, memory.TotalAvailableMemoryBytes -
+                Math.Max(memory.MemoryLoadBytes, GC.GetTotalMemory(false)));
+            maximumTransformLength = SelectBinaryTransformLength(exponent, available);
+        }
         if (maximumTransformLength < 1024 || maximumTransformLength > MaximumBinaryTransformLength ||
             !BitOperations.IsPow2(maximumTransformLength))
             throw new ArgumentOutOfRangeException(nameof(maximumTransformLength));
@@ -28,22 +53,26 @@ internal sealed partial class ParallelBigUnsigned
         token.ThrowIfCancellationRequested();
         if (exponent == 0) return new(BigInteger.One, 1, null);
         workerCount = Math.Clamp(workerCount, 1, Math.Max(1, Environment.ProcessorCount));
+        bool largeSchedule = persistentScheduling ?? maximumTransformLength > SmallBinaryTransformLength;
         bool avx2 = CalculationAccelerationManager.UsePowerNttAvx2;
-        bool avx512 = avx2 && Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
-        using var pool = new NttBufferPool(maximumRetainedBufferCount: 2, maximumLeasedBufferCount: 2);
+        // Match the accepted large decimal engine: static scheduling enables
+        // its individually validated AVX-512 kernels rather than the legacy gate.
+        bool avx512 = !largeSchedule && avx2 && Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+        using var pool = new NttBufferPool(maximumRetainedBufferCount: cacheForward ? 3 : 2,
+            maximumLeasedBufferCount: cacheForward ? 4 : 2);
         using var twiddlePool = new NttTwiddleBufferPool();
-        // Size caches for this power, with a 16 MiB maximum for both primes and
-        // both Shoup directions. Larger global stages use existing uncached kernels.
+        // Small powers retain the 16 MiB cache; large powers use up to 128 MiB
+        // to match the original engine's cached global-stage coverage.
         int predictedLimbs = checked((int)(((long)exponent * 232193 / 100000 + 31) / 16 + 2));
         int predictedTransform = (int)BitOperations.RoundUpToPowerOf2((uint)Math.Min(maximumTransformLength, predictedLimbs));
-        int cachedHalf = Math.Max(2, Math.Min(1 << 18, predictedTransform / 2));
+        int cachedHalf = Math.Max(2, Math.Min(largeSchedule ? 1 << 21 : 1 << 18, predictedTransform / 2));
         using var plans = new SharedNttTwiddlePlans(twiddlePool, avx2, avx512, cachedHalf);
         var diagnostics = new PowerDiagnosticsCollector();
         diagnostics.ConfigureNttAvx2(avx2);
         BinaryMagnitude magnitude = new([5], 1);
-        using (var workers = new FixedWorkerTeam(workerCount, pool, plans))
+        using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule))
         {
-            var arithmetic = new BinaryPowerWorkspace(workers, diagnostics, maximumTransformLength, token);
+            var arithmetic = new BinaryPowerWorkspace(workers, diagnostics, maximumTransformLength, token, cacheForward);
             int total = PowerOfTenArithmetic.OperationCount(exponent), done = 0;
             for (int bit = BitOperations.Log2((uint)exponent) - 1; bit >= 0; bit--)
             {
@@ -59,6 +88,9 @@ internal sealed partial class ParallelBigUnsigned
             }
             arithmetic.ReleaseScratch();
             workers.ReleaseCrtCarryScratch();
+            if (largeSchedule)
+                diagnostics.ConfigureLargePersistentStaticScheduler(workers.PersistentGenerationCount,
+                    workers.PersistentStaticRangeCount, cacheForward ? 4 : 2);
         }
         // Drop all transform, CRT and twiddle references before packing the final
         // number. Packing combines conversion and shifting, avoiding a BigInteger
@@ -67,12 +99,16 @@ internal sealed partial class ParallelBigUnsigned
         pool.ReleaseCachedBuffers();
         plans.ReleasePlans();
         twiddlePool.ReleaseCachedBuffers();
-        BigInteger value = PackShiftedBinary(magnitude, exponent, token);
+        bool large = forceLargeResult || !PowerOfTenArithmetic.CanUseBigInteger(exponent);
+        LargeBinaryUnsigned? largeValue = large
+            ? LargeBinaryUnsigned.ShiftRadix16(magnitude.Limbs.AsSpan(0, magnitude.Count), exponent, token) : null;
+        BigInteger? value = large ? null : PackShiftedBinary(magnitude, exponent, token);
         int operations = PowerOfTenArithmetic.OperationCount(exponent);
         progress?.Invoke(operations, operations);
         token.ThrowIfCancellationRequested();
         return new(value, workerCount, diagnostics.CreateSnapshot(workerCount),
-            diagnostics.NttMultiplicationCount == 0 ? 0 : cachedHalf * (avx2 ? 64L : 32L));
+            diagnostics.NttMultiplicationCount == 0 ? 0 : cachedHalf * (avx2 ? 64L : 32L), largeValue,
+            NttTransformLimit: maximumTransformLength);
     }
 
     private static BinaryMagnitude MultiplyBinaryByFive(BinaryMagnitude value, CancellationToken token)
@@ -112,7 +148,7 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     private sealed class BinaryPowerWorkspace(FixedWorkerTeam workers, PowerDiagnosticsCollector diagnostics,
-        int maximumTransformLength, CancellationToken token)
+        int maximumTransformLength, CancellationToken token, bool cacheForward = true)
     {
         private uint[]? pairBuffer;
 
@@ -148,14 +184,41 @@ internal sealed partial class ParallelBigUnsigned
             int segmentLength = maximumTransformLength / 2;
             pairBuffer ??= new uint[maximumTransformLength];
             var accumulated = new uint[checked(value.Count * 2 + 1)];
+            int pairs = 0, saved = 0;
             for (int left = 0; left < value.Count; left += segmentLength)
-            for (int right = left; right < value.Count; right += segmentLength)
             {
-                token.ThrowIfCancellationRequested();
-                var pair = Convolve(value, left, Math.Min(segmentLength, value.Count - left),
-                    right, Math.Min(segmentLength, value.Count - right), pairBuffer);
-                AddPair(accumulated, pair, left + right, left == right ? 1U : 2U);
+                uint[]? firstSpectrum = null, secondSpectrum = null;
+                try
+                {
+                    int leftCount = Math.Min(segmentLength, value.Count - left);
+                    // Cache only when this outer segment participates in more
+                    // than its diagonal. The last short diagonal stays compact.
+                    if (cacheForward && value.Count - left > segmentLength)
+                    {
+                        firstSpectrum = CreateSegmentForwardSpectrum(value.Limbs, left, leftCount,
+                            maximumTransformLength, FirstModulus, FirstPrimitiveRoot, workers, diagnostics, token);
+                        secondSpectrum = CreateSegmentForwardSpectrum(value.Limbs, left, leftCount,
+                            maximumTransformLength, SecondModulus, SecondPrimitiveRoot, workers, diagnostics, token);
+                    }
+                    for (int right = left; right < value.Count; right += segmentLength)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        var pair = Convolve(value, left, leftCount,
+                            right, Math.Min(segmentLength, value.Count - right), pairBuffer,
+                            firstSpectrum, secondSpectrum);
+                        AddPair(accumulated, pair, left + right, left == right ? 1U : 2U);
+                        pairs++;
+                        if (firstSpectrum is not null && right != left) saved += 2;
+                    }
+                }
+                finally
+                {
+                    if (secondSpectrum is not null) workers.ReturnNttBuffer(secondSpectrum);
+                    if (firstSpectrum is not null) workers.ReturnNttBuffer(firstSpectrum);
+                }
             }
+            diagnostics.ConfigureSegmentedNttMultiplication(pairs);
+            diagnostics.ConfigureLargeForwardSpectrumCache(saved);
             return Trim(accumulated, accumulated.Length);
         }
 
@@ -178,7 +241,8 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         private BinaryMagnitude Convolve(BinaryMagnitude value, int left, int leftCount,
-            int right, int rightCount, uint[]? destination)
+            int right, int rightCount, uint[]? destination,
+            uint[]? firstSpectrum = null, uint[]? secondSpectrum = null)
         {
             int coefficients = leftCount + rightCount - 1;
             if (coefficients == 1)
@@ -197,15 +261,17 @@ internal sealed partial class ParallelBigUnsigned
             bool square = left == right && leftCount == rightCount;
             diagnostics.NttMultiplicationCount++;
             uint[]? first = null;
-            ConvolveModulusCore(value.Limbs, left, leftCount, value.Limbs, right, rightCount,
-                length, FirstModulus, FirstPrimitiveRoot, square, true, destination, workers, diagnostics, token,
+            RunModulus(FirstModulus, FirstPrimitiveRoot, firstSpectrum, true, destination,
                 (_, compact) => first = compact ?? throw new InvalidOperationException("Missing binary P1 residues."));
             ulong carry = 0;
-            ConvolveModulusCore(value.Limbs, left, leftCount, value.Limbs, right, rightCount,
-                length, SecondModulus, SecondPrimitiveRoot, square, false, null, workers, diagnostics, token,
+            RunModulus(SecondModulus, SecondPrimitiveRoot, secondSpectrum, false, null,
                 (second, _) =>
                 {
-                    ulong[] scratch = workers.GetCrtCarryScratch(Math.Min(coefficients, 1 << 16));
+                    // At large transforms, 64K blocks launch thousands of
+                    // worker generations. Use the original engine's 1M block
+                    // size (8 MiB scratch) to amortize that synchronization.
+                    int blockLength = maximumTransformLength > SmallBinaryTransformLength ? 1 << 20 : 1 << 16;
+                    ulong[] scratch = workers.GetCrtCarryScratch(Math.Min(coefficients, blockLength));
                     for (int start = 0; start < coefficients; start += scratch.Length)
                     {
                         token.ThrowIfCancellationRequested();
@@ -214,7 +280,7 @@ internal sealed partial class ParallelBigUnsigned
                         ExecuteRanges(count, workers, token, (from, to) =>
                             ReconstructCrtRange(first!.AsSpan(start + from, to - from),
                                 second.AsSpan(start + from, to - from), scratch.AsSpan(from, to - from),
-                                workers.UseAvx512Ntt && Avx512DQ.IsSupported));
+                                (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) && Avx512DQ.IsSupported));
                         diagnostics.CrtTicks += Stopwatch.GetTimestamp() - stamp;
                         stamp = Stopwatch.GetTimestamp();
                         for (int i = 0; i < count; i++)
@@ -228,6 +294,17 @@ internal sealed partial class ParallelBigUnsigned
             if (carry > 65535) throw new InvalidOperationException("Binary carry exceeded one limb.");
             first![coefficients] = (uint)carry; // Always overwrite reused scratch's spare slot.
             return Trim(first, coefficients + 1);
+
+            void RunModulus(uint modulus, uint root, uint[]? spectrum, bool compact, uint[]? target,
+                Action<uint[], uint[]?> consume)
+            {
+                if (spectrum is null)
+                    ConvolveModulusCore(value.Limbs, left, leftCount, value.Limbs, right, rightCount,
+                        length, modulus, root, square, compact, target, workers, diagnostics, token, consume);
+                else
+                    ConvolveModulusWithCachedLeftSpectrum(spectrum, value.Limbs, right, rightCount,
+                        coefficients, modulus, root, square, compact, target, workers, diagnostics, token, consume);
+            }
         }
 
         private static BinaryMagnitude Trim(uint[] limbs, int count)

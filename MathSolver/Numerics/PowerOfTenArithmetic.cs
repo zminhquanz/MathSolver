@@ -3,10 +3,21 @@ using System.Numerics;
 namespace MathSolver.Numerics;
 
 internal sealed record PowerOfTenResult(
-    BigInteger Value, int WorkerCount, ParallelPowerDiagnostics? Diagnostics,
-    long TwiddleCapacityBytes = 0);
+    BigInteger? BinaryValue, int WorkerCount, ParallelPowerDiagnostics? Diagnostics,
+    long TwiddleCapacityBytes = 0,
+    LargeBinaryUnsigned? LargeMagnitude = null,
+    bool IsNegative = false,
+    int NttTransformLimit = 0)
+{
+    // Never let a BigInteger-only caller silently read zero for a large result.
+    internal BigInteger Value => BinaryValue ?? throw new InvalidOperationException(
+        "This result is stored in LargeMagnitude because it exceeds BigInteger capacity.");
+}
 
-/// <summary>Materializes (10^k)^n as 5^(kn) shifted left by kn bits.</summary>
+/// <summary>
+/// Materializes (10^k)^n using 5^(kn) and a real binary shift. Oversized results
+/// remain packed binary integers, independently of System.Numerics.BigInteger.
+/// </summary>
 internal static class PowerOfTenArithmetic
 {
     // Matched 1M measurements favor eight workers for these short transforms.
@@ -25,26 +36,34 @@ internal static class PowerOfTenArithmetic
         if (magnitude != 1 || k == 0)
             throw new ArgumentException("The base must have magnitude 10^k, k >= 1.", nameof(baseValue));
         long m = (long)k * exponent;
-        // Conservative integer bound above log2(10), including packing padding.
-        // Reject before computing 5^m if the final BigInteger cannot be represented.
-        if (m * 332193 / 100000 + 17 > int.MaxValue)
+        // Digit counts and decimal limb indices must fit even when BigInteger cannot.
+        if (m >= int.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(exponent),
-                "The materialized power exceeds the BigInteger bit-length limit.");
+                "The power exceeds the supported decimal digit count.");
         return checked((int)m);
     }
+
+    // .NET 10 BigInteger.MaxLength = Array.MaxLength / 32 uint limbs.
+    // Keep a conservative log2(10) bound and packing headroom for the binary path.
+    internal static bool CanUseBigInteger(int m) => m >= 0 &&
+        (long)m * 332193 / 100000 + 17 <= (long)(Array.MaxLength / 32) * 32;
 
     internal static int OperationCount(int m) => m == 0 ? 0 :
         BitOperations.Log2((uint)m) + BitOperations.PopCount((uint)m); // includes final shift
 
     internal static PowerOfTenResult Pow(long baseValue, int exponent, int workerCount,
-        Action<int, int>? progress, CancellationToken token)
+        Action<int, int>? progress, CancellationToken token, bool forceLargeResult = false)
     {
         token.ThrowIfCancellationRequested();
         int m = GetBinaryExponent(baseValue, exponent);
         if (m == 0) return new(BigInteger.One, 1, null);
         PowerOfTenResult result;
         if (workerCount > 1)
-            result = ParallelBigUnsigned.PowFiveAndShift(m, workerCount, progress, token);
+            result = ParallelBigUnsigned.PowFiveAndShift(m, workerCount, progress, token,
+                forceLargeResult: forceLargeResult);
+        else if (forceLargeResult || !CanUseBigInteger(m))
+            result = new(null, 1, null, LargeMagnitude:
+                LargeBinaryUnsigned.PowFiveAndShiftSingle(m, progress, token));
         else
         {
             int total = OperationCount(m);
@@ -58,6 +77,7 @@ internal static class PowerOfTenArithmetic
             result = new(shifted, 1, null);
         }
         return baseValue < 0 && (exponent & 1) != 0
-            ? result with { Value = BigInteger.Negate(result.Value) } : result;
+            ? result with { IsNegative = true,
+                BinaryValue = result.BinaryValue is { } binary ? BigInteger.Negate(binary) : null } : result;
     }
 }

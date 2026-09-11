@@ -2038,6 +2038,16 @@
       "mode": "exact"
     },
     {
+      "key": "PowerRoot.InfoEngineLargeBinary",
+      "source": "• Engine: tính 5ᵐ rồi dịch m bit; lưu số nguyên nhị phân đầy đủ khi vượt khả năng chứa của BigInteger",
+      "mode": "exact"
+    },
+    {
+      "key": "PowerRoot.InfoBinaryNttPlan",
+      "source": "• NTT nhị phân: transform tối đa 2^{0}; {1} cặp đoạn; giảm {2} biến đổi thuận nhờ tái sử dụng phổ",
+      "mode": "exact"
+    },
+    {
       "key": "PowerRoot.InfoDigits",
       "source": "• Số chữ số: {0}",
       "mode": "exact"

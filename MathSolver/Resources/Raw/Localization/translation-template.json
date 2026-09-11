@@ -413,6 +413,8 @@
     "PowerRoot.InfoEngineParallelNttSplit": "• Engine: lũy thừa phân nhánh SMT + NTT/CRT chính xác (DIF/DIT)",
     "PowerRoot.InfoEngineBitShift": "• Engine: dịch bit chính xác cho |a| = 2ᵏ (dùng BigInteger khi còn trong giới hạn; 2ᵏ ảo khi vượt giới hạn bit của runtime)",
     "PowerRoot.InfoEnginePowerOfTen": "• Engine: tính 5ᵐ rồi dịch trái m bit, tạo số nguyên đầy đủ",
+    "PowerRoot.InfoEngineLargeBinary": "• Engine: tính 5ᵐ rồi dịch m bit; lưu số nguyên nhị phân đầy đủ khi vượt khả năng chứa của BigInteger",
+    "PowerRoot.InfoBinaryNttPlan": "• NTT nhị phân: transform tối đa 2^{0}; {1} cặp đoạn; giảm {2} biến đổi thuận nhờ tái sử dụng phổ",
     "PowerRoot.InfoDigits": "• Số chữ số: {0}",
     "PowerRoot.InfoRam": "• Workspace thuật toán ước tính: {0}",
     "PowerRoot.InfoProcessRam": "• RAM process hiện tại: {0}",
