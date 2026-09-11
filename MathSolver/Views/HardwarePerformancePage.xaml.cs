@@ -143,10 +143,6 @@ public partial class HardwarePerformancePage : ContentPage
             BenchmarkTestPicker);
 #endif
 
-        Shell.SetNavBarIsVisible(
-            this,
-            false);
-
         Shell.SetTabBarIsVisible(
             this,
             false);
