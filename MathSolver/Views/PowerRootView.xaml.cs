@@ -3074,19 +3074,22 @@ public partial class PowerRootView : LocalizedSolverView
                 $"{sign}1 × 10{ToSuperscript(zeroCount)}";
         }
 
-        // Retain the computed integer. Export reads this value, not a zero count.
-        long estimatedPeakRamBytes = EstimatePeakRamBytes(computed.Value, digitCount,
-            computed.WorkerCount, digitCount <= FullResultDigitThreshold);
-        estimatedPeakRamBytes = Math.Max(estimatedPeakRamBytes,
+        // Retain the computed integer in its native representation for export.
+        long estimatedPeakRamBytes = computed.LargeMagnitude is { } binaryMagnitude
+            ? checked(binaryMagnitude.StorageBytes * 6L +
+                (computed.Diagnostics?.NttWorkspacePeakBytes ?? 0L) + computed.TwiddleCapacityBytes)
+            : Math.Max(EstimatePeakRamBytes(computed.Value, digitCount,
+                computed.WorkerCount, digitCount <= FullResultDigitThreshold),
             checked(computed.Value.GetByteCount() * 3L +
                 (computed.Diagnostics?.NttWorkspacePeakBytes ?? 0L) + computed.TwiddleCapacityBytes));
         return new PowerCalculationState(
-            baseValue, exponent, computed.Value, digitCount, compactResult,
+            baseValue, exponent, computed.BinaryValue ?? BigInteger.Zero, digitCount, compactResult,
             ActiveWorkerCount: computed.WorkerCount,
             Strategy: PowerComputationStrategy.FactorizedPowerOfTen,
             DecimalZeroCount: zeroCount, IsNegative: isNegative,
             EstimatedPeakRamBytes: estimatedPeakRamBytes, Elapsed: elapsed,
-            ParallelMagnitude: null, ParallelDiagnostics: computed.Diagnostics);
+            ParallelMagnitude: null, ParallelDiagnostics: computed.Diagnostics,
+            BinaryMagnitude: computed.LargeMagnitude, BinaryTransformLimit: computed.NttTransformLimit);
     }
 
     private static int EstimateDecimalDigitCount(
@@ -3901,7 +3904,9 @@ public partial class PowerRootView : LocalizedSolverView
                     PowerComputationStrategy.BitShift =>
                         "PowerRoot.InfoEngineBitShift",
                     PowerComputationStrategy.FactorizedPowerOfTen =>
-                        "PowerRoot.InfoEnginePowerOfTen",
+                        state.BinaryMagnitude is not null
+                            ? "PowerRoot.InfoEngineLargeBinary"
+                            : "PowerRoot.InfoEnginePowerOfTen",
                     PowerComputationStrategy.ParallelNttPower
                         when state.ParallelDiagnostics?.UsedMemoryBoundedLargePower ==
                              true =>
@@ -3984,6 +3989,13 @@ public partial class PowerRootView : LocalizedSolverView
                     diagnostics.UsedAvx2NttButterflies
                         ? "PowerRoot.InfoNttKernelAvx2"
                         : "PowerRoot.InfoNttKernelScalar"));
+
+            if (state.BinaryTransformLimit > 0)
+            {
+                lines.Insert(7, Format("PowerRoot.InfoBinaryNttPlan",
+                    BitOperations.Log2((uint)state.BinaryTransformLimit),
+                    diagnostics.SegmentedNttPairCount, diagnostics.LargeForwardTransformSavedCount));
+            }
 
             if (diagnostics.UsedMemoryBoundedLargePower)
             {
@@ -5116,6 +5128,16 @@ public partial class PowerRootView : LocalizedSolverView
         ParallelBigUnsigned? exportMagnitude =
             state.ParallelMagnitude;
 
+        if (state.BinaryMagnitude is { } binaryMagnitude)
+        {
+            // Conversion consumes only the actual computed binary value.
+            // Respect the computation's worker count; single-thread mode uses
+            // scalar Karatsuba conversion and never enables NTT for export.
+            exportMagnitude = ParallelBigUnsigned.FromBinaryMagnitude(binaryMagnitude,
+                state.ActiveWorkerCount, (done, total) => progress?.Invoke(
+                    new ExportFileProgress(ExportFilePhase.Preparing, done, total)), cancellationToken);
+        }
+
         if (state.Strategy ==
                 PowerComputationStrategy.BitShift &&
             state.VirtualBitShiftExponent >
@@ -5171,7 +5193,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         int totalBlocks = exportMagnitude is null
             ? BigIntegerDecimalWriter.CountBlocks(state.DigitCount, ExportLeafDigitCount)
-            : checked((state.DigitCount + ExportLeafDigitCount - 1) / ExportLeafDigitCount);
+            : checked((int)(((long)state.DigitCount + ExportLeafDigitCount - 1) / ExportLeafDigitCount));
 
         int completedBlocks = 0;
         object progressGate =
@@ -5222,7 +5244,9 @@ public partial class PowerRootView : LocalizedSolverView
         writer.WriteLine(
             state.Strategy ==
             PowerComputationStrategy.FactorizedPowerOfTen
-                ? "Engine: factorized power of five + binary shift"
+                ? state.BinaryMagnitude is not null
+                    ? "Engine: computed power of five + packed binary shift (large integer)"
+                    : "Engine: factorized power of five + binary shift"
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
                     ? state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true
@@ -5687,7 +5711,9 @@ public partial class PowerRootView : LocalizedSolverView
         string engineText =
             state.Strategy ==
             PowerComputationStrategy.FactorizedPowerOfTen
-                ? "Engine: factorized power of five + binary shift"
+                ? state.BinaryMagnitude is not null
+                    ? "Engine: computed power of five + packed binary shift (large integer)"
+                    : "Engine: factorized power of five + binary shift"
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
                     ? state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true
@@ -5730,7 +5756,7 @@ public partial class PowerRootView : LocalizedSolverView
     private static bool ShouldReleaseLargeTemporaryMemory(
         PowerCalculationState state)
     {
-        return state.ParallelMagnitude is not null &&
+        return (state.ParallelMagnitude is not null || state.BinaryMagnitude is not null) &&
                state.EstimatedPeakRamBytes >=
                LargeCalculationMemoryCleanupThresholdBytes;
     }
@@ -5839,7 +5865,9 @@ public partial class PowerRootView : LocalizedSolverView
         ParallelPowerDiagnostics? ParallelDiagnostics,
         long VirtualBitShiftExponent = 0L,
         long ProcessPrivateMemoryBytes = 0L,
-        long ProcessPrivateMemoryBeforeCleanupBytes = 0L);
+        long ProcessPrivateMemoryBeforeCleanupBytes = 0L,
+        LargeBinaryUnsigned? BinaryMagnitude = null,
+        int BinaryTransformLimit = 0);
 
     private sealed record RootCalculationState(
         Int128 Radicand,
