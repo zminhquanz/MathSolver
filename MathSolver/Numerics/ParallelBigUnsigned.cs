@@ -22,7 +22,7 @@ namespace MathSolver.Numerics;
 /// the butterfly work inside every transform is shared by the configured
 /// logical-processor worker budget.
 /// </summary>
-internal sealed class ParallelBigUnsigned
+internal sealed partial class ParallelBigUnsigned
 {
     private const uint LimbBase = 10_000;
     private const int DigitsPerLimb = 4;
@@ -28065,7 +28065,8 @@ internal sealed class ParallelBigUnsigned
 
         public NttTwiddlePlan(
             NttTwiddleBufferPool bufferPool,
-            bool useAvx2Ntt)
+            bool useAvx2Ntt,
+            int maximumCachedHalfLength = 0)
         {
             _bufferPool =
                 bufferPool ??
@@ -28077,7 +28078,9 @@ internal sealed class ParallelBigUnsigned
             // branch teams can hand them to the final-combine team, but no
             // multi-megabyte twiddle table survives the Pow lifetime.
             MaximumHalfLength =
-                SelectMaximumCachedTwiddleCount();
+                maximumCachedHalfLength == 0
+                    ? SelectMaximumCachedTwiddleCount()
+                    : maximumCachedHalfLength;
 
             // Shoup companions are only consumed after the transform enters
             // the cache-resident hierarchy.  Keep this threshold separate from
@@ -28100,7 +28103,7 @@ internal sealed class ParallelBigUnsigned
             // avoids the scalar bridge merge. Global stages above L3 remain
             // companion-free.
             MaximumShoupHalfLength =
-                l3NttTileLength;
+                Math.Min(l3NttTileLength, MaximumHalfLength);
 
             int capacity =
                 checked(
@@ -29265,6 +29268,7 @@ internal sealed class ParallelBigUnsigned
         private readonly NttTwiddleBufferPool _bufferPool;
         private readonly bool _useAvx2Ntt;
         private readonly bool _useAvx512Ntt;
+        private readonly int _maximumCachedHalfLength;
 
         private NttTwiddlePlan? _firstPlan;
         private NttTwiddlePlan? _secondPlan;
@@ -29273,7 +29277,8 @@ internal sealed class ParallelBigUnsigned
         public SharedNttTwiddlePlans(
             NttTwiddleBufferPool bufferPool,
             bool useAvx2Ntt,
-            bool useAvx512Ntt = false)
+            bool useAvx512Ntt = false,
+            int maximumCachedHalfLength = 0)
         {
             _bufferPool =
                 bufferPool ??
@@ -29286,6 +29291,7 @@ internal sealed class ParallelBigUnsigned
             _useAvx512Ntt =
                 useAvx2Ntt &&
                 useAvx512Ntt;
+            _maximumCachedHalfLength = maximumCachedHalfLength;
         }
 
         public bool UseAvx2Ntt =>
@@ -29308,7 +29314,8 @@ internal sealed class ParallelBigUnsigned
                     return _firstPlan ??=
                         new NttTwiddlePlan(
                             _bufferPool,
-                            _useAvx2Ntt);
+                            _useAvx2Ntt,
+                            _maximumCachedHalfLength);
                 }
 
                 if (modulus == SecondModulus)
@@ -29316,7 +29323,8 @@ internal sealed class ParallelBigUnsigned
                     return _secondPlan ??=
                         new NttTwiddlePlan(
                             _bufferPool,
-                            _useAvx2Ntt);
+                            _useAvx2Ntt,
+                            _maximumCachedHalfLength);
                 }
 
                 throw new ArgumentOutOfRangeException(

@@ -2078,6 +2078,12 @@ public partial class PowerRootView : LocalizedSolverView
                 out int decimalExponent);
 
         int activeWorkerCount = 1;
+        if (strategy == PowerComputationStrategy.FactorizedPowerOfTen &&
+            CalculationThreadingManager.UseMultithreading)
+        {
+            activeWorkerCount = PowerOfTenArithmetic.SelectWorkerCount(
+                estimatedDigitCount, CalculationThreadingManager.RecommendedWorkerCount);
+        }
 
         if (strategy ==
                 PowerComputationStrategy.SingleThreadedBigIntegerPower &&
@@ -2164,32 +2170,20 @@ public partial class PowerRootView : LocalizedSolverView
             PowerCalculationState state;
 
             if (strategy ==
-                PowerComputationStrategy.DecimalPowerOfTen)
+                PowerComputationStrategy.FactorizedPowerOfTen)
             {
-                SetCalculationProgress(
-                    baseValue,
-                    exponent,
-                    CalculationProgressPhase.DecimalShift,
-                    0,
-                    1);
-
+                int binaryExponent = PowerOfTenArithmetic.GetBinaryExponent(baseValue, exponent);
+                int total = Math.Max(1, PowerOfTenArithmetic.OperationCount(binaryExponent));
+                SetCalculationProgress(baseValue, exponent, CalculationProgressPhase.Computing, 0, total);
+                PowerOfTenResult computed = await _powerRootEngine.ComputePowerOfTenAsync(
+                    baseValue, exponent, activeWorkerCount,
+                    (completed, count) => ReportCalculationPhase(baseValue, exponent,
+                        CalculationProgressPhase.Computing, completed, count, calculationVersion),
+                    cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
-
-                state =
-                    CreatePowerOfTenCalculationState(
-                        baseValue,
-                        exponent,
-                        decimalExponent,
-                        stopwatch.Elapsed);
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                SetCalculationProgress(
-                    baseValue,
-                    exponent,
-                    CalculationProgressPhase.DecimalShift,
-                    1,
-                    1);
+                SetCalculationProgress(baseValue, exponent, CalculationProgressPhase.Formatting, 0, 1);
+                state = await Task.Run(() => CreatePowerOfTenCalculationState(
+                    baseValue, exponent, decimalExponent, computed, stopwatch.Elapsed), cancellationToken);
             }
             else if (strategy ==
                      PowerComputationStrategy.ParallelNttPower)
@@ -3042,6 +3036,7 @@ public partial class PowerRootView : LocalizedSolverView
         long baseValue,
         int exponent,
         int decimalExponent,
+        PowerOfTenResult computed,
         TimeSpan elapsed)
     {
         int zeroCount =
@@ -3067,11 +3062,7 @@ public partial class PowerRootView : LocalizedSolverView
         if (digitCount <=
             FullResultDigitThreshold)
         {
-            string exactResult =
-                $"{(isNegative ? "-" : string.Empty)}1" +
-                new string(
-                    '0',
-                    zeroCount);
+            string exactResult = computed.Value.ToString(CultureInfo.InvariantCulture);
 
             compactResult =
                 IntegerInputFormatter.FormatWhileTyping(
@@ -3083,26 +3074,19 @@ public partial class PowerRootView : LocalizedSolverView
                 $"{sign}1 × 10{ToSuperscript(zeroCount)}";
         }
 
-        // The number is represented symbolically as sign + 1 + zero count.
-        // Only a fixed-size zero block is allocated later during TXT export.
-        long estimatedPeakRamBytes =
-            ExportLeafDigitCount *
-            sizeof(char);
-
+        // Retain the computed integer. Export reads this value, not a zero count.
+        long estimatedPeakRamBytes = EstimatePeakRamBytes(computed.Value, digitCount,
+            computed.WorkerCount, digitCount <= FullResultDigitThreshold);
+        estimatedPeakRamBytes = Math.Max(estimatedPeakRamBytes,
+            checked(computed.Value.GetByteCount() * 3L +
+                (computed.Diagnostics?.NttWorkspacePeakBytes ?? 0L) + computed.TwiddleCapacityBytes));
         return new PowerCalculationState(
-            baseValue,
-            exponent,
-            BigInteger.Zero,
-            digitCount,
-            compactResult,
-            ActiveWorkerCount: 1,
-            Strategy: PowerComputationStrategy.DecimalPowerOfTen,
-            DecimalZeroCount: zeroCount,
-            IsNegative: isNegative,
-            EstimatedPeakRamBytes: estimatedPeakRamBytes,
-            Elapsed: elapsed,
-            ParallelMagnitude: null,
-            ParallelDiagnostics: null);
+            baseValue, exponent, computed.Value, digitCount, compactResult,
+            ActiveWorkerCount: computed.WorkerCount,
+            Strategy: PowerComputationStrategy.FactorizedPowerOfTen,
+            DecimalZeroCount: zeroCount, IsNegative: isNegative,
+            EstimatedPeakRamBytes: estimatedPeakRamBytes, Elapsed: elapsed,
+            ParallelMagnitude: null, ParallelDiagnostics: computed.Diagnostics);
     }
 
     private static int EstimateDecimalDigitCount(
@@ -3684,7 +3668,7 @@ public partial class PowerRootView : LocalizedSolverView
             };
 
         if (state.Strategy ==
-            PowerComputationStrategy.DecimalPowerOfTen)
+            PowerComputationStrategy.FactorizedPowerOfTen)
         {
             int zerosPerFactor =
                 state.DecimalZeroCount /
@@ -3916,7 +3900,7 @@ public partial class PowerRootView : LocalizedSolverView
                 {
                     PowerComputationStrategy.BitShift =>
                         "PowerRoot.InfoEngineBitShift",
-                    PowerComputationStrategy.DecimalPowerOfTen =>
+                    PowerComputationStrategy.FactorizedPowerOfTen =>
                         "PowerRoot.InfoEnginePowerOfTen",
                     PowerComputationStrategy.ParallelNttPower
                         when state.ParallelDiagnostics?.UsedMemoryBoundedLargePower ==
@@ -3969,8 +3953,8 @@ public partial class PowerRootView : LocalizedSolverView
                     CultureInfo.InvariantCulture))
             };
 
-        if (state.Strategy ==
-                PowerComputationStrategy.ParallelNttPower &&
+        if ((state.Strategy == PowerComputationStrategy.ParallelNttPower ||
+             state.Strategy == PowerComputationStrategy.FactorizedPowerOfTen) &&
             state.ParallelDiagnostics is not null)
         {
             ParallelPowerDiagnostics diagnostics =
@@ -5185,18 +5169,9 @@ public partial class PowerRootView : LocalizedSolverView
             cancellationToken.ThrowIfCancellationRequested();
         }
 
-        int totalBlocks =
-            state.Strategy ==
-                PowerComputationStrategy.DecimalPowerOfTen
-                ? checked(
-                    1 +
-                    (state.DecimalZeroCount +
-                     ExportLeafDigitCount - 1) /
-                    ExportLeafDigitCount)
-                : checked(
-                    (state.DigitCount +
-                     ExportLeafDigitCount - 1) /
-                    ExportLeafDigitCount);
+        int totalBlocks = exportMagnitude is null
+            ? BigIntegerDecimalWriter.CountBlocks(state.DigitCount, ExportLeafDigitCount)
+            : checked((state.DigitCount + ExportLeafDigitCount - 1) / ExportLeafDigitCount);
 
         int completedBlocks = 0;
         object progressGate =
@@ -5246,8 +5221,8 @@ public partial class PowerRootView : LocalizedSolverView
 
         writer.WriteLine(
             state.Strategy ==
-            PowerComputationStrategy.DecimalPowerOfTen
-                ? "Engine: direct decimal power-of-ten generation"
+            PowerComputationStrategy.FactorizedPowerOfTen
+                ? "Engine: factorized power of five + binary shift"
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
                     ? state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true
@@ -5273,17 +5248,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (state.Strategy ==
-            PowerComputationStrategy.DecimalPowerOfTen)
-        {
-            WritePowerOfTenDecimalBlocks(
-                writer,
-                state.DecimalZeroCount,
-                state.IsNegative,
-                ReportBlockWritten,
-                cancellationToken);
-        }
-        else if (exportMagnitude is not null)
+        if (exportMagnitude is not null)
         {
             if (state.IsNegative)
             {
@@ -5308,17 +5273,8 @@ public partial class PowerRootView : LocalizedSolverView
                 writer.Write('-');
             }
 
-            var powersOfTen =
-                new Dictionary<int, BigInteger>();
-
-            WriteDecimalBlocks(
-                writer,
-                unsignedResult,
-                state.DigitCount,
-                padToWidth: false,
-                powersOfTen,
-                ReportBlockWritten,
-                cancellationToken);
+            BigIntegerDecimalWriter.Write(writer, unsignedResult, state.DigitCount,
+                ExportLeafDigitCount, ReportBlockWritten, cancellationToken);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -5333,153 +5289,7 @@ public partial class PowerRootView : LocalizedSolverView
                 totalBlocks));
     }
 
-    private static void WritePowerOfTenDecimalBlocks(
-        TextWriter writer,
-        int zeroCount,
-        bool isNegative,
-        Action reportBlockWritten,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
 
-        if (isNegative)
-        {
-            writer.Write('-');
-        }
-
-        writer.Write('1');
-        reportBlockWritten();
-
-        string zeroBlock =
-            new(
-                '0',
-                ExportLeafDigitCount);
-
-        int remainingZeros =
-            zeroCount;
-
-        while (remainingZeros > 0)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            int blockLength =
-                Math.Min(
-                    ExportLeafDigitCount,
-                    remainingZeros);
-
-            writer.Write(
-                zeroBlock.AsSpan(
-                    0,
-                    blockLength));
-
-            remainingZeros -=
-                blockLength;
-
-            reportBlockWritten();
-        }
-    }
-
-    private static void WriteDecimalBlocks(
-        TextWriter writer,
-        BigInteger value,
-        int digitWidth,
-        bool padToWidth,
-        IDictionary<int, BigInteger> powersOfTen,
-        Action reportBlockWritten,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (digitWidth <=
-            ExportLeafDigitCount)
-        {
-            string blockText =
-                value.ToString(
-                    CultureInfo.InvariantCulture);
-
-            if (padToWidth &&
-                blockText.Length <
-                digitWidth)
-            {
-                writer.Write(
-                    new string(
-                        '0',
-                        digitWidth -
-                        blockText.Length));
-            }
-
-            writer.Write(
-                blockText);
-
-            cancellationToken.ThrowIfCancellationRequested();
-            reportBlockWritten();
-            return;
-        }
-
-        int lowDigitWidth =
-            digitWidth / 2;
-
-        int highDigitWidth =
-            digitWidth -
-            lowDigitWidth;
-
-        if (!powersOfTen.TryGetValue(
-                lowDigitWidth,
-                out BigInteger divisor))
-        {
-            divisor =
-                BigInteger.Pow(
-                    10,
-                    lowDigitWidth);
-
-            powersOfTen[lowDigitWidth] =
-                divisor;
-        }
-
-        BigInteger highValue =
-            BigInteger.DivRem(
-                value,
-                divisor,
-                out BigInteger lowValue);
-
-        WriteDecimalBlocks(
-            writer,
-            highValue,
-            highDigitWidth,
-            padToWidth,
-            powersOfTen,
-            reportBlockWritten,
-            cancellationToken);
-
-        WriteDecimalBlocks(
-            writer,
-            lowValue,
-            lowDigitWidth,
-            padToWidth: true,
-            powersOfTen,
-            reportBlockWritten,
-            cancellationToken);
-    }
-
-    private static int CountDecimalLeafBlocks(
-        int digitCount)
-    {
-        if (digitCount <=
-            ExportLeafDigitCount)
-        {
-            return 1;
-        }
-
-        int lowDigitCount =
-            digitCount / 2;
-
-        return checked(
-            CountDecimalLeafBlocks(
-                digitCount -
-                lowDigitCount) +
-            CountDecimalLeafBlocks(
-                lowDigitCount));
-    }
 
     private static string CreateExportProgressMessage(
         ExportFileProgress progress)
@@ -5876,8 +5686,8 @@ public partial class PowerRootView : LocalizedSolverView
     {
         string engineText =
             state.Strategy ==
-            PowerComputationStrategy.DecimalPowerOfTen
-                ? "Engine: direct decimal power-of-ten generation"
+            PowerComputationStrategy.FactorizedPowerOfTen
+                ? "Engine: factorized power of five + binary shift"
                 : state.Strategy ==
                   PowerComputationStrategy.ParallelNttPower
                     ? state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true
@@ -6052,7 +5862,7 @@ public partial class PowerRootView : LocalizedSolverView
         SingleThreadedBigIntegerPower,
         ParallelNttPower,
         BitShift,
-        DecimalPowerOfTen
+        FactorizedPowerOfTen
     }
 
     private enum CalculationProgressPhase

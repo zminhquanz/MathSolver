@@ -1979,7 +1979,7 @@
     },
     {
       "key": "PowerRoot.StepPowerOfTen",
-      "source": "Bước 2. Cơ số có dạng ±10ᵏ nên không cần tạo BigInteger hay ghép kết quả. Sinh trực tiếp chữ số 1 và {0} số 0; dấu âm chỉ được giữ khi cơ số âm và số mũ lẻ.",
+      "source": "Bước 2. Với m = {0}, tính 5ᵐ rồi dịch trái m bit để tạo BigInteger. Dấu âm chỉ được giữ khi cơ số âm và số mũ lẻ.",
       "mode": "exact"
     },
     {
@@ -2034,7 +2034,7 @@
     },
     {
       "key": "PowerRoot.InfoEnginePowerOfTen",
-      "source": "• Engine: sinh trực tiếp ±10ᵏ (không tạo BigInteger)",
+      "source": "• Engine: tính 5ᵐ rồi dịch trái m bit, tạo số nguyên đầy đủ",
       "mode": "exact"
     },
     {

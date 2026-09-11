@@ -9,7 +9,7 @@ public enum PowerRootComputationStrategy
     SingleThreadedBigIntegerPower,
     ParallelNttPower,
     BitShift,
-    DecimalPowerOfTen
+    FactorizedPowerOfTen
 }
 
 public enum PowerRootCalculationMethod
@@ -172,7 +172,7 @@ public sealed class PowerRootEngine
                 baseValue,
                 out decimalExponent))
         {
-            return PowerRootComputationStrategy.DecimalPowerOfTen;
+            return PowerRootComputationStrategy.FactorizedPowerOfTen;
         }
 
         if (exponent > 0 &&
@@ -182,6 +182,19 @@ public sealed class PowerRootEngine
         }
 
         return PowerRootComputationStrategy.SingleThreadedBigIntegerPower;
+    }
+
+    internal Task<PowerOfTenResult> ComputePowerOfTenAsync(
+        long baseValue, int exponent, int workerCount,
+        Action<int, int>? progress, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        // Validate the materialized result limit before starting a worker.
+        PowerOfTenArithmetic.GetBinaryExponent(baseValue, exponent);
+        return Task.Factory.StartNew(
+            () => PowerOfTenArithmetic.Pow(baseValue, exponent, workerCount, progress, cancellationToken),
+            cancellationToken, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
+            TaskScheduler.Default);
     }
 
     public Task<BigInteger> ComputeBitShiftPowerAsync(
@@ -353,7 +366,7 @@ public sealed class PowerRootEngine
         out int decimalExponent)
     {
         decimalExponent = 0;
-        long magnitude = Math.Abs(baseValue);
+        ulong magnitude = baseValue < 0 ? (ulong)(-(baseValue + 1)) + 1 : (ulong)baseValue;
 
         if (magnitude < 10)
         {
