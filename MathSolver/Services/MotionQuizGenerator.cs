@@ -104,21 +104,49 @@ public sealed class MotionQuizGenerator
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
         AppLanguage language,
-        MotionQuizType? requestedType = null) =>
-        CreateQuestion(mode, CreateContract(language, requestedType));
+        MotionQuizType? requestedType = null,
+        QuizCurriculumContext? curriculumContext = null) =>
+        CreateQuestion(
+            mode,
+            CreateContract(
+                language,
+                requestedType,
+                curriculumContext));
 
     public ArithmeticQuizQuestion GenerateContract(
         ArithmeticQuizMode mode,
         AppLanguage language,
-        MotionQuizType? requestedType = null) =>
-        CreateQuestion(mode, CreateContract(language, requestedType));
+        MotionQuizType? requestedType = null,
+        QuizCurriculumContext? curriculumContext = null) =>
+        CreateQuestion(
+            mode,
+            CreateContract(
+                language,
+                requestedType,
+                curriculumContext));
 
     private MotionQuizContract CreateContract(
         AppLanguage language,
-        MotionQuizType? requestedType)
+        MotionQuizType? requestedType,
+        QuizCurriculumContext? curriculumContext)
     {
+        IReadOnlyList<MotionQuizType> allowedTypes =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetAllowedMotionTypes(
+                    curriculumContext.Value)
+                : Enum.GetValues<MotionQuizType>();
+
+        if (allowedTypes.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Motion problems are not available at the selected curriculum tier.");
+        }
+
         MotionQuizType type =
-            requestedType ?? (MotionQuizType)_random.Next(4);
+            requestedType.HasValue &&
+            allowedTypes.Contains(requestedType.Value)
+                ? requestedType.Value
+                : allowedTypes[_random.Next(allowedTypes.Count)];
 
         return type switch
         {

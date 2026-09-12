@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Globalization;
 using Microsoft.Maui.Layouts;
 
@@ -202,16 +202,10 @@ public sealed class FractionExpressionView : ContentView
     private View CreateTokenView(
         string token)
     {
-        if (TryParseFraction(
-                token,
-                out string numerator,
-                out string denominator))
-        {
-            return CreateFractionView(
-                numerator,
-                denominator);
-        }
-
+        // Tách dấu câu trước khi thử parse phân số. Nếu parse token đầy đủ
+        // trước, chuỗi như "38425517497/24508967912." có thể bị decimal
+        // parser hiểu dấu chấm cuối câu là dấu thập phân của mẫu số, khiến
+        // mẫu không được chèn dấu phân cách hàng nghìn.
         if (TrySplitDecoratedFraction(
                 token,
                 out string prefix,
@@ -219,8 +213,8 @@ public sealed class FractionExpressionView : ContentView
                 out string suffix) &&
             TryParseFraction(
                 fractionToken,
-                out numerator,
-                out denominator))
+                out string numerator,
+                out string denominator))
         {
             var decorated = new HorizontalStackLayout
             {
@@ -242,6 +236,16 @@ public sealed class FractionExpressionView : ContentView
             }
 
             return decorated;
+        }
+
+        if (TryParseFraction(
+                token,
+                out numerator,
+                out denominator))
+        {
+            return CreateFractionView(
+                numerator,
+                denominator);
         }
 
         return CreateTextToken(token);
@@ -473,14 +477,14 @@ public sealed class FractionExpressionView : ContentView
             }
 
             if (!TryFormatMathFactor(
-            factorText,
-            out string formattedFactor))
-                {
-                    return false;
-                }
+                    factorText,
+                    out string formattedFactor))
+            {
+                return false;
+            }
 
-                displayFactors.Add(
-                    formattedFactor);
+            displayFactors.Add(
+                formattedFactor);
         }
 
         displayText =
@@ -492,8 +496,8 @@ public sealed class FractionExpressionView : ContentView
     }
 
     private static bool TryFormatMathFactor(
-    string text,
-    out string displayText)
+        string text,
+        out string displayText)
     {
         displayText =
             string.Empty;

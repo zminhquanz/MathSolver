@@ -28,15 +28,31 @@ public sealed class GeometryQuizGenerator
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode,
         AppLanguage language,
-        GeometryQuizShape? requestedShape = null)
+        GeometryQuizShape? requestedShape = null,
+        QuizCurriculumContext? curriculumContext = null)
     {
+        QuizCurriculumLayer.GeometryRules? curriculumRules =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetGeometryRules(
+                    curriculumContext.Value)
+                : null;
+
+        if (requestedShape.HasValue &&
+            curriculumRules is not null &&
+            !curriculumRules.AllowedShapes.Contains(requestedShape.Value))
+        {
+            requestedShape = null;
+        }
+
         string? requestedShapeId = requestedShape is null
             ? null
             : GetShapeId(requestedShape.Value);
 
-        GeometryStoryTemplate[] eligibleTemplates = requestedShapeId is null
-            ? Templates
-            : Templates.Where(template => template.ShapeId == requestedShapeId).ToArray();
+        GeometryStoryTemplate[] eligibleTemplates = Templates
+            .Where(template =>
+                (requestedShapeId is null || template.ShapeId == requestedShapeId) &&
+                IsTemplateAllowedByCurriculum(template, curriculumRules))
+            .ToArray();
 
         if (eligibleTemplates.Length == 0)
         {
@@ -50,7 +66,8 @@ public sealed class GeometryQuizGenerator
         IReadOnlyDictionary<string, BigInteger> dimensions =
             CreateDimensions(
                 template.ShapeId,
-                template.Measurement);
+                template.Measurement,
+                curriculumRules);
 
         (BigInteger correctAnswer, string formula) =
             ResolveExactQuizAnswer(
@@ -87,10 +104,15 @@ public sealed class GeometryQuizGenerator
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
         AppLanguage language,
-        GeometryQuizShape? requestedShape = null)
+        GeometryQuizShape? requestedShape = null,
+        QuizCurriculumContext? curriculumContext = null)
     {
         ArithmeticQuizQuestion question =
-            Generate(mode, language, requestedShape);
+            Generate(
+                mode,
+                language,
+                requestedShape,
+                curriculumContext);
 
         GeometryQuizContract contract =
             question.GeometryProblem ??
@@ -102,6 +124,45 @@ public sealed class GeometryQuizGenerator
             WordProblem = BuildAlgorithmProblem(
                 contract,
                 language)
+        };
+    }
+
+
+    private static bool IsTemplateAllowedByCurriculum(
+        GeometryStoryTemplate template,
+        QuizCurriculumLayer.GeometryRules? rules)
+    {
+        if (rules is null)
+        {
+            return true;
+        }
+
+        GeometryQuizShape shape = template.ShapeId switch
+        {
+            "square" => GeometryQuizShape.Square,
+            "rectangle" => GeometryQuizShape.Rectangle,
+            "triangle" => GeometryQuizShape.Triangle,
+            "trapezoid" => GeometryQuizShape.Trapezoid,
+            "rhombus" => GeometryQuizShape.Rhombus,
+            "parallelogram" => GeometryQuizShape.Parallelogram,
+            "circle" => GeometryQuizShape.Circle,
+            "cube" => GeometryQuizShape.Cube,
+            "rectangular_prism" => GeometryQuizShape.RectangularPrism,
+            _ => throw new ArgumentOutOfRangeException(nameof(template))
+        };
+
+        if (!rules.AllowedShapes.Contains(shape))
+        {
+            return false;
+        }
+
+        return template.Measurement switch
+        {
+            GeometryMeasurement.Perimeter => true,
+            GeometryMeasurement.Area => rules.AllowArea,
+            GeometryMeasurement.TotalArea => rules.AllowArea,
+            GeometryMeasurement.Volume => rules.AllowVolume,
+            _ => false
         };
     }
 
@@ -441,10 +502,23 @@ public sealed class GeometryQuizGenerator
 
     private IReadOnlyDictionary<string, BigInteger> CreateDimensions(
         string shapeId,
-        GeometryMeasurement measurement)
+        GeometryMeasurement measurement,
+        QuizCurriculumLayer.GeometryRules? curriculumRules)
     {
-        int Value(int minimum = 2, int maximum = 21) =>
-            _random.Next(minimum, maximum);
+        int maximumDimension =
+            curriculumRules?.MaximumDimension ??
+            int.MaxValue;
+
+        int Value(int minimum = 2, int maximum = 21)
+        {
+            int maximumInclusive = Math.Min(
+                maximum - 1,
+                maximumDimension);
+            int maximumExclusive = Math.Max(
+                minimum + 1,
+                maximumInclusive + 1);
+            return _random.Next(minimum, maximumExclusive);
+        }
 
         return shapeId switch
         {
@@ -460,7 +534,7 @@ public sealed class GeometryQuizGenerator
                     ["b"] = Value(2, 20)
                 },
             "triangle" =>
-                CreateTriangleDimensions(),
+                CreateTriangleDimensions(maximumDimension),
             "trapezoid" =>
                 new Dictionary<string, BigInteger>
                 {
@@ -492,8 +566,12 @@ public sealed class GeometryQuizGenerator
                     // sao cho công thức tiểu học π = 3.14 luôn cho kết quả nguyên,
                     // tránh làm thay đổi model đáp án của các dạng Toán đố khác.
                     ["r"] = measurement == GeometryMeasurement.Perimeter
-                        ? 25 * Value(1, 9)
-                        : 10 * Value(1, 21)
+                        ? 25 * _random.Next(
+                            1,
+                            Math.Max(2, Math.Min(9, maximumDimension / 25 + 1)))
+                        : 10 * _random.Next(
+                            1,
+                            Math.Max(2, Math.Min(21, maximumDimension / 10 + 1)))
                 },
             "cube" =>
                 new Dictionary<string, BigInteger>
@@ -511,9 +589,11 @@ public sealed class GeometryQuizGenerator
         };
     }
 
-    private IReadOnlyDictionary<string, BigInteger> CreateTriangleDimensions()
+    private IReadOnlyDictionary<string, BigInteger> CreateTriangleDimensions(
+        int maximumDimension)
     {
-        int a = _random.Next(6, 19) * 2;
+        int halfMaximum = Math.Max(7, Math.Min(19, maximumDimension / 2 + 1));
+        int a = _random.Next(6, halfMaximum) * 2;
         int b = a + _random.Next(-3, 4);
         int c = a + _random.Next(-3, 4);
         int h = _random.Next(2, Math.Max(3, a));

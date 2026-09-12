@@ -50,6 +50,9 @@ public partial class MathPuzzlePage : ContentPage
     private ArithmeticQuizMode _selectedMode =
         ArithmeticQuizMode.TrueFalse;
 
+    private CurriculumTier _selectedCurriculumTier =
+        CurriculumTier.ThreeStars;
+
     private QuizGenerationSource _generationSource =
         QuizGenerationSource.Algorithm;
 
@@ -69,9 +72,9 @@ public partial class MathPuzzlePage : ContentPage
     private bool _isDownloadingModel;
     private bool _showFriendlyGreetingForCurrentLoad;
     private bool _isUpdatingOperationPicker;
-    private ArithmeticOperation _selectedBasicOperation =
+    private ArithmeticOperation? _selectedBasicOperation =
         ArithmeticOperation.Add;
-    private FractionOperation _selectedFractionOperation =
+    private FractionOperation? _selectedFractionOperation =
         FractionOperation.Add;
     private ProportionQuizType _selectedProportionType =
         ProportionQuizType.Direct;
@@ -79,6 +82,7 @@ public partial class MathPuzzlePage : ContentPage
     private PercentageQuizType? _selectedPercentageType;
     private ArithmeticOperation? _selectedFindXOperation;
     private GeometryQuizShape? _selectedGeometryShape;
+    private readonly List<GeometryQuizShape?> _geometryShapePickerValues = [];
     private MotionQuizType? _selectedMotionType;
     private bool _isUpdatingSubtypePickers;
     private bool _isAiDiagnosticsVisible;
@@ -197,6 +201,7 @@ public partial class MathPuzzlePage : ContentPage
         UpdateOperationPickerItems();
         UpdateGenerationSourceStyles();
         UpdateModeStyles();
+        UpdateCurriculumTierStyles();
         UpdateLlmModelUi();
         ResetLlmDiagnostics();
         UpdateAiDiagnosticsVisibility();
@@ -321,6 +326,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         UpdateGenerationSourceStyles();
         UpdateModeStyles();
+        UpdateCurriculumTierStyles();
         UpdateProblemOperationPanel();
         RefreshTrueFalseAnswerButtonTheme();
         RefreshLlmActionButtonTheme();
@@ -381,6 +387,7 @@ public partial class MathPuzzlePage : ContentPage
 
                 UpdateOperationPickerItems();
                 UpdateGenerationSourceStyles();
+                UpdateCurriculumTierStyles();
                 UpdateLlmModelUi();
                 UpdateScoreLabels();
 
@@ -622,6 +629,110 @@ public partial class MathPuzzlePage : ContentPage
         QuestionPromptLabel.Text = GetQuestionPromptTitle();
     }
 
+    private void OnCurriculumOneStarClicked(object? sender, EventArgs e) =>
+        SelectCurriculumTier(CurriculumTier.OneStar);
+
+    private void OnCurriculumTwoStarsClicked(object? sender, EventArgs e) =>
+        SelectCurriculumTier(CurriculumTier.TwoStars);
+
+    private void OnCurriculumThreeStarsClicked(object? sender, EventArgs e) =>
+        SelectCurriculumTier(CurriculumTier.ThreeStars);
+
+    private void OnCurriculumFourStarsClicked(object? sender, EventArgs e) =>
+        SelectCurriculumTier(CurriculumTier.FourStars);
+
+    private void OnCurriculumFiveStarsClicked(object? sender, EventArgs e) =>
+        SelectCurriculumTier(CurriculumTier.FiveStars);
+
+    private void SelectCurriculumTier(CurriculumTier tier)
+    {
+        // AI/LLM owns an immutable curriculum snapshot for the whole inference.
+        // Ignore any queued WinUI click while generation is active so the UI
+        // cannot show a different star level from the contract being validated.
+        if (_generationSource == QuizGenerationSource.LocalLlm &&
+            _isLlmQuestionGenerationActive)
+        {
+            return;
+        }
+
+        if (_selectedCurriculumTier == tier)
+        {
+            return;
+        }
+
+        CancelLlmGeneration();
+        _selectedCurriculumTier = tier;
+        ResetQuizSessionState();
+        UpdateCurriculumTierStyles();
+        UpdateProblemOperationPanel();
+        UpdateEssayAnswerPresentation();
+
+        // Không rebuild Picker/subtype khi đổi sao. Skill Mode luôn giữ nguyên
+        // các lựa chọn hiện có; số sao chỉ thay đổi constraint của generator.
+        // Cách này tránh re-entrant SelectionChanged/flyout trên WinUI.
+        if (_generationSource == QuizGenerationSource.Algorithm)
+        {
+            GenerateAlgorithmQuestion();
+        }
+        else
+        {
+            PrepareLlmQuestionForGeneration();
+        }
+    }
+
+    private QuizCurriculumContext GetCurriculumContext() =>
+        new(
+            _selectedCurriculumTier,
+            IsMixedProblemSelection());
+
+    private bool IsMixedProblemSelection() =>
+        _quizProblemTypeCatalog
+            .GetFixedRequest(OperationPicker.SelectedIndex) is null;
+
+    private void EnsureCurriculumTierAvailableForSelection()
+    {
+        // Skill Mode cho phép đủ ★..★★★★★. Mixed Mode tự giới hạn skill
+        // trong QuizCurriculumLayer.ResolveMixedRequest, không khóa UI.
+    }
+
+    private void NormalizeSelectedSkillForCurriculum()
+    {
+        // Không thay đổi selection của subtype theo sao. Đây là chủ ý: khi
+        // người dùng đã chọn một skill, Curriculum chỉ scale dữ kiện số.
+    }
+
+    private void UpdateCurriculumTierStyles()
+    {
+        Button[] buttons =
+        [
+            CurriculumOneStarButton,
+            CurriculumTwoStarsButton,
+            CurriculumThreeStarsButton,
+            CurriculumFourStarsButton,
+            CurriculumFiveStarsButton
+        ];
+
+        bool tierSelectionEnabled =
+            !(_generationSource == QuizGenerationSource.LocalLlm &&
+              _isLlmQuestionGenerationActive);
+
+        foreach (Button button in buttons)
+        {
+            button.IsEnabled = tierSelectionEnabled;
+            button.Opacity = tierSelectionEnabled ? 1d : 0.72d;
+        }
+
+        SelectionButtonStyler.Select(
+            buttons[(int)_selectedCurriculumTier - 1],
+            buttons);
+
+        bool mixed = IsMixedProblemSelection();
+        CurriculumHintLabel.Text = TranslateQuiz(
+            mixed
+                ? "Quiz.CurriculumHintMixed"
+                : "Quiz.CurriculumHintSkill");
+    }
+
     private string GetQuestionPromptTitle()
     {
         if (_currentQuestion?.FractionProblem is not null &&
@@ -774,11 +885,14 @@ public partial class MathPuzzlePage : ContentPage
                     0,
                     OperationPicker.Items.Count - 1);
 
+            EnsureCurriculumTierAvailableForSelection();
+            NormalizeSelectedSkillForCurriculum();
             UpdateSubtypePickerItems();
 
             _activeProblemRequest =
                 GetSelectedFixedProblemRequest();
 
+            UpdateCurriculumTierStyles();
             UpdateProblemOperationPanel();
         }
         finally
@@ -886,38 +1000,37 @@ public partial class MathPuzzlePage : ContentPage
                 _ => 0
             };
 
+            // Danh sách hình học là tĩnh ở Skill Mode. Không clear/filter theo
+            // số sao; Curriculum chỉ lọc Geometry khi chính Mixed Mode chọn
+            // skill. Điều này tránh thay ItemsSource trong SelectionChanged
+            // và loại bỏ một nguồn treo native Picker trên WinUI.
             GeometryShapePicker.Items.Clear();
-            string[] geometryKeys =
+            _geometryShapePickerValues.Clear();
+
+            (GeometryQuizShape? Shape, string Key)[] geometryOptions =
             [
-                "Quiz.SubtypeMixed",
-                "Quiz.GeometrySquare",
-                "Quiz.GeometryRectangle",
-                "Quiz.GeometryTriangle",
-                "Quiz.GeometryTrapezoid",
-                "Quiz.GeometryRhombus",
-                "Quiz.GeometryParallelogram",
-                "Quiz.GeometryCircle",
-                "Quiz.GeometryCube",
-                "Quiz.GeometryRectangularPrism"
+                (null, "Quiz.SubtypeMixed"),
+                (GeometryQuizShape.Square, "Quiz.GeometrySquare"),
+                (GeometryQuizShape.Rectangle, "Quiz.GeometryRectangle"),
+                (GeometryQuizShape.Triangle, "Quiz.GeometryTriangle"),
+                (GeometryQuizShape.Trapezoid, "Quiz.GeometryTrapezoid"),
+                (GeometryQuizShape.Rhombus, "Quiz.GeometryRhombus"),
+                (GeometryQuizShape.Parallelogram, "Quiz.GeometryParallelogram"),
+                (GeometryQuizShape.Circle, "Quiz.GeometryCircle"),
+                (GeometryQuizShape.Cube, "Quiz.GeometryCube"),
+                (GeometryQuizShape.RectangularPrism, "Quiz.GeometryRectangularPrism")
             ];
-            foreach (string key in geometryKeys)
+
+            foreach ((GeometryQuizShape? shape, string key) in geometryOptions)
             {
                 GeometryShapePicker.Items.Add(TranslateQuiz(key));
+                _geometryShapePickerValues.Add(shape);
             }
-            GeometryShapePicker.SelectedIndex = _selectedGeometryShape switch
-            {
-                null => 0,
-                GeometryQuizShape.Square => 1,
-                GeometryQuizShape.Rectangle => 2,
-                GeometryQuizShape.Triangle => 3,
-                GeometryQuizShape.Trapezoid => 4,
-                GeometryQuizShape.Rhombus => 5,
-                GeometryQuizShape.Parallelogram => 6,
-                GeometryQuizShape.Circle => 7,
-                GeometryQuizShape.Cube => 8,
-                GeometryQuizShape.RectangularPrism => 9,
-                _ => 0
-            };
+
+            int geometrySelectedIndex =
+                _geometryShapePickerValues.IndexOf(_selectedGeometryShape);
+            GeometryShapePicker.SelectedIndex =
+                geometrySelectedIndex >= 0 ? geometrySelectedIndex : 0;
         }
         finally
         {
@@ -1033,19 +1146,11 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        GeometryQuizShape? selected = GeometryShapePicker.SelectedIndex switch
-        {
-            1 => GeometryQuizShape.Square,
-            2 => GeometryQuizShape.Rectangle,
-            3 => GeometryQuizShape.Triangle,
-            4 => GeometryQuizShape.Trapezoid,
-            5 => GeometryQuizShape.Rhombus,
-            6 => GeometryQuizShape.Parallelogram,
-            7 => GeometryQuizShape.Circle,
-            8 => GeometryQuizShape.Cube,
-            9 => GeometryQuizShape.RectangularPrism,
-            _ => null
-        };
+        GeometryQuizShape? selected =
+            GeometryShapePicker.SelectedIndex >= 0 &&
+            GeometryShapePicker.SelectedIndex < _geometryShapePickerValues.Count
+                ? _geometryShapePickerValues[GeometryShapePicker.SelectedIndex]
+                : null;
 
         if (_selectedGeometryShape == selected)
         {
@@ -1053,10 +1158,14 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         _selectedGeometryShape = selected;
-        OnSubtypeSelectionChanged(QuizProblemKind.Geometry);
+        OnSubtypeSelectionChanged(
+            QuizProblemKind.Geometry,
+            refreshSubtypePickers: false);
     }
 
-    private void OnSubtypeSelectionChanged(QuizProblemKind expectedKind)
+    private void OnSubtypeSelectionChanged(
+        QuizProblemKind expectedKind,
+        bool refreshSubtypePickers = false)
     {
         QuizProblemKind? kind = _quizProblemTypeCatalog
             .GetFixedRequest(OperationPicker.SelectedIndex)
@@ -1067,6 +1176,13 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         CancelLlmGeneration();
+        NormalizeSelectedSkillForCurriculum();
+
+        if (refreshSubtypePickers)
+        {
+            UpdateSubtypePickerItems();
+        }
+
         ResetQuizSessionState();
         _activeProblemRequest = GetSelectedFixedProblemRequest();
         UpdateEssayAnswerPresentation();
@@ -1097,9 +1213,15 @@ public partial class MathPuzzlePage : ContentPage
         CancelLlmGeneration();
         ResetQuizSessionState();
 
+        EnsureCurriculumTierAvailableForSelection();
+        NormalizeSelectedSkillForCurriculum();
+
+        // Các subtype là danh sách tĩnh ở Skill Mode. Không rebuild Picker
+        // ngay trong OperationPicker.SelectionChanged để tránh re-entrant UI.
         _activeProblemRequest =
             GetSelectedFixedProblemRequest();
 
+        UpdateCurriculumTierStyles();
         UpdateProblemOperationPanel();
 
         UpdateEssayAnswerPresentation();
@@ -1124,7 +1246,8 @@ public partial class MathPuzzlePage : ContentPage
             _selectedPercentageType,
             _selectedFindXOperation,
             _selectedGeometryShape,
-            _selectedMotionType);
+            _selectedMotionType,
+            _selectedCurriculumTier);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -1210,6 +1333,11 @@ public partial class MathPuzzlePage : ContentPage
 
         if (showProportionType)
         {
+            DirectProportionButton.IsEnabled = true;
+            InverseProportionButton.IsEnabled = true;
+            DirectProportionButton.Opacity = 1d;
+            InverseProportionButton.Opacity = 1d;
+
             SelectionButtonStyler.Select(
                 _selectedProportionType == ProportionQuizType.Direct
                     ? DirectProportionButton
@@ -1228,27 +1356,47 @@ public partial class MathPuzzlePage : ContentPage
                 ? "Quiz.FractionOperationTitle"
                 : "Quiz.BasicOperationTitle");
 
-        ArithmeticOperation operation =
-            kind == QuizProblemKind.Fraction
-                ? MapFractionOperation(_selectedFractionOperation)
-                : _selectedBasicOperation;
+        ArithmeticOperation? operation = kind == QuizProblemKind.Fraction
+            ? (_selectedFractionOperation.HasValue
+                ? MapFractionOperation(_selectedFractionOperation.Value)
+                : null)
+            : _selectedBasicOperation;
+
+        // Skill Mode không khóa phép tính theo sao. Nút Hỗn hợp ở đây chỉ
+        // random subtype bên trong skill hiện tại (+ - × ÷), hoàn toàn khác
+        // với mục Hỗn hợp các dạng ở OperationPicker.
+        ProblemMixedButton.IsEnabled = true;
+        ProblemAddButton.IsEnabled = true;
+        ProblemSubtractButton.IsEnabled = true;
+        ProblemMultiplyButton.IsEnabled = true;
+        ProblemDivideButton.IsEnabled = true;
+        ProblemMixedButton.Opacity = 1d;
+        ProblemAddButton.Opacity = 1d;
+        ProblemSubtractButton.Opacity = 1d;
+        ProblemMultiplyButton.Opacity = 1d;
+        ProblemDivideButton.Opacity = 1d;
 
         Button selected = operation switch
         {
+            null => ProblemMixedButton,
             ArithmeticOperation.Add => ProblemAddButton,
             ArithmeticOperation.Subtract => ProblemSubtractButton,
             ArithmeticOperation.Multiply => ProblemMultiplyButton,
             ArithmeticOperation.Divide => ProblemDivideButton,
-            _ => ProblemAddButton
+            _ => ProblemMixedButton
         };
 
         SelectionButtonStyler.Select(
             selected,
+            ProblemMixedButton,
             ProblemAddButton,
             ProblemSubtractButton,
             ProblemMultiplyButton,
             ProblemDivideButton);
     }
+
+    private void OnProblemMixedClicked(object? sender, EventArgs e) =>
+        SelectProblemOperation(null);
 
     private void OnProblemAddClicked(object? sender, EventArgs e) =>
         SelectProblemOperation(ArithmeticOperation.Add);
@@ -1262,12 +1410,18 @@ public partial class MathPuzzlePage : ContentPage
     private void OnProblemDivideClicked(object? sender, EventArgs e) =>
         SelectProblemOperation(ArithmeticOperation.Divide);
 
-    private void SelectProblemOperation(ArithmeticOperation operation)
+    private void SelectProblemOperation(ArithmeticOperation? operation)
     {
         QuizProblemKind? kind =
             _quizProblemTypeCatalog
                 .GetFixedRequest(OperationPicker.SelectedIndex)
                 ?.Kind;
+
+        if (kind != QuizProblemKind.Arithmetic &&
+            kind != QuizProblemKind.Fraction)
+        {
+            return;
+        }
 
         bool changed;
         if (kind == QuizProblemKind.Arithmetic)
@@ -1275,16 +1429,13 @@ public partial class MathPuzzlePage : ContentPage
             changed = _selectedBasicOperation != operation;
             _selectedBasicOperation = operation;
         }
-        else if (kind == QuizProblemKind.Fraction)
-        {
-            FractionOperation fractionOperation =
-                MapArithmeticOperation(operation);
-            changed = _selectedFractionOperation != fractionOperation;
-            _selectedFractionOperation = fractionOperation;
-        }
         else
         {
-            return;
+            FractionOperation? fractionOperation = operation.HasValue
+                ? MapArithmeticOperation(operation.Value)
+                : null;
+            changed = _selectedFractionOperation != fractionOperation;
+            _selectedFractionOperation = fractionOperation;
         }
 
         UpdateProblemOperationPanel();
@@ -1322,6 +1473,17 @@ public partial class MathPuzzlePage : ContentPage
                 ?.Kind;
 
         if (kind != QuizProblemKind.Proportion)
+        {
+            return;
+        }
+
+        IReadOnlyList<ProportionQuizType> allowedTypes =
+            QuizCurriculumLayer.GetAllowedProportionTypes(
+                new QuizCurriculumContext(
+                    _selectedCurriculumTier,
+                    IsMixedMode: false));
+
+        if (!allowedTypes.Contains(type))
         {
             return;
         }
@@ -1457,6 +1619,9 @@ public partial class MathPuzzlePage : ContentPage
 
             _activeProblemRequest = problemRequest;
 
+            QuizCurriculumContext curriculumContext =
+                GetCurriculumContext();
+
             _currentQuestion =
                 problemRequest.Kind switch
                 {
@@ -1464,39 +1629,47 @@ public partial class MathPuzzlePage : ContentPage
                         _geometryQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
                             AppLanguageManager.CurrentLanguage,
-                            problemRequest.GeometryShape),
+                            problemRequest.GeometryShape,
+                            curriculumContext),
                     QuizProblemKind.Arithmetic =>
                         _quizGenerator.Generate(
                             _selectedMode,
-                            problemRequest.ArithmeticOperation),
+                            problemRequest.ArithmeticOperation,
+                            curriculumContext),
                     QuizProblemKind.Fraction =>
                         _fractionQuizGenerator.Generate(
                             _selectedMode,
-                            problemRequest.FractionOperation),
+                            problemRequest.FractionOperation,
+                            curriculumContext),
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(
                             _selectedMode,
-                            problemRequest.FindXOperation),
+                            problemRequest.FindXOperation,
+                            curriculumContext),
                     QuizProblemKind.Proportion =>
                         _proportionQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
-                            problemRequest.ProportionType ?? _selectedProportionType,
-                            AppLanguageManager.CurrentLanguage),
+                            problemRequest.ProportionType,
+                            AppLanguageManager.CurrentLanguage,
+                            curriculumContext),
                     QuizProblemKind.Motion =>
                         _motionQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
                             AppLanguageManager.CurrentLanguage,
-                            problemRequest.MotionType),
+                            problemRequest.MotionType,
+                            curriculumContext),
                     QuizProblemKind.Average =>
                         _averageQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
                             problemRequest.AverageType,
-                            AppLanguageManager.CurrentLanguage),
+                            AppLanguageManager.CurrentLanguage,
+                            curriculumContext),
                     QuizProblemKind.Percentage =>
                         _percentageQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
                             problemRequest.PercentageType,
-                            AppLanguageManager.CurrentLanguage),
+                            AppLanguageManager.CurrentLanguage,
+                            curriculumContext),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -2163,7 +2336,8 @@ public partial class MathPuzzlePage : ContentPage
                     problemRequest,
                     AppLanguageManager.CurrentLanguage,
                     progress,
-                    cancellation.Token);
+                    cancellation.Token,
+                    curriculumContext: GetCurriculumContext());
 
             // Vô hiệu hóa callback Progress<T> đang chờ trên UI thread trước
             // khi hiển thị trạng thái cuối. Nếu không, ModelLoaded/Validating
@@ -2513,12 +2687,34 @@ public partial class MathPuzzlePage : ContentPage
         GeometryShapePicker.IsEnabled = !isLocked;
         MotionTypePicker.IsEnabled = !isLocked;
 
+        ProblemMixedButton.IsEnabled = !isLocked;
         ProblemAddButton.IsEnabled = !isLocked;
         ProblemSubtractButton.IsEnabled = !isLocked;
         ProblemMultiplyButton.IsEnabled = !isLocked;
         ProblemDivideButton.IsEnabled = !isLocked;
         DirectProportionButton.IsEnabled = !isLocked;
         InverseProportionButton.IsEnabled = !isLocked;
+
+        // Star level is part of the deterministic C# contract handed to the
+        // model. Lock it for the entire inference/validation cycle; otherwise
+        // WinUI could display a new tier while the running request still uses
+        // the old tier. The click handler also guards against queued clicks.
+        CurriculumOneStarButton.IsEnabled = !isLocked;
+        CurriculumTwoStarsButton.IsEnabled = !isLocked;
+        CurriculumThreeStarsButton.IsEnabled = !isLocked;
+        CurriculumFourStarsButton.IsEnabled = !isLocked;
+        CurriculumFiveStarsButton.IsEnabled = !isLocked;
+
+        double curriculumOpacity = isLocked ? 0.72d : 1d;
+        CurriculumOneStarButton.Opacity = curriculumOpacity;
+        CurriculumTwoStarsButton.Opacity = curriculumOpacity;
+        CurriculumThreeStarsButton.Opacity = curriculumOpacity;
+        CurriculumFourStarsButton.Opacity = curriculumOpacity;
+        CurriculumFiveStarsButton.Opacity = curriculumOpacity;
+
+        // Reapply the selected-star visual state after Enabled/Disabled changes
+        // because WinUI can otherwise keep its default disabled/accent brush.
+        UpdateCurriculumTierStyles();
 
         // Trong lúc AI chạy, không cho trả lời câu cũ hay chuyển sang câu kế
         // tiếp. Nút CreateOrRegenerate không bị khóa vì nó chính là nút Dừng.

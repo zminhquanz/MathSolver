@@ -55,15 +55,26 @@
     },
     "Quiz.CorrectFeedback": {
       "context": "Toán đố → phản hồi khi trả lời đúng.",
-      "placeholders": { "0": "Đáp án của bài toán, ví dụ: 12." }
+      "placeholders": {
+        "0": "Đáp án của bài toán, ví dụ: 12."
+      }
     },
     "Quiz.IncorrectFeedback": {
       "context": "Toán đố → phản hồi khi trả lời sai.",
-      "placeholders": { "0": "Đáp án đúng của bài toán, ví dụ: 12." }
+      "placeholders": {
+        "0": "Đáp án đúng của bài toán, ví dụ: 12."
+      }
     },
     "Quiz.QuestionCounter": {
       "context": "Toán đố → số thứ tự câu hỏi đang làm.",
-      "placeholders": { "0": "Số thứ tự câu hỏi, ví dụ: 3." }
+      "placeholders": {
+        "0": "Số thứ tự câu hỏi, ví dụ: 3."
+      }
+    },
+    "Formula.Tabs.Measurement": {
+      "context": "Trang Công thức → tab Đơn vị.",
+      "description": "Mở bộ quy đổi các đơn vị đo lường; không bao gồm tiền tệ.",
+      "translatorNote": "Giữ ký hiệu ↔ và dùng nhãn ngắn gọn."
     }
   },
   "placeholderNotes": {
@@ -534,7 +545,7 @@
     },
     {
       "key": "Quiz.OperationTitle",
-      "source": "3. Chọn bài toán",
+      "source": "4. Chọn bài toán",
       "mode": "exact"
     },
     {
@@ -819,7 +830,7 @@
     },
     {
       "key": "Quiz.LlmSettingsDescription",
-      "source": "AI viết đề theo chương trình tiểu học Việt Nam. Ứng dụng tự tính đáp án và kiểm tra lại trước khi hiển thị.",
+      "source": "AI/LLM chỉ diễn đạt đề từ hợp đồng C# đã được Curriculum Layer giới hạn theo số sao. Đáp án vẫn do ứng dụng tính và kiểm tra trước khi hiển thị.",
       "mode": "exact"
     },
     {
@@ -6645,6 +6656,426 @@
     {
       "key": "PowerRoot.InfoGlobalStageProfilerRow",
       "source": "    {0}: {1} giây | {2}% bucket | {3} lượt | {4} butterfly | {5} ms/lượt | {6} ns/butterfly",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Tabs.Measurement",
+      "source": "↔  Đơn vị",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Title",
+      "source": "QUY ĐỔI ĐƠN VỊ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Subtitle",
+      "source": "Độ dài • Khối lượng • Thời gian • Diện tích • Thể tích • Dung tích • Vận tốc • Nhiệt độ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ConverterTitle",
+      "source": "Bộ chuyển đổi đơn vị",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.CategoryLabel",
+      "source": "Loại đại lượng",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ValueLabel",
+      "source": "Giá trị cần đổi",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ValuePlaceholder",
+      "source": "Ví dụ: 1,5",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.FromLabel",
+      "source": "Từ đơn vị",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ToLabel",
+      "source": "Sang đơn vị",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ResultLabel",
+      "source": "Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ReferenceTitle",
+      "source": "Bảng ghi nhớ nhanh",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.ReferenceHint",
+      "source": "Với hệ mét, hãy chú ý số mũ của đại lượng: độ dài mỗi bậc ×10, diện tích mỗi bậc ×100, thể tích mỗi bậc ×1.000. Thời gian và nhiệt độ dùng quy tắc riêng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.TipsTitle",
+      "source": "Cách đổi đơn vị",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.TipsText",
+      "source": "• Đổi từ đơn vị lớn sang đơn vị nhỏ: nhân theo hệ số giữa hai đơn vị.\n• Đổi từ đơn vị nhỏ sang đơn vị lớn: chia theo hệ số giữa hai đơn vị.\n• Diện tích phải bình phương hệ số độ dài; thể tích phải lập phương hệ số độ dài.\n• Giờ–phút–giây không theo hệ thập phân. Nhiệt độ dùng công thức chuyển đổi riêng.\n• Tab này không có tiền tệ vì tỉ giá thay đổi theo thời gian và còn phụ thuộc ngôn ngữ/khu vực của ứng dụng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.InvalidNumber",
+      "source": "Giá trị nhập không phải là số hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.NumberTooLarge",
+      "source": "Giá trị quá lớn để quy đổi bằng kiểu số hiện tại.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Length",
+      "source": "Độ dài",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Mass",
+      "source": "Khối lượng",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Time",
+      "source": "Thời gian",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Area",
+      "source": "Diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Volume",
+      "source": "Thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Capacity",
+      "source": "Dung tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Speed",
+      "source": "Vận tốc",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Category.Temperature",
+      "source": "Nhiệt độ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Kilometre",
+      "source": "Ki-lô-mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Hectometre",
+      "source": "Héc-tô-mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Decametre",
+      "source": "Đề-ca-mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Metre",
+      "source": "Mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Decimetre",
+      "source": "Đề-xi-mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Centimetre",
+      "source": "Xen-ti-mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Millimetre",
+      "source": "Mi-li-mét",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Tonne",
+      "source": "Tấn",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Quintal",
+      "source": "Tạ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Yen",
+      "source": "Yến",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Kilogram",
+      "source": "Ki-lô-gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Hectogram",
+      "source": "Héc-tô-gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Decagram",
+      "source": "Đề-ca-gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Gram",
+      "source": "Gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Decigram",
+      "source": "Đề-xi-gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Centigram",
+      "source": "Xen-ti-gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Milligram",
+      "source": "Mi-li-gam",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Week",
+      "source": "Tuần",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Day",
+      "source": "Ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Hour",
+      "source": "Giờ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Minute",
+      "source": "Phút",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Second",
+      "source": "Giây",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Millisecond",
+      "source": "Mili giây",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareKilometre",
+      "source": "Ki-lô-mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Hectare",
+      "source": "Héc-ta",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareHectometre",
+      "source": "Héc-tô-mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareDecametre",
+      "source": "Đề-ca-mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareMetre",
+      "source": "Mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareDecimetre",
+      "source": "Đề-xi-mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareCentimetre",
+      "source": "Xen-ti-mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.SquareMillimetre",
+      "source": "Mi-li-mét vuông",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.CubicMetre",
+      "source": "Mét khối",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.CubicDecimetre",
+      "source": "Đề-xi-mét khối",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.CubicCentimetre",
+      "source": "Xen-ti-mét khối",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.CubicMillimetre",
+      "source": "Mi-li-mét khối",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Kilolitre",
+      "source": "Ki-lô-lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Hectolitre",
+      "source": "Héc-tô-lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Decalitre",
+      "source": "Đề-ca-lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Litre",
+      "source": "Lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Decilitre",
+      "source": "Đề-xi-lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Centilitre",
+      "source": "Xen-ti-lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Millilitre",
+      "source": "Mi-li-lít",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.KilometrePerHour",
+      "source": "Ki-lô-mét trên giờ",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.MetrePerSecond",
+      "source": "Mét trên giây",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Knot",
+      "source": "Hải lý trên giờ (knot)",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Celsius",
+      "source": "Độ C",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Fahrenheit",
+      "source": "Độ F",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Unit.Kelvin",
+      "source": "Kelvin",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Length",
+      "source": "km → hm → dam → m → dm → cm → mm\nMỗi bậc sang phải ×10; mỗi bậc sang trái ÷10.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Mass",
+      "source": "1 tấn = 10 tạ = 100 yến = 1.000 kg\nkg → hg → dag → g → dg → cg → mg (mỗi bậc sang phải ×10).",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Time",
+      "source": "1 tuần = 7 ngày\n1 ngày = 24 giờ\n1 giờ = 60 phút = 3.600 giây\n1 giây = 1.000 mili giây",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Area",
+      "source": "km² → hm² → dam² → m² → dm² → cm² → mm²\nMỗi bậc sang phải ×100. 1 ha = 1 hm² = 10.000 m².",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Volume",
+      "source": "m³ → dm³ → cm³ → mm³\nMỗi bậc sang phải ×1.000. 1 dm³ = 1 L và 1 cm³ = 1 mL.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Capacity",
+      "source": "kL → hL → daL → L → dL → cL → mL\nMỗi bậc sang phải ×10. 1 L = 1 dm³; 1 mL = 1 cm³.",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Speed",
+      "source": "1 m/s = 3,6 km/h\n1 km/h = 5/18 m/s\n1 kn = 1,852 km/h",
+      "mode": "exact"
+    },
+    {
+      "key": "Formula.Measurement.Reference.Temperature",
+      "source": "°F = °C × 9/5 + 32\n°C = (°F − 32) × 5/9\nK = °C + 273,15",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CurriculumTitle",
+      "source": "3. Chọn mức độ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CurriculumHintMixed",
+      "source": "Hỗn hợp có bộ quy tắc riêng: số sao quyết định dạng toán được phép xuất hiện, phạm vi số và trọng số ngẫu nhiên.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CurriculumHintSkill",
+      "source": "Mỗi dạng toán có lộ trình riêng theo số sao; Thuật toán và AI/LLM dùng chung đúng một Curriculum Layer.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CurriculumMinimumTier",
+      "source": "Dạng này bắt đầu từ mức {0}.",
       "mode": "exact"
     }
   ],

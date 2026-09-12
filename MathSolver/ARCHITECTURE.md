@@ -150,6 +150,23 @@ a mixed-subtype option. `LlmWordProblemValidator` checks every numeric occurrenc
 in order, the final-question semantic family, and the final-question answer unit
 before an AI question can reach the learner.
 
+### Math Puzzle Curriculum Layer — `Services/QuizCurriculumLayer.cs`
+
+Curriculum is intentionally scoped to **app-generated Math Puzzle content only**. It never constrains user-entered input in the Solve Math tab or the reusable math engines. The UI exposes five abstract star tiers (`★`..`★★★★★`) rather than country-specific grade labels.
+
+- **Mixed Mode has its own profile.** A tier first selects an allowed skill from a weighted pool, then the chosen generator receives `QuizCurriculumContext(IsMixedMode: true)`. Mixed rules can prefer smaller number ranges and simpler subtypes than the same star tier in a dedicated skill.
+- **Each skill has an independent progression.** Arithmetic, fractions, Find X and geometry use dedicated rules; proportion, motion, average and percentage expose tier-gated subtype sets. Fractions deliberately start at `★★★★`. Dedicated Arithmetic uses the normalized primary progression `★ = 0..9`, `★★ = 0..99`, `★★★ = 0..999`, `★★★★ = 0..9,999`, `★★★★★ = 0..99,999`; generated operands and answers are kept inside that tier range. Mixed Mode keeps its separate arithmetic ranges.
+- **Algorithm and AI/LLM share one source of truth.** Algorithm generation passes the curriculum context directly to the C# generators. AI/LLM first creates the same deterministic C# contract under the same rules; the model only rewrites that validated contract into natural language and receives a short tier-guidance sentence. It cannot choose a harder skill, larger number range, or extra mathematical concept independently.
+- **Fixed-skill UI enforces availability.** Selecting a skill whose progression starts later automatically promotes the star tier to its minimum; lower star buttons are disabled for that skill. Unsupported operation/subtype selections are normalized before question generation.
+
+Flow:
+
+```text
+Mixed:  Star tier -> Mixed weighted pool -> Skill -> Skill curriculum -> C# generator -> validator
+Skill:  Star tier -------------------------> Skill curriculum -> C# generator -> validator
+AI/LLM: same C# contract -----------------------------------------------------> wording only
+```
+
 ### Localization — `Services/LocalizationService.cs` / `TRANSLATING.md`
 
 Language packs are UTF-8 JSON files following `culture.json` format: metadata + strings + templates. Placeholders (`{field}`) are preserved in all template files for runtime interpolation.
@@ -372,7 +389,7 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 
 - Motion now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Basic single-object motion, same-direction catch-up, opposite-direction meeting, and river downstream/upstream motion. `QuizProblemRequest.MotionType` carries the requested `MotionQuizType?` into the existing `MotionQuizGenerator`; null preserves mixed random generation. The generator already owns all four mathematical contracts, and the LLM validator continues to enforce the generated contract's exact motion family.
 - Find X now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Sum, Difference, Product, and Quotient. `QuizProblemRequest.FindXOperation` carries the selected relationship through `QuizProblemTypeCatalog` into both `FindXQuizGenerator` and `LocalLlmQuizGenerator`; Mixed keeps it null so C# chooses randomly.
-- Geometry now has a second-level shape Picker shared by Algorithm and AI/LLM: Mixed, Square, Rectangle, Triangle, Trapezoid, Rhombus, Parallelogram, Cube, and Rectangular Prism. `QuizProblemRequest.GeometryShape` filters the C# geometry story-template catalog before the contract is generated, so the AI cannot silently switch to a different shape. Only exact-integer-friendly quiz shapes are included; pi-based circle/sphere/cylinder/cone questions remain outside this quiz path for now.
+- Geometry has a second-level shape Picker shared by Algorithm and AI/LLM. Its visible choices are filtered by the selected Curriculum tier so an unavailable shape cannot be selected in the first place (for example `★` exposes only Mixed, Square and Rectangle; Trapezoid first appears at `★★★★`). This also avoids mutating the WinUI Picker items while its native selection flyout is closing, which previously could leave the flyout stuck open. `QuizProblemRequest.GeometryShape` still filters the C# geometry story-template catalog before the contract is generated, so AI/LLM cannot silently switch to a different shape.
 - Average and Percentage generators use broader C# context catalogs. Average problems rotate through notebooks/books/fruit mass/pen boxes, distribution contexts, names, indirect-data objects, and two-group contexts while preserving the same six mathematical contracts. Percentage problems rotate through books, trees, students, marbles, flowers, pens, oranges, and tickets, with concrete subset nouns for ratio/value/whole problems.
 - Diversity is owned by C#, not by free-form model creativity. The LLM continues to receive one authoritative reference contract and the existing role-aware validators still own numeric facts, requested quantity, unit, and semantic family.
 
@@ -692,3 +709,30 @@ The shared <=10M AVX-512 gate now also enables Phase-6 inverse L1 register resid
 ### <=10M AVX-512 exponentiation schedule and inverse fusion review (2026-09-09)
 
 AVX-512 power branches now use left-to-right binary exponentiation: each set bit multiplies the growing result by the original UInt64 base through a bounded-width schoolbook product, avoiding large result-by-factor NTTs. Existing exponent splitting and square dispatch remain in use. Cached inverse stage pairs can use the existing segmented AVX-512 kernel even with fewer parents than workers, and the final inverse vector kernel folds normalization into its twiddle recurrence to save one Shoup product when both outputs are live. On HX 370 with 24 workers, alternating measurements of the 18-digit base raised to 9,999,999 decreased from 2.202 s at `c0e946e` to 1.653 s, with identical hashes. Additional local Low32 dispatch changes and removing exponent splitting were measured and rejected. See [algorithm comparisons and validation](AVX512_SUB10M_REVIEW_NOTES.md).
+
+## Curriculum Layer – Mixed vs Skill Mode (2026-09-12)
+
+Curriculum chỉ áp dụng trong tab Toán đố và dùng chung cho nguồn Thuật toán + AI/LLM.
+
+- **Hỗn hợp các dạng (top-level Mixed):** số sao quyết định pool skill được phép xuất hiện. Ví dụ các skill nâng cao như Phân số/Tỉ lệ/Chuyển động chỉ được đưa vào pool ở mốc phù hợp. Sau khi chọn skill, generator vẫn là nguồn tạo contract C# và AI/LLM chỉ diễn đạt lại contract đó.
+- **Đã chọn một skill cụ thể:** luôn cho phép đủ ★..★★★★★ và toàn bộ subtype của skill. Không thêm/xóa/disable Picker item theo sao. Điều này tránh re-entrant `SelectionChanged`/native flyout trên WinUI.
+- **Hỗn hợp bên trong skill:** Phép tính và Phân số hỗ trợ lựa chọn `Hỗn hợp các dạng`, truyền operation = `null` để generator random `+ - × ÷`. Find X và các Picker subtype khác giữ lựa chọn Hỗn hợp tương tự.
+- **Giới hạn dữ kiện a/b cho Cơ bản, Phân số, Tìm X:** ★ `0..9`, ★★ `0..99`, ★★★ `0..999`, ★★★★ `0..9,999`, ★★★★★ `0..99,999`. Đây là giới hạn **dữ kiện/toán hạng**, không phải giới hạn kết quả; tổng/tích/vế kết quả có thể vượt số chữ số của tier.
+- **WinUI stability:** đổi số sao không rebuild bất kỳ subtype Picker nào; chọn một subtype cũng không clear/repopulate Picker ngay trong `SelectedIndexChanged`.
+
+### Curriculum/AI realism + WinUI generation lock (2026-09-12)
+
+- Khi AI/LLM đang infer/validate một câu hỏi, năm nút ★..★★★★★ bị khóa cho đến khi tác vụ kết thúc hoặc bị hủy. `SelectCurriculumTier` cũng bỏ qua queued click để UI không thể hiển thị một tier khác với snapshot Curriculum đã truyền vào contract C#.
+- AI/LLM dùng catalog ngữ cảnh theo **quy mô dữ kiện**. Từ hàng nghìn trở lên, Cơ bản/Tìm X chuyển sang ngữ cảnh có thể chứa số lượng lớn như kho, nhà máy, xưởng in, trung tâm phân phối, thư viện lớn, trang trại/vườn ươm; validator từ chối bối cảnh cá nhân nhỏ như lớp học, tủ sách lớp, khu vườn gia đình, khay/hộp bánh.
+- Phép nhân quy mô lớn dùng riêng nhóm vật có thể sản xuất/đóng lô hàng loạt (linh kiện, chai nước, gói hàng, giấy in, tem nhãn, cây giống...) và prompt yêu cầu lô/thùng/pallet/dãy sản xuất/khu vực kho thay vì khay bánh hoặc vật chứa nhỏ.
+- Phân số có tử/mẫu từ hàng nghìn trở lên chỉ dùng đại lượng liên tục ở xưởng/kho/bồn (dây, vải, nước, nguyên liệu), không dùng bánh/chậu cây như một số lượng đồ vật khổng lồ.
+- Contract phép nhân của `ArithmeticQuizGenerator` và phép nhân trong `FindXQuizGenerator` được sinh sao cho tích/vế kết quả luôn nằm trong `Int32`. `ArithmeticQuizValidator` và `LlmWordProblemValidator` có guard `Int32` riêng cho multiplication; dữ kiện vượt phạm vi phải được C# sinh lại, không chuyển sang model để retry câu chữ.
+
+
+### Curriculum operand-scale + result auto-scroll follow-up (2026-09-13)
+
+- Với Cơ bản, Phân số và Tìm X ở Skill Mode, toán hạng/dữ kiện chính `a` luôn nằm đúng bucket của tier hiện tại: ★ đơn vị, ★★ chục, ★★★ trăm, ★★★★ nghìn, ★★★★★ chục nghìn.
+- Toán hạng/dữ kiện thứ hai `b` không bị ép cùng bucket với `a`: generator chọn ngẫu nhiên một bucket từ ★ đến tier hiện tại rồi sinh `b` trong bucket đó. Vì vậy ★★★★★ có thể tạo dạng `18,258 ÷ 2`, `43,721 + 85`, hoặc phân số có vế thứ hai nhỏ hơn nhiều. Cộng/trừ/chia vẫn giữ các ràng buộc toán học; phép nhân còn bị chặn để tích nằm trong `Int32`.
+- AI/LLM luôn nhận đúng contract C# đã sinh, nên quy tắc bucket `a/b` giống hệt nguồn Thuật toán. Khi có dữ kiện lớn, catalog/prompt/validator realism tiếp tục bắt buộc ngữ cảnh kho, nhà máy, trung tâm phân phối, bồn chứa... phù hợp thay vì lớp học, vườn nhà hay khay bánh.
+- `FractionExpressionView` tách dấu câu cuối token trước khi parse phân số, nhờ đó tử/mẫu `BigInteger` luôn được format grouping đúng (`24,508,967,912`) và dấu chấm cuối câu không bị hiểu nhầm là dấu thập phân của mẫu số.
+- Mọi `ScrollView` dọc dùng behavior layout chung: sau layout ban đầu, nếu nội dung tăng chiều cao do result/feedback/validation Border xuất hiện thì viewport tự cuộn xuống cuối. ScrollView chỉ ngang bị bỏ qua.

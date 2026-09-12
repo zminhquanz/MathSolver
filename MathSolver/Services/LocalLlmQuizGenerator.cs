@@ -200,7 +200,8 @@ public sealed class LocalLlmQuizGenerator
         AppLanguage language,
         IProgress<LlmQuizProgress>? progress = null,
         CancellationToken cancellationToken = default,
-        int maximumAttempts = MaximumAttempts)
+        int maximumAttempts = MaximumAttempts,
+        QuizCurriculumContext? curriculumContext = null)
     {
         int effectiveMaximumAttempts =
             Math.Clamp(
@@ -232,39 +233,47 @@ public sealed class LocalLlmQuizGenerator
                         _geometryQuizGenerator.Generate(
                             mode,
                             language,
-                            problemRequest.GeometryShape),
+                            problemRequest.GeometryShape,
+                            curriculumContext),
                     QuizProblemKind.Arithmetic =>
                         CreateNaturalLanguageContract(
                             mode,
-                            problemRequest.ArithmeticOperation),
+                            problemRequest.ArithmeticOperation,
+                            curriculumContext),
                     QuizProblemKind.Fraction =>
                         _fractionQuizGenerator.Generate(
                             mode,
-                            problemRequest.FractionOperation),
+                            problemRequest.FractionOperation,
+                            curriculumContext),
                     QuizProblemKind.FindX =>
                         _findXQuizGenerator.Generate(
                             mode,
-                            problemRequest.FindXOperation),
+                            problemRequest.FindXOperation,
+                            curriculumContext),
                     QuizProblemKind.Proportion =>
                         _proportionQuizGenerator.GenerateContract(
                             mode,
-                            problemRequest.ProportionType ?? ProportionQuizType.Direct,
-                            language),
+                            problemRequest.ProportionType,
+                            language,
+                            curriculumContext),
                     QuizProblemKind.Motion =>
                         _motionQuizGenerator.GenerateContract(
                             mode,
                             language,
-                            problemRequest.MotionType),
+                            problemRequest.MotionType,
+                            curriculumContext),
                     QuizProblemKind.Average =>
                         _averageQuizGenerator.GenerateContract(
                             mode,
                             problemRequest.AverageType,
-                            language),
+                            language,
+                            curriculumContext),
                     QuizProblemKind.Percentage =>
                         _percentageQuizGenerator.GenerateContract(
                             mode,
                             problemRequest.PercentageType,
-                            language),
+                            language,
+                            curriculumContext),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(problemRequest))
                 };
@@ -281,7 +290,20 @@ public sealed class LocalLlmQuizGenerator
                 contract.FractionProblem is FractionQuizContract fractionContract
                     ? LlmQuizPromptBuilder.SelectFractionStoryContext(
                         language,
-                        fractionContract.Operation)
+                        fractionContract.Operation,
+                        fractionContract)
+                    : contract.FindXProblem is FindXQuizContract findXContract
+                    ? LlmQuizPromptBuilder.SelectStoryContext(
+                        language,
+                        findXContract)
+                    : contract.GeometryProblem is null &&
+                      contract.ProportionProblem is null &&
+                      contract.MotionProblem is null &&
+                      contract.AverageProblem is null &&
+                      contract.PercentageProblem is null
+                    ? LlmQuizPromptBuilder.SelectStoryContext(
+                        language,
+                        contract.Expression)
                     : LlmQuizPromptBuilder.SelectStoryContext(
                         language);
 
@@ -307,6 +329,16 @@ public sealed class LocalLlmQuizGenerator
             string systemPrompt =
                 LlmQuizPromptBuilder.BuildSystemPrompt(
                     language);
+
+            if (curriculumContext.HasValue)
+            {
+                systemPrompt = string.Concat(
+                    systemPrompt,
+                    " ",
+                    LlmQuizPromptBuilder.BuildCurriculumGuidance(
+                        curriculumContext.Value,
+                        language));
+            }
 
             // Đây là nguồn sự thật bất biến của cả ba lần thử. Retry luôn
             // replay prompt này; không dựa vào token của JSON sai trước đó.
@@ -1017,7 +1049,8 @@ public sealed class LocalLlmQuizGenerator
 
     private ArithmeticQuizQuestion CreateNaturalLanguageContract(
         ArithmeticQuizMode mode,
-        ArithmeticOperation? requestedOperation)
+        ArithmeticOperation? requestedOperation,
+        QuizCurriculumContext? curriculumContext)
     {
         // Tránh các đề kiểu “có 0 đồ vật” vốn đúng toán học nhưng không tự nhiên.
         for (int attempt = 0; attempt < 32; attempt++)
@@ -1025,7 +1058,8 @@ public sealed class LocalLlmQuizGenerator
             ArithmeticQuizQuestion question =
                 _quizGenerator.Generate(
                     mode,
-                    requestedOperation);
+                    requestedOperation,
+                    curriculumContext);
 
             if (question.Expression.LeftOperand > 0 &&
                 question.Expression.RightOperand > 0)
@@ -1082,8 +1116,19 @@ internal static class LlmQuizPromptBuilder
         AppLanguage language)
     {
         return language == AppLanguage.Vietnamese
-            ? "Bạn là giáo viên tiểu học Việt Nam thân thiện. Bạn viết bài toán đố số học, phân số, Tìm x, trung bình cộng, phần trăm, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Thông thường solution_lead không chứa số; RIÊNG bài tỉ lệ thuận/nghịch, được phép nhắc lại duy nhất dữ kiện C nếu số đó chỉ dùng để xác định đại lượng cần tìm, ví dụ “Trọng lượng của 9 bao gạo là:”. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
-            : "You are a friendly elementary-school teacher writing for an English-language primary curriculum. Write arithmetic, fraction, Find-x, average, percentage, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+            ? "Bạn là giáo viên toán tiểu học thân thiện, viết bằng tiếng Việt tự nhiên. Bạn viết bài toán đố số học, phân số, Tìm x, trung bình cộng, phần trăm, tỉ lệ thuận/nghịch, chuyển động hoặc hình học từ dữ kiện bắt buộc. Không tự đổi số, phân số, phép tính, vai trò của x, hình, đơn vị, đại lượng cần tìm hay đáp án. Mọi phân số phải viết dạng 1/2 bằng dấu /; tuyệt đối không dùng LaTeX, ký hiệu $, \\frac, \\dfrac hoặc \\tfrac. solution_lead chỉ là câu dẫn đứng trước phép tính; không chứa phép tính, dấu bằng, kết quả hoặc đáp án. Thông thường solution_lead không chứa số; RIÊNG bài tỉ lệ thuận/nghịch, được phép nhắc lại duy nhất dữ kiện C nếu số đó chỉ dùng để xác định đại lượng cần tìm, ví dụ “Trọng lượng của 9 bao gạo là:”. Chỉ trả về đúng một JSON hợp lệ, trình bày mỗi thuộc tính trên một dòng như schema, không Markdown, không lời chào và không giải thích."
+            : "You are a friendly primary-school math teacher writing in natural English. Write arithmetic, fraction, Find-x, average, percentage, direct/inverse proportion, motion, or geometry word problems from the required facts. Never change the numbers, fractions, operation, role of x, shape, unit, requested measurement, or answer. Write every fraction as 1/2 with a slash; never use LaTeX, $, \\frac, \\dfrac, or \\tfrac. solution_lead is only the sentence before the calculation; it must not contain a calculation, equals sign, result, or answer. Normally it contains no number. For direct/inverse proportion only, it may repeat the single C fact when that number merely identifies the requested quantity, for example “The weight of 9 rice bags is:”. Return exactly one valid JSON object with one property per line as shown in the schema and no Markdown, greeting, or commentary.";
+    }
+
+    public static string BuildCurriculumGuidance(
+        QuizCurriculumContext context,
+        AppLanguage language)
+    {
+        string stars = QuizCurriculumLayer.ToStars(context.Tier);
+
+        return language == AppLanguage.Vietnamese
+            ? $"Mức Curriculum hiện tại là {stars}. Hãy dùng câu chữ phù hợp mức này; không thêm dữ kiện, bước suy luận, phép toán hoặc kiến thức ngoài hợp đồng C# đã cung cấp."
+            : $"The current Curriculum level is {stars}. Keep the wording appropriate for this level; do not add facts, reasoning steps, operations, or concepts beyond the supplied C# contract.";
     }
 
     public static string BuildGemma4Prompt(
@@ -1255,8 +1300,24 @@ internal static class LlmQuizPromptBuilder
             : BuildRetryInstruction(previousErrorCode, language);
 
         string languageName = language == AppLanguage.Vietnamese
-            ? "Vietnamese used in Vietnamese primary schools"
-            : "natural English used in an elementary school";
+            ? "natural Vietnamese used in primary-school math word problems"
+            : "natural English used in primary-school math word problems";
+
+        BigInteger fractionComplexity = new[]
+            {
+                BigInteger.Abs(contract.LeftOperand.Numerator),
+                contract.LeftOperand.Denominator,
+                BigInteger.Abs(contract.RightOperand.Numerator),
+                contract.RightOperand.Denominator
+            }
+            .Max();
+
+        string fractionScaleRule =
+            fractionComplexity >= LargeStoryQuantityThreshold
+                ? language == AppLanguage.Vietnamese
+                    ? "- Tử/mẫu lớn biểu thị độ chính xác của một đại lượng liên tục trong xưởng/kho/bồn, KHÔNG phải hàng nghìn hay hàng chục nghìn đồ vật riêng lẻ. Không dùng khay bánh, hộp bánh, chậu cây hoặc lớp học cho ngữ cảnh này."
+                    : "- Large numerators/denominators represent a precise fraction of a continuous quantity in a workshop/storage tank/warehouse, NOT thousands or tens of thousands of individual items. Do not use cake trays, small boxes, potted plants, or a classroom for this context."
+                : string.Empty;
 
         string operationRule = (contract.Operation, language) switch
         {
@@ -1267,7 +1328,7 @@ internal static class LlmQuizPromptBuilder
             (FractionOperation.Multiply, AppLanguage.Vietnamese) =>
                 "Hỏi một phân số của một lượng phân số; phải dùng từ “của” để thể hiện phép nhân.",
             (FractionOperation.Divide, AppLanguage.Vietnamese) =>
-                "Phân số thứ nhất là tổng lượng có sẵn, phân số thứ hai là kích thước của mỗi phần bằng nhau; hỏi tạo được bao nhiêu đơn vị theo đúng answer_unit bắt buộc.",
+                "So sánh hai lượng phân số và hỏi lượng thứ nhất gấp bao nhiêu lần lượng thứ hai; answer_unit bắt buộc là ‘lần’. Không diễn giải thành số phần vật lý nếu thương không nguyên.",
             (FractionOperation.Add, _) =>
                 "Combine the two parts and ask for the total.",
             (FractionOperation.Subtract, _) =>
@@ -1275,7 +1336,7 @@ internal static class LlmQuizPromptBuilder
             (FractionOperation.Multiply, _) =>
                 "Ask for one fraction of another fractional amount; use the word 'of'.",
             (FractionOperation.Divide, _) =>
-                "Treat the first fraction as the total amount and the second as the size of each equal portion; ask how many portions/items are obtained using the required answer_unit.",
+                "Compare the two fractional quantities and ask how many times the first is as large as the second; the required answer_unit is 'times'. Do not turn a non-integer quotient into a physical item count.",
             _ => throw new ArgumentOutOfRangeException(nameof(contract))
         };
 
@@ -1283,7 +1344,7 @@ internal static class LlmQuizPromptBuilder
         {
             return FormattableString.Invariant(
                 $$"""
-                Viết một bài toán đố phân số tự nhiên, phù hợp học sinh tiểu học Việt Nam.
+                Viết một bài toán đố phân số tự nhiên, phù hợp mức Curriculum đã được cung cấp.
                 Phân số thứ nhất bắt buộc: {{contract.LeftOperand}}
                 Phân số thứ hai bắt buộc: {{contract.RightOperand}}
                 Phép tính bắt buộc: {{GetFractionOperationPromptName(contract.Operation, language)}}
@@ -1295,9 +1356,10 @@ internal static class LlmQuizPromptBuilder
                 - Tuyệt đối không dùng LaTeX, dấu $, \frac, \dfrac, \tfrac hoặc ngoặc nhọn để viết phân số.
                 - Diễn đạt rõ đúng phép tính bắt buộc; không tính hoặc làm lộ đáp án.
                 - {{operationRule}}
+                {{fractionScaleRule}}
                 - Dùng đúng đồ vật bắt buộc. {{characterRule}}
                 - Câu hỏi cuối phải hỏi đúng đồ vật/answer_unit "{{selectedStoryContext.AnswerUnit}}"; không được đổi sang đồ vật khác ở vế hỏi.
-                - answer_unit phải đúng nguyên cụm bắt buộc, không chứa số. Với phép chia, answer_unit là đơn vị đếm của các phần tạo được, không phải đơn vị đo của hai phân số.
+                - answer_unit phải đúng nguyên cụm bắt buộc, không chứa số. Với phép chia phân số, answer_unit bắt buộc là “lần” vì đề hỏi tỉ số/gấp bao nhiêu lần; không diễn giải thương không nguyên thành số lượng vật thể.
                 - solution_lead là một câu dẫn ngắn kết thúc bằng dấu hai chấm, nhắc lại answer_unit và không chứa số, phép tính, dấu bằng, kết quả hay đáp án.
                 - Chỉ trả đúng JSON bốn trường sau, không thêm nội dung khác:
                 {
@@ -1324,9 +1386,10 @@ internal static class LlmQuizPromptBuilder
             - Never use LaTeX, $, \frac, \dfrac, \tfrac, or braces for a fraction.
             - Use the required operation unambiguously; do not calculate or reveal the answer.
             - {{operationRule}}
+            {{fractionScaleRule}}
             - Use the required story item exactly. {{characterRule}}
             - The final question must explicitly ask for the same required story item/answer_unit "{{selectedStoryContext.AnswerUnit}}"; never substitute a different object in the question.
-            - answer_unit must be exactly the required noun phrase without a number. For division, answer_unit is the count of portions/items obtained, not the measurement unit used by the two fractions.
+            - answer_unit must be exactly the required noun phrase without a number. For fraction division, answer_unit must be 'times' because the question asks for a ratio/how many times; never turn a non-integer quotient into a physical item count.
             - solution_lead is one short sentence ending with a colon. It repeats answer_unit and contains no number, calculation, equals sign, result, or answer.
             - Return exactly this four-field JSON schema and nothing else:
             {
@@ -1918,8 +1981,8 @@ internal static class LlmQuizPromptBuilder
 
         string languageName =
             language == AppLanguage.Vietnamese
-                ? "Vietnamese used in Vietnamese primary schools"
-                : "natural English used in an English-language elementary school";
+                ? "natural Vietnamese used in primary-school math word problems"
+                : "natural English used in primary-school math word problems";
 
         string retry =
             string.IsNullOrWhiteSpace(previousErrorCode)
@@ -1939,8 +2002,8 @@ internal static class LlmQuizPromptBuilder
 
         string classroomRule =
             language == AppLanguage.Vietnamese
-                ? "Nếu dùng tên lớp, khối chỉ được từ lớp 1 đến lớp 5. Lớp con dạng số chỉ từ 1 đến 9 và phải viết lớp 3/1 ... lớp 3/9; dạng chữ đi theo alphabet từ lớp 3A ... lớp 3I. Không viết lớp 30, lớp 3/0, lớp 3/10 hoặc lớp 3J; không viết gọn lớp 31 mà phải viết lớp 3/1."
-                : "If a class label is used, the grade must be Class 1 through Class 5. Numeric sections are only 1 through 9 and must be written Class 3/1 ... Class 3/9; alphabetic sections follow A through I, as in Class 3A ... Class 3I. Never write Class 30, Class 3/0, Class 3/10, or Class 3J; write Class 3/1 instead of compact Class 31.";
+                ? "Không gắn mức sao với lớp/khối học cụ thể. Nếu cần bối cảnh trường học, chỉ dùng cách gọi chung như lớp học hoặc các bạn học sinh."
+                : "Do not map star levels to a specific school grade. If a school setting is useful, use a generic classroom or students instead of a grade/class label.";
 
         string storyContextRule =
             BuildStoryContextRule(
@@ -1959,6 +2022,11 @@ internal static class LlmQuizPromptBuilder
                     : $"- For multiplication, keep two distinct roles: {expression.RightOperand} is the number of groups/rows/areas, and each group has {expression.LeftOperand} {selectedStoryContext.AnswerUnit}. The group noun must never be the item \"{selectedStoryContext.NaturalReference}\" itself. Valid: \"There are {expression.RightOperand} rows, each row has {expression.LeftOperand} {selectedStoryContext.AnswerUnit}.\" Never make each counted item contain more of itself."
                 : string.Empty;
 
+        string quantityScaleRule =
+            BuildArithmeticQuantityScaleRule(
+                expression,
+                language);
+
         return FormattableString.Invariant(
             $$"""
             Write one natural, age-appropriate word problem in {{languageName}}.
@@ -1974,6 +2042,7 @@ internal static class LlmQuizPromptBuilder
             - {{storyContextRule}}
             {{questionObjectRule}}
             - {{classroomRule}}
+            {{quantityScaleRule}}
             - For subtraction, the left quantity must decrease by the right quantity.
             {{multiplicationRoleRule}}
             - For division, divide the left total exactly into the right number of equal groups.
@@ -2013,6 +2082,77 @@ internal static class LlmQuizPromptBuilder
         return language == AppLanguage.Vietnamese
             ? $"Ngữ cảnh được chọn là \"{storyContext.NaturalReference}\". Hãy dùng đúng loại đồ vật này trong đề và đặt answer_unit là \"{storyContext.AnswerUnit}\"."
             : $"The selected story item is \"{storyContext.NaturalReference}\". Use this exact kind of item in the problem and set answer_unit to \"{storyContext.AnswerUnit}\".";
+    }
+
+    private static string BuildArithmeticQuantityScaleRule(
+        IntegerArithmeticExpression expression,
+        AppLanguage language)
+    {
+        BigInteger result = expression.Operation switch
+        {
+            ArithmeticOperation.Add =>
+                expression.LeftOperand + expression.RightOperand,
+            ArithmeticOperation.Subtract =>
+                expression.LeftOperand - expression.RightOperand,
+            ArithmeticOperation.Multiply =>
+                expression.LeftOperand * expression.RightOperand,
+            ArithmeticOperation.Divide when !expression.RightOperand.IsZero =>
+                expression.LeftOperand / expression.RightOperand,
+            _ => BigInteger.Zero
+        };
+
+        BigInteger largestQuantity = new[]
+            {
+                BigInteger.Abs(expression.LeftOperand),
+                BigInteger.Abs(expression.RightOperand),
+                BigInteger.Abs(result)
+            }
+            .Max();
+
+        if (largestQuantity < LargeStoryQuantityThreshold)
+        {
+            return string.Empty;
+        }
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return expression.Operation == ArithmeticOperation.Multiply
+                ? "- Dữ kiện ở quy mô hàng nghìn trở lên. BẮT BUỘC dùng bối cảnh quy mô lớn hợp lý như kho hàng, nhà máy, xưởng in, trung tâm phân phối, thư viện lớn, trang trại hoặc vườn ươm. Với phép nhân, nhóm phải là lô/thùng/pallet/dãy sản xuất/khu vực kho phù hợp. Tuyệt đối không đặt hàng nghìn/hàng chục nghìn đồ vật trong lớp học, tủ sách lớp, khu vườn gia đình, khay bánh, hộp bánh hoặc một vật chứa nhỏ."
+                : "- Dữ kiện ở quy mô hàng nghìn trở lên. BẮT BUỘC dùng bối cảnh quy mô lớn hợp lý như kho hàng, nhà máy, xưởng in, trung tâm phân phối, thư viện lớn, nhà sách, trang trại hoặc vườn ươm. Tuyệt đối không đặt số lượng lớn này trong lớp học, tủ sách lớp, khu vườn gia đình, khay/hộp nhỏ hoặc bối cảnh cá nhân.";
+        }
+
+        return expression.Operation == ArithmeticOperation.Multiply
+            ? "- The quantities are in the thousands or above. REQUIRED: use a realistic large-scale setting such as a warehouse, factory, printing facility, distribution center, large library, farm, or plant nursery. For multiplication, groups must be realistic lots/cartons/pallets/production rows/storage sections. Never put thousands or tens of thousands of items in one classroom, a personal garden, a cake tray, a small box, or another tiny container."
+            : "- The quantities are in the thousands or above. REQUIRED: use a realistic large-scale setting such as a warehouse, factory, printing facility, distribution center, large library, bookstore, farm, or plant nursery. Never place these large counts in one classroom, a personal garden, a small tray/box, or another personal-scale setting.";
+    }
+
+    private static string BuildFindXQuantityScaleRule(
+        FindXQuizContract contract,
+        AppLanguage language)
+    {
+        BigInteger largestQuantity = new[]
+            {
+                BigInteger.Abs(contract.KnownValue),
+                BigInteger.Abs(contract.ResultValue),
+                BigInteger.Abs(contract.CorrectAnswer)
+            }
+            .Max();
+
+        if (largestQuantity < LargeStoryQuantityThreshold)
+        {
+            return string.Empty;
+        }
+
+        if (language == AppLanguage.Vietnamese)
+        {
+            return contract.Operation == ArithmeticOperation.Multiply
+                ? "- Quy mô dữ kiện lớn: dùng kho hàng/nhà máy/xưởng/trung tâm phân phối/thư viện lớn/trang trại/vườn ươm và nhóm theo lô, thùng, pallet hoặc khu vực hợp lý. Không dùng lớp học, khu vườn gia đình, khay bánh hoặc hộp nhỏ cho số lượng hàng nghìn trở lên."
+                : "- Quy mô dữ kiện lớn: dùng kho hàng/nhà máy/xưởng/trung tâm phân phối/thư viện lớn/nhà sách/trang trại/vườn ươm. Không dùng lớp học, tủ sách lớp, khu vườn gia đình hoặc vật chứa nhỏ cho số lượng hàng nghìn trở lên.";
+        }
+
+        return contract.Operation == ArithmeticOperation.Multiply
+            ? "- This is a large-scale quantity. Use a warehouse/factory/workshop/distribution center/large library/farm/nursery and realistic lots, cartons, pallets, or storage sections. Do not use one classroom, a personal garden, a cake tray, or a small box for counts in the thousands or above."
+            : "- This is a large-scale quantity. Use a warehouse/factory/workshop/distribution center/large library/bookstore/farm/nursery. Do not use one classroom, a class bookshelf, a personal garden, or a small container for counts in the thousands or above.";
     }
 
     private static string BuildFindXStoryItemRule(
@@ -2080,8 +2220,8 @@ internal static class LlmQuizPromptBuilder
 
         string languageName =
             language == AppLanguage.Vietnamese
-                ? "Vietnamese used in Vietnamese primary schools"
-                : "natural English used in an English-language elementary school";
+                ? "natural Vietnamese used in primary-school math word problems"
+                : "natural English used in primary-school math word problems";
 
         string answerUnit =
             GetFindXAnswerUnit(
@@ -2112,8 +2252,8 @@ internal static class LlmQuizPromptBuilder
 
         string classroomRule =
             language == AppLanguage.Vietnamese
-                ? "Nếu dùng tên lớp, khối chỉ từ lớp 1 đến lớp 5; lớp con chỉ từ 1 đến 9 hoặc A đến I."
-                : "If a class label is used, use only grades 1 through 5 and sections 1 through 9 or A through I.";
+                ? "Không gắn mức sao với lớp/khối cụ thể; nếu cần bối cảnh trường học, chỉ dùng cách gọi chung như lớp học hoặc các bạn học sinh."
+                : "Do not map star levels to a specific grade; use a generic classroom or students when a school setting is needed.";
 
         string retry =
             string.IsNullOrWhiteSpace(previousErrorCode)
@@ -2121,6 +2261,11 @@ internal static class LlmQuizPromptBuilder
                 : BuildRetryInstruction(
                     previousErrorCode,
                     language);
+
+        string quantityScaleRule =
+            BuildFindXQuantityScaleRule(
+                contract,
+                language);
 
         return FormattableString.Invariant(
             $$"""
@@ -2143,6 +2288,7 @@ internal static class LlmQuizPromptBuilder
             - Keep answer_unit semantically equivalent to "{{answerUnit}}"; only cây/cái/chiếc may be exchanged for a Vietnamese pen unit.
             - {{characterRule}}
             - {{classroomRule}}
+            {{quantityScaleRule}}
             - solution_lead is only one short textbook lead-in sentence before the student's calculation. It introduces finding x, repeats the answer_unit noun phrase, ends with a colon, and contains no number, equation, operator, equals sign, value of x, result, or answer.
             - subject_name is the person, group, or object described in problem_text and contains no number.
             {{retry}}
@@ -2205,8 +2351,8 @@ internal static class LlmQuizPromptBuilder
 
         string languageName =
             language == AppLanguage.Vietnamese
-                ? "Vietnamese used in Vietnamese primary schools"
-                : "natural English used in an English-language elementary school";
+                ? "natural Vietnamese used in primary-school math word problems"
+                : "natural English used in primary-school math word problems";
 
         string measurement =
             (contract.Measurement, language) switch
@@ -2324,110 +2470,210 @@ internal static class LlmQuizPromptBuilder
             : null;
     }
 
+    private const int LargeStoryQuantityThreshold = 1_000;
+
     public static WordProblemStoryContext SelectStoryContext(
-        AppLanguage language)
-    {
-        IReadOnlyList<WordProblemStoryContext> items =
+        AppLanguage language) =>
+        SelectRandomStoryContext(
             WordProblemStoryContextCatalog
                 .GetProfile(language)
-                .Items;
+                .Items);
 
+    public static WordProblemStoryContext SelectStoryContext(
+        AppLanguage language,
+        IntegerArithmeticExpression expression)
+    {
+        BigInteger calculated = expression.Operation switch
+        {
+            ArithmeticOperation.Add =>
+                expression.LeftOperand + expression.RightOperand,
+            ArithmeticOperation.Subtract =>
+                expression.LeftOperand - expression.RightOperand,
+            ArithmeticOperation.Multiply =>
+                expression.LeftOperand * expression.RightOperand,
+            ArithmeticOperation.Divide when !expression.RightOperand.IsZero =>
+                expression.LeftOperand / expression.RightOperand,
+            _ => BigInteger.Zero
+        };
+
+        BigInteger largestQuantity = new[]
+            {
+                BigInteger.Abs(expression.LeftOperand),
+                BigInteger.Abs(expression.RightOperand),
+                BigInteger.Abs(calculated)
+            }
+            .Max();
+
+        if (largestQuantity < LargeStoryQuantityThreshold)
+        {
+            return SelectStoryContext(language);
+        }
+
+        IReadOnlyList<WordProblemStoryContext> items =
+            expression.Operation == ArithmeticOperation.Multiply
+                ? WordProblemStoryContextCatalog
+                    .GetLargeMultiplicationProfile(language)
+                    .Items
+                : WordProblemStoryContextCatalog
+                    .GetLargeQuantityProfile(language)
+                    .Items;
+
+        return SelectRandomStoryContext(items);
+    }
+
+    public static WordProblemStoryContext SelectStoryContext(
+        AppLanguage language,
+        FindXQuizContract contract)
+    {
+        BigInteger largestQuantity = new[]
+            {
+                BigInteger.Abs(contract.KnownValue),
+                BigInteger.Abs(contract.ResultValue),
+                BigInteger.Abs(contract.CorrectAnswer)
+            }
+            .Max();
+
+        if (largestQuantity < LargeStoryQuantityThreshold)
+        {
+            return SelectStoryContext(language);
+        }
+
+        IReadOnlyList<WordProblemStoryContext> items =
+            contract.Operation == ArithmeticOperation.Multiply
+                ? WordProblemStoryContextCatalog
+                    .GetLargeMultiplicationProfile(language)
+                    .Items
+                : WordProblemStoryContextCatalog
+                    .GetLargeQuantityProfile(language)
+                    .Items;
+
+        return SelectRandomStoryContext(items);
+    }
+
+    private static WordProblemStoryContext SelectRandomStoryContext(
+        IReadOnlyList<WordProblemStoryContext> items)
+    {
         if (items.Count == 0)
         {
             throw new InvalidOperationException(
                 "The word-problem story context catalog is empty.");
         }
 
+        WordProblemContextCategory[] categories =
+            items
+                .Select(item => item.Category)
+                .Distinct()
+                .ToArray();
+
         WordProblemContextCategory category =
-            StoryContextCategories[
-                Random.Shared.Next(
-                    StoryContextCategories.Length)];
+            categories[Random.Shared.Next(categories.Length)];
 
-        int categoryItemCount = 0;
+        WordProblemStoryContext[] categoryItems =
+            items
+                .Where(item => item.Category == category)
+                .ToArray();
 
-        foreach (WordProblemStoryContext item in items)
-        {
-            if (item.Category == category)
-            {
-                categoryItemCount++;
-            }
-        }
-
-        if (categoryItemCount == 0)
-        {
-            return items[Random.Shared.Next(items.Count)];
-        }
-
-        int selectedIndex =
-            Random.Shared.Next(categoryItemCount);
-
-        foreach (WordProblemStoryContext item in items)
-        {
-            if (item.Category != category)
-            {
-                continue;
-            }
-
-            if (selectedIndex-- == 0)
-            {
-                return item;
-            }
-        }
-
-        throw new InvalidOperationException(
-            "Could not select a word-problem story context.");
+        return categoryItems[
+            Random.Shared.Next(categoryItems.Length)];
     }
 
     public static WordProblemStoryContext SelectFractionStoryContext(
         AppLanguage language,
-        FractionOperation operation)
+        FractionOperation operation,
+        FractionQuizContract contract)
     {
         // Keep the story noun and answer unit dimensionally consistent.
-        // Division is special: the operands are measured quantities but the
-        // answer is a count of equal portions, not another length/volume/mass.
+        // Large numerators/denominators describe a precise fraction rather
+        // than a huge count of individual objects, so use continuous
+        // quantities and never a cake/item-count context at that scale.
+        BigInteger fractionComplexity = new[]
+            {
+                BigInteger.Abs(contract.LeftOperand.Numerator),
+                contract.LeftOperand.Denominator,
+                BigInteger.Abs(contract.RightOperand.Numerator),
+                contract.RightOperand.Denominator
+            }
+            .Max();
+
+        bool useContinuousLargeScaleContext =
+            fractionComplexity >= LargeStoryQuantityThreshold;
+
         WordProblemStoryContext[] contexts;
 
         if (operation == FractionOperation.Divide)
         {
+            // Division may produce a non-integer rational quotient. Phrase it
+            // as a ratio ("gấp bao nhiêu lần" / "how many times") instead of
+            // forcing a fractional count of cakes, cups or physical pieces.
             contexts =
                 language == AppLanguage.Vietnamese
-                    ?
-                    [
-                        new(WordProblemContextCategory.SchoolSupply, "mét dây ruy băng", "đoạn dây ruy băng"),
-                        new(WordProblemContextCategory.SchoolSupply, "mét vải", "mảnh vải"),
-                        new(WordProblemContextCategory.Sweet, "lít nước", "cốc nước"),
-                        new(WordProblemContextCategory.Sweet, "ki-lô-gam bột", "phần bột"),
-                        new(WordProblemContextCategory.Sweet, "chiếc bánh", "phần bánh")
-                    ]
-                    :
-                    [
-                        new(WordProblemContextCategory.SchoolSupply, "metres of ribbon", "pieces of ribbon"),
-                        new(WordProblemContextCategory.SchoolSupply, "metres of fabric", "pieces of fabric"),
-                        new(WordProblemContextCategory.Sweet, "litres of water", "cups of water"),
-                        new(WordProblemContextCategory.Sweet, "kilograms of flour", "portions of flour"),
-                        new(WordProblemContextCategory.Sweet, "cake", "pieces of cake")
-                    ];
+                    ? useContinuousLargeScaleContext
+                        ?
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "mét dây trong xưởng", "lần"),
+                            new(WordProblemContextCategory.SchoolSupply, "mét vải trong kho", "lần"),
+                            new(WordProblemContextCategory.Sweet, "lít nước trong bồn", "lần"),
+                            new(WordProblemContextCategory.Sweet, "ki-lô-gam nguyên liệu trong kho", "lần")
+                        ]
+                        :
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "mét dây ruy băng", "lần"),
+                            new(WordProblemContextCategory.SchoolSupply, "mét vải", "lần"),
+                            new(WordProblemContextCategory.Sweet, "lít nước", "lần"),
+                            new(WordProblemContextCategory.Sweet, "ki-lô-gam bột", "lần")
+                        ]
+                    : useContinuousLargeScaleContext
+                        ?
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "metres of cable in a workshop", "times"),
+                            new(WordProblemContextCategory.SchoolSupply, "metres of fabric in storage", "times"),
+                            new(WordProblemContextCategory.Sweet, "litres of water in a tank", "times"),
+                            new(WordProblemContextCategory.Sweet, "kilograms of material in storage", "times")
+                        ]
+                        :
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "metres of ribbon", "times"),
+                            new(WordProblemContextCategory.SchoolSupply, "metres of fabric", "times"),
+                            new(WordProblemContextCategory.Sweet, "litres of water", "times"),
+                            new(WordProblemContextCategory.Sweet, "kilograms of flour", "times")
+                        ];
         }
         else
         {
             contexts =
                 language == AppLanguage.Vietnamese
-                    ?
-                    [
-                        new(WordProblemContextCategory.SchoolSupply, "mét dây ruy băng", "mét dây ruy băng"),
-                        new(WordProblemContextCategory.SchoolSupply, "mét vải", "mét vải"),
-                        new(WordProblemContextCategory.Sweet, "lít nước", "lít nước"),
-                        new(WordProblemContextCategory.Sweet, "ki-lô-gam bột", "ki-lô-gam bột"),
-                        new(WordProblemContextCategory.Sweet, "chiếc bánh", "chiếc bánh")
-                    ]
-                    :
-                    [
-                        new(WordProblemContextCategory.SchoolSupply, "metres of ribbon", "metres of ribbon"),
-                        new(WordProblemContextCategory.SchoolSupply, "metres of fabric", "metres of fabric"),
-                        new(WordProblemContextCategory.Sweet, "litres of water", "litres of water"),
-                        new(WordProblemContextCategory.Sweet, "kilograms of flour", "kilograms of flour"),
-                        new(WordProblemContextCategory.Sweet, "cake", "cakes")
-                    ];
+                    ? useContinuousLargeScaleContext
+                        ?
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "mét dây trong xưởng", "mét dây"),
+                            new(WordProblemContextCategory.SchoolSupply, "mét vải trong kho", "mét vải"),
+                            new(WordProblemContextCategory.Sweet, "lít nước trong bồn", "lít nước"),
+                            new(WordProblemContextCategory.Sweet, "ki-lô-gam nguyên liệu trong kho", "ki-lô-gam nguyên liệu")
+                        ]
+                        :
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "mét dây ruy băng", "mét dây ruy băng"),
+                            new(WordProblemContextCategory.SchoolSupply, "mét vải", "mét vải"),
+                            new(WordProblemContextCategory.Sweet, "lít nước", "lít nước"),
+                            new(WordProblemContextCategory.Sweet, "ki-lô-gam bột", "ki-lô-gam bột"),
+                            new(WordProblemContextCategory.Sweet, "chiếc bánh", "chiếc bánh")
+                        ]
+                    : useContinuousLargeScaleContext
+                        ?
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "metres of cable in a workshop", "metres of cable"),
+                            new(WordProblemContextCategory.SchoolSupply, "metres of fabric in storage", "metres of fabric"),
+                            new(WordProblemContextCategory.Sweet, "litres of water in a tank", "litres of water"),
+                            new(WordProblemContextCategory.Sweet, "kilograms of material in storage", "kilograms of material")
+                        ]
+                        :
+                        [
+                            new(WordProblemContextCategory.SchoolSupply, "metres of ribbon", "metres of ribbon"),
+                            new(WordProblemContextCategory.SchoolSupply, "metres of fabric", "metres of fabric"),
+                            new(WordProblemContextCategory.Sweet, "litres of water", "litres of water"),
+                            new(WordProblemContextCategory.Sweet, "kilograms of flour", "kilograms of flour"),
+                            new(WordProblemContextCategory.Sweet, "cake", "cakes")
+                        ];
         }
 
         return contexts[Random.Shared.Next(contexts.Length)];
@@ -2492,6 +2738,8 @@ internal static class LlmQuizPromptBuilder
                     "Viết lại solution_lead bằng đúng cụm answer_unit; không thay đơn vị cụ thể bằng một từ khái quát hơn.",
                 "MultiplicationGroupItemConflict" =>
                     "Tách rõ số nhóm và số đồ vật mỗi nhóm. Dùng một danh từ nhóm như nhóm, dãy hoặc khu vực; không dùng chính answer_unit làm vật chứa nhiều vật cùng loại.",
+                "UnrealisticQuantityContext" =>
+                    "Đổi sang bối cảnh quy mô lớn phù hợp dữ kiện như kho hàng, nhà máy, xưởng, trung tâm phân phối, thư viện lớn, trang trại hoặc vườn ươm. Không dùng lớp học, khu vườn gia đình, khay bánh hay hộp nhỏ cho số lượng hàng nghìn trở lên.",
                 "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                     "Bỏ cụm từ gây suy ra sai phép toán và thay bằng hành động tiểu học thể hiện đúng phép tính bắt buộc.",
                 "InvalidClassLabel" =>
@@ -2554,6 +2802,8 @@ internal static class LlmQuizPromptBuilder
                 "Rewrite solution_lead with the exact answer_unit noun phrase instead of a broader category.",
             "MultiplicationGroupItemConflict" =>
                 "Separate the group count from the item count per group. Use a distinct group noun such as group, row, or area; never make the answer_unit contain more items of itself.",
+            "UnrealisticQuantityContext" =>
+                "Move the story to a realistic large-scale setting such as a warehouse, factory, workshop, distribution center, large library, farm, or nursery. Do not use one classroom, a personal garden, a cake tray, or a small box for quantities in the thousands or above.",
             "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                 "Remove wording that implies the wrong operation and replace it with a clear elementary-school action for the required operation.",
             "InvalidClassLabel" =>
@@ -3099,6 +3349,21 @@ internal sealed partial class LlmWordProblemValidator
     {
         ArgumentNullException.ThrowIfNull(requiredStoryContext);
 
+        if (expression.Operation == ArithmeticOperation.Multiply &&
+            (expression.LeftOperand < int.MinValue ||
+             expression.LeftOperand > int.MaxValue ||
+             expression.RightOperand < int.MinValue ||
+             expression.RightOperand > int.MaxValue ||
+             correctAnswer < int.MinValue ||
+             correctAnswer > int.MaxValue))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "MultiplicationContractOutOfInt32Range",
+                language == AppLanguage.Vietnamese
+                    ? "Contract phép nhân có toán hạng hoặc tích vượt phạm vi số nguyên 32-bit. C# phải sinh lại dữ kiện trước khi gọi AI; model không được dùng contract này."
+                    : "The multiplication contract has an operand or product outside the 32-bit integer range. C# must regenerate the facts before calling AI; the model must not receive this contract.");
+        }
+
         if (expression.LeftOperand < int.MinValue ||
             expression.LeftOperand > int.MaxValue ||
             expression.RightOperand < int.MinValue ||
@@ -3217,6 +3482,23 @@ internal sealed partial class LlmWordProblemValidator
                     language == AppLanguage.Vietnamese
                         ? $"hai dữ kiện của phép tính: {left} và {right}"
                         : $"the two operation inputs: {left} and {right}"));
+        }
+
+        LlmWordProblemValidationResult? scaleValidation =
+            ValidateLargeQuantitySetting(
+                problem,
+                new[]
+                {
+                    BigInteger.Abs(expression.LeftOperand),
+                    BigInteger.Abs(expression.RightOperand),
+                    BigInteger.Abs(correctAnswer)
+                }.Max(),
+                expression.Operation == ArithmeticOperation.Multiply,
+                language);
+
+        if (scaleValidation is not null)
+        {
+            return scaleValidation;
         }
 
         string lowerProblem =
@@ -4513,8 +4795,8 @@ internal sealed partial class LlmWordProblemValidator
                 FractionOperation.Multiply =>
                     ContainsAny(problem, "của", "phần của", "số đó"),
                 FractionOperation.Divide =>
-                    ContainsAny(problem, "chia", "cắt", "rót", "múc", "mỗi") &&
-                    ContainsAny(problem, "bao nhiêu", "được bao nhiêu", "mấy phần", "mấy đoạn", "mấy cốc"),
+                    (ContainsAny(problem, "chia", "tỉ số", "gấp") &&
+                     ContainsAny(problem, "bao nhiêu", "mấy", "lần")),
                 _ => false
             };
         }
@@ -4529,8 +4811,8 @@ internal sealed partial class LlmWordProblemValidator
             FractionOperation.Multiply =>
                 ContainsAny(problem, "of", "fraction of", "part of"),
             FractionOperation.Divide =>
-                ContainsAny(problem, "divide", "divided", "cut", "pour", "each") &&
-                ContainsAny(problem, "how many", "portions", "pieces", "cups"),
+                (ContainsAny(problem, "divide", "divided", "ratio", "times", "as large as") &&
+                 ContainsAny(problem, "how many", "times", "ratio")),
             _ => false
         };
     }
@@ -4671,6 +4953,23 @@ internal sealed partial class LlmWordProblemValidator
                         ? $"hai dữ kiện của phương trình {contract.EquationText}: {known} và {result}"
                         : $"the two facts in equation {contract.EquationText}: {known} and {result}") +
                 answerLeak);
+        }
+
+        LlmWordProblemValidationResult? scaleValidation =
+            ValidateLargeQuantitySetting(
+                problem,
+                new[]
+                {
+                    BigInteger.Abs(contract.KnownValue),
+                    BigInteger.Abs(contract.ResultValue),
+                    BigInteger.Abs(contract.CorrectAnswer)
+                }.Max(),
+                contract.Operation == ArithmeticOperation.Multiply,
+                language);
+
+        if (scaleValidation is not null)
+        {
+            return scaleValidation;
         }
 
         string lowerProblem = problem.ToLowerInvariant();
@@ -5398,6 +5697,112 @@ internal sealed partial class LlmWordProblemValidator
                     return found;
                 })
             .ToArray();
+
+    private static LlmWordProblemValidationResult? ValidateLargeQuantitySetting(
+        string problem,
+        BigInteger largestQuantity,
+        bool isMultiplication,
+        AppLanguage language)
+    {
+        if (largestQuantity < 1_000)
+        {
+            return null;
+        }
+
+        string normalized = NormalizeSemanticComparisonText(problem);
+
+        string[] smallScaleMarkers = language == AppLanguage.Vietnamese
+            ?
+            [
+                "lớp học",
+                "tủ sách lớp",
+                "tủ sách của lớp",
+                "khu vườn gia đình",
+                "vườn nhà",
+                "khay bánh",
+                "hộp bánh",
+                "bàn học",
+                "cặp sách"
+            ]
+            :
+            [
+                "classroom",
+                "class bookshelf",
+                "class cupboard",
+                "personal garden",
+                "home garden",
+                "cake tray",
+                "small cake box",
+                "school desk",
+                "school bag"
+            ];
+
+        bool hasSmallScaleConflict =
+            smallScaleMarkers.Any(marker =>
+                normalized.Contains(
+                    NormalizeSemanticComparisonText(marker),
+                    StringComparison.Ordinal));
+
+        string[] largeScaleMarkers = language == AppLanguage.Vietnamese
+            ?
+            [
+                "kho",
+                "nhà máy",
+                "xưởng",
+                "trung tâm",
+                "thư viện",
+                "nhà sách",
+                "siêu thị",
+                "trang trại",
+                "nông trại",
+                "vườn ươm",
+                "nhà in",
+                "cơ sở",
+                "hệ thống",
+                "khu sản xuất",
+                "khu phân phối"
+            ]
+            :
+            [
+                "warehouse",
+                "factory",
+                "workshop",
+                "distribution center",
+                "logistics center",
+                "library",
+                "bookstore",
+                "supermarket",
+                "farm",
+                "nursery",
+                "printing facility",
+                "storage",
+                "production facility",
+                "network"
+            ];
+
+        bool hasLargeScaleSetting =
+            largeScaleMarkers.Any(marker =>
+                normalized.Contains(
+                    NormalizeSemanticComparisonText(marker),
+                    StringComparison.Ordinal));
+
+        if (hasLargeScaleSetting && !hasSmallScaleConflict)
+        {
+            return null;
+        }
+
+        string feedback = language == AppLanguage.Vietnamese
+            ? isMultiplication
+                ? "Dữ kiện đã ở quy mô hàng nghìn trở lên nhưng problem_text vẫn thiếu bối cảnh quy mô lớn. Hãy đặt bài trong kho hàng, nhà máy, xưởng, trung tâm phân phối, thư viện lớn, trang trại hoặc vườn ươm; với phép nhân dùng lô/thùng/pallet/dãy sản xuất hay khu vực kho hợp lý. Không dùng lớp học, khu vườn gia đình, khay bánh hoặc hộp nhỏ."
+                : "Dữ kiện đã ở quy mô hàng nghìn trở lên nhưng problem_text vẫn thiếu bối cảnh quy mô lớn. Hãy dùng kho hàng, nhà máy, xưởng, trung tâm phân phối, thư viện lớn, nhà sách, siêu thị, trang trại hoặc vườn ươm; không dùng lớp học, tủ sách lớp, khu vườn gia đình hay vật chứa nhỏ."
+            : isMultiplication
+                ? "The facts are in the thousands or above, but problem_text has no realistic large-scale setting. Use a warehouse, factory, workshop, distribution center, large library, farm, or nursery; for multiplication use realistic lots/cartons/pallets/production rows/storage sections. Do not use one classroom, a personal garden, a cake tray, or a small box."
+                : "The facts are in the thousands or above, but problem_text has no realistic large-scale setting. Use a warehouse, factory, workshop, distribution center, large library, bookstore, supermarket, farm, or nursery; do not use one classroom, a class bookshelf, a personal garden, or a small container.";
+
+        return LlmWordProblemValidationResult.Invalid(
+            "UnrealisticQuantityContext",
+            feedback);
+    }
 
     private static string BuildTextLengthFeedback(
         int problemLength,

@@ -39,25 +39,6 @@ public sealed class QuizProblemTypeCatalog
             new(QuizProblemKind.Percentage))
     ];
 
-    private static readonly QuizProblemRequest[] MixedRequests =
-    [
-        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Add),
-        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Subtract),
-        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Multiply),
-        new(QuizProblemKind.Arithmetic, ArithmeticOperation.Divide),
-        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Add),
-        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Subtract),
-        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Multiply),
-        new(QuizProblemKind.Fraction, FractionOperation: FractionOperation.Divide),
-        new(QuizProblemKind.Geometry),
-        new(QuizProblemKind.FindX),
-        new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Direct),
-        new(QuizProblemKind.Proportion, ProportionType: ProportionQuizType.Inverse),
-        new(QuizProblemKind.Motion),
-        new(QuizProblemKind.Average),
-        new(QuizProblemKind.Percentage)
-    ];
-
     private static readonly IReadOnlyList<QuizProblemOption>
         ReadOnlyOptions =
             Array.AsReadOnly(RegisteredOptions);
@@ -75,14 +56,15 @@ public sealed class QuizProblemTypeCatalog
 
     public QuizProblemRequest Resolve(
         int selectedIndex,
-        ArithmeticOperation basicOperation,
-        FractionOperation fractionOperation,
+        ArithmeticOperation? basicOperation,
+        FractionOperation? fractionOperation,
         ProportionQuizType proportionType,
         AverageQuizType? averageType,
         PercentageQuizType? percentageType,
         ArithmeticOperation? findXOperation,
         GeometryQuizShape? geometryShape,
-        MotionQuizType? motionType)
+        MotionQuizType? motionType,
+        CurriculumTier curriculumTier)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -136,14 +118,9 @@ public sealed class QuizProblemTypeCatalog
             };
         }
 
-        if (MixedRequests.Length == 0)
-        {
-            throw new InvalidOperationException(
-                "No quiz problem type is registered for mixed generation.");
-        }
-
-        return MixedRequests[
-            _random.Next(MixedRequests.Length)];
+        return QuizCurriculumLayer.ResolveMixedRequest(
+            curriculumTier,
+            _random);
     }
 
     public QuizProblemRequest? GetFixedRequest(

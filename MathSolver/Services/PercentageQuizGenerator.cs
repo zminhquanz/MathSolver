@@ -39,27 +39,51 @@ public sealed class PercentageQuizGenerator
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
         PercentageQuizType? requestedType,
-        AppLanguage language)
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        PercentageQuizContract contract = CreateContract(requestedType, language);
+        PercentageQuizContract contract = CreateContract(
+            requestedType,
+            language,
+            curriculumContext);
         return CreateQuestion(mode, contract, includeWordProblem: false);
     }
 
     public ArithmeticQuizQuestion GenerateContract(
         ArithmeticQuizMode mode,
         PercentageQuizType? requestedType,
-        AppLanguage language)
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        PercentageQuizContract contract = CreateContract(requestedType, language);
+        PercentageQuizContract contract = CreateContract(
+            requestedType,
+            language,
+            curriculumContext);
         return CreateQuestion(mode, contract, includeWordProblem: false);
     }
 
     private PercentageQuizContract CreateContract(
         PercentageQuizType? requestedType,
-        AppLanguage language)
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext)
     {
-        PercentageQuizType type = requestedType ??
-            (PercentageQuizType)_random.Next(Enum.GetValues<PercentageQuizType>().Length);
+        IReadOnlyList<PercentageQuizType> allowedTypes =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetAllowedPercentageTypes(
+                    curriculumContext.Value)
+                : Enum.GetValues<PercentageQuizType>();
+
+        if (allowedTypes.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Percentage problems are not available at the selected curriculum tier.");
+        }
+
+        PercentageQuizType type =
+            requestedType.HasValue &&
+            allowedTypes.Contains(requestedType.Value)
+                ? requestedType.Value
+                : allowedTypes[_random.Next(allowedTypes.Count)];
 
         return type switch
         {

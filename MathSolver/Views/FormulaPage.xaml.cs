@@ -757,6 +757,14 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.Average);
     }
 
+    private async void OnMeasurementTabClicked(
+        object? sender,
+        EventArgs e)
+    {
+        await SwitchFormulaSubTabAsync(
+            FormulaSubTab.Measurement);
+    }
+
     private async Task SwitchFormulaSubTabAsync(
         FormulaSubTab selectedTab)
     {
@@ -905,6 +913,10 @@ public partial class FormulaPage : ContentPage
             selectedTab ==
             FormulaSubTab.Average;
 
+        MeasurementContent.IsVisible =
+            selectedTab ==
+            FormulaSubTab.Measurement;
+
         GeometryContent.IsVisible =
             selectedTab ==
             FormulaSubTab.Geometry;
@@ -920,6 +932,9 @@ public partial class FormulaPage : ContentPage
 
         ResetTransitionTransform(
             AverageContent);
+
+        ResetTransitionTransform(
+            MeasurementContent);
 
         ResetTransitionTransform(
             GeometryContent);
@@ -950,6 +965,13 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.Average)
         {
             AverageFormulaViewControl.RefreshLocalization();
+            return;
+        }
+
+        if (selectedTab ==
+            FormulaSubTab.Measurement)
+        {
+            MeasurementFormulaViewControl.RefreshLocalization();
             return;
         }
 
@@ -992,6 +1014,9 @@ public partial class FormulaPage : ContentPage
 
             FormulaSubTab.Average =>
                 AverageContent,
+
+            FormulaSubTab.Measurement =>
+                MeasurementContent,
 
             FormulaSubTab.Geometry =>
                 GeometryContent,
@@ -1038,6 +1063,11 @@ public partial class FormulaPage : ContentPage
             _selectedSubTab == FormulaSubTab.Average);
 
         ApplyAndroidSubTabState(
+            AndroidMeasurementTabButton,
+            AndroidMeasurementTabIndicator,
+            _selectedSubTab == FormulaSubTab.Measurement);
+
+        ApplyAndroidSubTabState(
             AndroidFormulaGeometryTabButton,
             AndroidFormulaGeometryTabIndicator,
             _selectedSubTab == FormulaSubTab.Geometry);
@@ -1046,6 +1076,7 @@ public partial class FormulaPage : ContentPage
         ResetSubTabButton(ProportionTabButton);
         ResetSubTabButton(MotionTabButton);
         ResetSubTabButton(AverageTabButton);
+        ResetSubTabButton(MeasurementTabButton);
         ResetSubTabButton(GeometryTabButton);
 
         Button selectedButton =
@@ -1055,6 +1086,7 @@ public partial class FormulaPage : ContentPage
                 FormulaSubTab.Proportion => ProportionTabButton,
                 FormulaSubTab.Motion => MotionTabButton,
                 FormulaSubTab.Average => AverageTabButton,
+                FormulaSubTab.Measurement => MeasurementTabButton,
                 FormulaSubTab.Geometry => GeometryTabButton,
                 _ => UnknownComponentTabButton
             };
@@ -1112,6 +1144,7 @@ public partial class FormulaPage : ContentPage
             FormulaSubTab.Proportion => AndroidProportionTabButton,
             FormulaSubTab.Motion => AndroidMotionTabButton,
             FormulaSubTab.Average => AndroidAverageTabButton,
+            FormulaSubTab.Measurement => AndroidMeasurementTabButton,
             FormulaSubTab.Geometry => AndroidFormulaGeometryTabButton,
             _ => AndroidUnknownComponentTabButton
         };
@@ -1704,6 +1737,7 @@ public partial class FormulaPage : ContentPage
                 }
 
                 AverageFormulaViewControl.RefreshLocalization();
+                MeasurementFormulaViewControl.RefreshLocalization();
 
                 LocalizationService.Attach(
                     this);
@@ -1896,6 +1930,7 @@ public partial class FormulaPage : ContentPage
         Proportion,
         Motion,
         Average,
+        Measurement,
         Geometry
     }
 }

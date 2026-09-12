@@ -57,27 +57,51 @@ public sealed class AverageQuizGenerator
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
         AverageQuizType? requestedType,
-        AppLanguage language)
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        AverageQuizContract contract = CreateContract(requestedType, language);
+        AverageQuizContract contract = CreateContract(
+            requestedType,
+            language,
+            curriculumContext);
         return CreateQuestion(mode, contract, includeWordProblem: false);
     }
 
     public ArithmeticQuizQuestion GenerateContract(
         ArithmeticQuizMode mode,
         AverageQuizType? requestedType,
-        AppLanguage language)
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        AverageQuizContract contract = CreateContract(requestedType, language);
+        AverageQuizContract contract = CreateContract(
+            requestedType,
+            language,
+            curriculumContext);
         return CreateQuestion(mode, contract, includeWordProblem: false);
     }
 
     private AverageQuizContract CreateContract(
         AverageQuizType? requestedType,
-        AppLanguage language)
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext)
     {
-        AverageQuizType type = requestedType ??
-            (AverageQuizType)_random.Next(Enum.GetValues<AverageQuizType>().Length);
+        IReadOnlyList<AverageQuizType> allowedTypes =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetAllowedAverageTypes(
+                    curriculumContext.Value)
+                : Enum.GetValues<AverageQuizType>();
+
+        if (allowedTypes.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Average problems are not available at the selected curriculum tier.");
+        }
+
+        AverageQuizType type =
+            requestedType.HasValue &&
+            allowedTypes.Contains(requestedType.Value)
+                ? requestedType.Value
+                : allowedTypes[_random.Next(allowedTypes.Count)];
 
         return type switch
         {

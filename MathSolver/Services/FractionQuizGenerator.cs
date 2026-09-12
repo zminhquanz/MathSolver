@@ -32,42 +32,71 @@ public sealed class FractionQuizGenerator
 
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode,
-        FractionOperation? requestedOperation = null)
+        FractionOperation? requestedOperation = null,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        FractionOperation operation =
-            requestedOperation ??
-            SupportedOperations[_random.Next(SupportedOperations.Length)];
+        QuizCurriculumLayer.FractionRules? curriculumRules =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetFractionRules(
+                    curriculumContext.Value)
+                : null;
 
-        if (!SupportedOperations.Contains(operation))
+        if (curriculumRules is { IsAvailable: false })
         {
-            throw new ArgumentOutOfRangeException(nameof(requestedOperation));
+            throw new InvalidOperationException(
+                "Fractions are not available at the selected curriculum tier.");
         }
+
+        IReadOnlyList<FractionOperation> allowedOperations =
+            curriculumRules?.AllowedOperations ??
+            SupportedOperations;
+
+        FractionOperation operation =
+            requestedOperation.HasValue &&
+            allowedOperations.Contains(requestedOperation.Value)
+                ? requestedOperation.Value
+                : allowedOperations[_random.Next(allowedOperations.Count)];
 
         ReducedFraction left;
         ReducedFraction right;
         ReducedFraction answer;
 
-        if (operation == FractionOperation.Divide)
+        if (curriculumRules?.RequireSameDenominatorForAddSubtract == true &&
+            operation is FractionOperation.Add or FractionOperation.Subtract)
         {
-            // Word-problem division should map cleanly to "how many equal
-            // portions?". Generate an exact integer quotient so the story does
-            // not end up asking for a fractional number of physical portions.
-            (left, right) = CreateExactDivisionOperands();
-            answer = Calculate(left, right, operation);
+            int denominator = CreateDenominator(
+                curriculumRules,
+                secondaryOperand: false);
+            left = CreateOperand(
+                curriculumRules,
+                secondaryOperand: false,
+                denominator);
+            right = CreateOperand(
+                curriculumRules,
+                secondaryOperand: true,
+                denominator);
         }
         else
         {
-            left = CreateOperand();
-            right = CreateOperand();
-
-            if (operation == FractionOperation.Subtract &&
-                Compare(left, right) < 0)
-            {
-                (left, right) = (right, left);
-            }
-
-            answer = Calculate(left, right, operation);
+            // Phân số thứ nhất theo đúng bậc chữ số của tier; phân số thứ hai
+            // chọn bậc chữ số độc lập từ ★ đến tier hiện tại. Vì vậy ở mức
+            // cao vẫn có thể gặp dạng 18.258/24.731 + 2/7 thay vì ép cả hai
+            // phân số đều có tử/mẫu rất lớn.
+            left = CreateOperand(
+                curriculumRules,
+                secondaryOperand: false);
+            right = CreateOperand(
+                curriculumRules,
+                secondaryOperand: true);
         }
+
+        if (operation == FractionOperation.Subtract &&
+            Compare(left, right) < 0)
+        {
+            (left, right) = (right, left);
+        }
+
+        answer = Calculate(left, right, operation);
 
         bool? equationIsCorrect = null;
         ReducedFraction? presented = null;
@@ -118,43 +147,46 @@ public sealed class FractionQuizGenerator
                 choices));
     }
 
-    private (ReducedFraction Left, ReducedFraction Right)
-        CreateExactDivisionOperands()
+    private int CreateDenominator(
+        QuizCurriculumLayer.FractionRules? curriculumRules,
+        bool secondaryOperand)
     {
-        while (true)
+        if (curriculumRules is null)
         {
-            int denominator = _random.Next(4, 13);
-            int quotient = _random.Next(2, Math.Min(5, denominator - 1) + 1);
-            int maxRightNumerator = (denominator - 1) / quotient;
-
-            if (maxRightNumerator < 1)
-            {
-                continue;
-            }
-
-            int rightNumerator =
-                _random.Next(1, maxRightNumerator + 1);
-
-            var right =
-                new ReducedFraction(
-                    rightNumerator,
-                    denominator);
-            var left =
-                new ReducedFraction(
-                    rightNumerator * quotient,
-                    denominator);
-
-            if (Compare(left, right) > 0)
-            {
-                return (left, right);
-            }
+            return _random.Next(2, 13);
         }
+
+        int maximum = Math.Max(2, curriculumRules.MaximumDenominator);
+
+        return secondaryOperand
+            ? QuizCurriculumLayer.NextSecondaryOperand(
+                _random,
+                curriculumRules.Tier,
+                minimumAllowed: 2,
+                maximumOverride: maximum)
+            : QuizCurriculumLayer.NextPrimaryOperand(
+                _random,
+                curriculumRules.Tier,
+                minimumAllowed: 2,
+                maximumOverride: maximum);
     }
 
-    private ReducedFraction CreateOperand()
+    private ReducedFraction CreateOperand(
+        QuizCurriculumLayer.FractionRules? curriculumRules,
+        bool secondaryOperand,
+        int? forcedDenominator = null)
     {
-        int denominator = _random.Next(2, 13);
-        int numerator = _random.Next(1, denominator);
+        int denominator =
+            forcedDenominator ??
+            CreateDenominator(
+                curriculumRules,
+                secondaryOperand);
+
+        int maximumNumerator = Math.Min(
+            denominator - 1,
+            curriculumRules?.MaximumNumerator ?? denominator - 1);
+
+        int numerator = _random.Next(1, maximumNumerator + 1);
         return new ReducedFraction(numerator, denominator);
     }
 

@@ -93,6 +93,9 @@
     <Compile Update="Views\FormulaPage.xaml.cs">
       <DependentUpon>FormulaPage.xaml</DependentUpon>
     </Compile>
+    <Compile Update="Views\MeasurementFormulaView.xaml.cs">
+      <DependentUpon>MeasurementFormulaView.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Views\MathPuzzlePage.xaml.cs">
       <DependentUpon>MathPuzzlePage.xaml</DependentUpon>
     </Compile>
@@ -118,6 +121,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\FormulaPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Views\MeasurementFormulaView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\FractionView.xaml">

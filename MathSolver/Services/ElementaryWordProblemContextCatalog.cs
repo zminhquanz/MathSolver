@@ -544,11 +544,83 @@ public static class WordProblemStoryContextCatalog
                 En(WordProblemContextCategory.OrnamentalPlant, "potted spider plant", "potted spider plants")
             ]);
 
+    // Ngữ cảnh quy mô lớn dùng riêng cho AI/LLM khi dữ kiện đạt hàng nghìn
+    // trở lên. Các danh từ này có thể xuất hiện tự nhiên trong kho, nhà máy,
+    // trung tâm phân phối, thư viện lớn hoặc vườn ươm; tránh tình huống vô lý
+    // như hàng chục nghìn chậu cây trong một khu vườn gia đình/lớp học.
+    private static readonly WordProblemStoryContextProfile VietnameseLargeQuantityProfile =
+        new(
+            [
+                Vi(WordProblemContextCategory.Book, "quyển sách"),
+                Vi(WordProblemContextCategory.SchoolSupply, "tờ giấy in"),
+                Vi(WordProblemContextCategory.Fruit, "quả cam"),
+                Vi(WordProblemContextCategory.Fruit, "quả táo"),
+                Vi(WordProblemContextCategory.OrnamentalPlant, "cây giống"),
+                Vi(WordProblemContextCategory.Toy, "linh kiện điện tử"),
+                Vi(WordProblemContextCategory.Toy, "viên gạch"),
+                Vi(WordProblemContextCategory.Sweet, "chai nước"),
+                Vi(WordProblemContextCategory.Sweet, "gói hàng"),
+                Vi(WordProblemContextCategory.SchoolSupply, "tem nhãn")
+            ]);
+
+    private static readonly WordProblemStoryContextProfile EnglishLargeQuantityProfile =
+        new(
+            [
+                En(WordProblemContextCategory.Book, "book", "books"),
+                En(WordProblemContextCategory.SchoolSupply, "sheet of printing paper", "sheets of printing paper"),
+                En(WordProblemContextCategory.Fruit, "orange", "oranges"),
+                En(WordProblemContextCategory.Fruit, "apple", "apples"),
+                En(WordProblemContextCategory.OrnamentalPlant, "seedling", "seedlings"),
+                En(WordProblemContextCategory.Toy, "electronic component", "electronic components"),
+                En(WordProblemContextCategory.Toy, "brick", "bricks"),
+                En(WordProblemContextCategory.Sweet, "bottle of water", "bottles of water"),
+                En(WordProblemContextCategory.Sweet, "parcel", "parcels"),
+                En(WordProblemContextCategory.SchoolSupply, "printed label", "printed labels")
+            ]);
+
+    // Phép nhân có hai vai trò số nhóm × số vật mỗi nhóm. Ở quy mô lớn chỉ
+    // dùng những vật có thể được đóng lô/thùng/pallet hoặc sản xuất hàng loạt.
+    private static readonly WordProblemStoryContextProfile VietnameseLargeMultiplicationProfile =
+        new(
+            [
+                Vi(WordProblemContextCategory.Toy, "linh kiện điện tử"),
+                Vi(WordProblemContextCategory.Toy, "viên gạch"),
+                Vi(WordProblemContextCategory.Sweet, "chai nước"),
+                Vi(WordProblemContextCategory.Sweet, "gói hàng"),
+                Vi(WordProblemContextCategory.SchoolSupply, "tờ giấy in"),
+                Vi(WordProblemContextCategory.SchoolSupply, "tem nhãn"),
+                Vi(WordProblemContextCategory.OrnamentalPlant, "cây giống")
+            ]);
+
+    private static readonly WordProblemStoryContextProfile EnglishLargeMultiplicationProfile =
+        new(
+            [
+                En(WordProblemContextCategory.Toy, "electronic component", "electronic components"),
+                En(WordProblemContextCategory.Toy, "brick", "bricks"),
+                En(WordProblemContextCategory.Sweet, "bottle of water", "bottles of water"),
+                En(WordProblemContextCategory.Sweet, "parcel", "parcels"),
+                En(WordProblemContextCategory.SchoolSupply, "sheet of printing paper", "sheets of printing paper"),
+                En(WordProblemContextCategory.SchoolSupply, "printed label", "printed labels"),
+                En(WordProblemContextCategory.OrnamentalPlant, "seedling", "seedlings")
+            ]);
+
     public static WordProblemStoryContextProfile GetProfile(
         AppLanguage language) =>
         language == AppLanguage.Vietnamese
             ? VietnameseProfile
             : EnglishProfile;
+
+    public static WordProblemStoryContextProfile GetLargeQuantityProfile(
+        AppLanguage language) =>
+        language == AppLanguage.Vietnamese
+            ? VietnameseLargeQuantityProfile
+            : EnglishLargeQuantityProfile;
+
+    public static WordProblemStoryContextProfile GetLargeMultiplicationProfile(
+        AppLanguage language) =>
+        language == AppLanguage.Vietnamese
+            ? VietnameseLargeMultiplicationProfile
+            : EnglishLargeMultiplicationProfile;
 
     private static WordProblemStoryContext Vi(
         WordProblemContextCategory category,

@@ -45,21 +45,33 @@ public sealed class ArithmeticQuizGenerator
 
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode,
-        ArithmeticOperation? requestedOperation = null)
+        ArithmeticOperation? requestedOperation = null,
+        QuizCurriculumContext? curriculumContext = null)
     {
+        QuizCurriculumLayer.ArithmeticRules? curriculumRules =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetArithmeticRules(
+                    curriculumContext.Value)
+                : null;
         for (int attempt = 0;
              attempt < MaximumGenerationAttempts;
              attempt++)
         {
+            IReadOnlyList<ArithmeticOperation> allowedOperations =
+                curriculumRules?.AllowedOperations ??
+                AllOperations;
+
             ArithmeticOperation operation =
-                requestedOperation ??
-                AllOperations[
-                    _random.Next(
-                        AllOperations.Length)];
+                requestedOperation.HasValue &&
+                allowedOperations.Contains(requestedOperation.Value)
+                    ? requestedOperation.Value
+                    : allowedOperations[
+                        _random.Next(allowedOperations.Count)];
 
             IntegerArithmeticExpression expression =
                 CreateExpression(
-                    operation);
+                    operation,
+                    curriculumRules);
 
             IntegerArithmeticResult calculation =
                 _engine.CalculateInteger(
@@ -101,46 +113,76 @@ public sealed class ArithmeticQuizGenerator
     }
 
     private IntegerArithmeticExpression CreateExpression(
-        ArithmeticOperation operation)
+        ArithmeticOperation operation,
+        QuizCurriculumLayer.ArithmeticRules? curriculumRules)
     {
         int left;
         int right;
 
+        if (curriculumRules is null)
+        {
+            return CreateLegacyExpression(operation);
+        }
+
+        CurriculumTier tier = curriculumRules.Tier;
+
         switch (operation)
         {
             case ArithmeticOperation.Add:
-                left =
-                    _random.Next(0, 101);
-
-                right =
-                    _random.Next(0, 101);
+                left = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier);
+                right = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier);
                 break;
 
             case ArithmeticOperation.Subtract:
-                left =
-                    _random.Next(0, 101);
-
-                right =
-                    _random.Next(0, left + 1);
+                left = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier);
+                right = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: left);
                 break;
 
             case ArithmeticOperation.Multiply:
-                left =
-                    _random.Next(0, 13);
+                left = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier);
 
-                right =
-                    _random.Next(0, 13);
+                // b được random theo bậc chữ số từ ★ đến tier hiện tại,
+                // nhưng contract Toán đố phải luôn nằm trong Int32 để C#
+                // validator có thể đối chiếu tuyệt đối an toàn.
+                int safeRightMaximum = Math.Min(
+                    curriculumRules.MaximumMultiplicationFactor,
+                    int.MaxValue / Math.Max(1, left));
+                right = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: safeRightMaximum);
                 break;
 
             case ArithmeticOperation.Divide:
-                right =
-                    _random.Next(1, 13);
+                int factorMaximum = Math.Max(
+                    1,
+                    Math.Min(
+                        curriculumRules.MaximumDivisionFactor,
+                        curriculumRules.MaximumValue));
 
-                int quotient =
-                    _random.Next(0, 13);
-
-                left =
-                    right * quotient;
+                // Chọn divisor theo bậc chữ số độc lập rồi chọn dividend là
+                // một bội chính xác trong đúng bậc của tier. Ví dụ ở ★★★★★
+                // hoàn toàn có thể sinh 18.258 ÷ 2 = 9.129.
+                right = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: factorMaximum);
+                left = QuizCurriculumLayer.NextPrimaryMultiple(
+                    _random,
+                    tier,
+                    right,
+                    curriculumRules.MaximumValue);
                 break;
 
             default:
@@ -154,6 +196,45 @@ public sealed class ArithmeticQuizGenerator
             left,
             operation,
             right);
+    }
+
+    private IntegerArithmeticExpression CreateLegacyExpression(
+        ArithmeticOperation operation)
+    {
+        int left;
+        int right;
+
+        switch (operation)
+        {
+            case ArithmeticOperation.Add:
+                left = _random.Next(0, 101);
+                right = _random.Next(0, 101);
+                break;
+
+            case ArithmeticOperation.Subtract:
+                left = _random.Next(0, 101);
+                right = _random.Next(0, left + 1);
+                break;
+
+            case ArithmeticOperation.Multiply:
+                left = _random.Next(0, 13);
+                right = _random.Next(0, 13);
+                break;
+
+            case ArithmeticOperation.Divide:
+                right = _random.Next(1, 13);
+                int quotient = _random.Next(0, 13);
+                left = right * quotient;
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(operation),
+                    operation,
+                    "Unsupported arithmetic operation.");
+        }
+
+        return new IntegerArithmeticExpression(left, operation, right);
     }
 
     private ArithmeticQuizQuestion CreateTrueFalseQuestion(
@@ -346,6 +427,17 @@ public sealed class ArithmeticQuizValidator
             !calculation.IsExactDivision)
         {
             return new(false, "NonExactDivision");
+        }
+
+        if (question.Expression.Operation == ArithmeticOperation.Multiply &&
+            (question.Expression.LeftOperand < int.MinValue ||
+             question.Expression.LeftOperand > int.MaxValue ||
+             question.Expression.RightOperand < int.MinValue ||
+             question.Expression.RightOperand > int.MaxValue ||
+             calculation.Result < int.MinValue ||
+             calculation.Result > int.MaxValue))
+        {
+            return new(false, "MultiplicationOutOfInt32Range");
         }
 
         if (calculation.Result !=

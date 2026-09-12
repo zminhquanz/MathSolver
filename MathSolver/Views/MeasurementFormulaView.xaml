@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentView
+    x:Class="MathSolver.Views.MeasurementFormulaView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="Transparent"
+    HorizontalOptions="Fill"
+    VerticalOptions="Fill">
+
+    <ScrollView
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill"
+        VerticalScrollBarVisibility="Default">
+
+        <VerticalStackLayout
+            Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,28', Default='20,16,20,28'}"
+            Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
+            HorizontalOptions="Fill">
+
+            <VerticalStackLayout Spacing="3">
+                <Label
+                    Text="↔  ⚖  ◷  □  ▣"
+                    FontSize="{OnPlatform Android=26, WinUI=36, Default=34}"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource PrimaryColor}" />
+
+                <Label
+                    x:Name="PageTitleLabel"
+                    FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                <Label
+                    x:Name="PageSubtitleLabel"
+                    FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
+                    HorizontalTextAlignment="Center"
+                    LineBreakMode="WordWrap"
+                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+            </VerticalStackLayout>
+
+            <Border
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="14">
+                    <Label
+                        x:Name="ConverterTitleLabel"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Label
+                        x:Name="CategoryLabel"
+                        FontSize="14"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                    <Border
+                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                        StrokeThickness="1"
+                        Padding="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="11" />
+                        </Border.StrokeShape>
+                        <Picker
+                            x:Name="CategoryPicker"
+                            HeightRequest="50"
+                            Margin="2,0"
+                            FontSize="16"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            TitleColor="{DynamicResource WallpaperTextSecondaryColor}"
+                            SelectedIndexChanged="OnCategoryChanged" />
+                    </Border>
+
+                    <Label
+                        x:Name="ValueLabel"
+                        FontSize="14"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                    <Border
+                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                        StrokeThickness="1"
+                        Padding="12,0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="11" />
+                        </Border.StrokeShape>
+                        <Entry
+                            x:Name="ValueEntry"
+                            HeightRequest="50"
+                            BackgroundColor="Transparent"
+                            FontSize="18"
+                            Keyboard="Numeric"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                            TextChanged="OnValueTextChanged" />
+                    </Border>
+
+                    <Grid
+                        ColumnDefinitions="*,Auto,*"
+                        ColumnSpacing="10"
+                        RowDefinitions="Auto,Auto">
+
+                        <Label
+                            x:Name="FromLabel"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Margin="0,0,0,5"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                        <Label
+                            x:Name="ToLabel"
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            Margin="0,0,0,5"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1"
+                            Padding="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="11" />
+                            </Border.StrokeShape>
+                            <Picker
+                                x:Name="FromUnitPicker"
+                                HeightRequest="50"
+                                Margin="2,0"
+                                FontSize="15"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                TitleColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                SelectedIndexChanged="OnUnitChanged" />
+                        </Border>
+
+                        <Button
+                            x:Name="SwapButton"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            WidthRequest="48"
+                            HeightRequest="48"
+                            Padding="0"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            CornerRadius="24"
+                            Text="⇄"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            BorderColor="{DynamicResource WallpaperPrimaryBorderColor}"
+                            BorderWidth="1"
+                            TextColor="{DynamicResource PrimaryColor}"
+                            Clicked="OnSwapClicked" />
+
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1"
+                            Padding="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="11" />
+                            </Border.StrokeShape>
+                            <Picker
+                                x:Name="ToUnitPicker"
+                                HeightRequest="50"
+                                Margin="2,0"
+                                FontSize="15"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                TitleColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                SelectedIndexChanged="OnUnitChanged" />
+                        </Border>
+                    </Grid>
+
+                    <Border
+                        x:Name="ResultBorder"
+                        Padding="16,14"
+                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                        StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="5">
+                            <Label
+                                x:Name="ResultCaptionLabel"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                            <Label
+                                x:Name="ResultLabel"
+                                Text="—"
+                                FontSize="{OnPlatform Android=25, WinUI=30, Default=28}"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource PrimaryColor}" />
+
+                            <Label
+                                x:Name="EquationLabel"
+                                FontSize="15"
+                                HorizontalTextAlignment="Center"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label
+                        x:Name="ErrorLabel"
+                        IsVisible="False"
+                        FontSize="14"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource DangerColor}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        x:Name="ReferenceTitleLabel"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Label
+                        x:Name="ReferenceTextLabel"
+                        FontSize="17"
+                        FontAttributes="Bold"
+                        LineHeight="1.35"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                    <Label
+                        x:Name="ReferenceHintLabel"
+                        FontSize="15"
+                        LineHeight="1.3"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperBorderBrush}"
+                StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="9">
+                    <Label
+                        x:Name="TipsTitleLabel"
+                        FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource PrimaryColor}" />
+
+                    <Label
+                        x:Name="TipsTextLabel"
+                        FontSize="16"
+                        LineHeight="1.35"
+                        LineBreakMode="WordWrap"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

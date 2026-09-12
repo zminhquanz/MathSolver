@@ -34,14 +34,22 @@ public sealed class FindXQuizGenerator
 
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode,
-        ArithmeticOperation? requestedOperation = null)
+        ArithmeticOperation? requestedOperation = null,
+        QuizCurriculumContext? curriculumContext = null)
     {
+        QuizCurriculumLayer.FindXRules? curriculumRules =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetFindXRules(
+                    curriculumContext.Value)
+                : null;
         for (int attempt = 0;
              attempt < MaximumGenerationAttempts;
              attempt++)
         {
             FindXQuizContract contract =
-                CreateContract(requestedOperation);
+                CreateContract(
+                    requestedOperation,
+                    curriculumRules);
 
             if (!IsVerifiedContract(contract))
             {
@@ -58,13 +66,27 @@ public sealed class FindXQuizGenerator
     }
 
     private FindXQuizContract CreateContract(
-        ArithmeticOperation? requestedOperation)
+        ArithmeticOperation? requestedOperation,
+        QuizCurriculumLayer.FindXRules? curriculumRules)
     {
-        ArithmeticOperation operation = requestedOperation ??
-            Operations[_random.Next(Operations.Length)];
+        IReadOnlyList<ArithmeticOperation> allowedOperations =
+            curriculumRules?.AllowedOperations ??
+            Operations;
+
+        ArithmeticOperation operation =
+            requestedOperation.HasValue &&
+            allowedOperations.Contains(requestedOperation.Value)
+                ? requestedOperation.Value
+                : allowedOperations[_random.Next(allowedOperations.Count)];
         bool unknownIsLeftOperand =
             _random.Next(2) == 0;
 
+        if (curriculumRules is null)
+        {
+            return CreateLegacyContract(operation, unknownIsLeftOperand);
+        }
+
+        CurriculumTier tier = curriculumRules.Tier;
         BigInteger knownValue;
         BigInteger resultValue;
         BigInteger correctAnswer;
@@ -72,46 +94,110 @@ public sealed class FindXQuizGenerator
         switch (operation)
         {
             case ArithmeticOperation.Add:
-                correctAnswer = _random.Next(1, 101);
-                knownValue = _random.Next(1, 101);
-                resultValue = correctAnswer + knownValue;
-                break;
+            {
+                int x = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier);
+                int known = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier);
 
-            case ArithmeticOperation.Subtract
-                when unknownIsLeftOperand:
-                knownValue = _random.Next(1, 51);
-                resultValue = _random.Next(0, 101);
-                correctAnswer = resultValue + knownValue;
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = (BigInteger)x + known;
                 break;
+            }
+
+            case ArithmeticOperation.Subtract when unknownIsLeftOperand:
+            {
+                int x = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier);
+                int known = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: x);
+
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = x - known;
+                break;
+            }
 
             case ArithmeticOperation.Subtract:
-                correctAnswer = _random.Next(1, 51);
-                resultValue = _random.Next(0, 101);
-                knownValue = correctAnswer + resultValue;
+            {
+                int known = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier);
+                int x = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: known);
+
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = known - x;
                 break;
+            }
 
             case ArithmeticOperation.Multiply:
-                correctAnswer = _random.Next(1, 13);
-                knownValue = _random.Next(1, 13);
-                resultValue = correctAnswer * knownValue;
-                break;
+            {
+                int x = QuizCurriculumLayer.NextPrimaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: curriculumRules.MaximumFactor);
+                int safeKnownMaximum = Math.Min(
+                    curriculumRules.MaximumFactor,
+                    int.MaxValue / Math.Max(1, x));
+                int known = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: safeKnownMaximum);
 
-            case ArithmeticOperation.Divide
-                when unknownIsLeftOperand:
-                knownValue = _random.Next(1, 13);
-                resultValue = _random.Next(1, 13);
-                correctAnswer = resultValue * knownValue;
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = (BigInteger)x * known;
                 break;
+            }
+
+            case ArithmeticOperation.Divide when unknownIsLeftOperand:
+            {
+                int known = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: curriculumRules.MaximumFactor);
+                int x = QuizCurriculumLayer.NextPrimaryMultiple(
+                    _random,
+                    tier,
+                    known,
+                    curriculumRules.MaximumAddSubtractValue);
+
+                knownValue = known;
+                correctAnswer = x;
+                resultValue = x / known;
+                break;
+            }
 
             case ArithmeticOperation.Divide:
-                correctAnswer = _random.Next(1, 13);
-                resultValue = _random.Next(1, 13);
-                knownValue = correctAnswer * resultValue;
+            {
+                int x = QuizCurriculumLayer.NextSecondaryOperand(
+                    _random,
+                    tier,
+                    maximumOverride: curriculumRules.MaximumFactor);
+                int known = QuizCurriculumLayer.NextPrimaryMultiple(
+                    _random,
+                    tier,
+                    x,
+                    curriculumRules.MaximumAddSubtractValue);
+
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = known / x;
                 break;
+            }
 
             default:
-                throw new ArgumentOutOfRangeException(
-                    nameof(operation));
+                throw new ArgumentOutOfRangeException(nameof(operation));
         }
 
         IntegerArithmeticExpression solutionExpression =
@@ -128,6 +214,88 @@ public sealed class FindXQuizGenerator
             unknownIsLeftOperand,
             correctAnswer,
             solutionExpression);
+    }
+
+    private FindXQuizContract CreateLegacyContract(
+        ArithmeticOperation operation,
+        bool unknownIsLeftOperand)
+    {
+        int maximum = 100;
+        BigInteger knownValue;
+        BigInteger resultValue;
+        BigInteger correctAnswer;
+
+        switch (operation)
+        {
+            case ArithmeticOperation.Add:
+            {
+                int x = _random.Next(1, maximum + 1);
+                int known = _random.Next(1, maximum + 1);
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = x + known;
+                break;
+            }
+            case ArithmeticOperation.Subtract when unknownIsLeftOperand:
+            {
+                int x = _random.Next(1, maximum + 1);
+                int known = _random.Next(0, x + 1);
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = x - known;
+                break;
+            }
+            case ArithmeticOperation.Subtract:
+            {
+                int known = _random.Next(1, maximum + 1);
+                int x = _random.Next(0, known + 1);
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = known - x;
+                break;
+            }
+            case ArithmeticOperation.Multiply:
+            {
+                int x = _random.Next(1, 13);
+                int known = _random.Next(1, 13);
+                correctAnswer = x;
+                knownValue = known;
+                resultValue = x * known;
+                break;
+            }
+            case ArithmeticOperation.Divide when unknownIsLeftOperand:
+            {
+                int known = _random.Next(1, 13);
+                int quotient = _random.Next(1, 13);
+                knownValue = known;
+                correctAnswer = known * quotient;
+                resultValue = quotient;
+                break;
+            }
+            case ArithmeticOperation.Divide:
+            {
+                int x = _random.Next(1, 13);
+                int quotient = _random.Next(1, 13);
+                correctAnswer = x;
+                knownValue = x * quotient;
+                resultValue = quotient;
+                break;
+            }
+            default:
+                throw new ArgumentOutOfRangeException(nameof(operation));
+        }
+
+        return new(
+            knownValue,
+            resultValue,
+            operation,
+            unknownIsLeftOperand,
+            correctAnswer,
+            CreateSolutionExpression(
+                knownValue,
+                resultValue,
+                operation,
+                unknownIsLeftOperand));
     }
 
     private static IntegerArithmeticExpression CreateSolutionExpression(
@@ -167,13 +335,23 @@ public sealed class FindXQuizGenerator
                     knownValue,
                     ArithmeticOperation.Divide,
                     resultValue),
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(operation))
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
     private bool IsVerifiedContract(
         FindXQuizContract contract)
     {
+        if (contract.Operation == ArithmeticOperation.Multiply &&
+            (contract.KnownValue < int.MinValue ||
+             contract.KnownValue > int.MaxValue ||
+             contract.ResultValue < int.MinValue ||
+             contract.ResultValue > int.MaxValue ||
+             contract.CorrectAnswer < int.MinValue ||
+             contract.CorrectAnswer > int.MaxValue))
+        {
+            return false;
+        }
+
         FindXIntegerResult solved =
             _engine.SolveInteger(
                 contract.KnownValue,

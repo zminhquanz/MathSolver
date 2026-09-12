@@ -405,26 +405,53 @@ public sealed class ProportionQuizGenerator
 
     public ArithmeticQuizQuestion GenerateAlgorithm(
         ArithmeticQuizMode mode,
-        ProportionQuizType type,
-        AppLanguage language)
+        ProportionQuizType? type,
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        ProportionQuizContract contract = CreateContract(type, language);
+        ProportionQuizContract contract = CreateContract(
+            type,
+            language,
+            curriculumContext);
         return CreateQuestion(mode, contract);
     }
 
     public ArithmeticQuizQuestion GenerateContract(
         ArithmeticQuizMode mode,
-        ProportionQuizType type,
-        AppLanguage language)
+        ProportionQuizType? type,
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext = null)
     {
-        ProportionQuizContract contract = CreateContract(type, language);
+        ProportionQuizContract contract = CreateContract(
+            type,
+            language,
+            curriculumContext);
         return CreateQuestion(mode, contract);
     }
 
     private ProportionQuizContract CreateContract(
-        ProportionQuizType type,
-        AppLanguage language)
+        ProportionQuizType? requestedType,
+        AppLanguage language,
+        QuizCurriculumContext? curriculumContext)
     {
+        IReadOnlyList<ProportionQuizType> allowedTypes =
+            curriculumContext.HasValue
+                ? QuizCurriculumLayer.GetAllowedProportionTypes(
+                    curriculumContext.Value)
+                : Enum.GetValues<ProportionQuizType>();
+
+        if (allowedTypes.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Proportion problems are not available at the selected curriculum tier.");
+        }
+
+        ProportionQuizType type =
+            requestedType.HasValue &&
+            allowedTypes.Contains(requestedType.Value)
+                ? requestedType.Value
+                : allowedTypes[_random.Next(allowedTypes.Count)];
+
         TemplateDefinition[] candidates = Templates
             .Where(template => template.Type == type)
             .ToArray();
