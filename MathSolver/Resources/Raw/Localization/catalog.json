@@ -1423,6 +1423,46 @@
       "mode": "exact"
     },
     {
+      "key": "Calculation.Arithmetic.Vertical.Generic.Title",
+      "source": "Phép tính đặt tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Generic.Subtitle",
+      "source": "Căn thẳng các chữ số theo giá trị hàng để quan sát phép tính trực quan hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Add.Title",
+      "source": "Phép cộng đặt tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Add.Subtitle",
+      "source": "Căn thẳng các chữ số cùng hàng rồi cộng từ phải sang trái.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Subtract.Title",
+      "source": "Phép trừ đặt tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Subtract.Subtitle",
+      "source": "Căn thẳng các chữ số cùng hàng rồi trừ từ phải sang trái.",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Multiply.Title",
+      "source": "Phép nhân đặt tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Calculation.Arithmetic.Vertical.Multiply.Subtitle",
+      "source": "Nhân lần lượt từng chữ số của thừa số thứ hai; với nhiều chữ số, các tích riêng được dịch đúng vị trí như cách đặt tính ở tiểu học.",
+      "mode": "exact"
+    },
+    {
       "key": "Settings.NumberDisplay.Title",
       "source": "Hiển thị kết quả đầy đủ",
       "mode": "exact"

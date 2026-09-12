@@ -156,6 +156,12 @@ public partial class CalculationPage : ContentPage
     {
         base.OnAppearing();
 
+        LocalizationService.CultureChanged -=
+            OnLocalizationCultureChanged;
+
+        LocalizationService.CultureChanged +=
+            OnLocalizationCultureChanged;
+
         LiveWallpaper.Resume();
 
         // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
@@ -174,6 +180,11 @@ public partial class CalculationPage : ContentPage
         UpdateNumberTypeButtonStyles();
 
         RefreshNumberDisplaysIfSettingChanged();
+
+        if (BasicArithmeticBorder.IsVisible)
+        {
+            UpdateBasicArithmeticLocalizedText();
+        }
 
         LongDivisionGraphicsView.Invalidate();
         BasicArithmeticGraphicsView.Invalidate();
@@ -317,6 +328,9 @@ public partial class CalculationPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        LocalizationService.CultureChanged -=
+            OnLocalizationCultureChanged;
+
         LiveWallpaper.Pause();
 
         // Hủy transition đang chạy ở trang sắp bị ẩn. Khi quay lại trang,
@@ -3752,40 +3766,71 @@ public partial class CalculationPage : ContentPage
     {
         HideLongDivision();
 
-        (string title, string subtitle) =
-            _selectedOperation switch
-            {
-                ArithmeticOperation.Add =>
-                    (
-                        "Phép cộng đặt tính",
-                        "Căn thẳng các chữ số cùng hàng rồi cộng từ phải sang trái."),
-
-                ArithmeticOperation.Subtract =>
-                    (
-                        "Phép trừ đặt tính",
-                        "Căn thẳng các chữ số cùng hàng rồi trừ từ phải sang trái."),
-
-                ArithmeticOperation.Multiply =>
-                    (
-                        "Phép nhân đặt tính",
-                        "Nhân lần lượt từng chữ số của thừa số thứ hai; với nhiều chữ số, các tích riêng được dịch đúng vị trí như cách đặt tính ở tiểu học."),
-
-                _ =>
-                    (
-                        "Phép tính đặt tính",
-                        "Căn thẳng các chữ số theo giá trị hàng để quan sát phép tính trực quan hơn.")
-            };
-
-        BasicArithmeticTitleLabel.Text =
-            title;
-
-        BasicArithmeticSubtitleLabel.Text =
-            subtitle;
+        UpdateBasicArithmeticLocalizedText();
 
         BasicArithmeticBorder.IsVisible =
             true;
 
         UpdateBasicArithmeticSize();
+        BasicArithmeticGraphicsView.Invalidate();
+    }
+
+    private void UpdateBasicArithmeticLocalizedText()
+    {
+        (string titleKey, string subtitleKey) =
+            _selectedOperation switch
+            {
+                ArithmeticOperation.Add =>
+                    (
+                        "Calculation.Arithmetic.Vertical.Add.Title",
+                        "Calculation.Arithmetic.Vertical.Add.Subtitle"),
+
+                ArithmeticOperation.Subtract =>
+                    (
+                        "Calculation.Arithmetic.Vertical.Subtract.Title",
+                        "Calculation.Arithmetic.Vertical.Subtract.Subtitle"),
+
+                ArithmeticOperation.Multiply =>
+                    (
+                        "Calculation.Arithmetic.Vertical.Multiply.Title",
+                        "Calculation.Arithmetic.Vertical.Multiply.Subtitle"),
+
+                _ =>
+                    (
+                        "Calculation.Arithmetic.Vertical.Generic.Title",
+                        "Calculation.Arithmetic.Vertical.Generic.Subtitle")
+            };
+
+        BasicArithmeticTitleLabel.Text =
+            LocalizationService.TranslateKey(
+                titleKey);
+
+        BasicArithmeticSubtitleLabel.Text =
+            LocalizationService.TranslateKey(
+                subtitleKey);
+    }
+
+    private void OnLocalizationCultureChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (!MainThread.IsMainThread)
+        {
+            MainThread.BeginInvokeOnMainThread(
+                () =>
+                    OnLocalizationCultureChanged(
+                        sender,
+                        e));
+
+            return;
+        }
+
+        if (!BasicArithmeticBorder.IsVisible)
+        {
+            return;
+        }
+
+        UpdateBasicArithmeticLocalizedText();
         BasicArithmeticGraphicsView.Invalidate();
     }
 

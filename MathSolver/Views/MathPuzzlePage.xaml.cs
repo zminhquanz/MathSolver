@@ -896,6 +896,7 @@ public partial class MathPuzzlePage : ContentPage
                 "Quiz.GeometryTrapezoid",
                 "Quiz.GeometryRhombus",
                 "Quiz.GeometryParallelogram",
+                "Quiz.GeometryCircle",
                 "Quiz.GeometryCube",
                 "Quiz.GeometryRectangularPrism"
             ];
@@ -912,8 +913,9 @@ public partial class MathPuzzlePage : ContentPage
                 GeometryQuizShape.Trapezoid => 4,
                 GeometryQuizShape.Rhombus => 5,
                 GeometryQuizShape.Parallelogram => 6,
-                GeometryQuizShape.Cube => 7,
-                GeometryQuizShape.RectangularPrism => 8,
+                GeometryQuizShape.Circle => 7,
+                GeometryQuizShape.Cube => 8,
+                GeometryQuizShape.RectangularPrism => 9,
                 _ => 0
             };
         }
@@ -1039,8 +1041,9 @@ public partial class MathPuzzlePage : ContentPage
             4 => GeometryQuizShape.Trapezoid,
             5 => GeometryQuizShape.Rhombus,
             6 => GeometryQuizShape.Parallelogram,
-            7 => GeometryQuizShape.Cube,
-            8 => GeometryQuizShape.RectangularPrism,
+            7 => GeometryQuizShape.Circle,
+            8 => GeometryQuizShape.Cube,
+            9 => GeometryQuizShape.RectangularPrism,
             _ => null
         };
 

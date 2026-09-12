@@ -2227,6 +2227,13 @@ internal static class LlmQuizPromptBuilder
             contract.Dimensions.Select(pair =>
                 $"- {GetDimensionName(pair.Key, language)}: {pair.Value} {contract.LengthUnitSymbol}"));
 
+        string circleRule =
+            contract.ShapeId == "circle"
+                ? language == AppLanguage.Vietnamese
+                    ? "Với hình tròn, dữ kiện duy nhất là bán kính; không đổi sang đường kính. problem_text phải ghi đúng ‘Lấy π = 3,14.’ và không được dùng hằng số π khác."
+                    : "For a circle, the only given dimension is the radius; do not replace it with a diameter. problem_text must state ‘Use π = 3.14.’ and must not use a different π value."
+                : string.Empty;
+
         string characterRule =
             selectedStudent is null
                 ? language == AppLanguage.Vietnamese
@@ -2254,12 +2261,13 @@ internal static class LlmQuizPromptBuilder
 
             Rules:
             - State that the object has the required shape.
-            - problem_text must contain every required dimension as digits with its length unit and no other arithmetic quantities.
+            - problem_text must contain every required dimension as digits with its length unit and no other arithmetic quantities, except the required π = 3.14 / 3,14 constant for circle problems.
             - Ask only for the required measurement. Do not ask for a different measurement.
             - Do not convert units. All given dimensions use {{contract.LengthUnitSymbol}}.
             - Do not calculate or reveal the answer inside problem_text.
             - Use the exact real-world object naturally; do not replace it.
             - {{characterRule}}
+            {{(string.IsNullOrWhiteSpace(circleRule) ? string.Empty : $"- {circleRule}")}}
             - solution_lead is only one short textbook lead-in sentence before the student's calculation. It names the required measurement, ends with a colon, and contains no dimension number, formula, operator, equals sign, calculated result, or answer.
             - Set answer_unit exactly to "{{contract.AnswerUnit}}". Never use a plain length unit for area or volume.
             - subject_name is the required real-world object, without a number.
@@ -2286,6 +2294,7 @@ internal static class LlmQuizPromptBuilder
                 "a" => "chiều dài hoặc cạnh a",
                 "b" => "chiều rộng b",
                 "h" => "chiều cao h",
+                "r" => "bán kính r",
                 _ => key
             };
         }
@@ -2295,6 +2304,7 @@ internal static class LlmQuizPromptBuilder
             "a" => "length or side a",
             "b" => "width b",
             "h" => "height h",
+            "r" => "radius r",
             _ => key
         };
     }
@@ -2469,6 +2479,8 @@ internal static class LlmQuizPromptBuilder
                 "GeometryShapeMismatch" or "GeometryMeasurementMismatch" or
                 "GeometryUnitMismatch" or "GeometryObjectMismatch" =>
                     "Giữ nguyên từng dữ kiện hình học trong contract: đồ vật, hình, đại lượng cần tìm, kích thước và đơn vị.",
+                "GeometryCirclePiMismatch" =>
+                    "Với hình tròn, phải ghi đúng ‘Lấy π = 3,14.’ trong problem_text; không đổi π và không biến bán kính thành đường kính.",
                 "FindXStoryItemMismatch" or "FindXAnswerUnitMismatch" or
                 "FindXRelationshipMismatch" =>
                     "Giữ nguyên phương trình Tìm x, dùng đúng đồ vật và answer_unit mà validator đã nêu; không đổi vai trò của số đã biết, kết quả hoặc đại lượng x.",
@@ -2529,6 +2541,8 @@ internal static class LlmQuizPromptBuilder
             "GeometryShapeMismatch" or "GeometryMeasurementMismatch" or
             "GeometryUnitMismatch" or "GeometryObjectMismatch" =>
                 "Preserve every geometry contract fact: object, shape, requested measurement, dimensions, and units.",
+            "GeometryCirclePiMismatch" =>
+                "For a circle, problem_text must state ‘Use π = 3.14.’ exactly in meaning; do not change π and do not replace radius with diameter.",
             "FindXStoryItemMismatch" or "FindXAnswerUnitMismatch" or
             "FindXRelationshipMismatch" =>
                 "Preserve the Find-x equation and use the exact story item and answer_unit named by the validator; do not swap the known value, result, or meaning of x.",
@@ -5127,9 +5141,16 @@ internal sealed partial class LlmWordProblemValidator
         string problemWithoutClassLabels =
             ClassLabelRegex().Replace(problem, " ");
 
+        string problemForNumberValidation =
+            contract.ShapeId == "circle"
+                ? CirclePi314Regex().Replace(
+                    problemWithoutClassLabels,
+                    " ")
+                : problemWithoutClassLabels;
+
         int[] actualNumbers =
             NumberRegex()
-                .Matches(problemWithoutClassLabels)
+                .Matches(problemForNumberValidation)
                 .Select(match =>
                     int.TryParse(
                         match.Value,
@@ -5168,6 +5189,16 @@ internal sealed partial class LlmWordProblemValidator
         }
 
         string lowerProblem = problem.ToLowerInvariant();
+
+        if (contract.ShapeId == "circle" &&
+            !CirclePi314Regex().IsMatch(problem))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "GeometryCirclePiMismatch",
+                language == AppLanguage.Vietnamese
+                    ? "Bài hình tròn phải ghi rõ ‘Lấy π = 3,14.’ để thống nhất với phép tính C# của Toán đố."
+                    : "A circle problem must state ‘Use π = 3.14.’ so it matches the C# quiz calculation contract.");
+        }
 
         if (!lowerProblem.Contains(
                 contract.ShapeName.ToLowerInvariant(),
@@ -6315,6 +6346,11 @@ internal sealed partial class LlmWordProblemValidator
         @"(?<prefix>\b(?:lớp|class)\s*)(?<label>\d+(?:\s*/\s*\d+|[A-Za-z])?)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ClassLabelRegex();
+
+    [GeneratedRegex(
+        @"(?:π|pi)\s*=\s*3[\.,]14",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex CirclePi314Regex();
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
     private static partial Regex WhitespaceRegex();

@@ -801,14 +801,14 @@
 
                                     <Label
                                     x:Name="BasicArithmeticTitleLabel"
-                                    Text="Phép tính đặt tính"
+                                    Text="{localization:Translate Calculation.Arithmetic.Vertical.Generic.Title}"
                                     FontSize="19"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                     <Label
                                     x:Name="BasicArithmeticSubtitleLabel"
-                                    Text="Căn thẳng các chữ số theo giá trị hàng để quan sát phép tính trực quan hơn."
+                                    Text="{localization:Translate Calculation.Arithmetic.Vertical.Generic.Subtitle}"
                                     FontSize="15"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />

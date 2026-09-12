@@ -28,6 +28,7 @@ public enum GeometryQuizShape
     Trapezoid,
     Rhombus,
     Parallelogram,
+    Circle,
     Cube,
     RectangularPrism
 }

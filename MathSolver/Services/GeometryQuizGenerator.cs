@@ -7,7 +7,9 @@ namespace MathSolver.Services;
 /// <summary>
 /// Sinh hợp đồng hình học dùng chung cho nguồn Thuật toán và AI/LLM.
 /// Nguồn Thuật toán ghép câu hỏi trực tiếp bằng template ngắn; AI/LLM chỉ
-/// diễn đạt lại hợp đồng. Đáp án luôn được lấy từ GeometryCalculationEngine.
+/// diễn đạt lại hợp đồng. Các hình dùng số nguyên lấy đáp án từ
+/// GeometryCalculationEngine; riêng hình tròn tiểu học dùng π = 3.14 chính xác
+/// theo hợp đồng Toán đố để giữ đáp án tương thích với model số nguyên hiện có.
 /// </summary>
 public sealed class GeometryQuizGenerator
 {
@@ -46,25 +48,15 @@ public sealed class GeometryQuizGenerator
             eligibleTemplates[_random.Next(eligibleTemplates.Length)];
 
         IReadOnlyDictionary<string, BigInteger> dimensions =
-            CreateDimensions(template.ShapeId);
-
-        GeometryCalculationResult calculation =
-            _engine.CalculateInteger(
+            CreateDimensions(
                 template.ShapeId,
+                template.Measurement);
+
+        (BigInteger correctAnswer, string formula) =
+            ResolveExactQuizAnswer(
+                template.ShapeId,
+                template.Measurement,
                 dimensions);
-
-        GeometryCalculationLine line =
-            calculation.Lines.FirstOrDefault(candidate =>
-                candidate.Measurement == template.Measurement) ??
-            throw new InvalidOperationException(
-                "The geometry engine did not return the requested measurement.");
-
-        if (!calculation.IsSuccess ||
-            line.IntegerValue is not BigInteger correctAnswer)
-        {
-            throw new InvalidOperationException(
-                "The geometry quiz contract must have an exact integer answer.");
-        }
 
         var contract = new GeometryQuizContract(
             template.ShapeId,
@@ -78,7 +70,7 @@ public sealed class GeometryQuizGenerator
                 ? template.VietnameseShape
                 : template.EnglishShape,
             correctAnswer,
-            line.Formula,
+            formula,
             BuildSubstitutionExpression(
                 template.ShapeId,
                 template.Measurement,
@@ -123,6 +115,7 @@ public sealed class GeometryQuizGenerator
             GeometryQuizShape.Trapezoid => "trapezoid",
             GeometryQuizShape.Rhombus => "rhombus",
             GeometryQuizShape.Parallelogram => "parallelogram",
+            GeometryQuizShape.Circle => "circle",
             GeometryQuizShape.Cube => "cube",
             GeometryQuizShape.RectangularPrism => "rectangular_prism",
             _ => throw new ArgumentOutOfRangeException(nameof(shape))
@@ -156,6 +149,9 @@ public sealed class GeometryQuizGenerator
         string d2 = value.TryGetValue("d2", out BigInteger d2v)
             ? d2v.ToString()
             : string.Empty;
+        string r = value.TryGetValue("r", out BigInteger rv)
+            ? rv.ToString()
+            : string.Empty;
         string unit = contract.LengthUnitSymbol;
 
         string problemText = language == AppLanguage.Vietnamese
@@ -185,6 +181,10 @@ public sealed class GeometryQuizGenerator
                     $"Tính chu vi của hình bình hành có hai cạnh {a} {unit} và {b} {unit}.",
                 ("parallelogram", GeometryMeasurement.Area) =>
                     $"Tính diện tích của hình bình hành có đáy {a} {unit} và chiều cao {h} {unit}.",
+                ("circle", GeometryMeasurement.Perimeter) =>
+                    $"Tính chu vi của hình tròn có bán kính {r} {unit}. Lấy π = 3,14.",
+                ("circle", GeometryMeasurement.Area) =>
+                    $"Tính diện tích của hình tròn có bán kính {r} {unit}. Lấy π = 3,14.",
                 ("cube", GeometryMeasurement.TotalArea) =>
                     $"Tính diện tích toàn phần của hình lập phương có cạnh {a} {unit}.",
                 ("cube", GeometryMeasurement.Volume) =>
@@ -222,6 +222,10 @@ public sealed class GeometryQuizGenerator
                     $"Calculate the perimeter of a parallelogram with side lengths {a} {unit} and {b} {unit}.",
                 ("parallelogram", GeometryMeasurement.Area) =>
                     $"Calculate the area of a parallelogram with base {a} {unit} and height {h} {unit}.",
+                ("circle", GeometryMeasurement.Perimeter) =>
+                    $"Calculate the circumference of a circle with radius {r} {unit}. Use π = 3.14.",
+                ("circle", GeometryMeasurement.Area) =>
+                    $"Calculate the area of a circle with radius {r} {unit}. Use π = 3.14.",
                 ("cube", GeometryMeasurement.TotalArea) =>
                     $"Calculate the total surface area of a cube with side length {a} {unit}.",
                 ("cube", GeometryMeasurement.Volume) =>
@@ -378,8 +382,66 @@ public sealed class GeometryQuizGenerator
         return distractors.ToArray();
     }
 
+    private (BigInteger CorrectAnswer, string Formula) ResolveExactQuizAnswer(
+        string shapeId,
+        GeometryMeasurement measurement,
+        IReadOnlyDictionary<string, BigInteger> dimensions)
+    {
+        if (shapeId == "circle")
+        {
+            BigInteger radius = dimensions["r"];
+            BigInteger numerator = measurement switch
+            {
+                GeometryMeasurement.Perimeter => 628 * radius,
+                GeometryMeasurement.Area => 314 * radius * radius,
+                _ => throw new ArgumentOutOfRangeException(nameof(measurement))
+            };
+
+            BigInteger answer = BigInteger.DivRem(
+                numerator,
+                100,
+                out BigInteger remainder);
+
+            if (!remainder.IsZero)
+            {
+                throw new InvalidOperationException(
+                    "The elementary circle quiz radius must produce an exact integer answer with pi = 3.14.");
+            }
+
+            string formula = measurement switch
+            {
+                GeometryMeasurement.Perimeter => "C = 2 × 3.14 × r",
+                GeometryMeasurement.Area => "S = 3.14 × r²",
+                _ => throw new ArgumentOutOfRangeException(nameof(measurement))
+            };
+
+            return (answer, formula);
+        }
+
+        GeometryCalculationResult calculation =
+            _engine.CalculateInteger(
+                shapeId,
+                dimensions);
+
+        GeometryCalculationLine line =
+            calculation.Lines.FirstOrDefault(candidate =>
+                candidate.Measurement == measurement) ??
+            throw new InvalidOperationException(
+                "The geometry engine did not return the requested measurement.");
+
+        if (!calculation.IsSuccess ||
+            line.IntegerValue is not BigInteger correctAnswer)
+        {
+            throw new InvalidOperationException(
+                "The geometry quiz contract must have an exact integer answer.");
+        }
+
+        return (correctAnswer, line.Formula);
+    }
+
     private IReadOnlyDictionary<string, BigInteger> CreateDimensions(
-        string shapeId)
+        string shapeId,
+        GeometryMeasurement measurement)
     {
         int Value(int minimum = 2, int maximum = 21) =>
             _random.Next(minimum, maximum);
@@ -422,6 +484,16 @@ public sealed class GeometryQuizGenerator
                     ["a"] = Value(4, 24),
                     ["b"] = Value(3, 20),
                     ["h"] = Value(2, 16)
+                },
+            "circle" =>
+                new Dictionary<string, BigInteger>
+                {
+                    // ArithmeticQuizQuestion hiện dùng BigInteger. Chọn bán kính
+                    // sao cho công thức tiểu học π = 3.14 luôn cho kết quả nguyên,
+                    // tránh làm thay đổi model đáp án của các dạng Toán đố khác.
+                    ["r"] = measurement == GeometryMeasurement.Perimeter
+                        ? 25 * Value(1, 9)
+                        : 10 * Value(1, 21)
                 },
             "cube" =>
                 new Dictionary<string, BigInteger>
@@ -480,6 +552,9 @@ public sealed class GeometryQuizGenerator
         string d2 = value.TryGetValue("d2", out BigInteger d2v)
             ? d2v.ToString()
             : string.Empty;
+        string r = value.TryGetValue("r", out BigInteger rv)
+            ? rv.ToString()
+            : string.Empty;
 
         return (shapeId, measurement) switch
         {
@@ -507,6 +582,10 @@ public sealed class GeometryQuizGenerator
                 $"({a} + {b}) × 2",
             ("parallelogram", GeometryMeasurement.Area) =>
                 $"{a} × {h}",
+            ("circle", GeometryMeasurement.Perimeter) =>
+                $"2 × 3.14 × {r}",
+            ("circle", GeometryMeasurement.Area) =>
+                $"3.14 × {r} × {r}",
             ("cube", GeometryMeasurement.TotalArea) =>
                 $"6 × {a} × {a}",
             ("cube", GeometryMeasurement.Volume) =>
@@ -553,6 +632,14 @@ public sealed class GeometryQuizGenerator
             "khung trang trí", "decorative frame", "hình bình hành", "parallelogram"),
         new("parallelogram", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
             "mảnh sân", "yard section", "hình bình hành", "parallelogram"),
+        new("circle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
+            "mặt bàn", "tabletop", "hình tròn", "circle"),
+        new("circle", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
+            "tấm bìa", "cardboard sheet", "hình tròn", "circle"),
+        new("circle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Millimeter,
+            "miếng nhãn", "label", "hình tròn", "circle"),
+        new("circle", GeometryMeasurement.Area, GeometryLengthUnit.Millimeter,
+            "miếng trang trí", "decoration", "hình tròn", "circle"),
         new("cube", GeometryMeasurement.TotalArea, GeometryLengthUnit.Decimeter,
             "thùng hình lập phương", "cube-shaped box", "hình lập phương", "cube"),
         new("cube", GeometryMeasurement.Volume, GeometryLengthUnit.Centimeter,
