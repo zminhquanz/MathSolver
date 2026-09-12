@@ -16,6 +16,8 @@ public partial class CalculationPage : ContentPage
 
     private readonly LongDivisionDrawable _longDivisionDrawable = new();
 
+    private readonly BasicArithmeticDrawable _basicArithmeticDrawable = new();
+
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
 
     private ArithmeticOperation _selectedOperation = ArithmeticOperation.Add;
@@ -115,6 +117,12 @@ public partial class CalculationPage : ContentPage
         LongDivisionGraphicsView.Drawable =
             _longDivisionDrawable;
 
+        BasicArithmeticGraphicsView.Drawable =
+            _basicArithmeticDrawable;
+
+        BasicArithmeticScrollView.SizeChanged +=
+            OnBasicArithmeticScrollViewSizeChanged;
+
         FirstNumberEntry.Focused +=
             OnNumberEntryFocused;
 
@@ -168,6 +176,7 @@ public partial class CalculationPage : ContentPage
         RefreshNumberDisplaysIfSettingChanged();
 
         LongDivisionGraphicsView.Invalidate();
+        BasicArithmeticGraphicsView.Invalidate();
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -664,6 +673,7 @@ public partial class CalculationPage : ContentPage
         ResultBorder.IsVisible = true;
         _currentDivisionDividend = 0;
         _currentDivisionDivisor = 0;
+        HideBasicArithmeticLayout();
         HideLongDivision();
     }
 
@@ -805,6 +815,7 @@ public partial class CalculationPage : ContentPage
         _currentDivisionDivisor =
             0;
 
+        HideBasicArithmeticLayout();
         HideLongDivision();
     }
 
@@ -860,6 +871,10 @@ public partial class CalculationPage : ContentPage
             0;
 
         HideLongDivision();
+        ShowBasicArithmeticLayout(
+            firstNumber,
+            secondNumber,
+            result);
     }
 
     private void ShowIntegerDivisionResult(
@@ -959,6 +974,7 @@ public partial class CalculationPage : ContentPage
                 divisorInteger,
                 quotient);
 
+        HideBasicArithmeticLayout();
         PreferElementaryLongDivisionMode();
 
         if (CanRenderLongDivision(
@@ -1097,6 +1113,7 @@ public partial class CalculationPage : ContentPage
         _currentDivisionDividend = 0;
         _currentDivisionDivisor = 0;
 
+        HideBasicArithmeticLayout();
         HideLongDivision();
     }
 
@@ -1136,6 +1153,7 @@ public partial class CalculationPage : ContentPage
         DivisionDetailBorder.IsVisible = false;
         ResultBorder.IsVisible = true;
 
+        HideBasicArithmeticLayout();
         PreferElementaryLongDivisionMode();
 
         ShowLongDivision(
@@ -1484,6 +1502,16 @@ public partial class CalculationPage : ContentPage
         _currentDivisionDivisor = 0;
 
         ResultBorder.IsVisible = true;
+
+        if (_selectedOperation is
+            ArithmeticOperation.Add or
+            ArithmeticOperation.Subtract or
+            ArithmeticOperation.Multiply)
+        {
+            ShowBasicArithmeticLayout(
+                firstNumber,
+                secondNumber);
+        }
     }
 
     private string CreateExplanation(
@@ -2479,6 +2507,8 @@ public partial class CalculationPage : ContentPage
         ErrorLabel.Text = message;
         ErrorBorder.IsVisible = true;
         ResultBorder.IsVisible = false;
+        HideBasicArithmeticLayout();
+        HideLongDivision();
     }
 
     private void HideMessages()
@@ -2487,6 +2517,7 @@ public partial class CalculationPage : ContentPage
         ResultBorder.IsVisible = false;
 
         DivisionDetailBorder.IsVisible = false;
+        HideBasicArithmeticLayout();
         HideLongDivision();
     }
 
@@ -3625,6 +3656,8 @@ public partial class CalculationPage : ContentPage
         decimal dividend,
         decimal divisor)
     {
+        HideBasicArithmeticLayout();
+
         if (!CanRenderLongDivision(
                 dividend,
                 divisor))
@@ -3669,6 +3702,146 @@ public partial class CalculationPage : ContentPage
             // Chỉ ẩn phần minh họa đặt tính nếu engine không hỗ trợ độ lớn.
             HideLongDivision();
         }
+    }
+
+    private void ShowBasicArithmeticLayout(
+        BigInteger firstNumber,
+        BigInteger secondNumber,
+        BigInteger result)
+    {
+        if (_selectedOperation is not (
+                ArithmeticOperation.Add or
+                ArithmeticOperation.Subtract or
+                ArithmeticOperation.Multiply))
+        {
+            HideBasicArithmeticLayout();
+            return;
+        }
+
+        _basicArithmeticDrawable.SetInteger(
+            firstNumber,
+            secondNumber,
+            result,
+            _selectedOperation);
+
+        ShowConfiguredBasicArithmeticLayout();
+    }
+
+    private void ShowBasicArithmeticLayout(
+        decimal firstNumber,
+        decimal secondNumber)
+    {
+        if (_selectedOperation is not (
+                ArithmeticOperation.Add or
+                ArithmeticOperation.Subtract or
+                ArithmeticOperation.Multiply))
+        {
+            HideBasicArithmeticLayout();
+            return;
+        }
+
+        _basicArithmeticDrawable.SetDecimal(
+            firstNumber,
+            secondNumber,
+            _selectedOperation);
+
+        ShowConfiguredBasicArithmeticLayout();
+    }
+
+    private void ShowConfiguredBasicArithmeticLayout()
+    {
+        HideLongDivision();
+
+        (string title, string subtitle) =
+            _selectedOperation switch
+            {
+                ArithmeticOperation.Add =>
+                    (
+                        "Phép cộng đặt tính",
+                        "Căn thẳng các chữ số cùng hàng rồi cộng từ phải sang trái."),
+
+                ArithmeticOperation.Subtract =>
+                    (
+                        "Phép trừ đặt tính",
+                        "Căn thẳng các chữ số cùng hàng rồi trừ từ phải sang trái."),
+
+                ArithmeticOperation.Multiply =>
+                    (
+                        "Phép nhân đặt tính",
+                        "Nhân lần lượt từng chữ số của thừa số thứ hai; với nhiều chữ số, các tích riêng được dịch đúng vị trí như cách đặt tính ở tiểu học."),
+
+                _ =>
+                    (
+                        "Phép tính đặt tính",
+                        "Căn thẳng các chữ số theo giá trị hàng để quan sát phép tính trực quan hơn.")
+            };
+
+        BasicArithmeticTitleLabel.Text =
+            title;
+
+        BasicArithmeticSubtitleLabel.Text =
+            subtitle;
+
+        BasicArithmeticBorder.IsVisible =
+            true;
+
+        UpdateBasicArithmeticSize();
+        BasicArithmeticGraphicsView.Invalidate();
+    }
+
+    private void UpdateBasicArithmeticSize()
+    {
+        if (!_basicArithmeticDrawable.HasContent)
+        {
+            return;
+        }
+
+        double viewportWidth =
+            BasicArithmeticScrollView.Width;
+
+        if (viewportWidth <= 0d)
+        {
+            viewportWidth =
+                Math.Max(
+                    320d,
+                    Width - 112d);
+        }
+
+        double preferredWidth =
+            _basicArithmeticDrawable.GetPreferredWidth();
+
+        double drawingWidth =
+            Math.Max(
+                viewportWidth,
+                preferredWidth);
+
+        BasicArithmeticGraphicsView.WidthRequest =
+            drawingWidth;
+
+        BasicArithmeticGraphicsView.HeightRequest =
+            _basicArithmeticDrawable.GetPreferredHeight(
+                drawingWidth);
+    }
+
+    private void HideBasicArithmeticLayout()
+    {
+        BasicArithmeticBorder.IsVisible = false;
+        _basicArithmeticDrawable.Clear();
+        BasicArithmeticGraphicsView.Invalidate();
+    }
+
+    private void OnBasicArithmeticScrollViewSizeChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (!BasicArithmeticBorder.IsVisible ||
+            !_basicArithmeticDrawable.HasContent)
+        {
+            return;
+        }
+
+        UpdateBasicArithmeticSize();
+        BasicArithmeticGraphicsView.Invalidate();
     }
 
     private void UpdateLongDivisionHeight()

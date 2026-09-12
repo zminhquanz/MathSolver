@@ -784,6 +784,65 @@
                                 </VerticalStackLayout>
                             </Border>
 
+                            <!-- Đặt tính cộng / trừ / nhân. Tách biệt hoàn toàn với LongDivisionBorder. -->
+                            <Border
+                            x:Name="BasicArithmeticBorder"
+                            IsVisible="False"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="10">
+
+                                    <Label
+                                    x:Name="BasicArithmeticTitleLabel"
+                                    Text="Phép tính đặt tính"
+                                    FontSize="19"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    <Label
+                                    x:Name="BasicArithmeticSubtitleLabel"
+                                    Text="Căn thẳng các chữ số theo giá trị hàng để quan sát phép tính trực quan hơn."
+                                    FontSize="15"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                    <Border
+                                        Padding="8"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperDividerBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+
+                                        <ScrollView
+                                            x:Name="BasicArithmeticScrollView"
+                                            Orientation="Horizontal"
+                                            HorizontalScrollBarVisibility="Default">
+
+                                            <GraphicsView
+                                            x:Name="BasicArithmeticGraphicsView"
+                                            HeightRequest="180"
+                                            MinimumHeightRequest="150"
+                                            MinimumWidthRequest="280"
+                                            HorizontalOptions="Start"
+                                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}" />
+
+                                        </ScrollView>
+
+                                    </Border>
+
+                                </VerticalStackLayout>
+                            </Border>
+
                             <!-- Phép chia đặt tính -->
                             <Border
                             x:Name="LongDivisionBorder"
