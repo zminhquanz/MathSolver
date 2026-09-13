@@ -14,6 +14,9 @@ internal sealed class LargeBinaryUnsigned
 
     private LargeBinaryUnsigned(uint[] ownedWords) => words = ownedWords;
 
+    // Caller transfers exclusive ownership of an already normalized packed array.
+    internal static LargeBinaryUnsigned FromOwnedWords(uint[] words) => new(words);
+
     internal static LargeBinaryUnsigned FromWords(ReadOnlySpan<uint> value)
     {
         int count = value.Length;

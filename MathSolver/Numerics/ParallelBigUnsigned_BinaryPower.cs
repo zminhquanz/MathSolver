@@ -1,6 +1,6 @@
-using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using MathSolver.Services;
@@ -70,6 +70,7 @@ internal sealed partial class ParallelBigUnsigned
         var diagnostics = new PowerDiagnosticsCollector();
         diagnostics.ConfigureNttAvx2(avx2);
         BinaryMagnitude magnitude = new([5], 1);
+        uint[] packedWords;
         using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule))
         {
             var arithmetic = new BinaryPowerWorkspace(workers, diagnostics, maximumTransformLength, token, cacheForward);
@@ -82,27 +83,31 @@ internal sealed partial class ParallelBigUnsigned
                 if (((exponent >> bit) & 1) != 0)
                 {
                     token.ThrowIfCancellationRequested();
-                    magnitude = MultiplyBinaryByFive(magnitude, token);
+                    magnitude = MultiplyBinaryByFive(magnitude, workers, token);
                     progress?.Invoke(++done, total);
                 }
             }
             arithmetic.ReleaseScratch();
             workers.ReleaseCrtCarryScratch();
+            // Release the NTT working set before packing, but keep the same
+            // worker team alive to parallelize the final shift as well.
+            diagnostics.ConfigureNttBufferPool(pool.CreateStatisticsSnapshot());
+            pool.ReleaseCachedBuffers();
+            plans.ReleasePlans();
+            twiddlePool.ReleaseCachedBuffers();
+            packedWords = BinaryRadix16.PackShifted(magnitude.Limbs, magnitude.Count, exponent,
+                (count, body) => ExecuteBinaryRanges(count, workers, token, body), token);
             if (largeSchedule)
                 diagnostics.ConfigureLargePersistentStaticScheduler(workers.PersistentGenerationCount,
                     workers.PersistentStaticRangeCount, cacheForward ? 4 : 2);
         }
-        // Drop all transform, CRT and twiddle references before packing the final
-        // number. Packing combines conversion and shifting, avoiding a BigInteger
-        // for 5^m plus another full-size shifted intermediate byte representation.
-        diagnostics.ConfigureNttBufferPool(pool.CreateStatisticsSnapshot());
-        pool.ReleaseCachedBuffers();
-        plans.ReleasePlans();
-        twiddlePool.ReleaseCachedBuffers();
+        // Packing already combined conversion and shifting, avoiding an
+        // intermediate BigInteger for 5^m. Large results take array ownership.
         bool large = forceLargeResult || !PowerOfTenArithmetic.CanUseBigInteger(exponent);
         LargeBinaryUnsigned? largeValue = large
-            ? LargeBinaryUnsigned.ShiftRadix16(magnitude.Limbs.AsSpan(0, magnitude.Count), exponent, token) : null;
-        BigInteger? value = large ? null : PackShiftedBinary(magnitude, exponent, token);
+            ? LargeBinaryUnsigned.FromOwnedWords(packedWords) : null;
+        BigInteger? value = large ? null : new BigInteger(MemoryMarshal.AsBytes(packedWords.AsSpan()), isUnsigned: true);
+        token.ThrowIfCancellationRequested();
         int operations = PowerOfTenArithmetic.OperationCount(exponent);
         progress?.Invoke(operations, operations);
         token.ThrowIfCancellationRequested();
@@ -111,40 +116,48 @@ internal sealed partial class ParallelBigUnsigned
             NttTransformLimit: maximumTransformLength);
     }
 
-    private static BinaryMagnitude MultiplyBinaryByFive(BinaryMagnitude value, CancellationToken token)
+    // Avoid waking a full team for tiny memory-only operations. Tile counts
+    // are dispatched separately below, after checking the original limb count.
+    private static void ExecuteBinaryRanges(int count, FixedWorkerTeam workers,
+        CancellationToken token, Action<int, int> body)
+    {
+        if (count < BinaryRadix16.TileLength * 2)
+        {
+            token.ThrowIfCancellationRequested();
+            body(0, count);
+        }
+        else ExecuteRanges(count, workers, token, body);
+    }
+
+    private static ulong NormalizeBinaryTiles(uint[] destination, int offset, int count,
+        ulong incomingCarry, FixedWorkerTeam workers, CancellationToken token,
+        Func<int, int, ulong> normalize) =>
+        BinaryRadix16.NormalizeTiles(destination, offset, count, incomingCarry,
+            (tiles, body) =>
+            {
+                if (count < BinaryRadix16.TileLength * 2) body(0, tiles);
+                else ExecuteRanges(tiles, workers, token, body);
+            }, normalize, token);
+
+    private static BinaryMagnitude MultiplyBinaryByFive(BinaryMagnitude value, FixedWorkerTeam workers,
+        CancellationToken token)
     {
         uint[] result = value.Limbs;
         if (result.Length <= value.Count) Array.Resize(ref result, checked(value.Count + 1));
-        uint carry = 0;
-        for (int i = 0; i < value.Count; i++)
+        ulong carry = NormalizeBinaryTiles(result, 0, value.Count, 0, workers, token, (from, to) =>
         {
-            if ((i & 0xffff) == 0) token.ThrowIfCancellationRequested();
-            uint product = result[i] * 5 + carry;
-            result[i] = product & 0xffff;
-            carry = product >> 16;
-        }
+            uint localCarry = 0;
+            for (int i = from; i < to; i++)
+            {
+                uint product = result[i] * 5 + localCarry;
+                result[i] = product & 0xffff;
+                localCarry = product >> 16;
+            }
+            return localCarry;
+        });
         int count = value.Count;
-        if (carry != 0) result[count++] = carry;
+        if (carry != 0) result[count++] = checked((uint)carry);
         return new(result, count);
-    }
-
-    private static BigInteger PackShiftedBinary(BinaryMagnitude value, int shift, CancellationToken token)
-    {
-        int limbOffset = shift / 16, bits = shift % 16;
-        byte[] bytes = new byte[checked((limbOffset + value.Count + 1) * 2)];
-        uint carry = 0;
-        for (int i = 0; i < value.Count; i++)
-        {
-            if ((i & 0xffff) == 0) token.ThrowIfCancellationRequested();
-            uint word = (value.Limbs[i] << bits) | carry;
-            BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan((limbOffset + i) * 2), (ushort)word);
-            carry = word >> 16;
-        }
-        BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan((limbOffset + value.Count) * 2), (ushort)carry);
-        token.ThrowIfCancellationRequested();
-        var result = new BigInteger(bytes, isUnsigned: true, isBigEndian: false);
-        token.ThrowIfCancellationRequested();
-        return result;
     }
 
     private sealed class BinaryPowerWorkspace(FixedWorkerTeam workers, PowerDiagnosticsCollector diagnostics,
@@ -224,20 +237,19 @@ internal sealed partial class ParallelBigUnsigned
 
         private void AddPair(uint[] destination, BinaryMagnitude pair, int offset, uint multiplier)
         {
-            ulong carry = 0;
-            int i = 0;
-            for (; i < pair.Count; i++)
+            ulong carry = NormalizeBinaryTiles(destination, offset, pair.Count, 0, workers, token, (from, to) =>
             {
-                if ((i & 0xffff) == 0) token.ThrowIfCancellationRequested();
-                ulong sum = destination[offset + i] + (ulong)pair.Limbs[i] * multiplier + carry;
-                destination[offset + i] = (uint)(sum & 0xffff); carry = sum >> 16;
-            }
-            while (carry != 0)
-            {
-                token.ThrowIfCancellationRequested();
-                ulong sum = destination[offset + i] + carry;
-                destination[offset + i++] = (uint)(sum & 0xffff); carry = sum >> 16;
-            }
+                ulong localCarry = 0;
+                for (int i = from; i < to; i++)
+                {
+                    ulong sum = destination[offset + i] + (ulong)pair.Limbs[i] * multiplier + localCarry;
+                    destination[offset + i] = (uint)(sum & 0xffff); localCarry = sum >> 16;
+                }
+                return localCarry;
+            });
+            int end = offset + pair.Count;
+            if (BinaryRadix16.AddCarry(destination, end, destination.Length - end, carry, token) != 0)
+                throw new InvalidOperationException("Binary segment accumulation overflowed.");
         }
 
         private BinaryMagnitude Convolve(BinaryMagnitude value, int left, int leftCount,
@@ -270,7 +282,7 @@ internal sealed partial class ParallelBigUnsigned
                     // At large transforms, 64K blocks launch thousands of
                     // worker generations. Use the original engine's 1M block
                     // size (8 MiB scratch) to amortize that synchronization.
-                    int blockLength = maximumTransformLength > SmallBinaryTransformLength ? 1 << 20 : 1 << 16;
+                    int blockLength = CrtCarryStreamingBlockLength;
                     ulong[] scratch = workers.GetCrtCarryScratch(Math.Min(coefficients, blockLength));
                     for (int start = 0; start < coefficients; start += scratch.Length)
                     {
@@ -283,11 +295,16 @@ internal sealed partial class ParallelBigUnsigned
                                 (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) && Avx512DQ.IsSupported));
                         diagnostics.CrtTicks += Stopwatch.GetTimestamp() - stamp;
                         stamp = Stopwatch.GetTimestamp();
-                        for (int i = 0; i < count; i++)
+                        carry = NormalizeBinaryTiles(first!, start, count, carry, workers, token, (from, to) =>
                         {
-                            ulong sum = scratch[i] + carry;
-                            first![start + i] = (uint)(sum & 0xffff); carry = sum >> 16;
-                        }
+                            ulong localCarry = 0;
+                            for (int i = from; i < to; i++)
+                            {
+                                ulong sum = scratch[i] + localCarry;
+                                first![start + i] = (uint)(sum & 0xffff); localCarry = sum >> 16;
+                            }
+                            return localCarry;
+                        });
                         diagnostics.CarryTicks += Stopwatch.GetTimestamp() - stamp;
                     }
                 });
