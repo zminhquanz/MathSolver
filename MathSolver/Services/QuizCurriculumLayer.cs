@@ -356,9 +356,12 @@ public static class QuizCurriculumLayer
 
         return context.Tier switch
         {
+            // Mixed Mode: hình học chỉ bắt đầu từ ★★. ★ không được đưa
+            // Geometry vào pool, và guard này giữ contract nhất quán nếu
+            // có code gọi trực tiếp GetGeometryRules ở ★.
             CurriculumTier.OneStar => new(
-                12,
-                [GeometryQuizShape.Square, GeometryQuizShape.Rectangle],
+                0,
+                Array.Empty<GeometryQuizShape>(),
                 AllowArea: false,
                 AllowVolume: false),
 
@@ -409,13 +412,10 @@ public static class QuizCurriculumLayer
             return Enum.GetValues<ProportionQuizType>();
         }
 
-        return context.Tier switch
-        {
-            CurriculumTier.FourStars => [ProportionQuizType.Direct],
-            CurriculumTier.FiveStars =>
-                [ProportionQuizType.Direct, ProportionQuizType.Inverse],
-            _ => Array.Empty<ProportionQuizType>()
-        };
+        // Mixed Mode: tỉ lệ thuận/nghịch chỉ bắt đầu ở ★★★★★.
+        return context.Tier == CurriculumTier.FiveStars
+            ? [ProportionQuizType.Direct, ProportionQuizType.Inverse]
+            : Array.Empty<ProportionQuizType>();
     }
 
     public static IReadOnlyList<MotionQuizType> GetAllowedMotionTypes(
@@ -426,12 +426,10 @@ public static class QuizCurriculumLayer
             return Enum.GetValues<MotionQuizType>();
         }
 
-        return context.Tier switch
-        {
-            CurriculumTier.FourStars => [MotionQuizType.Basic],
-            CurriculumTier.FiveStars => Enum.GetValues<MotionQuizType>(),
-            _ => Array.Empty<MotionQuizType>()
-        };
+        // Mixed Mode: toán chuyển động chỉ bắt đầu ở ★★★★★.
+        return context.Tier == CurriculumTier.FiveStars
+            ? Enum.GetValues<MotionQuizType>()
+            : Array.Empty<MotionQuizType>();
     }
 
     public static IReadOnlyList<AverageQuizType> GetAllowedAverageTypes(
@@ -479,9 +477,8 @@ public static class QuizCurriculumLayer
         {
             CurriculumTier.OneStar =>
             [
-                new(new(QuizProblemKind.Arithmetic), 7),
-                new(new(QuizProblemKind.FindX), 2),
-                new(new(QuizProblemKind.Geometry), 1)
+                new(new(QuizProblemKind.Arithmetic), 8),
+                new(new(QuizProblemKind.FindX), 2)
             ],
 
             CurriculumTier.TwoStars =>
@@ -504,8 +501,6 @@ public static class QuizCurriculumLayer
                 new(new(QuizProblemKind.Fraction), 3),
                 new(new(QuizProblemKind.FindX), 3),
                 new(new(QuizProblemKind.Geometry), 3),
-                new(new(QuizProblemKind.Proportion), 2),
-                new(new(QuizProblemKind.Motion), 2),
                 new(new(QuizProblemKind.Average), 2)
             ],
 

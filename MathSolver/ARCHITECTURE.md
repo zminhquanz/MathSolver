@@ -736,3 +736,15 @@ Curriculum chỉ áp dụng trong tab Toán đố và dùng chung cho nguồn Th
 - AI/LLM luôn nhận đúng contract C# đã sinh, nên quy tắc bucket `a/b` giống hệt nguồn Thuật toán. Khi có dữ kiện lớn, catalog/prompt/validator realism tiếp tục bắt buộc ngữ cảnh kho, nhà máy, trung tâm phân phối, bồn chứa... phù hợp thay vì lớp học, vườn nhà hay khay bánh.
 - `FractionExpressionView` tách dấu câu cuối token trước khi parse phân số, nhờ đó tử/mẫu `BigInteger` luôn được format grouping đúng (`24,508,967,912`) và dấu chấm cuối câu không bị hiểu nhầm là dấu thập phân của mẫu số.
 - Mọi `ScrollView` dọc dùng behavior layout chung: sau layout ban đầu, nếu nội dung tăng chiều cao do result/feedback/validation Border xuất hiện thì viewport tự cuộn xuống cuối. ScrollView chỉ ngang bị bỏ qua.
+
+### Mixed curriculum milestone correction (2026-09-13)
+
+Top-level **Hỗn hợp các dạng** now follows the intended elementary progression without changing Skill Mode availability:
+
+- ★: no Geometry yet.
+- ★★: Geometry begins.
+- ★★★★: Average begins.
+- ★★★★★: Direct/Inverse Proportion, Percentage, and Motion begin.
+- Skill Mode remains independent: choosing Geometry/Average/Proportion/Motion directly still keeps ★..★★★★★ available; the milestone gate applies only to the top-level Mixed pool.
+
+The matching mixed-only subtype guards were aligned with the same milestones, so a direct internal request cannot accidentally generate Proportion or Motion below ★★★★★, or Geometry at ★.
