@@ -156,14 +156,15 @@ public sealed class GeometryQuizGenerator
             return false;
         }
 
-        return template.Measurement switch
+        if (rules.AllowedMeasurements is null)
         {
-            GeometryMeasurement.Perimeter => true,
-            GeometryMeasurement.Area => rules.AllowArea,
-            GeometryMeasurement.TotalArea => rules.AllowArea,
-            GeometryMeasurement.Volume => rules.AllowVolume,
-            _ => false
-        };
+            return true;
+        }
+
+        return rules.AllowedMeasurements.TryGetValue(
+                   shape,
+                   out IReadOnlySet<GeometryMeasurement>? measurements) &&
+               measurements.Contains(template.Measurement);
     }
 
 

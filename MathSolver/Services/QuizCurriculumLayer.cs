@@ -25,7 +25,9 @@ public static class QuizCurriculumLayer
         int MaximumMultiplicationFactor,
         int MaximumDivisionFactor,
         int MaximumDivisionQuotient,
-        IReadOnlyList<ArithmeticOperation> AllowedOperations);
+        IReadOnlyList<ArithmeticOperation> AllowedOperations,
+        IReadOnlyList<int>? AllowedMultiplicationFactors = null,
+        IReadOnlyList<int>? AllowedDivisionFactors = null);
 
     public sealed record FractionRules(
         CurriculumTier Tier,
@@ -44,8 +46,7 @@ public static class QuizCurriculumLayer
     public sealed record GeometryRules(
         int MaximumDimension,
         IReadOnlyList<GeometryQuizShape> AllowedShapes,
-        bool AllowArea,
-        bool AllowVolume);
+        IReadOnlyDictionary<GeometryQuizShape, IReadOnlySet<GeometryMeasurement>>? AllowedMeasurements = null);
 
     private static readonly ArithmeticOperation[] AddSubtract =
     [
@@ -61,12 +62,6 @@ public static class QuizCurriculumLayer
         ArithmeticOperation.Divide
     ];
 
-    private static readonly FractionOperation[] FractionAddSubtract =
-    [
-        FractionOperation.Add,
-        FractionOperation.Subtract
-    ];
-
     private static readonly FractionOperation[] FourFractionOperations =
     [
         FractionOperation.Add,
@@ -74,6 +69,23 @@ public static class QuizCurriculumLayer
         FractionOperation.Multiply,
         FractionOperation.Divide
     ];
+
+    private static readonly int[] Grade2TableFactors = [2, 5];
+
+    private static readonly int[] Grade3TableFactors = [2, 3, 4, 5, 6, 7, 8, 9];
+
+    private static readonly IReadOnlySet<GeometryMeasurement> PerimeterOnly =
+        new HashSet<GeometryMeasurement>
+        {
+            GeometryMeasurement.Perimeter
+        };
+
+    private static readonly IReadOnlySet<GeometryMeasurement> PerimeterAndArea =
+        new HashSet<GeometryMeasurement>
+        {
+            GeometryMeasurement.Perimeter,
+            GeometryMeasurement.Area
+        };
 
     /// <summary>
     /// Giới hạn dữ kiện chính theo số sao.
@@ -243,20 +255,70 @@ public static class QuizCurriculumLayer
     {
         int maximum = GetMaximumOperandValue(context.Tier);
 
-        // Chỉ Mixed toàn bộ mới mô phỏng lộ trình phép toán của mốc học.
-        // Khi người dùng đã chọn "Phép tính", mọi phép + - × ÷ luôn khả dụng.
-        IReadOnlyList<ArithmeticOperation> operations =
-            context.IsMixedMode && context.Tier == CurriculumTier.OneStar
-                ? AddSubtract
-                : FourOperations;
+        if (!context.IsMixedMode)
+        {
+            // Skill Mode: giữ đúng UX đã thống nhất. Khi người dùng chủ động
+            // chọn Cơ bản, cả bốn phép luôn khả dụng; sao chỉ scale dữ kiện.
+            return new(
+                context.Tier,
+                maximum,
+                maximum,
+                maximum,
+                maximum,
+                FourOperations);
+        }
 
-        return new(
-            context.Tier,
-            maximum,
-            maximum,
-            maximum,
-            maximum,
-            operations);
+        // Hỗn hợp toàn bộ mô phỏng mạch số học tiểu học: lớp 1 chỉ cộng/trừ;
+        // lớp 2 bắt đầu nhân/chia với bảng 2 và 5; lớp 3 hoàn thiện bảng 2..9;
+        // lớp 4-5 mới mở rộng nhân/chia với số có nhiều chữ số.
+        return context.Tier switch
+        {
+            CurriculumTier.OneStar => new(
+                context.Tier,
+                maximum,
+                0,
+                0,
+                0,
+                AddSubtract),
+
+            CurriculumTier.TwoStars => new(
+                context.Tier,
+                maximum,
+                5,
+                5,
+                maximum,
+                FourOperations,
+                Grade2TableFactors,
+                Grade2TableFactors),
+
+            CurriculumTier.ThreeStars => new(
+                context.Tier,
+                maximum,
+                9,
+                9,
+                maximum,
+                FourOperations,
+                Grade3TableFactors,
+                Grade3TableFactors),
+
+            CurriculumTier.FourStars => new(
+                context.Tier,
+                maximum,
+                99,
+                99,
+                maximum,
+                FourOperations),
+
+            CurriculumTier.FiveStars => new(
+                context.Tier,
+                maximum,
+                99,
+                99,
+                maximum,
+                FourOperations),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(context))
+        };
     }
 
     public static FractionRules GetFractionRules(
@@ -277,8 +339,9 @@ public static class QuizCurriculumLayer
                 FourFractionOperations);
         }
 
-        // Mixed toàn bộ: curriculum quyết định từ mốc nào phân số được đưa
-        // vào pool. ResolveMixedRequest hiện chỉ chọn Fraction từ ★★★★.
+        // Ở lớp 3 học sinh mới làm quen "một phần mấy"; generator hiện tại
+        // là phép tính phân số thật sự nên chỉ tham gia Mixed từ ★★★★. Toán 4
+        // đã có cộng, trừ, nhân, chia phân số; giữ tử/mẫu nhỏ để sát bài học.
         return context.Tier switch
         {
             CurriculumTier.OneStar or
@@ -286,24 +349,24 @@ public static class QuizCurriculumLayer
             CurriculumTier.ThreeStars => new(
                 context.Tier,
                 false,
-                maximum,
-                maximum,
-                true,
+                0,
+                0,
+                false,
                 Array.Empty<FractionOperation>()),
 
             CurriculumTier.FourStars => new(
                 context.Tier,
                 true,
-                maximum,
-                maximum,
-                true,
-                FractionAddSubtract),
+                20,
+                20,
+                false,
+                FourFractionOperations),
 
             CurriculumTier.FiveStars => new(
                 context.Tier,
                 true,
-                maximum,
-                maximum,
+                100,
+                100,
                 false,
                 FourFractionOperations),
 
@@ -316,25 +379,53 @@ public static class QuizCurriculumLayer
     {
         int maximum = GetMaximumOperandValue(context.Tier);
 
-        IReadOnlyList<ArithmeticOperation> operations =
-            context.IsMixedMode &&
-            context.Tier is CurriculumTier.OneStar or CurriculumTier.TwoStars
-                ? AddSubtract
-                : FourOperations;
+        if (!context.IsMixedMode)
+        {
+            return new(
+                context.Tier,
+                maximum,
+                maximum,
+                FourOperations);
+        }
 
-        return new(
-            context.Tier,
-            maximum,
-            maximum,
-            operations);
+        // Tìm thành phần chưa biết của nhân/chia xuất hiện rõ ở Toán 3.
+        // Ở ★ và ★★ Mixed chỉ dùng quan hệ cộng/trừ; từ ★★★ mới mở ×/÷.
+        return context.Tier switch
+        {
+            CurriculumTier.OneStar or CurriculumTier.TwoStars => new(
+                context.Tier,
+                maximum,
+                maximum,
+                AddSubtract),
+
+            CurriculumTier.ThreeStars => new(
+                context.Tier,
+                maximum,
+                9,
+                FourOperations),
+
+            CurriculumTier.FourStars => new(
+                context.Tier,
+                maximum,
+                99,
+                FourOperations),
+
+            CurriculumTier.FiveStars => new(
+                context.Tier,
+                maximum,
+                99,
+                FourOperations),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(context))
+        };
     }
 
     public static GeometryRules GetGeometryRules(
         QuizCurriculumContext context)
     {
-        // Geometry không dùng dải 9/99/... cứng vì từng công thức cần các
-        // kích thước "đẹp" để đáp án tiểu học luôn chính xác. Số sao vẫn làm
-        // dữ kiện tăng dần, nhưng Skill Mode không bao giờ khóa hình/subtype.
+        // Geometry không dùng dải 9/99/... cứng vì từng công thức cần kích
+        // thước đẹp. Skill Mode vẫn cho người dùng chủ động chọn mọi hình;
+        // chỉ Hỗn hợp toàn bộ mới bám lộ trình CTGDPT tiểu học.
         int maximumDimension = context.Tier switch
         {
             CurriculumTier.OneStar => 20,
@@ -349,28 +440,32 @@ public static class QuizCurriculumLayer
         {
             return new(
                 maximumDimension,
-                Enum.GetValues<GeometryQuizShape>(),
-                AllowArea: true,
-                AllowVolume: true);
+                Enum.GetValues<GeometryQuizShape>());
         }
 
         return context.Tier switch
         {
-            // Mixed Mode: hình học chỉ bắt đầu từ ★★. ★ không được đưa
-            // Geometry vào pool, và guard này giữ contract nhất quán nếu
-            // có code gọi trực tiếp GetGeometryRules ở ★.
+            // ★: chưa đưa Geometry vào Mixed vì generator hiện tại là bài
+            // tính toán chứ không phải nhận dạng hình cơ bản của Toán 1.
             CurriculumTier.OneStar => new(
                 0,
                 Array.Empty<GeometryQuizShape>(),
-                AllowArea: false,
-                AllowVolume: false),
+                new Dictionary<GeometryQuizShape, IReadOnlySet<GeometryMeasurement>>()),
 
+            // Toán 2 đã làm quen chu vi hình tam giác/hình tứ giác. Catalog
+            // hiện chưa có hình tứ giác tổng quát, nên Mixed ★★ dùng đúng
+            // template tam giác - chu vi, không đẩy sớm diện tích/công thức
+            // của hình chữ nhật, hình vuông.
             CurriculumTier.TwoStars => new(
                 20,
-                [GeometryQuizShape.Square, GeometryQuizShape.Rectangle],
-                AllowArea: false,
-                AllowVolume: false),
+                [GeometryQuizShape.Triangle],
+                new Dictionary<GeometryQuizShape, IReadOnlySet<GeometryMeasurement>>
+                {
+                    [GeometryQuizShape.Triangle] = PerimeterOnly
+                }),
 
+            // Toán 3: chu vi tam giác; chu vi và diện tích chữ nhật/vuông.
+            // Chưa có công thức diện tích tam giác.
             CurriculumTier.ThreeStars => new(
                 30,
                 [
@@ -378,27 +473,38 @@ public static class QuizCurriculumLayer
                     GeometryQuizShape.Rectangle,
                     GeometryQuizShape.Triangle
                 ],
-                AllowArea: true,
-                AllowVolume: false),
+                new Dictionary<GeometryQuizShape, IReadOnlySet<GeometryMeasurement>>
+                {
+                    [GeometryQuizShape.Square] = PerimeterAndArea,
+                    [GeometryQuizShape.Rectangle] = PerimeterAndArea,
+                    [GeometryQuizShape.Triangle] = PerimeterOnly
+                }),
 
+            // Toán 4: tiếp tục chữ nhật/vuông; thêm bình hành và hình thoi.
+            // Tam giác vẫn chỉ dùng chu vi; hình thang/tròn chưa tính diện tích.
             CurriculumTier.FourStars => new(
                 40,
                 [
                     GeometryQuizShape.Square,
                     GeometryQuizShape.Rectangle,
                     GeometryQuizShape.Triangle,
-                    GeometryQuizShape.Trapezoid,
                     GeometryQuizShape.Rhombus,
                     GeometryQuizShape.Parallelogram
                 ],
-                AllowArea: true,
-                AllowVolume: false),
+                new Dictionary<GeometryQuizShape, IReadOnlySet<GeometryMeasurement>>
+                {
+                    [GeometryQuizShape.Square] = PerimeterAndArea,
+                    [GeometryQuizShape.Rectangle] = PerimeterAndArea,
+                    [GeometryQuizShape.Triangle] = PerimeterOnly,
+                    [GeometryQuizShape.Rhombus] = PerimeterAndArea,
+                    [GeometryQuizShape.Parallelogram] = PerimeterAndArea
+                }),
 
+            // Toán 5 mở diện tích tam giác, hình thang, hình tròn và thể tích
+            // hình hộp chữ nhật/hình lập phương; toàn bộ template hiện có hợp lệ.
             CurriculumTier.FiveStars => new(
                 80,
-                Enum.GetValues<GeometryQuizShape>(),
-                AllowArea: true,
-                AllowVolume: true),
+                Enum.GetValues<GeometryQuizShape>()),
 
             _ => throw new ArgumentOutOfRangeException(nameof(context))
         };
@@ -426,9 +532,11 @@ public static class QuizCurriculumLayer
             return Enum.GetValues<MotionQuizType>();
         }
 
-        // Mixed Mode: toán chuyển động chỉ bắt đầu ở ★★★★★.
+        // Mixed Mode: Toán 5 chính khóa tập trung quan hệ vận tốc - quãng
+        // đường - thời gian. Các biến thể đuổi nhau/gặp nhau/dòng nước vẫn
+        // giữ được khi người dùng chủ động chọn skill Chuyển động.
         return context.Tier == CurriculumTier.FiveStars
-            ? Enum.GetValues<MotionQuizType>()
+            ? [MotionQuizType.Basic]
             : Array.Empty<MotionQuizType>();
     }
 
@@ -457,8 +565,14 @@ public static class QuizCurriculumLayer
             return Enum.GetValues<PercentageQuizType>();
         }
 
+        // Mixed ★★★★★ bám hai yêu cầu cốt lõi của Toán 5: tìm tỉ số phần
+        // trăm của hai số và tìm giá trị phần trăm của một số. Dạng tìm toàn
+        // bộ từ một giá trị phần trăm vẫn khả dụng khi người dùng chọn riêng.
         return context.Tier == CurriculumTier.FiveStars
-            ? Enum.GetValues<PercentageQuizType>()
+            ? [
+                PercentageQuizType.FindPercentageRatio,
+                PercentageQuizType.FindPercentageValue
+              ]
             : Array.Empty<PercentageQuizType>();
     }
 
@@ -483,7 +597,7 @@ public static class QuizCurriculumLayer
 
             CurriculumTier.TwoStars =>
             [
-                new(new(QuizProblemKind.Arithmetic), 6),
+                new(new(QuizProblemKind.Arithmetic), 7),
                 new(new(QuizProblemKind.FindX), 2),
                 new(new(QuizProblemKind.Geometry), 2)
             ],

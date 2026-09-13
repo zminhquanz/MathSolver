@@ -142,10 +142,11 @@ public sealed class FindXQuizGenerator
 
             case ArithmeticOperation.Multiply:
             {
+                // x giữ độ lớn của tier; thừa số đã biết mới bị Curriculum
+                // giới hạn (Mixed ★★★: nhân số nhiều chữ số với 1 chữ số).
                 int x = QuizCurriculumLayer.NextPrimaryOperand(
                     _random,
-                    tier,
-                    maximumOverride: curriculumRules.MaximumFactor);
+                    tier);
                 int safeKnownMaximum = Math.Min(
                     curriculumRules.MaximumFactor,
                     int.MaxValue / Math.Max(1, x));

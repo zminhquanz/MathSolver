@@ -748,3 +748,22 @@ Top-level **Hỗn hợp các dạng** now follows the intended elementary progre
 - Skill Mode remains independent: choosing Geometry/Average/Proportion/Motion directly still keeps ★..★★★★★ available; the milestone gate applies only to the top-level Mixed pool.
 
 The matching mixed-only subtype guards were aligned with the same milestones, so a direct internal request cannot accidentally generate Proportion or Motion below ★★★★★, or Geometry at ★.
+
+## Curriculum audit against Vietnamese primary mathematics (CTGDPT 2018)
+
+The five stars remain Math Solver's abstract difficulty axis, but **global Mixed** uses them as grade-like curriculum milestones. Dedicated Skill Mode remains user-driven and never removes UI choices.
+
+- ★: arithmetic addition/subtraction and simple Find X with +/−.
+- ★★: arithmetic adds multiplication/division constrained to tables 2 and 5; Find X remains +/−. Geometry enters global Mixed only as triangle perimeter, matching the early perimeter strand without opening later area formulas.
+- ★★★: four arithmetic operations; multiplication/division use one-digit table factors 2..9; Find X includes ×/÷; Geometry includes square/rectangle perimeter+area and triangle perimeter. Fraction arithmetic is still excluded because grade 3 mainly introduces “one part of” rather than full fraction operations.
+- ★★★★: fraction arithmetic enters global Mixed with intentionally small numerators/denominators; average enters; Geometry adds parallelogram/rhombus while triangle remains perimeter-only.
+- ★★★★★: percentage, proportion, motion and the full supported geometry set enter. Global Mixed motion uses the core speed-distance-time form; advanced chasing/meeting/river variants remain available when Motion is selected directly. Percentage Mixed uses ratio and percentage-of-a-number; reverse-whole remains available in dedicated Percentage mode.
+
+Both Algorithm and AI/LLM consume the same C# contracts, so these restrictions apply before any LLM wording step.
+
+### Audit bổ sung: Geometry ★★
+
+- Mixed ★ không sinh Geometry vì generator hiện tại là bài tính toán, trong khi mốc đầu chủ yếu là nhận dạng hình trực quan.
+- Mixed ★★ bắt đầu Geometry bằng **chu vi tam giác**. Đây là dạng generator hiện tại biểu diễn đúng với mạch làm quen chu vi ở Toán 2; chưa mở sớm diện tích hình vuông/chữ nhật.
+- Mixed ★★★ mới mở chu vi/diện tích hình vuông, hình chữ nhật và giữ chu vi tam giác.
+- Skill Mode vẫn không lọc Picker/subtype theo sao để tránh thay đổi collection native WinUI trong lúc tương tác; khi người dùng chủ động chọn một dạng cụ thể, sao tiếp tục đóng vai trò scale dữ kiện.

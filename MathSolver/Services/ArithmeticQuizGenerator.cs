@@ -152,16 +152,16 @@ public sealed class ArithmeticQuizGenerator
                     _random,
                     tier);
 
-                // b được random theo bậc chữ số từ ★ đến tier hiện tại,
-                // nhưng contract Toán đố phải luôn nằm trong Int32 để C#
-                // validator có thể đối chiếu tuyệt đối an toàn.
+                // b được random theo bậc chữ số từ ★ đến tier hiện tại ở
+                // Skill Mode. Mixed toàn bộ có thể cấp danh sách factor cụ thể
+                // (ví dụ lớp 2 chỉ bảng 2 và 5, lớp 3 bảng 2..9).
                 int safeRightMaximum = Math.Min(
                     curriculumRules.MaximumMultiplicationFactor,
                     int.MaxValue / Math.Max(1, left));
-                right = QuizCurriculumLayer.NextSecondaryOperand(
-                    _random,
+                right = SelectFactor(
+                    curriculumRules.AllowedMultiplicationFactors,
                     tier,
-                    maximumOverride: safeRightMaximum);
+                    safeRightMaximum);
                 break;
 
             case ArithmeticOperation.Divide:
@@ -171,13 +171,10 @@ public sealed class ArithmeticQuizGenerator
                         curriculumRules.MaximumDivisionFactor,
                         curriculumRules.MaximumValue));
 
-                // Chọn divisor theo bậc chữ số độc lập rồi chọn dividend là
-                // một bội chính xác trong đúng bậc của tier. Ví dụ ở ★★★★★
-                // hoàn toàn có thể sinh 18.258 ÷ 2 = 9.129.
-                right = QuizCurriculumLayer.NextSecondaryOperand(
-                    _random,
+                right = SelectFactor(
+                    curriculumRules.AllowedDivisionFactors,
                     tier,
-                    maximumOverride: factorMaximum);
+                    factorMaximum);
                 left = QuizCurriculumLayer.NextPrimaryMultiple(
                     _random,
                     tier,
@@ -196,6 +193,32 @@ public sealed class ArithmeticQuizGenerator
             left,
             operation,
             right);
+    }
+
+    private int SelectFactor(
+        IReadOnlyList<int>? allowedFactors,
+        CurriculumTier tier,
+        int maximum)
+    {
+        if (allowedFactors is not null)
+        {
+            int[] eligible = allowedFactors
+                .Where(value => value >= 1 && value <= maximum)
+                .ToArray();
+
+            if (eligible.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "No curriculum multiplication/division factor is available.");
+            }
+
+            return eligible[_random.Next(eligible.Length)];
+        }
+
+        return QuizCurriculumLayer.NextSecondaryOperand(
+            _random,
+            tier,
+            maximumOverride: maximum);
     }
 
     private IntegerArithmeticExpression CreateLegacyExpression(
