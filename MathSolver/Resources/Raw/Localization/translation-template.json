@@ -681,7 +681,7 @@
     "legacy.exact.float.va.double.dang.dung.0.55de6232": "Float và Double đang dùng {0}.",
     "legacy.exact.float.va.double.dang.dung.scalar.4c2f4fd6": "Float và Double đang dùng Scalar.",
     "legacy.exact.float.va.double.dang.dung.simd.0715cc02": "Float và Double đang dùng SIMD.",
-    "legacy.exact.float.va.double.dung.simd.khi.bat.int32.va.947d976a": "Float và Double dùng SIMD khi bật. Int32 và Int64 luôn dùng Scalar. Đa luồng chỉ áp dụng cho benchmark.",
+    "legacy.exact.float.va.double.dung.simd.khi.bat.int32.va.947d976a": "Float, Double, Int32 và Int64 dùng SIMD khi bật tăng tốc phần cứng; tắt tăng tốc mới dùng Scalar. Đa luồng chỉ áp dụng cho benchmark.",
     "legacy.exact.ghi.nho.9f4319ae": "Ghi nhớ",
     "legacy.exact.ghi.nho.phep.cong.va.phep.tru.la.hai.phep.8a8fe171": "Ghi nhớ: Phép cộng và phép trừ là hai phép tính ngược nhau; phép nhân và phép chia cũng là hai phép tính ngược nhau. Sau khi tìm được x, luôn thay x vào phép tính ban đầu để kiểm tra và loại mọi giá trị vi phạm điều kiện chia cho 0.",
     "legacy.exact.giai.toan.5725d6d4": "Giải toán",

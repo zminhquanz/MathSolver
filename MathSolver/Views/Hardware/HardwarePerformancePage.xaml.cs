@@ -753,6 +753,8 @@ public partial class HardwarePerformancePage : ContentPage
 
         IntegerModeValueLabel.Text =
             BuildIntegerModeText(
+                effectiveUseSimd,
+                selectedMode,
                 useMultithreading,
                 workerCount);
 
@@ -931,17 +933,34 @@ public partial class HardwarePerformancePage : ContentPage
     }
 
     private static string BuildIntegerModeText(
+        bool useSimd,
+        CalculationSimdMode simdMode,
         bool useMultithreading,
         int workerCount)
     {
+        // Integer benchmarks follow the same global acceleration switch as
+        // Float/Double. SSE2, AVX2, AVX-512 and NEON all provide integer
+        // vector ALU operations, so Scalar is used only when SIMD is off or
+        // unavailable on the current runtime.
+        string processingMode =
+            useSimd
+                ? CalculationAccelerationManager
+                    .GetModeDisplayName(
+                        simdMode)
+                : "Scalar";
+
         return useMultithreading
             ? string.Format(
                 CultureInfo.CurrentCulture,
                 LocalizationService.Translate(
-                    "Scalar + đa luồng ({0} luồng)"),
+                    "{0} + đa luồng ({1} luồng)"),
+                processingMode,
                 workerCount)
-            : LocalizationService.Translate(
-                "Scalar + đơn luồng");
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                LocalizationService.Translate(
+                    "{0} + đơn luồng"),
+                processingMode);
     }
 
     private static string NormalizeText(
@@ -2293,8 +2312,8 @@ public partial class HardwarePerformancePage : ContentPage
 
         ThreadComparisonDescriptionLabel.Text =
             IsVietnamese
-                ? "Chạy cùng bài đo Scalar hai lần: một luồng và đa luồng. Điểm là trung bình nhân của Int32, Int64, Float và Double."
-                : "Run the same Scalar benchmark twice: single-threaded and multi-threaded. The score is the geometric mean of Int32, Int64, Float and Double.";
+                ? "Chạy cùng backend hiện tại hai lần: một luồng và đa luồng. Nếu tăng tốc phần cứng bật, cả Int32, Int64, Float và Double dùng SIMD; nếu tắt thì dùng Scalar."
+                : "Run the same current backend twice: single-threaded and multi-threaded. With hardware acceleration on, Int32, Int64, Float and Double all use SIMD; with it off, they use Scalar.";
 
         ThreadComparisonNoteLabel.Text =
             IsVietnamese
@@ -2747,10 +2766,16 @@ public partial class HardwarePerformancePage : ContentPage
 
         try
         {
+            bool useSimd =
+                CalculationAccelerationManager.UseSimd;
+
+            CalculationSimdMode simdMode =
+                CalculationAccelerationManager.EffectiveSimdMode;
+
             BenchmarkResult single =
                 await RunCalculationBenchmarkAsync(
-                    useSimd: false,
-                    simdMode: CalculationSimdMode.Portable,
+                    useSimd: useSimd,
+                    simdMode: simdMode,
                     useMultithreading: false,
                     cancellationToken: cancellationToken,
                     runLabel: IsVietnamese
@@ -2761,8 +2786,8 @@ public partial class HardwarePerformancePage : ContentPage
 
             BenchmarkResult multi =
                 await RunCalculationBenchmarkAsync(
-                    useSimd: false,
-                    simdMode: CalculationSimdMode.Portable,
+                    useSimd: useSimd,
+                    simdMode: simdMode,
                     useMultithreading: true,
                     cancellationToken: cancellationToken,
                     runLabel: IsVietnamese
@@ -3458,6 +3483,8 @@ public partial class HardwarePerformancePage : ContentPage
                 LocalizationService.Translate(
                     "Int32 / Int64: {0}"),
                 BuildIntegerModeText(
+                    _lastBenchmarkResult.UsedSimd,
+                    _lastBenchmarkResult.UsedSimdMode,
                     _lastBenchmarkResult.UsedMultithreading,
                     _lastBenchmarkResult.WorkerCount));
 
@@ -3519,6 +3546,16 @@ public partial class HardwarePerformancePage : ContentPage
             CalculationAccelerationManager.IsModeAvailable(
                 simdMode);
 
+#if ANDROID
+        // Android may expose the NEON HWCAP while a particular Mono runtime
+        // still cannot execute managed AdvSIMD/Vector128 code. Fall back to
+        // Scalar in that case instead of starting a SIMD benchmark that the
+        // runtime cannot execute.
+        actualUseSimd =
+            actualUseSimd &&
+            CalculationAccelerationManager.IsArmNeonManagedAvailable;
+#endif
+
         bool actualUseMultithreading =
             useMultithreading &&
             CalculationThreadingManager.IsMultithreadingAvailable;
@@ -3536,6 +3573,8 @@ public partial class HardwarePerformancePage : ContentPage
                 "Int",
                 1,
                 progress => RunInt32Benchmark(
+                    actualUseSimd,
+                    simdMode,
                     workerCount,
                     progress,
                     cancellationToken),
@@ -3548,6 +3587,8 @@ public partial class HardwarePerformancePage : ContentPage
                 "Long",
                 2,
                 progress => RunInt64Benchmark(
+                    actualUseSimd,
+                    simdMode,
                     workerCount,
                     progress,
                     cancellationToken),
@@ -3702,35 +3743,105 @@ public partial class HardwarePerformancePage : ContentPage
     }
 
     private static TimedBenchmarkResult RunInt32Benchmark(
+        bool useSimd,
+        CalculationSimdMode simdMode,
         int workerCount,
         IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
+        TimedWorker worker =
+            ResolveInt32BenchmarkWorker(
+                useSimd,
+                simdMode);
+
         WarmUpWorker(
-            RunInt32Worker,
+            worker,
             cancellationToken);
 
         return RunTenSecondBenchmark(
             workerCount,
-            RunInt32Worker,
+            worker,
             countdownProgress,
             cancellationToken);
     }
 
     private static TimedBenchmarkResult RunInt64Benchmark(
+        bool useSimd,
+        CalculationSimdMode simdMode,
         int workerCount,
         IProgress<int> countdownProgress,
         CancellationToken cancellationToken)
     {
+        TimedWorker worker =
+            ResolveInt64BenchmarkWorker(
+                useSimd,
+                simdMode);
+
         WarmUpWorker(
-            RunInt64Worker,
+            worker,
             cancellationToken);
 
         return RunTenSecondBenchmark(
             workerCount,
-            RunInt64Worker,
+            worker,
             countdownProgress,
             cancellationToken);
+    }
+
+    private static TimedWorker ResolveInt32BenchmarkWorker(
+        bool useSimd,
+        CalculationSimdMode simdMode)
+    {
+        if (!useSimd)
+        {
+            return RunInt32ScalarWorker;
+        }
+
+        return simdMode switch
+        {
+            CalculationSimdMode.Avx512 =>
+                RunInt32Avx512Worker,
+
+            CalculationSimdMode.AvxAvx2 =>
+                RunInt32Avx2Worker,
+
+            CalculationSimdMode.Sse =>
+                RunInt32SseWorker,
+
+            CalculationSimdMode.ArmNeon =>
+                RunInt32NeonWorker,
+
+            _ =>
+                RunInt32PortableSimdWorker
+        };
+    }
+
+    private static TimedWorker ResolveInt64BenchmarkWorker(
+        bool useSimd,
+        CalculationSimdMode simdMode)
+    {
+        if (!useSimd)
+        {
+            return RunInt64ScalarWorker;
+        }
+
+        return simdMode switch
+        {
+            CalculationSimdMode.Avx512 =>
+                RunInt64Avx512Worker,
+
+            CalculationSimdMode.AvxAvx2 =>
+                RunInt64Avx2Worker,
+
+            CalculationSimdMode.Sse =>
+                RunInt64SseWorker,
+
+            CalculationSimdMode.ArmNeon =>
+                RunInt64NeonWorker,
+
+            _ =>
+                RunInt64PortableSimdWorker
+        };
     }
 
     private static TimedBenchmarkResult RunFloatBenchmark(
@@ -3963,7 +4074,10 @@ public partial class HardwarePerformancePage : ContentPage
             checksum);
     }
 
-    private static WorkerResult RunInt32Worker(
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt32ScalarWorker(
         int workerIndex,
         long deadlineTimestamp,
         CancellationToken cancellationToken)
@@ -3972,13 +4086,34 @@ public partial class HardwarePerformancePage : ContentPage
             8_192;
 
         const int operationsPerIteration =
-            10;
+            8;
 
         int state =
             unchecked(
                 0x13579BDF +
                 workerIndex *
                 97);
+
+        const int addA =
+            1_664_525;
+
+        const int addB =
+            1_013_904_223;
+
+        const int addC =
+            97_531;
+
+        int xorA =
+            unchecked((int)0x9E3779B9u);
+
+        int xorB =
+            unchecked((int)0x85EBCA6Bu);
+
+        int xorC =
+            unchecked((int)0xC2B2AE35u);
+
+        int xorD =
+            unchecked((int)0x27D4EB2Fu);
 
         long operationCount =
             0;
@@ -3991,29 +4126,35 @@ public partial class HardwarePerformancePage : ContentPage
             {
                 state =
                     unchecked(
-                        state *
-                        1_664_525 +
-                        1_013_904_223);
+                        state +
+                        addA);
 
                 state ^=
-                    state <<
-                    13;
-
-                state ^=
-                    (int)(
-                        (uint)state >>
-                        17);
-
-                state ^=
-                    state <<
-                    5;
+                    xorA;
 
                 state =
                     unchecked(
                         state +
-                        state *
-                        31 +
-                        index);
+                        state);
+
+                state ^=
+                    xorB;
+
+                state =
+                    unchecked(
+                        state +
+                        addB);
+
+                state ^=
+                    xorC;
+
+                state =
+                    unchecked(
+                        state +
+                        addC);
+
+                state ^=
+                    xorD;
             }
 
             operationCount +=
@@ -4033,7 +4174,10 @@ public partial class HardwarePerformancePage : ContentPage
             state);
     }
 
-    private static WorkerResult RunInt64Worker(
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt64ScalarWorker(
         int workerIndex,
         long deadlineTimestamp,
         CancellationToken cancellationToken)
@@ -4042,13 +4186,34 @@ public partial class HardwarePerformancePage : ContentPage
             8_192;
 
         const int operationsPerIteration =
-            10;
+            8;
 
         long state =
             unchecked(
                 0x13579BDF2468ACE1L +
                 workerIndex *
                 193L);
+
+        const long addA =
+            6_364_136_223_846_793_005L;
+
+        const long addB =
+            1_442_695_040_888_963_407L;
+
+        const long addC =
+            97_531L;
+
+        long xorA =
+            unchecked((long)0x9E3779B97F4A7C15UL);
+
+        long xorB =
+            unchecked((long)0xC2B2AE3D27D4EB4FUL);
+
+        long xorC =
+            unchecked((long)0x165667B19E3779F9UL);
+
+        long xorD =
+            unchecked((long)0x85EBCA77C2B2AE63UL);
 
         long operationCount =
             0;
@@ -4061,29 +4226,35 @@ public partial class HardwarePerformancePage : ContentPage
             {
                 state =
                     unchecked(
-                        state *
-                        6_364_136_223_846_793_005L +
-                        1_442_695_040_888_963_407L);
+                        state +
+                        addA);
 
                 state ^=
-                    state <<
-                    13;
-
-                state ^=
-                    (long)(
-                        (ulong)state >>
-                        17);
-
-                state ^=
-                    state <<
-                    7;
+                    xorA;
 
                 state =
                     unchecked(
                         state +
-                        state *
-                        31 +
-                        index);
+                        state);
+
+                state ^=
+                    xorB;
+
+                state =
+                    unchecked(
+                        state +
+                        addB);
+
+                state ^=
+                    xorC;
+
+                state =
+                    unchecked(
+                        state +
+                        addC);
+
+                state ^=
+                    xorD;
             }
 
             operationCount +=
@@ -4101,6 +4272,744 @@ public partial class HardwarePerformancePage : ContentPage
         return new WorkerResult(
             operationCount,
             state);
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt32Avx512Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvx512Available)
+        {
+            return RunInt32PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector512<int>.Count;
+
+        Vector512<int> state =
+            Vector512.Create(
+                unchecked(
+                    0x13579BDF +
+                    workerIndex *
+                    97));
+
+        Vector512<int> addA =
+            Vector512.Create(
+                1_664_525);
+
+        Vector512<int> addB =
+            Vector512.Create(
+                1_013_904_223);
+
+        Vector512<int> addC =
+            Vector512.Create(
+                97_531);
+
+        Vector512<int> xorA =
+            Vector512.Create(
+                unchecked((int)0x9E3779B9u));
+
+        Vector512<int> xorB =
+            Vector512.Create(
+                unchecked((int)0x85EBCA6Bu));
+
+        Vector512<int> xorC =
+            Vector512.Create(
+                unchecked((int)0xC2B2AE35u));
+
+        Vector512<int> xorD =
+            Vector512.Create(
+                unchecked((int)0x27D4EB2Fu));
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector512.Sum(
+                state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt64Avx512Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvx512Available)
+        {
+            return RunInt64PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector512<long>.Count;
+
+        Vector512<long> state =
+            Vector512.Create(
+                unchecked(
+                    0x13579BDF2468ACE1L +
+                    workerIndex *
+                    193L));
+
+        Vector512<long> addA =
+            Vector512.Create(
+                6_364_136_223_846_793_005L);
+
+        Vector512<long> addB =
+            Vector512.Create(
+                1_442_695_040_888_963_407L);
+
+        Vector512<long> addC =
+            Vector512.Create(
+                97_531L);
+
+        Vector512<long> xorA =
+            Vector512.Create(
+                unchecked((long)0x9E3779B97F4A7C15UL));
+
+        Vector512<long> xorB =
+            Vector512.Create(
+                unchecked((long)0xC2B2AE3D27D4EB4FUL));
+
+        Vector512<long> xorC =
+            Vector512.Create(
+                unchecked((long)0x165667B19E3779F9UL));
+
+        Vector512<long> xorD =
+            Vector512.Create(
+                unchecked((long)0x85EBCA77C2B2AE63UL));
+
+        long operationCount =
+            0;
+
+        do
+        {
+            for (int index = 0;
+                 index < vectorIterationsPerBatch;
+                 index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() <
+               deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector512.Sum(
+                state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt32Avx2Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvxAvx2Available)
+        {
+            return RunInt32PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch =
+            2_048;
+
+        const int operationsPerLane =
+            8;
+
+        int laneCount =
+            Vector256<int>.Count;
+
+        Vector256<int> state =
+            Vector256.Create(
+                unchecked(
+                    0x13579BDF +
+                    workerIndex *
+                    97));
+
+        Vector256<int> addA = Vector256.Create(1_664_525);
+        Vector256<int> addB = Vector256.Create(1_013_904_223);
+        Vector256<int> addC = Vector256.Create(97_531);
+        Vector256<int> xorA = Vector256.Create(unchecked((int)0x9E3779B9u));
+        Vector256<int> xorB = Vector256.Create(unchecked((int)0x85EBCA6Bu));
+        Vector256<int> xorC = Vector256.Create(unchecked((int)0xC2B2AE35u));
+        Vector256<int> xorD = Vector256.Create(unchecked((int)0x27D4EB2Fu));
+
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector256.Sum(state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt64Avx2Worker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsAvxAvx2Available)
+        {
+            return RunInt64PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector256<long>.Count;
+
+        Vector256<long> state =
+            Vector256.Create(
+                unchecked(
+                    0x13579BDF2468ACE1L +
+                    workerIndex *
+                    193L));
+
+        Vector256<long> addA = Vector256.Create(6_364_136_223_846_793_005L);
+        Vector256<long> addB = Vector256.Create(1_442_695_040_888_963_407L);
+        Vector256<long> addC = Vector256.Create(97_531L);
+        Vector256<long> xorA = Vector256.Create(unchecked((long)0x9E3779B97F4A7C15UL));
+        Vector256<long> xorB = Vector256.Create(unchecked((long)0xC2B2AE3D27D4EB4FUL));
+        Vector256<long> xorC = Vector256.Create(unchecked((long)0x165667B19E3779F9UL));
+        Vector256<long> xorD = Vector256.Create(unchecked((long)0x85EBCA77C2B2AE63UL));
+
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector256.Sum(state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt32SseWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsSseAvailable)
+        {
+            return RunInt32PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector128<int>.Count;
+
+        Vector128<int> state =
+            Vector128.Create(
+                unchecked(
+                    0x13579BDF +
+                    workerIndex *
+                    97));
+
+        Vector128<int> addA = Vector128.Create(1_664_525);
+        Vector128<int> addB = Vector128.Create(1_013_904_223);
+        Vector128<int> addC = Vector128.Create(97_531);
+        Vector128<int> xorA = Vector128.Create(unchecked((int)0x9E3779B9u));
+        Vector128<int> xorB = Vector128.Create(unchecked((int)0x85EBCA6Bu));
+        Vector128<int> xorC = Vector128.Create(unchecked((int)0xC2B2AE35u));
+        Vector128<int> xorD = Vector128.Create(unchecked((int)0x27D4EB2Fu));
+
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt64SseWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsSseAvailable)
+        {
+            return RunInt64PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector128<long>.Count;
+
+        Vector128<long> state =
+            Vector128.Create(
+                unchecked(
+                    0x13579BDF2468ACE1L +
+                    workerIndex *
+                    193L));
+
+        Vector128<long> addA = Vector128.Create(6_364_136_223_846_793_005L);
+        Vector128<long> addB = Vector128.Create(1_442_695_040_888_963_407L);
+        Vector128<long> addC = Vector128.Create(97_531L);
+        Vector128<long> xorA = Vector128.Create(unchecked((long)0x9E3779B97F4A7C15UL));
+        Vector128<long> xorB = Vector128.Create(unchecked((long)0xC2B2AE3D27D4EB4FUL));
+        Vector128<long> xorC = Vector128.Create(unchecked((long)0x165667B19E3779F9UL));
+        Vector128<long> xorD = Vector128.Create(unchecked((long)0x85EBCA77C2B2AE63UL));
+
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount +=
+                (long)vectorIterationsPerBatch *
+                laneCount *
+                operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(
+            operationCount,
+            Vector128.Sum(state));
+    }
+
+    private static WorkerResult RunInt32NeonWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsArmNeonManagedAvailable ||
+            !Vector128.IsHardwareAccelerated)
+        {
+            return RunInt32PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        return RunInt32SseWidthWorker(
+            workerIndex,
+            deadlineTimestamp,
+            cancellationToken);
+    }
+
+    private static WorkerResult RunInt64NeonWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!CalculationAccelerationManager.IsArmNeonManagedAvailable ||
+            !Vector128.IsHardwareAccelerated)
+        {
+            return RunInt64PortableSimdWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        return RunInt64SseWidthWorker(
+            workerIndex,
+            deadlineTimestamp,
+            cancellationToken);
+    }
+
+    // Shared 128-bit integer kernels. The name intentionally avoids ISA
+    // intrinsics: the JIT maps these Vector128 operations to SSE2 on x86 and
+    // AdvSIMD on ARM64 depending on the current process architecture.
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt32SseWidthWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector128<int>.Count;
+
+        Vector128<int> state = Vector128.Create(
+            unchecked(0x13579BDF + workerIndex * 97));
+        Vector128<int> addA = Vector128.Create(1_664_525);
+        Vector128<int> addB = Vector128.Create(1_013_904_223);
+        Vector128<int> addC = Vector128.Create(97_531);
+        Vector128<int> xorA = Vector128.Create(unchecked((int)0x9E3779B9u));
+        Vector128<int> xorB = Vector128.Create(unchecked((int)0x85EBCA6Bu));
+        Vector128<int> xorC = Vector128.Create(unchecked((int)0xC2B2AE35u));
+        Vector128<int> xorD = Vector128.Create(unchecked((int)0x27D4EB2Fu));
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount += (long)vectorIterationsPerBatch * laneCount * operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(operationCount, Vector128.Sum(state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt64SseWidthWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector128<long>.Count;
+
+        Vector128<long> state = Vector128.Create(
+            unchecked(0x13579BDF2468ACE1L + workerIndex * 193L));
+        Vector128<long> addA = Vector128.Create(6_364_136_223_846_793_005L);
+        Vector128<long> addB = Vector128.Create(1_442_695_040_888_963_407L);
+        Vector128<long> addC = Vector128.Create(97_531L);
+        Vector128<long> xorA = Vector128.Create(unchecked((long)0x9E3779B97F4A7C15UL));
+        Vector128<long> xorB = Vector128.Create(unchecked((long)0xC2B2AE3D27D4EB4FUL));
+        Vector128<long> xorC = Vector128.Create(unchecked((long)0x165667B19E3779F9UL));
+        Vector128<long> xorD = Vector128.Create(unchecked((long)0x85EBCA77C2B2AE63UL));
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount += (long)vectorIterationsPerBatch * laneCount * operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        return new WorkerResult(operationCount, Vector128.Sum(state));
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt32PortableSimdWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!Vector.IsHardwareAccelerated || Vector<int>.Count <= 1)
+        {
+            return RunInt32ScalarWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector<int>.Count;
+
+        Vector<int> state = new(unchecked(0x13579BDF + workerIndex * 97));
+        Vector<int> addA = new(1_664_525);
+        Vector<int> addB = new(1_013_904_223);
+        Vector<int> addC = new(97_531);
+        Vector<int> xorA = new(unchecked((int)0x9E3779B9u));
+        Vector<int> xorB = new(unchecked((int)0x85EBCA6Bu));
+        Vector<int> xorC = new(unchecked((int)0xC2B2AE35u));
+        Vector<int> xorD = new(unchecked((int)0x27D4EB2Fu));
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount += (long)vectorIterationsPerBatch * laneCount * operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        double checksum = 0d;
+        for (int lane = 0; lane < laneCount; lane++)
+        {
+            checksum += state[lane];
+        }
+
+        return new WorkerResult(operationCount, checksum);
+    }
+
+    [MethodImpl(
+        MethodImplOptions.NoInlining |
+        MethodImplOptions.AggressiveOptimization)]
+    private static WorkerResult RunInt64PortableSimdWorker(
+        int workerIndex,
+        long deadlineTimestamp,
+        CancellationToken cancellationToken)
+    {
+        if (!Vector.IsHardwareAccelerated || Vector<long>.Count <= 1)
+        {
+            return RunInt64ScalarWorker(
+                workerIndex,
+                deadlineTimestamp,
+                cancellationToken);
+        }
+
+        const int vectorIterationsPerBatch = 2_048;
+        const int operationsPerLane = 8;
+        int laneCount = Vector<long>.Count;
+
+        Vector<long> state = new(unchecked(0x13579BDF2468ACE1L + workerIndex * 193L));
+        Vector<long> addA = new(6_364_136_223_846_793_005L);
+        Vector<long> addB = new(1_442_695_040_888_963_407L);
+        Vector<long> addC = new(97_531L);
+        Vector<long> xorA = new(unchecked((long)0x9E3779B97F4A7C15UL));
+        Vector<long> xorB = new(unchecked((long)0xC2B2AE3D27D4EB4FUL));
+        Vector<long> xorC = new(unchecked((long)0x165667B19E3779F9UL));
+        Vector<long> xorD = new(unchecked((long)0x85EBCA77C2B2AE63UL));
+        long operationCount = 0;
+
+        do
+        {
+            for (int index = 0; index < vectorIterationsPerBatch; index++)
+            {
+                state = state + addA;
+                state ^= xorA;
+                state = state + state;
+                state ^= xorB;
+                state = state + addB;
+                state ^= xorC;
+                state = state + addC;
+                state ^= xorD;
+            }
+
+            operationCount += (long)vectorIterationsPerBatch * laneCount * operationsPerLane;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+        while (Stopwatch.GetTimestamp() < deadlineTimestamp);
+
+        double checksum = 0d;
+        for (int lane = 0; lane < laneCount; lane++)
+        {
+            checksum += state[lane];
+        }
+
+        return new WorkerResult(operationCount, checksum);
     }
 
     private static WorkerResult RunFloatScalarWorker(

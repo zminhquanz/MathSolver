@@ -3685,7 +3685,7 @@
     },
     {
       "key": "legacy.exact.float.va.double.dung.simd.khi.bat.int32.va.947d976a",
-      "source": "Float và Double dùng SIMD khi bật. Int32 và Int64 luôn dùng Scalar. Đa luồng chỉ áp dụng cho benchmark.",
+      "source": "Float, Double, Int32 và Int64 dùng SIMD khi bật tăng tốc phần cứng; tắt tăng tốc mới dùng Scalar. Đa luồng chỉ áp dụng cho benchmark.",
       "mode": "exact"
     },
     {

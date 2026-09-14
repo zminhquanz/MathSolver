@@ -375,7 +375,7 @@
                         </Grid>
 
                         <Label
-                            Text="Float và Double dùng SIMD khi bật. Int32 và Int64 luôn dùng Scalar. Đa luồng chỉ áp dụng cho benchmark."
+                            Text="Float, Double, Int32 và Int64 dùng SIMD khi bật tăng tốc phần cứng; tắt tăng tốc mới dùng Scalar. Đa luồng chỉ áp dụng cho benchmark."
                             Style="{StaticResource HardwareDescriptionStyle}" />
                     </VerticalStackLayout>
                 </Border>
@@ -542,7 +542,7 @@
                             Spacing="12">
                             <Label
                                 x:Name="ThreadComparisonDescriptionLabel"
-                                Text="Chạy cùng bài đo Scalar hai lần: một luồng và đa luồng. Điểm là trung bình nhân của Int32, Int64, Float và Double."
+                                Text="Chạy cùng backend hiện tại hai lần: một luồng và đa luồng. Nếu tăng tốc phần cứng bật, cả Int32, Int64, Float và Double dùng SIMD; nếu tắt thì dùng Scalar."
                                 Style="{StaticResource HardwareDescriptionStyle}" />
 
                             <Button

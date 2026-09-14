@@ -42,7 +42,11 @@ public static class CalculationAccelerationManager
         Vector512.IsHardwareAccelerated;
 
     public static bool IsAvxAvx2Available =>
+        // The selectable 256-bit backend is shared by floating-point and
+        // integer benchmarks. AVX alone is sufficient for Float/Double, but
+        // 256-bit integer ALU instructions require AVX2.
         Avx.IsSupported &&
+        Avx2.IsSupported &&
         Vector256.IsHardwareAccelerated;
 
     public static bool IsSseAvailable =>
