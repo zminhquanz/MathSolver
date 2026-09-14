@@ -74,15 +74,6 @@ public static class LocalizationKeys
         public const string PowerExportAccelerationUnavailable =
             "Hardware.PowerExportAccelerationUnavailable";
 
-        public const string BigIntegerPowerAccelerationOn =
-            "Hardware.BigIntegerPowerAccelerationOn";
-
-        public const string BigIntegerPowerAccelerationOff =
-            "Hardware.BigIntegerPowerAccelerationOff";
-
-        public const string BigIntegerPowerAccelerationUnavailable =
-            "Hardware.BigIntegerPowerAccelerationUnavailable";
-
         public const string ParabolaAccelerationOn =
             "Hardware.ParabolaAccelerationOn";
 

@@ -811,22 +811,6 @@ public partial class HardwarePerformancePage : ContentPage
                             : LocalizationKeys.Hardware.PowerExportAccelerationOff),
                 powerExportBackend);
 
-        string bigIntegerPowerAccelerationStatus =
-            LocalizationService.TranslateKey(
-                !CalculationAccelerationManager
-                    .IsSingleThreadBigIntegerAccelerationAvailable
-                    ? LocalizationKeys.Hardware.BigIntegerPowerAccelerationUnavailable
-                    : CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2
-                        ? LocalizationKeys.Hardware.BigIntegerPowerAccelerationOn
-                        : LocalizationKeys.Hardware.BigIntegerPowerAccelerationOff);
-
-        if (CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2)
-        {
-            bigIntegerPowerAccelerationStatus += CalculationAccelerationManager.AllowAvx512
-                ? " (AVX-512 / AVX2 / BigInteger)"
-                : " (AVX2 / BigInteger)";
-        }
-
         string parabolaAccelerationStatus =
             LocalizationService.TranslateKey(
                 !ParabolaSimdEvaluator.IsAccelerationAvailable
@@ -840,8 +824,6 @@ public partial class HardwarePerformancePage : ContentPage
             nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : "Scalar") + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
-            Environment.NewLine +
-            bigIntegerPowerAccelerationStatus +
             Environment.NewLine +
             parabolaAccelerationStatus + " (" + ParabolaSimdEvaluator.BackendName + ")";
 

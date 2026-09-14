@@ -211,27 +211,6 @@ public static class CalculationAccelerationManager
         AllowAvx &&
         IsPowerNttAccelerationAvailable;
 
-    /// <summary>
-    /// Hardware capability for the single-threaded SIMD power backends.
-    /// Availability is separate from the measured production dispatch policy.
-    /// </summary>
-    public static bool IsSingleThreadBigIntegerAccelerationAvailable =>
-#if ANDROID
-        false;
-#else
-        Avx2.IsSupported &&
-        Vector256.IsHardwareAccelerated &&
-        (RuntimeInformation.ProcessArchitecture == Architecture.X64 ||
-         RuntimeInformation.ProcessArchitecture == Architecture.X86);
-#endif
-
-    // Enable the bounded AVX2 arithmetic window under the shared SIMD policy.
-    // Million-scale powers also use the bounded limb32 square backend; other sizes
-    // retain the runtime BigInteger fallback. AVX-512 is gated separately by AllowAvx512.
-    public static bool UseSingleThreadBigIntegerAvx2 =>
-        AllowAvx &&
-        IsSingleThreadBigIntegerAccelerationAvailable;
-
     public static CalculationSimdMode SelectedSimdMode
     {
         get

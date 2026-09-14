@@ -1,156 +1,48 @@
 using System.Numerics;
-using static MathSolver.Numerics.Avx2BigIntegerPower;
 
 namespace MathSolver.Numerics;
 
 /// <summary>
-/// Single-threaded power scheduling shared by the runtime and bounded SIMD backends.
-/// Hardware acceleration selects the prefix and bounded limb32 square backends; the
-/// exponent windows, progress and cancellation policy are shared.
+/// Single-threaded BigInteger power with exponent windows and bounded square
+/// batching. Progress and cancellation remain visible between batches.
 /// </summary>
 internal static class SingleThreadBigIntegerPower
 {
-    // Once the custom UInt16 window hands off to System.Numerics.BigInteger,
-    // consecutive left-to-right square steps can be folded into one runtime
-    // Pow(value, 2^k) call. .NET 10's BigInteger.Pow allocates one bounded
-    // result workspace and performs the internal square chain there, avoiding
-    // repeated public BigInteger construction / ArrayPool rent-return cycles
-    // between adjacent squares. Keep the batch deliberately small so
-    // cancellation latency remains close to the old per-square schedule.
     private const int MaximumRuntimeSquareBatchCount = 5;
-
-    // Runtime windowing is intentionally enabled only for million-scale
-    // exponents. Smaller powers keep the proven RuntimeSquareBatch5 path.
-    // Once the result is large, process up to five exponent bits at a time:
-    //     r <- r^(2^k) * base^window
-    // This is algebraically identical to k left-to-right binary steps, but it
-    // lets BigInteger.Pow keep all k squares inside one calculator workspace
-    // even when the bit window contains 1 bits. The window factor is tiny
-    // (base^31 at most for k=5) compared with the multi-megabyte result.
     private const int RuntimeWindowOptimizationMinimumExponent = 1_000_000;
     private const int MaximumRuntimeExponentWindowBitCount = 5;
 
-    // With window batching available, hand off before the custom 285 -> ~569
-    // limb square seen by the 10,000,000 path. 272 is deliberately below that
-    // observed point but still far above the small-input AVX2 region. Requiring
-    // at least five remaining bits ensures the earlier conversion is paid back
-    // by an immediate full runtime window. 500,000 keeps the old 448x4 policy.
-    private const int PredictiveRuntimeWindowHandoffMinimumLimbCount = 272;
-    private const int PredictiveRuntimeWindowHandoffMinimumRemainingBitCount = 5;
-    private const int EarlyRuntimeBatchHandoffMinimumLimbCount = 448;
-    private const int EarlyRuntimeBatchHandoffMinimumSquareCount = 4;
+    // Preserve the existing runtime-only schedule, expressed directly in bits.
+    // Batch after 512 former 16-bit limbs, or earlier when enough squares remain.
+    private const int RuntimeBatchingBitThreshold = 8192;
+    private const int MillionExponentBatchingBitThreshold = 4336;
+    private const int GroupedSquaresBatchingBitThreshold = 7152;
 
     public static BigInteger Pow(
         long baseValue,
         int exponent,
         Action<int, int> progress,
         int totalOperations,
-        CancellationToken cancellationToken,
-        bool useSimd,
-        bool useAvx512 = false)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(progress);
         ArgumentOutOfRangeException.ThrowIfNegative(exponent);
         cancellationToken.ThrowIfCancellationRequested();
+        if (exponent == 0) return BigInteger.One;
 
-        if (exponent == 0)
-        {
-            return BigInteger.One;
-        }
-
-        ulong magnitude =
-            baseValue < 0
-                ? (ulong)(-(baseValue + 1L)) + 1UL
-                : (ulong)baseValue;
-
-        // Enable the measured large-square backend for million-scale powers.
-        // Hardware mode is captured once; workers and NTT are never created here.
-        using var largeSquareWorkspace = useSimd && IsSupported && exponent >= 1_000_000
-            ? new SimdBigIntegerSquare(useAvx512) : null;
-        BigInteger RuntimePow(BigInteger value, int power) => largeSquareWorkspace is null
-            ? BigInteger.Pow(value, power)
-            : largeSquareWorkspace.PowOrRuntime(value, power, cancellationToken);
-
-        bool useCustomWindow = useSimd && IsSupported;
-        ushort[] baseMagnitude = useCustomWindow ? FromUInt64(magnitude) : [];
-
-        // Single-threaded backend: keep one small accumulator workspace for
-        // the entire custom-SIMD window instead of renting/returning a pooled
-        // UInt64 buffer for every square/multiply. NormalizeAccumulator clears
-        // each consumed coefficient as it propagates carry, so the workspace
-        // is already zeroed for the next operation without a separate Clear().
-        ulong[] accumulatorWorkspace =
-            useCustomWindow ? new ulong[MaximumAccumulatorLimbCount] : [];
-
-        // Left-to-right binary exponentiation keeps the multiply operand equal
-        // to the original base. That is a much better fit for the asymmetric
-        // AVX2 kernel than the old right-to-left schedule, which accumulated
-        // separately squared factors and later multiplied two large magnitudes.
-        //
-        // The operation count is unchanged: initialize from the leading 1 bit,
-        // then perform one square for every remaining bit and one multiply for
-        // every remaining set bit. Therefore existing progress accounting stays
-        // exactly compatible with the previous square/multiply implementation.
-        ushort[] resultMagnitude =
-            baseMagnitude;
-
-        bool runtimeBigIntegerMode = !useCustomWindow;
-        bool runtimeBatchingEnabled = false;
-
-        BigInteger baseBigInteger = new(magnitude);
-
+        BigInteger baseBigInteger = BigInteger.Abs(new BigInteger(baseValue));
         BigInteger resultBigInteger = baseBigInteger;
-
+        bool runtimeBatchingEnabled = false;
         int completedOperations = 0;
+        int highestSetBit = BitOperations.Log2((uint)exponent);
 
-        void SwitchToRuntimeBigInteger()
-        {
-            if (runtimeBigIntegerMode)
-            {
-                return;
-            }
-
-            resultBigInteger =
-                ToBigInteger(resultMagnitude);
-
-            runtimeBigIntegerMode = true;
-        }
-
-        int highestSetBit =
-            BitOperations.Log2(
-                (uint)exponent);
-
-        for (int bitIndex = highestSetBit - 1;
-             bitIndex >= 0;)
+        for (int bitIndex = highestSetBit - 1; bitIndex >= 0;)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            // Keep the binary prefix and batching boundary independent of SIMD.
-            // The runtime backend already owns a BigInteger here; only a custom
-            // kernel needs a representation conversion at this boundary.
             if (!runtimeBatchingEnabled)
-            {
-                int length = runtimeBigIntegerMode
-                    ? Math.Max(1, (int)((resultBigInteger.GetBitLength() + 15) / 16))
-                    : resultMagnitude.Length;
-                if (ShouldStartRuntimeBatching(length, exponent, bitIndex))
-                {
-                    SwitchToRuntimeBigInteger();
-                    runtimeBatchingEnabled = true;
-                }
-            }
+                runtimeBatchingEnabled = ShouldStartRuntimeBatching(
+                    resultBigInteger.GetBitLength(), exponent, bitIndex);
 
-            // After the custom AVX2 window has handed off to BigInteger, group
-            // a short run of consecutive square steps. For a left-to-right
-            // exponent bit run, k consecutive squares are exactly
-            // result <- result^(2^k). BigInteger.Pow in .NET 10 computes that
-            // chain inside one calculator workspace, while repeated public
-            // result *= result creates/disposes an intermediate BigInteger and
-            // rented buffer at every square boundary.
-            //
-            // Include the first set bit at the end of the run when it fits in
-            // the batch. Its required multiply-by-base is still performed once
-            // after the grouped squares, preserving the exact binary schedule.
             if (runtimeBatchingEnabled)
             {
                 int terminalZeroSquareCount =
@@ -182,7 +74,7 @@ internal static class SingleThreadBigIntegerPower
                     if (terminalBatchCount >= 2)
                     {
                         resultBigInteger =
-                            RuntimePow(
+                            BigInteger.Pow(
                                 resultBigInteger,
                                 1 << terminalBatchCount);
 
@@ -241,12 +133,12 @@ internal static class SingleThreadBigIntegerPower
                         BigInteger windowFactor =
                             windowValue == 0
                                 ? BigInteger.One
-                                : RuntimePow(
+                                : BigInteger.Pow(
                                     baseBigInteger,
                                     windowValue);
 
                         resultBigInteger =
-                            RuntimePow(
+                            BigInteger.Pow(
                                 resultBigInteger,
                                 1 << windowBitCount);
 
@@ -283,7 +175,7 @@ internal static class SingleThreadBigIntegerPower
                     groupedSquareCount >= 2)
                 {
                     resultBigInteger =
-                        RuntimePow(
+                        BigInteger.Pow(
                             resultBigInteger,
                             1 << groupedSquareCount);
 
@@ -313,92 +205,30 @@ internal static class SingleThreadBigIntegerPower
                 }
             }
 
-            // Every remaining exponent bit first squares the accumulated
-            // result. Keep the proven Square1024 crossover; if that window is
-            // exceeded, switch once to System.Numerics.BigInteger and continue
-            // with the same left-to-right schedule.
-            if (!runtimeBigIntegerMode &&
-                CanSquareInCustomWindow(
-                    resultMagnitude.Length))
-            {
-                resultMagnitude =
-                    SquareMagnitude(
-                        resultMagnitude,
-                        accumulatorWorkspace,
-                        cancellationToken);
-            }
-            else
-            {
-                SwitchToRuntimeBigInteger();
-
-                resultBigInteger = largeSquareWorkspace is null
-                    ? resultBigInteger * resultBigInteger
-                    : largeSquareWorkspace.SquareOrRuntime(resultBigInteger, cancellationToken);
-            }
-
-            progress(
-                ++completedOperations,
-                totalOperations);
+            resultBigInteger *= resultBigInteger;
+            progress(++completedOperations, totalOperations);
 
             if (((exponent >> bitIndex) & 1) != 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                // In left-to-right form the second operand is always the
-                // original base (at most four base-2^16 limbs for Int64 input).
-                if (!runtimeBigIntegerMode &&
-                    CanMultiplyInCustomWindow(
-                        resultMagnitude.Length,
-                        baseMagnitude.Length))
-                {
-                    resultMagnitude =
-                        MultiplyMagnitude(
-                            resultMagnitude,
-                            baseMagnitude,
-                            accumulatorWorkspace,
-                            cancellationToken);
-                }
-                else
-                {
-                    SwitchToRuntimeBigInteger();
-
-                    resultBigInteger *=
-                        baseBigInteger;
-                }
-
-                progress(
-                    ++completedOperations,
-                    totalOperations);
+                resultBigInteger *= baseBigInteger;
+                progress(++completedOperations, totalOperations);
             }
-
             bitIndex--;
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-
-        BigInteger result =
-            runtimeBigIntegerMode
-                ? resultBigInteger
-                : ToBigInteger(resultMagnitude);
-
-        if (baseValue < 0 &&
-            (exponent & 1) != 0)
-        {
-            result =
-                BigInteger.Negate(result);
-        }
-
-        return result;
+        return baseValue < 0 && (exponent & 1) != 0
+            ? BigInteger.Negate(resultBigInteger)
+            : resultBigInteger;
     }
 
-
-    private static bool ShouldStartRuntimeBatching(int length, int exponent, int bitIndex) =>
-        !CanSquareInCustomWindow(length) ||
+    private static bool ShouldStartRuntimeBatching(long bits, int exponent, int bitIndex) =>
+        bits > RuntimeBatchingBitThreshold ||
         (exponent >= RuntimeWindowOptimizationMinimumExponent &&
-         length >= PredictiveRuntimeWindowHandoffMinimumLimbCount &&
-         bitIndex + 1 >= PredictiveRuntimeWindowHandoffMinimumRemainingBitCount) ||
-        (length >= EarlyRuntimeBatchHandoffMinimumLimbCount &&
-         CountRuntimeSquareGroup(exponent, bitIndex, out _) >= EarlyRuntimeBatchHandoffMinimumSquareCount);
+         bits > MillionExponentBatchingBitThreshold && bitIndex + 1 >= 5) ||
+        (bits > GroupedSquaresBatchingBitThreshold &&
+         CountRuntimeSquareGroup(exponent, bitIndex, out _) >= 4);
 
     private static int CountTerminalZeroSquares(
         int exponent,

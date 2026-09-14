@@ -68,7 +68,7 @@ internal static class PowerOfTenArithmetic
         {
             int total = OperationCount(m);
             BigInteger power = SingleThreadBigIntegerPower.Pow(5, m,
-                (done, _) => progress?.Invoke(done, total), total - 1, token, useSimd: false);
+                (done, _) => progress?.Invoke(done, total), total - 1, token);
             token.ThrowIfCancellationRequested();
             BigInteger shifted = power << m;
             token.ThrowIfCancellationRequested();

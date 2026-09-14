@@ -13,7 +13,6 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [ParallelBigUnsigned_BinaryImport.cs](BigIntegers/ParallelBigUnsigned_BinaryImport.cs)
 - [ParallelBigUnsigned_BinaryPower.cs](BigIntegers/ParallelBigUnsigned_BinaryPower.cs)
 
-- [SimdBigIntegerSquare.cs](BigIntegers/SimdBigIntegerSquare.cs): bình phương BigInteger đơn luồng bằng Karatsuba limb32, lá AVX2/AVX-512 và fallback theo kích thước; xem [kết quả đo](../SINGLE_THREAD_LIMB32_REPORT.md).
 
 ## FloatingPoint
 
@@ -25,9 +24,8 @@ DoubleDouble, QuadDouble, OctoDouble: số thực độ chính xác mở rộng.
 
 ## Powers
 
-Bộ điều khiển lũy thừa đơn luồng, kernel AVX2 và lũy thừa cơ số 10.
+Bộ điều khiển lũy thừa BigInteger đơn luồng (runtime, không có kernel SIMD riêng) và lũy thừa cơ số 10.
 
-- [Avx2BigIntegerPower.cs](Powers/Avx2BigIntegerPower.cs)
 - [PowerOfTenArithmetic.cs](Powers/PowerOfTenArithmetic.cs)
 - [SingleThreadBigIntegerPower.cs](Powers/SingleThreadBigIntegerPower.cs)
 

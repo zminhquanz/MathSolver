@@ -262,16 +262,13 @@ public sealed class PowerRootEngine
                 int totalOperations =
                     CountPowerMultiplications(exponent);
 
-                // Share the power schedule across hardware modes. SIMD only
-                // selects the bounded arithmetic kernel, not the algorithm.
+                // Single-thread power uses runtime BigInteger in every hardware mode.
                 return SingleThreadBigIntegerPower.Pow(
                     baseValue,
                     exponent,
                     progress,
                     totalOperations,
-                    cancellationToken,
-                    CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2,
-                    CalculationAccelerationManager.AllowAvx512);
+                    cancellationToken);
             },
             cancellationToken,
             TaskCreationOptions.LongRunning |
