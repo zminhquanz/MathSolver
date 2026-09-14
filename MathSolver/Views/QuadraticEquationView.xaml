@@ -758,7 +758,11 @@
                             <RoundRectangle CornerRadius="12" />
                         </Border.StrokeShape>
 
-                        <GraphicsView
+                        <Grid RowDefinitions="Auto,*" RowSpacing="4">
+                        <Label x:Name="GraphSimdBackendLabel"
+                               FontSize="12"
+                               TextColor="{DynamicResource TextSecondaryColor}" />
+                        <GraphicsView Grid.Row="1"
                             x:Name="ParabolaGraphicsView"
                             HeightRequest="960"
                             HorizontalOptions="Fill"
@@ -768,6 +772,7 @@
                             DragInteraction="OnGraphDragInteraction"
                             EndInteraction="OnGraphEndInteraction"
                             CancelInteraction="OnGraphCancelInteraction" />
+                        </Grid>
 
                     </Border>
 

@@ -3985,7 +3985,9 @@ public partial class PowerRootView : LocalizedSolverView
 
             lines.Insert(
                 6,
-                Format(
+                diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
+                    ? "NTT: AVX2 / Scalar"
+                    : Format(
                     diagnostics.UsedAvx2NttButterflies
                         ? "PowerRoot.InfoNttKernelAvx2"
                         : "PowerRoot.InfoNttKernelScalar"));
@@ -5867,7 +5869,10 @@ public partial class PowerRootView : LocalizedSolverView
         long ProcessPrivateMemoryBytes = 0L,
         long ProcessPrivateMemoryBeforeCleanupBytes = 0L,
         LargeBinaryUnsigned? BinaryMagnitude = null,
-        int BinaryTransformLimit = 0);
+        int BinaryTransformLimit = 0)
+    {
+        public bool AllowAvx512 { get; } = CalculationAccelerationManager.AllowAvx512;
+    }
 
     private sealed record RootCalculationState(
         Int128 Radicand,

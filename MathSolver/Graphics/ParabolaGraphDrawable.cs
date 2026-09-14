@@ -1,4 +1,4 @@
-using MathSolver.Services;
+﻿using MathSolver.Services;
 using MathSolver.Numerics;
 using System.Globalization;
 using System.Numerics;
@@ -2122,8 +2122,18 @@ public static class ParabolaSimdEvaluator
         Scalar
     }
 
-    private static readonly SimdPath SelectedPath =
+    private static SimdPath SelectedPath =>
         DetectBestPath();
+
+    public static string BackendName => !CalculationAccelerationManager.UseSimd ? "Scalar" : SelectedPath switch
+    {
+        SimdPath.AvxFma => "AVX/FMA",
+        SimdPath.Avx => "AVX",
+        SimdPath.Sse2 => "SSE2",
+        SimdPath.NeonFma => "NEON/FMA",
+        SimdPath.ArmVector128 => "ARM Vector128",
+        _ => "Scalar"
+    };
 
     public static bool IsAccelerationAvailable =>
         SelectedPath != SimdPath.Scalar;
@@ -2237,13 +2247,13 @@ public static class ParabolaSimdEvaluator
     private static SimdPath DetectBestPath()
     {
         // x86: FMA + AVX là đường Horner nhanh và chính xác nhất hiện có.
-        if (Avx.IsSupported &&
+        if (CalculationAccelerationManager.AllowAvx && Avx.IsSupported &&
             Fma.IsSupported)
         {
             return SimdPath.AvxFma;
         }
 
-        if (Avx.IsSupported)
+        if (CalculationAccelerationManager.AllowAvx && Avx.IsSupported)
         {
             return SimdPath.Avx;
         }

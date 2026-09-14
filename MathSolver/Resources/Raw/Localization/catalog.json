@@ -3790,7 +3790,7 @@
     },
     {
       "key": "legacy.exact.tap.lenh.simd.benchmark.06948649",
-      "source": "Tập lệnh SIMD benchmark",
+      "source": "Tập lệnh SIMD toàn ứng dụng",
       "mode": "exact"
     },
     {

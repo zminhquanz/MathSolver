@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../MathSolver/Numerics/SingleThreadBigIntegerPower.cs" Link="SingleThreadBigIntegerPower.cs" />
+    <Compile Include="../../MathSolver/Numerics/Avx2BigIntegerPower.cs" Link="Avx2BigIntegerPower.cs" />
+    <Compile Include="../../artifacts/single-thread-power/generated/*.cs" />
+  </ItemGroup>
+</Project>

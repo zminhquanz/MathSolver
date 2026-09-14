@@ -28,7 +28,7 @@ internal sealed partial class ParallelBigUnsigned
         using var twiddles = workerCount > 1 ? new NttTwiddleBufferPool() : null;
         bool avx2 = CalculationAccelerationManager.UsePowerNttAvx2;
         using var plans = workerCount > 1
-            ? new SharedNttTwiddlePlans(twiddles!, avx2, avx2 && Avx512F.IsSupported, 1 << 18) : null;
+            ? new SharedNttTwiddlePlans(twiddles!, avx2, avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported), 1 << 18) : null;
         using var workers = workerCount > 1 ? new FixedWorkerTeam(workerCount, pool!, plans!) : null;
         var diagnostics = new PowerDiagnosticsCollector();
         var powers = new Dictionary<int, ParallelBigUnsigned>();

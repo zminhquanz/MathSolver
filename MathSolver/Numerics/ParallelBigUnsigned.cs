@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
@@ -678,7 +678,7 @@ internal sealed partial class ParallelBigUnsigned
         // worker gates, so the radix-4 dispatch below is confined to <=10M.
         bool useAvx512Ntt =
             useAvx2Ntt &&
-            Avx512F.IsSupported &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
         // One workspace pool lives for the complete exponentiation.  In the
@@ -4572,7 +4572,7 @@ internal sealed partial class ParallelBigUnsigned
         uint modulus)
     {
         return (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Pointwise) &&
-               Avx512F.IsSupported &&
+               (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                Vector512.IsHardwareAccelerated &&
                (modulus == FirstModulus ||
                 modulus == SecondModulus);
@@ -21789,7 +21789,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    Avx512F.IsSupported &&
+                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                     Vector512.IsHardwareAccelerated;
 
                 bool useLargeModeAvx512ForwardL1Generic =
@@ -22090,7 +22090,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    Avx512F.IsSupported &&
+                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                     Vector512.IsHardwareAccelerated;
 
                 bool useLargeModeAvx512ForwardL1Generic =
@@ -22440,7 +22440,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    Avx512F.IsSupported &&
+                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                     Vector512.IsHardwareAccelerated;
 
                 bool useLargeModeAvx512InverseL1Generic =
@@ -22682,7 +22682,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    Avx512F.IsSupported &&
+                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                     Vector512.IsHardwareAccelerated;
 
                 bool useLargeModeAvx512InverseL1Generic =
@@ -23047,7 +23047,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    Avx512F.IsSupported &&
+                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                     Vector512.IsHardwareAccelerated;
 
                 bool useLargeModeAvx512InverseL1Generic =
@@ -26277,7 +26277,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    Avx512F.IsSupported &&
+                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
                     Vector512.IsHardwareAccelerated;
 
                 bool useLargeModeAvx512ForwardL1Generic =
@@ -29900,7 +29900,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            Avx512F.IsSupported &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
         // Phase 3 keeps the shared large-mode AVX-512 plan flag off and
@@ -29911,7 +29911,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            Avx512F.IsSupported &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
         // Phase 4 opens only the four generic >10M Forward-L1 DIF stage-pairs
@@ -29921,7 +29921,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            Avx512F.IsSupported &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
         // Cached-global policy is independent of all other large-mode gates.
@@ -29931,7 +29931,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            Avx512F.IsSupported &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
         // Widen only the fused 4+2 DIF / 2+4 DIT kernels. Keep packed and
@@ -29940,7 +29940,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            Avx512F.IsSupported &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
         // L2 pass deliberately has a separate gate from the accepted L1
@@ -29964,17 +29964,17 @@ internal sealed partial class ParallelBigUnsigned
         public bool UseLargeModeAvx512InverseGlobal =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
 
         public bool UseLargeModeAvx512ForwardGlobalUncached =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
 
         public bool UseLargeModeAvx512Crt =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated &&
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated &&
             Avx512DQ.IsSupported;
 
         // Keep prefix normalization independent of the global-stage policy.
@@ -29983,26 +29983,26 @@ internal sealed partial class ParallelBigUnsigned
         public bool UseLargeModeAvx512FinalInversePrefix =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
 
         // The prime-specific reducer handles products and squares, including
         // aliased destinations. DQ is optional inside the exact F kernel.
         public bool UseLargeModeAvx512Pointwise =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
 
         public bool UseLargeModeAvx512ForwardL2 =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
 
         // Keep three-stage L3/bridge fusion separate from the shared <=10M
         // policy. The caller additionally checks the exact L3=4*L2 shape.
         public bool UseLargeModeAvx512InverseL3Bridge =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
 
         public long PersistentGenerationCount =>
             Interlocked.Read(

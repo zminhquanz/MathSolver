@@ -252,6 +252,8 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
     protected override void OnSolverLoaded()
     {
+        CalculationAccelerationManager.AccelerationChanged += OnGraphAccelerationChanged;
+        OnGraphAccelerationChanged(null, EventArgs.Empty);
         SubscribeGraphThemeChanges();
         ApplyCurrentGraphTheme();
 
@@ -264,12 +266,22 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
+        CalculationAccelerationManager.AccelerationChanged -= OnGraphAccelerationChanged;
         UnsubscribeGraphThemeChanges();
 
 #if WINDOWS
         DetachWindowsQuadraticScrollViewer();
         DetachWindowsGraphMouseWheel();
 #endif
+    }
+
+    private void OnGraphAccelerationChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.Dispatch(() =>
+        {
+            GraphSimdBackendLabel.Text = "SIMD: " + ParabolaSimdEvaluator.BackendName;
+            ParabolaGraphicsView.Invalidate();
+        });
     }
 
     private void OnQuadraticScrollViewHandlerChanged(

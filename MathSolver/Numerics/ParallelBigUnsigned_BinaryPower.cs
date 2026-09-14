@@ -57,7 +57,7 @@ internal sealed partial class ParallelBigUnsigned
         bool avx2 = CalculationAccelerationManager.UsePowerNttAvx2;
         // Match the accepted large decimal engine: static scheduling enables
         // its individually validated AVX-512 kernels rather than the legacy gate.
-        bool avx512 = !largeSchedule && avx2 && Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+        bool avx512 = !largeSchedule && avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
         using var pool = new NttBufferPool(maximumRetainedBufferCount: cacheForward ? 3 : 2,
             maximumLeasedBufferCount: cacheForward ? 4 : 2);
         using var twiddlePool = new NttTwiddleBufferPool();

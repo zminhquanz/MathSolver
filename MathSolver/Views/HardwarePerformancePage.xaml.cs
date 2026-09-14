@@ -742,7 +742,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         CalculationSimdMode selectedMode =
             CalculationAccelerationManager
-                .SelectedSimdMode;
+                .EffectiveSimdMode;
 
         FloatingPointModeValueLabel.Text =
             BuildFloatingPointModeText(
@@ -830,16 +830,16 @@ public partial class HardwarePerformancePage : ContentPage
 
         accelerationStatus +=
             Environment.NewLine +
-            nttAccelerationStatus +
+            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : "Scalar") + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
             Environment.NewLine +
             bigIntegerPowerAccelerationStatus +
             Environment.NewLine +
-            parabolaAccelerationStatus;
+            parabolaAccelerationStatus + " (" + ParabolaSimdEvaluator.BackendName + ")";
 
         AccelerationStatusLabel.Text =
-            accelerationStatus;
+            accelerationStatus + Environment.NewLine + "SIMD: " + CalculationAccelerationManager.GetModeDisplayName(CalculationAccelerationManager.SelectedSimdMode) + " → " + (effectiveUseSimd ? CalculationAccelerationManager.GetModeDisplayName(selectedMode) : "Scalar");
 
         MultithreadingStatusLabel.Text =
             !hasMultipleThreads
@@ -3171,7 +3171,7 @@ public partial class HardwarePerformancePage : ContentPage
 
 #if ANDROID
         if (HardwareAccelerationSwitch.IsToggled &&
-            CalculationAccelerationManager.SelectedSimdMode ==
+            CalculationAccelerationManager.EffectiveSimdMode ==
                 CalculationSimdMode.ArmNeon &&
             !CalculationAccelerationManager.IsArmNeonManagedAvailable)
         {
@@ -3235,7 +3235,7 @@ public partial class HardwarePerformancePage : ContentPage
 
             CalculationSimdMode simdMode =
                 CalculationAccelerationManager
-                    .SelectedSimdMode;
+                    .EffectiveSimdMode;
 
             bool useMultithreading =
                 CalculationThreadingManager.UseMultithreading;

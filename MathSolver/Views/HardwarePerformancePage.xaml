@@ -265,7 +265,7 @@
                             Margin="0,2,0,0">
 
                             <Label
-                                Text="Tập lệnh SIMD benchmark"
+                                Text="Tập lệnh SIMD toàn ứng dụng"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource TextPrimaryColor}" />
 

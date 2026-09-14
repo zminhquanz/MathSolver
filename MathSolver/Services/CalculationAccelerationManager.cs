@@ -18,20 +18,11 @@ public enum CalculationSimdMode
     Avx512,
     ArmNeon,
     ArmSve,
-    ArmSme
+    ArmSme,
+    Auto
 }
 
-/// <summary>
-/// Lưu trạng thái bật/tắt SIMD và tập lệnh benchmark đã chọn.
-/// Tùy chọn mode chỉ điều khiển benchmark. Các thuật toán khác vẫn có thể
-/// kiểm tra UseSimd để tự chọn đường xử lý thích hợp. Engine NTT/CRT lũy thừa
-/// dùng scalar khi Hardware acceleration tắt. Khi bật trên Windows/x86 có
-/// AVX2, NTT/CRT <=10M và large-mode >10M đều có thể dùng butterfly AVX2 +
-/// cached Shoup twiddle; large-mode vẫn giữ PersistentStatic scheduling. Đường SIMD
-/// production khác dùng cho đồ thị Parabol và decimal formatting base-10,000
-/// sau Carry. TXT export dùng AVX2 trên Windows/x86 và NEON/AdvSIMD trên
-/// Android ARM64, tất cả cùng chịu công tắc Hardware acceleration.
-/// </summary>
+/// <summary>Shared SIMD preference and effective kernel policy for the application.</summary>
 public static class CalculationAccelerationManager
 {
     private const string UseSimdPreferenceKey =
@@ -113,6 +104,7 @@ public static class CalculationAccelerationManager
         IsAvx512Available ||
         IsAvxAvx2Available ||
         IsSseAvailable ||
+        IsArmNeonManagedAvailable ||
         IsPortableSimdAvailable;
 #endif
 
@@ -126,7 +118,7 @@ public static class CalculationAccelerationManager
         get
         {
             var modes =
-                new List<CalculationSimdMode>();
+                new List<CalculationSimdMode> { CalculationSimdMode.Auto };
 
 #if ANDROID
             if (IsArmNeonAvailable)
@@ -151,6 +143,11 @@ public static class CalculationAccelerationManager
             {
                 modes.Add(
                     CalculationSimdMode.Sse);
+            }
+
+            if (IsArmNeonManagedAvailable)
+            {
+                modes.Add(CalculationSimdMode.ArmNeon);
             }
 #endif
 
@@ -188,17 +185,16 @@ public static class CalculationAccelerationManager
 
     /// <summary>
     /// Effective SIMD state for the base-10,000 decimal formatter used by
-    /// large-power TXT export. The shared Hardware acceleration switch is the
-    /// only user-facing gate, exactly like the NTT/CRT and Parabola backends.
+    /// large-power TXT export, respecting both the switch and selected mode.
     /// </summary>
     public static bool UsePowerExportSimd =>
         UseSimd &&
+        (EffectiveSimdMode == CalculationSimdMode.ArmNeon || AllowAvx) &&
         IsPowerExportAccelerationAvailable;
 
     /// <summary>
     /// AVX2 butterfly backend for the production in-place DIF/DIT NTT used by
-    /// power calculations. The Hardware acceleration switch is the only
-    /// user-facing gate. Benchmark mode selection remains independent, and the
+    /// power calculations. Both the switch and selected mode gate this backend; the
     /// segmented >10M path reuses the same accepted cache-resident kernels.
     /// </summary>
     public static bool IsPowerNttAccelerationAvailable =>
@@ -212,7 +208,7 @@ public static class CalculationAccelerationManager
 #endif
 
     public static bool UsePowerNttAvx2 =>
-        UseSimd &&
+        AllowAvx &&
         IsPowerNttAccelerationAvailable;
 
     /// <summary>
@@ -229,17 +225,10 @@ public static class CalculationAccelerationManager
          RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
 
-    // The 1M audit found no material whole-power benefit from the custom SIMD
-    // prefix over the shared runtime schedule. Small-power checks also favored
-    // BigInteger once workspace allocation and normalization were included.
-    // Keep the kernels available for controlled benchmarks, but use the runtime
-    // backend in production until a new kernel demonstrates a repeatable gain.
-    // See SINGLE_THREAD_POWER_SIMD_AUDIT_20260910.md.
-    private const bool EnableSingleThreadBigIntegerAvx2 = false;
-
+    // Enable the bounded AVX2 arithmetic window under the shared SIMD policy.
+    // Larger operands still hand off to the existing runtime BigInteger schedule.
     public static bool UseSingleThreadBigIntegerAvx2 =>
-        UseSimd &&
-        EnableSingleThreadBigIntegerAvx2 &&
+        AllowAvx &&
         IsSingleThreadBigIntegerAccelerationAvailable;
 
     public static CalculationSimdMode SelectedSimdMode
@@ -253,8 +242,17 @@ public static class CalculationAccelerationManager
         }
     }
 
+    public static CalculationSimdMode EffectiveSimdMode =>
+        SelectedSimdMode == CalculationSimdMode.Auto ? GetBestAvailableMode() : SelectedSimdMode;
+
+    public static bool AllowAvx => UseSimd &&
+        EffectiveSimdMode is CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512;
+
+    public static bool AllowAvx512 => UseSimd &&
+        EffectiveSimdMode == CalculationSimdMode.Avx512 && IsAvx512Available;
+
     public static int SimdVectorWidthBits =>
-        SelectedSimdMode switch
+        EffectiveSimdMode switch
         {
             CalculationSimdMode.Avx512 =>
                 512,
@@ -304,7 +302,7 @@ public static class CalculationAccelerationManager
                     true,
                 out CalculationSimdMode parsedMode)
                 ? parsedMode
-                : GetBestAvailableMode();
+                : CalculationSimdMode.Auto;
 
         _selectedSimdMode =
             NormalizeMode(
@@ -322,6 +320,7 @@ public static class CalculationAccelerationManager
     {
         return mode switch
         {
+            CalculationSimdMode.Auto => true,
             CalculationSimdMode.Avx512 =>
                 IsAvx512Available,
 
@@ -357,6 +356,8 @@ public static class CalculationAccelerationManager
     {
         return mode switch
         {
+            CalculationSimdMode.Auto => AppLanguageManager.CurrentLanguage == AppLanguage.English
+                ? "Automatic" : "Tự động",
             CalculationSimdMode.Avx512 =>
                 "AVX-512",
 
@@ -438,8 +439,7 @@ public static class CalculationAccelerationManager
     {
         Initialize();
 
-        _selectedSimdMode =
-            GetBestAvailableMode();
+        SetSelectedSimdMode(CalculationSimdMode.Auto);
 
         Preferences.Default.Set(
             SimdModePreferenceKey,
@@ -482,6 +482,11 @@ public static class CalculationAccelerationManager
         if (IsSseAvailable)
         {
             return CalculationSimdMode.Sse;
+        }
+
+        if (IsArmNeonManagedAvailable)
+        {
+            return CalculationSimdMode.ArmNeon;
         }
 
         return CalculationSimdMode.Portable;
