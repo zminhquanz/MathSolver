@@ -769,3 +769,11 @@ Both Algorithm and AI/LLM consume the same C# contracts, so these restrictions a
 - Mixed ★★ bắt đầu Geometry bằng **chu vi tam giác**. Đây là dạng generator hiện tại biểu diễn đúng với mạch làm quen chu vi ở Toán 2; chưa mở sớm diện tích hình vuông/chữ nhật.
 - Mixed ★★★ mới mở chu vi/diện tích hình vuông, hình chữ nhật và giữ chu vi tam giác.
 - Skill Mode vẫn không lọc Picker/subtype theo sao để tránh thay đổi collection native WinUI trong lúc tương tác; khi người dùng chủ động chọn một dạng cụ thể, sao tiếp tục đóng vai trò scale dữ kiện.
+
+## Single-thread SIMD divide-and-conquer experiment
+
+[Single-thread divide-and-conquer report](SINGLE_THREAD_DIVIDE_CONQUER_REPORT.md) records the 1M-exponent Karatsuba square prototypes, scalar/AVX2/AVX-512 leaves, correctness checks and handoff measurements. These candidates remain in `tests/SingleThreadDivideConquer`; production retains the enabled AVX2 prefix and existing BigInteger handoff because no replacement showed a sufficiently consistent whole-power improvement.
+
+## Accepted limb32 single-thread square backend
+
+The follow-up [limb32 report](SINGLE_THREAD_LIMB32_REPORT.md) records the accepted AVX2/AVX-512F Karatsuba square backend. Million-scale single-thread powers use it only for 1,024–262,144 input uint32 limbs, with the existing BigInteger fallback elsewhere. The shared SIMD mode is captured at calculation start. The report includes whole-power gains, additional allocation costs and the test matrix.

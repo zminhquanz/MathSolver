@@ -6600,17 +6600,17 @@
     },
     {
       "key": "Hardware.BigIntegerPowerAccelerationOn",
-      "source": "Lũy thừa BigInteger đơn luồng (AVX2): Đang bật.",
+      "source": "Lũy thừa BigInteger đơn luồng (SIMD): Đang bật.",
       "mode": "exact"
     },
     {
       "key": "Hardware.BigIntegerPowerAccelerationOff",
-      "source": "Lũy thừa BigInteger đơn luồng (AVX2): Đang tắt.",
+      "source": "Lũy thừa BigInteger đơn luồng (SIMD): Đang tắt.",
       "mode": "exact"
     },
     {
       "key": "Hardware.BigIntegerPowerAccelerationUnavailable",
-      "source": "Lũy thừa BigInteger đơn luồng (AVX2): Không khả dụng.",
+      "source": "Lũy thừa BigInteger đơn luồng (SIMD): Không khả dụng.",
       "mode": "exact"
     },
     {

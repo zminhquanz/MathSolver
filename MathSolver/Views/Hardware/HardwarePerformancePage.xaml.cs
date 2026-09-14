@@ -820,6 +820,13 @@ public partial class HardwarePerformancePage : ContentPage
                         ? LocalizationKeys.Hardware.BigIntegerPowerAccelerationOn
                         : LocalizationKeys.Hardware.BigIntegerPowerAccelerationOff);
 
+        if (CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2)
+        {
+            bigIntegerPowerAccelerationStatus += CalculationAccelerationManager.AllowAvx512
+                ? " (AVX-512 / AVX2 / BigInteger)"
+                : " (AVX2 / BigInteger)";
+        }
+
         string parabolaAccelerationStatus =
             LocalizationService.TranslateKey(
                 !ParabolaSimdEvaluator.IsAccelerationAvailable

@@ -212,7 +212,7 @@ public static class CalculationAccelerationManager
         IsPowerNttAccelerationAvailable;
 
     /// <summary>
-    /// Hardware capability for the experimental single-threaded AVX2 kernels.
+    /// Hardware capability for the single-threaded SIMD power backends.
     /// Availability is separate from the measured production dispatch policy.
     /// </summary>
     public static bool IsSingleThreadBigIntegerAccelerationAvailable =>
@@ -226,7 +226,8 @@ public static class CalculationAccelerationManager
 #endif
 
     // Enable the bounded AVX2 arithmetic window under the shared SIMD policy.
-    // Larger operands still hand off to the existing runtime BigInteger schedule.
+    // Million-scale powers also use the bounded limb32 square backend; other sizes
+    // retain the runtime BigInteger fallback. AVX-512 is gated separately by AllowAvx512.
     public static bool UseSingleThreadBigIntegerAvx2 =>
         AllowAvx &&
         IsSingleThreadBigIntegerAccelerationAvailable;

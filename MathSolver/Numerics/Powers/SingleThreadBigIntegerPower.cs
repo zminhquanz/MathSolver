@@ -5,8 +5,8 @@ namespace MathSolver.Numerics;
 
 /// <summary>
 /// Single-threaded power scheduling shared by the runtime and bounded SIMD backends.
-/// Hardware acceleration changes only the small arithmetic window; the runtime
-/// square batching, exponent windows, progress and cancellation policy are shared.
+/// Hardware acceleration selects the prefix and bounded limb32 square backends; the
+/// exponent windows, progress and cancellation policy are shared.
 /// </summary>
 internal static class SingleThreadBigIntegerPower
 {
@@ -46,7 +46,8 @@ internal static class SingleThreadBigIntegerPower
         Action<int, int> progress,
         int totalOperations,
         CancellationToken cancellationToken,
-        bool useSimd)
+        bool useSimd,
+        bool useAvx512 = false)
     {
         ArgumentNullException.ThrowIfNull(progress);
         ArgumentOutOfRangeException.ThrowIfNegative(exponent);
@@ -61,6 +62,14 @@ internal static class SingleThreadBigIntegerPower
             baseValue < 0
                 ? (ulong)(-(baseValue + 1L)) + 1UL
                 : (ulong)baseValue;
+
+        // Enable the measured large-square backend for million-scale powers.
+        // Hardware mode is captured once; workers and NTT are never created here.
+        using var largeSquareWorkspace = useSimd && IsSupported && exponent >= 1_000_000
+            ? new SimdBigIntegerSquare(useAvx512) : null;
+        BigInteger RuntimePow(BigInteger value, int power) => largeSquareWorkspace is null
+            ? BigInteger.Pow(value, power)
+            : largeSquareWorkspace.PowOrRuntime(value, power, cancellationToken);
 
         bool useCustomWindow = useSimd && IsSupported;
         ushort[] baseMagnitude = useCustomWindow ? FromUInt64(magnitude) : [];
@@ -173,7 +182,7 @@ internal static class SingleThreadBigIntegerPower
                     if (terminalBatchCount >= 2)
                     {
                         resultBigInteger =
-                            BigInteger.Pow(
+                            RuntimePow(
                                 resultBigInteger,
                                 1 << terminalBatchCount);
 
@@ -232,12 +241,12 @@ internal static class SingleThreadBigIntegerPower
                         BigInteger windowFactor =
                             windowValue == 0
                                 ? BigInteger.One
-                                : BigInteger.Pow(
+                                : RuntimePow(
                                     baseBigInteger,
                                     windowValue);
 
                         resultBigInteger =
-                            BigInteger.Pow(
+                            RuntimePow(
                                 resultBigInteger,
                                 1 << windowBitCount);
 
@@ -274,7 +283,7 @@ internal static class SingleThreadBigIntegerPower
                     groupedSquareCount >= 2)
                 {
                     resultBigInteger =
-                        BigInteger.Pow(
+                        RuntimePow(
                             resultBigInteger,
                             1 << groupedSquareCount);
 
@@ -322,8 +331,9 @@ internal static class SingleThreadBigIntegerPower
             {
                 SwitchToRuntimeBigInteger();
 
-                resultBigInteger *=
-                    resultBigInteger;
+                resultBigInteger = largeSquareWorkspace is null
+                    ? resultBigInteger * resultBigInteger
+                    : largeSquareWorkspace.SquareOrRuntime(resultBigInteger, cancellationToken);
             }
 
             progress(

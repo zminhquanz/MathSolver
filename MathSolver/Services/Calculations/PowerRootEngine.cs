@@ -270,7 +270,8 @@ public sealed class PowerRootEngine
                     progress,
                     totalOperations,
                     cancellationToken,
-                    CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2);
+                    CalculationAccelerationManager.UseSingleThreadBigIntegerAvx2,
+                    CalculationAccelerationManager.AllowAvx512);
             },
             cancellationToken,
             TaskCreationOptions.LongRunning |

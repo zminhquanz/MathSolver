@@ -1,4 +1,4 @@
-﻿# Numerics
+# Numerics
 
 [Bản đồ toàn project](../FOLDER_STRUCTURE.md)
 
@@ -12,6 +12,8 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [ParallelBigUnsigned.cs](BigIntegers/ParallelBigUnsigned.cs)
 - [ParallelBigUnsigned_BinaryImport.cs](BigIntegers/ParallelBigUnsigned_BinaryImport.cs)
 - [ParallelBigUnsigned_BinaryPower.cs](BigIntegers/ParallelBigUnsigned_BinaryPower.cs)
+
+- [SimdBigIntegerSquare.cs](BigIntegers/SimdBigIntegerSquare.cs): bình phương BigInteger đơn luồng bằng Karatsuba limb32, lá AVX2/AVX-512 và fallback theo kích thước; xem [kết quả đo](../SINGLE_THREAD_LIMB32_REPORT.md).
 
 ## FloatingPoint
 
@@ -34,4 +36,3 @@ Bộ điều khiển lũy thừa đơn luồng, kernel AVX2 và lũy thừa cơ 
 Chuyển BigInteger sang dữ liệu thập phân để ghi kết quả.
 
 - [BigIntegerDecimalWriter.cs](Serialization/BigIntegerDecimalWriter.cs)
-
