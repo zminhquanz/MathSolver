@@ -105,10 +105,16 @@
                             TextChanged="OnValueTextChanged" />
                     </Border>
 
+                    <!--
+                        Desktop has enough width for From / Swap / To on one line.
+                        On Android, stack the two pickers vertically so long localized unit names
+                        (for example "Kilometre (km)" / "Ki-lô-mét (km)") are never clipped.
+                    -->
                     <Grid
-                        ColumnDefinitions="*,Auto,*"
+                        ColumnDefinitions="{OnPlatform Android='*', Default='*,Auto,*'}"
+                        RowDefinitions="{OnPlatform Android='Auto,Auto,Auto,Auto,Auto', Default='Auto,Auto'}"
                         ColumnSpacing="10"
-                        RowDefinitions="Auto,Auto">
+                        RowSpacing="{OnPlatform Android=7, Default=0}">
 
                         <Label
                             x:Name="FromLabel"
@@ -121,15 +127,15 @@
 
                         <Label
                             x:Name="ToLabel"
-                            Grid.Row="0"
-                            Grid.Column="2"
+                            Grid.Row="{OnPlatform Android=3, Default=0}"
+                            Grid.Column="{OnPlatform Android=0, Default=2}"
                             Margin="0,0,0,5"
                             FontSize="14"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                         <Border
-                            Grid.Row="1"
+                            Grid.Row="{OnPlatform Android=1, Default=1}"
                             Grid.Column="0"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -141,7 +147,7 @@
                             <Picker
                                 x:Name="FromUnitPicker"
                                 HeightRequest="50"
-                                Margin="2,0"
+                                Margin="{OnPlatform Android='8,0', Default='2,0'}"
                                 FontSize="15"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 TitleColor="{DynamicResource WallpaperTextSecondaryColor}"
@@ -150,8 +156,9 @@
 
                         <Button
                             x:Name="SwapButton"
-                            Grid.Row="1"
-                            Grid.Column="1"
+                            Grid.Row="{OnPlatform Android=2, Default=1}"
+                            Grid.Column="{OnPlatform Android=0, Default=1}"
+                            HorizontalOptions="Center"
                             WidthRequest="48"
                             HeightRequest="48"
                             Padding="0"
@@ -166,8 +173,8 @@
                             Clicked="OnSwapClicked" />
 
                         <Border
-                            Grid.Row="1"
-                            Grid.Column="2"
+                            Grid.Row="{OnPlatform Android=4, Default=1}"
+                            Grid.Column="{OnPlatform Android=0, Default=2}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1"
@@ -178,7 +185,7 @@
                             <Picker
                                 x:Name="ToUnitPicker"
                                 HeightRequest="50"
-                                Margin="2,0"
+                                Margin="{OnPlatform Android='8,0', Default='2,0'}"
                                 FontSize="15"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 TitleColor="{DynamicResource WallpaperTextSecondaryColor}"

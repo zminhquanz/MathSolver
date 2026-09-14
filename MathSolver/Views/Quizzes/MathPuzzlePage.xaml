@@ -639,57 +639,75 @@
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
+                            <!--
+                                Keep all five difficulty choices fully readable on narrow Android screens.
+                                Android uses a balanced 3 + 2 layout; desktop keeps the compact single row.
+                                A six-column Android grid lets the first row use 2-column spans (3 equal cells)
+                                and the second row use 3-column spans (2 equal cells) without rebuilding controls.
+                            -->
                             <Grid
-                                ColumnDefinitions="*,*,*,*,*"
-                                ColumnSpacing="6">
+                                ColumnDefinitions="{OnPlatform Android='*,*,*,*,*,*', Default='*,*,*,*,*'}"
+                                RowDefinitions="{OnPlatform Android='Auto,Auto', Default='Auto'}"
+                                ColumnSpacing="6"
+                                RowSpacing="{OnPlatform Android=6, Default=0}">
 
                                 <Button
                                     x:Name="CurriculumOneStarButton"
+                                    Grid.Row="0"
                                     Grid.Column="0"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, Default=1}"
                                     Text="★"
                                     HeightRequest="46"
                                     CornerRadius="12"
-                                    FontSize="16"
+                                    FontSize="{OnPlatform Android=15, Default=16}"
                                     FontAttributes="Bold"
                                     Clicked="OnCurriculumOneStarClicked" />
 
                                 <Button
                                     x:Name="CurriculumTwoStarsButton"
-                                    Grid.Column="1"
+                                    Grid.Row="0"
+                                    Grid.Column="{OnPlatform Android=2, Default=1}"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, Default=1}"
                                     Text="★★"
                                     HeightRequest="46"
                                     CornerRadius="12"
-                                    FontSize="14"
+                                    FontSize="{OnPlatform Android=15, Default=14}"
                                     FontAttributes="Bold"
                                     Clicked="OnCurriculumTwoStarsClicked" />
 
                                 <Button
                                     x:Name="CurriculumThreeStarsButton"
-                                    Grid.Column="2"
+                                    Grid.Row="0"
+                                    Grid.Column="{OnPlatform Android=4, Default=2}"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, Default=1}"
                                     Text="★★★"
                                     HeightRequest="46"
                                     CornerRadius="12"
-                                    FontSize="13"
+                                    FontSize="{OnPlatform Android=15, Default=13}"
                                     FontAttributes="Bold"
                                     Clicked="OnCurriculumThreeStarsClicked" />
 
                                 <Button
                                     x:Name="CurriculumFourStarsButton"
-                                    Grid.Column="3"
+                                    Grid.Row="{OnPlatform Android=1, Default=0}"
+                                    Grid.Column="{OnPlatform Android=0, Default=3}"
+                                    Grid.ColumnSpan="{OnPlatform Android=3, Default=1}"
                                     Text="★★★★"
                                     HeightRequest="46"
                                     CornerRadius="12"
-                                    FontSize="12"
+                                    FontSize="{OnPlatform Android=15, Default=12}"
                                     FontAttributes="Bold"
                                     Clicked="OnCurriculumFourStarsClicked" />
 
                                 <Button
                                     x:Name="CurriculumFiveStarsButton"
-                                    Grid.Column="4"
+                                    Grid.Row="{OnPlatform Android=1, Default=0}"
+                                    Grid.Column="{OnPlatform Android=3, Default=4}"
+                                    Grid.ColumnSpan="{OnPlatform Android=3, Default=1}"
                                     Text="★★★★★"
                                     HeightRequest="46"
                                     CornerRadius="12"
-                                    FontSize="11"
+                                    FontSize="{OnPlatform Android=15, Default=11}"
                                     FontAttributes="Bold"
                                     Clicked="OnCurriculumFiveStarsClicked" />
 

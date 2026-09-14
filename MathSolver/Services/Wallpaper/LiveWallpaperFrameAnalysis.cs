@@ -368,7 +368,7 @@ public static class LiveWallpaperFrameAnalysis
                     valid[index] = true;
                     completed++;
                 }
-                catch (OperationCanceledException)
+                catch (System.OperationCanceledException)
                 {
                     throw;
                 }
@@ -498,7 +498,7 @@ public static class LiveWallpaperFrameAnalysis
                 valid[index] = true;
                 completed++;
             }
-            catch (OperationCanceledException)
+            catch (System.OperationCanceledException)
             {
                 throw;
             }
