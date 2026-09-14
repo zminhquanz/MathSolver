@@ -90,61 +90,61 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Views\FormulaPage.xaml.cs">
+    <Compile Update="Views\Formulas\FormulaPage.xaml.cs">
       <DependentUpon>FormulaPage.xaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\MeasurementFormulaView.xaml.cs">
+    <Compile Update="Views\Formulas\MeasurementFormulaView.xaml.cs">
       <DependentUpon>MeasurementFormulaView.xaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\MathPuzzlePage.xaml.cs">
+    <Compile Update="Views\Quizzes\MathPuzzlePage.xaml.cs">
       <DependentUpon>MathPuzzlePage.xaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\HardwareLlmBenchmarkView.xaml.cs">
+    <Compile Update="Views\Hardware\HardwareLlmBenchmarkView.xaml.cs">
       <DependentUpon>HardwareLlmBenchmarkView.xaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\GemmaModelCatalogPage.xaml.cs">
+    <Compile Update="Views\Hardware\GemmaModelCatalogPage.xaml.cs">
       <DependentUpon>GemmaModelCatalogPage.xaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\PowerRootView.xaml.cs">
+    <Compile Update="Views\Calculators\PowerRootView.xaml.cs">
       <DependentUpon>PowerRootView.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <MauiXaml Update="Views\AverageView.xaml">
+    <MauiXaml Update="Views\Calculators\AverageView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\PowerRootView.xaml">
+    <MauiXaml Update="Views\Calculators\PowerRootView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\FindXView.xaml">
+    <MauiXaml Update="Views\Calculators\FindXView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\FormulaPage.xaml">
+    <MauiXaml Update="Views\Formulas\FormulaPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\MeasurementFormulaView.xaml">
+    <MauiXaml Update="Views\Formulas\MeasurementFormulaView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\FractionView.xaml">
+    <MauiXaml Update="Views\Calculators\FractionView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\MultiplicationTablePage.xaml">
+    <MauiXaml Update="Views\Formulas\MultiplicationTablePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\MathPuzzlePage.xaml">
+    <MauiXaml Update="Views\Quizzes\MathPuzzlePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\HardwareLlmBenchmarkView.xaml">
+    <MauiXaml Update="Views\Hardware\HardwareLlmBenchmarkView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\GemmaModelCatalogPage.xaml">
+    <MauiXaml Update="Views\Hardware\GemmaModelCatalogPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\SettingsMenuPage.xaml">
+    <MauiXaml Update="Views\Settings\SettingsMenuPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\SplashPage.xaml">
+    <MauiXaml Update="Views\Startup\SplashPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
   </ItemGroup>

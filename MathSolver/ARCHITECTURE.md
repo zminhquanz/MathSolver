@@ -1,5 +1,7 @@
 # Math Solver Architecture Reference
 
+[Folder structure and class groups](FOLDER_STRUCTURE.md)
+
 ## Overview
 
 Math Solver is a cross-platform .NET MAUI desktop application providing arbitrary-precision arithmetic, scientific solvers, and educational math tools. The codebase is organized into layers: Numerics (core algorithms), Services (orchestration & utilities), Views (UI components), Models (data structures), and Platform-specific adapters for Windows/iOS/Android.
@@ -8,7 +10,7 @@ Math Solver is a cross-platform .NET MAUI desktop application providing arbitrar
 
 ## Core Numerics Engine
 
-### Arbitrary-Precision Integers — `Numerics/ParallelBigUnsigned.cs`
+### Arbitrary-Precision Integers — `Numerics/BigIntegers/ParallelBigUnsigned.cs`
 
 The heart of the application's computation engine:
 
@@ -20,7 +22,7 @@ The heart of the application's computation engine:
 
 The old giant `BigInteger` binary-to-decimal `DivRem` import is no longer used by the bit-shift calculation path.
 
-### Extended-Precision Floating Point — `Numerics/QuadDouble.cs` / `OctoDouble.cs` / `DoubleDouble.cs`
+### Extended-Precision Floating Point — `Numerics/FloatingPoint/QuadDouble.cs` / `OctoDouble.cs` / `DoubleDouble.cs`
 
 Three non-IEEE floating-point types that expand precision beyond IEEE 754:
 
@@ -66,13 +68,13 @@ The final inverse-DIT prefix kernel splits each worker's contiguous range at `va
 
 ## Threading Model
 
-### `Services/CalculationThreadingManager.cs`
+### `Services/Performance/CalculationThreadingManager.cs`
 
 - Reads user preference for multithreading via `Preferences.Default.Get()`.
 - Exposes: `IsMultithreadingAvailable`, `LogicalProcessorCount`, `PhysicalCoreCount`, `RecommendedWorkerCount`, `MaxDegreeOfParallelism`.
 - Default: 1 worker if no hardware threading detected; otherwise all logical processors.
 
-### Worker Scheduling — `Numerics/ParallelBigUnsigned.cs`
+### Worker Scheduling — `Numerics/BigIntegers/ParallelBigUnsigned.cs`
 
 - **Small SMT**: 8–19 thread CPUs (e.g., i7-8700) use 2,048-value L1 fused blocks to leave room for sibling threads in shared L1D.
 - **Medium Thread**: 20+ threads use 4,096-value (16 KiB) fused blocks.
@@ -86,7 +88,7 @@ The final inverse-DIT prefix kernel splits each worker's contiguous range at `va
 
 ## SIMD Acceleration
 
-### `Services/CalculationAccelerationManager.cs`
+### `Services/Performance/CalculationAccelerationManager.cs`
 
 Detects hardware capabilities and exposes:
 
@@ -150,7 +152,7 @@ a mixed-subtype option. `LlmWordProblemValidator` checks every numeric occurrenc
 in order, the final-question semantic family, and the final-question answer unit
 before an AI question can reach the learner.
 
-### Math Puzzle Curriculum Layer — `Services/QuizCurriculumLayer.cs`
+### Math Puzzle Curriculum Layer — `Services/Quizzes/QuizCurriculumLayer.cs`
 
 Curriculum is intentionally scoped to **app-generated Math Puzzle content only**. It never constrains user-entered input in the Solve Math tab or the reusable math engines. The UI exposes five abstract star tiers (`★`..`★★★★★`) rather than country-specific grade labels.
 
@@ -167,11 +169,11 @@ Skill:  Star tier -------------------------> Skill curriculum -> C# generator ->
 AI/LLM: same C# contract -----------------------------------------------------> wording only
 ```
 
-### Localization — `Services/LocalizationService.cs` / `TRANSLATING.md`
+### Localization — `Services/Localization/LocalizationService.cs` / `TRANSLATING.md`
 
 Language packs are UTF-8 JSON files following `culture.json` format: metadata + strings + templates. Placeholders (`{field}`) are preserved in all template files for runtime interpolation.
 
-### Theming & Fonts — `Services/AppThemeManager.cs` / `Services/AppFontManager.cs`
+### Theming & Fonts — `Services/Appearance/AppThemeManager.cs` / `Services/Appearance/AppFontManager.cs`
 
 Theme toggles between light/dark and color schemes; applied via resource overrides and XAML stylesheets. Font catalog caches system fonts by weight/style per culture; `AppFontManager` applies the selected font family to all text elements.
 
@@ -301,7 +303,7 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 
 - **Scalar thread comparison** runs the same four-type benchmark twice, once with one worker and once with the recommended multi-thread worker count. SIMD is forced off so the vertical chart measures CPU thread scaling without vector-width changes.
 - **Windows x86 SIMD comparison** benchmarks floating point only (Float + Double), because the existing Int32/Int64 paths are intentionally scalar. It runs each supported tier — 128-bit SSE, 256-bit AVX/AVX2, and 512-bit AVX-512 — once single-threaded and once multi-threaded, for up to six passes. Unsupported tiers are never executed and are omitted from both the comparison chart and the score summary; the availability status shows a cross mark for unsupported tiers.
-- Both comparison charts use `Graphics/BenchmarkVerticalChartDrawable.cs`; the Picker, raw benchmark controls, and the AI/LLM benchmark tab are locked while a raw benchmark is running, and the existing cancellation/close guard is reused.
+- Both comparison charts use `Graphics/Benchmarks/BenchmarkVerticalChartDrawable.cs`; the Picker, raw benchmark controls, and the AI/LLM benchmark tab are locked while a raw benchmark is running, and the existing cancellation/close guard is reused.
 - Benchmark buttons use red only while active and explicitly clear that local brush before restoring the theme `PrimaryColor`, preventing WinUI from leaving a completed/cancelled button red.
 - Human-facing ISA text is standardized as **AVX-512** (the internal enum remains `Avx512`).
 
