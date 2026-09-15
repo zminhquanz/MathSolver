@@ -314,6 +314,8 @@ namespace MathSolver
         private sealed class WindowsPickerNativeSelectionSyncState
         {
             public bool Attached;
+            public bool IsLoaded;
+            public Microsoft.UI.Dispatching.DispatcherQueue? DispatcherQueue;
             public bool BrushInitialized;
             public int ForegroundClampGeneration;
             public Microsoft.UI.Xaml.Media.SolidColorBrush? ForegroundBrush;
@@ -477,6 +479,10 @@ namespace MathSolver
 
             try
             {
+                // Capture while the native control is alive. Reading this property
+                // again from a deferred callback can fail during window teardown.
+                state.DispatcherQueue = comboBox.DispatcherQueue;
+                state.IsLoaded = comboBox.IsLoaded;
                 comboBox.SelectionChanged += (_, _) =>
                 {
                     if (weakPicker.TryGetTarget(out var livePicker))
@@ -487,6 +493,8 @@ namespace MathSolver
 
                 comboBox.Loaded += (_, _) =>
                 {
+                    state.IsLoaded = true;
+                    Interlocked.Increment(ref state.ForegroundClampGeneration);
                     if (weakPicker.TryGetTarget(out var livePicker))
                     {
                         TryAttachWindowsPickerCommonStateObserver(
@@ -494,6 +502,19 @@ namespace MathSolver
                             comboBox,
                             state);
                         QueueWindowsPickerPostSelectionRefresh(livePicker);
+                    }
+                };
+
+                comboBox.Unloaded += (_, _) =>
+                {
+                    // Invalidate both queued passes without touching native
+                    // properties. Loaded starts a new generation on navigation back.
+                    state.IsLoaded = false;
+                    Interlocked.Increment(ref state.ForegroundClampGeneration);
+                    if (weakPicker.TryGetTarget(out var livePicker) &&
+                        WindowsPickerVisualSyncStates.TryGetValue(livePicker, out var visualState))
+                    {
+                        Interlocked.Increment(ref visualState.Generation);
                     }
                 };
 
@@ -795,9 +816,35 @@ namespace MathSolver
             }
         }
 
+        // Check managed lifecycle state before accessing a native property. A
+        // handler can still reference its ComboBox after the window unloads it.
+        private static bool TryGetActiveWindowsPicker(
+            Microsoft.Maui.Controls.Picker picker,
+            out Microsoft.UI.Xaml.Controls.ComboBox comboBox,
+            out WindowsPickerNativeSelectionSyncState state)
+        {
+            if (picker.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.ComboBox native &&
+                WindowsPickerNativeSelectionSyncStates.TryGetValue(native, out var nativeState) &&
+                nativeState.IsLoaded)
+            {
+                comboBox = native;
+                state = nativeState;
+                return true;
+            }
+
+            comboBox = null!;
+            state = null!;
+            return false;
+        }
+
         private static void QueueWindowsPickerStableBrushColorRefresh(
             Microsoft.Maui.Controls.Picker picker)
         {
+            if (!TryGetActiveWindowsPicker(picker, out _, out _))
+            {
+                return;
+            }
+
             // Do not wait for the 96 ms/full native sync path just to change the
             // color of a brush that already exists. This closes the short window
             // where Normal had switched to Dark/Light but PointerOver could still
@@ -809,15 +856,10 @@ namespace MathSolver
         private static void ApplyWindowsPickerStableBrushColorOnly(
             Microsoft.Maui.Controls.Picker picker)
         {
-            if (picker.Handler?.PlatformView
-                is not Microsoft.UI.Xaml.Controls.ComboBox comboBox)
+            if (!TryGetActiveWindowsPicker(picker, out var comboBox, out var state))
             {
                 return;
             }
-
-            WindowsPickerNativeSelectionSyncState state =
-                WindowsPickerNativeSelectionSyncStates.GetOrCreateValue(
-                    comboBox);
 
             // Never initialize resources from this fast path. If the brush does
             // not exist yet, the guarded/full path will initialize it later.
@@ -876,6 +918,11 @@ namespace MathSolver
         private static void QueueWindowsPickerPostSelectionRefresh(
             Microsoft.Maui.Controls.Picker picker)
         {
+            if (!TryGetActiveWindowsPicker(picker, out _, out _))
+            {
+                return;
+            }
+
             // Selection/theme changes may replace the selected-content presenter.
             // Re-apply the base native visual immediately, then clamp again after
             // WinUI's queued VisualState/layout work. No ResourceDictionary writes
@@ -923,43 +970,63 @@ namespace MathSolver
             int generation,
             int remainingPasses)
         {
-            if (remainingPasses <= 0)
+            if (remainingPasses <= 0 || !state.IsLoaded ||
+                generation != Volatile.Read(ref state.ForegroundClampGeneration) ||
+                !ReferenceEquals(picker.Handler?.PlatformView, comboBox) ||
+                state.DispatcherQueue is not { } dispatcherQueue)
             {
                 return;
             }
 
-            bool queued = comboBox.DispatcherQueue.TryEnqueue(
-                Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
-                () =>
-                {
-                    if (generation !=
-                        Volatile.Read(ref state.ForegroundClampGeneration))
+            bool queued;
+            try
+            {
+                queued = dispatcherQueue.TryEnqueue(
+                    Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+                    () =>
                     {
-                        return;
-                    }
+                        if (!state.IsLoaded || generation !=
+                            Volatile.Read(ref state.ForegroundClampGeneration))
+                        {
+                            return;
+                        }
 
-                    if (picker.Handler?.PlatformView is not
-                        Microsoft.UI.Xaml.Controls.ComboBox currentComboBox ||
-                        !ReferenceEquals(currentComboBox, comboBox))
-                    {
-                        return;
-                    }
+                        if (picker.Handler?.PlatformView is not
+                            Microsoft.UI.Xaml.Controls.ComboBox currentComboBox ||
+                            !ReferenceEquals(currentComboBox, comboBox))
+                        {
+                            return;
+                        }
 
-                    ApplyWindowsPickerForegroundClampNow(
-                        picker,
-                        comboBox,
-                        state);
+                        ApplyWindowsPickerForegroundClampNow(
+                            picker,
+                            comboBox,
+                            state);
 
-                    QueueWindowsPickerForegroundClampPass(
-                        picker,
-                        comboBox,
-                        state,
-                        generation,
-                        remainingPasses - 1);
-                });
+                        QueueWindowsPickerForegroundClampPass(
+                            picker,
+                            comboBox,
+                            state,
+                            generation,
+                            remainingPasses - 1);
+                    });
+            }
+            catch (ObjectDisposedException)
+            {
+                queued = false;
+            }
+            catch (System.Runtime.InteropServices.COMException exception)
+                when (exception.HResult == unchecked((int)0x80000013) ||
+                      exception.HResult == unchecked((int)0x80010108))
+            {
+                // RO_E_CLOSED / RPC_E_DISCONNECTED: the UI queue has shut down.
+                queued = false;
+            }
 
             if (!queued)
             {
+                state.IsLoaded = false;
+                Interlocked.Increment(ref state.ForegroundClampGeneration);
                 System.Diagnostics.Debug.WriteLine(
                     "Picker foreground clamp dispatcher queue unavailable.");
             }
@@ -1026,8 +1093,7 @@ namespace MathSolver
         private static void ApplyWindowsPickerVisualNow(
             Microsoft.Maui.Controls.Picker picker)
         {
-            if (picker.Handler?.PlatformView
-                is not Microsoft.UI.Xaml.Controls.ComboBox comboBox)
+            if (!TryGetActiveWindowsPicker(picker, out var comboBox, out _))
             {
                 return;
             }
@@ -1062,6 +1128,11 @@ namespace MathSolver
         private static void QueueWindowsPickerVisualSync(
             Microsoft.Maui.Controls.Picker picker)
         {
+            if (!TryGetActiveWindowsPicker(picker, out var nativeComboBox, out var nativeState))
+            {
+                return;
+            }
+
             WindowsPickerVisualSyncState state =
                 WindowsPickerVisualSyncStates.GetOrCreateValue(picker);
 
@@ -1076,7 +1147,9 @@ namespace MathSolver
                 delay,
                 () =>
                 {
-                    if (generation != Volatile.Read(ref state.Generation))
+                    if (generation != Volatile.Read(ref state.Generation) ||
+                        !nativeState.IsLoaded ||
+                        !ReferenceEquals(picker.Handler?.PlatformView, nativeComboBox))
                     {
                         return;
                     }
