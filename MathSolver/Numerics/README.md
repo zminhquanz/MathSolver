@@ -12,6 +12,7 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [ParallelBigUnsigned.cs](BigIntegers/ParallelBigUnsigned.cs)
 - [ParallelBigUnsigned_BinaryImport.cs](BigIntegers/ParallelBigUnsigned_BinaryImport.cs)
 - [ParallelBigUnsigned_BinaryPower.cs](BigIntegers/ParallelBigUnsigned_BinaryPower.cs)
+- [ParallelBigUnsigned_Sse.cs](BigIntegers/ParallelBigUnsigned_Sse.cs): fallback SSE2/SSE4.1 cho butterfly NTT trong cache ở nhánh ≤10M; [kết quả đo](../SSE_NTT_SUB10M_NOTES.md).
 
 
 ## FloatingPoint

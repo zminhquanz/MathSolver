@@ -68,7 +68,7 @@ internal sealed partial class ParallelBigUnsigned
         int cachedHalf = Math.Max(2, Math.Min(largeSchedule ? 1 << 21 : 1 << 18, predictedTransform / 2));
         using var plans = new SharedNttTwiddlePlans(twiddlePool, avx2, avx512, cachedHalf);
         var diagnostics = new PowerDiagnosticsCollector();
-        diagnostics.ConfigureNttAvx2(avx2);
+        diagnostics.ConfigureNttBackends(avx2);
         BinaryMagnitude magnitude = new([5], 1);
         uint[] packedWords;
         using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule))

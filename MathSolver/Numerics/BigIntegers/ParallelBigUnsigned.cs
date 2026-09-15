@@ -700,7 +700,8 @@ internal sealed partial class ParallelBigUnsigned
             new SharedNttTwiddlePlans(
                 nttTwiddleBufferPool,
                 useAvx2Ntt,
-                useAvx512Ntt);
+                useAvx512Ntt,
+                useSseNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttSse);
 
         if (TryCreateExponentSplit(
                 exponent,
@@ -723,8 +724,8 @@ internal sealed partial class ParallelBigUnsigned
         var diagnostics =
             new PowerDiagnosticsCollector();
 
-        diagnostics.ConfigureNttAvx2(
-            useAvx2Ntt);
+        diagnostics.ConfigureNttBackends(
+            useAvx2Ntt, sharedNttTwiddlePlans.UseSseNtt);
 
         ParallelBigUnsigned magnitude;
         int actualWorkerCount;
@@ -888,7 +889,7 @@ internal sealed partial class ParallelBigUnsigned
         var diagnostics =
             new PowerDiagnosticsCollector();
 
-        diagnostics.ConfigureNttAvx2(
+        diagnostics.ConfigureNttBackends(
             useAvx2Ntt);
 
         // Three retained 2^26 uint buffers preserve the measured ~6 GB class
@@ -1355,8 +1356,8 @@ internal sealed partial class ParallelBigUnsigned
                 firstResult.Diagnostics,
                 secondResult.Diagnostics);
 
-        diagnostics.ConfigureNttAvx2(
-            sharedNttTwiddlePlans.UseAvx2Ntt);
+        diagnostics.ConfigureNttBackends(
+            sharedNttTwiddlePlans.UseAvx2Ntt, sharedNttTwiddlePlans.UseSseNtt);
 
         long finalCombineStarted =
             Stopwatch.GetTimestamp();
@@ -18273,7 +18274,7 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
-        if (shoupTwiddles is not null && Avx2.IsSupported)
+        if (workers.UseAvx2Ntt && shoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteForwardCachedStagePairByGroupsAvx2(
                 values, modulus, twiddles, shoupTwiddles,
@@ -20229,7 +20230,7 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
-        if (shoupTwiddles is not null && Avx2.IsSupported)
+        if (workers.UseAvx2Ntt && shoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteInverseCachedStagePairByGroupsAvx2(
                 values, modulus, twiddles, shoupTwiddles,
@@ -20827,7 +20828,7 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        if (shoupTwiddles is not null && Avx2.IsSupported)
+        if (workers.UseAvx2Ntt && shoupTwiddles is not null && Avx2.IsSupported)
         {
             var context = new Avx2NttModContext(modulus);
             ExecuteRanges(
@@ -21248,7 +21249,7 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        if (shoupTwiddles is not null && Avx2.IsSupported)
+        if (workers.UseAvx2Ntt && shoupTwiddles is not null && Avx2.IsSupported)
         {
             var context = new Avx2NttModContext(modulus);
             ExecuteRanges(
@@ -22238,6 +22239,13 @@ internal sealed partial class ParallelBigUnsigned
         int l3NttTileLength,
         CancellationToken cancellationToken)
     {
+        if (workers.UseSseNtt)
+        {
+            ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                l3NttTileLength, l2NttTileLength, fusedNttBlockLength, false, cancellationToken);
+            return;
+        }
+
         int tileCount =
             values.Length /
             l3NttTileLength;
@@ -23660,7 +23668,7 @@ internal sealed partial class ParallelBigUnsigned
         out long l1Ticks,
         out long l2Ticks)
     {
-        if (twiddlePlan.InverseShoupTwiddles is not null &&
+        if (twiddlePlan.HasAvx2Twiddles &&
             Avx2.IsSupported)
         {
             ExecuteInverseL2TileSequentialAvx2Profiled(
@@ -23715,6 +23723,13 @@ internal sealed partial class ParallelBigUnsigned
         int l3NttTileLength,
         CancellationToken cancellationToken)
     {
+        if (workers.UseSseNtt)
+        {
+            ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                l3NttTileLength, l2NttTileLength, fusedNttBlockLength, true, cancellationToken);
+            return;
+        }
+
         int tileCount =
             values.Length /
             l3NttTileLength;
@@ -25005,7 +25020,7 @@ internal sealed partial class ParallelBigUnsigned
         bool useLargeModeAvx512Radix4,
         bool useLargeModeAvx512ForwardL2)
     {
-        if (twiddlePlan.ForwardShoupTwiddles is not null && Avx2.IsSupported)
+        if (twiddlePlan.HasAvx2Twiddles && Avx2.IsSupported)
         {
             ExecuteForwardL2TileSequentialAvx2(
                 values, modulus, twiddles, twiddlePlan,
@@ -25394,7 +25409,7 @@ internal sealed partial class ParallelBigUnsigned
         bool useLargeModeAvx2InverseL2Low32Shoup,
         bool useLargeModeAvx512Radix4 = false)
     {
-        if (twiddlePlan.InverseShoupTwiddles is not null && Avx2.IsSupported)
+        if (twiddlePlan.HasAvx2Twiddles && Avx2.IsSupported)
         {
             ExecuteInverseL2TileSequentialAvx2(
                 values, modulus, twiddles, twiddlePlan,
@@ -26339,6 +26354,13 @@ internal sealed partial class ParallelBigUnsigned
         int l2NttTileLength,
         CancellationToken cancellationToken)
     {
+        if (workers.UseSseNtt)
+        {
+            ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                l2NttTileLength, l2NttTileLength, fusedNttBlockLength, false, cancellationToken);
+            return;
+        }
+
         int tileCount =
             values.Length /
             l2NttTileLength;
@@ -26748,6 +26770,13 @@ internal sealed partial class ParallelBigUnsigned
         int l2NttTileLength,
         CancellationToken cancellationToken)
     {
+        if (workers.UseSseNtt)
+        {
+            ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                l2NttTileLength, l2NttTileLength, fusedNttBlockLength, true, cancellationToken);
+            return;
+        }
+
         int tileCount =
             values.Length /
             l2NttTileLength;
@@ -27356,6 +27385,13 @@ internal sealed partial class ParallelBigUnsigned
         int fusedNttBlockLength,
         CancellationToken cancellationToken)
     {
+        if (workers.UseSseNtt)
+        {
+            ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                fusedNttBlockLength, fusedNttBlockLength, fusedNttBlockLength, false, cancellationToken);
+            return;
+        }
+
         if (workers.UseAvx2Ntt && twiddlePlan.ForwardShoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteForwardFusedTailAvx2(
@@ -27563,6 +27599,13 @@ internal sealed partial class ParallelBigUnsigned
         int fusedNttBlockLength,
         CancellationToken cancellationToken)
     {
+        if (workers.UseSseNtt)
+        {
+            ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                fusedNttBlockLength, fusedNttBlockLength, fusedNttBlockLength, true, cancellationToken);
+            return;
+        }
+
         if (workers.UseAvx2Ntt && twiddlePlan.InverseShoupTwiddles is not null && Avx2.IsSupported)
         {
             ExecuteInverseFusedHeadAvx2(
@@ -28039,6 +28082,7 @@ internal sealed partial class ParallelBigUnsigned
 
     private sealed class NttTwiddlePlan : IDisposable
     {
+        private readonly bool _useAvx2Ntt;
         private uint[]? _forwardTwiddles;
         private uint[]? _inverseTwiddles;
         private uint[]? _forwardShoupTwiddles;
@@ -28066,7 +28110,8 @@ internal sealed partial class ParallelBigUnsigned
         public NttTwiddlePlan(
             NttTwiddleBufferPool bufferPool,
             bool useAvx2Ntt,
-            int maximumCachedHalfLength = 0)
+            int maximumCachedHalfLength = 0,
+            bool useSseNtt = false)
         {
             _bufferPool =
                 bufferPool ??
@@ -28118,9 +28163,10 @@ internal sealed partial class ParallelBigUnsigned
                     capacity);
 
             // Shoup companions exist when the shared Hardware acceleration
-            // switch selects AVX2 at calculation start. They are Pow-scoped and
+            // switch selects AVX2 or the legacy SSE fallback. They are Pow-scoped and
             // reused by both <=10M and segmented >10M transforms.
-            if (useAvx2Ntt)
+            _useAvx2Ntt = useAvx2Ntt;
+            if (useAvx2Ntt || useSseNtt)
             {
                 _forwardShoupTwiddles =
                     _bufferPool.Rent(
@@ -28147,6 +28193,7 @@ internal sealed partial class ParallelBigUnsigned
                 "Twiddle cache is not available for this transform.");
 
         public bool HasAvx2Twiddles =>
+            _useAvx2Ntt &&
             _forwardShoupTwiddles is not null &&
             _inverseShoupTwiddles is not null;
 
@@ -28568,6 +28615,7 @@ internal sealed partial class ParallelBigUnsigned
             new long[GlobalStageProfileSlots];
 
         private bool _usedAvx2NttButterflies;
+        private bool _usedSseNttButterflies;
         private long _nttWorkspacePeakBytes;
         private long _nttPoolPeakRetainedBytes;
         private int _nttBufferRentCount;
@@ -28913,7 +28961,8 @@ internal sealed partial class ParallelBigUnsigned
                         second.CarryTicks),
                 _usedAvx2NttButterflies =
                     first._usedAvx2NttButterflies ||
-                    second._usedAvx2NttButterflies
+                    second._usedAvx2NttButterflies,
+                _usedSseNttButterflies = first._usedSseNttButterflies || second._usedSseNttButterflies
                 };
 
             result.CopyGlobalStageProfilesFrom(
@@ -29040,13 +29089,15 @@ internal sealed partial class ParallelBigUnsigned
 
             _usedAvx2NttButterflies |=
                 snapshot.UsedAvx2NttButterflies;
+            _usedSseNttButterflies |= snapshot.UsedSseNttButterflies;
         }
 
-        public void ConfigureNttAvx2(
-            bool enabled)
+        public void ConfigureNttBackends(
+            bool enabled, bool useSse = false)
         {
             _usedAvx2NttButterflies |=
                 enabled;
+            _usedSseNttButterflies |= useSse;
         }
 
         public void ConfigureSegmentedNttMultiplication(
@@ -29207,7 +29258,7 @@ internal sealed partial class ParallelBigUnsigned
                 _largePersistentGenerationCount,
                 _largePersistentStaticRangeCount,
                 _largeMemoryBudgetBufferLimit,
-                CreateGlobalStageProfiles());
+                CreateGlobalStageProfiles()) { UsedSseNttButterflies = _usedSseNttButterflies };
         }
 
         private static long ToTimestampTicks(
@@ -29267,6 +29318,7 @@ internal sealed partial class ParallelBigUnsigned
 
         private readonly NttTwiddleBufferPool _bufferPool;
         private readonly bool _useAvx2Ntt;
+        private readonly bool _useSseNtt;
         private readonly bool _useAvx512Ntt;
         private readonly int _maximumCachedHalfLength;
 
@@ -29278,7 +29330,8 @@ internal sealed partial class ParallelBigUnsigned
             NttTwiddleBufferPool bufferPool,
             bool useAvx2Ntt,
             bool useAvx512Ntt = false,
-            int maximumCachedHalfLength = 0)
+            int maximumCachedHalfLength = 0,
+            bool useSseNtt = false)
         {
             _bufferPool =
                 bufferPool ??
@@ -29292,7 +29345,10 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx2Ntt &&
                 useAvx512Ntt;
             _maximumCachedHalfLength = maximumCachedHalfLength;
+            _useSseNtt = useSseNtt && !useAvx2Ntt && Sse2.IsSupported;
         }
+
+        public bool UseSseNtt => _useSseNtt;
 
         public bool UseAvx2Ntt =>
             _useAvx2Ntt;
@@ -29315,7 +29371,7 @@ internal sealed partial class ParallelBigUnsigned
                         new NttTwiddlePlan(
                             _bufferPool,
                             _useAvx2Ntt,
-                            _maximumCachedHalfLength);
+                            _maximumCachedHalfLength, _useSseNtt);
                 }
 
                 if (modulus == SecondModulus)
@@ -29324,7 +29380,7 @@ internal sealed partial class ParallelBigUnsigned
                         new NttTwiddlePlan(
                             _bufferPool,
                             _useAvx2Ntt,
-                            _maximumCachedHalfLength);
+                            _maximumCachedHalfLength, _useSseNtt);
                 }
 
                 throw new ArgumentOutOfRangeException(
@@ -29872,6 +29928,8 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         public int WorkerCount { get; }
+
+        public bool UseSseNtt => _sharedNttTwiddlePlans.UseSseNtt;
 
         public bool UseAvx2Ntt =>
             _sharedNttTwiddlePlans.UseAvx2Ntt;
@@ -31209,4 +31267,7 @@ internal sealed record ParallelPowerDiagnostics(
     long LargePersistentGenerationCount,
     long LargePersistentStaticRangeCount,
     int LargeMemoryBudgetBufferLimit,
-    IReadOnlyList<NttGlobalStageProfileEntry> GlobalStageProfiles);
+    IReadOnlyList<NttGlobalStageProfileEntry> GlobalStageProfiles)
+{
+    public bool UsedSseNttButterflies { get; init; }
+}

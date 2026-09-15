@@ -78,7 +78,7 @@ public sealed class FractionQuizGenerator
         }
         else
         {
-            // Phân số thứ nhất theo đúng bậc chữ số của tier; phân số thứ hai
+            // Skill Mode: phân số thứ nhất theo bậc chữ số của tier; phân số thứ hai
             // chọn bậc chữ số độc lập từ ★ đến tier hiện tại. Vì vậy ở mức
             // cao vẫn có thể gặp dạng 18.258/24.731 + 2/7 thay vì ép cả hai
             // phân số đều có tử/mẫu rất lớn.
@@ -158,7 +158,14 @@ public sealed class FractionQuizGenerator
 
         int maximum = Math.Max(2, curriculumRules.MaximumDenominator);
 
-        return secondaryOperand
+        // Mixed curricula deliberately cap fractions below the tier's primary
+        // digit range (four stars: 20; five stars: 100). Sample the eligible
+        // smaller buckets in that case; keep the primary range in Skill Mode.
+        bool useSmallerBuckets = secondaryOperand ||
+            maximum < QuizCurriculumLayer.GetMinimumPrimaryOperandValue(
+                curriculumRules.Tier);
+
+        return useSmallerBuckets
             ? QuizCurriculumLayer.NextSecondaryOperand(
                 _random,
                 curriculumRules.Tier,

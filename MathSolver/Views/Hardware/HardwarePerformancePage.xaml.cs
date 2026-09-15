@@ -790,7 +790,7 @@ public partial class HardwarePerformancePage : ContentPage
                 !CalculationAccelerationManager
                     .IsPowerNttAccelerationAvailable
                     ? LocalizationKeys.Hardware.NttAccelerationUnavailable
-                    : CalculationAccelerationManager.UsePowerNttAvx2
+                    : CalculationAccelerationManager.UsePowerNttAvx2 || CalculationAccelerationManager.UsePowerNttSse
                         ? LocalizationKeys.Hardware.NttAccelerationOn
                         : LocalizationKeys.Hardware.NttAccelerationOff);
 
@@ -823,7 +823,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         accelerationStatus +=
             Environment.NewLine +
-            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : "Scalar") + ")" +
+            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : CalculationAccelerationManager.UsePowerNttSse ? (System.Runtime.Intrinsics.X86.Sse41.IsSupported ? "SSE4.1" : "SSE2") + " (128-bit, ≤10M) / Scalar" : "Scalar") + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
             Environment.NewLine +

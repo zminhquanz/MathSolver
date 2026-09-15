@@ -3985,7 +3985,11 @@ public partial class PowerRootView : LocalizedSolverView
 
             lines.Insert(
                 6,
-                diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
+                diagnostics.UsedSseNttButterflies
+                    ? System.Runtime.Intrinsics.X86.Sse41.IsSupported
+                        ? "NTT: SSE4.1 (128-bit) / Scalar"
+                        : "NTT: SSE2 (128-bit) / Scalar"
+                    : diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
                     ? "NTT: AVX2 / Scalar"
                     : Format(
                     diagnostics.UsedAvx2NttButterflies

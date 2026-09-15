@@ -197,23 +197,32 @@ public static class CalculationAccelerationManager
         IsPowerExportAccelerationAvailable;
 
     /// <summary>
-    /// AVX2 butterfly backend for the production in-place DIF/DIT NTT used by
-    /// power calculations. Both the switch and selected mode gate this backend; the
-    /// segmented >10M path reuses the same accepted cache-resident kernels.
+    /// x86 butterfly availability: SSE2 for <=10M, AVX2/AVX-512 also for >10M.
     /// </summary>
     public static bool IsPowerNttAccelerationAvailable =>
 #if ANDROID
         false;
 #else
-        Avx2.IsSupported &&
-        Vector256.IsHardwareAccelerated &&
+        Sse2.IsSupported &&
+        Vector128.IsHardwareAccelerated &&
         (RuntimeInformation.ProcessArchitecture == Architecture.X64 ||
          RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
 
     public static bool UsePowerNttAvx2 =>
         AllowAvx &&
+        Avx2.IsSupported &&
         IsPowerNttAccelerationAvailable;
+
+    /// <summary>SSE fallback for the legacy <=10M NTT cache-local butterflies.</summary>
+    public static bool UsePowerNttSse =>
+#if ANDROID
+        false;
+#else
+        UseSimd && IsSseAvailable && !UsePowerNttAvx2 &&
+        (EffectiveSimdMode is CalculationSimdMode.Sse or
+            CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512);
+#endif
 
     public static CalculationSimdMode SelectedSimdMode
     {

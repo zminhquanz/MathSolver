@@ -88,6 +88,8 @@ The final inverse-DIT prefix kernel splits each worker's contiguous range at `va
 
 ## SIMD Acceleration
 
+**SSE fallback (2026-09-15):** the legacy <=10M NTT path now uses four-lane SSE2 cache-local butterflies when SSE is selected, or Auto has no AVX2 backend. SSE4.1 specializes Shoup reduction when supported. Global stages, pointwise, final inverse normalization and CRT/carry retain Scalar in this fallback. The >10M and binary-power backends have not opted into SSE. See [implementation and measured results](SSE_NTT_SUB10M_NOTES.md).
+
 ### `Services/Performance/CalculationAccelerationManager.cs`
 
 Detects hardware capabilities and exposes:
