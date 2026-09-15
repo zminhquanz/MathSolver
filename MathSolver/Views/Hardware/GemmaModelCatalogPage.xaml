@@ -127,14 +127,16 @@
                     ColumnSpacing="16"
                     RowSpacing="16">
 
-                    <VerticalStackLayout
+                    <ScrollView
                         x:Name="ModelListPanel"
                         Grid.Column="0"
-                        Spacing="{OnPlatform Android=10, WinUI=12, Default=12}">
+                        Orientation="Vertical"
+                        VerticalScrollBarVisibility="Default">
+                    <VerticalStackLayout Spacing="10">
 
                         <Border
                             IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                            Padding="14"
+                            Padding="12"
                             BackgroundColor="{DynamicResource InfoSoftColor}"
                             Stroke="{DynamicResource InfoBorderBrush}"
                             StrokeThickness="1">
@@ -165,7 +167,7 @@
 
                         <Border
                             x:Name="E2BModelBorder"
-                            Padding="{OnPlatform Android=12, WinUI=16, Default=16}"
+                            Padding="12"
                             BackgroundColor="{DynamicResource PrimarySoftColor}"
                             Stroke="{DynamicResource PrimaryBorderBrush}"
                             StrokeThickness="2">
@@ -174,8 +176,8 @@
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{OnPlatform Android=6, WinUI=8, Default=8}" ColumnSpacing="10">
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="8">
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
                                     <Label
                                         x:Name="E2BTitleLabel"
                                         FontSize="{OnPlatform Android=15, WinUI=16, Default=16}"
@@ -190,10 +192,10 @@
 
                                 <Button
                                     x:Name="DownloadE2BButton"
-                                    Grid.RowSpan="3"
+                                    Grid.Row="1"
                                     Grid.Column="1"
                                     Text="↓ Tải"
-                                    WidthRequest="{OnPlatform Android=88, WinUI=92, Default=92}"
+                                    WidthRequest="92"
                                     HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
                                     Padding="0"
                                     CornerRadius="18"
@@ -203,7 +205,7 @@
                                     TextColor="{DynamicResource OnPrimaryColor}"
                                     Clicked="OnDownloadE2BClicked" />
 
-                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
+                                <Grid Grid.Row="1" Grid.Column="0" VerticalOptions="Center">
                                     <Border
                                         Padding="10,4"
                                         BackgroundColor="{DynamicResource SurfaceColor}"
@@ -218,16 +220,7 @@
                                             FontAttributes="Bold"
                                             TextColor="{DynamicResource PrimaryColor}" />
                                     </Border>
-                                </HorizontalStackLayout>
-
-                                <Label
-                                    Grid.Row="2"
-                                    Grid.Column="0"
-                                    x:Name="E2BCardHintLabel"
-                                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                                    FontSize="12"
-                                    LineHeight="1.25"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                </Grid>
 
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnE2BRowTapped" />
@@ -237,7 +230,7 @@
 
                         <Border
                             x:Name="E4BModelBorder"
-                            Padding="{OnPlatform Android=12, WinUI=16, Default=16}"
+                            Padding="12"
                             BackgroundColor="{DynamicResource SurfaceAltColor}"
                             Stroke="{DynamicResource BorderBrush}"
                             StrokeThickness="1">
@@ -246,8 +239,8 @@
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
 
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{OnPlatform Android=6, WinUI=8, Default=8}" ColumnSpacing="10">
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="8" ColumnSpacing="8">
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
                                     <Label
                                         x:Name="E4BTitleLabel"
                                         FontSize="{OnPlatform Android=15, WinUI=16, Default=16}"
@@ -262,10 +255,10 @@
 
                                 <Button
                                     x:Name="DownloadE4BButton"
-                                    Grid.RowSpan="3"
+                                    Grid.Row="1"
                                     Grid.Column="1"
                                     Text="↓ Tải"
-                                    WidthRequest="{OnPlatform Android=88, WinUI=92, Default=92}"
+                                    WidthRequest="92"
                                     HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
                                     Padding="0"
                                     CornerRadius="18"
@@ -275,7 +268,7 @@
                                     TextColor="{DynamicResource OnPrimaryColor}"
                                     Clicked="OnDownloadE4BClicked" />
 
-                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
+                                <Grid Grid.Row="1" Grid.Column="0" VerticalOptions="Center">
                                     <Border
                                         Padding="10,4"
                                         BackgroundColor="{DynamicResource SurfaceColor}"
@@ -290,16 +283,7 @@
                                             FontAttributes="Bold"
                                             TextColor="{DynamicResource PrimaryColor}" />
                                     </Border>
-                                </HorizontalStackLayout>
-
-                                <Label
-                                    Grid.Row="2"
-                                    Grid.Column="0"
-                                    x:Name="E4BCardHintLabel"
-                                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                                    FontSize="12"
-                                    LineHeight="1.25"
-                                    TextColor="{DynamicResource TextSecondaryColor}" />
+                                </Grid>
 
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnE4BRowTapped" />
@@ -307,22 +291,8 @@
                             </Grid>
                         </Border>
 
-                        <Border
-                            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                            Padding="12"
-                            BackgroundColor="{DynamicResource WarningSoftColor}"
-                            Stroke="{DynamicResource WarningBorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14" />
-                            </Border.StrokeShape>
-                            <Label
-                                x:Name="RowInteractionHintLabel"
-                                FontSize="12"
-                                LineHeight="1.25"
-                                TextColor="{DynamicResource WarningColor}" />
-                        </Border>
                     </VerticalStackLayout>
+                    </ScrollView>
 
                     <Grid
                         x:Name="ReadmePanel"

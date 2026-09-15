@@ -195,7 +195,7 @@
 
                 <Grid
                     x:Name="BenchmarkModeTabs"
-                    IsVisible="{OnPlatform WinUI=True, Default=False}"
+                    IsVisible="False"
                     ColumnDefinitions="*,*"
                     ColumnSpacing="8">
                     <Button
@@ -210,7 +210,7 @@
                     <Button
                         x:Name="LlmPerformanceTabButton"
                         Grid.Column="1"
-                        IsVisible="{OnPlatform WinUI=True, Default=False}"
+                        IsVisible="False"
                         HeightRequest="44"
                         CornerRadius="12"
                         FontAttributes="Bold"

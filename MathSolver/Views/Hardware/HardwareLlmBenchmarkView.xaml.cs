@@ -117,6 +117,7 @@ public partial class HardwareLlmBenchmarkView : ContentView
         if (!_isRunning)
         {
             RunLlmBenchmarkButton.IsEnabled =
+                LocalAiHardwareEligibility.IsAvailable &&
                 QuizLlmModelStore.IsSupportedModelPath(modelPath);
             RunLlmBenchmarkButton.Text =
                 GetIdleRunButtonText(vietnamese);
@@ -283,6 +284,8 @@ public partial class HardwareLlmBenchmarkView : ContentView
             CancelBenchmark();
             return;
         }
+
+        if (!LocalAiHardwareEligibility.IsAvailable) return;
 
         string? modelPath =
             new QuizLlmModelStore().GetSavedModelPath();

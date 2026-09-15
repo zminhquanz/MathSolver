@@ -57,6 +57,8 @@ internal static class PowerOfTenArithmetic
         token.ThrowIfCancellationRequested();
         int m = GetBinaryExponent(baseValue, exponent);
         if (m == 0) return new(BigInteger.One, 1, null);
+        if (workerCount > 1)
+            MathSolver.Services.NttPowerMemoryGuard.Shared.EnsureAllowed(exponent);
         PowerOfTenResult result;
         if (workerCount > 1)
             result = ParallelBigUnsigned.PowFiveAndShift(m, workerCount, progress, token,

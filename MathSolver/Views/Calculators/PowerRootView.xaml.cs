@@ -2169,6 +2169,12 @@ public partial class PowerRootView : LocalizedSolverView
         {
             PowerCalculationState state;
 
+            if (strategy == PowerComputationStrategy.ParallelNttPower ||
+                (strategy == PowerComputationStrategy.FactorizedPowerOfTen && activeWorkerCount > 1))
+            {
+                NttPowerMemoryGuard.Shared.EnsureAllowed(exponent);
+            }
+
             if (strategy ==
                 PowerComputationStrategy.FactorizedPowerOfTen)
             {

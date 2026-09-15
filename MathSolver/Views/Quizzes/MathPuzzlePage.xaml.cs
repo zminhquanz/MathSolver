@@ -431,15 +431,11 @@ public partial class MathPuzzlePage : ContentPage
     private void SelectGenerationSource(
         QuizGenerationSource source)
     {
-#if !WINDOWS
-        // LLamaSharp is Windows-only. Never let a restored/programmatic state
-        // switch Android (or another non-Windows target) onto the legacy GGUF
-        // path while the AI source is hidden.
-        if (source == QuizGenerationSource.LocalLlm)
+        // Also reject programmatic selection while the AI tab is hidden.
+        if (source == QuizGenerationSource.LocalLlm && !LocalAiHardwareEligibility.IsAvailable)
         {
             source = QuizGenerationSource.Algorithm;
         }
-#endif
 
         if (_generationSource == source)
         {
@@ -464,6 +460,10 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateGenerationSourceStyles()
     {
+        bool canUseLocalAi = LocalAiHardwareEligibility.IsAvailable;
+        LocalLlmSourceButton.IsVisible = canUseLocalAi;
+        Grid.SetColumnSpan(AlgorithmSourceButton, canUseLocalAi ? 1 : 2);
+
         SelectionButtonStyler.Select(
             _generationSource == QuizGenerationSource.Algorithm
                 ? AlgorithmSourceButton

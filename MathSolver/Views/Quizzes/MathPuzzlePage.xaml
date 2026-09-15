@@ -81,7 +81,7 @@
                                 <Button
                                     x:Name="LocalLlmSourceButton"
                                     Grid.Column="1"
-                                    IsVisible="{OnPlatform Android=False, WinUI=True, iOS=False, MacCatalyst=False, Default=False}"
+                                    IsVisible="False"
                                     Text="{localization:Translate Quiz.LocalLlmSource}"
                                     HeightRequest="48"
                                     CornerRadius="12"

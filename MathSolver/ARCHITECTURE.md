@@ -38,6 +38,37 @@ All three use fused-multiply-add (`Math.FusedMultiplyAdd`) to capture rounding e
 
 ## Memory & Lifetime Management
 
+### Local AI visibility
+
+`Services/Performance/LocalAiHardwareEligibility.cs` reuses `PhysicalMemoryInfo`
+to expose AI/LLM only on Windows with AVX2 support (`Avx2.IsSupported`) and at least
+12 GiB of installed RAM. The AVX2 check is independent of the app's SIMD preference. Unknown
+or lower RAM hides AI in both Hardware benchmarks and Math Puzzle; programmatic
+source selection and benchmark start also respect this rule. Android and other
+non-Windows targets remain hidden regardless of RAM. Eligibility is cached for
+the app session and is independent of the NTT exponent policy.
+
+### Physical RAM eligibility for large NTT powers
+
+`Services/Performance/PhysicalMemoryInfo.cs` reads installed physical RAM on
+Windows (SMBIOS via `GetPhysicallyInstalledSystemMemory`) and Android 14+
+(`ActivityManager.MemoryInfo.AdvertisedMem`). Older Android uses kernel-visible
+`TotalMem` without rounding up hardware reservations. iOS/MacCatalyst use
+`NSProcessInfo.PhysicalMemory`. Swap, zram, free memory and GC budgets do not
+contribute to this hardware threshold; an unavailable reading stays unknown.
+
+`NttPowerMemoryGuard` allows exponents through 10,000,000 without a RAM query.
+Exponents 10,000,001 through 100,000,000 require at least 12 GiB
+(`12 * 1024^3` bytes); lower or unknown RAM rejects the request with a message.
+The guard runs before allocating NTT workspaces, independently of SIMD and worker
+count, including NTT preparation for TXT export. Power-of-ten parallel arithmetic
+checks the original input exponent, not its internal `k * exponent` transform.
+Pure BigInteger/bit-shift computation does not use this NTT policy.
+This is an eligibility rule, not a free-memory budget or segmentation planner.
+
+Validation: `dotnet run --project tests/PowerOfTenValidation -c Release -- memory-guard`
+checks RAM/exponent boundaries and unknown readings without allocating huge powers.
+
 ### NTT Buffer Pool
 
 Large NTT value workspaces (`uint[]`) were previously allocated with `new uint[transformLength]` for every modulus pass, wasting RAM and GC pressure. The architecture now:

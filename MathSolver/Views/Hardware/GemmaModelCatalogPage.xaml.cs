@@ -97,15 +97,18 @@ public partial class GemmaModelCatalogPage : ContentPage
 
         CatalogPanel.WidthRequest =
             Math.Max(
-                320d,
+                1d,
                 Math.Min(
                     980d,
                     width - catalogHorizontalInset));
 
-        CatalogPanel.MaximumHeightRequest =
+        // Give both scrolling panes a finite viewport. A maximum alone lets
+        // the model stack measure beyond the body and overlap the footer.
+        CatalogPanel.HeightRequest =
             Math.Max(
-                320d,
-                height - catalogVerticalInset);
+                1d,
+                Math.Min(760d, height - catalogVerticalInset));
+        CatalogPanel.MaximumHeightRequest = CatalogPanel.HeightRequest;
 
         DownloadConfirmPanel.WidthRequest =
             Math.Max(
@@ -143,7 +146,7 @@ public partial class GemmaModelCatalogPage : ContentPage
             CatalogBodyGrid.ColumnDefinitions.Add(
                 new ColumnDefinition(GridLength.Star));
             CatalogBodyGrid.RowDefinitions.Add(
-                new RowDefinition(GridLength.Auto));
+                new RowDefinition(GridLength.Star));
 
             Grid.SetColumn(ModelListPanel, 0);
             Grid.SetRow(ModelListPanel, 0);
@@ -223,12 +226,6 @@ public partial class GemmaModelCatalogPage : ContentPage
         E4BMetadataLabel.Text =
             FormatModelMetadata(
                 Gemma4ModelDownloadService.E4B);
-
-        E2BCardHintLabel.Text = T("Quiz.ModelCatalogE2BRecommendation");
-        E4BCardHintLabel.Text = T("Quiz.ModelCatalogE4BRecommendation");
-
-        RowInteractionHintLabel.Text =
-            T("Quiz.ModelCatalogInteractionHint");
 
         ReadmeMathSolverHeadingLabel.Text =
             T("Quiz.ModelCatalogMathSolverHeading");

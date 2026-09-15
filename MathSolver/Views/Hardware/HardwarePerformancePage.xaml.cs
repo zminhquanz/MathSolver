@@ -387,7 +387,7 @@ public partial class HardwarePerformancePage : ContentPage
 
 #if WINDOWS
         LlmPerformanceTabButton.IsEnabled =
-            !anyBenchmarkRunning;
+            LocalAiHardwareEligibility.IsAvailable && !anyBenchmarkRunning;
 #else
         LlmPerformanceTabButton.IsEnabled = false;
 #endif
@@ -406,6 +406,7 @@ public partial class HardwarePerformancePage : ContentPage
         EventArgs e)
     {
 #if WINDOWS
+        if (!LocalAiHardwareEligibility.IsAvailable) return;
         _showLlmPerformance = true;
         LlmBenchmarkView.RefreshState();
         UpdateBenchmarkModeTabs();
@@ -414,9 +415,10 @@ public partial class HardwarePerformancePage : ContentPage
 
     private void UpdateBenchmarkModeTabs()
     {
-#if !WINDOWS
-        _showLlmPerformance = false;
-#endif
+        bool canUseLocalAi = LocalAiHardwareEligibility.IsAvailable;
+        BenchmarkModeTabs.IsVisible = canUseLocalAi;
+        LlmPerformanceTabButton.IsVisible = canUseLocalAi;
+        if (!canUseLocalAi) _showLlmPerformance = false;
 
         bool vietnamese =
             AppLanguageManager.CurrentLanguage ==

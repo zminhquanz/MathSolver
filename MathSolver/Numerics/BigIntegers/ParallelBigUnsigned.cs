@@ -650,6 +650,9 @@ internal sealed partial class ParallelBigUnsigned
         ArgumentOutOfRangeException.ThrowIfNegative(
             exponent);
 
+        cancellationToken.ThrowIfCancellationRequested();
+        NttPowerMemoryGuard.Shared.EnsureAllowed(exponent);
+
         workerCount =
             Math.Max(
                 1,
@@ -799,6 +802,8 @@ internal sealed partial class ParallelBigUnsigned
                 workerCount);
 
         cancellationToken.ThrowIfCancellationRequested();
+
+        NttPowerMemoryGuard.Shared.EnsureAllowed(exponent);
 
         // Capture the shared Hardware acceleration switch once for the complete
         // >10M transaction. The accepted AVX2/Shoup cache-resident kernels remain
