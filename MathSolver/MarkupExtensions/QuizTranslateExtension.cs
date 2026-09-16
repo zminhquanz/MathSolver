@@ -10,6 +10,7 @@ namespace MathSolver.MarkupExtensions;
 /// Vietnamese/English fallback so older external language packs remain usable.
 /// </summary>
 [ContentProperty(nameof(Key))]
+[AcceptEmptyServiceProvider]
 public sealed class QuizTranslateExtension :
     IMarkupExtension
 {

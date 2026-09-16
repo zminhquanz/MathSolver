@@ -377,7 +377,7 @@
                                         HeightRequest="20" />
 
                                     <Label
-                                        Text="{Binding Text, Source={x:Reference CopyResultButton}}"
+                                        Text="{Binding Text, Source={x:Reference CopyResultButton}, x:DataType='Button'}"
                                         FontSize="15"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}"
@@ -763,7 +763,7 @@
                                     HeightRequest="20" />
 
                                 <Label
-                                    Text="{Binding Text, Source={x:Reference RootCopyResultButton}}"
+                                    Text="{Binding Text, Source={x:Reference RootCopyResultButton}, x:DataType='Button'}"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}"

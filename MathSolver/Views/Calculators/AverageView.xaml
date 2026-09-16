@@ -221,7 +221,7 @@
                                 HeightRequest="20" />
 
                             <Label
-                                Text="{Binding Text, Source={x:Reference AverageCopyResultButton}}"
+                                Text="{Binding Text, Source={x:Reference AverageCopyResultButton}, x:DataType='Button'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"

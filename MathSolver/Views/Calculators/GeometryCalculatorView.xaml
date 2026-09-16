@@ -7,6 +7,8 @@
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:controls="clr-namespace:MathSolver.Controls"
+    xmlns:views="clr-namespace:MathSolver.Views"
+    xmlns:models="clr-namespace:MathSolver.Models"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill"
     VerticalOptions="Fill">
@@ -155,9 +157,16 @@
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         TitleColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        x:DataType="views:GeometryCalculatorView"
                                         ItemsSource="{Binding GeometryItems}"
-                                        SelectedIndexChanged="OnGeometryShapeSelected"
-                                        ItemDisplayBinding="{Binding Path=Name}" />
+                                        SelectedIndexChanged="OnGeometryShapeSelected">
+
+                                        <Picker.ItemDisplayBinding>
+                                            <Binding
+                                                Path="Name"
+                                                x:DataType="models:GeometryFormulaItem" />
+                                        </Picker.ItemDisplayBinding>
+                                    </Picker>
 
                                     <Path
                                         IsVisible="{OnPlatform Android=True, Default=False}"
@@ -262,6 +271,7 @@
 
                                 <Label
                                     Grid.Row="0"
+                                    x:DataType="views:GeometryCalculatorView"
                                     Text="{Binding SelectedGeometry.Name}"
                                     FontSize="21"
                                     FontAttributes="Bold"
@@ -303,10 +313,11 @@
                                         Spacing="7"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Start"
+                                        x:DataType="views:GeometryCalculatorView"
                                         BindableLayout.ItemsSource="{Binding SelectedGeometry.Formulas}">
 
                                         <BindableLayout.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="x:String">
 
                                                 <Border
                                                     Margin="0,2"
@@ -354,10 +365,11 @@
                                             Spacing="4"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Center"
-                                            BindableLayout.ItemsSource="{Binding SelectedGeometry.Symbols}">
+                                            x:DataType="views:GeometryCalculatorView"
+                                        BindableLayout.ItemsSource="{Binding SelectedGeometry.Symbols}">
 
                                             <BindableLayout.ItemTemplate>
-                                                <DataTemplate>
+                                                <DataTemplate x:DataType="x:String">
 
                                                     <Label
                                                         Text="{Binding .}"
@@ -399,10 +411,11 @@
 
                                             <VerticalStackLayout
                                                 Spacing="5"
-                                                BindableLayout.ItemsSource="{Binding SelectedGeometry.Properties}">
+                                                x:DataType="views:GeometryCalculatorView"
+                                        BindableLayout.ItemsSource="{Binding SelectedGeometry.Properties}">
 
                                                 <BindableLayout.ItemTemplate>
-                                                    <DataTemplate>
+                                                    <DataTemplate x:DataType="x:String">
 
                                                         <Label
                                                             Text="{Binding ., StringFormat='• {0}'}"
@@ -466,10 +479,11 @@
                         HorizontalOptions="Fill"
                         VerticalOptions="Start"
                         SizeChanged="OnGeometryInputFlexLayoutSizeChanged"
+                        x:DataType="views:GeometryCalculatorView"
                         BindableLayout.ItemsSource="{Binding InputFields}">
 
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="views:GeometryInputField">
 
                                 <Border
                                     Margin="0,5"
@@ -643,10 +657,11 @@
 
                     <VerticalStackLayout
                         Spacing="8"
+                        x:DataType="views:GeometryCalculatorView"
                         BindableLayout.ItemsSource="{Binding Results}">
 
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="views:GeometryResultLine">
 
                                 <Border
                                     Padding="12"
@@ -724,7 +739,7 @@
                                 HeightRequest="20" />
 
                             <Label
-                                Text="{Binding Text, Source={x:Reference GeometryCopyResultButton}}"
+                                Text="{Binding Text, Source={x:Reference GeometryCopyResultButton}, x:DataType='Button'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"

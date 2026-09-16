@@ -808,3 +808,24 @@ Both Algorithm and AI/LLM consume the same C# contracts, so these restrictions a
 SingleThreadBigIntegerPower uses runtime BigInteger arithmetic in both hardware-acceleration modes. It retains bounded square batching, exponent windows, progress and cancellation. The custom AVX2 prefix and AVX2/AVX-512 limb32 square backends have been removed from the application, along with their hardware-information status and dispatch flags.
 
 Historical prototypes and benchmark fixtures remain under tests/LegacySingleThreadSimd and the single-thread audit projects; they are not compiled into the app. The [divide-and-conquer report](SINGLE_THREAD_DIVIDE_CONQUER_REPORT.md), [limb32 report](SINGLE_THREAD_LIMB32_REPORT.md) and [regression report](SINGLE_THREAD_LIMB32_REGRESSION.md) describe retired experiments. NTT/CRT, decimal export and parabola SIMD remain independent.
+
+
+## x86 SSE NTT/CRT large-mode fallback (>10M)
+
+- The memory-bounded power path (10,000,001..100,000,000 exponent) now enables the managed 128-bit x86 backend whenever hardware acceleration is enabled, the effective mode is SSE-family, and AVX2 is not selected/available.
+- ISA preference is detected as SSE4.2 -> SSE4.1 -> SSSE3 -> SSE3 -> SSE2. SSE4.1 supplies PMULLD/PMINUD for packed Shoup reduction; SSSE3 supplies PSHUFB odd-lane extraction. SSE3 and SSE4.2 correctly reuse the nearest useful integer core because those revisions add no NTT-specific packed integer primitive.
+- Cache-resident Forward/Inverse NTT butterflies (L3/L2/L1 hierarchy) use the 128-bit Shoup kernel in large mode. Uncached RAM/global recurrence remains scalar to avoid adding a second DRAM twiddle/Shoup stream before benchmark evidence supports it.
+- CRT reconstruction is vectorized four coefficients at a time with SSE2-compatible exact 32x32->64 arithmetic, using the same constant Shoup inverse; SSE4.1/SSSE3 are consumed automatically where useful. Scalar remains the exact vector tail and non-SSE fallback.
+- No unsafe pointers are used; managed byrefs/Vector128 intrinsics only. AVX2/AVX-512 and the existing >10M persistent-worker/memory-budget policy are unchanged.
+
+
+## AVX2 CRT reconstruction backend (2026-09-16)
+
+- Two-prime CRT now has an explicit AVX2 backend instead of falling from AVX2 NTT to scalar reconstruction on AVX2-only x86 systems. Dispatch is **AVX-512DQ -> AVX2 -> SSE2+ -> Scalar**.
+- The AVX2 kernel reconstructs eight coefficients per loop. It reuses the accepted constant-inverse Shoup multiply (`MultiplyShoupAvx2`), reduces P1 residues into P2 with four unsigned conditional subtracts, and performs exact 32x32->64 `VPMULUDQ` reconstruction for even/odd lanes.
+- Even/odd qword chains are restored to coefficient order with AVX2 unpack + `VPERM2I128`, then written with two 256-bit stores. No coefficient-sized side table, unsafe block, or pointer arithmetic is introduced.
+- The same AVX2 CRT backend is used by legacy decimal NTT, memory-bounded >10M segmented NTT/CRT, and binary-power CRT whenever AVX2 is the active NTT backend. AVX-512 CRT remains preferred when its existing gate is active; SSE and scalar remain fallbacks/tails.
+
+### >10M AVX2/SSE global-tail SIMD completion (2026-09-16)
+
+The >10M NTT/CRT path no longer drops AVX2 or the x86 128-bit SSE family back to scalar arithmetic for non-final global stages. Cached global stages use the existing Shoup companion tables with Vector256 (AVX2) or Vector128 (SSE2 through SSE4.2) butterflies. Uncached global stages keep O(1) twiddle state and use exact constant-prime modular multiplication based on the two NTT prime forms (15*2^27+1 and 7*2^26+1), avoiding transform-sized global twiddle/Shoup streams. AVX2 processes 8 uint32 lanes per iteration; SSE processes 4 lanes. The final inverse normalization/prefix remains the dedicated final-prefix path rather than part of the global-tail bucket. Dispatch order remains AVX-512 -> AVX2 -> SSE -> scalar.

@@ -477,9 +477,14 @@ public partial class MultiplicationTablePage : ContentPage
         All
     }
 
-    public class TableCardModel
-    {
-        public string Title { get; set; } = string.Empty;
-        public List<string> Lines { get; set; } = new();
-    }
+}
+
+/// <summary>
+/// Strongly typed item model for the multiplication-table CollectionView.
+/// Kept top-level so XamlC can compile bindings in the item template.
+/// </summary>
+public sealed class TableCardModel
+{
+    public string Title { get; set; } = string.Empty;
+    public List<string> Lines { get; set; } = new();
 }

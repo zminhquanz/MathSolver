@@ -18,6 +18,7 @@ namespace MathSolver.MarkupExtensions;
 /// Instead, each binding uses the normal property path "Value".
 /// </summary>
 [ContentProperty(nameof(Key))]
+[AcceptEmptyServiceProvider]
 public sealed class TranslateExtension :
     IMarkupExtension
 {

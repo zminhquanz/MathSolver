@@ -821,7 +821,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         accelerationStatus +=
             Environment.NewLine +
-            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttNeon ? "NEON/AdvSIMD (128-bit, ≤10M) / Scalar" : CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : CalculationAccelerationManager.UsePowerNttSse ? (System.Runtime.Intrinsics.X86.Sse41.IsSupported ? "SSE4.1" : "SSE2") + " (128-bit, ≤10M) / Scalar" : "Scalar") + ")" +
+            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttNeon ? "NEON/AdvSIMD (128-bit, ≤10M) / Scalar" : CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 NTT/CRT (global-tail SIMD)" : "AVX2 NTT/CRT (256-bit, global-tail SIMD)" : CalculationAccelerationManager.UsePowerNttSse ? CalculationAccelerationManager.PowerNttSseBackendName + " (128-bit NTT/CRT, ≤100M; global-tail SIMD)" : "Scalar") + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
             Environment.NewLine +

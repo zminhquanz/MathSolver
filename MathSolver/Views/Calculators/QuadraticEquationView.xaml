@@ -485,7 +485,7 @@
                                 HeightRequest="20" />
 
                             <Label
-                                Text="{Binding Text, Source={x:Reference QuadraticCopyResultButton}}"
+                                Text="{Binding Text, Source={x:Reference QuadraticCopyResultButton}, x:DataType='Button'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"

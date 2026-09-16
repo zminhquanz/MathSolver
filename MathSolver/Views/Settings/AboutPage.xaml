@@ -45,7 +45,7 @@
                     Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
                     WidthRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
                     HeightRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
-                    Opacity="{Binding Source={x:Reference AboutBackButton}, Path=Opacity}"
+                    Opacity="{Binding Source={x:Reference AboutBackButton}, Path=Opacity, x:DataType='Button'}"
                     TranslationX="{OnPlatform Android=-2, WinUI=0, Default=0}"
                     HorizontalOptions="Center"
                     VerticalOptions="Center" />

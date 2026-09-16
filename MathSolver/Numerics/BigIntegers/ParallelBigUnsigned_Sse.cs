@@ -7,6 +7,521 @@ namespace MathSolver.Numerics;
 
 internal sealed partial class ParallelBigUnsigned
 {
+    // SSSE3 PSHUFB extracts lanes 1/3 into the even 32-bit positions consumed
+    // by PMULUDQ. SSE3 itself has no packed-integer primitive that improves
+    // this NTT kernel, so SSE3 CPUs correctly execute the SSE2 arithmetic path.
+    // SSE4.2 likewise inherits the SSE4.1 integer core (PMULLD/PMINUD).
+    private static readonly Vector128<byte> SseOddLaneShuffleMask =
+        Vector128.Create(
+            (byte)4, (byte)5, (byte)6, (byte)7,
+            (byte)0x80, (byte)0x80, (byte)0x80, (byte)0x80,
+            (byte)12, (byte)13, (byte)14, (byte)15,
+            (byte)0x80, (byte)0x80, (byte)0x80, (byte)0x80);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> ExtractOddLanesForMultiplySse(
+        Vector128<uint> value)
+    {
+        if (Ssse3.IsSupported)
+        {
+            return Ssse3.Shuffle(
+                    value.AsByte(),
+                    SseOddLaneShuffleMask)
+                .AsUInt32();
+        }
+
+        return Sse2.ShiftRightLogical(
+                value.AsUInt64(),
+                32)
+            .AsUInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> ReduceOnceSse(
+        Vector128<uint> value,
+        Vector128<uint> modulus)
+    {
+        Vector128<uint> reduced =
+            Sse2.Subtract(value, modulus);
+
+        if (Sse41.IsSupported)
+        {
+            return Sse41.Min(value, reduced);
+        }
+
+        return Sse2.Add(
+            reduced,
+            Sse2.And(
+                Sse2.ShiftRightArithmetic(
+                    reduced.AsInt32(),
+                    31)
+                .AsUInt32(),
+                modulus));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> MultiplyShoupSse(
+        Vector128<uint> value,
+        Vector128<uint> multiplier,
+        Vector128<uint> multiplierShoup,
+        Vector128<uint> modulus)
+    {
+        Vector128<uint> oddValue =
+            ExtractOddLanesForMultiplySse(value);
+        Vector128<uint> oddMultiplier =
+            ExtractOddLanesForMultiplySse(multiplier);
+        Vector128<uint> oddShoup =
+            ExtractOddLanesForMultiplySse(multiplierShoup);
+
+        Vector128<ulong> evenQ =
+            Sse2.ShiftRightLogical(
+                Sse2.Multiply(value, multiplierShoup),
+                32);
+        Vector128<ulong> oddQ =
+            Sse2.ShiftRightLogical(
+                Sse2.Multiply(oddValue, oddShoup),
+                32);
+
+        Vector128<uint> product;
+
+        if (Sse41.IsSupported)
+        {
+            Vector128<uint> q =
+                Sse2.Or(
+                        evenQ,
+                        Sse2.ShiftLeftLogical(oddQ, 32))
+                    .AsUInt32();
+
+            product = Sse2.Subtract(
+                Sse41.MultiplyLow(value, multiplier),
+                Sse41.MultiplyLow(q, modulus));
+        }
+        else
+        {
+            Vector128<ulong> even =
+                Sse2.Subtract(
+                    Sse2.Multiply(value, multiplier),
+                    Sse2.Multiply(evenQ.AsUInt32(), modulus));
+
+            Vector128<ulong> odd =
+                Sse2.Subtract(
+                    Sse2.Multiply(oddValue, oddMultiplier),
+                    Sse2.Multiply(oddQ.AsUInt32(), modulus));
+
+            product = Sse2.Or(
+                    even,
+                    Sse2.ShiftLeftLogical(odd, 32))
+                .AsUInt32();
+        }
+
+        return ReduceOnceSse(product, modulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> AddModuloSse(
+        Vector128<uint> left,
+        Vector128<uint> right,
+        Vector128<uint> modulus) =>
+        ReduceOnceSse(Sse2.Add(left, right), modulus);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> SubtractModuloSse(
+        Vector128<uint> left,
+        Vector128<uint> right,
+        Vector128<uint> modulus)
+    {
+        Vector128<uint> raw = Sse2.Subtract(left, right);
+        return Sse2.Add(
+            raw,
+            Sse2.And(
+                Sse2.ShiftRightArithmetic(
+                    raw.AsInt32(),
+                    31)
+                .AsUInt32(),
+                modulus));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<ulong> CorrectResidueBorrowSse(
+        Vector128<ulong> product,
+        Vector128<ulong> quotientTimesModulus,
+        ulong modulus)
+    {
+        Vector128<long> remainder =
+            Sse2.Subtract(
+                product.AsInt64(),
+                quotientTimesModulus.AsInt64());
+
+        // q0 is exact or one too high. A high-qword underflow leaves the high
+        // dword negative; duplicate that high-dword sign across its qword and
+        // add one modulus. This works on plain SSE2 (no PCMPGTQ required).
+        Vector128<int> signDwords =
+            Sse2.ShiftRightArithmetic(
+                remainder.AsInt32(),
+                31);
+        Vector128<int> borrowDwords =
+            Sse2.Shuffle(signDwords, 0xF5);
+        Vector128<ulong> correction =
+            Sse2.And(
+                borrowDwords.AsUInt64(),
+                Vector128.Create(modulus));
+
+        return Sse2.Add(
+                remainder,
+                correction.AsInt64())
+            .AsUInt64();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<ulong> ReduceResidueProductFirstModulusSse(
+        Vector128<ulong> product)
+    {
+        Vector128<ulong> high =
+            Sse2.ShiftRightLogical(product, 27);
+        Vector128<ulong> highWord =
+            Sse2.ShiftRightLogical(high, 32);
+        Vector128<ulong> lowWord =
+            Sse2.And(
+                high,
+                Vector128.Create((ulong)uint.MaxValue));
+        Vector128<ulong> lowQuotient =
+            Sse2.ShiftRightLogical(
+                Sse2.Multiply(
+                    lowWord.AsUInt32(),
+                    Vector128.Create(0x8888_8889u)),
+                35);
+        Vector128<ulong> lowQuotientTimes15 =
+            Sse2.Subtract(
+                    Sse2.ShiftLeftLogical(lowQuotient, 4).AsInt64(),
+                    lowQuotient.AsInt64())
+                .AsUInt64();
+        Vector128<ulong> lowRemainder =
+            Sse2.Subtract(
+                    lowWord.AsInt64(),
+                    lowQuotientTimes15.AsInt64())
+                .AsUInt64();
+        Vector128<ulong> carry =
+            Sse2.ShiftRightLogical(
+                Sse2.Add(
+                    Sse2.Add(
+                        lowRemainder.AsInt64(),
+                        highWord.AsInt64()),
+                    Vector128.Create(1UL).AsInt64())
+                .AsUInt64(),
+                4);
+        Vector128<ulong> highContribution =
+            Sse2.Multiply(
+                highWord.AsUInt32(),
+                Vector128.Create(0x1111_1111u));
+        Vector128<ulong> quotient =
+            Sse2.Add(
+                Sse2.Add(
+                    highContribution.AsInt64(),
+                    lowQuotient.AsInt64()),
+                carry.AsInt64())
+            .AsUInt64();
+        Vector128<ulong> quotientTimesModulus =
+            Sse2.Multiply(
+                quotient.AsUInt32(),
+                Vector128.Create(FirstModulus));
+
+        return CorrectResidueBorrowSse(
+            product,
+            quotientTimesModulus,
+            FirstModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<ulong> ReduceResidueProductSecondModulusSse(
+        Vector128<ulong> product)
+    {
+        Vector128<ulong> high =
+            Sse2.ShiftRightLogical(product, 26);
+        Vector128<ulong> initialQuotient =
+            Sse2.ShiftRightLogical(
+                Sse2.Multiply(
+                    high.AsUInt32(),
+                    Vector128.Create(0x2492_4925u)),
+                32);
+        Vector128<ulong> quotient =
+            Sse2.ShiftRightLogical(
+                Sse2.Add(
+                    initialQuotient.AsInt64(),
+                    Sse2.ShiftRightLogical(
+                        Sse2.Subtract(
+                            high.AsInt64(),
+                            initialQuotient.AsInt64())
+                        .AsUInt64(),
+                        1)
+                    .AsInt64())
+                .AsUInt64(),
+                2);
+        Vector128<ulong> quotientTimesModulus =
+            Sse2.Multiply(
+                quotient.AsUInt32(),
+                Vector128.Create(SecondModulus));
+
+        return CorrectResidueBorrowSse(
+            product,
+            quotientTimesModulus,
+            SecondModulus);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> MultiplyResiduesSse(
+        Vector128<uint> left,
+        Vector128<uint> right,
+        uint modulus)
+    {
+        Vector128<ulong> productEven =
+            Sse2.Multiply(left, right);
+        Vector128<uint> oddLeft =
+            ExtractOddLanesForMultiplySse(left);
+        Vector128<uint> oddRight =
+            ExtractOddLanesForMultiplySse(right);
+        Vector128<ulong> productOdd =
+            Sse2.Multiply(oddLeft, oddRight);
+
+        Vector128<ulong> remainderEven = modulus == FirstModulus
+            ? ReduceResidueProductFirstModulusSse(productEven)
+            : ReduceResidueProductSecondModulusSse(productEven);
+        Vector128<ulong> remainderOdd = modulus == FirstModulus
+            ? ReduceResidueProductFirstModulusSse(productOdd)
+            : ReduceResidueProductSecondModulusSse(productOdd);
+
+        return Sse2.Or(
+                remainderEven,
+                Sse2.ShiftLeftLogical(remainderOdd, 32))
+            .AsUInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> CreateTwiddleSequenceSse(
+        uint root,
+        int first,
+        uint modulus)
+    {
+        Span<uint> seed = stackalloc uint[4];
+        ulong current = ModPow(root, (uint)first, modulus);
+        for (int lane = 0; lane < seed.Length; lane++)
+        {
+            seed[lane] = (uint)current;
+            current = current * root % modulus;
+        }
+        return Vector128.LoadUnsafe(
+            ref MemoryMarshal.GetReference(seed));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteCachedGlobalStageSse(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int stageLength,
+        bool inverse,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength,
+            groupCount,
+            workers.WorkerCount,
+            GetSegmentsPerGroup(
+                halfLength,
+                groupCount,
+                workers.WorkerCount));
+        Vector128<uint> mod = Vector128.Create(modulus);
+
+        ExecuteRanges(
+            checked(groupCount * segments),
+            workers,
+            cancellationToken,
+            (start, end) =>
+            {
+                ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+                ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
+                ref uint quotients = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+                for (int segment = start; segment < end; segment++)
+                {
+                    GetSegmentBounds(
+                        segment,
+                        segments,
+                        halfLength,
+                        out int group,
+                        out int first,
+                        out int last);
+                    int groupOffset = group * stageLength;
+                    int i = first;
+
+                    for (; i + 3 < last; i += 4)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+                        Vector128<uint> left = Vector128.LoadUnsafe(ref data, (nuint)leftIndex);
+                        Vector128<uint> right = Vector128.LoadUnsafe(ref data, (nuint)rightIndex);
+                        Vector128<uint> rootVector = Vector128.LoadUnsafe(ref roots, (nuint)(twiddleOffset + i));
+                        Vector128<uint> shoupVector = Vector128.LoadUnsafe(ref quotients, (nuint)(twiddleOffset + i));
+
+                        if (inverse)
+                        {
+                            right = MultiplyShoupSse(right, rootVector, shoupVector, mod);
+                            AddModuloSse(left, right, mod).StoreUnsafe(ref data, (nuint)leftIndex);
+                            SubtractModuloSse(left, right, mod).StoreUnsafe(ref data, (nuint)rightIndex);
+                        }
+                        else
+                        {
+                            AddModuloSse(left, right, mod).StoreUnsafe(ref data, (nuint)leftIndex);
+                            MultiplyShoupSse(
+                                    SubtractModuloSse(left, right, mod),
+                                    rootVector,
+                                    shoupVector,
+                                    mod)
+                                .StoreUnsafe(ref data, (nuint)rightIndex);
+                        }
+                    }
+
+                    for (; i < last; i++)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+                        uint left = values[leftIndex];
+                        uint right = values[rightIndex];
+                        uint rootValue = twiddles[twiddleOffset + i];
+                        uint rootShoup = shoupTwiddles[twiddleOffset + i];
+                        if (inverse)
+                            right = MultiplyShoupScalar(right, rootValue, rootShoup, modulus);
+                        uint sum = left + right;
+                        if (sum >= modulus) sum -= modulus;
+                        uint difference = left >= right ? left - right : left + modulus - right;
+                        values[leftIndex] = sum;
+                        values[rightIndex] = inverse
+                            ? difference
+                            : MultiplyShoupScalar(difference, rootValue, rootShoup, modulus);
+                    }
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardUncachedStageSse(
+        uint[] values,
+        uint modulus,
+        uint root,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength,
+            groupCount,
+            workers.WorkerCount,
+            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
+
+        ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
+        {
+            ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+            for (int segment = start; segment < end; segment++)
+            {
+                GetSegmentBounds(segment, segments, halfLength,
+                    out int group, out int first, out int last);
+                int groupOffset = group * stageLength;
+                Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, first, modulus);
+                int i = first;
+                for (; i + 3 < last; i += 4)
+                {
+                    int leftIndex = groupOffset + i;
+                    int rightIndex = leftIndex + halfLength;
+                    Vector128<uint> left = Vector128.LoadUnsafe(ref data, (nuint)leftIndex);
+                    Vector128<uint> right = Vector128.LoadUnsafe(ref data, (nuint)rightIndex);
+                    AddModuloSse(left, right, mod).StoreUnsafe(ref data, (nuint)leftIndex);
+                    MultiplyResiduesSse(
+                            SubtractModuloSse(left, right, mod),
+                            twiddle,
+                            modulus)
+                        .StoreUnsafe(ref data, (nuint)rightIndex);
+                    twiddle = MultiplyResiduesSse(twiddle, advance, modulus);
+                }
+                uint scalarTwiddle = (uint)ModPow(root, (uint)i, modulus);
+                for (; i < last; i++)
+                {
+                    int leftIndex = groupOffset + i;
+                    int rightIndex = leftIndex + halfLength;
+                    uint left = values[leftIndex];
+                    uint right = values[rightIndex];
+                    uint sum = left + right;
+                    if (sum >= modulus) sum -= modulus;
+                    uint difference = left >= right ? left - right : left + modulus - right;
+                    values[leftIndex] = sum;
+                    values[rightIndex] = (uint)((ulong)difference * scalarTwiddle % modulus);
+                    scalarTwiddle = (uint)((ulong)scalarTwiddle * root % modulus);
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseUncachedStageSse(
+        uint[] values,
+        uint modulus,
+        uint root,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength,
+            groupCount,
+            workers.WorkerCount,
+            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
+
+        ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
+        {
+            ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+            for (int segment = start; segment < end; segment++)
+            {
+                GetSegmentBounds(segment, segments, halfLength,
+                    out int group, out int first, out int last);
+                int groupOffset = group * stageLength;
+                Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, first, modulus);
+                int i = first;
+                for (; i + 3 < last; i += 4)
+                {
+                    int leftIndex = groupOffset + i;
+                    int rightIndex = leftIndex + halfLength;
+                    Vector128<uint> left = Vector128.LoadUnsafe(ref data, (nuint)leftIndex);
+                    Vector128<uint> right = MultiplyResiduesSse(
+                        Vector128.LoadUnsafe(ref data, (nuint)rightIndex),
+                        twiddle,
+                        modulus);
+                    AddModuloSse(left, right, mod).StoreUnsafe(ref data, (nuint)leftIndex);
+                    SubtractModuloSse(left, right, mod).StoreUnsafe(ref data, (nuint)rightIndex);
+                    twiddle = MultiplyResiduesSse(twiddle, advance, modulus);
+                }
+                if (i < last)
+                {
+                    ProcessInverseUncachedStageSegmentByrefDualLane(
+                        values, modulus, root, stageLength, group, i, last, cancellationToken);
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+        });
+    }
+
     private static void ExecuteCachedTilesSse(
         uint[] values, uint modulus, FixedWorkerTeam workers, NttTwiddlePlan plan,
         int tileLength, int l2Length, int l1Length, bool inverse,
@@ -105,31 +620,16 @@ internal sealed partial class ParallelBigUnsigned
                     value = Sse2.Add(raw, Sse2.And(
                         Sse2.ShiftRightArithmetic(raw.AsInt32(), 31).AsUInt32(), mod));
                 }
-                var oddValue = Sse2.ShiftRightLogical(value.AsUInt64(), 32).AsUInt32();
-                var oddShoup = Sse2.ShiftRightLogical(quotient.AsUInt64(), 32).AsUInt32();
-                var evenQ = Sse2.ShiftRightLogical(Sse2.Multiply(value, quotient), 32);
-                var oddQ = Sse2.ShiftRightLogical(Sse2.Multiply(oddValue, oddShoup), 32);
-                Vector128<uint> product;
-                if (Sse41.IsSupported)
-                {
-                    var q = Sse2.Or(evenQ, Sse2.ShiftLeftLogical(oddQ, 32)).AsUInt32();
-                    product = Sse2.Subtract(Sse41.MultiplyLow(value, root), Sse41.MultiplyLow(q, mod));
-                }
-                else
-                {
-                    var even = Sse2.Subtract(Sse2.Multiply(value, root), Sse2.Multiply(evenQ.AsUInt32(), mod));
-                    var oddRoot = Sse2.ShiftRightLogical(root.AsUInt64(), 32).AsUInt32();
-                    var odd = Sse2.Subtract(Sse2.Multiply(oddValue, oddRoot), Sse2.Multiply(oddQ.AsUInt32(), mod));
-                    product = Sse2.Or(even, Sse2.ShiftLeftLogical(odd, 32)).AsUInt32();
-                }
-                var reduced = Sse2.Subtract(product, mod);
-                product = Sse41.IsSupported ? Sse41.Min(product, reduced) :
-                    Sse2.Add(reduced, Sse2.And(Sse2.ShiftRightArithmetic(reduced.AsInt32(), 31).AsUInt32(), mod));
+                Vector128<uint> product =
+                    MultiplyShoupSse(
+                        value,
+                        root,
+                        quotient,
+                        mod);
                 if (inverse) b = product;
-                var sum = Sse2.Add(a, b);
-                reduced = Sse2.Subtract(sum, mod);
-                sum = Sse41.IsSupported ? Sse41.Min(sum, reduced) :
-                    Sse2.Add(reduced, Sse2.And(Sse2.ShiftRightArithmetic(reduced.AsInt32(), 31).AsUInt32(), mod));
+                var sum = ReduceOnceSse(
+                    Sse2.Add(a, b),
+                    mod);
                 var difference = product;
                 if (inverse)
                 {
@@ -154,4 +654,105 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
     }
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static int ReconstructCrtRangeSse(
+        ReadOnlySpan<uint> firstSpan,
+        ReadOnlySpan<uint> secondSpan,
+        Span<ulong> scratchSpan)
+    {
+        int count = firstSpan.Length;
+        int vectorEnd = count & ~(Vector128<uint>.Count - 1);
+
+        ref uint firstReference = ref MemoryMarshal.GetReference(firstSpan);
+        ref uint secondReference = ref MemoryMarshal.GetReference(secondSpan);
+        ref ulong scratchReference = ref MemoryMarshal.GetReference(scratchSpan);
+
+        Vector128<uint> secondModulus = Vector128.Create(SecondModulus);
+        Vector128<uint> inverse = Vector128.Create((uint)FirstModulusInverseInSecond);
+        Vector128<uint> inverseShoup = Vector128.Create(FirstModulusInverseInSecondShoup);
+        Vector128<uint> firstModulus32 = Vector128.Create(FirstModulus);
+        Vector128<uint> one32 = Vector128.Create(1u);
+
+        int offset = 0;
+
+        for (; offset < vectorEnd; offset += Vector128<uint>.Count)
+        {
+            Vector128<uint> first =
+                Vector128.LoadUnsafe(ref firstReference, (nuint)offset);
+
+            Vector128<uint> reducedFirst = first;
+            reducedFirst = ReduceOnceSse(reducedFirst, secondModulus);
+            reducedFirst = ReduceOnceSse(reducedFirst, secondModulus);
+            reducedFirst = ReduceOnceSse(reducedFirst, secondModulus);
+            reducedFirst = ReduceOnceSse(reducedFirst, secondModulus);
+
+            Vector128<uint> second =
+                Vector128.LoadUnsafe(ref secondReference, (nuint)offset);
+
+            Vector128<uint> rawDifference =
+                Sse2.Subtract(second, reducedFirst);
+
+            Vector128<uint> difference =
+                Sse2.Add(
+                    rawDifference,
+                    Sse2.And(
+                        Sse2.ShiftRightArithmetic(
+                            rawDifference.AsInt32(),
+                            31)
+                        .AsUInt32(),
+                        secondModulus));
+
+            Vector128<uint> multiplier =
+                MultiplyShoupSse(
+                    difference,
+                    inverse,
+                    inverseShoup,
+                    secondModulus);
+
+            Vector128<uint> oddFirst =
+                ExtractOddLanesForMultiplySse(first);
+            Vector128<uint> oddMultiplier =
+                ExtractOddLanesForMultiplySse(multiplier);
+
+            Vector128<ulong> firstEven64 =
+                Sse2.Multiply(first, one32);
+            Vector128<ulong> firstOdd64 =
+                Sse2.Multiply(oddFirst, one32);
+
+            Vector128<ulong> productEven =
+                Sse2.Multiply(multiplier, firstModulus32);
+            Vector128<ulong> productOdd =
+                Sse2.Multiply(oddMultiplier, firstModulus32);
+
+            Vector128<ulong> reconstructedEven =
+                Sse2.Add(
+                    firstEven64.AsInt64(),
+                    productEven.AsInt64())
+                .AsUInt64();
+
+            Vector128<ulong> reconstructedOdd =
+                Sse2.Add(
+                    firstOdd64.AsInt64(),
+                    productOdd.AsInt64())
+                .AsUInt64();
+
+            Vector128<ulong> low =
+                Sse2.UnpackLow(
+                    reconstructedEven.AsInt64(),
+                    reconstructedOdd.AsInt64())
+                .AsUInt64();
+
+            Vector128<ulong> high =
+                Sse2.UnpackHigh(
+                    reconstructedEven.AsInt64(),
+                    reconstructedOdd.AsInt64())
+                .AsUInt64();
+
+            low.StoreUnsafe(ref scratchReference, (nuint)offset);
+            high.StoreUnsafe(ref scratchReference, (nuint)(offset + 2));
+        }
+
+        return offset;
+    }
+
 }

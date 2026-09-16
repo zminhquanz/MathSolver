@@ -3994,11 +3994,9 @@ public partial class PowerRootView : LocalizedSolverView
                 diagnostics.UsedNeonNttButterflies
                     ? "NTT: NEON/AdvSIMD (128-bit, ≤10M) / Scalar"
                     : diagnostics.UsedSseNttButterflies
-                    ? System.Runtime.Intrinsics.X86.Sse41.IsSupported
-                        ? "NTT: SSE4.1 (128-bit) / Scalar"
-                        : "NTT: SSE2 (128-bit) / Scalar"
+                    ? $"NTT/CRT: {CalculationAccelerationManager.PowerNttSseBackendName} (128-bit, ≤100M; global-tail SIMD)"
                     : diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
-                    ? "NTT: AVX2 / Scalar"
+                    ? "NTT/CRT: AVX2 256-bit + global-tail SIMD"
                     : Format(
                     diagnostics.UsedAvx2NttButterflies
                         ? "PowerRoot.InfoNttKernelAvx2"

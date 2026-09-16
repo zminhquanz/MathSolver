@@ -455,7 +455,7 @@
                                 HeightRequest="20" />
 
                             <Label
-                                Text="{Binding Text, Source={x:Reference FindXCopyResultButton}}"
+                                Text="{Binding Text, Source={x:Reference FindXCopyResultButton}, x:DataType='Button'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"

@@ -289,10 +289,25 @@ internal sealed partial class ParallelBigUnsigned
                         token.ThrowIfCancellationRequested();
                         int count = Math.Min(scratch.Length, coefficients - start);
                         long stamp = Stopwatch.GetTimestamp();
+                        bool useAvx512Crt =
+                            (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
+                            Avx512DQ.IsSupported;
+
+                        bool useAvx2Crt =
+                            !useAvx512Crt &&
+                            workers.UseAvx2Ntt &&
+                            Avx2.IsSupported;
+
+                        bool useSseCrt =
+                            !useAvx512Crt &&
+                            !useAvx2Crt &&
+                            workers.UseSseNtt &&
+                            Sse2.IsSupported;
+
                         ExecuteRanges(count, workers, token, (from, to) =>
                             ReconstructCrtRange(first!.AsSpan(start + from, to - from),
                                 second.AsSpan(start + from, to - from), scratch.AsSpan(from, to - from),
-                                (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) && Avx512DQ.IsSupported));
+                                useAvx512Crt, useAvx2Crt, useSseCrt));
                         diagnostics.CrtTicks += Stopwatch.GetTimestamp() - stamp;
                         stamp = Stopwatch.GetTimestamp();
                         carry = NormalizeBinaryTiles(first!, start, count, carry, workers, token, (from, to) =>

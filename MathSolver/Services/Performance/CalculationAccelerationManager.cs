@@ -22,6 +22,16 @@ public enum CalculationSimdMode
     Auto
 }
 
+public enum PowerNttSseIsa
+{
+    None = 0,
+    Sse2,
+    Sse3,
+    Ssse3,
+    Sse41,
+    Sse42
+}
+
 /// <summary>Shared SIMD preference and effective kernel policy for the application.</summary>
 public static class CalculationAccelerationManager
 {
@@ -220,7 +230,9 @@ public static class CalculationAccelerationManager
         IsPowerExportAccelerationAvailable;
 
     /// <summary>
-    /// Cache-local butterflies: Android NEON and SSE2 for &lt;=10M; AVX2/AVX-512 also for >10M.
+    /// NTT/CRT acceleration policy. x86 SSE2+ is available for both the legacy
+    /// &lt;=10M path and the memory-bounded &gt;10M path. AVX2/AVX-512 remain the
+    /// preferred wider backends when selected and supported.
     /// </summary>
     public static bool IsPowerNttAccelerationAvailable =>
 #if ANDROID
@@ -246,7 +258,7 @@ public static class CalculationAccelerationManager
         false;
 #endif
 
-    /// <summary>SSE fallback for the legacy &lt;=10M NTT cache-local butterflies.</summary>
+    /// <summary>SSE-family fallback for cache-resident NTT butterflies and CRT through 100M.</summary>
     public static bool UsePowerNttSse =>
 #if ANDROID
         false;
@@ -255,6 +267,40 @@ public static class CalculationAccelerationManager
         (EffectiveSimdMode is CalculationSimdMode.Sse or
             CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512);
 #endif
+
+    /// <summary>
+    /// Highest x86 SSE generation available to the 128-bit NTT/CRT backend.
+    /// SSE3 and SSE4.2 do not add useful packed integer multiply/reduction
+    /// instructions for this kernel; they still identify the CPU generation,
+    /// while SSSE3/SSE4.1 enable their useful sub-kernels where applicable.
+    /// </summary>
+    public static PowerNttSseIsa EffectivePowerNttSseIsa
+    {
+        get
+        {
+#if ANDROID
+            return PowerNttSseIsa.None;
+#else
+            if (!UsePowerNttSse) return PowerNttSseIsa.None;
+            if (Sse42.IsSupported) return PowerNttSseIsa.Sse42;
+            if (Sse41.IsSupported) return PowerNttSseIsa.Sse41;
+            if (Ssse3.IsSupported) return PowerNttSseIsa.Ssse3;
+            if (Sse3.IsSupported) return PowerNttSseIsa.Sse3;
+            return Sse2.IsSupported ? PowerNttSseIsa.Sse2 : PowerNttSseIsa.None;
+#endif
+        }
+    }
+
+    public static string PowerNttSseBackendName =>
+        EffectivePowerNttSseIsa switch
+        {
+            PowerNttSseIsa.Sse42 => "SSE4.2",
+            PowerNttSseIsa.Sse41 => "SSE4.1",
+            PowerNttSseIsa.Ssse3 => "SSSE3",
+            PowerNttSseIsa.Sse3 => "SSE3",
+            PowerNttSseIsa.Sse2 => "SSE2",
+            _ => "Scalar"
+        };
 
     public static CalculationSimdMode SelectedSimdMode
     {

@@ -31,6 +31,7 @@
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
     <ApplicationId>com.quanvu.mathsolver</ApplicationId>
     <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>

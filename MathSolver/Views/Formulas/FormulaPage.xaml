@@ -324,6 +324,7 @@
                             HorizontalOptions="Fill"
                             VerticalOptions="Start"
                             SizeChanged="OnUnknownComponentFlexLayoutSizeChanged"
+                            x:DataType="views:FormulaPage"
                             BindableLayout.ItemsSource="{Binding UnknownComponentItems}">
 
                             <BindableLayout.ItemTemplate>
@@ -1066,6 +1067,7 @@
                             HorizontalOptions="Fill"
                             VerticalOptions="Start"
                             SizeChanged="OnGeometryFlexLayoutSizeChanged"
+                            x:DataType="views:FormulaPage"
                             BindableLayout.ItemsSource="{Binding PlaneGeometryItems}"
                             BindableLayout.ItemTemplate="{StaticResource GeometryCardTemplate}" />
 
@@ -1122,6 +1124,7 @@
                             HorizontalOptions="Fill"
                             VerticalOptions="Start"
                             SizeChanged="OnGeometryFlexLayoutSizeChanged"
+                            x:DataType="views:FormulaPage"
                             BindableLayout.ItemsSource="{Binding SolidGeometryItems}"
                             BindableLayout.ItemTemplate="{StaticResource GeometryCardTemplate}" />
 

@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MathSolver.Controls"
+    xmlns:services="clr-namespace:MathSolver.Services"
     Title="Cài đặt"
     Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True"
@@ -42,7 +43,7 @@
                     Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
                     WidthRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
                     HeightRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
-                    Opacity="{Binding Source={x:Reference SettingsBackButton}, Path=Opacity}"
+                    Opacity="{Binding Source={x:Reference SettingsBackButton}, Path=Opacity, x:DataType='Button'}"
                     TranslationX="{OnPlatform Android=-2, WinUI=0, Default=0}"
                     HorizontalOptions="Center"
                     VerticalOptions="Center" />
@@ -766,16 +767,22 @@
 
                             <Grid>
                                 <Picker
-                                x:Name="FontPicker"
-                                HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                                ItemDisplayBinding="{Binding LocalizedDisplayName}"
-                                Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
-                                HorizontalOptions="Fill"
-                                VerticalOptions="Fill"
-                                FontSize="14"
-                                TextColor="{DynamicResource TextPrimaryColor}"
-                                TitleColor="{DynamicResource TextSecondaryColor}"
-                                SelectedIndexChanged="OnFontSelectionChanged" />
+                                    x:Name="FontPicker"
+                                    HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                    Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource TextPrimaryColor}"
+                                    TitleColor="{DynamicResource TextSecondaryColor}"
+                                    SelectedIndexChanged="OnFontSelectionChanged">
+
+                                    <Picker.ItemDisplayBinding>
+                                        <Binding
+                                            Path="LocalizedDisplayName"
+                                            x:DataType="services:AppFontOption" />
+                                    </Picker.ItemDisplayBinding>
+                                </Picker>
 
                                 <Path
                                     IsVisible="{OnPlatform Android=True, Default=False}"
@@ -856,14 +863,20 @@
                                 <Picker
                                     x:Name="LanguagePicker"
                                     HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
-                                    ItemDisplayBinding="{Binding LocalizedDisplayName}"
                                     Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
                                     FontSize="14"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     TitleColor="{DynamicResource TextSecondaryColor}"
-                                    SelectedIndexChanged="OnLanguageSelectionChanged" />
+                                    SelectedIndexChanged="OnLanguageSelectionChanged">
+
+                                    <Picker.ItemDisplayBinding>
+                                        <Binding
+                                            Path="LocalizedDisplayName"
+                                            x:DataType="services:AppLanguageOption" />
+                                    </Picker.ItemDisplayBinding>
+                                </Picker>
 
                                 <Path
                                     IsVisible="{OnPlatform Android=True, Default=False}"

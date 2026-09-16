@@ -814,6 +814,15 @@ internal sealed partial class ParallelBigUnsigned
         bool useAvx2Ntt =
             CalculationAccelerationManager.UsePowerNttAvx2;
 
+        // 128-bit x86 fallback is valid for the complete memory-bounded path.
+        // Keep AVX2 preferred; only enable SSE when the selected backend does
+        // not execute AVX2. Cache-resident NTT stages and CRT then use the
+        // managed 128-bit kernels while uncached global stages retain the exact
+        // scalar recurrence.
+        bool useSseNtt =
+            !useAvx2Ntt &&
+            CalculationAccelerationManager.UsePowerNttSse;
+
         int chunkExponent =
             LegacyMaximumExponent;
 
@@ -896,7 +905,8 @@ internal sealed partial class ParallelBigUnsigned
             new PowerDiagnosticsCollector();
 
         diagnostics.ConfigureNttBackends(
-            useAvx2Ntt);
+            useAvx2Ntt,
+            useSse: useSseNtt);
 
         // Three retained 2^26 uint buffers preserve the measured ~6 GB class
         // forward-cache behavior. Four simultaneously leased buffers is the
@@ -915,7 +925,8 @@ internal sealed partial class ParallelBigUnsigned
             new SharedNttTwiddlePlans(
                 nttTwiddleBufferPool,
                 useAvx2Ntt,
-                useAvx512Ntt: false);
+                useAvx512Ntt: false,
+                useSseNtt: useSseNtt);
 
         ParallelBigUnsigned magnitude;
 
@@ -3881,6 +3892,17 @@ internal sealed partial class ParallelBigUnsigned
                     (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
                     Avx512DQ.IsSupported;
 
+                bool useAvx2Crt =
+                    !useAvx512Crt &&
+                    workers.UseAvx2Ntt &&
+                    Avx2.IsSupported;
+
+                bool useSseCrt =
+                    !useAvx512Crt &&
+                    !useAvx2Crt &&
+                    workers.UseSseNtt &&
+                    Sse2.IsSupported;
+
                 for (int blockStart = 0;
                      blockStart < coefficientCount;
                      blockStart += scratchLength)
@@ -3950,7 +3972,9 @@ internal sealed partial class ParallelBigUnsigned
                                 firstSpan,
                                 secondSpan,
                                 scratchSpan,
-                                useAvx512Crt);
+                                useAvx512Crt,
+                                useAvx2Crt,
+                                useSseCrt);
                         });
 
                     crtTicks +=
@@ -4100,6 +4124,17 @@ internal sealed partial class ParallelBigUnsigned
             (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
             Avx512DQ.IsSupported;
 
+        bool useAvx2Crt =
+            !useAvx512Crt &&
+            workers.UseAvx2Ntt &&
+            Avx2.IsSupported;
+
+        bool useSseCrt =
+            !useAvx512Crt &&
+            !useAvx2Crt &&
+            workers.UseSseNtt &&
+            Sse2.IsSupported;
+
         for (int blockStart = 0;
              blockStart < coefficientCount;
              blockStart += scratchLength)
@@ -4163,7 +4198,9 @@ internal sealed partial class ParallelBigUnsigned
                         firstSpan,
                         secondSpan,
                         scratchSpan,
-                        useAvx512Crt);
+                        useAvx512Crt,
+                        useAvx2Crt,
+                        useSseCrt);
                 });
 
             crtTicks +=
@@ -5676,11 +5713,12 @@ internal sealed partial class ParallelBigUnsigned
                 // seed transforms at N=2^22..2^25. Include eligible remainders
                 // too; keep other stage shapes and worker counts unchanged.
 
-                if (useAvx512ForwardGlobalCached)
+                if (useAvx512ForwardGlobalCached || workers.UseAvx2Ntt)
                 {
-                    // Reuse the cached-global Low32 kernel for <=10M as well.
-                    // Publish companions lazily in the existing pooled backing;
-                    // the separate >10M Phase-5A shape policy stays intact.
+                    // Publish Low32/Shoup companions lazily for every SIMD
+                    // cached-global backend. AVX2 previously entered this fused
+                    // pair with a null companion table and therefore silently
+                    // fell back to the scalar global-tail kernel.
                     EnsureForwardGlobalShoupStageProfiled(
                         twiddlePlan,
                         stageLength >> 1,
@@ -5728,6 +5766,7 @@ internal sealed partial class ParallelBigUnsigned
             // DRAM-sized twiddle/Shoup stream.
             if (nextStageLength > l3NttTileLength &&
                 twiddlePlan.HasAvx2Twiddles &&
+                !workers.UseLargeModeAvx2ForwardL1Low32Shoup &&
                 CanFuseForwardUncachedGlobalStagePair(
                     stageLength,
                     twiddlePlan))
@@ -5997,6 +6036,40 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
+            if (workers.UseAvx2Ntt && useTwiddleCache && Avx2.IsSupported)
+            {
+                EnsureForwardGlobalShoupStageProfiled(
+                    twiddlePlan, halfLength, modulus, workers,
+                    diagnostics, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageAvx2(
+                    values, modulus, twiddlePlan.ForwardTwiddles,
+                    twiddlePlan.ForwardShoupTwiddles!, twiddleOffset,
+                    stageLength, false, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
+            if (workers.UseSseNtt && useTwiddleCache && Sse2.IsSupported)
+            {
+                EnsureForwardGlobalShoupStageProfiled(
+                    twiddlePlan, halfLength, modulus, workers,
+                    diagnostics, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageSse(
+                    values, modulus, twiddlePlan.ForwardTwiddles,
+                    twiddlePlan.ForwardShoupTwiddles!, twiddleOffset,
+                    stageLength, false, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
             int segmentsPerGroup =
                 GetSegmentsPerGroup(
                     halfLength,
@@ -6052,6 +6125,30 @@ internal sealed partial class ParallelBigUnsigned
             {
                 long started = Stopwatch.GetTimestamp();
                 ExecuteForwardUncachedStageAvx512(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalUncachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardUncached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
+            if (workers.UseAvx2Ntt && !useTwiddleCache && Avx2.IsSupported)
+            {
+                long started = Stopwatch.GetTimestamp();
+                ExecuteForwardUncachedStageAvx2(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalUncachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardUncached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
+            if (workers.UseSseNtt && !useTwiddleCache && Sse2.IsSupported)
+            {
+                long started = Stopwatch.GetTimestamp();
+                ExecuteForwardUncachedStageSse(
                     values, modulus, root, stageLength, workers, cancellationToken);
                 long elapsed = Stopwatch.GetTimestamp() - started;
                 diagnostics.ForwardGlobalUncachedTicks += elapsed;
@@ -6455,6 +6552,7 @@ internal sealed partial class ParallelBigUnsigned
                 stageLength << 1;
 
             if (!normalizeOutput &&
+                !workers.UseSseNtt &&
                 nextStageLength < length &&
                 CanFuseInverseCachedStagePair(
                     length,
@@ -6462,10 +6560,12 @@ internal sealed partial class ParallelBigUnsigned
                     twiddlePlan,
                     workers.WorkerCount,
                     allowSegmentedGroups: workers.UseAvx512Ntt ||
-                        workers.UseLargeModeAvx512InverseGlobal))
+                        workers.UseLargeModeAvx512InverseGlobal ||
+                        workers.UseAvx2Ntt))
             {
                 uint[]? globalShoupTwiddles = null;
-                if (workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal)
+                if (workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal ||
+                    workers.UseAvx2Ntt)
                 {
                     EnsureInverseGlobalShoupStage(
                         twiddlePlan, halfLength, modulus, workers, cancellationToken);
@@ -6655,6 +6755,38 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
+            if (!normalizeOutput && workers.UseAvx2Ntt && useTwiddleCache && Avx2.IsSupported)
+            {
+                EnsureInverseGlobalShoupStage(
+                    twiddlePlan, halfLength, modulus, workers, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageAvx2(
+                    values, modulus, twiddlePlan.InverseTwiddles,
+                    twiddlePlan.InverseShoupTwiddles!, twiddleOffset,
+                    stageLength, true, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.InverseGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
+            if (!normalizeOutput && workers.UseSseNtt && useTwiddleCache && Sse2.IsSupported)
+            {
+                EnsureInverseGlobalShoupStage(
+                    twiddlePlan, halfLength, modulus, workers, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageSse(
+                    values, modulus, twiddlePlan.InverseTwiddles,
+                    twiddlePlan.InverseShoupTwiddles!, twiddleOffset,
+                    stageLength, true, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.InverseGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
             // The N=2^26 inverse-DIT S=2^23 stage has only eight groups.
             // A ceil(worker/group) split can leave a static-range tail whenever
             // groupCount * segmentsPerGroup is not divisible by the logical
@@ -6773,6 +6905,16 @@ internal sealed partial class ParallelBigUnsigned
                 !useTwiddleCache && !normalizeOutput)
             {
                 ExecuteInverseUncachedStageAvx512(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+            }
+            else if (workers.UseAvx2Ntt && !useTwiddleCache && !normalizeOutput && Avx2.IsSupported)
+            {
+                ExecuteInverseUncachedStageAvx2(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+            }
+            else if (workers.UseSseNtt && !useTwiddleCache && !normalizeOutput && Sse2.IsSupported)
+            {
+                ExecuteInverseUncachedStageSse(
                     values, modulus, root, stageLength, workers, cancellationToken);
             }
             else if (useInverseUncachedDualLane)
@@ -10043,15 +10185,17 @@ internal sealed partial class ParallelBigUnsigned
     /// machines this removes the scalar UInt64 remainder from sixteen
     /// coefficients at a time, then widens the two eight-lane halves to build
     /// the exact 64-bit CRT coefficients. No coefficient-sized companion table
-    /// is created. When AVX-512 is disabled (including >10M large mode) the
-    /// caller passes false and this method executes the original scalar loop.
+    /// is created. Dispatch order is AVX-512DQ -> AVX2 -> SSE2+ -> Scalar, so
+    /// AVX2-only x86 systems keep CRT reconstruction vectorized as well.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ReconstructCrtRange(
         ReadOnlySpan<uint> firstSpan,
         ReadOnlySpan<uint> secondSpan,
         Span<ulong> scratchSpan,
-        bool useAvx512Crt)
+        bool useAvx512Crt,
+        bool useAvx2Crt,
+        bool useSseCrt)
     {
         int count =
             firstSpan.Length;
@@ -10270,6 +10414,35 @@ internal sealed partial class ParallelBigUnsigned
                         (nuint)(offset + 8));
                 }
             }
+        }
+
+        // 256-bit AVX2 CRT backend. This is intentionally independent of the
+        // NTT butterfly helpers so AVX2-only machines do not fall back to a
+        // scalar CRT pass after completing an AVX2 transform. Eight residues
+        // are reconstructed per iteration with the same constant-inverse
+        // Shoup arithmetic used by the accepted AVX2 NTT kernels.
+        if (useAvx2Crt &&
+            offset == 0 &&
+            count >= Vector256<uint>.Count)
+        {
+            offset = ReconstructCrtRangeAvx2(
+                firstSpan,
+                secondSpan,
+                scratchSpan);
+        }
+
+        // 128-bit x86 CRT fallback for both legacy and memory-bounded NTT.
+        // It vectorizes the constant-inverse Shoup step and exact 32x32->64
+        // reconstruction four coefficients at a time. SSE4.1 accelerates the
+        // packed low-32 arithmetic; SSE2 remains exact on older x86 CPUs.
+        if (useSseCrt &&
+            offset == 0 &&
+            count >= Vector128<uint>.Count)
+        {
+            offset = ReconstructCrtRangeSse(
+                firstSpan,
+                secondSpan,
+                scratchSpan);
         }
 
         // Exact fallback and vector tail. Keep this byte-for-byte arithmetic
@@ -18798,6 +18971,550 @@ internal sealed partial class ParallelBigUnsigned
             scalarTwiddle = scalarTwiddle * root % modulus;
         }
         cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<ulong> ReduceResidueProductFirstModulusAvx2(
+        Vector256<ulong> product)
+    {
+        Vector256<ulong> lowMask = Vector256.Create((ulong)uint.MaxValue);
+        Vector256<ulong> one = Vector256.Create(1UL);
+        Vector256<uint> divide15Magic = Vector256.Create(0x8888_8889u);
+        Vector256<uint> divide15HighScale = Vector256.Create(0x1111_1111u);
+        Vector256<uint> modulus32 = Vector256.Create(FirstModulus);
+        Vector256<ulong> modulus64 = Vector256.Create((ulong)FirstModulus);
+
+        Vector256<ulong> high = Avx2.ShiftRightLogical(product, 27);
+        Vector256<ulong> highWord = Avx2.ShiftRightLogical(high, 32);
+        Vector256<ulong> lowWord = Avx2.And(high, lowMask);
+        Vector256<ulong> lowQuotient = Avx2.ShiftRightLogical(
+            Avx2.Multiply(lowWord.AsUInt32(), divide15Magic), 35);
+        Vector256<ulong> lowRemainder = Avx2.Subtract(
+            lowWord.AsInt64(),
+            Avx2.Subtract(
+                Avx2.ShiftLeftLogical(lowQuotient, 4).AsInt64(),
+                lowQuotient.AsInt64()))
+            .AsUInt64();
+        Vector256<ulong> carry = Avx2.ShiftRightLogical(
+            Avx2.Add(
+                Avx2.Add(lowRemainder.AsInt64(), highWord.AsInt64()),
+                one.AsInt64()).AsUInt64(),
+            4);
+        Vector256<ulong> highContribution =
+            Avx2.Multiply(highWord.AsUInt32(), divide15HighScale);
+        Vector256<ulong> quotient = Avx2.Add(
+            Avx2.Add(highContribution.AsInt64(), lowQuotient.AsInt64()),
+            carry.AsInt64()).AsUInt64();
+        Vector256<ulong> quotientTimesModulus =
+            Avx2.Multiply(quotient.AsUInt32(), modulus32);
+        Vector256<ulong> borrowMask =
+            Avx2.CompareGreaterThan(
+                quotientTimesModulus.AsInt64(),
+                product.AsInt64()).AsUInt64();
+        Vector256<ulong> remainder = Avx2.Subtract(
+            product.AsInt64(), quotientTimesModulus.AsInt64()).AsUInt64();
+        return Avx2.Add(
+            remainder.AsInt64(),
+            Avx2.And(borrowMask, modulus64).AsInt64()).AsUInt64();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<ulong> ReduceResidueProductSecondModulusAvx2(
+        Vector256<ulong> product)
+    {
+        Vector256<uint> divide7Magic = Vector256.Create(0x2492_4925u);
+        Vector256<uint> modulus32 = Vector256.Create(SecondModulus);
+        Vector256<ulong> modulus64 = Vector256.Create((ulong)SecondModulus);
+
+        Vector256<ulong> high = Avx2.ShiftRightLogical(product, 26);
+        Vector256<ulong> initialQuotient = Avx2.ShiftRightLogical(
+            Avx2.Multiply(high.AsUInt32(), divide7Magic), 32);
+        Vector256<ulong> quotient = Avx2.ShiftRightLogical(
+            Avx2.Add(
+                initialQuotient.AsInt64(),
+                Avx2.ShiftRightLogical(
+                    Avx2.Subtract(high.AsInt64(), initialQuotient.AsInt64()).AsUInt64(),
+                    1).AsInt64()).AsUInt64(),
+            2);
+        Vector256<ulong> quotientTimesModulus =
+            Avx2.Multiply(quotient.AsUInt32(), modulus32);
+        Vector256<ulong> borrowMask =
+            Avx2.CompareGreaterThan(
+                quotientTimesModulus.AsInt64(),
+                product.AsInt64()).AsUInt64();
+        Vector256<ulong> remainder = Avx2.Subtract(
+            product.AsInt64(), quotientTimesModulus.AsInt64()).AsUInt64();
+        return Avx2.Add(
+            remainder.AsInt64(),
+            Avx2.And(borrowMask, modulus64).AsInt64()).AsUInt64();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<uint> MultiplyResiduesAvx2(
+        Vector256<uint> left,
+        Vector256<uint> right,
+        uint modulus)
+    {
+        Vector256<ulong> productEven = Avx2.Multiply(left, right);
+        Vector256<uint> oddLeft =
+            Avx2.ShiftRightLogical(left.AsUInt64(), 32).AsUInt32();
+        Vector256<uint> oddRight =
+            Avx2.ShiftRightLogical(right.AsUInt64(), 32).AsUInt32();
+        Vector256<ulong> productOdd = Avx2.Multiply(oddLeft, oddRight);
+
+        Vector256<ulong> remainderEven = modulus == FirstModulus
+            ? ReduceResidueProductFirstModulusAvx2(productEven)
+            : ReduceResidueProductSecondModulusAvx2(productEven);
+        Vector256<ulong> remainderOdd = modulus == FirstModulus
+            ? ReduceResidueProductFirstModulusAvx2(productOdd)
+            : ReduceResidueProductSecondModulusAvx2(productOdd);
+
+        return Avx2.Or(
+            remainderEven.AsUInt32(),
+            Avx2.ShiftLeftLogical(remainderOdd, 32).AsUInt32());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<uint> CreateTwiddleSequenceAvx2(
+        uint root,
+        int first,
+        uint modulus)
+    {
+        Span<uint> seed = stackalloc uint[8];
+        ulong current = ModPow(root, (uint)first, modulus);
+        for (int lane = 0; lane < seed.Length; lane++)
+        {
+            seed[lane] = (uint)current;
+            current = current * root % modulus;
+        }
+
+        return Vector256.LoadUnsafe(
+            ref MemoryMarshal.GetReference(seed));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteCachedGlobalStageAvx2(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int stageLength,
+        bool inverse,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength,
+            groupCount,
+            workers.WorkerCount,
+            GetSegmentsPerGroup(
+                halfLength,
+                groupCount,
+                workers.WorkerCount));
+
+        Avx2NttModContext context =
+            new Avx2NttModContext(modulus);
+
+        ExecuteRanges(
+            checked(groupCount * segments),
+            workers,
+            cancellationToken,
+            (start, end) =>
+            {
+                ref uint data =
+                    ref MemoryMarshal.GetArrayDataReference(values);
+                ref uint roots =
+                    ref MemoryMarshal.GetArrayDataReference(twiddles);
+                ref uint quotients =
+                    ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+                for (int segment = start; segment < end; segment++)
+                {
+                    GetSegmentBounds(
+                        segment,
+                        segments,
+                        halfLength,
+                        out int group,
+                        out int first,
+                        out int last);
+
+                    int groupOffset = group * stageLength;
+                    int i = first;
+                    int sinceCancellation = 0;
+
+                    for (; i + 7 < last; i += 8)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+
+                        Vector256<uint> left =
+                            Vector256.LoadUnsafe(
+                                ref data,
+                                (nuint)leftIndex);
+                        Vector256<uint> right =
+                            Vector256.LoadUnsafe(
+                                ref data,
+                                (nuint)rightIndex);
+                        Vector256<uint> rootVector =
+                            Vector256.LoadUnsafe(
+                                ref roots,
+                                (nuint)(twiddleOffset + i));
+                        Vector256<uint> shoupVector =
+                            Vector256.LoadUnsafe(
+                                ref quotients,
+                                (nuint)(twiddleOffset + i));
+
+                        if (inverse)
+                        {
+                            right = MultiplyShoupAvx2(
+                                right,
+                                rootVector,
+                                shoupVector,
+                                context);
+
+                            AddModuloAvx2(
+                                    left,
+                                    right,
+                                    context)
+                                .StoreUnsafe(
+                                    ref data,
+                                    (nuint)leftIndex);
+                            SubtractModuloAvx2(
+                                    left,
+                                    right,
+                                    context)
+                                .StoreUnsafe(
+                                    ref data,
+                                    (nuint)rightIndex);
+                        }
+                        else
+                        {
+                            AddModuloAvx2(
+                                    left,
+                                    right,
+                                    context)
+                                .StoreUnsafe(
+                                    ref data,
+                                    (nuint)leftIndex);
+                            MultiplyShoupAvx2(
+                                    SubtractModuloAvx2(
+                                        left,
+                                        right,
+                                        context),
+                                    rootVector,
+                                    shoupVector,
+                                    context)
+                                .StoreUnsafe(
+                                    ref data,
+                                    (nuint)rightIndex);
+                        }
+
+                        sinceCancellation += 8;
+                        if (sinceCancellation >= (1 << 14))
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            sinceCancellation = 0;
+                        }
+                    }
+
+                    for (; i < last; i++)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+                        uint left = values[leftIndex];
+                        uint right = values[rightIndex];
+                        uint rootValue =
+                            twiddles[twiddleOffset + i];
+                        uint rootShoup =
+                            shoupTwiddles[twiddleOffset + i];
+
+                        if (inverse)
+                        {
+                            right = MultiplyShoupScalar(
+                                right,
+                                rootValue,
+                                rootShoup,
+                                modulus);
+                        }
+
+                        uint sum = left + right;
+                        if (sum >= modulus)
+                        {
+                            sum -= modulus;
+                        }
+
+                        uint difference =
+                            left >= right
+                                ? left - right
+                                : left + modulus - right;
+
+                        values[leftIndex] = sum;
+                        values[rightIndex] = inverse
+                            ? difference
+                            : MultiplyShoupScalar(
+                                difference,
+                                rootValue,
+                                rootShoup,
+                                modulus);
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardUncachedStageAvx2(
+        uint[] values,
+        uint modulus,
+        uint root,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength,
+            groupCount,
+            workers.WorkerCount,
+            GetSegmentsPerGroup(
+                halfLength,
+                groupCount,
+                workers.WorkerCount));
+
+        Avx2NttModContext context =
+            new Avx2NttModContext(modulus);
+        uint step =
+            (uint)ModPow(root, 8, modulus);
+        Vector256<uint> advance =
+            Vector256.Create(step);
+
+        ExecuteRanges(
+            checked(groupCount * segments),
+            workers,
+            cancellationToken,
+            (start, end) =>
+            {
+                ref uint data =
+                    ref MemoryMarshal.GetArrayDataReference(values);
+
+                for (int segment = start; segment < end; segment++)
+                {
+                    GetSegmentBounds(
+                        segment,
+                        segments,
+                        halfLength,
+                        out int group,
+                        out int first,
+                        out int last);
+
+                    int groupOffset = group * stageLength;
+                    Vector256<uint> twiddle =
+                        CreateTwiddleSequenceAvx2(
+                            root,
+                            first,
+                            modulus);
+                    int i = first;
+                    int sinceCancellation = 0;
+
+                    for (; i + 7 < last; i += 8)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+
+                        Vector256<uint> left =
+                            Vector256.LoadUnsafe(
+                                ref data,
+                                (nuint)leftIndex);
+                        Vector256<uint> right =
+                            Vector256.LoadUnsafe(
+                                ref data,
+                                (nuint)rightIndex);
+
+                        AddModuloAvx2(
+                                left,
+                                right,
+                                context)
+                            .StoreUnsafe(
+                                ref data,
+                                (nuint)leftIndex);
+
+                        MultiplyResiduesAvx2(
+                                SubtractModuloAvx2(
+                                    left,
+                                    right,
+                                    context),
+                                twiddle,
+                                modulus)
+                            .StoreUnsafe(
+                                ref data,
+                                (nuint)rightIndex);
+
+                        twiddle = MultiplyResiduesAvx2(
+                            twiddle,
+                            advance,
+                            modulus);
+
+                        sinceCancellation += 8;
+                        if (sinceCancellation >= (1 << 14))
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            sinceCancellation = 0;
+                        }
+                    }
+
+                    uint scalarTwiddle =
+                        (uint)ModPow(root, (uint)i, modulus);
+                    for (; i < last; i++)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+                        uint left = values[leftIndex];
+                        uint right = values[rightIndex];
+                        uint sum = left + right;
+                        if (sum >= modulus)
+                        {
+                            sum -= modulus;
+                        }
+                        uint difference =
+                            left >= right
+                                ? left - right
+                                : left + modulus - right;
+                        values[leftIndex] = sum;
+                        values[rightIndex] =
+                            (uint)((ulong)difference * scalarTwiddle % modulus);
+                        scalarTwiddle =
+                            (uint)((ulong)scalarTwiddle * root % modulus);
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseUncachedStageAvx2(
+        uint[] values,
+        uint modulus,
+        uint root,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int halfLength = stageLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segments = GetWorkerAlignedSegmentsPerGroup(
+            halfLength,
+            groupCount,
+            workers.WorkerCount,
+            GetSegmentsPerGroup(
+                halfLength,
+                groupCount,
+                workers.WorkerCount));
+
+        Avx2NttModContext context =
+            new Avx2NttModContext(modulus);
+        uint step =
+            (uint)ModPow(root, 8, modulus);
+        Vector256<uint> advance =
+            Vector256.Create(step);
+
+        ExecuteRanges(
+            checked(groupCount * segments),
+            workers,
+            cancellationToken,
+            (start, end) =>
+            {
+                ref uint data =
+                    ref MemoryMarshal.GetArrayDataReference(values);
+
+                for (int segment = start; segment < end; segment++)
+                {
+                    GetSegmentBounds(
+                        segment,
+                        segments,
+                        halfLength,
+                        out int group,
+                        out int first,
+                        out int last);
+
+                    int groupOffset = group * stageLength;
+                    Vector256<uint> twiddle =
+                        CreateTwiddleSequenceAvx2(
+                            root,
+                            first,
+                            modulus);
+                    int i = first;
+                    int sinceCancellation = 0;
+
+                    for (; i + 7 < last; i += 8)
+                    {
+                        int leftIndex = groupOffset + i;
+                        int rightIndex = leftIndex + halfLength;
+
+                        Vector256<uint> left =
+                            Vector256.LoadUnsafe(
+                                ref data,
+                                (nuint)leftIndex);
+                        Vector256<uint> rawRight =
+                            Vector256.LoadUnsafe(
+                                ref data,
+                                (nuint)rightIndex);
+
+                        Vector256<uint> right =
+                            MultiplyResiduesAvx2(
+                                rawRight,
+                                twiddle,
+                                modulus);
+
+                        AddModuloAvx2(
+                                left,
+                                right,
+                                context)
+                            .StoreUnsafe(
+                                ref data,
+                                (nuint)leftIndex);
+                        SubtractModuloAvx2(
+                                left,
+                                right,
+                                context)
+                            .StoreUnsafe(
+                                ref data,
+                                (nuint)rightIndex);
+
+                        twiddle = MultiplyResiduesAvx2(
+                            twiddle,
+                            advance,
+                            modulus);
+
+                        sinceCancellation += 8;
+                        if (sinceCancellation >= (1 << 14))
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            sinceCancellation = 0;
+                        }
+                    }
+
+                    if (i < last)
+                    {
+                        ProcessInverseUncachedStageSegmentByrefDualLane(
+                            values,
+                            modulus,
+                            root,
+                            stageLength,
+                            group,
+                            i,
+                            last,
+                            cancellationToken);
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            });
     }
 
     // Advance sixteen independent twiddle lanes by root^16. Only this tiny

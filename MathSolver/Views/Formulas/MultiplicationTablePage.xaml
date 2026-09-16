@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:controls="clr-namespace:MathSolver.Controls"
+    xmlns:views="clr-namespace:MathSolver.Views"
     Title="{localization:Translate Tabs.TimesTables}"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
@@ -152,6 +153,7 @@
             Margin="{OnPlatform Android='-12,-10,-12,-20', WinUI='-20,-16', Default='-20,-16'}" />
         <CollectionView
             x:Name="TablesCollectionView"
+            x:DataType="views:MultiplicationTablePage"
             ItemsSource="{Binding TableCards}"
             SelectionMode="None"
             BackgroundColor="Transparent">
@@ -393,7 +395,7 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="views:TableCardModel">
                     <Border Style="{StaticResource CardBorderStyle}">
                         <VerticalStackLayout Spacing="12">
                             <Label
@@ -411,7 +413,7 @@
                                 Spacing="8"
                                 BindableLayout.ItemsSource="{Binding Lines}">
                                 <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="x:String">
                                         <Border
                                             Style="{StaticResource TableLineBorderStyle}">
                                             <Label

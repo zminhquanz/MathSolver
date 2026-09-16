@@ -8,6 +8,7 @@
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:base="clr-namespace:MathSolver.Views.Base"
     xmlns:models="clr-namespace:MathSolver.Models"
+    xmlns:views="clr-namespace:MathSolver.Views"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
@@ -441,7 +442,7 @@
                                 HeightRequest="20" />
 
                             <Label
-                                Text="{Binding Text, Source={x:Reference FractionCopyResultButton}}"
+                                Text="{Binding Text, Source={x:Reference FractionCopyResultButton}, x:DataType='Button'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
@@ -471,7 +472,7 @@
                                 TextColor="{DynamicResource PrimaryDarkColor}" />
 
                             <VerticalStackLayout
-                                BindableLayout.ItemsSource="{Binding Source={x:Reference Root}, Path=SolutionSteps}"
+                                BindableLayout.ItemsSource="{Binding Source={x:Reference Root}, Path=SolutionSteps, x:DataType={x:Type views:FractionView}}"
                                 Spacing="10">
 
                                 <BindableLayout.ItemTemplate>
