@@ -829,3 +829,8 @@ Historical prototypes and benchmark fixtures remain under tests/LegacySingleThre
 ### >10M AVX2/SSE global-tail SIMD completion (2026-09-16)
 
 The >10M NTT/CRT path no longer drops AVX2 or the x86 128-bit SSE family back to scalar arithmetic for non-final global stages. Cached global stages use the existing Shoup companion tables with Vector256 (AVX2) or Vector128 (SSE2 through SSE4.2) butterflies. Uncached global stages keep O(1) twiddle state and use exact constant-prime modular multiplication based on the two NTT prime forms (15*2^27+1 and 7*2^26+1), avoiding transform-sized global twiddle/Shoup streams. AVX2 processes 8 uint32 lanes per iteration; SSE processes 4 lanes. The final inverse normalization/prefix remains the dedicated final-prefix path rather than part of the global-tail bucket. Dispatch order remains AVX-512 -> AVX2 -> SSE -> scalar.
+
+
+## Android ARM64 NEON large NTT/CRT (100M)
+
+The memory-bounded >10M power path can now keep the NTT/CRT pipeline on managed 128-bit NEON when Hardware acceleration selects ARM NEON: cache-local L1/L2/L3, global cached/uncached stages, pointwise multiplication and CRT reconstruction. The existing segmented scheduling, memory budget and final exact normalization/prefix-carry path remain unchanged. See `NEON_LARGE_NTT_CRT_NOTES.md`.

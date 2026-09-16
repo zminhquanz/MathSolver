@@ -27,10 +27,16 @@ internal sealed partial class ParallelBigUnsigned
         using var pool = workerCount > 1 ? new NttBufferPool(3, 4) : null;
         using var twiddles = workerCount > 1 ? new NttTwiddleBufferPool() : null;
         bool avx2 = CalculationAccelerationManager.UsePowerNttAvx2;
+        bool neon = !avx2 && CalculationAccelerationManager.UsePowerNttNeon;
         using var plans = workerCount > 1
-            ? new SharedNttTwiddlePlans(twiddles!, avx2, avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported), 1 << 18) : null;
+            ? new SharedNttTwiddlePlans(
+                twiddles!, avx2,
+                avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported),
+                1 << 18, useSseNtt: false, useNeonNtt: neon)
+            : null;
         using var workers = workerCount > 1 ? new FixedWorkerTeam(workerCount, pool!, plans!) : null;
         var diagnostics = new PowerDiagnosticsCollector();
+        diagnostics.ConfigureNttBackends(avx2, useNeon: neon);
         var powers = new Dictionary<int, ParallelBigUnsigned>();
         int leaves = Math.Max(1, checked((int)(((long)words.Length + leafWords - 1) / leafWords)));
         int completed = 0, total = checked(leaves * 2 - 1);

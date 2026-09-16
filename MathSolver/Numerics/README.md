@@ -13,7 +13,7 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [ParallelBigUnsigned_BinaryImport.cs](BigIntegers/ParallelBigUnsigned_BinaryImport.cs)
 - [ParallelBigUnsigned_BinaryPower.cs](BigIntegers/ParallelBigUnsigned_BinaryPower.cs)
 - [ParallelBigUnsigned_Sse.cs](BigIntegers/ParallelBigUnsigned_Sse.cs): fallback SSE2/SSE4.1 cho butterfly NTT trong cache ở nhánh ≤10M; [kết quả đo](../SSE_NTT_SUB10M_NOTES.md).
-- [ParallelBigUnsigned_Neon.cs](BigIntegers/ParallelBigUnsigned_Neon.cs): butterfly NTT forward/inverse L1/L2/L3 trên Android ARM64, chỉ ≤10M. Dùng AdvSimd khi runtime hỗ trợ, hoặc Vector128 kết hợp Scalar high32 trên Mono; [kiểm thử USB](../../tests/NeonNttAndroidValidation/README.md).
+- [ParallelBigUnsigned_Neon.cs](BigIntegers/ParallelBigUnsigned_Neon.cs): backend NTT/CRT ARM64 NEON cho Android đến số mũ 100M: L1/L2/L3 cache-local, global cached/uncached tail, pointwise và CRT. Dùng AdvSimd.Arm64 khi runtime hỗ trợ, hoặc Vector128 compatibility path trên Mono; [kiểm thử USB](../../tests/NeonNttAndroidValidation/README.md).
 
 
 ## FloatingPoint

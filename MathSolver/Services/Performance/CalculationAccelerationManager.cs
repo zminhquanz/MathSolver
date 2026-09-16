@@ -230,9 +230,10 @@ public static class CalculationAccelerationManager
         IsPowerExportAccelerationAvailable;
 
     /// <summary>
-    /// NTT/CRT acceleration policy. x86 SSE2+ is available for both the legacy
-    /// &lt;=10M path and the memory-bounded &gt;10M path. AVX2/AVX-512 remain the
-    /// preferred wider backends when selected and supported.
+    /// NTT/CRT acceleration policy. x86 SSE2+ and Android ARM64 NEON are
+    /// available for both the legacy &lt;=10M path and the memory-bounded
+    /// &gt;10M..100M path. AVX2/AVX-512 remain the preferred wider x86 backends
+    /// when selected and supported.
     /// </summary>
     public static bool IsPowerNttAccelerationAvailable =>
 #if ANDROID
@@ -249,7 +250,10 @@ public static class CalculationAccelerationManager
         Avx2.IsSupported &&
         IsPowerNttAccelerationAvailable;
 
-    /// <summary>Managed ARM64 NEON for Android's &lt;=10M NTT cache-local butterflies.</summary>
+    /// <summary>
+    /// Managed ARM64 NEON for Android NTT/CRT through exponent 100M: cache-local
+    /// butterflies, global cached/uncached tails, pointwise products and CRT.
+    /// </summary>
     public static bool UsePowerNttNeon =>
 #if ANDROID
         UseSimd && EffectiveSimdMode == CalculationSimdMode.ArmNeon &&

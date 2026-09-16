@@ -55,6 +55,7 @@ internal sealed partial class ParallelBigUnsigned
         workerCount = Math.Clamp(workerCount, 1, Math.Max(1, Environment.ProcessorCount));
         bool largeSchedule = persistentScheduling ?? maximumTransformLength > SmallBinaryTransformLength;
         bool avx2 = CalculationAccelerationManager.UsePowerNttAvx2;
+        bool neon = !avx2 && CalculationAccelerationManager.UsePowerNttNeon;
         // Match the accepted large decimal engine: static scheduling enables
         // its individually validated AVX-512 kernels rather than the legacy gate.
         bool avx512 = !largeSchedule && avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
@@ -66,9 +67,11 @@ internal sealed partial class ParallelBigUnsigned
         int predictedLimbs = checked((int)(((long)exponent * 232193 / 100000 + 31) / 16 + 2));
         int predictedTransform = (int)BitOperations.RoundUpToPowerOf2((uint)Math.Min(maximumTransformLength, predictedLimbs));
         int cachedHalf = Math.Max(2, Math.Min(largeSchedule ? 1 << 21 : 1 << 18, predictedTransform / 2));
-        using var plans = new SharedNttTwiddlePlans(twiddlePool, avx2, avx512, cachedHalf);
+        using var plans = new SharedNttTwiddlePlans(
+            twiddlePool, avx2, avx512, cachedHalf,
+            useSseNtt: false, useNeonNtt: neon);
         var diagnostics = new PowerDiagnosticsCollector();
-        diagnostics.ConfigureNttBackends(avx2);
+        diagnostics.ConfigureNttBackends(avx2, useNeon: neon);
         BinaryMagnitude magnitude = new([5], 1);
         uint[] packedWords;
         using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule))
@@ -304,10 +307,16 @@ internal sealed partial class ParallelBigUnsigned
                             workers.UseSseNtt &&
                             Sse2.IsSupported;
 
+                        bool useNeonCrt =
+                            !useAvx512Crt &&
+                            !useAvx2Crt &&
+                            !useSseCrt &&
+                            workers.UseNeonNtt;
+
                         ExecuteRanges(count, workers, token, (from, to) =>
                             ReconstructCrtRange(first!.AsSpan(start + from, to - from),
                                 second.AsSpan(start + from, to - from), scratch.AsSpan(from, to - from),
-                                useAvx512Crt, useAvx2Crt, useSseCrt));
+                                useAvx512Crt, useAvx2Crt, useSseCrt, useNeonCrt));
                         diagnostics.CrtTicks += Stopwatch.GetTimestamp() - stamp;
                         stamp = Stopwatch.GetTimestamp();
                         carry = NormalizeBinaryTiles(first!, start, count, carry, workers, token, (from, to) =>

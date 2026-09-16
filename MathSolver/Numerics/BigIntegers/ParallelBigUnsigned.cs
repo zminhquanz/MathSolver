@@ -816,12 +816,20 @@ internal sealed partial class ParallelBigUnsigned
 
         // 128-bit x86 fallback is valid for the complete memory-bounded path.
         // Keep AVX2 preferred; only enable SSE when the selected backend does
-        // not execute AVX2. Cache-resident NTT stages and CRT then use the
-        // managed 128-bit kernels while uncached global stages retain the exact
-        // scalar recurrence.
+        // not execute AVX2. Cache-local, global-tail and CRT work then stay on
+        // the managed 128-bit SIMD backend.
         bool useSseNtt =
             !useAvx2Ntt &&
             CalculationAccelerationManager.UsePowerNttSse;
+
+        // Android ARM64 uses the same complete memory-bounded graph as x86:
+        // cache-local butterflies, global cached/uncached tails, pointwise
+        // products and CRT all remain on the 128-bit NEON backend.  AVX2/SSE
+        // are mutually exclusive with this flag by platform/dispatch policy.
+        bool useNeonNtt =
+            !useAvx2Ntt &&
+            !useSseNtt &&
+            CalculationAccelerationManager.UsePowerNttNeon;
 
         int chunkExponent =
             LegacyMaximumExponent;
@@ -906,7 +914,8 @@ internal sealed partial class ParallelBigUnsigned
 
         diagnostics.ConfigureNttBackends(
             useAvx2Ntt,
-            useSse: useSseNtt);
+            useSse: useSseNtt,
+            useNeon: useNeonNtt);
 
         // Three retained 2^26 uint buffers preserve the measured ~6 GB class
         // forward-cache behavior. Four simultaneously leased buffers is the
@@ -926,7 +935,8 @@ internal sealed partial class ParallelBigUnsigned
                 nttTwiddleBufferPool,
                 useAvx2Ntt,
                 useAvx512Ntt: false,
-                useSseNtt: useSseNtt);
+                useSseNtt: useSseNtt,
+                useNeonNtt: useNeonNtt);
 
         ParallelBigUnsigned magnitude;
 
@@ -2711,6 +2721,17 @@ internal sealed partial class ParallelBigUnsigned
                     workers,
                     cancellationToken);
             }
+            else if (workers.UseNeonNtt)
+            {
+                ExecutePointwiseProductNeon(
+                    cachedLeftSpectrum,
+                    cachedLeftSpectrum,
+                    transformedRight,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
             else
             {
                 ExecuteRanges(
@@ -2832,6 +2853,17 @@ internal sealed partial class ParallelBigUnsigned
                         workers,
                         cancellationToken);
                 }
+                else if (workers.UseNeonNtt)
+                {
+                    ExecutePointwiseProductNeon(
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
                 else
                 {
                     ExecuteRanges(
@@ -2888,6 +2920,17 @@ internal sealed partial class ParallelBigUnsigned
                         modulus))
                 {
                     ExecutePointwiseProductDualVectorIlp(
+                        transformedProduct,
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else if (workers.UseNeonNtt)
+                {
+                    ExecutePointwiseProductNeon(
                         transformedProduct,
                         transformedProduct,
                         cachedLeftSpectrum,
@@ -3903,6 +3946,12 @@ internal sealed partial class ParallelBigUnsigned
                     workers.UseSseNtt &&
                     Sse2.IsSupported;
 
+                bool useNeonCrt =
+                    !useAvx512Crt &&
+                    !useAvx2Crt &&
+                    !useSseCrt &&
+                    workers.UseNeonNtt;
+
                 for (int blockStart = 0;
                      blockStart < coefficientCount;
                      blockStart += scratchLength)
@@ -3974,7 +4023,8 @@ internal sealed partial class ParallelBigUnsigned
                                 scratchSpan,
                                 useAvx512Crt,
                                 useAvx2Crt,
-                                useSseCrt);
+                                useSseCrt,
+                                useNeonCrt);
                         });
 
                     crtTicks +=
@@ -4135,6 +4185,12 @@ internal sealed partial class ParallelBigUnsigned
             workers.UseSseNtt &&
             Sse2.IsSupported;
 
+        bool useNeonCrt =
+            !useAvx512Crt &&
+            !useAvx2Crt &&
+            !useSseCrt &&
+            workers.UseNeonNtt;
+
         for (int blockStart = 0;
              blockStart < coefficientCount;
              blockStart += scratchLength)
@@ -4200,7 +4256,8 @@ internal sealed partial class ParallelBigUnsigned
                         scratchSpan,
                         useAvx512Crt,
                         useAvx2Crt,
-                        useSseCrt);
+                        useSseCrt,
+                        useNeonCrt);
                 });
 
             crtTicks +=
@@ -4513,6 +4570,17 @@ internal sealed partial class ParallelBigUnsigned
                         modulus))
                 {
                     ExecutePointwiseProductDualVectorIlp(
+                        transformedLeft,
+                        transformedLeft,
+                        transformedLeft,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else if (workers.UseNeonNtt)
+                {
+                    ExecutePointwiseProductNeon(
                         transformedLeft,
                         transformedLeft,
                         transformedLeft,
@@ -5546,6 +5614,17 @@ internal sealed partial class ParallelBigUnsigned
                     workers,
                     cancellationToken);
             }
+            else if (workers.UseNeonNtt)
+            {
+                ExecutePointwiseProductNeon(
+                    transformedLeft,
+                    transformedLeft,
+                    rightTransform,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
             else
             {
                 ExecuteRanges(
@@ -5664,6 +5743,7 @@ internal sealed partial class ParallelBigUnsigned
                 stageLength >> 1;
 
             if (nextStageLength > l3NttTileLength &&
+                !workers.UseNeonNtt &&
                 CanFuseForwardCachedStagePair(
                     length,
                     stageLength,
@@ -6070,6 +6150,23 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
+            if (workers.UseNeonNtt && useTwiddleCache)
+            {
+                EnsureForwardGlobalShoupStageProfiled(
+                    twiddlePlan, halfLength, modulus, workers,
+                    diagnostics, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageNeon(
+                    values, modulus, twiddlePlan.ForwardTwiddles,
+                    twiddlePlan.ForwardShoupTwiddles!, twiddleOffset,
+                    stageLength, false, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
             int segmentsPerGroup =
                 GetSegmentsPerGroup(
                     halfLength,
@@ -6149,6 +6246,18 @@ internal sealed partial class ParallelBigUnsigned
             {
                 long started = Stopwatch.GetTimestamp();
                 ExecuteForwardUncachedStageSse(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.ForwardGlobalUncachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.ForwardUncached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
+            if (workers.UseNeonNtt && !useTwiddleCache)
+            {
+                long started = Stopwatch.GetTimestamp();
+                ExecuteForwardUncachedStageNeon(
                     values, modulus, root, stageLength, workers, cancellationToken);
                 long elapsed = Stopwatch.GetTimestamp() - started;
                 diagnostics.ForwardGlobalUncachedTicks += elapsed;
@@ -6553,6 +6662,7 @@ internal sealed partial class ParallelBigUnsigned
 
             if (!normalizeOutput &&
                 !workers.UseSseNtt &&
+                !workers.UseNeonNtt &&
                 nextStageLength < length &&
                 CanFuseInverseCachedStagePair(
                     length,
@@ -6787,6 +6897,22 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
+            if (!normalizeOutput && workers.UseNeonNtt && useTwiddleCache)
+            {
+                EnsureInverseGlobalShoupStage(
+                    twiddlePlan, halfLength, modulus, workers, cancellationToken);
+                long started = Stopwatch.GetTimestamp();
+                ExecuteCachedGlobalStageNeon(
+                    values, modulus, twiddlePlan.InverseTwiddles,
+                    twiddlePlan.InverseShoupTwiddles!, twiddleOffset,
+                    stageLength, true, workers, cancellationToken);
+                long elapsed = Stopwatch.GetTimestamp() - started;
+                diagnostics.InverseGlobalCachedTicks += elapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseCached, stageLength, 0, length, elapsed);
+                continue;
+            }
+
             // The N=2^26 inverse-DIT S=2^23 stage has only eight groups.
             // A ceil(worker/group) split can leave a static-range tail whenever
             // groupCount * segmentsPerGroup is not divisible by the logical
@@ -6915,6 +7041,11 @@ internal sealed partial class ParallelBigUnsigned
             else if (workers.UseSseNtt && !useTwiddleCache && !normalizeOutput && Sse2.IsSupported)
             {
                 ExecuteInverseUncachedStageSse(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+            }
+            else if (workers.UseNeonNtt && !useTwiddleCache && !normalizeOutput)
+            {
+                ExecuteInverseUncachedStageNeon(
                     values, modulus, root, stageLength, workers, cancellationToken);
             }
             else if (useInverseUncachedDualLane)
@@ -10185,8 +10316,8 @@ internal sealed partial class ParallelBigUnsigned
     /// machines this removes the scalar UInt64 remainder from sixteen
     /// coefficients at a time, then widens the two eight-lane halves to build
     /// the exact 64-bit CRT coefficients. No coefficient-sized companion table
-    /// is created. Dispatch order is AVX-512DQ -> AVX2 -> SSE2+ -> Scalar, so
-    /// AVX2-only x86 systems keep CRT reconstruction vectorized as well.
+    /// is created. Dispatch order is AVX-512DQ -> AVX2 -> SSE2+ on x86, or
+    /// NEON/AdvSIMD on Android ARM64, then Scalar for the remaining tail.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ReconstructCrtRange(
@@ -10195,7 +10326,8 @@ internal sealed partial class ParallelBigUnsigned
         Span<ulong> scratchSpan,
         bool useAvx512Crt,
         bool useAvx2Crt,
-        bool useSseCrt)
+        bool useSseCrt,
+        bool useNeonCrt)
     {
         int count =
             firstSpan.Length;
@@ -10440,6 +10572,20 @@ internal sealed partial class ParallelBigUnsigned
             count >= Vector128<uint>.Count)
         {
             offset = ReconstructCrtRangeSse(
+                firstSpan,
+                secondSpan,
+                scratchSpan);
+        }
+
+        // Android ARM64 CRT backend. Four residues are reconstructed per
+        // 128-bit NEON vector. The inverse step uses the same constant Shoup
+        // multiplier as the NTT kernels; 32x32->64 widening multiply builds
+        // the exact CRT coefficient without UInt64 division.
+        if (useNeonCrt &&
+            offset == 0 &&
+            count >= Vector128<uint>.Count)
+        {
+            offset = ReconstructCrtRangeNeon(
                 firstSpan,
                 secondSpan,
                 scratchSpan);

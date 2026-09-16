@@ -3992,7 +3992,7 @@ public partial class PowerRootView : LocalizedSolverView
             lines.Insert(
                 6,
                 diagnostics.UsedNeonNttButterflies
-                    ? "NTT: NEON/AdvSIMD (128-bit, ≤10M) / Scalar"
+                    ? "NTT/CRT: NEON/AdvSIMD (128-bit, ≤100M; global-tail SIMD)"
                     : diagnostics.UsedSseNttButterflies
                     ? $"NTT/CRT: {CalculationAccelerationManager.PowerNttSseBackendName} (128-bit, ≤100M; global-tail SIMD)"
                     : diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
