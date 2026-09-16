@@ -68,9 +68,17 @@ public partial class MathPuzzlePage : ContentPage
     private bool _questionAnswered;
     private bool? _lastAnswerWasCorrect;
     private bool _isGeneratingWithLlm;
+#if WINDOWS
     private bool _isLlmQuestionGenerationActive;
+#else
+    private bool _isLlmQuestionGenerationActive => false;
+#endif
     private bool _isDownloadingModel;
+#if WINDOWS
     private bool _showFriendlyGreetingForCurrentLoad;
+#else
+    private bool _showFriendlyGreetingForCurrentLoad => false;
+#endif
     private bool _isUpdatingOperationPicker;
     private ArithmeticOperation? _selectedBasicOperation =
         ArithmeticOperation.Add;
@@ -91,7 +99,9 @@ public partial class MathPuzzlePage : ContentPage
     // Khi bấm Câu tiếp theo, số câu mới chỉ được commit sau khi AI tạo được
     // đề hợp lệ. Nếu cả ba attempt đều thất bại, giữ lại số này để lần bấm
     // Tạo lại kế tiếp vẫn hoàn tất đúng câu đang chờ thay vì đứng ở câu cũ.
+#if WINDOWS
     private int? _pendingLlmQuestionNumberOnSuccess;
+#endif
     private int _questionCount;
     private int _correctCount;
     private int _incorrectCount;
@@ -4444,8 +4454,10 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ResetQuizSessionState()
     {
+#if WINDOWS
         _pendingLlmQuestionNumberOnSuccess =
             null;
+#endif
         ResetCurrentQuestionState();
         ResetQuizSessionCounters();
     }

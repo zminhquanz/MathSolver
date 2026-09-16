@@ -14,7 +14,9 @@ public partial class SettingsPage : ContentPage
 #endif
     private bool _updatingFullNumberDisplaySwitch;
     private bool _updatingDeveloperModeSwitch;
+#if ANDROID
     private bool _updatingDynamicColorSwitch;
+#endif
     private bool _updatingLiveWallpaperSwitch;
     private bool _updatingLiveWallpaperModePicker;
     private bool _isImportingLiveWallpaper;

@@ -2130,8 +2130,8 @@ public static class ParabolaSimdEvaluator
         SimdPath.AvxFma => "AVX/FMA",
         SimdPath.Avx => "AVX",
         SimdPath.Sse2 => "SSE2",
-        SimdPath.NeonFma => "NEON/FMA",
-        SimdPath.ArmVector128 => "ARM Vector128",
+        SimdPath.NeonFma => "NEON/AdvSIMD (FMA)",
+        SimdPath.ArmVector128 => "NEON/AdvSIMD (Vector128)",
         _ => "Scalar"
     };
 
@@ -2246,6 +2246,10 @@ public static class ParabolaSimdEvaluator
 
     private static SimdPath DetectBestPath()
     {
+#if ANDROID
+        if (!CalculationAccelerationManager.IsAndroidNeonExecutionAllowed)
+            return SimdPath.Scalar;
+#endif
         // x86: FMA + AVX là đường Horner nhanh và chính xác nhất hiện có.
         if (CalculationAccelerationManager.AllowAvx && Avx.IsSupported &&
             Fma.IsSupported)

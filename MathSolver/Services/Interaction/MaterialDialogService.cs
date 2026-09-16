@@ -78,13 +78,13 @@ public static class MaterialDialogService
                 () => completion.TrySetResult(true));
 
         var builder =
-            new MaterialAlertDialogBuilder(activity)
-                .SetTitle(title)
-                .SetMessage(message)
-                .SetPositiveButton(
-                    buttonText,
-                    (_, _) => completion.TrySetResult(true))
-                .SetOnCancelListener(cancelListener);
+            new MaterialAlertDialogBuilder(activity);
+        builder.SetTitle(title);
+        builder.SetMessage(message);
+        builder.SetPositiveButton(
+            buttonText,
+            (_, _) => completion.TrySetResult(true));
+        builder.SetOnCancelListener(cancelListener);
 
         var dialog =
             builder.Create();
@@ -111,16 +111,16 @@ public static class MaterialDialogService
                 () => completion.TrySetResult(false));
 
         var builder =
-            new MaterialAlertDialogBuilder(activity)
-                .SetTitle(title)
-                .SetMessage(message)
-                .SetPositiveButton(
-                    accept,
-                    (_, _) => completion.TrySetResult(true))
-                .SetNegativeButton(
-                    cancel,
-                    (_, _) => completion.TrySetResult(false))
-                .SetOnCancelListener(cancelListener);
+            new MaterialAlertDialogBuilder(activity);
+        builder.SetTitle(title);
+        builder.SetMessage(message);
+        builder.SetPositiveButton(
+            accept,
+            (_, _) => completion.TrySetResult(true));
+        builder.SetNegativeButton(
+            cancel,
+            (_, _) => completion.TrySetResult(false));
+        builder.SetOnCancelListener(cancelListener);
 
         var dialog =
             builder.Create();

@@ -277,10 +277,10 @@ public static class LiveWallpaperVideoInspector
             break;
         }
 
-        if (!foundVideoTrack || !isH264)
+        if (!OperatingSystem.IsAndroidVersionAtLeast(26) || !foundVideoTrack || !isH264)
         {
             return new(
-                IsH264: false,
+                IsH264: foundVideoTrack && isH264,
                 CanUseHardwarePreferredH264Path: false,
                 CodecDisplayName: "H.264 / AVC",
                 HardwareDecoderName: null,
@@ -293,7 +293,7 @@ public static class LiveWallpaperVideoInspector
         var codecList =
             new MediaCodecList(MediaCodecListKind.AllCodecs);
 
-        foreach (MediaCodecInfo codec in codecList.GetCodecInfos())
+        foreach (MediaCodecInfo codec in codecList.GetCodecInfos() ?? [])
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -303,7 +303,7 @@ public static class LiveWallpaperVideoInspector
             }
 
             bool supportsH264 =
-                codec.GetSupportedTypes().Any(
+                (codec.GetSupportedTypes() ?? []).Any(
                     type => string.Equals(
                         type,
                         H264Mime,
@@ -319,10 +319,10 @@ public static class LiveWallpaperVideoInspector
             {
                 try
                 {
-                    MediaCodecInfo.CodecCapabilities capabilities =
+                    MediaCodecInfo.CodecCapabilities? capabilities =
                         codec.GetCapabilitiesForType(H264Mime);
 
-                    if (!capabilities.IsFormatSupported(h264Format))
+                    if (capabilities?.IsFormatSupported(h264Format) != true)
                     {
                         continue;
                     }
@@ -335,7 +335,7 @@ public static class LiveWallpaperVideoInspector
 
             bool isHardwareAccelerated;
 
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            if (OperatingSystem.IsAndroidVersionAtLeast(29))
             {
                 isHardwareAccelerated =
                     codec.IsHardwareAccelerated &&

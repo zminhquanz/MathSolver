@@ -26,8 +26,12 @@ namespace MathSolver
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
-                .UseMauiCommunityToolkit()
-                .UseMauiCommunityToolkitMediaElement(
+                .UseMauiCommunityToolkit();
+#if ANDROID
+            if (OperatingSystem.IsAndroidVersionAtLeast(26))
+#endif
+            {
+                builder.UseMauiCommunityToolkitMediaElement(
                     isAndroidForegroundServiceEnabled: false,
                     static options =>
                     {
@@ -43,13 +47,14 @@ namespace MathSolver
                         options.SetDefaultAndroidViewType(
                             AndroidViewType.TextureView);
 #endif
-                    })
-                .ConfigureFonts(fonts =>
-                {
-                    // Toàn bộ font được quản lý tại AppFontCatalog.
-                    // Khi thêm font mới, không cần sửa MauiProgram.
-                    AppFontCatalog.RegisterFonts(fonts);
-                });
+                    });
+            }
+            builder.ConfigureFonts(fonts =>
+            {
+                // Toàn bộ font được quản lý tại AppFontCatalog.
+                // Khi thêm font mới, không cần sửa MauiProgram.
+                AppFontCatalog.RegisterFonts(fonts);
+            });
 
 #if ANDROID
             ConfigureAndroidMaterial3Phase3(builder);

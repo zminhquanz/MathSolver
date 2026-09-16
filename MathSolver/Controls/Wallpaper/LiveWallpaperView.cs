@@ -234,6 +234,14 @@ public sealed class LiveWallpaperView : Grid
             return;
         }
 
+#if ANDROID
+        if (!OperatingSystem.IsAndroidVersionAtLeast(26))
+        {
+            ReleasePlaybackOwnership();
+            ReleaseAllAnimatedResources(immediateMediaRelease: true);
+            return;
+        }
+#endif
         // MP4 mode was accepted only after H.264/hardware-path validation.
         // Keep playback uninterrupted during AI/LLM inference. Tell the manager
         // before creating the player so optional frame analysis cannot overlap

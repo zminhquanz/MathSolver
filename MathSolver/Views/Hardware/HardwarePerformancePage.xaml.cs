@@ -112,7 +112,11 @@ public partial class HardwarePerformancePage : ContentPage
 
     private BenchmarkResult? _lastBenchmarkResult;
     private ThreadComparisonResult? _lastThreadComparisonResult;
+#if WINDOWS
     private SimdComparisonResult? _lastSimdComparisonResult;
+#else
+    private SimdComparisonResult? _lastSimdComparisonResult => null;
+#endif
     private RawBenchmarkKind _activeRawBenchmarkKind;
     private bool _isBenchmarkRunning;
     private bool _isLoadingAccelerationState;
@@ -624,6 +628,13 @@ public partial class HardwarePerformancePage : ContentPage
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
 
+        if (!CalculationAccelerationManager.IsAndroidNeonExecutionAllowed)
+        {
+            return useEnglish
+                ? "Execution: Scalar. NEON/AdvSIMD requires an optimized Android Release build and a supported ARM64 runtime."
+                : "Đang chạy Scalar. NEON/AdvSIMD chỉ bật trong Android Release có tối ưu và runtime ARM64 hỗ trợ.";
+        }
+
         string neonBackend =
             CalculationAccelerationManager.IsArmNeonAdvSimdAvailable
                 ? ".NET AdvSimd (Mono JIT)"
@@ -727,7 +738,6 @@ public partial class HardwarePerformancePage : ContentPage
             useSimd &&
             runtimeCanExecuteSimd;
 #else
-        const bool runtimeCanExecuteSimd = true;
         bool effectiveUseSimd = useSimd;
 #endif
 
@@ -766,9 +776,6 @@ public partial class HardwarePerformancePage : ContentPage
                 Architecture.Arm or
                 Architecture.Arm64) &&
             AndroidCpuInfo.HasArmSimd;
-#else
-        const bool hasArmHardwareSimd =
-            false;
 #endif
 
         bool accelerationUnavailable =
@@ -792,28 +799,17 @@ public partial class HardwarePerformancePage : ContentPage
                 !CalculationAccelerationManager
                     .IsPowerNttAccelerationAvailable
                     ? LocalizationKeys.Hardware.NttAccelerationUnavailable
-                    : CalculationAccelerationManager.UsePowerNttAvx2 || CalculationAccelerationManager.UsePowerNttSse
+                    : CalculationAccelerationManager.UsePowerNttAvx2 || CalculationAccelerationManager.UsePowerNttSse || CalculationAccelerationManager.UsePowerNttNeon
                         ? LocalizationKeys.Hardware.NttAccelerationOn
                         : LocalizationKeys.Hardware.NttAccelerationOff);
 
-        string powerExportBackend =
-#if ANDROID
-            "NEON/AdvSIMD";
-#else
-            "AVX2";
-#endif
-
         string powerExportAccelerationStatus =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                LocalizationService.TranslateKey(
-                    !CalculationAccelerationManager
-                        .IsPowerExportAccelerationAvailable
-                        ? LocalizationKeys.Hardware.PowerExportAccelerationUnavailable
-                        : CalculationAccelerationManager.UsePowerExportSimd
-                            ? LocalizationKeys.Hardware.PowerExportAccelerationOn
-                            : LocalizationKeys.Hardware.PowerExportAccelerationOff),
-                powerExportBackend);
+            LocalizationService.TranslateKey(
+                !CalculationAccelerationManager.IsPowerExportAccelerationAvailable
+                    ? LocalizationKeys.Hardware.PowerExportAccelerationUnavailable
+                    : CalculationAccelerationManager.UsePowerExportSimd
+                        ? LocalizationKeys.Hardware.PowerExportAccelerationOn
+                        : LocalizationKeys.Hardware.PowerExportAccelerationOff);
 
         string parabolaAccelerationStatus =
             LocalizationService.TranslateKey(
@@ -825,7 +821,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         accelerationStatus +=
             Environment.NewLine +
-            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : CalculationAccelerationManager.UsePowerNttSse ? (System.Runtime.Intrinsics.X86.Sse41.IsSupported ? "SSE4.1" : "SSE2") + " (128-bit, ≤10M) / Scalar" : "Scalar") + ")" +
+            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttNeon ? "NEON/AdvSIMD (128-bit, ≤10M) / Scalar" : CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 / Scalar" : "AVX2 / Scalar" : CalculationAccelerationManager.UsePowerNttSse ? (System.Runtime.Intrinsics.X86.Sse41.IsSupported ? "SSE4.1" : "SSE2") + " (128-bit, ≤10M) / Scalar" : "Scalar") + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
             Environment.NewLine +
@@ -3555,7 +3551,7 @@ public partial class HardwarePerformancePage : ContentPage
         // runtime cannot execute.
         actualUseSimd =
             actualUseSimd &&
-            CalculationAccelerationManager.IsArmNeonManagedAvailable;
+            CalculationAccelerationManager.IsAndroidNeonExecutionAllowed;
 #endif
 
         bool actualUseMultithreading =

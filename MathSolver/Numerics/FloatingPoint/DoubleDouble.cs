@@ -337,7 +337,7 @@ public readonly struct DoubleDouble :
 
     /// <summary>
     /// Computes sin(angle) and cos(angle) with DoubleDouble arithmetic.
-    /// The root engine only calls this for |angle| <= π/2, so a fixed
+    /// The root engine only calls this for |angle| &lt;= π/2, so a fixed
     /// Taylor expansion converges quickly and keeps the result at the same
     /// ~31-32 digit precision as the real root path.
     /// </summary>

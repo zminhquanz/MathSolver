@@ -108,7 +108,7 @@ public sealed class ThemedSvgPathIcon : ContentView
         // .NET MAUI hỗ trợ SVG-compatible path markup qua
         // PathGeometryConverter.ConvertFromInvariantString().
         _path.Data =
-            (MauiGeometry)new MauiPathGeometryConverter()
+            (MauiGeometry?)new MauiPathGeometryConverter()
                 .ConvertFromInvariantString(
                     pathMarkup);
     }
@@ -178,6 +178,6 @@ public sealed class ThemedSvgPathIcon : ContentView
                 iconColor);
 
         _path.Stroke =
-            null;
+            Brush.Transparent;
     }
 }

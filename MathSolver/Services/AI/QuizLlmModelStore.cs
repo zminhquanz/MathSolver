@@ -160,7 +160,7 @@ public sealed class QuizLlmModelStore
     }
 
     public static bool IsSupportedModelPath(
-        string? path)
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
     {
         if (string.IsNullOrWhiteSpace(path) ||
             !File.Exists(path) ||

@@ -478,7 +478,7 @@ public static class LiveWallpaperFrameAnalysis
                            1_000_000d);
 
                 bitmap =
-                    Build.VERSION.SdkInt >= BuildVersionCodes.OMr1
+                    OperatingSystem.IsAndroidVersionAtLeast(27)
                         ? retriever.GetScaledFrameAtTime(
                             timeMicroseconds,
                             Option.Closest,

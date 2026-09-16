@@ -346,9 +346,7 @@ public partial class AppShell : Shell
                     nameof(SettingsPage));
             }
 
-            return;
-#endif
-
+#else
             ContentPage? hostPage =
                 Shell.Current.CurrentPage as ContentPage;
 
@@ -442,6 +440,7 @@ public partial class AppShell : Shell
                     requestedRoute,
                     animate: false);
             }
+#endif
         }
         finally
         {
@@ -458,7 +457,8 @@ public partial class AppShell : Shell
 #if ANDROID
     private bool ShowAndroidSettingsPopup()
     {
-        if (SettingsButton.Handler?.PlatformView is not Android.Views.View anchor)
+        if (SettingsButton.Handler?.PlatformView is not Android.Views.View anchor ||
+            anchor.Context is not Android.Content.Context anchorContext)
         {
             return false;
         }
@@ -474,7 +474,7 @@ public partial class AppShell : Shell
 
         Android.Content.Context popupContext =
             new ContextThemeWrapper(
-                anchor.Context,
+                anchorContext,
                 popupThemeResource);
 
         // Dynamic Color is optional. When enabled, apply the Material You
@@ -496,7 +496,7 @@ public partial class AppShell : Shell
         // project SVG assets as leading icons. No custom popup layout is needed.
         AddAndroidSettingsMenuItem(
             popup,
-            anchor.Context,
+            anchorContext,
             itemId: 1,
             order: 0,
             title: useEnglish ? "Settings" : "Cài đặt",
@@ -504,7 +504,7 @@ public partial class AppShell : Shell
 
         AddAndroidSettingsMenuItem(
             popup,
-            anchor.Context,
+            anchorContext,
             itemId: 2,
             order: 1,
             title: useEnglish ? "Hardware information" : "Thông tin phần cứng",
@@ -512,7 +512,7 @@ public partial class AppShell : Shell
 
         AddAndroidSettingsMenuItem(
             popup,
-            anchor.Context,
+            anchorContext,
             itemId: 3,
             order: 2,
             title: useEnglish ? "About" : "Giới thiệu",
@@ -520,7 +520,7 @@ public partial class AppShell : Shell
 
         AddAndroidSettingsMenuItem(
             popup,
-            anchor.Context,
+            anchorContext,
             itemId: 4,
             order: 3,
             title: useEnglish ? "Reset settings" : "Đặt lại cài đặt",
@@ -528,7 +528,7 @@ public partial class AppShell : Shell
 
         // Framework PopupMenu exposes this from API 29 onward. Pixel 9/API 36
         // therefore shows all four leading icons without reflection/custom UI.
-        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q)
+        if (OperatingSystem.IsAndroidVersionAtLeast(29))
         {
             popup.SetForceShowIcon(true);
         }
@@ -555,7 +555,7 @@ public partial class AppShell : Shell
         int iconResource)
     {
         IMenuItem? menuItem =
-            popup.Menu.Add(
+            popup.Menu?.Add(
                 0,
                 itemId,
                 order,
@@ -603,7 +603,7 @@ public partial class AppShell : Shell
         object? sender,
         PopupMenu.MenuItemClickEventArgs e)
     {
-        switch (e.Item.ItemId)
+        switch (e.Item?.ItemId)
         {
             case 1:
                 await NavigateFromAndroidSettingsPopupAsync(

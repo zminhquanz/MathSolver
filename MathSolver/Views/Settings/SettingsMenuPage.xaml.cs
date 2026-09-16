@@ -86,7 +86,6 @@ public partial class SettingsMenuPage : ContentView
     private readonly List<AppFontOption> _fontOptions =
         AppFontCatalog.Options.ToList();
 
-    private bool _updatingPickerSelections;
 
     private readonly TaskCompletionSource<string?>
         _completion =

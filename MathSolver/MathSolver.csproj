@@ -52,9 +52,12 @@
     <UseMaterial3>true</UseMaterial3>
   </PropertyGroup>
 
-  <!-- Keep Mono on Android, but benchmark Debug builds through the Mono JIT
-       instead of the interpreter so managed ARM64 NEON/AdvSIMD intrinsics
-       can be exposed to the benchmark path. Windows is unaffected. -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);MATHSOLVER_ANDROID_RELEASE</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Keep Mono JIT on Android Debug. SIMD execution is separately disabled
+       by CalculationAccelerationManager; CPU capabilities remain detectable. -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
     <UseMonoRuntime>true</UseMonoRuntime>
     <UseInterpreter>false</UseInterpreter>

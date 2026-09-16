@@ -66,6 +66,25 @@ public static class CalculationAccelerationManager
         (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
          Vector128.IsHardwareAccelerated);
 
+    /// <summary>
+    /// Android execution policy shared by NTT, parabola, TXT export and benchmarks.
+    /// Hardware detection remains independent so Debug can still list CPU features.
+    /// </summary>
+    public static bool IsAndroidNeonExecutionAllowed =>
+#if ANDROID && MATHSOLVER_ANDROID_RELEASE && !DEBUG
+        IsAndroidBuildOptimized && IsArmNeonHardwareAvailable &&
+        (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated);
+#else
+        false;
+#endif
+
+#if ANDROID && MATHSOLVER_ANDROID_RELEASE && !DEBUG
+    private static readonly bool IsAndroidBuildOptimized =
+        Attribute.GetCustomAttribute(typeof(CalculationAccelerationManager).Assembly,
+            typeof(System.Diagnostics.DebuggableAttribute)) is not
+            System.Diagnostics.DebuggableAttribute { IsJITOptimizerDisabled: true };
+#endif
+
 #if ANDROID
     /// <summary>
     /// Android UI availability is based on the real ARM64 HWCAP flag.
@@ -167,6 +186,9 @@ public static class CalculationAccelerationManager
 
             return
                 _useSimd &&
+#if ANDROID
+                IsAndroidNeonExecutionAllowed &&
+#endif
                 IsSimdAvailable;
         }
     }
@@ -179,10 +201,10 @@ public static class CalculationAccelerationManager
     /// </summary>
     public static bool IsPowerExportAccelerationAvailable =>
 #if ANDROID
-        AdvSimd.Arm64.IsSupported;
+        IsAndroidNeonExecutionAllowed;
 #else
-        Avx2.IsSupported &&
-        Vector256.IsHardwareAccelerated &&
+        Sse2.IsSupported &&
+        Vector128.IsHardwareAccelerated &&
         (RuntimeInformation.ProcessArchitecture == Architecture.X64 ||
          RuntimeInformation.ProcessArchitecture == Architecture.X86);
 #endif
@@ -193,15 +215,16 @@ public static class CalculationAccelerationManager
     /// </summary>
     public static bool UsePowerExportSimd =>
         UseSimd &&
-        (EffectiveSimdMode == CalculationSimdMode.ArmNeon || AllowAvx) &&
+        (EffectiveSimdMode is CalculationSimdMode.ArmNeon or CalculationSimdMode.Sse or
+            CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512) &&
         IsPowerExportAccelerationAvailable;
 
     /// <summary>
-    /// x86 butterfly availability: SSE2 for <=10M, AVX2/AVX-512 also for >10M.
+    /// Cache-local butterflies: Android NEON and SSE2 for &lt;=10M; AVX2/AVX-512 also for >10M.
     /// </summary>
     public static bool IsPowerNttAccelerationAvailable =>
 #if ANDROID
-        false;
+        IsAndroidNeonExecutionAllowed;
 #else
         Sse2.IsSupported &&
         Vector128.IsHardwareAccelerated &&
@@ -214,7 +237,16 @@ public static class CalculationAccelerationManager
         Avx2.IsSupported &&
         IsPowerNttAccelerationAvailable;
 
-    /// <summary>SSE fallback for the legacy <=10M NTT cache-local butterflies.</summary>
+    /// <summary>Managed ARM64 NEON for Android's &lt;=10M NTT cache-local butterflies.</summary>
+    public static bool UsePowerNttNeon =>
+#if ANDROID
+        UseSimd && EffectiveSimdMode == CalculationSimdMode.ArmNeon &&
+        IsPowerNttAccelerationAvailable;
+#else
+        false;
+#endif
+
+    /// <summary>SSE fallback for the legacy &lt;=10M NTT cache-local butterflies.</summary>
     public static bool UsePowerNttSse =>
 #if ANDROID
         false;

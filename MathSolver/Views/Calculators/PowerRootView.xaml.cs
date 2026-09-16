@@ -3991,7 +3991,9 @@ public partial class PowerRootView : LocalizedSolverView
 
             lines.Insert(
                 6,
-                diagnostics.UsedSseNttButterflies
+                diagnostics.UsedNeonNttButterflies
+                    ? "NTT: NEON/AdvSIMD (128-bit, ≤10M) / Scalar"
+                    : diagnostics.UsedSseNttButterflies
                     ? System.Runtime.Intrinsics.X86.Sse41.IsSupported
                         ? "NTT: SSE4.1 (128-bit) / Scalar"
                         : "NTT: SSE2 (128-bit) / Scalar"

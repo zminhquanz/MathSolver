@@ -159,6 +159,7 @@ public partial class GemmaModelCatalogPage : ContentPage
             Grid.SetRow(ReadmePanel, 1);
 #endif
         }
+#if !ANDROID
         else
         {
             CatalogBodyGrid.ColumnDefinitions.Add(
@@ -173,6 +174,7 @@ public partial class GemmaModelCatalogPage : ContentPage
             Grid.SetColumn(ReadmePanel, 1);
             Grid.SetRow(ReadmePanel, 0);
         }
+#endif
 
 #if ANDROID
         DownloadConfirmPanel.MaximumHeightRequest =
@@ -445,6 +447,13 @@ public partial class GemmaModelCatalogPage : ContentPage
     {
         try
         {
+#if ANDROID
+            if (!OperatingSystem.IsAndroidVersionAtLeast(26))
+            {
+                // Keep the app-owned download directory on older Android.
+                return;
+            }
+#endif
             string initialPath =
                 Directory.Exists(_downloadDirectory)
                     ? _downloadDirectory

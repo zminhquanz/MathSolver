@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
@@ -704,7 +704,8 @@ internal sealed partial class ParallelBigUnsigned
                 nttTwiddleBufferPool,
                 useAvx2Ntt,
                 useAvx512Ntt,
-                useSseNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttSse);
+                useSseNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttSse,
+                useNeonNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttNeon);
 
         if (TryCreateExponentSplit(
                 exponent,
@@ -728,7 +729,7 @@ internal sealed partial class ParallelBigUnsigned
             new PowerDiagnosticsCollector();
 
         diagnostics.ConfigureNttBackends(
-            useAvx2Ntt, sharedNttTwiddlePlans.UseSseNtt);
+            useAvx2Ntt, sharedNttTwiddlePlans.UseSseNtt, sharedNttTwiddlePlans.UseNeonNtt);
 
         ParallelBigUnsigned magnitude;
         int actualWorkerCount;
@@ -775,7 +776,7 @@ internal sealed partial class ParallelBigUnsigned
     /// <summary>
     /// Memory-bounded exact power path for exponents above the production
     /// 10,000,000 limit and up to 100,000,000. It deliberately does not modify
-    /// Pow(): the first <=10M chunk (and optional remainder) is calculated by
+    /// Pow(): the first &lt;=10M chunk (and optional remainder) is calculated by
     /// the proven legacy engine, then a small Int32 quotient is merged through
     /// sequential in-place/segmented NTT multiplications. This prevents the
     /// large PowSplit branches from keeping multiple multi-gigabyte magnitudes
@@ -1362,7 +1363,7 @@ internal sealed partial class ParallelBigUnsigned
                 secondResult.Diagnostics);
 
         diagnostics.ConfigureNttBackends(
-            sharedNttTwiddlePlans.UseAvx2Ntt, sharedNttTwiddlePlans.UseSseNtt);
+            sharedNttTwiddlePlans.UseAvx2Ntt, sharedNttTwiddlePlans.UseSseNtt, sharedNttTwiddlePlans.UseNeonNtt);
 
         long finalCombineStarted =
             Stopwatch.GetTimestamp();
@@ -8913,16 +8914,16 @@ internal sealed partial class ParallelBigUnsigned
 
     /// <summary>
     /// Large-mode L1 AVX2 Shoup multiply that keeps only the low
-    /// 32 bits of x*w and q*p.  For both production NTT primes p < 2^31, the
+    /// 32 bits of x*w and q*p.  For both production NTT primes p &lt; 2^31, the
     /// Shoup provisional remainder r = x*w - q*p is in [0, 2p), therefore
-    /// r < 2^32.  The low 32-bit subtraction is consequently the exact
+    /// r &lt; 2^32.  The low 32-bit subtraction is consequently the exact
     /// provisional remainder, not merely a congruent residue.  VPMULLD can
     /// produce x*w and q*p for all eight lanes directly; only q still needs
     /// the two even/odd VPMULUDQ operations used by AVX2 to obtain high32.
     /// This reduces each modular product from six VPMULUDQ chains to two
     /// VPMULUDQ + two VPMULLD while preserving the accepted one-subtract
     /// VPMINUD correction.  It is deliberately dispatched only by the >10M
-    /// L1 experimental paths so the <=10M AVX2 fallback is unchanged.
+    /// L1 experimental paths so the &lt;=10M AVX2 fallback is unchanged.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector256<uint> MultiplyShoupLow32Avx2(
@@ -8997,7 +8998,7 @@ internal sealed partial class ParallelBigUnsigned
     /// <summary>
     /// >10M Inverse-L1 exact-low32 AVX-512 Shoup multiply. Both production
     /// NTT primes are below 2^31, so the provisional Shoup residue is below
-    /// 2p < 2^32. VPMULLD therefore needs only the exact low dword of x*w and
+    /// 2p &lt; 2^32. VPMULLD therefore needs only the exact low dword of x*w and
     /// q*p; VPMULUDQ is retained only for high32(x*shoup).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -9323,7 +9324,7 @@ internal sealed partial class ParallelBigUnsigned
 
     /// <summary>
     /// Sixteen-lane AVX-512F modular context. The general AVX-512 NTT gate is
-    /// still the <=10M path, while >10M Phase 1 constructs this context only
+    /// still the &lt;=10M path, while >10M Phase 1 constructs this context only
     /// for the isolated generic Inverse-L1 experiment. AVX2 remains fallback.
     /// </summary>
     private readonly struct Avx512NttModContext
@@ -10491,7 +10492,7 @@ internal sealed partial class ParallelBigUnsigned
     /// Both independent values share one twiddle/Shoup vector, but only the
     /// high 32 bits required for q use VPMULUDQ.  The product and q*p terms
     /// keep only their exact low dwords with VPMULLD, which is sufficient
-    /// because the Shoup provisional remainder is below 2p < 2^32 for both
+    /// because the Shoup provisional remainder is below 2p &lt; 2^32 for both
     /// production NTT primes.  The two quotient chains stay software-pipelined
     /// so this remains suitable for the bounded Forward stage-pair schedule.
     /// </summary>
@@ -11590,7 +11591,7 @@ internal sealed partial class ParallelBigUnsigned
     /// multiply.  Traversal, twiddle order, stores, scalar tail and register
     /// schedule are identical to ExecuteForwardCachedStagePairGroupBoundedAvx2;
     /// only the vector modular products use VPMULLD for the low product/q*p
-    /// terms.  This isolates large-mode Forward L1 from the accepted <=10M
+    /// terms.  This isolates large-mode Forward L1 from the accepted &lt;=10M
     /// AVX2 fallback.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -12116,7 +12117,7 @@ internal sealed partial class ParallelBigUnsigned
 
     /// <summary>
     /// AVX-512F counterpart of the cached DIF twiddle-major traversal. This is
-    /// deliberately restricted to the experimental <=10M path. One 512-bit
+    /// deliberately restricted to the experimental &lt;=10M path. One 512-bit
     /// twiddle/Shoup pair services sixteen butterflies across every group in
     /// the resident region before advancing, preserving the same cache reuse
     /// policy as the accepted AVX2 kernel.
@@ -12884,7 +12885,7 @@ internal sealed partial class ParallelBigUnsigned
     /// reduction already proven by the larger Forward-L1 pairs.  The two
     /// second-stage products continue to share one twiddle and are retired by
     /// the paired Low32 helper.  This helper is dispatched only by the existing
-    /// large-mode Low32 gate; <=10M AVX2 remains untouched.
+    /// large-mode Low32 gate; &lt;=10M AVX2 remains untouched.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardCachedStagePairRegionQuarter4Low32Avx2(
@@ -13731,7 +13732,7 @@ internal sealed partial class ParallelBigUnsigned
     /// vector modular products switch from full 64-bit product reconstruction
     /// to VPMULLD low-dword products plus VPMULUDQ only for high32(q).  The
     /// >10M path also routes the packed 16+8 pair through its dedicated Low32
-    /// specialization; <=10M keeps the accepted AVX2 packed kernel.
+    /// specialization; &lt;=10M keeps the accepted AVX2 packed kernel.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedLow32Avx2(
@@ -17817,7 +17818,7 @@ internal sealed partial class ParallelBigUnsigned
 
 
     /// <summary>
-    /// Cached global DIF pairs for <=10M and the separate >10M Phase-5A
+    /// Cached global DIF pairs for &lt;=10M and the separate >10M Phase-5A
     /// shapes. Worker-aligned slices keep every team member busy, including
     /// transforms with fewer groups than workers. Each slice uses exact
     /// sixteen-lane Low32 Shoup with scalar residual butterflies.
@@ -20054,7 +20055,7 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Cached global single stage for <=10M. Split the butterfly stream of
+    /// Cached global single stage for &lt;=10M. Split the butterfly stream of
     /// each group across workers so even the largest stages use the full team.
     /// Companions are published before entry; all arithmetic stays below p.
     /// </summary>
@@ -21786,9 +21787,6 @@ internal sealed partial class ParallelBigUnsigned
                 long localL3Ticks = 0;
                 long localL2Ticks = 0;
                 long localL1Ticks = 0;
-                long localL1Packed816Ticks = 0;
-                long localL1GenericStagePairTicks = 0;
-                long localL1Radix4TailTicks = 0;
 
                 var context =
                     new Avx2NttModContext(modulus);
@@ -22247,6 +22245,12 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.UseSseNtt)
         {
             ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                l3NttTileLength, l2NttTileLength, fusedNttBlockLength, false, cancellationToken);
+            return;
+        }
+        if (workers.UseNeonNtt)
+        {
+            ExecuteCachedTilesNeon(values, modulus, workers, twiddlePlan,
                 l3NttTileLength, l2NttTileLength, fusedNttBlockLength, false, cancellationToken);
             return;
         }
@@ -23734,6 +23738,12 @@ internal sealed partial class ParallelBigUnsigned
                 l3NttTileLength, l2NttTileLength, fusedNttBlockLength, true, cancellationToken);
             return;
         }
+        if (workers.UseNeonNtt)
+        {
+            ExecuteCachedTilesNeon(values, modulus, workers, twiddlePlan,
+                l3NttTileLength, l2NttTileLength, fusedNttBlockLength, true, cancellationToken);
+            return;
+        }
 
         int tileCount =
             values.Length /
@@ -24447,7 +24457,7 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// <=10M Forward DIF stages 4+2 across sixteen independent radix-4 groups.
+    /// &lt;=10M Forward DIF stages 4+2 across sixteen independent radix-4 groups.
     /// Inputs and outputs are canonical residues below p. Both primes are
     /// below 2^31, so the existing AVX-512 modular add/subtract and full-product
     /// Shoup helpers preserve the scalar arithmetic exactly. The shared NTT
@@ -24512,7 +24522,7 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// <=10M Inverse DIT stages 2+4 using the same sixteen-group transpose.
+    /// &lt;=10M Inverse DIT stages 2+4 using the same sixteen-group transpose.
     /// The caller supplies the inverse quarter-turn and its Shoup companion.
     /// Inverse-length normalization remains in the existing final NTT stage.
     /// </summary>
@@ -26365,6 +26375,12 @@ internal sealed partial class ParallelBigUnsigned
                 l2NttTileLength, l2NttTileLength, fusedNttBlockLength, false, cancellationToken);
             return;
         }
+        if (workers.UseNeonNtt)
+        {
+            ExecuteCachedTilesNeon(values, modulus, workers, twiddlePlan,
+                l2NttTileLength, l2NttTileLength, fusedNttBlockLength, false, cancellationToken);
+            return;
+        }
 
         int tileCount =
             values.Length /
@@ -26778,6 +26794,12 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.UseSseNtt)
         {
             ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                l2NttTileLength, l2NttTileLength, fusedNttBlockLength, true, cancellationToken);
+            return;
+        }
+        if (workers.UseNeonNtt)
+        {
+            ExecuteCachedTilesNeon(values, modulus, workers, twiddlePlan,
                 l2NttTileLength, l2NttTileLength, fusedNttBlockLength, true, cancellationToken);
             return;
         }
@@ -27396,6 +27418,12 @@ internal sealed partial class ParallelBigUnsigned
                 fusedNttBlockLength, fusedNttBlockLength, fusedNttBlockLength, false, cancellationToken);
             return;
         }
+        if (workers.UseNeonNtt)
+        {
+            ExecuteCachedTilesNeon(values, modulus, workers, twiddlePlan,
+                fusedNttBlockLength, fusedNttBlockLength, fusedNttBlockLength, false, cancellationToken);
+            return;
+        }
 
         if (workers.UseAvx2Ntt && twiddlePlan.ForwardShoupTwiddles is not null && Avx2.IsSupported)
         {
@@ -27607,6 +27635,12 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.UseSseNtt)
         {
             ExecuteCachedTilesSse(values, modulus, workers, twiddlePlan,
+                fusedNttBlockLength, fusedNttBlockLength, fusedNttBlockLength, true, cancellationToken);
+            return;
+        }
+        if (workers.UseNeonNtt)
+        {
+            ExecuteCachedTilesNeon(values, modulus, workers, twiddlePlan,
                 fusedNttBlockLength, fusedNttBlockLength, fusedNttBlockLength, true, cancellationToken);
             return;
         }
@@ -27945,7 +27979,7 @@ internal sealed partial class ParallelBigUnsigned
                     modulus,
                     shoupScale);
 
-            forwardShoupTwiddles[offset] =
+            forwardShoupTwiddles![offset] =
                 oneShoup;
 
             inverseShoupTwiddles![offset] =
@@ -27995,7 +28029,7 @@ internal sealed partial class ParallelBigUnsigned
                             modulus,
                             shoupScale);
 
-                    forwardShoupTwiddles[offset + index] =
+                    forwardShoupTwiddles![offset + index] =
                         shoup;
 
                     // For 0 < current < p and odd NTT prime p:
@@ -28067,7 +28101,7 @@ internal sealed partial class ParallelBigUnsigned
                                 modulus,
                                 shoupScale);
 
-                        forwardShoupTwiddles[offset + index] =
+                        forwardShoupTwiddles![offset + index] =
                             shoup;
 
                         inverseShoupTwiddles![inverseIndex] =
@@ -28116,7 +28150,7 @@ internal sealed partial class ParallelBigUnsigned
             NttTwiddleBufferPool bufferPool,
             bool useAvx2Ntt,
             int maximumCachedHalfLength = 0,
-            bool useSseNtt = false)
+            bool use128BitNtt = false)
         {
             _bufferPool =
                 bufferPool ??
@@ -28171,7 +28205,7 @@ internal sealed partial class ParallelBigUnsigned
             // switch selects AVX2 or the legacy SSE fallback. They are Pow-scoped and
             // reused by both <=10M and segmented >10M transforms.
             _useAvx2Ntt = useAvx2Ntt;
-            if (useAvx2Ntt || useSseNtt)
+            if (useAvx2Ntt || use128BitNtt)
             {
                 _forwardShoupTwiddles =
                     _bufferPool.Rent(
@@ -28621,6 +28655,7 @@ internal sealed partial class ParallelBigUnsigned
 
         private bool _usedAvx2NttButterflies;
         private bool _usedSseNttButterflies;
+        private bool _usedNeonNttButterflies;
         private long _nttWorkspacePeakBytes;
         private long _nttPoolPeakRetainedBytes;
         private int _nttBufferRentCount;
@@ -28967,7 +29002,8 @@ internal sealed partial class ParallelBigUnsigned
                 _usedAvx2NttButterflies =
                     first._usedAvx2NttButterflies ||
                     second._usedAvx2NttButterflies,
-                _usedSseNttButterflies = first._usedSseNttButterflies || second._usedSseNttButterflies
+                _usedSseNttButterflies = first._usedSseNttButterflies || second._usedSseNttButterflies,
+                _usedNeonNttButterflies = first._usedNeonNttButterflies || second._usedNeonNttButterflies
                 };
 
             result.CopyGlobalStageProfilesFrom(
@@ -29095,14 +29131,16 @@ internal sealed partial class ParallelBigUnsigned
             _usedAvx2NttButterflies |=
                 snapshot.UsedAvx2NttButterflies;
             _usedSseNttButterflies |= snapshot.UsedSseNttButterflies;
+            _usedNeonNttButterflies |= snapshot.UsedNeonNttButterflies;
         }
 
         public void ConfigureNttBackends(
-            bool enabled, bool useSse = false)
+            bool enabled, bool useSse = false, bool useNeon = false)
         {
             _usedAvx2NttButterflies |=
                 enabled;
             _usedSseNttButterflies |= useSse;
+            _usedNeonNttButterflies |= useNeon;
         }
 
         public void ConfigureSegmentedNttMultiplication(
@@ -29263,7 +29301,7 @@ internal sealed partial class ParallelBigUnsigned
                 _largePersistentGenerationCount,
                 _largePersistentStaticRangeCount,
                 _largeMemoryBudgetBufferLimit,
-                CreateGlobalStageProfiles()) { UsedSseNttButterflies = _usedSseNttButterflies };
+                CreateGlobalStageProfiles()) { UsedSseNttButterflies = _usedSseNttButterflies, UsedNeonNttButterflies = _usedNeonNttButterflies };
         }
 
         private static long ToTimestampTicks(
@@ -29324,6 +29362,7 @@ internal sealed partial class ParallelBigUnsigned
         private readonly NttTwiddleBufferPool _bufferPool;
         private readonly bool _useAvx2Ntt;
         private readonly bool _useSseNtt;
+        private readonly bool _useNeonNtt;
         private readonly bool _useAvx512Ntt;
         private readonly int _maximumCachedHalfLength;
 
@@ -29336,7 +29375,8 @@ internal sealed partial class ParallelBigUnsigned
             bool useAvx2Ntt,
             bool useAvx512Ntt = false,
             int maximumCachedHalfLength = 0,
-            bool useSseNtt = false)
+            bool useSseNtt = false,
+            bool useNeonNtt = false)
         {
             _bufferPool =
                 bufferPool ??
@@ -29351,9 +29391,13 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx512Ntt;
             _maximumCachedHalfLength = maximumCachedHalfLength;
             _useSseNtt = useSseNtt && !useAvx2Ntt && Sse2.IsSupported;
+            _useNeonNtt = useNeonNtt && !useAvx2Ntt &&
+                (System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported ||
+                 (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 && Vector128.IsHardwareAccelerated));
         }
 
         public bool UseSseNtt => _useSseNtt;
+        public bool UseNeonNtt => _useNeonNtt;
 
         public bool UseAvx2Ntt =>
             _useAvx2Ntt;
@@ -29376,7 +29420,7 @@ internal sealed partial class ParallelBigUnsigned
                         new NttTwiddlePlan(
                             _bufferPool,
                             _useAvx2Ntt,
-                            _maximumCachedHalfLength, _useSseNtt);
+                            _maximumCachedHalfLength, _useSseNtt || _useNeonNtt);
                 }
 
                 if (modulus == SecondModulus)
@@ -29385,7 +29429,7 @@ internal sealed partial class ParallelBigUnsigned
                         new NttTwiddlePlan(
                             _bufferPool,
                             _useAvx2Ntt,
-                            _maximumCachedHalfLength, _useSseNtt);
+                            _maximumCachedHalfLength, _useSseNtt || _useNeonNtt);
                 }
 
                 throw new ArgumentOutOfRangeException(
@@ -29439,7 +29483,7 @@ internal sealed partial class ParallelBigUnsigned
     /// Small Pow-scoped backing pool for shared twiddle tables. Scalar NTT
     /// needs four arrays total (forward + inverse for each modulus). AVX2 adds
     /// one Shoup companion per table, so the pool may temporarily retain eight
-    /// arrays for both <=10M and segmented >10M calculations.
+    /// arrays for both &lt;=10M and segmented >10M calculations.
     /// </summary>
     private sealed class NttTwiddleBufferPool : IDisposable
     {
@@ -29559,7 +29603,7 @@ internal sealed partial class ParallelBigUnsigned
     /// <summary>
     /// Reuses the large temporary uint[] workspaces needed by an NTT
     /// convolution. Only arrays of the largest transform length observed so
-    /// far are retained. The production <=10M path keeps the historical cap of
+    /// far are retained. The production &lt;=10M path keeps the historical cap of
     /// two buffers; memory-bounded segmented mode opts into three so two cached
     /// outer spectra plus one mutable product workspace can be reused without
     /// creating a fresh 256 MiB array for every outer segment.
@@ -29935,6 +29979,7 @@ internal sealed partial class ParallelBigUnsigned
         public int WorkerCount { get; }
 
         public bool UseSseNtt => _sharedNttTwiddlePlans.UseSseNtt;
+        public bool UseNeonNtt => _sharedNttTwiddlePlans.UseNeonNtt;
 
         public bool UseAvx2Ntt =>
             _sharedNttTwiddlePlans.UseAvx2Ntt;
@@ -30616,9 +30661,9 @@ internal sealed partial class ParallelBigUnsigned
 
     /// <summary>
     /// Formats fixed-width base-10,000 limbs in most-significant-first order.
-    /// Windows/x86 AVX2 processes 16 limbs -> 64 UTF-16 characters per
-    /// iteration. Android ARM64 NEON processes 8 limbs -> 32 UTF-16 characters
-    /// per iteration. Both paths use exact reciprocal /10 integer arithmetic;
+    /// Windows/x86 AVX-512 and AVX2 process 16 limbs per iteration; SSE2
+    /// processes 8 limbs. Android ARM64 NEON processes 8 or 4 limbs.
+    /// All paths use exact reciprocal /10 integer arithmetic;
     /// scalar remains the final fallback when SIMD is disabled or unavailable.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -30629,6 +30674,9 @@ internal sealed partial class ParallelBigUnsigned
         Span<char> destination,
         bool useSimd)
     {
+#if ANDROID
+        useSimd &= CalculationAccelerationManager.IsAndroidNeonExecutionAllowed;
+#endif
         if (limbCount <= 0)
         {
             return;
@@ -30650,7 +30698,23 @@ internal sealed partial class ParallelBigUnsigned
         int sourceHigh =
             highestSourceIndex;
 
+        CalculationSimdMode mode = useSimd
+            ? CalculationAccelerationManager.EffectiveSimdMode
+            : CalculationSimdMode.Portable;
+
+        if (useSimd && mode == CalculationSimdMode.Avx512 &&
+            Avx512F.IsSupported && Vector512.IsHardwareAccelerated && remaining >= 16)
+        {
+            int count = remaining & ~15;
+            WriteFixedLimbsDescendingAvx512(source, sourceHigh, count,
+                destination.Slice(destinationOffset, count * DigitsPerLimb));
+            sourceHigh -= count;
+            remaining -= count;
+            destinationOffset += count * DigitsPerLimb;
+        }
+
         if (useSimd &&
+            (mode is CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512) &&
             Avx2.IsSupported &&
             remaining >= 16)
         {
@@ -30677,23 +30741,34 @@ internal sealed partial class ParallelBigUnsigned
                 vectorizedLimbCount *
                 DigitsPerLimb;
         }
+
+        if (useSimd &&
+            (mode is CalculationSimdMode.Sse or CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512) &&
+            Sse2.IsSupported && remaining >= 8)
+        {
+            int count = remaining & ~7;
+            WriteFixedLimbsDescendingSse2(source, sourceHigh, count,
+                destination.Slice(destinationOffset, count * DigitsPerLimb));
+            sourceHigh -= count;
+            remaining -= count;
+            destinationOffset += count * DigitsPerLimb;
+        }
 #if ANDROID
         else if (useSimd &&
-                 AdvSimd.Arm64.IsSupported &&
-                 remaining >= 8)
+                 RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
+                 (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated) &&
+                 remaining >= (AdvSimd.Arm64.IsSupported ? 8 : 4))
         {
             int vectorizedLimbCount =
                 remaining &
-                ~7;
+                (AdvSimd.Arm64.IsSupported ? ~7 : ~3);
 
-            WriteFixedLimbsDescendingNeon(
-                source,
-                sourceHigh,
-                vectorizedLimbCount,
-                destination.Slice(
-                    destinationOffset,
-                    vectorizedLimbCount *
-                    DigitsPerLimb));
+            Span<char> vectorDestination = destination.Slice(
+                destinationOffset, vectorizedLimbCount * DigitsPerLimb);
+            if (AdvSimd.Arm64.IsSupported)
+                WriteFixedLimbsDescendingNeon(source, sourceHigh, vectorizedLimbCount, vectorDestination);
+            else
+                WriteFixedLimbsDescendingNeonVector128(source, sourceHigh, vectorizedLimbCount, vectorDestination);
 
             sourceHigh -=
                 vectorizedLimbCount;
@@ -30717,6 +30792,77 @@ internal sealed partial class ParallelBigUnsigned
             destinationOffset +=
                 DigitsPerLimb;
             remaining--;
+        }
+    }
+
+    // uint32 arithmetic needs AVX-512F only, not BW or DQ. For x <= 9999,
+    // x*52429 fits in uint32 and (x*52429)>>19 equals floor(x/10).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WriteFixedLimbsDescendingAvx512(
+        uint[] source, int highestSourceIndex, int limbCount, Span<char> destination)
+    {
+        var reverse = Vector512.Create(15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u,
+            7u, 6u, 5u, 4u, 3u, 2u, 1u, 0u);
+        var magic = Vector512.Create(52429u);
+        var ten = Vector512.Create(10u);
+        var zero = Vector512.Create(48u);
+        ref uint input = ref MemoryMarshal.GetArrayDataReference(source);
+        ref ushort output = ref MemoryMarshal.GetReference(MemoryMarshal.Cast<char, ushort>(destination));
+        for (int i = 0; i < limbCount; i += 16)
+        {
+            var values = Vector512.Shuffle(
+                Vector512.LoadUnsafe(ref input, (nuint)(highestSourceIndex - i - 15)), reverse);
+            var q10 = Avx512F.ShiftRightLogical(Avx512F.MultiplyLow(values, magic), 19);
+            var q100 = Avx512F.ShiftRightLogical(Avx512F.MultiplyLow(q10, magic), 19);
+            var q1000 = Avx512F.ShiftRightLogical(Avx512F.MultiplyLow(q100, magic), 19);
+            var ones = values - Avx512F.MultiplyLow(q10, ten) + zero;
+            var tens = q10 - Avx512F.MultiplyLow(q100, ten) + zero;
+            var hundreds = q100 - Avx512F.MultiplyLow(q1000, ten) + zero;
+            var thousands = q1000 + zero;
+            var firstPair = thousands | (hundreds << 16);
+            var secondPair = tens | (ones << 16);
+            // Each widened lane holds one limb's four UTF-16 digits, most
+            // significant first. WidenLower/Upper preserve global lane order.
+            var firstEight = Vector512.WidenLower(firstPair) | (Vector512.WidenLower(secondPair) << 32);
+            var lastEight = Vector512.WidenUpper(firstPair) | (Vector512.WidenUpper(secondPair) << 32);
+            firstEight.AsUInt16().StoreUnsafe(ref output, (nuint)(i * DigitsPerLimb));
+            lastEight.AsUInt16().StoreUnsafe(ref output, (nuint)(i * DigitsPerLimb + 32));
+        }
+    }
+
+    // SSE3/SSSE3/SSE4.x CPUs share this SSE2 baseline: no newer ISA is needed
+    // for exact unsigned high multiply, shifts, packing and digit interleaving.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WriteFixedLimbsDescendingSse2(
+        uint[] source, int highestSourceIndex, int limbCount, Span<char> destination)
+    {
+        var magic = Vector128.Create((ushort)0xCCCD);
+        var ten = Vector128.Create((ushort)10);
+        var zero = Vector128.Create((ushort)'0');
+        ref uint input = ref MemoryMarshal.GetArrayDataReference(source);
+        ref ushort output = ref MemoryMarshal.GetReference(MemoryMarshal.Cast<char, ushort>(destination));
+        for (int i = 0; i < limbCount; i += 8)
+        {
+            int low = highestSourceIndex - i - 7;
+            var upper = Sse2.Shuffle(Vector128.LoadUnsafe(ref input, (nuint)(low + 4)).AsInt32(), 0x1B);
+            var lower = Sse2.Shuffle(Vector128.LoadUnsafe(ref input, (nuint)low).AsInt32(), 0x1B);
+            // Limbs <=9999 fit signed int16, so SSE2 PACKSSDW is exact here.
+            var values = Sse2.PackSignedSaturate(upper, lower).AsUInt16();
+            var q10 = Sse2.ShiftRightLogical(Sse2.MultiplyHigh(values, magic), 3);
+            var q100 = Sse2.ShiftRightLogical(Sse2.MultiplyHigh(q10, magic), 3);
+            var q1000 = Sse2.ShiftRightLogical(Sse2.MultiplyHigh(q100, magic), 3);
+            var ones = Sse2.Add(Sse2.Subtract(values, Sse2.MultiplyLow(q10, ten)), zero);
+            var tens = Sse2.Add(Sse2.Subtract(q10, Sse2.MultiplyLow(q100, ten)), zero);
+            var hundreds = Sse2.Add(Sse2.Subtract(q100, Sse2.MultiplyLow(q1000, ten)), zero);
+            var thousands = Sse2.Add(q1000, zero);
+            var firstLow = Sse2.UnpackLow(thousands, hundreds).AsUInt32();
+            var secondLow = Sse2.UnpackLow(tens, ones).AsUInt32();
+            var firstHigh = Sse2.UnpackHigh(thousands, hundreds).AsUInt32();
+            var secondHigh = Sse2.UnpackHigh(tens, ones).AsUInt32();
+            Sse2.UnpackLow(firstLow, secondLow).AsUInt16().StoreUnsafe(ref output, (nuint)(i * DigitsPerLimb));
+            Sse2.UnpackHigh(firstLow, secondLow).AsUInt16().StoreUnsafe(ref output, (nuint)(i * DigitsPerLimb + 8));
+            Sse2.UnpackLow(firstHigh, secondHigh).AsUInt16().StoreUnsafe(ref output, (nuint)(i * DigitsPerLimb + 16));
+            Sse2.UnpackHigh(firstHigh, secondHigh).AsUInt16().StoreUnsafe(ref output, (nuint)(i * DigitsPerLimb + 24));
         }
     }
 
@@ -31106,6 +31252,42 @@ internal sealed partial class ParallelBigUnsigned
         }
     }
 
+    // Mono ARM64 can expose Vector128 while AdvSimd.IsSupported is false.
+    // Work in uint32 lanes: every limb is <=9999, so x*52429 fits in uint32
+    // and (x*52429)>>19 is an exact division by ten without widening multiply.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WriteFixedLimbsDescendingNeonVector128(
+        uint[] source, int highestSourceIndex, int limbCount, Span<char> destination)
+    {
+        var magic = Vector128.Create(52429u);
+        var ten = Vector128.Create(10u);
+        var asciiZero = Vector128.Create(48u);
+        ref ushort output = ref MemoryMarshal.GetReference(MemoryMarshal.Cast<char, ushort>(destination));
+
+        for (int processed = 0; processed < limbCount; processed += 4)
+        {
+            int high = highestSourceIndex - processed;
+            var values = Vector128.Create(source[high], source[high - 1], source[high - 2], source[high - 3]);
+            var q10 = Vector128.Multiply(values, magic) >> 19;
+            var q100 = Vector128.Multiply(q10, magic) >> 19;
+            var q1000 = Vector128.Multiply(q100, magic) >> 19;
+            var ones = values - Vector128.Multiply(q10, ten) + asciiZero;
+            var tens = q10 - Vector128.Multiply(q100, ten) + asciiZero;
+            var hundreds = q100 - Vector128.Multiply(q1000, ten) + asciiZero;
+            var thousands = q1000 + asciiZero;
+
+            // Android ARM64 is little endian: each ulong contains four UTF-16
+            // characters in thousands/hundreds/tens/ones order. No string or
+            // temporary array is allocated; the caller's existing block is reused.
+            var firstPair = thousands | (hundreds << 16);
+            var secondPair = tens | (ones << 16);
+            var firstTwo = Vector128.WidenLower(firstPair) | (Vector128.WidenLower(secondPair) << 32);
+            var lastTwo = Vector128.WidenUpper(firstPair) | (Vector128.WidenUpper(secondPair) << 32);
+            firstTwo.AsUInt16().StoreUnsafe(ref output, (nuint)(processed * DigitsPerLimb));
+            lastTwo.AsUInt16().StoreUnsafe(ref output, (nuint)(processed * DigitsPerLimb + 8));
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<ushort> DivideBy10U16Neon(
         Vector128<ushort> value)
@@ -31275,4 +31457,5 @@ internal sealed record ParallelPowerDiagnostics(
     IReadOnlyList<NttGlobalStageProfileEntry> GlobalStageProfiles)
 {
     public bool UsedSseNttButterflies { get; init; }
+    public bool UsedNeonNttButterflies { get; init; }
 }

@@ -2870,7 +2870,7 @@ internal static class LlmWordProblemParser
 
     public static bool TryParse(
         string rawOutput,
-        out LlmWordProblemDraft? draft,
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out LlmWordProblemDraft? draft,
         out string errorCode,
         out string? errorDetail)
     {

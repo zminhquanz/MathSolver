@@ -157,10 +157,10 @@ public static class AndroidMaterialYouManager
 
         var typedValue = new TypedValue();
 
-        if (!activity.Theme.ResolveAttribute(
+        if (activity.Theme?.ResolveAttribute(
                 attributeId,
                 typedValue,
-                true))
+                true) != true)
         {
             return false;
         }
@@ -170,9 +170,8 @@ public static class AndroidMaterialYouManager
         try
         {
             argb = typedValue.ResourceId != 0
-                ? activity.Resources!.GetColor(
-                    typedValue.ResourceId,
-                    activity.Theme).ToArgb()
+                ? AndroidX.Core.Content.ContextCompat.GetColor(
+                    activity, typedValue.ResourceId)
                 : typedValue.Data;
         }
         catch

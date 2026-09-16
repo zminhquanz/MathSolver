@@ -18,10 +18,14 @@ public partial class HardwareLlmBenchmarkView : ContentView
     private const double AccuracyChartTopAxisHeight = 28d;
     private const double AccuracyChartBottomPadding = 4d;
 
+#if WINDOWS
     private CancellationTokenSource? _benchmarkCancellation;
     private TaskCompletionSource<bool>? _benchmarkCompletion;
     private bool _isRunning;
     private int _progressVersion;
+#else
+    private bool _isRunning => false;
+#endif
     private bool _isUpdatingScopePicker;
     private LlmBenchmarkCategory? _selectedBenchmarkCategory;
 #if WINDOWS
@@ -30,7 +34,12 @@ public partial class HardwareLlmBenchmarkView : ContentView
 
     public bool IsBenchmarkRunning => _isRunning;
 
+#if WINDOWS
     public event Action<bool>? BenchmarkRunningChanged;
+#else
+    // LLM benchmarks are unavailable on these platforms.
+    public event Action<bool>? BenchmarkRunningChanged { add { } remove { } }
+#endif
 
     public HardwareLlmBenchmarkView()
     {
@@ -261,13 +270,19 @@ public partial class HardwareLlmBenchmarkView : ContentView
 
     public void CancelBenchmark()
     {
+#if WINDOWS
         _benchmarkCancellation?.Cancel();
+#endif
     }
 
     public async Task StopAndWaitAsync()
     {
         CancelBenchmark();
+#if WINDOWS
         Task? completion = _benchmarkCompletion?.Task;
+#else
+        Task? completion = null;
+#endif
         if (completion is not null)
         {
             await completion;
