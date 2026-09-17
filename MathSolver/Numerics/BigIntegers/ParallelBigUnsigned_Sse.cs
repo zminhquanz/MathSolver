@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -11,6 +12,141 @@ internal sealed partial class ParallelBigUnsigned
     // by PMULUDQ. SSE3 itself has no packed-integer primitive that improves
     // this NTT kernel, so SSE3 CPUs correctly execute the SSE2 arithmetic path.
     // SSE4.2 likewise inherits the SSE4.1 integer core (PMULLD/PMINUD).
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void TransposeRadix4Sse(
+        Vector128<uint> row0,
+        Vector128<uint> row1,
+        Vector128<uint> row2,
+        Vector128<uint> row3,
+        out Vector128<uint> column0,
+        out Vector128<uint> column1,
+        out Vector128<uint> column2,
+        out Vector128<uint> column3)
+    {
+        Vector128<uint> low01 = Sse2.UnpackLow(row0, row1);
+        Vector128<uint> high01 = Sse2.UnpackHigh(row0, row1);
+        Vector128<uint> low23 = Sse2.UnpackLow(row2, row3);
+        Vector128<uint> high23 = Sse2.UnpackHigh(row2, row3);
+
+        column0 = Sse2.UnpackLow(low01.AsUInt64(), low23.AsUInt64()).AsUInt32();
+        column1 = Sse2.UnpackHigh(low01.AsUInt64(), low23.AsUInt64()).AsUInt32();
+        column2 = Sse2.UnpackLow(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
+        column3 = Sse2.UnpackHigh(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardLengthFourAndTwoFusedBlockSse(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd)
+    {
+        Debug.Assert(Sse2.IsSupported);
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> twiddle = Vector128.Create(quarterTurnTwiddle);
+        Vector128<uint> shoup = Vector128.Create(quarterTurnShoup);
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 15;
+
+        for (; index <= vectorEnd; index += 16)
+        {
+            TransposeRadix4Sse(
+                Vector128.LoadUnsafe(ref data, (nuint)index),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 4)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 8)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 12)),
+                out Vector128<uint> value0, out Vector128<uint> value1,
+                out Vector128<uint> value2, out Vector128<uint> value3);
+
+            Vector128<uint> topSum0 = AddModuloSse(value0, value2, mod);
+            Vector128<uint> topSum1 = AddModuloSse(value1, value3, mod);
+            Vector128<uint> lower0 = SubtractModuloSse(value0, value2, mod);
+            Vector128<uint> lower1 = MultiplyShoupSse(
+                SubtractModuloSse(value1, value3, mod), twiddle, shoup, mod);
+
+            TransposeRadix4Sse(
+                AddModuloSse(topSum0, topSum1, mod),
+                SubtractModuloSse(topSum0, topSum1, mod),
+                AddModuloSse(lower0, lower1, mod),
+                SubtractModuloSse(lower0, lower1, mod),
+                out Vector128<uint> output0, out Vector128<uint> output1,
+                out Vector128<uint> output2, out Vector128<uint> output3);
+
+            output0.StoreUnsafe(ref data, (nuint)index);
+            output1.StoreUnsafe(ref data, (nuint)(index + 4));
+            output2.StoreUnsafe(ref data, (nuint)(index + 8));
+            output3.StoreUnsafe(ref data, (nuint)(index + 12));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseLengthTwoAndFourFusedBlockSse(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd)
+    {
+        Debug.Assert(Sse2.IsSupported);
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> twiddle = Vector128.Create(quarterTurnTwiddle);
+        Vector128<uint> shoup = Vector128.Create(quarterTurnShoup);
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 15;
+
+        for (; index <= vectorEnd; index += 16)
+        {
+            TransposeRadix4Sse(
+                Vector128.LoadUnsafe(ref data, (nuint)index),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 4)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 8)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 12)),
+                out Vector128<uint> value0, out Vector128<uint> value1,
+                out Vector128<uint> value2, out Vector128<uint> value3);
+
+            Vector128<uint> leftSum = AddModuloSse(value0, value1, mod);
+            Vector128<uint> rightSum = AddModuloSse(value2, value3, mod);
+            Vector128<uint> leftDifference = SubtractModuloSse(value0, value1, mod);
+            Vector128<uint> rightDifference = MultiplyShoupSse(
+                SubtractModuloSse(value2, value3, mod), twiddle, shoup, mod);
+
+            TransposeRadix4Sse(
+                AddModuloSse(leftSum, rightSum, mod),
+                AddModuloSse(leftDifference, rightDifference, mod),
+                SubtractModuloSse(leftSum, rightSum, mod),
+                SubtractModuloSse(leftDifference, rightDifference, mod),
+                out Vector128<uint> output0, out Vector128<uint> output1,
+                out Vector128<uint> output2, out Vector128<uint> output3);
+
+            output0.StoreUnsafe(ref data, (nuint)index);
+            output1.StoreUnsafe(ref data, (nuint)(index + 4));
+            output2.StoreUnsafe(ref data, (nuint)(index + 8));
+            output3.StoreUnsafe(ref data, (nuint)(index + 12));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteInverseLengthTwoAndFourFusedBlock(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
     private static readonly Vector128<byte> SseOddLaneShuffleMask =
         Vector128.Create(
             (byte)4, (byte)5, (byte)6, (byte)7,
@@ -301,15 +437,194 @@ internal sealed partial class ParallelBigUnsigned
         int first,
         uint modulus)
     {
-        Span<uint> seed = stackalloc uint[4];
-        ulong current = ModPow(root, (uint)first, modulus);
-        for (int lane = 0; lane < seed.Length; lane++)
-        {
-            seed[lane] = (uint)current;
-            current = current * root % modulus;
-        }
-        return Vector128.LoadUnsafe(
-            ref MemoryMarshal.GetReference(seed));
+        // SSE2 baseline (SSSE3/SSE4.x inherit this setup): calculate the tiny
+        // lane-power basis once, then apply root^first to all four lanes with
+        // the packed residue multiplier instead of a dependent scalar chain.
+        uint r2 = (uint)((ulong)root * root % modulus);
+        uint r3 = (uint)((ulong)r2 * root % modulus);
+        Vector128<uint> lanePowers = Vector128.Create(1u, root, r2, r3);
+        uint firstPower = (uint)ModPow(root, (uint)first, modulus);
+        return MultiplyResiduesSse(
+            lanePowers,
+            Vector128.Create(firstPower),
+            modulus);
+    }
+
+    /// <summary>
+    /// Four-lane SIMD Forward-DIF cached global S + S/2 pair.  Each worker
+    /// owns an independent quarter-stream slice, loads the four value streams
+    /// once, completes both stages while resident in Vector128 registers, and
+    /// consumes the existing cached twiddle + Shoup rows.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairByGroupsSse(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(Sse2.IsSupported);
+        const int CancellationStride = 1 << 15;
+        int halfLength = stageLength >> 1;
+        int quarterLength = halfLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segmentsPerGroup =
+            GetWorkerAlignedSegmentsPerGroup(
+                quarterLength,
+                groupCount,
+                workers.WorkerCount,
+                GetSegmentsPerGroup(
+                    quarterLength,
+                    groupCount,
+                    workers.WorkerCount));
+        Vector128<uint> mod = Vector128.Create(modulus);
+
+        ExecuteRanges(
+            checked(groupCount * segmentsPerGroup),
+            workers,
+            cancellationToken,
+            (segmentStart, segmentEnd) =>
+            {
+                ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+                ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
+                ref uint quotients = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+                for (int segment = segmentStart; segment < segmentEnd; segment++)
+                {
+                    GetSegmentBounds(
+                        segment,
+                        segmentsPerGroup,
+                        quarterLength,
+                        out int group,
+                        out int first,
+                        out int last);
+
+                    int groupOffset = group * stageLength;
+                    int index0 = groupOffset + first;
+                    int index1 = groupOffset + quarterLength + first;
+                    int index2 = groupOffset + halfLength + first;
+                    int index3 = groupOffset + halfLength + quarterLength + first;
+                    int firstTwiddleIndex0 = firstTwiddleOffset + first;
+                    int firstTwiddleIndex1 = firstTwiddleOffset + quarterLength + first;
+                    int secondTwiddleIndex = secondTwiddleOffset + first;
+                    int remaining = last - first;
+
+                    while (remaining > 0)
+                    {
+                        int chunkLength = Math.Min(remaining, CancellationStride);
+                        int chunkEnd = index0 + chunkLength;
+
+                        while (index0 + 3 < chunkEnd)
+                        {
+                            Vector128<uint> value0 = Vector128.LoadUnsafe(ref data, (nuint)index0);
+                            Vector128<uint> value1 = Vector128.LoadUnsafe(ref data, (nuint)index1);
+                            Vector128<uint> value2 = Vector128.LoadUnsafe(ref data, (nuint)index2);
+                            Vector128<uint> value3 = Vector128.LoadUnsafe(ref data, (nuint)index3);
+
+                            Vector128<uint> topSum0 = AddModuloSse(value0, value2, mod);
+                            Vector128<uint> topSum1 = AddModuloSse(value1, value3, mod);
+                            Vector128<uint> topDifference0 = SubtractModuloSse(value0, value2, mod);
+                            Vector128<uint> topDifference1 = SubtractModuloSse(value1, value3, mod);
+
+                            Vector128<uint> firstTwiddle0 =
+                                Vector128.LoadUnsafe(ref roots, (nuint)firstTwiddleIndex0);
+                            Vector128<uint> firstShoup0 =
+                                Vector128.LoadUnsafe(ref quotients, (nuint)firstTwiddleIndex0);
+                            Vector128<uint> firstTwiddle1 =
+                                Vector128.LoadUnsafe(ref roots, (nuint)firstTwiddleIndex1);
+                            Vector128<uint> firstShoup1 =
+                                Vector128.LoadUnsafe(ref quotients, (nuint)firstTwiddleIndex1);
+
+                            Vector128<uint> lower0 =
+                                MultiplyShoupSse(topDifference0, firstTwiddle0, firstShoup0, mod);
+                            Vector128<uint> lower1 =
+                                MultiplyShoupSse(topDifference1, firstTwiddle1, firstShoup1, mod);
+
+                            Vector128<uint> upperSum = AddModuloSse(topSum0, topSum1, mod);
+                            Vector128<uint> upperDifference = SubtractModuloSse(topSum0, topSum1, mod);
+                            Vector128<uint> lowerSum = AddModuloSse(lower0, lower1, mod);
+                            Vector128<uint> lowerDifference = SubtractModuloSse(lower0, lower1, mod);
+
+                            Vector128<uint> secondTwiddle =
+                                Vector128.LoadUnsafe(ref roots, (nuint)secondTwiddleIndex);
+                            Vector128<uint> secondShoup =
+                                Vector128.LoadUnsafe(ref quotients, (nuint)secondTwiddleIndex);
+
+                            Vector128<uint> output1 =
+                                MultiplyShoupSse(upperDifference, secondTwiddle, secondShoup, mod);
+                            Vector128<uint> output3 =
+                                MultiplyShoupSse(lowerDifference, secondTwiddle, secondShoup, mod);
+
+                            upperSum.StoreUnsafe(ref data, (nuint)index0);
+                            output1.StoreUnsafe(ref data, (nuint)index1);
+                            lowerSum.StoreUnsafe(ref data, (nuint)index2);
+                            output3.StoreUnsafe(ref data, (nuint)index3);
+
+                            index0 += 4;
+                            index1 += 4;
+                            index2 += 4;
+                            index3 += 4;
+                            firstTwiddleIndex0 += 4;
+                            firstTwiddleIndex1 += 4;
+                            secondTwiddleIndex += 4;
+                        }
+
+                        for (; index0 < chunkEnd;
+                             index0++, index1++, index2++, index3++,
+                             firstTwiddleIndex0++, firstTwiddleIndex1++, secondTwiddleIndex++)
+                        {
+                            uint value0 = values[index0];
+                            uint value1 = values[index1];
+                            uint value2 = values[index2];
+                            uint value3 = values[index3];
+
+                            uint topSum0 = value0 + value2;
+                            uint topSum1 = value1 + value3;
+                            if (topSum0 >= modulus) topSum0 -= modulus;
+                            if (topSum1 >= modulus) topSum1 -= modulus;
+
+                            uint topDifference0 =
+                                value0 >= value2 ? value0 - value2 : value0 + modulus - value2;
+                            uint topDifference1 =
+                                value1 >= value3 ? value1 - value3 : value1 + modulus - value3;
+
+                            uint lower0 = MultiplyShoupScalar(
+                                topDifference0, twiddles[firstTwiddleIndex0],
+                                shoupTwiddles[firstTwiddleIndex0], modulus);
+                            uint lower1 = MultiplyShoupScalar(
+                                topDifference1, twiddles[firstTwiddleIndex1],
+                                shoupTwiddles[firstTwiddleIndex1], modulus);
+
+                            uint upperSum = topSum0 + topSum1;
+                            if (upperSum >= modulus) upperSum -= modulus;
+                            uint upperDifference =
+                                topSum0 >= topSum1 ? topSum0 - topSum1 : topSum0 + modulus - topSum1;
+
+                            uint lowerSum = lower0 + lower1;
+                            if (lowerSum >= modulus) lowerSum -= modulus;
+                            uint lowerDifference =
+                                lower0 >= lower1 ? lower0 - lower1 : lower0 + modulus - lower1;
+
+                            values[index0] = upperSum;
+                            values[index1] = MultiplyShoupScalar(
+                                upperDifference, twiddles[secondTwiddleIndex],
+                                shoupTwiddles[secondTwiddleIndex], modulus);
+                            values[index2] = lowerSum;
+                            values[index3] = MultiplyShoupScalar(
+                                lowerDifference, twiddles[secondTwiddleIndex],
+                                shoupTwiddles[secondTwiddleIndex], modulus);
+                        }
+
+                        remaining -= chunkLength;
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -558,7 +873,7 @@ internal sealed partial class ParallelBigUnsigned
         if (inverse && leaf)
         {
             int quarterTurn = plan.GetOffset(2) + 1;
-            ExecuteInverseLengthTwoAndFourFusedBlock(values, modulus,
+            ExecuteInverseLengthTwoAndFourFusedBlockSse(values, modulus,
                 twiddles[quarterTurn], shoup[quarterTurn], offset, offset + length);
         }
         if (inverse && !leaf)
@@ -583,7 +898,7 @@ internal sealed partial class ParallelBigUnsigned
         if (!inverse && leaf)
         {
             int quarterTurn = plan.GetOffset(2) + 1;
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(values, modulus,
+            ExecuteForwardLengthFourAndTwoFusedBlockSse(values, modulus,
                 twiddles[quarterTurn], shoup[quarterTurn], offset, offset + length);
         }
     }

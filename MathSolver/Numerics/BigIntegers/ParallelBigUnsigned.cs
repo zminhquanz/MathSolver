@@ -4101,8 +4101,8 @@ internal sealed partial class ParallelBigUnsigned
                         Stopwatch.GetTimestamp();
 
                     // Reuse the exact tiled carry algorithm on large <=10M
-                    // AVX-512 blocks. Smaller blocks keep the sequential loop
-                    // so a worker barrier cannot dominate a short carry chain.
+                    // AVX-512 blocks. Keep the existing AVX-512 threshold so a
+                    // worker barrier cannot dominate a short carry chain.
                     if (workers.UseAvx512Ntt && workers.WorkerCount > 1 &&
                         blockCount >= (long)ParallelCarryTileLength * workers.WorkerCount)
                     {
@@ -4111,6 +4111,34 @@ internal sealed partial class ParallelBigUnsigned
                             inverseTailScratchStart, firstResidues, blockStart,
                             blockCount, carry, workers, cancellationToken);
                         carryTicks += Stopwatch.GetTimestamp() - carryStarted;
+                        continue;
+                    }
+
+                    // <=10M production path: CRT reconstruction already picked
+                    // the active AVX2 / SSE2+ / NEON backend above.  Feed the
+                    // whole bounded scratch block directly into the matching
+                    // SIMD carry decomposition instead of falling back to the
+                    // scalar /10000 loop.  Carry propagation itself remains a
+                    // short ordered reconciliation inside NormalizeCrtCarryRangeSimd.
+                    // AVX-512 behavior is intentionally left unchanged here.
+                    if (useAvx2Crt || useSseCrt || useNeonCrt)
+                    {
+                        carry = NormalizeCrtCarryRangeSimd(
+                            transformedSecond,
+                            crtScratch,
+                            useInverseTailScratch,
+                            inverseTailScratchStart,
+                            0,
+                            firstResidues,
+                            blockStart,
+                            blockCount,
+                            carry,
+                            workers,
+                            cancellationToken);
+
+                        carryTicks +=
+                            Stopwatch.GetTimestamp() -
+                            carryStarted;
                         continue;
                     }
 
@@ -4384,45 +4412,18 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.WorkerCount == 1 ||
             tileCount <= 1)
         {
-            ulong carry =
-                incomingCarry;
-
-            for (int offset = 0;
-                 offset < blockCount;
-                 offset++)
-            {
-                if ((offset & 0xFFFF) == 0)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
-                ulong coefficient =
-                    useInverseTailScratch
-                        ? ReadPackedUInt64(
-                            transformedSecond,
-                            checked(
-                                inverseTailScratchStart +
-                                offset * 2))
-                        : crtScratch![offset];
-
-                ulong value =
-                    coefficient +
-                    carry;
-
-                ulong quotient =
-                    value /
-                    LimbBase;
-
-                destination[blockStart + offset] =
-                    (uint)(value -
-                           quotient *
-                           LimbBase);
-
-                carry =
-                    quotient;
-            }
-
-            return carry;
+            return NormalizeCrtCarryRangeSimd(
+                transformedSecond,
+                crtScratch,
+                useInverseTailScratch,
+                inverseTailScratchStart,
+                relativeStart: 0,
+                destination,
+                blockStart,
+                blockCount,
+                incomingCarry,
+                workers,
+                cancellationToken);
         }
 
         ulong[] tileCarries =
@@ -4454,46 +4455,19 @@ internal sealed partial class ParallelBigUnsigned
                                 blockCount -
                                 relativeStart);
 
-                        ulong localCarry = 0;
-
-                        for (int offset = 0;
-                             offset < count;
-                             offset++)
-                        {
-                            if ((offset & 0xFFFF) == 0)
-                            {
-                                cancellationToken.ThrowIfCancellationRequested();
-                            }
-
-                            int relativeIndex =
-                                relativeStart +
-                                offset;
-
-                            ulong coefficient =
-                                useInverseTailScratch
-                                    ? ReadPackedUInt64(
-                                        transformedSecond,
-                                        checked(
-                                            inverseTailScratchStart +
-                                            relativeIndex * 2))
-                                    : crtScratch![relativeIndex];
-
-                            ulong value =
-                                coefficient +
-                                localCarry;
-
-                            ulong quotient =
-                                value /
-                                LimbBase;
-
-                            destination[blockStart + relativeIndex] =
-                                (uint)(value -
-                                       quotient *
-                                       LimbBase);
-
-                            localCarry =
-                                quotient;
-                        }
+                        ulong localCarry =
+                            NormalizeCrtCarryRangeSimd(
+                                transformedSecond,
+                                crtScratch,
+                                useInverseTailScratch,
+                                inverseTailScratchStart,
+                                relativeStart,
+                                destination,
+                                checked(blockStart + relativeStart),
+                                count,
+                                incomingCarry: 0,
+                                workers,
+                                cancellationToken);
 
                         tileCarries[tileIndex] =
                             localCarry;
@@ -5853,20 +5827,19 @@ internal sealed partial class ParallelBigUnsigned
                 stageLength >> 1;
 
             if (nextStageLength > l3NttTileLength &&
-                !workers.UseNeonNtt &&
                 CanFuseForwardCachedStagePair(
                     length,
                     stageLength,
                     twiddlePlan,
                     workers.WorkerCount,
                     buildCachedTwiddles,
-                    // The AVX2 <=10M hybrid path keeps the global arithmetic
-                    // scalar but can still split one huge DIF group into
-                    // independent quarter-stream ranges.  That lets early
-                    // global stages keep all 24 workers busy while eliminating
-                    // the second full-array sweep.  Scalar-only and large-mode
-                    // paths retain the proven whole-group fusion policy.
-                    twiddlePlan.HasAvx2Twiddles))
+                    // Every SIMD cached-pair backend can split one huge DIF
+                    // group into independent quarter-stream ranges.  This keeps
+                    // AVX2, SSE2->SSE4.x and NEON worker occupancy high without
+                    // changing the fused S + S/2 arithmetic or table layout.
+                    twiddlePlan.HasAvx2Twiddles ||
+                    workers.UseSseNtt ||
+                    workers.UseNeonNtt))
             {
                 int firstTwiddleOffset =
                     EnsureForwardCachedStageTwiddlesProfiled(
@@ -5903,12 +5876,14 @@ internal sealed partial class ParallelBigUnsigned
                 // seed transforms at N=2^22..2^25. Include eligible remainders
                 // too; keep other stage shapes and worker counts unchanged.
 
-                if (useAvx512ForwardGlobalCached || workers.UseAvx2Ntt)
+                if (useAvx512ForwardGlobalCached ||
+                    workers.UseAvx2Ntt ||
+                    workers.UseSseNtt ||
+                    workers.UseNeonNtt)
                 {
                     // Publish Low32/Shoup companions lazily for every SIMD
-                    // cached-global backend. AVX2 previously entered this fused
-                    // pair with a null companion table and therefore silently
-                    // fell back to the scalar global-tail kernel.
+                    // cached-global backend.  The same immutable companion rows
+                    // are consumed by AVX-512, AVX2, SSE2->SSE4.x and NEON.
                     EnsureForwardGlobalShoupStageProfiled(
                         twiddlePlan,
                         stageLength >> 1,
@@ -8215,6 +8190,24 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
+        if (workers.UseNeonNtt && halfLength >= 256)
+        {
+            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
+            {
+                int bothEnd = Math.Min(end, validRightCount);
+                if (start < bothEnd)
+                    ProcessFinalInversePrefixNeon(
+                        values, output, halfLength, start, bothEnd, true,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+                int leftStart = Math.Max(start, validRightCount);
+                if (leftStart < end)
+                    ProcessFinalInversePrefixNeon(
+                        values, output, halfLength, leftStart, end, false,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+            });
+            return;
+        }
+
         // Small transforms keep the exact v33 scalar final-stage path. The
         // four-lane kernel is intentionally enabled only at the same adaptive
         // threshold that already proved worthwhile for the global NTT path.
@@ -9341,8 +9334,9 @@ internal sealed partial class ParallelBigUnsigned
     /// the two even/odd VPMULUDQ operations used by AVX2 to obtain high32.
     /// This reduces each modular product from six VPMULUDQ chains to two
     /// VPMULUDQ + two VPMULLD while preserving the accepted one-subtract
-    /// VPMINUD correction.  It is deliberately dispatched only by the >10M
-    /// L1 experimental paths so the &lt;=10M AVX2 fallback is unchanged.
+    /// VPMINUD correction.  Large-mode L1 uses it for data butterflies; the
+    /// &lt;=10M fused uncached Forward pair now also uses it only for advancing
+    /// already-reduced twiddle vectors by a broadcast constant.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector256<uint> MultiplyShoupLow32Avx2(
@@ -18754,6 +18748,24 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
+        if (workers.UseSseNtt && shoupTwiddles is not null && Sse2.IsSupported)
+        {
+            ExecuteForwardCachedStagePairByGroupsSse(
+                values, modulus, twiddles, shoupTwiddles,
+                firstTwiddleOffset, secondTwiddleOffset, stageLength,
+                workers, cancellationToken);
+            return;
+        }
+
+        if (workers.UseNeonNtt && shoupTwiddles is not null)
+        {
+            ExecuteForwardCachedStagePairByGroupsNeon(
+                values, modulus, twiddles, shoupTwiddles,
+                firstTwiddleOffset, secondTwiddleOffset, stageLength,
+                workers, cancellationToken);
+            return;
+        }
+
         const int CancellationStride =
             1 << 15;
 
@@ -19057,7 +19069,8 @@ internal sealed partial class ParallelBigUnsigned
         // This lets RyuJIT strength-reduce every `% modulus` in the recurrence
         // and butterfly products while preserving the exact root^2/root^4
         // dependency-breaking schedule, worker partitioning, memory traffic,
-        // and stage boundaries.  AVX2 fallback is deliberately untouched.
+        // and stage boundaries.  AVX2 now has its own YMM stage-pair kernel;
+        // the constant-modulus scalar helpers remain only as non-AVX2 fallbacks.
         //
         // Keep the previously measured Coffee-Lake 100M specialization too:
         // that path remains valid even though >10M does not enable AVX-512.
@@ -19098,6 +19111,13 @@ internal sealed partial class ParallelBigUnsigned
                     if (workers.UseAvx512Ntt || workers.UseLargeModeAvx512ForwardGlobalUncached)
                     {
                         ProcessForwardUncachedStagePairAvx512(
+                            values, modulus, firstRoot, secondRoot, quarterPhase,
+                            stageLength, groupIndex, butterflyStart, butterflyEnd,
+                            cancellationToken);
+                    }
+                    else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+                    {
+                        ProcessForwardUncachedStagePairAvx2(
                             values, modulus, firstRoot, secondRoot, quarterPhase,
                             stageLength, groupIndex, butterflyStart, butterflyEnd,
                             cancellationToken);
@@ -19201,6 +19221,257 @@ internal sealed partial class ParallelBigUnsigned
             ProcessForwardUncachedStagePairSegmentByrefDualLane(
                 values, modulus, firstRoot, secondRoot, quarterPhase,
                 stageLength, groupIndex, i, last, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    /// <summary>
+    /// AVX2 version of the fused uncached global Forward-DIF stage pair S and S/2.
+    /// Eight adjacent butterflies are processed per YMM batch while the four quarter
+    /// streams are resident in registers.  Twiddle vectors are seeded once per worker
+    /// segment and then advanced by root^8 with exact low32 Shoup multiplication, so
+    /// the DRAM-sized stage pair no longer falls back to the scalar dual-lane kernel.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStagePairAvx2(
+        uint[] values,
+        uint modulus,
+        uint firstRoot,
+        uint secondRoot,
+        uint quarterPhase,
+        int stageLength,
+        int groupIndex,
+        int first,
+        int last,
+        CancellationToken cancellationToken)
+    {
+        int quarterLength =
+            stageLength >> 2;
+
+        int groupOffset =
+            groupIndex * stageLength;
+
+        Avx2NttModContext context =
+            new Avx2NttModContext(modulus);
+
+        // Stage S uses firstRoot^j for quarter 0/2 and the same sequence phase-
+        // shifted by firstRoot^quarterLength for quarter 1/3.  Stage S/2 uses
+        // secondRoot^j.  CreateTwiddleSequenceAvx2 expands all eight lanes from
+        // a compact scalar seed, so setup is independent of the batch count.
+        Vector256<uint> twiddle0 =
+            CreateTwiddleSequenceAvx2(
+                firstRoot,
+                first,
+                modulus);
+
+        Vector256<uint> twiddle1 =
+            MultiplyResiduesAvx2(
+                twiddle0,
+                Vector256.Create(quarterPhase),
+                modulus);
+
+        Vector256<uint> twiddle2 =
+            CreateTwiddleSequenceAvx2(
+                secondRoot,
+                first,
+                modulus);
+
+        uint step0 =
+            (uint)ModPow(
+                firstRoot,
+                8u,
+                modulus);
+
+        uint step2 =
+            (uint)ModPow(
+                secondRoot,
+                8u,
+                modulus);
+
+        Vector256<uint> advance0 =
+            Vector256.Create(step0);
+
+        Vector256<uint> advance2 =
+            Vector256.Create(step2);
+
+        Vector256<uint> advance0Shoup =
+            Vector256.Create(
+                (uint)(((ulong)step0 << 32) / modulus));
+
+        Vector256<uint> advance2Shoup =
+            Vector256.Create(
+                (uint)(((ulong)step2 << 32) / modulus));
+
+        ref uint data =
+            ref MemoryMarshal.GetArrayDataReference(values);
+
+        int i =
+            first;
+
+        int sinceCancellation =
+            0;
+
+        for (; i + 7 < last; i += 8)
+        {
+            int index0 =
+                groupOffset + i;
+
+            int index1 =
+                index0 + quarterLength;
+
+            int index2 =
+                index1 + quarterLength;
+
+            int index3 =
+                index2 + quarterLength;
+
+            Vector256<uint> value0 =
+                Vector256.LoadUnsafe(
+                    ref data,
+                    (nuint)index0);
+
+            Vector256<uint> value1 =
+                Vector256.LoadUnsafe(
+                    ref data,
+                    (nuint)index1);
+
+            Vector256<uint> value2 =
+                Vector256.LoadUnsafe(
+                    ref data,
+                    (nuint)index2);
+
+            Vector256<uint> value3 =
+                Vector256.LoadUnsafe(
+                    ref data,
+                    (nuint)index3);
+
+            // Complete stage S for both independent quarter pairs.
+            Vector256<uint> topSum0 =
+                AddModuloAvx2(
+                    value0,
+                    value2,
+                    context);
+
+            Vector256<uint> topSum1 =
+                AddModuloAvx2(
+                    value1,
+                    value3,
+                    context);
+
+            Vector256<uint> lower0 =
+                MultiplyResiduesAvx2(
+                    SubtractModuloAvx2(
+                        value0,
+                        value2,
+                        context),
+                    twiddle0,
+                    modulus);
+
+            Vector256<uint> lower1 =
+                MultiplyResiduesAvx2(
+                    SubtractModuloAvx2(
+                        value1,
+                        value3,
+                        context),
+                    twiddle1,
+                    modulus);
+
+            // Immediately fold stage S/2 while the four streams are still live.
+            // Store the two sum branches before the long modular-product chains to
+            // keep YMM register pressure bounded on both Zen and Coffee Lake.
+            Vector256<uint> upperSum =
+                AddModuloAvx2(
+                    topSum0,
+                    topSum1,
+                    context);
+
+            Vector256<uint> upperDifference =
+                SubtractModuloAvx2(
+                    topSum0,
+                    topSum1,
+                    context);
+
+            Vector256<uint> lowerSum =
+                AddModuloAvx2(
+                    lower0,
+                    lower1,
+                    context);
+
+            Vector256<uint> lowerDifference =
+                SubtractModuloAvx2(
+                    lower0,
+                    lower1,
+                    context);
+
+            upperSum.StoreUnsafe(
+                ref data,
+                (nuint)index0);
+
+            lowerSum.StoreUnsafe(
+                ref data,
+                (nuint)index2);
+
+            MultiplyResiduesAvx2(
+                    upperDifference,
+                    twiddle2,
+                    modulus)
+                .StoreUnsafe(
+                    ref data,
+                    (nuint)index1);
+
+            MultiplyResiduesAvx2(
+                    lowerDifference,
+                    twiddle2,
+                    modulus)
+                .StoreUnsafe(
+                    ref data,
+                    (nuint)index3);
+
+            // Both stage-S twiddle streams share the same root^8 advance.  Pair
+            // them so the two independent VPMULUDQ chains overlap; stage S/2 has
+            // its own root^(2*8) advance and remains independent.
+            MultiplyShoupPairSameTwiddleLow32Avx2(
+                twiddle0,
+                twiddle1,
+                advance0,
+                advance0Shoup,
+                context,
+                out twiddle0,
+                out twiddle1);
+
+            twiddle2 =
+                MultiplyShoupLow32Avx2(
+                    twiddle2,
+                    advance2,
+                    advance2Shoup,
+                    context);
+
+            sinceCancellation +=
+                8;
+
+            if (sinceCancellation >= (1 << 14))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                sinceCancellation = 0;
+            }
+        }
+
+        // Segment partitioning is not required to be a multiple of eight.  Keep
+        // the proven scalar dual-lane implementation only for the residual tail.
+        if (i < last)
+        {
+            ProcessForwardUncachedStagePairSegmentByrefDualLane(
+                values,
+                modulus,
+                firstRoot,
+                secondRoot,
+                quarterPhase,
+                stageLength,
+                groupIndex,
+                i,
+                last,
+                cancellationToken);
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
     }
 
@@ -19372,16 +19643,27 @@ internal sealed partial class ParallelBigUnsigned
         int first,
         uint modulus)
     {
-        Span<uint> seed = stackalloc uint[8];
-        ulong current = ModPow(root, (uint)first, modulus);
-        for (int lane = 0; lane < seed.Length; lane++)
-        {
-            seed[lane] = (uint)current;
-            current = current * root % modulus;
-        }
+        // Seed/setup SIMD: build only the first four powers scalar, then
+        // expand the upper four lanes with one packed modular multiply. A
+        // second packed multiply applies root^first to all eight lanes. This
+        // removes the seven-deep scalar dependency chain that used to run for
+        // every uncached-stage segment.
+        uint r2 = (uint)((ulong)root * root % modulus);
+        uint r3 = (uint)((ulong)r2 * root % modulus);
+        uint r4 = (uint)((ulong)r3 * root % modulus);
 
-        return Vector256.LoadUnsafe(
-            ref MemoryMarshal.GetReference(seed));
+        Vector256<uint> firstQuarterRepeated =
+            Vector256.Create(1u, root, r2, r3, 1u, root, r2, r3);
+        Vector256<uint> quarterAdvance =
+            Vector256.Create(1u, 1u, 1u, 1u, r4, r4, r4, r4);
+        Vector256<uint> lanePowers =
+            MultiplyResiduesAvx2(firstQuarterRepeated, quarterAdvance, modulus);
+
+        uint firstPower = (uint)ModPow(root, (uint)first, modulus);
+        return MultiplyResiduesAvx2(
+            lanePowers,
+            Vector256.Create(firstPower),
+            modulus);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -19809,18 +20091,35 @@ internal sealed partial class ParallelBigUnsigned
             });
     }
 
-    // Advance sixteen independent twiddle lanes by root^16. Only this tiny
-    // seed lives on the stack; no transform-sized twiddle table is introduced.
+    // Advance sixteen independent twiddle lanes by root^16. Seed/setup is
+    // expanded in ZMM registers: four scalar powers define one quarter, then
+    // root^4/root^8/root^12 broadcast factors generate all sixteen lanes.
     private static Vector512<uint> CreateTwiddleSequenceAvx512(uint root, int first, uint modulus)
     {
-        Span<uint> seed = stackalloc uint[16];
-        ulong current = ModPow(root, (uint)first, modulus);
-        for (int lane = 0; lane < seed.Length; lane++)
-        {
-            seed[lane] = (uint)current;
-            current = current * root % modulus;
-        }
-        return Vector512.LoadUnsafe(ref MemoryMarshal.GetReference(seed));
+        uint r2 = (uint)((ulong)root * root % modulus);
+        uint r3 = (uint)((ulong)r2 * root % modulus);
+        uint r4 = (uint)((ulong)r3 * root % modulus);
+        uint r8 = (uint)((ulong)r4 * r4 % modulus);
+        uint r12 = (uint)((ulong)r8 * r4 % modulus);
+
+        Vector512<uint> firstQuarterRepeated = Vector512.Create(
+            1u, root, r2, r3,
+            1u, root, r2, r3,
+            1u, root, r2, r3,
+            1u, root, r2, r3);
+        Vector512<uint> quarterAdvance = Vector512.Create(
+            1u, 1u, 1u, 1u,
+            r4, r4, r4, r4,
+            r8, r8, r8, r8,
+            r12, r12, r12, r12);
+        Vector512<uint> lanePowers =
+            MultiplyResiduesAvx512(firstQuarterRepeated, quarterAdvance, modulus);
+
+        uint firstPower = (uint)ModPow(root, (uint)first, modulus);
+        return MultiplyResiduesAvx512(
+            lanePowers,
+            Vector512.Create(firstPower),
+            modulus);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -24214,6 +24513,8 @@ internal sealed partial class ParallelBigUnsigned
         int tileEnd =
             tileOffset + l2NttTileLength;
 
+        int quarterTurnIndex = twiddlePlan.GetOffset(2) + 1;
+
         long l1Started =
             Stopwatch.GetTimestamp();
 
@@ -24222,13 +24523,11 @@ internal sealed partial class ParallelBigUnsigned
              blockOffset += fusedNttBlockLength)
         {
             // Inverse of the forward radix-4 tail: finish DIT stages 2 and 4
-            // in one local pass before building larger cache-resident parents.
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values,
-                modulus,
-                twiddles[twiddlePlan.GetOffset(2) + 1],
-                blockOffset,
-                blockOffset + fusedNttBlockLength);
+            // in one local SIMD pass before building larger cache-resident parents.
+            ExecuteInverseLengthTwoAndFourFusedBlockAvx2(
+                values, modulus, twiddles[quarterTurnIndex],
+                shoupTwiddles[quarterTurnIndex], blockOffset,
+                blockOffset + fusedNttBlockLength, context);
 
             // Starting at stage 8 leaves an even number of L1-local stages, so
             // every remaining DIT stage can participate in a pair: 8+16,
@@ -24395,9 +24694,9 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
-                ExecuteInverseLengthTwoAndFourFusedBlock(
+                ExecuteInverseLengthTwoAndFourFusedBlockAvx2(
                     values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                    blockOffset, blockOffset + fusedNttBlockLength);
+                    blockOffset, blockOffset + fusedNttBlockLength, context);
             }
 
             radix4TailTicks +=
@@ -25055,9 +25354,9 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
-                ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                ExecuteForwardLengthFourAndTwoFusedBlockAvx2(
                     values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                    blockOffset, blockEnd);
+                    blockOffset, blockEnd, context);
             }
         }
 
@@ -25268,9 +25567,9 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
-                ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                ExecuteForwardLengthFourAndTwoFusedBlockAvx2(
                     values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                    blockOffset, blockOffset + fusedNttBlockLength);
+                    blockOffset, blockOffset + fusedNttBlockLength, context);
             }
         }
     }
@@ -25318,9 +25617,9 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
-                ExecuteInverseLengthTwoAndFourFusedBlock(
+                ExecuteInverseLengthTwoAndFourFusedBlockAvx2(
                     values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                    blockOffset, blockOffset + fusedNttBlockLength);
+                    blockOffset, blockOffset + fusedNttBlockLength, context);
             }
 
             // Starting at stage 8 leaves an even number of L1-local stages, so
@@ -25443,6 +25742,141 @@ internal sealed partial class ParallelBigUnsigned
     /// Applying the same transpose to the outputs restores their memory order.
     /// Only AVX-512F unpacks are needed; no gather or temporary array is used.
     /// </summary>
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void TransposeRadix4Avx2(
+        Vector256<uint> row0,
+        Vector256<uint> row1,
+        Vector256<uint> row2,
+        Vector256<uint> row3,
+        out Vector256<uint> column0,
+        out Vector256<uint> column1,
+        out Vector256<uint> column2,
+        out Vector256<uint> column3)
+    {
+        Vector256<uint> low01 = Avx2.UnpackLow(row0, row1);
+        Vector256<uint> high01 = Avx2.UnpackHigh(row0, row1);
+        Vector256<uint> low23 = Avx2.UnpackLow(row2, row3);
+        Vector256<uint> high23 = Avx2.UnpackHigh(row2, row3);
+
+        column0 = Avx2.UnpackLow(low01.AsUInt64(), low23.AsUInt64()).AsUInt32();
+        column1 = Avx2.UnpackHigh(low01.AsUInt64(), low23.AsUInt64()).AsUInt32();
+        column2 = Avx2.UnpackLow(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
+        column3 = Avx2.UnpackHigh(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardLengthFourAndTwoFusedBlockAvx2(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd,
+        in Avx2NttModContext context)
+    {
+        Debug.Assert(Avx2.IsSupported);
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector256<uint> twiddle = Vector256.Create(quarterTurnTwiddle);
+        Vector256<uint> shoup = Vector256.Create(quarterTurnShoup);
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 31;
+
+        for (; index <= vectorEnd; index += 32)
+        {
+            TransposeRadix4Avx2(
+                Vector256.LoadUnsafe(ref data, (nuint)index),
+                Vector256.LoadUnsafe(ref data, (nuint)(index + 8)),
+                Vector256.LoadUnsafe(ref data, (nuint)(index + 16)),
+                Vector256.LoadUnsafe(ref data, (nuint)(index + 24)),
+                out Vector256<uint> value0, out Vector256<uint> value1,
+                out Vector256<uint> value2, out Vector256<uint> value3);
+
+            Vector256<uint> topSum0 = AddModuloAvx2(value0, value2, context);
+            Vector256<uint> topSum1 = AddModuloAvx2(value1, value3, context);
+            Vector256<uint> lower0 = SubtractModuloAvx2(value0, value2, context);
+            Vector256<uint> lower1 = MultiplyShoupAvx2(
+                SubtractModuloAvx2(value1, value3, context), twiddle, shoup, context);
+
+            TransposeRadix4Avx2(
+                AddModuloAvx2(topSum0, topSum1, context),
+                SubtractModuloAvx2(topSum0, topSum1, context),
+                AddModuloAvx2(lower0, lower1, context),
+                SubtractModuloAvx2(lower0, lower1, context),
+                out Vector256<uint> output0, out Vector256<uint> output1,
+                out Vector256<uint> output2, out Vector256<uint> output3);
+
+            output0.StoreUnsafe(ref data, (nuint)index);
+            output1.StoreUnsafe(ref data, (nuint)(index + 8));
+            output2.StoreUnsafe(ref data, (nuint)(index + 16));
+            output3.StoreUnsafe(ref data, (nuint)(index + 24));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseLengthTwoAndFourFusedBlockAvx2(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd,
+        in Avx2NttModContext context)
+    {
+        Debug.Assert(Avx2.IsSupported);
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector256<uint> twiddle = Vector256.Create(quarterTurnTwiddle);
+        Vector256<uint> shoup = Vector256.Create(quarterTurnShoup);
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 31;
+
+        for (; index <= vectorEnd; index += 32)
+        {
+            TransposeRadix4Avx2(
+                Vector256.LoadUnsafe(ref data, (nuint)index),
+                Vector256.LoadUnsafe(ref data, (nuint)(index + 8)),
+                Vector256.LoadUnsafe(ref data, (nuint)(index + 16)),
+                Vector256.LoadUnsafe(ref data, (nuint)(index + 24)),
+                out Vector256<uint> value0, out Vector256<uint> value1,
+                out Vector256<uint> value2, out Vector256<uint> value3);
+
+            Vector256<uint> leftSum = AddModuloAvx2(value0, value1, context);
+            Vector256<uint> rightSum = AddModuloAvx2(value2, value3, context);
+            Vector256<uint> leftDifference = SubtractModuloAvx2(value0, value1, context);
+            Vector256<uint> rightDifference = MultiplyShoupAvx2(
+                SubtractModuloAvx2(value2, value3, context), twiddle, shoup, context);
+
+            TransposeRadix4Avx2(
+                AddModuloAvx2(leftSum, rightSum, context),
+                AddModuloAvx2(leftDifference, rightDifference, context),
+                SubtractModuloAvx2(leftSum, rightSum, context),
+                SubtractModuloAvx2(leftDifference, rightDifference, context),
+                out Vector256<uint> output0, out Vector256<uint> output1,
+                out Vector256<uint> output2, out Vector256<uint> output3);
+
+            output0.StoreUnsafe(ref data, (nuint)index);
+            output1.StoreUnsafe(ref data, (nuint)(index + 8));
+            output2.StoreUnsafe(ref data, (nuint)(index + 16));
+            output3.StoreUnsafe(ref data, (nuint)(index + 24));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteInverseLengthTwoAndFourFusedBlock(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void TransposeRadix4Avx512(
         Vector512<uint> row0,
@@ -28294,9 +28728,9 @@ internal sealed partial class ParallelBigUnsigned
                     }
                     else
                     {
-                        ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                        ExecuteForwardLengthFourAndTwoFusedBlockAvx2(
                             values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                            blockOffset, blockEnd);
+                            blockOffset, blockEnd, context);
                     }
                     if ((blockIndex & 0x3F) == 0x3F) cancellationToken.ThrowIfCancellationRequested();
                 }

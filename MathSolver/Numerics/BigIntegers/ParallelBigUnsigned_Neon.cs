@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -10,8 +11,157 @@ internal sealed partial class ParallelBigUnsigned
     // Android ARM64 NEON backend through exponent 100M. Cached forward DIF /
     // inverse DIT use four uint32 lanes; the large-mode extension below adds
     // global cached/uncached stages, pointwise products and CRT. Final inverse
-    // prefix normalization keeps the shared scalar/prefix path, matching the
-    // x86 large-mode architecture.
+    // prefix normalization and the radix-4 leaf stages now stay in four-lane
+    // NEON registers on ARM64, with the existing scalar/portable fallbacks.
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void TransposeRadix4Neon(
+        Vector128<uint> row0,
+        Vector128<uint> row1,
+        Vector128<uint> row2,
+        Vector128<uint> row3,
+        out Vector128<uint> column0,
+        out Vector128<uint> column1,
+        out Vector128<uint> column2,
+        out Vector128<uint> column3)
+    {
+        Vector128<uint> low01 = AdvSimd.Arm64.ZipLow(row0, row1);
+        Vector128<uint> high01 = AdvSimd.Arm64.ZipHigh(row0, row1);
+        Vector128<uint> low23 = AdvSimd.Arm64.ZipLow(row2, row3);
+        Vector128<uint> high23 = AdvSimd.Arm64.ZipHigh(row2, row3);
+
+        column0 = AdvSimd.Arm64.ZipLow(low01.AsUInt64(), low23.AsUInt64()).AsUInt32();
+        column1 = AdvSimd.Arm64.ZipHigh(low01.AsUInt64(), low23.AsUInt64()).AsUInt32();
+        column2 = AdvSimd.Arm64.ZipLow(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
+        column3 = AdvSimd.Arm64.ZipHigh(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardLengthFourAndTwoFusedBlockNeon(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd)
+    {
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                blockOffset, blockEnd);
+            return;
+        }
+
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> twiddle = Vector128.Create(quarterTurnTwiddle);
+        Vector128<uint> shoup = Vector128.Create(quarterTurnShoup);
+
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 15;
+        for (; index <= vectorEnd; index += 16)
+        {
+            TransposeRadix4Neon(
+                Vector128.LoadUnsafe(ref data, (nuint)index),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 4)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 8)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 12)),
+                out Vector128<uint> value0, out Vector128<uint> value1,
+                out Vector128<uint> value2, out Vector128<uint> value3);
+
+            Vector128<uint> topSum0 = AddModuloNeon(value0, value2, mod);
+            Vector128<uint> topSum1 = AddModuloNeon(value1, value3, mod);
+            Vector128<uint> lower0 = SubtractModuloNeon(value0, value2, mod);
+            Vector128<uint> lower1 = MultiplyShoupNeon(
+                SubtractModuloNeon(value1, value3, mod), twiddle, shoup, mod);
+
+            TransposeRadix4Neon(
+                AddModuloNeon(topSum0, topSum1, mod),
+                SubtractModuloNeon(topSum0, topSum1, mod),
+                AddModuloNeon(lower0, lower1, mod),
+                SubtractModuloNeon(lower0, lower1, mod),
+                out Vector128<uint> output0, out Vector128<uint> output1,
+                out Vector128<uint> output2, out Vector128<uint> output3);
+
+            output0.StoreUnsafe(ref data, (nuint)index);
+            output1.StoreUnsafe(ref data, (nuint)(index + 4));
+            output2.StoreUnsafe(ref data, (nuint)(index + 8));
+            output3.StoreUnsafe(ref data, (nuint)(index + 12));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseLengthTwoAndFourFusedBlockNeon(
+        uint[] values,
+        uint modulus,
+        uint quarterTurnTwiddle,
+        uint quarterTurnShoup,
+        int blockOffset,
+        int blockEnd)
+    {
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            ExecuteInverseLengthTwoAndFourFusedBlock(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                blockOffset, blockEnd);
+            return;
+        }
+
+        Debug.Assert(((blockEnd - blockOffset) & 3) == 0);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> twiddle = Vector128.Create(quarterTurnTwiddle);
+        Vector128<uint> shoup = Vector128.Create(quarterTurnShoup);
+
+        int index = blockOffset;
+        int vectorEnd = blockEnd - 15;
+        for (; index <= vectorEnd; index += 16)
+        {
+            TransposeRadix4Neon(
+                Vector128.LoadUnsafe(ref data, (nuint)index),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 4)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 8)),
+                Vector128.LoadUnsafe(ref data, (nuint)(index + 12)),
+                out Vector128<uint> value0, out Vector128<uint> value1,
+                out Vector128<uint> value2, out Vector128<uint> value3);
+
+            Vector128<uint> leftSum = AddModuloNeon(value0, value1, mod);
+            Vector128<uint> rightSum = AddModuloNeon(value2, value3, mod);
+            Vector128<uint> leftDifference = SubtractModuloNeon(value0, value1, mod);
+            Vector128<uint> rightDifference = MultiplyShoupNeon(
+                SubtractModuloNeon(value2, value3, mod), twiddle, shoup, mod);
+
+            TransposeRadix4Neon(
+                AddModuloNeon(leftSum, rightSum, mod),
+                AddModuloNeon(leftDifference, rightDifference, mod),
+                SubtractModuloNeon(leftSum, rightSum, mod),
+                SubtractModuloNeon(leftDifference, rightDifference, mod),
+                out Vector128<uint> output0, out Vector128<uint> output1,
+                out Vector128<uint> output2, out Vector128<uint> output3);
+
+            output0.StoreUnsafe(ref data, (nuint)index);
+            output1.StoreUnsafe(ref data, (nuint)(index + 4));
+            output2.StoreUnsafe(ref data, (nuint)(index + 8));
+            output3.StoreUnsafe(ref data, (nuint)(index + 12));
+        }
+
+        if (index < blockEnd)
+        {
+            ExecuteInverseLengthTwoAndFourFusedBlock(
+                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
+                index, blockEnd);
+        }
+    }
+
     private static void ExecuteCachedTilesNeon(
         uint[] values, uint modulus, FixedWorkerTeam workers, NttTwiddlePlan plan,
         int tileLength, int l2Length, int l1Length, bool inverse,
@@ -48,7 +198,7 @@ internal sealed partial class ParallelBigUnsigned
         if (inverse && leaf)
         {
             int quarterTurn = plan.GetOffset(2) + 1;
-            ExecuteInverseLengthTwoAndFourFusedBlock(values, modulus,
+            ExecuteInverseLengthTwoAndFourFusedBlockNeon(values, modulus,
                 twiddles[quarterTurn], shoup[quarterTurn], offset, offset + length);
         }
         if (inverse && !leaf)
@@ -77,7 +227,7 @@ internal sealed partial class ParallelBigUnsigned
         if (!inverse && leaf)
         {
             int quarterTurn = plan.GetOffset(2) + 1;
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(values, modulus,
+            ExecuteForwardLengthFourAndTwoFusedBlockNeon(values, modulus,
                 twiddles[quarterTurn], shoup[quarterTurn], offset, offset + length);
         }
     }
@@ -486,16 +636,193 @@ internal sealed partial class ParallelBigUnsigned
         int first,
         uint modulus)
     {
-        Span<uint> seed = stackalloc uint[4];
-        ulong current = ModPow(root, (uint)first, modulus);
+        // ARM64 seed/setup mirrors the 128-bit x86 path: keep the lane basis
+        // independent of root^first and broadcast the segment seed through one
+        // packed NEON modular multiply.
+        uint r2 = (uint)((ulong)root * root % modulus);
+        uint r3 = (uint)((ulong)r2 * root % modulus);
+        Vector128<uint> lanePowers = Vector128.Create(1u, root, r2, r3);
+        uint firstPower = (uint)ModPow(root, (uint)first, modulus);
+        return MultiplyResiduesNeon(
+            lanePowers,
+            Vector128.Create(firstPower),
+            modulus);
+    }
 
-        for (int lane = 0; lane < seed.Length; lane++)
-        {
-            seed[lane] = (uint)current;
-            current = current * root % modulus;
-        }
+    /// <summary>
+    /// Four-lane SIMD Forward-DIF cached global S + S/2 pair.  Each worker
+    /// owns an independent quarter-stream slice, loads the four value streams
+    /// once, completes both stages while resident in Vector128 registers, and
+    /// consumes the existing cached twiddle + Shoup rows.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardCachedStagePairByGroupsNeon(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        const int CancellationStride = 1 << 15;
+        int halfLength = stageLength >> 1;
+        int quarterLength = halfLength >> 1;
+        int groupCount = values.Length / stageLength;
+        int segmentsPerGroup =
+            GetWorkerAlignedSegmentsPerGroup(
+                quarterLength,
+                groupCount,
+                workers.WorkerCount,
+                GetSegmentsPerGroup(
+                    quarterLength,
+                    groupCount,
+                    workers.WorkerCount));
+        Vector128<uint> mod = Vector128.Create(modulus);
 
-        return Vector128.LoadUnsafe(ref MemoryMarshal.GetReference(seed));
+        ExecuteRanges(
+            checked(groupCount * segmentsPerGroup),
+            workers,
+            cancellationToken,
+            (segmentStart, segmentEnd) =>
+            {
+                ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+                ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
+                ref uint quotients = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+                for (int segment = segmentStart; segment < segmentEnd; segment++)
+                {
+                    GetSegmentBounds(
+                        segment,
+                        segmentsPerGroup,
+                        quarterLength,
+                        out int group,
+                        out int first,
+                        out int last);
+
+                    int groupOffset = group * stageLength;
+                    int index0 = groupOffset + first;
+                    int index1 = groupOffset + quarterLength + first;
+                    int index2 = groupOffset + halfLength + first;
+                    int index3 = groupOffset + halfLength + quarterLength + first;
+                    int firstTwiddleIndex0 = firstTwiddleOffset + first;
+                    int firstTwiddleIndex1 = firstTwiddleOffset + quarterLength + first;
+                    int secondTwiddleIndex = secondTwiddleOffset + first;
+                    int remaining = last - first;
+
+                    while (remaining > 0)
+                    {
+                        int chunkLength = Math.Min(remaining, CancellationStride);
+                        int chunkEnd = index0 + chunkLength;
+
+                        while (index0 + 3 < chunkEnd)
+                        {
+                            Vector128<uint> value0 = Vector128.LoadUnsafe(ref data, (nuint)index0);
+                            Vector128<uint> value1 = Vector128.LoadUnsafe(ref data, (nuint)index1);
+                            Vector128<uint> value2 = Vector128.LoadUnsafe(ref data, (nuint)index2);
+                            Vector128<uint> value3 = Vector128.LoadUnsafe(ref data, (nuint)index3);
+
+                            Vector128<uint> topSum0 = AddModuloNeon(value0, value2, mod);
+                            Vector128<uint> topSum1 = AddModuloNeon(value1, value3, mod);
+                            Vector128<uint> topDifference0 = SubtractModuloNeon(value0, value2, mod);
+                            Vector128<uint> topDifference1 = SubtractModuloNeon(value1, value3, mod);
+
+                            Vector128<uint> firstTwiddle0 =
+                                Vector128.LoadUnsafe(ref roots, (nuint)firstTwiddleIndex0);
+                            Vector128<uint> firstShoup0 =
+                                Vector128.LoadUnsafe(ref quotients, (nuint)firstTwiddleIndex0);
+                            Vector128<uint> firstTwiddle1 =
+                                Vector128.LoadUnsafe(ref roots, (nuint)firstTwiddleIndex1);
+                            Vector128<uint> firstShoup1 =
+                                Vector128.LoadUnsafe(ref quotients, (nuint)firstTwiddleIndex1);
+
+                            Vector128<uint> lower0 =
+                                MultiplyShoupNeon(topDifference0, firstTwiddle0, firstShoup0, mod);
+                            Vector128<uint> lower1 =
+                                MultiplyShoupNeon(topDifference1, firstTwiddle1, firstShoup1, mod);
+
+                            Vector128<uint> upperSum = AddModuloNeon(topSum0, topSum1, mod);
+                            Vector128<uint> upperDifference = SubtractModuloNeon(topSum0, topSum1, mod);
+                            Vector128<uint> lowerSum = AddModuloNeon(lower0, lower1, mod);
+                            Vector128<uint> lowerDifference = SubtractModuloNeon(lower0, lower1, mod);
+
+                            Vector128<uint> secondTwiddle =
+                                Vector128.LoadUnsafe(ref roots, (nuint)secondTwiddleIndex);
+                            Vector128<uint> secondShoup =
+                                Vector128.LoadUnsafe(ref quotients, (nuint)secondTwiddleIndex);
+
+                            Vector128<uint> output1 =
+                                MultiplyShoupNeon(upperDifference, secondTwiddle, secondShoup, mod);
+                            Vector128<uint> output3 =
+                                MultiplyShoupNeon(lowerDifference, secondTwiddle, secondShoup, mod);
+
+                            upperSum.StoreUnsafe(ref data, (nuint)index0);
+                            output1.StoreUnsafe(ref data, (nuint)index1);
+                            lowerSum.StoreUnsafe(ref data, (nuint)index2);
+                            output3.StoreUnsafe(ref data, (nuint)index3);
+
+                            index0 += 4;
+                            index1 += 4;
+                            index2 += 4;
+                            index3 += 4;
+                            firstTwiddleIndex0 += 4;
+                            firstTwiddleIndex1 += 4;
+                            secondTwiddleIndex += 4;
+                        }
+
+                        for (; index0 < chunkEnd;
+                             index0++, index1++, index2++, index3++,
+                             firstTwiddleIndex0++, firstTwiddleIndex1++, secondTwiddleIndex++)
+                        {
+                            uint value0 = values[index0];
+                            uint value1 = values[index1];
+                            uint value2 = values[index2];
+                            uint value3 = values[index3];
+
+                            uint topSum0 = value0 + value2;
+                            uint topSum1 = value1 + value3;
+                            if (topSum0 >= modulus) topSum0 -= modulus;
+                            if (topSum1 >= modulus) topSum1 -= modulus;
+
+                            uint topDifference0 =
+                                value0 >= value2 ? value0 - value2 : value0 + modulus - value2;
+                            uint topDifference1 =
+                                value1 >= value3 ? value1 - value3 : value1 + modulus - value3;
+
+                            uint lower0 = MultiplyShoupScalar(
+                                topDifference0, twiddles[firstTwiddleIndex0],
+                                shoupTwiddles[firstTwiddleIndex0], modulus);
+                            uint lower1 = MultiplyShoupScalar(
+                                topDifference1, twiddles[firstTwiddleIndex1],
+                                shoupTwiddles[firstTwiddleIndex1], modulus);
+
+                            uint upperSum = topSum0 + topSum1;
+                            if (upperSum >= modulus) upperSum -= modulus;
+                            uint upperDifference =
+                                topSum0 >= topSum1 ? topSum0 - topSum1 : topSum0 + modulus - topSum1;
+
+                            uint lowerSum = lower0 + lower1;
+                            if (lowerSum >= modulus) lowerSum -= modulus;
+                            uint lowerDifference =
+                                lower0 >= lower1 ? lower0 - lower1 : lower0 + modulus - lower1;
+
+                            values[index0] = upperSum;
+                            values[index1] = MultiplyShoupScalar(
+                                upperDifference, twiddles[secondTwiddleIndex],
+                                shoupTwiddles[secondTwiddleIndex], modulus);
+                            values[index2] = lowerSum;
+                            values[index3] = MultiplyShoupScalar(
+                                lowerDifference, twiddles[secondTwiddleIndex],
+                                shoupTwiddles[secondTwiddleIndex], modulus);
+                        }
+
+                        remaining -= chunkLength;
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+            });
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -812,6 +1139,95 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessFinalInversePrefixNeon(
+        uint[] values,
+        uint[] output,
+        int halfLength,
+        int start,
+        int end,
+        bool writeRight,
+        uint modulus,
+        uint root,
+        uint inverseLength,
+        uint inverseLengthShoup,
+        CancellationToken cancellationToken)
+    {
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            uint rootSquared = (uint)((ulong)root * root % modulus);
+            uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
+            if (writeRight)
+            {
+                ExecuteFinalInverseBothOutputsRange(values, output, halfLength, start, end,
+                    modulus, root, rootSquared, rootFourth, inverseLength,
+                    inverseLengthShoup, cancellationToken);
+            }
+            else
+            {
+                ExecuteFinalInverseLeftOnlyRange(values, output, halfLength, start, end,
+                    modulus, root, rootSquared, rootFourth, inverseLength,
+                    inverseLengthShoup, cancellationToken);
+            }
+            return;
+        }
+
+        ref uint valuesRef = ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint outputRef = ref MemoryMarshal.GetArrayDataReference(output);
+        Vector128<uint> modulusVector = Vector128.Create(modulus);
+        Vector128<uint> inverseVector = Vector128.Create(inverseLength);
+        Vector128<uint> inverseShoupVector = Vector128.Create(inverseLengthShoup);
+        Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
+
+        int i = start;
+        if (i + 4 <= end)
+        {
+            Vector128<uint> twiddle = CreateTwiddleSequenceNeon(root, i, modulus);
+            for (; i + 4 <= end; i += 4)
+            {
+                int rightIndex = i + halfLength;
+                Vector128<uint> left = Vector128.LoadUnsafe(ref valuesRef, (nuint)i);
+                Vector128<uint> right = MultiplyResiduesNeon(
+                    Vector128.LoadUnsafe(ref valuesRef, (nuint)rightIndex),
+                    twiddle, modulus);
+
+                Vector128<uint> sum = AddModuloNeon(left, right, modulusVector);
+                Vector128<uint> difference = SubtractModuloNeon(left, right, modulusVector);
+
+                MultiplyShoupNeon(sum, inverseVector, inverseShoupVector, modulusVector)
+                    .StoreUnsafe(ref outputRef, (nuint)i);
+                if (writeRight)
+                {
+                    MultiplyShoupNeon(difference, inverseVector, inverseShoupVector, modulusVector)
+                        .StoreUnsafe(ref outputRef, (nuint)rightIndex);
+                }
+
+                if (i + 4 < end)
+                    twiddle = MultiplyResiduesNeon(twiddle, advance, modulus);
+
+                if (((i - start) & 0x7FFF) == 0x7FFC)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+
+        if (i < end)
+        {
+            uint rootSquared = (uint)((ulong)root * root % modulus);
+            uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
+            if (writeRight)
+            {
+                ExecuteFinalInverseBothOutputsRange(values, output, halfLength, i, end,
+                    modulus, root, rootSquared, rootFourth, inverseLength,
+                    inverseLengthShoup, cancellationToken);
+            }
+            else
+            {
+                ExecuteFinalInverseLeftOnlyRange(values, output, halfLength, i, end,
+                    modulus, root, rootSquared, rootFourth, inverseLength,
+                    inverseLengthShoup, cancellationToken);
+            }
+        }
+    }
+
     private static int ReconstructCrtRangeNeon(
         ReadOnlySpan<uint> firstSpan,
         ReadOnlySpan<uint> secondSpan,
