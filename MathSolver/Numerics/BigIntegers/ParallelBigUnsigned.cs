@@ -2721,6 +2721,28 @@ internal sealed partial class ParallelBigUnsigned
                     workers,
                     cancellationToken);
             }
+            else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+            {
+                ExecutePointwiseProductAvx2(
+                    cachedLeftSpectrum,
+                    cachedLeftSpectrum,
+                    transformedRight,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
+            else if (workers.UseSseNtt && Sse2.IsSupported)
+            {
+                ExecutePointwiseProductSse(
+                    cachedLeftSpectrum,
+                    cachedLeftSpectrum,
+                    transformedRight,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
             else if (workers.UseNeonNtt)
             {
                 ExecutePointwiseProductNeon(
@@ -2853,6 +2875,28 @@ internal sealed partial class ParallelBigUnsigned
                         workers,
                         cancellationToken);
                 }
+                else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+                {
+                    ExecutePointwiseProductAvx2(
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else if (workers.UseSseNtt && Sse2.IsSupported)
+                {
+                    ExecutePointwiseProductSse(
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
                 else if (workers.UseNeonNtt)
                 {
                     ExecutePointwiseProductNeon(
@@ -2920,6 +2964,28 @@ internal sealed partial class ParallelBigUnsigned
                         modulus))
                 {
                     ExecutePointwiseProductDualVectorIlp(
+                        transformedProduct,
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+                {
+                    ExecutePointwiseProductAvx2(
+                        transformedProduct,
+                        transformedProduct,
+                        cachedLeftSpectrum,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else if (workers.UseSseNtt && Sse2.IsSupported)
+                {
+                    ExecutePointwiseProductSse(
                         transformedProduct,
                         transformedProduct,
                         cachedLeftSpectrum,
@@ -4578,6 +4644,28 @@ internal sealed partial class ParallelBigUnsigned
                         workers,
                         cancellationToken);
                 }
+                else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+                {
+                    ExecutePointwiseProductAvx2(
+                        transformedLeft,
+                        transformedLeft,
+                        transformedLeft,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
+                else if (workers.UseSseNtt && Sse2.IsSupported)
+                {
+                    ExecutePointwiseProductSse(
+                        transformedLeft,
+                        transformedLeft,
+                        transformedLeft,
+                        transformLength,
+                        modulus,
+                        workers,
+                        cancellationToken);
+                }
                 else if (workers.UseNeonNtt)
                 {
                     ExecutePointwiseProductNeon(
@@ -5606,6 +5694,28 @@ internal sealed partial class ParallelBigUnsigned
                     modulus))
             {
                 ExecutePointwiseProductDualVectorIlp(
+                    transformedLeft,
+                    transformedLeft,
+                    rightTransform,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
+            else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+            {
+                ExecutePointwiseProductAvx2(
+                    transformedLeft,
+                    transformedLeft,
+                    rightTransform,
+                    transformLength,
+                    modulus,
+                    workers,
+                    cancellationToken);
+            }
+            else if (workers.UseSseNtt && Sse2.IsSupported)
+            {
+                ExecutePointwiseProductSse(
                     transformedLeft,
                     transformedLeft,
                     rightTransform,
@@ -8063,6 +8173,42 @@ internal sealed partial class ParallelBigUnsigned
                 int leftStart = Math.Max(start, validRightCount);
                 if (leftStart < end)
                     ProcessFinalInversePrefixAvx512(
+                        values, output, halfLength, leftStart, end, false,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+            });
+            return;
+        }
+
+        if (workers.UseAvx2Ntt && Avx2.IsSupported && halfLength >= 256)
+        {
+            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
+            {
+                int bothEnd = Math.Min(end, validRightCount);
+                if (start < bothEnd)
+                    ProcessFinalInversePrefixAvx2(
+                        values, output, halfLength, start, bothEnd, true,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+                int leftStart = Math.Max(start, validRightCount);
+                if (leftStart < end)
+                    ProcessFinalInversePrefixAvx2(
+                        values, output, halfLength, leftStart, end, false,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+            });
+            return;
+        }
+
+        if (workers.UseSseNtt && Sse2.IsSupported && halfLength >= 256)
+        {
+            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
+            {
+                int bothEnd = Math.Min(end, validRightCount);
+                if (start < bothEnd)
+                    ProcessFinalInversePrefixSse(
+                        values, output, halfLength, start, bothEnd, true,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
+                int leftStart = Math.Max(start, validRightCount);
+                if (leftStart < end)
+                    ProcessFinalInversePrefixSse(
                         values, output, halfLength, leftStart, end, false,
                         modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
             });
