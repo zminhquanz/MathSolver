@@ -402,6 +402,142 @@ internal sealed partial class ParallelBigUnsigned
         return carry;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong NormalizeCoefficientCarryRangeSimd(
+        ulong[] sourceArray,
+        int sourceStart,
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong incomingCarry,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        if (count <= 0)
+            return incomingCarry;
+
+        ref ulong source = ref Unsafe.Add(
+            ref MemoryMarshal.GetArrayDataReference(sourceArray),
+            sourceStart);
+
+        ulong carry = incomingCarry;
+        int offset = 0;
+
+        if (BitConverter.IsLittleEndian &&
+            (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
+            Avx512F.IsSupported && count >= Vector512<ulong>.Count)
+        {
+            Span<ulong> q = stackalloc ulong[Vector512<ulong>.Count];
+            Span<ulong> r = stackalloc ulong[Vector512<ulong>.Count];
+            ref ulong qRef = ref MemoryMarshal.GetReference(q);
+            ref ulong rRef = ref MemoryMarshal.GetReference(r);
+            int end = count & ~(Vector512<ulong>.Count - 1);
+
+            for (; offset < end; offset += Vector512<ulong>.Count)
+            {
+                if ((offset & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                Vector512<ulong> values =
+                    Vector512.LoadUnsafe(ref source, (nuint)offset);
+                DecomposeBase10000Avx512(values, out var qv, out var rv);
+                qv.StoreUnsafe(ref qRef);
+                rv.StoreUnsafe(ref rRef);
+                carry = ReconcileCarryDigits(
+                    q, r, destination, destinationStart + offset, carry);
+            }
+        }
+        else if (BitConverter.IsLittleEndian &&
+                 workers.UseAvx2Ntt && Avx2.IsSupported &&
+                 count >= Vector256<ulong>.Count)
+        {
+            Span<ulong> q = stackalloc ulong[Vector256<ulong>.Count];
+            Span<ulong> r = stackalloc ulong[Vector256<ulong>.Count];
+            ref ulong qRef = ref MemoryMarshal.GetReference(q);
+            ref ulong rRef = ref MemoryMarshal.GetReference(r);
+            int end = count & ~(Vector256<ulong>.Count - 1);
+
+            for (; offset < end; offset += Vector256<ulong>.Count)
+            {
+                if ((offset & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                Vector256<ulong> values =
+                    Vector256.LoadUnsafe(ref source, (nuint)offset);
+                DecomposeBase10000Avx2(values, out var qv, out var rv);
+                qv.StoreUnsafe(ref qRef);
+                rv.StoreUnsafe(ref rRef);
+                carry = ReconcileCarryDigits(
+                    q, r, destination, destinationStart + offset, carry);
+            }
+        }
+        else if (BitConverter.IsLittleEndian &&
+                 workers.UseSseNtt && Sse2.IsSupported &&
+                 count >= Vector128<ulong>.Count)
+        {
+            Span<ulong> q = stackalloc ulong[Vector128<ulong>.Count];
+            Span<ulong> r = stackalloc ulong[Vector128<ulong>.Count];
+            ref ulong qRef = ref MemoryMarshal.GetReference(q);
+            ref ulong rRef = ref MemoryMarshal.GetReference(r);
+            int end = count & ~(Vector128<ulong>.Count - 1);
+
+            for (; offset < end; offset += Vector128<ulong>.Count)
+            {
+                if ((offset & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                Vector128<ulong> values =
+                    Vector128.LoadUnsafe(ref source, (nuint)offset);
+                DecomposeBase10000Sse(values, out var qv, out var rv);
+                qv.StoreUnsafe(ref qRef);
+                rv.StoreUnsafe(ref rRef);
+                carry = ReconcileCarryDigits(
+                    q, r, destination, destinationStart + offset, carry);
+            }
+        }
+#if ANDROID
+        else if (BitConverter.IsLittleEndian &&
+                 workers.UseNeonNtt && AdvSimd.Arm64.IsSupported &&
+                 count >= Vector128<ulong>.Count)
+        {
+            Span<ulong> q = stackalloc ulong[Vector128<ulong>.Count];
+            Span<ulong> r = stackalloc ulong[Vector128<ulong>.Count];
+            ref ulong qRef = ref MemoryMarshal.GetReference(q);
+            ref ulong rRef = ref MemoryMarshal.GetReference(r);
+            int end = count & ~(Vector128<ulong>.Count - 1);
+
+            for (; offset < end; offset += Vector128<ulong>.Count)
+            {
+                if ((offset & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                Vector128<ulong> values =
+                    Vector128.LoadUnsafe(ref source, (nuint)offset);
+                DecomposeBase10000Neon(values, out var qv, out var rv);
+                qv.StoreUnsafe(ref qRef);
+                rv.StoreUnsafe(ref rRef);
+                carry = ReconcileCarryDigits(
+                    q, r, destination, destinationStart + offset, carry);
+            }
+        }
+#endif
+
+        for (; offset < count; offset++)
+        {
+            if ((offset & 0xFFFF) == 0)
+                cancellationToken.ThrowIfCancellationRequested();
+
+            ulong value =
+                Unsafe.Add(ref source, offset) + carry;
+            ulong quotient = value / LimbBase;
+            destination[destinationStart + offset] =
+                (uint)(value - quotient * LimbBase);
+            carry = quotient;
+        }
+
+        return carry;
+    }
+
     private static ulong NormalizeCrtCarryRangeScalar(
         uint[] transformedSecond,
         ulong[]? crtScratch,
@@ -430,4 +566,98 @@ internal sealed partial class ParallelBigUnsigned
         }
         return carry;
     }
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static int SkipNormalizedMaxLimbsSimd(
+        uint[] destination,
+        int index,
+        int end,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        ref uint destinationRef =
+            ref MemoryMarshal.GetArrayDataReference(destination);
+
+        // AVX-512 machines also expose AVX2 on the supported x64 targets used
+        // by this application.  Using the YMM compare here avoids depending on
+        // AVX-512 mask extraction APIs for a tiny carry-prefix scan while still
+        // skipping eight normalized limbs per instruction group.
+        if ((workers.UseAvx512Ntt || workers.UseAvx2Ntt) && Avx2.IsSupported)
+        {
+            Vector256<int> max = Vector256.Create((int)(LimbBase - 1));
+            Vector256<uint> zero = Vector256<uint>.Zero;
+            int vectorEnd = end - Vector256<uint>.Count + 1;
+            while (index < vectorEnd)
+            {
+                Vector256<uint> values =
+                    Vector256.LoadUnsafe(ref destinationRef, (nuint)index);
+                Vector256<int> equal =
+                    Avx2.CompareEqual(values.AsInt32(), max);
+                if (Avx2.MoveMask(equal.AsByte()) != -1)
+                    break;
+
+                zero.StoreUnsafe(ref destinationRef, (nuint)index);
+                index += Vector256<uint>.Count;
+                if ((index & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+        else if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            Vector128<int> max = Vector128.Create((int)(LimbBase - 1));
+            Vector128<uint> zero = Vector128<uint>.Zero;
+            int vectorEnd = end - Vector128<uint>.Count + 1;
+            while (index < vectorEnd)
+            {
+                Vector128<uint> values =
+                    Vector128.LoadUnsafe(ref destinationRef, (nuint)index);
+                Vector128<int> equal =
+                    Sse2.CompareEqual(values.AsInt32(), max);
+                if (Sse2.MoveMask(equal.AsByte()) != 0xFFFF)
+                    break;
+
+                zero.StoreUnsafe(ref destinationRef, (nuint)index);
+                index += Vector128<uint>.Count;
+                if ((index & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+#if ANDROID
+        else if (workers.UseNeonNtt && AdvSimd.IsSupported)
+        {
+            Vector128<uint> max = Vector128.Create(LimbBase - 1);
+            Vector128<uint> zero = Vector128<uint>.Zero;
+            int vectorEnd = end - Vector128<uint>.Count + 1;
+            while (index < vectorEnd)
+            {
+                Vector128<uint> values =
+                    Vector128.LoadUnsafe(ref destinationRef, (nuint)index);
+                Vector128<uint> equal = AdvSimd.CompareEqual(values, max);
+                if (equal.GetElement(0) != uint.MaxValue ||
+                    equal.GetElement(1) != uint.MaxValue ||
+                    equal.GetElement(2) != uint.MaxValue ||
+                    equal.GetElement(3) != uint.MaxValue)
+                {
+                    break;
+                }
+
+                zero.StoreUnsafe(ref destinationRef, (nuint)index);
+                index += Vector128<uint>.Count;
+                if ((index & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+#endif
+
+        // At most one vector-width remains before the first non-9,999 limb.
+        // Keep this bounded scalar cleanup instead of issuing masked stores,
+        // which are unavailable on SSE2/NEON and slower for such a short tail.
+        while (index < end && destination[index] == LimbBase - 1)
+        {
+            destination[index] = 0;
+            index++;
+        }
+
+        return index;
+    }
+
 }

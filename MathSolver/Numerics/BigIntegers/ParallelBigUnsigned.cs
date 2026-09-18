@@ -1562,7 +1562,7 @@ internal sealed partial class ParallelBigUnsigned
                 // A UInt64 has at most five base-10,000 limbs. This O(5*n)
                 // product stays bounded in operand width even at large n;
                 // the general Multiply work threshold would select an NTT.
-                result = MultiplySchoolbook(smallBase, result, diagnostics, cancellationToken);
+                result = MultiplySchoolbook(smallBase, result, workers, diagnostics, cancellationToken);
                 progress?.Invoke(++completedOperations, totalOperations);
             }
         }
@@ -1785,6 +1785,7 @@ internal sealed partial class ParallelBigUnsigned
             return MultiplySchoolbook(
                 left,
                 right,
+                workers,
                 diagnostics,
                 cancellationToken);
         }
@@ -3356,6 +3357,7 @@ internal sealed partial class ParallelBigUnsigned
                                 productStart),
                             count,
                             carry,
+                            workers,
                             cancellationToken);
 
                 carry =
@@ -3386,44 +3388,40 @@ internal sealed partial class ParallelBigUnsigned
         int destinationStart,
         int count,
         ulong carry,
+        FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        int end =
-            checked(
-                destinationStart +
-                count);
+        int end = checked(destinationStart + count);
+        int destinationIndex = destinationStart;
 
-        int destinationIndex =
-            destinationStart;
-
-        while (carry > 0 &&
-               destinationIndex < end)
+        // A large incoming carry collapses by roughly four decimal digits per
+        // limb.  Reduce only that logarithmic prefix scalarly.  Once carry is
+        // one, propagation is exactly a scan over a run of 9,999 limbs, which
+        // can be skipped/zeroed a vector at a time.
+        while (carry > 1 && destinationIndex < end)
         {
-            if ((destinationIndex & 0xFFFF) == 0)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-            }
-
-            ulong value =
-                destination[destinationIndex] +
-                carry;
-
-            ulong quotient =
-                value /
-                LimbBase;
-
-            destination[destinationIndex] =
-                (uint)(value -
-                       quotient *
-                       LimbBase);
-
-            carry =
-                quotient;
-
+            ulong value = destination[destinationIndex] + carry;
+            ulong quotient = value / LimbBase;
+            destination[destinationIndex] = (uint)(value - quotient * LimbBase);
+            carry = quotient;
             destinationIndex++;
         }
 
-        return carry;
+        if (carry == 0 || destinationIndex >= end)
+            return carry;
+
+        destinationIndex = SkipNormalizedMaxLimbsSimd(
+            destination, destinationIndex, end, workers, cancellationToken);
+
+        if (destinationIndex < end)
+        {
+            // SkipNormalizedMaxLimbsSimd stops at the first limb != 9,999.
+            destination[destinationIndex]++;
+            return 0;
+        }
+
+        // Every remaining limb was 9,999 and has been reset to zero.
+        return 1;
     }
 
     private static void PropagateNormalizedCarry(
@@ -3470,9 +3468,54 @@ internal sealed partial class ParallelBigUnsigned
     private static ParallelBigUnsigned MultiplySchoolbook(
         ParallelBigUnsigned left,
         ParallelBigUnsigned right,
+        FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        // UInt64 bases contain at most five base-10,000 limbs.  Once the
+        // opposite operand has grown, compute each output coefficient exactly
+        // once with the selected SIMD ISA instead of making up to five full
+        // read/modify/write sweeps over the coefficient array.  The output-
+        // centric layout also makes coefficient ranges independent, so the
+        // existing fixed worker team can share very long small-base products.
+        int smallerLimbCount =
+            Math.Min(left._limbCount, right._limbCount);
+        int largerLimbCount =
+            Math.Max(left._limbCount, right._limbCount);
+
+        bool hasSchoolbookSimd =
+            (workers.UseAvx512Ntt && Avx512F.IsSupported && Avx2.IsSupported) ||
+            (workers.UseAvx2Ntt && Avx2.IsSupported) ||
+            (workers.UseSseNtt && Sse2.IsSupported) ||
+            workers.UseNeonNtt;
+
+        if (smallerLimbCount <= 5 &&
+            largerLimbCount >= SmallBaseSchoolbookSimdMinimumLargeLimbs &&
+            hasSchoolbookSimd)
+        {
+            return MultiplySmallBaseSchoolbookSimd(
+                left,
+                right,
+                workers,
+                diagnostics,
+                cancellationToken);
+        }
+
+        long genericSchoolbookWork =
+            (long)left._limbCount *
+            right._limbCount;
+
+        if (genericSchoolbookWork >= GenericSchoolbookSimdMinimumWork &&
+            hasSchoolbookSimd)
+        {
+            return MultiplyGenericSchoolbookSimd(
+                left,
+                right,
+                workers,
+                diagnostics,
+                cancellationToken);
+        }
+
         int coefficientCount =
             checked(
                 left._limbCount +
@@ -3503,6 +3546,7 @@ internal sealed partial class ParallelBigUnsigned
 
         return CreateFromCoefficients(
             coefficients,
+            workers,
             diagnostics,
             cancellationToken);
     }
@@ -4504,6 +4548,7 @@ internal sealed partial class ParallelBigUnsigned
                                 relativeStart),
                             count,
                             carry,
+                            workers,
                             cancellationToken);
 
                 carry =
@@ -5930,7 +5975,9 @@ internal sealed partial class ParallelBigUnsigned
             // value-buffer sweep and one stage barrier without introducing a
             // DRAM-sized twiddle/Shoup stream.
             if (nextStageLength > l3NttTileLength &&
-                twiddlePlan.HasAvx2Twiddles &&
+                (twiddlePlan.HasAvx2Twiddles ||
+                 workers.UseSseNtt ||
+                 workers.UseNeonNtt) &&
                 !workers.UseLargeModeAvx2ForwardL1Low32Shoup &&
                 CanFuseForwardUncachedGlobalStagePair(
                     stageLength,
@@ -8208,9 +8255,73 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
-        // Small transforms keep the exact v33 scalar final-stage path. The
-        // four-lane kernel is intentionally enabled only at the same adaptive
-        // threshold that already proved worthwhile for the global NTT path.
+        // Tiny transforms should still use the selected SIMD backend, but do
+        // so on the caller thread.  Splitting <256 butterflies across the
+        // worker team creates sub-vector fragments and used to send most of
+        // the work back through the scalar four-way fallback.
+        if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512FinalInversePrefix) &&
+            halfLength >= Vector512<uint>.Count)
+        {
+            int bothEnd = Math.Min(halfLength, validRightCount);
+            if (bothEnd > 0)
+                ProcessFinalInversePrefixAvx512(
+                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            if (bothEnd < halfLength)
+                ProcessFinalInversePrefixAvx512(
+                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            return;
+        }
+
+        if (workers.UseAvx2Ntt && Avx2.IsSupported &&
+            halfLength >= Vector256<uint>.Count)
+        {
+            int bothEnd = Math.Min(halfLength, validRightCount);
+            if (bothEnd > 0)
+                ProcessFinalInversePrefixAvx2(
+                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            if (bothEnd < halfLength)
+                ProcessFinalInversePrefixAvx2(
+                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            return;
+        }
+
+        if (workers.UseSseNtt && Sse2.IsSupported &&
+            halfLength >= Vector128<uint>.Count)
+        {
+            int bothEnd = Math.Min(halfLength, validRightCount);
+            if (bothEnd > 0)
+                ProcessFinalInversePrefixSse(
+                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            if (bothEnd < halfLength)
+                ProcessFinalInversePrefixSse(
+                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            return;
+        }
+
+        if (workers.UseNeonNtt &&
+            System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported &&
+            halfLength >= Vector128<uint>.Count)
+        {
+            int bothEnd = Math.Min(halfLength, validRightCount);
+            if (bothEnd > 0)
+                ProcessFinalInversePrefixNeon(
+                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            if (bothEnd < halfLength)
+                ProcessFinalInversePrefixNeon(
+                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    inverseLength, inverseLengthShoup, cancellationToken);
+            return;
+        }
+
+        // Only transforms smaller than one hardware vector keep the exact
+        // scalar final-stage path.
         if (halfLength < AdaptiveFourWayHalfLength)
         {
             ExecuteFinalInversePrefixScalar(
@@ -9032,8 +9143,9 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// AVX-512 cached global stages: lazily populate only the Forward
-    /// Shoup companion row for one cached global stage. The companion backing
+    /// Cached global stages: lazily populate only the Forward Shoup companion
+    /// row for one cached global stage. The row is generated with the widest
+    /// active AVX-512/AVX2/SSE/NEON backend. The companion backing
     /// buffer is already Pow-scoped/rented for the accepted AVX2 local path, so
     /// this adds no coefficient-sized allocation. A separate publication flag
     /// is required because the ordinary global twiddle row can be ready while
@@ -9072,9 +9184,6 @@ internal sealed partial class ParallelBigUnsigned
         uint[] forwardTwiddles =
             twiddlePlan.ForwardTwiddles;
 
-        double shoupScale =
-            4_294_967_296.0 / modulus;
-
         long started =
             Stopwatch.GetTimestamp();
 
@@ -9084,21 +9193,15 @@ internal sealed partial class ParallelBigUnsigned
             cancellationToken,
             (start, end) =>
             {
-                for (int index = start;
-                     index < end;
-                     index++)
-                {
-                    shoupTwiddles[offset + index] =
-                        ComputeShoupCompanion(
-                            forwardTwiddles[offset + index],
-                            modulus,
-                            shoupScale);
-
-                    if ((index & 0xFFFF) == 0xFFFF)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                }
+                BuildGlobalShoupCompanionRangeSimd(
+                    forwardTwiddles,
+                    shoupTwiddles,
+                    offset,
+                    start,
+                    end,
+                    modulus,
+                    workers,
+                    cancellationToken);
             });
 
         twiddlePlan.MarkForwardGlobalShoupStageReady(
@@ -9125,15 +9228,17 @@ internal sealed partial class ParallelBigUnsigned
         int offset = twiddlePlan.GetOffset(halfLength);
         uint[] twiddles = twiddlePlan.InverseTwiddles;
         uint[] shoup = twiddlePlan.InverseShoupTwiddles!;
-        double scale = 4_294_967_296.0 / modulus;
         ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
         {
-            for (int i = start; i < end; i++)
-            {
-                shoup[offset + i] = ComputeShoupCompanion(twiddles[offset + i], modulus, scale);
-                if ((i & 0xFFFF) == 0xFFFF)
-                    cancellationToken.ThrowIfCancellationRequested();
-            }
+            BuildGlobalShoupCompanionRangeSimd(
+                twiddles,
+                shoup,
+                offset,
+                start,
+                end,
+                modulus,
+                workers,
+                cancellationToken);
         });
         twiddlePlan.MarkInverseGlobalShoupStageReady(halfLength);
     }
@@ -12841,6 +12946,20 @@ internal sealed partial class ParallelBigUnsigned
         int regionEnd = regionOffset + regionLength;
         int groupCount = regionLength / stageLength;
 
+        // Experimental S=8 packed-two-group path.  One S=8 group exposes only
+        // four butterflies, which under-fills YMM.  Pair two adjacent groups:
+        // group N occupies the low 128-bit half and group N+1 the high half.
+        // The same [1,w,w^2,w^3] twiddle/Shoup block is duplicated once and
+        // reused for the full resident region.  Keep the scalar helper for a
+        // possible odd final group and for the single-group case.
+        if (halfLength == 4 && groupCount >= 2)
+        {
+            ExecuteForwardLengthEightGroupsPackedTwoAvx2(
+                values, modulus, twiddles, shoupTwiddles,
+                twiddleOffset, regionOffset, regionLength, context);
+            return;
+        }
+
         if (groupCount <= 1 || halfLength < 8)
         {
             for (int groupOffset = regionOffset;
@@ -12855,13 +12974,6 @@ internal sealed partial class ParallelBigUnsigned
                 }
                 else if (halfLength == 4)
                 {
-                    // AVX2 has no profitable eight-lane shape for the final
-                    // S=8 DIF stage: one group contains only four butterflies.
-                    // Keep the tail scalar, but consume the Shoup companions
-                    // already resident in the AVX2 twiddle plan so the three
-                    // non-trivial butterflies avoid variable-modulus division.
-                    // The helper is fully unrolled and completes one butterfly
-                    // at a time to keep scalar register pressure bounded.
                     ExecuteForwardLengthEightGroupShoupScalar(
                         values, modulus, twiddles, shoupTwiddles,
                         twiddleOffset, groupOffset);
@@ -19118,6 +19230,21 @@ internal sealed partial class ParallelBigUnsigned
                     else if (workers.UseAvx2Ntt && Avx2.IsSupported)
                     {
                         ProcessForwardUncachedStagePairAvx2(
+                            values, modulus, firstRoot, secondRoot, quarterPhase,
+                            stageLength, groupIndex, butterflyStart, butterflyEnd,
+                            cancellationToken);
+                    }
+                    else if (workers.UseSseNtt && Sse2.IsSupported)
+                    {
+                        ProcessForwardUncachedStagePairSse(
+                            values, modulus, firstRoot, secondRoot, quarterPhase,
+                            stageLength, groupIndex, butterflyStart, butterflyEnd,
+                            cancellationToken);
+                    }
+                    else if (workers.UseNeonNtt &&
+                             System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported)
+                    {
+                        ProcessForwardUncachedStagePairNeon(
                             values, modulus, firstRoot, secondRoot, quarterPhase,
                             stageLength, groupIndex, butterflyStart, butterflyEnd,
                             cancellationToken);
@@ -27229,12 +27356,136 @@ internal sealed partial class ParallelBigUnsigned
 
 
     /// <summary>
-    /// Specialized scalar/Shoup kernel for the final Forward DIF S=8 stage.
-    /// A single group has four butterflies, so packing two groups into AVX2
-    /// costs more than it saves on Coffee Lake.  Instead, retain the scalar
-    /// traversal and replace the three non-trivial variable-modulus products
-    /// with the existing exact Shoup reduction.  Butterfly zero has twiddle 1
-    /// and therefore needs no multiply.
+    /// Experimental AVX2 kernel for a standalone Forward DIF S=8 stage.
+    /// Two adjacent eight-value groups are packed into one YMM: the first
+    /// group's four butterflies occupy the low 128-bit half and the second
+    /// group's four butterflies occupy the high half.  This gives the exact
+    /// eight useful uint lanes required by AVX2 without gathers or temporary
+    /// buffers.  An odd final group falls back to the accepted scalar/Shoup
+    /// helper so this routine is safe for any cache-region group count.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteForwardLengthEightGroupsPackedTwoAvx2(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int twiddleOffset,
+        int regionOffset,
+        int regionLength,
+        in Avx2NttModContext context)
+    {
+        const int StageLength = 8;
+        const int HalfLength = 4;
+        const int TwoGroupStride = StageLength * 2;
+
+        int regionEnd = regionOffset + regionLength;
+
+        ref uint valuesReference =
+            ref MemoryMarshal.GetArrayDataReference(values);
+        ref uint twiddleReference =
+            ref MemoryMarshal.GetArrayDataReference(twiddles);
+        ref uint shoupReference =
+            ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+
+        Vector128<uint> twiddleHalf =
+            Vector128.LoadUnsafe(
+                ref twiddleReference,
+                (nuint)twiddleOffset);
+        Vector128<uint> shoupHalf =
+            Vector128.LoadUnsafe(
+                ref shoupReference,
+                (nuint)twiddleOffset);
+
+        // Both S=8 groups use the same four stage twiddles.
+        Vector256<uint> twiddleVector =
+            Vector256.Create(twiddleHalf, twiddleHalf);
+        Vector256<uint> shoupVector =
+            Vector256.Create(shoupHalf, shoupHalf);
+
+        int groupOffset = regionOffset;
+        int pairedEnd = regionEnd - StageLength;
+
+        for (; groupOffset < pairedEnd; groupOffset += TwoGroupStride)
+        {
+            int nextGroupOffset = groupOffset + StageLength;
+
+            // Read two complete S=8 groups with two contiguous YMM loads.
+            // VPERM2I128 then forms the eight left and eight right butterfly
+            // lanes without gather: [g0.left4 | g1.left4] and
+            // [g0.right4 | g1.right4].
+            Vector256<uint> group0 =
+                Vector256.LoadUnsafe(
+                    ref valuesReference,
+                    (nuint)groupOffset);
+            Vector256<uint> group1 =
+                Vector256.LoadUnsafe(
+                    ref valuesReference,
+                    (nuint)nextGroupOffset);
+
+            Vector256<uint> left =
+                Avx2.Permute2x128(
+                        group0.AsInt64(),
+                        group1.AsInt64(),
+                        0x20)
+                    .AsUInt32();
+            Vector256<uint> right =
+                Avx2.Permute2x128(
+                        group0.AsInt64(),
+                        group1.AsInt64(),
+                        0x31)
+                    .AsUInt32();
+
+            Vector256<uint> sums =
+                AddModuloAvx2(left, right, context);
+            Vector256<uint> differences =
+                SubtractModuloAvx2(left, right, context);
+            Vector256<uint> multiplied =
+                MultiplyShoupAvx2(
+                    differences,
+                    twiddleVector,
+                    shoupVector,
+                    context);
+
+            // Reassemble each eight-value group in-register so the output is
+            // written with two contiguous YMM stores.
+            Vector256<uint> output0 =
+                Avx2.Permute2x128(
+                        sums.AsInt64(),
+                        multiplied.AsInt64(),
+                        0x20)
+                    .AsUInt32();
+            Vector256<uint> output1 =
+                Avx2.Permute2x128(
+                        sums.AsInt64(),
+                        multiplied.AsInt64(),
+                        0x31)
+                    .AsUInt32();
+
+            output0.StoreUnsafe(
+                ref valuesReference,
+                (nuint)groupOffset);
+            output1.StoreUnsafe(
+                ref valuesReference,
+                (nuint)nextGroupOffset);
+        }
+
+        // A cache region normally contains an even power-of-two number of
+        // S=8 groups.  Keep the exact scalar helper for defensive reuse when
+        // a caller supplies an odd group count.
+        if (groupOffset < regionEnd)
+        {
+            ExecuteForwardLengthEightGroupShoupScalar(
+                values, modulus, twiddles, shoupTwiddles,
+                twiddleOffset, groupOffset);
+        }
+    }
+
+    /// <summary>
+    /// Scalar/Shoup fallback for the final Forward DIF S=8 stage.  The AVX2
+    /// production experiment now packs two adjacent groups into one YMM; this
+    /// helper remains the single/odd-group fallback and the rollback reference.
+    /// Butterfly zero has twiddle 1 and therefore needs no multiply.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ExecuteForwardLengthEightGroupShoupScalar(
@@ -29411,6 +29662,28 @@ internal sealed partial class ParallelBigUnsigned
                 ? 4_294_967_296.0 / modulus
                 : 0.0;
 
+        // Cached table construction used to advance one scalar power at a
+        // time with a 64-bit modulo operation.  Select the widest active NTT
+        // ISA once per stage and advance a complete seed vector by root^W
+        // with the same exact Shoup reduction used by the butterfly kernels.
+        // The only scalar modular chain left is the W-lane seed at the start
+        // of each worker range plus a sub-vector tail.
+        int twiddleSimdWidth =
+            SelectCachedTwiddleSimdWidth(workers);
+
+        uint twiddleSimdAdvance =
+            twiddleSimdWidth != 0
+                ? (uint)ModPow(root, (uint)twiddleSimdWidth, modulus)
+                : 0u;
+
+        uint twiddleSimdAdvanceShoup =
+            twiddleSimdWidth != 0
+                ? ComputeShoupCompanion(
+                    twiddleSimdAdvance,
+                    modulus,
+                    4_294_967_296.0 / modulus)
+                : 0u;
+
         forwardTwiddles[offset] = 1;
         inverseTwiddles[offset] = 1;
 
@@ -29440,6 +29713,30 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.WorkerCount == 1 ||
             halfLength < ParallelTwiddleThreshold)
         {
+            if (twiddleSimdWidth != 0 &&
+                halfLength - 1 >= twiddleSimdWidth)
+            {
+                BuildCachedTwiddleRangeSimd(
+                    forwardTwiddles,
+                    inverseTwiddles,
+                    forwardShoupTwiddles,
+                    inverseShoupTwiddles,
+                    offset,
+                    halfLength,
+                    firstIndex: 1,
+                    endIndex: halfLength,
+                    root,
+                    modulus,
+                    buildShoupCompanions,
+                    shoupScale,
+                    twiddleSimdAdvance,
+                    twiddleSimdAdvanceShoup,
+                    workers,
+                    cancellationToken);
+
+                return;
+            }
+
             ulong twiddle =
                 root;
 
@@ -29509,6 +29806,30 @@ internal sealed partial class ParallelBigUnsigned
 
                 int endIndex =
                     end + 1;
+
+                if (twiddleSimdWidth != 0 &&
+                    endIndex - firstIndex >= twiddleSimdWidth)
+                {
+                    BuildCachedTwiddleRangeSimd(
+                        forwardTwiddles,
+                        inverseTwiddles,
+                        forwardShoupTwiddles,
+                        inverseShoupTwiddles,
+                        offset,
+                        halfLength,
+                        firstIndex,
+                        endIndex,
+                        root,
+                        modulus,
+                        buildShoupCompanions,
+                        shoupScale,
+                        twiddleSimdAdvance,
+                        twiddleSimdAdvanceShoup,
+                        workers,
+                        cancellationToken);
+
+                    return;
+                }
 
                 ulong twiddle =
                     firstIndex == 1
@@ -29966,6 +30287,7 @@ internal sealed partial class ParallelBigUnsigned
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static ParallelBigUnsigned CreateFromCoefficients(
         ulong[] coefficients,
+        FixedWorkerTeam workers,
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
@@ -29975,47 +30297,25 @@ internal sealed partial class ParallelBigUnsigned
         var limbs =
             new uint[coefficients.Length + 8];
 
-        // One Span/ReadOnlySpan is created for the whole carry pass.  Do not
-        // repeatedly Slice/AsSpan inside the loop: that was part of the
-        // previous regression.
-        ReadOnlySpan<ulong> source =
-            coefficients;
+        // Normalize the coefficient stream with the same exact SIMD
+        // base-10,000 decomposition used by the CRT carry path.  The
+        // quotient/remainder work is vectorized; only the true carry
+        // dependency between adjacent digits remains ordered.  This closes
+        // the AVX2 / SSE2+ / NEON scalar carry hole for schoolbook fallback
+        // products that do not enter the <=5-limb small-base fast path.
+        ulong carry =
+            NormalizeCoefficientCarryRangeSimd(
+                coefficients,
+                0,
+                limbs,
+                0,
+                coefficients.Length,
+                0,
+                workers,
+                cancellationToken);
 
-        Span<uint> destination =
-            limbs;
-
-        ulong carry = 0;
-        int limbCount = 0;
-
-        for (int index = 0;
-             index < source.Length;
-             index++)
-        {
-            if ((index & 0xFFFF) == 0)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-            }
-
-            ulong value =
-                source[index] +
-                carry;
-
-            // Compute the quotient once.  In optimized x64 code RyuJIT
-            // strength-reduces division by the constant 10,000 to a BMI2
-            // MULX/shift sequence.  Derive the remainder from that quotient
-            // so the carry pass does not need a second reciprocal multiply.
-            ulong quotient =
-                value /
-                LimbBase;
-
-            destination[limbCount++] =
-                (uint)(value -
-                       quotient *
-                       LimbBase);
-
-            carry =
-                quotient;
-        }
+        int limbCount =
+            coefficients.Length;
 
         while (carry > 0)
         {
@@ -30023,7 +30323,7 @@ internal sealed partial class ParallelBigUnsigned
                 carry /
                 LimbBase;
 
-            destination[limbCount++] =
+            limbs[limbCount++] =
                 (uint)(carry -
                        quotient *
                        LimbBase);

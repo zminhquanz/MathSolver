@@ -649,6 +649,136 @@ internal sealed partial class ParallelBigUnsigned
             modulus);
     }
 
+
+
+    /// <summary>
+    /// ARM64 NEON version of the fused uncached global Forward-DIF stage pair
+    /// S and S/2. Four adjacent butterflies are processed per Vector128 batch,
+    /// with all quarter streams kept in registers and the three twiddle vectors
+    /// advanced by root^4 using exact Shoup multiplication. Only the residual
+    /// segment shorter than four butterflies uses the scalar dual-lane fallback.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ProcessForwardUncachedStagePairNeon(
+        uint[] values,
+        uint modulus,
+        uint firstRoot,
+        uint secondRoot,
+        uint quarterPhase,
+        int stageLength,
+        int groupIndex,
+        int first,
+        int last,
+        CancellationToken cancellationToken)
+    {
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            ProcessForwardUncachedStagePairSegmentByrefDualLane(
+                values, modulus, firstRoot, secondRoot, quarterPhase,
+                stageLength, groupIndex, first, last, cancellationToken);
+            return;
+        }
+
+        int quarterLength = stageLength >> 2;
+        int groupOffset = groupIndex * stageLength;
+        Vector128<uint> mod = Vector128.Create(modulus);
+
+        Vector128<uint> twiddle0 =
+            CreateTwiddleSequenceNeon(firstRoot, first, modulus);
+
+        Vector128<uint> twiddle1 =
+            MultiplyResiduesNeon(
+                twiddle0,
+                Vector128.Create(quarterPhase),
+                modulus);
+
+        Vector128<uint> twiddle2 =
+            CreateTwiddleSequenceNeon(secondRoot, first, modulus);
+
+        uint step0 = (uint)ModPow(firstRoot, 4u, modulus);
+        uint step2 = (uint)ModPow(secondRoot, 4u, modulus);
+
+        Vector128<uint> advance0 = Vector128.Create(step0);
+        Vector128<uint> advance2 = Vector128.Create(step2);
+        Vector128<uint> advance0Shoup =
+            Vector128.Create((uint)(((ulong)step0 << 32) / modulus));
+        Vector128<uint> advance2Shoup =
+            Vector128.Create((uint)(((ulong)step2 << 32) / modulus));
+
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+        int i = first;
+        int sinceCancellation = 0;
+
+        for (; i + 3 < last; i += 4)
+        {
+            int index0 = groupOffset + i;
+            int index1 = index0 + quarterLength;
+            int index2 = index1 + quarterLength;
+            int index3 = index2 + quarterLength;
+
+            Vector128<uint> value0 = Vector128.LoadUnsafe(ref data, (nuint)index0);
+            Vector128<uint> value1 = Vector128.LoadUnsafe(ref data, (nuint)index1);
+            Vector128<uint> value2 = Vector128.LoadUnsafe(ref data, (nuint)index2);
+            Vector128<uint> value3 = Vector128.LoadUnsafe(ref data, (nuint)index3);
+
+            Vector128<uint> topSum0 = AddModuloNeon(value0, value2, mod);
+            Vector128<uint> topSum1 = AddModuloNeon(value1, value3, mod);
+
+            Vector128<uint> lower0 =
+                MultiplyResiduesNeon(
+                    SubtractModuloNeon(value0, value2, mod),
+                    twiddle0,
+                    modulus);
+
+            Vector128<uint> lower1 =
+                MultiplyResiduesNeon(
+                    SubtractModuloNeon(value1, value3, mod),
+                    twiddle1,
+                    modulus);
+
+            Vector128<uint> upperSum = AddModuloNeon(topSum0, topSum1, mod);
+            Vector128<uint> upperDifference = SubtractModuloNeon(topSum0, topSum1, mod);
+            Vector128<uint> lowerSum = AddModuloNeon(lower0, lower1, mod);
+            Vector128<uint> lowerDifference = SubtractModuloNeon(lower0, lower1, mod);
+
+            upperSum.StoreUnsafe(ref data, (nuint)index0);
+            lowerSum.StoreUnsafe(ref data, (nuint)index2);
+
+            MultiplyResiduesNeon(upperDifference, twiddle2, modulus)
+                .StoreUnsafe(ref data, (nuint)index1);
+            MultiplyResiduesNeon(lowerDifference, twiddle2, modulus)
+                .StoreUnsafe(ref data, (nuint)index3);
+
+            twiddle0 = MultiplyShoupNeon(twiddle0, advance0, advance0Shoup, mod);
+            twiddle1 = MultiplyShoupNeon(twiddle1, advance0, advance0Shoup, mod);
+            twiddle2 = MultiplyShoupNeon(twiddle2, advance2, advance2Shoup, mod);
+
+            sinceCancellation += 4;
+            if (sinceCancellation >= (1 << 14))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                sinceCancellation = 0;
+            }
+        }
+
+        if (i < last)
+        {
+            ProcessForwardUncachedStagePairSegmentByrefDualLane(
+                values,
+                modulus,
+                firstRoot,
+                secondRoot,
+                quarterPhase,
+                stageLength,
+                groupIndex,
+                i,
+                last,
+                cancellationToken);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
     /// <summary>
     /// Four-lane SIMD Forward-DIF cached global S + S/2 pair.  Each worker
     /// owns an independent quarter-stream slice, loads the four value streams
