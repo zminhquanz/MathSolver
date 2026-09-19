@@ -566,6 +566,116 @@ internal sealed partial class ParallelBigUnsigned
         }
         return carry;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static bool WouldNormalizedRangeOverflow(
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong carry,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        if (carry == 0 || count <= 0)
+            return false;
+
+        int end = checked(destinationStart + count);
+        int index = destinationStart;
+
+        // Reduce a multi-limb carry exactly as AddCarryToNormalizedRange does,
+        // but do not mutate the already-normalized tile. A UInt64 carry falls
+        // to one/zero after only a handful of base-10,000 limbs.
+        while (carry > 1 && index < end)
+        {
+            ulong value = destination[index] + carry;
+            carry = value / LimbBase;
+            index++;
+        }
+
+        if (carry == 0)
+            return false;
+
+        if (index >= end)
+            return true;
+
+        // carry == 1 here. It escapes the tile iff every remaining digit is
+        // 9,999. Scan read-only with the same ISA preference used by the
+        // mutating carry injector; AVX-512 deliberately uses the compact YMM
+        // compare because this prefix scan only needs equality + movemask.
+        ref uint destinationRef =
+            ref MemoryMarshal.GetArrayDataReference(destination);
+
+        if ((workers.UseAvx512Ntt || workers.UseAvx2Ntt) && Avx2.IsSupported)
+        {
+            Vector256<int> max = Vector256.Create((int)(LimbBase - 1));
+            int vectorEnd = end - Vector256<uint>.Count + 1;
+            while (index < vectorEnd)
+            {
+                Vector256<uint> values =
+                    Vector256.LoadUnsafe(ref destinationRef, (nuint)index);
+                Vector256<int> equal =
+                    Avx2.CompareEqual(values.AsInt32(), max);
+                if (Avx2.MoveMask(equal.AsByte()) != -1)
+                    return false;
+
+                index += Vector256<uint>.Count;
+                if ((index & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+        else if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            Vector128<int> max = Vector128.Create((int)(LimbBase - 1));
+            int vectorEnd = end - Vector128<uint>.Count + 1;
+            while (index < vectorEnd)
+            {
+                Vector128<uint> values =
+                    Vector128.LoadUnsafe(ref destinationRef, (nuint)index);
+                Vector128<int> equal =
+                    Sse2.CompareEqual(values.AsInt32(), max);
+                if (Sse2.MoveMask(equal.AsByte()) != 0xFFFF)
+                    return false;
+
+                index += Vector128<uint>.Count;
+                if ((index & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+#if ANDROID
+        else if (workers.UseNeonNtt && AdvSimd.IsSupported)
+        {
+            Vector128<uint> max = Vector128.Create(LimbBase - 1);
+            int vectorEnd = end - Vector128<uint>.Count + 1;
+            while (index < vectorEnd)
+            {
+                Vector128<uint> values =
+                    Vector128.LoadUnsafe(ref destinationRef, (nuint)index);
+                Vector128<uint> equal = AdvSimd.CompareEqual(values, max);
+                if (equal.GetElement(0) != uint.MaxValue ||
+                    equal.GetElement(1) != uint.MaxValue ||
+                    equal.GetElement(2) != uint.MaxValue ||
+                    equal.GetElement(3) != uint.MaxValue)
+                {
+                    return false;
+                }
+
+                index += Vector128<uint>.Count;
+                if ((index & 0xFFFF) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+#endif
+
+        while (index < end)
+        {
+            if (destination[index] != LimbBase - 1)
+                return false;
+            index++;
+        }
+
+        return true;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static int SkipNormalizedMaxLimbsSimd(
         uint[] destination,

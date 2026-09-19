@@ -588,14 +588,37 @@ internal sealed partial class ParallelBigUnsigned
                     (nuint)(offset + index));
         }
 
-        StoreGlobalShoupScalarTail(
-            twiddles,
-            shoup,
-            offset,
-            index,
-            end,
-            modulus,
-            cancellationToken);
+        if (index < end)
+        {
+            Span<uint> tailInput = stackalloc uint[Width];
+            tailInput.Clear();
+            Span<uint> tailOutput = stackalloc uint[Width];
+            int remaining = end - index;
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                tailInput[lane] = twiddles[offset + index + lane];
+            }
+
+            ref uint tailInputRef = ref MemoryMarshal.GetReference(tailInput);
+            ref uint tailOutputRef = ref MemoryMarshal.GetReference(tailOutput);
+            Vector512<uint> tailVector = Vector512.LoadUnsafe(ref tailInputRef);
+            ComputeShoupCompanionAvx512(
+                    tailVector,
+                    reciprocalHigh,
+                    reciprocalLow,
+                    modulusVector,
+                    one,
+                    zero)
+                .StoreUnsafe(ref tailOutputRef);
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                shoup[offset + index + lane] = tailOutput[lane];
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -687,14 +710,37 @@ internal sealed partial class ParallelBigUnsigned
                     (nuint)(offset + index));
         }
 
-        StoreGlobalShoupScalarTail(
-            twiddles,
-            shoup,
-            offset,
-            index,
-            end,
-            modulus,
-            cancellationToken);
+        if (index < end)
+        {
+            Span<uint> tailInput = stackalloc uint[Width];
+            tailInput.Clear();
+            Span<uint> tailOutput = stackalloc uint[Width];
+            int remaining = end - index;
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                tailInput[lane] = twiddles[offset + index + lane];
+            }
+
+            ref uint tailInputRef = ref MemoryMarshal.GetReference(tailInput);
+            ref uint tailOutputRef = ref MemoryMarshal.GetReference(tailOutput);
+            Vector256<uint> tailVector = Vector256.LoadUnsafe(ref tailInputRef);
+            ComputeShoupCompanionAvx2(
+                    tailVector,
+                    reciprocalHigh,
+                    reciprocalLow,
+                    modulusVector,
+                    one,
+                    zero)
+                .StoreUnsafe(ref tailOutputRef);
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                shoup[offset + index + lane] = tailOutput[lane];
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -786,14 +832,37 @@ internal sealed partial class ParallelBigUnsigned
                     (nuint)(offset + index));
         }
 
-        StoreGlobalShoupScalarTail(
-            twiddles,
-            shoup,
-            offset,
-            index,
-            end,
-            modulus,
-            cancellationToken);
+        if (index < end)
+        {
+            Span<uint> tailInput = stackalloc uint[Width];
+            tailInput.Clear();
+            Span<uint> tailOutput = stackalloc uint[Width];
+            int remaining = end - index;
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                tailInput[lane] = twiddles[offset + index + lane];
+            }
+
+            ref uint tailInputRef = ref MemoryMarshal.GetReference(tailInput);
+            ref uint tailOutputRef = ref MemoryMarshal.GetReference(tailOutput);
+            Vector128<uint> tailVector = Vector128.LoadUnsafe(ref tailInputRef);
+            ComputeShoupCompanionSse(
+                    tailVector,
+                    reciprocalHigh,
+                    reciprocalLow,
+                    modulusVector,
+                    one,
+                    zero)
+                .StoreUnsafe(ref tailOutputRef);
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                shoup[offset + index + lane] = tailOutput[lane];
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -885,41 +954,37 @@ internal sealed partial class ParallelBigUnsigned
                     (nuint)(offset + index));
         }
 
-        StoreGlobalShoupScalarTail(
-            twiddles,
-            shoup,
-            offset,
-            index,
-            end,
-            modulus,
-            cancellationToken);
+        if (index < end)
+        {
+            Span<uint> tailInput = stackalloc uint[Width];
+            tailInput.Clear();
+            Span<uint> tailOutput = stackalloc uint[Width];
+            int remaining = end - index;
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                tailInput[lane] = twiddles[offset + index + lane];
+            }
+
+            ref uint tailInputRef = ref MemoryMarshal.GetReference(tailInput);
+            ref uint tailOutputRef = ref MemoryMarshal.GetReference(tailOutput);
+            Vector128<uint> tailVector = Vector128.LoadUnsafe(ref tailInputRef);
+            ComputeShoupCompanionNeon(
+                    tailVector,
+                    reciprocalHigh,
+                    reciprocalLow,
+                    modulusVector,
+                    one,
+                    zero)
+                .StoreUnsafe(ref tailOutputRef);
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                shoup[offset + index + lane] = tailOutput[lane];
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void StoreGlobalShoupScalarTail(
-        uint[] twiddles,
-        uint[] shoup,
-        int offset,
-        int index,
-        int end,
-        uint modulus,
-        CancellationToken cancellationToken)
-    {
-        if (index >= end)
-        {
-            return;
-        }
-
-        double scale = 4_294_967_296.0 / modulus;
-        for (; index < end; index++)
-        {
-            shoup[offset + index] =
-                ComputeShoupCompanion(
-                    twiddles[offset + index],
-                    modulus,
-                    scale);
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-    }
 }

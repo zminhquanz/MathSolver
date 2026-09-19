@@ -171,7 +171,7 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void StoreScalarTwiddleTail(
+    private static void StoreVectorTwiddleTail(
         uint[] forwardTwiddles,
         uint[] inverseTwiddles,
         uint[]? forwardShoupTwiddles,
@@ -180,46 +180,34 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength,
         int index,
         int endIndex,
-        uint root,
-        uint modulus,
+        ReadOnlySpan<uint> forwardTail,
+        ReadOnlySpan<uint> inverseTail,
+        ReadOnlySpan<uint> forwardShoupTail,
+        ReadOnlySpan<uint> inverseShoupTail,
         bool buildShoupCompanions,
-        double shoupScale,
-        ulong twiddle,
         CancellationToken cancellationToken)
     {
-        for (; index < endIndex; index++)
+        int count = endIndex - index;
+        for (int lane = 0; lane < count; lane++)
         {
-            uint current = (uint)twiddle;
-            forwardTwiddles[offset + index] = current;
+            forwardTwiddles[offset + index + lane] =
+                forwardTail[lane];
 
             int inverseIndex =
-                offset + halfLength - index;
+                offset + halfLength - (index + lane);
             inverseTwiddles[inverseIndex] =
-                modulus - current;
+                inverseTail[lane];
 
             if (buildShoupCompanions)
             {
-                uint shoup =
-                    ComputeShoupCompanion(
-                        current,
-                        modulus,
-                        shoupScale);
-                forwardShoupTwiddles![offset + index] = shoup;
+                forwardShoupTwiddles![offset + index + lane] =
+                    forwardShoupTail[lane];
                 inverseShoupTwiddles![inverseIndex] =
-                    uint.MaxValue - shoup;
-            }
-
-            if (index + 1 < endIndex)
-            {
-                twiddle =
-                    twiddle * root % modulus;
-            }
-
-            if ((index & 0xFFFF) == 0xFFFF)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
+                    inverseShoupTail[lane];
             }
         }
+
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -293,6 +281,14 @@ internal sealed partial class ParallelBigUnsigned
         Vector512<uint> advanceVector = Vector512.Create(advance);
         Vector512<uint> advanceShoupVector = Vector512.Create(advanceShoup);
         Vector512<uint> uintMax = Vector512.Create(uint.MaxValue);
+        GetGlobalShoupReciprocal(
+            modulus,
+            out uint reciprocalHighScalar,
+            out uint reciprocalLowScalar);
+        Vector512<uint> reciprocalHigh = Vector512.Create(reciprocalHighScalar);
+        Vector512<uint> reciprocalLow = Vector512.Create(reciprocalLowScalar);
+        Vector512<uint> one = Vector512.Create(1u);
+        Vector512<uint> zero = Vector512<uint>.Zero;
 
         ref uint forwardRef =
             ref MemoryMarshal.GetArrayDataReference(forwardTwiddles);
@@ -300,8 +296,14 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(inverseTwiddles);
 
         Span<uint> shoupScratch = stackalloc uint[Width];
+        Span<uint> inverseScratch = stackalloc uint[Width];
+        Span<uint> inverseShoupScratch = stackalloc uint[Width];
         ref uint shoupScratchRef =
             ref MemoryMarshal.GetReference(shoupScratch);
+        ref uint inverseScratchRef =
+            ref MemoryMarshal.GetReference(inverseScratch);
+        ref uint inverseShoupScratchRef =
+            ref MemoryMarshal.GetReference(inverseShoupScratch);
         ref uint forwardShoupRef = ref shoupScratchRef;
         ref uint inverseShoupRef = ref shoupScratchRef;
         if (buildShoupCompanions)
@@ -330,17 +332,14 @@ internal sealed partial class ParallelBigUnsigned
 
             if (buildShoupCompanions)
             {
-                for (int lane = 0; lane < Width; lane++)
-                {
-                    shoupScratch[lane] =
-                        ComputeShoupCompanion(
-                            twiddle.GetElement(lane),
-                            modulus,
-                            shoupScale);
-                }
-
                 Vector512<uint> shoup =
-                    Vector512.LoadUnsafe(ref shoupScratchRef);
+                    ComputeShoupCompanionAvx512(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        context.Modulus,
+                        one,
+                        zero);
                 shoup.StoreUnsafe(
                     ref forwardShoupRef,
                     (nuint)(offset + index));
@@ -372,7 +371,28 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < endIndex)
         {
-            StoreScalarTwiddleTail(
+            twiddle.StoreUnsafe(ref seedRef);
+            Vector512<uint> inverseTailVector =
+                Vector512.Subtract(context.Modulus, twiddle);
+            inverseTailVector.StoreUnsafe(ref inverseScratchRef);
+
+            if (buildShoupCompanions)
+            {
+                Vector512<uint> shoupTailVector =
+                    ComputeShoupCompanionAvx512(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        context.Modulus,
+                        one,
+                        zero);
+                shoupTailVector.StoreUnsafe(ref shoupScratchRef);
+                Vector512<uint> inverseShoupTailVector =
+                    Vector512.Subtract(uintMax, shoupTailVector);
+                inverseShoupTailVector.StoreUnsafe(ref inverseShoupScratchRef);
+            }
+
+            StoreVectorTwiddleTail(
                 forwardTwiddles,
                 inverseTwiddles,
                 forwardShoupTwiddles,
@@ -381,11 +401,11 @@ internal sealed partial class ParallelBigUnsigned
                 halfLength,
                 index,
                 endIndex,
-                root,
-                modulus,
+                seed,
+                inverseScratch,
+                shoupScratch,
+                inverseShoupScratch,
                 buildShoupCompanions,
-                shoupScale,
-                twiddle.GetElement(0),
                 cancellationToken);
         }
     }
@@ -419,6 +439,14 @@ internal sealed partial class ParallelBigUnsigned
         Vector256<uint> advanceVector = Vector256.Create(advance);
         Vector256<uint> advanceShoupVector = Vector256.Create(advanceShoup);
         Vector256<uint> uintMax = Vector256.Create(uint.MaxValue);
+        GetGlobalShoupReciprocal(
+            modulus,
+            out uint reciprocalHighScalar,
+            out uint reciprocalLowScalar);
+        Vector256<uint> reciprocalHigh = Vector256.Create(reciprocalHighScalar);
+        Vector256<uint> reciprocalLow = Vector256.Create(reciprocalLowScalar);
+        Vector256<uint> one = Vector256.Create(1u);
+        Vector256<uint> zero = Vector256<uint>.Zero;
 
         ref uint forwardRef =
             ref MemoryMarshal.GetArrayDataReference(forwardTwiddles);
@@ -426,8 +454,14 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(inverseTwiddles);
 
         Span<uint> shoupScratch = stackalloc uint[Width];
+        Span<uint> inverseScratch = stackalloc uint[Width];
+        Span<uint> inverseShoupScratch = stackalloc uint[Width];
         ref uint shoupScratchRef =
             ref MemoryMarshal.GetReference(shoupScratch);
+        ref uint inverseScratchRef =
+            ref MemoryMarshal.GetReference(inverseScratch);
+        ref uint inverseShoupScratchRef =
+            ref MemoryMarshal.GetReference(inverseShoupScratch);
         ref uint forwardShoupRef = ref shoupScratchRef;
         ref uint inverseShoupRef = ref shoupScratchRef;
         if (buildShoupCompanions)
@@ -456,17 +490,14 @@ internal sealed partial class ParallelBigUnsigned
 
             if (buildShoupCompanions)
             {
-                for (int lane = 0; lane < Width; lane++)
-                {
-                    shoupScratch[lane] =
-                        ComputeShoupCompanion(
-                            twiddle.GetElement(lane),
-                            modulus,
-                            shoupScale);
-                }
-
                 Vector256<uint> shoup =
-                    Vector256.LoadUnsafe(ref shoupScratchRef);
+                    ComputeShoupCompanionAvx2(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        context.Modulus,
+                        one,
+                        zero);
                 shoup.StoreUnsafe(
                     ref forwardShoupRef,
                     (nuint)(offset + index));
@@ -498,7 +529,28 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < endIndex)
         {
-            StoreScalarTwiddleTail(
+            twiddle.StoreUnsafe(ref seedRef);
+            Vector256<uint> inverseTailVector =
+                Avx2.Subtract(context.Modulus, twiddle);
+            inverseTailVector.StoreUnsafe(ref inverseScratchRef);
+
+            if (buildShoupCompanions)
+            {
+                Vector256<uint> shoupTailVector =
+                    ComputeShoupCompanionAvx2(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        context.Modulus,
+                        one,
+                        zero);
+                shoupTailVector.StoreUnsafe(ref shoupScratchRef);
+                Vector256<uint> inverseShoupTailVector =
+                    Avx2.Subtract(uintMax, shoupTailVector);
+                inverseShoupTailVector.StoreUnsafe(ref inverseShoupScratchRef);
+            }
+
+            StoreVectorTwiddleTail(
                 forwardTwiddles,
                 inverseTwiddles,
                 forwardShoupTwiddles,
@@ -507,11 +559,11 @@ internal sealed partial class ParallelBigUnsigned
                 halfLength,
                 index,
                 endIndex,
-                root,
-                modulus,
+                seed,
+                inverseScratch,
+                shoupScratch,
+                inverseShoupScratch,
                 buildShoupCompanions,
-                shoupScale,
-                twiddle.GetElement(0),
                 cancellationToken);
         }
     }
@@ -545,6 +597,14 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> advanceVector = Vector128.Create(advance);
         Vector128<uint> advanceShoupVector = Vector128.Create(advanceShoup);
         Vector128<uint> uintMax = Vector128.Create(uint.MaxValue);
+        GetGlobalShoupReciprocal(
+            modulus,
+            out uint reciprocalHighScalar,
+            out uint reciprocalLowScalar);
+        Vector128<uint> reciprocalHigh = Vector128.Create(reciprocalHighScalar);
+        Vector128<uint> reciprocalLow = Vector128.Create(reciprocalLowScalar);
+        Vector128<uint> one = Vector128.Create(1u);
+        Vector128<uint> zero = Vector128<uint>.Zero;
 
         ref uint forwardRef =
             ref MemoryMarshal.GetArrayDataReference(forwardTwiddles);
@@ -552,8 +612,14 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(inverseTwiddles);
 
         Span<uint> shoupScratch = stackalloc uint[Width];
+        Span<uint> inverseScratch = stackalloc uint[Width];
+        Span<uint> inverseShoupScratch = stackalloc uint[Width];
         ref uint shoupScratchRef =
             ref MemoryMarshal.GetReference(shoupScratch);
+        ref uint inverseScratchRef =
+            ref MemoryMarshal.GetReference(inverseScratch);
+        ref uint inverseShoupScratchRef =
+            ref MemoryMarshal.GetReference(inverseShoupScratch);
         ref uint forwardShoupRef = ref shoupScratchRef;
         ref uint inverseShoupRef = ref shoupScratchRef;
         if (buildShoupCompanions)
@@ -582,17 +648,14 @@ internal sealed partial class ParallelBigUnsigned
 
             if (buildShoupCompanions)
             {
-                for (int lane = 0; lane < Width; lane++)
-                {
-                    shoupScratch[lane] =
-                        ComputeShoupCompanion(
-                            twiddle.GetElement(lane),
-                            modulus,
-                            shoupScale);
-                }
-
                 Vector128<uint> shoup =
-                    Vector128.LoadUnsafe(ref shoupScratchRef);
+                    ComputeShoupCompanionSse(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        modulusVector,
+                        one,
+                        zero);
                 shoup.StoreUnsafe(
                     ref forwardShoupRef,
                     (nuint)(offset + index));
@@ -624,7 +687,28 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < endIndex)
         {
-            StoreScalarTwiddleTail(
+            twiddle.StoreUnsafe(ref seedRef);
+            Vector128<uint> inverseTailVector =
+                Sse2.Subtract(modulusVector, twiddle);
+            inverseTailVector.StoreUnsafe(ref inverseScratchRef);
+
+            if (buildShoupCompanions)
+            {
+                Vector128<uint> shoupTailVector =
+                    ComputeShoupCompanionSse(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        modulusVector,
+                        one,
+                        zero);
+                shoupTailVector.StoreUnsafe(ref shoupScratchRef);
+                Vector128<uint> inverseShoupTailVector =
+                    Sse2.Subtract(uintMax, shoupTailVector);
+                inverseShoupTailVector.StoreUnsafe(ref inverseShoupScratchRef);
+            }
+
+            StoreVectorTwiddleTail(
                 forwardTwiddles,
                 inverseTwiddles,
                 forwardShoupTwiddles,
@@ -633,11 +717,11 @@ internal sealed partial class ParallelBigUnsigned
                 halfLength,
                 index,
                 endIndex,
-                root,
-                modulus,
+                seed,
+                inverseScratch,
+                shoupScratch,
+                inverseShoupScratch,
                 buildShoupCompanions,
-                shoupScale,
-                twiddle.GetElement(0),
                 cancellationToken);
         }
     }
@@ -671,6 +755,14 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> advanceVector = Vector128.Create(advance);
         Vector128<uint> advanceShoupVector = Vector128.Create(advanceShoup);
         Vector128<uint> uintMax = Vector128.Create(uint.MaxValue);
+        GetGlobalShoupReciprocal(
+            modulus,
+            out uint reciprocalHighScalar,
+            out uint reciprocalLowScalar);
+        Vector128<uint> reciprocalHigh = Vector128.Create(reciprocalHighScalar);
+        Vector128<uint> reciprocalLow = Vector128.Create(reciprocalLowScalar);
+        Vector128<uint> one = Vector128.Create(1u);
+        Vector128<uint> zero = Vector128<uint>.Zero;
 
         ref uint forwardRef =
             ref MemoryMarshal.GetArrayDataReference(forwardTwiddles);
@@ -678,8 +770,14 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(inverseTwiddles);
 
         Span<uint> shoupScratch = stackalloc uint[Width];
+        Span<uint> inverseScratch = stackalloc uint[Width];
+        Span<uint> inverseShoupScratch = stackalloc uint[Width];
         ref uint shoupScratchRef =
             ref MemoryMarshal.GetReference(shoupScratch);
+        ref uint inverseScratchRef =
+            ref MemoryMarshal.GetReference(inverseScratch);
+        ref uint inverseShoupScratchRef =
+            ref MemoryMarshal.GetReference(inverseShoupScratch);
         ref uint forwardShoupRef = ref shoupScratchRef;
         ref uint inverseShoupRef = ref shoupScratchRef;
         if (buildShoupCompanions)
@@ -708,17 +806,14 @@ internal sealed partial class ParallelBigUnsigned
 
             if (buildShoupCompanions)
             {
-                for (int lane = 0; lane < Width; lane++)
-                {
-                    shoupScratch[lane] =
-                        ComputeShoupCompanion(
-                            twiddle.GetElement(lane),
-                            modulus,
-                            shoupScale);
-                }
-
                 Vector128<uint> shoup =
-                    Vector128.LoadUnsafe(ref shoupScratchRef);
+                    ComputeShoupCompanionNeon(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        modulusVector,
+                        one,
+                        zero);
                 shoup.StoreUnsafe(
                     ref forwardShoupRef,
                     (nuint)(offset + index));
@@ -750,7 +845,28 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < endIndex)
         {
-            StoreScalarTwiddleTail(
+            twiddle.StoreUnsafe(ref seedRef);
+            Vector128<uint> inverseTailVector =
+                AdvSimd.Subtract(modulusVector, twiddle);
+            inverseTailVector.StoreUnsafe(ref inverseScratchRef);
+
+            if (buildShoupCompanions)
+            {
+                Vector128<uint> shoupTailVector =
+                    ComputeShoupCompanionNeon(
+                        twiddle,
+                        reciprocalHigh,
+                        reciprocalLow,
+                        modulusVector,
+                        one,
+                        zero);
+                shoupTailVector.StoreUnsafe(ref shoupScratchRef);
+                Vector128<uint> inverseShoupTailVector =
+                    AdvSimd.Subtract(uintMax, shoupTailVector);
+                inverseShoupTailVector.StoreUnsafe(ref inverseShoupScratchRef);
+            }
+
+            StoreVectorTwiddleTail(
                 forwardTwiddles,
                 inverseTwiddles,
                 forwardShoupTwiddles,
@@ -759,11 +875,11 @@ internal sealed partial class ParallelBigUnsigned
                 halfLength,
                 index,
                 endIndex,
-                root,
-                modulus,
+                seed,
+                inverseScratch,
+                shoupScratch,
+                inverseShoupScratch,
                 buildShoupCompanions,
-                shoupScale,
-                twiddle.GetElement(0),
                 cancellationToken);
         }
     }

@@ -99,13 +99,13 @@ internal sealed partial class ParallelBigUnsigned
     // is retained only as the fallback when the tail is too short.
     private const int CrtCarryStreamingBlockLength = 1 << 20;
 
-    // Large-mode pipeline flattening: carry/segment accumulation is split into
-    // L2-friendly tiles and executed by the same persistent logical-worker
-    // team. Each tile normalizes with an independent zero carry; a tiny
-    // boundary-reconciliation pass then injects the true carry between tiles.
-    // This preserves exact base-10,000 arithmetic while replacing long
-    // single-core valleys between NTT waves with useful parallel work.
+    // Carry normalization is split into L2-friendly tiles. Large mode keeps
+    // its accepted ordered tile-boundary reconciliation; <=10M additionally
+    // derives generate/propagate summaries and performs block carry-lookahead
+    // before parallel final injection.  Each tile still normalizes first with
+    // an independent zero carry, preserving exact base-10,000 arithmetic.
     private const int ParallelCarryTileLength = 1 << 14; // 16,384 coefficients
+    private const int HierarchicalCarryTileLength = 1 << 9; // 512 coefficients (<=10M carry lookahead)
 
     // Both primes support transforms through 2^26. Their product is large
     // enough to recover every base-10,000 convolution coefficient in the
@@ -4062,6 +4062,15 @@ internal sealed partial class ParallelBigUnsigned
                     !useSseCrt &&
                     workers.UseNeonNtt;
 
+                int crtVectorWidth =
+                    useAvx512Crt
+                        ? Vector512<uint>.Count
+                        : useAvx2Crt
+                            ? Vector256<uint>.Count
+                            : useSseCrt || useNeonCrt
+                                ? Vector128<uint>.Count
+                                : 1;
+
                 for (int blockStart = 0;
                      blockStart < coefficientCount;
                      blockStart += scratchLength)
@@ -4077,12 +4086,13 @@ internal sealed partial class ParallelBigUnsigned
                     long crtStarted =
                         Stopwatch.GetTimestamp();
 
-                    // CRT stays parallel. Each worker writes only its own
-                    // range in the bounded scratch block, and the barrier at
-                    // ExecuteRanges completion guarantees the source residues
-                    // can then be overwritten safely by the sequential carry.
-                    ExecuteRanges(
+                    // CRT stays parallel, but workers are scheduled in complete
+                    // SIMD-width blocks. This removes the old per-worker CRT
+                    // scalar suffix; only the final block-wide global tail can
+                    // remain before carry consumes the reconstructed stream.
+                    ExecuteVectorAlignedRanges(
                         blockCount,
+                        crtVectorWidth,
                         workers,
                         cancellationToken,
                         (start, end) =>
@@ -4131,6 +4141,7 @@ internal sealed partial class ParallelBigUnsigned
                                 firstSpan,
                                 secondSpan,
                                 scratchSpan,
+                                !workers.UsesPersistentStaticScheduling,
                                 useAvx512Crt,
                                 useAvx2Crt,
                                 useSseCrt,
@@ -4144,11 +4155,21 @@ internal sealed partial class ParallelBigUnsigned
                     long carryStarted =
                         Stopwatch.GetTimestamp();
 
-                    // Reuse the exact tiled carry algorithm on large <=10M
-                    // AVX-512 blocks. Keep the existing AVX-512 threshold so a
-                    // worker barrier cannot dominate a short carry chain.
-                    if (workers.UseAvx512Ntt && workers.WorkerCount > 1 &&
-                        blockCount >= (long)ParallelCarryTileLength * workers.WorkerCount)
+                    // Large <=10M blocks use zero-carry tile normalization +
+                    // block carry-lookahead. Keep the existing full-worker
+                    // threshold so the extra worker generation cannot dominate
+                    // short tails, but let every active SIMD backend benefit
+                    // instead of limiting tiled carry to AVX-512 only.
+                    int carryTileLength = workers.UsesPersistentStaticScheduling
+                        ? ParallelCarryTileLength
+                        : HierarchicalCarryTileLength;
+                    bool useParallelCarry =
+                        workers.WorkerCount > 1 &&
+                        (useAvx512Crt || useAvx2Crt || useSseCrt || useNeonCrt) &&
+                        blockCount >=
+                            (long)carryTileLength * workers.WorkerCount;
+
+                    if (useParallelCarry)
                     {
                         carry = NormalizeCrtCarryBlockParallel(
                             transformedSecond, crtScratch, useInverseTailScratch,
@@ -4158,13 +4179,10 @@ internal sealed partial class ParallelBigUnsigned
                         continue;
                     }
 
-                    // <=10M production path: CRT reconstruction already picked
-                    // the active AVX2 / SSE2+ / NEON backend above.  Feed the
-                    // whole bounded scratch block directly into the matching
-                    // SIMD carry decomposition instead of falling back to the
-                    // scalar /10000 loop.  Carry propagation itself remains a
-                    // short ordered reconciliation inside NormalizeCrtCarryRangeSimd.
-                    // AVX-512 behavior is intentionally left unchanged here.
+                    // Short <=10M tails stay on the direct SIMD carry path for
+                    // AVX2 / SSE2+ / NEON so a second worker generation cannot
+                    // dominate them. AVX-512 short-tail behavior stays unchanged;
+                    // full blocks above already use tiled lookahead.
                     if (useAvx2Crt || useSseCrt || useNeonCrt)
                     {
                         carry = NormalizeCrtCarryRangeSimd(
@@ -4392,6 +4410,7 @@ internal sealed partial class ParallelBigUnsigned
                         firstSpan,
                         secondSpan,
                         scratchSpan,
+                        !workers.UsesPersistentStaticScheduling,
                         useAvx512Crt,
                         useAvx2Crt,
                         useSseCrt,
@@ -4435,6 +4454,30 @@ internal sealed partial class ParallelBigUnsigned
         return trailingCarry;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteCarryTileRanges(
+        int itemCount,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken,
+        Action<int, int> body)
+    {
+        if (itemCount <= 0)
+            return;
+
+        // Large mode preserves its persistent worker scheduling exactly.
+        // For <=10M, avoid waking a full team when a small schoolbook result
+        // contains fewer micro-tiles than logical workers.
+        if (!workers.UsesPersistentStaticScheduling &&
+            itemCount < workers.WorkerCount)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            body(0, itemCount);
+            return;
+        }
+
+        ExecuteRanges(itemCount, workers, cancellationToken, body);
+    }
+
     private static ulong NormalizeCrtCarryBlockParallel(
         uint[] transformedSecond,
         ulong[]? crtScratch,
@@ -4447,11 +4490,16 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        int tileLength =
+            workers.UsesPersistentStaticScheduling
+                ? ParallelCarryTileLength
+                : HierarchicalCarryTileLength;
+
         int tileCount =
             checked(
                 (blockCount +
-                 ParallelCarryTileLength - 1) /
-                ParallelCarryTileLength);
+                 tileLength - 1) /
+                tileLength);
 
         if (workers.WorkerCount == 1 ||
             tileCount <= 1)
@@ -4476,7 +4524,7 @@ internal sealed partial class ParallelBigUnsigned
 
         try
         {
-            ExecuteRanges(
+            ExecuteCarryTileRanges(
                 tileCount,
                 workers,
                 cancellationToken,
@@ -4491,11 +4539,11 @@ internal sealed partial class ParallelBigUnsigned
                         int relativeStart =
                             checked(
                                 tileIndex *
-                                ParallelCarryTileLength);
+                                tileLength);
 
                         int count =
                             Math.Min(
-                                ParallelCarryTileLength,
+                                tileLength,
                                 blockCount -
                                 relativeStart);
 
@@ -4518,6 +4566,25 @@ internal sealed partial class ParallelBigUnsigned
                     }
                 });
 
+            // <=10M: use the hierarchical micro-tile carry lookahead.  Each
+            // 512-digit tile is normalized independently, then the exact
+            // one-bit overflow transfer is prefix-composed in O(log N).  This
+            // shortens the remaining intra-tile dependency chain by 32x versus
+            // the legacy 16K tile while keeping large-mode scheduling intact.
+            if (!workers.UsesPersistentStaticScheduling)
+            {
+                return ReconcileNormalizedCarryTilesHierarchical(
+                    destination,
+                    blockStart,
+                    blockCount,
+                    incomingCarry,
+                    tileCarries,
+                    tileCount,
+                    tileLength,
+                    workers,
+                    cancellationToken);
+            }
+
             ulong carry =
                 incomingCarry;
 
@@ -4530,11 +4597,11 @@ internal sealed partial class ParallelBigUnsigned
                 int relativeStart =
                     checked(
                         tileIndex *
-                        ParallelCarryTileLength);
+                        tileLength);
 
                 int count =
                     Math.Min(
-                        ParallelCarryTileLength,
+                        tileLength,
                         blockCount -
                         relativeStart);
 
@@ -4565,6 +4632,322 @@ internal sealed partial class ParallelBigUnsigned
                 tileCarries,
                 clearArray: false);
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong ReconcileNormalizedCarryTilesHierarchical(
+        uint[] destination,
+        int blockStart,
+        int blockCount,
+        ulong incomingCarry,
+        ulong[] tileCarries,
+        int tileCount,
+        int tileLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(tileCount > 0);
+
+        if (tileCount == 1)
+        {
+            ulong overflow = incomingCarry == 0
+                ? 0
+                : AddCarryToNormalizedRange(
+                    destination, blockStart, blockCount, incomingCarry,
+                    workers, cancellationToken);
+            return checked(tileCarries[0] + overflow);
+        }
+
+        int carryBitCount = tileCount - 1;
+        byte[] generate = ArrayPool<byte>.Shared.Rent(carryBitCount);
+        byte[] propagate = ArrayPool<byte>.Shared.Rent(carryBitCount);
+
+        try
+        {
+            Array.Clear(generate, 0, carryBitCount);
+            Array.Clear(propagate, 0, carryBitCount);
+
+            // Tile zero is anchored by the caller-supplied carry, so its
+            // outgoing overflow is already a constant prefix result.
+            generate[0] = WouldNormalizedRangeOverflow(
+                destination, blockStart,
+                Math.Min(tileLength, blockCount), incomingCarry,
+                workers, cancellationToken) ? (byte)1 : (byte)0;
+
+            if (carryBitCount > 1)
+            {
+                ExecuteCarryTileRanges(
+                    carryBitCount - 1,
+                    workers,
+                    cancellationToken,
+                    (from, to) =>
+                    {
+                        for (int relative = from; relative < to; relative++)
+                        {
+                            int tileIndex = relative + 1;
+                            int relativeStart = checked(tileIndex * tileLength);
+                            int count = Math.Min(tileLength, blockCount - relativeStart);
+                            int start = checked(blockStart + relativeStart);
+                            ulong baseCarry = tileCarries[tileIndex - 1];
+
+                            bool g = WouldNormalizedRangeOverflow(
+                                destination, start, count, baseCarry,
+                                workers, cancellationToken);
+                            generate[tileIndex] = g ? (byte)1 : (byte)0;
+
+                            if (!g)
+                            {
+                                bool p = WouldNormalizedRangeOverflow(
+                                    destination, start, count, checked(baseCarry + 1UL),
+                                    workers, cancellationToken);
+                                propagate[tileIndex] = p ? (byte)1 : (byte)0;
+                            }
+                        }
+                    });
+            }
+
+            // Kogge-Stone prefix over byte G/P summaries.  Iterate from high
+            // to low so every stage reads the previous-stage value at i-d.
+            // For a 1M block and 512-digit micro-tiles this is only 11 stages.
+            for (int distance = 1; distance < carryBitCount; distance <<= 1)
+            {
+                for (int i = carryBitCount - 1; i >= distance; i--)
+                {
+                    byte p = propagate[i];
+                    generate[i] = (byte)(generate[i] | (p & generate[i - distance]));
+                    propagate[i] = (byte)(p & propagate[i - distance]);
+                }
+            }
+
+            long finalOverflowBits = 0;
+            int lastTileIndex = tileCount - 1;
+
+            ExecuteCarryTileRanges(
+                tileCount,
+                workers,
+                cancellationToken,
+                (tileStart, tileEnd) =>
+                {
+                    for (int tileIndex = tileStart; tileIndex < tileEnd; tileIndex++)
+                    {
+                        int relativeStart = checked(tileIndex * tileLength);
+                        int count = Math.Min(tileLength, blockCount - relativeStart);
+                        ulong tileInput = tileIndex == 0
+                            ? incomingCarry
+                            : checked(tileCarries[tileIndex - 1] + generate[tileIndex - 1]);
+
+                        ulong overflow = tileInput == 0
+                            ? 0
+                            : AddCarryToNormalizedRange(
+                                destination, checked(blockStart + relativeStart), count,
+                                tileInput, workers, cancellationToken);
+
+                        if (tileIndex < lastTileIndex)
+                        {
+                            Debug.Assert(overflow == generate[tileIndex],
+                                "Hierarchical carry prefix disagreed with tile reconciliation.");
+                        }
+                        else
+                        {
+                            Interlocked.Exchange(ref finalOverflowBits, unchecked((long)overflow));
+                        }
+                    }
+                });
+
+            ulong finalOverflow = unchecked((ulong)Volatile.Read(ref finalOverflowBits));
+            return checked(tileCarries[lastTileIndex] + finalOverflow);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(generate, clearArray: false);
+            ArrayPool<byte>.Shared.Return(propagate, clearArray: false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong ReconcileCrtCarryTilesLookahead(
+        uint[] destination,
+        int blockStart,
+        int blockCount,
+        ulong incomingCarry,
+        ulong[] tileCarries,
+        int tileCount,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(tileCount is > 1 and <= 64);
+
+        // We only need overflow bits through the penultimate tile.  The last
+        // tile's overflow is the final UInt64 carry and may be wider than one
+        // when the streaming block ends in a very short partial tile.
+        int carryBitCount = tileCount - 1;
+        ulong activeMask =
+            (1UL << carryBitCount) - 1UL;
+
+        ulong generateMask = 0;
+        ulong propagateMask = 0;
+
+        // Tile 0 is anchored by the caller-supplied incoming carry, so its
+        // output bit is a constant generate term rather than a propagate term.
+        if (WouldNormalizedRangeOverflow(
+                destination,
+                blockStart,
+                ParallelCarryTileLength,
+                incomingCarry,
+                workers,
+                cancellationToken))
+        {
+            generateMask |= 1UL;
+        }
+
+        // For tile i>0, its input is tileCarries[i-1] + b(i-1), where b is a
+        // single bit.  Probe the normalized tile at base and base+1 to derive
+        // the exact monotone transfer function bOut = G | (P & bIn).
+        for (int tileIndex = 1;
+             tileIndex < carryBitCount;
+             tileIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int destinationStart =
+                checked(
+                    blockStart +
+                    tileIndex *
+                    ParallelCarryTileLength);
+
+            ulong baseCarry =
+                tileCarries[tileIndex - 1];
+
+            bool generates =
+                WouldNormalizedRangeOverflow(
+                    destination,
+                    destinationStart,
+                    ParallelCarryTileLength,
+                    baseCarry,
+                    workers,
+                    cancellationToken);
+
+            ulong bit =
+                1UL << tileIndex;
+
+            if (generates)
+            {
+                generateMask |= bit;
+                continue;
+            }
+
+            ulong incrementedCarry =
+                checked(baseCarry + 1UL);
+
+            if (WouldNormalizedRangeOverflow(
+                    destination,
+                    destinationStart,
+                    ParallelCarryTileLength,
+                    incrementedCarry,
+                    workers,
+                    cancellationToken))
+            {
+                propagateMask |= bit;
+            }
+        }
+
+        // Kogge-Stone style prefix over the packed G/P bits.  At distance d,
+        // each bit composes its d-wide predecessor group.  With at most 63
+        // carry bits per 1M streaming block this finishes in <= 6 iterations.
+        for (int distance = 1;
+             distance < carryBitCount;
+             distance <<= 1)
+        {
+            ulong oldGenerate = generateMask;
+            ulong oldPropagate = propagateMask;
+
+            ulong shiftedGenerate =
+                (oldGenerate << distance) & activeMask;
+            ulong shiftedPropagate =
+                (oldPropagate << distance) & activeMask;
+            ulong lowerMask =
+                (1UL << distance) - 1UL;
+
+            generateMask =
+                (oldGenerate |
+                 (oldPropagate & shiftedGenerate)) &
+                activeMask;
+
+            propagateMask =
+                ((oldPropagate & shiftedPropagate) |
+                 (oldPropagate & lowerMask)) &
+                activeMask;
+        }
+
+        long finalOverflowBits = 0;
+        int lastTileIndex = tileCount - 1;
+
+        ExecuteRanges(
+            tileCount,
+            workers,
+            cancellationToken,
+            (tileStart, tileEnd) =>
+            {
+                for (int tileIndex = tileStart;
+                     tileIndex < tileEnd;
+                     tileIndex++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    int relativeStart =
+                        checked(
+                            tileIndex *
+                            ParallelCarryTileLength);
+
+                    int count =
+                        Math.Min(
+                            ParallelCarryTileLength,
+                            blockCount -
+                            relativeStart);
+
+                    ulong tileInput =
+                        tileIndex == 0
+                            ? incomingCarry
+                            : checked(
+                                tileCarries[tileIndex - 1] +
+                                ((generateMask >> (tileIndex - 1)) & 1UL));
+
+                    ulong overflow =
+                        tileInput == 0
+                            ? 0
+                            : AddCarryToNormalizedRange(
+                                destination,
+                                checked(blockStart + relativeStart),
+                                count,
+                                tileInput,
+                                workers,
+                                cancellationToken);
+
+                    if (tileIndex < lastTileIndex)
+                    {
+                        ulong expectedOverflow =
+                            (generateMask >> tileIndex) & 1UL;
+                        Debug.Assert(
+                            overflow == expectedOverflow,
+                            "Carry-lookahead summary disagreed with tile reconciliation.");
+                    }
+                    else
+                    {
+                        Interlocked.Exchange(
+                            ref finalOverflowBits,
+                            unchecked((long)overflow));
+                    }
+                }
+            });
+
+        ulong finalOverflow =
+            unchecked(
+                (ulong)Volatile.Read(
+                    ref finalOverflowBits));
+
+        return checked(
+            tileCarries[lastTileIndex] +
+            finalOverflow);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -4813,8 +5196,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (modulus == FirstModulus)
         {
-            ExecuteRanges(
+            ExecuteVectorAlignedRanges(
                 length,
+                Vector512<uint>.Count * 2,
                 workers,
                 cancellationToken,
                 (start, end) =>
@@ -4841,8 +5225,9 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
-        ExecuteRanges(
+        ExecuteVectorAlignedRanges(
             length,
+            Vector512<uint>.Count * 2,
             workers,
             cancellationToken,
             (start, end) =>
@@ -5969,7 +6354,7 @@ internal sealed partial class ParallelBigUnsigned
 
             // The first global stages of a 2^26-class transform are too large
             // for the bounded twiddle cache.  On the hardware-accelerated
-            // <=10M path, fuse those uncached scalar stages as well.  Each
+            // <=10M path, fuse those uncached SIMD stages as well.  Each
             // worker owns an independent quarter-stream slice and advances
             // three compact twiddle recurrences locally, removing one complete
             // value-buffer sweep and one stage barrier without introducing a
@@ -5998,9 +6383,8 @@ internal sealed partial class ParallelBigUnsigned
 
             // <=10M experiment: fuse the otherwise-unpaired 2*L3 DIF
             // transition stage with the complete L3 -> L2 -> L1 tail.  The
-            // bridge itself stays on the cached scalar path because Shoup
-            // companions intentionally begin at L3/2; descendants remain
-            // AVX2/Shoup. Each
+            // bridge itself uses the exact cached SIMD path; Shoup companions
+            // intentionally begin at L3/2 and descendants remain AVX2/Shoup. Each
             // worker owns one 2*L3 parent, performs its top butterfly stage,
             // then immediately completes both independent L3 children while
             // those values are still warm.  This removes one whole-array
@@ -6835,15 +7219,17 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
-            // v33: the last DIT stage is the only stage whose outputs are
-            // externally consumed.  Linear convolution needs only the
-            // [0, validOutputLength) prefix.  P1 writes that prefix directly
-            // into its compact result backing; P2 stays in-place but skips
-            // normalization/stores for the dead tail that CRT immediately
-            // reuses as scratch.  Worker partitioning and butterfly arithmetic
-            // for every valid coefficient are unchanged.
+            // v35 <=10M: the final DIT stage always goes through the dedicated
+            // final-output kernel, including the exact-full-output case where
+            // validOutputLength == length.  For exact-full output
+            // validRightCount becomes halfLength, so every butterfly takes the
+            // SIMD write-both path and the left-only range is naturally empty.
+            // PowMemoryBounded (>10M) deliberately keeps the previous gate so
+            // its accepted large-mode scheduling/checkpoint is not changed by
+            // this <=10M cleanup.  Partial/compact output behavior is unchanged.
             if (normalizeOutput &&
-                (compactFinalOutput ||
+                (!workers.UsesPersistentStaticScheduling ||
+                 compactFinalOutput ||
                  validOutputLength < length))
             {
                 uint[] finalOutput;
@@ -8144,10 +8530,11 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     /// <summary>
-    /// Executes only the final inverse-DIT stage and materializes the valid
-    /// linear-convolution prefix.  The first half of the final stage is always
-    /// valid because transformLength is the smallest power of two that covers
-    /// coefficientCount; only the upper-half suffix can be dead.
+    /// Executes only the final inverse-DIT stage and materializes every live
+    /// linear-convolution output.  This covers both partial-prefix output and
+    /// exact-full output.  The first half of the final stage is always valid
+    /// because transformLength is the smallest power of two that covers
+    /// coefficientCount; only a suffix of the upper half can be dead.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteFinalInversePrefix(
@@ -8182,76 +8569,91 @@ internal sealed partial class ParallelBigUnsigned
             validOutputLength -
             halfLength;
 
+        bool allowPaddedTail =
+            !workers.UsesPersistentStaticScheduling;
+
         if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512FinalInversePrefix) &&
             halfLength >= 256)
         {
-            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
-            {
-                int bothEnd = Math.Min(end, validRightCount);
-                if (start < bothEnd)
+            ExecuteVectorAlignedSplitRanges(
+                0,
+                validRightCount,
+                validRightCount,
+                halfLength,
+                Vector512<uint>.Count,
+                workers,
+                cancellationToken,
+                (start, end) =>
                     ProcessFinalInversePrefixAvx512(
-                        values, output, halfLength, start, bothEnd, true,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-                int leftStart = Math.Max(start, validRightCount);
-                if (leftStart < end)
+                        values, output, halfLength, start, end, true, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken),
+                (start, end) =>
                     ProcessFinalInversePrefixAvx512(
-                        values, output, halfLength, leftStart, end, false,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-            });
+                        values, output, halfLength, start, end, false, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken));
             return;
         }
 
         if (workers.UseAvx2Ntt && Avx2.IsSupported && halfLength >= 256)
         {
-            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
-            {
-                int bothEnd = Math.Min(end, validRightCount);
-                if (start < bothEnd)
+            ExecuteVectorAlignedSplitRanges(
+                0,
+                validRightCount,
+                validRightCount,
+                halfLength,
+                Vector256<uint>.Count,
+                workers,
+                cancellationToken,
+                (start, end) =>
                     ProcessFinalInversePrefixAvx2(
-                        values, output, halfLength, start, bothEnd, true,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-                int leftStart = Math.Max(start, validRightCount);
-                if (leftStart < end)
+                        values, output, halfLength, start, end, true, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken),
+                (start, end) =>
                     ProcessFinalInversePrefixAvx2(
-                        values, output, halfLength, leftStart, end, false,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-            });
+                        values, output, halfLength, start, end, false, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken));
             return;
         }
 
         if (workers.UseSseNtt && Sse2.IsSupported && halfLength >= 256)
         {
-            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
-            {
-                int bothEnd = Math.Min(end, validRightCount);
-                if (start < bothEnd)
+            ExecuteVectorAlignedSplitRanges(
+                0,
+                validRightCount,
+                validRightCount,
+                halfLength,
+                Vector128<uint>.Count,
+                workers,
+                cancellationToken,
+                (start, end) =>
                     ProcessFinalInversePrefixSse(
-                        values, output, halfLength, start, bothEnd, true,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-                int leftStart = Math.Max(start, validRightCount);
-                if (leftStart < end)
+                        values, output, halfLength, start, end, true, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken),
+                (start, end) =>
                     ProcessFinalInversePrefixSse(
-                        values, output, halfLength, leftStart, end, false,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-            });
+                        values, output, halfLength, start, end, false, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken));
             return;
         }
 
         if (workers.UseNeonNtt && halfLength >= 256)
         {
-            ExecuteRanges(halfLength, workers, cancellationToken, (start, end) =>
-            {
-                int bothEnd = Math.Min(end, validRightCount);
-                if (start < bothEnd)
+            ExecuteVectorAlignedSplitRanges(
+                0,
+                validRightCount,
+                validRightCount,
+                halfLength,
+                Vector128<uint>.Count,
+                workers,
+                cancellationToken,
+                (start, end) =>
                     ProcessFinalInversePrefixNeon(
-                        values, output, halfLength, start, bothEnd, true,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-                int leftStart = Math.Max(start, validRightCount);
-                if (leftStart < end)
+                        values, output, halfLength, start, end, true, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken),
+                (start, end) =>
                     ProcessFinalInversePrefixNeon(
-                        values, output, halfLength, leftStart, end, false,
-                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken);
-            });
+                        values, output, halfLength, start, end, false, allowPaddedTail,
+                        modulus, root, inverseLength, inverseLengthShoup, cancellationToken));
             return;
         }
 
@@ -8265,11 +8667,11 @@ internal sealed partial class ParallelBigUnsigned
             int bothEnd = Math.Min(halfLength, validRightCount);
             if (bothEnd > 0)
                 ProcessFinalInversePrefixAvx512(
-                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    values, output, halfLength, 0, bothEnd, true, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             if (bothEnd < halfLength)
                 ProcessFinalInversePrefixAvx512(
-                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    values, output, halfLength, bothEnd, halfLength, false, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             return;
         }
@@ -8280,11 +8682,11 @@ internal sealed partial class ParallelBigUnsigned
             int bothEnd = Math.Min(halfLength, validRightCount);
             if (bothEnd > 0)
                 ProcessFinalInversePrefixAvx2(
-                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    values, output, halfLength, 0, bothEnd, true, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             if (bothEnd < halfLength)
                 ProcessFinalInversePrefixAvx2(
-                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    values, output, halfLength, bothEnd, halfLength, false, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             return;
         }
@@ -8295,11 +8697,11 @@ internal sealed partial class ParallelBigUnsigned
             int bothEnd = Math.Min(halfLength, validRightCount);
             if (bothEnd > 0)
                 ProcessFinalInversePrefixSse(
-                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    values, output, halfLength, 0, bothEnd, true, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             if (bothEnd < halfLength)
                 ProcessFinalInversePrefixSse(
-                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    values, output, halfLength, bothEnd, halfLength, false, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             return;
         }
@@ -8311,11 +8713,11 @@ internal sealed partial class ParallelBigUnsigned
             int bothEnd = Math.Min(halfLength, validRightCount);
             if (bothEnd > 0)
                 ProcessFinalInversePrefixNeon(
-                    values, output, halfLength, 0, bothEnd, true, modulus, root,
+                    values, output, halfLength, 0, bothEnd, true, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             if (bothEnd < halfLength)
                 ProcessFinalInversePrefixNeon(
-                    values, output, halfLength, bothEnd, halfLength, false, modulus, root,
+                    values, output, halfLength, bothEnd, halfLength, false, allowPaddedTail, modulus, root,
                     inverseLength, inverseLengthShoup, cancellationToken);
             return;
         }
@@ -10569,6 +10971,7 @@ internal sealed partial class ParallelBigUnsigned
         ReadOnlySpan<uint> firstSpan,
         ReadOnlySpan<uint> secondSpan,
         Span<ulong> scratchSpan,
+        bool allowPaddedTail,
         bool useAvx512Crt,
         bool useAvx2Crt,
         bool useSseCrt,
@@ -10836,8 +11239,43 @@ internal sealed partial class ParallelBigUnsigned
                 scratchSpan);
         }
 
-        // Exact fallback and vector tail. Keep this byte-for-byte arithmetic
-        // equivalent to the accepted Phase 5 CRT loop.
+        // <=10M vector tail: pad the one global residual to the active SIMD
+        // width and run the exact CRT kernel once more.  This removes the final
+        // 1..15 scalar modular reconstructions without masked-load APIs or
+        // out-of-range memory access.  With a full padded vector the recursive
+        // call terminates in the SIMD body and never reaches this tail again.
+        if (allowPaddedTail && offset < count &&
+            (useAvx512Crt || useAvx2Crt || useSseCrt || useNeonCrt))
+        {
+            int vectorWidth = useAvx512Crt
+                ? Vector512<uint>.Count
+                : useAvx2Crt
+                    ? Vector256<uint>.Count
+                    : Vector128<uint>.Count;
+
+            Span<uint> firstScratch = stackalloc uint[vectorWidth];
+            Span<uint> secondScratch = stackalloc uint[vectorWidth];
+            Span<ulong> crtScratch = stackalloc ulong[vectorWidth];
+            int remaining = count - offset;
+
+            firstSpan.Slice(offset, remaining).CopyTo(firstScratch);
+            secondSpan.Slice(offset, remaining).CopyTo(secondScratch);
+
+            ReconstructCrtRange(
+                firstScratch,
+                secondScratch,
+                crtScratch,
+                true,
+                useAvx512Crt,
+                useAvx2Crt,
+                useSseCrt,
+                useNeonCrt);
+
+            crtScratch.Slice(0, remaining).CopyTo(scratchSpan.Slice(offset, remaining));
+            offset = count;
+        }
+
+        // Exact fallback for machines with SIMD disabled/unavailable.
         for (;
              offset < count;
              offset++)
@@ -11336,46 +11774,21 @@ internal sealed partial class ParallelBigUnsigned
             rightIndex += 16;
             twiddleIndex += 16;
         }
-
-        // NTT stage sizes are powers of two, so production AVX-512 stages do
-        // not normally reach this tail. Keep exact scalar arithmetic for
-        // defensive reuse and for the first fifteen butterflies after lane 0.
-        while (leftIndex < butterflyEnd)
+        int residualCount = butterflyEnd - leftIndex;
+        if (residualCount > 0)
         {
-            leftValue =
-                values[leftIndex];
-
-            rightValue =
-                values[rightIndex];
-
-            sum =
-                leftValue +
-                rightValue;
-
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            uint difference =
-                leftValue >= rightValue
-                    ? leftValue - rightValue
-                    : leftValue + modulus - rightValue;
-
-            values[leftIndex] =
-                sum;
-
-            values[rightIndex] =
-                MultiplyShoupScalar(
-                    difference,
-                    twiddles[twiddleIndex],
-                    shoupTwiddles[twiddleIndex],
-                    modulus);
-
-            leftIndex++;
-            rightIndex++;
-            twiddleIndex++;
+            ExecuteCachedButterflyTailAvx512(
+                values,
+                twiddles,
+                shoupTwiddles,
+                leftIndex,
+                rightIndex,
+                twiddleIndex,
+                residualCount,
+                inverse: false,
+                context);
         }
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -11495,39 +11908,21 @@ internal sealed partial class ParallelBigUnsigned
             twiddleIndex += 16;
         }
 
-        while (leftIndex < butterflyEnd)
+        int residualCount = butterflyEnd - leftIndex;
+        if (residualCount > 0)
         {
-            leftValue =
-                values[leftIndex];
-
-            rightValue =
-                MultiplyShoupScalar(
-                    values[rightIndex],
-                    twiddles[twiddleIndex],
-                    shoupTwiddles[twiddleIndex],
-                    modulus);
-
-            sum =
-                leftValue +
-                rightValue;
-
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            values[leftIndex] =
-                sum;
-
-            values[rightIndex] =
-                leftValue >= rightValue
-                    ? leftValue - rightValue
-                    : leftValue + modulus - rightValue;
-
-            leftIndex++;
-            rightIndex++;
-            twiddleIndex++;
+            ExecuteCachedButterflyTailAvx512(
+                values,
+                twiddles,
+                shoupTwiddles,
+                leftIndex,
+                rightIndex,
+                twiddleIndex,
+                residualCount,
+                inverse: true,
+                context);
         }
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -11646,43 +12041,21 @@ internal sealed partial class ParallelBigUnsigned
             rightIndex += 8;
             twiddleIndex += 8;
         }
-
-        // Keep the proven scalar modulo path for the 0-7 residue tail. This
-        // also makes small cache-resident groups avoid SIMD setup overhead.
-        while (leftIndex < butterflyEnd)
+        int residualCount = butterflyEnd - leftIndex;
+        if (residualCount > 0)
         {
-            leftValue =
-                values[leftIndex];
-
-            rightValue =
-                values[rightIndex];
-
-            sum =
-                leftValue +
-                rightValue;
-
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            uint difference =
-                leftValue >= rightValue
-                    ? leftValue - rightValue
-                    : leftValue + modulus - rightValue;
-
-            values[leftIndex] =
-                sum;
-
-            values[rightIndex] =
-                (uint)((ulong)difference *
-                       twiddles[twiddleIndex] %
-                       modulus);
-
-            leftIndex++;
-            rightIndex++;
-            twiddleIndex++;
+            ExecuteCachedButterflyTailAvx2(
+                values,
+                twiddles,
+                shoupTwiddles,
+                leftIndex,
+                rightIndex,
+                twiddleIndex,
+                residualCount,
+                inverse: false,
+                context);
         }
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -11802,37 +12175,21 @@ internal sealed partial class ParallelBigUnsigned
             twiddleIndex += 8;
         }
 
-        while (leftIndex < butterflyEnd)
+        int residualCount = butterflyEnd - leftIndex;
+        if (residualCount > 0)
         {
-            leftValue =
-                values[leftIndex];
-
-            rightValue =
-                (uint)((ulong)values[rightIndex] *
-                       twiddles[twiddleIndex] %
-                       modulus);
-
-            sum =
-                leftValue +
-                rightValue;
-
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            values[leftIndex] =
-                sum;
-
-            values[rightIndex] =
-                leftValue >= rightValue
-                    ? leftValue - rightValue
-                    : leftValue + modulus - rightValue;
-
-            leftIndex++;
-            rightIndex++;
-            twiddleIndex++;
+            ExecuteCachedButterflyTailAvx2(
+                values,
+                twiddles,
+                shoupTwiddles,
+                leftIndex,
+                rightIndex,
+                twiddleIndex,
+                residualCount,
+                inverse: true,
+                context);
         }
+
     }
 
 
@@ -11930,39 +12287,14 @@ internal sealed partial class ParallelBigUnsigned
             secondTwiddleIndex += 8;
         }
 
-        for (; index0 < end0;
-             index0++, index1++, index2++, index3++,
-             firstTwiddleIndex0++, firstTwiddleIndex1++, secondTwiddleIndex++)
+        int residualCount = end0 - index0;
+        if (residualCount > 0)
         {
-            uint value0 = values[index0];
-            uint value1 = values[index1];
-            uint value2 = values[index2];
-            uint value3 = values[index3];
-
-            uint topSum0 = value0 + value2;
-            uint topSum1 = value1 + value3;
-            if (topSum0 >= modulus) topSum0 -= modulus;
-            if (topSum1 >= modulus) topSum1 -= modulus;
-
-            uint topDifference0 = value0 >= value2 ? value0 - value2 : value0 + modulus - value2;
-            uint topDifference1 = value1 >= value3 ? value1 - value3 : value1 + modulus - value3;
-
-            uint lower0 = (uint)((ulong)topDifference0 * twiddles[firstTwiddleIndex0] % modulus);
-            uint lower1 = (uint)((ulong)topDifference1 * twiddles[firstTwiddleIndex1] % modulus);
-
-            uint upperSum = topSum0 + topSum1;
-            if (upperSum >= modulus) upperSum -= modulus;
-            uint upperDifference = topSum0 >= topSum1 ? topSum0 - topSum1 : topSum0 + modulus - topSum1;
-
-            uint lowerSum = lower0 + lower1;
-            if (lowerSum >= modulus) lowerSum -= modulus;
-            uint lowerDifference = lower0 >= lower1 ? lower0 - lower1 : lower0 + modulus - lower1;
-
-            uint secondTwiddle = twiddles[secondTwiddleIndex];
-            values[index0] = upperSum;
-            values[index1] = (uint)((ulong)upperDifference * secondTwiddle % modulus);
-            values[index2] = lowerSum;
-            values[index3] = (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+            ExecuteForwardCachedStagePairTailAvx2(
+                values, twiddles, shoupTwiddles,
+                index0, index1, index2, index3,
+                firstTwiddleIndex0, firstTwiddleIndex1, secondTwiddleIndex,
+                residualCount, context);
         }
     }
 
@@ -12094,59 +12426,14 @@ internal sealed partial class ParallelBigUnsigned
             firstTwiddleIndex1 += 8;
             secondTwiddleIndex += 8;
         }
-
-        // Tiny tails keep the exact scalar ordering used by the accepted
-        // stage-pair kernel.  The L1 packed 16+8 specialization handles the
-        // important quarterLength==4 case before this helper is selected.
-        for (; index0 < end0;
-             index0++, index1++, index2++, index3++,
-             firstTwiddleIndex0++, firstTwiddleIndex1++, secondTwiddleIndex++)
+        int residualCount = end0 - index0;
+        if (residualCount > 0)
         {
-            uint value0 = values[index0];
-            uint value1 = values[index1];
-            uint value2 = values[index2];
-            uint value3 = values[index3];
-
-            uint topSum0 = value0 + value2;
-            uint topSum1 = value1 + value3;
-            if (topSum0 >= modulus) topSum0 -= modulus;
-            if (topSum1 >= modulus) topSum1 -= modulus;
-
-            uint topDifference0 =
-                value0 >= value2
-                    ? value0 - value2
-                    : value0 + modulus - value2;
-            uint topDifference1 =
-                value1 >= value3
-                    ? value1 - value3
-                    : value1 + modulus - value3;
-
-            uint lower0 =
-                (uint)((ulong)topDifference0 * twiddles[firstTwiddleIndex0] % modulus);
-            uint lower1 =
-                (uint)((ulong)topDifference1 * twiddles[firstTwiddleIndex1] % modulus);
-
-            uint upperSum = topSum0 + topSum1;
-            if (upperSum >= modulus) upperSum -= modulus;
-            uint upperDifference =
-                topSum0 >= topSum1
-                    ? topSum0 - topSum1
-                    : topSum0 + modulus - topSum1;
-
-            uint lowerSum = lower0 + lower1;
-            if (lowerSum >= modulus) lowerSum -= modulus;
-            uint lowerDifference =
-                lower0 >= lower1
-                    ? lower0 - lower1
-                    : lower0 + modulus - lower1;
-
-            uint secondTwiddle = twiddles[secondTwiddleIndex];
-            values[index0] = upperSum;
-            values[index1] =
-                (uint)((ulong)upperDifference * secondTwiddle % modulus);
-            values[index2] = lowerSum;
-            values[index3] =
-                (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+            ExecuteForwardCachedStagePairTailAvx2(
+                values, twiddles, shoupTwiddles,
+                index0, index1, index2, index3,
+                firstTwiddleIndex0, firstTwiddleIndex1, secondTwiddleIndex,
+                residualCount, context);
         }
     }
 
@@ -12466,39 +12753,14 @@ internal sealed partial class ParallelBigUnsigned
             secondTwiddleIndex1 += 8;
         }
 
-        for (; index0 < end0;
-             index0++, index1++, index2++, index3++,
-             firstTwiddleIndex++, secondTwiddleIndex0++, secondTwiddleIndex1++)
+        int residualCount = end0 - index0;
+        if (residualCount > 0)
         {
-            uint value0 = values[index0];
-            uint value1 = values[index1];
-            uint value2 = values[index2];
-            uint value3 = values[index3];
-            uint firstTwiddle = twiddles[firstTwiddleIndex];
-
-            uint right0 = (uint)((ulong)value1 * firstTwiddle % modulus);
-            uint right1 = (uint)((ulong)value3 * firstTwiddle % modulus);
-
-            uint firstSum0 = value0 + right0;
-            uint firstSum1 = value2 + right1;
-            if (firstSum0 >= modulus) firstSum0 -= modulus;
-            if (firstSum1 >= modulus) firstSum1 -= modulus;
-
-            uint firstDifference0 = value0 >= right0 ? value0 - right0 : value0 + modulus - right0;
-            uint firstDifference1 = value2 >= right1 ? value2 - right1 : value2 + modulus - right1;
-
-            uint mergedRight0 = (uint)((ulong)firstSum1 * twiddles[secondTwiddleIndex0] % modulus);
-            uint mergedRight1 = (uint)((ulong)firstDifference1 * twiddles[secondTwiddleIndex1] % modulus);
-
-            uint finalSum0 = firstSum0 + mergedRight0;
-            uint finalSum1 = firstDifference0 + mergedRight1;
-            if (finalSum0 >= modulus) finalSum0 -= modulus;
-            if (finalSum1 >= modulus) finalSum1 -= modulus;
-
-            values[index0] = finalSum0;
-            values[index1] = finalSum1;
-            values[index2] = firstSum0 >= mergedRight0 ? firstSum0 - mergedRight0 : firstSum0 + modulus - mergedRight0;
-            values[index3] = firstDifference0 >= mergedRight1 ? firstDifference0 - mergedRight1 : firstDifference0 + modulus - mergedRight1;
+            ExecuteInverseCachedStagePairTailAvx2(
+                values, twiddles, shoupTwiddles,
+                index0, index1, index2, index3,
+                firstTwiddleIndex, secondTwiddleIndex0, secondTwiddleIndex1,
+                residualCount, context);
         }
     }
 
@@ -12771,35 +13033,19 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; butterfly < halfLength; butterfly++)
+        int residualCount = halfLength - butterfly;
+        if (residualCount > 0)
         {
-            uint twiddle = twiddles[twiddleOffset + butterfly];
-            uint shoup = shoupTwiddles[twiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
             {
                 int leftIndex = groupOffset + butterfly;
                 int rightIndex = leftIndex + halfLength;
-
-                uint left = values[leftIndex];
-                uint right = values[rightIndex];
-                uint sum = left + right;
-                if (sum >= modulus) sum -= modulus;
-
-                uint difference =
-                    left >= right
-                        ? left - right
-                        : left + modulus - right;
-
-                values[leftIndex] = sum;
-                values[rightIndex] =
-                    MultiplyShoupScalar(
-                        difference,
-                        twiddle,
-                        shoup,
-                        modulus);
+                ExecuteCachedButterflyTailAvx512(
+                    values, twiddles, shoupTwiddles,
+                    leftIndex, rightIndex, twiddleOffset + butterfly,
+                    residualCount, inverse: false, context);
             }
         }
     }
@@ -12892,33 +13138,19 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; butterfly < halfLength; butterfly++)
+        int residualCount = halfLength - butterfly;
+        if (residualCount > 0)
         {
-            uint twiddle = twiddles[twiddleOffset + butterfly];
-            uint shoup = shoupTwiddles[twiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
             {
                 int leftIndex = groupOffset + butterfly;
                 int rightIndex = leftIndex + halfLength;
-
-                uint left = values[leftIndex];
-                uint right =
-                    MultiplyShoupScalar(
-                        values[rightIndex],
-                        twiddle,
-                        shoup,
-                        modulus);
-                uint sum = left + right;
-                if (sum >= modulus) sum -= modulus;
-
-                values[leftIndex] = sum;
-                values[rightIndex] =
-                    left >= right
-                        ? left - right
-                        : left + modulus - right;
+                ExecuteCachedButterflyTailAvx512(
+                    values, twiddles, shoupTwiddles,
+                    leftIndex, rightIndex, twiddleOffset + butterfly,
+                    residualCount, inverse: true, context);
             }
         }
     }
@@ -12974,9 +13206,10 @@ internal sealed partial class ParallelBigUnsigned
                 }
                 else if (halfLength == 4)
                 {
-                    ExecuteForwardLengthEightGroupShoupScalar(
-                        values, modulus, twiddles, shoupTwiddles,
-                        twiddleOffset, groupOffset);
+                    ExecuteCachedButterflyTailAvx2(
+                        values, twiddles, shoupTwiddles,
+                        groupOffset, groupOffset + 4, twiddleOffset,
+                        4, inverse: false, context);
                 }
                 else
                 {
@@ -13037,34 +13270,19 @@ internal sealed partial class ParallelBigUnsigned
                 multiplied.StoreUnsafe(ref valuesReference, (nuint)rightIndex);
             }
         }
-
-        // Only non-multiple-of-eight tails reach here.  Cached power-of-two NTT
-        // stages normally have no tail, but keep the exact scalar fallback for
-        // defensive reuse of this helper.
-        for (; butterfly < halfLength; butterfly++)
+        int residualCount = halfLength - butterfly;
+        if (residualCount > 0)
         {
-            uint twiddle = twiddles[twiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
             {
                 int leftIndex = groupOffset + butterfly;
                 int rightIndex = leftIndex + halfLength;
-
-                uint left = values[leftIndex];
-                uint right = values[rightIndex];
-                uint sum = left + right;
-                if (sum >= modulus) sum -= modulus;
-
-                uint difference =
-                    left >= right
-                        ? left - right
-                        : left + modulus - right;
-
-                values[leftIndex] = sum;
-                values[rightIndex] =
-                    (uint)((ulong)difference * twiddle % modulus);
+                ExecuteCachedButterflyTailAvx2(
+                    values, twiddles, shoupTwiddles,
+                    leftIndex, rightIndex, twiddleOffset + butterfly,
+                    residualCount, inverse: false, context);
             }
         }
     }
@@ -13159,28 +13377,19 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; butterfly < halfLength; butterfly++)
+        int residualCount = halfLength - butterfly;
+        if (residualCount > 0)
         {
-            uint twiddle = twiddles[twiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
             {
                 int leftIndex = groupOffset + butterfly;
                 int rightIndex = leftIndex + halfLength;
-
-                uint left = values[leftIndex];
-                uint right =
-                    (uint)((ulong)values[rightIndex] * twiddle % modulus);
-                uint sum = left + right;
-                if (sum >= modulus) sum -= modulus;
-
-                values[leftIndex] = sum;
-                values[rightIndex] =
-                    left >= right
-                        ? left - right
-                        : left + modulus - right;
+                ExecuteCachedButterflyTailAvx2(
+                    values, twiddles, shoupTwiddles,
+                    leftIndex, rightIndex, twiddleOffset + butterfly,
+                    residualCount, inverse: true, context);
             }
         }
     }
@@ -14002,15 +14211,9 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; butterfly < quarterLength; butterfly++)
+        int residualCount = quarterLength - butterfly;
+        if (residualCount > 0)
         {
-            uint firstTwiddle0 =
-                twiddles[firstTwiddleOffset + butterfly];
-            uint firstTwiddle1 =
-                twiddles[firstTwiddleOffset + quarterLength + butterfly];
-            uint secondTwiddle =
-                twiddles[secondTwiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -14019,51 +14222,13 @@ internal sealed partial class ParallelBigUnsigned
                 int index1 = index0 + quarterLength;
                 int index2 = index0 + halfLength;
                 int index3 = index2 + quarterLength;
-
-                uint value0 = values[index0];
-                uint value1 = values[index1];
-                uint value2 = values[index2];
-                uint value3 = values[index3];
-
-                uint topSum0 = value0 + value2;
-                uint topSum1 = value1 + value3;
-                if (topSum0 >= modulus) topSum0 -= modulus;
-                if (topSum1 >= modulus) topSum1 -= modulus;
-
-                uint topDifference0 =
-                    value0 >= value2
-                        ? value0 - value2
-                        : value0 + modulus - value2;
-                uint topDifference1 =
-                    value1 >= value3
-                        ? value1 - value3
-                        : value1 + modulus - value3;
-
-                uint lower0 =
-                    (uint)((ulong)topDifference0 * firstTwiddle0 % modulus);
-                uint lower1 =
-                    (uint)((ulong)topDifference1 * firstTwiddle1 % modulus);
-
-                uint upperSum = topSum0 + topSum1;
-                if (upperSum >= modulus) upperSum -= modulus;
-                uint upperDifference =
-                    topSum0 >= topSum1
-                        ? topSum0 - topSum1
-                        : topSum0 + modulus - topSum1;
-
-                uint lowerSum = lower0 + lower1;
-                if (lowerSum >= modulus) lowerSum -= modulus;
-                uint lowerDifference =
-                    lower0 >= lower1
-                        ? lower0 - lower1
-                        : lower0 + modulus - lower1;
-
-                values[index0] = upperSum;
-                values[index1] =
-                    (uint)((ulong)upperDifference * secondTwiddle % modulus);
-                values[index2] = lowerSum;
-                values[index3] =
-                    (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+                ExecuteForwardCachedStagePairTailAvx2(
+                    values, twiddles, shoupTwiddles,
+                    index0, index1, index2, index3,
+                    firstTwiddleOffset + butterfly,
+                    firstTwiddleOffset + quarterLength + butterfly,
+                    secondTwiddleOffset + butterfly,
+                    residualCount, context);
             }
         }
     }
@@ -14227,19 +14392,9 @@ internal sealed partial class ParallelBigUnsigned
                 output3.StoreUnsafe(ref valuesReference, (nuint)index3);
             }
         }
-
-        // Scalar tails are byte-for-byte equivalent in arithmetic/order to the
-        // accepted twiddle-major kernel and are rarely taken for power-of-two
-        // cache stages wider than the packed 16+8 specialization.
-        for (; butterfly < quarterLength; butterfly++)
+        int residualCount = quarterLength - butterfly;
+        if (residualCount > 0)
         {
-            uint firstTwiddle0 =
-                twiddles[firstTwiddleOffset + butterfly];
-            uint firstTwiddle1 =
-                twiddles[firstTwiddleOffset + quarterLength + butterfly];
-            uint secondTwiddle =
-                twiddles[secondTwiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -14248,51 +14403,13 @@ internal sealed partial class ParallelBigUnsigned
                 int index1 = index0 + quarterLength;
                 int index2 = index0 + halfLength;
                 int index3 = index2 + quarterLength;
-
-                uint value0 = values[index0];
-                uint value1 = values[index1];
-                uint value2 = values[index2];
-                uint value3 = values[index3];
-
-                uint topSum0 = value0 + value2;
-                uint topSum1 = value1 + value3;
-                if (topSum0 >= modulus) topSum0 -= modulus;
-                if (topSum1 >= modulus) topSum1 -= modulus;
-
-                uint topDifference0 =
-                    value0 >= value2
-                        ? value0 - value2
-                        : value0 + modulus - value2;
-                uint topDifference1 =
-                    value1 >= value3
-                        ? value1 - value3
-                        : value1 + modulus - value3;
-
-                uint lower0 =
-                    (uint)((ulong)topDifference0 * firstTwiddle0 % modulus);
-                uint lower1 =
-                    (uint)((ulong)topDifference1 * firstTwiddle1 % modulus);
-
-                uint upperSum = topSum0 + topSum1;
-                if (upperSum >= modulus) upperSum -= modulus;
-                uint upperDifference =
-                    topSum0 >= topSum1
-                        ? topSum0 - topSum1
-                        : topSum0 + modulus - topSum1;
-
-                uint lowerSum = lower0 + lower1;
-                if (lowerSum >= modulus) lowerSum -= modulus;
-                uint lowerDifference =
-                    lower0 >= lower1
-                        ? lower0 - lower1
-                        : lower0 + modulus - lower1;
-
-                values[index0] = upperSum;
-                values[index1] =
-                    (uint)((ulong)upperDifference * secondTwiddle % modulus);
-                values[index2] = lowerSum;
-                values[index3] =
-                    (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+                ExecuteForwardCachedStagePairTailAvx2(
+                    values, twiddles, shoupTwiddles,
+                    index0, index1, index2, index3,
+                    firstTwiddleOffset + butterfly,
+                    firstTwiddleOffset + quarterLength + butterfly,
+                    secondTwiddleOffset + butterfly,
+                    residualCount, context);
             }
         }
     }
@@ -14987,19 +15104,9 @@ internal sealed partial class ParallelBigUnsigned
                 output3.StoreUnsafe(ref valuesReference, (nuint)index3);
             }
         }
-
-        // Power-of-two L3 stage lengths are normally exact multiples of 16.
-        // Preserve a scalar tail for defensive reuse; production L2/L3 power-of-two
-        // stage lengths normally enter the 16-lane loop exactly.
-        for (; butterfly < quarterLength; butterfly++)
+        int residualCount = quarterLength - butterfly;
+        if (residualCount > 0)
         {
-            uint firstTwiddle0 =
-                twiddles[firstTwiddleOffset + butterfly];
-            uint firstTwiddle1 =
-                twiddles[firstTwiddleOffset + quarterLength + butterfly];
-            uint secondTwiddle =
-                twiddles[secondTwiddleOffset + butterfly];
-
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -15008,64 +15115,13 @@ internal sealed partial class ParallelBigUnsigned
                 int index1 = index0 + quarterLength;
                 int index2 = index0 + halfLength;
                 int index3 = index2 + quarterLength;
-
-                uint value0 = values[index0];
-                uint value1 = values[index1];
-                uint value2 = values[index2];
-                uint value3 = values[index3];
-
-                uint topSum0 = value0 + value2;
-                uint topSum1 = value1 + value3;
-                if (topSum0 >= modulus) topSum0 -= modulus;
-                if (topSum1 >= modulus) topSum1 -= modulus;
-
-                uint topDifference0 =
-                    value0 >= value2
-                        ? value0 - value2
-                        : value0 + modulus - value2;
-                uint topDifference1 =
-                    value1 >= value3
-                        ? value1 - value3
-                        : value1 + modulus - value3;
-
-                uint lower0 =
-                    MultiplyShoupScalar(
-                        topDifference0,
-                        firstTwiddle0,
-                        shoupTwiddles[firstTwiddleOffset + butterfly],
-                        modulus);
-                uint lower1 =
-                    MultiplyShoupScalar(
-                        topDifference1,
-                        firstTwiddle1,
-                        shoupTwiddles[firstTwiddleOffset + quarterLength + butterfly],
-                        modulus);
-
-                uint upperSum = topSum0 + topSum1;
-                if (upperSum >= modulus) upperSum -= modulus;
-                uint upperDifference =
-                    topSum0 >= topSum1
-                        ? topSum0 - topSum1
-                        : topSum0 + modulus - topSum1;
-
-                uint lowerSum = lower0 + lower1;
-                if (lowerSum >= modulus) lowerSum -= modulus;
-                uint lowerDifference =
-                    lower0 >= lower1
-                        ? lower0 - lower1
-                        : lower0 + modulus - lower1;
-
-                uint secondShoup =
-                    shoupTwiddles[secondTwiddleOffset + butterfly];
-
-                values[index0] = upperSum;
-                values[index1] =
-                    MultiplyShoupScalar(
-                        upperDifference, secondTwiddle, secondShoup, modulus);
-                values[index2] = lowerSum;
-                values[index3] =
-                    MultiplyShoupScalar(
-                        lowerDifference, secondTwiddle, secondShoup, modulus);
+                ExecuteForwardCachedStagePairTailAvx512(
+                    values, twiddles, shoupTwiddles,
+                    index0, index1, index2, index3,
+                    firstTwiddleOffset + butterfly,
+                    firstTwiddleOffset + quarterLength + butterfly,
+                    secondTwiddleOffset + butterfly,
+                    residualCount, context);
             }
         }
     }
@@ -16486,15 +16542,9 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; butterfly < halfLength; butterfly++)
+        int residualCount = halfLength - butterfly;
+        if (residualCount > 0)
         {
-            uint firstTwiddle =
-                twiddles[firstTwiddleOffset + butterfly];
-            uint secondTwiddle0 =
-                twiddles[secondTwiddleOffset + butterfly];
-            uint secondTwiddle1 =
-                twiddles[secondTwiddleOffset + halfLength + butterfly];
-
             for (int parentOffset = regionOffset;
                  parentOffset < regionEnd;
                  parentOffset += parentLength)
@@ -16503,51 +16553,13 @@ internal sealed partial class ParallelBigUnsigned
                 int index1 = index0 + halfLength;
                 int index2 = index0 + stageLength;
                 int index3 = index2 + halfLength;
-
-                uint value0 = values[index0];
-                uint value1 = values[index1];
-                uint value2 = values[index2];
-                uint value3 = values[index3];
-
-                uint right0 =
-                    (uint)((ulong)value1 * firstTwiddle % modulus);
-                uint right1 =
-                    (uint)((ulong)value3 * firstTwiddle % modulus);
-
-                uint firstSum0 = value0 + right0;
-                uint firstSum1 = value2 + right1;
-                if (firstSum0 >= modulus) firstSum0 -= modulus;
-                if (firstSum1 >= modulus) firstSum1 -= modulus;
-
-                uint firstDifference0 =
-                    value0 >= right0
-                        ? value0 - right0
-                        : value0 + modulus - right0;
-                uint firstDifference1 =
-                    value2 >= right1
-                        ? value2 - right1
-                        : value2 + modulus - right1;
-
-                uint mergedRight0 =
-                    (uint)((ulong)firstSum1 * secondTwiddle0 % modulus);
-                uint mergedRight1 =
-                    (uint)((ulong)firstDifference1 * secondTwiddle1 % modulus);
-
-                uint finalSum0 = firstSum0 + mergedRight0;
-                uint finalSum1 = firstDifference0 + mergedRight1;
-                if (finalSum0 >= modulus) finalSum0 -= modulus;
-                if (finalSum1 >= modulus) finalSum1 -= modulus;
-
-                values[index0] = finalSum0;
-                values[index1] = finalSum1;
-                values[index2] =
-                    firstSum0 >= mergedRight0
-                        ? firstSum0 - mergedRight0
-                        : firstSum0 + modulus - mergedRight0;
-                values[index3] =
-                    firstDifference0 >= mergedRight1
-                        ? firstDifference0 - mergedRight1
-                        : firstDifference0 + modulus - mergedRight1;
+                ExecuteInverseCachedStagePairTailAvx2(
+                    values, twiddles, shoupTwiddles,
+                    index0, index1, index2, index3,
+                    firstTwiddleOffset + butterfly,
+                    secondTwiddleOffset + butterfly,
+                    secondTwiddleOffset + halfLength + butterfly,
+                    residualCount, context);
             }
         }
     }
@@ -17575,21 +17587,9 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; butterfly < halfLength; butterfly++)
+        int residualCount = halfLength - butterfly;
+        if (residualCount > 0)
         {
-            uint firstTwiddle =
-                twiddles[firstTwiddleOffset + butterfly];
-            uint firstShoup =
-                shoupTwiddles[firstTwiddleOffset + butterfly];
-            uint secondTwiddle0 =
-                twiddles[secondTwiddleOffset + butterfly];
-            uint secondShoup0 =
-                shoupTwiddles[secondTwiddleOffset + butterfly];
-            uint secondTwiddle1 =
-                twiddles[secondTwiddleOffset + halfLength + butterfly];
-            uint secondShoup1 =
-                shoupTwiddles[secondTwiddleOffset + halfLength + butterfly];
-
             for (int parentOffset = regionOffset;
                  parentOffset < regionEnd;
                  parentOffset += parentLength)
@@ -17598,53 +17598,13 @@ internal sealed partial class ParallelBigUnsigned
                 int index1 = index0 + halfLength;
                 int index2 = index0 + stageLength;
                 int index3 = index2 + halfLength;
-
-                uint value0 = values[index0];
-                uint value1 = values[index1];
-                uint value2 = values[index2];
-                uint value3 = values[index3];
-
-                uint right0 =
-                    MultiplyShoupScalar(value1, firstTwiddle, firstShoup, modulus);
-                uint right1 =
-                    MultiplyShoupScalar(value3, firstTwiddle, firstShoup, modulus);
-
-                uint firstSum0 = value0 + right0;
-                uint firstSum1 = value2 + right1;
-                if (firstSum0 >= modulus) firstSum0 -= modulus;
-                if (firstSum1 >= modulus) firstSum1 -= modulus;
-
-                uint firstDifference0 =
-                    value0 >= right0
-                        ? value0 - right0
-                        : value0 + modulus - right0;
-                uint firstDifference1 =
-                    value2 >= right1
-                        ? value2 - right1
-                        : value2 + modulus - right1;
-
-                uint mergedRight0 =
-                    MultiplyShoupScalar(
-                        firstSum1, secondTwiddle0, secondShoup0, modulus);
-                uint mergedRight1 =
-                    MultiplyShoupScalar(
-                        firstDifference1, secondTwiddle1, secondShoup1, modulus);
-
-                uint finalSum0 = firstSum0 + mergedRight0;
-                uint finalSum1 = firstDifference0 + mergedRight1;
-                if (finalSum0 >= modulus) finalSum0 -= modulus;
-                if (finalSum1 >= modulus) finalSum1 -= modulus;
-
-                values[index0] = finalSum0;
-                values[index1] = finalSum1;
-                values[index2] =
-                    firstSum0 >= mergedRight0
-                        ? firstSum0 - mergedRight0
-                        : firstSum0 + modulus - mergedRight0;
-                values[index3] =
-                    firstDifference0 >= mergedRight1
-                        ? firstDifference0 - mergedRight1
-                        : firstDifference0 + modulus - mergedRight1;
+                ExecuteInverseCachedStagePairTailAvx512(
+                    values, twiddles, shoupTwiddles,
+                    index0, index1, index2, index3,
+                    firstTwiddleOffset + butterfly,
+                    secondTwiddleOffset + butterfly,
+                    secondTwiddleOffset + halfLength + butterfly,
+                    residualCount, context);
             }
         }
     }
@@ -18391,8 +18351,9 @@ internal sealed partial class ParallelBigUnsigned
     /// <summary>
     /// Cached global DIF pairs for &lt;=10M and the separate >10M Phase-5A
     /// shapes. Worker-aligned slices keep every team member busy, including
-    /// transforms with fewer groups than workers. Each slice uses exact
-    /// sixteen-lane Low32 Shoup with scalar residual butterflies.
+    /// transforms with fewer groups than workers. In <=10M mode the segment
+    /// boundaries are expressed in complete ZMM blocks, so worker-local scalar
+    /// residuals disappear; persistent large mode retains its accepted layout.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardCachedStagePairByGroupsLow32Avx512(
@@ -18417,17 +18378,11 @@ internal sealed partial class ParallelBigUnsigned
             stageLength;
 
         int segmentsPerGroup =
-            GetSegmentsPerGroup(
+            GetVectorAlignedSegmentsPerGroup(
                 quarterLength,
                 groupCount,
-                workers.WorkerCount);
-
-        segmentsPerGroup =
-            GetWorkerAlignedSegmentsPerGroup(
-                quarterLength,
-                groupCount,
-                workers.WorkerCount,
-                segmentsPerGroup);
+                workers,
+                Vector512<uint>.Count);
 
         var context =
             new Avx512NttModContext(
@@ -18443,10 +18398,12 @@ internal sealed partial class ParallelBigUnsigned
                      segmentIndex < segmentEnd;
                      segmentIndex++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segmentIndex,
                         segmentsPerGroup,
                         quarterLength,
+                        Vector512<uint>.Count,
+                        workers,
                         out int groupIndex,
                         out int butterflyStart,
                         out int butterflyEnd);
@@ -19168,11 +19125,34 @@ internal sealed partial class ParallelBigUnsigned
                 (uint)quarterLength,
                 modulus);
 
+        int stagePairVectorWidth =
+            (workers.UseAvx512Ntt || workers.UseLargeModeAvx512ForwardGlobalUncached)
+                ? Vector512<uint>.Count
+                : workers.UseAvx2Ntt && Avx2.IsSupported
+                    ? Vector256<uint>.Count
+                    : ((workers.UseSseNtt && Sse2.IsSupported) ||
+                       (workers.UseNeonNtt &&
+                        System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported))
+                        ? Vector128<uint>.Count
+                        : 1;
+
+        bool useVectorAlignedStagePairRanges =
+            !workers.UsesPersistentStaticScheduling &&
+            stagePairVectorWidth > 1 &&
+            quarterLength >= stagePairVectorWidth &&
+            quarterLength % stagePairVectorWidth == 0;
+
         int segmentsPerGroup =
-            GetSegmentsPerGroup(
-                quarterLength,
-                groupCount,
-                workers.WorkerCount);
+            useVectorAlignedStagePairRanges
+                ? GetVectorAlignedSegmentsPerGroup(
+                    quarterLength,
+                    groupCount,
+                    workers,
+                    stagePairVectorWidth)
+                : GetSegmentsPerGroup(
+                    quarterLength,
+                    groupCount,
+                    workers.WorkerCount);
 
         // Phase 18 retunes the already-proven global dual-lane recurrence for
         // the <=10M AVX-512 path without vectorizing the DRAM-sized value pass.
@@ -19212,10 +19192,12 @@ internal sealed partial class ParallelBigUnsigned
                      segmentIndex < segmentEnd;
                      segmentIndex++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segmentIndex,
                         segmentsPerGroup,
                         quarterLength,
+                        stagePairVectorWidth,
+                        workers,
                         out int groupIndex,
                         out int butterflyStart,
                         out int butterflyEnd);
@@ -19345,9 +19327,11 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
         if (i < last)
-            ProcessForwardUncachedStagePairSegmentByrefDualLane(
-                values, modulus, firstRoot, secondRoot, quarterPhase,
-                stageLength, groupIndex, i, last, cancellationToken);
+        {
+            ProcessForwardUncachedStagePairTailAvx512(
+                values, groupOffset, quarterLength, i, last - i,
+                twiddle0, twiddle1, twiddle2, modulus, context);
+        }
         cancellationToken.ThrowIfCancellationRequested();
     }
 
@@ -19582,33 +19566,24 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        // Segment partitioning is not required to be a multiple of eight.  Keep
-        // the proven scalar dual-lane implementation only for the residual tail.
+        // Defensive non-aligned segments finish in one padded YMM batch.
         if (i < last)
         {
-            ProcessForwardUncachedStagePairSegmentByrefDualLane(
-                values,
-                modulus,
-                firstRoot,
-                secondRoot,
-                quarterPhase,
-                stageLength,
-                groupIndex,
-                i,
-                last,
-                cancellationToken);
+            ProcessForwardUncachedStagePairTailAvx2(
+                values, groupOffset, quarterLength, i, last - i,
+                twiddle0, twiddle1, twiddle2, modulus, context);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
     }
 
     // Final DIT normalization shares the uncached sixteen-lane recurrence.
-    // The caller splits the valid-prefix boundary once per worker, so this
-    // loop never reads or writes past a compact destination or its live suffix.
+    // The aligned scheduler keeps each semantic side of validRightCount in
+    // complete ZMM blocks, leaving at most one global residual per side.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ProcessFinalInversePrefixAvx512(
         uint[] values, uint[] output, int halfLength, int first, int last,
-        bool writeRight, uint modulus, uint root, uint inverseLength,
+        bool writeRight, bool allowPaddedTail, uint modulus, uint root, uint inverseLength,
         uint inverseLengthShoup, CancellationToken cancellationToken)
     {
         var context = new Avx512NttModContext(modulus);
@@ -19645,20 +19620,65 @@ internal sealed partial class ParallelBigUnsigned
                 sinceCancellation = 0;
             }
         }
-        ulong scalarTwiddle = ModPow(root, (uint)i, modulus);
-        for (; i < last; i++)
+        if (i < last && allowPaddedTail)
         {
-            uint left = values[i];
-            uint right = (uint)(values[i + halfLength] * scalarTwiddle % modulus);
-            uint sum = left + right;
-            if (sum >= modulus) sum -= modulus;
-            output[i] = MultiplyShoupScalar(sum, inverseLength, inverseLengthShoup, modulus);
+            int remaining = last - i;
+            Span<uint> leftScratch = stackalloc uint[Vector512<uint>.Count];
+            Span<uint> rightScratch = stackalloc uint[Vector512<uint>.Count];
+            Span<uint> leftOutputScratch = stackalloc uint[Vector512<uint>.Count];
+            Span<uint> rightOutputScratch = stackalloc uint[Vector512<uint>.Count];
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                leftScratch[lane] = values[i + lane];
+                rightScratch[lane] = values[i + halfLength + lane];
+            }
+
+            ref uint leftScratchRef = ref MemoryMarshal.GetReference(leftScratch);
+            ref uint rightScratchRef = ref MemoryMarshal.GetReference(rightScratch);
+            ref uint leftOutputRef = ref MemoryMarshal.GetReference(leftOutputScratch);
+            ref uint rightOutputRef = ref MemoryMarshal.GetReference(rightOutputScratch);
+
+            Vector512<uint> tailTwiddle = CreateTwiddleSequenceAvx512(root, i, modulus);
+            tailTwiddle = MultiplyShoupLow32Avx512(tailTwiddle, scale, scaleShoup, context);
+            Vector512<uint> leftVector = MultiplyShoupLow32Avx512(
+                Vector512.LoadUnsafe(ref leftScratchRef), scale, scaleShoup, context);
+            Vector512<uint> rightVector = MultiplyResiduesAvx512(
+                Vector512.LoadUnsafe(ref rightScratchRef), tailTwiddle, modulus);
+
+            AddModuloAvx512(leftVector, rightVector, context)
+                .StoreUnsafe(ref leftOutputRef);
             if (writeRight)
             {
-                uint difference = left >= right ? left - right : left + modulus - right;
-                output[i + halfLength] = MultiplyShoupScalar(difference, inverseLength, inverseLengthShoup, modulus);
+                SubtractModuloAvx512(leftVector, rightVector, context)
+                    .StoreUnsafe(ref rightOutputRef);
             }
-            scalarTwiddle = scalarTwiddle * root % modulus;
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                output[i + lane] = leftOutputScratch[lane];
+                if (writeRight)
+                    output[i + halfLength + lane] = rightOutputScratch[lane];
+            }
+        }
+        if (i < last && !allowPaddedTail)
+        {
+            ulong scalarTwiddle = ModPow(root, (uint)i, modulus);
+            for (; i < last; i++)
+            {
+                uint left = values[i];
+                uint right = (uint)(values[i + halfLength] * scalarTwiddle % modulus);
+                uint sum = left + right;
+                if (sum >= modulus) sum -= modulus;
+                output[i] = MultiplyShoupScalar(sum, inverseLength, inverseLengthShoup, modulus);
+                if (writeRight)
+                {
+                    uint difference = left >= right ? left - right : left + modulus - right;
+                    output[i + halfLength] = MultiplyShoupScalar(
+                        difference, inverseLength, inverseLengthShoup, modulus);
+                }
+                scalarTwiddle = scalarTwiddle * root % modulus;
+            }
         }
         cancellationToken.ThrowIfCancellationRequested();
     }
@@ -19807,14 +19827,11 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
+        int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
-            workers.WorkerCount,
-            GetSegmentsPerGroup(
-                halfLength,
-                groupCount,
-                workers.WorkerCount));
+            workers,
+            Vector256<uint>.Count);
 
         Avx2NttModContext context =
             new Avx2NttModContext(modulus);
@@ -19834,10 +19851,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector256<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -19978,14 +19997,11 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
+        int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
-            workers.WorkerCount,
-            GetSegmentsPerGroup(
-                halfLength,
-                groupCount,
-                workers.WorkerCount));
+            workers,
+            Vector256<uint>.Count);
 
         Avx2NttModContext context =
             new Avx2NttModContext(modulus);
@@ -20005,10 +20021,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector256<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -20108,14 +20126,11 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
+        int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
-            workers.WorkerCount,
-            GetSegmentsPerGroup(
-                halfLength,
-                groupCount,
-                workers.WorkerCount));
+            workers,
+            Vector256<uint>.Count);
 
         Avx2NttModContext context =
             new Avx2NttModContext(modulus);
@@ -20135,10 +20150,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector256<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -20263,15 +20280,21 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
-            halfLength, groupCount, workers.WorkerCount,
-            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        int segments = GetVectorAlignedSegmentsPerGroup(
+            halfLength, groupCount, workers, Vector512<uint>.Count);
         ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
         {
             for (int segment = start; segment < end; segment++)
             {
-                GetSegmentBounds(segment, segments, halfLength,
-                    out int group, out int first, out int last);
+                GetVectorAlignedSegmentBounds(
+                    segment,
+                    segments,
+                    halfLength,
+                    Vector512<uint>.Count,
+                    workers,
+                    out int group,
+                    out int first,
+                    out int last);
                 ProcessForwardUncachedStageSegmentAvx512(
                     values, modulus, root, stageLength, group, first, last, cancellationToken);
             }
@@ -20337,9 +20360,8 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
-            halfLength, groupCount, workers.WorkerCount,
-            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        int segments = GetVectorAlignedSegmentsPerGroup(
+            halfLength, groupCount, workers, Vector512<uint>.Count);
         var context = new Avx512NttModContext(modulus);
         uint step = (uint)ModPow(root, 16, modulus);
         Vector512<uint> advance = Vector512.Create(step);
@@ -20349,8 +20371,15 @@ internal sealed partial class ParallelBigUnsigned
             ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
             for (int segment = start; segment < end; segment++)
             {
-                GetSegmentBounds(segment, segments, halfLength,
-                    out int group, out int first, out int last);
+                GetVectorAlignedSegmentBounds(
+                    segment,
+                    segments,
+                    halfLength,
+                    Vector512<uint>.Count,
+                    workers,
+                    out int group,
+                    out int first,
+                    out int last);
                 int groupOffset = group * stageLength;
                 Vector512<uint> twiddle = CreateTwiddleSequenceAvx512(root, first, modulus);
                 int i = first;
@@ -21502,9 +21531,8 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
-            halfLength, groupCount, workers.WorkerCount,
-            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+        int segments = GetVectorAlignedSegmentsPerGroup(
+            halfLength, groupCount, workers, Vector512<uint>.Count);
         var context = new Avx512NttModContext(modulus);
         ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
         {
@@ -21513,8 +21541,15 @@ internal sealed partial class ParallelBigUnsigned
             ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
             for (int segment = start; segment < end; segment++)
             {
-                GetSegmentBounds(segment, segments, halfLength,
-                    out int group, out int first, out int last);
+                GetVectorAlignedSegmentBounds(
+                    segment,
+                    segments,
+                    halfLength,
+                    Vector512<uint>.Count,
+                    workers,
+                    out int group,
+                    out int first,
+                    out int last);
                 int groupOffset = group * stageLength;
                 int i = first;
                 int sinceCancellation = 0;
@@ -21572,9 +21607,8 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int parentLength = stageLength << 1;
         int parentCount = values.Length / parentLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
-            halfLength, parentCount, workers.WorkerCount,
-            GetSegmentsPerGroup(halfLength, parentCount, workers.WorkerCount));
+        int segments = GetVectorAlignedSegmentsPerGroup(
+            halfLength, parentCount, workers, Vector512<uint>.Count);
         var context = new Avx512NttModContext(modulus);
         ExecuteRanges(checked(parentCount * segments), workers, cancellationToken, (start, end) =>
         {
@@ -21583,8 +21617,15 @@ internal sealed partial class ParallelBigUnsigned
             ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
             for (int segment = start; segment < end; segment++)
             {
-                GetSegmentBounds(segment, segments, halfLength,
-                    out int parent, out int first, out int last);
+                GetVectorAlignedSegmentBounds(
+                    segment,
+                    segments,
+                    halfLength,
+                    Vector512<uint>.Count,
+                    workers,
+                    out int parent,
+                    out int first,
+                    out int last);
                 int parentOffset = parent * parentLength;
                 int i = first;
                 int sinceCancellation = 0;
@@ -23381,7 +23422,7 @@ internal sealed partial class ParallelBigUnsigned
                                 // the scheduler/boost noise is much smaller, so reuse
                                 // the accepted value-side bounded schedule here while
                                 // preserving the bridge stage itself on the exact cached
-                                // scalar path. Twiddle-major traversal is unchanged.
+                                // SIMD path. Twiddle-major traversal is unchanged.
                                 if (useAvx512Ntt)
                                 {
                                     ExecuteForwardCachedStagePairRegionTwiddleMajorBoundedAvx512(
@@ -25942,9 +25983,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailAvx2(
+                values, index, blockEnd - index,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: false, context);
         }
     }
 
@@ -25998,9 +26039,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailAvx2(
+                values, index, blockEnd - index,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: true, context);
         }
     }
 
@@ -26031,7 +26072,7 @@ internal sealed partial class ParallelBigUnsigned
     /// Inputs and outputs are canonical residues below p. Both primes are
     /// below 2^31, so the existing AVX-512 modular add/subtract and full-product
     /// Shoup helpers preserve the scalar arithmetic exactly. The shared NTT
-    /// AVX-512 gate is checked by the caller; short residuals stay scalar.
+    /// AVX-512 gate is checked by the caller; short residual groups use a padded SIMD batch.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardLengthFourAndTwoFusedBlockAvx512(
@@ -26085,9 +26126,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailAvx512(
+                values, index, blockEnd - index,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: false, context);
         }
     }
 
@@ -26148,9 +26189,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailAvx512(
+                values, index, blockEnd - index,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: true, context);
         }
     }
 
@@ -27361,8 +27402,8 @@ internal sealed partial class ParallelBigUnsigned
     /// group's four butterflies occupy the low 128-bit half and the second
     /// group's four butterflies occupy the high half.  This gives the exact
     /// eight useful uint lanes required by AVX2 without gathers or temporary
-    /// buffers.  An odd final group falls back to the accepted scalar/Shoup
-    /// helper so this routine is safe for any cache-region group count.
+    /// buffers.  An odd final group finishes in one padded YMM butterfly batch,
+    /// so this routine stays SIMD-clean for any cache-region group count.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardLengthEightGroupsPackedTwoAvx2(
@@ -27475,122 +27516,14 @@ internal sealed partial class ParallelBigUnsigned
         // a caller supplies an odd group count.
         if (groupOffset < regionEnd)
         {
-            ExecuteForwardLengthEightGroupShoupScalar(
-                values, modulus, twiddles, shoupTwiddles,
-                twiddleOffset, groupOffset);
+            ExecuteCachedButterflyTailAvx2(
+                values, twiddles, shoupTwiddles,
+                groupOffset, groupOffset + HalfLength, twiddleOffset,
+                HalfLength, inverse: false, context);
         }
     }
 
-    /// <summary>
-    /// Scalar/Shoup fallback for the final Forward DIF S=8 stage.  The AVX2
-    /// production experiment now packs two adjacent groups into one YMM; this
-    /// helper remains the single/odd-group fallback and the rollback reference.
-    /// Butterfly zero has twiddle 1 and therefore needs no multiply.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void ExecuteForwardLengthEightGroupShoupScalar(
-        uint[] values,
-        uint modulus,
-        uint[] twiddles,
-        uint[] shoupTwiddles,
-        int twiddleOffset,
-        int groupOffset)
-    {
-        // j = 0: twiddle == 1.
-        {
-            int leftIndex = groupOffset;
-            int rightIndex = groupOffset + 4;
 
-            uint left = values[leftIndex];
-            uint right = values[rightIndex];
-            uint sum = left + right;
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            values[leftIndex] = sum;
-            values[rightIndex] =
-                left >= right
-                    ? left - right
-                    : left + modulus - right;
-        }
-
-        // j = 1..3: complete each butterfly before opening the next one.
-        // This deliberately favors a small live scalar set over deeper ILP;
-        // the AVX2 experiments showed that extra live state hurts this path.
-        {
-            int leftIndex = groupOffset + 1;
-            int rightIndex = groupOffset + 5;
-            uint left = values[leftIndex];
-            uint right = values[rightIndex];
-            uint sum = left + right;
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            uint difference =
-                left >= right
-                    ? left - right
-                    : left + modulus - right;
-
-            values[leftIndex] = sum;
-            values[rightIndex] = MultiplyShoupScalar(
-                difference,
-                twiddles[twiddleOffset + 1],
-                shoupTwiddles[twiddleOffset + 1],
-                modulus);
-        }
-
-        {
-            int leftIndex = groupOffset + 2;
-            int rightIndex = groupOffset + 6;
-            uint left = values[leftIndex];
-            uint right = values[rightIndex];
-            uint sum = left + right;
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            uint difference =
-                left >= right
-                    ? left - right
-                    : left + modulus - right;
-
-            values[leftIndex] = sum;
-            values[rightIndex] = MultiplyShoupScalar(
-                difference,
-                twiddles[twiddleOffset + 2],
-                shoupTwiddles[twiddleOffset + 2],
-                modulus);
-        }
-
-        {
-            int leftIndex = groupOffset + 3;
-            int rightIndex = groupOffset + 7;
-            uint left = values[leftIndex];
-            uint right = values[rightIndex];
-            uint sum = left + right;
-            if (sum >= modulus)
-            {
-                sum -= modulus;
-            }
-
-            uint difference =
-                left >= right
-                    ? left - right
-                    : left + modulus - right;
-
-            values[leftIndex] = sum;
-            values[rightIndex] = MultiplyShoupScalar(
-                difference,
-                twiddles[twiddleOffset + 3],
-                shoupTwiddles[twiddleOffset + 3],
-                modulus);
-        }
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ExecuteForwardCachedDifGroup(
@@ -29527,6 +29460,43 @@ internal sealed partial class ParallelBigUnsigned
             });
     }
 
+    private static readonly Vector512<uint> LengthTwoSwapIndicesAvx512 =
+        Vector512.Create(
+            1u, 0u, 3u, 2u, 5u, 4u, 7u, 6u,
+            9u, 8u, 11u, 10u, 13u, 12u, 15u, 14u);
+
+    private static readonly Vector512<uint> LengthTwoEvenLaneMaskAvx512 =
+        Vector512.Create(
+            uint.MaxValue, 0u, uint.MaxValue, 0u,
+            uint.MaxValue, 0u, uint.MaxValue, 0u,
+            uint.MaxValue, 0u, uint.MaxValue, 0u,
+            uint.MaxValue, 0u, uint.MaxValue, 0u);
+
+    private static readonly Vector512<uint> LengthTwoOddLaneMaskAvx512 =
+        Vector512.Create(
+            0u, uint.MaxValue, 0u, uint.MaxValue,
+            0u, uint.MaxValue, 0u, uint.MaxValue,
+            0u, uint.MaxValue, 0u, uint.MaxValue,
+            0u, uint.MaxValue, 0u, uint.MaxValue);
+
+    private static readonly Vector256<uint> LengthTwoEvenLaneMaskAvx2 =
+        Vector256.Create(
+            uint.MaxValue, 0u, uint.MaxValue, 0u,
+            uint.MaxValue, 0u, uint.MaxValue, 0u);
+
+    private static readonly Vector256<uint> LengthTwoOddLaneMaskAvx2 =
+        Vector256.Create(
+            0u, uint.MaxValue, 0u, uint.MaxValue,
+            0u, uint.MaxValue, 0u, uint.MaxValue);
+
+    /// <summary>
+    /// SIMD length-2 NTT stage for the <=10M engine. Adjacent residues are
+    /// already laid out as [left,right], so each vector swaps neighboring
+    /// dwords, computes both modular sum/difference chains, then selects the
+    /// even sum lanes and odd left-minus-right lanes. This avoids any gather,
+    /// transpose, or temporary buffer. The persistent >10M scheduler keeps the
+    /// previous scalar implementation so its accepted checkpoint is untouched.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteLengthTwoButterflies(
         uint[] values,
@@ -29539,61 +29509,327 @@ internal sealed partial class ParallelBigUnsigned
         int pairCount =
             values.Length >> 1;
 
+        // Keep PowMemoryBounded (>10M) byte-for-byte on its established scalar
+        // S=2 scheduling. This phase intentionally targets only the <=10M path.
+        if (!workers.UsesPersistentStaticScheduling)
+        {
+            if (workers.UseAvx512Ntt &&
+                Avx512F.IsSupported &&
+                pairCount >= (Vector512<uint>.Count >> 1))
+            {
+                ExecuteVectorAlignedRanges(
+                    pairCount,
+                    Vector512<uint>.Count >> 1,
+                    workers,
+                    cancellationToken,
+                    (start, end) => ExecuteLengthTwoButterfliesAvx512(
+                        values, modulus, normalize, inverseLength, start, end));
+                return;
+            }
+
+            // A transform can be smaller than one ZMM even when AVX-512 is
+            // selected globally. Fall down the x86 SIMD width hierarchy rather
+            // than turning the complete S=2 stage scalar: 8 values use YMM,
+            // 4 values use XMM, and only a single two-value butterfly is too
+            // small to expose independent pairs to SIMD.
+            if ((workers.UseAvx512Ntt || workers.UseAvx2Ntt) &&
+                Avx2.IsSupported &&
+                pairCount >= (Vector256<uint>.Count >> 1))
+            {
+                ExecuteVectorAlignedRanges(
+                    pairCount,
+                    Vector256<uint>.Count >> 1,
+                    workers,
+                    cancellationToken,
+                    (start, end) => ExecuteLengthTwoButterfliesAvx2(
+                        values, modulus, normalize, inverseLength, start, end));
+                return;
+            }
+
+            if ((workers.UseAvx512Ntt || workers.UseAvx2Ntt || workers.UseSseNtt) &&
+                Sse2.IsSupported &&
+                pairCount >= (Vector128<uint>.Count >> 1))
+            {
+                ExecuteVectorAlignedRanges(
+                    pairCount,
+                    Vector128<uint>.Count >> 1,
+                    workers,
+                    cancellationToken,
+                    (start, end) => ExecuteLengthTwoButterfliesSse(
+                        values, modulus, normalize, inverseLength, start, end));
+                return;
+            }
+
+            if (workers.UseNeonNtt &&
+                pairCount >= (Vector128<uint>.Count >> 1))
+            {
+                ExecuteVectorAlignedRanges(
+                    pairCount,
+                    Vector128<uint>.Count >> 1,
+                    workers,
+                    cancellationToken,
+                    (start, end) => ExecuteLengthTwoButterfliesNeon(
+                        values, modulus, normalize, inverseLength, start, end));
+                return;
+            }
+        }
+
         ExecuteRanges(
             pairCount,
             workers,
             cancellationToken,
-            (start, end) =>
+            (start, end) => ExecuteLengthTwoButterfliesScalarRange(
+                values, modulus, normalize, inverseLength, start, end));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteLengthTwoButterfliesAvx512(
+        uint[] values,
+        uint modulus,
+        bool normalize,
+        uint inverseLength,
+        int pairStart,
+        int pairEnd)
+    {
+        Debug.Assert(Avx512F.IsSupported);
+
+        ref uint data =
+            ref MemoryMarshal.GetArrayDataReference(values);
+
+        var context =
+            new Avx512NttModContext(modulus);
+
+        Vector512<uint> inverse =
+            default;
+        Vector512<uint> inverseShoup =
+            default;
+
+        if (normalize)
+        {
+            uint shoup =
+                (uint)(((ulong)inverseLength << 32) / modulus);
+
+            inverse =
+                Vector512.Create(inverseLength);
+            inverseShoup =
+                Vector512.Create(shoup);
+        }
+
+        int pairIndex =
+            pairStart;
+
+        for (; pairIndex + 7 < pairEnd; pairIndex += 8)
+        {
+            int valueIndex =
+                pairIndex << 1;
+
+            Vector512<uint> value =
+                Vector512.LoadUnsafe(
+                    ref data,
+                    (nuint)valueIndex);
+
+            Vector512<uint> swapped =
+                Vector512.Shuffle(
+                    value,
+                    LengthTwoSwapIndicesAvx512);
+
+            Vector512<uint> sum =
+                AddModuloAvx512(
+                    value,
+                    swapped,
+                    context);
+
+            // swapped-value yields [right-left, left-right, ...], so the odd
+            // lanes are exactly the S=2 difference that follows each sum.
+            Vector512<uint> difference =
+                SubtractModuloAvx512(
+                    swapped,
+                    value,
+                    context);
+
+            Vector512<uint> output =
+                Vector512.BitwiseOr(
+                    Vector512.BitwiseAnd(
+                        sum,
+                        LengthTwoEvenLaneMaskAvx512),
+                    Vector512.BitwiseAnd(
+                        difference,
+                        LengthTwoOddLaneMaskAvx512));
+
+            if (normalize)
             {
-                int leftIndex =
-                    start << 1;
+                output =
+                    MultiplyShoupAvx512(
+                        output,
+                        inverse,
+                        inverseShoup,
+                        context);
+            }
 
-                for (int pairIndex = start;
-                     pairIndex < end;
-                     pairIndex++, leftIndex += 2)
-                {
-                    uint leftValue =
-                        values[leftIndex];
+            output.StoreUnsafe(
+                ref data,
+                (nuint)valueIndex);
+        }
 
-                    uint rightValue =
-                        values[leftIndex + 1];
+        if (pairIndex < pairEnd)
+        {
+            ExecuteLengthTwoButterfliesScalarRange(
+                values, modulus, normalize, inverseLength, pairIndex, pairEnd);
+        }
+    }
 
-                    uint sum =
-                        leftValue +
-                        rightValue;
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteLengthTwoButterfliesAvx2(
+        uint[] values,
+        uint modulus,
+        bool normalize,
+        uint inverseLength,
+        int pairStart,
+        int pairEnd)
+    {
+        Debug.Assert(Avx2.IsSupported);
 
-                    if (sum >= modulus)
-                    {
-                        sum -= modulus;
-                    }
+        ref uint data =
+            ref MemoryMarshal.GetArrayDataReference(values);
 
-                    uint difference =
-                        leftValue >= rightValue
-                            ? leftValue - rightValue
-                            : leftValue + modulus - rightValue;
+        var context =
+            new Avx2NttModContext(modulus);
 
-                    if (normalize)
-                    {
-                        values[leftIndex] =
-                            (uint)((ulong)sum *
-                                   inverseLength %
-                                   modulus);
+        Vector256<uint> inverse =
+            default;
+        Vector256<uint> inverseShoup =
+            default;
 
-                        values[leftIndex + 1] =
-                            (uint)((ulong)difference *
-                                   inverseLength %
-                                   modulus);
-                    }
-                    else
-                    {
-                        values[leftIndex] =
-                            sum;
+        if (normalize)
+        {
+            uint shoup =
+                (uint)(((ulong)inverseLength << 32) / modulus);
 
-                        values[leftIndex + 1] =
-                            difference;
-                    }
-                }
-            });
+            inverse =
+                Vector256.Create(inverseLength);
+            inverseShoup =
+                Vector256.Create(shoup);
+        }
+
+        int pairIndex =
+            pairStart;
+
+        for (; pairIndex + 3 < pairEnd; pairIndex += 4)
+        {
+            int valueIndex =
+                pairIndex << 1;
+
+            Vector256<uint> value =
+                Vector256.LoadUnsafe(
+                    ref data,
+                    (nuint)valueIndex);
+
+            Vector256<uint> swapped =
+                Avx2.Shuffle(
+                        value.AsInt32(),
+                        0xB1)
+                    .AsUInt32();
+
+            Vector256<uint> sum =
+                AddModuloAvx2(
+                    value,
+                    swapped,
+                    context);
+
+            Vector256<uint> difference =
+                SubtractModuloAvx2(
+                    swapped,
+                    value,
+                    context);
+
+            Vector256<uint> output =
+                Vector256.BitwiseOr(
+                    Vector256.BitwiseAnd(
+                        sum,
+                        LengthTwoEvenLaneMaskAvx2),
+                    Vector256.BitwiseAnd(
+                        difference,
+                        LengthTwoOddLaneMaskAvx2));
+
+            if (normalize)
+            {
+                output =
+                    MultiplyShoupAvx2(
+                        output,
+                        inverse,
+                        inverseShoup,
+                        context);
+            }
+
+            output.StoreUnsafe(
+                ref data,
+                (nuint)valueIndex);
+        }
+
+        if (pairIndex < pairEnd)
+        {
+            ExecuteLengthTwoButterfliesScalarRange(
+                values, modulus, normalize, inverseLength, pairIndex, pairEnd);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteLengthTwoButterfliesScalarRange(
+        uint[] values,
+        uint modulus,
+        bool normalize,
+        uint inverseLength,
+        int pairStart,
+        int pairEnd)
+    {
+        int leftIndex =
+            pairStart << 1;
+
+        for (int pairIndex = pairStart;
+             pairIndex < pairEnd;
+             pairIndex++, leftIndex += 2)
+        {
+            uint leftValue =
+                values[leftIndex];
+
+            uint rightValue =
+                values[leftIndex + 1];
+
+            uint sum =
+                leftValue +
+                rightValue;
+
+            if (sum >= modulus)
+            {
+                sum -= modulus;
+            }
+
+            uint difference =
+                leftValue >= rightValue
+                    ? leftValue - rightValue
+                    : leftValue + modulus - rightValue;
+
+            if (normalize)
+            {
+                values[leftIndex] =
+                    (uint)((ulong)sum *
+                           inverseLength %
+                           modulus);
+
+                values[leftIndex + 1] =
+                    (uint)((ulong)difference *
+                           inverseLength %
+                           modulus);
+            }
+            else
+            {
+                values[leftIndex] =
+                    sum;
+
+                values[leftIndex + 1] =
+                    difference;
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29667,7 +29903,8 @@ internal sealed partial class ParallelBigUnsigned
         // ISA once per stage and advance a complete seed vector by root^W
         // with the same exact Shoup reduction used by the butterfly kernels.
         // The only scalar modular chain left is the W-lane seed at the start
-        // of each worker range plus a sub-vector tail.
+        // of each worker range. Residual arithmetic is completed in one padded
+        // SIMD vector, so a short worker tail no longer re-enters modular scalar math.
         int twiddleSimdWidth =
             SelectCachedTwiddleSimdWidth(workers);
 
@@ -30238,6 +30475,88 @@ internal sealed partial class ParallelBigUnsigned
             exactSegments);
     }
 
+    /// <summary>
+    /// Chooses the per-group segment count in units of complete SIMD vectors.
+    /// For power-of-two NTT stages halfLength is normally divisible by the
+    /// active lane count, so every worker slice becomes vector-clean and the
+    /// scalar residual loop disappears. If the stage is smaller than one
+    /// vector or not divisible by vectorWidth, preserve the legacy partition.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetVectorAlignedSegmentsPerGroup(
+        int halfLength,
+        int groupCount,
+        FixedWorkerTeam workers,
+        int vectorWidth)
+    {
+        int workerCount =
+            workers.WorkerCount;
+
+        if (workers.UsesPersistentStaticScheduling ||
+            vectorWidth <= 1 ||
+            halfLength < vectorWidth ||
+            halfLength % vectorWidth != 0)
+        {
+            return GetWorkerAlignedSegmentsPerGroup(
+                halfLength,
+                groupCount,
+                workerCount,
+                GetSegmentsPerGroup(halfLength, groupCount, workerCount));
+        }
+
+        int vectorBlockCount =
+            halfLength / vectorWidth;
+
+        return GetWorkerAlignedSegmentsPerGroup(
+            vectorBlockCount,
+            groupCount,
+            workerCount,
+            GetSegmentsPerGroup(vectorBlockCount, groupCount, workerCount));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void GetVectorAlignedSegmentBounds(
+        int segmentIndex,
+        int segmentsPerGroup,
+        int halfLength,
+        int vectorWidth,
+        FixedWorkerTeam workers,
+        out int groupIndex,
+        out int butterflyStart,
+        out int butterflyEnd)
+    {
+        if (workers.UsesPersistentStaticScheduling ||
+            vectorWidth <= 1 ||
+            halfLength < vectorWidth ||
+            halfLength % vectorWidth != 0)
+        {
+            GetSegmentBounds(
+                segmentIndex,
+                segmentsPerGroup,
+                halfLength,
+                out groupIndex,
+                out butterflyStart,
+                out butterflyEnd);
+            return;
+        }
+
+        int vectorBlockCount =
+            halfLength / vectorWidth;
+
+        GetSegmentBounds(
+            segmentIndex,
+            segmentsPerGroup,
+            vectorBlockCount,
+            out groupIndex,
+            out int blockStart,
+            out int blockEnd);
+
+        butterflyStart =
+            checked(blockStart * vectorWidth);
+        butterflyEnd =
+            checked(blockEnd * vectorWidth);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void GetSegmentBounds(
         int segmentIndex,
@@ -30285,6 +30604,71 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong NormalizeCoefficientCarryBlockParallel(
+        ulong[] coefficients,
+        int sourceStart,
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong incomingCarry,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        if (count <= 0)
+            return incomingCarry;
+
+        // Preserve the accepted large-mode behavior.  <=10M uses 512-digit
+        // micro-tiles so the scalar carry dependency inside each SIMD
+        // quotient/remainder stream is bounded and the inter-tile dependency
+        // is solved by the same exact prefix lookahead as CRT carry.
+        if (workers.UsesPersistentStaticScheduling ||
+            workers.WorkerCount == 1 ||
+            count < HierarchicalCarryTileLength * 2)
+        {
+            return NormalizeCoefficientCarryRangeSimd(
+                coefficients, sourceStart, destination, destinationStart,
+                count, incomingCarry, workers, cancellationToken);
+        }
+
+        const int tileLength = HierarchicalCarryTileLength;
+        int tileCount = checked((count + tileLength - 1) / tileLength);
+        ulong[] tileCarries = ArrayPool<ulong>.Shared.Rent(tileCount);
+
+        try
+        {
+            ExecuteCarryTileRanges(
+                tileCount,
+                workers,
+                cancellationToken,
+                (tileStart, tileEnd) =>
+                {
+                    for (int tileIndex = tileStart; tileIndex < tileEnd; tileIndex++)
+                    {
+                        int relativeStart = checked(tileIndex * tileLength);
+                        int tileCountLocal = Math.Min(tileLength, count - relativeStart);
+                        tileCarries[tileIndex] = NormalizeCoefficientCarryRangeSimd(
+                            coefficients,
+                            checked(sourceStart + relativeStart),
+                            destination,
+                            checked(destinationStart + relativeStart),
+                            tileCountLocal,
+                            0,
+                            workers,
+                            cancellationToken);
+                    }
+                });
+
+            return ReconcileNormalizedCarryTilesHierarchical(
+                destination, destinationStart, count, incomingCarry,
+                tileCarries, tileCount, tileLength, workers, cancellationToken);
+        }
+        finally
+        {
+            ArrayPool<ulong>.Shared.Return(tileCarries, clearArray: false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static ParallelBigUnsigned CreateFromCoefficients(
         ulong[] coefficients,
         FixedWorkerTeam workers,
@@ -30304,7 +30688,7 @@ internal sealed partial class ParallelBigUnsigned
         // the AVX2 / SSE2+ / NEON scalar carry hole for schoolbook fallback
         // products that do not enter the <=5-limb small-base fast path.
         ulong carry =
-            NormalizeCoefficientCarryRangeSimd(
+            NormalizeCoefficientCarryBlockParallel(
                 coefficients,
                 0,
                 limbs,
@@ -31092,6 +31476,220 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     /// <summary>
+    /// Splits a contiguous element range in vector-width blocks before handing
+    /// it to the persistent worker team. Worker boundaries therefore always
+    /// land on SIMD-width boundaries; only one final global tail can remain.
+    /// This helper is intentionally element-based and is not used for the
+    /// group/segment schedulers whose work-item unit is not one residue.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ExecuteVectorAlignedRanges(
+        int itemCount,
+        int vectorWidth,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken,
+        Action<int, int> body)
+    {
+        ExecuteVectorAlignedRange(
+            0,
+            itemCount,
+            vectorWidth,
+            workers,
+            cancellationToken,
+            body);
+    }
+
+    /// <summary>
+    /// Range-offset form of ExecuteVectorAlignedRanges. The aligned body is
+    /// still statically partitioned across every worker, while a sub-vector
+    /// suffix is executed once by the coordinator after the worker barrier.
+    /// </summary>
+    private static void ExecuteVectorAlignedRange(
+        int rangeStart,
+        int rangeEnd,
+        int vectorWidth,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken,
+        Action<int, int> body)
+    {
+        if (rangeStart >= rangeEnd)
+        {
+            return;
+        }
+
+        if (workers.UsesPersistentStaticScheduling)
+        {
+            ExecuteRanges(
+                rangeEnd - rangeStart,
+                workers,
+                cancellationToken,
+                (start, end) => body(rangeStart + start, rangeStart + end));
+            return;
+        }
+
+        if (vectorWidth <= 1)
+        {
+            ExecuteRanges(
+                rangeEnd - rangeStart,
+                workers,
+                cancellationToken,
+                (start, end) => body(rangeStart + start, rangeStart + end));
+            return;
+        }
+
+        int count =
+            rangeEnd - rangeStart;
+
+        int alignedCount =
+            count - count % vectorWidth;
+
+        if (alignedCount > 0)
+        {
+            int blockCount =
+                alignedCount / vectorWidth;
+
+            ExecuteRanges(
+                blockCount,
+                workers,
+                cancellationToken,
+                (blockStart, blockEnd) =>
+                    body(
+                        checked(rangeStart + blockStart * vectorWidth),
+                        checked(rangeStart + blockEnd * vectorWidth)));
+        }
+
+        if (alignedCount < count)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            body(
+                rangeStart + alignedCount,
+                rangeEnd);
+        }
+    }
+
+    /// <summary>
+    /// Schedules two logical contiguous ranges in one worker generation while
+    /// keeping both sides independently SIMD-width aligned. This is used by
+    /// the final inverse stage where validRightCount is a semantic boundary:
+    /// below it both outputs are live, above it only the left output is live.
+    /// At most one global tail remains on each side of that boundary.
+    /// </summary>
+    private static void ExecuteVectorAlignedSplitRanges(
+        int firstStart,
+        int firstEnd,
+        int secondStart,
+        int secondEnd,
+        int vectorWidth,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken,
+        Action<int, int> firstBody,
+        Action<int, int> secondBody)
+    {
+        int firstCount = Math.Max(0, firstEnd - firstStart);
+        int secondCount = Math.Max(0, secondEnd - secondStart);
+
+        if (workers.UsesPersistentStaticScheduling)
+        {
+            int combinedStart = firstStart;
+            int combinedEnd = secondEnd;
+
+            ExecuteRanges(
+                combinedEnd - combinedStart,
+                workers,
+                cancellationToken,
+                (localStart, localEnd) =>
+                {
+                    int start = combinedStart + localStart;
+                    int end = combinedStart + localEnd;
+
+                    int firstLocalEnd = Math.Min(end, firstEnd);
+                    if (start < firstLocalEnd)
+                    {
+                        firstBody(start, firstLocalEnd);
+                    }
+
+                    int secondLocalStart = Math.Max(start, secondStart);
+                    if (secondLocalStart < end)
+                    {
+                        secondBody(secondLocalStart, end);
+                    }
+                });
+            return;
+        }
+
+        if (vectorWidth <= 1)
+        {
+            ExecuteVectorAlignedRange(
+                firstStart, firstEnd, 1, workers, cancellationToken, firstBody);
+            ExecuteVectorAlignedRange(
+                secondStart, secondEnd, 1, workers, cancellationToken, secondBody);
+            return;
+        }
+
+        int firstAlignedCount =
+            firstCount - firstCount % vectorWidth;
+        int secondAlignedCount =
+            secondCount - secondCount % vectorWidth;
+
+        int firstBlockCount =
+            firstAlignedCount / vectorWidth;
+        int secondBlockCount =
+            secondAlignedCount / vectorWidth;
+        int totalBlockCount =
+            checked(firstBlockCount + secondBlockCount);
+
+        if (totalBlockCount > 0)
+        {
+            ExecuteRanges(
+                totalBlockCount,
+                workers,
+                cancellationToken,
+                (blockStart, blockEnd) =>
+                {
+                    int firstLocalStart =
+                        Math.Min(blockStart, firstBlockCount);
+                    int firstLocalEnd =
+                        Math.Min(blockEnd, firstBlockCount);
+
+                    if (firstLocalStart < firstLocalEnd)
+                    {
+                        firstBody(
+                            checked(firstStart + firstLocalStart * vectorWidth),
+                            checked(firstStart + firstLocalEnd * vectorWidth));
+                    }
+
+                    int secondLocalStart =
+                        Math.Max(0, blockStart - firstBlockCount);
+                    int secondLocalEnd =
+                        Math.Max(0, blockEnd - firstBlockCount);
+
+                    if (secondLocalStart < secondLocalEnd)
+                    {
+                        secondBody(
+                            checked(secondStart + secondLocalStart * vectorWidth),
+                            checked(secondStart + secondLocalEnd * vectorWidth));
+                    }
+                });
+        }
+
+        if (firstAlignedCount < firstCount)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            firstBody(
+                firstStart + firstAlignedCount,
+                firstEnd);
+        }
+
+        if (secondAlignedCount < secondCount)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            secondBody(
+                secondStart + secondAlignedCount,
+                secondEnd);
+        }
+    }
+
+    /// <summary>
     /// Owns exactly one immutable twiddle plan per NTT modulus for one complete
     /// Pow operation. PowSplit worker teams share these plans concurrently.
     /// This removes the duplicate forward/inverse table pairs that v30 kept in
@@ -31720,6 +32318,9 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         public int WorkerCount { get; }
+
+        public bool UsesPersistentStaticScheduling =>
+            _persistentStaticScheduling;
 
         public bool UseSseNtt => _sharedNttTwiddlePlans.UseSseNtt;
         public bool UseNeonNtt => _sharedNttTwiddlePlans.UseNeonNtt;

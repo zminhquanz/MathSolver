@@ -35,6 +35,110 @@ internal sealed partial class ParallelBigUnsigned
         column3 = Sse2.UnpackHigh(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
     }
 
+    private static readonly Vector128<uint> LengthTwoEvenLaneMaskSse =
+        Vector128.Create(
+            uint.MaxValue, 0u, uint.MaxValue, 0u);
+
+    private static readonly Vector128<uint> LengthTwoOddLaneMaskSse =
+        Vector128.Create(
+            0u, uint.MaxValue, 0u, uint.MaxValue);
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteLengthTwoButterfliesSse(
+        uint[] values,
+        uint modulus,
+        bool normalize,
+        uint inverseLength,
+        int pairStart,
+        int pairEnd)
+    {
+        Debug.Assert(Sse2.IsSupported);
+
+        ref uint data =
+            ref MemoryMarshal.GetArrayDataReference(values);
+
+        Vector128<uint> mod =
+            Vector128.Create(modulus);
+
+        Vector128<uint> inverse =
+            default;
+        Vector128<uint> inverseShoup =
+            default;
+
+        if (normalize)
+        {
+            uint shoup =
+                (uint)(((ulong)inverseLength << 32) / modulus);
+
+            inverse =
+                Vector128.Create(inverseLength);
+            inverseShoup =
+                Vector128.Create(shoup);
+        }
+
+        int pairIndex =
+            pairStart;
+
+        for (; pairIndex + 1 < pairEnd; pairIndex += 2)
+        {
+            int valueIndex =
+                pairIndex << 1;
+
+            Vector128<uint> value =
+                Vector128.LoadUnsafe(
+                    ref data,
+                    (nuint)valueIndex);
+
+            Vector128<uint> swapped =
+                Sse2.Shuffle(
+                        value.AsInt32(),
+                        0xB1)
+                    .AsUInt32();
+
+            Vector128<uint> sum =
+                AddModuloSse(
+                    value,
+                    swapped,
+                    mod);
+
+            Vector128<uint> difference =
+                SubtractModuloSse(
+                    swapped,
+                    value,
+                    mod);
+
+            Vector128<uint> output =
+                Sse2.Or(
+                        Sse2.And(
+                            sum,
+                            LengthTwoEvenLaneMaskSse),
+                        Sse2.And(
+                            difference,
+                            LengthTwoOddLaneMaskSse))
+                    .AsUInt32();
+
+            if (normalize)
+            {
+                output =
+                    MultiplyShoupSse(
+                        output,
+                        inverse,
+                        inverseShoup,
+                        mod);
+            }
+
+            output.StoreUnsafe(
+                ref data,
+                (nuint)valueIndex);
+        }
+
+        if (pairIndex < pairEnd)
+        {
+            ExecuteLengthTwoButterfliesScalarRange(
+                values, modulus, normalize, inverseLength, pairIndex, pairEnd);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardLengthFourAndTwoFusedBlockSse(
         uint[] values,
@@ -85,9 +189,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailSse(
+                values, index, blockEnd - index, modulus,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: false);
         }
     }
 
@@ -141,9 +245,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailSse(
+                values, index, blockEnd - index, modulus,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: true);
         }
     }
 
@@ -458,8 +562,8 @@ internal sealed partial class ParallelBigUnsigned
     /// while all four quarter streams stay resident in registers. SSSE3 and
     /// SSE4.x automatically inherit the faster helpers already used by this
     /// backend; the recurrence itself advances by root^4 through exact Shoup
-    /// multiplication. Only a residual segment shorter than four butterflies
-    /// falls back to the proven scalar dual-lane implementation.
+    /// multiplication. A residual segment shorter than four butterflies finishes
+    /// in one zero-padded XMM batch instead of re-entering scalar modular math.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ProcessForwardUncachedStagePairSse(
@@ -563,17 +667,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (i < last)
         {
-            ProcessForwardUncachedStagePairSegmentByrefDualLane(
-                values,
-                modulus,
-                firstRoot,
-                secondRoot,
-                quarterPhase,
-                stageLength,
-                groupIndex,
-                i,
-                last,
-                cancellationToken);
+            ProcessForwardUncachedStagePairTailSse(
+                values, groupOffset, quarterLength, i, last - i,
+                twiddle0, twiddle1, twiddle2, modulus);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -603,14 +699,11 @@ internal sealed partial class ParallelBigUnsigned
         int quarterLength = halfLength >> 1;
         int groupCount = values.Length / stageLength;
         int segmentsPerGroup =
-            GetWorkerAlignedSegmentsPerGroup(
+            GetVectorAlignedSegmentsPerGroup(
                 quarterLength,
                 groupCount,
-                workers.WorkerCount,
-                GetSegmentsPerGroup(
-                    quarterLength,
-                    groupCount,
-                    workers.WorkerCount));
+                workers,
+                Vector128<uint>.Count);
         Vector128<uint> mod = Vector128.Create(modulus);
 
         ExecuteRanges(
@@ -625,10 +718,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segmentsPerGroup,
                         quarterLength,
+                        Vector128<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -770,14 +865,11 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
+        int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
-            workers.WorkerCount,
-            GetSegmentsPerGroup(
-                halfLength,
-                groupCount,
-                workers.WorkerCount));
+            workers,
+            Vector128<uint>.Count);
         Vector128<uint> mod = Vector128.Create(modulus);
 
         ExecuteRanges(
@@ -792,10 +884,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector128<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -863,11 +957,11 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
+        int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
-            workers.WorkerCount,
-            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+            workers,
+            Vector128<uint>.Count);
         Vector128<uint> mod = Vector128.Create(modulus);
         Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
 
@@ -876,8 +970,15 @@ internal sealed partial class ParallelBigUnsigned
             ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
             for (int segment = start; segment < end; segment++)
             {
-                GetSegmentBounds(segment, segments, halfLength,
-                    out int group, out int first, out int last);
+                GetVectorAlignedSegmentBounds(
+                    segment,
+                    segments,
+                    halfLength,
+                    Vector128<uint>.Count,
+                    workers,
+                    out int group,
+                    out int first,
+                    out int last);
                 int groupOffset = group * stageLength;
                 Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, first, modulus);
                 int i = first;
@@ -925,11 +1026,11 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetWorkerAlignedSegmentsPerGroup(
+        int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
-            workers.WorkerCount,
-            GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+            workers,
+            Vector128<uint>.Count);
         Vector128<uint> mod = Vector128.Create(modulus);
         Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
 
@@ -938,8 +1039,15 @@ internal sealed partial class ParallelBigUnsigned
             ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
             for (int segment = start; segment < end; segment++)
             {
-                GetSegmentBounds(segment, segments, halfLength,
-                    out int group, out int first, out int last);
+                GetVectorAlignedSegmentBounds(
+                    segment,
+                    segments,
+                    halfLength,
+                    Vector128<uint>.Count,
+                    workers,
+                    out int group,
+                    out int first,
+                    out int last);
                 int groupOffset = group * stageLength;
                 Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, first, modulus);
                 int i = first;
@@ -1084,17 +1192,29 @@ internal sealed partial class ParallelBigUnsigned
                 sum.StoreUnsafe(ref data, (nuint)(group + j));
                 difference.StoreUnsafe(ref data, (nuint)(group + half + j));
             }
-            for (; j < half; j++)
+            if (j < half)
             {
-                uint a = values[group + j], b = values[group + half + j];
-                uint root = half == 1 ? 1u : twiddles[twiddleOffset + j];
-                if (inverse) b = (uint)((ulong)b * root % modulus);
-                uint sum = a + b;
-                if (sum >= modulus) sum -= modulus;
-                uint difference = a >= b ? a - b : a + modulus - b;
-                if (!inverse) difference = (uint)((ulong)difference * root % modulus);
-                values[group + j] = sum;
-                values[group + half + j] = difference;
+                int residualCount = half - j;
+                if (half == 1)
+                {
+                    // Length-2 is handled by the dedicated SIMD S=2 kernel in
+                    // production. Keep this single-butterfly safety fallback for
+                    // callers that enter the cached tile helper directly.
+                    uint a = values[group];
+                    uint b = values[group + half];
+                    uint sum = a + b;
+                    if (sum >= modulus) sum -= modulus;
+                    values[group] = sum;
+                    values[group + half] =
+                        a >= b ? a - b : a + modulus - b;
+                }
+                else
+                {
+                    ExecuteCachedButterflyTailSse(
+                        values, twiddles, shoup,
+                        group + j, group + half + j, twiddleOffset + j,
+                        residualCount, inverse, modulus);
+                }
             }
         }
     }

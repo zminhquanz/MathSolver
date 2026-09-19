@@ -42,9 +42,9 @@ internal sealed partial class ParallelBigUnsigned
         uint[] smallLimbs = small._limbs;
         uint[] largeLimbs = large._limbs;
 
-        // Only smallCount-1 coefficients exist on either edge.  Keep these
-        // tiny triangular boundaries scalar and give the long full-overlap
-        // middle to SIMD, where every output has exactly smallCount products.
+        // Only smallCount-1 coefficients exist on either edge.  Compute those
+        // triangular boundaries with padded SIMD (out-of-range multiplicands are
+        // zero) and give the long full-overlap middle to the regular SIMD kernel.
         int interiorStart = smallCount - 1;
         int interiorEnd = largeCount; // exclusive; k <= largeCount - 1
 
@@ -55,7 +55,7 @@ internal sealed partial class ParallelBigUnsigned
         ref ulong initialCoefficientRef =
             ref MemoryMarshal.GetArrayDataReference(coefficients);
 
-        FillSmallBaseCoefficientRangeScalar(
+        FillSmallBaseCoefficientBoundaryRangeSimd(
             ref initialSmallRef,
             smallCount,
             ref initialLargeRef,
@@ -63,6 +63,7 @@ internal sealed partial class ParallelBigUnsigned
             ref initialCoefficientRef,
             0,
             interiorStart,
+            workers,
             cancellationToken);
 
         int interiorCount = interiorEnd - interiorStart;
@@ -82,7 +83,7 @@ internal sealed partial class ParallelBigUnsigned
                 Avx2.IsSupported)
             {
                 FillSmallBaseCoefficientRangeAvx512(
-                    ref smallRef, smallCount, ref largeRef,
+                    ref smallRef, smallCount, ref largeRef, largeCount,
                     ref coefficientRef, start, end, cancellationToken);
                 return;
             }
@@ -90,7 +91,7 @@ internal sealed partial class ParallelBigUnsigned
             if (workers.UseAvx2Ntt && Avx2.IsSupported)
             {
                 FillSmallBaseCoefficientRangeAvx2(
-                    ref smallRef, smallCount, ref largeRef,
+                    ref smallRef, smallCount, ref largeRef, largeCount,
                     ref coefficientRef, start, end, cancellationToken);
                 return;
             }
@@ -98,7 +99,7 @@ internal sealed partial class ParallelBigUnsigned
             if (workers.UseSseNtt && Sse2.IsSupported)
             {
                 FillSmallBaseCoefficientRangeSse(
-                    ref smallRef, smallCount, ref largeRef,
+                    ref smallRef, smallCount, ref largeRef, largeCount,
                     ref coefficientRef, start, end, cancellationToken);
                 return;
             }
@@ -107,7 +108,7 @@ internal sealed partial class ParallelBigUnsigned
             if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
             {
                 FillSmallBaseCoefficientRangeNeon(
-                    ref smallRef, smallCount, ref largeRef,
+                    ref smallRef, smallCount, ref largeRef, largeCount,
                     ref coefficientRef, start, end, cancellationToken);
                 return;
             }
@@ -118,11 +119,15 @@ internal sealed partial class ParallelBigUnsigned
                 ref coefficientRef, start, end, cancellationToken);
         }
 
+        int interiorVectorWidth =
+            SelectSmallBaseSchoolbookSimdWidth(workers);
+
         if (workers.WorkerCount > 1 &&
             interiorCount >= SmallBaseSchoolbookParallelMinimumOutputs)
         {
-            ExecuteRanges(
+            ExecuteVectorAlignedRanges(
                 interiorCount,
+                interiorVectorWidth,
                 workers,
                 cancellationToken,
                 ProcessInterior);
@@ -138,7 +143,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(largeLimbs);
         ref ulong finalCoefficientRef =
             ref MemoryMarshal.GetArrayDataReference(coefficients);
-        FillSmallBaseCoefficientRangeScalar(
+        FillSmallBaseCoefficientBoundaryRangeSimd(
             ref finalSmallRef,
             smallCount,
             ref finalLargeRef,
@@ -146,6 +151,7 @@ internal sealed partial class ParallelBigUnsigned
             ref finalCoefficientRef,
             interiorEnd,
             coefficientCount,
+            workers,
             cancellationToken);
 
         return CreateFromSmallBaseCoefficientsSimd(
@@ -154,6 +160,299 @@ internal sealed partial class ParallelBigUnsigned
             diagnostics,
             cancellationToken);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int SelectSmallBaseSchoolbookSimdWidth(
+        FixedWorkerTeam workers)
+    {
+        if (workers.UseAvx512Ntt && Avx512F.IsSupported && Avx2.IsSupported)
+            return Vector512<uint>.Count;
+        if (workers.UseAvx2Ntt && Avx2.IsSupported)
+            return Vector256<uint>.Count;
+        if (workers.UseSseNtt && Sse2.IsSupported)
+            return Sse41.IsSupported ? Vector128<uint>.Count : 2;
+#if ANDROID
+        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+            return Vector128<uint>.Count;
+#endif
+        return 1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void FillSmallBasePaddedInput(
+        Span<uint> scratch,
+        ref uint large,
+        int largeCount,
+        int outputStart,
+        int outputCount,
+        int smallIndex)
+    {
+        scratch.Clear();
+        for (int lane = 0; lane < outputCount; lane++)
+        {
+            int sourceIndex = outputStart + lane - smallIndex;
+            if ((uint)sourceIndex < (uint)largeCount)
+            {
+                scratch[lane] = Unsafe.Add(ref large, sourceIndex);
+            }
+        }
+    }
+
+    private static void FillSmallBaseCoefficientBoundaryRangeSimd(
+        ref uint small,
+        int smallCount,
+        ref uint large,
+        int largeCount,
+        ref ulong destination,
+        int start,
+        int end,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        if (start >= end)
+            return;
+
+        if (workers.UseAvx512Ntt && Avx512F.IsSupported && Avx2.IsSupported)
+        {
+            FillSmallBaseCoefficientPaddedAvx512(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, start, end, cancellationToken);
+            return;
+        }
+
+        if (workers.UseAvx2Ntt && Avx2.IsSupported)
+        {
+            FillSmallBaseCoefficientPaddedAvx2(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, start, end, cancellationToken);
+            return;
+        }
+
+        if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            FillSmallBaseCoefficientPaddedSse(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, start, end, cancellationToken);
+            return;
+        }
+
+#if ANDROID
+        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+        {
+            FillSmallBaseCoefficientPaddedNeon(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, start, end, cancellationToken);
+            return;
+        }
+#endif
+
+        FillSmallBaseCoefficientRangeScalar(
+            ref small, smallCount, ref large, largeCount,
+            ref destination, start, end, cancellationToken);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void FillSmallBaseCoefficientPaddedAvx512(
+        ref uint small,
+        int smallCount,
+        ref uint large,
+        int largeCount,
+        ref ulong destination,
+        int start,
+        int end,
+        CancellationToken cancellationToken)
+    {
+        const int Width = 16;
+        Span<uint> inputScratch = stackalloc uint[Width];
+        Span<uint> resultScratch = stackalloc uint[Width];
+        ref uint inputRef = ref MemoryMarshal.GetReference(inputScratch);
+        ref uint resultRef = ref MemoryMarshal.GetReference(resultScratch);
+
+        for (int outputStart = start; outputStart < end; outputStart += Width)
+        {
+            int count = Math.Min(Width, end - outputStart);
+            Vector512<uint> sum = Vector512<uint>.Zero;
+            for (int smallIndex = 0; smallIndex < smallCount; smallIndex++)
+            {
+                FillSmallBasePaddedInput(
+                    inputScratch, ref large, largeCount,
+                    outputStart, count, smallIndex);
+                Vector512<uint> source = Vector512.LoadUnsafe(ref inputRef);
+                sum = Vector512.Add(
+                    sum,
+                    Avx512F.MultiplyLow(
+                        source,
+                        Vector512.Create(Unsafe.Add(ref small, smallIndex))));
+            }
+
+            sum.StoreUnsafe(ref resultRef);
+            for (int lane = 0; lane < count; lane++)
+                Unsafe.Add(ref destination, outputStart + lane) = resultScratch[lane];
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void FillSmallBaseCoefficientPaddedAvx2(
+        ref uint small,
+        int smallCount,
+        ref uint large,
+        int largeCount,
+        ref ulong destination,
+        int start,
+        int end,
+        CancellationToken cancellationToken)
+    {
+        const int Width = 8;
+        Span<uint> inputScratch = stackalloc uint[Width];
+        Span<uint> resultScratch = stackalloc uint[Width];
+        ref uint inputRef = ref MemoryMarshal.GetReference(inputScratch);
+        ref uint resultRef = ref MemoryMarshal.GetReference(resultScratch);
+
+        for (int outputStart = start; outputStart < end; outputStart += Width)
+        {
+            int count = Math.Min(Width, end - outputStart);
+            Vector256<int> sum = Vector256<int>.Zero;
+            for (int smallIndex = 0; smallIndex < smallCount; smallIndex++)
+            {
+                FillSmallBasePaddedInput(
+                    inputScratch, ref large, largeCount,
+                    outputStart, count, smallIndex);
+                Vector256<int> source = Vector256.LoadUnsafe(ref inputRef).AsInt32();
+                sum = Avx2.Add(
+                    sum,
+                    Avx2.MultiplyLow(
+                        source,
+                        Vector256.Create((int)Unsafe.Add(ref small, smallIndex))));
+            }
+
+            sum.AsUInt32().StoreUnsafe(ref resultRef);
+            for (int lane = 0; lane < count; lane++)
+                Unsafe.Add(ref destination, outputStart + lane) = resultScratch[lane];
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void FillSmallBaseCoefficientPaddedSse(
+        ref uint small,
+        int smallCount,
+        ref uint large,
+        int largeCount,
+        ref ulong destination,
+        int start,
+        int end,
+        CancellationToken cancellationToken)
+    {
+        if (Sse41.IsSupported)
+        {
+            const int Width = 4;
+            Span<uint> inputScratch = stackalloc uint[Width];
+            Span<uint> resultScratch = stackalloc uint[Width];
+            ref uint inputRef = ref MemoryMarshal.GetReference(inputScratch);
+            ref uint resultRef = ref MemoryMarshal.GetReference(resultScratch);
+
+            for (int outputStart = start; outputStart < end; outputStart += Width)
+            {
+                int count = Math.Min(Width, end - outputStart);
+                Vector128<int> sum = Vector128<int>.Zero;
+                for (int smallIndex = 0; smallIndex < smallCount; smallIndex++)
+                {
+                    FillSmallBasePaddedInput(
+                        inputScratch, ref large, largeCount,
+                        outputStart, count, smallIndex);
+                    Vector128<int> source = Vector128.LoadUnsafe(ref inputRef).AsInt32();
+                    sum = Sse2.Add(
+                        sum,
+                        Sse41.MultiplyLow(
+                            source,
+                            Vector128.Create((int)Unsafe.Add(ref small, smallIndex))));
+                }
+
+                sum.AsUInt32().StoreUnsafe(ref resultRef);
+                for (int lane = 0; lane < count; lane++)
+                    Unsafe.Add(ref destination, outputStart + lane) = resultScratch[lane];
+            }
+        }
+        else
+        {
+            const int Width = 2;
+            Span<uint> inputScratch = stackalloc uint[Width];
+            Span<ulong> resultScratch = stackalloc ulong[Width];
+            ref ulong resultRef = ref MemoryMarshal.GetReference(resultScratch);
+
+            for (int outputStart = start; outputStart < end; outputStart += Width)
+            {
+                int count = Math.Min(Width, end - outputStart);
+                Vector128<ulong> sum = Vector128<ulong>.Zero;
+                for (int smallIndex = 0; smallIndex < smallCount; smallIndex++)
+                {
+                    FillSmallBasePaddedInput(
+                        inputScratch, ref large, largeCount,
+                        outputStart, count, smallIndex);
+                    Vector128<uint> widened = Vector128.Create(
+                        inputScratch[0], 0u, inputScratch[1], 0u);
+                    Vector128<ulong> product =
+                        Sse2.Multiply(
+                            widened,
+                            Vector128.Create(Unsafe.Add(ref small, smallIndex)));
+                    sum = Sse2.Add(sum.AsInt64(), product.AsInt64()).AsUInt64();
+                }
+
+                sum.StoreUnsafe(ref resultRef);
+                for (int lane = 0; lane < count; lane++)
+                    Unsafe.Add(ref destination, outputStart + lane) = resultScratch[lane];
+            }
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+#if ANDROID
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void FillSmallBaseCoefficientPaddedNeon(
+        ref uint small,
+        int smallCount,
+        ref uint large,
+        int largeCount,
+        ref ulong destination,
+        int start,
+        int end,
+        CancellationToken cancellationToken)
+    {
+        const int Width = 4;
+        Span<uint> inputScratch = stackalloc uint[Width];
+        Span<uint> resultScratch = stackalloc uint[Width];
+        ref uint inputRef = ref MemoryMarshal.GetReference(inputScratch);
+        ref uint resultRef = ref MemoryMarshal.GetReference(resultScratch);
+
+        for (int outputStart = start; outputStart < end; outputStart += Width)
+        {
+            int count = Math.Min(Width, end - outputStart);
+            Vector128<uint> sum = Vector128<uint>.Zero;
+            for (int smallIndex = 0; smallIndex < smallCount; smallIndex++)
+            {
+                FillSmallBasePaddedInput(
+                    inputScratch, ref large, largeCount,
+                    outputStart, count, smallIndex);
+                Vector128<uint> source = Vector128.LoadUnsafe(ref inputRef);
+                sum = AdvSimd.Add(
+                    sum,
+                    AdvSimd.Multiply(
+                        source,
+                        Vector128.Create(Unsafe.Add(ref small, smallIndex))));
+            }
+
+            sum.StoreUnsafe(ref resultRef);
+            for (int lane = 0; lane < count; lane++)
+                Unsafe.Add(ref destination, outputStart + lane) = resultScratch[lane];
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong ComputeSmallBaseCoefficient(
@@ -276,6 +575,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint small,
         int smallCount,
         ref uint large,
+        int largeCount,
         ref ulong destination,
         int start,
         int end,
@@ -314,15 +614,11 @@ internal sealed partial class ParallelBigUnsigned
             StoreSixteenUInt32AsUInt64Avx512(sum, ref destination, index);
         }
 
-        for (; index < end; index++)
+        if (index < end)
         {
-            ulong sum =
-                (ulong)Unsafe.Add(ref small, 0) * Unsafe.Add(ref large, index);
-            if (smallCount > 1) sum += (ulong)Unsafe.Add(ref small, 1) * Unsafe.Add(ref large, index - 1);
-            if (smallCount > 2) sum += (ulong)Unsafe.Add(ref small, 2) * Unsafe.Add(ref large, index - 2);
-            if (smallCount > 3) sum += (ulong)Unsafe.Add(ref small, 3) * Unsafe.Add(ref large, index - 3);
-            if (smallCount > 4) sum += (ulong)Unsafe.Add(ref small, 4) * Unsafe.Add(ref large, index - 4);
-            Unsafe.Add(ref destination, index) = sum;
+            FillSmallBaseCoefficientPaddedAvx512(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, index, end, cancellationToken);
         }
     }
 
@@ -331,6 +627,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint small,
         int smallCount,
         ref uint large,
+        int largeCount,
         ref ulong destination,
         int start,
         int end,
@@ -369,15 +666,11 @@ internal sealed partial class ParallelBigUnsigned
             StoreEightUInt32AsUInt64Avx2(sum.AsUInt32(), ref destination, index);
         }
 
-        for (; index < end; index++)
+        if (index < end)
         {
-            ulong sum =
-                (ulong)Unsafe.Add(ref small, 0) * Unsafe.Add(ref large, index);
-            if (smallCount > 1) sum += (ulong)Unsafe.Add(ref small, 1) * Unsafe.Add(ref large, index - 1);
-            if (smallCount > 2) sum += (ulong)Unsafe.Add(ref small, 2) * Unsafe.Add(ref large, index - 2);
-            if (smallCount > 3) sum += (ulong)Unsafe.Add(ref small, 3) * Unsafe.Add(ref large, index - 3);
-            if (smallCount > 4) sum += (ulong)Unsafe.Add(ref small, 4) * Unsafe.Add(ref large, index - 4);
-            Unsafe.Add(ref destination, index) = sum;
+            FillSmallBaseCoefficientPaddedAvx2(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, index, end, cancellationToken);
         }
     }
 
@@ -386,6 +679,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint small,
         int smallCount,
         ref uint large,
+        int largeCount,
         ref ulong destination,
         int start,
         int end,
@@ -454,15 +748,11 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        for (; index < end; index++)
+        if (index < end)
         {
-            ulong sum =
-                (ulong)Unsafe.Add(ref small, 0) * Unsafe.Add(ref large, index);
-            if (smallCount > 1) sum += (ulong)Unsafe.Add(ref small, 1) * Unsafe.Add(ref large, index - 1);
-            if (smallCount > 2) sum += (ulong)Unsafe.Add(ref small, 2) * Unsafe.Add(ref large, index - 2);
-            if (smallCount > 3) sum += (ulong)Unsafe.Add(ref small, 3) * Unsafe.Add(ref large, index - 3);
-            if (smallCount > 4) sum += (ulong)Unsafe.Add(ref small, 4) * Unsafe.Add(ref large, index - 4);
-            Unsafe.Add(ref destination, index) = sum;
+            FillSmallBaseCoefficientPaddedSse(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, index, end, cancellationToken);
         }
     }
 
@@ -472,6 +762,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint small,
         int smallCount,
         ref uint large,
+        int largeCount,
         ref ulong destination,
         int start,
         int end,
@@ -513,15 +804,11 @@ internal sealed partial class ParallelBigUnsigned
             high.StoreUnsafe(ref destination, (nuint)(index + 2));
         }
 
-        for (; index < end; index++)
+        if (index < end)
         {
-            ulong sum =
-                (ulong)Unsafe.Add(ref small, 0) * Unsafe.Add(ref large, index);
-            if (smallCount > 1) sum += (ulong)Unsafe.Add(ref small, 1) * Unsafe.Add(ref large, index - 1);
-            if (smallCount > 2) sum += (ulong)Unsafe.Add(ref small, 2) * Unsafe.Add(ref large, index - 2);
-            if (smallCount > 3) sum += (ulong)Unsafe.Add(ref small, 3) * Unsafe.Add(ref large, index - 3);
-            if (smallCount > 4) sum += (ulong)Unsafe.Add(ref small, 4) * Unsafe.Add(ref large, index - 4);
-            Unsafe.Add(ref destination, index) = sum;
+            FillSmallBaseCoefficientPaddedNeon(
+                ref small, smallCount, ref large, largeCount,
+                ref destination, index, end, cancellationToken);
         }
     }
 #endif
@@ -544,7 +831,7 @@ internal sealed partial class ParallelBigUnsigned
         // base-10,000 quotient/remainder decomposition as CRT carry; only
         // the ordered dependency reconciliation remains scalar.
         ulong carry =
-            NormalizeCoefficientCarryRangeSimd(
+            NormalizeCoefficientCarryBlockParallel(
                 coefficients,
                 0,
                 limbs,

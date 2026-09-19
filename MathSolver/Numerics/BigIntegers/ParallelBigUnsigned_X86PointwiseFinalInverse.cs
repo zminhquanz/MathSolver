@@ -21,8 +21,9 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        ExecuteRanges(
+        ExecuteVectorAlignedRanges(
             length,
+            Vector256<uint>.Count,
             workers,
             cancellationToken,
             (start, end) =>
@@ -61,8 +62,9 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        ExecuteRanges(
+        ExecuteVectorAlignedRanges(
             length,
+            Vector128<uint>.Count,
             workers,
             cancellationToken,
             (start, end) =>
@@ -99,6 +101,7 @@ internal sealed partial class ParallelBigUnsigned
         int start,
         int end,
         bool writeRight,
+        bool allowPaddedTail,
         uint modulus,
         uint root,
         uint inverseLength,
@@ -163,44 +166,66 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        if (i < end)
+        if (i < end && allowPaddedTail)
+        {
+            int remaining = end - i;
+            Span<uint> leftScratch = stackalloc uint[Vector256<uint>.Count];
+            Span<uint> rightScratch = stackalloc uint[Vector256<uint>.Count];
+            Span<uint> leftOutputScratch = stackalloc uint[Vector256<uint>.Count];
+            Span<uint> rightOutputScratch = stackalloc uint[Vector256<uint>.Count];
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                leftScratch[lane] = values[i + lane];
+                rightScratch[lane] = values[i + halfLength + lane];
+            }
+
+            ref uint leftScratchRef = ref MemoryMarshal.GetReference(leftScratch);
+            ref uint rightScratchRef = ref MemoryMarshal.GetReference(rightScratch);
+            ref uint leftOutputRef = ref MemoryMarshal.GetReference(leftOutputScratch);
+            ref uint rightOutputRef = ref MemoryMarshal.GetReference(rightOutputScratch);
+
+            Vector256<uint> leftVector = Vector256.LoadUnsafe(ref leftScratchRef);
+            Vector256<uint> rightVector = MultiplyResiduesAvx2(
+                Vector256.LoadUnsafe(ref rightScratchRef),
+                CreateTwiddleSequenceAvx2(root, i, modulus),
+                modulus);
+            Vector256<uint> sum = AddModuloAvx2(leftVector, rightVector, context);
+            Vector256<uint> difference = SubtractModuloAvx2(leftVector, rightVector, context);
+
+            MultiplyShoupAvx2(sum, inverseVector, inverseShoupVector, context)
+                .StoreUnsafe(ref leftOutputRef);
+            if (writeRight)
+            {
+                MultiplyShoupAvx2(difference, inverseVector, inverseShoupVector, context)
+                    .StoreUnsafe(ref rightOutputRef);
+            }
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                output[i + lane] = leftOutputScratch[lane];
+                if (writeRight)
+                    output[i + halfLength + lane] = rightOutputScratch[lane];
+            }
+        }
+        if (i < end && !allowPaddedTail)
         {
             uint rootSquared = (uint)((ulong)root * root % modulus);
             uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
-
             if (writeRight)
             {
                 ExecuteFinalInverseBothOutputsRange(
-                    values,
-                    output,
-                    halfLength,
-                    i,
-                    end,
-                    modulus,
-                    root,
-                    rootSquared,
-                    rootFourth,
-                    inverseLength,
-                    inverseLengthShoup,
-                    cancellationToken);
+                    values, output, halfLength, i, end, modulus, root, rootSquared,
+                    rootFourth, inverseLength, inverseLengthShoup, cancellationToken);
             }
             else
             {
                 ExecuteFinalInverseLeftOnlyRange(
-                    values,
-                    output,
-                    halfLength,
-                    i,
-                    end,
-                    modulus,
-                    root,
-                    rootSquared,
-                    rootFourth,
-                    inverseLength,
-                    inverseLengthShoup,
-                    cancellationToken);
+                    values, output, halfLength, i, end, modulus, root, rootSquared,
+                    rootFourth, inverseLength, inverseLengthShoup, cancellationToken);
             }
         }
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -211,6 +236,7 @@ internal sealed partial class ParallelBigUnsigned
         int start,
         int end,
         bool writeRight,
+        bool allowPaddedTail,
         uint modulus,
         uint root,
         uint inverseLength,
@@ -275,43 +301,65 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        if (i < end)
+        if (i < end && allowPaddedTail)
+        {
+            int remaining = end - i;
+            Span<uint> leftScratch = stackalloc uint[Vector128<uint>.Count];
+            Span<uint> rightScratch = stackalloc uint[Vector128<uint>.Count];
+            Span<uint> leftOutputScratch = stackalloc uint[Vector128<uint>.Count];
+            Span<uint> rightOutputScratch = stackalloc uint[Vector128<uint>.Count];
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                leftScratch[lane] = values[i + lane];
+                rightScratch[lane] = values[i + halfLength + lane];
+            }
+
+            ref uint leftScratchRef = ref MemoryMarshal.GetReference(leftScratch);
+            ref uint rightScratchRef = ref MemoryMarshal.GetReference(rightScratch);
+            ref uint leftOutputRef = ref MemoryMarshal.GetReference(leftOutputScratch);
+            ref uint rightOutputRef = ref MemoryMarshal.GetReference(rightOutputScratch);
+
+            Vector128<uint> leftVector = Vector128.LoadUnsafe(ref leftScratchRef);
+            Vector128<uint> rightVector = MultiplyResiduesSse(
+                Vector128.LoadUnsafe(ref rightScratchRef),
+                CreateTwiddleSequenceSse(root, i, modulus),
+                modulus);
+            Vector128<uint> sum = AddModuloSse(leftVector, rightVector, modulusVector);
+            Vector128<uint> difference = SubtractModuloSse(leftVector, rightVector, modulusVector);
+
+            MultiplyShoupSse(sum, inverseVector, inverseShoupVector, modulusVector)
+                .StoreUnsafe(ref leftOutputRef);
+            if (writeRight)
+            {
+                MultiplyShoupSse(difference, inverseVector, inverseShoupVector, modulusVector)
+                    .StoreUnsafe(ref rightOutputRef);
+            }
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                output[i + lane] = leftOutputScratch[lane];
+                if (writeRight)
+                    output[i + halfLength + lane] = rightOutputScratch[lane];
+            }
+        }
+        if (i < end && !allowPaddedTail)
         {
             uint rootSquared = (uint)((ulong)root * root % modulus);
             uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
-
             if (writeRight)
             {
                 ExecuteFinalInverseBothOutputsRange(
-                    values,
-                    output,
-                    halfLength,
-                    i,
-                    end,
-                    modulus,
-                    root,
-                    rootSquared,
-                    rootFourth,
-                    inverseLength,
-                    inverseLengthShoup,
-                    cancellationToken);
+                    values, output, halfLength, i, end, modulus, root, rootSquared,
+                    rootFourth, inverseLength, inverseLengthShoup, cancellationToken);
             }
             else
             {
                 ExecuteFinalInverseLeftOnlyRange(
-                    values,
-                    output,
-                    halfLength,
-                    i,
-                    end,
-                    modulus,
-                    root,
-                    rootSquared,
-                    rootFourth,
-                    inverseLength,
-                    inverseLengthShoup,
-                    cancellationToken);
+                    values, output, halfLength, i, end, modulus, root, rootSquared,
+                    rootFourth, inverseLength, inverseLengthShoup, cancellationToken);
             }
         }
+
     }
 }

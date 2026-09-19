@@ -36,6 +36,116 @@ internal sealed partial class ParallelBigUnsigned
         column3 = AdvSimd.Arm64.ZipHigh(high01.AsUInt64(), high23.AsUInt64()).AsUInt32();
     }
 
+    private static readonly Vector128<uint> LengthTwoSwapIndicesNeon =
+        Vector128.Create(1u, 0u, 3u, 2u);
+
+    private static readonly Vector128<uint> LengthTwoEvenLaneMaskNeon =
+        Vector128.Create(
+            uint.MaxValue, 0u, uint.MaxValue, 0u);
+
+    private static readonly Vector128<uint> LengthTwoOddLaneMaskNeon =
+        Vector128.Create(
+            0u, uint.MaxValue, 0u, uint.MaxValue);
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteLengthTwoButterfliesNeon(
+        uint[] values,
+        uint modulus,
+        bool normalize,
+        uint inverseLength,
+        int pairStart,
+        int pairEnd)
+    {
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            ExecuteLengthTwoButterfliesScalarRange(
+                values, modulus, normalize, inverseLength, pairStart, pairEnd);
+            return;
+        }
+
+        ref uint data =
+            ref MemoryMarshal.GetArrayDataReference(values);
+
+        Vector128<uint> mod =
+            Vector128.Create(modulus);
+
+        Vector128<uint> inverse =
+            default;
+        Vector128<uint> inverseShoup =
+            default;
+
+        if (normalize)
+        {
+            uint shoup =
+                (uint)(((ulong)inverseLength << 32) / modulus);
+
+            inverse =
+                Vector128.Create(inverseLength);
+            inverseShoup =
+                Vector128.Create(shoup);
+        }
+
+        int pairIndex =
+            pairStart;
+
+        for (; pairIndex + 1 < pairEnd; pairIndex += 2)
+        {
+            int valueIndex =
+                pairIndex << 1;
+
+            Vector128<uint> value =
+                Vector128.LoadUnsafe(
+                    ref data,
+                    (nuint)valueIndex);
+
+            Vector128<uint> swapped =
+                Vector128.Shuffle(
+                    value,
+                    LengthTwoSwapIndicesNeon);
+
+            Vector128<uint> sum =
+                AddModuloNeon(
+                    value,
+                    swapped,
+                    mod);
+
+            Vector128<uint> difference =
+                SubtractModuloNeon(
+                    swapped,
+                    value,
+                    mod);
+
+            Vector128<uint> output =
+                Vector128.BitwiseOr(
+                    Vector128.BitwiseAnd(
+                        sum,
+                        LengthTwoEvenLaneMaskNeon),
+                    Vector128.BitwiseAnd(
+                        difference,
+                        LengthTwoOddLaneMaskNeon));
+
+            if (normalize)
+            {
+                output =
+                    MultiplyShoupNeon(
+                        output,
+                        inverse,
+                        inverseShoup,
+                        mod);
+            }
+
+            output.StoreUnsafe(
+                ref data,
+                (nuint)valueIndex);
+        }
+
+        if (pairIndex < pairEnd)
+        {
+            ExecuteLengthTwoButterfliesScalarRange(
+                values, modulus, normalize, inverseLength, pairIndex, pairEnd);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteForwardLengthFourAndTwoFusedBlockNeon(
         uint[] values,
@@ -93,9 +203,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteForwardLengthFourAndTwoFusedBlockShoup(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailNeon(
+                values, index, blockEnd - index, modulus,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: false);
         }
     }
 
@@ -156,9 +266,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (index < blockEnd)
         {
-            ExecuteInverseLengthTwoAndFourFusedBlock(
-                values, modulus, quarterTurnTwiddle, quarterTurnShoup,
-                index, blockEnd);
+            ExecuteLengthFourAndTwoFusedTailNeon(
+                values, index, blockEnd - index, modulus,
+                quarterTurnTwiddle, quarterTurnShoup, inverse: true);
         }
     }
 
@@ -288,17 +398,26 @@ internal sealed partial class ParallelBigUnsigned
                 sum.StoreUnsafe(ref data, (nuint)(group + j));
                 difference.StoreUnsafe(ref data, (nuint)(group + half + j));
             }
-            for (; j < half; j++)
+            if (j < half)
             {
-                uint a = values[group + j], b = values[group + half + j];
-                uint root = half == 1 ? 1u : twiddles[twiddleOffset + j];
-                if (inverse) b = (uint)((ulong)b * root % modulus);
-                uint sum = a + b;
-                if (sum >= modulus) sum -= modulus;
-                uint difference = a >= b ? a - b : a + modulus - b;
-                if (!inverse) difference = (uint)((ulong)difference * root % modulus);
-                values[group + j] = sum;
-                values[group + half + j] = difference;
+                int residualCount = half - j;
+                if (half == 1)
+                {
+                    uint a = values[group];
+                    uint b = values[group + half];
+                    uint sum = a + b;
+                    if (sum >= modulus) sum -= modulus;
+                    values[group] = sum;
+                    values[group + half] =
+                        a >= b ? a - b : a + modulus - b;
+                }
+                else
+                {
+                    ExecuteCachedButterflyTailNeon(
+                        values, twiddles, shoup,
+                        group + j, group + half + j, twiddleOffset + j,
+                        residualCount, inverse, modulus);
+                }
             }
         }
     }
@@ -360,17 +479,26 @@ internal sealed partial class ParallelBigUnsigned
                 sum.StoreUnsafe(ref data, (nuint)(group + j));
                 difference.StoreUnsafe(ref data, (nuint)(group + half + j));
             }
-            for (; j < half; j++)
+            if (j < half)
             {
-                uint a = values[group + j], b = values[group + half + j];
-                uint root = half == 1 ? 1u : twiddles[twiddleOffset + j];
-                if (inverse) b = (uint)((ulong)b * root % modulus);
-                uint sum = a + b;
-                if (sum >= modulus) sum -= modulus;
-                uint difference = a >= b ? a - b : a + modulus - b;
-                if (!inverse) difference = (uint)((ulong)difference * root % modulus);
-                values[group + j] = sum;
-                values[group + half + j] = difference;
+                int residualCount = half - j;
+                if (half == 1)
+                {
+                    uint a = values[group];
+                    uint b = values[group + half];
+                    uint sum = a + b;
+                    if (sum >= modulus) sum -= modulus;
+                    values[group] = sum;
+                    values[group + half] =
+                        a >= b ? a - b : a + modulus - b;
+                }
+                else
+                {
+                    ExecuteCachedButterflyTailNeon(
+                        values, twiddles, shoup,
+                        group + j, group + half + j, twiddleOffset + j,
+                        residualCount, inverse, modulus);
+                }
             }
         }
     }
@@ -655,8 +783,8 @@ internal sealed partial class ParallelBigUnsigned
     /// ARM64 NEON version of the fused uncached global Forward-DIF stage pair
     /// S and S/2. Four adjacent butterflies are processed per Vector128 batch,
     /// with all quarter streams kept in registers and the three twiddle vectors
-    /// advanced by root^4 using exact Shoup multiplication. Only the residual
-    /// segment shorter than four butterflies uses the scalar dual-lane fallback.
+    /// advanced by root^4 using exact Shoup multiplication. A residual segment
+    /// shorter than four butterflies finishes in one zero-padded NEON batch.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ProcessForwardUncachedStagePairNeon(
@@ -763,17 +891,9 @@ internal sealed partial class ParallelBigUnsigned
 
         if (i < last)
         {
-            ProcessForwardUncachedStagePairSegmentByrefDualLane(
-                values,
-                modulus,
-                firstRoot,
-                secondRoot,
-                quarterPhase,
-                stageLength,
-                groupIndex,
-                i,
-                last,
-                cancellationToken);
+            ProcessForwardUncachedStagePairTailNeon(
+                values, groupOffset, quarterLength, i, last - i,
+                twiddle0, twiddle1, twiddle2, modulus);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -802,14 +922,11 @@ internal sealed partial class ParallelBigUnsigned
         int quarterLength = halfLength >> 1;
         int groupCount = values.Length / stageLength;
         int segmentsPerGroup =
-            GetWorkerAlignedSegmentsPerGroup(
+            GetVectorAlignedSegmentsPerGroup(
                 quarterLength,
                 groupCount,
-                workers.WorkerCount,
-                GetSegmentsPerGroup(
-                    quarterLength,
-                    groupCount,
-                    workers.WorkerCount));
+                workers,
+                Vector128<uint>.Count);
         Vector128<uint> mod = Vector128.Create(modulus);
 
         ExecuteRanges(
@@ -824,10 +941,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segmentsPerGroup,
                         quarterLength,
+                        Vector128<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -970,11 +1089,11 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
         int segments =
-            GetWorkerAlignedSegmentsPerGroup(
+            GetVectorAlignedSegmentsPerGroup(
                 halfLength,
                 groupCount,
-                workers.WorkerCount,
-                GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+                workers,
+                Vector128<uint>.Count);
 
         Vector128<uint> mod = Vector128.Create(modulus);
 
@@ -990,10 +1109,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector128<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -1080,11 +1201,11 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
         int segments =
-            GetWorkerAlignedSegmentsPerGroup(
+            GetVectorAlignedSegmentsPerGroup(
                 halfLength,
                 groupCount,
-                workers.WorkerCount,
-                GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+                workers,
+                Vector128<uint>.Count);
 
         Vector128<uint> mod = Vector128.Create(modulus);
         Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
@@ -1099,10 +1220,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector128<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -1161,11 +1284,11 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
         int segments =
-            GetWorkerAlignedSegmentsPerGroup(
+            GetVectorAlignedSegmentsPerGroup(
                 halfLength,
                 groupCount,
-                workers.WorkerCount,
-                GetSegmentsPerGroup(halfLength, groupCount, workers.WorkerCount));
+                workers,
+                Vector128<uint>.Count);
 
         Vector128<uint> mod = Vector128.Create(modulus);
         Vector128<uint> advance = Vector128.Create((uint)ModPow(root, 4, modulus));
@@ -1180,10 +1303,12 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetSegmentBounds(
+                    GetVectorAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
+                        Vector128<uint>.Count,
+                        workers,
                         out int group,
                         out int first,
                         out int last);
@@ -1238,8 +1363,9 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
-        ExecuteRanges(
+        ExecuteVectorAlignedRanges(
             length,
+            Vector128<uint>.Count,
             workers,
             cancellationToken,
             (start, end) =>
@@ -1276,6 +1402,7 @@ internal sealed partial class ParallelBigUnsigned
         int start,
         int end,
         bool writeRight,
+        bool allowPaddedTail,
         uint modulus,
         uint root,
         uint inverseLength,
@@ -1339,7 +1466,49 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
-        if (i < end)
+        if (i < end && allowPaddedTail)
+        {
+            int remaining = end - i;
+            Span<uint> leftScratch = stackalloc uint[Vector128<uint>.Count];
+            Span<uint> rightScratch = stackalloc uint[Vector128<uint>.Count];
+            Span<uint> leftOutputScratch = stackalloc uint[Vector128<uint>.Count];
+            Span<uint> rightOutputScratch = stackalloc uint[Vector128<uint>.Count];
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                leftScratch[lane] = values[i + lane];
+                rightScratch[lane] = values[i + halfLength + lane];
+            }
+
+            ref uint leftScratchRef = ref MemoryMarshal.GetReference(leftScratch);
+            ref uint rightScratchRef = ref MemoryMarshal.GetReference(rightScratch);
+            ref uint leftOutputRef = ref MemoryMarshal.GetReference(leftOutputScratch);
+            ref uint rightOutputRef = ref MemoryMarshal.GetReference(rightOutputScratch);
+
+            Vector128<uint> leftVector = Vector128.LoadUnsafe(ref leftScratchRef);
+            Vector128<uint> rightVector = MultiplyResiduesNeon(
+                Vector128.LoadUnsafe(ref rightScratchRef),
+                CreateTwiddleSequenceNeon(root, i, modulus),
+                modulus);
+            Vector128<uint> sum = AddModuloNeon(leftVector, rightVector, modulusVector);
+            Vector128<uint> difference = SubtractModuloNeon(leftVector, rightVector, modulusVector);
+
+            MultiplyShoupNeon(sum, inverseVector, inverseShoupVector, modulusVector)
+                .StoreUnsafe(ref leftOutputRef);
+            if (writeRight)
+            {
+                MultiplyShoupNeon(difference, inverseVector, inverseShoupVector, modulusVector)
+                    .StoreUnsafe(ref rightOutputRef);
+            }
+
+            for (int lane = 0; lane < remaining; lane++)
+            {
+                output[i + lane] = leftOutputScratch[lane];
+                if (writeRight)
+                    output[i + halfLength + lane] = rightOutputScratch[lane];
+            }
+        }
+        if (i < end && !allowPaddedTail)
         {
             uint rootSquared = (uint)((ulong)root * root % modulus);
             uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
@@ -1356,6 +1525,7 @@ internal sealed partial class ParallelBigUnsigned
                     inverseLengthShoup, cancellationToken);
             }
         }
+
     }
 
     private static int ReconstructCrtRangeNeon(
