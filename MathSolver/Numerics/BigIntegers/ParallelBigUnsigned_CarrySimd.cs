@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -768,6 +769,332 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         return index;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ulong GetPackedCarryBit(ulong[] words, int bitIndex) =>
+        (words[bitIndex >> 6] >> (bitIndex & 63)) & 1UL;
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void PrefixGeneratePropagatePackedWords(
+        ulong[] generateWords,
+        ulong[] propagateWords,
+        int count)
+    {
+        if (count <= 1)
+            return;
+
+        int wordCount = (count + 63) >> 6;
+        int validTailBits = count & 63;
+        ulong tailMask = validTailBits == 0
+            ? ulong.MaxValue
+            : (1UL << validTailBits) - 1UL;
+
+        for (int distance = 1; distance < count; distance <<= 1)
+        {
+            int wordShift = distance >> 6;
+            int bitShift = distance & 63;
+
+            // High-to-low keeps every lower source word on the previous prefix
+            // round while composing the destination word in place.
+            for (int word = wordCount - 1; word >= 0; word--)
+            {
+                ulong oldG = generateWords[word];
+                ulong oldP = propagateWords[word];
+                ulong shiftedG = 0;
+                ulong shiftedP = 0;
+                int sourceWord = word - wordShift;
+                if (sourceWord >= 0)
+                {
+                    shiftedG = generateWords[sourceWord] << bitShift;
+                    shiftedP = propagateWords[sourceWord] << bitShift;
+                    if (bitShift != 0 && sourceWord > 0)
+                    {
+                        shiftedG |= generateWords[sourceWord - 1] >> (64 - bitShift);
+                        shiftedP |= propagateWords[sourceWord - 1] >> (64 - bitShift);
+                    }
+                }
+
+                int wordStart = word << 6;
+                ulong targetMask;
+                if (distance <= wordStart)
+                {
+                    targetMask = ulong.MaxValue;
+                }
+                else if (distance >= wordStart + 64)
+                {
+                    targetMask = 0;
+                }
+                else
+                {
+                    int preserved = distance - wordStart;
+                    targetMask = ~((1UL << preserved) - 1UL);
+                }
+
+                ulong newG = oldG | (oldP & shiftedG & targetMask);
+                ulong newP = (oldP & ~targetMask) |
+                             ((oldP & shiftedP) & targetMask);
+                if (word == wordCount - 1)
+                {
+                    newG &= tailMask;
+                    newP &= tailMask;
+                }
+
+                generateWords[word] = newG;
+                propagateWords[word] = newP;
+            }
+        }
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetCarryLeafLength(FixedWorkerTeam workers)
+    {
+        if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512Crt) &&
+            Avx512F.IsSupported)
+            return Vector512<ulong>.Count; // 8 exact coefficients
+        if (workers.UseAvx2Ntt && Avx2.IsSupported)
+            return Vector256<ulong>.Count; // 4
+        if (workers.UseSseNtt && Sse2.IsSupported)
+            return 4; // Two XMM vectors: base-10,000 carry needs >=4 digits to collapse to a 0/1 transfer.
+#if ANDROID
+        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+            return 4; // Two NEON vectors for the same carry-absorption guarantee as SSE.
+#endif
+        return 1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ulong GetNormalizedRangeOverflowExact(
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong carry)
+    {
+        int end = checked(destinationStart + count);
+        for (int index = destinationStart; index < end && carry != 0; index++)
+        {
+            ulong value = destination[index] + carry;
+            carry = value / LimbBase;
+        }
+
+        return carry;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong ReconcileSmallNormalizedSubtilesSequential(
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong incomingCarry,
+        ReadOnlySpan<ulong> subtileCarries,
+        int subtileLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        ulong carry = incomingCarry;
+        for (int subtile = 0; subtile < subtileCarries.Length; subtile++)
+        {
+            int relativeStart = checked(subtile * subtileLength);
+            int localCount = Math.Min(subtileLength, count - relativeStart);
+            ulong overflow = carry == 0
+                ? 0
+                : AddCarryToNormalizedRange(
+                    destination, destinationStart + relativeStart, localCount,
+                    carry, workers, cancellationToken);
+            carry = checked(subtileCarries[subtile] + overflow);
+        }
+
+        return carry;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong ReconcileSmallNormalizedSubtiles(
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong incomingCarry,
+        ReadOnlySpan<ulong> subtileCarries,
+        int subtileLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        int subtileCount = subtileCarries.Length;
+        if (subtileCount == 1)
+        {
+            ulong overflow = incomingCarry == 0 ? 0 : AddCarryToNormalizedRange(
+                destination, destinationStart, count, incomingCarry,
+                workers, cancellationToken);
+            return checked(subtileCarries[0] + overflow);
+        }
+
+        int carryBitCount = subtileCount - 1;
+        Debug.Assert(carryBitCount <= 63);
+        ulong generateMask = 0;
+        ulong propagateMask = 0;
+        ulong activeMask = (1UL << carryBitCount) - 1UL;
+
+        int firstCount = Math.Min(subtileLength, count);
+        ulong firstOverflow = GetNormalizedRangeOverflowExact(
+            destination, destinationStart, firstCount, incomingCarry);
+        if (firstOverflow > 1)
+        {
+            return ReconcileSmallNormalizedSubtilesSequential(
+                destination, destinationStart, count, incomingCarry,
+                subtileCarries, subtileLength, workers, cancellationToken);
+        }
+        if (firstOverflow != 0)
+            generateMask |= 1UL;
+
+        for (int subtile = 1; subtile < carryBitCount; subtile++)
+        {
+            int relativeStart = subtile * subtileLength;
+            int localCount = Math.Min(subtileLength, count - relativeStart);
+            ulong baseCarry = subtileCarries[subtile - 1];
+            ulong overflow0 = GetNormalizedRangeOverflowExact(
+                destination, destinationStart + relativeStart, localCount, baseCarry);
+            ulong overflow1 = GetNormalizedRangeOverflowExact(
+                destination, destinationStart + relativeStart, localCount,
+                checked(baseCarry + 1UL));
+
+            // A one-bit G/P transfer is valid only after the incoming carry has
+            // collapsed to 0/1 across this subtile.  This is guaranteed for the
+            // normal >=4-digit leaves used by x86/ARM SIMD, but keep an exact
+            // local fallback for unusually large coefficients or short tails.
+            if (overflow0 > 1 || overflow1 > 1)
+            {
+                return ReconcileSmallNormalizedSubtilesSequential(
+                    destination, destinationStart, count, incomingCarry,
+                    subtileCarries, subtileLength, workers, cancellationToken);
+            }
+
+            ulong bit = 1UL << subtile;
+            if (overflow0 != 0)
+            {
+                generateMask |= bit;
+            }
+            else if (overflow1 != 0)
+            {
+                propagateMask |= bit;
+            }
+        }
+
+        for (int distance = 1; distance < carryBitCount; distance <<= 1)
+        {
+            ulong oldG = generateMask;
+            ulong oldP = propagateMask;
+            ulong shiftedG = (oldG << distance) & activeMask;
+            ulong shiftedP = (oldP << distance) & activeMask;
+            ulong lowerMask = (1UL << distance) - 1UL;
+            generateMask = (oldG | (oldP & shiftedG)) & activeMask;
+            propagateMask = ((oldP & shiftedP) | (oldP & lowerMask)) & activeMask;
+        }
+
+        ulong finalOverflow = 0;
+        int last = subtileCount - 1;
+        for (int subtile = 0; subtile < subtileCount; subtile++)
+        {
+            int relativeStart = subtile * subtileLength;
+            int localCount = Math.Min(subtileLength, count - relativeStart);
+            ulong subtileInput = subtile == 0
+                ? incomingCarry
+                : checked(subtileCarries[subtile - 1] +
+                          ((generateMask >> (subtile - 1)) & 1UL));
+            ulong overflow = subtileInput == 0 ? 0 : AddCarryToNormalizedRange(
+                destination, destinationStart + relativeStart, localCount,
+                subtileInput, workers, cancellationToken);
+            if (subtile < last)
+            {
+                Debug.Assert(overflow == ((generateMask >> subtile) & 1UL));
+            }
+            else
+            {
+                finalOverflow = overflow;
+            }
+        }
+
+        return checked(subtileCarries[last] + finalOverflow);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong NormalizeCrtCarryRangeLeafLookahead(
+        uint[] transformedSecond,
+        ulong[]? crtScratch,
+        bool useInverseTailScratch,
+        int inverseTailScratchStart,
+        int relativeStart,
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong incomingCarry,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(count <= HierarchicalCarryTileLength);
+        int leafLength = GetCarryLeafLength(workers);
+        if (leafLength <= 1 || count <= leafLength)
+        {
+            return NormalizeCrtCarryRangeSimd(
+                transformedSecond, crtScratch, useInverseTailScratch,
+                inverseTailScratchStart, relativeStart, destination,
+                destinationStart, count, incomingCarry, workers, cancellationToken);
+        }
+
+        int subtileCount = (count + leafLength - 1) / leafLength;
+        Span<ulong> carries = stackalloc ulong[64];
+        Debug.Assert(subtileCount <= carries.Length);
+        for (int subtile = 0; subtile < subtileCount; subtile++)
+        {
+            int localStart = subtile * leafLength;
+            int localCount = Math.Min(leafLength, count - localStart);
+            carries[subtile] = NormalizeCrtCarryRangeSimd(
+                transformedSecond, crtScratch, useInverseTailScratch,
+                inverseTailScratchStart, relativeStart + localStart,
+                destination, destinationStart + localStart, localCount, 0,
+                workers, cancellationToken);
+        }
+
+        return ReconcileSmallNormalizedSubtiles(
+            destination, destinationStart, count, incomingCarry,
+            carries[..subtileCount], leafLength, workers, cancellationToken);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong NormalizeCoefficientCarryRangeLeafLookahead(
+        ulong[] coefficients,
+        int sourceStart,
+        uint[] destination,
+        int destinationStart,
+        int count,
+        ulong incomingCarry,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        Debug.Assert(count <= HierarchicalCarryTileLength);
+        int leafLength = GetCarryLeafLength(workers);
+        if (leafLength <= 1 || count <= leafLength)
+        {
+            return NormalizeCoefficientCarryRangeSimd(
+                coefficients, sourceStart, destination, destinationStart,
+                count, incomingCarry, workers, cancellationToken);
+        }
+
+        int subtileCount = (count + leafLength - 1) / leafLength;
+        Span<ulong> carries = stackalloc ulong[64];
+        Debug.Assert(subtileCount <= carries.Length);
+        for (int subtile = 0; subtile < subtileCount; subtile++)
+        {
+            int localStart = subtile * leafLength;
+            int localCount = Math.Min(leafLength, count - localStart);
+            carries[subtile] = NormalizeCoefficientCarryRangeSimd(
+                coefficients, sourceStart + localStart,
+                destination, destinationStart + localStart,
+                localCount, 0, workers, cancellationToken);
+        }
+
+        return ReconcileSmallNormalizedSubtiles(
+            destination, destinationStart, count, incomingCarry,
+            carries[..subtileCount], leafLength, workers, cancellationToken);
     }
 
 }

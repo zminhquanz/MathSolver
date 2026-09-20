@@ -103,8 +103,15 @@ internal sealed partial class ParallelBigUnsigned
             pool.ReleaseCachedBuffers();
             plans.ReleasePlans();
             twiddlePool.ReleaseCachedBuffers();
-            packedWords = BinaryRadix16.PackShifted(magnitude.Limbs, magnitude.Count, exponent,
-                (count, body) => ExecuteBinaryRanges(count, workers, token, body), token);
+            packedWords = BinaryRadix16.PackShifted(
+                magnitude.Limbs, magnitude.Count, exponent,
+                (count, body) => ExecuteBinaryRanges(count, workers, token, body),
+                useAvx2: !workers.UsesPersistentStaticScheduling &&
+                    (workers.UseAvx512Ntt || workers.UseAvx2Ntt) && Avx2.IsSupported,
+                useSse2: !workers.UsesPersistentStaticScheduling &&
+                    workers.UseSseNtt && Sse2.IsSupported,
+                useNeon: !workers.UsesPersistentStaticScheduling && workers.UseNeonNtt,
+                token: token);
             if (largeSchedule)
                 diagnostics.ConfigureLargePersistentStaticScheduler(workers.PersistentGenerationCount,
                     workers.PersistentStaticRangeCount, cacheForward ? 4 : 2);
@@ -143,11 +150,25 @@ internal sealed partial class ParallelBigUnsigned
         BinaryRadix16.NormalizeTiles(destination, offset, count, incomingCarry,
             (tiles, body) =>
             {
-                if (count < BinaryRadix16.CarryLookaheadTileLength * workers.WorkerCount)
+                int carryTileLength = workers.UsesPersistentStaticScheduling
+                    ? BinaryRadix16.LegacyCarryLookaheadTileLength
+                    : BinaryRadix16.CarryLookaheadTileLength;
+                if (count < carryTileLength * workers.WorkerCount)
                     body(0, tiles);
                 else
                     ExecuteRanges(tiles, workers, token, body);
-            }, normalize, token);
+            }, normalize, token,
+            workers.UsesPersistentStaticScheduling
+                ? BinaryRadix16.LegacyCarryLookaheadTileLength
+                : BinaryRadix16.CarryLookaheadTileLength,
+            !workers.UsesPersistentStaticScheduling &&
+                workers.UseAvx512Ntt && Avx512F.IsSupported,
+            !workers.UsesPersistentStaticScheduling &&
+                workers.UseAvx2Ntt && Avx2.IsSupported,
+            !workers.UsesPersistentStaticScheduling &&
+                workers.UseSseNtt && Sse2.IsSupported,
+            !workers.UsesPersistentStaticScheduling &&
+                workers.UseNeonNtt);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong ReconcileBinaryCarryDigits(
@@ -276,8 +297,10 @@ internal sealed partial class ParallelBigUnsigned
         return carry;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static ulong MultiplyBinaryByFiveRangeSimd(
+    // Preserve the accepted persistent >10M BinaryPower carry kernels.
+    // The lookahead replacements below are intentionally scoped to <=10M.
+[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong MultiplyBinaryByFiveRangeSimdLegacy(
         uint[] destination,
         int from,
         int to,
@@ -379,8 +402,8 @@ internal sealed partial class ParallelBigUnsigned
         return carry;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static ulong AddBinaryPairRangeSimd(
+[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong AddBinaryPairRangeSimdLegacy(
         uint[] destination,
         uint[] pair,
         int destinationOffset,
@@ -498,6 +521,325 @@ internal sealed partial class ParallelBigUnsigned
             carry = sum >> 16;
         }
         return carry;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong NormalizeBoundedBinaryRawZeroCarry(
+        ReadOnlySpan<uint> raw,
+        uint[] destination,
+        int destinationStart,
+        FixedWorkerTeam workers)
+    {
+        int count = raw.Length;
+        if (count <= 0) return 0;
+        Debug.Assert(count <= BinaryRadix16.CarryLookaheadTileLength);
+
+        Span<uint> quotient = stackalloc uint[BinaryRadix16.CarryLookaheadTileLength];
+        Span<uint> carryInputs = stackalloc uint[BinaryRadix16.CarryLookaheadTileLength];
+        ref uint rawRef = ref MemoryMarshal.GetReference(raw);
+        ref uint quotientRef = ref MemoryMarshal.GetReference(quotient);
+        int offset = 0;
+
+        // SIMD phase 1: extract the radix-2^16 quotient for the complete
+        // micro-tile.  The G/P relation between neighboring digits remains a
+        // compact 64-bit control problem; the expensive data arithmetic stays
+        // in vectors.
+        if (workers.UseAvx512Ntt && Avx512F.IsSupported &&
+            Vector512.IsHardwareAccelerated)
+        {
+            int end = count & ~(Vector512<uint>.Count - 1);
+            for (; offset < end; offset += Vector512<uint>.Count)
+            {
+                Vector512<uint> values = Vector512.LoadUnsafe(ref rawRef, (nuint)offset);
+                Avx512F.ShiftRightLogical(values, 16)
+                    .StoreUnsafe(ref quotientRef, (nuint)offset);
+            }
+        }
+        else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+        {
+            int end = count & ~(Vector256<uint>.Count - 1);
+            for (; offset < end; offset += Vector256<uint>.Count)
+            {
+                Vector256<uint> values = Vector256.LoadUnsafe(ref rawRef, (nuint)offset);
+                Avx2.ShiftRightLogical(values, 16)
+                    .StoreUnsafe(ref quotientRef, (nuint)offset);
+            }
+        }
+        else if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            int end = count & ~(Vector128<uint>.Count - 1);
+            for (; offset < end; offset += Vector128<uint>.Count)
+            {
+                Vector128<uint> values = Vector128.LoadUnsafe(ref rawRef, (nuint)offset);
+                Sse2.ShiftRightLogical(values, 16)
+                    .StoreUnsafe(ref quotientRef, (nuint)offset);
+            }
+        }
+#if ANDROID
+        else if (workers.UseNeonNtt && AdvSimd.IsSupported)
+        {
+            int end = count & ~(Vector128<uint>.Count - 1);
+            for (; offset < end; offset += Vector128<uint>.Count)
+            {
+                Vector128<uint> values = Vector128.LoadUnsafe(ref rawRef, (nuint)offset);
+                AdvSimd.ShiftRightLogical(values, 16)
+                    .StoreUnsafe(ref quotientRef, (nuint)offset);
+            }
+        }
+#endif
+        for (; offset < count; offset++)
+            quotient[offset] = raw[offset] >> 16;
+
+        ulong generateMask = 0;
+        ulong propagateMask = 0;
+        for (int lane = 1; lane < count; lane++)
+        {
+            uint baseCarry = quotient[lane - 1];
+            uint remainder = raw[lane] & 0xffffU;
+            uint baseSum = remainder + baseCarry;
+            ulong bit = 1UL << lane;
+            if (baseSum >= 0x10000U)
+                generateMask |= bit;
+            else if (baseSum + 1U >= 0x10000U)
+                propagateMask |= bit;
+        }
+
+        ulong activeMask = count == 64 ? ulong.MaxValue : (1UL << count) - 1UL;
+        for (int distance = 1; distance < count; distance <<= 1)
+        {
+            ulong oldGenerate = generateMask;
+            ulong oldPropagate = propagateMask;
+            ulong shiftedGenerate = (oldGenerate << distance) & activeMask;
+            ulong shiftedPropagate = (oldPropagate << distance) & activeMask;
+            ulong lowerMask = (1UL << distance) - 1UL;
+            generateMask = (oldGenerate | (oldPropagate & shiftedGenerate)) & activeMask;
+            propagateMask = ((oldPropagate & shiftedPropagate) |
+                             (oldPropagate & lowerMask)) & activeMask;
+        }
+
+        carryInputs[0] = 0;
+        for (int lane = 1; lane < count; lane++)
+        {
+            carryInputs[lane] = quotient[lane - 1] +
+                (uint)((generateMask >> (lane - 1)) & 1UL);
+        }
+
+        // SIMD phase 2: add the resolved carry-ins and mask back to radix 2^16.
+        ref uint carryRef = ref MemoryMarshal.GetReference(carryInputs);
+        ref uint destinationRef = ref MemoryMarshal.GetArrayDataReference(destination);
+        offset = 0;
+        if (workers.UseAvx512Ntt && Avx512F.IsSupported &&
+            Vector512.IsHardwareAccelerated)
+        {
+            Vector512<uint> mask = Vector512.Create(0xffffU);
+            int end = count & ~(Vector512<uint>.Count - 1);
+            for (; offset < end; offset += Vector512<uint>.Count)
+            {
+                Vector512<uint> sum = Vector512.Add(
+                    Vector512.LoadUnsafe(ref rawRef, (nuint)offset),
+                    Vector512.LoadUnsafe(ref carryRef, (nuint)offset));
+                Vector512.BitwiseAnd(sum, mask).StoreUnsafe(
+                    ref destinationRef, (nuint)(destinationStart + offset));
+            }
+        }
+        else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+        {
+            Vector256<uint> mask = Vector256.Create(0xffffU);
+            int end = count & ~(Vector256<uint>.Count - 1);
+            for (; offset < end; offset += Vector256<uint>.Count)
+            {
+                Vector256<uint> sum = Avx2.Add(
+                    Vector256.LoadUnsafe(ref rawRef, (nuint)offset).AsInt32(),
+                    Vector256.LoadUnsafe(ref carryRef, (nuint)offset).AsInt32()).AsUInt32();
+                Vector256.BitwiseAnd(sum, mask).StoreUnsafe(
+                    ref destinationRef, (nuint)(destinationStart + offset));
+            }
+        }
+        else if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            Vector128<uint> mask = Vector128.Create(0xffffU);
+            int end = count & ~(Vector128<uint>.Count - 1);
+            for (; offset < end; offset += Vector128<uint>.Count)
+            {
+                Vector128<uint> sum = Sse2.Add(
+                    Vector128.LoadUnsafe(ref rawRef, (nuint)offset).AsInt32(),
+                    Vector128.LoadUnsafe(ref carryRef, (nuint)offset).AsInt32()).AsUInt32();
+                Vector128.BitwiseAnd(sum, mask).StoreUnsafe(
+                    ref destinationRef, (nuint)(destinationStart + offset));
+            }
+        }
+#if ANDROID
+        else if (workers.UseNeonNtt && AdvSimd.IsSupported)
+        {
+            Vector128<uint> mask = Vector128.Create(0xffffU);
+            int end = count & ~(Vector128<uint>.Count - 1);
+            for (; offset < end; offset += Vector128<uint>.Count)
+            {
+                Vector128<uint> sum = AdvSimd.Add(
+                    Vector128.LoadUnsafe(ref rawRef, (nuint)offset),
+                    Vector128.LoadUnsafe(ref carryRef, (nuint)offset));
+                Vector128.BitwiseAnd(sum, mask).StoreUnsafe(
+                    ref destinationRef, (nuint)(destinationStart + offset));
+            }
+        }
+#endif
+        for (; offset < count; offset++)
+            destination[destinationStart + offset] =
+                (raw[offset] + carryInputs[offset]) & 0xffffU;
+
+        return quotient[count - 1] + ((generateMask >> (count - 1)) & 1UL);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong MultiplyBinaryByFiveRangeSimd(
+        uint[] destination,
+        int from,
+        int to,
+        FixedWorkerTeam workers,
+        CancellationToken token)
+    {
+        if (workers.UsesPersistentStaticScheduling)
+            return MultiplyBinaryByFiveRangeSimdLegacy(
+                destination, from, to, workers, token);
+
+        int count = to - from;
+        Debug.Assert(count <= BinaryRadix16.CarryLookaheadTileLength);
+        Span<uint> raw = stackalloc uint[BinaryRadix16.CarryLookaheadTileLength];
+        ref uint rawRef = ref MemoryMarshal.GetReference(raw);
+        ref uint data = ref MemoryMarshal.GetArrayDataReference(destination);
+        int i = 0;
+
+        if (workers.UseAvx512Ntt && Avx512F.IsSupported && Vector512.IsHardwareAccelerated)
+        {
+            Vector512<uint> five = Vector512.Create(5u);
+            for (; i + Vector512<uint>.Count <= count; i += Vector512<uint>.Count)
+            {
+                Avx512F.MultiplyLow(
+                    Vector512.LoadUnsafe(ref data, (nuint)(from + i)), five)
+                    .StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+        else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+        {
+            Vector256<int> five = Vector256.Create(5);
+            for (; i + Vector256<uint>.Count <= count; i += Vector256<uint>.Count)
+            {
+                Avx2.MultiplyLow(
+                    Vector256.LoadUnsafe(ref data, (nuint)(from + i)).AsInt32(), five)
+                    .AsUInt32().StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+        else if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            for (; i + Vector128<uint>.Count <= count; i += Vector128<uint>.Count)
+            {
+                Vector128<uint> values = Vector128.LoadUnsafe(ref data, (nuint)(from + i));
+                Sse2.Add(values.AsInt32(), Sse2.ShiftLeftLogical(values, 2).AsInt32())
+                    .AsUInt32().StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+#if ANDROID
+        else if (workers.UseNeonNtt && AdvSimd.IsSupported)
+        {
+            Vector128<uint> five = Vector128.Create(5u);
+            for (; i + Vector128<uint>.Count <= count; i += Vector128<uint>.Count)
+            {
+                AdvSimd.Multiply(
+                    Vector128.LoadUnsafe(ref data, (nuint)(from + i)), five)
+                    .StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+#endif
+        for (; i < count; i++)
+            raw[i] = destination[from + i] * 5U;
+
+        token.ThrowIfCancellationRequested();
+        return NormalizeBoundedBinaryRawZeroCarry(raw[..count], destination, from, workers);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static ulong AddBinaryPairRangeSimd(
+        uint[] destination,
+        uint[] pair,
+        int destinationOffset,
+        int from,
+        int to,
+        uint multiplier,
+        FixedWorkerTeam workers,
+        CancellationToken token)
+    {
+        if (workers.UsesPersistentStaticScheduling)
+            return AddBinaryPairRangeSimdLegacy(
+                destination, pair, destinationOffset, from, to, multiplier, workers, token);
+
+        int count = to - from;
+        Debug.Assert(count <= BinaryRadix16.CarryLookaheadTileLength);
+        Span<uint> raw = stackalloc uint[BinaryRadix16.CarryLookaheadTileLength];
+        ref uint rawRef = ref MemoryMarshal.GetReference(raw);
+        ref uint destinationRef = ref MemoryMarshal.GetArrayDataReference(destination);
+        ref uint pairRef = ref MemoryMarshal.GetArrayDataReference(pair);
+        int i = 0;
+
+        if (workers.UseAvx512Ntt && Avx512F.IsSupported && Vector512.IsHardwareAccelerated)
+        {
+            Vector512<uint> multiplierVector = Vector512.Create(multiplier);
+            for (; i + Vector512<uint>.Count <= count; i += Vector512<uint>.Count)
+            {
+                Vector512<uint> pairVector = Avx512F.MultiplyLow(
+                    Vector512.LoadUnsafe(ref pairRef, (nuint)(from + i)), multiplierVector);
+                Vector512.Add(
+                    Vector512.LoadUnsafe(ref destinationRef, (nuint)(destinationOffset + from + i)),
+                    pairVector).StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+        else if (workers.UseAvx2Ntt && Avx2.IsSupported)
+        {
+            Vector256<int> multiplierVector = Vector256.Create((int)multiplier);
+            for (; i + Vector256<uint>.Count <= count; i += Vector256<uint>.Count)
+            {
+                Vector256<uint> pairVector = Avx2.MultiplyLow(
+                    Vector256.LoadUnsafe(ref pairRef, (nuint)(from + i)).AsInt32(),
+                    multiplierVector).AsUInt32();
+                Avx2.Add(
+                    Vector256.LoadUnsafe(ref destinationRef, (nuint)(destinationOffset + from + i)),
+                    pairVector).StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+        else if (workers.UseSseNtt && Sse2.IsSupported)
+        {
+            for (; i + Vector128<uint>.Count <= count; i += Vector128<uint>.Count)
+            {
+                Vector128<uint> pairVector = Vector128.LoadUnsafe(ref pairRef, (nuint)(from + i));
+                if (multiplier == 2U)
+                    pairVector = Sse2.ShiftLeftLogical(pairVector, 1);
+                Sse2.Add(
+                    Vector128.LoadUnsafe(ref destinationRef, (nuint)(destinationOffset + from + i)).AsInt32(),
+                    pairVector.AsInt32()).AsUInt32().StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+#if ANDROID
+        else if (workers.UseNeonNtt && AdvSimd.IsSupported)
+        {
+            Vector128<uint> multiplierVector = Vector128.Create(multiplier);
+            for (; i + Vector128<uint>.Count <= count; i += Vector128<uint>.Count)
+            {
+                Vector128<uint> pairVector = AdvSimd.Multiply(
+                    Vector128.LoadUnsafe(ref pairRef, (nuint)(from + i)), multiplierVector);
+                AdvSimd.Add(
+                    Vector128.LoadUnsafe(ref destinationRef, (nuint)(destinationOffset + from + i)),
+                    pairVector).StoreUnsafe(ref rawRef, (nuint)i);
+            }
+        }
+#endif
+        for (; i < count; i++)
+        {
+            raw[i] = checked(destination[destinationOffset + from + i] +
+                             pair[from + i] * multiplier);
+        }
+
+        token.ThrowIfCancellationRequested();
+        return NormalizeBoundedBinaryRawZeroCarry(
+            raw[..count], destination, destinationOffset + from, workers);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]

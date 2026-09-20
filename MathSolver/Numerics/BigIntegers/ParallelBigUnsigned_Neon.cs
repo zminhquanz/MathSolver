@@ -1162,28 +1162,13 @@ internal sealed partial class ParallelBigUnsigned
                         }
                     }
 
-                    for (; i < last; i++)
+                    if (i < last)
                     {
-                        int leftIndex = groupOffset + i;
-                        int rightIndex = leftIndex + halfLength;
-                        uint left = values[leftIndex];
-                        uint right = values[rightIndex];
-                        uint rootValue = twiddles[twiddleOffset + i];
-                        uint rootShoup = shoupTwiddles[twiddleOffset + i];
-
-                        if (inverse)
-                            right = MultiplyShoupScalar(right, rootValue, rootShoup, modulus);
-
-                        uint sum = left + right;
-                        if (sum >= modulus) sum -= modulus;
-                        uint difference = left >= right ? left - right : left + modulus - right;
-
-                        values[leftIndex] = sum;
-                        values[rightIndex] = inverse
-                            ? difference
-                            : MultiplyShoupScalar(difference, rootValue, rootShoup, modulus);
+                        ExecuteCachedButterflyTailNeon(
+                            values, twiddles, shoupTwiddles,
+                            groupOffset + i, groupOffset + halfLength + i,
+                            twiddleOffset + i, last - i, inverse, modulus);
                     }
-
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             });
@@ -1610,6 +1595,80 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         return offset;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void ExecuteInverseCachedStagePairByGroupsNeon(
+        uint[] values,
+        uint modulus,
+        uint[] twiddles,
+        uint[] shoupTwiddles,
+        int firstTwiddleOffset,
+        int secondTwiddleOffset,
+        int stageLength,
+        FixedWorkerTeam workers,
+        CancellationToken cancellationToken)
+    {
+        const int Width = 4;
+        int halfLength = stageLength >> 1;
+        int parentLength = stageLength << 1;
+        int parentCount = values.Length / parentLength;
+        int segmentsPerParent = GetVectorAlignedSegmentsPerGroup(
+            halfLength, parentCount, workers, Width);
+        Vector128<uint> mod = Vector128.Create(modulus);
+
+        ExecuteRanges(checked(parentCount * segmentsPerParent), workers, cancellationToken,
+            (segmentStart, segmentEnd) =>
+            {
+                ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
+                ref uint tw = ref MemoryMarshal.GetArrayDataReference(twiddles);
+                ref uint sh = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+                for (int segment = segmentStart; segment < segmentEnd; segment++)
+                {
+                    GetVectorAlignedSegmentBounds(
+                        segment, segmentsPerParent, halfLength, Width, workers,
+                        out int parent, out int first, out int last);
+                    int index0 = parent * parentLength + first;
+                    int index1 = index0 + halfLength;
+                    int index2 = index0 + stageLength;
+                    int index3 = index2 + halfLength;
+                    int t1Index = firstTwiddleOffset + first;
+                    int t20Index = secondTwiddleOffset + first;
+                    int t21Index = secondTwiddleOffset + halfLength + first;
+
+                    for (int i = first; i < last; i += Width)
+                    {
+                        Vector128<uint> a = Vector128.LoadUnsafe(ref data, (nuint)index0);
+                        Vector128<uint> b = Vector128.LoadUnsafe(ref data, (nuint)index1);
+                        Vector128<uint> c = Vector128.LoadUnsafe(ref data, (nuint)index2);
+                        Vector128<uint> d = Vector128.LoadUnsafe(ref data, (nuint)index3);
+                        Vector128<uint> t1 = Vector128.LoadUnsafe(ref tw, (nuint)t1Index);
+                        Vector128<uint> s1 = Vector128.LoadUnsafe(ref sh, (nuint)t1Index);
+                        Vector128<uint> br = MultiplyShoupNeon(b, t1, s1, mod);
+                        Vector128<uint> dr = MultiplyShoupNeon(d, t1, s1, mod);
+                        Vector128<uint> u0 = AddModuloNeon(a, br, mod);
+                        Vector128<uint> v0 = SubtractModuloNeon(a, br, mod);
+                        Vector128<uint> u1 = AddModuloNeon(c, dr, mod);
+                        Vector128<uint> v1 = SubtractModuloNeon(c, dr, mod);
+
+                        Vector128<uint> t20 = Vector128.LoadUnsafe(ref tw, (nuint)t20Index);
+                        Vector128<uint> s20 = Vector128.LoadUnsafe(ref sh, (nuint)t20Index);
+                        Vector128<uint> t21 = Vector128.LoadUnsafe(ref tw, (nuint)t21Index);
+                        Vector128<uint> s21 = Vector128.LoadUnsafe(ref sh, (nuint)t21Index);
+                        Vector128<uint> m0 = MultiplyShoupNeon(u1, t20, s20, mod);
+                        Vector128<uint> m1 = MultiplyShoupNeon(v1, t21, s21, mod);
+
+                        AddModuloNeon(u0, m0, mod).StoreUnsafe(ref data, (nuint)index0);
+                        AddModuloNeon(v0, m1, mod).StoreUnsafe(ref data, (nuint)index1);
+                        SubtractModuloNeon(u0, m0, mod).StoreUnsafe(ref data, (nuint)index2);
+                        SubtractModuloNeon(v0, m1, mod).StoreUnsafe(ref data, (nuint)index3);
+
+                        index0 += Width; index1 += Width; index2 += Width; index3 += Width;
+                        t1Index += Width; t20Index += Width; t21Index += Width;
+                    }
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            });
     }
 
 }

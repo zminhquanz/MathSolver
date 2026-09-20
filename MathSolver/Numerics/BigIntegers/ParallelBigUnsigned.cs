@@ -105,7 +105,7 @@ internal sealed partial class ParallelBigUnsigned
     // before parallel final injection.  Each tile still normalizes first with
     // an independent zero carry, preserving exact base-10,000 arithmetic.
     private const int ParallelCarryTileLength = 1 << 14; // 16,384 coefficients
-    private const int HierarchicalCarryTileLength = 1 << 9; // 512 coefficients (<=10M carry lookahead)
+    private const int HierarchicalCarryTileLength = 1 << 6; // 64 coefficients; second-level intra-microtile carry prefix
 
     // Both primes support transforms through 2^26. Their product is large
     // enough to recover every base-10,000 convolution coefficient in the
@@ -4090,11 +4090,7 @@ internal sealed partial class ParallelBigUnsigned
                     // SIMD-width blocks. This removes the old per-worker CRT
                     // scalar suffix; only the final block-wide global tail can
                     // remain before carry consumes the reconstructed stream.
-                    ExecuteVectorAlignedRanges(
-                        blockCount,
-                        crtVectorWidth,
-                        workers,
-                        cancellationToken,
+                    Action<int, int> reconstructRange =
                         (start, end) =>
                         {
                             int count =
@@ -4146,7 +4142,14 @@ internal sealed partial class ParallelBigUnsigned
                                 useAvx2Crt,
                                 useSseCrt,
                                 useNeonCrt);
-                        });
+                        };
+
+                    ExecuteVectorAlignedRanges(
+                        blockCount,
+                        crtVectorWidth,
+                        workers,
+                        cancellationToken,
+                        reconstructRange);
 
                     crtTicks +=
                         Stopwatch.GetTimestamp() -
@@ -4501,21 +4504,21 @@ internal sealed partial class ParallelBigUnsigned
                  tileLength - 1) /
                 tileLength);
 
-        if (workers.WorkerCount == 1 ||
-            tileCount <= 1)
+        if (tileCount <= 1)
         {
+            if (!workers.UsesPersistentStaticScheduling)
+            {
+                Debug.Assert(blockCount <= HierarchicalCarryTileLength);
+                return NormalizeCrtCarryRangeLeafLookahead(
+                    transformedSecond, crtScratch, useInverseTailScratch,
+                    inverseTailScratchStart, relativeStart: 0, destination,
+                    blockStart, blockCount, incomingCarry, workers, cancellationToken);
+            }
+
             return NormalizeCrtCarryRangeSimd(
-                transformedSecond,
-                crtScratch,
-                useInverseTailScratch,
-                inverseTailScratchStart,
-                relativeStart: 0,
-                destination,
-                blockStart,
-                blockCount,
-                incomingCarry,
-                workers,
-                cancellationToken);
+                transformedSecond, crtScratch, useInverseTailScratch,
+                inverseTailScratchStart, relativeStart: 0, destination,
+                blockStart, blockCount, incomingCarry, workers, cancellationToken);
         }
 
         ulong[] tileCarries =
@@ -4548,18 +4551,31 @@ internal sealed partial class ParallelBigUnsigned
                                 relativeStart);
 
                         ulong localCarry =
-                            NormalizeCrtCarryRangeSimd(
-                                transformedSecond,
-                                crtScratch,
-                                useInverseTailScratch,
-                                inverseTailScratchStart,
-                                relativeStart,
-                                destination,
-                                checked(blockStart + relativeStart),
-                                count,
-                                incomingCarry: 0,
-                                workers,
-                                cancellationToken);
+                            workers.UsesPersistentStaticScheduling
+                                ? NormalizeCrtCarryRangeSimd(
+                                    transformedSecond,
+                                    crtScratch,
+                                    useInverseTailScratch,
+                                    inverseTailScratchStart,
+                                    relativeStart,
+                                    destination,
+                                    checked(blockStart + relativeStart),
+                                    count,
+                                    incomingCarry: 0,
+                                    workers,
+                                    cancellationToken)
+                                : NormalizeCrtCarryRangeLeafLookahead(
+                                    transformedSecond,
+                                    crtScratch,
+                                    useInverseTailScratch,
+                                    inverseTailScratchStart,
+                                    relativeStart,
+                                    destination,
+                                    checked(blockStart + relativeStart),
+                                    count,
+                                    incomingCarry: 0,
+                                    workers,
+                                    cancellationToken);
 
                         tileCarries[tileIndex] =
                             localCarry;
@@ -4567,9 +4583,9 @@ internal sealed partial class ParallelBigUnsigned
                 });
 
             // <=10M: use the hierarchical micro-tile carry lookahead.  Each
-            // 512-digit tile is normalized independently, then the exact
+            // 64-digit micro-tile is normalized independently, then the exact
             // one-bit overflow transfer is prefix-composed in O(log N).  This
-            // shortens the remaining intra-tile dependency chain by 32x versus
+            // shortens the outer micro-tile span by 256x versus
             // the legacy 16K tile while keeping large-mode scheduling intact.
             if (!workers.UsesPersistentStaticScheduling)
             {
@@ -4659,65 +4675,70 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         int carryBitCount = tileCount - 1;
-        byte[] generate = ArrayPool<byte>.Shared.Rent(carryBitCount);
-        byte[] propagate = ArrayPool<byte>.Shared.Rent(carryBitCount);
+        int wordCount = (carryBitCount + 63) >> 6;
+        ulong[] generateWords = ArrayPool<ulong>.Shared.Rent(wordCount);
+        ulong[] propagateWords = ArrayPool<ulong>.Shared.Rent(wordCount);
 
         try
         {
-            Array.Clear(generate, 0, carryBitCount);
-            Array.Clear(propagate, 0, carryBitCount);
+            Array.Clear(generateWords, 0, wordCount);
+            Array.Clear(propagateWords, 0, wordCount);
 
-            // Tile zero is anchored by the caller-supplied carry, so its
-            // outgoing overflow is already a constant prefix result.
-            generate[0] = WouldNormalizedRangeOverflow(
+            // Build G/P directly into packed words. Each scheduled item owns one
+            // complete 64-bit word, so workers never contend on individual bits.
+            // This removes the previous byte arrays plus pack/unpack passes.
+            bool firstGenerate = WouldNormalizedRangeOverflow(
                 destination, blockStart,
                 Math.Min(tileLength, blockCount), incomingCarry,
-                workers, cancellationToken) ? (byte)1 : (byte)0;
+                workers, cancellationToken);
+            if (firstGenerate)
+                generateWords[0] = 1UL;
 
-            if (carryBitCount > 1)
-            {
-                ExecuteCarryTileRanges(
-                    carryBitCount - 1,
-                    workers,
-                    cancellationToken,
-                    (from, to) =>
+            ExecuteCarryTileRanges(
+                wordCount,
+                workers,
+                cancellationToken,
+                (wordStart, wordEnd) =>
+                {
+                    for (int word = wordStart; word < wordEnd; word++)
                     {
-                        for (int relative = from; relative < to; relative++)
+                        int firstBit = word << 6;
+                        int lastBit = Math.Min(carryBitCount, firstBit + 64);
+                        int bitIndex = Math.Max(1, firstBit);
+                        ulong gWord = word == 0 ? generateWords[0] : 0UL;
+                        ulong pWord = 0UL;
+
+                        for (; bitIndex < lastBit; bitIndex++)
                         {
-                            int tileIndex = relative + 1;
+                            int tileIndex = bitIndex;
                             int relativeStart = checked(tileIndex * tileLength);
                             int count = Math.Min(tileLength, blockCount - relativeStart);
                             int start = checked(blockStart + relativeStart);
                             ulong baseCarry = tileCarries[tileIndex - 1];
+                            ulong bit = 1UL << (bitIndex & 63);
 
                             bool g = WouldNormalizedRangeOverflow(
                                 destination, start, count, baseCarry,
                                 workers, cancellationToken);
-                            generate[tileIndex] = g ? (byte)1 : (byte)0;
-
-                            if (!g)
+                            if (g)
                             {
-                                bool p = WouldNormalizedRangeOverflow(
-                                    destination, start, count, checked(baseCarry + 1UL),
-                                    workers, cancellationToken);
-                                propagate[tileIndex] = p ? (byte)1 : (byte)0;
+                                gWord |= bit;
+                            }
+                            else if (WouldNormalizedRangeOverflow(
+                                destination, start, count, checked(baseCarry + 1UL),
+                                workers, cancellationToken))
+                            {
+                                pWord |= bit;
                             }
                         }
-                    });
-            }
 
-            // Kogge-Stone prefix over byte G/P summaries.  Iterate from high
-            // to low so every stage reads the previous-stage value at i-d.
-            // For a 1M block and 512-digit micro-tiles this is only 11 stages.
-            for (int distance = 1; distance < carryBitCount; distance <<= 1)
-            {
-                for (int i = carryBitCount - 1; i >= distance; i--)
-                {
-                    byte p = propagate[i];
-                    generate[i] = (byte)(generate[i] | (p & generate[i - distance]));
-                    propagate[i] = (byte)(p & propagate[i - distance]);
-                }
-            }
+                        generateWords[word] = gWord;
+                        propagateWords[word] = pWord;
+                    }
+                });
+
+            PrefixGeneratePropagatePackedWords(
+                generateWords, propagateWords, carryBitCount);
 
             long finalOverflowBits = 0;
             int lastTileIndex = tileCount - 1;
@@ -4732,9 +4753,12 @@ internal sealed partial class ParallelBigUnsigned
                     {
                         int relativeStart = checked(tileIndex * tileLength);
                         int count = Math.Min(tileLength, blockCount - relativeStart);
+                        ulong prefixBit = tileIndex == 0
+                            ? 0UL
+                            : GetPackedCarryBit(generateWords, tileIndex - 1);
                         ulong tileInput = tileIndex == 0
                             ? incomingCarry
-                            : checked(tileCarries[tileIndex - 1] + generate[tileIndex - 1]);
+                            : checked(tileCarries[tileIndex - 1] + prefixBit);
 
                         ulong overflow = tileInput == 0
                             ? 0
@@ -4744,8 +4768,9 @@ internal sealed partial class ParallelBigUnsigned
 
                         if (tileIndex < lastTileIndex)
                         {
-                            Debug.Assert(overflow == generate[tileIndex],
-                                "Hierarchical carry prefix disagreed with tile reconciliation.");
+                            Debug.Assert(
+                                overflow == GetPackedCarryBit(generateWords, tileIndex),
+                                "Hierarchical packed carry prefix disagreed with tile reconciliation.");
                         }
                         else
                         {
@@ -4759,8 +4784,8 @@ internal sealed partial class ParallelBigUnsigned
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(generate, clearArray: false);
-            ArrayPool<byte>.Shared.Return(propagate, clearArray: false);
+            ArrayPool<ulong>.Shared.Return(generateWords, clearArray: false);
+            ArrayPool<ulong>.Shared.Return(propagateWords, clearArray: false);
         }
     }
 
@@ -7169,12 +7194,107 @@ internal sealed partial class ParallelBigUnsigned
             bool normalizeOutput =
                 stageLength == length;
 
-            // DIT counterpart of the two-stage DIF fusion.  Only cached
-            // non-final global stages are paired, so normalization remains on
-            // the original final-stage path.  Completing S and 2S together
-            // cuts one whole-array pass and one worker-team barrier.
+            // DIT counterpart of the two-stage DIF fusion.  <=10M can now
+            // pair uncached stages and can fuse the penultimate stage directly
+            // into final normalization; cached pairs retain their Shoup-table
+            // path below.  Large/persistent mode keeps the accepted schedule.
             int nextStageLength =
                 stageLength << 1;
+
+            // <=10M Phase: fuse the penultimate DIT stage directly into the
+            // normalized final stage.  This removes one full transform-sized
+            // read/write pass.  Persistent >10M scheduling deliberately keeps
+            // the accepted path unchanged.
+            if (!workers.UsesPersistentStaticScheduling &&
+                !workers.UseSseNtt &&
+                !workers.UseNeonNtt &&
+                !normalizeOutput &&
+                nextStageLength == length &&
+                CanUseInverseStagePairSimd(workers, halfLength))
+            {
+                uint[] finalOutput;
+                if (compactFinalOutput)
+                {
+                    if (compactOutputDestination is not null)
+                    {
+                        if (compactOutputDestination.Length < validOutputLength + 1)
+                            throw new InvalidOperationException(
+                                "The supplied compact inverse output buffer is too small.");
+                        compactOutput = compactOutputDestination;
+                    }
+                    else
+                    {
+                        long allocationStarted = Stopwatch.GetTimestamp();
+                        compactOutput = GC.AllocateUninitializedArray<uint>(
+                            checked(validOutputLength + 1));
+                        excludedAllocationTicks +=
+                            Stopwatch.GetTimestamp() - allocationStarted;
+                    }
+                    finalOutput = compactOutput;
+                }
+                else
+                {
+                    finalOutput = values;
+                }
+
+                if (!inversePrimitiveRootReady)
+                {
+                    inversePrimitiveRoot =
+                        (uint)ModPow(primitiveRoot, modulus - 2u, modulus);
+                    inversePrimitiveRootReady = true;
+                }
+
+                long fusedFinalStarted = Stopwatch.GetTimestamp();
+                ExecuteInverseUncachedStagePairSegmented(
+                    values, finalOutput, validOutputLength, modulus,
+                    inversePrimitiveRoot, inverseLength, inverseLengthShoup,
+                    stageLength, true, workers, cancellationToken);
+                long fusedFinalElapsed = Stopwatch.GetTimestamp() - fusedFinalStarted;
+                diagnostics.InverseGlobalUncachedTicks += fusedFinalElapsed;
+                diagnostics.InverseFinalPrefixTicks += fusedFinalElapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseUncached, stageLength, nextStageLength,
+                    values.Length, fusedFinalElapsed);
+
+                // Both S and 2S were consumed.  The for-loop increment moves
+                // from length to 2*length and exits.
+                stageLength <<= 1;
+                continue;
+            }
+
+            // <=10M uncached DIT stage-pair fusion.  Pair only when both stages
+            // would otherwise use root recurrence rather than immutable cached
+            // twiddle tables; cached stages keep their specialized Shoup path.
+            if (!workers.UsesPersistentStaticScheduling &&
+                !workers.UseSseNtt &&
+                !workers.UseNeonNtt &&
+                !normalizeOutput &&
+                nextStageLength < length &&
+                !twiddlePlan.CanCache(halfLength) &&
+                !twiddlePlan.CanCache(stageLength) &&
+                CanUseInverseStagePairSimd(workers, halfLength))
+            {
+                if (!inversePrimitiveRootReady)
+                {
+                    inversePrimitiveRoot =
+                        (uint)ModPow(primitiveRoot, modulus - 2u, modulus);
+                    inversePrimitiveRootReady = true;
+                }
+
+                long fusedUncachedStarted = Stopwatch.GetTimestamp();
+                ExecuteInverseUncachedStagePairSegmented(
+                    values, values, values.Length, modulus, inversePrimitiveRoot,
+                    inverseLength, inverseLengthShoup, stageLength,
+                    false, workers, cancellationToken);
+                long fusedUncachedElapsed = Stopwatch.GetTimestamp() - fusedUncachedStarted;
+                diagnostics.InverseGlobalUncachedTicks += fusedUncachedElapsed;
+                diagnostics.RecordGlobalStageProfile(
+                    NttGlobalStageKind.InverseUncached, stageLength, nextStageLength,
+                    values.Length, fusedUncachedElapsed);
+
+                stageLength <<= 1;
+                continue;
+            }
 
             if (!normalizeOutput &&
                 !workers.UseSseNtt &&
@@ -18351,7 +18471,7 @@ internal sealed partial class ParallelBigUnsigned
     /// <summary>
     /// Cached global DIF pairs for &lt;=10M and the separate >10M Phase-5A
     /// shapes. Worker-aligned slices keep every team member busy, including
-    /// transforms with fewer groups than workers. In <=10M mode the segment
+    /// transforms with fewer groups than workers. In &lt;=10M mode the segment
     /// boundaries are expressed in complete ZMM blocks, so worker-local scalar
     /// residuals disappear; persistent large mode retains its accepted layout.
     /// </summary>
@@ -19826,6 +19946,14 @@ internal sealed partial class ParallelBigUnsigned
         CancellationToken cancellationToken)
     {
         int halfLength = stageLength >> 1;
+        if (!workers.UsesPersistentStaticScheduling &&
+            halfLength < Vector256<uint>.Count && Sse2.IsSupported)
+        {
+            ExecuteCachedGlobalStageSse(
+                values, modulus, twiddles, shoupTwiddles, twiddleOffset,
+                stageLength, inverse, workers, cancellationToken);
+            return;
+        }
         int groupCount = values.Length / stageLength;
         int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength,
@@ -19940,45 +20068,12 @@ internal sealed partial class ParallelBigUnsigned
                         }
                     }
 
-                    for (; i < last; i++)
+                    if (i < last)
                     {
-                        int leftIndex = groupOffset + i;
-                        int rightIndex = leftIndex + halfLength;
-                        uint left = values[leftIndex];
-                        uint right = values[rightIndex];
-                        uint rootValue =
-                            twiddles[twiddleOffset + i];
-                        uint rootShoup =
-                            shoupTwiddles[twiddleOffset + i];
-
-                        if (inverse)
-                        {
-                            right = MultiplyShoupScalar(
-                                right,
-                                rootValue,
-                                rootShoup,
-                                modulus);
-                        }
-
-                        uint sum = left + right;
-                        if (sum >= modulus)
-                        {
-                            sum -= modulus;
-                        }
-
-                        uint difference =
-                            left >= right
-                                ? left - right
-                                : left + modulus - right;
-
-                        values[leftIndex] = sum;
-                        values[rightIndex] = inverse
-                            ? difference
-                            : MultiplyShoupScalar(
-                                difference,
-                                rootValue,
-                                rootShoup,
-                                modulus);
+                        ExecuteCachedButterflyTailAvx2(
+                            values, twiddles, shoupTwiddles,
+                            groupOffset + i, groupOffset + halfLength + i,
+                            twiddleOffset + i, last - i, inverse, context);
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
@@ -20279,6 +20374,27 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers, CancellationToken cancellationToken)
     {
         int halfLength = stageLength >> 1;
+
+        // Small-NTT width cascade: do not burn a full ZMM on a stage that
+        // contains fewer than sixteen butterflies.  AVX-512 machines descend
+        // to the narrowest useful x86 vector width; S=4 is handled by the
+        // padded XMM residual kernel rather than scalar arithmetic.
+        if (!workers.UsesPersistentStaticScheduling && halfLength < Vector512<uint>.Count)
+        {
+            if (halfLength >= Vector256<uint>.Count && Avx2.IsSupported)
+            {
+                ExecuteForwardUncachedStageAvx2(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+                return;
+            }
+            if (Sse2.IsSupported)
+            {
+                ExecuteForwardUncachedStageSse(
+                    values, modulus, root, stageLength, workers, cancellationToken);
+                return;
+            }
+        }
+
         int groupCount = values.Length / stageLength;
         int segments = GetVectorAlignedSegmentsPerGroup(
             halfLength, groupCount, workers, Vector512<uint>.Count);
@@ -21576,20 +21692,12 @@ internal sealed partial class ParallelBigUnsigned
                         sinceCancellation = 0;
                     }
                 }
-                for (; i < last; i++)
+                if (i < last)
                 {
-                    int leftIndex = groupOffset + i;
-                    int rightIndex = leftIndex + halfLength;
-                    uint left = values[leftIndex];
-                    uint right = values[rightIndex];
-                    uint root = twiddles[twiddleOffset + i];
-                    uint shoup = shoupTwiddles[twiddleOffset + i];
-                    if (inverse) right = MultiplyShoupScalar(right, root, shoup, modulus);
-                    uint sum = left + right;
-                    if (sum >= modulus) sum -= modulus;
-                    uint difference = left >= right ? left - right : left + modulus - right;
-                    values[leftIndex] = sum;
-                    values[rightIndex] = inverse ? difference : MultiplyShoupScalar(difference, root, shoup, modulus);
+                    ExecuteCachedButterflyTailAvx512(
+                        values, twiddles, shoupTwiddles,
+                        groupOffset + i, groupOffset + halfLength + i,
+                        twiddleOffset + i, last - i, inverse, context);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
             }
@@ -21720,6 +21828,26 @@ internal sealed partial class ParallelBigUnsigned
                 workers, cancellationToken);
             return;
         }
+
+        if (workers.UseSseNtt && shoupTwiddles is not null && Sse2.IsSupported)
+        {
+            ExecuteInverseCachedStagePairByGroupsSse(
+                values, modulus, twiddles, shoupTwiddles,
+                firstTwiddleOffset, secondTwiddleOffset, stageLength,
+                workers, cancellationToken);
+            return;
+        }
+
+#if ANDROID
+        if (workers.UseNeonNtt && shoupTwiddles is not null && AdvSimd.Arm64.IsSupported)
+        {
+            ExecuteInverseCachedStagePairByGroupsNeon(
+                values, modulus, twiddles, shoupTwiddles,
+                firstTwiddleOffset, secondTwiddleOffset, stageLength,
+                workers, cancellationToken);
+            return;
+        }
+#endif
 
         const int CancellationStride =
             1 << 15;
@@ -29490,7 +29618,7 @@ internal sealed partial class ParallelBigUnsigned
             0u, uint.MaxValue, 0u, uint.MaxValue);
 
     /// <summary>
-    /// SIMD length-2 NTT stage for the <=10M engine. Adjacent residues are
+    /// SIMD length-2 NTT stage for the &lt;=10M engine. Adjacent residues are
     /// already laid out as [left,right], so each vector swaps neighboring
     /// dwords, computes both modular sum/difference chains, then selects the
     /// even sum lanes and odd left-minus-right lanes. This avoids any gather,
@@ -30617,17 +30745,28 @@ internal sealed partial class ParallelBigUnsigned
         if (count <= 0)
             return incomingCarry;
 
-        // Preserve the accepted large-mode behavior.  <=10M uses 512-digit
+        // Preserve the accepted large-mode behavior.  <=10M uses 64-digit
         // micro-tiles so the scalar carry dependency inside each SIMD
         // quotient/remainder stream is bounded and the inter-tile dependency
         // is solved by the same exact prefix lookahead as CRT carry.
-        if (workers.UsesPersistentStaticScheduling ||
-            workers.WorkerCount == 1 ||
-            count < HierarchicalCarryTileLength * 2)
+        if (workers.UsesPersistentStaticScheduling)
         {
             return NormalizeCoefficientCarryRangeSimd(
                 coefficients, sourceStart, destination, destinationStart,
                 count, incomingCarry, workers, cancellationToken);
+        }
+
+        if (count < HierarchicalCarryTileLength * 2)
+        {
+            // One or two micro-tiles are cheaper to finish locally.  Never pass
+            // a larger range to the <=64-coefficient leaf helper, even on a
+            // single-worker configuration.
+            if (count <= HierarchicalCarryTileLength)
+            {
+                return NormalizeCoefficientCarryRangeLeafLookahead(
+                    coefficients, sourceStart, destination, destinationStart,
+                    count, incomingCarry, workers, cancellationToken);
+            }
         }
 
         const int tileLength = HierarchicalCarryTileLength;
@@ -30646,7 +30785,7 @@ internal sealed partial class ParallelBigUnsigned
                     {
                         int relativeStart = checked(tileIndex * tileLength);
                         int tileCountLocal = Math.Min(tileLength, count - relativeStart);
-                        tileCarries[tileIndex] = NormalizeCoefficientCarryRangeSimd(
+                        tileCarries[tileIndex] = NormalizeCoefficientCarryRangeLeafLookahead(
                             coefficients,
                             checked(sourceStart + relativeStart),
                             destination,
