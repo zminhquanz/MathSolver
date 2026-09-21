@@ -1324,7 +1324,7 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int parentLength = stageLength << 1;
         int parentCount = values.Length / parentLength;
-        int segmentsPerParent = GetVectorAlignedSegmentsPerGroup(
+        int segmentsPerParent = GetFusionAlignedSegmentsPerGroup(
             halfLength, parentCount, workers, Width);
         Vector128<uint> mod = Vector128.Create(modulus);
 
@@ -1336,7 +1336,7 @@ internal sealed partial class ParallelBigUnsigned
                 ref uint sh = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment, segmentsPerParent, halfLength, Width, workers,
                         out int parent, out int first, out int last);
                     int index0 = parent * parentLength + first;

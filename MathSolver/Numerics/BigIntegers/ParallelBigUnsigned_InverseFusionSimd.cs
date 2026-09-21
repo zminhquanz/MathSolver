@@ -12,11 +12,11 @@ namespace MathSolver.Numerics;
 internal sealed partial class ParallelBigUnsigned
 {
     /// <summary>
-    /// &lt;=10M inverse-DIT two-stage fusion.  Stage S and its parent 2S are
+    /// Inverse-DIT two-stage fusion for both worker schedules.  Stage S and its parent 2S are
     /// completed while four quarter streams are resident in vector registers.
     /// When <paramref name="normalizeFinal"/> is true the parent is the final
     /// NTT stage and the normalized result is written directly to output.
-    /// Large/persistent mode never calls this helper.
+    /// Persistent teams retain static dispatch over vector-aligned slices.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteInverseUncachedStagePairSegmented(
@@ -50,14 +50,14 @@ internal sealed partial class ParallelBigUnsigned
         uint secondPhase = (uint)ModPow(secondRoot, (uint)halfLength, modulus);
 
         int width =
-            (workers.UseAvx512Ntt && Avx512F.IsSupported)
+            ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal) && Avx512F.IsSupported)
                 ? Vector512<uint>.Count
                 : (workers.UseAvx2Ntt && Avx2.IsSupported)
                     ? Vector256<uint>.Count
                     : (workers.UseSseNtt && Sse2.IsSupported)
                         ? Vector128<uint>.Count
 #if ANDROID
-                        : (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+                        : (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
                             ? Vector128<uint>.Count
 #endif
                             : 1;
@@ -65,7 +65,7 @@ internal sealed partial class ParallelBigUnsigned
         if (width <= 1 || halfLength < width || (halfLength % width) != 0)
             throw new InvalidOperationException("Inverse stage-pair SIMD fusion requires a vector-aligned half stage.");
 
-        int segmentsPerParent = GetVectorAlignedSegmentsPerGroup(
+        int segmentsPerParent = GetFusionAlignedSegmentsPerGroup(
             halfLength, parentCount, workers, width);
 
         ExecuteRanges(
@@ -77,7 +77,7 @@ internal sealed partial class ParallelBigUnsigned
                 for (int segmentIndex = segmentStart; segmentIndex < segmentEnd; segmentIndex++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segmentIndex,
                         segmentsPerParent,
                         halfLength,
@@ -87,7 +87,7 @@ internal sealed partial class ParallelBigUnsigned
                         out int first,
                         out int last);
 
-                    if (workers.UseAvx512Ntt && Avx512F.IsSupported)
+                    if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal) && Avx512F.IsSupported)
                     {
                         ProcessInverseUncachedStagePairAvx512(
                             values, output, validOutputLength, modulus,
@@ -115,7 +115,7 @@ internal sealed partial class ParallelBigUnsigned
                             normalizeFinal, cancellationToken);
                     }
 #if ANDROID
-                    else if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+                    else if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
                     {
                         ProcessInverseUncachedStagePairNeon(
                             values, output, validOutputLength, modulus,
@@ -507,14 +507,14 @@ internal sealed partial class ParallelBigUnsigned
     private static bool CanUseInverseStagePairSimd(FixedWorkerTeam workers, int halfLength)
     {
         int width =
-            (workers.UseAvx512Ntt && Avx512F.IsSupported)
+            ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal) && Avx512F.IsSupported)
                 ? Vector512<uint>.Count
                 : (workers.UseAvx2Ntt && Avx2.IsSupported)
                     ? Vector256<uint>.Count
                     : (workers.UseSseNtt && Sse2.IsSupported)
                         ? Vector128<uint>.Count
 #if ANDROID
-                        : (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+                        : (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
                             ? Vector128<uint>.Count
 #endif
                             : 1;

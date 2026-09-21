@@ -453,15 +453,8 @@ internal sealed partial class ParallelBigUnsigned
                     value = Vector128.Add(raw, Vector128.BitwiseAnd(
                         (raw.AsInt32() >> 31).AsUInt32(), mod));
                 }
-                // On the tested Mono runtime AdvSimd is unavailable even though
-                // Vector128 is accelerated. Four scalar high32 products avoid
-                // the slower widening / split16 emulation; low products, sums,
-                // differences and modular correction remain vector operations.
-                var q = Vector128.Create(
-                    (uint)(((ulong)value.GetElement(0) * quotient.GetElement(0)) >> 32),
-                    (uint)(((ulong)value.GetElement(1) * quotient.GetElement(1)) >> 32),
-                    (uint)(((ulong)value.GetElement(2) * quotient.GetElement(2)) >> 32),
-                    (uint)(((ulong)value.GetElement(3) * quotient.GetElement(3)) >> 32));
+                // Exact uint32 partial products replace scalar high32 lane extraction.
+                var q = MultiplyHighUInt32Portable(value, quotient);
                 var product = Vector128.Subtract(Vector128.Multiply(value, root), Vector128.Multiply(q, mod));
                 var reduced = Vector128.Subtract(product, mod);
                 product = reduced + ((reduced.AsInt32() >> 31).AsUInt32() & mod);
@@ -602,12 +595,7 @@ internal sealed partial class ParallelBigUnsigned
             return ReduceOnceNeon(product, modulus);
         }
 
-        Vector128<uint> qPortable =
-            Vector128.Create(
-                (uint)(((ulong)value.GetElement(0) * multiplierShoup.GetElement(0)) >> 32),
-                (uint)(((ulong)value.GetElement(1) * multiplierShoup.GetElement(1)) >> 32),
-                (uint)(((ulong)value.GetElement(2) * multiplierShoup.GetElement(2)) >> 32),
-                (uint)(((ulong)value.GetElement(3) * multiplierShoup.GetElement(3)) >> 32));
+        Vector128<uint> qPortable = MultiplyHighUInt32Portable(value, multiplierShoup);
 
         return ReduceOnceNeon(
             Vector128.Subtract(
@@ -1667,7 +1655,7 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int parentLength = stageLength << 1;
         int parentCount = values.Length / parentLength;
-        int segmentsPerParent = GetVectorAlignedSegmentsPerGroup(
+        int segmentsPerParent = GetFusionAlignedSegmentsPerGroup(
             halfLength, parentCount, workers, Width);
         Vector128<uint> mod = Vector128.Create(modulus);
 
@@ -1679,7 +1667,7 @@ internal sealed partial class ParallelBigUnsigned
                 ref uint sh = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment, segmentsPerParent, halfLength, Width, workers,
                         out int parent, out int first, out int last);
                     int index0 = parent * parentLength + first;

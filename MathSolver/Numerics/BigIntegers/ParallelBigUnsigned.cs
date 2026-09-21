@@ -3276,47 +3276,9 @@ internal sealed partial class ParallelBigUnsigned
                                 destinationOffset +
                                 productStart);
 
-                        ulong localCarry = 0;
-
-                        for (int offset = 0;
-                             offset < count;
-                             offset++)
-                        {
-                            if ((offset & 0xFFFF) == 0)
-                            {
-                                cancellationToken.ThrowIfCancellationRequested();
-                            }
-
-                            int destinationIndex =
-                                destinationStart +
-                                offset;
-
-                            if ((uint)destinationIndex >=
-                                (uint)destination.Length)
-                            {
-                                throw new InvalidOperationException(
-                                    "Segmented NTT accumulation exceeded the result buffer.");
-                            }
-
-                            ulong value =
-                                destination[destinationIndex] +
-                                (ulong)product[productStart + offset] *
-                                (uint)multiplicity +
-                                localCarry;
-
-                            ulong quotient =
-                                value /
-                                LimbBase;
-
-                            destination[destinationIndex] =
-                                (uint)(value -
-                                       quotient *
-                                       LimbBase);
-
-                            localCarry =
-                                quotient;
-                        }
-
+                        ulong localCarry = AccumulateNormalizedSegmentTile(
+                            destination, destinationStart, product, productStart,
+                            count, multiplicity, workers, cancellationToken);
                         tileCarries[tileIndex] =
                             localCarry;
                     }
@@ -6321,11 +6283,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512ForwardGlobalCached =
                     workers.UseAvx512Ntt ||
-                    (workers.UseLargeModeAvx512ForwardGlobalCached &&
-                    workers.WorkerCount == 24 &&
-                    length >= (1 << 22) &&
-                    (stageLength == (1 << 22) ||
-                     stageLength == (1 << 20)));
+                    workers.UseLargeModeAvx512ForwardGlobalCached;
 
                 // Per-stage 100M profiles also show these pairs in smaller
                 // seed transforms at N=2^22..2^25. Include eligible remainders
@@ -6640,7 +6598,7 @@ internal sealed partial class ParallelBigUnsigned
                 diagnostics.ForwardGlobalTwiddleBuildCount++;
             }
 
-            if (workers.UseAvx512Ntt && useTwiddleCache)
+            if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512ForwardGlobalCached) && useTwiddleCache)
             {
                 EnsureForwardGlobalShoupStageProfiled(
                     twiddlePlan, halfLength, modulus, workers,
@@ -7197,18 +7155,13 @@ internal sealed partial class ParallelBigUnsigned
             // DIT counterpart of the two-stage DIF fusion.  <=10M can now
             // pair uncached stages and can fuse the penultimate stage directly
             // into final normalization; cached pairs retain their Shoup-table
-            // path below.  Large/persistent mode keeps the accepted schedule.
+            // path below. Persistent dispatch uses whole-vector fusion slices.
             int nextStageLength =
                 stageLength << 1;
 
-            // <=10M Phase: fuse the penultimate DIT stage directly into the
-            // normalized final stage.  This removes one full transform-sized
-            // read/write pass.  Persistent >10M scheduling deliberately keeps
-            // the accepted path unchanged. SSE2+ and native ARM64 NEON use
-            // four-lane fusion; the capability helper keeps Mono's portable
-            // NEON backend on its existing separate-stage path.
-            if (!workers.UsesPersistentStaticScheduling &&
-                !normalizeOutput &&
+            // Fuse penultimate DIT and final normalization for both worker schedules.
+            // Each aligned slice reads all four inputs before prefix stores.
+            if (!normalizeOutput &&
                 nextStageLength == length &&
                 CanUseInverseStagePairSimd(workers, halfLength))
             {
@@ -7262,11 +7215,10 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
-            // <=10M uncached DIT stage-pair fusion.  Pair only when both stages
+            // Uncached DIT stage-pair fusion. Pair only when both stages
             // would otherwise use root recurrence rather than immutable cached
             // twiddle tables; cached stages keep their specialized Shoup path.
-            if (!workers.UsesPersistentStaticScheduling &&
-                !normalizeOutput &&
+            if (!normalizeOutput &&
                 nextStageLength < length &&
                 !twiddlePlan.CanCache(halfLength) &&
                 !twiddlePlan.CanCache(stageLength) &&
@@ -7294,10 +7246,8 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
-            // Four-lane cached fusion needs complete vector slices. Keep the
-            // persistent large-mode schedule and tiny stages on their old path.
+            // Four-lane fusion uses aligned slices even on persistent worker teams.
             bool use128BitCachedFusion =
-                !workers.UsesPersistentStaticScheduling &&
                 (workers.UseSseNtt || workers.UseNeonNtt) &&
                 halfLength >= Vector128<uint>.Count &&
                 halfLength % Vector128<uint>.Count == 0;
@@ -18920,11 +18870,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         if (shoupTwiddles is not null &&
             (workers.UseAvx512Ntt ||
-            (workers.UseLargeModeAvx512ForwardGlobalCached &&
-            workers.WorkerCount == 24 &&
-            values.Length >= (1 << 22) &&
-            (stageLength == (1 << 22) ||
-             stageLength == (1 << 20)))))
+            workers.UseLargeModeAvx512ForwardGlobalCached))
         {
             ExecuteForwardCachedStagePairByGroupsLow32Avx512(
                 values, modulus, twiddles, shoupTwiddles,
@@ -29643,11 +29589,9 @@ internal sealed partial class ParallelBigUnsigned
         int pairCount =
             values.Length >> 1;
 
-        // Keep PowMemoryBounded (>10M) byte-for-byte on its established scalar
-        // S=2 scheduling. This phase intentionally targets only the <=10M path.
-        if (!workers.UsesPersistentStaticScheduling)
+        // Independent length-two butterflies may use SIMD on both schedules.
         {
-            if (workers.UseAvx512Ntt &&
+            if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512Radix4) &&
                 Avx512F.IsSupported &&
                 pairCount >= (Vector512<uint>.Count >> 1))
             {
@@ -30616,6 +30560,79 @@ internal sealed partial class ParallelBigUnsigned
     /// scalar residual loop disappears. If the stage is smaller than one
     /// vector or not divisible by vectorWidth, preserve the legacy partition.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetFusionAlignedSegmentsPerGroup(
+        int halfLength,
+        int groupCount,
+        FixedWorkerTeam workers,
+        int vectorWidth)
+    {
+        int workerCount =
+            workers.WorkerCount;
+
+        if (vectorWidth <= 1 ||
+            halfLength < vectorWidth ||
+            halfLength % vectorWidth != 0)
+        {
+            return GetWorkerAlignedSegmentsPerGroup(
+                halfLength,
+                groupCount,
+                workerCount,
+                GetSegmentsPerGroup(halfLength, groupCount, workerCount));
+        }
+
+        int vectorBlockCount =
+            halfLength / vectorWidth;
+
+        return GetWorkerAlignedSegmentsPerGroup(
+            vectorBlockCount,
+            groupCount,
+            workerCount,
+            GetSegmentsPerGroup(vectorBlockCount, groupCount, workerCount));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void GetFusionAlignedSegmentBounds(
+        int segmentIndex,
+        int segmentsPerGroup,
+        int halfLength,
+        int vectorWidth,
+        FixedWorkerTeam workers,
+        out int groupIndex,
+        out int butterflyStart,
+        out int butterflyEnd)
+    {
+        if (vectorWidth <= 1 ||
+            halfLength < vectorWidth ||
+            halfLength % vectorWidth != 0)
+        {
+            GetSegmentBounds(
+                segmentIndex,
+                segmentsPerGroup,
+                halfLength,
+                out groupIndex,
+                out butterflyStart,
+                out butterflyEnd);
+            return;
+        }
+
+        int vectorBlockCount =
+            halfLength / vectorWidth;
+
+        GetSegmentBounds(
+            segmentIndex,
+            segmentsPerGroup,
+            vectorBlockCount,
+            out groupIndex,
+            out int blockStart,
+            out int blockEnd);
+
+        butterflyStart =
+            checked(blockStart * vectorWidth);
+        butterflyEnd =
+            checked(blockEnd * vectorWidth);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetVectorAlignedSegmentsPerGroup(
         int halfLength,
@@ -32521,9 +32538,7 @@ internal sealed partial class ParallelBigUnsigned
             (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
             Vector512.IsHardwareAccelerated;
 
-        // Cached-global policy is independent of all other large-mode gates.
-        // Callers select the measured 24-worker S=2^22 / S=2^20 pairs, including
-        // seed/remainder transforms at N>=2^22, without enabling the shared flag.
+        // Cached-global policy covers eligible stage pairs on any worker count.
         public bool UseLargeModeAvx512ForwardGlobalCached =>
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
