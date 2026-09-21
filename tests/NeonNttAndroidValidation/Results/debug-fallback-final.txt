@@ -1,0 +1,2 @@
+﻿09-16 09:29:07.631 24140 24230 I NttNeon : DEVICE=V2419A runtime=10.0.12 cpu=8 AdvSimd=False Arm64=False Vector128=True Optimized=False
+09-16 09:29:07.820 24140 24230 I NttNeon : DONE PASS: Scalar fallback enforced; NEON timing skipped (runtime/build not eligible).
