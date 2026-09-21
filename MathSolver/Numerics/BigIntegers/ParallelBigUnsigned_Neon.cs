@@ -726,6 +726,52 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> MultiplyHighUInt32Portable(
+        Vector128<uint> left,
+        Vector128<uint> right)
+    {
+        // Four independent 32x32 high products using only uint32 operations.
+        // Each partial product fits in uint. Splitting the middle carry before
+        // adding the next product prevents overflow (including uint.MaxValue).
+        Vector128<uint> mask = Vector128.Create(0xFFFFu);
+        Vector128<uint> a0 = left & mask;
+        Vector128<uint> a1 = left >> 16;
+        Vector128<uint> b0 = right & mask;
+        Vector128<uint> b1 = right >> 16;
+        Vector128<uint> low = a0 * b0;
+        Vector128<uint> middle = a1 * b0 + (low >> 16);
+        Vector128<uint> upper = a1 * b1 + (middle >> 16);
+        middle = (middle & mask) + a0 * b1;
+        return upper + (middle >> 16);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> MultiplyResiduesPortable(
+        Vector128<uint> left,
+        Vector128<uint> right,
+        uint modulus)
+    {
+        // Canonical inputs and the two production primes (<2^31) are required.
+        // R=floor(2^64/p). The estimate floor(right*R/2^32) is at most
+        // one below floor(right*2^32/p); its residual is in [0,2p).
+        // Its high word is zero, so the low-word subtraction is exact.
+        GetGlobalShoupReciprocal(modulus, out uint high, out uint low);
+        Vector128<uint> mod = Vector128.Create(modulus);
+        Vector128<uint> estimate = right * Vector128.Create(high) +
+            MultiplyHighUInt32Portable(right, Vector128.Create(low));
+        Vector128<uint> residual = Vector128<uint>.Zero - estimate * mod;
+        Vector128<uint> correction = Vector128.Create(1u) - ((residual - mod) >> 31);
+        Vector128<uint> shoup = estimate + correction;
+
+        // Shoup leaves a remainder in [0,2p). Use the exact low product and
+        // one correction instead of extracting four lanes for scalar ulong %.
+        Vector128<uint> quotient = MultiplyHighUInt32Portable(left, shoup);
+        Vector128<uint> product = left * right - quotient * mod;
+        Vector128<uint> reduced = product - mod;
+        return reduced + ((reduced.AsInt32() >> 31).AsUInt32() & mod);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<uint> MultiplyResiduesNeon(
         Vector128<uint> left,
         Vector128<uint> right,
@@ -733,6 +779,12 @@ internal sealed partial class ParallelBigUnsigned
     {
         if (!AdvSimd.Arm64.IsSupported)
         {
+            if (Vector128.IsHardwareAccelerated &&
+                (modulus == FirstModulus || modulus == SecondModulus))
+            {
+                return MultiplyResiduesPortable(left, right, modulus);
+            }
+
             return Vector128.Create(
                 (uint)((ulong)left.GetElement(0) * right.GetElement(0) % modulus),
                 (uint)((ulong)left.GetElement(1) * right.GetElement(1) % modulus),

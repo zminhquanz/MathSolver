@@ -472,6 +472,10 @@ internal static class BinaryRadix16
             if (useAvx2 && Avx2.IsSupported)
             {
                 const int OutputsPerBatch = 4;
+                // Register-count SSE shifts read one count from the low 64 bits.
+                // Unlike the byte overload, this supports a runtime shift count.
+                Vector128<uint> leftShiftCount = Vector128.CreateScalar((uint)bits);
+                Vector128<uint> rightShiftCount = Vector128.CreateScalar((uint)(32 - bits));
                 while (word + OutputsPerBatch <= to)
                 {
                     int inputIndex = word * 2;
@@ -506,8 +510,8 @@ internal static class BinaryRadix16
                             Avx2.ShiftLeftLogical(previousOdd, 16)).GetLower();
 
                         Vector128<uint> shifted = Sse2.Or(
-                            Sse2.ShiftLeftLogical(packed4, (byte)bits),
-                            Sse2.ShiftRightLogical(previousPacked, (byte)(32 - bits)));
+                            Sse2.ShiftLeftLogical(packed4, leftShiftCount),
+                            Sse2.ShiftRightLogical(previousPacked, rightShiftCount));
                         shifted.StoreUnsafe(ref words[offset + word]);
                     }
                     word += OutputsPerBatch;
@@ -567,6 +571,10 @@ internal static class BinaryRadix16
                 const int OutputsPerBatch = 2;
                 Vector128<ulong> low16Mask = Vector128.Create(0xffffUL);
                 Vector128<ulong> low32Mask = Vector128.Create(0xffff_ffffUL);
+                // USHL uses positive counts for left shifts and negative counts
+                // for logical right shifts, independently in each ulong lane.
+                Vector128<long> leftShiftCount = Vector128.Create((long)bits);
+                Vector128<long> rightShiftCount = Vector128.Create((long)bits - 32);
                 while (word + OutputsPerBatch <= to)
                 {
                     int inputIndex = word * 2;
@@ -591,8 +599,8 @@ internal static class BinaryRadix16
                                 AdvSimd.ShiftRightLogical(previous64, 32), 16));
                         result = Vector128.BitwiseAnd(
                             Vector128.BitwiseOr(
-                                AdvSimd.ShiftLeftLogical(currentPacked, (byte)bits),
-                                AdvSimd.ShiftRightLogical(previousPacked, (byte)(32 - bits))),
+                                AdvSimd.ShiftLogical(currentPacked, leftShiftCount),
+                                AdvSimd.ShiftLogical(previousPacked, rightShiftCount)),
                             low32Mask);
                     }
 

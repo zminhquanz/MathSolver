@@ -7294,9 +7294,16 @@ internal sealed partial class ParallelBigUnsigned
                 continue;
             }
 
+            // Four-lane cached fusion needs complete vector slices. Keep the
+            // persistent large-mode schedule and tiny stages on their old path.
+            bool use128BitCachedFusion =
+                !workers.UsesPersistentStaticScheduling &&
+                (workers.UseSseNtt || workers.UseNeonNtt) &&
+                halfLength >= Vector128<uint>.Count &&
+                halfLength % Vector128<uint>.Count == 0;
+
             if (!normalizeOutput &&
-                !workers.UseSseNtt &&
-                !workers.UseNeonNtt &&
+                (!(workers.UseSseNtt || workers.UseNeonNtt) || use128BitCachedFusion) &&
                 nextStageLength < length &&
                 CanFuseInverseCachedStagePair(
                     length,
@@ -7305,11 +7312,11 @@ internal sealed partial class ParallelBigUnsigned
                     workers.WorkerCount,
                     allowSegmentedGroups: workers.UseAvx512Ntt ||
                         workers.UseLargeModeAvx512InverseGlobal ||
-                        workers.UseAvx2Ntt))
+                        workers.UseAvx2Ntt || use128BitCachedFusion))
             {
                 uint[]? globalShoupTwiddles = null;
                 if (workers.UseAvx512Ntt || workers.UseLargeModeAvx512InverseGlobal ||
-                    workers.UseAvx2Ntt)
+                    workers.UseAvx2Ntt || use128BitCachedFusion)
                 {
                     EnsureInverseGlobalShoupStage(
                         twiddlePlan, halfLength, modulus, workers, cancellationToken);
@@ -21837,7 +21844,8 @@ internal sealed partial class ParallelBigUnsigned
         }
 
 #if ANDROID
-        if (workers.UseNeonNtt && shoupTwiddles is not null && AdvSimd.Arm64.IsSupported)
+        if (workers.UseNeonNtt && shoupTwiddles is not null &&
+            (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
         {
             ExecuteInverseCachedStagePairByGroupsNeon(
                 values, modulus, twiddles, shoupTwiddles,
