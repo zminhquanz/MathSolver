@@ -7204,10 +7204,10 @@ internal sealed partial class ParallelBigUnsigned
             // <=10M Phase: fuse the penultimate DIT stage directly into the
             // normalized final stage.  This removes one full transform-sized
             // read/write pass.  Persistent >10M scheduling deliberately keeps
-            // the accepted path unchanged.
+            // the accepted path unchanged. SSE2+ and native ARM64 NEON use
+            // four-lane fusion; the capability helper keeps Mono's portable
+            // NEON backend on its existing separate-stage path.
             if (!workers.UsesPersistentStaticScheduling &&
-                !workers.UseSseNtt &&
-                !workers.UseNeonNtt &&
                 !normalizeOutput &&
                 nextStageLength == length &&
                 CanUseInverseStagePairSimd(workers, halfLength))
@@ -7266,8 +7266,6 @@ internal sealed partial class ParallelBigUnsigned
             // would otherwise use root recurrence rather than immutable cached
             // twiddle tables; cached stages keep their specialized Shoup path.
             if (!workers.UsesPersistentStaticScheduling &&
-                !workers.UseSseNtt &&
-                !workers.UseNeonNtt &&
                 !normalizeOutput &&
                 nextStageLength < length &&
                 !twiddlePlan.CanCache(halfLength) &&

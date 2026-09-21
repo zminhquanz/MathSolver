@@ -32,6 +32,7 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         int parentLength = checked(stageLength << 1);
         int halfLength = stageLength >> 1;
         int parentCount = values.Length / parentLength;
@@ -75,6 +76,7 @@ internal sealed partial class ParallelBigUnsigned
             {
                 for (int segmentIndex = segmentStart; segmentIndex < segmentEnd; segmentIndex++)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     GetVectorAlignedSegmentBounds(
                         segmentIndex,
                         segmentsPerParent,
@@ -353,8 +355,15 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> t1 = CreateTwiddleSequenceSse(firstRoot, first, modulus);
         Vector128<uint> t20 = CreateTwiddleSequenceSse(secondRoot, first, modulus);
         Vector128<uint> t21 = MultiplyResiduesSse(t20, Vector128.Create(secondPhase), modulus);
-        Vector128<uint> advance1 = Vector128.Create((uint)ModPow(firstRoot, Width, modulus));
-        Vector128<uint> advance2 = Vector128.Create((uint)ModPow(secondRoot, Width, modulus));
+        // The stride factors are invariant for this segment. Build their
+        // Shoup companions once instead of reducing three general products
+        // on every four-butterfly iteration.
+        uint step1 = (uint)ModPow(firstRoot, Width, modulus);
+        uint step2 = (uint)ModPow(secondRoot, Width, modulus);
+        Vector128<uint> advance1 = Vector128.Create(step1);
+        Vector128<uint> advance2 = Vector128.Create(step2);
+        Vector128<uint> advanceShoup1 = Vector128.Create((uint)(((ulong)step1 << 32) / modulus));
+        Vector128<uint> advanceShoup2 = Vector128.Create((uint)(((ulong)step2 << 32) / modulus));
         Vector128<uint> inv = Vector128.Create(inverseLength);
         Vector128<uint> invShoup = Vector128.Create(inverseLengthShoup);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
@@ -403,9 +412,9 @@ internal sealed partial class ParallelBigUnsigned
 
             if (i + Width < last)
             {
-                t1 = MultiplyResiduesSse(t1, advance1, modulus);
-                t20 = MultiplyResiduesSse(t20, advance2, modulus);
-                t21 = MultiplyResiduesSse(t21, advance2, modulus);
+                t1 = MultiplyShoupSse(t1, advance1, advanceShoup1, mod);
+                t20 = MultiplyShoupSse(t20, advance2, advanceShoup2, mod);
+                t21 = MultiplyShoupSse(t21, advance2, advanceShoup2, mod);
             }
             if (((i - first) & 0x3FFF) == 0x3FFC)
                 cancellationToken.ThrowIfCancellationRequested();
@@ -428,8 +437,15 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> t1 = CreateTwiddleSequenceNeon(firstRoot, first, modulus);
         Vector128<uint> t20 = CreateTwiddleSequenceNeon(secondRoot, first, modulus);
         Vector128<uint> t21 = MultiplyResiduesNeon(t20, Vector128.Create(secondPhase), modulus);
-        Vector128<uint> advance1 = Vector128.Create((uint)ModPow(firstRoot, Width, modulus));
-        Vector128<uint> advance2 = Vector128.Create((uint)ModPow(secondRoot, Width, modulus));
+        // The stride factors are invariant for this segment. Build their
+        // Shoup companions once instead of reducing three general products
+        // on every four-butterfly iteration.
+        uint step1 = (uint)ModPow(firstRoot, Width, modulus);
+        uint step2 = (uint)ModPow(secondRoot, Width, modulus);
+        Vector128<uint> advance1 = Vector128.Create(step1);
+        Vector128<uint> advance2 = Vector128.Create(step2);
+        Vector128<uint> advanceShoup1 = Vector128.Create((uint)(((ulong)step1 << 32) / modulus));
+        Vector128<uint> advanceShoup2 = Vector128.Create((uint)(((ulong)step2 << 32) / modulus));
         Vector128<uint> inv = Vector128.Create(inverseLength);
         Vector128<uint> invShoup = Vector128.Create(inverseLengthShoup);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
@@ -478,9 +494,9 @@ internal sealed partial class ParallelBigUnsigned
 
             if (i + Width < last)
             {
-                t1 = MultiplyResiduesNeon(t1, advance1, modulus);
-                t20 = MultiplyResiduesNeon(t20, advance2, modulus);
-                t21 = MultiplyResiduesNeon(t21, advance2, modulus);
+                t1 = MultiplyShoupNeon(t1, advance1, advanceShoup1, mod);
+                t20 = MultiplyShoupNeon(t20, advance2, advanceShoup2, mod);
+                t21 = MultiplyShoupNeon(t21, advance2, advanceShoup2, mod);
             }
             if (((i - first) & 0x3FFF) == 0x3FFC)
                 cancellationToken.ThrowIfCancellationRequested();
