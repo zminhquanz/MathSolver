@@ -1364,14 +1364,16 @@ internal sealed partial class ParallelBigUnsigned
 
                         Vector128<uint> t20 = Vector128.LoadUnsafe(ref tw, (nuint)t20Index);
                         Vector128<uint> s20 = Vector128.LoadUnsafe(ref sh, (nuint)t20Index);
+                        Vector128<uint> m0 = MultiplyShoupSse(u1, t20, s20, mod);
+                        // All four inputs are loaded: retire the even outputs before
+                        // loading odd twiddles to reduce live vector temporaries.
+                        AddModuloSse(u0, m0, mod).StoreUnsafe(ref data, (nuint)index0);
+                        SubtractModuloSse(u0, m0, mod).StoreUnsafe(ref data, (nuint)index2);
+
                         Vector128<uint> t21 = Vector128.LoadUnsafe(ref tw, (nuint)t21Index);
                         Vector128<uint> s21 = Vector128.LoadUnsafe(ref sh, (nuint)t21Index);
-                        Vector128<uint> m0 = MultiplyShoupSse(u1, t20, s20, mod);
                         Vector128<uint> m1 = MultiplyShoupSse(v1, t21, s21, mod);
-
-                        AddModuloSse(u0, m0, mod).StoreUnsafe(ref data, (nuint)index0);
                         AddModuloSse(v0, m1, mod).StoreUnsafe(ref data, (nuint)index1);
-                        SubtractModuloSse(u0, m0, mod).StoreUnsafe(ref data, (nuint)index2);
                         SubtractModuloSse(v0, m1, mod).StoreUnsafe(ref data, (nuint)index3);
 
                         index0 += Width; index1 += Width; index2 += Width; index3 += Width;

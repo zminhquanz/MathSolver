@@ -1635,14 +1635,16 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
-                // Managed Vector128 compatibility path for Mono runtimes that
-                // advertise accelerated Vector128 but not AdvSimd.Arm64.
-                for (int lane = 0; lane < Vector128<uint>.Count; lane++)
-                {
-                    scratchSpan[offset + lane] =
-                        first.GetElement(lane) +
-                        (ulong)FirstModulus * multiplier.GetElement(lane);
-                }
+                // Assemble exact 64-bit products from 32-bit halves, then add
+                // the widened P1 residues. Avoid four scalar lane products.
+                Vector128<uint> productLow = multiplier * firstModulusVector;
+                Vector128<uint> productHigh = MultiplyHighUInt32Portable(multiplier, firstModulusVector);
+                Vector128<ulong> lower = Vector128.WidenLower(productLow) |
+                    (Vector128.WidenLower(productHigh) << 32);
+                Vector128<ulong> upper = Vector128.WidenUpper(productLow) |
+                    (Vector128.WidenUpper(productHigh) << 32);
+                (lower + Vector128.WidenLower(first)).StoreUnsafe(ref scratchReference, (nuint)offset);
+                (upper + Vector128.WidenUpper(first)).StoreUnsafe(ref scratchReference, (nuint)(offset + 2));
             }
         }
 
@@ -1705,14 +1707,16 @@ internal sealed partial class ParallelBigUnsigned
 
                         Vector128<uint> t20 = Vector128.LoadUnsafe(ref tw, (nuint)t20Index);
                         Vector128<uint> s20 = Vector128.LoadUnsafe(ref sh, (nuint)t20Index);
+                        Vector128<uint> m0 = MultiplyShoupNeon(u1, t20, s20, mod);
+                        // All four inputs are loaded: retire the even outputs before
+                        // loading odd twiddles to reduce live vector temporaries.
+                        AddModuloNeon(u0, m0, mod).StoreUnsafe(ref data, (nuint)index0);
+                        SubtractModuloNeon(u0, m0, mod).StoreUnsafe(ref data, (nuint)index2);
+
                         Vector128<uint> t21 = Vector128.LoadUnsafe(ref tw, (nuint)t21Index);
                         Vector128<uint> s21 = Vector128.LoadUnsafe(ref sh, (nuint)t21Index);
-                        Vector128<uint> m0 = MultiplyShoupNeon(u1, t20, s20, mod);
                         Vector128<uint> m1 = MultiplyShoupNeon(v1, t21, s21, mod);
-
-                        AddModuloNeon(u0, m0, mod).StoreUnsafe(ref data, (nuint)index0);
                         AddModuloNeon(v0, m1, mod).StoreUnsafe(ref data, (nuint)index1);
-                        SubtractModuloNeon(u0, m0, mod).StoreUnsafe(ref data, (nuint)index2);
                         SubtractModuloNeon(v0, m1, mod).StoreUnsafe(ref data, (nuint)index3);
 
                         index0 += Width; index1 += Width; index2 += Width; index3 += Width;

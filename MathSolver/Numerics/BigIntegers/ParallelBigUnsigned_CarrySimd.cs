@@ -202,14 +202,25 @@ internal sealed partial class ParallelBigUnsigned
         uint multiplier)
     {
         Vector128<uint> words = value.AsUInt32();
-        Vector64<uint> packed = Vector64.Create(words.GetElement(0), words.GetElement(2));
-        return AdvSimd.MultiplyWideningLower(packed, Vector64.Create(multiplier));
+        if (AdvSimd.Arm64.IsSupported)
+        {
+            Vector64<uint> packed = AdvSimd.ExtractNarrowingLower(value);
+            return AdvSimd.MultiplyWideningLower(packed, Vector64.Create(multiplier));
+        }
+
+        // Portable uint32 products, assembled into two exact uint64 lanes.
+        // Only the even words are significant; no vector uint64 multiply.
+        Vector128<uint> factor = Vector128.Create(multiplier);
+        Vector128<ulong> mask = Vector128.Create((ulong)uint.MaxValue);
+        Vector128<ulong> low = (words * factor).AsUInt64() & mask;
+        Vector128<ulong> high = MultiplyHighUInt32Portable(words, factor).AsUInt64() & mask;
+        return low | (high << 32);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<ulong> DividePackedUInt32By10000Neon(
         Vector128<ulong> value) =>
-        AdvSimd.ShiftRightLogical(
+        Vector128.ShiftRightLogical(
             MultiplyPackedUInt32Neon(value, CarryDivide10000Magic),
             45);
 
@@ -220,18 +231,18 @@ internal sealed partial class ParallelBigUnsigned
         out Vector128<ulong> remainder)
     {
         Vector128<ulong> lowMask = Vector128.Create((ulong)uint.MaxValue);
-        Vector128<ulong> high = AdvSimd.ShiftRightLogical(value, 32);
-        Vector128<ulong> low = AdvSimd.And(value.AsByte(), lowMask.AsByte()).AsUInt64();
+        Vector128<ulong> high = Vector128.ShiftRightLogical(value, 32);
+        Vector128<ulong> low = value & lowMask;
         Vector128<ulong> s = Vector128.Add(
             low,
             MultiplyPackedUInt32Neon(high, (uint)CarryTwo32Remainder));
-        Vector128<ulong> sHigh = AdvSimd.ShiftRightLogical(s, 32);
-        Vector128<ulong> sLow = AdvSimd.And(s.AsByte(), lowMask.AsByte()).AsUInt64();
+        Vector128<ulong> sHigh = Vector128.ShiftRightLogical(s, 32);
+        Vector128<ulong> sLow = s & lowMask;
         Vector128<ulong> t = Vector128.Add(
             sLow,
             MultiplyPackedUInt32Neon(sHigh, (uint)CarryTwo32Remainder));
-        Vector128<ulong> overflow = AdvSimd.ShiftRightLogical(t, 32);
-        Vector128<ulong> tLow = AdvSimd.And(t.AsByte(), lowMask.AsByte()).AsUInt64();
+        Vector128<ulong> overflow = Vector128.ShiftRightLogical(t, 32);
+        Vector128<ulong> tLow = t & lowMask;
 
         Vector128<ulong> q0 = DividePackedUInt32By10000Neon(tLow);
         Vector128<ulong> r0 = Vector128.Subtract(
@@ -372,7 +383,7 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 #if ANDROID
-        else if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported && count >= Vector128<ulong>.Count)
+        else if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated) && count >= Vector128<ulong>.Count)
         {
             Span<ulong> q = stackalloc ulong[Vector128<ulong>.Count];
             Span<ulong> r = stackalloc ulong[Vector128<ulong>.Count];
@@ -498,7 +509,7 @@ internal sealed partial class ParallelBigUnsigned
         }
 #if ANDROID
         else if (BitConverter.IsLittleEndian &&
-                 workers.UseNeonNtt && AdvSimd.Arm64.IsSupported &&
+                 workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated) &&
                  count >= Vector128<ulong>.Count)
         {
             Span<ulong> q = stackalloc ulong[Vector128<ulong>.Count];
@@ -858,7 +869,7 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.UseSseNtt && Sse2.IsSupported)
             return 4; // Two XMM vectors: base-10,000 carry needs >=4 digits to collapse to a 0/1 transfer.
 #if ANDROID
-        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+        if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
             return 4; // Two NEON vectors for the same carry-absorption guarantee as SSE.
 #endif
         return 1;
