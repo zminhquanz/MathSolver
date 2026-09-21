@@ -1,1 +1,0 @@
-Historical single-thread SIMD kernels, retired from the application at the user's request. These sources are linked only by experimental benchmark projects so their old results can still be reproduced. They are not a production fallback or selectable backend.
