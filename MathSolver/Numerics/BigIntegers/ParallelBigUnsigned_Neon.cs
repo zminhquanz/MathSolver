@@ -56,7 +56,7 @@ internal sealed partial class ParallelBigUnsigned
         int pairStart,
         int pairEnd)
     {
-        if (!AdvSimd.Arm64.IsSupported)
+        if (!AdvSimd.Arm64.IsSupported && !Vector128.IsHardwareAccelerated)
         {
             ExecuteLengthTwoButterfliesScalarRange(
                 values, modulus, normalize, inverseLength, pairStart, pairEnd);
@@ -839,7 +839,7 @@ internal sealed partial class ParallelBigUnsigned
         int last,
         CancellationToken cancellationToken)
     {
-        if (!AdvSimd.Arm64.IsSupported)
+        if (!AdvSimd.Arm64.IsSupported && !Vector128.IsHardwareAccelerated)
         {
             ProcessForwardUncachedStagePairSegmentByrefDualLane(
                 values, modulus, firstRoot, secondRoot, quarterPhase,
@@ -962,7 +962,7 @@ internal sealed partial class ParallelBigUnsigned
         int quarterLength = halfLength >> 1;
         int groupCount = values.Length / stageLength;
         int segmentsPerGroup =
-            GetVectorAlignedSegmentsPerGroup(
+            GetFusionAlignedSegmentsPerGroup(
                 quarterLength,
                 groupCount,
                 workers,
@@ -981,7 +981,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segmentsPerGroup,
                         quarterLength,
@@ -1129,7 +1129,7 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
         int segments =
-            GetVectorAlignedSegmentsPerGroup(
+            GetFusionAlignedSegmentsPerGroup(
                 halfLength,
                 groupCount,
                 workers,
@@ -1149,7 +1149,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -1226,7 +1226,7 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
         int segments =
-            GetVectorAlignedSegmentsPerGroup(
+            GetFusionAlignedSegmentsPerGroup(
                 halfLength,
                 groupCount,
                 workers,
@@ -1245,7 +1245,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -1309,7 +1309,7 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
         int segments =
-            GetVectorAlignedSegmentsPerGroup(
+            GetFusionAlignedSegmentsPerGroup(
                 halfLength,
                 groupCount,
                 workers,
@@ -1328,7 +1328,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -1434,7 +1434,7 @@ internal sealed partial class ParallelBigUnsigned
         uint inverseLengthShoup,
         CancellationToken cancellationToken)
     {
-        if (!AdvSimd.Arm64.IsSupported)
+        if (!AdvSimd.Arm64.IsSupported && !Vector128.IsHardwareAccelerated)
         {
             uint rootSquared = (uint)((ulong)root * root % modulus);
             uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
@@ -1498,6 +1498,8 @@ internal sealed partial class ParallelBigUnsigned
             Span<uint> rightScratch = stackalloc uint[Vector128<uint>.Count];
             Span<uint> leftOutputScratch = stackalloc uint[Vector128<uint>.Count];
             Span<uint> rightOutputScratch = stackalloc uint[Vector128<uint>.Count];
+            leftScratch.Clear();
+            rightScratch.Clear();
 
             for (int lane = 0; lane < remaining; lane++)
             {

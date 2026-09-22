@@ -18453,7 +18453,7 @@ internal sealed partial class ParallelBigUnsigned
             stageLength;
 
         int segmentsPerGroup =
-            GetVectorAlignedSegmentsPerGroup(
+            GetFusionAlignedSegmentsPerGroup(
                 quarterLength,
                 groupCount,
                 workers,
@@ -18473,7 +18473,7 @@ internal sealed partial class ParallelBigUnsigned
                      segmentIndex < segmentEnd;
                      segmentIndex++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segmentIndex,
                         segmentsPerGroup,
                         quarterLength,
@@ -19203,19 +19203,18 @@ internal sealed partial class ParallelBigUnsigned
                     ? Vector256<uint>.Count
                     : ((workers.UseSseNtt && Sse2.IsSupported) ||
                        (workers.UseNeonNtt &&
-                        System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported))
+                        (System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated)))
                         ? Vector128<uint>.Count
                         : 1;
 
         bool useVectorAlignedStagePairRanges =
-            !workers.UsesPersistentStaticScheduling &&
             stagePairVectorWidth > 1 &&
             quarterLength >= stagePairVectorWidth &&
             quarterLength % stagePairVectorWidth == 0;
 
         int segmentsPerGroup =
             useVectorAlignedStagePairRanges
-                ? GetVectorAlignedSegmentsPerGroup(
+                ? GetFusionAlignedSegmentsPerGroup(
                     quarterLength,
                     groupCount,
                     workers,
@@ -19263,7 +19262,7 @@ internal sealed partial class ParallelBigUnsigned
                      segmentIndex < segmentEnd;
                      segmentIndex++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segmentIndex,
                         segmentsPerGroup,
                         quarterLength,
@@ -19295,7 +19294,7 @@ internal sealed partial class ParallelBigUnsigned
                             cancellationToken);
                     }
                     else if (workers.UseNeonNtt &&
-                             System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported)
+                             (System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
                     {
                         ProcessForwardUncachedStagePairNeon(
                             values, modulus, firstRoot, secondRoot, quarterPhase,
@@ -19906,7 +19905,7 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
             workers,
@@ -19930,7 +19929,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -20043,7 +20042,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
             workers,
@@ -20067,7 +20066,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -20172,7 +20171,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
             workers,
@@ -20196,7 +20195,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -20347,13 +20346,13 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength, groupCount, workers, Vector512<uint>.Count);
         ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
         {
             for (int segment = start; segment < end; segment++)
             {
-                GetVectorAlignedSegmentBounds(
+                GetFusionAlignedSegmentBounds(
                     segment,
                     segments,
                     halfLength,
@@ -20427,7 +20426,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength, groupCount, workers, Vector512<uint>.Count);
         var context = new Avx512NttModContext(modulus);
         uint step = (uint)ModPow(root, 16, modulus);
@@ -20438,7 +20437,7 @@ internal sealed partial class ParallelBigUnsigned
             ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
             for (int segment = start; segment < end; segment++)
             {
-                GetVectorAlignedSegmentBounds(
+                GetFusionAlignedSegmentBounds(
                     segment,
                     segments,
                     halfLength,
@@ -21598,7 +21597,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength, groupCount, workers, Vector512<uint>.Count);
         var context = new Avx512NttModContext(modulus);
         ExecuteRanges(checked(groupCount * segments), workers, cancellationToken, (start, end) =>
@@ -21608,7 +21607,7 @@ internal sealed partial class ParallelBigUnsigned
             ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
             for (int segment = start; segment < end; segment++)
             {
-                GetVectorAlignedSegmentBounds(
+                GetFusionAlignedSegmentBounds(
                     segment,
                     segments,
                     halfLength,
@@ -21666,7 +21665,7 @@ internal sealed partial class ParallelBigUnsigned
         int halfLength = stageLength >> 1;
         int parentLength = stageLength << 1;
         int parentCount = values.Length / parentLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength, parentCount, workers, Vector512<uint>.Count);
         var context = new Avx512NttModContext(modulus);
         ExecuteRanges(checked(parentCount * segments), workers, cancellationToken, (start, end) =>
@@ -21676,7 +21675,7 @@ internal sealed partial class ParallelBigUnsigned
             ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
             for (int segment = start; segment < end; segment++)
             {
-                GetVectorAlignedSegmentBounds(
+                GetFusionAlignedSegmentBounds(
                     segment,
                     segments,
                     halfLength,
@@ -30603,81 +30602,6 @@ internal sealed partial class ParallelBigUnsigned
         out int butterflyEnd)
     {
         if (vectorWidth <= 1 ||
-            halfLength < vectorWidth ||
-            halfLength % vectorWidth != 0)
-        {
-            GetSegmentBounds(
-                segmentIndex,
-                segmentsPerGroup,
-                halfLength,
-                out groupIndex,
-                out butterflyStart,
-                out butterflyEnd);
-            return;
-        }
-
-        int vectorBlockCount =
-            halfLength / vectorWidth;
-
-        GetSegmentBounds(
-            segmentIndex,
-            segmentsPerGroup,
-            vectorBlockCount,
-            out groupIndex,
-            out int blockStart,
-            out int blockEnd);
-
-        butterflyStart =
-            checked(blockStart * vectorWidth);
-        butterflyEnd =
-            checked(blockEnd * vectorWidth);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetVectorAlignedSegmentsPerGroup(
-        int halfLength,
-        int groupCount,
-        FixedWorkerTeam workers,
-        int vectorWidth)
-    {
-        int workerCount =
-            workers.WorkerCount;
-
-        if (workers.UsesPersistentStaticScheduling ||
-            vectorWidth <= 1 ||
-            halfLength < vectorWidth ||
-            halfLength % vectorWidth != 0)
-        {
-            return GetWorkerAlignedSegmentsPerGroup(
-                halfLength,
-                groupCount,
-                workerCount,
-                GetSegmentsPerGroup(halfLength, groupCount, workerCount));
-        }
-
-        int vectorBlockCount =
-            halfLength / vectorWidth;
-
-        return GetWorkerAlignedSegmentsPerGroup(
-            vectorBlockCount,
-            groupCount,
-            workerCount,
-            GetSegmentsPerGroup(vectorBlockCount, groupCount, workerCount));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void GetVectorAlignedSegmentBounds(
-        int segmentIndex,
-        int segmentsPerGroup,
-        int halfLength,
-        int vectorWidth,
-        FixedWorkerTeam workers,
-        out int groupIndex,
-        out int butterflyStart,
-        out int butterflyEnd)
-    {
-        if (workers.UsesPersistentStaticScheduling ||
-            vectorWidth <= 1 ||
             halfLength < vectorWidth ||
             halfLength % vectorWidth != 0)
         {

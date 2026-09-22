@@ -22,7 +22,71 @@ internal sealed partial class ParallelBigUnsigned
         bool vector = Vector128.IsHardwareAccelerated &&
             ((workers.UseAvx2Ntt && Avx2.IsSupported) ||
              (workers.UseSseNtt && Sse2.IsSupported) || workers.UseNeonNtt);
-        if (vector)
+        if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512Pointwise) && Avx512F.IsSupported && count >= 16)
+        {
+            ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);
+            ref uint src = ref MemoryMarshal.GetArrayDataReference(product);
+            var limit = Vector512.Create((int)LimbBase - 1);
+            var radix = Vector512.Create(LimbBase);
+            var one = Vector512.Create(1u);
+            Span<uint> remainders = stackalloc uint[16];
+            Span<uint> quotients = stackalloc uint[16];
+            for (; offset <= count - 16; offset += 16)
+            {
+                if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
+                var p = Vector512.LoadUnsafe(ref src, (nuint)(productStart + offset));
+                if (multiplicity == 2) p += p;
+                var sum = Vector512.LoadUnsafe(ref dst, (nuint)(destinationStart + offset)) + p;
+                var first = Vector512.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= first & radix;
+                var second = Vector512.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= second & radix;
+                var q = (first & one) + (second & one);
+                sum.CopyTo(remainders);
+                q.CopyTo(quotients);
+                for (int lane = 0; lane < 16; lane++)
+                {
+                    ulong digit = remainders[lane] + carry;
+                    bool overflow = digit >= LimbBase;
+                    destination[destinationStart + offset + lane] =
+                        (uint)(overflow ? digit - LimbBase : digit);
+                    carry = quotients[lane] + (overflow ? 1UL : 0UL);
+                }
+            }
+        }
+        if (workers.UseAvx2Ntt && Avx2.IsSupported && count - offset >= 8)
+        {
+            ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);
+            ref uint src = ref MemoryMarshal.GetArrayDataReference(product);
+            var limit = Vector256.Create((int)LimbBase - 1);
+            var radix = Vector256.Create(LimbBase);
+            var one = Vector256.Create(1u);
+            Span<uint> remainders = stackalloc uint[8];
+            Span<uint> quotients = stackalloc uint[8];
+            for (; offset <= count - 8; offset += 8)
+            {
+                if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
+                var p = Vector256.LoadUnsafe(ref src, (nuint)(productStart + offset));
+                if (multiplicity == 2) p += p;
+                var sum = Vector256.LoadUnsafe(ref dst, (nuint)(destinationStart + offset)) + p;
+                var first = Vector256.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= first & radix;
+                var second = Vector256.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= second & radix;
+                var q = (first & one) + (second & one);
+                sum.CopyTo(remainders);
+                q.CopyTo(quotients);
+                for (int lane = 0; lane < 8; lane++)
+                {
+                    ulong digit = remainders[lane] + carry;
+                    bool overflow = digit >= LimbBase;
+                    destination[destinationStart + offset + lane] =
+                        (uint)(overflow ? digit - LimbBase : digit);
+                    carry = quotients[lane] + (overflow ? 1UL : 0UL);
+                }
+            }
+        }
+        if (vector && count - offset >= 4)
         {
             ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);
             ref uint src = ref MemoryMarshal.GetArrayDataReference(product);

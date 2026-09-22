@@ -75,7 +75,7 @@ internal sealed partial class ParallelBigUnsigned
             return;
         }
 
-        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+        if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
         {
             BuildGlobalShoupCompanionRangeNeon(
                 twiddles,
@@ -463,6 +463,14 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> one,
         Vector128<uint> zero)
     {
+        if (!AdvSimd.Arm64.IsSupported)
+        {
+            // Exact reciprocal estimate is at most one below the quotient.
+            // Unsigned residual <2p<2^32 supplies the correction, including x=0.
+            var q = twiddle * reciprocalHigh + MultiplyHighUInt32Portable(twiddle, reciprocalLow);
+            var remainder = zero - q * modulus;
+            return q + (Vector128.GreaterThanOrEqual(remainder, modulus) & one);
+        }
         Vector128<uint> estimate =
             AdvSimd.Add(
                 AdvSimd.Multiply(

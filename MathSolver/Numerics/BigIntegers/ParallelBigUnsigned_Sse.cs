@@ -699,7 +699,7 @@ internal sealed partial class ParallelBigUnsigned
         int quarterLength = halfLength >> 1;
         int groupCount = values.Length / stageLength;
         int segmentsPerGroup =
-            GetVectorAlignedSegmentsPerGroup(
+            GetFusionAlignedSegmentsPerGroup(
                 quarterLength,
                 groupCount,
                 workers,
@@ -718,7 +718,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segmentsPerGroup,
                         quarterLength,
@@ -865,7 +865,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
             workers,
@@ -884,7 +884,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 for (int segment = start; segment < end; segment++)
                 {
-                    GetVectorAlignedSegmentBounds(
+                    GetFusionAlignedSegmentBounds(
                         segment,
                         segments,
                         halfLength,
@@ -946,7 +946,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
             workers,
@@ -959,7 +959,7 @@ internal sealed partial class ParallelBigUnsigned
             ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
             for (int segment = start; segment < end; segment++)
             {
-                GetVectorAlignedSegmentBounds(
+                GetFusionAlignedSegmentBounds(
                     segment,
                     segments,
                     halfLength,
@@ -1015,7 +1015,7 @@ internal sealed partial class ParallelBigUnsigned
     {
         int halfLength = stageLength >> 1;
         int groupCount = values.Length / stageLength;
-        int segments = GetVectorAlignedSegmentsPerGroup(
+        int segments = GetFusionAlignedSegmentsPerGroup(
             halfLength,
             groupCount,
             workers,
@@ -1028,7 +1028,7 @@ internal sealed partial class ParallelBigUnsigned
             ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
             for (int segment = start; segment < end; segment++)
             {
-                GetVectorAlignedSegmentBounds(
+                GetFusionAlignedSegmentBounds(
                     segment,
                     segments,
                     halfLength,

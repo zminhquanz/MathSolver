@@ -29,7 +29,7 @@ internal sealed partial class ParallelBigUnsigned
             return Vector128<uint>.Count;
         }
 
-        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
+        if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
         {
             return Vector128<uint>.Count;
         }
@@ -797,7 +797,7 @@ internal sealed partial class ParallelBigUnsigned
 
             Vector128<uint> inverse =
                 ReverseUInt32LanesNeon(
-                    AdvSimd.Subtract(modulusVector, twiddle));
+                    Vector128.Subtract(modulusVector, twiddle));
             int inverseStart =
                 offset + halfLength - (index + Width - 1);
             inverse.StoreUnsafe(
@@ -820,7 +820,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 Vector128<uint> inverseShoup =
                     ReverseUInt32LanesNeon(
-                        AdvSimd.Subtract(uintMax, shoup));
+                        Vector128.Subtract(uintMax, shoup));
                 inverseShoup.StoreUnsafe(
                     ref inverseShoupRef,
                     (nuint)inverseStart);
@@ -847,7 +847,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             twiddle.StoreUnsafe(ref seedRef);
             Vector128<uint> inverseTailVector =
-                AdvSimd.Subtract(modulusVector, twiddle);
+                Vector128.Subtract(modulusVector, twiddle);
             inverseTailVector.StoreUnsafe(ref inverseScratchRef);
 
             if (buildShoupCompanions)
@@ -862,7 +862,7 @@ internal sealed partial class ParallelBigUnsigned
                         zero);
                 shoupTailVector.StoreUnsafe(ref shoupScratchRef);
                 Vector128<uint> inverseShoupTailVector =
-                    AdvSimd.Subtract(uintMax, shoupTailVector);
+                    Vector128.Subtract(uintMax, shoupTailVector);
                 inverseShoupTailVector.StoreUnsafe(ref inverseShoupScratchRef);
             }
 
