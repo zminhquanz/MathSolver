@@ -14,6 +14,14 @@ Math Solver is a cross-platform .NET MAUI desktop application providing arbitrar
 
 The heart of the application's computation engine:
 
+Its partial implementation is grouped by responsibility: `ParallelBigUnsigned_Binary.cs`
+handles binary import/powers, `ParallelBigUnsigned_Schoolbook.cs` handles small
+products, `ParallelBigUnsigned_Reconstruction.cs` handles CRT/carry/segment
+accumulation, and `ParallelBigUnsigned_NttKernels.cs` holds residual NTT,
+inverse-fusion, pointwise and final-inverse helpers. SSE and NEON backends and
+twiddle/Shoup preparation retain separate files because they have distinct
+platform or measurement boundaries.
+
 - **Base**: Digits are stored in base 10,000 so TXT export never needs a giant binary-to-decimal division tree.
 - **Multiplication**: Large products use two exact NTTs and CRT; butterfly work inside every transform is shared by the configured logical-processor worker budget.
 - **Bit-shift shortcut**: `|a| = 2^k` powers use `BigInteger.One << (k * n)` — single-threaded, exact result. Binary BigInteger intermediate results are imported into the same base-10,000 representation before TXT export. A 1,024-limb leaf is exactly 4,096 decimal digits, matching the export block size and keeping each leaf conversion small.

@@ -3,15 +3,138 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
-#if ANDROID
 using System.Runtime.Intrinsics.Arm;
-#endif
+using System.Runtime.Intrinsics.X86;
 
 namespace MathSolver.Numerics;
 
 internal sealed partial class ParallelBigUnsigned
 {
+    #region CRT reconstruction
+    /// <summary>
+    /// Exact eight-coefficient CRT reconstruction for AVX2-only x86 paths.
+    /// The modular inverse is constant for the whole CRT pass, so the same
+    /// Shoup multiplier used by the AVX2 NTT kernels removes UInt64 remainder
+    /// operations. VPMULUDQ widens even and odd dword lanes independently;
+    /// VPUNPCKLQ/HQ + VPERM2I128 restore coefficient order before two YMM
+    /// stores. No unsafe pointer arithmetic or coefficient-sized side table is
+    /// introduced.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static int ReconstructCrtRangeAvx2(
+        ReadOnlySpan<uint> firstSpan,
+        ReadOnlySpan<uint> secondSpan,
+        Span<ulong> scratchSpan)
+    {
+        int count = firstSpan.Length;
+        int vectorEnd = count & ~(Vector256<uint>.Count - 1);
+
+        ref uint firstReference = ref MemoryMarshal.GetReference(firstSpan);
+        ref uint secondReference = ref MemoryMarshal.GetReference(secondSpan);
+        ref ulong scratchReference = ref MemoryMarshal.GetReference(scratchSpan);
+
+        var context = new Avx2NttModContext(SecondModulus);
+        Vector256<uint> inverseVector =
+            Vector256.Create((uint)FirstModulusInverseInSecond);
+        Vector256<uint> inverseShoupVector =
+            Vector256.Create(FirstModulusInverseInSecondShoup);
+        Vector256<uint> firstModulusVector =
+            Vector256.Create(FirstModulus);
+        Vector256<uint> oneVector =
+            Vector256.Create(1u);
+
+        int offset = 0;
+
+        for (; offset < vectorEnd; offset += Vector256<uint>.Count)
+        {
+            Vector256<uint> first =
+                Vector256.LoadUnsafe(ref firstReference, (nuint)offset);
+
+            // FirstModulus < 5 * SecondModulus. Four unsigned conditional
+            // subtracts therefore reduce every P1 residue into P2 exactly.
+            Vector256<uint> reducedFirst = ReduceOnceAvx2(first, context);
+            reducedFirst = ReduceOnceAvx2(reducedFirst, context);
+            reducedFirst = ReduceOnceAvx2(reducedFirst, context);
+            reducedFirst = ReduceOnceAvx2(reducedFirst, context);
+
+            Vector256<uint> second =
+                Vector256.LoadUnsafe(ref secondReference, (nuint)offset);
+
+            Vector256<uint> difference =
+                SubtractModuloAvx2(second, reducedFirst, context);
+
+            Vector256<uint> multiplier =
+                MultiplyShoupAvx2(
+                    difference,
+                    inverseVector,
+                    inverseShoupVector,
+                    context);
+
+            // VPMULUDQ consumes dword lanes 0/2/4/6 and produces four exact
+            // qword products. Shift each qword to expose lanes 1/3/5/7 for the
+            // second independent chain.
+            Vector256<uint> oddFirst =
+                Avx2.ShiftRightLogical(first.AsUInt64(), 32).AsUInt32();
+            Vector256<uint> oddMultiplier =
+                Avx2.ShiftRightLogical(multiplier.AsUInt64(), 32).AsUInt32();
+
+            Vector256<ulong> firstEven64 =
+                Avx2.Multiply(first, oneVector);
+            Vector256<ulong> firstOdd64 =
+                Avx2.Multiply(oddFirst, oneVector);
+
+            Vector256<ulong> productEven =
+                Avx2.Multiply(multiplier, firstModulusVector);
+            Vector256<ulong> productOdd =
+                Avx2.Multiply(oddMultiplier, firstModulusVector);
+
+            Vector256<ulong> reconstructedEven =
+                Avx2.Add(firstEven64.AsInt64(), productEven.AsInt64())
+                    .AsUInt64();
+            Vector256<ulong> reconstructedOdd =
+                Avx2.Add(firstOdd64.AsInt64(), productOdd.AsInt64())
+                    .AsUInt64();
+
+            // AVX2 unpack operations are lane-local. First interleave the even
+            // and odd qwords, then cross the 128-bit lane boundary once so the
+            // two stores preserve scalar coefficient order 0..7.
+            Vector256<ulong> interleavedLow =
+                Avx2.UnpackLow(
+                        reconstructedEven.AsInt64(),
+                        reconstructedOdd.AsInt64())
+                    .AsUInt64();
+            Vector256<ulong> interleavedHigh =
+                Avx2.UnpackHigh(
+                        reconstructedEven.AsInt64(),
+                        reconstructedOdd.AsInt64())
+                    .AsUInt64();
+
+            Vector256<ulong> reconstructedLow =
+                Avx2.Permute2x128(
+                        interleavedLow.AsInt64(),
+                        interleavedHigh.AsInt64(),
+                        0x20)
+                    .AsUInt64();
+            Vector256<ulong> reconstructedHigh =
+                Avx2.Permute2x128(
+                        interleavedLow.AsInt64(),
+                        interleavedHigh.AsInt64(),
+                        0x31)
+                    .AsUInt64();
+
+            reconstructedLow.StoreUnsafe(
+                ref scratchReference,
+                (nuint)offset);
+            reconstructedHigh.StoreUnsafe(
+                ref scratchReference,
+                (nuint)(offset + 4));
+        }
+
+        return offset;
+    }
+    #endregion
+
+    #region Carry normalization
     // Exact base-10,000 quotient helper for packed uint32 values stored in the
     // low dword of each qword lane. ceil(2^45 / 10000) = 0xD1B71759 and
     // floor(n/10000) = (n * magic) >> 45 for every uint32 n.
@@ -1107,5 +1230,129 @@ internal sealed partial class ParallelBigUnsigned
             destination, destinationStart, count, incomingCarry,
             carries[..subtileCount], leafLength, workers, cancellationToken);
     }
+    #endregion
 
+    #region Segment accumulation
+    // Inputs are normalized base-10,000 limbs and multiplicity is 1 or 2.
+    // Raw sums <=29,997 need at most two subtractions. Carry stays <=2.
+    // Only the independent raw sum/decomposition is vectorized; inter-lane
+    // carry and inter-tile reconciliation preserve the original ordering.
+    private static ulong AccumulateNormalizedSegmentTile(
+        uint[] destination, int destinationStart, uint[] product, int productStart,
+        int count, int multiplicity, FixedWorkerTeam workers, CancellationToken token)
+    {
+        if (destinationStart < 0 || count > destination.Length - destinationStart)
+            throw new InvalidOperationException("Segmented NTT accumulation exceeded the result buffer.");
+        int offset = 0;
+        ulong carry = 0;
+        bool vector = Vector128.IsHardwareAccelerated &&
+            ((workers.UseAvx2Ntt && Avx2.IsSupported) ||
+             (workers.UseSseNtt && Sse2.IsSupported) || workers.UseNeonNtt);
+        if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512Pointwise) && Avx512F.IsSupported && count >= 16)
+        {
+            ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);
+            ref uint src = ref MemoryMarshal.GetArrayDataReference(product);
+            var limit = Vector512.Create((int)LimbBase - 1);
+            var radix = Vector512.Create(LimbBase);
+            var one = Vector512.Create(1u);
+            Span<uint> remainders = stackalloc uint[16];
+            Span<uint> quotients = stackalloc uint[16];
+            for (; offset <= count - 16; offset += 16)
+            {
+                if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
+                var p = Vector512.LoadUnsafe(ref src, (nuint)(productStart + offset));
+                if (multiplicity == 2) p += p;
+                var sum = Vector512.LoadUnsafe(ref dst, (nuint)(destinationStart + offset)) + p;
+                var first = Vector512.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= first & radix;
+                var second = Vector512.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= second & radix;
+                var q = (first & one) + (second & one);
+                sum.CopyTo(remainders);
+                q.CopyTo(quotients);
+                for (int lane = 0; lane < 16; lane++)
+                {
+                    ulong digit = remainders[lane] + carry;
+                    bool overflow = digit >= LimbBase;
+                    destination[destinationStart + offset + lane] =
+                        (uint)(overflow ? digit - LimbBase : digit);
+                    carry = quotients[lane] + (overflow ? 1UL : 0UL);
+                }
+            }
+        }
+        if (workers.UseAvx2Ntt && Avx2.IsSupported && count - offset >= 8)
+        {
+            ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);
+            ref uint src = ref MemoryMarshal.GetArrayDataReference(product);
+            var limit = Vector256.Create((int)LimbBase - 1);
+            var radix = Vector256.Create(LimbBase);
+            var one = Vector256.Create(1u);
+            Span<uint> remainders = stackalloc uint[8];
+            Span<uint> quotients = stackalloc uint[8];
+            for (; offset <= count - 8; offset += 8)
+            {
+                if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
+                var p = Vector256.LoadUnsafe(ref src, (nuint)(productStart + offset));
+                if (multiplicity == 2) p += p;
+                var sum = Vector256.LoadUnsafe(ref dst, (nuint)(destinationStart + offset)) + p;
+                var first = Vector256.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= first & radix;
+                var second = Vector256.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= second & radix;
+                var q = (first & one) + (second & one);
+                sum.CopyTo(remainders);
+                q.CopyTo(quotients);
+                for (int lane = 0; lane < 8; lane++)
+                {
+                    ulong digit = remainders[lane] + carry;
+                    bool overflow = digit >= LimbBase;
+                    destination[destinationStart + offset + lane] =
+                        (uint)(overflow ? digit - LimbBase : digit);
+                    carry = quotients[lane] + (overflow ? 1UL : 0UL);
+                }
+            }
+        }
+        if (vector && count - offset >= 4)
+        {
+            ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);
+            ref uint src = ref MemoryMarshal.GetArrayDataReference(product);
+            var limit = Vector128.Create((int)LimbBase - 1);
+            var radix = Vector128.Create(LimbBase);
+            var one = Vector128.Create(1u);
+            Span<uint> remainders = stackalloc uint[4];
+            Span<uint> quotients = stackalloc uint[4];
+            for (; offset <= count - 4; offset += 4)
+            {
+                if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
+                var p = Vector128.LoadUnsafe(ref src, (nuint)(productStart + offset));
+                if (multiplicity == 2) p += p;
+                var sum = Vector128.LoadUnsafe(ref dst, (nuint)(destinationStart + offset)) + p;
+                var first = Vector128.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= first & radix;
+                var second = Vector128.GreaterThan(sum.AsInt32(), limit).AsUInt32();
+                sum -= second & radix;
+                var q = (first & one) + (second & one);
+                sum.CopyTo(remainders);
+                q.CopyTo(quotients);
+                for (int lane = 0; lane < 4; lane++)
+                {
+                    ulong digit = remainders[lane] + carry;
+                    bool overflow = digit >= LimbBase;
+                    destination[destinationStart + offset + lane] =
+                        (uint)(overflow ? digit - LimbBase : digit);
+                    carry = quotients[lane] + (overflow ? 1UL : 0UL);
+                }
+            }
+        }
+        for (; offset < count; offset++)
+        {
+            if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
+            ulong value = destination[destinationStart + offset] +
+                (ulong)product[productStart + offset] * (uint)multiplicity + carry;
+            carry = value / LimbBase;
+            destination[destinationStart + offset] = (uint)(value - carry * LimbBase);
+        }
+        return carry;
+    }
+    #endregion
 }

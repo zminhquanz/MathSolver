@@ -10,8 +10,12 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [LargeBinaryUnsigned.cs](BigIntegers/LargeBinaryUnsigned.cs)
 - [LimbKaratsuba.cs](BigIntegers/LimbKaratsuba.cs)
 - [ParallelBigUnsigned.cs](BigIntegers/ParallelBigUnsigned.cs)
-- [ParallelBigUnsigned_BinaryImport.cs](BigIntegers/ParallelBigUnsigned_BinaryImport.cs)
-- [ParallelBigUnsigned_BinaryPower.cs](BigIntegers/ParallelBigUnsigned_BinaryPower.cs)
+- [ParallelBigUnsigned_Binary.cs](BigIntegers/ParallelBigUnsigned_Binary.cs): import limb nhị phân và lũy thừa nhị phân.
+- [ParallelBigUnsigned_Schoolbook.cs](BigIntegers/ParallelBigUnsigned_Schoolbook.cs): nhân schoolbook nhỏ và tổng quát.
+- [ParallelBigUnsigned_Reconstruction.cs](BigIntegers/ParallelBigUnsigned_Reconstruction.cs): CRT, chuẩn hóa carry và cộng tích phân đoạn.
+- [ParallelBigUnsigned_NttKernels.cs](BigIntegers/ParallelBigUnsigned_NttKernels.cs): các stage NTT còn lại, inverse fusion, pointwise và final inverse.
+- [ParallelBigUnsigned_TwiddleSimd.cs](BigIntegers/ParallelBigUnsigned_TwiddleSimd.cs): dựng bảng twiddle SIMD.
+- [ParallelBigUnsigned_GlobalShoupSimd.cs](BigIntegers/ParallelBigUnsigned_GlobalShoupSimd.cs): dựng Shoup companion cho global stage.
 - [ParallelBigUnsigned_Sse.cs](BigIntegers/ParallelBigUnsigned_Sse.cs): fallback SSE2/SSE4.1 cho butterfly NTT trong cache ở nhánh ≤10M; [kết quả đo](../SSE_NTT_SUB10M_NOTES.md).
 - [ParallelBigUnsigned_Neon.cs](BigIntegers/ParallelBigUnsigned_Neon.cs): backend NTT/CRT ARM64 NEON cho Android đến số mũ 100M: L1/L2/L3 cache-local, global cached/uncached tail, pointwise và CRT. Dùng AdvSimd.Arm64 khi runtime hỗ trợ, hoặc Vector128 compatibility path trên Mono; [kiểm thử USB](../../tests/NeonNttAndroidValidation/README.md).
 
