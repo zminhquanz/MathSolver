@@ -16,6 +16,7 @@
     <!-- Khi result/feedback Border làm nội dung dài thêm, tự đưa viewport xuống
          cuối. Behavior bỏ qua layout ban đầu và ScrollView chỉ ngang. -->
     <Style TargetType="ScrollView" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="services:AutoScrollOnContentGrowthBehavior.IsEnabled" Value="True" />
     </Style>
 

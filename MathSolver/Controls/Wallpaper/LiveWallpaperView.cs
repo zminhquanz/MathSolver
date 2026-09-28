@@ -48,7 +48,13 @@ public sealed class LiveWallpaperView : Grid
     public LiveWallpaperView()
     {
         InputTransparent = true;
+#if ANDROID
+        // This is the first child of each page Grid, so it remains behind the
+        // content without a negative native Z position on Android.
+        ZIndex = 0;
+#else
         ZIndex = -100;
+#endif
 
         // No GraphicsView, drawable, timer, MediaElement, or scrim is created
         // here. With wallpaper disabled the control stays almost allocation-free.
@@ -449,6 +455,7 @@ public sealed class LiveWallpaperView : Grid
 
         _readabilityScrim = new BoxView
         {
+            BackgroundColor = Colors.Transparent,
             Opacity = 1d,
             InputTransparent = true,
             HorizontalOptions = LayoutOptions.Fill,

@@ -246,8 +246,9 @@
 
         </Border>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" BackgroundColor="Transparent">
             <ScrollView
+                BackgroundColor="Transparent"
                 HorizontalOptions="Fill"
                 VerticalOptions="Fill">
                 <VerticalStackLayout
