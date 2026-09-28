@@ -62,7 +62,9 @@ internal static class PowerOfTenArithmetic
         PowerOfTenResult result;
         if (workerCount > 1)
             result = ParallelBigUnsigned.PowFiveAndShift(m, workerCount, progress, token,
-                forceLargeResult: forceLargeResult);
+                forceLargeResult: forceLargeResult,
+                allowNeonNtt: MathSolver.Services.CalculationAccelerationManager
+                    .UsePowerNttNeonForExponent(exponent));
         else if (forceLargeResult || !CanUseBigInteger(m))
             result = new(null, 1, null, LargeMagnitude:
                 LargeBinaryUnsigned.PowFiveAndShiftSingle(m, progress, token));

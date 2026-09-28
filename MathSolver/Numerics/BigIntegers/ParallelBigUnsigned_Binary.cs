@@ -143,7 +143,8 @@ internal sealed partial class ParallelBigUnsigned
     internal static PowerOfTenResult PowFiveAndShift(int exponent, int workerCount,
         Action<int, int>? progress, CancellationToken token,
         int maximumTransformLength = 0, bool forceLargeResult = false,
-        bool cacheForward = true, bool? persistentScheduling = null)
+        bool cacheForward = true, bool? persistentScheduling = null,
+        bool allowNeonNtt = true)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(exponent);
         if (maximumTransformLength == 0)
@@ -163,7 +164,7 @@ internal sealed partial class ParallelBigUnsigned
         workerCount = Math.Clamp(workerCount, 1, Math.Max(1, Environment.ProcessorCount));
         bool largeSchedule = persistentScheduling ?? maximumTransformLength > SmallBinaryTransformLength;
         bool avx2 = CalculationAccelerationManager.UsePowerNttAvx2;
-        bool neon = !avx2 && CalculationAccelerationManager.UsePowerNttNeon;
+        bool neon = !avx2 && allowNeonNtt && CalculationAccelerationManager.UsePowerNttNeon;
         bool sse = !avx2 && !neon && CalculationAccelerationManager.UsePowerNttSse;
         // Match the accepted large decimal engine: static scheduling enables
         // its individually validated AVX-512 kernels rather than the legacy gate.

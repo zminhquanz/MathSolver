@@ -705,7 +705,8 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx2Ntt,
                 useAvx512Ntt,
                 useSseNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttSse,
-                useNeonNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttNeon);
+                useNeonNtt: exponent <= LegacyMaximumExponent &&
+                    CalculationAccelerationManager.UsePowerNttNeonForExponent(exponent));
 
         if (TryCreateExponentSplit(
                 exponent,
@@ -829,7 +830,7 @@ internal sealed partial class ParallelBigUnsigned
         bool useNeonNtt =
             !useAvx2Ntt &&
             !useSseNtt &&
-            CalculationAccelerationManager.UsePowerNttNeon;
+            CalculationAccelerationManager.UsePowerNttNeonForExponent(exponent);
 
         int chunkExponent =
             LegacyMaximumExponent;

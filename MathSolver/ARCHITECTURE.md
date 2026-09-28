@@ -842,3 +842,12 @@ The >10M NTT/CRT path no longer drops AVX2 or the x86 128-bit SSE family back to
 ## Android ARM64 NEON large NTT/CRT (100M)
 
 The memory-bounded >10M power path can now keep the NTT/CRT pipeline on managed 128-bit NEON when Hardware acceleration selects ARM NEON: cache-local L1/L2/L3, global cached/uncached stages, pointwise multiplication and CRT reconstruction. The existing segmented scheduling, memory budget and final exact normalization/prefix-carry path remain unchanged. See `NEON_LARGE_NTT_CRT_NOTES.md`.
+
+For power calculations with an original exponent of at most 1,000,000, Android
+Release selects scalar NTT/CRT even when ARM NEON is enabled. This covers both
+general bases and the factorized `10^k` binary path. A reported 1M exponent
+took 9 seconds on NEON versus 3 seconds on scalar on the same device; the
+policy avoids the slower short-power path without changing the SIMD setting
+for other operations. Larger exponents retain NEON dispatch. This is a
+workload policy based on the reported device result, not a general claim that
+scalar is faster on all ARM processors.

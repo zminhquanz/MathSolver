@@ -262,6 +262,13 @@ public static class CalculationAccelerationManager
         false;
 #endif
 
+    // On Android Release, the 128-bit modular NEON NTT takes longer than the
+    // scalar NTT at exponent 1M (reported 9 s versus 3 s). Select the scalar
+    // kernels for this short-power range while keeping the user's NEON setting
+    // available for longer NTTs and other SIMD operations.
+    public static bool UsePowerNttNeonForExponent(int exponent) =>
+        exponent > 1_000_000 && UsePowerNttNeon;
+
     /// <summary>SSE-family fallback for cache-resident NTT butterflies and CRT through 100M.</summary>
     public static bool UsePowerNttSse =>
 #if ANDROID
