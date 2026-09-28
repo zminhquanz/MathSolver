@@ -321,7 +321,7 @@ public static class LocalizationService
     }
 
 
-    private static string ResolveInitialCulture()
+    private static string? ResolveInitialCulture()
     {
         const string preferenceKey =
             "Localization.SelectedCulture";
@@ -334,7 +334,12 @@ public static class LocalizationService
                 ResolveLegacyCulture());
         }
 
-        return ResolveLegacyCulture();
+        // Existing users may only have the old app_language preference.
+        // With neither preference set, let LocalizationManager match the
+        // operating-system culture to an installed language pack.
+        return AppLanguageManager.HasStoredLanguage
+            ? ResolveLegacyCulture()
+            : null;
     }
 
     private static string ResolveLegacyCulture()

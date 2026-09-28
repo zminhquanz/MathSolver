@@ -64,7 +64,7 @@ public sealed class LocalizationManager :
         DefaultCulture;
 
     /// <summary>
-    /// Culture selected when the application has never stored a user choice.
+    /// Fallback when the system language has no installed language pack.
     /// This is intentionally separate from SourceCulture.
     /// </summary>
     public string DefaultCulture =>
@@ -125,16 +125,28 @@ public sealed class LocalizationManager :
                     true;
             }
 
-            string storedCulture =
-                Preferences.Default.Get(
+            string culture;
+            if (!string.IsNullOrWhiteSpace(preferredCulture))
+            {
+                culture = preferredCulture;
+            }
+            else if (Preferences.Default.ContainsKey(SelectedCulturePreferenceKey))
+            {
+                culture = Preferences.Default.Get(
                     SelectedCulturePreferenceKey,
                     DefaultCulture);
+            }
+            else
+            {
+                IReadOnlyList<LanguageOption> availableLanguages =
+                    await _provider.GetAvailableLanguagesAsync(cancellationToken)
+                        .ConfigureAwait(false);
 
-            string culture =
-                string.IsNullOrWhiteSpace(
-                    preferredCulture)
-                    ? storedCulture
-                    : preferredCulture;
+                culture = SystemLanguageCultureResolver.Resolve(
+                    CultureInfo.CurrentUICulture,
+                    availableLanguages.Select(language => language.Culture),
+                    DefaultCulture);
+            }
 
             await LoadCurrentPackCoreAsync(
                 culture,

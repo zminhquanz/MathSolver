@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace MathSolver.Services;
 
 public sealed record AppLanguageOption(
@@ -44,12 +46,26 @@ public static class AppLanguageManager
     private const string LanguagePreferenceKey =
         "app_language";
 
+    private const string SelectedCulturePreferenceKey =
+        "Localization.SelectedCulture";
+
     private static bool _initialized;
 
     public static event EventHandler? LanguageChanged;
 
     public static AppLanguage CurrentLanguage { get; private set; } =
         AppLanguage.English;
+
+    public static bool HasStoredLanguage =>
+        Preferences.Default.ContainsKey(LanguagePreferenceKey);
+
+    private static AppLanguage SystemDefaultLanguage =>
+        string.Equals(
+            CultureInfo.CurrentUICulture.TwoLetterISOLanguageName,
+            "vi",
+            StringComparison.OrdinalIgnoreCase)
+            ? AppLanguage.Vietnamese
+            : AppLanguage.English;
 
     public static void Initialize()
     {
@@ -63,7 +79,32 @@ public static class AppLanguageManager
         string storedValue =
             Preferences.Default.Get(
                 LanguagePreferenceKey,
-                AppLanguage.English.ToString());
+                SystemDefaultLanguage.ToString());
+
+        // The JSON pack is the active UI language. Keep older screens that
+        // still use AppLanguage in sync with a saved pack selection.
+        if (Preferences.Default.ContainsKey(SelectedCulturePreferenceKey))
+        {
+            string selectedCulture = Preferences.Default.Get(
+                SelectedCulturePreferenceKey,
+                string.Empty);
+
+            try
+            {
+                storedValue = CultureInfo.GetCultureInfo(selectedCulture)
+                    .TwoLetterISOLanguageName switch
+                {
+                    "vi" => AppLanguage.Vietnamese.ToString(),
+                    "en" => AppLanguage.English.ToString(),
+                    _ => storedValue
+                };
+            }
+            catch (CultureNotFoundException)
+            {
+                // Fall back to the legacy preference if the saved culture
+                // is no longer valid.
+            }
+        }
 
         if (!Enum.TryParse(
                 storedValue,
@@ -71,7 +112,7 @@ public static class AppLanguageManager
                 out AppLanguage language))
         {
             language =
-                AppLanguage.English;
+                SystemDefaultLanguage;
         }
 
         CurrentLanguage =
@@ -83,10 +124,7 @@ public static class AppLanguageManager
     {
         Initialize();
 
-        if (CurrentLanguage == language)
-        {
-            return false;
-        }
+        bool changed = CurrentLanguage != language;
 
         CurrentLanguage =
             language;
@@ -99,12 +137,12 @@ public static class AppLanguageManager
             null,
             EventArgs.Empty);
 
-        return true;
+        return changed;
     }
 
     public static void ResetToDefault()
     {
         SetLanguage(
-            AppLanguage.English);
+            SystemDefaultLanguage);
     }
 }
