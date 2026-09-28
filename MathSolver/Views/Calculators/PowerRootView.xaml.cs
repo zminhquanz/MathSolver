@@ -3991,16 +3991,7 @@ public partial class PowerRootView : LocalizedSolverView
 
             lines.Insert(
                 6,
-                diagnostics.UsedNeonNttButterflies
-                    ? "NTT/CRT: NEON/AdvSIMD (128-bit, ≤100M; global-tail SIMD)"
-                    : diagnostics.UsedSseNttButterflies
-                    ? $"NTT/CRT: {CalculationAccelerationManager.PowerNttSseBackendName} (128-bit, ≤100M; global-tail SIMD)"
-                    : diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
-                    ? "NTT/CRT: AVX2 256-bit + global-tail SIMD"
-                    : Format(
-                    diagnostics.UsedAvx2NttButterflies
-                        ? "PowerRoot.InfoNttKernelAvx2"
-                        : "PowerRoot.InfoNttKernelScalar"));
+                GetNttKernelDetail(state, diagnostics));
 
             if (state.BinaryTransformLimit > 0)
             {
@@ -5850,6 +5841,44 @@ public partial class PowerRootView : LocalizedSolverView
             key);
     }
 
+    private static string GetNttKernelDetail(
+        PowerCalculationState state,
+        ParallelPowerDiagnostics diagnostics)
+    {
+#if ANDROID
+        if (diagnostics.UsedNeonNttButterflies)
+        {
+            return Format(
+                "PowerRoot.InfoNttKernelNeonAndroid",
+                state.Exponent > LegacyNttMaximumExponent ? ">10M" : "≤10M");
+        }
+
+        if (!state.WasSimdEnabled || !state.WasNeonSelected)
+        {
+            return Translate("PowerRoot.InfoNttKernelScalarNeonOff");
+        }
+
+        if (state.WasNeonPortableSuppressed)
+        {
+            return Translate("PowerRoot.InfoNttKernelScalarNeonPortable");
+        }
+
+        return Translate(
+            state.Exponent <= 1_000_000 && state.WasAndroidNeonAllowed
+                ? "PowerRoot.InfoNttKernelScalarNeonShort"
+                : "PowerRoot.InfoNttKernelScalarNeonUnavailable");
+#else
+        return diagnostics.UsedSseNttButterflies
+            ? $"NTT/CRT: {CalculationAccelerationManager.PowerNttSseBackendName} (128-bit, ≤100M; global-tail SIMD)"
+            : diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
+                ? "NTT/CRT: AVX2 256-bit + global-tail SIMD"
+                : Format(
+                    diagnostics.UsedAvx2NttButterflies
+                        ? "PowerRoot.InfoNttKernelAvx2"
+                        : "PowerRoot.InfoNttKernelScalar");
+#endif
+    }
+
     private static string Format(
         string key,
         params object?[] values)
@@ -5882,6 +5911,17 @@ public partial class PowerRootView : LocalizedSolverView
         int BinaryTransformLimit = 0)
     {
         public bool AllowAvx512 { get; } = CalculationAccelerationManager.AllowAvx512;
+
+        public bool WasSimdEnabled { get; } = CalculationAccelerationManager.UseSimd;
+
+        public bool WasNeonSelected { get; } =
+            CalculationAccelerationManager.EffectiveSimdMode == CalculationSimdMode.ArmNeon;
+
+        public bool WasNeonPortableSuppressed { get; } =
+            CalculationAccelerationManager.IsPowerNttPortableNeonSuppressed;
+
+        public bool WasAndroidNeonAllowed { get; } =
+            CalculationAccelerationManager.IsAndroidNeonExecutionAllowed;
     }
 
     private sealed record RootCalculationState(

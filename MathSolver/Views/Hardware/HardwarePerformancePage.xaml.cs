@@ -819,9 +819,28 @@ public partial class HardwarePerformancePage : ContentPage
                         ? LocalizationKeys.Hardware.ParabolaAccelerationOn
                         : LocalizationKeys.Hardware.ParabolaAccelerationOff);
 
+        string nttBackendStatus =
+#if ANDROID
+            !useSimd || selectedMode != CalculationSimdMode.ArmNeon
+                ? LocalizationService.TranslateKey("Hardware.NttBackendNeonOff")
+                : CalculationAccelerationManager.IsPowerNttPortableNeonSuppressed
+                    ? LocalizationService.TranslateKey("Hardware.NttBackendNeonPortable")
+                    : CalculationAccelerationManager.UsePowerNttNeon
+                        ? LocalizationService.TranslateKey("Hardware.NttBackendNeonDirect")
+                        : LocalizationService.TranslateKey("Hardware.NttBackendNeonUnavailable");
+#else
+            CalculationAccelerationManager.UsePowerNttAvx2
+                ? CalculationAccelerationManager.AllowAvx512
+                    ? "AVX-512 / AVX2 NTT/CRT (global-tail SIMD)"
+                    : "AVX2 NTT/CRT (256-bit, global-tail SIMD)"
+                : CalculationAccelerationManager.UsePowerNttSse
+                    ? CalculationAccelerationManager.PowerNttSseBackendName + " (128-bit NTT/CRT, ≤100M; global-tail SIMD)"
+                    : "Scalar";
+#endif
+
         accelerationStatus +=
             Environment.NewLine +
-            nttAccelerationStatus + " (" + (CalculationAccelerationManager.UsePowerNttNeon ? "NEON/AdvSIMD (128-bit NTT/CRT, ≤100M; global-tail SIMD)" : CalculationAccelerationManager.UsePowerNttAvx2 ? CalculationAccelerationManager.AllowAvx512 ? "AVX-512 / AVX2 NTT/CRT (global-tail SIMD)" : "AVX2 NTT/CRT (256-bit, global-tail SIMD)" : CalculationAccelerationManager.UsePowerNttSse ? CalculationAccelerationManager.PowerNttSseBackendName + " (128-bit NTT/CRT, ≤100M; global-tail SIMD)" : "Scalar") + ")" +
+            nttAccelerationStatus + " (" + nttBackendStatus + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
             Environment.NewLine +

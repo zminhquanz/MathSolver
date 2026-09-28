@@ -841,13 +841,19 @@ The >10M NTT/CRT path no longer drops AVX2 or the x86 128-bit SSE family back to
 
 ## Android ARM64 NEON large NTT/CRT (100M)
 
-The memory-bounded >10M power path can now keep the NTT/CRT pipeline on managed 128-bit NEON when Hardware acceleration selects ARM NEON: cache-local L1/L2/L3, global cached/uncached stages, pointwise multiplication and CRT reconstruction. The existing segmented scheduling, memory budget and final exact normalization/prefix-carry path remain unchanged. See `NEON_LARGE_NTT_CRT_NOTES.md`.
+The memory-bounded >10M path contains 128-bit NEON kernels for cache-local
+L1/L2/L3 stages, global cached/uncached stages, pointwise multiplication and
+CRT reconstruction. The existing segmented scheduling, memory budget and
+exact normalization remain unchanged. The same backend is present in the
+<=10M path.
 
-For power calculations with an original exponent of at most 1,000,000, Android
-Release selects scalar NTT/CRT even when ARM NEON is enabled. This covers both
-general bases and the factorized `10^k` binary path. A reported 1M exponent
-took 9 seconds on NEON versus 3 seconds on scalar on the same device; the
-policy avoids the slower short-power path without changing the SIMD setting
-for other operations. Larger exponents retain NEON dispatch. This is a
-workload policy based on the reported device result, not a general claim that
-scalar is faster on all ARM processors.
+Android Release now enables NEON for power NTT/CRT only when the runtime
+exposes direct `AdvSimd.Arm64` and the exponent is above 1M. On the tested
+ARM64 Mono runtime, only hardware-accelerated portable `Vector128` was
+exposed; whole-power benchmarks at 1M, 10M, 20M and 100M found that path
+2.2-2.9 times slower than Scalar with identical output hashes. Pow therefore
+uses Scalar on that runtime even if app-wide NEON is enabled. This gate does
+not change NEON dispatch for other app features, and it does not infer the
+performance of direct AdvSimd on a different runtime. The >10M physical-RAM
+admission rule remains in effect. See
+[`tests/AndroidNttBenchmark/README.md`](../tests/AndroidNttBenchmark/README.md).
