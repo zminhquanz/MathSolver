@@ -57,6 +57,11 @@
     <DefineConstants>$(DefineConstants);MATHSOLVER_ANDROID_RELEASE</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
   <!-- Keep Mono JIT on Android Debug. SIMD execution is separately disabled
        by CalculationAccelerationManager; CPU capabilities remain detectable. -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
