@@ -1,9 +1,21 @@
-# Math puzzle unit checks
+# Math puzzle checks
+
+## Visual Studio
+
+1. Open `MathSolver.slnx` in Visual Studio.
+2. In Solution Explorer, right-click `MathPuzzleUnitTests` and select **Set as Startup Project**.
+3. Select **Release** (or **Debug** to use breakpoints), then press **Ctrl+F5** to run.
+4. Read the console output. Each group prints `PASS` or `FAIL`, followed by a total. A failing group also prints the exception and the source line.
+
+This is a standalone console test harness. Its checks do not appear as individual
+tests in Visual Studio's Test Explorer; run the project or use the command below.
+
+## Command line
 
 Run from the repository root:
 
 ```powershell
-dotnet run --project tests/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj -c Release
+dotnet run --project UnitTest/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj -c Release
 ```
 
 The command exits with a nonzero status when any check fails. It uses the real

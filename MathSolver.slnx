@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/UnitTest/">
+    <Project Path="UnitTest/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj" />
+  </Folder>
   <Project Path="MathSolver/MathSolver.csproj" />
 </Solution>
