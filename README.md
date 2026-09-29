@@ -17,32 +17,41 @@
   </a>
 </p>
 
-Math Solver is an offline-first mathematics learning and problem-solving application built with .NET MAUI. It provides step-by-step calculations, reusable formula references, responsive layouts, and high-precision numeric processing for students and anyone who wants to review essential mathematics.
+Math Solver is a mathematics learning and problem-solving application built with .NET MAUI. It combines worked calculations, practice questions, formula references, and hardware tools in a responsive interface. Core mathematics features work offline.
 
 ## Current Release
 
-The current stable release is **Math Solver v0.1.1**.
+The current release is **Math Solver v0.2.0** for **Android** and **Windows**. Download the available builds from [GitHub Releases](https://github.com/zminhquanz/MathSolver/releases/latest).
 
-The current public builds are available for Windows x64.
+| Platform | v0.2.0 build and scope |
+| --- | --- |
+| Android | ARM64 APK; the project sets Android 5.0 (API 21) as its minimum version. Includes the core calculators, quizzes, formula references, tables, settings, and hardware benchmarks. |
+| Windows | Windows x64 build; the project sets Windows 10 version 1809 (build 17763) as its minimum version. Includes the core features and, on eligible hardware, optional local AI question generation and AI benchmarks. |
 
-Android, macOS, and iOS releases are planned but are not available yet.
-
-Download the latest version from the
-[GitHub Releases](../../releases/latest) page.
+The project also contains iOS and Mac Catalyst targets, but this release announcement covers Android and Windows only.
 
 ## Features
 
 ### Solve Math
 
-The **Solve Math** tab contains dedicated tools for:
+The **Solve Math** tab provides seven tools:
 
-- Basic arithmetic: addition, subtraction, multiplication, and division
-- Integer and decimal calculations
-- Long-division presentation
-- Fraction addition, subtraction, multiplication, division, simplification, and common denominators
-- Finding an unknown value in arithmetic equations
-- Quadratic equations and parabola graphs
-- Plane and solid geometry calculations
+| Tool | What it does |
+| --- | --- |
+| Basic arithmetic | Adds, subtracts, multiplies, and divides integers or decimals; evaluates expressions with operator precedence and brackets; shows calculation steps and long division. |
+| Average | Calculates the arithmetic mean of a list of integers or decimals and explains the sum and division. |
+| Powers and roots | Calculates integer powers with large-number strategies, previews long results, and exports large results to TXT; calculates roots, including supported complex results for negative radicands. |
+| Fractions | Adds, subtracts, multiplies, divides, simplifies, and finds common denominators with worked steps. |
+| Find x | Solves for an unknown component of addition, subtraction, multiplication, or division. |
+| Equations | Solves linear and quadratic equations, explains the result, and draws the corresponding line or parabola. |
+| Geometry | Calculates measurements for plane and solid shapes with formulas and diagrams. |
+
+Results can be copied to the clipboard. Settings include an option to show long numeric results in full instead of the default compact display.
+
+The powers and roots tool accepts these input ranges:
+
+- Powers: an integer base from -1,000,000,000,000,000,000 to 1,000,000,000,000,000,000 and an exponent from 0 to 100,000,000. `0^0` is undefined.
+- Roots: a radicand that fits in a signed 128-bit integer and a root degree from -2,147,483,648 to 2,147,483,647, excluding zero. A negative degree gives the reciprocal of the corresponding positive-degree root. A negative radicand with an even degree can produce a complex result.
 
 ### Geometry Calculator
 
@@ -79,9 +88,9 @@ The calculator can determine values such as:
 - Total surface area
 - Volume
 
-### Quadratic Equations
+### Equations and Numeric Precision
 
-Internal calculations use a custom Double-Double numeric structure for approximately 32 significant digits of precision. This improves the calculation of:
+The equation tool supports both linear and quadratic modes. Quadratic calculations use a custom Double-Double numeric structure for approximately 32 significant digits of precision. This improves the calculation of:
 
 - Discriminant
 - Square root of the discriminant
@@ -89,46 +98,67 @@ Internal calculations use a custom Double-Double numeric structure for approxima
 - Parabola vertex
 - Parabola sampling points
 
+The codebase also uses higher-precision and big-integer types where appropriate for other calculations. Precision and supported input ranges depend on the tool.
+
+### Math Puzzles
+
+The **Math Puzzles** tab generates practice questions for basic arithmetic, fractions, geometry, finding x, direct or inverse proportion, motion, averages, and percentages. Choose a specific type or a mixed set, then choose a difficulty from one to five stars. Answer using true/false, multiple choice, or a written response; the app checks the answer and shows a solution.
+
+Algorithm-generated questions work offline on Android and Windows. On Windows, an optional **AI/LLM** source can generate word problems using a local Gemma 4 GGUF model. It appears only when the device supports AVX2 and has at least 12 GiB of physical RAM. The model can be imported or downloaded in the app; downloading it requires internet access. Android does not currently include local AI generation.
+
 ### Formula Reference
 
 The **Formulas** tab includes:
 
 - Rules for finding unknown components in addition, subtraction, multiplication, and division
 - Detailed examples and verification steps
+- Direct, inverse, and compound proportion, with interactive diagrams
+- Motion and average formulas with worked examples
+- A measurement reference and converter for length, mass, time, area, volume, capacity, speed, and temperature
 - Plane geometry formulas
 - Solid geometry formulas
 - Reusable diagrams and symbol descriptions
+
+The unit converter groups thousands with commas and uses a dot for the decimal part in its results, regardless of the selected app language (for example, `1,000 m` or `1,000 kg`).
 
 ### Multiplication Tables
 
 The **Multiplication Tables** tab provides:
 
-- Multiplication tables from 1 to 20
-- Division tables
+- Multiplication and division tables, selectable in the 1–10 and 11–20 ranges
 - Responsive layouts for desktop and mobile screens
+
+### Hardware and Performance
+
+Open **Settings → Hardware information** to inspect device, CPU, memory, runtime, and supported instruction-set information. The page includes benchmarks for Int32, Int64, Float, and Double, with controls for SIMD acceleration and multithreading. Android has ARM/NEON-specific benchmark paths; Windows exposes supported x86 SIMD comparisons. On eligible Windows devices, a separate local AI benchmark measures model generation speed and question validity.
 
 ## User Interface
 
 Math Solver includes:
 
-- Responsive layouts for desktop, laptop, tablet, and phone screens
-- Light and dark themes
-- Custom accent colors
+- Responsive layouts for desktop, laptop, tablet, and phone screens; Android sub-tabs also support swipe navigation
+- System, light, and dark themes; Material You dynamic colors are available on Android 12 and later
+- Preset or custom accent colors, including HEX and RGB controls
 - Font customization
-- Vietnamese and English localization
+- Vietnamese and English built-in localization
+- Optional animated mathematics background or an imported H.264 MP4 live wallpaper
 - Animated tab transitions
 - Reusable vector and `GraphicsView` illustrations
 - Adaptive card layouts based on the available screen width
+- Settings for full-length numeric results and developer diagnostics
+
+Imported MP4 wallpaper clips require a compatible H.264 decoder and can be up to 120 seconds long. On Android, the video is limited to 3,686,400 pixels (equivalent to 2560 × 1440).
 
 ## Offline Operation
 
-The main calculation features work entirely offline. No internet connection or cloud-based AI service is required for standard arithmetic, fractions, equations, multiplication tables, formulas, or geometry calculations.
+Calculators, algorithm-generated math puzzles, formulas, and multiplication tables work offline. Optional Windows local AI runs on the device after a supported model is available. Downloading a model, opening external links, and obtaining a release build require a network connection.
 
 ## Technology
 
 - C#
-- .NET MAUI
+- .NET 10 and .NET MAUI
 - XAML
+- LLamaSharp and llama.cpp for optional Windows-only local AI
 
 ## Project Structure
 
@@ -154,12 +184,12 @@ MathSolver/
 
 ### Requirements
 
-Install the .NET SDK and .NET MAUI workload required by the project. For Windows development, use Visual Studio with the .NET MAUI development tools installed. Android development also requires the Android SDK and an emulator or physical device.
+Install the .NET 10 SDK and the .NET MAUI workload. For Windows development, use Visual Studio with the .NET MAUI development tools installed. Android development also requires the Android SDK and an emulator or physical device.
 
 ### Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/zminhquanz/MathSolver.git
 cd MathSolver
 ```
 
@@ -172,14 +202,20 @@ dotnet restore
 ### Build
 
 ```bash
-dotnet build
+dotnet build MathSolver/MathSolver.csproj -f net10.0-android
 ```
 
-You can also open the solution in Visual Studio, select **Windows Machine** or an Android target, and run the application.
+On Windows, build the Windows target with:
+
+```powershell
+dotnet build MathSolver/MathSolver.csproj -f net10.0-windows10.0.19041.0
+```
+
+You can also open the solution in Visual Studio, select **Windows Machine** or an Android target, and run the application. Release APK builds target Android ARM64 and require a signing setup.
 
 ## Translating Math Solver
 
-The translation workflow is **export a CSV → translate the spreadsheet → validate and generate a JSON language pack → import it into the app**. Translators only need a spreadsheet editor. Developers run the Python tool and manage the language packs.
+The translation workflow is **export a CSV → translate the spreadsheet → validate and generate a JSON language pack → integrate the pack into the app**. Translators only need a spreadsheet editor. Developers run the Python tool and manage the language packs.
 
 The app matches translations using stable keys such as `Formula.Tabs.UnknownComponent`. Translators do not need to understand these keys or the app's code: they read the original text and its context, then enter a translation. The tool preserves the mapping automatically, even if spreadsheet rows are reordered.
 
@@ -191,7 +227,7 @@ The app matches translations using stable keys such as `Formula.Tabs.UnknownComp
 | [English worksheet](translations/en-US.csv) | Review existing English translations or use them as a reference |
 | [Localization tool](tools/localization.py) | Export, refresh, validate, and import worksheets |
 | [Localization catalog](MathSolver/Resources/Raw/Localization/catalog.json) | Shared context, descriptions, and placeholder explanations |
-| [Language pack reference](MathSolver/TRANSLATING.md) | JSON format, mathematical content rules, and submission details |
+| [Language pack reference](TRANSLATING.md) | JSON format, mathematical content rules, and submission details |
 
 Developers need **Python 3.9 or newer**. No additional Python packages or .NET build are needed to run the tool. Translators receiving a prepared CSV do not need Python.
 
@@ -296,11 +332,11 @@ python tools/localization.py import --input translations/en-US.csv --culture en-
 
 ### 4. Check the Language in the App
 
-Use the app's language-pack import feature to select the generated JSON, then select that language. CSV import in the Python tool creates a file; it does not install the language into the running app.
+The current language picker exposes the two built-in languages, Vietnamese and English. There is no user-facing JSON import control in v0.2.0. The app has a `LocalizationService.ImportLanguagePackAsync` API for developer integration, while the Python `import` command only creates the JSON file.
 
 The Python tool checks culture-code syntax. The app additionally validates it with .NET `CultureInfo`. Check the translated screens for clipped labels, readability, correct mathematical terminology, and messages containing placeholders. These visual and language checks require review in the app.
 
-To bundle an approved language with the application, place its JSON under `MathSolver/Resources/Raw/Localization` and add the language to `manifest.json`. Local imports do not require a manifest change. See the [language pack reference](MathSolver/TRANSLATING.md) for submission details.
+To bundle an approved language with the application, place its JSON under `MathSolver/Resources/Raw/Localization`, add it to `manifest.json`, and expose it in the language selection UI. Developer-initiated local imports do not require a manifest change. See the [language pack reference](TRANSLATING.md) for submission details.
 
 ### 5. Update an In-Progress Translation After Source Changes
 
@@ -351,7 +387,7 @@ Developers can run the workflow checks with:
 python -m unittest discover -s tools -p "test_localization.py"
 ```
 
-For instructions on adding per-string context, placeholder explanations, and screenshot references, see [Developer metadata guidance](MathSolver/TRANSLATING.md#developer-export-refresh-validate-and-import).
+For instructions on adding per-string context, placeholder explanations, and screenshot references, see [Developer metadata guidance](TRANSLATING.md#developer-export-refresh-validate-and-import).
 
 ## Cleaning Build Artifacts
 
