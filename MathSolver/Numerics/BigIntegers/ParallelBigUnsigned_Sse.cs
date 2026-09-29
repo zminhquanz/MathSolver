@@ -8,6 +8,14 @@ namespace MathSolver.Numerics;
 
 internal sealed partial class ParallelBigUnsigned
 {
+#if FORCE_SSE2
+    // The benchmark harness can compile the same NTT backend as an SSE2-only
+    // variant without changing the production CPU feature dispatch.
+    private const bool AllowNewerSseNtt = false;
+#else
+    private const bool AllowNewerSseNtt = true;
+#endif
+
     // SSSE3 PSHUFB extracts lanes 1/3 into the even 32-bit positions consumed
     // by PMULUDQ. SSE3 itself has no packed-integer primitive that improves
     // this NTT kernel, so SSE3 CPUs correctly execute the SSE2 arithmetic path.
@@ -262,7 +270,7 @@ internal sealed partial class ParallelBigUnsigned
     private static Vector128<uint> ExtractOddLanesForMultiplySse(
         Vector128<uint> value)
     {
-        if (Ssse3.IsSupported)
+        if (AllowNewerSseNtt && Ssse3.IsSupported)
         {
             return Ssse3.Shuffle(
                     value.AsByte(),
@@ -284,7 +292,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> reduced =
             Sse2.Subtract(value, modulus);
 
-        if (Sse41.IsSupported)
+        if (AllowNewerSseNtt && Sse41.IsSupported)
         {
             return Sse41.Min(value, reduced);
         }
@@ -324,7 +332,7 @@ internal sealed partial class ParallelBigUnsigned
 
         Vector128<uint> product;
 
-        if (Sse41.IsSupported)
+        if (AllowNewerSseNtt && Sse41.IsSupported)
         {
             Vector128<uint> q =
                 Sse2.Or(
@@ -412,6 +420,7 @@ internal sealed partial class ParallelBigUnsigned
             .AsUInt64();
     }
 
+    // Retained as the prime-specialized reference for the SSE benchmark.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<ulong> ReduceResidueProductFirstModulusSse(
         Vector128<ulong> product)
@@ -508,6 +517,35 @@ internal sealed partial class ParallelBigUnsigned
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<ulong> ReduceResidueProductFirstModulusBarrettSse(
+        Vector128<ulong> product)
+    {
+        // product < FirstModulus^2. Build high64(product * reciprocal) from
+        // SSE2's two unsigned 32x32->64 lane multiplications. The high word
+        // of the first prime's reciprocal is 2, so no extra multiply is needed.
+        Vector128<ulong> low = Sse2.And(
+            product, Vector128.Create((ulong)uint.MaxValue));
+        Vector128<ulong> high = Sse2.ShiftRightLogical(product, 32);
+        Vector128<uint> reciprocalLow =
+            Vector128.Create(unchecked((uint)FirstBarrettReciprocal));
+        Vector128<ulong> lowProduct = Sse2.Multiply(low.AsUInt32(), reciprocalLow);
+        Vector128<ulong> highProduct = Sse2.Multiply(high.AsUInt32(), reciprocalLow);
+        Vector128<ulong> cross = Sse2.Add(
+            Sse2.Add(highProduct, Sse2.ShiftLeftLogical(low, 1)),
+            Sse2.ShiftRightLogical(lowProduct, 32));
+        Vector128<ulong> quotient = Sse2.Add(
+            Sse2.ShiftLeftLogical(high, 1),
+            Sse2.ShiftRightLogical(cross, 32));
+        Vector128<ulong> quotientTimesModulus = Sse2.Multiply(
+            quotient.AsUInt32(), Vector128.Create(FirstModulus));
+        Vector128<ulong> remainder = Sse2.Subtract(product, quotientTimesModulus);
+
+        // The Barrett estimate is exact or one low, so remainder < 2p < 2^32.
+        return ReduceOnceSse(remainder.AsUInt32(), Vector128.Create(FirstModulus))
+            .AsUInt64();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<uint> MultiplyResiduesSse(
         Vector128<uint> left,
         Vector128<uint> right,
@@ -522,11 +560,14 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<ulong> productOdd =
             Sse2.Multiply(oddLeft, oddRight);
 
+        Debug.Assert(modulus == FirstModulus || modulus == SecondModulus);
+        // Barrett wins for the first prime; the second prime's existing
+        // shift-and-reciprocal reducer needs fewer instructions on SSE2/4.1.
         Vector128<ulong> remainderEven = modulus == FirstModulus
-            ? ReduceResidueProductFirstModulusSse(productEven)
+            ? ReduceResidueProductFirstModulusBarrettSse(productEven)
             : ReduceResidueProductSecondModulusSse(productEven);
         Vector128<ulong> remainderOdd = modulus == FirstModulus
-            ? ReduceResidueProductFirstModulusSse(productOdd)
+            ? ReduceResidueProductFirstModulusBarrettSse(productOdd)
             : ReduceResidueProductSecondModulusSse(productOdd);
 
         return Sse2.Or(
@@ -544,8 +585,8 @@ internal sealed partial class ParallelBigUnsigned
         // SSE2 baseline (SSSE3/SSE4.x inherit this setup): calculate the tiny
         // lane-power basis once, then apply root^first to all four lanes with
         // the packed residue multiplier instead of a dependent scalar chain.
-        uint r2 = (uint)((ulong)root * root % modulus);
-        uint r3 = (uint)((ulong)r2 * root % modulus);
+        uint r2 = MultiplyNttBarrett(root, root, modulus);
+        uint r3 = MultiplyNttBarrett(r2, root, modulus);
         Vector128<uint> lanePowers = Vector128.Create(1u, root, r2, r3);
         uint firstPower = (uint)ModPow(root, (uint)first, modulus);
         return MultiplyResiduesSse(
@@ -996,8 +1037,8 @@ internal sealed partial class ParallelBigUnsigned
                     if (sum >= modulus) sum -= modulus;
                     uint difference = left >= right ? left - right : left + modulus - right;
                     values[leftIndex] = sum;
-                    values[rightIndex] = (uint)((ulong)difference * scalarTwiddle % modulus);
-                    scalarTwiddle = (uint)((ulong)scalarTwiddle * root % modulus);
+                    values[rightIndex] = MultiplyNttBarrett(difference, scalarTwiddle, modulus);
+                    scalarTwiddle = MultiplyNttBarrett(scalarTwiddle, root, modulus);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
             }

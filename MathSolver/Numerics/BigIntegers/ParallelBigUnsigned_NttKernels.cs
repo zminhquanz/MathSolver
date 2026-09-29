@@ -1532,7 +1532,7 @@ internal sealed partial class ParallelBigUnsigned
                 for (; i < end; i++)
                 {
                     destination[i] =
-                        (uint)((ulong)left[i] * right[i] % modulus);
+                        MultiplyNttBarrett(left[i], right[i], modulus);
                 }
             });
     }
@@ -1573,7 +1573,7 @@ internal sealed partial class ParallelBigUnsigned
                 for (; i < end; i++)
                 {
                     destination[i] =
-                        (uint)((ulong)left[i] * right[i] % modulus);
+                        MultiplyNttBarrett(left[i], right[i], modulus);
                 }
             });
     }
@@ -1695,8 +1695,8 @@ internal sealed partial class ParallelBigUnsigned
         }
         if (i < end && !allowPaddedTail)
         {
-            uint rootSquared = (uint)((ulong)root * root % modulus);
-            uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
+            uint rootSquared = MultiplyNttBarrett(root, root, modulus);
+            uint rootFourth = MultiplyNttBarrett(rootSquared, rootSquared, modulus);
             if (writeRight)
             {
                 ExecuteFinalInverseBothOutputsRange(
@@ -1830,8 +1830,8 @@ internal sealed partial class ParallelBigUnsigned
         }
         if (i < end && !allowPaddedTail)
         {
-            uint rootSquared = (uint)((ulong)root * root % modulus);
-            uint rootFourth = (uint)((ulong)rootSquared * rootSquared % modulus);
+            uint rootSquared = MultiplyNttBarrett(root, root, modulus);
+            uint rootFourth = MultiplyNttBarrett(rootSquared, rootSquared, modulus);
             if (writeRight)
             {
                 ExecuteFinalInverseBothOutputsRange(

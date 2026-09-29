@@ -2769,9 +2769,7 @@ internal sealed partial class ParallelBigUnsigned
                              index++)
                         {
                             cachedLeftSpectrum[index] =
-                                (uint)((ulong)cachedLeftSpectrum[index] *
-                                       transformedRight[index] %
-                                       modulus);
+                                MultiplyNttBarrett(cachedLeftSpectrum[index], transformedRight[index], modulus);
                         }
                     });
             }
@@ -2926,9 +2924,7 @@ internal sealed partial class ParallelBigUnsigned
                                     cachedLeftSpectrum[index];
 
                                 transformedProduct[index] =
-                                    (uint)(value *
-                                           value %
-                                           modulus);
+                                    ReduceNttProductBarrett(value * value, modulus);
                             }
                         });
                 }
@@ -3020,9 +3016,7 @@ internal sealed partial class ParallelBigUnsigned
                                  index++)
                             {
                                 transformedProduct[index] =
-                                    (uint)((ulong)transformedProduct[index] *
-                                           cachedLeftSpectrum[index] %
-                                           modulus);
+                                    MultiplyNttBarrett(transformedProduct[index], cachedLeftSpectrum[index], modulus);
                             }
                         });
                 }
@@ -5083,9 +5077,7 @@ internal sealed partial class ParallelBigUnsigned
                                     transformedLeft[index];
 
                                 transformedLeft[index] =
-                                    (uint)(value *
-                                           value %
-                                           modulus);
+                                    ReduceNttProductBarrett(value * value, modulus);
                             }
                         });
                 }
@@ -5632,9 +5624,7 @@ internal sealed partial class ParallelBigUnsigned
         if (index < end)
         {
             destination[index] =
-                (uint)((ulong)left[index] *
-                       right[index] %
-                       FirstModulus);
+                ReduceFirstProductBarrett((ulong)left[index] * right[index]);
         }
     }
 
@@ -5744,9 +5734,7 @@ internal sealed partial class ParallelBigUnsigned
         if (index < end)
         {
             destination[index] =
-                (uint)((ulong)left[index] *
-                       right[index] %
-                       SecondModulus);
+                ReduceSecondProductBarrett((ulong)left[index] * right[index]);
         }
     }
 
@@ -5839,7 +5827,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             ulong value = source[index];
             destination[index] =
-                (uint)(value * value % FirstModulus);
+                ReduceFirstProductBarrett(value * value);
         }
     }
 
@@ -5932,7 +5920,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             ulong value = source[index];
             destination[index] =
-                (uint)(value * value % SecondModulus);
+                ReduceSecondProductBarrett(value * value);
         }
     }
 
@@ -5953,10 +5941,10 @@ internal sealed partial class ParallelBigUnsigned
             right[secondIndex];
 
         destination[firstIndex] =
-            (uint)(firstProduct % FirstModulus);
+            ReduceFirstProductBarrett(firstProduct);
 
         destination[secondIndex] =
-            (uint)(secondProduct % FirstModulus);
+            ReduceFirstProductBarrett(secondProduct);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -5976,10 +5964,10 @@ internal sealed partial class ParallelBigUnsigned
             right[secondIndex];
 
         destination[firstIndex] =
-            (uint)(firstProduct % SecondModulus);
+            ReduceSecondProductBarrett(firstProduct);
 
         destination[secondIndex] =
-            (uint)(secondProduct % SecondModulus);
+            ReduceSecondProductBarrett(secondProduct);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -5999,10 +5987,10 @@ internal sealed partial class ParallelBigUnsigned
             secondValue * secondValue;
 
         destination[firstIndex] =
-            (uint)(firstProduct % FirstModulus);
+            ReduceFirstProductBarrett(firstProduct);
 
         destination[secondIndex] =
-            (uint)(secondProduct % FirstModulus);
+            ReduceFirstProductBarrett(secondProduct);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -6022,10 +6010,10 @@ internal sealed partial class ParallelBigUnsigned
             secondValue * secondValue;
 
         destination[firstIndex] =
-            (uint)(firstProduct % SecondModulus);
+            ReduceSecondProductBarrett(firstProduct);
 
         destination[secondIndex] =
-            (uint)(secondProduct % SecondModulus);
+            ReduceSecondProductBarrett(secondProduct);
     }
 
     /// <summary>
@@ -6140,9 +6128,7 @@ internal sealed partial class ParallelBigUnsigned
                              index++)
                         {
                             transformedLeft[index] =
-                                (uint)((ulong)transformedLeft[index] *
-                                       rightTransform[index] %
-                                       modulus);
+                                MultiplyNttBarrett(transformedLeft[index], rightTransform[index], modulus);
                         }
                     });
             }
@@ -6879,9 +6865,7 @@ internal sealed partial class ParallelBigUnsigned
                                     sum;
 
                                 values[rightIndex] =
-                                    (uint)((ulong)difference *
-                                           twiddles[twiddleOffset + butterfly] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference, twiddles[twiddleOffset + butterfly], modulus);
 
                                 if (((butterfly - butterflyStart) &
                                      0x7FFF) == 0x7FFF)
@@ -6937,16 +6921,12 @@ internal sealed partial class ParallelBigUnsigned
                                     sum;
 
                                 values[rightIndex] =
-                                    (uint)((ulong)difference *
-                                           twiddle %
-                                           modulus);
+                                    MultiplyNttBarrett(difference, twiddle, modulus);
 
                                 if (butterfly + 1 < butterflyEnd)
                                 {
                                     twiddle =
-                                        twiddle *
-                                        root %
-                                        modulus;
+                                        ReduceNttProductBarrett((ulong)twiddle * root, modulus);
                                 }
 
                                 if (((butterfly - butterflyStart) &
@@ -7750,14 +7730,10 @@ internal sealed partial class ParallelBigUnsigned
                             if (normalizeOutput)
                             {
                                 values[leftIndex] =
-                                    (uint)((ulong)sum *
-                                           inverseLength %
-                                           modulus);
+                                    MultiplyNttBarrett(sum, inverseLength, modulus);
 
                                 values[rightIndex] =
-                                    (uint)((ulong)difference *
-                                           inverseLength %
-                                           modulus);
+                                    MultiplyNttBarrett(difference, inverseLength, modulus);
                             }
                             else
                             {
@@ -7797,9 +7773,7 @@ internal sealed partial class ParallelBigUnsigned
                                     values[leftIndex];
 
                                 uint rightValue =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddles[twiddleOffset + butterfly] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleOffset + butterfly], modulus);
 
                                 uint sum =
                                     leftValue +
@@ -7818,14 +7792,10 @@ internal sealed partial class ParallelBigUnsigned
                                 if (normalizeOutput)
                                 {
                                     values[leftIndex] =
-                                        (uint)((ulong)sum *
-                                               inverseLength %
-                                               modulus);
+                                        MultiplyNttBarrett(sum, inverseLength, modulus);
 
                                     values[rightIndex] =
-                                        (uint)((ulong)difference *
-                                               inverseLength %
-                                               modulus);
+                                        MultiplyNttBarrett(difference, inverseLength, modulus);
                                 }
                                 else
                                 {
@@ -7870,9 +7840,7 @@ internal sealed partial class ParallelBigUnsigned
                                     values[leftIndex];
 
                                 uint rightValue =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddle %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddle, modulus);
 
                                 uint sum =
                                     leftValue +
@@ -7891,14 +7859,10 @@ internal sealed partial class ParallelBigUnsigned
                                 if (normalizeOutput)
                                 {
                                     values[leftIndex] =
-                                        (uint)((ulong)sum *
-                                               inverseLength %
-                                               modulus);
+                                        MultiplyNttBarrett(sum, inverseLength, modulus);
 
                                     values[rightIndex] =
-                                        (uint)((ulong)difference *
-                                               inverseLength %
-                                               modulus);
+                                        MultiplyNttBarrett(difference, inverseLength, modulus);
                                 }
                                 else
                                 {
@@ -7912,9 +7876,7 @@ internal sealed partial class ParallelBigUnsigned
                                 if (butterfly + 1 < butterflyEnd)
                                 {
                                     twiddle =
-                                        twiddle *
-                                        root %
-                                        modulus;
+                                        ReduceNttProductBarrett((ulong)twiddle * root, modulus);
                                 }
 
                                 if (((butterfly - butterflyStart) &
@@ -8113,14 +8075,10 @@ internal sealed partial class ParallelBigUnsigned
                 // consuming either butterfly.  This is intentionally scalar:
                 // adding a global Shoup companion would double twiddle traffic.
                 uint right0 =
-                    (uint)((ulong)rightRaw0 *
-                           twiddle0 %
-                           modulus);
+                    MultiplyNttBarrett(rightRaw0, twiddle0, modulus);
 
                 uint right1 =
-                    (uint)((ulong)rightRaw1 *
-                           twiddle1 %
-                           modulus);
+                    MultiplyNttBarrett(rightRaw1, twiddle1, modulus);
 
                 uint sum0 =
                     left0 +
@@ -8173,9 +8131,7 @@ internal sealed partial class ParallelBigUnsigned
                     leftRef;
 
                 uint rightValue =
-                    (uint)((ulong)rightRef *
-                           twiddles[twiddleIndex] %
-                           modulus);
+                    MultiplyNttBarrett(rightRef, twiddles[twiddleIndex], modulus);
 
                 uint sum =
                     leftValue +
@@ -8302,14 +8258,10 @@ internal sealed partial class ParallelBigUnsigned
                     modulus);
 
         uint twiddleOdd =
-            (uint)((ulong)twiddleEven *
-                   root %
-                   modulus);
+            MultiplyNttBarrett(twiddleEven, root, modulus);
 
         uint twiddleStepTwo =
-            (uint)((ulong)root *
-                   root %
-                   modulus);
+            MultiplyNttBarrett(root, root, modulus);
 
         int leftIndexBase =
             groupOffset +
@@ -8348,9 +8300,7 @@ internal sealed partial class ParallelBigUnsigned
                         leftRef;
 
                     uint rightValue =
-                        (uint)((ulong)rightRef *
-                               twiddleEven %
-                               modulus);
+                        MultiplyNttBarrett(rightRef, twiddleEven, modulus);
 
                     uint sum =
                         leftValue +
@@ -8384,9 +8334,7 @@ internal sealed partial class ParallelBigUnsigned
                         leftRef;
 
                     uint rightValue =
-                        (uint)((ulong)rightRef *
-                               twiddleOdd %
-                               modulus);
+                        MultiplyNttBarrett(rightRef, twiddleOdd, modulus);
 
                     uint sum =
                         leftValue +
@@ -8420,14 +8368,10 @@ internal sealed partial class ParallelBigUnsigned
                 if (hasMore)
                 {
                     twiddleEven =
-                        (uint)((ulong)twiddleEven *
-                               twiddleStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(twiddleEven, twiddleStepTwo, modulus);
 
                     twiddleOdd =
-                        (uint)((ulong)twiddleOdd *
-                               twiddleStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(twiddleOdd, twiddleStepTwo, modulus);
                 }
             }
 
@@ -8443,9 +8387,7 @@ internal sealed partial class ParallelBigUnsigned
                     leftRef;
 
                 uint rightValue =
-                    (uint)((ulong)rightRef *
-                           twiddleEven %
-                           modulus);
+                    MultiplyNttBarrett(rightRef, twiddleEven, modulus);
 
                 uint sum =
                     leftValue +
@@ -8479,9 +8421,7 @@ internal sealed partial class ParallelBigUnsigned
                         twiddleOdd;
 
                     twiddleOdd =
-                        (uint)((ulong)twiddleEven *
-                               root %
-                               modulus);
+                        MultiplyNttBarrett(twiddleEven, root, modulus);
                 }
             }
 
@@ -8825,14 +8765,10 @@ internal sealed partial class ParallelBigUnsigned
         // root^4, breaking the long scalar twiddle dependency chain while
         // preserving exactly the same DIT arithmetic and worker partitioning.
         uint rootSquared =
-            (uint)((ulong)root *
-                   root %
-                   modulus);
+            MultiplyNttBarrett(root, root, modulus);
 
         uint rootFourth =
-            (uint)((ulong)rootSquared *
-                   rootSquared %
-                   modulus);
+            MultiplyNttBarrett(rootSquared, rootSquared, modulus);
 
         ExecuteRanges(
             halfLength,
@@ -8968,9 +8904,7 @@ internal sealed partial class ParallelBigUnsigned
                         values[butterfly];
 
                     uint rightValue =
-                        (uint)((ulong)values[rightIndex] *
-                               twiddle %
-                               modulus);
+                        MultiplyNttBarrett(values[rightIndex], twiddle, modulus);
 
                     uint sum =
                         leftValue +
@@ -8998,9 +8932,7 @@ internal sealed partial class ParallelBigUnsigned
                     if (butterfly + 1 < butterflyEnd)
                     {
                         twiddle =
-                            twiddle *
-                            root %
-                            modulus;
+                            ReduceNttProductBarrett((ulong)twiddle * root, modulus);
                     }
 
                     if (((butterfly - butterflyStart) &
@@ -9042,19 +8974,13 @@ internal sealed partial class ParallelBigUnsigned
                     modulus);
 
         ulong twiddle1 =
-            twiddle0 *
-            root %
-            modulus;
+            ReduceNttProductBarrett((ulong)twiddle0 * root, modulus);
 
         ulong twiddle2 =
-            twiddle0 *
-            rootSquared %
-            modulus;
+            ReduceNttProductBarrett((ulong)twiddle0 * rootSquared, modulus);
 
         ulong twiddle3 =
-            twiddle2 *
-            root %
-            modulus;
+            ReduceNttProductBarrett((ulong)twiddle2 * root, modulus);
 
         while (butterfly < end)
         {
@@ -9084,24 +9010,16 @@ internal sealed partial class ParallelBigUnsigned
                     values[butterfly + 3];
 
                 uint right0 =
-                    (uint)((ulong)values[rightIndex0] *
-                           twiddle0 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0], twiddle0, modulus);
 
                 uint right1 =
-                    (uint)((ulong)values[rightIndex0 + 1] *
-                           twiddle1 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0 + 1], twiddle1, modulus);
 
                 uint right2 =
-                    (uint)((ulong)values[rightIndex0 + 2] *
-                           twiddle2 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0 + 2], twiddle2, modulus);
 
                 uint right3 =
-                    (uint)((ulong)values[rightIndex0 + 3] *
-                           twiddle3 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0 + 3], twiddle3, modulus);
 
                 uint sum0 = left0 + right0;
                 uint sum1 = left1 + right1;
@@ -9158,24 +9076,16 @@ internal sealed partial class ParallelBigUnsigned
                     MultiplyShoupScalar(difference3, inverseLength, inverseLengthShoup, modulus);
 
                 twiddle0 =
-                    twiddle0 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle0 * rootFourth, modulus);
 
                 twiddle1 =
-                    twiddle1 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle1 * rootFourth, modulus);
 
                 twiddle2 =
-                    twiddle2 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle2 * rootFourth, modulus);
 
                 twiddle3 =
-                    twiddle3 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle3 * rootFourth, modulus);
             }
 
             for (;
@@ -9190,9 +9100,7 @@ internal sealed partial class ParallelBigUnsigned
                     values[butterfly];
 
                 uint rightValue =
-                    (uint)((ulong)values[rightIndex] *
-                           twiddle0 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex], twiddle0, modulus);
 
                 uint sum =
                     leftValue +
@@ -9215,28 +9123,20 @@ internal sealed partial class ParallelBigUnsigned
                     MultiplyShoupScalar(difference, inverseLength, inverseLengthShoup, modulus);
 
                 twiddle0 =
-                    twiddle0 *
-                    root %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle0 * root, modulus);
             }
 
             // The four-way loop leaves twiddle0 at root^butterfly.  If the
             // scalar cleanup ran, it advanced the same lane one step at a
             // time, so the next cancellation chunk can continue directly.
             twiddle1 =
-                twiddle0 *
-                root %
-                modulus;
+                ReduceNttProductBarrett((ulong)twiddle0 * root, modulus);
 
             twiddle2 =
-                twiddle0 *
-                rootSquared %
-                modulus;
+                ReduceNttProductBarrett((ulong)twiddle0 * rootSquared, modulus);
 
             twiddle3 =
-                twiddle2 *
-                root %
-                modulus;
+                ReduceNttProductBarrett((ulong)twiddle2 * root, modulus);
 
             cancellationToken.ThrowIfCancellationRequested();
         }
@@ -9272,19 +9172,13 @@ internal sealed partial class ParallelBigUnsigned
                     modulus);
 
         ulong twiddle1 =
-            twiddle0 *
-            root %
-            modulus;
+            ReduceNttProductBarrett((ulong)twiddle0 * root, modulus);
 
         ulong twiddle2 =
-            twiddle0 *
-            rootSquared %
-            modulus;
+            ReduceNttProductBarrett((ulong)twiddle0 * rootSquared, modulus);
 
         ulong twiddle3 =
-            twiddle2 *
-            root %
-            modulus;
+            ReduceNttProductBarrett((ulong)twiddle2 * root, modulus);
 
         while (butterfly < end)
         {
@@ -9314,24 +9208,16 @@ internal sealed partial class ParallelBigUnsigned
                     values[butterfly + 3];
 
                 uint right0 =
-                    (uint)((ulong)values[rightIndex0] *
-                           twiddle0 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0], twiddle0, modulus);
 
                 uint right1 =
-                    (uint)((ulong)values[rightIndex0 + 1] *
-                           twiddle1 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0 + 1], twiddle1, modulus);
 
                 uint right2 =
-                    (uint)((ulong)values[rightIndex0 + 2] *
-                           twiddle2 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0 + 2], twiddle2, modulus);
 
                 uint right3 =
-                    (uint)((ulong)values[rightIndex0 + 3] *
-                           twiddle3 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex0 + 3], twiddle3, modulus);
 
                 uint sum0 = left0 + right0;
                 uint sum1 = left1 + right1;
@@ -9356,24 +9242,16 @@ internal sealed partial class ParallelBigUnsigned
                     MultiplyShoupScalar(sum3, inverseLength, inverseLengthShoup, modulus);
 
                 twiddle0 =
-                    twiddle0 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle0 * rootFourth, modulus);
 
                 twiddle1 =
-                    twiddle1 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle1 * rootFourth, modulus);
 
                 twiddle2 =
-                    twiddle2 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle2 * rootFourth, modulus);
 
                 twiddle3 =
-                    twiddle3 *
-                    rootFourth %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle3 * rootFourth, modulus);
             }
 
             for (;
@@ -9388,9 +9266,7 @@ internal sealed partial class ParallelBigUnsigned
                     values[butterfly];
 
                 uint rightValue =
-                    (uint)((ulong)values[rightIndex] *
-                           twiddle0 %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex], twiddle0, modulus);
 
                 uint sum =
                     leftValue +
@@ -9405,25 +9281,17 @@ internal sealed partial class ParallelBigUnsigned
                     MultiplyShoupScalar(sum, inverseLength, inverseLengthShoup, modulus);
 
                 twiddle0 =
-                    twiddle0 *
-                    root %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)twiddle0 * root, modulus);
             }
 
             twiddle1 =
-                twiddle0 *
-                root %
-                modulus;
+                ReduceNttProductBarrett((ulong)twiddle0 * root, modulus);
 
             twiddle2 =
-                twiddle0 *
-                rootSquared %
-                modulus;
+                ReduceNttProductBarrett((ulong)twiddle0 * rootSquared, modulus);
 
             twiddle3 =
-                twiddle2 *
-                root %
-                modulus;
+                ReduceNttProductBarrett((ulong)twiddle2 * root, modulus);
 
             cancellationToken.ThrowIfCancellationRequested();
         }
@@ -12668,9 +12536,9 @@ internal sealed partial class ParallelBigUnsigned
                     : value1 + modulus - value3;
 
             uint lower0 =
-                (uint)((ulong)topDifference0 * twiddles[firstTwiddleIndex0] % modulus);
+                MultiplyNttBarrett(topDifference0, twiddles[firstTwiddleIndex0], modulus);
             uint lower1 =
-                (uint)((ulong)topDifference1 * twiddles[firstTwiddleIndex1] % modulus);
+                MultiplyNttBarrett(topDifference1, twiddles[firstTwiddleIndex1], modulus);
 
             uint upperSum = topSum0 + topSum1;
             if (upperSum >= modulus) upperSum -= modulus;
@@ -12689,10 +12557,10 @@ internal sealed partial class ParallelBigUnsigned
             uint secondTwiddle = twiddles[secondTwiddleIndex];
             values[index0] = upperSum;
             values[index1] =
-                (uint)((ulong)upperDifference * secondTwiddle % modulus);
+                MultiplyNttBarrett(upperDifference, secondTwiddle, modulus);
             values[index2] = lowerSum;
             values[index3] =
-                (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+                MultiplyNttBarrett(lowerDifference, secondTwiddle, modulus);
         }
     }
 
@@ -12990,8 +12858,8 @@ internal sealed partial class ParallelBigUnsigned
             uint value3 = values[index3];
             uint firstTwiddle = twiddles[firstTwiddleIndex];
 
-            uint right0 = (uint)((ulong)value1 * firstTwiddle % modulus);
-            uint right1 = (uint)((ulong)value3 * firstTwiddle % modulus);
+            uint right0 = MultiplyNttBarrett(value1, firstTwiddle, modulus);
+            uint right1 = MultiplyNttBarrett(value3, firstTwiddle, modulus);
 
             uint firstSum0 = value0 + right0;
             uint firstSum1 = value2 + right1;
@@ -13001,8 +12869,8 @@ internal sealed partial class ParallelBigUnsigned
             uint firstDifference0 = value0 >= right0 ? value0 - right0 : value0 + modulus - right0;
             uint firstDifference1 = value2 >= right1 ? value2 - right1 : value2 + modulus - right1;
 
-            uint mergedRight0 = (uint)((ulong)firstSum1 * twiddles[secondTwiddleIndex0] % modulus);
-            uint mergedRight1 = (uint)((ulong)firstDifference1 * twiddles[secondTwiddleIndex1] % modulus);
+            uint mergedRight0 = MultiplyNttBarrett(firstSum1, twiddles[secondTwiddleIndex0], modulus);
+            uint mergedRight1 = MultiplyNttBarrett(firstDifference1, twiddles[secondTwiddleIndex1], modulus);
 
             uint finalSum0 = firstSum0 + mergedRight0;
             uint finalSum1 = firstDifference0 + mergedRight1;
@@ -14692,9 +14560,9 @@ internal sealed partial class ParallelBigUnsigned
                         : value1 + modulus - value3;
 
                 uint lower0 =
-                    (uint)((ulong)topDifference0 * firstTwiddle0 % modulus);
+                    MultiplyNttBarrett(topDifference0, firstTwiddle0, modulus);
                 uint lower1 =
-                    (uint)((ulong)topDifference1 * firstTwiddle1 % modulus);
+                    MultiplyNttBarrett(topDifference1, firstTwiddle1, modulus);
 
                 uint upperSum = topSum0 + topSum1;
                 if (upperSum >= modulus) upperSum -= modulus;
@@ -14712,10 +14580,10 @@ internal sealed partial class ParallelBigUnsigned
 
                 values[index0] = upperSum;
                 values[index1] =
-                    (uint)((ulong)upperDifference * secondTwiddle % modulus);
+                    MultiplyNttBarrett(upperDifference, secondTwiddle, modulus);
                 values[index2] = lowerSum;
                 values[index3] =
-                    (uint)((ulong)lowerDifference * secondTwiddle % modulus);
+                    MultiplyNttBarrett(lowerDifference, secondTwiddle, modulus);
             }
         }
     }
@@ -16834,9 +16702,9 @@ internal sealed partial class ParallelBigUnsigned
                 uint value3 = values[index3];
 
                 uint right0 =
-                    (uint)((ulong)value1 * firstTwiddle % modulus);
+                    MultiplyNttBarrett(value1, firstTwiddle, modulus);
                 uint right1 =
-                    (uint)((ulong)value3 * firstTwiddle % modulus);
+                    MultiplyNttBarrett(value3, firstTwiddle, modulus);
 
                 uint firstSum0 = value0 + right0;
                 uint firstSum1 = value2 + right1;
@@ -16853,9 +16721,9 @@ internal sealed partial class ParallelBigUnsigned
                         : value2 + modulus - right1;
 
                 uint mergedRight0 =
-                    (uint)((ulong)firstSum1 * secondTwiddle0 % modulus);
+                    MultiplyNttBarrett(firstSum1, secondTwiddle0, modulus);
                 uint mergedRight1 =
-                    (uint)((ulong)firstDifference1 * secondTwiddle1 % modulus);
+                    MultiplyNttBarrett(firstDifference1, secondTwiddle1, modulus);
 
                 uint finalSum0 = firstSum0 + mergedRight0;
                 uint finalSum1 = firstDifference0 + mergedRight1;
@@ -17963,14 +17831,10 @@ internal sealed partial class ParallelBigUnsigned
                                     : value1 + modulus - value3;
 
                             uint lower0 =
-                                (uint)((ulong)topDifference0 *
-                                       twiddles[firstTwiddleIndex0] %
-                                       modulus);
+                                MultiplyNttBarrett(topDifference0, twiddles[firstTwiddleIndex0], modulus);
 
                             uint lower1 =
-                                (uint)((ulong)topDifference1 *
-                                       twiddles[firstTwiddleIndex1] %
-                                       modulus);
+                                MultiplyNttBarrett(topDifference1, twiddles[firstTwiddleIndex1], modulus);
 
                             uint upperSum = topSum0 + topSum1;
                             if (upperSum >= modulus) upperSum -= modulus;
@@ -17993,14 +17857,10 @@ internal sealed partial class ParallelBigUnsigned
 
                             values[index0] = upperSum;
                             values[index1] =
-                                (uint)((ulong)upperDifference *
-                                       secondTwiddle %
-                                       modulus);
+                                MultiplyNttBarrett(upperDifference, secondTwiddle, modulus);
                             values[index2] = lowerSum;
                             values[index3] =
-                                (uint)((ulong)lowerDifference *
-                                       secondTwiddle %
-                                       modulus);
+                                MultiplyNttBarrett(lowerDifference, secondTwiddle, modulus);
                         }
 
                         remaining -=
@@ -18277,14 +18137,10 @@ internal sealed partial class ParallelBigUnsigned
                                 twiddles[firstTwiddleIndex];
 
                             uint right0 =
-                                (uint)((ulong)value1 *
-                                       firstTwiddle %
-                                       modulus);
+                                MultiplyNttBarrett(value1, firstTwiddle, modulus);
 
                             uint right1 =
-                                (uint)((ulong)value3 *
-                                       firstTwiddle %
-                                       modulus);
+                                MultiplyNttBarrett(value3, firstTwiddle, modulus);
 
                             uint firstSum0 = value0 + right0;
                             uint firstSum1 = value2 + right1;
@@ -18302,14 +18158,10 @@ internal sealed partial class ParallelBigUnsigned
                                     : value2 + modulus - right1;
 
                             uint mergedRight0 =
-                                (uint)((ulong)firstSum1 *
-                                       twiddles[secondTwiddleIndex0] %
-                                       modulus);
+                                MultiplyNttBarrett(firstSum1, twiddles[secondTwiddleIndex0], modulus);
 
                             uint mergedRight1 =
-                                (uint)((ulong)firstDifference1 *
-                                       twiddles[secondTwiddleIndex1] %
-                                       modulus);
+                                MultiplyNttBarrett(firstDifference1, twiddles[secondTwiddleIndex1], modulus);
 
                             uint finalSum0 = firstSum0 + mergedRight0;
                             uint finalSum1 = firstDifference0 + mergedRight1;
@@ -19187,9 +19039,7 @@ internal sealed partial class ParallelBigUnsigned
                 modulus);
 
         uint secondRoot =
-            (uint)((ulong)firstRoot *
-                   firstRoot %
-                   modulus);
+            MultiplyNttBarrett(firstRoot, firstRoot, modulus);
 
         uint quarterPhase =
             (uint)ModPow(
@@ -19229,8 +19079,8 @@ internal sealed partial class ParallelBigUnsigned
         // the <=10M AVX-512 path without vectorizing the DRAM-sized value pass.
         // The two NTT primes are compile-time constants, so use the existing
         // prime-specialized dual-lane helpers whenever AVX-512 NTT is enabled.
-        // This lets RyuJIT strength-reduce every `% modulus` in the recurrence
-        // and butterfly products while preserving the exact root^2/root^4
+        // Barrett reduces the scalar recurrence and butterfly products while
+        // preserving the exact root^2/root^4
         // dependency-breaking schedule, worker partitioning, memory traffic,
         // and stage boundaries.  AVX2 now has its own YMM stage-pair kernel;
         // the constant-modulus scalar helpers remain only as non-AVX2 fallbacks.
@@ -19738,7 +19588,8 @@ internal sealed partial class ParallelBigUnsigned
             for (; i < last; i++)
             {
                 uint left = values[i];
-                uint right = (uint)(values[i + halfLength] * scalarTwiddle % modulus);
+                uint right = ReduceNttProductBarrett(
+                    values[i + halfLength] * scalarTwiddle, modulus);
                 uint sum = left + right;
                 if (sum >= modulus) sum -= modulus;
                 output[i] = MultiplyShoupScalar(sum, inverseLength, inverseLengthShoup, modulus);
@@ -19748,7 +19599,7 @@ internal sealed partial class ParallelBigUnsigned
                     output[i + halfLength] = MultiplyShoupScalar(
                         difference, inverseLength, inverseLengthShoup, modulus);
                 }
-                scalarTwiddle = scalarTwiddle * root % modulus;
+                scalarTwiddle = ReduceNttProductBarrett((ulong)scalarTwiddle * root, modulus);
             }
         }
         cancellationToken.ThrowIfCancellationRequested();
@@ -19866,9 +19717,9 @@ internal sealed partial class ParallelBigUnsigned
         // second packed multiply applies root^first to all eight lanes. This
         // removes the seven-deep scalar dependency chain that used to run for
         // every uncached-stage segment.
-        uint r2 = (uint)((ulong)root * root % modulus);
-        uint r3 = (uint)((ulong)r2 * root % modulus);
-        uint r4 = (uint)((ulong)r3 * root % modulus);
+        uint r2 = MultiplyNttBarrett(root, root, modulus);
+        uint r3 = MultiplyNttBarrett(r2, root, modulus);
+        uint r4 = MultiplyNttBarrett(r3, root, modulus);
 
         Vector256<uint> firstQuarterRepeated =
             Vector256.Create(1u, root, r2, r3, 1u, root, r2, r3);
@@ -20151,9 +20002,9 @@ internal sealed partial class ParallelBigUnsigned
                                 : left + modulus - right;
                         values[leftIndex] = sum;
                         values[rightIndex] =
-                            (uint)((ulong)difference * scalarTwiddle % modulus);
+                            MultiplyNttBarrett(difference, scalarTwiddle, modulus);
                         scalarTwiddle =
-                            (uint)((ulong)scalarTwiddle * root % modulus);
+                            MultiplyNttBarrett(scalarTwiddle, root, modulus);
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
@@ -20286,11 +20137,11 @@ internal sealed partial class ParallelBigUnsigned
     // root^4/root^8/root^12 broadcast factors generate all sixteen lanes.
     private static Vector512<uint> CreateTwiddleSequenceAvx512(uint root, int first, uint modulus)
     {
-        uint r2 = (uint)((ulong)root * root % modulus);
-        uint r3 = (uint)((ulong)r2 * root % modulus);
-        uint r4 = (uint)((ulong)r3 * root % modulus);
-        uint r8 = (uint)((ulong)r4 * r4 % modulus);
-        uint r12 = (uint)((ulong)r8 * r4 % modulus);
+        uint r2 = MultiplyNttBarrett(root, root, modulus);
+        uint r3 = MultiplyNttBarrett(r2, root, modulus);
+        uint r4 = MultiplyNttBarrett(r3, root, modulus);
+        uint r8 = MultiplyNttBarrett(r4, r4, modulus);
+        uint r12 = MultiplyNttBarrett(r8, r4, modulus);
 
         Vector512<uint> firstQuarterRepeated = Vector512.Create(
             1u, root, r2, r3,
@@ -20414,8 +20265,8 @@ internal sealed partial class ParallelBigUnsigned
             if (sum >= modulus) sum -= modulus;
             uint difference = left >= right ? left - right : left + modulus - right;
             values[leftIndex] = sum;
-            values[rightIndex] = (uint)((ulong)difference * scalarTwiddle % modulus);
-            scalarTwiddle = (uint)((ulong)scalarTwiddle * root % modulus);
+            values[rightIndex] = MultiplyNttBarrett(difference, scalarTwiddle, modulus);
+            scalarTwiddle = MultiplyNttBarrett(scalarTwiddle, root, modulus);
         }
         cancellationToken.ThrowIfCancellationRequested();
     }
@@ -21070,37 +20921,25 @@ internal sealed partial class ParallelBigUnsigned
                     modulus);
 
         uint firstTwiddleOdd =
-            (uint)((ulong)firstTwiddleEven *
-                   firstRoot %
-                   modulus);
+            MultiplyNttBarrett(firstTwiddleEven, firstRoot, modulus);
 
         uint firstPhaseEven =
-            (uint)((ulong)firstTwiddleEven *
-                   quarterPhase %
-                   modulus);
+            MultiplyNttBarrett(firstTwiddleEven, quarterPhase, modulus);
 
         uint firstPhaseOdd =
-            (uint)((ulong)firstTwiddleOdd *
-                   quarterPhase %
-                   modulus);
+            MultiplyNttBarrett(firstTwiddleOdd, quarterPhase, modulus);
 
         uint secondTwiddleEven =
-            (uint)((ulong)firstTwiddleEven *
-                   firstTwiddleEven %
-                   modulus);
+            MultiplyNttBarrett(firstTwiddleEven, firstTwiddleEven, modulus);
 
         uint secondTwiddleOdd =
-            (uint)((ulong)firstTwiddleOdd *
-                   firstTwiddleOdd %
-                   modulus);
+            MultiplyNttBarrett(firstTwiddleOdd, firstTwiddleOdd, modulus);
 
         uint firstStepTwo =
             secondRoot;
 
         uint secondStepTwo =
-            (uint)((ulong)secondRoot *
-                   secondRoot %
-                   modulus);
+            MultiplyNttBarrett(secondRoot, secondRoot, modulus);
 
         while (remaining > 0)
         {
@@ -21177,34 +21016,22 @@ internal sealed partial class ParallelBigUnsigned
                 if (hasMore)
                 {
                     firstTwiddleEven =
-                        (uint)((ulong)firstTwiddleEven *
-                               firstStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(firstTwiddleEven, firstStepTwo, modulus);
 
                     firstTwiddleOdd =
-                        (uint)((ulong)firstTwiddleOdd *
-                               firstStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(firstTwiddleOdd, firstStepTwo, modulus);
 
                     firstPhaseEven =
-                        (uint)((ulong)firstPhaseEven *
-                               firstStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(firstPhaseEven, firstStepTwo, modulus);
 
                     firstPhaseOdd =
-                        (uint)((ulong)firstPhaseOdd *
-                               firstStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(firstPhaseOdd, firstStepTwo, modulus);
 
                     secondTwiddleEven =
-                        (uint)((ulong)secondTwiddleEven *
-                               secondStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(secondTwiddleEven, secondStepTwo, modulus);
 
                     secondTwiddleOdd =
-                        (uint)((ulong)secondTwiddleOdd *
-                               secondStepTwo %
-                               modulus);
+                        MultiplyNttBarrett(secondTwiddleOdd, secondStepTwo, modulus);
                 }
             }
 
@@ -21252,19 +21079,13 @@ internal sealed partial class ParallelBigUnsigned
                         secondTwiddleOdd;
 
                     firstTwiddleOdd =
-                        (uint)((ulong)firstTwiddleEven *
-                               firstRoot %
-                               modulus);
+                        MultiplyNttBarrett(firstTwiddleEven, firstRoot, modulus);
 
                     firstPhaseOdd =
-                        (uint)((ulong)firstTwiddleOdd *
-                               quarterPhase %
-                               modulus);
+                        MultiplyNttBarrett(firstTwiddleOdd, quarterPhase, modulus);
 
                     secondTwiddleOdd =
-                        (uint)((ulong)firstTwiddleOdd *
-                               firstTwiddleOdd %
-                               modulus);
+                        MultiplyNttBarrett(firstTwiddleOdd, firstTwiddleOdd, modulus);
                 }
             }
 
@@ -21531,14 +21352,10 @@ internal sealed partial class ParallelBigUnsigned
                 : value1 + modulus - value3;
 
         uint lower0 =
-            (uint)((ulong)topDifference0 *
-                   firstTwiddle0 %
-                   modulus);
+            MultiplyNttBarrett(topDifference0, firstTwiddle0, modulus);
 
         uint lower1 =
-            (uint)((ulong)topDifference1 *
-                   firstTwiddle1 %
-                   modulus);
+            MultiplyNttBarrett(topDifference1, firstTwiddle1, modulus);
 
         uint upperSum =
             topSum0 +
@@ -21572,17 +21389,13 @@ internal sealed partial class ParallelBigUnsigned
             upperSum;
 
         value1Reference =
-            (uint)((ulong)upperDifference *
-                   secondTwiddle %
-                   modulus);
+            MultiplyNttBarrett(upperDifference, secondTwiddle, modulus);
 
         value2Reference =
             lowerSum;
 
         value3Reference =
-            (uint)((ulong)lowerDifference *
-                   secondTwiddle %
-                   modulus);
+            MultiplyNttBarrett(lowerDifference, secondTwiddle, modulus);
     }
 
     /// <summary>
@@ -22286,14 +22099,10 @@ internal sealed partial class ParallelBigUnsigned
             value3Reference;
 
         uint right0 =
-            (uint)((ulong)value1 *
-                   firstTwiddle %
-                   modulus);
+            MultiplyNttBarrett(value1, firstTwiddle, modulus);
 
         uint right1 =
-            (uint)((ulong)value3 *
-                   firstTwiddle %
-                   modulus);
+            MultiplyNttBarrett(value3, firstTwiddle, modulus);
 
         uint firstSum0 =
             value0 +
@@ -22328,9 +22137,7 @@ internal sealed partial class ParallelBigUnsigned
         // keeping both second-stage modular-multiply pipelines live together
         // in the scalar global-cache hot path.
         uint mergedRight0 =
-            (uint)((ulong)firstSum1 *
-                   secondTwiddle0 %
-                   modulus);
+            MultiplyNttBarrett(firstSum1, secondTwiddle0, modulus);
 
         uint finalSum0 =
             firstSum0 +
@@ -22350,9 +22157,7 @@ internal sealed partial class ParallelBigUnsigned
                 : firstSum0 + modulus - mergedRight0;
 
         uint mergedRight1 =
-            (uint)((ulong)firstDifference1 *
-                   secondTwiddle1 %
-                   modulus);
+            MultiplyNttBarrett(firstDifference1, secondTwiddle1, modulus);
 
         uint finalSum1 =
             firstDifference0 +
@@ -22527,24 +22332,16 @@ internal sealed partial class ParallelBigUnsigned
                                     values[leftIndex + 3] = sum3;
 
                                     values[rightIndex] =
-                                        (uint)((ulong)difference0 *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                                     values[rightIndex + 1] =
-                                        (uint)((ulong)difference1 *
-                                               twiddles[twiddleIndex + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                                     values[rightIndex + 2] =
-                                        (uint)((ulong)difference2 *
-                                               twiddles[twiddleIndex + 2] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference2, twiddles[twiddleIndex + 2], modulus);
 
                                     values[rightIndex + 3] =
-                                        (uint)((ulong)difference3 *
-                                               twiddles[twiddleIndex + 3] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference3, twiddles[twiddleIndex + 3], modulus);
                                 }
 
                                 {
@@ -22597,24 +22394,16 @@ internal sealed partial class ParallelBigUnsigned
                                     values[left4Index + 3] = sum7;
 
                                     values[right4Index] =
-                                        (uint)((ulong)difference4 *
-                                               twiddles[twiddle4Index] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference4, twiddles[twiddle4Index], modulus);
 
                                     values[right4Index + 1] =
-                                        (uint)((ulong)difference5 *
-                                               twiddles[twiddle4Index + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference5, twiddles[twiddle4Index + 1], modulus);
 
                                     values[right4Index + 2] =
-                                        (uint)((ulong)difference6 *
-                                               twiddles[twiddle4Index + 2] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference6, twiddles[twiddle4Index + 2], modulus);
 
                                     values[right4Index + 3] =
-                                        (uint)((ulong)difference7 *
-                                               twiddles[twiddle4Index + 3] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference7, twiddles[twiddle4Index + 3], modulus);
                                 }
                             }
                         }
@@ -22673,24 +22462,16 @@ internal sealed partial class ParallelBigUnsigned
                                 values[leftIndex + 3] = sum3;
 
                                 values[rightIndex] =
-                                    (uint)((ulong)difference0 *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                                 values[rightIndex + 1] =
-                                    (uint)((ulong)difference1 *
-                                           twiddles[twiddleIndex + 1] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                                 values[rightIndex + 2] =
-                                    (uint)((ulong)difference2 *
-                                           twiddles[twiddleIndex + 2] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference2, twiddles[twiddleIndex + 2], modulus);
 
                                 values[rightIndex + 3] =
-                                    (uint)((ulong)difference3 *
-                                           twiddles[twiddleIndex + 3] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference3, twiddles[twiddleIndex + 3], modulus);
                             }
                         }
 
@@ -22741,14 +22522,10 @@ internal sealed partial class ParallelBigUnsigned
                                 sum1;
 
                             values[rightIndex] =
-                                (uint)((ulong)difference0 *
-                                       twiddles[twiddleIndex] %
-                                       modulus);
+                                MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                             values[rightIndex + 1] =
-                                (uint)((ulong)difference1 *
-                                       twiddles[twiddleIndex + 1] %
-                                       modulus);
+                                MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
                         }
 
                         if (butterfly < chunkEnd)
@@ -22776,9 +22553,7 @@ internal sealed partial class ParallelBigUnsigned
                                 sum;
 
                             values[rightIndex] =
-                                (uint)((ulong)difference *
-                                       twiddles[twiddleIndex] %
-                                       modulus);
+                                MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
 
                             butterfly++;
                             leftIndex++;
@@ -22906,24 +22681,16 @@ internal sealed partial class ParallelBigUnsigned
                                     uint left3 = values[leftIndex + 3];
 
                                     uint right0 =
-                                        (uint)((ulong)values[rightIndex] *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                     uint right1 =
-                                        (uint)((ulong)values[rightIndex + 1] *
-                                               twiddles[twiddleIndex + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                                     uint right2 =
-                                        (uint)((ulong)values[rightIndex + 2] *
-                                               twiddles[twiddleIndex + 2] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 2], twiddles[twiddleIndex + 2], modulus);
 
                                     uint right3 =
-                                        (uint)((ulong)values[rightIndex + 3] *
-                                               twiddles[twiddleIndex + 3] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 3], twiddles[twiddleIndex + 3], modulus);
 
                                     uint sum0 = left0 + right0;
                                     uint sum1 = left1 + right1;
@@ -22972,24 +22739,16 @@ internal sealed partial class ParallelBigUnsigned
                                     uint left7 = values[left4Index + 3];
 
                                     uint right4 =
-                                        (uint)((ulong)values[right4Index] *
-                                               twiddles[twiddle4Index] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[right4Index], twiddles[twiddle4Index], modulus);
 
                                     uint right5 =
-                                        (uint)((ulong)values[right4Index + 1] *
-                                               twiddles[twiddle4Index + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[right4Index + 1], twiddles[twiddle4Index + 1], modulus);
 
                                     uint right6 =
-                                        (uint)((ulong)values[right4Index + 2] *
-                                               twiddles[twiddle4Index + 2] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[right4Index + 2], twiddles[twiddle4Index + 2], modulus);
 
                                     uint right7 =
-                                        (uint)((ulong)values[right4Index + 3] *
-                                               twiddles[twiddle4Index + 3] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[right4Index + 3], twiddles[twiddle4Index + 3], modulus);
 
                                     uint sum4 = left4 + right4;
                                     uint sum5 = left5 + right5;
@@ -23044,24 +22803,16 @@ internal sealed partial class ParallelBigUnsigned
                                 uint left3 = values[leftIndex + 3];
 
                                 uint right0 =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                 uint right1 =
-                                    (uint)((ulong)values[rightIndex + 1] *
-                                           twiddles[twiddleIndex + 1] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                                 uint right2 =
-                                    (uint)((ulong)values[rightIndex + 2] *
-                                           twiddles[twiddleIndex + 2] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex + 2], twiddles[twiddleIndex + 2], modulus);
 
                                 uint right3 =
-                                    (uint)((ulong)values[rightIndex + 3] *
-                                           twiddles[twiddleIndex + 3] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex + 3], twiddles[twiddleIndex + 3], modulus);
 
                                 uint sum0 = left0 + right0;
                                 uint sum1 = left1 + right1;
@@ -23113,14 +22864,10 @@ internal sealed partial class ParallelBigUnsigned
                                 values[leftIndex + 1];
 
                             uint right0 =
-                                (uint)((ulong)values[rightIndex] *
-                                       twiddles[twiddleIndex] %
-                                       modulus);
+                                MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                             uint right1 =
-                                (uint)((ulong)values[rightIndex + 1] *
-                                       twiddles[twiddleIndex + 1] %
-                                       modulus);
+                                MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                             uint sum0 =
                                 left0 + right0;
@@ -23159,9 +22906,7 @@ internal sealed partial class ParallelBigUnsigned
                                 values[leftIndex];
 
                             rightValue =
-                                (uint)((ulong)values[rightIndex] *
-                                       twiddles[twiddleIndex] %
-                                       modulus);
+                                MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                             sum =
                                 leftValue +
@@ -26475,7 +26220,7 @@ internal sealed partial class ParallelBigUnsigned
                     : value1 + modulus - value3;
 
             uint lower1 =
-                (uint)((ulong)lower1Raw * quarterTurnTwiddle % modulus);
+                MultiplyNttBarrett(lower1Raw, quarterTurnTwiddle, modulus);
 
             uint output0 = topSum0 + topSum1;
             if (output0 >= modulus) output0 -= modulus;
@@ -26851,24 +26596,16 @@ internal sealed partial class ParallelBigUnsigned
                         values[leftIndex + 3] = sum3;
 
                         values[rightIndex] =
-                            (uint)((ulong)difference0 *
-                                   twiddles[twiddleIndex] %
-                                   modulus);
+                            MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                         values[rightIndex + 1] =
-                            (uint)((ulong)difference1 *
-                                   twiddles[twiddleIndex + 1] %
-                                   modulus);
+                            MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                         values[rightIndex + 2] =
-                            (uint)((ulong)difference2 *
-                                   twiddles[twiddleIndex + 2] %
-                                   modulus);
+                            MultiplyNttBarrett(difference2, twiddles[twiddleIndex + 2], modulus);
 
                         values[rightIndex + 3] =
-                            (uint)((ulong)difference3 *
-                                   twiddles[twiddleIndex + 3] %
-                                   modulus);
+                            MultiplyNttBarrett(difference3, twiddles[twiddleIndex + 3], modulus);
 
                         leftIndex += 4;
                         rightIndex += 4;
@@ -26903,14 +26640,10 @@ internal sealed partial class ParallelBigUnsigned
                     values[leftIndex + 1] = sum1;
 
                     values[rightIndex] =
-                        (uint)((ulong)difference0 *
-                               twiddles[twiddleIndex] %
-                               modulus);
+                        MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                     values[rightIndex + 1] =
-                        (uint)((ulong)difference1 *
-                               twiddles[twiddleIndex + 1] %
-                               modulus);
+                        MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                     leftIndex += 2;
                     rightIndex += 2;
@@ -26935,9 +26668,7 @@ internal sealed partial class ParallelBigUnsigned
 
                     values[leftIndex] = sum;
                     values[rightIndex] =
-                        (uint)((ulong)difference *
-                               twiddles[twiddleIndex] %
-                               modulus);
+                        MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
                 }
             }
         }
@@ -27034,14 +26765,10 @@ internal sealed partial class ParallelBigUnsigned
                         values[leftIndex + 1] = sum1;
 
                         values[rightIndex] =
-                            (uint)((ulong)difference0 *
-                                   twiddles[twiddleIndex] %
-                                   modulus);
+                            MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                         values[rightIndex + 1] =
-                            (uint)((ulong)difference1 *
-                                   twiddles[twiddleIndex + 1] %
-                                   modulus);
+                            MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                         leftIndex += 2;
                         rightIndex += 2;
@@ -27066,9 +26793,7 @@ internal sealed partial class ParallelBigUnsigned
 
                         values[leftIndex] = sum;
                         values[rightIndex] =
-                            (uint)((ulong)difference *
-                                   twiddles[twiddleIndex] %
-                                   modulus);
+                            MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
                     }
                 }
             }
@@ -27228,14 +26953,10 @@ internal sealed partial class ParallelBigUnsigned
                         uint left1 = values[leftIndex + 1];
 
                         uint right0 =
-                            (uint)((ulong)values[rightIndex] *
-                                   twiddles[twiddleIndex] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                         uint right1 =
-                            (uint)((ulong)values[rightIndex + 1] *
-                                   twiddles[twiddleIndex + 1] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                         uint sum0 = left0 + right0;
                         uint sum1 = left1 + right1;
@@ -27265,9 +26986,7 @@ internal sealed partial class ParallelBigUnsigned
                     {
                         leftValue = values[leftIndex];
                         rightValue =
-                            (uint)((ulong)values[rightIndex] *
-                                   twiddles[twiddleIndex] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                         sum = leftValue + rightValue;
 
@@ -27351,24 +27070,16 @@ internal sealed partial class ParallelBigUnsigned
                         uint left3 = values[leftIndex + 3];
 
                         uint right0 =
-                            (uint)((ulong)values[rightIndex] *
-                                   twiddles[twiddleIndex] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                         uint right1 =
-                            (uint)((ulong)values[rightIndex + 1] *
-                                   twiddles[twiddleIndex + 1] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                         uint right2 =
-                            (uint)((ulong)values[rightIndex + 2] *
-                                   twiddles[twiddleIndex + 2] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex + 2], twiddles[twiddleIndex + 2], modulus);
 
                         uint right3 =
-                            (uint)((ulong)values[rightIndex + 3] *
-                                   twiddles[twiddleIndex + 3] %
-                                   modulus);
+                            MultiplyNttBarrett(values[rightIndex + 3], twiddles[twiddleIndex + 3], modulus);
 
                         uint sum0 = left0 + right0;
                         uint sum1 = left1 + right1;
@@ -27417,14 +27128,10 @@ internal sealed partial class ParallelBigUnsigned
                     uint left1 = values[leftIndex + 1];
 
                     uint right0 =
-                        (uint)((ulong)values[rightIndex] *
-                               twiddles[twiddleIndex] %
-                               modulus);
+                        MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                     uint right1 =
-                        (uint)((ulong)values[rightIndex + 1] *
-                               twiddles[twiddleIndex + 1] %
-                               modulus);
+                        MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                     uint sum0 = left0 + right0;
                     uint sum1 = left1 + right1;
@@ -27454,9 +27161,7 @@ internal sealed partial class ParallelBigUnsigned
                 {
                     leftValue = values[leftIndex];
                     rightValue =
-                        (uint)((ulong)values[rightIndex] *
-                               twiddles[twiddleIndex] %
-                               modulus);
+                        MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                     sum = leftValue + rightValue;
 
@@ -27705,24 +27410,16 @@ internal sealed partial class ParallelBigUnsigned
                 values[leftIndex + 3] = sum3;
 
                 values[rightIndex] =
-                    (uint)((ulong)difference0 *
-                           twiddles[twiddleIndex] %
-                           modulus);
+                    MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                 values[rightIndex + 1] =
-                    (uint)((ulong)difference1 *
-                           twiddles[twiddleIndex + 1] %
-                           modulus);
+                    MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                 values[rightIndex + 2] =
-                    (uint)((ulong)difference2 *
-                           twiddles[twiddleIndex + 2] %
-                           modulus);
+                    MultiplyNttBarrett(difference2, twiddles[twiddleIndex + 2], modulus);
 
                 values[rightIndex + 3] =
-                    (uint)((ulong)difference3 *
-                           twiddles[twiddleIndex + 3] %
-                           modulus);
+                    MultiplyNttBarrett(difference3, twiddles[twiddleIndex + 3], modulus);
 
                 leftIndex += 4;
                 rightIndex += 4;
@@ -27757,14 +27454,10 @@ internal sealed partial class ParallelBigUnsigned
             values[leftIndex + 1] = sum1;
 
             values[rightIndex] =
-                (uint)((ulong)difference0 *
-                       twiddles[twiddleIndex] %
-                       modulus);
+                MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
             values[rightIndex + 1] =
-                (uint)((ulong)difference1 *
-                       twiddles[twiddleIndex + 1] %
-                       modulus);
+                MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
             leftIndex += 2;
             rightIndex += 2;
@@ -27789,9 +27482,7 @@ internal sealed partial class ParallelBigUnsigned
 
             values[leftIndex] = sum;
             values[rightIndex] =
-                (uint)((ulong)difference *
-                       twiddles[twiddleIndex] %
-                       modulus);
+                MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
         }
     }
 
@@ -27854,24 +27545,16 @@ internal sealed partial class ParallelBigUnsigned
                 uint left3 = values[leftIndex + 3];
 
                 uint right0 =
-                    (uint)((ulong)values[rightIndex] *
-                           twiddles[twiddleIndex] %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                 uint right1 =
-                    (uint)((ulong)values[rightIndex + 1] *
-                           twiddles[twiddleIndex + 1] %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                 uint right2 =
-                    (uint)((ulong)values[rightIndex + 2] *
-                           twiddles[twiddleIndex + 2] %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex + 2], twiddles[twiddleIndex + 2], modulus);
 
                 uint right3 =
-                    (uint)((ulong)values[rightIndex + 3] *
-                           twiddles[twiddleIndex + 3] %
-                           modulus);
+                    MultiplyNttBarrett(values[rightIndex + 3], twiddles[twiddleIndex + 3], modulus);
 
                 uint sum0 = left0 + right0;
                 uint sum1 = left1 + right1;
@@ -27920,14 +27603,10 @@ internal sealed partial class ParallelBigUnsigned
             uint left1 = values[leftIndex + 1];
 
             uint right0 =
-                (uint)((ulong)values[rightIndex] *
-                       twiddles[twiddleIndex] %
-                       modulus);
+                MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
             uint right1 =
-                (uint)((ulong)values[rightIndex + 1] *
-                       twiddles[twiddleIndex + 1] %
-                       modulus);
+                MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
             uint sum0 = left0 + right0;
             uint sum1 = left1 + right1;
@@ -27957,9 +27636,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             leftValue = values[leftIndex];
             rightValue =
-                (uint)((ulong)values[rightIndex] *
-                       twiddles[twiddleIndex] %
-                       modulus);
+                MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
             sum = leftValue + rightValue;
 
@@ -28222,24 +27899,16 @@ internal sealed partial class ParallelBigUnsigned
                                     values[leftIndex + 3] = sum3;
 
                                     values[rightIndex] =
-                                        (uint)((ulong)difference0 *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                                     values[rightIndex + 1] =
-                                        (uint)((ulong)difference1 *
-                                               twiddles[twiddleIndex + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                                     values[rightIndex + 2] =
-                                        (uint)((ulong)difference2 *
-                                               twiddles[twiddleIndex + 2] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference2, twiddles[twiddleIndex + 2], modulus);
 
                                     values[rightIndex + 3] =
-                                        (uint)((ulong)difference3 *
-                                               twiddles[twiddleIndex + 3] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference3, twiddles[twiddleIndex + 3], modulus);
 
                                     leftIndex += 4;
                                     rightIndex += 4;
@@ -28274,14 +27943,10 @@ internal sealed partial class ParallelBigUnsigned
                                 values[leftIndex + 1] = sum1;
 
                                 values[rightIndex] =
-                                    (uint)((ulong)difference0 *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                                 values[rightIndex + 1] =
-                                    (uint)((ulong)difference1 *
-                                           twiddles[twiddleIndex + 1] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                                 leftIndex += 2;
                                 rightIndex += 2;
@@ -28306,9 +27971,7 @@ internal sealed partial class ParallelBigUnsigned
 
                                 values[leftIndex] = sum;
                                 values[rightIndex] =
-                                    (uint)((ulong)difference *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
                             }
                         }
                     }
@@ -28407,14 +28070,10 @@ internal sealed partial class ParallelBigUnsigned
                                     values[leftIndex + 1] = sum1;
 
                                     values[rightIndex] =
-                                        (uint)((ulong)difference0 *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                                     values[rightIndex + 1] =
-                                        (uint)((ulong)difference1 *
-                                               twiddles[twiddleIndex + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                                     leftIndex += 2;
                                     rightIndex += 2;
@@ -28439,9 +28098,7 @@ internal sealed partial class ParallelBigUnsigned
 
                                     values[leftIndex] = sum;
                                     values[rightIndex] =
-                                        (uint)((ulong)difference *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
                                 }
                             }
                         }
@@ -28634,14 +28291,10 @@ internal sealed partial class ParallelBigUnsigned
                                     uint left1 = values[leftIndex + 1];
 
                                     uint right0 =
-                                        (uint)((ulong)values[rightIndex] *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                     uint right1 =
-                                        (uint)((ulong)values[rightIndex + 1] *
-                                               twiddles[twiddleIndex + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                                     uint sum0 = left0 + right0;
                                     uint sum1 = left1 + right1;
@@ -28671,9 +28324,7 @@ internal sealed partial class ParallelBigUnsigned
                                 {
                                     leftValue = values[leftIndex];
                                     rightValue =
-                                        (uint)((ulong)values[rightIndex] *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                     sum = leftValue + rightValue;
 
@@ -28758,24 +28409,16 @@ internal sealed partial class ParallelBigUnsigned
                                     uint left3 = values[leftIndex + 3];
 
                                     uint right0 =
-                                        (uint)((ulong)values[rightIndex] *
-                                               twiddles[twiddleIndex] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                     uint right1 =
-                                        (uint)((ulong)values[rightIndex + 1] *
-                                               twiddles[twiddleIndex + 1] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                                     uint right2 =
-                                        (uint)((ulong)values[rightIndex + 2] *
-                                               twiddles[twiddleIndex + 2] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 2], twiddles[twiddleIndex + 2], modulus);
 
                                     uint right3 =
-                                        (uint)((ulong)values[rightIndex + 3] *
-                                               twiddles[twiddleIndex + 3] %
-                                               modulus);
+                                        MultiplyNttBarrett(values[rightIndex + 3], twiddles[twiddleIndex + 3], modulus);
 
                                     uint sum0 = left0 + right0;
                                     uint sum1 = left1 + right1;
@@ -28824,14 +28467,10 @@ internal sealed partial class ParallelBigUnsigned
                                 uint left1 = values[leftIndex + 1];
 
                                 uint right0 =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                 uint right1 =
-                                    (uint)((ulong)values[rightIndex + 1] *
-                                           twiddles[twiddleIndex + 1] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                                 uint sum0 = left0 + right0;
                                 uint sum1 = left1 + right1;
@@ -28861,9 +28500,7 @@ internal sealed partial class ParallelBigUnsigned
                             {
                                 leftValue = values[leftIndex];
                                 rightValue =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                 sum = leftValue + rightValue;
 
@@ -29249,14 +28886,10 @@ internal sealed partial class ParallelBigUnsigned
                                 values[leftIndex + 1] = sum1;
 
                                 values[rightIndex] =
-                                    (uint)((ulong)difference0 *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference0, twiddles[twiddleIndex], modulus);
 
                                 values[rightIndex + 1] =
-                                    (uint)((ulong)difference1 *
-                                           twiddles[twiddleIndex + 1] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference1, twiddles[twiddleIndex + 1], modulus);
 
                                 leftIndex += 2;
                                 rightIndex += 2;
@@ -29281,9 +28914,7 @@ internal sealed partial class ParallelBigUnsigned
 
                                 values[leftIndex] = sum;
                                 values[rightIndex] =
-                                    (uint)((ulong)difference *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(difference, twiddles[twiddleIndex], modulus);
                             }
                         }
                     }
@@ -29475,14 +29106,10 @@ internal sealed partial class ParallelBigUnsigned
                                 uint left1 = values[leftIndex + 1];
 
                                 uint right0 =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                 uint right1 =
-                                    (uint)((ulong)values[rightIndex + 1] *
-                                           twiddles[twiddleIndex + 1] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex + 1], twiddles[twiddleIndex + 1], modulus);
 
                                 uint sum0 = left0 + right0;
                                 uint sum1 = left1 + right1;
@@ -29512,9 +29139,7 @@ internal sealed partial class ParallelBigUnsigned
                             {
                                 leftValue = values[leftIndex];
                                 rightValue =
-                                    (uint)((ulong)values[rightIndex] *
-                                           twiddles[twiddleIndex] %
-                                           modulus);
+                                    MultiplyNttBarrett(values[rightIndex], twiddles[twiddleIndex], modulus);
 
                                 sum = leftValue + rightValue;
 
@@ -29890,14 +29515,10 @@ internal sealed partial class ParallelBigUnsigned
             if (normalize)
             {
                 values[leftIndex] =
-                    (uint)((ulong)sum *
-                           inverseLength %
-                           modulus);
+                    MultiplyNttBarrett(sum, inverseLength, modulus);
 
                 values[leftIndex + 1] =
-                    (uint)((ulong)difference *
-                           inverseLength %
-                           modulus);
+                    MultiplyNttBarrett(difference, inverseLength, modulus);
             }
             else
             {
@@ -30096,9 +29717,7 @@ internal sealed partial class ParallelBigUnsigned
                 if (index + 1 < halfLength)
                 {
                     twiddle =
-                        twiddle *
-                        root %
-                        modulus;
+                        ReduceNttProductBarrett((ulong)twiddle * root, modulus);
                 }
 
                 if ((index & 0xFFFF) == 0xFFFF)
@@ -30190,9 +29809,7 @@ internal sealed partial class ParallelBigUnsigned
                     if (index + 1 < endIndex)
                     {
                         twiddle =
-                            twiddle *
-                            root %
-                            modulus;
+                            ReduceNttProductBarrett((ulong)twiddle * root, modulus);
                     }
                 }
             });
@@ -33005,15 +32622,11 @@ internal sealed partial class ParallelBigUnsigned
             if ((remaining & 1u) != 0)
             {
                 result =
-                    result *
-                    factor %
-                    modulus;
+                    ReduceNttProductBarrett((ulong)result * factor, modulus);
             }
 
             factor =
-                factor *
-                factor %
-                modulus;
+                ReduceNttProductBarrett((ulong)factor * factor, modulus);
 
             remaining >>= 1;
         }

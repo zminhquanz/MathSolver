@@ -165,7 +165,7 @@ internal sealed partial class ParallelBigUnsigned
             if (lane + 1 < seed.Length)
             {
                 twiddle =
-                    twiddle * root % modulus;
+                    ReduceNttProductBarrett(twiddle * root, modulus);
             }
         }
     }
