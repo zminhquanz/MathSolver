@@ -25,7 +25,7 @@ The current release is **Math Solver v0.2.0** for **Android** and **Windows**. D
 
 | Platform | v0.2.0 build and scope |
 | --- | --- |
-| Android | ARM64 APK; the project sets Android 5.0 (API 21) as its minimum version. Includes the core calculators, quizzes, formula references, tables, settings, and hardware benchmarks. |
+| Android | ARM64 APK; the project sets Android 7.0 (API 24) as its minimum version. Includes the core calculators, quizzes, formula references, tables, settings, and hardware benchmarks. |
 | Windows | Windows x64 build; the project sets Windows 10 version 1809 (build 17763) as its minimum version. Includes the core features and, on eligible hardware, optional local AI question generation and AI benchmarks. |
 
 The project also contains iOS and Mac Catalyst targets, but this release announcement covers Android and Windows only.
