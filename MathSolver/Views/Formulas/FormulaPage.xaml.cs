@@ -17,6 +17,10 @@ public partial class FormulaPage : ContentPage
 
     private bool _isSubTabTransitioning;
 
+#if ANDROID
+    private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
+#endif
+
     private VisualElement FormulaSubTabAnimationHost
     {
         get
@@ -63,6 +67,14 @@ public partial class FormulaPage : ContentPage
     {
         InitializeComponent();
 
+#if ANDROID
+        _androidSubTabSwipe = new AndroidSubTabSwipeNavigator(
+            FormulaSubTabContentHost,
+            () => (int)_selectedSubTab,
+            (int)FormulaSubTab.Geometry,
+            index => SwitchFormulaSubTabAsync((FormulaSubTab)index));
+#endif
+
         InteractiveButtonAnimation.SetIsScopeEnabled(
             this,
             true);
@@ -100,6 +112,10 @@ public partial class FormulaPage : ContentPage
     {
         base.OnAppearing();
 
+#if ANDROID
+        _androidSubTabSwipe.Attach();
+#endif
+
         LiveWallpaper.Resume();
 
         // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
@@ -128,6 +144,10 @@ public partial class FormulaPage : ContentPage
 
     protected override void OnDisappearing()
     {
+#if ANDROID
+        _androidSubTabSwipe.Detach();
+#endif
+
         LiveWallpaper.Pause();
 
         _mainTabAnimationVersion++;

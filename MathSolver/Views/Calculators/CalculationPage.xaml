@@ -246,7 +246,10 @@
 
         </Border>
 
-        <Grid Grid.Row="1" BackgroundColor="Transparent">
+        <Grid
+            x:Name="CalculationSubTabContentHost"
+            Grid.Row="1"
+            BackgroundColor="Transparent">
             <ScrollView
                 BackgroundColor="Transparent"
                 HorizontalOptions="Fill"

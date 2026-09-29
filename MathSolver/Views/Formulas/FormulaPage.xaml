@@ -262,6 +262,7 @@
 
         <!-- Nội dung tab con -->
         <Grid
+            x:Name="FormulaSubTabContentHost"
             Grid.Row="1"
             HorizontalOptions="Fill">
 

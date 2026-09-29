@@ -20,6 +20,21 @@ namespace MathSolver
                                ConfigChanges.Density)]
     public class MainActivity : MauiAppCompatActivity
     {
+        // Observe touch events after controls receive them so sub-tab pages can
+        // recognize swipes without intercepting scrolling or text input.
+        internal static event Action<MotionEvent>? TouchDispatched;
+
+        public override bool DispatchTouchEvent(MotionEvent? ev)
+        {
+            bool handled = base.DispatchTouchEvent(ev);
+            if (ev is not null)
+            {
+                TouchDispatched?.Invoke(ev);
+            }
+
+            return handled;
+        }
+
         protected override void OnCreate(Bundle? savedInstanceState)
         {
             // Android starts this Activity with MathSolver.SplashTheme so the

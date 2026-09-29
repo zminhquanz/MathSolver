@@ -92,6 +92,10 @@ public partial class CalculationPage : ContentPage
     private bool _isSubTabTransitioning;
     private bool _isPowerRootCalculationInteractionLocked;
 
+#if ANDROID
+    private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
+#endif
+
     private const double CalculationSubTabSpacing =
         6d;
 
@@ -103,6 +107,14 @@ public partial class CalculationPage : ContentPage
     public CalculationPage()
     {
         InitializeComponent();
+
+#if ANDROID
+        _androidSubTabSwipe = new AndroidSubTabSwipeNavigator(
+            CalculationSubTabContentHost,
+            () => (int)_selectedSubTab,
+            (int)CalculationSubTab.Geometry,
+            index => SwitchSubTabAsync((CalculationSubTab)index));
+#endif
 
         _lastAppliedShowFullNumbers =
             ResultNumberDisplayMode.ShowFullNumbers;
@@ -155,6 +167,10 @@ public partial class CalculationPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+#if ANDROID
+        _androidSubTabSwipe.Attach();
+#endif
 
         LocalizationService.CultureChanged -=
             OnLocalizationCultureChanged;
@@ -328,6 +344,9 @@ public partial class CalculationPage : ContentPage
 
     protected override void OnDisappearing()
     {
+#if ANDROID
+        _androidSubTabSwipe.Detach();
+#endif
         LocalizationService.CultureChanged -=
             OnLocalizationCultureChanged;
 
