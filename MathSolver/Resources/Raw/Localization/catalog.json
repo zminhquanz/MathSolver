@@ -6554,8 +6554,8 @@
       "mode": "exact"
     },
     {
-      "key": "PowerRoot.InfoNttKernelScalarNeonPortable",
-      "source": "• NTT/CRT: Scalar (NEON đang bật nhưng Vector128 portable chậm hơn Scalar trên runtime này; NEON vẫn áp dụng cho tác vụ khác).",
+      "key": "PowerRoot.InfoNttKernelNeonPortableAndroid",
+      "source": "• NTT/CRT: NEON/Vector128 kết hợp Scalar cho nhân high32 và carry (nhánh {0}; mũ trên 1M đến 100M).",
       "mode": "exact"
     },
     {
@@ -6570,7 +6570,7 @@
     },
     {
       "key": "PowerRoot.InfoNttKernelScalarNeonUnavailable",
-      "source": "• NTT/CRT: Scalar (Android Debug hoặc runtime không hỗ trợ NEON trực tiếp).",
+      "source": "• NTT/CRT: Scalar (Android Debug hoặc runtime không hỗ trợ NEON/Vector128).",
       "mode": "exact"
     },
     {
@@ -6580,7 +6580,7 @@
     },
     {
       "key": "Hardware.NttBackendNeonPortable",
-      "source": "Pow dùng Scalar vì Vector128 portable chậm hơn qua benchmark; NEON vẫn bật cho tác vụ khác",
+      "source": "NEON/Vector128 kết hợp Scalar cho nhân high32 và carry ở mũ >1M–100M; ≤1M dùng Scalar",
       "mode": "exact"
     },
     {
@@ -6590,7 +6590,7 @@
     },
     {
       "key": "Hardware.NttBackendNeonUnavailable",
-      "source": "Scalar vì Android Debug hoặc runtime không hỗ trợ NEON trực tiếp",
+      "source": "Scalar vì Android Debug hoặc runtime không hỗ trợ NEON/Vector128",
       "mode": "exact"
     },
     {

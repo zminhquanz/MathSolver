@@ -718,19 +718,16 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> left,
         Vector128<uint> right)
     {
-        // Four independent 32x32 high products using only uint32 operations.
-        // Each partial product fits in uint. Splitting the middle carry before
-        // adding the next product prevents overflow (including uint.MaxValue).
-        Vector128<uint> mask = Vector128.Create(0xFFFFu);
-        Vector128<uint> a0 = left & mask;
-        Vector128<uint> a1 = left >> 16;
-        Vector128<uint> b0 = right & mask;
-        Vector128<uint> b1 = right >> 16;
-        Vector128<uint> low = a0 * b0;
-        Vector128<uint> middle = a1 * b0 + (low >> 16);
-        Vector128<uint> upper = a1 * b1 + (middle >> 16);
-        middle = (middle & mask) + a0 * b1;
-        return upper + (middle >> 16);
+        // Mono ARM64 exposes generic Vector128 but not AdvSimd. Its portable
+        // 16-bit partial-product sequence costs far more than four native
+        // scalar 32x32->64 multiplies, especially in every Shoup butterfly.
+        // Keep the exact high word while allowing the surrounding vector
+        // add/subtract and low product to remain in Vector128.
+        return Vector128.Create(
+            (uint)(((ulong)left.GetElement(0) * right.GetElement(0)) >> 32),
+            (uint)(((ulong)left.GetElement(1) * right.GetElement(1)) >> 32),
+            (uint)(((ulong)left.GetElement(2) * right.GetElement(2)) >> 32),
+            (uint)(((ulong)left.GetElement(3) * right.GetElement(3)) >> 32));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

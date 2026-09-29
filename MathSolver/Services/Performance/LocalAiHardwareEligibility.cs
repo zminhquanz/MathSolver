@@ -13,7 +13,7 @@ public static class LocalAiHardwareEligibility
         OperatingSystem.IsWindows() &&
         // Check runtime/CPU capability, independently of the app's SIMD preference.
         Avx2.IsSupported &&
-        PhysicalMemoryInfo.ReadTotalBytes() >= MinimumPhysicalBytes);
+        PhysicalMemoryInfo.ReadInstalledBytes() >= MinimumPhysicalBytes);
 
     public static bool IsAvailable => Availability.Value;
 }

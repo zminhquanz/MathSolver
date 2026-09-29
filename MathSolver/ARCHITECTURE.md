@@ -59,15 +59,22 @@ the app session and is independent of the NTT exponent policy.
 ### Physical RAM eligibility for large NTT powers
 
 `Services/Performance/PhysicalMemoryInfo.cs` reads installed physical RAM on
-Windows (SMBIOS via `GetPhysicallyInstalledSystemMemory`) and Android 14+
-(`ActivityManager.MemoryInfo.AdvertisedMem`). Older Android uses kernel-visible
-`TotalMem` without rounding up hardware reservations. iOS/MacCatalyst use
-`NSProcessInfo.PhysicalMemory`. Swap, zram, free memory and GC budgets do not
-contribute to this hardware threshold; an unavailable reading stays unknown.
+Windows (SMBIOS via `GetPhysicallyInstalledSystemMemory`). Android reads the
+bootloader's `ro.boot.ddr_size` when it is exposed as a valid byte count and
+uses kernel-visible `ActivityManager.MemoryInfo.TotalMem` as a conservative
+lower bound otherwise. Android's `AdvertisedMem` is not used: the tested
+12-GiB device reported 16 GB there, while its bootloader reported 12 GiB;
+the production helper selected the bootloader value in a Release+AOT device
+probe.
+iOS/MacCatalyst use `NSProcessInfo.PhysicalMemory`. `AvailMem`, swap, zram,
+free memory and GC budgets do not contribute to this hardware threshold;
+an unavailable reading stays unknown.
 
 `NttPowerMemoryGuard` allows exponents through 10,000,000 without a RAM query.
-Exponents 10,000,001 through 100,000,000 require at least 12 GiB
-(`12 * 1024^3` bytes); lower or unknown RAM rejects the request with a message.
+Exponents 10,000,001 through 100,000,000 require at least 12 decimal GB
+(`12,000,000,000` bytes) of installed/advertised RAM; lower or unknown RAM
+rejects the request with a message. A 12-GB device is not rejected merely
+because system reservations reduce kernel-visible RAM below 12 GiB.
 The guard runs before allocating NTT workspaces, independently of SIMD and worker
 count, including NTT preparation for TXT export. Power-of-ten parallel arithmetic
 checks the original input exponent, not its internal `k * exponent` transform.
@@ -847,13 +854,17 @@ CRT reconstruction. The existing segmented scheduling, memory budget and
 exact normalization remain unchanged. The same backend is present in the
 <=10M path.
 
-Android Release now enables NEON for power NTT/CRT only when the runtime
-exposes direct `AdvSimd.Arm64` and the exponent is above 1M. On the tested
-ARM64 Mono runtime, only hardware-accelerated portable `Vector128` was
-exposed; whole-power benchmarks at 1M, 10M, 20M and 100M found that path
-2.2-2.9 times slower than Scalar with identical output hashes. Pow therefore
-uses Scalar on that runtime even if app-wide NEON is enabled. This gate does
-not change NEON dispatch for other app features, and it does not infer the
-performance of direct AdvSimd on a different runtime. The >10M physical-RAM
-admission rule remains in effect. See
-[`tests/AndroidNttBenchmark/README.md`](../tests/AndroidNttBenchmark/README.md).
+Android Release enables NEON for power NTT/CRT above exponent 1M when the
+runtime exposes direct `AdvSimd.Arm64` or accelerated `Vector128`. On the
+tested ARM64 Mono runtime, direct AdvSimd reports unavailable even though
+Vector128 is available. The original portable high32 partial-product sequence
+and vector base-10,000 carry were much slower than Scalar. The hybrid path
+keeps Vector128 NTT butterflies but uses four exact scalar 32x32-to-64 high
+products per vector and Scalar carry/segment accumulation. Release+AOT
+whole-power tests on the device measured 39.751 s vs 48.429 s at 10M with an
+18-digit base (and 19.002 s vs 22.446 s with a 9-digit base),
+12.157 s vs 13.643 s at 20M, and 5.154 s vs 5.694 s at 100M for hybrid vs
+Scalar, with matching output hashes. Exponents through 1M remain Scalar.
+The >10M physical-RAM admission rule remains in effect; the benchmark bypasses
+it only inside an isolated test APK. See
+[`tests/AndroidNttBenchmark/RESULTS_20260929.md`](../tests/AndroidNttBenchmark/RESULTS_20260929.md).

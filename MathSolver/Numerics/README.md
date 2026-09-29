@@ -17,7 +17,7 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [ParallelBigUnsigned_TwiddleSimd.cs](BigIntegers/ParallelBigUnsigned_TwiddleSimd.cs): dựng bảng twiddle SIMD.
 - [ParallelBigUnsigned_GlobalShoupSimd.cs](BigIntegers/ParallelBigUnsigned_GlobalShoupSimd.cs): dựng Shoup companion cho global stage.
 - [ParallelBigUnsigned_Sse.cs](BigIntegers/ParallelBigUnsigned_Sse.cs): fallback SSE2/SSE4.1 cho butterfly NTT trong cache ở nhánh ≤10M; [kết quả đo](../SSE_NTT_SUB10M_NOTES.md).
-- [ParallelBigUnsigned_Neon.cs](BigIntegers/ParallelBigUnsigned_Neon.cs): backend NTT/CRT ARM64 NEON đến số mũ 100M. Pow chỉ bật backend này khi runtime có AdvSimd.Arm64 trực tiếp và mũ >1M; Vector128 portable dùng Scalar cho Pow sau [benchmark trên thiết bị thật](../../tests/AndroidNttBenchmark/README.md).
+- [ParallelBigUnsigned_Neon.cs](BigIntegers/ParallelBigUnsigned_Neon.cs): backend NTT/CRT ARM64 NEON đến số mũ 100M. Trên Android Release, Pow dùng AdvSimd.Arm64 trực tiếp hoặc Vector128 lai (nhân high32 và carry dùng Scalar) khi mũ >1M; mũ ≤1M giữ Scalar. Xem [benchmark trên thiết bị thật](../../tests/AndroidNttBenchmark/RESULTS_20260929.md).
 
 
 ## FloatingPoint

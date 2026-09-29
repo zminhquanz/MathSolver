@@ -5812,18 +5812,15 @@ public partial class PowerRootView : LocalizedSolverView
         if (diagnostics.UsedNeonNttButterflies)
         {
             return Format(
-                "PowerRoot.InfoNttKernelNeonAndroid",
+                state.WasNeonPortableAvailable
+                    ? "PowerRoot.InfoNttKernelNeonPortableAndroid"
+                    : "PowerRoot.InfoNttKernelNeonAndroid",
                 state.Exponent > LegacyNttMaximumExponent ? ">10M" : "≤10M");
         }
 
         if (!state.WasSimdEnabled || !state.WasNeonSelected)
         {
             return Translate("PowerRoot.InfoNttKernelScalarNeonOff");
-        }
-
-        if (state.WasNeonPortableSuppressed)
-        {
-            return Translate("PowerRoot.InfoNttKernelScalarNeonPortable");
         }
 
         return Translate(
@@ -5880,8 +5877,8 @@ public partial class PowerRootView : LocalizedSolverView
         public bool WasNeonSelected { get; } =
             CalculationAccelerationManager.EffectiveSimdMode == CalculationSimdMode.ArmNeon;
 
-        public bool WasNeonPortableSuppressed { get; } =
-            CalculationAccelerationManager.IsPowerNttPortableNeonSuppressed;
+        public bool WasNeonPortableAvailable { get; } =
+            CalculationAccelerationManager.IsPowerNttPortableNeonAvailable;
 
         public bool WasAndroidNeonAllowed { get; } =
             CalculationAccelerationManager.IsAndroidNeonExecutionAllowed;

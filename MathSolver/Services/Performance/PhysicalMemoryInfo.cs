@@ -1,12 +1,17 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 
 namespace MathSolver.Services;
 
-/// <summary>Physical RAM only: never includes swap, zram or the GC heap budget.</summary>
+/// <summary>
+/// Installed physical RAM, not currently available RAM. Swap, zram, free
+/// memory and the GC heap budget are excluded. Android falls back to the
+/// kernel-visible physical total when its bootloader size is unavailable.
+/// </summary>
 public static class PhysicalMemoryInfo
 {
-    public static long? ReadTotalBytes()
+    public static long? ReadInstalledBytes()
     {
         try
         {
@@ -18,16 +23,24 @@ public static class PhysicalMemoryInfo
             }
 
 #if ANDROID
+            long? installed = ReadAndroidBootDdrBytes();
             using var manager = Android.App.Application.Context.GetSystemService(
                 Android.Content.Context.ActivityService) as Android.App.ActivityManager;
-            if (manager is null) return null;
+            if (manager is null) return installed;
             using var info = new Android.App.ActivityManager.MemoryInfo();
             manager.GetMemoryInfo(info);
-            // API 34 reports installed/advertised RAM including hardware reservations.
-            // Older versions expose kernel-visible physical RAM; do not round it up.
-            long bytes = OperatingSystem.IsAndroidVersionAtLeast(34) && info.AdvertisedMem > 0
-                ? info.AdvertisedMem : info.TotalMem;
-            return bytes > 0 ? bytes : null;
+            // AdvertisedMem is a retail figure and can include RAM expansion.
+            // On a measured 12-GiB device it reported 16 GB, while the
+            // bootloader reported 12 GiB. Prefer physical DDR size when the
+            // vendor exposes it; otherwise TotalMem is a conservative lower
+            // bound. Neither value depends on currently free memory.
+            if (installed is > 0 &&
+                (info.TotalMem <= 0 || installed >= info.TotalMem))
+            {
+                return installed;
+            }
+
+            return info.TotalMem > 0 ? info.TotalMem : installed;
 #elif IOS || MACCATALYST
             ulong bytes = Foundation.NSProcessInfo.ProcessInfo.PhysicalMemory;
             return bytes > 0 ? checked((long)bytes) : null;
@@ -41,6 +54,41 @@ public static class PhysicalMemoryInfo
             return null;
         }
     }
+
+#if ANDROID
+    private static long? ReadAndroidBootDdrBytes()
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "/system/bin/getprop",
+                Arguments = "ro.boot.ddr_size",
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            });
+            if (process is null) return null;
+            if (!process.WaitForExit(2000))
+            {
+                process.Kill();
+                return null;
+            }
+
+            string output = process.StandardOutput.ReadToEnd().Trim();
+            return process.ExitCode == 0 &&
+                   long.TryParse(output, NumberStyles.None,
+                       CultureInfo.InvariantCulture, out long bytes) &&
+                   bytes is > 0 and <= (1L << 40)
+                ? bytes
+                : null;
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            Debug.WriteLine($"Physical DDR query failed: {exception.Message}");
+            return null;
+        }
+    }
+#endif
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

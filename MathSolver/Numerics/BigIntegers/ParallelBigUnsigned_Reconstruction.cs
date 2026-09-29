@@ -506,7 +506,7 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 #if ANDROID
-        else if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated) && count >= Vector128<ulong>.Count)
+        else if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported && count >= Vector128<ulong>.Count)
         {
             Span<ulong> q = stackalloc ulong[Vector128<ulong>.Count];
             Span<ulong> r = stackalloc ulong[Vector128<ulong>.Count];
@@ -632,7 +632,7 @@ internal sealed partial class ParallelBigUnsigned
         }
 #if ANDROID
         else if (BitConverter.IsLittleEndian &&
-                 workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated) &&
+                 workers.UseNeonNtt && AdvSimd.Arm64.IsSupported &&
                  count >= Vector128<ulong>.Count)
         {
             Span<ulong> q = stackalloc ulong[Vector128<ulong>.Count];
@@ -992,7 +992,7 @@ internal sealed partial class ParallelBigUnsigned
         if (workers.UseSseNtt && Sse2.IsSupported)
             return 4; // Two XMM vectors: base-10,000 carry needs >=4 digits to collapse to a 0/1 transfer.
 #if ANDROID
-        if (workers.UseNeonNtt && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated))
+        if (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported)
             return 4; // Two NEON vectors for the same carry-absorption guarantee as SSE.
 #endif
         return 1;
@@ -1247,7 +1247,8 @@ internal sealed partial class ParallelBigUnsigned
         ulong carry = 0;
         bool vector = Vector128.IsHardwareAccelerated &&
             ((workers.UseAvx2Ntt && Avx2.IsSupported) ||
-             (workers.UseSseNtt && Sse2.IsSupported) || workers.UseNeonNtt);
+             (workers.UseSseNtt && Sse2.IsSupported) ||
+             (workers.UseNeonNtt && AdvSimd.Arm64.IsSupported));
         if ((workers.UseAvx512Ntt || workers.UseLargeModeAvx512Pointwise) && Avx512F.IsSupported && count >= 16)
         {
             ref uint dst = ref MemoryMarshal.GetArrayDataReference(destination);

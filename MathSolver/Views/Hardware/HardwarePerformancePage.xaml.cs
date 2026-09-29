@@ -823,7 +823,7 @@ public partial class HardwarePerformancePage : ContentPage
 #if ANDROID
             !useSimd || selectedMode != CalculationSimdMode.ArmNeon
                 ? LocalizationService.TranslateKey("Hardware.NttBackendNeonOff")
-                : CalculationAccelerationManager.IsPowerNttPortableNeonSuppressed
+                : CalculationAccelerationManager.IsPowerNttPortableNeonAvailable
                     ? LocalizationService.TranslateKey("Hardware.NttBackendNeonPortable")
                     : CalculationAccelerationManager.UsePowerNttNeon
                         ? LocalizationService.TranslateKey("Hardware.NttBackendNeonDirect")

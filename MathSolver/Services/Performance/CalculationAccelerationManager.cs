@@ -230,15 +230,14 @@ public static class CalculationAccelerationManager
         IsPowerExportAccelerationAvailable;
 
     /// <summary>
-    /// NTT/CRT acceleration policy. On Android, the Vector128-only portable
-    /// path is deliberately excluded: device benchmarks at 1M, 10M, 20M and 100M
-    /// found it substantially slower than Scalar despite matching results.
-    /// Direct AdvSimd remains eligible above the short-power scalar gate.
-    /// x86 SSE2+ and the wider AVX backends keep their existing policy.
+    /// NTT/CRT acceleration policy. On Android, direct AdvSimd and the
+    /// optimized hybrid Vector128 backend are eligible above the short-power
+    /// scalar gate. x86 SSE2+ and wider AVX backends keep their existing policy.
     /// </summary>
     public static bool IsPowerNttAccelerationAvailable =>
 #if ANDROID
-        IsAndroidNeonExecutionAllowed && AdvSimd.Arm64.IsSupported;
+        IsAndroidNeonExecutionAllowed &&
+        (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated);
 #else
         Sse2.IsSupported &&
         Vector128.IsHardwareAccelerated &&
@@ -252,9 +251,8 @@ public static class CalculationAccelerationManager
         IsPowerNttAccelerationAvailable;
 
     /// <summary>
-    /// Direct ARM64 AdvSimd for Android NTT/CRT through exponent 100M.
-    /// Portable Vector128 remains available to other operations, but is not
-    /// selected for NTT/CRT after whole-power device measurements.
+    /// Direct ARM64 AdvSimd or optimized hybrid Vector128 for Android NTT/CRT
+    /// through exponent 100M.
     /// </summary>
     public static bool UsePowerNttNeon =>
 #if ANDROID
@@ -264,16 +262,15 @@ public static class CalculationAccelerationManager
         false;
 #endif
 
-    // Keep the short-power gate for direct AdvSimd, which was already slower
-    // at 1M. The portable Vector128 path is excluded for all exponents above.
+    // The 1M result is close enough to Scalar that the short-power gate stays.
     public static bool UsePowerNttNeonForExponent(int exponent) =>
         exponent > 1_000_000 && UsePowerNttNeon;
 
     /// <summary>
-    /// A NEON selection can still accelerate other app features while Pow
-    /// deliberately runs Scalar on Android Mono's Vector128-only runtime.
+    /// True when the Android Pow NTT backend uses portable Vector128 with
+    /// scalar high-word products and carry, rather than direct AdvSimd.
     /// </summary>
-    public static bool IsPowerNttPortableNeonSuppressed =>
+    public static bool IsPowerNttPortableNeonAvailable =>
 #if ANDROID
         IsAndroidNeonExecutionAllowed &&
         !AdvSimd.Arm64.IsSupported &&
