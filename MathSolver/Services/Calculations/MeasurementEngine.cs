@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace MathSolver.Services;
 
@@ -9,6 +10,10 @@ namespace MathSolver.Services;
 /// </summary>
 public static class MeasurementEngine
 {
+    private static readonly Regex InvariantGroupedNumber = new(
+        @"^[+-]?[0-9]{1,3}(,[0-9]{3})+(\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     public sealed record MeasurementUnit(
         string Id,
         string NameKey,
@@ -282,6 +287,22 @@ public static class MeasurementEngine
             NumberStyles.Number |
             NumberStyles.AllowExponent;
 
+        // Results use comma groups and a dot for decimals. Read that shape
+        // first so vi-VN does not interpret "1,000" as 1 or "1.25" as 125.
+        bool usesOutputSeparators =
+            InvariantGroupedNumber.IsMatch(normalized) ||
+            (normalized.Contains('.') && !normalized.Contains(','));
+
+        if (usesOutputSeparators &&
+            decimal.TryParse(
+                normalized,
+                styles,
+                CultureInfo.InvariantCulture,
+                out value))
+        {
+            return true;
+        }
+
         if (decimal.TryParse(
                 normalized,
                 styles,
@@ -309,13 +330,8 @@ public static class MeasurementEngine
     public static string FormatValue(
         decimal value)
     {
-        CultureInfo culture =
-            AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
-                ? CultureInfo.GetCultureInfo("vi-VN")
-                : CultureInfo.GetCultureInfo("en-US");
-
         return value.ToString(
-            "0.############################",
-            culture);
+            "#,0.############################",
+            CultureInfo.InvariantCulture);
     }
 }

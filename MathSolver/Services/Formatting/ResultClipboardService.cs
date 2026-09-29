@@ -1,5 +1,5 @@
+using MathSolver.Controls;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
-using Microsoft.Maui.Controls;
 
 namespace MathSolver.Services;
 
@@ -12,7 +12,7 @@ public static class ResultClipboardService
         1200;
 
     public static async Task CopyAsync(
-        Button button,
+        ResultCopyButton button,
         string? resultText)
     {
         if (string.IsNullOrWhiteSpace(
@@ -30,19 +30,14 @@ public static class ResultClipboardService
             await Clipboard.Default.SetTextAsync(
                 resultText);
 
-            button.Text =
-                LocalizationService.TranslateKey(
-                    "PowerRoot.Copied");
+            button.IsCopied = true;
 
             await Task.Delay(
                 CopiedFeedbackMilliseconds);
         }
         finally
         {
-            button.Text =
-                LocalizationService.TranslateKey(
-                    "PowerRoot.CopyResult");
-
+            button.IsCopied = false;
             button.IsEnabled =
                 true;
         }

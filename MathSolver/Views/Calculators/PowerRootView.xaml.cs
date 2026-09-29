@@ -73,12 +73,6 @@ public partial class PowerRootView : LocalizedSolverView
     private const int RootScientificDisplaySignificantDigits =
         12;
 
-    private const sbyte MinRootDegree =
-        sbyte.MinValue;
-
-    private const sbyte MaxRootDegree =
-        sbyte.MaxValue;
-
     private const int RootMaximumDecimalPlaces =
         10;
 
@@ -784,13 +778,13 @@ public partial class PowerRootView : LocalizedSolverView
             return true;
         }
 
-        // sbyte allows −128..127. The extra character is the optional minus.
-        if (normalized.Length > 4)
+        // Int32.MinValue has ten digits and an optional minus sign.
+        if (normalized.Length > 11)
         {
             return false;
         }
 
-        return sbyte.TryParse(
+        return int.TryParse(
             normalized,
             NumberStyles.Integer,
             CultureInfo.InvariantCulture,
@@ -897,11 +891,11 @@ public partial class PowerRootView : LocalizedSolverView
             RemoveGroupSeparators(
                 entry.Text);
 
-        if (sbyte.TryParse(
+        if (int.TryParse(
                 normalized,
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
-                out sbyte degree))
+                out int degree))
         {
             SetRootEntryText(
                 entry,
@@ -949,7 +943,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         if (!TryReadRootInputs(
                 out Int128 radicand,
-                out sbyte degree))
+                out int degree))
         {
             return;
         }
@@ -1007,7 +1001,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private bool TryReadRootInputs(
         out Int128 radicand,
-        out sbyte degree)
+        out int degree)
     {
         radicand = Int128.Zero;
         degree = 0;
@@ -1038,13 +1032,11 @@ public partial class PowerRootView : LocalizedSolverView
             RemoveGroupSeparators(
                 RootDegreeEntry.Text);
 
-        if (!sbyte.TryParse(
+        if (!int.TryParse(
                 degreeText,
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
                 out degree) ||
-            degree < MinRootDegree ||
-            degree > MaxRootDegree ||
             degree == 0)
         {
             ShowRootError(
@@ -1094,7 +1086,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private void ShowTextbookRootExpression(
         Int128 radicand,
-        sbyte degree)
+        int degree)
     {
         RootResultExpressionView.Degree =
             degree;
@@ -1124,8 +1116,8 @@ public partial class PowerRootView : LocalizedSolverView
             BigInteger.Abs(
                 (BigInteger)state.Radicand);
 
-        int absoluteDegree =
-            Math.Abs((int)state.Degree);
+        long absoluteDegree =
+            Math.Abs((long)state.Degree);
 
         bool hasExactIntegerRoot =
             _powerRootEngine.TryGetExactIntegerRoot(
@@ -1367,7 +1359,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private void RenderNegativeDegreeRootSolution(
         RootCalculationState state,
-        int absoluteDegree,
+        long absoluteDegree,
         string formattedRadicand,
         bool hasExactIntegerRoot,
         BigInteger exactMagnitude,
@@ -1556,7 +1548,7 @@ public partial class PowerRootView : LocalizedSolverView
     private void AddRootVisualStep(
         string text,
         BigInteger radicand,
-        sbyte degree,
+        int degree,
         string? relation = null,
         string? result = null)
     {
@@ -1581,7 +1573,7 @@ public partial class PowerRootView : LocalizedSolverView
     private void AddRootConclusion(
         string text,
         BigInteger radicand,
-        sbyte degree,
+        int degree,
         string relation,
         string result)
     {
@@ -1639,7 +1631,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private static View CreateRootEquation(
         BigInteger radicand,
-        sbyte degree,
+        int degree,
         string? relation,
         string? result,
         bool isConclusion = false)
@@ -2006,22 +1998,9 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        await Clipboard.Default.SetTextAsync(
+        await ResultClipboardService.CopyAsync(
+            RootCopyResultButton,
             _rootCalculationState.ResultText);
-
-        RootCopyResultButton.Text =
-            Translate(
-                "PowerRoot.Copied");
-
-        await Task.Delay(
-            1200);
-
-        if (_rootCalculationState is not null)
-        {
-            RootCopyResultButton.Text =
-                Translate(
-                    "PowerRoot.RootCopyResult");
-        }
     }
 
     private void ShowRootError(
@@ -3464,11 +3443,10 @@ public partial class PowerRootView : LocalizedSolverView
             state.DigitCount >
             FullResultDigitThreshold;
 
-        CopyResultButton.Text =
-            Translate(
-                isCompact
-                    ? "PowerRoot.CopyCompact"
-                    : "PowerRoot.CopyResult");
+        CopyResultButton.NormalTextKey =
+            isCompact
+                ? "PowerRoot.CopyCompact"
+                : "PowerRoot.CopyResult";
 
         bool canExport =
             state.DigitCount >=
@@ -4543,24 +4521,9 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        await Clipboard.Default.SetTextAsync(
+        await ResultClipboardService.CopyAsync(
+            CopyResultButton,
             _calculationState.CompactResult);
-
-        string originalText =
-            CopyResultButton.Text;
-
-        CopyResultButton.Text =
-            Translate(
-                "PowerRoot.Copied");
-
-        await Task.Delay(
-            1200);
-
-        if (_calculationState is not null)
-        {
-            CopyResultButton.Text =
-                originalText;
-        }
     }
 
     private async void OnExportTextClicked(
@@ -5700,7 +5663,7 @@ public partial class PowerRootView : LocalizedSolverView
     }
 
     private static string ToSignedSuperscript(
-        int value)
+        long value)
     {
         return value < 0
             ? $"⁻{ToSuperscript(-value)}"
@@ -5926,7 +5889,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private sealed record RootCalculationState(
         Int128 Radicand,
-        sbyte Degree,
+        int Degree,
         bool IsComplex,
         DoubleDouble RealResult,
         DoubleDouble ImaginaryResult,

@@ -641,15 +641,15 @@
 
                             <Grid HeightRequest="48">
 
-                                <Button
+                                <controls:ResultCopyButton
                                     x:Name="BasicCopyResultButton"
-                                    Text="{localization:Translate PowerRoot.CopyResult}"
+                                    NormalTextKey="PowerRoot.CopyResult"
+                                    Text=""
                                     HeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                    TextColor="Transparent"
                                     Clicked="OnBasicCopyResultClicked" />
 
                                 <HorizontalStackLayout
@@ -663,7 +663,7 @@
                                         HeightRequest="20" />
 
                                     <Label
-                                        Text="{Binding Text, Source={x:Reference BasicCopyResultButton}, x:DataType='Button'}"
+                                        Text="{Binding DisplayText, Source={x:Reference BasicCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                         FontSize="15"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}"

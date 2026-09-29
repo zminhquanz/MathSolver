@@ -1880,12 +1880,12 @@
     },
     {
       "key": "PowerRoot.DegreePlaceholder",
-      "source": "Ví dụ: −3, 2 hoặc 127",
+      "source": "Ví dụ: −3, 2 hoặc 2,147,483,647",
       "mode": "exact"
     },
     {
       "key": "PowerRoot.DegreeHint",
-      "source": "Số nguyên từ −128 đến 127, trừ 0. Nếu nhập bậc âm, ứng dụng sẽ tính căn với bậc dương tương ứng trước, rồi lấy 1 chia cho kết quả vừa tìm.",
+      "source": "Số nguyên từ −2,147,483,648 đến 2,147,483,647, trừ 0. Nếu nhập bậc âm, ứng dụng sẽ tính căn với bậc dương tương ứng trước, rồi lấy 1 chia cho kết quả vừa tìm.",
       "mode": "exact"
     },
     {
@@ -1905,7 +1905,7 @@
     },
     {
       "key": "PowerRoot.RootDegreeRangeError",
-      "source": "Bậc căn phải là số nguyên từ −128 đến 127 và khác 0.",
+      "source": "Bậc căn phải là số nguyên từ −2,147,483,648 đến 2,147,483,647 và khác 0.",
       "mode": "exact"
     },
     {
@@ -5710,7 +5710,7 @@
     },
     {
       "key": "PowerRoot.RootDegreeHint",
-      "source": "Nhập số nguyên từ −128 đến 127, khác 0. Nếu là bậc âm, hãy tính căn với bậc dương tương ứng trước rồi lấy 1 chia cho kết quả.",
+      "source": "Nhập số nguyên từ −2,147,483,648 đến 2,147,483,647, khác 0. Với bậc âm, hãy tính căn với bậc dương tương ứng trước rồi lấy 1 chia cho kết quả.",
       "mode": "exact"
     },
     {

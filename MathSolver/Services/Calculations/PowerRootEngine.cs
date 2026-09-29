@@ -21,7 +21,7 @@ public enum PowerRootCalculationMethod
 
 public sealed record RootCalculationResult(
     Int128 Radicand,
-    sbyte Degree,
+    int Degree,
     bool IsComplex,
     DoubleDouble RealResult,
     DoubleDouble ImaginaryResult,
@@ -52,7 +52,7 @@ public sealed class PowerRootEngine
 
     public RootCalculationResult CalculateRoot(
         Int128 radicand,
-        sbyte degree)
+        int degree)
     {
         if (degree == 0)
         {
@@ -68,8 +68,8 @@ public sealed class PowerRootEngine
                 "A negative-degree root of zero is undefined.");
         }
 
-        int absoluteDegree =
-            Math.Abs((int)degree);
+        long absoluteDegree =
+            Math.Abs((long)degree);
 
         PowerRootCalculationMethod method =
             absoluteDegree switch
@@ -97,13 +97,13 @@ public sealed class PowerRootEngine
 
         bool isComplex =
             radicand < 0 &&
-            (absoluteDegree & 1) == 0;
+            (absoluteDegree & 1L) == 0;
 
         if (isComplex)
         {
             DoubleDouble angle =
                 DoubleDouble.Pi /
-                new DoubleDouble(absoluteDegree);
+                new DoubleDouble((double)absoluteDegree);
 
             if (degree < 0)
             {
@@ -140,7 +140,7 @@ public sealed class PowerRootEngine
 
     private static DoubleDouble CalculatePositiveMagnitudeRoot(
         DoubleDouble magnitude,
-        int degree,
+        long degree,
         PowerRootCalculationMethod method)
     {
         if (degree == 1)
@@ -407,7 +407,7 @@ public sealed class PowerRootEngine
 
     public bool TryGetExactIntegerRoot(
         BigInteger magnitude,
-        int degree,
+        long degree,
         out BigInteger root)
     {
         root = BigInteger.Zero;
@@ -430,6 +430,8 @@ public sealed class PowerRootEngine
             return false;
         }
 
+        int boundedDegree = checked((int)degree);
+
         int upperRootBitCount =
             checked((int)((bitLength + degree - 1L) / degree));
 
@@ -440,7 +442,7 @@ public sealed class PowerRootEngine
         {
             BigInteger candidate = (lower + upper) >> 1;
             int comparison =
-                BigInteger.Pow(candidate, degree)
+                BigInteger.Pow(candidate, boundedDegree)
                     .CompareTo(magnitude);
 
             if (comparison == 0)

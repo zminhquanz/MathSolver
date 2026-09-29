@@ -280,9 +280,10 @@ public readonly struct DoubleDouble :
     /// </summary>
     public static DoubleDouble RootUsingPow(
         DoubleDouble value,
-        int degree)
+        long degree)
     {
-        if (degree < 2)
+        if (degree < 2 ||
+            degree > (long)int.MaxValue + 1L)
         {
             throw new ArgumentOutOfRangeException(nameof(degree));
         }
@@ -314,8 +315,8 @@ public readonly struct DoubleDouble :
                     value.ToDouble(),
                     1d / degree));
 
-        DoubleDouble degreeValue = new(degree);
-        DoubleDouble degreeMinusOne = new(degree - 1);
+        DoubleDouble degreeValue = new((double)degree);
+        DoubleDouble degreeMinusOne = new((double)(degree - 1L));
 
         // Newton cho x^degree = value:
         // x(k+1) = ((degree - 1)x + value/x^(degree - 1)) / degree.
@@ -324,7 +325,7 @@ public readonly struct DoubleDouble :
              iteration++)
         {
             DoubleDouble previousPower =
-                Pow(estimate, degree - 1);
+                Pow(estimate, checked((int)(degree - 1L)));
 
             estimate =
                 (degreeMinusOne * estimate +
