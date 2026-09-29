@@ -13,6 +13,7 @@ public enum EssayAnswerError
     InvalidEquationFormat,
     WrongOperandsOrOperation,
     WrongEquationResult,
+    WrongEquationUnit,
     MissingSolution,
     WrongSolutionContent,
     InvalidAnswerFormat,
@@ -65,42 +66,18 @@ public sealed partial class EssayAnswerValidator
                 question,
                 solutionText);
 
+        (string calculation, string enteredEquationUnit) =
+            SplitEquationResult(question, equationText);
+
         (bool equationIsCorrect, EssayAnswerError equationError) =
-            question.FractionProblem is FractionQuizContract fraction
-                ? ValidateFractionEquation(
-                    fraction,
-                    equationText)
-                : question.GeometryProblem is GeometryQuizContract geometry
-                ? ValidateGeometryEquation(
-                    geometry,
-                    equationText)
-                : question.ProportionProblem is ProportionQuizContract proportion
-                ? ValidateProportionEquation(
-                    proportion,
-                    equationText)
-                : question.MotionProblem is MotionQuizContract motion
-                ? ValidateMotionEquation(
-                    motion,
-                    equationText)
-                : question.AverageProblem is AverageQuizContract average
-                ? ValidateContractEquation(
-                    average.EquationText,
-                    average.RepresentativeLeft,
-                    average.RepresentativeOperation,
-                    average.RepresentativeRight,
-                    average.CorrectAnswer,
-                    equationText)
-                : question.PercentageProblem is PercentageQuizContract percentage
-                ? ValidateContractEquation(
-                    percentage.EquationText,
-                    percentage.RepresentativeLeft,
-                    percentage.RepresentativeOperation,
-                    percentage.RepresentativeRight,
-                    percentage.CorrectAnswer,
-                    equationText)
-                : ValidateEquation(
-                    question,
-                    equationText);
+            ValidateCalculatedEquation(question, calculation);
+
+        if (equationIsCorrect &&
+            !IsExpectedUnit(question, enteredEquationUnit))
+        {
+            equationIsCorrect = false;
+            equationError = EssayAnswerError.WrongEquationUnit;
+        }
 
         (bool answerIsCorrect, EssayAnswerError answerError) =
             question.FractionProblem is FractionQuizContract fractionAnswer
@@ -121,14 +98,79 @@ public sealed partial class EssayAnswerValidator
             answerError);
     }
 
+    public static bool RequiresSolution(ArithmeticQuizQuestion question)
+    {
+        ArgumentNullException.ThrowIfNull(question);
+
+        return question.WordProblem is not null ||
+               question.GeometryProblem is not null ||
+               question.FindXProblem is not null ||
+               question.ProportionProblem is not null ||
+               question.MotionProblem is not null ||
+               question.AverageProblem is not null ||
+               question.PercentageProblem is not null;
+    }
+
+    public static string GetExpectedUnit(ArithmeticQuizQuestion question)
+    {
+        ArgumentNullException.ThrowIfNull(question);
+
+        return question.WordProblem?.AnswerUnit ??
+               question.GeometryProblem?.AnswerUnit ??
+               question.ProportionProblem?.AnswerUnit ??
+               question.MotionProblem?.AnswerUnit ??
+               question.AverageProblem?.AnswerUnit ??
+               question.PercentageProblem?.AnswerUnit ??
+               string.Empty;
+    }
+
+    private static (string Calculation, string Unit) SplitEquationResult(
+        ArithmeticQuizQuestion question,
+        string? equationText)
+    {
+        string text = equationText ?? string.Empty;
+        int equalsIndex = text.LastIndexOf('=');
+        if (equalsIndex < 0)
+            return (text, string.Empty);
+
+        string resultText = text[(equalsIndex + 1)..];
+        Match match = question.FractionProblem is not null
+            ? FractionEquationResultRegex().Match(resultText)
+            : AnswerRegex().Match(resultText);
+        if (!match.Success)
+            return (text, string.Empty);
+
+        string enteredUnit = question.FractionProblem is null &&
+            match.Groups["percent"].Success
+            ? "%"
+            : match.Groups["unit"].Value;
+        return (text[..(equalsIndex + 1)] + match.Groups["value"].Value,
+            NormalizeUnit(enteredUnit));
+    }
+
+    private static bool IsExpectedUnit(
+        ArithmeticQuizQuestion question,
+        string enteredUnit)
+    {
+        string expectedUnit = NormalizeUnit(GetExpectedUnit(question));
+        return expectedUnit.Length == 0 ||
+               enteredUnit.Length > 0 &&
+               UnitsMatch(
+                   enteredUnit,
+                   expectedUnit,
+                   question.WordProblem?.ProblemText ??
+                   question.ProportionProblem?.ProblemText ??
+                   question.MotionProblem?.ProblemText ??
+                   question.AverageProblem?.ProblemText ??
+                   question.PercentageProblem?.ProblemText);
+    }
+
     private static (bool IsCorrect, EssayAnswerError Error)
         ValidateSolution(
             ArithmeticQuizQuestion question,
             string? solutionText)
     {
-        // Nguồn Thuật toán không hiển thị ô lời giải bằng câu văn. Chỉ bài
-        // toán đố do AI tạo mới bắt buộc học sinh điền phần này.
-        if (question.WordProblem is not MathWordProblem wordProblem)
+        if (!RequiresSolution(question))
         {
             return (true, EssayAnswerError.None);
         }
@@ -157,11 +199,34 @@ public sealed partial class EssayAnswerValidator
                 : (false, EssayAnswerError.WrongSolutionContent);
         }
 
+        if (question.FindXProblem is not null &&
+            question.WordProblem is null)
+        {
+            bool mentionsUnknown = new[]
+            {
+                "giá trị của x", "giá trị x", "số chưa biết",
+                "the value of x", "unknown number", "the unknown"
+            }.Any(phrase => ContainsNormalizedPhrase(solution, phrase));
+
+            return mentionsUnknown
+                ? (true, EssayAnswerError.None)
+                : (false, EssayAnswerError.WrongSolutionContent);
+        }
+
         string expectedUnit =
             NormalizeUnit(
-                wordProblem.AnswerUnit);
+                question.WordProblem?.AnswerUnit ??
+                question.ProportionProblem?.AnswerUnit ??
+                question.MotionProblem?.AnswerUnit ??
+                question.AverageProblem?.AnswerUnit ??
+                question.PercentageProblem?.AnswerUnit);
 
         bool mentionsExpectedQuantity =
+            expectedUnit == "%" &&
+            ((solutionText ?? string.Empty).Contains('%') ||
+             ContainsNormalizedPhrase(solution, "phần trăm") ||
+             ContainsNormalizedPhrase(solution, "percent") ||
+             ContainsNormalizedPhrase(solution, "percentage")) ||
             WordProblemUnitEquivalence.ContainsVietnameseUnit(
                 solution,
                 expectedUnit) ||
@@ -200,6 +265,60 @@ public sealed partial class EssayAnswerValidator
                $" {normalizedText} ".Contains(
                    $" {normalizedPhrase} ",
                    StringComparison.Ordinal);
+    }
+
+    private static (bool IsCorrect, EssayAnswerError Error)
+        ValidateCalculatedEquation(
+            ArithmeticQuizQuestion question,
+            string? equationText)
+    {
+        string text = (equationText ?? string.Empty).Trim();
+        if (text.Length == 0 || !text.Contains('='))
+            return (false, EssayAnswerError.InvalidEquationFormat);
+
+        string[] parts = text.Split('=', StringSplitOptions.TrimEntries);
+        if (parts.Length < 2 || parts.Any(string.IsNullOrWhiteSpace))
+            return (false, EssayAnswerError.InvalidEquationFormat);
+
+        int firstCalculationPart = 0;
+        if (parts.Length > 2 && parts[0].All(character =>
+                char.IsLetter(character) || char.IsWhiteSpace(character)))
+        {
+            firstCalculationPart = 1;
+        }
+
+        EssayCalculationEvaluator.Value? equationValue = null;
+        bool containsOperation = false;
+        for (int index = firstCalculationPart; index < parts.Length; index++)
+        {
+            if (!EssayCalculationEvaluator.TryEvaluate(
+                    parts[index], out EssayCalculationEvaluator.Value value,
+                    out bool partHasOperation))
+            {
+                return (false, EssayAnswerError.InvalidEquationFormat);
+            }
+
+            containsOperation |= partHasOperation;
+            if (equationValue is not null && equationValue.Value != value)
+                return (false, EssayAnswerError.WrongEquationResult);
+            equationValue = value;
+        }
+
+        if (!containsOperation || equationValue is null)
+            return (false, EssayAnswerError.InvalidEquationFormat);
+
+        EssayCalculationEvaluator.Value expected =
+            question.FractionProblem is FractionQuizContract fraction
+                ? EssayCalculationEvaluator.Value.Create(
+                    fraction.CorrectAnswer.Numerator,
+                    fraction.CorrectAnswer.Denominator)
+                : new EssayCalculationEvaluator.Value(
+                    question.CorrectAnswer,
+                    BigInteger.One);
+
+        return equationValue.Value == expected
+            ? (true, EssayAnswerError.None)
+            : (false, EssayAnswerError.WrongEquationResult);
     }
 
     private static (bool IsCorrect, EssayAnswerError Error)
@@ -287,18 +406,8 @@ public sealed partial class EssayAnswerValidator
             return (false, EssayAnswerError.WrongAnswer);
         }
 
-        string expectedUnit = NormalizeUnit(question.WordProblem?.AnswerUnit);
         string enteredUnit = NormalizeUnit(match.Groups["unit"].Value);
-        if (expectedUnit.Length > 0 &&
-            (enteredUnit.Length == 0 ||
-             !UnitsMatch(
-                 enteredUnit,
-                 expectedUnit,
-                 question.WordProblem?.ProblemText ??
-                 question.ProportionProblem?.ProblemText ??
-                 question.MotionProblem?.ProblemText ??
-                 question.AverageProblem?.ProblemText ??
-                 question.PercentageProblem?.ProblemText)))
+        if (!IsExpectedUnit(question, enteredUnit))
         {
             return (false, EssayAnswerError.WrongAnswerUnit);
         }
@@ -628,27 +737,7 @@ public sealed partial class EssayAnswerValidator
                     ? "%"
                     : match.Groups["unit"].Value);
 
-        string expectedUnit =
-            NormalizeUnit(
-                question.WordProblem?.AnswerUnit ??
-                question.ProportionProblem?.AnswerUnit ??
-                question.MotionProblem?.AnswerUnit ??
-                question.AverageProblem?.AnswerUnit ??
-                question.PercentageProblem?.AnswerUnit);
-
-        // Bài toán đố có đơn vị thì đáp số phải ghi đúng đơn vị như một bài
-        // giải tiểu học. Câu do thuật toán tạo chỉ là biểu thức nên không ép
-        // đơn vị khi WordProblem không tồn tại.
-        if (expectedUnit.Length > 0 &&
-            (enteredUnit.Length == 0 ||
-             !UnitsMatch(
-                 enteredUnit,
-                 expectedUnit,
-                 question.WordProblem?.ProblemText ??
-                 question.ProportionProblem?.ProblemText ??
-                 question.MotionProblem?.ProblemText ??
-                 question.AverageProblem?.ProblemText ??
-                 question.PercentageProblem?.ProblemText)))
+        if (!IsExpectedUnit(question, enteredUnit))
         {
             return (false, EssayAnswerError.WrongAnswerUnit);
         }
@@ -1000,4 +1089,9 @@ public sealed partial class EssayAnswerValidator
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase)]
     private static partial Regex AnswerRegex();
+
+    [GeneratedRegex(
+        @"^\s*(?<value>[+-]?\d+(?:\s*/\s*[+-]?\d+)?)\s*(?<unit>.*?)\s*$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex FractionEquationResultRegex();
 }

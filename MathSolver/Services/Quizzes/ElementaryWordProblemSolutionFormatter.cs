@@ -86,7 +86,7 @@ public static class ElementaryWordProblemSolutionFormatter
 
         return
             $"{solutionLead}{Environment.NewLine}" +
-            $"{left} {symbol} {right} = {answer}{Environment.NewLine}" +
+            $"{left} {symbol} {right} = {answer} {wordProblem.AnswerUnit}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
@@ -106,7 +106,7 @@ public static class ElementaryWordProblemSolutionFormatter
             string step1 = language == AppLanguage.Vietnamese
                 ? $"Giá trị ứng với 1 đơn vị: {contract.B.ToString("N0", culture)} ÷ {contract.A.ToString("N0", culture)} = {unitRate.ToString("N0", culture)}"
                 : $"Value for 1 unit: {contract.B.ToString("N0", culture)} ÷ {contract.A.ToString("N0", culture)} = {unitRate.ToString("N0", culture)}";
-            string step2 = $"{unitRate.ToString("N0", culture)} × {contract.C.ToString("N0", culture)} = {answer}";
+            string step2 = $"{unitRate.ToString("N0", culture)} × {contract.C.ToString("N0", culture)} = {answer} {wordProblem.AnswerUnit}";
             return $"{lead}{Environment.NewLine}{step1}{Environment.NewLine}{step2}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
         }
 
@@ -116,12 +116,12 @@ public static class ElementaryWordProblemSolutionFormatter
             int newPeople = total / contract.C;
             string step1 = $"{contract.A.ToString("N0", culture)} × {contract.B.ToString("N0", culture)} = {total.ToString("N0", culture)}";
             string step2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {newPeople.ToString("N0", culture)}";
-            string step3 = $"{newPeople.ToString("N0", culture)} − {contract.A.ToString("N0", culture)} = {answer}";
+            string step3 = $"{newPeople.ToString("N0", culture)} − {contract.A.ToString("N0", culture)} = {answer} {wordProblem.AnswerUnit}";
             return $"{lead}{Environment.NewLine}{step1}{Environment.NewLine}{step2}{Environment.NewLine}{step3}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
         }
 
         string inverseStep1 = $"{contract.A.ToString("N0", culture)} × {contract.B.ToString("N0", culture)} = {total.ToString("N0", culture)}";
-        string inverseStep2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {answer}";
+        string inverseStep2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {answer} {wordProblem.AnswerUnit}";
         return $"{lead}{Environment.NewLine}{inverseStep1}{Environment.NewLine}{inverseStep2}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
@@ -158,7 +158,7 @@ public static class ElementaryWordProblemSolutionFormatter
             $"{solutionLead}{Environment.NewLine}" +
             $"{findX.EquationText}{Environment.NewLine}" +
             $"x = {left} {symbol} {right}{Environment.NewLine}" +
-            $"x = {answer}{Environment.NewLine}" +
+            $"x = {answer} {wordProblem.AnswerUnit}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
@@ -177,7 +177,7 @@ public static class ElementaryWordProblemSolutionFormatter
 
         return
             $"{solutionLead}{Environment.NewLine}" +
-            $"{fraction.ExpressionText} = {fraction.CorrectAnswer}{Environment.NewLine}" +
+            $"{fraction.ExpressionText} = {fraction.CorrectAnswer} {wordProblem.AnswerUnit}{Environment.NewLine}" +
             $"{answerLabel}: {fraction.CorrectAnswer} {wordProblem.AnswerUnit}";
     }
 
@@ -215,7 +215,7 @@ public static class ElementaryWordProblemSolutionFormatter
         return
             $"{solutionLead}{Environment.NewLine}" +
             $"{geometry.Formula}{Environment.NewLine}" +
-            $"{substitution} = {answer}{Environment.NewLine}" +
+            $"{substitution} = {answer} {geometry.AnswerUnit}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {geometry.AnswerUnit}";
     }
 

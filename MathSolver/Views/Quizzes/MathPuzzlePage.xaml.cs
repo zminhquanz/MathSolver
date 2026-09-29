@@ -809,16 +809,20 @@ public partial class MathPuzzlePage : ContentPage
     {
         bool isWordProblemSource =
             _generationSource == QuizGenerationSource.LocalLlm;
+        bool requiresSolution =
+            _currentQuestion is not null &&
+            EssayAnswerValidator.RequiresSolution(_currentQuestion);
         bool isFindX = IsFindXProblemSelected();
         bool isFraction = IsFractionProblemSelected();
         bool isProportion = IsProportionProblemSelected();
         bool isMotion = IsMotionProblemSelected();
 
-        // Lời giải bằng câu văn chỉ có ý nghĩa với toán đố do AI tạo.
-        // Nguồn Thuật toán dùng biểu thức hoặc đề hình học ngắn, nên học sinh
-        // chỉ cần nhập phép tính và đáp số.
         EssaySolutionSection.IsVisible =
-            isWordProblemSource;
+            requiresSolution;
+
+        string expectedEquationUnit = _currentQuestion is null
+            ? string.Empty
+            : EssayAnswerValidator.GetExpectedUnit(_currentQuestion);
 
         EssayValidationHintLabel.Text =
             TranslateQuiz(
@@ -842,9 +846,14 @@ public partial class MathPuzzlePage : ContentPage
                     ? "Quiz.ProportionEssayValidationHint"
                     : isMotion
                     ? "Quiz.MotionEssayValidationHint"
-                    : isWordProblemSource
+                    : requiresSolution
                         ? "Quiz.EssayValidationHint"
                         : "Quiz.EssayValidationHintAlgorithm");
+        if (!string.IsNullOrWhiteSpace(expectedEquationUnit))
+        {
+            EssayValidationHintLabel.Text += " " +
+                TranslateQuiz("Quiz.EssayEquationUnitHint");
+        }
 
         EssayEquationEntry.Placeholder =
             isFindX
@@ -858,6 +867,13 @@ public partial class MathPuzzlePage : ContentPage
                 : isMotion
                 ? TranslateQuiz("Quiz.MotionEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
+        if (!string.IsNullOrWhiteSpace(expectedEquationUnit))
+        {
+            EssayEquationEntry.Placeholder +=
+                expectedEquationUnit == "%"
+                    ? "%"
+                    : " " + expectedEquationUnit;
+        }
 
         EssayAnswerEntry.Placeholder =
             isFraction
@@ -4086,6 +4102,11 @@ public partial class MathPuzzlePage : ContentPage
                     : "Quiz.EssaySolutionContentIncorrect");
         }
 
+        if (validation.EquationError == EssayAnswerError.WrongEquationUnit)
+        {
+            return TranslateQuiz("Quiz.EssayEquationUnitIncorrect");
+        }
+
         if (!validation.EquationIsCorrect &&
             !validation.AnswerIsCorrect)
         {
@@ -4209,12 +4230,12 @@ public partial class MathPuzzlePage : ContentPage
                 ? $"Giá trị ứng với 1 đơn vị là:{Environment.NewLine}" +
                   $"{contract.B:N0} ÷ {contract.A:N0} = {unitRate:N0}{Environment.NewLine}" +
                   $"Giá trị ứng với {contract.C:N0} đơn vị là:{Environment.NewLine}" +
-                  $"{unitRate:N0} × {contract.C:N0} = {answer}{Environment.NewLine}" +
+                  $"{unitRate:N0} × {contract.C:N0} = {answer} {contract.AnswerUnit}{Environment.NewLine}" +
                   $"{answerLabel}: {answer} {contract.AnswerUnit}"
                 : $"Value for 1 unit:{Environment.NewLine}" +
                   $"{contract.B:N0} ÷ {contract.A:N0} = {unitRate:N0}{Environment.NewLine}" +
                   $"Value for {contract.C:N0} units:{Environment.NewLine}" +
-                  $"{unitRate:N0} × {contract.C:N0} = {answer}{Environment.NewLine}" +
+                  $"{unitRate:N0} × {contract.C:N0} = {answer} {contract.AnswerUnit}{Environment.NewLine}" +
                   $"{answerLabel}: {answer} {contract.AnswerUnit}";
         }
 
@@ -4228,14 +4249,14 @@ public partial class MathPuzzlePage : ContentPage
                   $"Số người thực tế là:{Environment.NewLine}" +
                   $"{total:N0} ÷ {contract.C:N0} = {newPeople:N0}{Environment.NewLine}" +
                   $"Số người đến thêm là:{Environment.NewLine}" +
-                  $"{newPeople:N0} − {contract.A:N0} = {answer}{Environment.NewLine}" +
+                  $"{newPeople:N0} − {contract.A:N0} = {answer} {contract.AnswerUnit}{Environment.NewLine}" +
                   $"{answerLabel}: {answer} {contract.AnswerUnit}"
                 : $"The total person-days stays constant:{Environment.NewLine}" +
                   $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
                   $"Actual number of people:{Environment.NewLine}" +
                   $"{total:N0} ÷ {contract.C:N0} = {newPeople:N0}{Environment.NewLine}" +
                   $"Additional people:{Environment.NewLine}" +
-                  $"{newPeople:N0} − {contract.A:N0} = {answer}{Environment.NewLine}" +
+                  $"{newPeople:N0} − {contract.A:N0} = {answer} {contract.AnswerUnit}{Environment.NewLine}" +
                   $"{answerLabel}: {answer} {contract.AnswerUnit}";
         }
 
@@ -4243,12 +4264,12 @@ public partial class MathPuzzlePage : ContentPage
             ? $"Tích của hai đại lượng tỉ lệ nghịch không đổi:{Environment.NewLine}" +
               $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
               $"Giá trị cần tìm là:{Environment.NewLine}" +
-              $"{total:N0} ÷ {contract.C:N0} = {answer}{Environment.NewLine}" +
+              $"{total:N0} ÷ {contract.C:N0} = {answer} {contract.AnswerUnit}{Environment.NewLine}" +
               $"{answerLabel}: {answer} {contract.AnswerUnit}"
             : $"The product of the inversely proportional quantities stays constant:{Environment.NewLine}" +
               $"{contract.A:N0} × {contract.B:N0} = {total:N0}{Environment.NewLine}" +
               $"Required value:{Environment.NewLine}" +
-              $"{total:N0} ÷ {contract.C:N0} = {answer}{Environment.NewLine}" +
+              $"{total:N0} ÷ {contract.C:N0} = {answer} {contract.AnswerUnit}{Environment.NewLine}" +
               $"{answerLabel}: {answer} {contract.AnswerUnit}";
     }
 

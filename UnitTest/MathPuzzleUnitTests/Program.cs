@@ -4,6 +4,9 @@ var tests = new (string Name, Action Run)[]
 {
     ("Catalog", PuzzleTests.CheckCatalog),
     ("Algorithm question matrix", PuzzleTests.CheckAlgorithmMatrix),
+    ("Essay solution requirements", PuzzleTests.CheckEssaySolutionRequirements),
+    ("Essay calculation units", PuzzleTests.CheckEssayCalculationUnits),
+    ("Flexible essay calculations", PuzzleTests.CheckFlexibleEssayCalculations),
     ("AI prompt matrix", PuzzleTests.CheckPromptMatrix),
     ("AI JSON parser", PuzzleTests.CheckParser),
     ("AI contract validator", PuzzleTests.CheckValidators)
