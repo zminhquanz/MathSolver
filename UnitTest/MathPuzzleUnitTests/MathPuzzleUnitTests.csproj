@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../MathSolver/Models/Arithmetic/*.cs" Link="Models/Arithmetic/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Models/Fractions/*.cs" Link="Models/Fractions/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Models/Formulas/GeometryCalculation.cs" Link="Models/Formulas/GeometryCalculation.cs" />
+    <Compile Include="../../MathSolver/Models/Quizzes/*.cs" Link="Models/Quizzes/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Numerics/BigIntegers/*.cs" Link="Numerics/BigIntegers/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Numerics/Powers/*.cs" Link="Numerics/Powers/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Numerics/FloatingPoint/*.cs" Link="Numerics/FloatingPoint/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Numerics/Serialization/*.cs" Link="Numerics/Serialization/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Services/Calculations/*.cs" Exclude="../../MathSolver/Services/Calculations/MeasurementEngine.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
+    <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Services/AI/LocalLlmQuizGenerator.cs" Link="Services/AI/LocalLlmQuizGenerator.cs" />
+  </ItemGroup>
+</Project>
