@@ -17,7 +17,9 @@ internal static partial class PuzzleTests
             ArithmeticQuizQuestion question = Generate(
                 kind, subtype, ArithmeticQuizMode.Essay, language, 11000 + count);
             string label = $"{kind}/{subtype}/{language}";
-            bool required = kind is not (QuizProblemKind.Arithmetic or QuizProblemKind.Fraction);
+            bool required = kind is not (
+                QuizProblemKind.Arithmetic or QuizProblemKind.Fraction or
+                QuizProblemKind.FindX);
 
             Require(EssayAnswerValidator.RequiresSolution(question) == required,
                 $"{label}: wrong essay solution requirement.");
@@ -46,13 +48,14 @@ internal static partial class PuzzleTests
             count++;
         }
 
-        // AI word problems still require a sentence even for basic arithmetic
-        // and fractions; the exception applies to algorithm-only expressions.
+        // AI word problems still require a sentence for arithmetic, fractions,
+        // and Find X; the exception applies to algorithm-only expressions.
         foreach (QuizProblemKind kind in new[]
-            { QuizProblemKind.Arithmetic, QuizProblemKind.Fraction })
+            { QuizProblemKind.Arithmetic, QuizProblemKind.Fraction,
+              QuizProblemKind.FindX })
         {
-            object subtype = kind == QuizProblemKind.Arithmetic
-                ? ArithmeticOperation.Add : FractionOperation.Add;
+            object subtype = kind == QuizProblemKind.Fraction
+                ? FractionOperation.Add : ArithmeticOperation.Add;
             ArithmeticQuizQuestion question = Generate(
                 kind, subtype, ArithmeticQuizMode.Essay, AppLanguage.English, 12000)
                 with { WordProblem = new MathWordProblem(

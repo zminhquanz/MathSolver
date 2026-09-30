@@ -36,9 +36,9 @@ public sealed record EssayAnswerValidationResult(
 }
 
 /// <summary>
-/// Chấm đủ ba phần của bài tự luận: câu lời giải, phép tính và đáp số. Câu lời
-/// giải không cần trùng từng chữ với mẫu, nhưng bắt buộc phải có và phải nêu
-/// đúng đại lượng/đơn vị mà đề bài yêu cầu.
+/// Chấm phép tính và đáp số của bài tự luận. Câu lời giải chỉ bắt buộc với
+/// bài toán có ngữ cảnh lời văn/đại lượng; các phép tính số thuần túy không
+/// cần phần này.
 /// </summary>
 public sealed partial class EssayAnswerValidator
 {
@@ -104,7 +104,6 @@ public sealed partial class EssayAnswerValidator
 
         return question.WordProblem is not null ||
                question.GeometryProblem is not null ||
-               question.FindXProblem is not null ||
                question.ProportionProblem is not null ||
                question.MotionProblem is not null ||
                question.AverageProblem is not null ||
@@ -165,6 +164,11 @@ public sealed partial class EssayAnswerValidator
                    question.PercentageProblem?.ProblemText);
     }
 
+    internal static bool IsExpectedUnitForFeedback(
+        ArithmeticQuizQuestion question,
+        string enteredUnit) =>
+        IsExpectedUnit(question, NormalizeUnit(enteredUnit));
+
     private static (bool IsCorrect, EssayAnswerError Error)
         ValidateSolution(
             ArithmeticQuizQuestion question,
@@ -175,13 +179,21 @@ public sealed partial class EssayAnswerValidator
             return (true, EssayAnswerError.None);
         }
 
-        string solution =
-            NormalizeComparisonText(
-                solutionText ?? string.Empty);
+        string solution = NormalizeComparisonText(
+            NormalizeUnit(Regex.Replace(
+                solutionText ?? string.Empty,
+                @"(?<=\d)(?=\p{L})",
+                " ",
+                RegexOptions.CultureInvariant)));
 
         if (solution.Length == 0)
         {
             return (false, EssayAnswerError.MissingSolution);
+        }
+
+        if (MentionsSolutionCue(question, solution, solutionText))
+        {
+            return (true, EssayAnswerError.None);
         }
 
         if (question.GeometryProblem is GeometryQuizContract geometry)
@@ -199,18 +211,11 @@ public sealed partial class EssayAnswerValidator
                 : (false, EssayAnswerError.WrongSolutionContent);
         }
 
-        if (question.FindXProblem is not null &&
-            question.WordProblem is null)
+        if (question.MotionProblem is MotionQuizContract motion &&
+            GetMotionQuantityPhrases(motion.QuestionKind)
+                .Any(phrase => ContainsNormalizedPhrase(solution, phrase)))
         {
-            bool mentionsUnknown = new[]
-            {
-                "giá trị của x", "giá trị x", "số chưa biết",
-                "the value of x", "unknown number", "the unknown"
-            }.Any(phrase => ContainsNormalizedPhrase(solution, phrase));
-
-            return mentionsUnknown
-                ? (true, EssayAnswerError.None)
-                : (false, EssayAnswerError.WrongSolutionContent);
+            return (true, EssayAnswerError.None);
         }
 
         string expectedUnit =
@@ -230,6 +235,7 @@ public sealed partial class EssayAnswerValidator
             WordProblemUnitEquivalence.ContainsVietnameseUnit(
                 solution,
                 expectedUnit) ||
+            ContainsNormalizedPhrase(solution, expectedUnit) ||
             ContainsNormalizedPhrase(
                 solution,
                 NormalizeEnglishUnitToSingular(expectedUnit));
@@ -237,6 +243,63 @@ public sealed partial class EssayAnswerValidator
         return mentionsExpectedQuantity
             ? (true, EssayAnswerError.None)
             : (false, EssayAnswerError.WrongSolutionContent);
+    }
+
+    private static bool MentionsSolutionCue(
+        ArithmeticQuizQuestion question,
+        string normalizedSolution,
+        string? originalSolution)
+    {
+        string expectedUnit = NormalizeUnit(GetExpectedUnit(question));
+        if (expectedUnit == "%" &&
+            ((originalSolution ?? string.Empty).Contains('%') ||
+             ContainsNormalizedPhrase(normalizedSolution, "phần trăm") ||
+             ContainsNormalizedPhrase(normalizedSolution, "percentage") ||
+             ContainsNormalizedPhrase(normalizedSolution, "tỉ lệ") ||
+             ContainsNormalizedPhrase(normalizedSolution, "tỷ lệ") ||
+             ContainsNormalizedPhrase(normalizedSolution, "share")))
+        {
+            return true;
+        }
+
+        if (WordProblemUnitEquivalence.ContainsVietnameseUnit(
+                normalizedSolution, expectedUnit) ||
+            ContainsNormalizedPhrase(normalizedSolution, expectedUnit) ||
+            ContainsNormalizedPhrase(
+                normalizedSolution,
+                NormalizeEnglishUnitToSingular(expectedUnit)) ||
+            (GetMetricUnitSymbol(expectedUnit, allowDescriptiveSuffix: true)
+                 is string metricSymbol &&
+             ContainsNormalizedPhrase(normalizedSolution, metricSymbol)))
+        {
+            return true;
+        }
+
+        string[] unitWords = NormalizeComparisonText(expectedUnit).Split(
+            ' ', StringSplitOptions.RemoveEmptyEntries);
+        if (unitWords.Length > 1 &&
+            ((unitWords[0] is "kg" or "gam" or "g" or "tấn" or
+                "lít" or "mét" or "km" or "cm" or "mm" &&
+              ContainsNormalizedPhrase(normalizedSolution, unitWords[0])) ||
+             unitWords[^1] is not ("vuông" or "khối" or "of") &&
+             ContainsNormalizedPhrase(normalizedSolution, unitWords[^1])))
+        {
+            return true;
+        }
+
+        string? subject = question.ProportionProblem?.SubjectName ??
+                          question.MotionProblem?.SubjectName ??
+                          question.AverageProblem?.SubjectName ??
+                          question.PercentageProblem?.SubjectName;
+
+        return ContainsNormalizedPhrase(normalizedSolution, subject ?? string.Empty) ||
+               question.ProportionProblem is
+                   { Scenario: ProportionScenarioKind.PaintArea } &&
+               (ContainsNormalizedPhrase(normalizedSolution, "tường") ||
+                ContainsNormalizedPhrase(normalizedSolution, "wall")) ||
+               question.GeometryProblem is GeometryQuizContract geometry &&
+               (ContainsNormalizedPhrase(normalizedSolution, geometry.ObjectName) ||
+                ContainsNormalizedPhrase(normalizedSolution, geometry.ShapeName));
     }
 
     private static IReadOnlyList<string> GetGeometryQuantityPhrases(
@@ -252,6 +315,19 @@ public sealed partial class EssayAnswerValidator
             GeometryMeasurement.Volume =>
                 ["thể tích", "volume"],
             _ => []
+        };
+
+    private static IReadOnlyList<string> GetMotionQuantityPhrases(
+        MotionQuestionKind kind) => kind switch
+        {
+            MotionQuestionKind.BasicDistance or
+            MotionQuestionKind.BasicRestDistance =>
+                ["quãng đường", "distance"],
+            MotionQuestionKind.BasicTime or
+            MotionQuestionKind.CatchUpTime or
+            MotionQuestionKind.MeetingTime =>
+                ["thời gian", "time"],
+            _ => ["vận tốc", "tốc độ", "speed"]
         };
 
     private static bool ContainsNormalizedPhrase(
@@ -844,6 +920,11 @@ public sealed partial class EssayAnswerValidator
             return true;
         }
 
+        if (MetricUnitsMatch(enteredUnit, expectedUnit))
+        {
+            return true;
+        }
+
         // Từ chỉ loại tiếng Việt không làm thay đổi danh từ được đếm.
         // Ví dụ: cây bút = cái bút = chiếc bút; quy tắc vẫn giữ nguyên
         // phần tên cụ thể như bút chì, bút bi hoặc sổ tay.
@@ -889,6 +970,60 @@ public sealed partial class EssayAnswerValidator
                    singularEntered,
                    singularExpected,
                    problemText);
+    }
+
+    private static bool MetricUnitsMatch(
+        string enteredUnit,
+        string expectedUnit)
+    {
+        string? enteredSymbol = GetMetricUnitSymbol(
+            enteredUnit, allowDescriptiveSuffix: false);
+        return enteredSymbol is not null &&
+               enteredSymbol == GetMetricUnitSymbol(
+                   expectedUnit, allowDescriptiveSuffix: true);
+    }
+
+    private static string? GetMetricUnitSymbol(
+        string unit,
+        bool allowDescriptiveSuffix)
+    {
+        int spaceIndex = unit.IndexOf(' ');
+        string unitName = spaceIndex < 0 ? unit : unit[..spaceIndex];
+        string? symbol = unitName switch
+        {
+            "m" or "mét" or "met" or "meter" or "meters" or
+                "metre" or "metres" => "m",
+            "km" or "kilomet" or "kilômét" or "ki-lô-mét" or
+                "kilometer" or "kilometers" or "kilometre" or
+                "kilometres" => "km",
+            "g" or "gam" or "gram" or "grams" or
+                "gramme" or "grammes" => "g",
+            "kg" or "kilogam" or "kilôgam" or "ki-lô-gam" or
+                "kilogram" or "kilograms" or "kilogramme" or
+                "kilogrammes" => "kg",
+            _ => null
+        };
+
+        if (spaceIndex < 0)
+        {
+            return symbol;
+        }
+
+        if (!allowDescriptiveSuffix || symbol is null)
+        {
+            return null;
+        }
+
+        string suffix = unit[(spaceIndex + 1)..];
+        return suffix.StartsWith("vuông", StringComparison.Ordinal) ||
+               suffix.StartsWith("khối", StringComparison.Ordinal) ||
+               suffix.StartsWith("mỗi ", StringComparison.Ordinal) ||
+               suffix.StartsWith("trên ", StringComparison.Ordinal) ||
+               suffix.StartsWith("square ", StringComparison.Ordinal) ||
+               suffix.StartsWith("cubic ", StringComparison.Ordinal) ||
+               suffix.StartsWith("per ", StringComparison.Ordinal)
+            ? null
+            : symbol;
     }
 
     /// <summary>
@@ -943,6 +1078,7 @@ public sealed partial class EssayAnswerValidator
         {
             normalized.Append(
                 char.IsLetterOrDigit(character) ||
+                char.IsNumber(character) ||
                 char.IsWhiteSpace(character)
                     ? character
                     : ' ');
@@ -1085,7 +1221,7 @@ public sealed partial class EssayAnswerValidator
     private static partial Regex GroupedIntegerRegex();
 
     [GeneratedRegex(
-        @"^\s*(?:(?:đáp\s*số|answer)\s*:?)?\s*(?<value>\+?\d(?:[\d.,\u00A0\u202F ]*\d)?)(?:(?:\s+(?<unit>.*?))|(?<percent>%))?\s*[.!]?\s*$",
+        @"^\s*(?:(?:đáp\s*số|answer)\s*:?)?\s*(?<value>\+?\d(?:[\d.,\u00A0\u202F ]*\d)?)(?:(?<percent>%)|\s*(?<unit>[^\d\s].*?))?\s*[.!]?\s*$",
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase)]
     private static partial Regex AnswerRegex();

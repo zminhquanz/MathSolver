@@ -127,11 +127,15 @@ public sealed class AverageQuizGenerator
         string problem = language == AppLanguage.Vietnamese
             ? $"Trong {count} ngày, {context.ViAction} lần lượt {list} {context.ViUnit}. Trung bình mỗi ngày là bao nhiêu {context.ViUnit}?"
             : $"Over {count} days, {context.EnAction} {list} {context.EnUnit}, respectively. What is the average number of {context.EnUnit} per day?";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Tổng cộng: {string.Join(" + ", values)} = {total} {context.ViUnit}{Environment.NewLine}" +
-              $"Trung bình mỗi ngày: {total} ÷ {count} = {average} {context.ViUnit}"
-            : $"Total: {string.Join(" + ", values)} = {total} {context.EnUnit}{Environment.NewLine}" +
-              $"Average per day: {total} ÷ {count} = {average} {context.EnUnit}";
+        string equation = $"({string.Join(" + ", values)}) ÷ {count} = {average}";
+        string solution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? $"Trung bình mỗi ngày ({context.ViUnit}) là:"
+                : $"The average per day ({context.EnUnit}) is:",
+            equation,
+            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+            average,
+            language);
 
         return new(
             AverageQuizType.Direct,
@@ -140,7 +144,7 @@ public sealed class AverageQuizGenerator
             language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
             language == AppLanguage.Vietnamese ? context.ViSubject : context.EnSubject,
             problem,
-            $"{total} ÷ {count} = {average}",
+            equation,
             solution,
             total,
             ArithmeticOperation.Divide,
@@ -156,9 +160,15 @@ public sealed class AverageQuizGenerator
         string problem = language == AppLanguage.Vietnamese
             ? $"{count} {context.ViGroup} có tổng cộng {total} {context.ViUnit}. Trung bình mỗi {context.ViGroup} có bao nhiêu {context.ViUnit}?"
             : $"{count} {context.EnGroup} have {total} {context.EnUnit} in total. How many {context.EnUnit} are there per group on average?";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Trung bình mỗi {context.ViGroup}: {total} ÷ {count} = {average} {context.ViUnit}"
-            : $"Average per group: {total} ÷ {count} = {average} {context.EnUnit}";
+        string equation = $"{total} ÷ {count} = {average}";
+        string solution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? $"Trung bình mỗi {context.ViGroup} ({context.ViUnit}) là:"
+                : $"The average per group ({context.EnUnit}) is:",
+            equation,
+            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+            average,
+            language);
 
         return new(
             AverageQuizType.TotalToAverage,
@@ -167,7 +177,7 @@ public sealed class AverageQuizGenerator
             language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
             language == AppLanguage.Vietnamese ? context.ViSubject : context.EnSubject,
             problem,
-            $"{total} ÷ {count} = {average}",
+            equation,
             solution,
             total,
             ArithmeticOperation.Divide,
@@ -183,9 +193,15 @@ public sealed class AverageQuizGenerator
         string problem = language == AppLanguage.Vietnamese
             ? $"Có {count} {context.ViGroup}, trung bình mỗi {context.ViGroup} có {average} {context.ViUnit}. Tất cả có bao nhiêu {context.ViUnit}?"
             : $"There are {count} {context.EnGroup}, with an average of {average} {context.EnUnit} per group. How many {context.EnUnit} are there altogether?";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Tổng số: {average} × {count} = {total} {context.ViUnit}"
-            : $"Total: {average} × {count} = {total} {context.EnUnit}";
+        string equation = $"{average} × {count} = {total}";
+        string solution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? $"Tổng số {context.ViUnit} là:"
+                : $"The total number of {context.EnUnit} is:",
+            equation,
+            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+            total,
+            language);
 
         return new(
             AverageQuizType.AverageToTotal,
@@ -194,7 +210,7 @@ public sealed class AverageQuizGenerator
             language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
             language == AppLanguage.Vietnamese ? $"tổng {context.ViSubject}" : $"total {context.EnSubject}",
             problem,
-            $"{average} × {count} = {total}",
+            equation,
             solution,
             average,
             ArithmeticOperation.Multiply,
@@ -228,13 +244,15 @@ public sealed class AverageQuizGenerator
             string problem = language == AppLanguage.Vietnamese
                 ? $"{name} có điểm của 3 bài đầu lần lượt là {a}, {b}, {c}. Bài thứ {count} {name} cần bao nhiêu điểm để điểm trung bình của {count} bài là {targetAverage}?"
                 : $"{name} scores {a}, {b}, and {c} on the first 3 tests. What score is needed on test {count} for an average of {targetAverage} across {count} tests?";
-            string solution = language == AppLanguage.Vietnamese
-                ? $"Tổng điểm cần có: {targetAverage} × {count} = {targetTotal}{Environment.NewLine}" +
-                  $"Tổng 3 bài đầu: {a} + {b} + {c} = {knownTotal}{Environment.NewLine}" +
-                  $"Điểm bài thứ {count}: {targetTotal} − {knownTotal} = {missing} điểm"
-                : $"Required total score: {targetAverage} × {count} = {targetTotal}{Environment.NewLine}" +
-                  $"First 3 tests total: {a} + {b} + {c} = {knownTotal}{Environment.NewLine}" +
-                  $"Score on test {count}: {targetTotal} − {knownTotal} = {missing} points";
+            string equation = $"{targetAverage} × {count} − ({a} + {b} + {c}) = {missing}";
+            string solution = FormatSolution(
+                language == AppLanguage.Vietnamese
+                    ? $"Điểm bài thứ {count} cần có là:"
+                    : $"The score needed on test {count} is:",
+                equation,
+                language == AppLanguage.Vietnamese ? "điểm" : "points",
+                missing,
+                language);
 
             IReadOnlyList<int> facts = language == AppLanguage.Vietnamese
                 ? [3, a, b, c, count, count, targetAverage]
@@ -247,7 +265,7 @@ public sealed class AverageQuizGenerator
                 language == AppLanguage.Vietnamese ? "điểm" : "points",
                 language == AppLanguage.Vietnamese ? "điểm bài còn thiếu" : "missing test score",
                 problem,
-                $"{targetTotal} − {knownTotal} = {missing}",
+                equation,
                 solution,
                 targetTotal,
                 ArithmeticOperation.Subtract,
@@ -278,13 +296,16 @@ public sealed class AverageQuizGenerator
             string problem = language == AppLanguage.Vietnamese
                 ? $"Lan có {lan} {context.ViUnit}, Mai nhiều hơn Lan {more} {context.ViUnit}, Hoa ít hơn Mai {less} {context.ViUnit}. Trung bình mỗi bạn có bao nhiêu {context.ViUnit}?"
                 : $"Lan has {lan} {context.EnUnit}. Mai has {more} more {context.EnUnit} than Lan, and Hoa has {less} fewer {context.EnUnit} than Mai. How many {context.EnUnit} does each person have on average?";
-            string solution = language == AppLanguage.Vietnamese
-                ? $"Mai có: {lan} + {more} = {mai} {context.ViUnit}{Environment.NewLine}" +
-                  $"Hoa có: {mai} − {less} = {hoa} {context.ViUnit}{Environment.NewLine}" +
-                  $"Trung bình: ({lan} + {mai} + {hoa}) ÷ 3 = {average} {context.ViUnit}"
-                : $"Mai has: {lan} + {more} = {mai} {context.EnUnit}{Environment.NewLine}" +
-                  $"Hoa has: {mai} − {less} = {hoa} {context.EnUnit}{Environment.NewLine}" +
-                  $"Average: ({lan} + {mai} + {hoa}) ÷ 3 = {average} {context.EnUnit}";
+            string equation =
+                $"({lan} + ({lan} + {more}) + ({lan} + {more} − {less})) ÷ 3 = {average}";
+            string solution = FormatSolution(
+                language == AppLanguage.Vietnamese
+                    ? $"Trung bình mỗi bạn ({context.ViUnit}) là:"
+                    : $"The average per person ({context.EnUnit}) is:",
+                equation,
+                language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+                average,
+                language);
 
             return new(
                 AverageQuizType.IndirectData,
@@ -293,7 +314,7 @@ public sealed class AverageQuizGenerator
                 language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
                 language == AppLanguage.Vietnamese ? $"{context.ViSubject} mỗi bạn" : $"{context.EnSubject} per person",
                 problem,
-                $"{total} ÷ 3 = {average}",
+                equation,
                 solution,
                 total,
                 ArithmeticOperation.Divide,
@@ -324,13 +345,16 @@ public sealed class AverageQuizGenerator
             string problem = language == AppLanguage.Vietnamese
                 ? $"Nhóm A có {countA} {context.ViMember}, trung bình mỗi người có {averageA} {context.ViUnit}. Nhóm B có {countB} {context.ViMember}, trung bình mỗi người có {averageB} {context.ViUnit}. Trung bình chung của cả hai nhóm là bao nhiêu {context.ViUnit}?"
                 : $"Group A has {countA} {context.EnMember}, averaging {averageA} {context.EnUnit} each. Group B has {countB} {context.EnMember}, averaging {averageB} {context.EnUnit} each. What is the combined average in {context.EnUnit}?";
-            string solution = language == AppLanguage.Vietnamese
-                ? $"Tổng nhóm A: {countA} × {averageA} = {countA * averageA} {context.ViUnit}{Environment.NewLine}" +
-                  $"Tổng nhóm B: {countB} × {averageB} = {countB * averageB} {context.ViUnit}{Environment.NewLine}" +
-                  $"Trung bình chung: {totalPoints} ÷ {totalCount} = {average} {context.ViUnit}"
-                : $"Group A total: {countA} × {averageA} = {countA * averageA} {context.EnUnit}{Environment.NewLine}" +
-                  $"Group B total: {countB} × {averageB} = {countB * averageB} {context.EnUnit}{Environment.NewLine}" +
-                  $"Combined average: {totalPoints} ÷ {totalCount} = {average} {context.EnUnit}";
+            string equation =
+                $"({countA} × {averageA} + {countB} × {averageB}) ÷ ({countA} + {countB}) = {average}";
+            string solution = FormatSolution(
+                language == AppLanguage.Vietnamese
+                    ? $"Trung bình chung ({context.ViUnit}) là:"
+                    : $"The combined average ({context.EnUnit}) is:",
+                equation,
+                language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+                average,
+                language);
 
             return new(
                 AverageQuizType.TwoGroups,
@@ -339,7 +363,7 @@ public sealed class AverageQuizGenerator
                 language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
                 language == AppLanguage.Vietnamese ? context.ViSubject : context.EnSubject,
                 problem,
-                $"{totalPoints} ÷ {totalCount} = {average}",
+                equation,
                 solution,
                 totalPoints,
                 ArithmeticOperation.Divide,
@@ -351,9 +375,15 @@ public sealed class AverageQuizGenerator
         string fallbackProblem = language == AppLanguage.Vietnamese
             ? "Nhóm A có 4 bạn, điểm trung bình là 8. Nhóm B có 4 bạn, điểm trung bình là 6. Điểm trung bình chung của cả hai nhóm là bao nhiêu?"
             : "Group A has 4 students with an average score of 8. Group B has 4 students with an average score of 6. What is the combined average score?";
-        string fallbackSolution = language == AppLanguage.Vietnamese
-            ? "Tổng điểm hai nhóm: 4 × 8 + 4 × 6 = 56\nĐiểm trung bình chung: 56 ÷ 8 = 7 điểm"
-            : "Combined total: 4 × 8 + 4 × 6 = 56\nCombined average: 56 ÷ 8 = 7 points";
+        string fallbackEquation = "(4 × 8 + 4 × 6) ÷ (4 + 4) = 7";
+        string fallbackSolution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? "Điểm trung bình chung là:"
+                : "The combined average score is:",
+            fallbackEquation,
+            language == AppLanguage.Vietnamese ? "điểm" : "points",
+            answer,
+            language);
         return new(
             AverageQuizType.TwoGroups,
             [ca, aa, cb, ab],
@@ -361,7 +391,7 @@ public sealed class AverageQuizGenerator
             language == AppLanguage.Vietnamese ? "điểm" : "points",
             language == AppLanguage.Vietnamese ? "điểm trung bình chung" : "combined average score",
             fallbackProblem,
-            "56 ÷ 8 = 7",
+            fallbackEquation,
             fallbackSolution,
             56,
             ArithmeticOperation.Divide,
@@ -486,6 +516,19 @@ public sealed class AverageQuizGenerator
 
     private static string JoinValues(IReadOnlyList<int> values) =>
         string.Join(", ", values);
+
+    private static string FormatSolution(
+        string lead,
+        string equation,
+        string unit,
+        int answer,
+        AppLanguage language)
+    {
+        string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+        return $"{lead}{Environment.NewLine}" +
+               $"{equation} {unit}{Environment.NewLine}" +
+               $"{answerLabel}: {answer} {unit}";
+    }
 
     private static string BuildSolutionLead(AverageQuizContract contract) =>
         AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese

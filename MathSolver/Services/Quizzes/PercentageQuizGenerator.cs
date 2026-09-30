@@ -101,22 +101,28 @@ public sealed class PercentageQuizGenerator
         int whole = PickMultipleOf(20, 40, 200);
         int part = whole * percentage / 100;
         ItemContext item = Contexts[_random.Next(Contexts.Length)];
-        string unit = language == AppLanguage.Vietnamese ? "%" : "%";
+        const string unit = "%";
         string problem = language == AppLanguage.Vietnamese
             ? $"Có tất cả {whole} {item.ViUnit}, trong đó có {part} {item.ViRatioPart}. Hỏi số {item.ViRatioPart} chiếm bao nhiêu phần trăm tổng số {item.ViUnit}?"
             : $"There are {whole} {item.EnUnit} in total, including {part} {item.EnRatioPart}. What percentage of the total are {item.EnRatioPart}?";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Tỉ số phần trăm: {part} × 100 ÷ {whole} = {percentage}%"
-            : $"Percentage ratio: {part} × 100 ÷ {whole} = {percentage}%";
+        string equation = $"{part} ÷ {whole} × 100 = {percentage}";
+        string solution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? $"Tỉ lệ {item.ViRatioPart} trong tổng số {item.ViUnit} là:"
+                : $"The share of {item.EnRatioPart} among all {item.EnUnit} is:",
+            equation,
+            unit,
+            percentage,
+            language);
 
         return new(
             PercentageQuizType.FindPercentageRatio,
             [whole, part],
             percentage,
             unit,
-            language == AppLanguage.Vietnamese ? "tỉ số phần trăm" : "percentage ratio",
+            language == AppLanguage.Vietnamese ? item.ViRatioPart : item.EnRatioPart,
             problem,
-            $"{part * 100} ÷ {whole} = {percentage}",
+            equation,
             solution,
             part * 100,
             ArithmeticOperation.Divide,
@@ -135,9 +141,15 @@ public sealed class PercentageQuizGenerator
         string problem = language == AppLanguage.Vietnamese
             ? $"Có tất cả {whole} {item.ViUnit}, trong đó {percentage}% là {item.ViRatioPart}. Hỏi có bao nhiêu {item.ViRatioPart}?"
             : $"There are {whole} {item.EnUnit} in total, and {percentage}% are {item.EnRatioPart}. How many {item.EnRatioPart} are there?";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Số {item.ViRatioPart}: {whole} ÷ 100 × {percentage} = {value} {item.ViRatioPart}"
-            : $"Number of {item.EnRatioPart}: {whole} ÷ 100 × {percentage} = {value} {item.EnRatioPart}";
+        string equation = $"{whole} × {percentage} ÷ 100 = {value}";
+        string solution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? $"Số {item.ViRatioPart} là:"
+                : $"The number of {item.EnRatioPart} is:",
+            equation,
+            unit,
+            value,
+            language);
 
         return new(
             PercentageQuizType.FindPercentageValue,
@@ -146,7 +158,7 @@ public sealed class PercentageQuizGenerator
             unit,
             subject,
             problem,
-            $"{whole / 100} × {percentage} = {value}",
+            equation,
             solution,
             whole / 100,
             ArithmeticOperation.Multiply,
@@ -165,9 +177,15 @@ public sealed class PercentageQuizGenerator
         string problem = language == AppLanguage.Vietnamese
             ? $"Có {value} {item.ViRatioPart}, bằng {percentage}% tổng số {item.ViUnit}. Hỏi có tất cả bao nhiêu {item.ViUnit}?"
             : $"There are {value} {item.EnRatioPart}, which make up {percentage}% of all {item.EnUnit}. How many {item.EnUnit} are there altogether?";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Tổng số {item.ViUnit}: {value} × 100 ÷ {percentage} = {whole} {item.ViUnit}"
-            : $"Total {item.EnUnit}: {value} × 100 ÷ {percentage} = {whole} {item.EnUnit}";
+        string equation = $"{value} × 100 ÷ {percentage} = {whole}";
+        string solution = FormatSolution(
+            language == AppLanguage.Vietnamese
+                ? $"Tổng số {item.ViUnit} là:"
+                : $"The total number of {item.EnUnit} is:",
+            equation,
+            unit,
+            whole,
+            language);
 
         return new(
             PercentageQuizType.FindWholeFromPercentageValue,
@@ -176,7 +194,7 @@ public sealed class PercentageQuizGenerator
             unit,
             subject,
             problem,
-            $"{value * 100} ÷ {percentage} = {whole}",
+            equation,
             solution,
             value * 100,
             ArithmeticOperation.Divide,
@@ -287,6 +305,20 @@ public sealed class PercentageQuizGenerator
         AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
             ? $"{contract.SubjectName} là:"
             : $"The {contract.SubjectName} is:";
+
+    private static string FormatSolution(
+        string lead,
+        string equation,
+        string unit,
+        int answer,
+        AppLanguage language)
+    {
+        string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+        string unitSuffix = unit == "%" ? unit : $" {unit}";
+        return $"{lead}{Environment.NewLine}" +
+               $"{equation}{unitSuffix}{Environment.NewLine}" +
+               $"{answerLabel}: {answer}{unitSuffix}";
+    }
 
     private void Shuffle<T>(IList<T> values)
     {

@@ -49,11 +49,31 @@ public static class ElementaryWordProblemSolutionFormatter
 
         if (question.ProportionProblem is ProportionQuizContract proportion)
         {
-            return FormatProportion(
+            return ProportionQuizSolutionFormatter.Format(
                 proportion,
-                wordProblem,
                 language,
-                culture);
+                culture,
+                wordProblem.AnswerUnit);
+        }
+
+        if (question.MotionProblem is MotionQuizContract motion)
+        {
+            return FormatMotion(motion, wordProblem, language, culture);
+        }
+
+        if (question.AverageProblem is AverageQuizContract average)
+        {
+            string lead = NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead);
+            string averageAnswer = average.CorrectAnswer.ToString("N0", culture);
+            string averageAnswerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+            return $"{lead}{Environment.NewLine}" +
+                   $"{average.EquationText} {wordProblem.AnswerUnit}{Environment.NewLine}" +
+                   $"{averageAnswerLabel}: {averageAnswer} {wordProblem.AnswerUnit}";
+        }
+
+        if (question.PercentageProblem is PercentageQuizContract percentage)
+        {
+            return percentage.SolutionText;
         }
 
         string left =
@@ -90,8 +110,8 @@ public static class ElementaryWordProblemSolutionFormatter
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
-    private static string FormatProportion(
-        ProportionQuizContract contract,
+    private static string FormatMotion(
+        MotionQuizContract contract,
         MathWordProblem wordProblem,
         AppLanguage language,
         CultureInfo culture)
@@ -99,30 +119,9 @@ public static class ElementaryWordProblemSolutionFormatter
         string lead = NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead);
         string answer = contract.CorrectAnswer.ToString("N0", culture);
         string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
-
-        if (contract.IsDirect)
-        {
-            int unitRate = contract.B / contract.A;
-            string step1 = language == AppLanguage.Vietnamese
-                ? $"Giá trị ứng với 1 đơn vị: {contract.B.ToString("N0", culture)} ÷ {contract.A.ToString("N0", culture)} = {unitRate.ToString("N0", culture)}"
-                : $"Value for 1 unit: {contract.B.ToString("N0", culture)} ÷ {contract.A.ToString("N0", culture)} = {unitRate.ToString("N0", culture)}";
-            string step2 = $"{unitRate.ToString("N0", culture)} × {contract.C.ToString("N0", culture)} = {answer} {wordProblem.AnswerUnit}";
-            return $"{lead}{Environment.NewLine}{step1}{Environment.NewLine}{step2}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
-        }
-
-        int total = contract.A * contract.B;
-        if (contract.AsksForAdditionalPeople)
-        {
-            int newPeople = total / contract.C;
-            string step1 = $"{contract.A.ToString("N0", culture)} × {contract.B.ToString("N0", culture)} = {total.ToString("N0", culture)}";
-            string step2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {newPeople.ToString("N0", culture)}";
-            string step3 = $"{newPeople.ToString("N0", culture)} − {contract.A.ToString("N0", culture)} = {answer} {wordProblem.AnswerUnit}";
-            return $"{lead}{Environment.NewLine}{step1}{Environment.NewLine}{step2}{Environment.NewLine}{step3}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
-        }
-
-        string inverseStep1 = $"{contract.A.ToString("N0", culture)} × {contract.B.ToString("N0", culture)} = {total.ToString("N0", culture)}";
-        string inverseStep2 = $"{total.ToString("N0", culture)} ÷ {contract.C.ToString("N0", culture)} = {answer} {wordProblem.AnswerUnit}";
-        return $"{lead}{Environment.NewLine}{inverseStep1}{Environment.NewLine}{inverseStep2}{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+        return $"{lead}{Environment.NewLine}" +
+               $"{contract.EquationText} {wordProblem.AnswerUnit}{Environment.NewLine}" +
+               $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
     private static string FormatFindX(

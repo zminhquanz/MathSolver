@@ -56,7 +56,54 @@ internal static partial class PuzzleTests
         Require(equivalent.EquationIsCorrect && equivalent.AnswerIsCorrect,
             "Calculation and answer must accept the same Vietnamese unit equivalence.");
 
+        CheckMetricUnitAbbreviations(validator);
+
         Console.WriteLine($"  Checked {count} algorithm/AI equations with correct, missing, and wrong units.");
+    }
+
+    private static void CheckMetricUnitAbbreviations(
+        EssayAnswerValidator validator)
+    {
+        ArithmeticQuizQuestion sample = Generate(
+            QuizProblemKind.Proportion, ProportionQuizType.Direct,
+            ArithmeticQuizMode.Essay, AppLanguage.Vietnamese, 14001);
+
+        foreach ((string writtenUnit, string symbol, string wrongSymbol) in new[]
+        {
+            ("mét vải", "m", "m²"),
+            ("gam", "g", "kg"),
+            ("kilomet", "km", "m"),
+            ("kilogam", "kg", "g")
+        })
+        {
+            ArithmeticQuizQuestion question = sample with
+            {
+                ProportionProblem = sample.ProportionProblem! with
+                {
+                    AnswerUnit = writtenUnit
+                }
+            };
+            string equation = BuildEquation(question);
+            string answer = question.CorrectAnswer.ToString();
+            EssayAnswerValidationResult accepted = validator.Validate(
+                question, $"Số {symbol} là:", equation + symbol,
+                answer + symbol);
+            Require(accepted.IsCorrect,
+                $"{writtenUnit} must accept adjacent {symbol} in solution, equation and answer: " +
+                $"{accepted.SolutionError}/{accepted.EquationError}/{accepted.AnswerError}.");
+
+            EssayAnswerValidationResult wrongEquation = validator.Validate(
+                question, $"Số {symbol} là:", equation + wrongSymbol,
+                answer + symbol);
+            Require(wrongEquation.EquationError == EssayAnswerError.WrongEquationUnit,
+                $"{writtenUnit} incorrectly accepted {wrongSymbol} in the equation.");
+
+            EssayAnswerValidationResult wrongAnswer = validator.Validate(
+                question, $"Số {symbol} là:", equation + symbol,
+                answer + wrongSymbol);
+            Require(wrongAnswer.AnswerError == EssayAnswerError.WrongAnswerUnit,
+                $"{writtenUnit} incorrectly accepted {wrongSymbol} in the answer.");
+        }
     }
 
     private static void CheckEquationUnit(

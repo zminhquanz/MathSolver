@@ -6,6 +6,8 @@ var tests = new (string Name, Action Run)[]
     ("Algorithm question matrix", PuzzleTests.CheckAlgorithmMatrix),
     ("Essay solution requirements", PuzzleTests.CheckEssaySolutionRequirements),
     ("Essay calculation units", PuzzleTests.CheckEssayCalculationUnits),
+    ("Detailed essay feedback", PuzzleTests.CheckEssayFeedback),
+    ("AI essay solutions and formatting", PuzzleTests.CheckAiEssayFormatting),
     ("Flexible essay calculations", PuzzleTests.CheckFlexibleEssayCalculations),
     ("AI prompt matrix", PuzzleTests.CheckPromptMatrix),
     ("AI JSON parser", PuzzleTests.CheckParser),
