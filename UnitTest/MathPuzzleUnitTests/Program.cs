@@ -11,7 +11,8 @@ var tests = new (string Name, Action Run)[]
     ("Flexible essay calculations", PuzzleTests.CheckFlexibleEssayCalculations),
     ("AI prompt matrix", PuzzleTests.CheckPromptMatrix),
     ("AI JSON parser", PuzzleTests.CheckParser),
-    ("AI contract validator", PuzzleTests.CheckValidators)
+    ("AI contract validator", PuzzleTests.CheckValidators),
+    ("Motion realism", PuzzleTests.CheckMotionRealism)
 };
 
 int failed = 0;

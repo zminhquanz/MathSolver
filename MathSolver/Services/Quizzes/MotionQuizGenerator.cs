@@ -23,6 +23,7 @@ public sealed class MotionQuizGenerator
     private enum MotionSubjectKind
     {
         MotorVehicle,
+        Train,
         Bicycle,
         FastAnimal,
         MediumAnimal,
@@ -66,7 +67,7 @@ public sealed class MotionQuizGenerator
         new("một ô tô", "a car", MotionSubjectKind.MotorVehicle),
         new("một xe máy", "a motorcycle", MotionSubjectKind.MotorVehicle),
         new("một xe buýt", "a bus", MotionSubjectKind.MotorVehicle),
-        new("một tàu hỏa", "a train", MotionSubjectKind.MotorVehicle),
+        new("một tàu hỏa", "a train", MotionSubjectKind.Train),
         new("một xe đạp", "a bicycle", MotionSubjectKind.Bicycle),
         new("một con ngựa", "a horse", MotionSubjectKind.FastAnimal),
         new("một con nai", "a deer", MotionSubjectKind.FastAnimal),
@@ -80,18 +81,18 @@ public sealed class MotionQuizGenerator
         new("một người chạy bộ", "a jogger", MotionSubjectKind.Runner)
     ];
 
+    // These speed ranges describe powered boats. A paddle canoe would make
+    // the same numeric facts physically implausible.
     private static readonly string[] WatercraftVi =
     [
-        "một chiếc thuyền",
         "một ca nô",
         "một xuồng máy"
     ];
 
     private static readonly string[] WatercraftEn =
     [
-        "a boat",
-        "a canoe",
-        "a motorboat"
+        "a motorboat",
+        "a speedboat"
     ];
 
     private readonly Random _random;
@@ -428,8 +429,8 @@ public sealed class MotionQuizGenerator
                 ? _random.Next(15, 41)
                 : _random.Next(18, 46);
         int currentSpeed = profile.SpeedUnitEn == "m/s"
-            ? _random.Next(1, Math.Min(5, boatSpeed))
-            : _random.Next(2, Math.Min(11, boatSpeed));
+            ? _random.Next(1, Math.Min(3, boatSpeed))
+            : _random.Next(1, Math.Min(6, boatSpeed));
         int downstream = boatSpeed + currentSpeed;
         int upstream = boatSpeed - currentSpeed;
 
@@ -833,6 +834,10 @@ public sealed class MotionQuizGenerator
         {
             MotionSubjectKind.MotorVehicle =>
                 language == AppLanguage.English
+                    ? [MotionUnitKind.RoadKmHour, MotionUnitKind.RoadKmMinute, MotionUnitKind.MeterSecond, MotionUnitKind.MilesHour]
+                    : [MotionUnitKind.RoadKmHour, MotionUnitKind.RoadKmMinute, MotionUnitKind.MeterSecond],
+            MotionSubjectKind.Train =>
+                language == AppLanguage.English
                     ? [MotionUnitKind.RoadKmHour, MotionUnitKind.RoadKmMinute, MotionUnitKind.MilesHour]
                     : [MotionUnitKind.RoadKmHour, MotionUnitKind.RoadKmMinute],
             MotionSubjectKind.Bicycle =>
@@ -893,7 +898,10 @@ public sealed class MotionQuizGenerator
         (subjectKind, unitKind) switch
         {
             (MotionSubjectKind.MotorVehicle, MotionUnitKind.RoadKmHour or MotionUnitKind.RoadKmMinute) => (25, 91),
+            (MotionSubjectKind.MotorVehicle, MotionUnitKind.MeterSecond) => (8, 24),
             (MotionSubjectKind.MotorVehicle, MotionUnitKind.MilesHour) => (15, 61),
+            (MotionSubjectKind.Train, MotionUnitKind.RoadKmHour or MotionUnitKind.RoadKmMinute) => (60, 121),
+            (MotionSubjectKind.Train, MotionUnitKind.MilesHour) => (40, 76),
             (MotionSubjectKind.Bicycle, MotionUnitKind.RoadKmHour) => (8, 31),
             (MotionSubjectKind.Bicycle, MotionUnitKind.MeterSecond) => (2, 9),
             (MotionSubjectKind.Bicycle, MotionUnitKind.MilesHour) => (5, 20),
@@ -903,7 +911,7 @@ public sealed class MotionQuizGenerator
             (MotionSubjectKind.MediumAnimal, MotionUnitKind.MeterSecond) => (2, 11),
             (MotionSubjectKind.TinyAnimal, MotionUnitKind.CentimeterSecond) => (1, 9),
             (MotionSubjectKind.TinyAnimal, MotionUnitKind.MillimeterSecond) => (2, 21),
-            (MotionSubjectKind.Pedestrian, MotionUnitKind.MeterSecond) => (1, 4),
+            (MotionSubjectKind.Pedestrian, MotionUnitKind.MeterSecond) => (1, 3),
             (MotionSubjectKind.Runner, MotionUnitKind.MeterSecond) => (2, 9),
             _ => (2, 12)
         };

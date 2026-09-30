@@ -1795,11 +1795,11 @@ internal static class LlmQuizPromptBuilder
                 - CHỈ dùng 4 nhóm chuyển động cơ bản: một vật; cùng chiều đuổi kịp; ngược chiều gặp nhau; xuôi/ngược dòng. Không thêm bài nâng cao, vận tốc thay đổi nhiều chặng, đi-về hay kết hợp nhiều dạng.
                 - Mọi dữ kiện số trong problem_text bắt buộc viết bằng chữ số 0-9; không viết số bằng chữ.
                 - problem_text phải giữ đúng toàn bộ các lần xuất hiện số trong danh sách [{{facts}}], đúng vai trò như mẫu; không thêm, bỏ, gộp hoặc đổi bất kỳ dữ kiện số nào.
-                - Không tự đổi đơn vị. Giữ nguyên các đơn vị tốc độ, thời gian và quãng đường trong mẫu C#.
+                - Giữ đúng đơn vị tốc độ, thời gian và quãng đường trong mẫu C#. Có thể viết tên đầy đủ tương đương, ví dụ m là mét; không quy đổi sang đơn vị khác.
                 - Giữ nguyên loại chuyển động {{typeName}}; không đổi cùng chiều thành ngược chiều, không đổi gặp nhau thành đuổi kịp, không đổi xuôi/ngược dòng thành bài khác.
-                - Có thể diễn đạt câu văn tự nhiên hơn, nhưng không đổi phương tiện/con vật/người đi bộ đã được C# chọn sang đối tượng khác.
+                - Có thể diễn đạt tự nhiên bằng tên người khi bối cảnh và đơn vị vẫn hợp lý. Với cm/mm cho con vật nhỏ và bài sông, phải nêu rõ con vật hoặc phương tiện đường sông.
                 - Để câu chuyện sinh động hơn, ưu tiên thêm tên riêng/vai trò phù hợp: {{personalizationHint}}
-                - Tên riêng/vai trò không được tạo thêm dữ kiện số. Nếu có hai chủ thể thì có thể dùng hai tên khác nhau, nhưng vẫn phải giữ nguyên đúng phương tiện/con vật/người mà C# đã chọn.
+                - Tên riêng/vai trò không được tạo thêm dữ kiện số. Nếu có hai chủ thể thì có thể dùng hai tên khác nhau; bối cảnh cm/mm của con vật nhỏ và phương tiện đường sông phải vẫn rõ ràng.
                 - Không tính hoặc làm lộ đáp án trong problem_text.
                 - answer_unit phải đúng "{{contract.AnswerUnit}}", không chứa số hoặc phép tính.
                 - subject_name là cụm ngắn mô tả đúng đại lượng cần tìm.
@@ -1827,11 +1827,11 @@ internal static class LlmQuizPromptBuilder
             - Use only the four basic motion families: one moving object; same-direction catch-up; opposite-direction meeting; upstream/downstream river motion. Do not create advanced multi-stage, round-trip, variable-speed, or combined-motion problems.
             - Every numeric fact in problem_text MUST use digits 0-9; never spell a number out as a word.
             - problem_text must preserve every numeric occurrence in [{{facts}}] with the same role as the reference. Do not add, omit, merge, or change any numeric fact.
-            - Do not convert units. Keep the exact speed, time, and distance units selected by C#.
+            - Preserve speed, time, and distance units. Equivalent full names are allowed, such as m and meters; do not convert to another unit.
             - Keep the required {{typeName}} relationship. Do not turn catch-up into meeting, meeting into catch-up, or river motion into another kind.
-            - You may polish the wording, but do not replace the vehicle, animal, pedestrian, or watercraft selected by C# with a different object.
+            - You may use people's names when the motion context and units remain sensible. Tiny animals measured in cm/mm and river craft must remain explicit.
             - To make the story livelier, prefer adding suitable names/roles: {{personalizationHint}}
-            - Names/roles must not introduce any new numeric fact. If there are two subjects, two different names are allowed, but the C#-selected vehicles/animals/people must remain unchanged.
+            - Names/roles must not introduce any new numeric fact. Two subjects may have different names; tiny animals measured in cm/mm and river craft must remain clear.
             - Do not calculate or reveal the answer in problem_text.
             - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
             - subject_name is a short phrase naming the requested quantity.
@@ -1938,11 +1938,11 @@ internal static class LlmQuizPromptBuilder
                 MotionQuizType.Basic =>
                     "nếu là xe có thể dùng chú Nam/cô Mai là người điều khiển; nếu là người đi bộ/chạy bộ dùng tên như An, Minh; nếu là con vật có thể viết 'con rùa của bé An'",
                 MotionQuizType.Chasing =>
-                    "có thể đặt tên An và Minh cho hai người/chủ thể, hoặc chú Nam và chú Bình cho hai người điều khiển phương tiện",
+                    "nếu chủ thể là người thì có thể đặt tên An và Minh; nếu là xe thì có thể đặt tên An và Bình làm người lái nhưng xe vẫn là chủ thể chuyển động; nếu là con vật thì giữ rõ con vật đang di chuyển",
                 MotionQuizType.Meeting =>
-                    "có thể đặt hai tên như An và Mai, hoặc chú Nam và cô Lan cho hai chủ thể đi từ hai phía",
+                    "nếu chủ thể là người thì có thể đặt tên An và Mai; nếu là xe thì có thể đặt tên hai người lái nhưng xe vẫn là chủ thể chuyển động; nếu là con vật thì giữ rõ con vật đang di chuyển",
                 MotionQuizType.River =>
-                    "ví dụ chú Bình điều khiển ca nô, bác Nam chèo thuyền hoặc cô Lan lái xuồng máy",
+                    "ví dụ chú Bình điều khiển ca nô hoặc cô Lan lái xuồng máy",
                 _ => "dùng tên riêng và vai trò đời thường phù hợp"
             };
         }
@@ -1952,11 +1952,11 @@ internal static class LlmQuizPromptBuilder
             MotionQuizType.Basic =>
                 "for a vehicle, name its driver such as Liam or Emma; for a pedestrian/runner use Alex or Mia; for an animal you may write 'Alex's turtle'",
             MotionQuizType.Chasing =>
-                "use two names such as Alex and Liam for the two subjects, or name the two drivers when vehicles are involved",
+                "name Alex and Liam when the moving subjects are people; for vehicles, name the drivers while keeping the vehicles as the moving subjects; for animals, keep the animals moving and optionally name them or their owners",
             MotionQuizType.Meeting =>
-                "use two different names such as Mia and Alex for the subjects approaching from opposite sides",
+                "name Mia and Alex when the moving subjects are people; for vehicles, name the drivers while keeping the vehicles as the moving subjects; for animals, keep the animals moving and optionally name them or their owners",
             MotionQuizType.River =>
-                "for example Ben operates the motorboat, Liam rows the boat, or Emma pilots the canoe",
+                "for example Ben operates the motorboat or Emma pilots the speedboat",
             _ => "use a natural proper name and everyday role"
         };
     }
@@ -2715,7 +2715,7 @@ internal static class LlmQuizPromptBuilder
                 "MotionRelationshipMismatch" =>
                     "Giữ đúng loại chuyển động và đơn vị trong mẫu C#: một vật, cùng chiều đuổi kịp, ngược chiều gặp nhau hoặc xuôi/ngược dòng. Không chuyển sang dạng nâng cao.",
                 "MotionUnitMismatch" =>
-                    "Giữ nguyên chính xác các đơn vị do C# chọn trong problem_text; không đổi km/h, m/s, mph, giờ/phút/giây hoặc km/m/cm/mm/miles sang đơn vị khác.",
+                    "Giữ đúng đơn vị do C# chọn; có thể viết tên đầy đủ tương đương như m = mét. Không quy đổi sang đơn vị khác.",
                 "FractionFactsMismatch" =>
                     "Ghi từng phân số đúng dạng 1/2 bằng dấu /. Tuyệt đối không dùng $, LaTeX, \\frac, \\dfrac, \\tfrac hoặc ngoặc nhọn.",
                 "AnswerRevealedInProblem" =>
@@ -2740,6 +2740,8 @@ internal static class LlmQuizPromptBuilder
                     "Tách rõ số nhóm và số đồ vật mỗi nhóm. Dùng một danh từ nhóm như nhóm, dãy hoặc khu vực; không dùng chính answer_unit làm vật chứa nhiều vật cùng loại.",
                 "UnrealisticQuantityContext" =>
                     "Đổi sang bối cảnh quy mô lớn phù hợp dữ kiện như kho hàng, nhà máy, xưởng, trung tâm phân phối, thư viện lớn, trang trại hoặc vườn ươm. Không dùng lớp học, khu vườn gia đình, khay bánh hay hộp nhỏ cho số lượng hàng nghìn trở lên.",
+                "MotionSubjectMismatch" =>
+                    "Có thể dùng tên người trong bài chuyển động theo mét. Với con vật rất nhỏ dùng cm/mm và phương tiện đường sông, phải nêu rõ chủ thể tương ứng.",
                 "OperationMeaningUnclear" or "OperationMeaningConflict" =>
                     "Bỏ cụm từ gây suy ra sai phép toán và thay bằng hành động tiểu học thể hiện đúng phép tính bắt buộc.",
                 "InvalidClassLabel" =>
@@ -2779,7 +2781,9 @@ internal static class LlmQuizPromptBuilder
             "MotionRelationshipMismatch" =>
                 "Keep the exact C# motion type and units: single-object, same-direction catch-up, opposite-direction meeting, or upstream/downstream river motion. Do not turn it into an advanced problem.",
             "MotionUnitMismatch" =>
-                "Keep every unit selected by C# exactly as written in problem_text. Do not convert km/h, m/s, mph, hours/minutes/seconds, or km/m/cm/mm/miles.",
+                "Keep the C# units; equivalent full names such as m and meters are allowed. Do not convert to another unit.",
+            "MotionSubjectMismatch" =>
+                "People may be named in meter-scale motion stories. Tiny animals measured in cm/mm and river craft must remain explicit.",
             "FractionFactsMismatch" =>
                 "Write each fraction exactly as 1/2 with a slash. Never use $, LaTeX, \\frac, \\dfrac, \\tfrac, or braces.",
             "AnswerRevealedInProblem" =>
@@ -4326,15 +4330,24 @@ internal sealed partial class LlmWordProblemValidator
 
         string? missingUnit = contract.RequiredProblemUnits
             .FirstOrDefault(requiredUnit =>
-                !ContainsExactUnit(problem, requiredUnit));
+                !ContainsMotionUnit(problem, requiredUnit));
 
         if (!string.IsNullOrWhiteSpace(missingUnit))
         {
             return LlmWordProblemValidationResult.Invalid(
                 "MotionUnitMismatch",
                 language == AppLanguage.Vietnamese
-                    ? $"problem_text phải giữ nguyên đơn vị “{missingUnit}” do C# chọn. Không tự quy đổi hoặc đổi cách ghi đơn vị."
-                    : $"problem_text must preserve the C# unit “{missingUnit}” exactly. Do not convert or rewrite that unit.");
+                    ? $"problem_text cần dùng đơn vị “{missingUnit}” hoặc tên đầy đủ tương đương, ví dụ m = mét. Không quy đổi sang đơn vị khác."
+                    : $"problem_text must use “{missingUnit}” or its equivalent full unit name. Do not convert to a different unit.");
+        }
+
+        if (!MatchesMotionSubjects(problem, contract, language))
+        {
+            return LlmWordProblemValidationResult.Invalid(
+                "MotionSubjectMismatch",
+                language == AppLanguage.Vietnamese
+                    ? "Giữ bối cảnh chuyển động hợp lý với đơn vị và dữ kiện. Có thể kể bằng tên riêng khi dùng m hoặc m/s; con vật rất nhỏ dùng cm/mm và phương tiện đường sông cần được nêu rõ."
+                    : "Keep a motion context consistent with the units and facts. Names are allowed with m or m/s; tiny animals using cm/mm and river craft must remain explicit.");
         }
 
         if (!MatchesMotionScenario(problem.ToLowerInvariant(), contract.Type, language))
@@ -4417,6 +4430,136 @@ internal sealed partial class LlmWordProblemValidator
             RegexOptions.IgnoreCase |
             RegexOptions.CultureInvariant);
     }
+
+    private static bool ContainsMotionUnit(string text, string requiredUnit)
+    {
+        string[] equivalentNames = requiredUnit switch
+        {
+            "m" => ["mét", "meter", "meters", "metre", "metres"],
+            "cm" => ["xăng-ti-mét", "xăngtimét", "centimeter", "centimeters",
+                     "centimetre", "centimetres"],
+            "mm" => ["mi-li-mét", "milimét", "millimeter", "millimeters",
+                     "millimetre", "millimetres"],
+            "km" => ["ki-lô-mét", "kilômét", "kilometer", "kilometers",
+                     "kilometre", "kilometres"],
+            "m/s" => ["mét/giây", "mét mỗi giây", "mét trên giây",
+                       "meter per second", "meters per second", "metre per second",
+                       "metres per second"],
+            "cm/s" => ["xăng-ti-mét/giây", "xăngtimét/giây",
+                        "centimeters per second", "centimetres per second"],
+            "mm/s" => ["mi-li-mét/giây", "milimét/giây",
+                        "millimeters per second", "millimetres per second"],
+            "km/h" => ["km/giờ", "kilômét mỗi giờ", "kilometers per hour",
+                        "kilometres per hour"],
+            "mph" => ["miles per hour"],
+            "dặm" or "miles" => ["dặm", "mile", "miles"],
+            _ => []
+        };
+
+        IEnumerable<string> names = equivalentNames.Prepend(requiredUnit);
+        bool distanceUnit = requiredUnit is "m" or "cm" or "mm" or "km" or
+            "dặm" or "miles";
+        return names.Any(name =>
+        {
+            if (!distanceUnit)
+                return ContainsExactUnit(text, name);
+
+            // “mét mỗi giây” contains a speed unit, not a separate distance
+            // unit. A distance must be present independently in the story.
+            string pattern =
+                $@"(?<![\p{{L}}\p{{N}}/]){Regex.Escape(name)}" +
+                @"(?![\p{L}\p{N}/])" +
+                @"(?!\s+(?:mỗi|trên|per)\s+(?:giây|giờ|second|seconds|hour|hours)\b)";
+            return Regex.IsMatch(text, pattern,
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        });
+    }
+
+    private static bool MatchesMotionSubjects(
+        string problem,
+        MotionQuizContract contract,
+        AppLanguage language)
+    {
+        string reference = contract.ProblemText.ToLowerInvariant();
+        string candidate = problem.ToLowerInvariant();
+        bool referenceHuman = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(reference,
+                "người đi bộ", "học sinh đi bộ", "vận động viên chạy bộ", "người chạy bộ")
+            : ContainsMotionSubjectTerm(reference,
+                "pedestrian", "student walking", "runner", "jogger");
+        bool referenceAnimal = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(reference, "ngựa", "nai", "chó", "thỏ", "rùa")
+            : ContainsMotionSubjectTerm(reference,
+                "horse", "deer", "dog", "rabbit", "turtle", "tortoise");
+        bool referenceRoadVehicle = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(reference,
+                "ô tô", "xe máy", "xe buýt", "tàu hỏa", "xe đạp")
+            : ContainsMotionSubjectTerm(reference,
+                "car", "motorcycle", "bus", "train", "bicycle");
+        bool candidateAnimal = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(candidate,
+                "ngựa", "nai", "chó", "thỏ", "rùa")
+            : ContainsMotionSubjectTerm(candidate,
+                "horse", "horses", "deer", "dog", "dogs", "rabbit", "rabbits",
+                "turtle", "turtles", "tortoise", "tortoises");
+        bool candidateRoadVehicle = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(candidate,
+                "ô tô", "xe hơi", "xe máy", "xe buýt", "xe bus", "tàu hỏa",
+                "tàu hoả", "xe lửa", "xe đạp")
+            : ContainsMotionSubjectTerm(candidate,
+                "car", "cars", "motorcycle", "motorcycles", "motorbike",
+                "motorbikes", "bus", "buses", "train", "trains", "bicycle",
+                "bicycles", "bike", "bikes");
+        bool candidateRiverCraft = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(candidate,
+                "ca nô", "cano", "xuồng máy", "thuyền", "thuyền máy")
+            : ContainsMotionSubjectTerm(candidate,
+                "motorboat", "motorboats", "speedboat", "speedboats",
+                "boat", "boats", "powerboat", "powerboats", "canoe", "canoes");
+
+        if (contract.Type == MotionQuizType.River)
+        {
+            bool unpowered = language == AppLanguage.Vietnamese
+                ? ContainsMotionSubjectTerm(candidate, "thuyền chèo", "chèo thuyền")
+                : ContainsMotionSubjectTerm(candidate, "canoe", "canoes", "rowboat",
+                    "rowboats", "paddleboat", "paddleboats");
+            return candidateRiverCraft && !unpowered && !candidateAnimal;
+        }
+
+        // Very small distances belong to the tiny-animal stories. Names alone
+        // are ambiguous at this scale, so the animal must still be identified.
+        bool tinyScale = contract.RequiredProblemUnits.Any(unit =>
+            unit is "cm" or "mm" or "cm/s" or "mm/s");
+        if (tinyScale)
+        {
+            bool tinyAnimal = language == AppLanguage.Vietnamese
+                ? ContainsMotionSubjectTerm(candidate, "rùa")
+                : ContainsMotionSubjectTerm(candidate,
+                    "turtle", "turtles", "tortoise", "tortoises");
+            return tinyAnimal && !candidateRoadVehicle;
+        }
+
+        // At meter or road scale, names can replace a generic moving subject.
+        // Only an explicit switch to another kind is contradictory.
+        bool candidateWalkingOrRunning = language == AppLanguage.Vietnamese
+            ? ContainsMotionSubjectTerm(candidate, "đi bộ", "chạy bộ")
+            : ContainsMotionSubjectTerm(candidate,
+                "walking", "walks", "on foot", "running", "runs", "jogging");
+        if (candidateRiverCraft ||
+            referenceHuman && (candidateAnimal || candidateRoadVehicle) ||
+            referenceAnimal && (candidateRoadVehicle || candidateWalkingOrRunning) ||
+            referenceRoadVehicle && (candidateAnimal || candidateWalkingOrRunning))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ContainsMotionSubjectTerm(
+        string text,
+        params string[] terms) =>
+        terms.Any(term => ContainsExactUnit(text, term));
 
     private static bool MatchesMotionScenario(
         string problem,

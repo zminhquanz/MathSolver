@@ -34,7 +34,7 @@
     <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
     <ApplicationId>com.quanvu.mathsolver</ApplicationId>
-    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>0.2.1</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
     <WindowsPackageType>None</WindowsPackageType>
 
