@@ -833,8 +833,10 @@ public partial class MathPuzzlePage : ContentPage
         bool isAverage = question?.AverageProblem is not null;
         PercentageQuizType? percentageType = question?.PercentageProblem?.Type;
 
-        EssaySolutionSection.IsVisible =
-            requiresSolution;
+        EssayWorkLabel.Text = TranslateQuiz(
+            requiresSolution
+                ? "Quiz.EssayCombinedLabel"
+                : "Quiz.EssayEquationLabel");
 
         string expectedEquationUnit = question is null
             ? string.Empty
@@ -873,7 +875,7 @@ public partial class MathPuzzlePage : ContentPage
                 TranslateQuiz("Quiz.EssayEquationUnitHint");
         }
 
-        EssayEquationEntry.Placeholder =
+        string equationPlaceholder =
             isFindX
                 ? TranslateQuiz("Quiz.FindXEssayEquationPlaceholder")
                 : isFraction
@@ -895,11 +897,16 @@ public partial class MathPuzzlePage : ContentPage
                 : Translate("Quiz.EssayEquationPlaceholder");
         if (!string.IsNullOrWhiteSpace(expectedEquationUnit))
         {
-            EssayEquationEntry.Placeholder +=
+            equationPlaceholder +=
                 expectedEquationUnit == "%"
                     ? "%"
                     : " " + expectedEquationUnit;
         }
+
+        EssayWorkEditor.Placeholder = requiresSolution
+            ? TranslateQuiz("Quiz.EssayCombinedPlaceholder") +
+              Environment.NewLine + equationPlaceholder
+            : equationPlaceholder;
 
         EssayAnswerEntry.Placeholder =
             isFraction
@@ -3544,8 +3551,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         TrueAnswerButton.IsEnabled = isEnabled;
         FalseAnswerButton.IsEnabled = isEnabled;
-        EssaySolutionEditor.IsEnabled = isEnabled;
-        EssayEquationEntry.IsEnabled = isEnabled;
+        EssayWorkEditor.IsEnabled = isEnabled;
         EssayAnswerEntry.IsEnabled = isEnabled;
         SubmitEssayAnswerButton.IsEnabled = isEnabled;
 
@@ -3851,8 +3857,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         SetAnswerControlsEnabled(true);
 
-        EssaySolutionEditor.Text = string.Empty;
-        EssayEquationEntry.Text = string.Empty;
+        EssayWorkEditor.Text = string.Empty;
         EssayAnswerEntry.Text = string.Empty;
 
         foreach (Button button in ChoiceButtons)
@@ -3960,11 +3965,16 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
+        (string solutionText, string equationText) =
+            EssayCombinedInputParser.Split(
+                EssayWorkEditor.Text,
+                EssayAnswerValidator.RequiresSolution(_currentQuestion));
+
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(
                 _currentQuestion,
-                EssaySolutionEditor.Text,
-                EssayEquationEntry.Text,
+                solutionText,
+                equationText,
                 EssayAnswerEntry.Text);
 
         CompleteAnswer(
@@ -3974,8 +3984,8 @@ public partial class MathPuzzlePage : ContentPage
                 BuildEssayFeedback(
                     _currentQuestion,
                     validation,
-                    EssaySolutionEditor.Text,
-                    EssayEquationEntry.Text,
+                    solutionText,
+                    equationText,
                     EssayAnswerEntry.Text));
     }
 
@@ -4379,8 +4389,7 @@ public partial class MathPuzzlePage : ContentPage
         SolutionFractionView.Expression = string.Empty;
         SolutionFractionView.IsVisible = false;
         SolutionBorder.IsVisible = false;
-        EssaySolutionEditor.Text = string.Empty;
-        EssayEquationEntry.Text = string.Empty;
+        EssayWorkEditor.Text = string.Empty;
         EssayAnswerEntry.Text = string.Empty;
         NextQuestionButton.IsEnabled = false;
 

@@ -1340,11 +1340,12 @@
                                 Spacing="10">
 
                                 <VerticalStackLayout
-                                    x:Name="EssaySolutionSection"
+                                    x:Name="EssayWorkSection"
                                     Spacing="10">
 
                                     <Label
-                                        Text="{localization:QuizTranslate Quiz.EssaySolutionLabel}"
+                                        x:Name="EssayWorkLabel"
+                                        Text="{localization:QuizTranslate Quiz.EssayCombinedLabel}"
                                         FontSize="16"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
@@ -1360,45 +1361,18 @@
                                         </Border.StrokeShape>
 
                                         <Editor
-                                            x:Name="EssaySolutionEditor"
-                                            MinimumHeightRequest="86"
+                                            x:Name="EssayWorkEditor"
+                                            MinimumHeightRequest="140"
                                             AutoSize="TextChanges"
                                             FontSize="16"
                                             BackgroundColor="Transparent"
                                             TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            Placeholder="{localization:QuizTranslate Quiz.EssaySolutionPlaceholder}"
+                                            Placeholder="{localization:QuizTranslate Quiz.EssayCombinedPlaceholder}"
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                     </Border>
 
                                 </VerticalStackLayout>
-
-                                <Label
-                                    Text="{localization:QuizTranslate Quiz.EssayEquationLabel}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Border
-                                    Padding="12,4"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-
-                                    <Entry
-                                        x:Name="EssayEquationEntry"
-                                        HeightRequest="48"
-                                        FontSize="18"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        Placeholder="{localization:QuizTranslate Quiz.EssayEquationPlaceholder}"
-                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                </Border>
 
                                 <Label
                                     Text="{localization:QuizTranslate Quiz.EssayAnswerLabel}"
