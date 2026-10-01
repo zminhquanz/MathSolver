@@ -296,12 +296,12 @@ public static class WindowStateManager
         if (currentState == PersistedWindowState.Minimized &&
             previousState != PersistedWindowState.Minimized)
         {
-            LiveWallpaperManager.NotifyHostSuspended();
+            AppMemoryPolicy.EnterBackground();
         }
         else if (previousState == PersistedWindowState.Minimized &&
                  currentState != PersistedWindowState.Minimized)
         {
-            LiveWallpaperManager.NotifyHostResumed();
+            AppMemoryPolicy.Resume();
         }
 
         if (currentState ==

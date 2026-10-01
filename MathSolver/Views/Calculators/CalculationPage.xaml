@@ -1051,28 +1051,28 @@
             <Grid
                 x:Name="AverageTabContent"
                 IsVisible="False">
-                <views:AverageView x:Name="AverageSolverView" />
+                <controls:LazyContentView x:Name="AverageSolverHost" ContentTemplate="{DataTemplate views:AverageView}" />
             </Grid>
 
             <!-- Tab lũy thừa - căn bậc -->
             <Grid
                 x:Name="PowerRootTabContent"
                 IsVisible="False">
-                <views:PowerRootView x:Name="PowerRootSolverView" />
+                <controls:LazyContentView x:Name="PowerRootSolverHost" ContentTemplate="{DataTemplate views:PowerRootView}" />
             </Grid>
 
             <!-- Tab Phân số -->
             <Grid
                 x:Name="FractionTabContent"
                 IsVisible="False">
-                <views:FractionView x:Name="FractionSolverView" />
+                <controls:LazyContentView x:Name="FractionSolverHost" ContentTemplate="{DataTemplate views:FractionView}" />
             </Grid>
 
             <!-- Tab tìm x -->
             <Grid
                 x:Name="FindXTabContent"
                 IsVisible="False">
-                <views:FindXView x:Name="FindXSolverView" />
+                <controls:LazyContentView x:Name="FindXSolverHost" ContentTemplate="{DataTemplate views:FindXView}" />
 
             </Grid>
 
@@ -1080,7 +1080,7 @@
             <Grid
                 x:Name="QuadraticTabContent"
                 IsVisible="False">
-                <views:QuadraticEquationView x:Name="QuadraticSolverView" />
+                <controls:LazyContentView x:Name="QuadraticSolverHost" ContentTemplate="{DataTemplate views:QuadraticEquationView}" />
             </Grid>
 
             <!-- Tab hình học -->
@@ -1088,7 +1088,7 @@
                 x:Name="GeometryTabContent"
                 IsVisible="False">
 
-                <views:GeometryCalculatorView x:Name="GeometrySolverView" />
+                <controls:LazyContentView x:Name="GeometrySolverHost" ContentTemplate="{DataTemplate views:GeometryCalculatorView}" />
 
             </Grid>
         </Grid>

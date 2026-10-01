@@ -2,6 +2,7 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),
     ("Catalog", PuzzleTests.CheckCatalog),
     ("Algorithm question matrix", PuzzleTests.CheckAlgorithmMatrix),
     ("Numeric expressions", PuzzleTests.CheckExpressions),

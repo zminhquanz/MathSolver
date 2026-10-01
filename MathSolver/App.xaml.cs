@@ -80,6 +80,10 @@ public partial class App : Application
         };
 #endif
 
+        window.Stopped += (_, _) => AppMemoryPolicy.EnterBackground();
+        window.Resumed += (_, _) => AppMemoryPolicy.Resume();
+        window.Destroying += (_, _) => AppMemoryPolicy.EndSession();
+
         return window;
     }
 

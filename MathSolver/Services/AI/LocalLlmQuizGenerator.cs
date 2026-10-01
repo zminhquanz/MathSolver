@@ -20,7 +20,7 @@ namespace MathSolver.Services;
 /// do C# giữ.
 /// </summary>
 #if WINDOWS
-public sealed class LocalLlmQuizGenerator
+public sealed class LocalLlmQuizGenerator : IRecoverableMemoryOwner
 {
     /// <summary>
     /// LLamaSharp/GGUF is a Windows-only runtime. Keep the established desktop
@@ -107,6 +107,21 @@ public sealed class LocalLlmQuizGenerator
         _percentageQuizGenerator =
             percentageQuizGenerator ??
             throw new ArgumentNullException(nameof(percentageQuizGenerator));
+        AppMemoryPolicy.Register(this);
+    }
+
+    public async Task<long> ReleaseRecoverableMemoryAsync()
+    {
+        // Native contexts in active inference must retain their weights. A
+        // running generation gets to finish; its finally schedules another trim.
+        if (!AppMemoryPolicy.IsInBackground || !await _generationGate.WaitAsync(0)) return 0;
+        try
+        {
+            CancelScheduledModelUnload();
+            await Task.Run(DisposeLoadedModel);
+            return 0; // Native/mapped memory is reclaimed by Dispose, not managed GC.
+        }
+        finally { _generationGate.Release(); }
     }
 
     /// <summary>
@@ -839,6 +854,7 @@ public sealed class LocalLlmQuizGenerator
         finally
         {
             _generationGate.Release();
+            if (AppMemoryPolicy.IsInBackground) AppMemoryPolicy.RequestCleanup();
         }
     }
 

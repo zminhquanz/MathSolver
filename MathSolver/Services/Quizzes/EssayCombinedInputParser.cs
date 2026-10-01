@@ -1,11 +1,59 @@
+using System.Text.RegularExpressions;
+
 namespace MathSolver.Services;
 
 /// <summary>
-/// Separates the two parts of the combined essay editor before passing them
-/// to the existing, independent solution and equation validators.
+/// Separates a written submission before passing its parts to the independent
+/// solution, calculation, and final answer validators.
 /// </summary>
-public static class EssayCombinedInputParser
+public static partial class EssayCombinedInputParser
 {
+    public static (string Solution, string Equation, string Answer) Parse(
+        string? input,
+        bool requiresSolution,
+        bool preserveAllCalculations = false)
+    {
+        string[] lines = (input ?? string.Empty).Normalize()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var work = new List<string>();
+        var answers = new List<string>();
+        foreach (string line in lines)
+        {
+            Match label = AnswerLabelRegex().Match(line);
+            if (!label.Success)
+            {
+                work.Add(line);
+                continue;
+            }
+
+            // Support a labeled answer on its own line or after the calculation.
+            string prefix = line[..label.Index].Trim();
+            if (prefix.Length > 0)
+                work.Add(prefix);
+            answers.Add(line[(label.Index + label.Length)..].Trim());
+        }
+
+        // A bare final value with an optional unit is also accepted. Never
+        // infer the answer from an equation: an omitted answer must be reported.
+        if (answers.Count == 0 && work.Count > 0 &&
+            BareAnswerRegex().IsMatch(work[^1]))
+        {
+            answers.Add(work[^1]);
+            work.RemoveAt(work.Count - 1);
+        }
+
+        // Numeric questions can also include an optional written explanation.
+        // Whether that explanation is required remains the validator's decision.
+        bool includesSolution = requiresSolution || work.Any(line => line.Any(char.IsLetter));
+        var parts = Split(string.Join(Environment.NewLine, work),
+            includesSolution, preserveAllCalculations);
+        // Multiple answers stay visible to the validator rather than silently
+        // choosing a correct answer and hiding a conflicting one.
+        return (parts.Solution, parts.Equation, string.Join(Environment.NewLine, answers));
+    }
+
     public static (string Solution, string Equation) Split(
         string? input,
         bool requiresSolution,
@@ -87,4 +135,12 @@ public static class EssayCombinedInputParser
                (char.IsDigit(trimmed[0]) || trimmed[0] == '(') &&
                line.Any(character => character is '+' or '-' or '−' or '×' or '*' or '÷' or '/');
     }
+
+    [GeneratedRegex(@"(?<!\p{L})(?:đáp\s*số|dap\s*so|đáp\s*án|dap\s*an|final\s+answer|answer)\s*[:=]\s*",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex AnswerLabelRegex();
+
+    [GeneratedRegex(@"^[+\-−]?\d(?:[\d.,\u00A0\u202F ]*\d)?(?:\s*/\s*[+\-−]?\d+)?\s*(?:%|\p{L}[\p{L}\p{N}\s²³^/.-]*)?[.!]?$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex BareAnswerRegex();
 }

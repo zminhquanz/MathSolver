@@ -91,6 +91,9 @@ public partial class CalculationPage : ContentPage
 
     private bool _isSubTabTransitioning;
     private bool _isPowerRootCalculationInteractionLocked;
+    private bool _isPageActive;
+
+    private PowerRootView? PowerRootSolverView => PowerRootSolverHost.Content as PowerRootView;
 
 #if ANDROID
     private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
@@ -150,9 +153,6 @@ public partial class CalculationPage : ContentPage
         CalculationSubTabScrollView.SizeChanged +=
             OnCalculationSubTabScrollViewSizeChanged;
 
-        PowerRootSolverView.CalculationInteractionLockChanged +=
-            OnPowerRootCalculationInteractionLockChanged;
-
         SelectNumberType(
             NumberInputType.Integer,
             clearInputs: false);
@@ -167,6 +167,8 @@ public partial class CalculationPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _isPageActive = true;
+        PowerRootSolverView?.SetTabActive(_selectedSubTab == CalculationSubTab.PowerRoot);
 
 #if ANDROID
         _androidSubTabSwipe.Attach();
@@ -344,6 +346,9 @@ public partial class CalculationPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _isPageActive = false;
+        if (!SettingsMenuPage.IsTransparentOverlayActive)
+            PowerRootSolverView?.SetTabActive(false);
 #if ANDROID
         _androidSubTabSwipe.Detach();
 #endif
@@ -4024,11 +4029,11 @@ public partial class CalculationPage : ContentPage
                 EventArgs.Empty);
         }
 
-        AverageSolverView.RefreshNumberDisplay();
-        FractionSolverView.RefreshNumberDisplay();
-        FindXSolverView.RefreshNumberDisplay();
-        QuadraticSolverView.RefreshNumberDisplay();
-        GeometrySolverView.RefreshNumberDisplay();
+        (AverageSolverHost.Content as AverageView)?.RefreshNumberDisplay();
+        (FractionSolverHost.Content as FractionView)?.RefreshNumberDisplay();
+        (FindXSolverHost.Content as FindXView)?.RefreshNumberDisplay();
+        (QuadraticSolverHost.Content as QuadraticEquationView)?.RefreshNumberDisplay();
+        (GeometrySolverHost.Content as GeometryCalculatorView)?.RefreshNumberDisplay();
     }
 
     private async Task SwitchSubTabAsync(
@@ -4067,6 +4072,9 @@ public partial class CalculationPage : ContentPage
             VisualElement incomingContent =
                 GetSubTabContent(
                     selectedTab);
+
+            EnsureSubTabCreated(selectedTab);
+            PowerRootSolverView?.SetTabActive(_isPageActive && selectedTab == CalculationSubTab.PowerRoot);
 
             int direction =
                 (int)selectedTab >
@@ -4329,6 +4337,7 @@ public partial class CalculationPage : ContentPage
 
     private void SelectSubTab(CalculationSubTab selectedTab)
     {
+        EnsureSubTabCreated(selectedTab);
         _selectedSubTab = selectedTab;
 
         BasicTabContent.IsVisible = selectedTab == CalculationSubTab.Basic;
@@ -4357,6 +4366,25 @@ public partial class CalculationPage : ContentPage
 
 
         UpdateSubTabButtonStyles();
+    }
+
+    private void EnsureSubTabCreated(CalculationSubTab tab)
+    {
+        switch (tab)
+        {
+            case CalculationSubTab.Average: AverageSolverHost.EnsureContent(); break;
+            case CalculationSubTab.Fraction: FractionSolverHost.EnsureContent(); break;
+            case CalculationSubTab.FindX: FindXSolverHost.EnsureContent(); break;
+            case CalculationSubTab.Quadratic: QuadraticSolverHost.EnsureContent(); break;
+            case CalculationSubTab.Geometry: GeometrySolverHost.EnsureContent(); break;
+            case CalculationSubTab.PowerRoot:
+                if (PowerRootSolverView is null)
+                {
+                    var solver = (PowerRootView)PowerRootSolverHost.EnsureContent();
+                    solver.CalculationInteractionLockChanged += OnPowerRootCalculationInteractionLockChanged;
+                }
+                break;
+        }
     }
 
     private void UpdateSubTabButtonStyles()

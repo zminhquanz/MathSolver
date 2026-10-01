@@ -117,6 +117,7 @@ public partial class PowerRootView : LocalizedSolverView
         InitializeComponent();
 
         InitializeLocalization();
+        AppMemoryPolicy.Register(this);
 
         SelectMode(
             powerMode: true);
@@ -163,6 +164,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         _calculationCancellation?.Cancel();
         _exportCancellation?.Cancel();
+        SetTabActive(false);
     }
 
     private void OnPowerModeClicked(
@@ -2562,6 +2564,7 @@ public partial class PowerRootView : LocalizedSolverView
             }
 
             UpdateWindowsCloseGuard();
+            ScheduleInactiveResultArchive();
         }
     }
 
@@ -3888,7 +3891,7 @@ public partial class PowerRootView : LocalizedSolverView
                     PowerComputationStrategy.BitShift =>
                         "PowerRoot.InfoEngineBitShift",
                     PowerComputationStrategy.FactorizedPowerOfTen =>
-                        state.BinaryMagnitude is not null
+                        state.HasBinaryMagnitude
                             ? "PowerRoot.InfoEngineLargeBinary"
                             : "PowerRoot.InfoEnginePowerOfTen",
                     PowerComputationStrategy.ParallelNttPower
@@ -4564,6 +4567,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         string? temporaryPath =
             null;
+        bool ownsTemporaryPath = false;
 
         _exportCancellation?.Dispose();
         _exportCancellation =
@@ -4601,96 +4605,108 @@ public partial class PowerRootView : LocalizedSolverView
         // tach va ghi tung khoi chu so cua BigInteger.
         await Task.Yield();
 
+        string fileName = $"power_{state.BaseValue}_{state.Exponent}.txt";
         try
         {
-            string fileName =
-                $"power_{state.BaseValue}_{state.Exponent}.txt";
+            await _resultStorageGate.WaitAsync(cancellationToken);
+            try
+            {
+                // A background archive may have completed after the export click.
+                state = _calculationState ?? throw new InvalidOperationException("The result is no longer available.");
+                fileName =
+                    $"power_{state.BaseValue}_{state.Exponent}.txt";
 
-            temporaryPath =
-                Path.Combine(
-                    FileSystem.CacheDirectory,
-                    $"{Guid.NewGuid():N}_{fileName}");
+                temporaryPath =
+                    state.CachedResultPath ?? Path.Combine(
+                        FileSystem.CacheDirectory,
+                        $"{Guid.NewGuid():N}_{fileName}");
+                ownsTemporaryPath = state.CachedResultPath is null;
 
-            int lastReportedCreationBlock =
-                0;
+                int lastReportedCreationBlock =
+                    0;
 
-            long lastCreationReportTimestamp =
-                Stopwatch.GetTimestamp();
+                long lastCreationReportTimestamp =
+                    Stopwatch.GetTimestamp();
 
-            // Cap nhat toi da khoang 400 moc tien trinh, hoac sau moi 100 ms.
-            // Neu dua ca hang chuc nghin block 4 KB vao UI dispatcher, Windows
-            // co the trong nhu bi treo du file van dang duoc ghi binh thuong.
-            Action<ExportFileProgress> creationProgress =
-                update =>
-                {
-                    int minimumBlockDelta =
-                        Math.Max(
-                            1,
-                            update.TotalBlocks /
-                            400);
-
-                    bool isFinalUpdate =
-                        update.CompletedBlocks >=
-                        update.TotalBlocks;
-
-                    bool shouldReport =
-                        isFinalUpdate ||
-                        update.CompletedBlocks -
-                        lastReportedCreationBlock >=
-                        minimumBlockDelta ||
-                        Stopwatch.GetElapsedTime(
-                            lastCreationReportTimestamp) >=
-                        TimeSpan.FromMilliseconds(
-                            100d);
-
-                    if (!shouldReport)
+                // Cap nhat toi da khoang 400 moc tien trinh, hoac sau moi 100 ms.
+                // Neu dua ca hang chuc nghin block 4 KB vao UI dispatcher, Windows
+                // co the trong nhu bi treo du file van dang duoc ghi binh thuong.
+                Action<ExportFileProgress> creationProgress =
+                    update =>
                     {
-                        return;
-                    }
+                        int minimumBlockDelta =
+                            Math.Max(
+                                1,
+                                update.TotalBlocks /
+                                400);
 
-                    double normalizedProgress =
-                        Math.Clamp(
-                            update.TotalBlocks > 0
-                                ? (double)update.CompletedBlocks /
-                                  update.TotalBlocks
-                                : 0d,
-                            0d,
-                            1d);
+                        bool isFinalUpdate =
+                            update.CompletedBlocks >=
+                            update.TotalBlocks;
 
-                    lastReportedCreationBlock =
-                        update.CompletedBlocks;
+                        bool shouldReport =
+                            isFinalUpdate ||
+                            update.CompletedBlocks -
+                            lastReportedCreationBlock >=
+                            minimumBlockDelta ||
+                            Stopwatch.GetElapsedTime(
+                                lastCreationReportTimestamp) >=
+                            TimeSpan.FromMilliseconds(
+                                100d);
 
-                    lastCreationReportTimestamp =
-                        Stopwatch.GetTimestamp();
+                        if (!shouldReport)
+                        {
+                            return;
+                        }
 
-                    MainThread
-                        .InvokeOnMainThreadAsync(
-                            () =>
-                            {
-                                ShowExportStatus(
-                                    CreateExportProgressMessage(
-                                        update),
-                                    normalizedProgress,
-                                    isBusy: true);
-                            })
-                        .GetAwaiter()
-                        .GetResult();
-                };
+                        double normalizedProgress =
+                            Math.Clamp(
+                                update.TotalBlocks > 0
+                                    ? (double)update.CompletedBlocks /
+                                      update.TotalBlocks
+                                    : 0d,
+                                0d,
+                                1d);
 
-            // Read the shared Hardware acceleration switch at export start.
-            // Windows dispatches to AVX2 when available; Android ARM64 dispatches
-            // to NEON/AdvSIMD. Turning the switch off forces the scalar formatter.
-            bool useSimdForExport =
-                CalculationAccelerationManager.UsePowerExportSimd;
+                        lastReportedCreationBlock =
+                            update.CompletedBlocks;
 
-            await Task.Run(
-                () => WriteFullResultFile(
-                    temporaryPath,
-                    state,
-                    creationProgress,
-                    cancellationToken,
-                    useSimdForExport),
-                cancellationToken);
+                        lastCreationReportTimestamp =
+                            Stopwatch.GetTimestamp();
+
+                        MainThread
+                            .InvokeOnMainThreadAsync(
+                                () =>
+                                {
+                                    ShowExportStatus(
+                                        CreateExportProgressMessage(
+                                            update),
+                                        normalizedProgress,
+                                        isBusy: true);
+                                })
+                            .GetAwaiter()
+                            .GetResult();
+                    };
+
+                // Read the shared Hardware acceleration switch at export start.
+                // Windows dispatches to AVX2 when available; Android ARM64 dispatches
+                // to NEON/AdvSIMD. Turning the switch off forces the scalar formatter.
+                bool useSimdForExport =
+                    CalculationAccelerationManager.UsePowerExportSimd;
+
+                if (ownsTemporaryPath)
+                {
+                    await Task.Run(
+                        () => WriteFullResultFile(
+                            temporaryPath,
+                            state,
+                            creationProgress,
+                            cancellationToken,
+                            useSimdForExport),
+                        cancellationToken);
+                }
+            }
+            finally { _resultStorageGate.Release(); }
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -4784,7 +4800,7 @@ public partial class PowerRootView : LocalizedSolverView
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(
+            if (ownsTemporaryPath && !string.IsNullOrWhiteSpace(
                     temporaryPath))
             {
                 try
@@ -4825,6 +4841,7 @@ public partial class PowerRootView : LocalizedSolverView
             }
 
             UpdateWindowsCloseGuard();
+            ScheduleInactiveResultArchive();
         }
     }
 
@@ -5094,7 +5111,8 @@ public partial class PowerRootView : LocalizedSolverView
         ParallelBigUnsigned? exportMagnitude =
             state.ParallelMagnitude;
 
-        if (state.BinaryMagnitude is { } binaryMagnitude)
+        if (state.Strategy != PowerComputationStrategy.FactorizedPowerOfTen &&
+            state.BinaryMagnitude is { } binaryMagnitude)
         {
             // Conversion consumes only the actual computed binary value.
             // Respect the computation's worker count; single-thread mode uses
@@ -5210,7 +5228,7 @@ public partial class PowerRootView : LocalizedSolverView
         writer.WriteLine(
             state.Strategy ==
             PowerComputationStrategy.FactorizedPowerOfTen
-                ? state.BinaryMagnitude is not null
+                ? state.HasBinaryMagnitude
                     ? "Engine: computed power of five + packed binary shift (large integer)"
                     : "Engine: factorized power of five + binary shift"
                 : state.Strategy ==
@@ -5238,7 +5256,15 @@ public partial class PowerRootView : LocalizedSolverView
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (exportMagnitude is not null)
+        if (state.Strategy == PowerComputationStrategy.FactorizedPowerOfTen)
+        {
+            // The already-computed value is exactly +/-10^k. Its TXT form is
+            // one followed by k zeroes; formatting it needs no binary-to-decimal
+            // NTT workspace while the app is trying to reclaim memory.
+            PowerOfTenDecimalWriter.Write(writer, state.DecimalZeroCount, state.IsNegative,
+                ExportLeafDigitCount, ReportBlockWritten, cancellationToken);
+        }
+        else if (exportMagnitude is not null)
         {
             if (state.IsNegative)
             {
@@ -5353,7 +5379,7 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        _calculationState = null;
+        ReleaseStoredResult();
         _pendingRestoredEntryTexts.Remove(
             BaseEntry);
         _pendingRestoredEntryTexts.Remove(
@@ -5506,8 +5532,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private void HideResult()
     {
-        _calculationState =
-            null;
+        ReleaseStoredResult();
 
         ResultBorder.IsVisible =
             false;
@@ -5677,7 +5702,7 @@ public partial class PowerRootView : LocalizedSolverView
         string engineText =
             state.Strategy ==
             PowerComputationStrategy.FactorizedPowerOfTen
-                ? state.BinaryMagnitude is not null
+                ? state.HasBinaryMagnitude
                     ? "Engine: computed power of five + packed binary shift (large integer)"
                     : "Engine: factorized power of five + binary shift"
                 : state.Strategy ==
@@ -5868,8 +5893,11 @@ public partial class PowerRootView : LocalizedSolverView
         long ProcessPrivateMemoryBytes = 0L,
         long ProcessPrivateMemoryBeforeCleanupBytes = 0L,
         LargeBinaryUnsigned? BinaryMagnitude = null,
-        int BinaryTransformLimit = 0)
+        int BinaryTransformLimit = 0,
+        string? CachedResultPath = null,
+        bool WasBinaryMagnitude = false)
     {
+        public bool HasBinaryMagnitude => WasBinaryMagnitude || BinaryMagnitude is not null;
         public bool AllowAvx512 { get; } = CalculationAccelerationManager.AllowAvx512;
 
         public bool WasSimdEnabled { get; } = CalculationAccelerationManager.UseSimd;

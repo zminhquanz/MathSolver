@@ -106,6 +106,14 @@ The **Math Puzzles** tab generates practice questions for basic arithmetic, frac
 
 Algorithm-generated questions work offline on Android and Windows. On Windows, an optional **AI/LLM** source can generate word problems using a local Gemma 4 GGUF model. It appears only when the device supports AVX2 and has at least 12 GiB of physical RAM. The model can be imported or downloaded in the app; downloading it requires internet access. Android does not currently include local AI generation.
 
+Written responses use one input box for the solution sentence, calculation, and final answer on both platforms. Put calculations on their own lines and finish with `Answer: …` (or `Đáp số: …` in Vietnamese), including the required unit. The app checks each part separately; numeric questions retain their existing exemptions from requiring a solution sentence.
+
+Calculator sub-tabs and the proportion, motion, average, and measurement formula views are created when first opened. Their views then remain available to preserve inputs and results.
+
+Completed power results occupying at least **32 MiB** of managed numeric storage are written to a private temporary TXT file after **60 seconds** away from the power tab, or when the app enters the background. The full file is completed before the in-memory number is released. The preview, solution, and TXT export remain available; later exports stream the retained file without reloading the number. A failed or canceled archive keeps the in-memory result. Clearing the result, starting a new calculation, or closing the app normally removes its temporary file. Temporary files left after an interrupted app session are pruned after seven days when result storage is first used in a new process. These files do not restore a session after the app process exits.
+
+Background cleanup releases live-wallpaper resources and idle Windows AI weights, while active calculations and exports finish before their recoverable data is considered for cleanup. Android also handles the system's supported `onTrimMemory` background signals, following the [Android memory lifecycle guidance](https://developer.android.com/topic/performance/memory/manage-app-memory). Garbage collection is requested only after a large number has been released, rather than on every tab switch.
+
 ### Formula Reference
 
 The **Formulas** tab includes:

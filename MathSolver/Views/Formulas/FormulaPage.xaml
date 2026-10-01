@@ -782,28 +782,28 @@
             <Grid
                 x:Name="ProportionContent"
                 IsVisible="False">
-                <views:ProportionFormulaView />
+                <controls:LazyContentView x:Name="ProportionFormulaHost" ContentTemplate="{DataTemplate views:ProportionFormulaView}" />
             </Grid>
 
             <!-- TAB: CHUYỂN ĐỘNG -->
             <Grid
                 x:Name="MotionContent"
                 IsVisible="False">
-                <views:MotionFormulaView />
+                <controls:LazyContentView x:Name="MotionFormulaHost" ContentTemplate="{DataTemplate views:MotionFormulaView}" />
             </Grid>
 
             <!-- TAB: TRUNG BÌNH CỘNG -->
             <Grid
                 x:Name="AverageContent"
                 IsVisible="False">
-                <views:AverageFormulaView x:Name="AverageFormulaViewControl" />
+                <controls:LazyContentView x:Name="AverageFormulaHost" ContentTemplate="{DataTemplate views:AverageFormulaView}" />
             </Grid>
 
             <!-- TAB: ĐƠN VỊ -->
             <Grid
                 x:Name="MeasurementContent"
                 IsVisible="False">
-                <views:MeasurementFormulaView x:Name="MeasurementFormulaViewControl" />
+                <controls:LazyContentView x:Name="MeasurementFormulaHost" ContentTemplate="{DataTemplate views:MeasurementFormulaView}" />
             </Grid>
 
             <!-- TAB: HÌNH HỌC -->

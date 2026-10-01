@@ -1437,7 +1437,7 @@
 
                                         <Editor
                                             x:Name="EssayWorkEditor"
-                                            MinimumHeightRequest="140"
+                                            MinimumHeightRequest="180"
                                             AutoSize="TextChanges"
                                             FontSize="16"
                                             BackgroundColor="Transparent"
@@ -1448,33 +1448,6 @@
                                     </Border>
 
                                 </VerticalStackLayout>
-
-                                <Label
-                                    Text="{localization:QuizTranslate Quiz.EssayAnswerLabel}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Border
-                                    Padding="12,4"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-
-                                    <Entry
-                                        x:Name="EssayAnswerEntry"
-                                        HeightRequest="48"
-                                        FontSize="18"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        Placeholder="{localization:QuizTranslate Quiz.EssayAnswerPlaceholder}"
-                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                </Border>
 
                                 <Label
                                     x:Name="EssayValidationHintLabel"

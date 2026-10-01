@@ -846,7 +846,7 @@ public partial class MathPuzzlePage : ContentPage
         EssayWorkLabel.Text = TranslateQuiz(
             requiresSolution
                 ? "Quiz.EssayCombinedLabel"
-                : "Quiz.EssayEquationLabel");
+                : "Quiz.EssayCombinedNumericLabel");
 
         string expectedEquationUnit = question is null
             ? string.Empty
@@ -888,6 +888,8 @@ public partial class MathPuzzlePage : ContentPage
             EssayValidationHintLabel.Text += " " +
                 TranslateQuiz("Quiz.EssayEquationUnitHint");
         }
+        EssayValidationHintLabel.Text += " " +
+            TranslateQuiz("Quiz.EssayCombinedAnswerHint");
 
         string equationPlaceholder =
             question?.ExpressionProblem is not null
@@ -924,12 +926,9 @@ public partial class MathPuzzlePage : ContentPage
               Environment.NewLine + equationPlaceholder
             : equationPlaceholder;
 
-        EssayAnswerEntry.Placeholder =
-            question?.ExpressionProblem is not null && !isFraction
-                ? TranslateQuiz("Quiz.ExpressionAnswerPlaceholder")
-                : isFraction
-                ? TranslateQuiz("Quiz.FractionEssayAnswerPlaceholder")
-                : Translate("Quiz.EssayAnswerPlaceholder");
+        EssayWorkEditor.Placeholder += Environment.NewLine +
+            TranslateQuiz("Quiz.EssayCombinedAnswerPlaceholder") +
+            (string.IsNullOrWhiteSpace(expectedEquationUnit) ? string.Empty : " " + expectedEquationUnit);
     }
 
     private void UpdateOperationPickerItems()
@@ -3667,7 +3666,6 @@ public partial class MathPuzzlePage : ContentPage
         TrueAnswerButton.IsEnabled = isEnabled;
         FalseAnswerButton.IsEnabled = isEnabled;
         EssayWorkEditor.IsEnabled = isEnabled;
-        EssayAnswerEntry.IsEnabled = isEnabled;
         SubmitEssayAnswerButton.IsEnabled = isEnabled;
 
         foreach (Button button in ChoiceButtons)
@@ -3984,7 +3982,6 @@ public partial class MathPuzzlePage : ContentPage
         SetAnswerControlsEnabled(true);
 
         EssayWorkEditor.Text = string.Empty;
-        EssayAnswerEntry.Text = string.Empty;
 
         foreach (Button button in ChoiceButtons)
         {
@@ -4091,8 +4088,8 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        (string solutionText, string equationText) =
-            EssayCombinedInputParser.Split(
+        (string solutionText, string equationText, string answerText) =
+            EssayCombinedInputParser.Parse(
                 EssayWorkEditor.Text,
                 EssayAnswerValidator.RequiresSolution(_currentQuestion),
                 preserveAllCalculations: _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
@@ -4102,7 +4099,7 @@ public partial class MathPuzzlePage : ContentPage
                 _currentQuestion,
                 solutionText,
                 equationText,
-                EssayAnswerEntry.Text);
+                answerText);
 
         CompleteAnswer(
             validation.IsCorrect,
@@ -4113,7 +4110,7 @@ public partial class MathPuzzlePage : ContentPage
                     validation,
                     solutionText,
                     equationText,
-                    EssayAnswerEntry.Text));
+                    answerText));
     }
 
     private void CompleteAnswer(
@@ -4524,7 +4521,6 @@ public partial class MathPuzzlePage : ContentPage
         SolutionFractionView.IsVisible = false;
         SolutionBorder.IsVisible = false;
         EssayWorkEditor.Text = string.Empty;
-        EssayAnswerEntry.Text = string.Empty;
         NextQuestionButton.IsEnabled = false;
 
         ClearMultipleChoiceAnswers();

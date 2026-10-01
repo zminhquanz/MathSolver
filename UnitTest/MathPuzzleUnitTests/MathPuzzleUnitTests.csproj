@@ -7,6 +7,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../MathSolver/Services/Memory/ResultFileStore.cs" Link="Services/Memory/ResultFileStore.cs" />
+    <Compile Include="../../MathSolver/Views/Calculators/PowerRootView.Memory.cs" Link="Views/PowerRootView.Memory.cs" />
+    <Compile Include="../../MathSolver/Services/Memory/RecoverableMemoryRegistry.cs" Link="Services/Memory/RecoverableMemoryRegistry.cs" />
     <Compile Include="../../MathSolver/Models/Arithmetic/*.cs" Link="Models/Arithmetic/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Models/Fractions/*.cs" Link="Models/Fractions/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Models/Formulas/GeometryCalculation.cs" Link="Models/Formulas/GeometryCalculation.cs" />

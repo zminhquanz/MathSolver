@@ -17,6 +17,9 @@ public partial class FormulaPage : ContentPage
 
     private bool _isSubTabTransitioning;
 
+    private AverageFormulaView? AverageFormulaViewControl => AverageFormulaHost.Content as AverageFormulaView;
+    private MeasurementFormulaView? MeasurementFormulaViewControl => MeasurementFormulaHost.Content as MeasurementFormulaView;
+
 #if ANDROID
     private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
 #endif
@@ -396,6 +399,7 @@ public partial class FormulaPage : ContentPage
 
     private void PrepareSelectedSubTabForMainAppearance()
     {
+        EnsureFormulaSubTabCreated(_selectedSubTab);
         if (_selectedSubTab ==
             FormulaSubTab.UnknownComponent)
         {
@@ -968,6 +972,7 @@ public partial class FormulaPage : ContentPage
     private void PrepareFormulaSubTabContent(
         FormulaSubTab selectedTab)
     {
+        EnsureFormulaSubTabCreated(selectedTab);
         if (selectedTab ==
             FormulaSubTab.UnknownComponent)
         {
@@ -984,14 +989,14 @@ public partial class FormulaPage : ContentPage
         if (selectedTab ==
             FormulaSubTab.Average)
         {
-            AverageFormulaViewControl.RefreshLocalization();
+            AverageFormulaViewControl?.RefreshLocalization();
             return;
         }
 
         if (selectedTab ==
             FormulaSubTab.Measurement)
         {
-            MeasurementFormulaViewControl.RefreshLocalization();
+            MeasurementFormulaViewControl?.RefreshLocalization();
             return;
         }
 
@@ -1015,6 +1020,17 @@ public partial class FormulaPage : ContentPage
                  FormulaSubTab.Geometry)
         {
             UpdateGeometryCardWidthsIfNeeded();
+        }
+    }
+
+    private void EnsureFormulaSubTabCreated(FormulaSubTab tab)
+    {
+        switch (tab)
+        {
+            case FormulaSubTab.Proportion: ProportionFormulaHost.EnsureContent(); break;
+            case FormulaSubTab.Motion: MotionFormulaHost.EnsureContent(); break;
+            case FormulaSubTab.Average: AverageFormulaHost.EnsureContent(); break;
+            case FormulaSubTab.Measurement: MeasurementFormulaHost.EnsureContent(); break;
         }
     }
 
@@ -1756,8 +1772,8 @@ public partial class FormulaPage : ContentPage
                         force: true);
                 }
 
-                AverageFormulaViewControl.RefreshLocalization();
-                MeasurementFormulaViewControl.RefreshLocalization();
+                AverageFormulaViewControl?.RefreshLocalization();
+                MeasurementFormulaViewControl?.RefreshLocalization();
 
                 LocalizationService.Attach(
                     this);

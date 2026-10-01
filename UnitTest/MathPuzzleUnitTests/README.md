@@ -24,6 +24,14 @@ the app source. Small stubs replace only platform services needed to compile
 these components outside MAUI. It needs no model download, API key, network
 connection, or unit-test package.
 
+The recoverable-result group links the production result file store, weak memory
+registry, power-of-ten streaming writer, and `PowerRootView.Memory.cs`. A small
+platform harness replaces UI dependencies and uses a small storage threshold.
+It checks retained previews and exact values, foreground/busy exemptions,
+returning before the idle timeout, concurrent cleanup, clear/new-result races,
+disk-write failure, cancellation, repeated file exports, stale-file cleanup,
+and weak registrations. It does not measure RAM savings or benchmark the app.
+
 The checks cover all supported puzzle subtypes in Vietnamese and English across
 true/false, multiple choice, and essay modes. They also check prompts for every
 subtype; JSON acceptance and rejection; valid and invalid AI stories for the

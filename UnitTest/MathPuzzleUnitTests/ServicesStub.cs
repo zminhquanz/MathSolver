@@ -11,6 +11,7 @@ internal enum CalculationSimdMode { Portable, Scalar, Sse, AvxAvx2, Avx512, ArmN
 
 internal static class CalculationAccelerationManager
 {
+    internal static bool UsePowerExportSimd => false;
     internal static bool UsePowerNttAvx2 { get; set; } = Avx2.IsSupported;
     internal static bool UsePowerNttSse { get; set; }
     internal static bool UsePowerNttNeon => false;

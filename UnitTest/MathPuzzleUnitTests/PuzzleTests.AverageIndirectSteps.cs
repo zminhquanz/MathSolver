@@ -48,6 +48,12 @@ internal static partial class PuzzleTests
                         $"{language}/{seed} rejected valid steps: {calculations}; " +
                         $"{result.SolutionError}/{result.EquationError}/{result.AnswerError}; " +
                         string.Join(", ", result.Steps.Select(step => $"{step.Number}:{step.Error}")));
+                    var submission = EssayCombinedInputParser.Parse(
+                        $"{lead}\n{calculations}\nAnswer: {answer}", true, true);
+                    var unifiedResult = validator.Validate(question, submission.Solution,
+                        submission.Equation, submission.Answer);
+                    Require(unifiedResult.IsCorrect && unifiedResult.Steps.Count == result.Steps.Count,
+                        "The unified submission lost an indirect-average calculation step.");
                 }
 
                 string inline = $"{lead} {first}+{more}={second}\n{lead} {second}-{less}={third}\n{lead} ({first}+{second}+{third})/3={answer}";
