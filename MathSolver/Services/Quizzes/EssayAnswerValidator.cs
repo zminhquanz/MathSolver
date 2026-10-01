@@ -80,10 +80,10 @@ public sealed partial class EssayAnswerValidator
         }
 
         (bool answerIsCorrect, EssayAnswerError answerError) =
-            question.FractionProblem is FractionQuizContract fractionAnswer
+            question.UsesFractionFormatting
                 ? ValidateFractionAnswer(
                     question,
-                    fractionAnswer,
+                    question.ExactAnswer,
                     answerText)
                 : ValidateAnswer(
                     question,
@@ -133,13 +133,13 @@ public sealed partial class EssayAnswerValidator
             return (text, string.Empty);
 
         string resultText = text[(equalsIndex + 1)..];
-        Match match = question.FractionProblem is not null
+        Match match = question.UsesFractionFormatting
             ? FractionEquationResultRegex().Match(resultText)
             : AnswerRegex().Match(resultText);
         if (!match.Success)
             return (text, string.Empty);
 
-        string enteredUnit = question.FractionProblem is null &&
+        string enteredUnit = !question.UsesFractionFormatting &&
             match.Groups["percent"].Success
             ? "%"
             : match.Groups["unit"].Value;
@@ -251,6 +251,10 @@ public sealed partial class EssayAnswerValidator
         string? originalSolution)
     {
         string expectedUnit = NormalizeUnit(GetExpectedUnit(question));
+        if (question.ExpressionProblem?.Story is not null &&
+            new[] { "giá trị", "kết quả", "biểu thức", "value", "result", "expression" }
+                .Any(cue => ContainsNormalizedPhrase(normalizedSolution, cue)))
+            return true;
         if (expectedUnit == "%" &&
             ((originalSolution ?? string.Empty).Contains('%') ||
              ContainsNormalizedPhrase(normalizedSolution, "phần trăm") ||
@@ -312,6 +316,8 @@ public sealed partial class EssayAnswerValidator
                 ["diện tích", "area"],
             GeometryMeasurement.TotalArea =>
                 ["diện tích toàn phần", "total surface area"],
+            GeometryMeasurement.LateralArea =>
+                ["diện tích xung quanh", "lateral surface area"],
             GeometryMeasurement.Volume =>
                 ["thể tích", "volume"],
             _ => []
@@ -383,19 +389,36 @@ public sealed partial class EssayAnswerValidator
         if (!containsOperation || equationValue is null)
             return (false, EssayAnswerError.InvalidEquationFormat);
 
+        if (question.ExpressionProblem is ExpressionQuizContract expressionProblem)
+        {
+            string entered = NormalizeNumericExpression(parts[firstCalculationPart]);
+            string given = NormalizeNumericExpression(expressionProblem.ExpressionText);
+            // Verbal AI plans describe grouping rather than a literal printed
+            // formula. Accept redundant grouping while preserving every ordered
+            // operand and operation. Numeric Algorithm grading stays unchanged.
+            bool same = entered == given || question.WordProblem is not null &&
+                EssayCalculationEvaluator.TryGetStructure(entered, out string enteredTree, expressionProblem.UsesFractions) &&
+                EssayCalculationEvaluator.TryGetStructure(given, out string givenTree, expressionProblem.UsesFractions) &&
+                enteredTree == givenTree;
+            if (!same)
+                return (false, EssayAnswerError.WrongOperandsOrOperation);
+        }
+
         EssayCalculationEvaluator.Value expected =
-            question.FractionProblem is FractionQuizContract fraction
-                ? EssayCalculationEvaluator.Value.Create(
-                    fraction.CorrectAnswer.Numerator,
-                    fraction.CorrectAnswer.Denominator)
-                : new EssayCalculationEvaluator.Value(
-                    question.CorrectAnswer,
-                    BigInteger.One);
+            EssayCalculationEvaluator.Value.Create(question.ExactAnswer.Numerator,
+                question.ExactAnswer.Denominator);
 
         return equationValue.Value == expected
             ? (true, EssayAnswerError.None)
             : (false, EssayAnswerError.WrongEquationResult);
     }
+
+    private static string NormalizeNumericExpression(string text) =>
+        string.Concat(text.Where(character => !char.IsWhiteSpace(character)).Select(character => character switch
+        {
+            '−' => '-', '×' or 'x' or 'X' or '·' => '*', '÷' or ':' => '/',
+            '[' or '{' => '(', ']' or '}' => ')', _ => character
+        }));
 
     private static (bool IsCorrect, EssayAnswerError Error)
         ValidateFractionEquation(
@@ -460,7 +483,7 @@ public sealed partial class EssayAnswerValidator
     private static (bool IsCorrect, EssayAnswerError Error)
         ValidateFractionAnswer(
             ArithmeticQuizQuestion question,
-            FractionQuizContract contract,
+            ReducedFraction expectedAnswer,
             string? answerText)
     {
         string value = (answerText ?? string.Empty).Trim();
@@ -477,7 +500,7 @@ public sealed partial class EssayAnswerValidator
             return (false, EssayAnswerError.InvalidAnswerFormat);
         }
 
-        if (entered != contract.CorrectAnswer)
+        if (entered != expectedAnswer)
         {
             return (false, EssayAnswerError.WrongAnswer);
         }

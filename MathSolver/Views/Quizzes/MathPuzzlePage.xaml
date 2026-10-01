@@ -771,6 +771,31 @@
 
                             </Border>
 
+                            <VerticalStackLayout x:Name="ExpressionTypePanel" IsVisible="False" Spacing="8">
+                                <Label Text="{localization:QuizTranslate Quiz.ExpressionTypeTitle}"
+                                       FontSize="15" FontAttributes="Bold"
+                                       TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                <Border Padding="0"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+                                    <Grid>
+                                        <Picker x:Name="ExpressionTypePicker"
+                                                HeightRequest="{OnPlatform Android=56, Default=50}"
+                                                FontSize="16" FontAttributes="Bold"
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                                SelectedIndexChanged="OnExpressionTypeChanged" />
+                                        <Path IsVisible="{OnPlatform Android=True, Default=False}"
+                                              Data="M4,7 L10,13 L16,7 Z"
+                                              Fill="{DynamicResource WallpaperTextSecondaryBrush}"
+                                              WidthRequest="14" HeightRequest="14" Margin="0,0,18,0"
+                                              HorizontalOptions="End" VerticalOptions="Center" InputTransparent="True" />
+                                    </Grid>
+                                </Border>
+                            </VerticalStackLayout>
+
                             <VerticalStackLayout
                                 x:Name="ProblemOperationPanel"
                                 IsVisible="False"
@@ -815,9 +840,20 @@
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                    <Button
+                                        x:Name="MixedProportionButton"
+                                        Grid.Row="0"
+                                        Grid.ColumnSpan="2"
+                                        Text="{localization:QuizTranslate Quiz.OperationMixed}"
+                                        HeightRequest="46"
+                                        CornerRadius="12"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        Clicked="OnMixedProportionClicked" />
                                     <Button
                                         x:Name="DirectProportionButton"
+                                        Grid.Row="1"
                                         Grid.Column="0"
                                         Text="{localization:QuizTranslate Quiz.ProportionDirect}"
                                         HeightRequest="46"
@@ -827,6 +863,7 @@
                                         Clicked="OnDirectProportionClicked" />
                                     <Button
                                         x:Name="InverseProportionButton"
+                                        Grid.Row="1"
                                         Grid.Column="1"
                                         Text="{localization:QuizTranslate Quiz.ProportionInverse}"
                                         HeightRequest="46"
@@ -1076,6 +1113,44 @@
                                             InputTransparent="True" />
                                     </Grid>
 
+                                </Border>
+
+                                <Label
+                                    Text="{localization:QuizTranslate Quiz.GeometryMeasurementTitle}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Border
+                                    Padding="0"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+                                    <Grid>
+                                        <Picker
+                                            x:Name="GeometryMeasurementPicker"
+                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            SelectedIndexChanged="OnGeometryMeasurementChanged" />
+                                        <Path
+                                            IsVisible="{OnPlatform Android=True, Default=False}"
+                                            Data="M4,7 L10,13 L16,7 Z"
+                                            Fill="{DynamicResource WallpaperTextSecondaryBrush}"
+                                            WidthRequest="14"
+                                            HeightRequest="14"
+                                            Margin="0,0,18,0"
+                                            HorizontalOptions="End"
+                                            VerticalOptions="Center"
+                                            InputTransparent="True" />
+                                    </Grid>
                                 </Border>
                             </VerticalStackLayout>
 

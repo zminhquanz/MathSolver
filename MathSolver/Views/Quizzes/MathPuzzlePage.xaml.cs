@@ -35,6 +35,8 @@ public partial class MathPuzzlePage : ContentPage
     private readonly AverageQuizGenerator _averageQuizGenerator;
     private readonly PercentageQuizGenerator _percentageQuizGenerator;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
+    private readonly ExpressionQuizGenerator _expressionQuizGenerator = new();
+    private ExpressionQuizType? _selectedExpressionType;
     private readonly SortedDictionary<int, string> _llmRawOutputs = new();
     private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
     private readonly EssayAnswerValidator _essayAnswerValidator;
@@ -84,13 +86,15 @@ public partial class MathPuzzlePage : ContentPage
         ArithmeticOperation.Add;
     private FractionOperation? _selectedFractionOperation =
         FractionOperation.Add;
-    private ProportionQuizType _selectedProportionType =
+    private ProportionQuizType? _selectedProportionType =
         ProportionQuizType.Direct;
     private AverageQuizType? _selectedAverageType;
     private PercentageQuizType? _selectedPercentageType;
     private ArithmeticOperation? _selectedFindXOperation;
     private GeometryQuizShape? _selectedGeometryShape;
     private readonly List<GeometryQuizShape?> _geometryShapePickerValues = [];
+    private GeometryMeasurement? _selectedGeometryMeasurement;
+    private readonly List<GeometryMeasurement?> _geometryMeasurementPickerValues = [];
     private MotionQuizType? _selectedMotionType;
     private bool _isUpdatingSubtypePickers;
     private bool _isAiDiagnosticsVisible;
@@ -138,6 +142,8 @@ public partial class MathPuzzlePage : ContentPage
             FindXTypePicker);
         AndroidPickerVisualHelper.Attach(
             GeometryShapePicker);
+        AndroidPickerVisualHelper.Attach(
+            GeometryMeasurementPicker);
         AndroidPickerVisualHelper.Attach(
             MotionTypePicker);
 #endif
@@ -738,6 +744,8 @@ public partial class MathPuzzlePage : ContentPage
 
         bool mixed = IsMixedProblemSelection();
         CurriculumHintLabel.Text = TranslateQuiz(
+            _quizProblemTypeCatalog.GetFixedRequest(OperationPicker.SelectedIndex)?.Kind == QuizProblemKind.Expression
+                ? "Quiz.ExpressionDifficultyHint" :
             mixed
                 ? "Quiz.CurriculumHintMixed"
                 : "Quiz.CurriculumHintSkill");
@@ -745,6 +753,8 @@ public partial class MathPuzzlePage : ContentPage
 
     private string GetQuestionPromptTitle()
     {
+        if (_currentQuestion?.ExpressionProblem is not null)
+            return TranslateQuiz("Quiz.ExpressionQuestionTitle");
         if (_currentQuestion?.FractionProblem is not null &&
             _generationSource == QuizGenerationSource.Algorithm)
         {
@@ -819,7 +829,7 @@ public partial class MathPuzzlePage : ContentPage
             ? question.FindXProblem is not null
             : IsFindXProblemSelected();
         bool isFraction = question is not null
-            ? question.FractionProblem is not null
+            ? question.UsesFractionFormatting
             : IsFractionProblemSelected();
         bool isGeometry = question is not null
             ? question.GeometryProblem is not null
@@ -844,7 +854,9 @@ public partial class MathPuzzlePage : ContentPage
 
         EssayValidationHintLabel.Text =
             TranslateQuiz(
-                isWordProblemSource && isFindX
+                question?.ExpressionProblem is not null
+                    ? requiresSolution ? "Quiz.ExpressionEssayHintAi" : "Quiz.ExpressionEssayHint"
+                    : isWordProblemSource && isFindX
                     ? "Quiz.FindXEssayValidationHintAi"
                     : isWordProblemSource && isGeometry
                     ? "Quiz.GeometryEssayValidationHintAi"
@@ -876,7 +888,9 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         string equationPlaceholder =
-            isFindX
+            question?.ExpressionProblem is not null
+                ? TranslateQuiz(isFraction ? "Quiz.ExpressionFractionPlaceholder" : "Quiz.ExpressionIntegerPlaceholder")
+                : isFindX
                 ? TranslateQuiz("Quiz.FindXEssayEquationPlaceholder")
                 : isFraction
                 ? TranslateQuiz("Quiz.FractionEssayEquationPlaceholder")
@@ -909,7 +923,9 @@ public partial class MathPuzzlePage : ContentPage
             : equationPlaceholder;
 
         EssayAnswerEntry.Placeholder =
-            isFraction
+            question?.ExpressionProblem is not null && !isFraction
+                ? TranslateQuiz("Quiz.ExpressionAnswerPlaceholder")
+                : isFraction
                 ? TranslateQuiz("Quiz.FractionEssayAnswerPlaceholder")
                 : Translate("Quiz.EssayAnswerPlaceholder");
     }
@@ -927,7 +943,7 @@ public partial class MathPuzzlePage : ContentPage
         {
             OperationPicker.Items.Clear();
             foreach (QuizProblemOption option in
-                     _quizProblemTypeCatalog.Options)
+                     _quizProblemTypeCatalog.GetOptions(_generationSource == QuizGenerationSource.Algorithm))
             {
                 OperationPicker.Items.Add(
                     TranslateQuiz(option.LocalizationKey));
@@ -965,6 +981,13 @@ public partial class MathPuzzlePage : ContentPage
         _isUpdatingSubtypePickers = true;
         try
         {
+            ExpressionTypePicker.Items.Clear();
+            ExpressionTypePicker.Items.Add(TranslateQuiz("Quiz.SubtypeMixed"));
+            foreach (string key in new[] { "Quiz.ExpressionInteger", "Quiz.ExpressionIntegerBrackets",
+                         "Quiz.ExpressionFraction", "Quiz.ExpressionFractionBrackets" })
+                ExpressionTypePicker.Items.Add(TranslateQuiz(key));
+            ExpressionTypePicker.SelectedIndex = _selectedExpressionType.HasValue
+                ? (int)_selectedExpressionType.Value + 1 : 0;
             AverageTypePicker.Items.Clear();
             string[] averageKeys =
             [
@@ -1090,11 +1113,63 @@ public partial class MathPuzzlePage : ContentPage
                 _geometryShapePickerValues.IndexOf(_selectedGeometryShape);
             GeometryShapePicker.SelectedIndex =
                 geometrySelectedIndex >= 0 ? geometrySelectedIndex : 0;
+            UpdateGeometryMeasurementPickerItems();
         }
         finally
         {
             _isUpdatingSubtypePickers = false;
         }
+    }
+
+    private void UpdateGeometryMeasurementPickerItems()
+    {
+        bool wasUpdating = _isUpdatingSubtypePickers;
+        _isUpdatingSubtypePickers = true;
+        try
+        {
+            IReadOnlyList<GeometryMeasurement> available =
+                GeometryQuizGenerator.GetAvailableMeasurements(_selectedGeometryShape);
+            if (_selectedGeometryMeasurement.HasValue && !available.Contains(_selectedGeometryMeasurement.Value))
+                _selectedGeometryMeasurement = null;
+
+            GeometryMeasurementPicker.Items.Clear();
+            _geometryMeasurementPickerValues.Clear();
+            GeometryMeasurementPicker.Items.Add(TranslateQuiz("Quiz.SubtypeMixed"));
+            _geometryMeasurementPickerValues.Add(null);
+            foreach (GeometryMeasurement measurement in available)
+            {
+                string key = measurement switch
+                {
+                    GeometryMeasurement.Perimeter => "Quiz.GeometryPerimeter",
+                    GeometryMeasurement.Area => "Quiz.GeometryArea",
+                    GeometryMeasurement.Volume => "Quiz.GeometryVolume",
+                    GeometryMeasurement.LateralArea => "Quiz.GeometryLateralArea",
+                    GeometryMeasurement.TotalArea => "Quiz.GeometryTotalArea",
+                    _ => throw new ArgumentOutOfRangeException(nameof(measurement))
+                };
+                GeometryMeasurementPicker.Items.Add(TranslateQuiz(key));
+                _geometryMeasurementPickerValues.Add(measurement);
+            }
+            GeometryMeasurementPicker.SelectedIndex =
+                _geometryMeasurementPickerValues.IndexOf(_selectedGeometryMeasurement);
+        }
+        finally
+        {
+            _isUpdatingSubtypePickers = wasUpdating;
+        }
+    }
+
+    private void OnGeometryMeasurementChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers)
+            return;
+        int index = GeometryMeasurementPicker.SelectedIndex;
+        GeometryMeasurement? selected = index >= 0 && index < _geometryMeasurementPickerValues.Count
+            ? _geometryMeasurementPickerValues[index] : null;
+        if (selected == _selectedGeometryMeasurement)
+            return;
+        _selectedGeometryMeasurement = selected;
+        OnSubtypeSelectionChanged(QuizProblemKind.Geometry);
     }
 
     private void OnAverageTypeChanged(object? sender, EventArgs e)
@@ -1217,6 +1292,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         _selectedGeometryShape = selected;
+        UpdateGeometryMeasurementPickerItems();
         OnSubtypeSelectionChanged(
             QuizProblemKind.Geometry,
             refreshSubtypePickers: false);
@@ -1306,7 +1382,10 @@ public partial class MathPuzzlePage : ContentPage
             _selectedFindXOperation,
             _selectedGeometryShape,
             _selectedMotionType,
-            _selectedCurriculumTier);
+            _selectedCurriculumTier,
+            includeExpressions: true,
+            expressionType: _selectedExpressionType,
+            geometryMeasurement: _selectedGeometryMeasurement);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -1316,6 +1395,7 @@ public partial class MathPuzzlePage : ContentPage
 
         return request?.Kind switch
         {
+            QuizProblemKind.Expression => request.Value with { ExpressionType = _selectedExpressionType },
             QuizProblemKind.Arithmetic =>
                 request.Value with
                 {
@@ -1349,7 +1429,8 @@ public partial class MathPuzzlePage : ContentPage
             QuizProblemKind.Geometry =>
                 request.Value with
                 {
-                    GeometryShape = _selectedGeometryShape
+                    GeometryShape = _selectedGeometryShape,
+                    GeometryMeasurement = _selectedGeometryMeasurement
                 },
             QuizProblemKind.Motion =>
                 request.Value with
@@ -1389,18 +1470,25 @@ public partial class MathPuzzlePage : ContentPage
         FindXTypePanel.IsVisible = showFindXType;
         GeometryShapePanel.IsVisible = showGeometryShape;
         MotionTypePanel.IsVisible = showMotionType;
+        ExpressionTypePanel.IsVisible = kind == QuizProblemKind.Expression;
 
         if (showProportionType)
         {
-            DirectProportionButton.IsEnabled = true;
-            InverseProportionButton.IsEnabled = true;
+            MixedProportionButton.IsEnabled = !_isGeneratingWithLlm;
+            DirectProportionButton.IsEnabled = !_isGeneratingWithLlm;
+            InverseProportionButton.IsEnabled = !_isGeneratingWithLlm;
+            MixedProportionButton.Opacity = 1d;
             DirectProportionButton.Opacity = 1d;
             InverseProportionButton.Opacity = 1d;
 
             SelectionButtonStyler.Select(
-                _selectedProportionType == ProportionQuizType.Direct
-                    ? DirectProportionButton
-                    : InverseProportionButton,
+                _selectedProportionType switch
+                {
+                    ProportionQuizType.Direct => DirectProportionButton,
+                    ProportionQuizType.Inverse => InverseProportionButton,
+                    _ => MixedProportionButton
+                },
+                MixedProportionButton,
                 DirectProportionButton,
                 InverseProportionButton);
         }
@@ -1518,13 +1606,16 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
+    private void OnMixedProportionClicked(object? sender, EventArgs e) =>
+        SelectProportionType(null);
+
     private void OnDirectProportionClicked(object? sender, EventArgs e) =>
         SelectProportionType(ProportionQuizType.Direct);
 
     private void OnInverseProportionClicked(object? sender, EventArgs e) =>
         SelectProportionType(ProportionQuizType.Inverse);
 
-    private void SelectProportionType(ProportionQuizType type)
+    private void SelectProportionType(ProportionQuizType? type)
     {
         QuizProblemKind? kind =
             _quizProblemTypeCatalog
@@ -1542,7 +1633,7 @@ public partial class MathPuzzlePage : ContentPage
                     _selectedCurriculumTier,
                     IsMixedMode: false));
 
-        if (!allowedTypes.Contains(type))
+        if (allowedTypes.Count == 0 || type.HasValue && !allowedTypes.Contains(type.Value))
         {
             return;
         }
@@ -1623,7 +1714,7 @@ public partial class MathPuzzlePage : ContentPage
 
     private bool IsFractionProblemSelected()
     {
-        if (_currentQuestion?.FractionProblem is not null)
+        if (_currentQuestion?.UsesFractionFormatting == true)
         {
             return true;
         }
@@ -1632,7 +1723,18 @@ public partial class MathPuzzlePage : ContentPage
             _activeProblemRequest ??
             GetSelectedFixedProblemRequest();
 
-        return request?.Kind == QuizProblemKind.Fraction;
+        return request?.Kind == QuizProblemKind.Fraction ||
+            request?.Kind == QuizProblemKind.Expression &&
+            _selectedExpressionType is ExpressionQuizType.Fraction or ExpressionQuizType.FractionWithBrackets;
+    }
+
+    private void OnExpressionTypeChanged(object? sender, EventArgs e)
+    {
+        if (_isUpdatingSubtypePickers || ExpressionTypePicker.SelectedIndex < 0)
+            return;
+        _selectedExpressionType = ExpressionTypePicker.SelectedIndex == 0
+            ? null : (ExpressionQuizType)(ExpressionTypePicker.SelectedIndex - 1);
+        OnSubtypeSelectionChanged(QuizProblemKind.Expression);
     }
 
     private bool IsProportionProblemSelected()
@@ -1684,12 +1786,15 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion =
                 problemRequest.Kind switch
                 {
+                    QuizProblemKind.Expression => _expressionQuizGenerator.Generate(
+                        _selectedMode, problemRequest.ExpressionType, curriculumContext.Tier),
                     QuizProblemKind.Geometry =>
                         _geometryQuizGenerator.GenerateAlgorithm(
                             _selectedMode,
                             AppLanguageManager.CurrentLanguage,
                             problemRequest.GeometryShape,
-                            curriculumContext),
+                            curriculumContext,
+                            problemRequest.GeometryMeasurement),
                     QuizProblemKind.Arithmetic =>
                         _quizGenerator.Generate(
                             _selectedMode,
@@ -2744,13 +2849,16 @@ public partial class MathPuzzlePage : ContentPage
         PercentageTypePicker.IsEnabled = !isLocked;
         FindXTypePicker.IsEnabled = !isLocked;
         GeometryShapePicker.IsEnabled = !isLocked;
+        GeometryMeasurementPicker.IsEnabled = !isLocked;
         MotionTypePicker.IsEnabled = !isLocked;
+        ExpressionTypePicker.IsEnabled = !isLocked;
 
         ProblemMixedButton.IsEnabled = !isLocked;
         ProblemAddButton.IsEnabled = !isLocked;
         ProblemSubtractButton.IsEnabled = !isLocked;
         ProblemMultiplyButton.IsEnabled = !isLocked;
         ProblemDivideButton.IsEnabled = !isLocked;
+        MixedProportionButton.IsEnabled = !isLocked;
         DirectProportionButton.IsEnabled = !isLocked;
         InverseProportionButton.IsEnabled = !isLocked;
 
@@ -2825,7 +2933,12 @@ public partial class MathPuzzlePage : ContentPage
         PercentageTypePicker.IsEnabled = !isBusy;
         FindXTypePicker.IsEnabled = !isBusy;
         GeometryShapePicker.IsEnabled = !isBusy;
+        GeometryMeasurementPicker.IsEnabled = !isBusy;
         MotionTypePicker.IsEnabled = !isBusy;
+        ExpressionTypePicker.IsEnabled = !isBusy;
+        MixedProportionButton.IsEnabled = !isBusy;
+        DirectProportionButton.IsEnabled = !isBusy;
+        InverseProportionButton.IsEnabled = !isBusy;
 
         UpdateCreateOrRegenerateQuestionButtonState();
         UpdateAiTeacherState();
@@ -3609,12 +3722,13 @@ public partial class MathPuzzlePage : ContentPage
                 21,
                 "WallpaperTextPrimaryColor",
                 useFractionFormatting:
-                    fractionProblem is not null);
+                    _currentQuestion.UsesFractionFormatting);
 
             if (_currentQuestion.Mode ==
                 ArithmeticQuizMode.TrueFalse)
             {
                 string presentedAnswer =
+                    _currentQuestion.ExpressionProblem?.PresentedAnswer?.ToString() ??
                     fractionProblem?.PresentedAnswer?.ToString() ??
                     _currentQuestion.PresentedAnswer
                         .GetValueOrDefault()
@@ -3626,7 +3740,7 @@ public partial class MathPuzzlePage : ContentPage
                     presentedAnswer,
                     wordProblem.AnswerUnit);
 
-                if (fractionProblem is not null)
+                if (_currentQuestion.UsesFractionFormatting)
                 {
                     PresentedAnswerLabel.IsVisible = false;
                     PresentedAnswerFractionView.Expression =
@@ -3732,6 +3846,16 @@ public partial class MathPuzzlePage : ContentPage
 
             RenderPresentedContractAnswer(percentageProblem.AnswerUnit);
         }
+        else if (_currentQuestion.ExpressionProblem is ExpressionQuizContract expressionProblem)
+        {
+            PresentedAnswerLabel.IsVisible = false;
+            PresentedAnswerFractionView.IsVisible = false;
+            SetQuestionContent($"{expressionProblem.ExpressionText} = " +
+                (_currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? expressionProblem.PresentedAnswer.ToString() : "?"),
+                expressionProblem.UsesFractions ? 26 : 28, "PrimaryColor",
+                useFractionFormatting: expressionProblem.UsesFractions);
+        }
         else if (fractionProblem is not null)
         {
             PresentedAnswerLabel.IsVisible = false;
@@ -3801,7 +3925,7 @@ public partial class MathPuzzlePage : ContentPage
                     ChoiceButtons[index];
 
                 button.HeightRequest =
-                    fractionProblem is not null
+                    _currentQuestion.UsesFractionFormatting
                         ? 72
                         : 54;
 
@@ -3821,10 +3945,10 @@ public partial class MathPuzzlePage : ContentPage
                                         ? $" {percentageProblem.AnswerUnit}"
                                         : string.Empty;
 
-                if (fractionProblem is not null)
+                if (_currentQuestion.UsesFractionFormatting)
                 {
                     ReducedFraction choice =
-                        fractionProblem.Choices[index];
+                        fractionProblem?.Choices[index] ?? _currentQuestion.ExpressionProblem!.Choices[index];
                     button.Text = string.Empty;
                     button.CommandParameter = choice.ToString();
 
@@ -3924,7 +4048,7 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        if (_currentQuestion.FractionProblem is FractionQuizContract fraction)
+        if (_currentQuestion.UsesFractionFormatting)
         {
             if (!ReducedFraction.TryParse(
                     button.CommandParameter?.ToString(),
@@ -3934,7 +4058,7 @@ public partial class MathPuzzlePage : ContentPage
             }
 
             CompleteAnswer(
-                selectedFraction == fraction.CorrectAnswer,
+                selectedFraction == _currentQuestion.ExactAnswer,
                 button);
             return;
         }
@@ -4016,11 +4140,11 @@ public partial class MathPuzzlePage : ContentPage
         foreach (Button button in ChoiceButtons)
         {
             bool isCorrectChoice =
-                _currentQuestion.FractionProblem is FractionQuizContract fraction
+                _currentQuestion.UsesFractionFormatting
                     ? ReducedFraction.TryParse(
                         button.CommandParameter?.ToString(),
                         out ReducedFraction fractionAnswer) &&
-                      fractionAnswer == fraction.CorrectAnswer
+                      fractionAnswer == _currentQuestion.ExactAnswer
                     : BigInteger.TryParse(
                         button.CommandParameter?.ToString(),
                         NumberStyles.Integer,
@@ -4067,10 +4191,10 @@ public partial class MathPuzzlePage : ContentPage
             SetSolutionContent(
                 solutionText,
                 useFractionFormatting:
-                    _currentQuestion.FractionProblem is not null);
+                    _currentQuestion.UsesFractionFormatting);
             SolutionBorder.IsVisible = true;
         }
-        else if (EssayAnswerValidator.RequiresSolution(_currentQuestion))
+        else if (_currentQuestion.ExpressionProblem is not null || EssayAnswerValidator.RequiresSolution(_currentQuestion))
         {
             string solutionText =
                 FormatPlainEssaySolution(
@@ -4079,7 +4203,7 @@ public partial class MathPuzzlePage : ContentPage
             SetSolutionContent(
                 solutionText,
                 useFractionFormatting:
-                    _currentQuestion.FractionProblem is not null);
+                    _currentQuestion.UsesFractionFormatting);
             SolutionBorder.IsVisible = true;
         }
 
@@ -4116,6 +4240,12 @@ public partial class MathPuzzlePage : ContentPage
     private static string FormatPlainEssaySolution(
         ArithmeticQuizQuestion question)
     {
+        if (question.ExpressionProblem is ExpressionQuizContract expressionProblem)
+        {
+            string label = AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+            return $"{expressionProblem.ExpressionText} = {expressionProblem.CorrectAnswer}" +
+                Environment.NewLine + $"{label}: {expressionProblem.CorrectAnswer}";
+        }
         if (question.FractionProblem is FractionQuizContract fraction)
         {
             string fractionAnswerLabel =
@@ -4208,6 +4338,7 @@ public partial class MathPuzzlePage : ContentPage
     private void ShowFeedback(bool isCorrect)
     {
         string answerText =
+            _currentQuestion?.ExpressionProblem?.CorrectAnswer.ToString() ??
             _currentQuestion?.FractionProblem?.CorrectAnswer.ToString() ??
             _currentQuestion?.CorrectAnswer.ToString(
                 "N0",
@@ -4252,7 +4383,7 @@ public partial class MathPuzzlePage : ContentPage
             answerText);
 
         bool useFractionFormatting =
-            _currentQuestion?.FractionProblem is not null;
+            _currentQuestion?.UsesFractionFormatting == true;
 
         FeedbackLabel.HorizontalTextAlignment = TextAlignment.Center;
         FeedbackLabel.IsVisible = !useFractionFormatting;

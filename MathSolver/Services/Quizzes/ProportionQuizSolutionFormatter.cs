@@ -77,6 +77,17 @@ public static class ProportionQuizSolutionFormatter
                     $"Số {unit} thực phẩm đủ dùng là:",
                 ProportionScenarioKind.SalesStock =>
                     $"Số {unit} hàng đủ bán là:",
+                ProportionScenarioKind.WorkersRequired or
+                ProportionScenarioKind.MachinesRequired =>
+                    $"Số {unit} cần để hoàn thành công việc đúng thời hạn là:",
+                ProportionScenarioKind.TapsTime =>
+                    $"Thời gian để bơm đầy bể ({unit}) là:",
+                ProportionScenarioKind.TravelSpeedTime =>
+                    $"Thời gian đi hết quãng đường ({unit}) là:",
+                ProportionScenarioKind.TransportTrips =>
+                    $"Số {unit} mỗi xe cần chở là:",
+                ProportionScenarioKind.PackagingCount =>
+                    $"Số {unit} {contract.SubjectName} sau khi đóng lại là:",
                 _ => $"Số {unit} cần tìm là:"
             };
         }
@@ -115,6 +126,17 @@ public static class ProportionQuizSolutionFormatter
                 $"The time the food will last ({unit}) is:",
             ProportionScenarioKind.SalesStock =>
                 $"The time the stock will last ({unit}) is:",
+            ProportionScenarioKind.WorkersRequired or
+            ProportionScenarioKind.MachinesRequired =>
+                $"The number of {unit} needed to finish the job on time is:",
+            ProportionScenarioKind.TapsTime =>
+                $"The time needed to fill the tank ({unit}) is:",
+            ProportionScenarioKind.TravelSpeedTime =>
+                $"The time needed to travel the route ({unit}) is:",
+            ProportionScenarioKind.TransportTrips =>
+                $"The number of {unit} needed by each truck is:",
+            ProportionScenarioKind.PackagingCount =>
+                $"The number of {unit} of {contract.SubjectName} after repacking is:",
             _ => $"The required number of {unit} is:"
         };
     }

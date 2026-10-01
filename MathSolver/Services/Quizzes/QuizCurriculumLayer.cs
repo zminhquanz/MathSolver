@@ -583,7 +583,8 @@ public static class QuizCurriculumLayer
     /// </summary>
     public static QuizProblemRequest ResolveMixedRequest(
         CurriculumTier tier,
-        Random random)
+        Random random,
+        bool includeExpressions = true)
     {
         ArgumentNullException.ThrowIfNull(random);
 
@@ -632,6 +633,17 @@ public static class QuizCurriculumLayer
 
             _ => throw new ArgumentOutOfRangeException(nameof(tier))
         };
+
+        if (includeExpressions)
+        {
+            // Both sources share the same pool. Fractions join Mixed at the
+            // same tier as the existing fraction questions.
+            ExpressionQuizType[] types = tier >= CurriculumTier.FourStars
+                ? Enum.GetValues<ExpressionQuizType>()
+                : [ExpressionQuizType.Integer, ExpressionQuizType.IntegerWithBrackets];
+            pool = [.. pool, new(new(QuizProblemKind.Expression,
+                ExpressionType: types[random.Next(types.Length)]), 2)];
+        }
 
         int totalWeight = pool.Sum(item => item.Weight);
         int roll = random.Next(totalWeight);

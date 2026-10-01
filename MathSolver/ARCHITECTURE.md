@@ -187,6 +187,71 @@ practice questions. Quiz questions are accepted only after
 invariants: exact division, correct answer key, true/false flag consistency,
 and four unique multiple-choice answers containing the correct answer once.
 
+### Mixed Proportion Selection
+
+The proportion selector offers mixed, direct and inverse in both Algorithm and
+AI/LLM. Mixed is a null `ProportionType` in the request; the existing generator
+chooses an allowed relationship before selecting its story template. Each
+generated contract still has a concrete direct/inverse type for its formula,
+AI prompt and grading. Fixed selections remain fixed. This skill-level mixed
+choice uses skill curriculum rules, independently of the global mixed pool.
+
+### Geometry Quiz Measurement Selection
+
+Geometry quizzes share a shape and measurement selection across Algorithm and
+AI/LLM. Plane shapes offer perimeter, area, or mixed; cubes and rectangular
+prisms offer volume, lateral surface area, total surface area, or mixed.
+Mixed shapes can be filtered by any supported measurement. Changing shape
+resets an incompatible measurement to mixed. The request carries the chosen
+measurement into the C# contract before either source generates a question.
+Lateral-area contracts use `4 × a²` for cubes and `2 × (a + b) × h` for prisms;
+the answer unit is squared, while volume uses cubed units. Global mixed mode
+continues to use curriculum rules and does not inherit hidden picker values.
+
+### Numeric and Verbal Expressions
+
+`ExpressionQuizGenerator` owns the **Evaluate an expression**
+category. `ExpressionQuizContract` stores the complete expression and exact
+`ReducedFraction` answer instead of squeezing multiple operations into the
+legacy two-operand `IntegerArithmeticExpression`. Its four subtypes are integer
+and fraction expressions, each with or without brackets. Stars 1–5 set exactly
+3–7 operands; bracketed subtypes also have exactly 1–5 pairs. Each fraction is
+one operand. All four arithmetic operations are available at every expression
+tier, with exact division for integer expressions. Groups may be nested or
+separate; at one star, grouped addition is also accepted for grouping practice.
+At higher tiers, at least one group must affect the value.
+
+The generator and essay grader share `EssayCalculationEvaluator`, which uses
+exact rational arithmetic and matches `()`, `[]`, and `{}`. Numeric essays need
+only a calculation and answer. Their first equality member preserves the given
+expression (operator aliases and equivalent bracket symbols are accepted), and
+all subsequent equality members must have its value. Equivalent fraction
+answers need not already be reduced. The UI supports true/false, four choices
+and essay on Windows/Android with bilingual strings and wrapping fraction
+display. After grading it shows the calculation and answer.
+
+Both Algorithm and Windows AI/LLM expose the category and its **Mixed** subtype.
+`QuizProblemRequest.ExpressionType = null` samples the four subtypes; the
+generated contract always stores a concrete type. Global Mixed includes
+expressions for both sources, with fraction expressions joining at four stars.
+Explicit expression selection offers all four subtypes at every star level.
+
+AI expression contracts include an `ExpressionStoryContract`: a bilingual
+context, verbal calculation plan and reference question. The plan is derived
+from the expression tree (including precedence for unbracketed expressions).
+Eight classroom/game/STEM themes vary independently of the numeric facts.
+LLM wording may vary the introduction and question, but the mathematical span
+must occur exactly once without changed operations, order, grouping or added
+numbers. Only expression contracts allow an empty `answer_unit` in JSON parsing;
+ordinary word problems retain their existing unit checks. AI essays require a
+short value/result sentence, the calculation and answer; their displayed
+solution includes all three. Android continues to expose Algorithm only.
+AI expression grading accepts redundant brackets by comparing ordered operation
+trees, rather than the hidden formula's literal formatting. Changed operands,
+operations or grouping remain invalid even if they coincidentally give the
+same answer. Algorithm expression matching retains its existing behavior.
+See [expression research and validation](EXPRESSION_AI_MIXED_NOTES.md).
+
 ### Average & Percentage Word Problems
 
 `AverageQuizGenerator` and `PercentageQuizGenerator` are shared by the Algorithm

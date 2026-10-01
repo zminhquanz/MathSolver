@@ -29,7 +29,8 @@ public sealed class GeometryQuizGenerator
         ArithmeticQuizMode mode,
         AppLanguage language,
         GeometryQuizShape? requestedShape = null,
-        QuizCurriculumContext? curriculumContext = null)
+        QuizCurriculumContext? curriculumContext = null,
+        GeometryMeasurement? requestedMeasurement = null)
     {
         QuizCurriculumLayer.GeometryRules? curriculumRules =
             curriculumContext.HasValue
@@ -51,13 +52,14 @@ public sealed class GeometryQuizGenerator
         GeometryStoryTemplate[] eligibleTemplates = Templates
             .Where(template =>
                 (requestedShapeId is null || template.ShapeId == requestedShapeId) &&
+                (!requestedMeasurement.HasValue || template.Measurement == requestedMeasurement.Value) &&
                 IsTemplateAllowedByCurriculum(template, curriculumRules))
             .ToArray();
 
         if (eligibleTemplates.Length == 0)
         {
             throw new InvalidOperationException(
-                "No geometry template is registered for the selected shape.");
+                "No geometry template is available for the selected shape, measurement and curriculum.");
         }
 
         GeometryStoryTemplate template =
@@ -105,14 +107,16 @@ public sealed class GeometryQuizGenerator
         ArithmeticQuizMode mode,
         AppLanguage language,
         GeometryQuizShape? requestedShape = null,
-        QuizCurriculumContext? curriculumContext = null)
+        QuizCurriculumContext? curriculumContext = null,
+        GeometryMeasurement? requestedMeasurement = null)
     {
         ArithmeticQuizQuestion question =
             Generate(
                 mode,
                 language,
                 requestedShape,
-                curriculumContext);
+                curriculumContext,
+                requestedMeasurement);
 
         GeometryQuizContract contract =
             question.GeometryProblem ??
@@ -127,6 +131,18 @@ public sealed class GeometryQuizGenerator
         };
     }
 
+
+    /// <summary>Measurements supported by the chosen shape; null mixes all shapes.</summary>
+    public static IReadOnlyList<GeometryMeasurement> GetAvailableMeasurements(GeometryQuizShape? shape) =>
+        shape switch
+        {
+            GeometryQuizShape.Cube or GeometryQuizShape.RectangularPrism =>
+                [GeometryMeasurement.Volume, GeometryMeasurement.LateralArea, GeometryMeasurement.TotalArea],
+            null =>
+                [GeometryMeasurement.Perimeter, GeometryMeasurement.Area, GeometryMeasurement.Volume,
+                 GeometryMeasurement.LateralArea, GeometryMeasurement.TotalArea],
+            _ => [GeometryMeasurement.Perimeter, GeometryMeasurement.Area]
+        };
 
     private static bool IsTemplateAllowedByCurriculum(
         GeometryStoryTemplate template,
@@ -247,10 +263,14 @@ public sealed class GeometryQuizGenerator
                     $"Tính chu vi của hình tròn có bán kính {r} {unit}. Lấy π = 3,14.",
                 ("circle", GeometryMeasurement.Area) =>
                     $"Tính diện tích của hình tròn có bán kính {r} {unit}. Lấy π = 3,14.",
+                ("cube", GeometryMeasurement.LateralArea) =>
+                    $"Tính diện tích xung quanh của hình lập phương có cạnh {a} {unit}.",
                 ("cube", GeometryMeasurement.TotalArea) =>
                     $"Tính diện tích toàn phần của hình lập phương có cạnh {a} {unit}.",
                 ("cube", GeometryMeasurement.Volume) =>
                     $"Tính thể tích của hình lập phương có cạnh {a} {unit}.",
+                ("rectangular_prism", GeometryMeasurement.LateralArea) =>
+                    $"Tính diện tích xung quanh của hình hộp chữ nhật có chiều dài đáy {a} {unit}, chiều rộng đáy {b} {unit} và chiều cao {h} {unit}.",
                 ("rectangular_prism", GeometryMeasurement.TotalArea) =>
                     $"Tính diện tích toàn phần của hình hộp chữ nhật có chiều dài {a} {unit}, chiều rộng {b} {unit} và chiều cao {h} {unit}.",
                 ("rectangular_prism", GeometryMeasurement.Volume) =>
@@ -288,10 +308,14 @@ public sealed class GeometryQuizGenerator
                     $"Calculate the circumference of a circle with radius {r} {unit}. Use π = 3.14.",
                 ("circle", GeometryMeasurement.Area) =>
                     $"Calculate the area of a circle with radius {r} {unit}. Use π = 3.14.",
+                ("cube", GeometryMeasurement.LateralArea) =>
+                    $"Calculate the lateral surface area of a cube with side length {a} {unit}.",
                 ("cube", GeometryMeasurement.TotalArea) =>
                     $"Calculate the total surface area of a cube with side length {a} {unit}.",
                 ("cube", GeometryMeasurement.Volume) =>
                     $"Calculate the volume of a cube with side length {a} {unit}.",
+                ("rectangular_prism", GeometryMeasurement.LateralArea) =>
+                    $"Calculate the lateral surface area of a rectangular prism with base length {a} {unit}, base width {b} {unit}, and height {h} {unit}.",
                 ("rectangular_prism", GeometryMeasurement.TotalArea) =>
                     $"Calculate the total surface area of a rectangular prism with length {a} {unit}, width {b} {unit}, and height {h} {unit}.",
                 ("rectangular_prism", GeometryMeasurement.Volume) =>
@@ -307,6 +331,10 @@ public sealed class GeometryQuizGenerator
                     $"Chu vi {contract.ShapeName} là",
                 GeometryMeasurement.Volume =>
                     $"Thể tích {contract.ShapeName} là",
+                GeometryMeasurement.LateralArea =>
+                    $"Diện tích xung quanh {contract.ShapeName} là",
+                GeometryMeasurement.TotalArea =>
+                    $"Diện tích toàn phần {contract.ShapeName} là",
                 _ => $"Diện tích {contract.ShapeName} là"
             }
             : contract.Measurement switch
@@ -315,6 +343,10 @@ public sealed class GeometryQuizGenerator
                     $"The perimeter of the {contract.ShapeName} is",
                 GeometryMeasurement.Volume =>
                     $"The volume of the {contract.ShapeName} is",
+                GeometryMeasurement.LateralArea =>
+                    $"The lateral surface area of the {contract.ShapeName} is",
+                GeometryMeasurement.TotalArea =>
+                    $"The total surface area of the {contract.ShapeName} is",
                 _ => $"The area of the {contract.ShapeName} is"
             };
 
@@ -667,10 +699,14 @@ public sealed class GeometryQuizGenerator
                 $"2 × 3.14 × {r}",
             ("circle", GeometryMeasurement.Area) =>
                 $"3.14 × {r} × {r}",
+            ("cube", GeometryMeasurement.LateralArea) =>
+                $"4 × {a} × {a}",
             ("cube", GeometryMeasurement.TotalArea) =>
                 $"6 × {a} × {a}",
             ("cube", GeometryMeasurement.Volume) =>
                 $"{a} × {a} × {a}",
+            ("rectangular_prism", GeometryMeasurement.LateralArea) =>
+                $"2 × ({a} + {b}) × {h}",
             ("rectangular_prism", GeometryMeasurement.TotalArea) =>
                 $"2 × ({a} × {b} + {a} × {h} + {b} × {h})",
             ("rectangular_prism", GeometryMeasurement.Volume) =>
@@ -721,12 +757,16 @@ public sealed class GeometryQuizGenerator
             "miếng nhãn", "label", "hình tròn", "circle"),
         new("circle", GeometryMeasurement.Area, GeometryLengthUnit.Millimeter,
             "miếng trang trí", "decoration", "hình tròn", "circle"),
+        new("cube", GeometryMeasurement.LateralArea, GeometryLengthUnit.Decimeter,
+            "thùng hình lập phương", "cube-shaped box", "hình lập phương", "cube"),
         new("cube", GeometryMeasurement.TotalArea, GeometryLengthUnit.Decimeter,
             "thùng hình lập phương", "cube-shaped box", "hình lập phương", "cube"),
         new("cube", GeometryMeasurement.Volume, GeometryLengthUnit.Centimeter,
             "hộp quà", "gift box", "hình lập phương", "cube"),
         new("cube", GeometryMeasurement.Volume, GeometryLengthUnit.Millimeter,
             "khối mô hình nhỏ", "small model block", "hình lập phương", "cube"),
+        new("rectangular_prism", GeometryMeasurement.LateralArea, GeometryLengthUnit.Meter,
+            "bể chứa", "storage tank", "hình hộp chữ nhật", "rectangular prism"),
         new("rectangular_prism", GeometryMeasurement.TotalArea, GeometryLengthUnit.Meter,
             "bể chứa", "storage tank", "hình hộp chữ nhật", "rectangular prism"),
         new("rectangular_prism", GeometryMeasurement.Volume, GeometryLengthUnit.Meter,

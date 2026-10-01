@@ -40,11 +40,24 @@ internal static class EssayCalculationEvaluator
         return true;
     }
 
-    private sealed class Parser(string text)
+    internal static bool TryGetStructure(string text, out string structure, bool fractionLiterals)
+    {
+        structure = string.Empty;
+        if (text.Length is 0 or > 256)
+            return false;
+        var parser = new Parser(text, trackStructure: true, fractionLiterals: fractionLiterals);
+        if (!parser.TryReadExpression(out _) || !parser.AtEnd)
+            return false;
+        structure = parser.Structure;
+        return true;
+    }
+
+    private sealed class Parser(string text, bool trackStructure = false, bool fractionLiterals = true)
     {
         private int _position;
         private int _depth;
         internal bool HasOperation { get; private set; }
+        internal string Structure { get; private set; } = string.Empty;
 
         internal bool AtEnd
         {
@@ -68,8 +81,12 @@ internal static class EssayCalculationEvaluator
                     return true;
 
                 char operation = text[_position++];
+                string leftStructure = Structure;
                 if (!TryReadTerm(out Value right))
                     return false;
+
+                if (trackStructure)
+                    Structure = $"{(operation == '+' ? '+' : '-')}({leftStructure},{Structure})";
 
                 HasOperation = true;
                 value = operation == '+'
@@ -96,8 +113,12 @@ internal static class EssayCalculationEvaluator
                     return true;
 
                 char operation = text[_position++];
+                string leftStructure = Structure;
                 if (!TryReadFactor(out Value right))
                     return false;
+
+                if (trackStructure)
+                    Structure = $"{(operation is '÷' or '/' or ':' ? '/' : '*')}({leftStructure},{Structure})";
 
                 HasOperation = true;
                 if (operation is '÷' or '/' or ':')
@@ -131,15 +152,16 @@ internal static class EssayCalculationEvaluator
             }
 
             bool isNumber = false;
-            if (_position < text.Length && text[_position] == '(')
+            if (_position < text.Length && text[_position] is '(' or '[' or '{')
             {
+                char closing = text[_position] switch { '(' => ')', '[' => ']', _ => '}' };
                 if (++_depth > 20)
                     return false;
                 _position++;
                 if (!TryReadExpression(out value))
                     return false;
                 SkipSpaces();
-                if (_position == text.Length || text[_position++] != ')')
+                if (_position == text.Length || text[_position++] != closing)
                     return false;
                 _depth--;
             }
@@ -156,7 +178,7 @@ internal static class EssayCalculationEvaluator
             // literal. Treating the first slash as part of the factor also makes
             // expressions such as 1/2 ÷ 3/4 unambiguous while retaining ordinary
             // left-to-right division semantics for 24/4/2.
-            if (isNumber)
+            if (isNumber && fractionLiterals)
             {
                 int slashPosition = _position;
                 SkipSpaces();
@@ -164,28 +186,36 @@ internal static class EssayCalculationEvaluator
                 {
                     _position++;
                     SkipSpaces();
+                    string numeratorStructure = Structure;
                     if (!TryReadNumber(out Value denominator) ||
                         !denominator.Denominator.IsOne ||
                         denominator.Numerator.IsZero)
                     {
                         _position = slashPosition;
+                        Structure = numeratorStructure;
                     }
                     else
                     {
                         HasOperation = true;
                         value = Value.Create(value.Numerator,
                             value.Denominator * denominator.Numerator);
+                        if (trackStructure)
+                            Structure = $"/({numeratorStructure},{Structure})";
                     }
                 }
             }
 
             if (negative)
+            {
                 value = value with { Numerator = -value.Numerator };
+                if (trackStructure) Structure = $"neg({Structure})";
+            }
 
             SkipSpaces();
             if (_position < text.Length && text[_position] is '%' or '²' or '³')
             {
                 char suffix = text[_position++];
+                if (trackStructure) Structure = $"{suffix}({Structure})";
                 HasOperation = true;
                 value = suffix switch
                 {
@@ -230,6 +260,7 @@ internal static class EssayCalculationEvaluator
                         CultureInfo.InvariantCulture, out BigInteger integer))
                     return false;
                 value = new Value(integer, BigInteger.One);
+                if (trackStructure) Structure = $"n({integer.ToString(CultureInfo.InvariantCulture)})";
                 return true;
             }
 
@@ -242,6 +273,7 @@ internal static class EssayCalculationEvaluator
                         CultureInfo.InvariantCulture, out BigInteger integer))
                     return false;
                 value = new Value(integer, BigInteger.One);
+                if (trackStructure) Structure = $"n({integer.ToString(CultureInfo.InvariantCulture)})";
                 return true;
             }
 
@@ -251,6 +283,8 @@ internal static class EssayCalculationEvaluator
                 return false;
 
             value = Value.Create(decimalDigits, BigInteger.Pow(10, groups[1].Length));
+            if (trackStructure)
+                Structure = $"n({value.Numerator.ToString(CultureInfo.InvariantCulture)}/{value.Denominator.ToString(CultureInfo.InvariantCulture)})";
             return true;
         }
 

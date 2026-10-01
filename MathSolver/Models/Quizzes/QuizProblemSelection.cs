@@ -13,7 +13,8 @@ public enum QuizProblemKind
     Proportion,
     Motion,
     Average,
-    Percentage
+    Percentage,
+    Expression
 }
 
 /// <summary>
@@ -46,7 +47,9 @@ public readonly record struct QuizProblemRequest(
     PercentageQuizType? PercentageType = null,
     ArithmeticOperation? FindXOperation = null,
     GeometryQuizShape? GeometryShape = null,
-    MotionQuizType? MotionType = null);
+    MotionQuizType? MotionType = null,
+    ExpressionQuizType? ExpressionType = null,
+    GeometryMeasurement? GeometryMeasurement = null);
 
 /// <summary>
 /// Một mục nhóm hiển thị trong danh sách dạng đề. FixedRequest bằng null dành
@@ -54,7 +57,8 @@ public readonly record struct QuizProblemRequest(
 /// </summary>
 public sealed record QuizProblemOption(
     string LocalizationKey,
-    QuizProblemRequest? FixedRequest)
+    QuizProblemRequest? FixedRequest,
+    bool AlgorithmOnly = false)
 {
     public bool IsMixed =>
         FixedRequest is null;

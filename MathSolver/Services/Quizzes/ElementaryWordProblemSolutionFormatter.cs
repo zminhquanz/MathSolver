@@ -21,6 +21,14 @@ public static class ElementaryWordProblemSolutionFormatter
                 "The question does not contain a word problem.",
                 nameof(question));
 
+        if (question.ExpressionProblem is ExpressionQuizContract expression)
+        {
+            string label = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+            return NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead) + Environment.NewLine +
+                $"{expression.ExpressionText} = {expression.CorrectAnswer}" + Environment.NewLine +
+                $"{label}: {expression.CorrectAnswer}";
+        }
+
         if (question.GeometryProblem is GeometryQuizContract geometry)
         {
             return FormatGeometry(

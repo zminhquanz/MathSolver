@@ -27,7 +27,13 @@ public enum ProportionScenarioKind
     WorkersJob,
     FoodPeopleDays,
     FoodAdditionalPeople,
-    SalesStock
+    SalesStock,
+    WorkersRequired,
+    MachinesRequired,
+    TapsTime,
+    TravelSpeedTime,
+    TransportTrips,
+    PackagingCount
 }
 
 /// <summary>
@@ -47,4 +53,12 @@ public sealed record ProportionQuizContract(
     bool AsksForAdditionalPeople = false)
 {
     public bool IsDirect => Type == ProportionQuizType.Direct;
+
+    // For these inverse questions C replaces B, rather than A: e.g. a new
+    // deadline or a new daily sales rate.
+    public bool InverseChangesSecondQuantity => Scenario is
+        ProportionScenarioKind.WorkersRequired or
+        ProportionScenarioKind.MachinesRequired or
+        ProportionScenarioKind.SalesStock or
+        ProportionScenarioKind.PackagingCount || AsksForAdditionalPeople;
 }

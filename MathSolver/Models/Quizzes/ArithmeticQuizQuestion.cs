@@ -26,7 +26,14 @@ public sealed record ArithmeticQuizQuestion(
     ProportionQuizContract? ProportionProblem = null,
     MotionQuizContract? MotionProblem = null,
     AverageQuizContract? AverageProblem = null,
-    PercentageQuizContract? PercentageProblem = null);
+    PercentageQuizContract? PercentageProblem = null,
+    ExpressionQuizContract? ExpressionProblem = null)
+{
+    public bool UsesFractionFormatting => FractionProblem is not null || ExpressionProblem?.UsesFractions == true;
+
+    public ReducedFraction ExactAnswer => ExpressionProblem?.CorrectAnswer ??
+        FractionProblem?.CorrectAnswer ?? new ReducedFraction(CorrectAnswer, BigInteger.One);
+}
 
 public sealed record ArithmeticQuizValidationResult(
     bool IsValid,

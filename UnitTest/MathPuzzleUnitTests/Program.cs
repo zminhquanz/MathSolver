@@ -4,6 +4,11 @@ var tests = new (string Name, Action Run)[]
 {
     ("Catalog", PuzzleTests.CheckCatalog),
     ("Algorithm question matrix", PuzzleTests.CheckAlgorithmMatrix),
+    ("Numeric expressions", PuzzleTests.CheckExpressions),
+    ("Mixed and AI expressions", PuzzleTests.CheckExpressionAi),
+    ("Geometry measurement selection", PuzzleTests.CheckGeometryMeasurements),
+    ("Inverse proportion variety", PuzzleTests.CheckInverseProportionVariety),
+    ("Mixed proportion selection", PuzzleTests.CheckMixedProportionSelection),
     ("Essay solution requirements", PuzzleTests.CheckEssaySolutionRequirements),
     ("Essay calculation units", PuzzleTests.CheckEssayCalculationUnits),
     ("Detailed essay feedback", PuzzleTests.CheckEssayFeedback),

@@ -50,6 +50,7 @@ public sealed class LocalLlmQuizGenerator
     private readonly MotionQuizGenerator _motionQuizGenerator;
     private readonly AverageQuizGenerator _averageQuizGenerator;
     private readonly PercentageQuizGenerator _percentageQuizGenerator;
+    private readonly ExpressionQuizGenerator _expressionQuizGenerator = new();
     private readonly BasicArithmeticEngine _engine;
     private readonly LlmWordProblemValidator _wordProblemValidator = new();
     private readonly SemaphoreSlim _generationGate = new(1, 1);
@@ -229,12 +230,17 @@ public sealed class LocalLlmQuizGenerator
             ArithmeticQuizQuestion contract =
                 problemRequest.Kind switch
                 {
+                    QuizProblemKind.Expression =>
+                        _expressionQuizGenerator.GenerateContract(
+                            mode, problemRequest.ExpressionType, language,
+                            curriculumContext?.Tier ?? CurriculumTier.ThreeStars),
                     QuizProblemKind.Geometry =>
                         _geometryQuizGenerator.Generate(
                             mode,
                             language,
                             problemRequest.GeometryShape,
-                            curriculumContext),
+                            curriculumContext,
+                            problemRequest.GeometryMeasurement),
                     QuizProblemKind.Arithmetic =>
                         CreateNaturalLanguageContract(
                             mode,
@@ -300,7 +306,8 @@ public sealed class LocalLlmQuizGenerator
                       contract.ProportionProblem is null &&
                       contract.MotionProblem is null &&
                       contract.AverageProblem is null &&
-                      contract.PercentageProblem is null
+                      contract.PercentageProblem is null &&
+                      contract.ExpressionProblem is null
                     ? LlmQuizPromptBuilder.SelectStoryContext(
                         language,
                         contract.Expression)
@@ -343,7 +350,9 @@ public sealed class LocalLlmQuizGenerator
             // Đây là nguồn sự thật bất biến của cả ba lần thử. Retry luôn
             // replay prompt này; không dựa vào token của JSON sai trước đó.
             string authoritativeUserPrompt =
-                contract.FindXProblem is FindXQuizContract findX
+                contract.ExpressionProblem is ExpressionQuizContract expressionContract
+                    ? LlmQuizPromptBuilder.BuildExpressionUserPrompt(expressionContract, language, null)
+                    : contract.FindXProblem is FindXQuizContract findX
                     ? LlmQuizPromptBuilder.BuildFindXUserPrompt(
                         findX,
                         language,
@@ -479,7 +488,7 @@ public sealed class LocalLlmQuizGenerator
                 var inferenceParameters =
                     new InferenceParams
                     {
-                        MaxTokens = MaximumOutputTokens,
+                        MaxTokens = contract.ExpressionProblem is null ? MaximumOutputTokens : 512,
                         SamplingPipeline =
                             new DefaultSamplingPipeline
                             {
@@ -643,7 +652,8 @@ public sealed class LocalLlmQuizGenerator
                         rawOutput,
                         out LlmWordProblemDraft? draft,
                         out string parseErrorCode,
-                        out string? parseErrorDetail))
+                        out string? parseErrorDetail,
+                        allowEmptyAnswerUnit: contract.ExpressionProblem is not null))
                 {
                     previousErrorCode = parseErrorCode;
                     previousValidationFeedback =
@@ -669,7 +679,9 @@ public sealed class LocalLlmQuizGenerator
                         rawModelOutput: rawOutput);
 
                     LlmWordProblemValidationResult validation =
-                        contract.FindXProblem is FindXQuizContract validatedFindX
+                        contract.ExpressionProblem is ExpressionQuizContract validatedExpression
+                            ? _wordProblemValidator.ValidateExpression(draft, validatedExpression, language)
+                            : contract.FindXProblem is FindXQuizContract validatedFindX
                             ? _wordProblemValidator.ValidateFindX(
                                 draft,
                                 validatedFindX,
@@ -1418,6 +1430,50 @@ internal static class LlmQuizPromptBuilder
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
+    public static string BuildExpressionUserPrompt(
+        ExpressionQuizContract contract, AppLanguage language, string? previousErrorCode)
+    {
+        ExpressionStoryContract story = contract.Story ??
+            throw new ArgumentException("The expression requires a verbal calculation plan.", nameof(contract));
+        if (story.Language != language)
+            throw new ArgumentException("The calculation plan language does not match the prompt.", nameof(language));
+        string retry = string.IsNullOrWhiteSpace(previousErrorCode)
+            ? string.Empty : BuildRetryInstruction(previousErrorCode, language);
+        return language == AppLanguage.Vietnamese
+            ? $$"""
+              Viết một đề tính giá trị biểu thức bằng lời, dùng ngữ cảnh "{{story.ContextName}}".
+              C# giữ toàn bộ dữ kiện và thứ tự tính. Chỉ thay câu dẫn và cách hỏi cho tự nhiên.
+              Kế hoạch tính bắt buộc: {{story.CalculationPlan}}
+              - Chép nguyên kế hoạch tính đúng một lần vào problem_text, kể cả phân số và nhóm ngoặc.
+              - Không đổi số, phép toán, thứ tự, dấu ngoặc; không thêm số, công thức hay đáp án.
+              - Hỏi giá trị/kết quả cần tìm. Đây là bài số học, không gán đơn vị cho kết quả.
+              - Trả đúng một JSON theo mẫu sau; chỉ đổi câu dẫn/cách hỏi trong problem_text:
+              {
+                "problem_text": "{{story.ReferenceProblem.ProblemText}}",
+                "subject_name": "kết quả",
+                "answer_unit": "",
+                "solution_lead": "Giá trị cần tìm là:"
+              }
+              {{retry}}
+              """
+            : $$"""
+              Write a verbal expression-evaluation question in the context "{{story.ContextName}}".
+              C# owns every fact and the calculation order. Only vary the introduction and question wording.
+              Required calculation plan: {{story.CalculationPlan}}
+              - Copy the calculation plan exactly once into problem_text, including fractions and grouping.
+              - Never change numbers, operations, order or brackets; add no numbers, equations or answer.
+              - Ask for the value/result. This is a numerical task with no answer unit.
+              - Return exactly one JSON following this example; only vary the introduction/question in problem_text:
+              {
+                "problem_text": "{{story.ReferenceProblem.ProblemText}}",
+                "subject_name": "result",
+                "answer_unit": "",
+                "solution_lead": "The required value is:"
+              }
+              {{retry}}
+              """;
+    }
+
     public static string BuildProportionUserPrompt(
         ProportionQuizContract contract,
         AppLanguage language,
@@ -1447,6 +1503,22 @@ internal static class LlmQuizPromptBuilder
         string personalizationHint = BuildProportionPersonalizationHint(
             contract.Scenario,
             language);
+
+        string inverseRule = contract.IsDirect
+            ? string.Empty
+            : language == AppLanguage.Vietnamese
+                ? "- Giữ rõ tổng công việc, lượng hàng/thực phẩm, thể tích bể hoặc quãng đường cố định như mẫu. Giữ điều kiện năng suất, khẩu phần hoặc tải trọng bằng nhau khi mẫu có nêu. " +
+                  (contract.AsksForAdditionalPeople
+                      ? "C thay đổi đại lượng của B; hỏi số người đến thêm so với A."
+                      : contract.InverseChangesSecondQuantity
+                      ? "C thay đổi đại lượng của B; phải hỏi đại lượng tương ứng với A."
+                      : "C thay đổi đại lượng của A; phải hỏi đại lượng tương ứng với B.")
+                : "- Explicitly preserve the fixed job, stock/food, tank volume, or route from the reference. Keep equal productivity, portions, or load capacity where specified. " +
+                  (contract.AsksForAdditionalPeople
+                      ? "C changes the quantity represented by B; ask how many people arrive in addition to A."
+                      : contract.InverseChangesSecondQuantity
+                      ? "C changes the quantity represented by B; ask for the corresponding quantity represented by A."
+                      : "C changes the quantity represented by A; ask for the corresponding quantity represented by B.");
 
         string currencyRule =
             contract.Scenario == ProportionScenarioKind.Shopping
@@ -1478,6 +1550,7 @@ internal static class LlmQuizPromptBuilder
                 - Tên riêng/vai trò chỉ là chi tiết câu chuyện; không được làm phát sinh dữ kiện số mới, không dùng tên lớp/đội có chữ số như “lớp 5A”, và không được thay thế đối tượng chính của contract.
                 - Giữ nguyên đơn vị thực tế do C# chọn trong mẫu tham chiếu (ví dụ bao gạo dùng kg, rau/củ/trái cây/thịt/trứng dùng gam, xe tải chở nhiều gạo dùng tấn, thùng/can chất lỏng dùng lít); không tự đổi sang đơn vị khác.
                 {{currencyRule}}
+                {{inverseRule}}
                 {{specialRule}}
                 - Không tính hoặc làm lộ đáp án trong problem_text.
                 - answer_unit phải đúng "{{contract.AnswerUnit}}", không chứa số hay phép tính.
@@ -1515,6 +1588,7 @@ internal static class LlmQuizPromptBuilder
             - The name/role is story flavor only. It must not introduce another numeric fact, must not use numbered class/team labels such as “Grade 5A”, and must not replace the contract's main object.
             - Preserve the realistic unit chosen by C# in the reference (for example rice bags use kg, vegetables/fruit/meat/eggs use grams, truckloads of rice use tons, and liquid containers use liters); do not convert it to another unit.
             {{currencyRule}}
+            {{inverseRule}}
             {{specialRule}}
             - Do not calculate or reveal the answer in problem_text.
             - answer_unit must be exactly "{{contract.AnswerUnit}}" and contain no number or equation.
@@ -1877,15 +1951,25 @@ internal static class LlmQuizPromptBuilder
                 ProportionScenarioKind.ProductionItems =>
                     "ví dụ chú Minh quản lý xưởng, cô Lan phụ trách nhóm thợ hoặc bác Bình kiểm tra sản phẩm",
                 ProportionScenarioKind.WorkersDays or
+                ProportionScenarioKind.WorkersRequired or
                 ProportionScenarioKind.WorkersJob =>
                     "ví dụ chú Bình phụ trách đội công nhân hoặc bác Nam quản lý nhóm thợ",
-                ProportionScenarioKind.MachinesHours =>
+                ProportionScenarioKind.MachinesHours or
+                ProportionScenarioKind.MachinesRequired =>
                     "ví dụ cô Lan quản lý xưởng hoặc chú Minh phụ trách các máy",
                 ProportionScenarioKind.FoodPeopleDays or
                 ProportionScenarioKind.FoodAdditionalPeople =>
                     "ví dụ cô Mai phụ trách bếp ăn hoặc cô Hương chuẩn bị thực phẩm",
                 ProportionScenarioKind.SalesStock =>
                     "ví dụ cô Lan là chủ cửa hàng hoặc chú Minh phụ trách quầy bán hàng",
+                ProportionScenarioKind.TapsTime =>
+                    "ví dụ bác Hòa phụ trách bơm nước vào bể",
+                ProportionScenarioKind.TravelSpeedTime =>
+                    "ví dụ cô Mai lái xe hoặc chú Nam đi công tác",
+                ProportionScenarioKind.TransportTrips =>
+                    "ví dụ bác Bình điều phối đội xe tải",
+                ProportionScenarioKind.PackagingCount =>
+                    "ví dụ cô Lan phụ trách đóng gói gạo hoặc đường",
                 _ => "ví dụ bạn An, cô Lan, chú Minh hoặc một vai trò đời thường phù hợp"
             };
         }
@@ -1914,15 +1998,25 @@ internal static class LlmQuizPromptBuilder
             ProportionScenarioKind.ProductionItems =>
                 "for example Liam manages the workshop, Emma supervises the workers, or Ben checks the products",
             ProportionScenarioKind.WorkersDays or
+            ProportionScenarioKind.WorkersRequired or
             ProportionScenarioKind.WorkersJob =>
                 "for example Ben supervises the workers or Liam manages the crew",
-            ProportionScenarioKind.MachinesHours =>
+            ProportionScenarioKind.MachinesHours or
+            ProportionScenarioKind.MachinesRequired =>
                 "for example Emma manages the workshop or Liam operates the machines",
             ProportionScenarioKind.FoodPeopleDays or
             ProportionScenarioKind.FoodAdditionalPeople =>
                 "for example Mia runs the kitchen or Emma prepares the food",
             ProportionScenarioKind.SalesStock =>
                 "for example Emma owns the store or Ben manages the sales counter",
+            ProportionScenarioKind.TapsTime =>
+                "for example Ben supervises filling the tank",
+            ProportionScenarioKind.TravelSpeedTime =>
+                "for example Emma drives the car or Liam travels for work",
+            ProportionScenarioKind.TransportTrips =>
+                "for example Ben manages the fleet of trucks",
+            ProportionScenarioKind.PackagingCount =>
+                "for example Mia supervises packing rice or sugar",
             _ => "for example Alex, Emma, Liam, Mia, or another natural everyday role"
         };
     }
@@ -2359,10 +2453,12 @@ internal static class LlmQuizPromptBuilder
             {
                 (GeometryMeasurement.Perimeter, AppLanguage.Vietnamese) => "chu vi",
                 (GeometryMeasurement.Area, AppLanguage.Vietnamese) => "diện tích",
+                (GeometryMeasurement.LateralArea, AppLanguage.Vietnamese) => "diện tích xung quanh",
                 (GeometryMeasurement.TotalArea, AppLanguage.Vietnamese) => "diện tích toàn phần",
                 (GeometryMeasurement.Volume, AppLanguage.Vietnamese) => "thể tích",
                 (GeometryMeasurement.Perimeter, _) => "perimeter",
                 (GeometryMeasurement.Area, _) => "area",
+                (GeometryMeasurement.LateralArea, _) => "lateral surface area",
                 (GeometryMeasurement.TotalArea, _) => "total surface area",
                 (GeometryMeasurement.Volume, _) => "volume",
                 _ => throw new ArgumentOutOfRangeException(nameof(contract))
@@ -2876,7 +2972,8 @@ internal static class LlmWordProblemParser
         string rawOutput,
         [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out LlmWordProblemDraft? draft,
         out string errorCode,
-        out string? errorDetail)
+        out string? errorDetail,
+        bool allowEmptyAnswerUnit = false)
     {
         draft = null;
         errorCode = "InvalidJson";
@@ -2970,8 +3067,8 @@ internal static class LlmWordProblemParser
                     occurrences.GetValueOrDefault(property.Name) + 1;
 
                 if (property.Value.ValueKind != JsonValueKind.String ||
-                    string.IsNullOrWhiteSpace(
-                        property.Value.GetString()))
+                    string.IsNullOrWhiteSpace(property.Value.GetString()) &&
+                    !(allowEmptyAnswerUnit && property.Name.Equals("answer_unit", StringComparison.OrdinalIgnoreCase)))
                 {
                     emptyOrInvalid.Add(property.Name);
                 }
@@ -3344,6 +3441,52 @@ internal sealed record LlmWordProblemValidationResult(
 
 internal sealed partial class LlmWordProblemValidator
 {
+    public LlmWordProblemValidationResult ValidateExpression(
+        LlmWordProblemDraft draft, ExpressionQuizContract contract, AppLanguage language)
+    {
+        bool vietnamese = language == AppLanguage.Vietnamese;
+        LlmWordProblemValidationResult Reject(string code, string vi, string en) =>
+            LlmWordProblemValidationResult.Invalid(code, vietnamese ? vi : en);
+        if (contract.Story is not ExpressionStoryContract story || story.Language != language)
+            return Reject("ExpressionStoryMissing", "C# chưa tạo kế hoạch tính đúng ngôn ngữ.",
+                "C# has not generated a calculation plan in this language.");
+
+        string problem = NormalizeSingleLine(draft.ProblemText);
+        string lead = NormalizeSingleLine(draft.SolutionLead);
+        string unit = NormalizeSingleLine(draft.AnswerUnit);
+        if (problem.Length < 18 || problem.Length > 1400 || lead.Length > 240 ||
+            NormalizeSingleLine(draft.SubjectName).Length > 100 || !IsQuestionSentence(problem, language))
+            return Reject("ExpressionQuestionInvalid", "Đề cần có câu hỏi ngắn gọn về kết quả.",
+                "The problem needs a concise question asking for the result.");
+
+        // Validate the mathematical span, not just a bag of numbers: subtraction,
+        // division and nested grouping must keep their original meaning.
+        string plan = NormalizeSingleLine(story.CalculationPlan);
+        int planStart = problem.IndexOf(plan, StringComparison.OrdinalIgnoreCase);
+        if (planStart < 0 || problem.IndexOf(plan, planStart + plan.Length,
+                StringComparison.OrdinalIgnoreCase) >= 0)
+            return Reject("ExpressionPlanMismatch", "Chép nguyên kế hoạch tính đúng một lần; giữ phép toán, thứ tự và ngoặc.",
+                "Copy the calculation plan exactly once, preserving operations, order and grouping.");
+        string surroundingText = problem.Remove(planStart, plan.Length);
+        if (NumberRegex().IsMatch(surroundingText) || surroundingText.Contains('='))
+            return Reject("ExpressionExtraFacts", "Không thêm số, phép tính hoặc đáp án ngoài kế hoạch tính C#.",
+                "Do not add numbers, equations or answers outside the C# calculation plan.");
+        if (!problem.Contains(story.ContextName, StringComparison.OrdinalIgnoreCase))
+            return Reject("ExpressionContextMismatch", "Giữ ngữ cảnh đã chọn để đề bài đa dạng đúng hợp đồng.",
+                "Keep the chosen context from the contract.");
+        if (unit.Length != 0)
+            return Reject("AnswerUnitMismatch", "Biểu thức số học này không có đơn vị đáp số; để answer_unit rỗng.",
+                "This numerical expression has no answer unit; leave answer_unit empty.");
+        if (lead.Length == 0 || NumberRegex().IsMatch(lead) ||
+            lead.IndexOfAny(['=', '+', '−', '×', '÷', '/', '*']) >= 0)
+            return Reject("SolutionLeadContainsCalculation", "Lời giải chỉ nêu giá trị cần tìm, không chứa phép tính hay đáp án.",
+                "The solution lead must name the value to find without a calculation or answer.");
+
+        // The model owns wording only. Keep the answer subject and solution lead
+        // from C# so numeric expressions never acquire physical units.
+        return new(true, null, null, story.ReferenceProblem with { ProblemText = problem });
+    }
+
     public LlmWordProblemValidationResult Validate(
         LlmWordProblemDraft draft,
         IntegerArithmeticExpression expression,
@@ -4181,8 +4324,8 @@ internal sealed partial class LlmWordProblemValidator
             bool currencyLooksValid =
                 language == AppLanguage.Vietnamese
                     ? lower.Contains("đồng", StringComparison.OrdinalIgnoreCase) &&
-                      !ContainsAny(lower, "dollar", "usd", "$")
-                    : ContainsAny(lower, "$", "dollar", "dollars") &&
+                      !ContainsAny(lower, "dollar", "usd") && !lower.Contains('$')
+                    : (lower.Contains('$') || ContainsAny(lower, "dollar", "dollars")) &&
                       !ContainsAny(lower, "dong", "vnd", "đồng");
 
             if (!currencyLooksValid)
@@ -4661,6 +4804,26 @@ internal sealed partial class LlmWordProblemValidator
                 ProportionScenarioKind.SalesStock =>
                     ContainsAny(problem, "cửa hàng", "mứt", "hộp") &&
                     ContainsAny(problem, "bán", "ngày"),
+                ProportionScenarioKind.WorkersRequired =>
+                    ContainsAny(problem, "công nhân", "thợ", "người") &&
+                    ContainsAny(problem, "ngày") &&
+                    ContainsAny(problem, "công việc", "xây", "hoàn thành", "làm xong"),
+                ProportionScenarioKind.MachinesRequired =>
+                    ContainsAny(problem, "máy") &&
+                    ContainsAny(problem, "giờ") &&
+                    ContainsAny(problem, "lô hàng", "đơn hàng", "hoàn thành", "in", "đóng gói"),
+                ProportionScenarioKind.TapsTime =>
+                    ContainsAny(problem, "vòi", "máy bơm") &&
+                    ContainsAny(problem, "bể") && ContainsAny(problem, "phút"),
+                ProportionScenarioKind.TravelSpeedTime =>
+                    ContainsAny(problem, "ô tô", "xe máy", "xe") &&
+                    ContainsAny(problem, "quãng đường") && ContainsAny(problem, "km/h"),
+                ProportionScenarioKind.TransportTrips =>
+                    ContainsAny(problem, "xe tải") &&
+                    ContainsAny(problem, "chuyến") && ContainsAny(problem, "hàng", "cát"),
+                ProportionScenarioKind.PackagingCount =>
+                    ContainsAny(problem, "gạo", "đường") &&
+                    ContainsAny(problem, "bao", "túi") && ContainsAny(problem, "kg"),
                 _ => false
             };
         }
@@ -4724,6 +4887,24 @@ internal sealed partial class LlmWordProblemValidator
             ProportionScenarioKind.SalesStock =>
                 ContainsAny(problem, "store", "shop", "jam", "boxes") &&
                 ContainsAny(problem, "sell", "sells", "days"),
+            ProportionScenarioKind.WorkersRequired =>
+                ContainsAny(problem, "worker", "workers", "builder", "builders", "people") &&
+                ContainsAny(problem, "days") && ContainsAny(problem, "job", "wall", "finish"),
+            ProportionScenarioKind.MachinesRequired =>
+                ContainsAny(problem, "machine", "machines", "printer", "printers") &&
+                ContainsAny(problem, "hours") && ContainsAny(problem, "batch", "order", "finish"),
+            ProportionScenarioKind.TapsTime =>
+                ContainsAny(problem, "tap", "taps", "pump", "pumps") &&
+                ContainsAny(problem, "tank") && ContainsAny(problem, "minutes"),
+            ProportionScenarioKind.TravelSpeedTime =>
+                ContainsAny(problem, "car", "motorcycle", "vehicle") &&
+                ContainsAny(problem, "route", "distance") && ContainsAny(problem, "km/h"),
+            ProportionScenarioKind.TransportTrips =>
+                ContainsAny(problem, "truck", "trucks") &&
+                ContainsAny(problem, "trip", "trips") && ContainsAny(problem, "goods", "sand"),
+            ProportionScenarioKind.PackagingCount =>
+                ContainsAny(problem, "rice", "sugar") &&
+                ContainsAny(problem, "bag", "bags") && ContainsAny(problem, "kg"),
             _ => false
         };
     }
@@ -5769,10 +5950,12 @@ internal sealed partial class LlmWordProblemValidator
         {
             (GeometryMeasurement.Perimeter, AppLanguage.Vietnamese) => "chu vi",
             (GeometryMeasurement.Area, AppLanguage.Vietnamese) => "diện tích",
+            (GeometryMeasurement.LateralArea, AppLanguage.Vietnamese) => "diện tích xung quanh",
             (GeometryMeasurement.TotalArea, AppLanguage.Vietnamese) => "diện tích toàn phần",
             (GeometryMeasurement.Volume, AppLanguage.Vietnamese) => "thể tích",
             (GeometryMeasurement.Perimeter, _) => "perimeter",
             (GeometryMeasurement.Area, _) => "area",
+            (GeometryMeasurement.LateralArea, _) => "lateral surface area",
             (GeometryMeasurement.TotalArea, _) => "total surface area",
             (GeometryMeasurement.Volume, _) => "volume",
             _ => throw new ArgumentOutOfRangeException(nameof(measurement))
@@ -5793,15 +5976,12 @@ internal sealed partial class LlmWordProblemValidator
             return false;
         }
 
-        // “Diện tích”/“area” là chuỗi con của “diện tích toàn phần”/
-        // “total surface area”. Khi contract chỉ yêu cầu diện tích phẳng,
-        // không được coi cụm đại lượng 3D dài hơn là khớp.
+        // Plane area must not match either of the longer solid-area phrases.
         return expectedMeasurement != GeometryMeasurement.Area ||
-               !problem.Contains(
-                   GetGeometryMeasurementPhrase(
-                       GeometryMeasurement.TotalArea,
-                       language),
-                   StringComparison.Ordinal);
+               (!problem.Contains(GetGeometryMeasurementPhrase(GeometryMeasurement.TotalArea, language),
+                   StringComparison.Ordinal) &&
+                !problem.Contains(GetGeometryMeasurementPhrase(GeometryMeasurement.LateralArea, language),
+                   StringComparison.Ordinal));
     }
 
     private static string[] FindConflictingGeometryMeasurements(
@@ -5812,6 +5992,7 @@ internal sealed partial class LlmWordProblemValidator
         {
             GeometryMeasurement.Perimeter,
             GeometryMeasurement.Area,
+            GeometryMeasurement.LateralArea,
             GeometryMeasurement.TotalArea,
             GeometryMeasurement.Volume
         }

@@ -324,7 +324,7 @@ public sealed class ProportionQuizGenerator
         new(
             ProportionQuizType.Inverse,
             ProportionScenarioKind.WorkersDays,
-            "{0} công nhân đắp xong một đoạn đường trong {1} ngày. Hỏi {2} công nhân đắp xong đoạn đường đó trong bao nhiêu ngày?",
+            "{0} công nhân đắp xong một đoạn đường trong {1} ngày. Hỏi {2} công nhân đắp xong cùng đoạn đường đó trong bao nhiêu ngày, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?",
             "{0} workers finish a road section in {1} days. How many days do {2} workers need at the same productivity?",
             "ngày",
             "days",
@@ -342,8 +342,8 @@ public sealed class ProportionQuizGenerator
         new(
             ProportionQuizType.Inverse,
             ProportionScenarioKind.MachinesHours,
-            "{0} máy hoàn thành một công việc trong {1} giờ. Hỏi {2} máy cùng năng suất hoàn thành công việc đó trong bao nhiêu giờ?",
-            "{0} machines finish a job in {1} hours. How many hours do {2} equally productive machines need?",
+            "{0} máy hoàn thành một công việc trong {1} giờ. Hỏi {2} máy cùng năng suất hoàn thành cùng công việc đó trong bao nhiêu giờ, biết các máy chạy đồng thời?",
+            "{0} machines finish a job in {1} hours. How many hours do {2} equally productive machines, running simultaneously, need to finish the same job?",
             "giờ",
             "hours",
             "thời gian",
@@ -360,8 +360,8 @@ public sealed class ProportionQuizGenerator
         new(
             ProportionQuizType.Inverse,
             ProportionScenarioKind.FoodPeopleDays,
-            "Một bếp ăn chuẩn bị gạo đủ cho {0} người ăn trong {1} ngày. Thực tế có {2} người. Hỏi số gạo đó đủ ăn trong bao nhiêu ngày?",
-            "A kitchen has enough rice for {0} people for {1} days. If there are actually {2} people, for how many days will the rice last?",
+            "Một bếp ăn chuẩn bị gạo đủ cho {0} người ăn trong {1} ngày. Thực tế có {2} người, mỗi người ăn lượng gạo như nhau mỗi ngày. Hỏi số gạo đã chuẩn bị đủ ăn trong bao nhiêu ngày?",
+            "A kitchen has enough rice for {0} people for {1} days. There are actually {2} people, all eating the same amount of rice per day. For how many days will the prepared rice last?",
             "ngày",
             "days",
             "thời gian",
@@ -369,8 +369,8 @@ public sealed class ProportionQuizGenerator
         new(
             ProportionQuizType.Inverse,
             ProportionScenarioKind.FoodPeopleDays,
-            "Một bếp ăn có đủ thực phẩm cho {0} học sinh dùng trong {1} ngày. Nếu số học sinh thực tế là {2} em thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?",
-            "A school kitchen has enough food for {0} students for {1} days. If there are actually {2} students, for how many days will the food last?",
+            "Một bếp ăn có đủ thực phẩm cho {0} học sinh dùng trong {1} ngày. Nếu số học sinh thực tế là {2} em và khẩu phần mỗi em mỗi ngày không đổi thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?",
+            "A school kitchen has enough food for {0} students for {1} days. If there are actually {2} students and each student's daily portion stays the same, for how many days will the food last?",
             "ngày",
             "days",
             "thời gian",
@@ -378,8 +378,8 @@ public sealed class ProportionQuizGenerator
         new(
             ProportionQuizType.Inverse,
             ProportionScenarioKind.FoodAdditionalPeople,
-            "Chuẩn bị đủ thực phẩm cho {0} người ăn trong {1} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {2} ngày. Hỏi có thêm bao nhiêu người?",
-            "Food is prepared for {0} people for {1} days. Because more people arrive, it lasts only {2} days. How many additional people arrived?",
+            "Chuẩn bị đủ thực phẩm cho {0} người ăn trong {1} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {2} ngày, biết khẩu phần mỗi người mỗi ngày không đổi. Hỏi có thêm bao nhiêu người?",
+            "Food is prepared for {0} people for {1} days. Because more people arrive, it lasts only {2} days, with each person's daily portion unchanged. How many additional people arrived?",
             "người",
             "people",
             "số người đến thêm",
@@ -393,7 +393,85 @@ public sealed class ProportionQuizGenerator
             "ngày",
             "days",
             "thời gian",
-            "time")
+            "time"),
+
+        // Đổi đại lượng cần tìm: thời hạn cố định, tìm số người/máy.
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.WorkersRequired,
+            "{0} công nhân hoàn thành một công việc trong {1} ngày. Muốn hoàn thành cùng công việc đó trong {2} ngày thì cần bao nhiêu công nhân, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?",
+            "{0} workers finish a job in {1} days. How many workers are needed to finish the same job in {2} days if each worker has the same productivity and daily working hours?",
+            "công nhân", "workers", "số công nhân", "number of workers"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.WorkersRequired,
+            "Một đội có {0} thợ xây xong một bức tường trong {1} ngày. Hỏi cần bao nhiêu thợ để xây cùng bức tường đó trong {2} ngày, biết mỗi thợ có cùng năng suất và làm cùng thời gian mỗi ngày?",
+            "A crew of {0} builders finishes a wall in {1} days. How many builders are needed to build the same wall in {2} days if their productivity and daily working hours are equal?",
+            "thợ", "builders", "số thợ", "number of builders"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.MachinesRequired,
+            "{0} máy đóng gói xong một lô hàng trong {1} giờ. Hỏi cần bao nhiêu máy để đóng gói cùng lô hàng đó trong {2} giờ, biết các máy chạy đồng thời và có cùng năng suất?",
+            "{0} machines pack a batch of goods in {1} hours. How many machines are needed to pack the same batch in {2} hours if they run simultaneously at the same rate?",
+            "máy", "machines", "số máy", "number of machines"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.MachinesRequired,
+            "{0} máy in hoàn thành một đơn hàng trong {1} giờ. Muốn in xong cùng đơn hàng đó trong {2} giờ thì cần bao nhiêu máy in cùng năng suất, biết các máy hoạt động đồng thời?",
+            "{0} printers complete an order in {1} hours. How many equally productive printers, running simultaneously, are needed to complete the same order in {2} hours?",
+            "máy in", "printers", "số máy in", "number of printers"),
+
+        // Lưu lượng và vận tốc: giữ nguyên bể hoặc quãng đường.
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.TapsTime,
+            "{0} vòi nước cùng chảy thì đầy một bể trống trong {1} phút. Hỏi {2} vòi có cùng lưu lượng chảy đồng thời thì đầy cùng bể trống đó trong bao nhiêu phút, biết bể không có nước thoát ra?",
+            "{0} taps fill an empty tank in {1} minutes. How many minutes do {2} taps take to fill the same empty tank if all taps run simultaneously at the same flow rate and no water drains out?",
+            "phút", "minutes", "thời gian đầy bể", "tank filling time"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.TapsTime,
+            "{0} máy bơm làm đầy một bể trống trong {1} phút. Hỏi {2} máy bơm cùng lưu lượng hoạt động đồng thời thì đầy cùng bể đó trong bao nhiêu phút, biết không có nước thoát ra?",
+            "{0} pumps fill an empty tank in {1} minutes. How many minutes do {2} pumps take to fill the same empty tank if they run simultaneously at the same flow rate and no water drains out?",
+            "phút", "minutes", "thời gian đầy bể", "tank filling time"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.TravelSpeedTime,
+            "Một ô tô đi đều với vận tốc {0} km/h và hết {1} giờ để đi một quãng đường. Nếu đi cùng quãng đường đó với vận tốc {2} km/h thì mất bao nhiêu giờ, biết ô tô không dừng nghỉ?",
+            "A car travels a route at a constant speed of {0} km/h in {1} hours. How many hours would the same route take at {2} km/h if the car makes no stops?",
+            "giờ", "hours", "thời gian đi", "travel time"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.TravelSpeedTime,
+            "Một xe máy đi đều với vận tốc {0} km/h trong {1} giờ thì đến nơi. Hỏi đi cùng quãng đường với vận tốc {2} km/h thì hết bao nhiêu giờ, biết xe không dừng nghỉ?",
+            "A motorcycle reaches its destination after {1} hours at a constant speed of {0} km/h. How many hours would the same route take at {2} km/h without any stops?",
+            "giờ", "hours", "thời gian đi", "travel time"),
+
+        // Cùng lượng hàng, thay số xe hoặc khối lượng mỗi bao.
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.TransportTrips,
+            "{0} xe tải chở hết một lô hàng, mỗi xe đi {1} chuyến. Nếu dùng {2} xe tải có cùng sức chở thì mỗi xe cần đi bao nhiêu chuyến để chở hết cùng lô hàng đó, biết mỗi chuyến đều chở đủ tải và các xe đi số chuyến như nhau?",
+            "{0} trucks move a batch of goods, making {1} trips each. How many trips must each of {2} trucks make to move the same batch if every trip carries a full load, all trucks have equal capacity, and each truck makes the same number of trips?",
+            "chuyến", "trips", "số chuyến mỗi xe", "trips per truck"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.TransportTrips,
+            "{0} xe tải chở hết một lô cát, mỗi xe đi {1} chuyến đầy tải. Hỏi dùng {2} xe tải cùng sức chở thì mỗi xe phải đi bao nhiêu chuyến đầy tải để chở hết cùng lô cát, biết các xe đi số chuyến như nhau?",
+            "{0} trucks move a batch of sand, making {1} fully loaded trips each. How many fully loaded trips must each of {2} trucks make to move the same batch if all trucks have equal capacity and make the same number of trips?",
+            "chuyến", "trips", "số chuyến mỗi xe", "trips per truck"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.PackagingCount,
+            "Một kho có {0} bao gạo, mỗi bao chứa {1} kg. Đóng lại toàn bộ số gạo đó vào các bao, mỗi bao chứa {2} kg thì cần bao nhiêu bao, biết không hao hụt gạo?",
+            "A store has {0} bags of rice containing {1} kg each. How many bags are needed to repack all that rice with {2} kg in each bag, without any loss?",
+            "bao", "bags", "gạo", "rice"),
+        new(
+            ProportionQuizType.Inverse,
+            ProportionScenarioKind.PackagingCount,
+            "Có {0} túi đường, mỗi túi nặng {1} kg. Chia lại toàn bộ số đường đó vào các túi, mỗi túi nặng {2} kg thì được bao nhiêu túi, biết không hao hụt đường?",
+            "There are {0} bags of sugar weighing {1} kg each. How many bags can be made by repacking all the sugar into bags weighing {2} kg each, without any loss?",
+            "túi", "bags", "đường", "sugar")
     ];
 
     private readonly Random _random;
@@ -500,6 +578,26 @@ public sealed class ProportionQuizGenerator
     private TemplateDefinition PickWeightedTemplate(
         IReadOnlyList<TemplateDefinition> candidates)
     {
+        if (candidates[0].Type == ProportionQuizType.Inverse)
+        {
+            // A second wording must not double a scenario's probability.
+            // Pick the mathematical context first, then one of its wordings.
+            TemplateDefinition[][] scenarios = candidates
+                .GroupBy(candidate => candidate.Scenario)
+                .Select(group => group.ToArray())
+                .ToArray();
+            int scenarioRoll = _random.Next(
+                scenarios.Sum(group => GetTemplateWeight(group[0])));
+            foreach (TemplateDefinition[] group in scenarios)
+            {
+                scenarioRoll -= GetTemplateWeight(group[0]);
+                if (scenarioRoll < 0)
+                    return group[_random.Next(group.Length)];
+            }
+
+            return scenarios[^1][0];
+        }
+
         int totalWeight = 0;
         foreach (TemplateDefinition candidate in candidates)
         {
@@ -540,6 +638,12 @@ public sealed class ProportionQuizGenerator
             ProportionScenarioKind.ProductionItems => 3,
             ProportionScenarioKind.SalesStock => 4,
             ProportionScenarioKind.FoodAdditionalPeople => 3,
+            ProportionScenarioKind.WorkersRequired => 5,
+            ProportionScenarioKind.MachinesRequired => 4,
+            ProportionScenarioKind.TapsTime => 4,
+            ProportionScenarioKind.TravelSpeedTime => 4,
+            ProportionScenarioKind.TransportTrips => 4,
+            ProportionScenarioKind.PackagingCount => 4,
 
             // Khối lượng / diện tích có trong chương trình nhưng ít gặp hơn.
             ProportionScenarioKind.RiceBagsWeight => 3,
@@ -617,6 +721,7 @@ public sealed class ProportionQuizGenerator
                     break;
 
                 case ProportionScenarioKind.MachinesHours:
+                case ProportionScenarioKind.MachinesRequired:
                     a = _random.Next(2, 11);
                     b = _random.Next(2, 13);
                     c = _random.Next(2, 13);
@@ -624,9 +729,34 @@ public sealed class ProportionQuizGenerator
 
                 case ProportionScenarioKind.WorkersDays:
                 case ProportionScenarioKind.WorkersJob:
+                case ProportionScenarioKind.WorkersRequired:
                     a = _random.Next(4, 21);
                     b = _random.Next(3, 16);
                     c = _random.Next(4, 25);
+                    break;
+
+                case ProportionScenarioKind.TapsTime:
+                    a = _random.Next(1, 7);
+                    b = _random.Next(2, 13) * 5;         // 10..60 phút
+                    c = _random.Next(1, 9);
+                    break;
+
+                case ProportionScenarioKind.TravelSpeedTime:
+                    a = PickFrom([20, 30, 40, 50, 60]); // km/h
+                    b = _random.Next(1, 7);             // giờ
+                    c = PickFrom([20, 30, 40, 50, 60]);
+                    break;
+
+                case ProportionScenarioKind.TransportTrips:
+                    a = _random.Next(2, 11);
+                    b = _random.Next(2, 13);
+                    c = _random.Next(2, 13);
+                    break;
+
+                case ProportionScenarioKind.PackagingCount:
+                    a = _random.Next(4, 21);
+                    b = PickFrom([5, 10, 20, 25, 40, 50]);
+                    c = PickFrom([5, 10, 20, 25, 40, 50]);
                     break;
 
                 default:
@@ -654,8 +784,13 @@ public sealed class ProportionQuizGenerator
                 continue;
             }
 
-            if (c == a &&
-                scenario is not ProportionScenarioKind.SalesStock)
+            int changedQuantity = scenario is
+                ProportionScenarioKind.WorkersRequired or
+                ProportionScenarioKind.MachinesRequired or
+                ProportionScenarioKind.SalesStock or
+                ProportionScenarioKind.PackagingCount
+                    ? b : a;
+            if (c == changedQuantity)
             {
                 continue;
             }
@@ -674,6 +809,12 @@ public sealed class ProportionQuizGenerator
                 ProportionScenarioKind.FoodPeopleDays => 30,
                 ProportionScenarioKind.WorkersDays or
                 ProportionScenarioKind.WorkersJob => 30,
+                ProportionScenarioKind.WorkersRequired => 60,
+                ProportionScenarioKind.MachinesRequired => 24,
+                ProportionScenarioKind.TapsTime => 120,
+                ProportionScenarioKind.TravelSpeedTime => 12,
+                ProportionScenarioKind.TransportTrips => 24,
+                ProportionScenarioKind.PackagingCount => 200,
                 _ => 60
             };
 
@@ -691,6 +832,12 @@ public sealed class ProportionQuizGenerator
             ProportionScenarioKind.MachinesHours => (4, 6, 8, 3),
             ProportionScenarioKind.WorkersDays or
             ProportionScenarioKind.WorkersJob => (6, 8, 12, 4),
+            ProportionScenarioKind.WorkersRequired => (6, 8, 4, 12),
+            ProportionScenarioKind.MachinesRequired => (4, 6, 3, 8),
+            ProportionScenarioKind.TapsTime => (2, 30, 3, 20),
+            ProportionScenarioKind.TravelSpeedTime => (40, 3, 60, 2),
+            ProportionScenarioKind.TransportTrips => (4, 6, 8, 3),
+            ProportionScenarioKind.PackagingCount => (12, 25, 50, 6),
             _ => (4, 6, 8, 3)
         };
     }

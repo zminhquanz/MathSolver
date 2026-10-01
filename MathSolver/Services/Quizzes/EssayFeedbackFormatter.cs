@@ -271,11 +271,14 @@ public static class EssayFeedbackFormatter
     private static string GetExpectedValue(
         ArithmeticQuizQuestion question,
         CultureInfo culture) =>
+        question.ExpressionProblem?.CorrectAnswer.ToString() ??
         question.FractionProblem?.CorrectAnswer.ToString() ??
         question.CorrectAnswer.ToString("N0", culture);
 
     private static string GetSampleEquation(ArithmeticQuizQuestion question)
     {
+        if (question.ExpressionProblem is ExpressionQuizContract expressionProblem)
+            return $"{expressionProblem.ExpressionText} = {expressionProblem.CorrectAnswer}";
         if (question.FractionProblem is FractionQuizContract fraction)
             return $"{fraction.ExpressionText} = {fraction.CorrectAnswer}";
         if (question.GeometryProblem is GeometryQuizContract geometry)

@@ -363,10 +363,12 @@ internal static partial class PuzzleTests
             (GeometryMeasurement.Perimeter, true) => "perimeter",
             (GeometryMeasurement.Area, true) => "area",
             (GeometryMeasurement.TotalArea, true) => "total surface area",
+            (GeometryMeasurement.LateralArea, true) => "lateral surface area",
             (GeometryMeasurement.Volume, true) => "volume",
             (GeometryMeasurement.Perimeter, false) => "chu vi",
             (GeometryMeasurement.Area, false) => "diện tích",
             (GeometryMeasurement.TotalArea, false) => "diện tích toàn phần",
+            (GeometryMeasurement.LateralArea, false) => "diện tích xung quanh",
             _ => "thể tích"
         };
         string dimensions = string.Join(", ", contract.Dimensions.Select(pair =>

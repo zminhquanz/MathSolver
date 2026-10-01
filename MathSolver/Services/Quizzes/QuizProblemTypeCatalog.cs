@@ -36,7 +36,10 @@ public sealed class QuizProblemTypeCatalog
             new(QuizProblemKind.Average)),
         new(
             "Quiz.ProblemPercentage",
-            new(QuizProblemKind.Percentage))
+            new(QuizProblemKind.Percentage)),
+        new(
+            "Quiz.ProblemExpression",
+            new(QuizProblemKind.Expression))
     ];
 
     private static readonly IReadOnlyList<QuizProblemOption>
@@ -54,26 +57,36 @@ public sealed class QuizProblemTypeCatalog
     public IReadOnlyList<QuizProblemOption> Options =>
         ReadOnlyOptions;
 
+    public IEnumerable<QuizProblemOption> GetOptions(bool algorithm) =>
+        ReadOnlyOptions.Where(option => algorithm || !option.AlgorithmOnly);
+
     public QuizProblemRequest Resolve(
         int selectedIndex,
         ArithmeticOperation? basicOperation,
         FractionOperation? fractionOperation,
-        ProportionQuizType proportionType,
+        ProportionQuizType? proportionType,
         AverageQuizType? averageType,
         PercentageQuizType? percentageType,
         ArithmeticOperation? findXOperation,
         GeometryQuizShape? geometryShape,
         MotionQuizType? motionType,
-        CurriculumTier curriculumTier)
+        CurriculumTier curriculumTier,
+        bool includeExpressions = true,
+        ExpressionQuizType? expressionType = null,
+        GeometryMeasurement? geometryMeasurement = null)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
+
+        if (option.AlgorithmOnly && !includeExpressions)
+            return QuizCurriculumLayer.ResolveMixedRequest(curriculumTier, _random);
 
         if (option.FixedRequest is
             QuizProblemRequest fixedRequest)
         {
             return fixedRequest.Kind switch
             {
+                QuizProblemKind.Expression => fixedRequest with { ExpressionType = expressionType },
                 QuizProblemKind.Arithmetic =>
                     fixedRequest with
                     {
@@ -107,7 +120,8 @@ public sealed class QuizProblemTypeCatalog
                 QuizProblemKind.Geometry =>
                     fixedRequest with
                     {
-                        GeometryShape = geometryShape
+                        GeometryShape = geometryShape,
+                        GeometryMeasurement = geometryMeasurement
                     },
                 QuizProblemKind.Motion =>
                     fixedRequest with
@@ -120,7 +134,8 @@ public sealed class QuizProblemTypeCatalog
 
         return QuizCurriculumLayer.ResolveMixedRequest(
             curriculumTier,
-            _random);
+            _random,
+            includeExpressions);
     }
 
     public QuizProblemRequest? GetFixedRequest(
