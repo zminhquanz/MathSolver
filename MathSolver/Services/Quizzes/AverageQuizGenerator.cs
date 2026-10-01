@@ -298,16 +298,7 @@ public sealed class AverageQuizGenerator
                 : $"Lan has {lan} {context.EnUnit}. Mai has {more} more {context.EnUnit} than Lan, and Hoa has {less} fewer {context.EnUnit} than Mai. How many {context.EnUnit} does each person have on average?";
             string equation =
                 $"({lan} + ({lan} + {more}) + ({lan} + {more} − {less})) ÷ 3 = {average}";
-            string solution = FormatSolution(
-                language == AppLanguage.Vietnamese
-                    ? $"Trung bình mỗi bạn ({context.ViUnit}) là:"
-                    : $"The average per person ({context.EnUnit}) is:",
-                equation,
-                language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
-                average,
-                language);
-
-            return new(
+            var contract = new AverageQuizContract(
                 AverageQuizType.IndirectData,
                 [lan, more, less],
                 average,
@@ -315,10 +306,12 @@ public sealed class AverageQuizGenerator
                 language == AppLanguage.Vietnamese ? $"{context.ViSubject} mỗi bạn" : $"{context.EnSubject} per person",
                 problem,
                 equation,
-                solution,
+                string.Empty,
                 total,
                 ArithmeticOperation.Divide,
-                3);
+                3,
+                new(lan, more, less));
+            return contract with { SolutionText = AverageIndirectSolutionFormatter.Format(contract, language) };
         }
 
         throw new InvalidOperationException("Could not create an indirect average problem.");

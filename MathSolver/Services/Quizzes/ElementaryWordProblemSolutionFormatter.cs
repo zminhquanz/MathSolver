@@ -71,6 +71,8 @@ public static class ElementaryWordProblemSolutionFormatter
 
         if (question.AverageProblem is AverageQuizContract average)
         {
+            if (average.Type == AverageQuizType.IndirectData)
+                return AverageIndirectSolutionFormatter.Format(average, language, wordProblem.SolutionLead);
             string lead = NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead);
             string averageAnswer = average.CorrectAnswer.ToString("N0", culture);
             string averageAnswerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";

@@ -854,7 +854,9 @@ public partial class MathPuzzlePage : ContentPage
 
         EssayValidationHintLabel.Text =
             TranslateQuiz(
-                question?.ExpressionProblem is not null
+                question?.AverageProblem?.Type == AverageQuizType.IndirectData
+                    ? "Quiz.AverageIndirectEssayHint"
+                    : question?.ExpressionProblem is not null
                     ? requiresSolution ? "Quiz.ExpressionEssayHintAi" : "Quiz.ExpressionEssayHint"
                     : isWordProblemSource && isFindX
                     ? "Quiz.FindXEssayValidationHintAi"
@@ -4092,7 +4094,8 @@ public partial class MathPuzzlePage : ContentPage
         (string solutionText, string equationText) =
             EssayCombinedInputParser.Split(
                 EssayWorkEditor.Text,
-                EssayAnswerValidator.RequiresSolution(_currentQuestion));
+                EssayAnswerValidator.RequiresSolution(_currentQuestion),
+                preserveAllCalculations: _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
 
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(

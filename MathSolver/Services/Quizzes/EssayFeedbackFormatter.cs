@@ -51,7 +51,10 @@ public static class EssayFeedbackFormatter
 
         if (!validation.EquationIsCorrect)
         {
-            messages.Add(DescribeEquation(
+            if (validation.Steps.Count > 0)
+                messages.AddRange(validation.Steps.Where(step => !step.IsCorrect)
+                    .Select(step => DescribeStep(step, expectedUnit, expectedAnswer, vietnamese)));
+            else messages.Add(DescribeEquation(
                 question, validation.EquationError, equationText,
                 expectedUnit, expectedAnswer, vietnamese, culture));
         }
@@ -64,6 +67,32 @@ public static class EssayFeedbackFormatter
         }
 
         return string.Join(Environment.NewLine, messages);
+    }
+
+    private static string DescribeStep(EssayStepValidationResult step, string expectedUnit,
+        string expectedAnswer, bool vi)
+    {
+        string prefix = vi ? $"Bước {step.Number}: " : $"Step {step.Number}: ";
+        return prefix + (step.Error switch
+        {
+            EssayAnswerError.WrongEquationResult when step.ComputedValue != step.WrittenValue => vi
+                ? $"vế trái tính được {step.ComputedValue}, nhưng em ghi {step.WrittenValue}."
+                : $"the left side evaluates to {step.ComputedValue}, but you wrote {step.WrittenValue}.",
+            EssayAnswerError.WrongEquationResult => vi
+                ? $"kết quả cuối là {step.ComputedValue}, nhưng bài toán cần {expectedAnswer}."
+                : $"the final result is {step.ComputedValue}, but the problem needs {expectedAnswer}.",
+            EssayAnswerError.WrongEquationUnit when string.IsNullOrWhiteSpace(step.EnteredUnit) => vi
+                ? $"phép tính cuối thiếu đơn vị “{expectedUnit}”."
+                : $"the final calculation is missing the unit “{expectedUnit}”.",
+            EssayAnswerError.WrongEquationUnit => vi
+                ? $"đơn vị “{step.EnteredUnit}” chưa đúng; cần “{expectedUnit}”."
+                : $"the unit “{step.EnteredUnit}” is incorrect; use “{expectedUnit}”.",
+            EssayAnswerError.WrongOperandsOrOperation => vi
+                ? "dữ kiện hoặc quan hệ tính chưa khớp đề bài. Dùng dữ kiện trong đề hoặc kết quả đã tính đúng ở bước trước; phép tính cuối cần tìm trung bình cộng."
+                : "the facts or calculation relationships do not match the problem. Use the given facts or a correctly derived earlier result; the final calculation must find the average.",
+            _ => vi ? "không đọc được phép tính; hãy ghi đầy đủ biểu thức = kết quả."
+                : "the calculation cannot be read; write a complete expression = result."
+        });
     }
 
     private static string GetSolutionGuidance(

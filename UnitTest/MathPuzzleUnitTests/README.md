@@ -53,3 +53,13 @@ surface area, squared/cubed units, mixed selections and AI contract validation.
 The mixed-proportion group checks that both sources sample direct and inverse
 at every skill tier, retain concrete contracts for grading and AI prompts, and
 honor fixed selections after mixed mode.
+
+The indirect-average group checks bilingual Algorithm and AI essay grading
+with a merged calculation, two or three steps, and longer regrouped solutions.
+It checks reuse of derived values (including fractions), optional intermediate
+units, equality chains and inline solution headings. Incorrect earlier steps
+cannot be hidden by a correct final calculation; feedback identifies the
+failing step and its computed/written result. Final calculation/answer units
+remain required, and the other average subtypes retain their existing grading.
+The worked example uses three steps and an answer, without prescribing how many
+steps the learner must submit.

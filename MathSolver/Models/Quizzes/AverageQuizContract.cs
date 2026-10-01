@@ -27,4 +27,7 @@ public sealed record AverageQuizContract(
     string SolutionText,
     BigInteger RepresentativeLeft,
     ArithmeticOperation RepresentativeOperation,
-    BigInteger RepresentativeRight);
+    BigInteger RepresentativeRight,
+    AverageIndirectData? IndirectData = null);
+
+public sealed record AverageIndirectData(int FirstQuantity, int Increase, int Decrease, int PersonCount = 3);

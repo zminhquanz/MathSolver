@@ -33,7 +33,13 @@ public sealed record EssayAnswerValidationResult(
         SolutionIsCorrect &&
         EquationIsCorrect &&
         AnswerIsCorrect;
+
+    public IReadOnlyList<EssayStepValidationResult> Steps { get; init; } = [];
 }
+
+public sealed record EssayStepValidationResult(
+    int Number, string Equation, bool IsCorrect, EssayAnswerError Error,
+    string? ComputedValue = null, string? WrittenValue = null, string? EnteredUnit = null);
 
 /// <summary>
 /// Chấm phép tính và đáp số của bài tự luận. Câu lời giải chỉ bắt buộc với
@@ -69,10 +75,13 @@ public sealed partial class EssayAnswerValidator
         (string calculation, string enteredEquationUnit) =
             SplitEquationResult(question, equationText);
 
-        (bool equationIsCorrect, EssayAnswerError equationError) =
-            ValidateCalculatedEquation(question, calculation);
+        IReadOnlyList<EssayStepValidationResult> steps = [];
+        bool indirect = question.AverageProblem?.Type == AverageQuizType.IndirectData;
+        (bool equationIsCorrect, EssayAnswerError equationError) = indirect
+            ? AverageIndirectEssayValidator.Validate(question, equationText, out steps)
+            : ValidateCalculatedEquation(question, calculation);
 
-        if (equationIsCorrect &&
+        if (!indirect && equationIsCorrect &&
             !IsExpectedUnit(question, enteredEquationUnit))
         {
             equationIsCorrect = false;
@@ -95,7 +104,7 @@ public sealed partial class EssayAnswerValidator
             answerIsCorrect,
             solutionError,
             equationError,
-            answerError);
+            answerError) { Steps = steps };
     }
 
     public static bool RequiresSolution(ArithmeticQuizQuestion question)
@@ -123,9 +132,10 @@ public sealed partial class EssayAnswerValidator
                string.Empty;
     }
 
-    private static (string Calculation, string Unit) SplitEquationResult(
+    internal static (string Calculation, string Unit) SplitEquationResult(
         ArithmeticQuizQuestion question,
-        string? equationText)
+        string? equationText,
+        bool allowFractionResult = false)
     {
         string text = equationText ?? string.Empty;
         int equalsIndex = text.LastIndexOf('=');
@@ -133,7 +143,7 @@ public sealed partial class EssayAnswerValidator
             return (text, string.Empty);
 
         string resultText = text[(equalsIndex + 1)..];
-        Match match = question.UsesFractionFormatting
+        Match match = question.UsesFractionFormatting || allowFractionResult
             ? FractionEquationResultRegex().Match(resultText)
             : AnswerRegex().Match(resultText);
         if (!match.Success)

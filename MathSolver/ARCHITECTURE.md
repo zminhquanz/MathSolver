@@ -265,6 +265,21 @@ a mixed-subtype option. `LlmWordProblemValidator` checks every numeric occurrenc
 in order, the final-question semantic family, and the final-question answer unit
 before an AI question can reach the learner.
 
+Indirect-data average essays support multiple calculations in the shared
+multiline work editor on both platforms and both question sources. The
+`AverageIndirectData` contract keeps the first quantity and its increase/decrease
+relations. `EssayCombinedInputParser` preserves all equation lines for this
+subtype; other subtypes retain their existing input parsing.
+`AverageIndirectEssayValidator` tracks exact rational results and their linear
+derivation from those facts, so later steps can reuse earlier results. It checks
+all entered steps and accepts a merged calculation or any valid grouping,
+without matching the number of steps to the worked example. One solution
+sentence with a valid unit or subject is enough; intermediate units are optional,
+but written units are checked and the final calculation and answer require them.
+`EssayAnswerValidationResult.Steps` provides per-step errors for bilingual
+`EssayFeedbackFormatter` messages. `AverageIndirectSolutionFormatter` supplies
+a three-step worked example plus the answer for Algorithm and AI/LLM questions.
+
 ### Math Puzzle Curriculum Layer — `Services/Quizzes/QuizCurriculumLayer.cs`
 
 Curriculum is intentionally scoped to **app-generated Math Puzzle content only**. It never constrains user-entered input in the Solve Math tab or the reusable math engines. The UI exposes five abstract star tiers (`★`..`★★★★★`) rather than country-specific grade labels.

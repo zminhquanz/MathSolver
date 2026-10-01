@@ -203,7 +203,10 @@ internal static partial class PuzzleTests
                     ? $"Đáp số: {average.CorrectAnswer} {average.AnswerUnit}"
                     : $"Answer: {average.CorrectAnswer} {average.AnswerUnit}";
 
-                Require(algorithmLines.Length == 3 &&
+                Require(type == AverageQuizType.IndirectData
+                        ? algorithmLines.Length == 7 && algorithmLines.Count(line => line.Contains('=')) == 3 &&
+                          algorithmLines[^1] == expectedAnswerLine
+                        : algorithmLines.Length == 3 &&
                         !algorithmLines[0].Contains('=') &&
                         algorithmLines[1] == $"{average.EquationText} {average.AnswerUnit}" &&
                         algorithmLines[2] == expectedAnswerLine,
@@ -230,7 +233,10 @@ internal static partial class PuzzleTests
                 string formatted = ElementaryWordProblemSolutionFormatter.Format(
                     ai, language, CultureInfo.InvariantCulture);
                 string[] aiLines = formatted.Split(Environment.NewLine);
-                Require(aiLines.Length == 3 &&
+                Require(type == AverageQuizType.IndirectData
+                        ? aiLines.Length == 7 && aiLines.Count(line => line.Contains('=')) == 3 &&
+                          aiLines[^1] == expectedAnswerLine
+                        : aiLines.Length == 3 &&
                         aiLines[1] == $"{average.EquationText} {average.AnswerUnit}" &&
                         aiLines[2] == expectedAnswerLine,
                     $"AI {language}/{type} should show one lead, equation and answer: {formatted}");
