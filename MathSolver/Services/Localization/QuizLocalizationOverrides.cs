@@ -11,6 +11,18 @@ internal static class QuizLocalizationOverrides
     private static readonly IReadOnlyDictionary<string, string> Vietnamese =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            ["Quiz.ShowDiagram"] = "Xem sơ đồ",
+            ["Quiz.ComparisonSubtype"] = "So sánh < = >",
+            ["Quiz.Elementary.IntegerCompare"] = "So sánh số nguyên",
+            ["Quiz.ComparisonQuestionTitle"] = "Điền dấu so sánh thích hợp",
+            ["Quiz.ComparisonTrueFalseTitle"] = "So sánh sau đúng hay sai?",
+            ["Quiz.ComparisonEssayHint"] = "Nhập dấu >, <, = hoặc cả dòng so sánh. Không bắt buộc lời giải hay phép tính riêng.",
+            ["Quiz.ComparisonEssayPlaceholder"] = "Dấu >, <, = hoặc dòng so sánh hai số",
+            ["Quiz.HideDiagram"] = "Ẩn sơ đồ",
+            ["Quiz.EnlargeDiagram"] = "Phóng to hình",
+            ["Quiz.CloseDiagram"] = "Đóng hình",
+            ["Quiz.DiagramZoom"] = "Mức phóng to",
+            ["Quiz.DiagramNotToScale"] = "Hình minh họa không theo tỉ lệ số đo.",
             ["Quiz.ProblemTwoNumbers"] = "Tìm hai số",
             ["Quiz.ProblemMeasurement"] = "Đo lường",
             ["Quiz.ProblemTime"] = "Thời gian",
@@ -53,7 +65,7 @@ internal static class QuizLocalizationOverrides
             ["Quiz.Elementary.ReadPieChart"] = "Đọc biểu đồ tròn",
             ["Quiz.Elementary.ChartTotal"] = "Tổng các giá trị",
             ["Quiz.Elementary.ChartDifference"] = "Chênh lệch các giá trị",
-            ["Quiz.Elementary.Likelihood"] = "Chắc chắn, có thể, không thể",
+            ["Quiz.Elementary.Likelihood"] = "Chắc Chắn, Có Thể, Không Thể",
             ["Quiz.Elementary.ExperimentalProbability"] = "Phân số qua thử nghiệm",
             ["Quiz.Elementary.ClassifyAngle"] = "Nhận biết góc",
             ["Quiz.Elementary.ParallelLines"] = "Hai đường song song",
@@ -302,6 +314,18 @@ internal static class QuizLocalizationOverrides
     private static readonly IReadOnlyDictionary<string, string> English =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            ["Quiz.ShowDiagram"] = "Show diagram",
+            ["Quiz.ComparisonSubtype"] = "Compare < = >",
+            ["Quiz.Elementary.IntegerCompare"] = "Compare integers",
+            ["Quiz.ComparisonQuestionTitle"] = "Fill in the correct comparison sign",
+            ["Quiz.ComparisonTrueFalseTitle"] = "Is this comparison true or false?",
+            ["Quiz.ComparisonEssayHint"] = "Enter >, <, = or the complete comparison. No separate explanation or calculation is required.",
+            ["Quiz.ComparisonEssayPlaceholder"] = ">, <, = or the comparison of the two values",
+            ["Quiz.HideDiagram"] = "Hide diagram",
+            ["Quiz.EnlargeDiagram"] = "Enlarge diagram",
+            ["Quiz.CloseDiagram"] = "Close diagram",
+            ["Quiz.DiagramZoom"] = "Zoom level",
+            ["Quiz.DiagramNotToScale"] = "Illustration is not drawn to scale.",
             ["Quiz.ProblemTwoNumbers"] = "Find two numbers",
             ["Quiz.ProblemMeasurement"] = "Measurement",
             ["Quiz.ProblemTime"] = "Time",

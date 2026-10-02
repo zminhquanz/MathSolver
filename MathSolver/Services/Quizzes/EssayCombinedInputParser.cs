@@ -38,7 +38,7 @@ public static partial class EssayCombinedInputParser
         // A bare final value with an optional unit is also accepted. Never
         // infer the answer from an equation: an omitted answer must be reported.
         if (answers.Count == 0 && work.Count > 0 &&
-            BareAnswerRegex().IsMatch(work[^1]))
+            (BareAnswerRegex().IsMatch(work[^1]) || work[^1] is "<" or ">" or "="))
         {
             answers.Add(work[^1]);
             work.RemoveAt(work.Count - 1);
@@ -74,7 +74,7 @@ public static partial class EssayCombinedInputParser
             foreach (string line in lines)
             {
                 int equals = line.IndexOf('=');
-                if (equals < 0)
+                if (equals < 0 && !line.Contains('<') && !line.Contains('>'))
                 {
                     solutions.Add(line);
                     continue;

@@ -143,6 +143,22 @@ public sealed class FractionExpressionView : ContentView
                 StringSplitOptions
                     .RemoveEmptyEntries);
 
+        // Plain result/unit lines need normal word spacing, even when the
+        // question itself contains a stacked fraction.
+        bool hasFraction = tokens.Any(token =>
+        {
+            TrySplitDecoratedFraction(token, out _, out string fraction, out _);
+            return TryParseFraction(fraction, out _, out _);
+        });
+        if (!hasFraction)
+        {
+            Label textLine = CreateTextToken(line);
+            textLine.HorizontalTextAlignment = HorizontalTextAlignment;
+            textLine.HorizontalOptions = WrapContent ? LayoutOptions.Fill : GetHorizontalLayoutOptions();
+            textLine.LineBreakMode = WrapContent ? LineBreakMode.WordWrap : LineBreakMode.NoWrap;
+            return textLine;
+        }
+
         if (!WrapContent)
         {
             var singleLineLayout =
@@ -153,10 +169,10 @@ public sealed class FractionExpressionView : ContentView
                     HorizontalOptions = GetHorizontalLayoutOptions()
                 };
 
-            foreach (string token in tokens)
+            foreach (View tokenView in CreateTokenViews(tokens))
             {
                 singleLineLayout.Children.Add(
-                    CreateTokenView(token));
+                    tokenView);
             }
 
             return singleLineLayout;
@@ -177,9 +193,8 @@ public sealed class FractionExpressionView : ContentView
                 HorizontalOptions = LayoutOptions.Fill
             };
 
-        foreach (string token in tokens)
+        foreach (View tokenView in CreateTokenViews(tokens))
         {
-            View tokenView = CreateTokenView(token);
             tokenView.Margin = new Thickness(
                 0,
                 0,
@@ -189,6 +204,41 @@ public sealed class FractionExpressionView : ContentView
         }
 
         return wrappingLayout;
+    }
+
+    private IEnumerable<View> CreateTokenViews(string[] tokens)
+    {
+        for (int index = 0; index < tokens.Length; index++)
+        {
+            // A mixed number is one mathematical item; keep the whole and
+            // proper fraction together when a paragraph or choice wraps.
+            TrySplitDecoratedFraction(tokens[index], out string prefix, out string whole, out string wholeSuffix);
+            if (index + 1 < tokens.Length && wholeSuffix.Length == 0 &&
+                BigInteger.TryParse(whole, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+            {
+                TrySplitDecoratedFraction(tokens[index + 1], out string fractionPrefix, out string fraction, out string suffix);
+                string[] parts = fraction.Split('/');
+                if (fractionPrefix.Length == 0 && parts.Length == 2 &&
+                    BigInteger.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out BigInteger n) &&
+                    BigInteger.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out BigInteger d) &&
+                    n > 0 && n < d && TryParseFraction(fraction, out string numerator, out string denominator))
+                {
+                    var mixed = new HorizontalStackLayout
+                    {
+                        Spacing = Math.Min(TokenSpacing, MathFontSize * .12),
+                        VerticalOptions = LayoutOptions.Center
+                    };
+                    if (prefix.Length > 0) mixed.Children.Add(CreateTextToken(prefix));
+                    mixed.Children.Add(CreateTextToken(whole));
+                    mixed.Children.Add(CreateFractionView(numerator, denominator));
+                    if (suffix.Length > 0) mixed.Children.Add(CreateTextToken(suffix));
+                    yield return mixed;
+                    index++;
+                    continue;
+                }
+            }
+            yield return CreateTokenView(tokens[index]);
+        }
     }
 
     private LayoutOptions GetHorizontalLayoutOptions() =>

@@ -1,5 +1,11 @@
 # Math puzzle checks
 
+The comparison group checks 2,880 integer/fraction contracts across both languages,
+five star levels and three answer modes. It independently compares cross products,
+checks equality of equivalent fractions, correct and incorrect signs, full and
+reversed comparisons, conflicting submissions, AI fact preservation and fixed/mixed
+subtype selection. Algorithm and AI use the same C# contract and grader.
+
 The elementary-expansion groups cover 4,920 Algorithm/AI contracts for 41 skills
 across nine new families, both languages, all five star levels and all three answer
 modes. They check examples, distinct choices, subtype translations, unchanged AI
@@ -33,6 +39,14 @@ the app source. Small stubs replace only platform services needed to compile
 these components outside MAUI. It needs no model download, API key, network
 connection, or unit-test package.
 
+The quiz-diagram group verifies geometry labels against the dimensions actually
+stated in each task (excluding generated but unmentioned lengths), all ten motion
+kinds and arrow directions, fraction and two-number diagrams, indirect averages,
+and Vietnamese/English controls. Changing AI prose or hidden answer values must
+not change an ungraded diagram. Worked explanations are available only after
+grading. Native layout, modal navigation and pinch gestures still need device
+checks; these contract tests do not simulate MAUI rendering.
+
 The recoverable-result group links the production result file store, weak memory
 registry, power-of-ten streaming writer, and `PowerRootView.Memory.cs`. A small
 platform harness replaces UI dependencies and uses a small storage threshold.
@@ -47,6 +61,21 @@ subtype; JSON acceptance and rejection; valid and invalid AI stories for the
 geometry, proportion, motion, average, and percentage contracts; and direct AI
 validation cases for arithmetic, fractions, and find-x. These checks validate
 the app's AI integration contract, not the quality of a live model's writing.
+
+The elementary group also checks 400 fraction-of-a-number and whole-from-a-part
+stories across ten themes in both languages. Each story retains its own unit
+and solution label in Algorithm, AI prompts, essay grading and ungraded diagrams.
+It also checks 1,000 themed table/bar/pie/total/difference questions in both
+languages, independently deriving the answer from the categories named in each
+question. Every subtype samples all ten themes, and pie percentages vary while
+remaining positive and adding up to 100. Algorithm and AI share grading data.
+
+The visual-geometry variety group checks 2,400 bilingual angle/line questions
+across the five tiers and three answer modes. It independently classifies line
+directions with dot/cross products, covers four angle types and rotated figures,
+and checks that three-line selection has at most one valid pair. Higher tiers
+include no-pair cases and accept reversed line names. App builds compile the
+renderer; native drawing layout still needs verification on a device.
 
 The numeric-expression group checks all five star levels, integer/fraction
 expressions with and without brackets, and all three answer modes. It verifies

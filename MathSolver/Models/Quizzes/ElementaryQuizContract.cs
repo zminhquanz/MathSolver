@@ -12,7 +12,8 @@ public enum ElementaryQuizType
     ReduceFraction, CompareFractions, MixedNumber, CommonDenominator, FractionOfNumber, WholeFromFraction,
     ReadTable, ReadBarChart, ReadPieChart, ChartTotal, ChartDifference,
     Likelihood, ExperimentalProbability,
-    ClassifyAngle, ParallelLines, PerpendicularLines, CountSides, RectangleSide, CompositeArea
+    ClassifyAngle, ParallelLines, PerpendicularLines, CountSides, RectangleSide, CompositeArea,
+    IntegerCompare
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,
@@ -22,8 +23,11 @@ public sealed record ElementaryAnswer(string Label, ReducedFraction Value, strin
     public bool IsText => Text is not null && !RequireMixedNumber && RequiredDenominator is null;
 }
 
+public sealed record QuizVisualLine(string Label, decimal DirectionDegrees, float OffsetRatio = 0);
+
 public sealed record QuizVisualData(string Kind, IReadOnlyList<string> Labels,
-    IReadOnlyList<decimal> Values, string Unit);
+    IReadOnlyList<decimal> Values, string Unit, decimal RotationDegrees = 0,
+    IReadOnlyList<QuizVisualLine>? Lines = null);
 
 /// <summary>C# owns every relation, answer and visual; AI may rewrite introductory wording only.</summary>
 public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuizType Type,
@@ -33,6 +37,23 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     QuizVisualData? Visual = null, string? PresentedText = null,
     IReadOnlyList<string>? ChoiceTexts = null)
 {
+    public bool UsesFractionFormatting => Type is ElementaryQuizType.ReduceFraction or
+        ElementaryQuizType.CompareFractions or ElementaryQuizType.MixedNumber or
+        ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
+        ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability;
+
+    public bool IsComparison => Type is ElementaryQuizType.IntegerCompare or
+        ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions;
+
+    public (string Left, string Right) ComparisonOperands => Type == ElementaryQuizType.CompareFractions
+        ? ($"{Facts[0]}/{Facts[1]}", $"{Facts[2]}/{Facts[3]}") : (Facts[0], Facts[1]);
+
+    public string FormatComparison(string symbol)
+    {
+        var (left, right) = ComparisonOperands;
+        return $"{left} {symbol} {right}";
+    }
+
     public string AnswerText => string.Join("; ", Answers.Select(answer =>
         (Answers.Count > 1 ? answer.Label + ": " : "") + FormatAnswer(answer)));
     public static string FormatAnswer(ElementaryAnswer answer) =>

@@ -832,14 +832,20 @@
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                <Button
-                                    x:Name="ProblemMixedButton"
-                                    Text="{localization:QuizTranslate Quiz.SubtypeMixed}"
-                                    HeightRequest="44"
-                                    CornerRadius="12"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    Clicked="OnProblemMixedClicked" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <Button
+                                        x:Name="ProblemMixedButton"
+                                        Text="{localization:QuizTranslate Quiz.SubtypeMixed}"
+                                        HeightRequest="44"
+                                        CornerRadius="12"
+                                        FontSize="14"
+                                        FontAttributes="Bold"
+                                        Clicked="OnProblemMixedClicked" />
+                                    <Button x:Name="ProblemCompareButton" Grid.Column="1"
+                                            Text="{localization:QuizTranslate Quiz.ComparisonSubtype}"
+                                            HeightRequest="44" CornerRadius="12" FontSize="14" FontAttributes="Bold"
+                                            Clicked="OnProblemCompareClicked" />
+                                </Grid>
 
                                 <Grid
                                     ColumnDefinitions="*,*,*,*"
@@ -1243,29 +1249,52 @@
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                            <Label
-                                x:Name="QuestionExpressionLabel"
-                                FontSize="34"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                            <Button x:Name="QuizDiagramToggleButton" IsVisible="False"
+                                    Text="{localization:QuizTranslate Quiz.ShowDiagram}"
+                                    Clicked="OnQuizDiagramToggleClicked" HorizontalOptions="Center"
+                                    CornerRadius="12" />
 
-                            <GraphicsView x:Name="QuizVisualView" IsVisible="False" HeightRequest="260"
-                                          HorizontalOptions="Fill" />
-                            <Label x:Name="QuizVisualDataLabel" IsVisible="False" FontSize="14"
-                                   LineBreakMode="WordWrap" HorizontalTextAlignment="Center"
-                                   TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <controls:FractionExpressionView
-                                x:Name="QuestionFractionExpressionView"
-                                IsVisible="False"
-                                MathFontSize="21"
-                                MathColor="{DynamicResource PrimaryColor}"
-                                HorizontalTextAlignment="Center"
-                                WrapContent="True"
-                                TokenSpacing="4"
-                                HorizontalOptions="Fill" />
+                            <Grid x:Name="QuestionDiagramGrid" RowDefinitions="Auto,Auto"
+                                  RowSpacing="16" ColumnSpacing="20" SizeChanged="OnQuestionDiagramSizeChanged">
+                                <VerticalStackLayout x:Name="QuestionTextPanel" Spacing="8" VerticalOptions="Center">
+                                    <Label x:Name="QuestionExpressionLabel" FontSize="34" FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                           TextColor="{DynamicResource PrimaryColor}" />
+                                    <controls:FractionExpressionView x:Name="QuestionFractionExpressionView"
+                                        IsVisible="False" MathFontSize="21" MathColor="{DynamicResource PrimaryColor}"
+                                        HorizontalTextAlignment="Center" WrapContent="True" TokenSpacing="4"
+                                        HorizontalOptions="Fill" />
+                                    <controls:FractionExpressionView x:Name="QuestionComparisonFractionView"
+                                        IsVisible="False" MathFontSize="32" MathColor="{DynamicResource PrimaryColor}"
+                                        HorizontalTextAlignment="Center" WrapContent="True" TokenSpacing="4"
+                                        HorizontalOptions="Fill" />
+                                    <Label x:Name="NumericResultLabel" IsVisible="False"
+                                           FontSize="34" FontAttributes="Bold" MinimumHeightRequest="56"
+                                           HorizontalOptions="Fill" HorizontalTextAlignment="Center"
+                                           VerticalTextAlignment="Center" LineBreakMode="WordWrap"
+                                           TextColor="{DynamicResource PrimaryColor}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout x:Name="QuizDiagramPanel" Grid.Row="1" IsVisible="False" Spacing="8">
+                                    <Label x:Name="QuizDiagramCaptionLabel" FontSize="15" FontAttributes="Bold"
+                                           LineBreakMode="WordWrap" HorizontalTextAlignment="Center"
+                                           TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <GraphicsView x:Name="QuizVisualView" IsVisible="False" HeightRequest="260"
+                                                  HorizontalOptions="Fill" />
+                                    <Label x:Name="QuizVisualDataLabel" IsVisible="False" FontSize="14"
+                                           LineBreakMode="WordWrap" HorizontalTextAlignment="Center"
+                                           TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                    <Label x:Name="QuizDiagramNoteLabel" IsVisible="False" FontSize="12"
+                                           Text="{localization:QuizTranslate Quiz.DiagramNotToScale}"
+                                           HorizontalTextAlignment="Center" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                    <Label x:Name="QuizDiagramExplanationLabel" IsVisible="False" FontSize="15"
+                                           LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <controls:FractionExpressionView x:Name="QuizDiagramExplanationFractionView"
+                                        IsVisible="False" MathFontSize="15" WrapContent="True" TokenSpacing="4"
+                                        HorizontalOptions="Fill" MathColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Button Text="{localization:QuizTranslate Quiz.EnlargeDiagram}"
+                                            Clicked="OnEnlargeQuizDiagramClicked" HorizontalOptions="Center" CornerRadius="12" />
+                                </VerticalStackLayout>
+                            </Grid>
 
                             <Label
                                 x:Name="PresentedAnswerLabel"
@@ -1392,6 +1421,7 @@
                                     Grid.Column="0"
                                     IsVisible="False"
                                     InputTransparent="True"
+                                    Margin="12,8"
                                     MathFontSize="16"
                                     MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     HorizontalTextAlignment="Center"
@@ -1405,6 +1435,7 @@
                                     Grid.Column="1"
                                     IsVisible="False"
                                     InputTransparent="True"
+                                    Margin="12,8"
                                     MathFontSize="16"
                                     MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     HorizontalTextAlignment="Center"
@@ -1418,6 +1449,7 @@
                                     Grid.Column="0"
                                     IsVisible="False"
                                     InputTransparent="True"
+                                    Margin="12,8"
                                     MathFontSize="16"
                                     MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     HorizontalTextAlignment="Center"
@@ -1431,6 +1463,7 @@
                                     Grid.Column="1"
                                     IsVisible="False"
                                     InputTransparent="True"
+                                    Margin="12,8"
                                     MathFontSize="16"
                                     MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     HorizontalTextAlignment="Center"

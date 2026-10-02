@@ -13,6 +13,7 @@ internal static partial class ElementaryEssayValidator
         string? solution, string? equations, string? answerText)
     {
         var contract = question.ElementaryProblem!;
+        if (contract.IsComparison) return ComparisonEssayValidator.Validate(contract, equations, answerText);
         bool vi = contract.Language == AppLanguage.Vietnamese;
         bool preferDecimals = contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement;
         bool solutionOkay = !contract.RequiresSolution || !string.IsNullOrWhiteSpace(solution) &&

@@ -47,4 +47,8 @@ Bảng, biểu đồ cột/tròn, đồng hồ và hình học trực quan dùng
 Hai nguồn Thuật toán và AI/LLM dùng cùng drawable trên Windows và Android.
 
 - [ElementaryQuizDrawable.cs](Quizzes/ElementaryQuizDrawable.cs)
+- [QuizDiagramDrawable.cs](Quizzes/QuizDiagramDrawable.cs): hình học có số đo,
+  sơ đồ đoạn thẳng tìm hai số, chuyển động, phân số và trung bình cộng gián tiếp.
+  `QuizDiagramBuilder` chọn dữ kiện từ hợp đồng C#, không đọc câu văn AI;
+  kết quả và diễn giải chỉ được đưa vào sơ đồ sau khi chấm.
 

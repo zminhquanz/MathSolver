@@ -4,7 +4,10 @@ var tests = new (string Name, Action Run)[]
 {
     ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),
     ("Catalog", PuzzleTests.CheckCatalog),
+    ("Integer and fraction comparisons", PuzzleTests.CheckComparisons),
+    ("Quiz diagrams and hidden answers", PuzzleTests.CheckQuizDiagrams),
     ("Elementary contracts and AI matrix", PuzzleTests.CheckElementaryContracts),
+    ("Visual geometry variety", PuzzleTests.CheckVisualGeometryVariety),
     ("Flexible multi-step work and two answers", PuzzleTests.CheckElementaryFlexibleWork),
     ("Algorithm question matrix", PuzzleTests.CheckAlgorithmMatrix),
     ("Numeric expressions", PuzzleTests.CheckExpressions),

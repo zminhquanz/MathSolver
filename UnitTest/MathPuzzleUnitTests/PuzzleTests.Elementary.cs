@@ -54,6 +54,115 @@ internal static partial class PuzzleTests
         }
         Require(count > 3000, "The new curriculum matrix is unexpectedly small.");
         Console.WriteLine($"  Checked {count} elementary contracts, examples, choices and AI responses.");
+
+        foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
+        foreach (var type in new[] { ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction })
+        {
+            var contexts = FractionQuantityStoryContextCatalog.GetProfile(language);
+            var seenUnits = new HashSet<string>();
+            for (int seed = 0; seed < 100; seed++)
+            {
+                var question = new ElementaryQuizGenerator(new Random(seed)).Generate(
+                    ArithmeticQuizMode.Essay, QuizProblemKind.FractionSkills, type, language, CurriculumTier.FiveStars);
+                var contract = question.ElementaryProblem!;
+                var answer = contract.Answers[0];
+                seenUnits.Add(answer.Unit);
+                var context = contexts.Single(story => story.Unit == answer.Unit);
+                bool findingPart = type == ElementaryQuizType.FractionOfNumber;
+                int given = int.Parse(contract.Facts[0]), numerator = int.Parse(contract.Facts[1]), denominator = int.Parse(contract.Facts[2]);
+                int expectedValue = findingPart ? given * numerator / denominator : given * denominator / numerator;
+                Require(answer.Value == new ReducedFraction(expectedValue, 1) && answer.Label ==
+                    (findingPart ? context.PartLabel : context.WholeLabel), "Fraction story labels or answer differ from the given facts.");
+                var parts = EssayCombinedInputParser.Parse(contract.SolutionText, true, true);
+                Require(validator.Validate(question, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
+                    $"{type}/{language}/{answer.Unit}: themed example was rejected.");
+                string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
+                Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var draft,
+                    out _, out _, allowEmptyAnswerUnit: true), "Themed AI prompt could not be parsed.");
+                var ai = aiValidator.ValidateElementary(draft!, contract);
+                Require(ai.IsValid && validator.Validate(question with { WordProblem = ai.WordProblem },
+                    parts.Solution, parts.Equation, parts.Answer).IsCorrect, "AI themed grading differs from Algorithm.");
+                if (answer.Unit is "lít" or "litres")
+                {
+                    foreach (var sourceQuestion in new[] { question, question with { WordProblem = ai.WordProblem } })
+                        Require(validator.Validate(sourceQuestion, parts.Solution,
+                            parts.Equation.Replace(" " + answer.Unit, " l", StringComparison.Ordinal),
+                            answer.Value + "l").IsCorrect, "The litre symbol must remain accepted in calculations and answers.");
+                    Require(!ElementaryEssayValidator.CheckAnswers(question, answer.Value + "ml"),
+                        "Millilitres must not be treated as litres without conversion.");
+                }
+                var diagram = QuizDiagramBuilder.Build(question, language)!;
+                Require(diagram.Caption.EndsWith(" " + answer.Unit, StringComparison.Ordinal) &&
+                    diagram.Rows[0].Label.EndsWith(" " + answer.Unit, StringComparison.Ordinal) &&
+                    diagram.Explanation is null, "Themed diagram lost the unit or revealed the solution.");
+            }
+            Require(contexts.All(context => seenUnits.Contains(context.Unit)), "Fraction stories did not cover all themes.");
+        }
+        Console.WriteLine("  Checked 400 themed fraction-part/whole stories, AI contracts, grading and diagram units.");
+        CheckDataChartStories(validator, aiValidator);
+    }
+
+    private static void CheckDataChartStories(EssayAnswerValidator validator, LlmWordProblemValidator aiValidator)
+    {
+        foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
+        foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Data))
+        {
+            var contexts = DataChartStoryContextCatalog.GetProfile(language);
+            var seenThemes = new HashSet<string>();
+            var pieDistributions = new HashSet<string>();
+            for (int seed = 0; seed < 100; seed++)
+            {
+                var mode = Enum.GetValues<ArithmeticQuizMode>()[seed % 3];
+                var question = new ElementaryQuizGenerator(new Random(seed)).Generate(
+                    mode, QuizProblemKind.Data, type, language, (CurriculumTier)(seed % 5 + 1));
+                var contract = question.ElementaryProblem!;
+                var visual = contract.Visual!;
+                Require(visual.Labels.Count == 3 && visual.Labels.Distinct().Count() == 3 && visual.Values.Count == 3,
+                    "A themed chart must have three distinct labeled values.");
+                var context = contexts.Single(story => story.Labels.Order().SequenceEqual(visual.Labels.Order()));
+                seenThemes.Add(context.Description);
+                Require(contract.ProblemText.Contains(context.Description, StringComparison.Ordinal),
+                    "The chart question lost its story context.");
+                Require(contract.Facts.SequenceEqual(visual.Values.Select(value => value.ToString(System.Globalization.CultureInfo.InvariantCulture))),
+                    "The chart and grading facts disagree.");
+                string expectedUnit = type == ElementaryQuizType.ReadPieChart ? "%" : context.Unit;
+                Require(visual.Unit == expectedUnit && contract.Answers[0].Unit == expectedUnit,
+                    "The question, chart and answer must use the same unit.");
+                int[] queriedRows = Enumerable.Range(0, visual.Labels.Count)
+                    .Where(index => contract.ProblemText.Contains($"“{visual.Labels[index]}”", StringComparison.Ordinal)).ToArray();
+                decimal expectedValue = type switch
+                {
+                    ElementaryQuizType.ChartTotal => visual.Values.Sum(),
+                    ElementaryQuizType.ChartDifference when queriedRows.Length == 2 =>
+                        Math.Abs(visual.Values[queriedRows[0]] - visual.Values[queriedRows[1]]),
+                    _ when queriedRows.Length == 1 => visual.Values[queriedRows[0]],
+                    _ => throw new InvalidOperationException("Chart question refers to the wrong number of categories.")
+                };
+                Require(contract.Answers[0].Value == new ReducedFraction((int)expectedValue, 1),
+                    "The answer differs from the categories actually requested in the chart question.");
+                Require(contract.ChoiceTexts!.Count(choice => ElementaryEssayValidator.CheckAnswers(question, choice)) == 1,
+                    "A themed chart must retain exactly one correct choice.");
+                var parts = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true);
+                Require(validator.Validate(question, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
+                    $"{type}/{language}/{context.Description}: themed chart example was rejected.");
+                string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
+                Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var draft,
+                    out _, out _, allowEmptyAnswerUnit: true), "The themed chart AI prompt could not be parsed.");
+                var ai = aiValidator.ValidateElementary(draft!, contract);
+                Require(ai.IsValid && validator.Validate(question with { WordProblem = ai.WordProblem },
+                    parts.Solution, parts.Equation, parts.Answer).IsCorrect, "Chart grading differs between Algorithm and AI.");
+                if (type == ElementaryQuizType.ReadPieChart)
+                {
+                    Require(visual.Values.All(value => value > 0) && visual.Values.Sum() == 100,
+                        "Pie chart percentages must be positive and sum to 100.");
+                    pieDistributions.Add(string.Join(",", visual.Values));
+                }
+            }
+            Require(contexts.All(context => seenThemes.Contains(context.Description)), "A chart subtype did not sample every theme.");
+            if (type == ElementaryQuizType.ReadPieChart)
+                Require(pieDistributions.Count > 10, "Pie chart percentages are still repetitive.");
+        }
+        Console.WriteLine("  Checked 1000 bilingual themed charts, independent answers, percentage totals and AI grading.");
     }
 
     internal static void CheckElementaryFlexibleWork()

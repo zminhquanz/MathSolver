@@ -898,6 +898,23 @@ Both Algorithm and AI/LLM consume the same C# contracts, so these restrictions a
 - Mixed ★★★ mới mở chu vi/diện tích hình vuông, hình chữ nhật và giữ chu vi tam giác.
 - Skill Mode vẫn không lọc Picker/subtype theo sao để tránh thay đổi collection native WinUI trong lúc tương tác; khi người dùng chủ động chọn một dạng cụ thể, sao tiếp tục đóng vai trò scale dữ kiện.
 
+## Elementary quiz groups and shared multi-step grading
+
+`ElementaryQuizGenerator` and `ElementaryQuizContract` extend both quiz sources
+with nine groups / 41 skills: two numbers, measurement, time, remainders, decimals,
+fraction skills, data charts, likelihood and visual geometry. `ElementaryEssayValidator`
+and `StepDerivationTracker` check exact derived quantities and independently labeled
+answers without enforcing a worked-example step count. Indirect averages adapt to
+this same grader. `ElementaryQuizDrawable` renders immutable quiz data on both
+platforms. [Scope, UI behavior and validation](ELEMENTARY_QUIZ_EXPANSION.md).
+
+`QuizDiagramBuilder` extends the shared quiz presentation with labeled geometry,
+two-number bars, motion arrows, fraction bars and indirect-average relations.
+Only task-given facts enter ungraded diagrams; answer values and worked
+explanations are gated by grading. `MathPuzzlePage.Diagrams.cs` handles optional
+visibility, responsive placement and modal zoom while preserving quiz state.
+[Diagram behavior and validation](QUIZ_DIAGRAMS.md).
+
 ## Single-thread BigInteger power
 
 SingleThreadBigIntegerPower uses runtime BigInteger arithmetic in both hardware-acceleration modes. It retains bounded square batching, exponent windows, progress and cancellation. The custom AVX2 prefix and AVX2/AVX-512 limb32 square backends have been removed from the application, along with their hardware-information status and dispatch flags.

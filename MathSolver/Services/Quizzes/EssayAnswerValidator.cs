@@ -1041,6 +1041,8 @@ public sealed partial class EssayAnswerValidator
             "kg" or "kilogam" or "kilôgam" or "ki-lô-gam" or
                 "kilogram" or "kilograms" or "kilogramme" or
                 "kilogrammes" => "kg",
+            "l" or "lít" or "lit" or "liter" or "liters" or
+                "litre" or "litres" => "l",
             _ => null
         };
 

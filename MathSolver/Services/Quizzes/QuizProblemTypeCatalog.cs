@@ -83,7 +83,9 @@ public sealed class QuizProblemTypeCatalog
         bool includeExpressions = true,
         ExpressionQuizType? expressionType = null,
         GeometryMeasurement? geometryMeasurement = null,
-        ElementaryQuizType? elementaryType = null)
+        ElementaryQuizType? elementaryType = null,
+        bool basicComparison = false,
+        bool fractionComparison = false)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -100,12 +102,14 @@ public sealed class QuizProblemTypeCatalog
                 QuizProblemKind.Arithmetic =>
                     fixedRequest with
                     {
-                        ArithmeticOperation = basicOperation
+                        ArithmeticOperation = basicOperation,
+                        IsComparison = basicComparison || !basicOperation.HasValue && _random.Next(5) == 4
                     },
                 QuizProblemKind.Fraction =>
                     fixedRequest with
                     {
-                        FractionOperation = fractionOperation
+                        FractionOperation = fractionOperation,
+                        IsComparison = fractionComparison || !fractionOperation.HasValue && _random.Next(5) == 4
                     },
                 QuizProblemKind.Proportion =>
                     fixedRequest with

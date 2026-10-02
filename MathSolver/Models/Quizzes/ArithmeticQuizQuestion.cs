@@ -30,7 +30,8 @@ public sealed record ArithmeticQuizQuestion(
     ExpressionQuizContract? ExpressionProblem = null,
     ElementaryQuizContract? ElementaryProblem = null)
 {
-    public bool UsesFractionFormatting => FractionProblem is not null || ExpressionProblem?.UsesFractions == true;
+    public bool UsesFractionFormatting => FractionProblem is not null || ExpressionProblem?.UsesFractions == true
+        || ElementaryProblem?.UsesFractionFormatting == true;
 
     public ReducedFraction ExactAnswer => ExpressionProblem?.CorrectAnswer ??
         FractionProblem?.CorrectAnswer ?? new ReducedFraction(CorrectAnswer, BigInteger.One);

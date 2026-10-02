@@ -38,6 +38,8 @@ public partial class MathPuzzlePage : ContentPage
     private readonly ExpressionQuizGenerator _expressionQuizGenerator = new();
     private readonly ElementaryQuizGenerator _elementaryQuizGenerator = new();
     private ElementaryQuizType? _selectedElementaryType;
+    private bool _selectedBasicComparison;
+    private bool _selectedFractionComparison;
     private readonly List<ElementaryQuizType?> _elementaryTypePickerValues = [];
     private QuizProblemKind? _elementaryPickerKind;
     private AppLanguage? _elementaryPickerLanguage;
@@ -295,7 +297,7 @@ public partial class MathPuzzlePage : ContentPage
         // Constructor của overlay bật cờ trước khi popup làm trang
         // nhận OnDisappearing, nên không được coi đây là thao tác rời tab lớn:
         // giữ nguyên câu hỏi, lựa chọn, điểm số và model đang nằm trong RAM.
-        if (SettingsMenuPage.IsTransparentOverlayActive ||
+        if (_diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive ||
             GemmaModelCatalogPage.IsTransparentOverlayActive)
         {
             base.OnDisappearing();
@@ -761,7 +763,10 @@ public partial class MathPuzzlePage : ContentPage
     private string GetQuestionPromptTitle()
     {
         if (_currentQuestion?.ElementaryProblem is ElementaryQuizContract elementary)
-            return TranslateQuiz("Quiz.Problem" + elementary.Kind);
+            return elementary.IsComparison
+                ? TranslateQuiz(_currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? "Quiz.ComparisonTrueFalseTitle" : "Quiz.ComparisonQuestionTitle")
+                : TranslateQuiz("Quiz.Problem" + elementary.Kind);
         if (_currentQuestion?.ExpressionProblem is not null)
             return TranslateQuiz("Quiz.ExpressionQuestionTitle");
         if (_currentQuestion?.FractionProblem is not null &&
@@ -942,6 +947,11 @@ public partial class MathPuzzlePage : ContentPage
         {
             EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ElementaryEssayHint");
             EssayWorkEditor.Placeholder = TranslateQuiz(requiresSolution ? "Quiz.ElementaryEssayPlaceholder" : "Quiz.ElementaryAnswerPlaceholder");
+            if (elementary.IsComparison)
+            {
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ComparisonEssayHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.ComparisonEssayPlaceholder");
+            }
         }
     }
 
@@ -1401,7 +1411,9 @@ public partial class MathPuzzlePage : ContentPage
             includeExpressions: true,
             expressionType: _selectedExpressionType,
             geometryMeasurement: _selectedGeometryMeasurement,
-            elementaryType: _selectedElementaryType);
+            elementaryType: _selectedElementaryType,
+            basicComparison: _selectedBasicComparison,
+            fractionComparison: _selectedFractionComparison);
 
     private QuizProblemRequest? GetSelectedFixedProblemRequest()
     {
@@ -1415,12 +1427,14 @@ public partial class MathPuzzlePage : ContentPage
             QuizProblemKind.Arithmetic =>
                 request.Value with
                 {
-                    ArithmeticOperation = _selectedBasicOperation
+                    ArithmeticOperation = _selectedBasicOperation,
+                    IsComparison = _selectedBasicComparison
                 },
             QuizProblemKind.Fraction =>
                 request.Value with
                 {
-                    FractionOperation = _selectedFractionOperation
+                    FractionOperation = _selectedFractionOperation,
+                    IsComparison = _selectedFractionComparison
                 },
             QuizProblemKind.Proportion =>
                 request.Value with
@@ -1571,13 +1585,16 @@ public partial class MathPuzzlePage : ContentPage
         ProblemSubtractButton.IsEnabled = true;
         ProblemMultiplyButton.IsEnabled = true;
         ProblemDivideButton.IsEnabled = true;
+        ProblemCompareButton.IsEnabled = true;
         ProblemMixedButton.Opacity = 1d;
         ProblemAddButton.Opacity = 1d;
         ProblemSubtractButton.Opacity = 1d;
         ProblemMultiplyButton.Opacity = 1d;
         ProblemDivideButton.Opacity = 1d;
+        ProblemCompareButton.Opacity = 1d;
 
-        Button selected = operation switch
+        bool comparison = kind == QuizProblemKind.Fraction ? _selectedFractionComparison : _selectedBasicComparison;
+        Button selected = comparison ? ProblemCompareButton : operation switch
         {
             null => ProblemMixedButton,
             ArithmeticOperation.Add => ProblemAddButton,
@@ -1593,7 +1610,8 @@ public partial class MathPuzzlePage : ContentPage
             ProblemAddButton,
             ProblemSubtractButton,
             ProblemMultiplyButton,
-            ProblemDivideButton);
+            ProblemDivideButton,
+            ProblemCompareButton);
     }
 
     private void OnProblemMixedClicked(object? sender, EventArgs e) =>
@@ -1611,7 +1629,10 @@ public partial class MathPuzzlePage : ContentPage
     private void OnProblemDivideClicked(object? sender, EventArgs e) =>
         SelectProblemOperation(ArithmeticOperation.Divide);
 
-    private void SelectProblemOperation(ArithmeticOperation? operation)
+    private void OnProblemCompareClicked(object? sender, EventArgs e) =>
+        SelectProblemOperation(null, comparison: true);
+
+    private void SelectProblemOperation(ArithmeticOperation? operation, bool comparison = false)
     {
         QuizProblemKind? kind =
             _quizProblemTypeCatalog
@@ -1627,16 +1648,18 @@ public partial class MathPuzzlePage : ContentPage
         bool changed;
         if (kind == QuizProblemKind.Arithmetic)
         {
-            changed = _selectedBasicOperation != operation;
+            changed = _selectedBasicOperation != operation || _selectedBasicComparison != comparison;
             _selectedBasicOperation = operation;
+            _selectedBasicComparison = comparison;
         }
         else
         {
             FractionOperation? fractionOperation = operation.HasValue
                 ? MapArithmeticOperation(operation.Value)
                 : null;
-            changed = _selectedFractionOperation != fractionOperation;
+            changed = _selectedFractionOperation != fractionOperation || _selectedFractionComparison != comparison;
             _selectedFractionOperation = fractionOperation;
+            _selectedFractionComparison = comparison;
         }
 
         UpdateProblemOperationPanel();
@@ -1840,6 +1863,8 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion =
                 problemRequest.Kind switch
                 {
+                    _ when problemRequest.IsComparison => _elementaryQuizGenerator.GenerateComparison(
+                        _selectedMode, problemRequest.Kind, AppLanguageManager.CurrentLanguage, curriculumContext.Tier),
                     _ when ElementaryQuizGenerator.Supports(problemRequest.Kind) => _elementaryQuizGenerator.Generate(
                         _selectedMode, problemRequest.Kind, problemRequest.ElementaryType,
                         AppLanguageManager.CurrentLanguage, curriculumContext.Tier),
@@ -1932,6 +1957,7 @@ public partial class MathPuzzlePage : ContentPage
             GetSelectedFixedProblemRequest();
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
+        ResetQuizDiagram();
 
         QuestionPromptLabel.Text =
             Translate("Quiz.WordProblemTitle");
@@ -2515,6 +2541,7 @@ public partial class MathPuzzlePage : ContentPage
         _currentQuestion = null;
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
+        ResetQuizDiagram();
         FeedbackBorder.IsVisible = false;
         SolutionBorder.IsVisible = false;
         PresentedAnswerLabel.IsVisible = false;
@@ -2916,6 +2943,7 @@ public partial class MathPuzzlePage : ContentPage
         ProblemSubtractButton.IsEnabled = !isLocked;
         ProblemMultiplyButton.IsEnabled = !isLocked;
         ProblemDivideButton.IsEnabled = !isLocked;
+        ProblemCompareButton.IsEnabled = !isLocked;
         MixedProportionButton.IsEnabled = !isLocked;
         DirectProportionButton.IsEnabled = !isLocked;
         InverseProportionButton.IsEnabled = !isLocked;
@@ -3696,6 +3724,8 @@ public partial class MathPuzzlePage : ContentPage
         string colorResource,
         bool useFractionFormatting)
     {
+        NumericResultLabel.IsVisible = false;
+        QuestionComparisonFractionView.IsVisible = false;
         QuestionExpressionLabel.IsVisible =
             !useFractionFormatting;
         QuestionFractionExpressionView.IsVisible =
@@ -3773,20 +3803,71 @@ public partial class MathPuzzlePage : ContentPage
 
         ElementaryQuizContract? elementary = _currentQuestion.ElementaryProblem;
         UpdateElementaryChoiceLayout(elementary);
-        QuizVisualView.IsVisible = elementary?.Visual is not null;
-        QuizVisualView.Drawable = new MathSolver.Graphics.ElementaryQuizDrawable(elementary?.Visual);
-        QuizVisualView.Invalidate();
-        QuizVisualDataLabel.IsVisible = elementary?.Visual?.Kind is "table" or "bar" or "pie";
-        QuizVisualDataLabel.Text = QuizVisualDataLabel.IsVisible && elementary?.Visual is QuizVisualData visual
-            ? string.Join(" · ", visual.Labels.Select((label, index) => $"{label}: {visual.Values[index]} {visual.Unit}")) : "";
+        UpdateQuizDiagram();
         if (elementary is not null)
         {
             QuestionPromptLabel.Text = GetQuestionPromptTitle();
-            SetQuestionContent(wordProblem?.ProblemText ?? elementary.ProblemText, 21,
-                "WallpaperTextPrimaryColor", useFractionFormatting: false);
             PresentedAnswerFractionView.IsVisible = false;
-            PresentedAnswerLabel.IsVisible = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse;
-            PresentedAnswerLabel.Text = elementary.PresentedText ?? "";
+            if (elementary.IsComparison)
+            {
+                SetQuestionContent(wordProblem?.ProblemText ?? elementary.ProblemText, 21,
+                    "WallpaperTextPrimaryColor", useFractionFormatting: elementary.UsesFractionFormatting);
+                string displayedSymbol = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? elementary.PresentedText ?? "?" : "?";
+                string comparisonText = elementary.FormatComparison(displayedSymbol);
+                if (elementary.Type == ElementaryQuizType.CompareFractions)
+                {
+                    QuestionComparisonFractionView.Expression = comparisonText;
+                    QuestionComparisonFractionView.IsVisible = true;
+                }
+                else
+                {
+                    NumericResultLabel.Text = comparisonText;
+                    NumericResultLabel.IsVisible = true;
+                }
+                PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerLabel.Text = string.Empty;
+            }
+            else if (wordProblem is null && elementary.Type is
+                (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract or
+                 ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide))
+            {
+                ArithmeticOperation operation = elementary.Type switch
+                {
+                    ElementaryQuizType.DecimalAdd => ArithmeticOperation.Add,
+                    ElementaryQuizType.DecimalSubtract => ArithmeticOperation.Subtract,
+                    ElementaryQuizType.DecimalMultiply => ArithmeticOperation.Multiply,
+                    _ => ArithmeticOperation.Divide
+                };
+                string decimalExpression = $"{elementary.Facts[0]} {BasicArithmeticEngine.GetSymbol(operation)} {elementary.Facts[1]}";
+                string displayedAnswer = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? elementary.PresentedText ?? "" : "?";
+                SetQuestionContent($"{decimalExpression} = {displayedAnswer}", 34,
+                    "PrimaryColor", useFractionFormatting: false);
+                PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerLabel.Text = string.Empty;
+            }
+            else if (wordProblem is null && elementary.Type == ElementaryQuizType.DecimalRound)
+            {
+                SetQuestionContent(elementary.ProblemText, 21,
+                    "WallpaperTextPrimaryColor", useFractionFormatting: false);
+                string displayedResult = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? elementary.PresentedText ?? "?" : "?";
+                NumericResultLabel.Text = $"{elementary.Facts[0]} ≈ {displayedResult}";
+                NumericResultLabel.IsVisible = true;
+                PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerLabel.Text = string.Empty;
+            }
+            else
+            {
+                SetQuestionContent(wordProblem?.ProblemText ?? elementary.ProblemText, 21,
+                    "WallpaperTextPrimaryColor", useFractionFormatting: elementary.UsesFractionFormatting);
+                bool showPresented = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse;
+                PresentedAnswerLabel.IsVisible = showPresented && !elementary.UsesFractionFormatting;
+                PresentedAnswerLabel.Text = elementary.PresentedText ?? "";
+                PresentedAnswerFractionView.IsVisible = showPresented && elementary.UsesFractionFormatting;
+                PresentedAnswerFractionView.Expression = FormatElementaryAnswerForDisplay(elementary, elementary.PresentedText ?? "");
+            }
         }
         else if (wordProblem is not null)
         {
@@ -3998,6 +4079,7 @@ public partial class MathPuzzlePage : ContentPage
             {
                 Button button =
                     ChoiceButtons[index];
+                button.MinimumHeightRequest = 54;
 
                 button.HeightRequest =
                     _currentQuestion.UsesFractionFormatting
@@ -4024,11 +4106,19 @@ public partial class MathPuzzlePage : ContentPage
                 if (elementary is not null)
                 {
                     string choice = elementary.ChoiceTexts![index];
-                    button.Text = $"{prefix}. {choice}";
+                    button.Text = elementary.UsesFractionFormatting ? string.Empty : $"{prefix}. {choice}";
                     button.CommandParameter = choice;
-                    ChoiceFractionViews[index].IsVisible = false;
+                    ChoiceFractionViews[index].Expression = $"{prefix}. {FormatElementaryAnswerForDisplay(elementary, choice)}";
+                    ChoiceFractionViews[index].IsVisible = elementary.UsesFractionFormatting;
                     button.HeightRequest = elementary.Answers.Count > 1
                         ? DeviceInfo.Platform == DevicePlatform.Android ? 120 : 86 : 72;
+                    if (elementary.UsesFractionFormatting)
+                    {
+                        // Let the overlay determine the row height for stacked
+                        // fractions, mixed numbers and two labeled answers.
+                        button.MinimumHeightRequest = button.HeightRequest;
+                        button.HeightRequest = -1;
+                    }
                 }
                 else if (_currentQuestion.UsesFractionFormatting)
                 {
@@ -4078,11 +4168,16 @@ public partial class MathPuzzlePage : ContentPage
         NextQuestionButton.IsEnabled = false;
     }
 
+    private static string FormatElementaryAnswerForDisplay(ElementaryQuizContract contract, string text) =>
+        contract.Answers.Count > 1 ? text.Replace("; ", Environment.NewLine, StringComparison.Ordinal) : text;
+
     private void UpdateElementaryChoiceLayout(ElementaryQuizContract? contract)
     {
         bool singleColumn = contract is not null &&
             (DeviceInfo.Platform == DevicePlatform.Android || Width < 600) &&
-            (contract.Answers.Count > 1 || contract.ChoiceTexts?.Any(choice => choice.Length > 40) == true);
+            (contract.Answers.Count > 1 ||
+             contract.Type is ElementaryQuizType.ParallelLines or ElementaryQuizType.PerpendicularLines ||
+             contract.ChoiceTexts?.Any(choice => choice.Length > 40) == true);
         if (_singleColumnChoices == singleColumn) return;
         _singleColumnChoices = singleColumn;
         MultipleChoiceAnswerGrid.ColumnDefinitions.Clear();
@@ -4236,6 +4331,7 @@ public partial class MathPuzzlePage : ContentPage
 
         _questionAnswered = true;
         _lastAnswerWasCorrect = isCorrect;
+        UpdateQuizDiagram();
 
         if (isCorrect)
         {
@@ -4286,8 +4382,10 @@ public partial class MathPuzzlePage : ContentPage
                 feedbackOverride))
         {
             FeedbackLabel.Text = feedbackOverride;
-            FeedbackLabel.IsVisible = true;
-            FeedbackFractionView.IsVisible = false;
+            FeedbackFractionView.Expression = feedbackOverride;
+            FeedbackLabel.IsVisible = !_currentQuestion.UsesFractionFormatting;
+            FeedbackFractionView.IsVisible = _currentQuestion.UsesFractionFormatting;
+            FeedbackFractionView.HorizontalTextAlignment = isCorrect ? TextAlignment.Center : TextAlignment.Start;
             FeedbackLabel.HorizontalTextAlignment = isCorrect
                 ? TextAlignment.Center
                 : TextAlignment.Start;
@@ -4295,7 +4393,7 @@ public partial class MathPuzzlePage : ContentPage
 
         if (_currentQuestion.ElementaryProblem is ElementaryQuizContract elementary)
         {
-            SetSolutionContent(elementary.SolutionText, useFractionFormatting: false);
+            SetSolutionContent(elementary.SolutionText, useFractionFormatting: elementary.UsesFractionFormatting);
             SolutionBorder.IsVisible = true;
         }
         else if (_currentQuestion.WordProblem is not null)
@@ -4510,6 +4608,7 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion?.UsesFractionFormatting == true;
 
         FeedbackLabel.HorizontalTextAlignment = TextAlignment.Center;
+        FeedbackFractionView.HorizontalTextAlignment = TextAlignment.Center;
         FeedbackLabel.IsVisible = !useFractionFormatting;
         FeedbackFractionView.IsVisible = useFractionFormatting;
 
@@ -4627,15 +4726,16 @@ public partial class MathPuzzlePage : ContentPage
         _lastAnswerWasCorrect = null;
 
         QuestionExpressionLabel.Text = string.Empty;
-        QuizVisualView.IsVisible = false;
-        QuizVisualView.Drawable = null;
-        QuizVisualDataLabel.IsVisible = false;
-        QuizVisualDataLabel.Text = string.Empty;
+        ResetQuizDiagram();
         QuestionExpressionLabel.IsVisible = true;
         QuestionFractionExpressionView.Expression = string.Empty;
         QuestionFractionExpressionView.IsVisible = false;
+        QuestionComparisonFractionView.Expression = string.Empty;
+        QuestionComparisonFractionView.IsVisible = false;
         PresentedAnswerLabel.Text = string.Empty;
         PresentedAnswerLabel.IsVisible = false;
+        NumericResultLabel.Text = string.Empty;
+        NumericResultLabel.IsVisible = false;
         PresentedAnswerFractionView.Expression = string.Empty;
         PresentedAnswerFractionView.IsVisible = false;
         FeedbackLabel.Text = string.Empty;

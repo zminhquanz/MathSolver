@@ -245,6 +245,9 @@ public sealed class LocalLlmQuizGenerator : IRecoverableMemoryOwner
             ArithmeticQuizQuestion contract =
                 problemRequest.Kind switch
                 {
+                    _ when problemRequest.IsComparison =>
+                        new ElementaryQuizGenerator().GenerateComparison(mode, problemRequest.Kind,
+                            language, curriculumContext?.Tier ?? CurriculumTier.ThreeStars),
                     _ when ElementaryQuizGenerator.Supports(problemRequest.Kind) =>
                         new ElementaryQuizGenerator().Generate(mode, problemRequest.Kind, problemRequest.ElementaryType,
                             language, curriculumContext?.Tier ?? CurriculumTier.ThreeStars),

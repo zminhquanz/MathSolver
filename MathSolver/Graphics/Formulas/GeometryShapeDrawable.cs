@@ -1,4 +1,4 @@
-﻿using MathSolver.Services;
+using MathSolver.Services;
 using Microsoft.Maui.Graphics;
 
 namespace MathSolver.Graphics;
@@ -30,6 +30,37 @@ public sealed class GeometryShapeDrawable : IDrawable
     private const float ViewportPadding = 8f;
 
     public GeometryShapeType ShapeType { get; init; }
+
+    // Null preserves the symbolic labels used by the formula pages. Quiz callers
+    // supply only the dimensions stated in the question; absent labels stay blank.
+    public IReadOnlyDictionary<string, string>? DimensionLabels { get; init; }
+
+    private string Label(string key)
+    {
+        if (DimensionLabels is null) return key;
+        key = key.Replace("₁", "1").Replace("₂", "2");
+        if (ShapeType == GeometryShapeType.RectangularPrism && key == "c") key = "h";
+        return DimensionLabels.GetValueOrDefault(key, "");
+    }
+
+    private void DrawDimensionLabel(ICanvas canvas, string text, float x, float y,
+        float width, float height, HorizontalAlignment horizontal, VerticalAlignment vertical)
+    {
+        if (text.Length == 0) return;
+        canvas.SaveState();
+        try
+        {
+            if (DimensionLabels is not null)
+            {
+                float expanded = Math.Max(width, 75);
+                x -= (expanded - width) / 2;
+                width = expanded;
+                canvas.FontSize = 12;
+            }
+            canvas.DrawString(text, x, y, width, height, horizontal, vertical);
+        }
+        finally { canvas.RestoreState(); }
+    }
 
     private static Color ShapeColor =>
         ThemeResource.GetColor(
@@ -183,7 +214,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         }
     }
 
-    private static void DrawSquare(ICanvas canvas, RectF bounds)
+    private void DrawSquare(ICanvas canvas, RectF bounds)
     {
         float side = Math.Min(
             bounds.Width * 0.48f,
@@ -209,7 +240,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             side);
     }
 
-    private static void DrawRectangle(ICanvas canvas, RectF bounds)
+    private void DrawRectangle(ICanvas canvas, RectF bounds)
     {
         float width = bounds.Width * 0.62f;
         float height = bounds.Height * 0.40f;
@@ -234,7 +265,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             height);
     }
 
-    private static void DrawTriangle(ICanvas canvas, RectF bounds)
+    private void DrawTriangle(ICanvas canvas, RectF bounds)
     {
         float left = bounds.Width * 0.18f;
         float right = bounds.Width * 0.82f;
@@ -250,6 +281,12 @@ public sealed class GeometryShapeDrawable : IDrawable
         triangle.Close();
 
         canvas.DrawPath(triangle);
+
+        if (DimensionLabels?.ContainsKey("b") == true)
+        {
+            DrawHorizontalLabel(canvas, "b", left - 30, (top + bottom) / 2 - 25, 90);
+            DrawHorizontalLabel(canvas, "c", right - 60, (top + bottom) / 2 - 25, 90);
+        }
 
         DrawHorizontalLabel(
             canvas,
@@ -273,7 +310,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             bottom - top);
     }
 
-    private static void DrawRightTriangle(
+    private void DrawRightTriangle(
         ICanvas canvas,
         RectF bounds)
     {
@@ -323,8 +360,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             top,
             bottom - top);
 
-        canvas.DrawString(
-            "c",
+        DrawDimensionLabel(canvas,
+            Label("c"),
             (left + right) / 2f + 8f,
             (top + bottom) / 2f - 22f,
             30f,
@@ -343,7 +380,7 @@ public sealed class GeometryShapeDrawable : IDrawable
                 bounds.Width * 0.065f));
     }
 
-    private static void DrawEquilateralTriangle(
+    private void DrawEquilateralTriangle(
         ICanvas canvas,
         RectF bounds)
     {
@@ -389,8 +426,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             bottom + 2f,
             right - left);
 
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             left + (centerX - left) * 0.34f - 26f,
             top + (bottom - top) * 0.48f - 12f,
             30f,
@@ -398,8 +435,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
 
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             centerX + (right - centerX) * 0.56f + 2f,
             top + (bottom - top) * 0.48f - 12f,
             30f,
@@ -453,7 +490,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             bottom);
     }
 
-    private static void DrawCircle(ICanvas canvas, RectF bounds)
+    private void DrawCircle(ICanvas canvas, RectF bounds)
     {
         float diameter = Math.Min(
             bounds.Width * 0.52f,
@@ -470,8 +507,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             bounds.Center.X + diameter / 2,
             bounds.Center.Y);
 
-        canvas.DrawString(
-            "r",
+        DrawDimensionLabel(canvas,
+            Label("r"),
             bounds.Center.X,
             bounds.Center.Y - 24,
             diameter / 2,
@@ -480,7 +517,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
-    private static void DrawTrapezoid(ICanvas canvas, RectF bounds)
+    private void DrawTrapezoid(ICanvas canvas, RectF bounds)
     {
         float topLeft = bounds.Width * 0.33f;
         float topRight = bounds.Width * 0.67f;
@@ -507,6 +544,12 @@ public sealed class GeometryShapeDrawable : IDrawable
             topY - 25,
             topRight - topLeft);
 
+        if (DimensionLabels?.ContainsKey("c") == true)
+        {
+            DrawHorizontalLabel(canvas, "c", bottomLeft - 25, (topY + bottomY) / 2 - 20, 80);
+            DrawHorizontalLabel(canvas, "d", bottomRight - 55, (topY + bottomY) / 2 - 20, 80);
+        }
+
         DrawHorizontalLabel(
             canvas,
             "b",
@@ -529,7 +572,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             bottomY - topY);
     }
 
-    private static void DrawIsoscelesTrapezoid(
+    private void DrawIsoscelesTrapezoid(
         ICanvas canvas,
         RectF bounds)
     {
@@ -603,8 +646,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             topY,
             bottomY - topY);
 
-        canvas.DrawString(
-            "c",
+        DrawDimensionLabel(canvas,
+            Label("c"),
             bottomLeft + (topLeft - bottomLeft) * 0.45f - 28f,
             topY + (bottomY - topY) * 0.45f - 10f,
             28f,
@@ -612,8 +655,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
 
-        canvas.DrawString(
-            "c",
+        DrawDimensionLabel(canvas,
+            Label("c"),
             topRight + (bottomRight - topRight) * 0.55f + 2f,
             topY + (bottomY - topY) * 0.45f - 10f,
             28f,
@@ -646,7 +689,7 @@ public sealed class GeometryShapeDrawable : IDrawable
                 bounds.Width * 0.055f));
     }
 
-    private static void DrawRightTrapezoid(
+    private void DrawRightTrapezoid(
         ICanvas canvas,
         RectF bounds)
     {
@@ -710,8 +753,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             topY,
             bottomY - topY);
 
-        canvas.DrawString(
-            "c",
+        DrawDimensionLabel(canvas,
+            Label("c"),
             topRight + (bottomRight - topRight) * 0.55f + 3f,
             topY + (bottomY - topY) * 0.45f - 10f,
             28f,
@@ -741,7 +784,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             size: markerSize);
     }
 
-    private static void DrawRhombus(ICanvas canvas, RectF bounds)
+    private void DrawRhombus(ICanvas canvas, RectF bounds)
     {
         float centerX = bounds.Center.X;
         float centerY = bounds.Center.Y;
@@ -773,8 +816,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             centerX,
             centerY + verticalRadius);
 
-        canvas.DrawString(
-            "d₁",
+        DrawDimensionLabel(canvas,
+            Label("d₁"),
             centerX,
             centerY - 28,
             horizontalRadius,
@@ -782,8 +825,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
 
-        canvas.DrawString(
-            "d₂",
+        DrawDimensionLabel(canvas,
+            Label("d₂"),
             centerX + 7,
             centerY,
             32,
@@ -791,8 +834,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
 
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             centerX + horizontalRadius - 5,
             centerY - verticalRadius / 2 - 18,
             30,
@@ -801,7 +844,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
-    private static void DrawParallelogram(
+    private void DrawParallelogram(
         ICanvas canvas,
         RectF bounds)
     {
@@ -843,8 +886,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             topY,
             bottomY - topY);
 
-        canvas.DrawString(
-            "b",
+        DrawDimensionLabel(canvas,
+            Label("b"),
             right - offset / 2,
             topY + 10,
             30,
@@ -853,15 +896,15 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
-    private static void DrawHorizontalLabel(
+    private void DrawHorizontalLabel(
         ICanvas canvas,
         string text,
         float x,
         float y,
         float width)
     {
-        canvas.DrawString(
-            text,
+        DrawDimensionLabel(canvas,
+            Label(text),
             x,
             y,
             width,
@@ -870,24 +913,24 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
-    private static void DrawVerticalLabel(
+    private void DrawVerticalLabel(
         ICanvas canvas,
         string text,
         float x,
         float y,
         float height)
     {
-        canvas.DrawString(
-            text,
+        DrawDimensionLabel(canvas,
+            Label(text),
             x,
             y,
-            28,
+            DimensionLabels is null ? 28 : 65,
             height,
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
     }
 
-    private static void DrawDashedLine(
+    private void DrawDashedLine(
     ICanvas canvas,
     float x1,
     float y1,
@@ -909,7 +952,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.RestoreState();
     }
 
-    private static void DrawRightAngleMarker(
+    private void DrawRightAngleMarker(
         ICanvas canvas,
         float cornerX,
         float cornerY,
@@ -950,7 +993,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.RestoreState();
     }
 
-    private static void DrawSegmentTick(
+    private void DrawSegmentTick(
         ICanvas canvas,
         float x1,
         float y1,
@@ -1027,7 +1070,7 @@ public sealed class GeometryShapeDrawable : IDrawable
         return width < 260 ? 13 : 15;
     }
 
-    private static void DrawCube(
+    private void DrawCube(
     ICanvas canvas,
     RectF bounds)
     {
@@ -1167,8 +1210,8 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.RestoreState();
 
         // Chú thích cạnh a phía dưới mặt trước.
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             frontBottomLeft.X,
             frontBottomLeft.Y + 4f * scale,
             side,
@@ -1177,8 +1220,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
 
         // Chú thích cạnh a bên phải.
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             frontBottomRight.X + 5f * scale,
             frontTopRight.Y,
             24f * scale,
@@ -1187,8 +1230,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
 
         // Chú thích chiều sâu cũng bằng a.
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             frontTopLeft.X,
             backTopLeft.Y - 24f * scale,
             depthX,
@@ -1197,7 +1240,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
     }
 
-    private static void DrawRectangularPrism(
+    private void DrawRectangularPrism(
     ICanvas canvas,
     RectF rect)
     {
@@ -1265,8 +1308,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             bottom);
 
         // Ký hiệu chiều dài
-        canvas.DrawString(
-            "a",
+        DrawDimensionLabel(canvas,
+            Label("a"),
             left,
             bottom + depthY + 7f,
             width,
@@ -1275,8 +1318,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Top);
 
         // Ký hiệu chiều cao
-        canvas.DrawString(
-            "c",
+        DrawDimensionLabel(canvas,
+            Label("c"),
             right + depthX + 8f,
             top + depthY,
             25f,
@@ -1285,8 +1328,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Center);
 
         // Ký hiệu chiều rộng
-        canvas.DrawString(
-            "b",
+        DrawDimensionLabel(canvas,
+            Label("b"),
             right + 4f,
             top + 2f,
             depthX + 20f,
@@ -1295,7 +1338,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Top);
     }
 
-    private static void DrawSphere(
+    private void DrawSphere(
     ICanvas canvas,
     RectF rect)
     {
@@ -1342,8 +1385,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             left + diameter,
             rect.Center.Y);
 
-        canvas.DrawString(
-            "r",
+        DrawDimensionLabel(canvas,
+            Label("r"),
             rect.Center.X,
             rect.Center.Y - 25f,
             diameter / 2f,
@@ -1352,7 +1395,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Bottom);
     }
 
-    private static void DrawCylinder(
+    private void DrawCylinder(
     ICanvas canvas,
     RectF rect)
     {
@@ -1424,8 +1467,8 @@ public sealed class GeometryShapeDrawable : IDrawable
 
         canvas.RestoreState();
 
-        canvas.DrawString(
-            "h",
+        DrawDimensionLabel(canvas,
+            Label("h"),
             rect.Center.X + 7f,
             top + ellipseHeight,
             30f,
@@ -1440,8 +1483,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             left + width,
             bottom);
 
-        canvas.DrawString(
-            "r",
+        DrawDimensionLabel(canvas,
+            Label("r"),
             rect.Center.X,
             bottom - 29f,
             width / 2f,
@@ -1450,7 +1493,7 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Bottom);
     }
 
-    private static void DrawCone(
+    private void DrawCone(
     ICanvas canvas,
     RectF rect)
     {
@@ -1518,8 +1561,8 @@ public sealed class GeometryShapeDrawable : IDrawable
 
         canvas.RestoreState();
 
-        canvas.DrawString(
-            "h",
+        DrawDimensionLabel(canvas,
+            Label("h"),
             centerX + 7f,
             apexY,
             30f,
@@ -1534,8 +1577,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             left + baseWidth,
             baseY);
 
-        canvas.DrawString(
-            "r",
+        DrawDimensionLabel(canvas,
+            Label("r"),
             centerX,
             baseY - 29f,
             baseWidth / 2f,

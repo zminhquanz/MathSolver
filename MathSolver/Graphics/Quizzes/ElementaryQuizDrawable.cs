@@ -95,19 +95,80 @@ public sealed class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
             }
             else if (data.Kind == "angle")
             {
-                float x = width * .42f, y = height * .7f, length = Math.Min(110, width * .3f);
+                float x = width / 2, y = height / 2 - 10;
+                float length = Math.Min(105, Math.Min(width - 80, height - 85) / 2);
+                double rotation = (double)data.RotationDegrees * Math.PI / 180;
                 double angle = (double)data.Values[0] * Math.PI / 180;
-                canvas.DrawLine(x, y, x + length, y);
-                canvas.DrawLine(x, y, x + length * (float)Math.Cos(angle), y - length * (float)Math.Sin(angle));
-                Text(Value(0), x - 42, y - 40, 84);
+                for (int ray = 0; ray < 2; ray++)
+                {
+                    double direction = rotation + ray * angle;
+                    float ux = (float)Math.Cos(direction), uy = -(float)Math.Sin(direction);
+                    canvas.DrawLine(x, y, x + length * ux, y + length * uy);
+                    if (data.Labels.Count == 3)
+                        Text(data.Labels[ray == 0 ? 0 : 2], x + (length + 16) * ux - 13, y + (length + 16) * uy - 13, 26);
+                }
+                if (data.Values[0] == 90)
+                {
+                    float ux = (float)Math.Cos(rotation), uy = -(float)Math.Sin(rotation);
+                    float vx = (float)Math.Cos(rotation + angle), vy = -(float)Math.Sin(rotation + angle);
+                    var square = new PathF();
+                    square.MoveTo(x + 15 * ux, y + 15 * uy);
+                    square.LineTo(x + 15 * (ux + vx), y + 15 * (uy + vy));
+                    square.LineTo(x + 15 * vx, y + 15 * vy);
+                    canvas.DrawPath(square);
+                }
+                else
+                {
+                    var arc = new PathF();
+                    for (int step = 0; step <= 24; step++)
+                    {
+                        double direction = rotation + angle * step / 24;
+                        float ax = x + 25 * (float)Math.Cos(direction), ay = y - 25 * (float)Math.Sin(direction);
+                        if (step == 0) arc.MoveTo(ax, ay); else arc.LineTo(ax, ay);
+                    }
+                    canvas.DrawPath(arc);
+                }
+                if (data.Labels.Count == 3)
+                {
+                    double opposite = rotation + angle / 2 + Math.PI;
+                    Text(data.Labels[1], x + 22 * (float)Math.Cos(opposite) - 13, y - 22 * (float)Math.Sin(opposite) - 13, 26);
+                }
+                Text(Value(0), 0, height - 30, width);
             }
-            else if (data.Kind is "parallel" or "perpendicular")
+            else if (data.Kind is "parallel" or "perpendicular" or "intersecting" or "line-pairs")
             {
-                canvas.DrawLine(width * .15f, height * .4f, width * .85f, height * .4f);
-                if (data.Kind == "parallel") canvas.DrawLine(width * .15f, height * .65f, width * .85f, height * .65f);
-                else canvas.DrawLine(width / 2, height * .12f, width / 2, height * .85f);
-                if (data.Kind == "perpendicular")
-                { canvas.DrawLine(width / 2 + 14, height * .4f, width / 2 + 14, height * .4f - 14); canvas.DrawLine(width / 2, height * .4f - 14, width / 2 + 14, height * .4f - 14); }
+                IReadOnlyList<QuizVisualLine> lines = data.Lines ??
+                    [new("a", 0, data.Kind == "parallel" ? -.28f : 0),
+                     new("b", data.Kind == "parallel" ? 0 : data.Kind == "perpendicular" ? 90 : 45,
+                         data.Kind == "parallel" ? .28f : 0)];
+                float cx = width / 2, cy = height / 2;
+                float radius = Math.Max(10, Math.Min(width - 60, height - 65) / 2);
+                for (int index = 0; index < lines.Count; index++)
+                {
+                    var line = lines[index];
+                    double angle = (double)line.DirectionDegrees * Math.PI / 180;
+                    float ux = (float)Math.Cos(angle), uy = -(float)Math.Sin(angle);
+                    float offset = line.OffsetRatio * radius;
+                    float x = cx - uy * offset, y = cy + ux * offset;
+                    float halfLength = MathF.Sqrt(Math.Max(0, radius * radius - offset * offset)) * .82f;
+                    canvas.StrokeColor = Series[index % Series.Length];
+                    canvas.FontColor = Series[index % Series.Length];
+                    canvas.DrawLine(x - halfLength * ux, y - halfLength * uy, x + halfLength * ux, y + halfLength * uy);
+                    Text(line.Label, x + (halfLength + 12) * ux - 14, y + (halfLength + 12) * uy - 13, 28);
+                }
+                if (lines.Count == 2 && data.Kind == "perpendicular")
+                {
+                    double first = (double)lines[0].DirectionDegrees * Math.PI / 180;
+                    double second = (double)lines[1].DirectionDegrees * Math.PI / 180;
+                    float ux = (float)Math.Cos(first), uy = -(float)Math.Sin(first);
+                    float vx = (float)Math.Cos(second), vy = -(float)Math.Sin(second);
+                    canvas.StrokeColor = ThemeResource.GetColor("WallpaperTextSecondaryColor", "#64748B");
+                    var square = new PathF();
+                    square.MoveTo(cx + 14 * ux, cy + 14 * uy);
+                    square.LineTo(cx + 14 * (ux + vx), cy + 14 * (uy + vy));
+                    square.LineTo(cx + 14 * vx, cy + 14 * vy);
+                    canvas.DrawPath(square);
+                }
             }
             else if (data.Kind == "composite")
             {
