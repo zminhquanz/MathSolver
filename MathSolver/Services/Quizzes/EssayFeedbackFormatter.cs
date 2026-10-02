@@ -30,6 +30,8 @@ public static class EssayFeedbackFormatter
             return string.Empty;
         }
 
+        if (validation.Details.Count > 0) return string.Join(Environment.NewLine, validation.Details);
+
         bool vietnamese = language == AppLanguage.Vietnamese;
         string expectedUnit = EssayAnswerValidator.GetExpectedUnit(question);
         string expectedAnswer = GetExpectedAnswer(question, expectedUnit, culture);

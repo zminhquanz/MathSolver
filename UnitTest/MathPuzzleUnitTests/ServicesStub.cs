@@ -7,6 +7,10 @@ public static class AppLanguageManager
 {
     public static AppLanguage CurrentLanguage { get; set; } = AppLanguage.English;
 }
+internal static class LocalizationService
+{
+    internal static string TranslateKey(string key) => key;
+}
 internal enum CalculationSimdMode { Portable, Scalar, Sse, AvxAvx2, Avx512, ArmNeon }
 
 internal static class CalculationAccelerationManager

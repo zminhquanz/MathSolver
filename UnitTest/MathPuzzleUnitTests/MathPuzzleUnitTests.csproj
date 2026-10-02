@@ -18,7 +18,8 @@
     <Compile Include="../../MathSolver/Numerics/Powers/*.cs" Link="Numerics/Powers/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Numerics/FloatingPoint/*.cs" Link="Numerics/FloatingPoint/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Numerics/Serialization/*.cs" Link="Numerics/Serialization/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/Calculations/*.cs" Exclude="../../MathSolver/Services/Calculations/MeasurementEngine.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Services/Calculations/*.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Services/Localization/QuizLocalizationOverrides.cs" Link="Services/Localization/QuizLocalizationOverrides.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
     <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Services/AI/LocalLlmQuizGenerator.cs" Link="Services/AI/LocalLlmQuizGenerator.cs" />

@@ -27,7 +27,8 @@ public sealed record ArithmeticQuizQuestion(
     MotionQuizContract? MotionProblem = null,
     AverageQuizContract? AverageProblem = null,
     PercentageQuizContract? PercentageProblem = null,
-    ExpressionQuizContract? ExpressionProblem = null)
+    ExpressionQuizContract? ExpressionProblem = null,
+    ElementaryQuizContract? ElementaryProblem = null)
 {
     public bool UsesFractionFormatting => FractionProblem is not null || ExpressionProblem?.UsesFractions == true;
 

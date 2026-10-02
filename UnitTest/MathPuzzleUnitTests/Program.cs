@@ -4,6 +4,8 @@ var tests = new (string Name, Action Run)[]
 {
     ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),
     ("Catalog", PuzzleTests.CheckCatalog),
+    ("Elementary contracts and AI matrix", PuzzleTests.CheckElementaryContracts),
+    ("Flexible multi-step work and two answers", PuzzleTests.CheckElementaryFlexibleWork),
     ("Algorithm question matrix", PuzzleTests.CheckAlgorithmMatrix),
     ("Numeric expressions", PuzzleTests.CheckExpressions),
     ("Mixed and AI expressions", PuzzleTests.CheckExpressionAi),

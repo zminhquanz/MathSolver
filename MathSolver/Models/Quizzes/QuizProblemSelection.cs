@@ -14,7 +14,16 @@ public enum QuizProblemKind
     Motion,
     Average,
     Percentage,
-    Expression
+    Expression,
+    TwoNumbers,
+    Measurement,
+    Time,
+    Remainder,
+    Decimal,
+    FractionSkills,
+    Data,
+    Probability,
+    VisualGeometry
 }
 
 /// <summary>
@@ -49,7 +58,8 @@ public readonly record struct QuizProblemRequest(
     GeometryQuizShape? GeometryShape = null,
     MotionQuizType? MotionType = null,
     ExpressionQuizType? ExpressionType = null,
-    GeometryMeasurement? GeometryMeasurement = null);
+    GeometryMeasurement? GeometryMeasurement = null,
+    ElementaryQuizType? ElementaryType = null);
 
 /// <summary>
 /// Một mục nhóm hiển thị trong danh sách dạng đề. FixedRequest bằng null dành

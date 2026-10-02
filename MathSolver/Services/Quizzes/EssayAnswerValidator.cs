@@ -35,11 +35,12 @@ public sealed record EssayAnswerValidationResult(
         AnswerIsCorrect;
 
     public IReadOnlyList<EssayStepValidationResult> Steps { get; init; } = [];
+    public IReadOnlyList<string> Details { get; init; } = [];
 }
 
 public sealed record EssayStepValidationResult(
     int Number, string Equation, bool IsCorrect, EssayAnswerError Error,
-    string? ComputedValue = null, string? WrittenValue = null, string? EnteredUnit = null);
+    string? ComputedValue = null, string? WrittenValue = null, string? EnteredUnit = null, string? ExpectedUnit = null);
 
 /// <summary>
 /// Chấm phép tính và đáp số của bài tự luận. Câu lời giải chỉ bắt buộc với
@@ -66,6 +67,9 @@ public sealed partial class EssayAnswerValidator
         string? answerText)
     {
         ArgumentNullException.ThrowIfNull(question);
+
+        if (question.ElementaryProblem is not null)
+            return ElementaryEssayValidator.Validate(question, solutionText, equationText, answerText);
 
         (bool solutionIsCorrect, EssayAnswerError solutionError) =
             ValidateSolution(
@@ -111,6 +115,8 @@ public sealed partial class EssayAnswerValidator
     {
         ArgumentNullException.ThrowIfNull(question);
 
+        if (question.ElementaryProblem is not null) return question.ElementaryProblem.RequiresSolution;
+
         return question.WordProblem is not null ||
                question.GeometryProblem is not null ||
                question.ProportionProblem is not null ||
@@ -124,6 +130,7 @@ public sealed partial class EssayAnswerValidator
         ArgumentNullException.ThrowIfNull(question);
 
         return question.WordProblem?.AnswerUnit ??
+               question.ElementaryProblem?.Answers.FirstOrDefault()?.Unit ??
                question.GeometryProblem?.AnswerUnit ??
                question.ProportionProblem?.AnswerUnit ??
                question.MotionProblem?.AnswerUnit ??
@@ -179,7 +186,7 @@ public sealed partial class EssayAnswerValidator
         string enteredUnit) =>
         IsExpectedUnit(question, NormalizeUnit(enteredUnit));
 
-    private static (bool IsCorrect, EssayAnswerError Error)
+    internal static (bool IsCorrect, EssayAnswerError Error)
         ValidateSolution(
             ArithmeticQuizQuestion question,
             string? solutionText)

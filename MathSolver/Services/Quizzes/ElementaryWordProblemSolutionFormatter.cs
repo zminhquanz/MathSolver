@@ -15,6 +15,8 @@ public static class ElementaryWordProblemSolutionFormatter
         ArgumentNullException.ThrowIfNull(question);
         ArgumentNullException.ThrowIfNull(culture);
 
+        if (question.ElementaryProblem is ElementaryQuizContract elementary) return elementary.SolutionText;
+
         MathWordProblem wordProblem =
             question.WordProblem ??
             throw new ArgumentException(

@@ -245,6 +245,9 @@ public sealed class LocalLlmQuizGenerator : IRecoverableMemoryOwner
             ArithmeticQuizQuestion contract =
                 problemRequest.Kind switch
                 {
+                    _ when ElementaryQuizGenerator.Supports(problemRequest.Kind) =>
+                        new ElementaryQuizGenerator().Generate(mode, problemRequest.Kind, problemRequest.ElementaryType,
+                            language, curriculumContext?.Tier ?? CurriculumTier.ThreeStars),
                     QuizProblemKind.Expression =>
                         _expressionQuizGenerator.GenerateContract(
                             mode, problemRequest.ExpressionType, language,
@@ -365,7 +368,9 @@ public sealed class LocalLlmQuizGenerator : IRecoverableMemoryOwner
             // Đây là nguồn sự thật bất biến của cả ba lần thử. Retry luôn
             // replay prompt này; không dựa vào token của JSON sai trước đó.
             string authoritativeUserPrompt =
-                contract.ExpressionProblem is ExpressionQuizContract expressionContract
+                contract.ElementaryProblem is ElementaryQuizContract elementaryContract
+                    ? LlmQuizPromptBuilder.BuildElementaryUserPrompt(elementaryContract)
+                    : contract.ExpressionProblem is ExpressionQuizContract expressionContract
                     ? LlmQuizPromptBuilder.BuildExpressionUserPrompt(expressionContract, language, null)
                     : contract.FindXProblem is FindXQuizContract findX
                     ? LlmQuizPromptBuilder.BuildFindXUserPrompt(
@@ -668,7 +673,7 @@ public sealed class LocalLlmQuizGenerator : IRecoverableMemoryOwner
                         out LlmWordProblemDraft? draft,
                         out string parseErrorCode,
                         out string? parseErrorDetail,
-                        allowEmptyAnswerUnit: contract.ExpressionProblem is not null))
+                        allowEmptyAnswerUnit: contract.ExpressionProblem is not null || contract.ElementaryProblem is not null))
                 {
                     previousErrorCode = parseErrorCode;
                     previousValidationFeedback =
@@ -694,7 +699,9 @@ public sealed class LocalLlmQuizGenerator : IRecoverableMemoryOwner
                         rawModelOutput: rawOutput);
 
                     LlmWordProblemValidationResult validation =
-                        contract.ExpressionProblem is ExpressionQuizContract validatedExpression
+                        contract.ElementaryProblem is ElementaryQuizContract validatedElementary
+                            ? _wordProblemValidator.ValidateElementary(draft, validatedElementary)
+                            : contract.ExpressionProblem is ExpressionQuizContract validatedExpression
                             ? _wordProblemValidator.ValidateExpression(draft, validatedExpression, language)
                             : contract.FindXProblem is FindXQuizContract validatedFindX
                             ? _wordProblemValidator.ValidateFindX(
@@ -1445,6 +1452,17 @@ internal static class LlmQuizPromptBuilder
             (FractionOperation.Divide, _) => "division",
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
+
+    public static string BuildElementaryUserPrompt(ElementaryQuizContract contract)
+    {
+        bool vi = contract.Language == AppLanguage.Vietnamese;
+        string schema = JsonSerializer.Serialize(new { problem_text = contract.ProblemText,
+            solution_lead = contract.Answers[0].Label + ":", answer_unit = contract.Answers[0].Unit,
+            subject_name = contract.Answers[0].Label }, new JsonSerializerOptions
+            { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+        return (vi ? "Trả về JSON duy nhất theo mẫu. Giữ nguyên đoạn đề toán đúng một lần; có thể thêm một câu dẫn tự nhiên phía trước, không thêm số hoặc đáp án. Dữ kiện, bảng/hình và lời giải do C# quản lý. "
+            : "Return only JSON using the schema. Keep the mathematical passage verbatim exactly once. You may prepend a natural introductory sentence without numbers or answers. C# owns the facts, chart/figure and solution. ") + schema;
+    }
 
     public static string BuildExpressionUserPrompt(
         ExpressionQuizContract contract, AppLanguage language, string? previousErrorCode)
@@ -3457,6 +3475,24 @@ internal sealed record LlmWordProblemValidationResult(
 
 internal sealed partial class LlmWordProblemValidator
 {
+    public LlmWordProblemValidationResult ValidateElementary(LlmWordProblemDraft draft, ElementaryQuizContract contract)
+    {
+        string text = NormalizeSingleLine(draft.ProblemText);
+        string canonical = NormalizeSingleLine(contract.ProblemText);
+        bool vi = contract.Language == AppLanguage.Vietnamese;
+        int start = text.IndexOf(canonical, StringComparison.Ordinal);
+        if (text.Length > 1800 || start < 0 || text.IndexOf(canonical, start + canonical.Length, StringComparison.Ordinal) >= 0
+            || text[(start + canonical.Length)..].Trim().Length != 0
+            || NumberRegex().IsMatch(text[..start]) || text[..start].Contains('='))
+            return LlmWordProblemValidationResult.Invalid("ElementaryFactsMismatch", vi
+                ? "Giữ nguyên đề toán C# đúng một lần; chỉ thêm câu dẫn phía trước, không thêm số hay đáp án."
+                : "Keep the C# mathematical passage exactly once; only prepend an introduction without numbers or answers.");
+        if (!string.Equals(draft.AnswerUnit?.Trim() ?? "", contract.Answers[0].Unit, StringComparison.OrdinalIgnoreCase))
+            return LlmWordProblemValidationResult.Invalid("AnswerUnitMismatch", vi ? "Giữ đúng đơn vị đáp số C#." : "Keep the C# answer unit.");
+        return new(true, null, null, new MathWordProblem(text, contract.Answers[0].Label + ":",
+            contract.Answers[0].Unit, contract.Answers[0].Label));
+    }
+
     public LlmWordProblemValidationResult ValidateExpression(
         LlmWordProblemDraft draft, ExpressionQuizContract contract, AppLanguage language)
     {

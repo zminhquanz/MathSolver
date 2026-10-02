@@ -39,7 +39,16 @@ public sealed class QuizProblemTypeCatalog
             new(QuizProblemKind.Percentage)),
         new(
             "Quiz.ProblemExpression",
-            new(QuizProblemKind.Expression))
+            new(QuizProblemKind.Expression)),
+        new("Quiz.ProblemTwoNumbers", new(QuizProblemKind.TwoNumbers)),
+        new("Quiz.ProblemMeasurement", new(QuizProblemKind.Measurement)),
+        new("Quiz.ProblemTime", new(QuizProblemKind.Time)),
+        new("Quiz.ProblemRemainder", new(QuizProblemKind.Remainder)),
+        new("Quiz.ProblemDecimal", new(QuizProblemKind.Decimal)),
+        new("Quiz.ProblemFractionSkills", new(QuizProblemKind.FractionSkills)),
+        new("Quiz.ProblemData", new(QuizProblemKind.Data)),
+        new("Quiz.ProblemProbability", new(QuizProblemKind.Probability)),
+        new("Quiz.ProblemVisualGeometry", new(QuizProblemKind.VisualGeometry))
     ];
 
     private static readonly IReadOnlyList<QuizProblemOption>
@@ -73,7 +82,8 @@ public sealed class QuizProblemTypeCatalog
         CurriculumTier curriculumTier,
         bool includeExpressions = true,
         ExpressionQuizType? expressionType = null,
-        GeometryMeasurement? geometryMeasurement = null)
+        GeometryMeasurement? geometryMeasurement = null,
+        ElementaryQuizType? elementaryType = null)
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
@@ -128,6 +138,7 @@ public sealed class QuizProblemTypeCatalog
                     {
                         MotionType = motionType
                     },
+                _ when ElementaryQuizGenerator.Supports(fixedRequest.Kind) => fixedRequest with { ElementaryType = elementaryType },
                 _ => fixedRequest
             };
         }

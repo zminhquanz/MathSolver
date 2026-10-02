@@ -1,5 +1,14 @@
 # Math puzzle checks
 
+The elementary-expansion groups cover 4,920 Algorithm/AI contracts for 41 skills
+across nine new families, both languages, all five star levels and all three answer
+modes. They check examples, distinct choices, subtype translations, unchanged AI
+mathematical passages and answer units. Independent cases cover merged/split work,
+reordered two-number answers, missing/duplicate results, earlier errors, school
+division-with-remainder notation, extra groups, exact decimals with comma notation,
+mixed numbers and reduced fractions. Indirect averages use the same derivation
+grader. See [implementation details](../../MathSolver/ELEMENTARY_QUIZ_EXPANSION.md).
+
 ## Visual Studio
 
 1. Open `MathSolver.slnx` in Visual Studio.

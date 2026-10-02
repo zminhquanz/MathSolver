@@ -645,6 +645,19 @@ public static class QuizCurriculumLayer
                 ExpressionType: types[random.Next(types.Length)]), 2)];
         }
 
+        // Skills become available individually at every star; Mixed follows a
+        // gradual progression and uses the same pool for both sources.
+        if (tier >= CurriculumTier.TwoStars)
+            pool = [.. pool, new(new(QuizProblemKind.Data), 1), new(new(QuizProblemKind.Probability), 1),
+                new(new(QuizProblemKind.VisualGeometry), 1)];
+        if (tier >= CurriculumTier.ThreeStars)
+            pool = [.. pool, new(new(QuizProblemKind.Measurement), 1), new(new(QuizProblemKind.Time), 1),
+                new(new(QuizProblemKind.Remainder), 1)];
+        if (tier >= CurriculumTier.FourStars)
+            pool = [.. pool, new(new(QuizProblemKind.TwoNumbers), 2), new(new(QuizProblemKind.FractionSkills), 1)];
+        if (tier >= CurriculumTier.FiveStars)
+            pool = [.. pool, new(new(QuizProblemKind.Decimal), 1)];
+
         int totalWeight = pool.Sum(item => item.Weight);
         int roll = random.Next(totalWeight);
 

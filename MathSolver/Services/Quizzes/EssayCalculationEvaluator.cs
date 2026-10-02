@@ -9,6 +9,10 @@ namespace MathSolver.Services;
 /// </summary>
 internal static class EssayCalculationEvaluator
 {
+    internal static string Format(Value value) => value.Denominator.IsOne
+        ? value.Numerator.ToString(CultureInfo.InvariantCulture)
+        : $"{value.Numerator.ToString(CultureInfo.InvariantCulture)}/{value.Denominator.ToString(CultureInfo.InvariantCulture)}";
+
     internal readonly record struct Value(BigInteger Numerator, BigInteger Denominator)
     {
         internal static Value Create(BigInteger numerator, BigInteger denominator)
@@ -25,14 +29,14 @@ internal static class EssayCalculationEvaluator
         }
     }
 
-    internal static bool TryEvaluate(string text, out Value value, out bool hasOperation)
+    internal static bool TryEvaluate(string text, out Value value, out bool hasOperation, bool preferDecimalNotation = false)
     {
         value = default;
         hasOperation = false;
         if (text.Length is 0 or > 256)
             return false;
 
-        var parser = new Parser(text);
+        var parser = new Parser(text, preferDecimalNotation: preferDecimalNotation);
         if (!parser.TryReadExpression(out value) || !parser.AtEnd)
             return false;
 
@@ -40,19 +44,19 @@ internal static class EssayCalculationEvaluator
         return true;
     }
 
-    internal static bool TryGetStructure(string text, out string structure, bool fractionLiterals)
+    internal static bool TryGetStructure(string text, out string structure, bool fractionLiterals, bool preferDecimalNotation = false)
     {
         structure = string.Empty;
         if (text.Length is 0 or > 256)
             return false;
-        var parser = new Parser(text, trackStructure: true, fractionLiterals: fractionLiterals);
+        var parser = new Parser(text, trackStructure: true, fractionLiterals: fractionLiterals, preferDecimalNotation: preferDecimalNotation);
         if (!parser.TryReadExpression(out _) || !parser.AtEnd)
             return false;
         structure = parser.Structure;
         return true;
     }
 
-    private sealed class Parser(string text, bool trackStructure = false, bool fractionLiterals = true)
+    private sealed class Parser(string text, bool trackStructure = false, bool fractionLiterals = true, bool preferDecimalNotation = false)
     {
         private int _position;
         private int _depth;
@@ -265,7 +269,7 @@ internal static class EssayCalculationEvaluator
             }
 
             string[] groups = token.Split(['.', ',']);
-            bool groupedInteger = groups[0].Length is >= 1 and <= 3 &&
+            bool groupedInteger = !preferDecimalNotation && groups[0].Length is >= 1 and <= 3 &&
                                   groups.Skip(1).All(group => group.Length == 3);
             if (groupedInteger)
             {

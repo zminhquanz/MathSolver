@@ -771,6 +771,31 @@
 
                             </Border>
 
+                            <VerticalStackLayout x:Name="ElementaryTypePanel" IsVisible="False" Spacing="8">
+                                <Label Text="{localization:QuizTranslate Quiz.ElementaryTypeTitle}"
+                                       FontSize="15" FontAttributes="Bold"
+                                       TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                <Border Padding="0"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+                                    <Grid>
+                                        <Picker x:Name="ElementaryTypePicker"
+                                                HeightRequest="{OnPlatform Android=56, Default=50}"
+                                                FontSize="16" FontAttributes="Bold"
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                                SelectedIndexChanged="OnElementaryTypeChanged" />
+                                        <Path IsVisible="{OnPlatform Android=True, Default=False}"
+                                              Data="M4,7 L10,13 L16,7 Z"
+                                              Fill="{DynamicResource WallpaperTextSecondaryBrush}"
+                                              WidthRequest="14" HeightRequest="14" Margin="0,0,18,0"
+                                              HorizontalOptions="End" VerticalOptions="Center" InputTransparent="True" />
+                                    </Grid>
+                                </Border>
+                            </VerticalStackLayout>
+
                             <VerticalStackLayout x:Name="ExpressionTypePanel" IsVisible="False" Spacing="8">
                                 <Label Text="{localization:QuizTranslate Quiz.ExpressionTypeTitle}"
                                        FontSize="15" FontAttributes="Bold"
@@ -1225,6 +1250,12 @@
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource PrimaryColor}" />
+
+                            <GraphicsView x:Name="QuizVisualView" IsVisible="False" HeightRequest="260"
+                                          HorizontalOptions="Fill" />
+                            <Label x:Name="QuizVisualDataLabel" IsVisible="False" FontSize="14"
+                                   LineBreakMode="WordWrap" HorizontalTextAlignment="Center"
+                                   TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <controls:FractionExpressionView
                                 x:Name="QuestionFractionExpressionView"

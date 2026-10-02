@@ -41,3 +41,10 @@ Minh họa chuyển động, tỉ lệ và hình học.
 - [MotionAverageSpeedDrawable.cs](Formulas/MotionAverageSpeedDrawable.cs)
 - [ProportionComparisonDrawable.cs](Formulas/ProportionComparisonDrawable.cs)
 
+## Quizzes
+
+Bảng, biểu đồ cột/tròn, đồng hồ và hình học trực quan dùng dữ kiện của câu hỏi.
+Hai nguồn Thuật toán và AI/LLM dùng cùng drawable trên Windows và Android.
+
+- [ElementaryQuizDrawable.cs](Quizzes/ElementaryQuizDrawable.cs)
+
