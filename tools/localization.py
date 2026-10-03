@@ -119,7 +119,7 @@ def find_references(source, project):
             continue
         for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
             for literal in re.findall(r'"([^"\n]*)"', line):
-                key = literal.removeprefix("{localization:Translate ").removesuffix("}")
+                key = re.sub(r"^\{localization:(?:Quiz)?Translate\s+", "", literal).removesuffix("}")
                 identities = ([keys[key]] if key in keys else []) + sources.get(literal, [])
                 for identity in identities:
                     reference = f"{path.relative_to(project).as_posix()}:{number}"

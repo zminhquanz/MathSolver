@@ -755,9 +755,9 @@ AVX-512 power branches now use left-to-right binary exponentiation: each set bit
 
 ## Curriculum Layer – Mixed vs Skill Mode (2026-09-12)
 
-Curriculum chỉ áp dụng trong tab Toán đố và dùng chung cho nguồn Thuật toán + C#.
+Curriculum chỉ áp dụng trong tab Toán đố và được các generator C# sử dụng.
 
-- **Hỗn hợp các dạng (top-level Mixed):** số sao quyết định pool skill được phép xuất hiện. Ví dụ các skill nâng cao như Phân số/Tỉ lệ/Chuyển động chỉ được đưa vào pool ở mốc phù hợp. Sau khi chọn skill, generator vẫn là nguồn tạo contract C# và C# chỉ diễn đạt lại contract đó.
+- **Hỗn hợp các dạng (top-level Mixed):** số sao quyết định pool skill được phép xuất hiện. Ví dụ các skill nâng cao như Phân số/Tỉ lệ/Chuyển động chỉ được đưa vào pool ở mốc phù hợp. Sau khi chọn skill, generator C# tạo dữ kiện, đề bài và đáp án.
 - **Đã chọn một skill cụ thể:** luôn cho phép đủ ★..★★★★★ và toàn bộ subtype của skill. Không thêm/xóa/disable Picker item theo sao. Điều này tránh re-entrant `SelectionChanged`/native flyout trên WinUI.
 - **Hỗn hợp bên trong skill:** Phép tính và Phân số hỗ trợ lựa chọn `Hỗn hợp các dạng`, truyền operation = `null` để generator random `+ - × ÷`. Find X và các Picker subtype khác giữ lựa chọn Hỗn hợp tương tự.
 - **Giới hạn dữ kiện a/b cho Cơ bản, Phân số, Tìm X:** ★ `0..9`, ★★ `0..99`, ★★★ `0..999`, ★★★★ `0..9,999`, ★★★★★ `0..99,999`. Đây là giới hạn **dữ kiện/toán hạng**, không phải giới hạn kết quả; tổng/tích/vế kết quả có thể vượt số chữ số của tier.
@@ -767,7 +767,7 @@ Curriculum chỉ áp dụng trong tab Toán đố và dùng chung cho nguồn Th
 
 - Với Cơ bản, Phân số và Tìm X ở Skill Mode, toán hạng/dữ kiện chính `a` luôn nằm đúng bucket của tier hiện tại: ★ đơn vị, ★★ chục, ★★★ trăm, ★★★★ nghìn, ★★★★★ chục nghìn.
 - Toán hạng/dữ kiện thứ hai `b` không bị ép cùng bucket với `a`: generator chọn ngẫu nhiên một bucket từ ★ đến tier hiện tại rồi sinh `b` trong bucket đó. Vì vậy ★★★★★ có thể tạo dạng `18,258 ÷ 2`, `43,721 + 85`, hoặc phân số có vế thứ hai nhỏ hơn nhiều. Cộng/trừ/chia vẫn giữ các ràng buộc toán học; phép nhân còn bị chặn để tích nằm trong `Int32`.
-- C# luôn nhận đúng contract C# đã sinh, nên quy tắc bucket `a/b` giống hệt nguồn Thuật toán. Khi có dữ kiện lớn, catalog/prompt/validator realism tiếp tục bắt buộc ngữ cảnh kho, nhà máy, trung tâm phân phối, bồn chứa... phù hợp thay vì lớp học, vườn nhà hay khay bánh.
+- Generator C# áp dụng quy tắc bucket `a/b` khi sinh dữ kiện. Ngữ cảnh đề bài được chọn theo độ lớn của dữ kiện để số lượng lớn phù hợp với kho, nhà máy, trung tâm phân phối hoặc bồn chứa.
 - `FractionExpressionView` tách dấu câu cuối token trước khi parse phân số, nhờ đó tử/mẫu `BigInteger` luôn được format grouping đúng (`24,508,967,912`) và dấu chấm cuối câu không bị hiểu nhầm là dấu thập phân của mẫu số.
 - Mọi `ScrollView` dọc dùng behavior layout chung: sau layout ban đầu, nếu nội dung tăng chiều cao do result/feedback/validation Border xuất hiện thì viewport tự cuộn xuống cuối. ScrollView chỉ ngang bị bỏ qua.
 

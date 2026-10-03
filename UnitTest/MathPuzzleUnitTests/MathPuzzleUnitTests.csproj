@@ -7,6 +7,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../../MathSolver/Resources/Raw/Localization/vi-VN.json" LogicalName="QuizLocalization.vi-VN.json" />
+    <EmbeddedResource Include="../../MathSolver/Resources/Raw/Localization/en-US.json" LogicalName="QuizLocalization.en-US.json" />
+    <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.xaml" LogicalName="QuizLocalization.MathPuzzlePage.xaml" />
+    <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.xaml.cs" LogicalName="QuizLocalization.MathPuzzlePage.xaml.cs" />
+    <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.Diagrams.cs" LogicalName="QuizLocalization.MathPuzzlePage.Diagrams.cs" />
     <Compile Include="../../MathSolver/Services/Memory/ResultFileStore.cs" Link="Services/Memory/ResultFileStore.cs" />
     <Compile Include="../../MathSolver/Views/Calculators/PowerRootView.Memory.cs" Link="Views/PowerRootView.Memory.cs" />
     <Compile Include="../../MathSolver/Services/Memory/RecoverableMemoryRegistry.cs" Link="Services/Memory/RecoverableMemoryRegistry.cs" />

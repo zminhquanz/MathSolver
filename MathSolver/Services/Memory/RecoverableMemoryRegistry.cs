@@ -40,8 +40,8 @@ public sealed class RecoverableMemoryRegistry
                 _owners.RemoveAll(reference => !reference.TryGetTarget(out _));
                 owners = _owners.ToArray();
             }
-            // Unload idle native weights promptly while an independent result
-            // archive is streaming to disk. Each owner serializes its own work.
+            // Release independent owners concurrently so one result archive
+            // does not delay another owner's cleanup. Each owner serializes its own work.
             long[] released = await Task.WhenAll(owners.Select(ReleaseOwnerAsync));
             return released.Sum();
         }

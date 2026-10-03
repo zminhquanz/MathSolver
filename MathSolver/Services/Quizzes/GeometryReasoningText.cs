@@ -56,17 +56,4 @@ internal static class GeometryReasoningText
             $"{answer}: {formattedAnswer} {contract.AnswerUnit}";
     }
 
-    internal static string BuildPrompt(GeometryQuizContract contract, AppLanguage language)
-    {
-        var reasoning = contract.Reasoning!;
-        return language == AppLanguage.Vietnamese
-            ? $"Viết bằng tiếng Việt một bối cảnh ngắn tự nhiên cho bài hình học sau. Giữ đúng đồ vật {contract.ObjectName}, hình {contract.ShapeName} và đại lượng cần tìm.\n" +
-              "Các câu định lượng dưới đây đã được C# kiểm tra. Giữ nguyên từng câu dữ kiện, quan hệ và đơn vị. Có thể đổi thứ tự các câu dữ kiện độc lập, thêm lời dẫn không chứa số và viết lại câu hỏi cùng đại lượng; không đưa kích thước suy ra vào đề:\n" +
-              reasoning.ProblemText + "\nKhông tính sẵn kết quả. solution_lead chỉ là câu dẫn lời giải, không chứa số hoặc phép tính. " +
-              $"Chỉ trả JSON bốn trường problem_text, subject_name, answer_unit (phải là {contract.AnswerUnit}), solution_lead."
-            : $"Write in English a brief natural context for this geometry problem. Preserve object {contract.ObjectName}, shape {contract.ShapeName}, and the requested measurement.\n" +
-              "C# has checked the following quantitative sentences. Preserve each factual sentence, relationship and unit. You may reorder independent fact sentences, add a nonnumeric introduction and reword the question about the same measurement; never supply inferred dimensions:\n" +
-              reasoning.ProblemText + "\nDo not precompute the result. solution_lead is a short sentence with no number or calculation. " +
-              $"Return only four-field JSON: problem_text, subject_name, answer_unit (exactly {contract.AnswerUnit}), solution_lead.";
-    }
 }

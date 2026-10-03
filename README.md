@@ -134,7 +134,7 @@ Geometry measurement practice also has five reasoning levels for every supported
 | 4 stars | Combine linked dimensions or sum/difference relations before applying the formula. |
 | 5 stars | Combine those relations with conversion of a given length into the formula's length unit. |
 
-C# keeps supplied facts separate from solved dimensions. The algorithm owns these facts, inference steps, and exact answers. The separate narration validator accepts equivalent written length-unit names and rejects changed quantities, reversed relations, and wrong answer units. Unknown dimensions stay marked `?` until the solution is revealed. Triangle, trapezoid, and rhombus dimensions are generated with consistent geometric relationships. Circle questions retain the elementary convention of π = 3.14 and dimensions that produce whole-number answers.
+C# keeps supplied facts separate from solved dimensions. The algorithm owns these facts, reasoning steps, and exact answers. Written-answer graders check calculations and answer units, including equivalent written length-unit names. Unknown dimensions stay marked `?` until the solution is revealed. Triangle, trapezoid, and rhombus dimensions are generated with consistent geometric relationships. Circle questions retain the elementary convention of π = 3.14 and dimensions that produce whole-number answers.
 
 Written geometry work may merge, split, or reorder calculations, including fractional intermediate results. Every written equality is checked, along with the final calculation unit and answer unit; a correct final answer does not hide an incorrect earlier equality. The existing whole-curriculum Mixed eligibility rules remain in place.
 

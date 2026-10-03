@@ -138,163 +138,148 @@ strings,Geometry.Properties.RectangularPrism,"Hình học — đại lượng, c
 strings,Geometry.Properties.Sphere,"Hình học — đại lượng, công thức và kết quả.",Mọi điểm trên mặt cầu cách tâm một khoảng bằng bán kính; hình cầu không có cạnh và không có đỉnh.,,,,,Models/GeometryFormulaItem.cs:373,,untranslated,,ab9bb0a923f9566874502637dbb15a88c098763140d08e39f8d8b238137723ce
 strings,Geometry.Properties.Cylinder,"Hình học — đại lượng, công thức và kết quả.",Có hai đáy tròn bằng nhau và song song; chiều cao là khoảng cách vuông góc giữa hai mặt đáy.,,,,,Models/GeometryFormulaItem.cs:397,,untranslated,,5a2ac10516519679dc1ffe391c4a4091b2571b94a6cb3402ac4682d4026d8c1f
 strings,Geometry.Properties.Cone,"Hình học — đại lượng, công thức và kết quả.",Có một đáy tròn và một đỉnh; chiều cao vuông góc với mặt đáy; đường sinh nối đỉnh với đường tròn đáy.,,,,,Models/GeometryFormulaItem.cs:422,,untranslated,,aad120418c3a52c01b5ec30dc9f3d3d3a2c085b05de9fc1ac22ad2654a65263d
-strings,Quiz.PracticeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",LUYỆN TẬP TOÁN ĐỐ,,,,,Views/MathPuzzlePage.xaml:37,,untranslated,,63c00c773156ea0e0220723616c4f5fe870059cdee34a31a3412eda321d9b863
-strings,Quiz.ModeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",2. Chọn kiểu câu hỏi,,,,,"Services/Localization/QuizLocalizationOverrides.cs:19
-Services/Localization/QuizLocalizationOverrides.cs:218
-Views/MathPuzzlePage.xaml:576",,untranslated,,9c46feeba8512cf8369f374cbba333d3cf0779de4766b6ccb64d98fd6399ee39
-strings,Quiz.TrueFalseMode,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✅❌ Đúng / Sai,,,,,Views/MathPuzzlePage.xaml:593,,untranslated,,fcc306fa0f5abf9b35bf5ea8d9ae3bf5c4b1ec6ef4fdf59b6a814fce6843cfa6
-strings,Quiz.MultipleChoiceMode,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",🔢 4 đáp án,,,,,Views/MathPuzzlePage.xaml:605,,untranslated,,4382500eb61d920e688dc92c3d2fbdc9c51b2bef03dcb976c29eff39eadf58eb
-strings,Quiz.EssayMode,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✍️ Tự luận,,,,,"Services/Localization/QuizLocalizationOverrides.cs:21
-Services/Localization/QuizLocalizationOverrides.cs:220",,untranslated,,007c1b80f8d9728ef332653adac630628bf50353b4125c301e3b7791ba7278a1
-strings,Quiz.OperationTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",3. Chọn bài toán,,,,,"Services/Localization/QuizLocalizationOverrides.cs:44
-Services/Localization/QuizLocalizationOverrides.cs:243
-Views/MathPuzzlePage.xaml:630",,untranslated,,ebf39d44b51a984de51b4bf2efe6201c7f12719f284ea74ef940f4b08b8f740a
-strings,Quiz.OperationMixed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hỗn hợp,,,,,"Services/Localization/QuizLocalizationOverrides.cs:46
-Services/Localization/QuizLocalizationOverrides.cs:245
-Services/QuizProblemTypeCatalog.cs:14",,untranslated,,00b0ec1615be36bfc4da8ce48ddd0d927174e22cfdda84b395d9ac9a6e30f407
-strings,Quiz.ProblemBasic,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Cơ bản + − × ÷,,,,,"Services/Localization/QuizLocalizationOverrides.cs:47
-Services/Localization/QuizLocalizationOverrides.cs:246
-Services/QuizProblemTypeCatalog.cs:17",,untranslated,,a5861ee452a84466f8f55dc4bf0e08a427aa886499a175f6b5650b02b86d8ec0
-strings,Quiz.ProblemFraction,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phân số ½,,,,,"Services/Localization/QuizLocalizationOverrides.cs:48
-Services/Localization/QuizLocalizationOverrides.cs:247
-Services/QuizProblemTypeCatalog.cs:20",,untranslated,,4e961ebb5244ab5ce994f76a106b769a087fe2267cba63df72cf897cec28428d
-strings,Quiz.BasicOperationTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn phép tính cơ bản,,,,,"Services/Localization/QuizLocalizationOverrides.cs:49
-Services/Localization/QuizLocalizationOverrides.cs:248
-Views/MathPuzzlePage.xaml.cs:1226",,untranslated,,68ea6f8b6f64f4157d12b53f93ab7c69c1a8fcd38191c6fb67c4ae477b3723ca
-strings,Quiz.FractionOperationTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn phép tính phân số,,,,,"Services/Localization/QuizLocalizationOverrides.cs:50
-Services/Localization/QuizLocalizationOverrides.cs:249
-Views/MathPuzzlePage.xaml.cs:1225",,untranslated,,7d277c8d68ac188162615f27581192d0bfddbee3940b2524925c4a9fe99acf6f
-strings,Quiz.OperationAddition,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép cộng +,,,,,,,untranslated,,4bf3e2d5da303e92743425e013d2b7bffa7079b5185fc8de506c3abd9017b2ec
-strings,Quiz.OperationSubtraction,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép trừ −,,,,,,,untranslated,,b9bd8aa777e4975a3f180c3dbb7d96bc0105148faaf71ff713fb7a1e315251f0
-strings,Quiz.OperationMultiplication,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép nhân ×,,,,,,,untranslated,,d03555f637e6f0a285274b50404ec0c1e4f092671de0b9b3e8b65944ff9d1185
-strings,Quiz.OperationDivision,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép chia ÷,,,,,,,untranslated,,0c708c50fb4a09e8850721d5eaec9443eff6f5445a34b431b79f15f15867620e
-strings,Quiz.ProblemGeometry,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình học △ □ ◯,,,,,"Services/Localization/QuizLocalizationOverrides.cs:51
-Services/Localization/QuizLocalizationOverrides.cs:250
-Services/QuizProblemTypeCatalog.cs:23",,untranslated,,e5b374869aeea364aa0084896d47b8192730e3aad16695dae685905d2622ff3b
-strings,Quiz.ProblemFindX,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tìm x,,,,,"Services/Localization/QuizLocalizationOverrides.cs:52
+strings,Quiz.PracticeTitle,"Math puzzles: question generation, practice and grading.",LUYỆN TẬP TOÁN ĐỐ,,,,,Views/Quizzes/MathPuzzlePage.xaml:37,,untranslated,,63c00c773156ea0e0220723616c4f5fe870059cdee34a31a3412eda321d9b863
+strings,Quiz.ModeTitle,Math puzzle practice on Windows and Android.,2. Chọn kiểu câu hỏi,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:76
+Services/Localization/QuizLocalizationOverrides.cs:244",,untranslated,,9c46feeba8512cf8369f374cbba333d3cf0779de4766b6ccb64d98fd6399ee39
+strings,Quiz.TrueFalseMode,"Math puzzles: question generation, practice and grading.",✅❌ Đúng / Sai,,,,,Views/Quizzes/MathPuzzlePage.xaml:62,,untranslated,,fcc306fa0f5abf9b35bf5ea8d9ae3bf5c4b1ec6ef4fdf59b6a814fce6843cfa6
+strings,Quiz.MultipleChoiceMode,"Math puzzles: question generation, practice and grading.",🔢 4 đáp án,,,,,Views/Quizzes/MathPuzzlePage.xaml:74,,untranslated,,4382500eb61d920e688dc92c3d2fbdc9c51b2bef03dcb976c29eff39eadf58eb
+strings,Quiz.EssayMode,"Math puzzles > Written answer; input labels, instructions and grading feedback.",✍️ Tự luận,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:83
 Services/Localization/QuizLocalizationOverrides.cs:251
-Services/QuizProblemTypeCatalog.cs:26
-Views/HardwareLlmBenchmarkView.xaml.cs:815",,untranslated,,33c89ddcba40a014b440c825ab683a71ef150eebda929cf72bc5a44dcbf1cf25
-strings,Quiz.FractionQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán phân số,,,,,"Services/Localization/QuizLocalizationOverrides.cs:71
+Views/Quizzes/MathPuzzlePage.xaml:86",,untranslated,,007c1b80f8d9728ef332653adac630628bf50353b4125c301e3b7791ba7278a1
+strings,Quiz.OperationTitle,Math puzzle practice on Windows and Android.,4. Chọn bài toán,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:118
+Services/Localization/QuizLocalizationOverrides.cs:286",,untranslated,,06567bdd3a93674b72214468a93b1f2a96ae2206ff11725f7777c2cfc593fe04
+strings,Quiz.OperationMixed,Math puzzle practice on Windows and Android.,Hỗn hợp,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:120
+Services/Localization/QuizLocalizationOverrides.cs:288
+Services/Quizzes/QuizProblemTypeCatalog.cs:14
+Views/Quizzes/MathPuzzlePage.xaml:332",,untranslated,,00b0ec1615be36bfc4da8ce48ddd0d927174e22cfdda84b395d9ac9a6e30f407
+strings,Quiz.ProblemBasic,Math puzzle practice on Windows and Android.,Cơ bản + − × ÷,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:121
+Services/Localization/QuizLocalizationOverrides.cs:289
+Services/Quizzes/QuizProblemTypeCatalog.cs:17",,untranslated,,a5861ee452a84466f8f55dc4bf0e08a427aa886499a175f6b5650b02b86d8ec0
+strings,Quiz.ProblemFraction,Math puzzle practice on Windows and Android.,Phân số ½,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:122
+Services/Localization/QuizLocalizationOverrides.cs:290
+Services/Quizzes/QuizProblemTypeCatalog.cs:20",,untranslated,,4e961ebb5244ab5ce994f76a106b769a087fe2267cba63df72cf897cec28428d
+strings,Quiz.BasicOperationTitle,Math puzzle practice on Windows and Android.,Chọn phép tính cơ bản,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:136
+Services/Localization/QuizLocalizationOverrides.cs:304
+Views/Quizzes/MathPuzzlePage.xaml.cs:1241",,untranslated,,68ea6f8b6f64f4157d12b53f93ab7c69c1a8fcd38191c6fb67c4ae477b3723ca
+strings,Quiz.FractionOperationTitle,Math puzzle practice on Windows and Android.,Chọn phép tính phân số,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:137
+Services/Localization/QuizLocalizationOverrides.cs:305
+Views/Quizzes/MathPuzzlePage.xaml.cs:1240",,untranslated,,7d277c8d68ac188162615f27581192d0bfddbee3940b2524925c4a9fe99acf6f
+strings,Quiz.OperationAddition,"Math puzzles: question generation, practice and grading.",Phép cộng +,,,,,,,untranslated,,4bf3e2d5da303e92743425e013d2b7bffa7079b5185fc8de506c3abd9017b2ec
+strings,Quiz.OperationSubtraction,"Math puzzles: question generation, practice and grading.",Phép trừ −,,,,,,,untranslated,,b9bd8aa777e4975a3f180c3dbb7d96bc0105148faaf71ff713fb7a1e315251f0
+strings,Quiz.OperationMultiplication,"Math puzzles: question generation, practice and grading.",Phép nhân ×,,,,,,,untranslated,,d03555f637e6f0a285274b50404ec0c1e4f092671de0b9b3e8b65944ff9d1185
+strings,Quiz.OperationDivision,"Math puzzles: question generation, practice and grading.",Phép chia ÷,,,,,,,untranslated,,0c708c50fb4a09e8850721d5eaec9443eff6f5445a34b431b79f15f15867620e
+strings,Quiz.ProblemGeometry,Math puzzle practice on Windows and Android.,Hình học △ □ ◯,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:138
+Services/Localization/QuizLocalizationOverrides.cs:306
+Services/Quizzes/QuizProblemTypeCatalog.cs:23",,untranslated,,e5b374869aeea364aa0084896d47b8192730e3aad16695dae685905d2622ff3b
+strings,Quiz.ProblemFindX,Math puzzle practice on Windows and Android.,Tìm x,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:145
+Services/Localization/QuizLocalizationOverrides.cs:313
+Services/Quizzes/QuizProblemTypeCatalog.cs:26",,untranslated,,33c89ddcba40a014b440c825ab683a71ef150eebda929cf72bc5a44dcbf1cf25
+strings,Quiz.FractionQuestionTitle,Math puzzle practice on Windows and Android.,Bài toán phân số,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:162
+Services/Localization/QuizLocalizationOverrides.cs:330
+Views/Quizzes/MathPuzzlePage.xaml.cs:480",,untranslated,,282577756c036c15eefe9809f022236ff1af8296033c808010b750c24cedad8f
+strings,Quiz.FractionEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 1/2 + 1/4 = 3/4,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:163
+Services/Localization/QuizLocalizationOverrides.cs:331
+Views/Quizzes/MathPuzzlePage.xaml.cs:599",,untranslated,,240eabfe96bcf2447d59f001892e1ace123e59e9d17464a162ff3c3b2a99f864
+strings,Quiz.FractionEssayValidationHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Ứng dụng chấm hai phân số, phép tính và kết quả đã rút gọn.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:164
+Services/Localization/QuizLocalizationOverrides.cs:332
+Views/Quizzes/MathPuzzlePage.xaml.cs:577",,untranslated,,c63c927b16c354e4feb5b033e4b48e4a1a6aaee7f1f38325383b6eda74ea11ed
+strings,Quiz.FractionEssayAnswerPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 3/4 mét vải,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:165
+Services/Localization/QuizLocalizationOverrides.cs:333",,untranslated,,135d2e8cceb6c27a30eac560d32541ae071f5467841d7a066df61cf7ba24c39c
+strings,Quiz.FindXQuestionTitle,Math puzzle practice on Windows and Android.,Tìm giá trị của x,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:166
+Services/Localization/QuizLocalizationOverrides.cs:334
+Views/Quizzes/MathPuzzlePage.xaml.cs:485",,untranslated,,97f1a067cbdf8d4671d249edb35f1cf1151b6e024d48107477fb1270d9f9a0a9
+strings,Quiz.FindXEssayValidationHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ứng dụng chấm phép tính ngược và giá trị x; không cần câu lời giải cho phương trình số.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:167
+Services/Localization/QuizLocalizationOverrides.cs:335
+Views/Quizzes/MathPuzzlePage.xaml.cs:573",,untranslated,,3caef5e84005d4924e8341b1224fca68b925032a4536df5fc6bc333085bb3866
+strings,Quiz.FindXEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 12 − 5 = 7,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:168
+Services/Localization/QuizLocalizationOverrides.cs:336
+Views/Quizzes/MathPuzzlePage.xaml.cs:597",,untranslated,,9e13041f0cef8eecae52f680f773bd7a3b0075bac9e5f9974bd9a4eec562a5eb
+strings,Quiz.GeometryQuestionTitle,"Math puzzles: question generation, practice and grading.",Bài toán hình học,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:490,,untranslated,,fa97e3371fc96d10f4b14d9d57c0f7c8bd7558bee82e2994cbdc61b9aef7eaf8
+strings,Quiz.QuestionTitle,"Math puzzles: question generation, practice and grading.",Phép tính sau đúng hay sai?,,,,,"Views/Quizzes/MathPuzzlePage.xaml:699
+Views/Quizzes/MathPuzzlePage.xaml.cs:522
+Views/Quizzes/MathPuzzlePage.xaml.cs:527",,untranslated,,ed361beff04c1198ba88ea00c84889d3c76997b40824f0d4cd23c1f8d3a77ed8
+strings,Quiz.MultipleChoiceQuestionTitle,"Math puzzles: question generation, practice and grading.",Chọn đáp án đúng,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:524,,untranslated,,b8ae6519d492eb0be097a2e75e93fa271b310ea7da80650c25fbdb8b6db08fcd
+strings,Quiz.EssayQuestionTitle,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Thực hiện phép tính,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:84
+Services/Localization/QuizLocalizationOverrides.cs:252
+Views/Quizzes/MathPuzzlePage.xaml.cs:526",,untranslated,,218af28c73a4b052e7b65e099497e678ed7fc8986f99969ce0f34dfcc96d896d
+strings,Quiz.TrueAnswer,"Math puzzles: question generation, practice and grading.",Đúng,,,,,Views/Quizzes/MathPuzzlePage.xaml:778,,untranslated,,bbe3f71ee3201a40fb38585ed3e94ef0ef8ef7f291830a5866ce872cbb13ea20
+strings,Quiz.FalseAnswer,"Math puzzles: question generation, practice and grading.",Sai,,,,,Views/Quizzes/MathPuzzlePage.xaml:793,,untranslated,,b6c7e88b41b7646066874feb220acad3212a9d7bc42ecf395b518762211fb70b
+strings,Quiz.EssaySolutionLabel,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Lời giải,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:85
+Services/Localization/QuizLocalizationOverrides.cs:171
+Services/Localization/QuizLocalizationOverrides.cs:253
+Views/Calculators/CalculationPage.xaml:777",,untranslated,,2b7d09ea0d2e247ea68a3fcc1eb22eeaa2d1d0219daeacb805918285efb380b7
+strings,Quiz.EssaySolutionPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Viết câu lời giải có đúng đơn vị hoặc đối tượng cần tìm (bắt buộc),"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:86
+Services/Localization/QuizLocalizationOverrides.cs:254",,untranslated,,c6b9a0b286658a6dd8a8415143115be11daa02d43c09c30c043cd2816d69b9a2
+strings,Quiz.EssayEquationLabel,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Phép tính,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/FractionCalculationEngine.cs:351
+Services/Calculations/FractionCalculationEngine.cs:422
+Services/Localization/QuizLocalizationOverrides.cs:92
+Services/Localization/QuizLocalizationOverrides.cs:260",,untranslated,,0222cfa7e0f18766210b53f226fc708c66ecd6c3143720377523beea5335d791
+strings,Quiz.EssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 5 × 6 = 30,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:93
+Services/Localization/QuizLocalizationOverrides.cs:261
+Views/Quizzes/MathPuzzlePage.xaml.cs:614",,untranslated,,c2b376266d43acfc9644e7ea212dc8baf78c5c752ccfab65cd0a1a852e74af8b
+strings,Quiz.GeometryEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: (12 + 8) × 2 = 40,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:98
+Services/Localization/QuizLocalizationOverrides.cs:266
+Views/Quizzes/MathPuzzlePage.xaml.cs:601",,untranslated,,9aff0816957399c2f3e7c7ca76c91175c3e4e38df7ce6d486ef33dfcf4f7d744
+strings,Quiz.EssayAnswerLabel,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Đáp số,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:99
+Services/Localization/QuizLocalizationOverrides.cs:267
+Services/Quizzes/AverageQuizGenerator.cs:523
+Services/Quizzes/ComparisonEssayValidator.cs:19",,untranslated,,58191c5d58c0f8d41f8aadb8fcdad0855596fb4c2fbacadb4826d012aea69a3e
+strings,Quiz.EssayAnswerPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 30 cây bút,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:100
+Services/Localization/QuizLocalizationOverrides.cs:268",,untranslated,,0774f075ad7677dedcdad50db571c402081596ad14ce25702b9c4a5c571ef0d2
+strings,Quiz.EssayValidationHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm. Ứng dụng vẫn chấm phép tính, kết quả và đơn vị đáp số.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:101
+Services/Localization/QuizLocalizationOverrides.cs:269
+Views/Quizzes/MathPuzzlePage.xaml:971",,untranslated,,9eaa58780699d19c0b2fa3ca4a8eecf8bef1a448d653bb76c893cd9a797ae81e
+strings,Quiz.EssayValidationHintAlgorithm,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Ứng dụng chấm hai số dữ kiện, phép toán, kết quả và giá trị đáp số.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:102
 Services/Localization/QuizLocalizationOverrides.cs:270
-Services/LocalLlmQuizGenerator.cs:4445
-Views/MathPuzzlePage.xaml.cs:630",,untranslated,,282577756c036c15eefe9809f022236ff1af8296033c808010b750c24cedad8f
-strings,Quiz.FractionEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 1/2 + 1/4 = 3/4,,,,,"Services/Localization/QuizLocalizationOverrides.cs:72
-Services/Localization/QuizLocalizationOverrides.cs:271
-Views/MathPuzzlePage.xaml.cs:732",,untranslated,,240eabfe96bcf2447d59f001892e1ace123e59e9d17464a162ff3c3b2a99f864
-strings,Quiz.FractionEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm hai phân số, phép tính và kết quả đã rút gọn.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:73
-Services/Localization/QuizLocalizationOverrides.cs:272
-Views/MathPuzzlePage.xaml.cs:719",,untranslated,,c63c927b16c354e4feb5b033e4b48e4a1a6aaee7f1f38325383b6eda74ea11ed
-strings,Quiz.FractionEssayAnswerPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 3/4 mét vải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:75
+Views/Quizzes/MathPuzzlePage.xaml.cs:584",,untranslated,,26e91fdee344160e03ee6a628019529fd0cee1dbb29957b760dcc99bad519e34
+strings,Quiz.GeometryEssayValidationHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Bắt buộc điền lời giải có đúng đơn vị hoặc tên đối tượng hình học. Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:105
+Services/Localization/QuizLocalizationOverrides.cs:273
+Views/Quizzes/MathPuzzlePage.xaml.cs:575",,untranslated,,2e53d9236fcb3873fbdb3308596f21e45d958fca79398e8c59aff775daae586b
+strings,Quiz.SubmitEssayAnswer,"Math puzzles > Written answer; input labels, instructions and grading feedback.",📝 Chấm bài,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:106
 Services/Localization/QuizLocalizationOverrides.cs:274
-Views/MathPuzzlePage.xaml.cs:743",,untranslated,,135d2e8cceb6c27a30eac560d32541ae071f5467841d7a066df61cf7ba24c39c
-strings,Quiz.FindXQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tìm giá trị của x,,,,,"Services/Localization/QuizLocalizationOverrides.cs:76
+Views/Quizzes/MathPuzzlePage.xaml:978",,untranslated,,d28bd16aeeffdcf83d5a7c451e183897a19f8d6c0bf3e67edc9533a763231d60
+strings,Quiz.EssayCorrectFeedback,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Chính xác! Lời giải, phép tính và đáp số đều đúng.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:107
 Services/Localization/QuizLocalizationOverrides.cs:275
-Views/MathPuzzlePage.xaml.cs:636",,untranslated,,97f1a067cbdf8d4671d249edb35f1cf1151b6e024d48107477fb1270d9f9a0a9
-strings,Quiz.FindXEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ứng dụng chấm phép tính ngược và giá trị x; không cần câu lời giải cho phương trình số.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:77
-Services/Localization/QuizLocalizationOverrides.cs:276
-Views/MathPuzzlePage.xaml.cs:715",,untranslated,,3caef5e84005d4924e8341b1224fca68b925032a4536df5fc6bc333085bb3866
-strings,Quiz.FindXEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 12 − 5 = 7,,,,,"Services/Localization/QuizLocalizationOverrides.cs:79
-Services/Localization/QuizLocalizationOverrides.cs:278
-Views/MathPuzzlePage.xaml.cs:730",,untranslated,,9e13041f0cef8eecae52f680f773bd7a3b0075bac9e5f9974bd9a4eec562a5eb
-strings,Quiz.GeometryQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán hình học,,,,,Views/MathPuzzlePage.xaml.cs:642,,untranslated,,fa97e3371fc96d10f4b14d9d57c0f7c8bd7558bee82e2994cbdc61b9aef7eaf8
-strings,Quiz.QuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép tính sau đúng hay sai?,,,,,"Views/MathPuzzlePage.xaml:1035
-Views/MathPuzzlePage.xaml.cs:678
-Views/MathPuzzlePage.xaml.cs:683",,untranslated,,ed361beff04c1198ba88ea00c84889d3c76997b40824f0d4cd23c1f8d3a77ed8
-strings,Quiz.MultipleChoiceQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn đáp án đúng,,,,,Views/MathPuzzlePage.xaml.cs:680,,untranslated,,b8ae6519d492eb0be097a2e75e93fa271b310ea7da80650c25fbdb8b6db08fcd
-strings,Quiz.EssayQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Trình bày bài giải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:22
-Services/Localization/QuizLocalizationOverrides.cs:221
-Views/MathPuzzlePage.xaml.cs:682",,untranslated,,66d9c6e1ca320d43cce97a0895252a5b7ed02f8f5ce1bd124320c2cd6b520fcd
-strings,Quiz.TrueAnswer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đúng,,,,,"Views/HardwareLlmBenchmarkView.xaml:179
-Views/HardwareLlmBenchmarkView.xaml.cs:92
-Views/MathPuzzlePage.xaml:1085",,untranslated,,bbe3f71ee3201a40fb38585ed3e94ef0ef8ef7f291830a5866ce872cbb13ea20
-strings,Quiz.FalseAnswer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Sai,,,,,Views/MathPuzzlePage.xaml:1100,,untranslated,,b6c7e88b41b7646066874feb220acad3212a9d7bc42ecf395b518762211fb70b
-strings,Quiz.EssaySolutionLabel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Lời giải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:23
-Services/Localization/QuizLocalizationOverrides.cs:207
-Services/Localization/QuizLocalizationOverrides.cs:222
-Views/CalculationPage.xaml:773",,untranslated,,2b7d09ea0d2e247ea68a3fcc1eb22eeaa2d1d0219daeacb805918285efb380b7
-strings,Quiz.EssaySolutionPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Viết câu lời giải nêu đúng đại lượng cần tìm (bắt buộc),,,,,"Services/Localization/QuizLocalizationOverrides.cs:24
-Services/Localization/QuizLocalizationOverrides.cs:223",,untranslated,,4547d9147b7bc7f6e5d7974fa9da10abe8c9b6834a78a4af037ee0763d0fc5a5
-strings,Quiz.EssayEquationLabel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép tính,,,,,"Services/Core/FractionCalculationEngine.cs:351
-Services/Core/FractionCalculationEngine.cs:422
-Services/Localization/QuizLocalizationOverrides.cs:25
-Services/Localization/QuizLocalizationOverrides.cs:224",,untranslated,,0222cfa7e0f18766210b53f226fc708c66ecd6c3143720377523beea5335d791
-strings,Quiz.EssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 5 × 6 = 30,,,,,"Services/Localization/QuizLocalizationOverrides.cs:26
-Services/Localization/QuizLocalizationOverrides.cs:225
-Views/MathPuzzlePage.xaml.cs:739",,untranslated,,c2b376266d43acfc9644e7ea212dc8baf78c5c752ccfab65cd0a1a852e74af8b
-strings,Quiz.GeometryEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: (12 + 8) × 2 = 40,,,,,"Services/Localization/QuizLocalizationOverrides.cs:27
-Services/Localization/QuizLocalizationOverrides.cs:226
-Views/MathPuzzlePage.xaml.cs:734",,untranslated,,9aff0816957399c2f3e7c7ca76c91175c3e4e38df7ce6d486ef33dfcf4f7d744
-strings,Quiz.EssayAnswerLabel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đáp số,,,,,"Services/ElementaryWordProblemSolutionFormatter.cs:80
-Services/ElementaryWordProblemSolutionFormatter.cs:101
-Services/ElementaryWordProblemSolutionFormatter.cs:151
-Services/ElementaryWordProblemSolutionFormatter.cs:172",,untranslated,,58191c5d58c0f8d41f8aadb8fcdad0855596fb4c2fbacadb4826d012aea69a3e
-strings,Quiz.EssayAnswerPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 30 cây bút,,,,,"Services/Localization/QuizLocalizationOverrides.cs:29
-Services/Localization/QuizLocalizationOverrides.cs:228
-Views/MathPuzzlePage.xaml.cs:744",,untranslated,,0774f075ad7677dedcdad50db571c402081596ad14ce25702b9c4a5c571ef0d2
-strings,Quiz.EssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Bắt buộc điền lời giải. Ứng dụng chấm đại lượng trong lời giải, phép tính, kết quả, giá trị và đơn vị đáp số.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:30
-Services/Localization/QuizLocalizationOverrides.cs:229
-Views/MathPuzzlePage.xaml.cs:725",,untranslated,,c575573d3b7191eab72021a67a07f844ce3b85450ea007044c0393c7e599da44
-strings,Quiz.EssayValidationHintAlgorithm,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm hai số dữ kiện, phép toán, kết quả và giá trị đáp số.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:31
-Services/Localization/QuizLocalizationOverrides.cs:230
-Views/MathPuzzlePage.xaml.cs:726",,untranslated,,26e91fdee344160e03ee6a628019529fd0cee1dbb29957b760dcc99bad519e34
-strings,Quiz.GeometryEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị: độ dài, diện tích hoặc thể tích.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:32
-Services/Localization/QuizLocalizationOverrides.cs:231
-Views/MathPuzzlePage.xaml.cs:717",,untranslated,,74be8c53f85b3e6f11cd27390f404bcb16aea3028b6a35e17e31762cd461dfe3
-strings,Quiz.SubmitEssayAnswer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",📝 Chấm bài,,,,,"Services/Localization/QuizLocalizationOverrides.cs:34
-Services/Localization/QuizLocalizationOverrides.cs:233",,untranslated,,d28bd16aeeffdcf83d5a7c451e183897a19f8d6c0bf3e67edc9533a763231d60
-strings,Quiz.EssayCorrectFeedback,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Chính xác! Lời giải, phép tính và đáp số đều đúng.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:35
-Services/Localization/QuizLocalizationOverrides.cs:234
-Views/MathPuzzlePage.xaml.cs:3868",,untranslated,,623c28be314ef392d36199208fb7fd3e3b41e0ba2f6145662251a4fd7673f463
-strings,Quiz.EssaySolutionRequired,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Em chưa điền lời giải. Phần lời giải là bắt buộc đối với bài toán đố.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:36
-Services/Localization/QuizLocalizationOverrides.cs:235
-Views/MathPuzzlePage.xaml.cs:3876",,untranslated,,d9166fa6a112dcdfb2263581b86f806bdcc2405636c9b51da0170f40674ecb57
-strings,Quiz.EssaySolutionContentIncorrect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Lời giải chưa nêu đúng đại lượng cần tìm. Hãy dùng đúng tên đơn vị trong đề bài.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:37
-Services/Localization/QuizLocalizationOverrides.cs:236
-Views/MathPuzzlePage.xaml.cs:3877",,untranslated,,ab7a8a09798e17d4a4dc37c96aaead4972eff2ba1edbf2e40c2fc11eb505f75a
-strings,Quiz.EssayEquationAndAnswerIncorrect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép tính và đáp số đều chưa đúng.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:38
-Services/Localization/QuizLocalizationOverrides.cs:237
-Views/MathPuzzlePage.xaml.cs:3884",,untranslated,,b09b809fa3bfda6280428e2c80628c05424e1eda26ca882206cf5d5862c7848d
-strings,Quiz.EssayEquationFormatIncorrect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép tính chưa đúng định dạng. Hãy nhập đầy đủ như 5 × 6 = 30.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:39
-Services/Localization/QuizLocalizationOverrides.cs:238
-Views/MathPuzzlePage.xaml.cs:3892",,untranslated,,6c6e5710b057bf92b0a81eb8ce78f397c7c116cde4c9f42f0c5633d35b35ed9d
-strings,Quiz.EssayEquationIncorrect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Phép tính chưa đúng dữ kiện, phép toán hoặc kết quả.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:40
-Services/Localization/QuizLocalizationOverrides.cs:239
-Views/MathPuzzlePage.xaml.cs:3894",,untranslated,,f8e32be6e905a0fc8b1edf5f5909a0cbfb54c31852ae9a943a23af05a8d3467f
-strings,Quiz.EssayAnswerIncorrect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phép tính đúng nhưng đáp số chưa đúng.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:41
-Services/Localization/QuizLocalizationOverrides.cs:240
-Views/MathPuzzlePage.xaml.cs:3902",,untranslated,,75ef03c1d417504ec5e7f1263a7ecc4241cffffbc32a37636efafb2fc35e7deb
-strings,Quiz.EssayAnswerUnitIncorrect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Giá trị đáp số đúng nhưng đơn vị chưa phù hợp với đề bài.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:42
-Services/Localization/QuizLocalizationOverrides.cs:241
-Views/MathPuzzlePage.xaml.cs:3900",,untranslated,,0e581b54cb42642c5b286cc4d94109afd39b63312df5a2b75ef1a2bb2592ffa7
-strings,Quiz.RegenerateQuestion,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",🔄 Tạo đề lại,,,,,"Services/Localization/QuizLocalizationOverrides.cs:43
-Services/Localization/QuizLocalizationOverrides.cs:242
-Views/MathPuzzlePage.xaml.cs:478
-Views/MathPuzzlePage.xaml.cs:2662",,untranslated,,91c81e07c575b775055c603f12bc9818f2294415c54a789bf4db59444ee972d9
-strings,Quiz.NextQuestion,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",➡️ Câu tiếp theo,,,,,Views/MathPuzzlePage.xaml:1440,,untranslated,,69ed73c6072aff137c79038d2236e941bb579efcbbd1f125cd35a418f876eac8
-strings,Quiz.ValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Mỗi câu hỏi đều được tính đáp án và kiểm tra lại trước khi hiển thị.,,,,,Views/MathPuzzlePage.xaml:1455,,untranslated,,df0914b1f3649c168db9223a88b96eb32963b6b0402e15742096669a69db93f0
-strings,Quiz.GenerationError,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể sinh câu hỏi hợp lệ. Hãy thử lại.,,,,,"Views/MathPuzzlePage.xaml.cs:1511
-Views/MathPuzzlePage.xaml.cs:2401",,untranslated,,bd3b40be9cd1bbd5a88f40e4ef884a6f907d111f3f137b338b9baae18c602a82
+Views/Quizzes/MathPuzzlePage.xaml.cs:2367",,untranslated,,623c28be314ef392d36199208fb7fd3e3b41e0ba2f6145662251a4fd7673f463
+strings,Quiz.EssaySolutionRequired,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Em chưa điền lời giải. Phần lời giải là bắt buộc đối với bài toán có lời văn.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:109
+Services/Localization/QuizLocalizationOverrides.cs:277",,untranslated,,12c71e355de2cf3263ae77ad471ce36a8f00aaddb8eb7b222084197a27a82ae8
+strings,Quiz.EssaySolutionContentIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Lời giải chưa nêu đúng đơn vị hoặc đối tượng cần tìm trong đề bài.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:110
+Services/Localization/QuizLocalizationOverrides.cs:278",,untranslated,,f095c0be39f92a8be8b070361c7f696b31d02012803d94180f63ca39c9b1116e
+strings,Quiz.EssayEquationAndAnswerIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Phép tính và đáp số đều chưa đúng.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:111
+Services/Localization/QuizLocalizationOverrides.cs:279",,untranslated,,b09b809fa3bfda6280428e2c80628c05424e1eda26ca882206cf5d5862c7848d
+strings,Quiz.EssayEquationFormatIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Phép tính chưa đúng định dạng. Hãy nhập đầy đủ như 5 × 6 = 30.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:112
+Services/Localization/QuizLocalizationOverrides.cs:280",,untranslated,,6c6e5710b057bf92b0a81eb8ce78f397c7c116cde4c9f42f0c5633d35b35ed9d
+strings,Quiz.EssayEquationIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Phép tính chưa đúng dữ kiện, phép toán hoặc kết quả.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:113
+Services/Localization/QuizLocalizationOverrides.cs:281",,untranslated,,f8e32be6e905a0fc8b1edf5f5909a0cbfb54c31852ae9a943a23af05a8d3467f
+strings,Quiz.EssayAnswerIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Phép tính đúng nhưng đáp số chưa đúng.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:115
+Services/Localization/QuizLocalizationOverrides.cs:283",,untranslated,,75ef03c1d417504ec5e7f1263a7ecc4241cffffbc32a37636efafb2fc35e7deb
+strings,Quiz.EssayAnswerUnitIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Giá trị đáp số đúng nhưng đơn vị chưa phù hợp với đề bài.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:116
+Services/Localization/QuizLocalizationOverrides.cs:284",,untranslated,,0e581b54cb42642c5b286cc4d94109afd39b63312df5a2b75ef1a2bb2592ffa7
+strings,Quiz.RegenerateQuestion,Math puzzle practice on Windows and Android.,🔄 Tạo đề lại,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:117
+Services/Localization/QuizLocalizationOverrides.cs:285
+Views/Quizzes/MathPuzzlePage.xaml:1071",,untranslated,,91c81e07c575b775055c603f12bc9818f2294415c54a789bf4db59444ee972d9
+strings,Quiz.NextQuestion,"Math puzzles: question generation, practice and grading.",➡️ Câu tiếp theo,,,,,Views/Quizzes/MathPuzzlePage.xaml:1084,,untranslated,,69ed73c6072aff137c79038d2236e941bb579efcbbd1f125cd35a418f876eac8
+strings,Quiz.ValidationHint,"Math puzzles: question generation, practice and grading.",Mỗi câu hỏi đều được tính đáp án và kiểm tra lại trước khi hiển thị.,,,,,Views/Quizzes/MathPuzzlePage.xaml:1099,,untranslated,,df0914b1f3649c168db9223a88b96eb32963b6b0402e15742096669a69db93f0
+strings,Quiz.GenerationError,"Math puzzles: question generation, practice and grading.",Không thể sinh câu hỏi hợp lệ. Hãy thử lại.,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:1586,,untranslated,,bd3b40be9cd1bbd5a88f40e4ef884a6f907d111f3f137b338b9baae18c602a82
 strings,Quiz.CorrectFeedback,Toán đố → phản hồi khi trả lời đúng.,Chính xác! Đáp án là {0}.,,,"{0}: Đáp án của bài toán, ví dụ: 12.",,"Services/Localization/LocalizationKeys.cs:32
-Views/MathPuzzlePage.xaml.cs:4088",,untranslated,,d3dcb7309c3ffd5588bd50242541e71ecd02ea6d854e665588e7fcae727d7a8b
+Views/Quizzes/MathPuzzlePage.xaml.cs:2528",,untranslated,,d3dcb7309c3ffd5588bd50242541e71ecd02ea6d854e665588e7fcae727d7a8b
 strings,Quiz.IncorrectFeedback,Toán đố → phản hồi khi trả lời sai.,Chưa đúng. Đáp án đúng là {0}.,,,"{0}: Đáp án đúng của bài toán, ví dụ: 12.",,"Services/Localization/LocalizationKeys.cs:35
-Views/MathPuzzlePage.xaml.cs:4089",,untranslated,,b8855a1509b3159f3aa2d3aab39c0256c82a3a462f014ec8d14fea8fa999c707
-strings,Quiz.QuestionCounter,Toán đố → số thứ tự câu hỏi đang làm.,Câu {0},,,"{0}: Số thứ tự câu hỏi, ví dụ: 3.",,Views/MathPuzzlePage.xaml.cs:4259,,untranslated,,f1dd4255b4563aeb02baa997a5c24f471d81a381ebccf45ff7a7b326a9ba1891
-strings,Quiz.CorrectCounter,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✓ {0},,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/MathPuzzlePage.xaml.cs:4265,,untranslated,,000b5c639cb541dbfac8f66d0cc8b2f60e876a555111427be6ae13a01324a26a
-strings,Quiz.IncorrectCounter,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✕ {0},,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/MathPuzzlePage.xaml.cs:4271,,untranslated,,e39130b41645cea3f78b7663f3c8a8632f5f9878161289e2d904853a50f4e677
-strings,Quiz.WordProblemTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán có lời văn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:205
-Services/Localization/QuizLocalizationOverrides.cs:404
-Views/MathPuzzlePage.xaml.cs:671
-Views/MathPuzzlePage.xaml.cs:1540",,untranslated,,5f3d6581895b66d19a64cecd922c6a29700fb559bfa27da97102ce9ef477e5c6
-strings,Quiz.PresentedAnswer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đáp án được đưa ra: {0} {1},,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:206
-Services/Localization/QuizLocalizationOverrides.cs:405
-Views/MathPuzzlePage.xaml.cs:3368
-Views/MathPuzzlePage.xaml.cs:3413",,untranslated,,8968552768183a0e0b029a779a0e6cb51a4e5247877206dad235677f1e905b8e
-strings,Quiz.SolutionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Lời giải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:23
-Services/Localization/QuizLocalizationOverrides.cs:207
-Services/Localization/QuizLocalizationOverrides.cs:406
-Views/CalculationPage.xaml:773",,untranslated,,2b7d09ea0d2e247ea68a3fcc1eb22eeaa2d1d0219daeacb805918285efb380b7
+Views/Quizzes/MathPuzzlePage.xaml.cs:2529",,untranslated,,b8855a1509b3159f3aa2d3aab39c0256c82a3a462f014ec8d14fea8fa999c707
+strings,Quiz.QuestionCounter,Toán đố → số thứ tự câu hỏi đang làm.,Câu {0},,,"{0}: Số thứ tự câu hỏi, ví dụ: 3.",,Views/Quizzes/MathPuzzlePage.xaml.cs:2673,,untranslated,,f1dd4255b4563aeb02baa997a5c24f471d81a381ebccf45ff7a7b326a9ba1891
+strings,Quiz.CorrectCounter,"Math puzzles: question generation, practice and grading.",✓ {0},,,{0}: Keep this placeholder unchanged; the app supplies its value at runtime.,,Views/Quizzes/MathPuzzlePage.xaml.cs:2679,,untranslated,,000b5c639cb541dbfac8f66d0cc8b2f60e876a555111427be6ae13a01324a26a
+strings,Quiz.IncorrectCounter,"Math puzzles: question generation, practice and grading.",✕ {0},,,{0}: Keep this placeholder unchanged; the app supplies its value at runtime.,,Views/Quizzes/MathPuzzlePage.xaml.cs:2685,,untranslated,,e39130b41645cea3f78b7663f3c8a8632f5f9878161289e2d904853a50f4e677
+strings,Quiz.WordProblemTitle,Math puzzle practice on Windows and Android.,Bài toán có lời văn,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:169
+Services/Localization/QuizLocalizationOverrides.cs:337
+Views/Quizzes/MathPuzzlePage.xaml.cs:515",,untranslated,,5f3d6581895b66d19a64cecd922c6a29700fb559bfa27da97102ce9ef477e5c6
+strings,Quiz.PresentedAnswer,Math puzzle practice on Windows and Android.,Đáp án được đưa ra: {0} {1},A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.","{0}: Keep this placeholder unchanged; the app supplies its value at runtime.
+{1}: Keep this placeholder unchanged; the app supplies its value at runtime.",,"Services/Localization/QuizLocalizationOverrides.cs:170
+Services/Localization/QuizLocalizationOverrides.cs:338
+Views/Quizzes/MathPuzzlePage.xaml.cs:1820
+Views/Quizzes/MathPuzzlePage.xaml.cs:1865",,untranslated,,8968552768183a0e0b029a779a0e6cb51a4e5247877206dad235677f1e905b8e
+strings,Quiz.SolutionTitle,Math puzzle practice on Windows and Android.,Lời giải,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:85
+Services/Localization/QuizLocalizationOverrides.cs:171
+Services/Localization/QuizLocalizationOverrides.cs:339
+Views/Calculators/CalculationPage.xaml:777",,untranslated,,2b7d09ea0d2e247ea68a3fcc1eb22eeaa2d1d0219daeacb805918285efb380b7
 strings,Actions.Calculate,Thao tác trên giao diện.,🧮 Tính toán,,,,,"Services/Localization/LocalizationKeys.cs:108
 Views/AverageView.xaml:144
 Views/CalculationPage.xaml:547
@@ -834,9 +819,9 @@ strings,captured.term.canh.ben.d.e7741baa,Thuật ngữ được chèn vào câu
 strings,captured.term.canh.goc.vuong.a.a5dc434e,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,cạnh góc vuông a,,,,,,,untranslated,,f30a4c847e73b01fbabcc17d35382cd8c9583893fee3da085c87781fc3a4d2b2
 strings,captured.term.canh.goc.vuong.b.bac46350,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,cạnh góc vuông b,,,,,,,untranslated,,d1f9974154cf2c2fd301b294e1d81e795cb5c9553e5c12c9e7568875fe87990e
 strings,captured.term.canh.huyen.c.ab81b0c3,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,cạnh huyền c,,,,,,,untranslated,,5a76ad03298ad11222139680053737d0e3d241d65ce3d8257224d6fb188272b7
-strings,captured.term.chieu.cao.h.8f86a731,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,chiều cao h,,,,,Services/LocalLlmQuizGenerator.cs:2288,,untranslated,,5dd8beafacf45e5a4684f8e254b96805f097c3eb4810954560ebdb9936765501
+strings,captured.term.chieu.cao.h.8f86a731,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,chiều cao h,,,,,,,untranslated,,5dd8beafacf45e5a4684f8e254b96805f097c3eb4810954560ebdb9936765501
 strings,captured.term.chieu.dai.a.8a1ec3f5,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,chiều dài a,,,,,,,untranslated,,6beb32d102271bbe25eb5b876bc36c619cb2509f4aa8dba2a9ddade058e6a3d5
-strings,captured.term.chieu.rong.b.6b9cf406,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,chiều rộng b,,,,,Services/LocalLlmQuizGenerator.cs:2287,,untranslated,,af4ca9441b9d00c687350d2a19c0e16bd0f6e766293acc77091249aaa7e2d173
+strings,captured.term.chieu.rong.b.6b9cf406,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,chiều rộng b,,,,,,,untranslated,,af4ca9441b9d00c687350d2a19c0e16bd0f6e766293acc77091249aaa7e2d173
 strings,captured.term.day.a.b0ad7564,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,đáy a,,,,,,,untranslated,,78774e7f8b2759d9a7558244c95408dd883eafb5ace0b19c2aff1fb302dbb087
 strings,captured.term.day.b.7804355d,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,đáy b,,,,,,,untranslated,,f110fa5891d553f0353ba9b0ff954de3eaabd3ed3c4affc7b138d8ad4cfb5780
 strings,captured.term.do.dai.canh.a.0e8baab6,Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.,độ dài cạnh a,,,,,,,untranslated,,0d1ca6e5fa34b3cd131b9803bf2de87de04475bcbf39dbd832730b3b7221b501
@@ -1373,8 +1358,7 @@ strings,legacy.exact.tim.thanh.phan.chua.biet.32d2f35e,Cần bổ sung ngữ c�
 Views/FormulaPage.xaml:270",,untranslated,,660f6e2fc1a4da9813a20514c1ffe3d479c8c3e622db6f4d852d094798a53fa7
 strings,legacy.exact.tim.thua.so.chua.biet.bedea7d0,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Tìm thừa số chưa biết,,,,,Views/FormulaPage.xaml.cs:1797,,untranslated,,c8412093b87402c0cf21f94bb617d0784ab4b80eaa08f98d8f17a3cf624af337
 strings,legacy.exact.tim.thua.so.chua.biet.x.b.c.thi.x.c.b.voi.01cb206d,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,"• Tìm thừa số chưa biết: x × b = c thì x = c ÷ b, với b ≠ 0.",,,,,Views/FormulaPage.xaml:649,,untranslated,,7aed741d2dcf51ed0c1d068376c6f21d35778b6abfc609c81a3c6ead3c513478
-strings,legacy.exact.tim.x.7283c7a7,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Tìm x,,,,,"Services/Localization/QuizLocalizationOverrides.cs:52
-Views/HardwareLlmBenchmarkView.xaml.cs:815",,untranslated,,33c89ddcba40a014b440c825ab683a71ef150eebda929cf72bc5a44dcbf1cf25
+strings,legacy.exact.tim.x.7283c7a7,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Tìm x,,,,,Services/Localization/QuizLocalizationOverrides.cs:145,,untranslated,,33c89ddcba40a014b440c825ab683a71ef150eebda929cf72bc5a44dcbf1cf25
 strings,legacy.exact.tinh.biet.thuc.xet.so.nghiem.trinh.bay.loi.95a5ca01,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Tính biệt thức Δ • Xét số nghiệm • Trình bày lời giải chi tiết,,,,,Views/QuadraticEquationView.xaml:77,,untranslated,,089f31df637702dee3c462a89383c5056c29ca6ff53ae71bc39233e0fa7184cc
 strings,legacy.exact.tinh.chat.co.ban.a.0.a.va.a.a.0.4d4d22ee,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,• Tính chất cơ bản: a − 0 = a và a − a = 0.,,,,,Views/FormulaPage.xaml:586,,untranslated,,358721b09221b685b53979a705a5ac25129d3a2fff75c4dea0f06ed25ca56886
 strings,legacy.exact.tinh.chat.co.ban.a.1.a.a.a.1.voi.a.0.0.a.0.06dc6837,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,• Tính chất cơ bản: a ÷ 1 = a; a ÷ a = 1 với a ≠ 0; 0 ÷ a = 0 với a ≠ 0.,,,,,Views/FormulaPage.xaml:691,,untranslated,,3a17239c1ac1b96ab89cf077539a2de4b962c76ec025bf3e236097d22c7c3dfa
@@ -1607,18 +1591,14 @@ strings,legacy.phrase.phan.so.thu.hai.la.0.0.nen.khong.xac.dinh.ffd3aeb2,Cần b
 strings,legacy.phrase.phan.so.thu.nhat.la.0.0.nen.khong.xac.dinh.1fa66f0c,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phân số thứ nhất là 0/0 nên không xác định.,,,,,Services/Core/FractionCalculationEngine.cs:22,,untranslated,,cbcaec3cda105aacad1de8e8a160926089607bcb6a179dfecbe4b906808e80aa
 strings,legacy.phrase.phan.thap.phan.06606c00,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phần thập phân,,,,,,,untranslated,,f78d17b970a1384aca0bf876c7944416580855e6595c12a70c65c151d79887aa
 strings,legacy.phrase.phep.bien.doi.hinh.thuc.66ba13cb,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép biến đổi hình thức,,,,,,,untranslated,,e6bad87f7eb1a5b8ebc22183bf1086d91fb8087931e354c4e33e16d25f33f955
-strings,legacy.phrase.phep.chia.78ff9274,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép chia,,,,,"Services/LocalLlmQuizGenerator.cs:1350
-Services/LocalLlmQuizGenerator.cs:5958",,untranslated,,96be1fbf99f729de7068e4625e17a438d3b2006229c5af9ab384cf9b890e70dd
+strings,legacy.phrase.phep.chia.78ff9274,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép chia,,,,,,,untranslated,,96be1fbf99f729de7068e4625e17a438d3b2006229c5af9ab384cf9b890e70dd
 strings,legacy.phrase.phep.chia.cung.khong.co.tinh.chat.ket.hop.c2d0f7d6,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép chia cũng không có tính chất kết hợp.,,,,,,,untranslated,,6c4371b5c7edcd47fca747e01c3684e887ac750a1c65ce8cc9040ece97698636
 strings,legacy.phrase.phep.chia.khong.co.tinh.chat.giao.hoan.247ac3c5,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép chia không có tính chất giao hoán.,,,,,,,untranslated,,32c16e1fa19949134460755912a4e0f83f0b5f0cd6e1e0962bebdac4b32c9187
 strings,legacy.phrase.phep.chia.la.phep.toan.nguoc.cua.phep.nhan.8879d34b,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép chia là phép toán ngược của phép nhân.,,,,,Views/CalculationPage.xaml.cs:1069,,untranslated,,1df17f1601f349048d75921f6c1003758b4b109864afeff8ceabc7771cf8ce0e
-strings,legacy.phrase.phep.cong.3f8ca064,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép cộng,,,,,"Services/Core/FractionCalculationEngine.cs:93
-Services/LocalLlmQuizGenerator.cs:1347
-Services/LocalLlmQuizGenerator.cs:5955",,untranslated,,c5dac8fb715cb21bf76b8631e7882fcb7b27bc0cf7771c9846102396d3a339cc
+strings,legacy.phrase.phep.cong.3f8ca064,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép cộng,,,,,Services/Calculations/FractionCalculationEngine.cs:93,,untranslated,,c5dac8fb715cb21bf76b8631e7882fcb7b27bc0cf7771c9846102396d3a339cc
 strings,legacy.phrase.phep.cong.co.tinh.chat.giao.hoan.va.ket.ho.336d74cf,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép cộng có tính chất giao hoán và kết hợp.,,,,,,,untranslated,,f0d2ede6942322b5e1b71ab8fb0148349329d96dc99fe5dcd1cafbb3313f30d7
 strings,legacy.phrase.phep.cong.co.tinh.giao.hoan.va.ket.hop.68aca753,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép cộng có tính giao hoán và kết hợp.,,,,,Views/CalculationPage.xaml.cs:1038,,untranslated,,e1b2adfcb024deb1ae439e9bae8de6cb9491ae7c030401155cc19098f7e7b8ea
-strings,legacy.phrase.phep.nhan.ab051880,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép nhân,,,,,"Services/LocalLlmQuizGenerator.cs:1349
-Services/LocalLlmQuizGenerator.cs:5957",,untranslated,,2c029496097a5dd0283894f18eabdb0b3136f3a59430148ab18afe38f1d64401
+strings,legacy.phrase.phep.nhan.ab051880,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép nhân,,,,,,,untranslated,,2c029496097a5dd0283894f18eabdb0b3136f3a59430148ab18afe38f1d64401
 strings,legacy.phrase.phep.nhan.co.tinh.chat.giao.hoan.ket.hop.v.98b25f44,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,"Phép nhân có tính chất giao hoán, kết hợp và phân phối.",,,,,,,untranslated,,1d3807242ef721ca52f813db4aa2a0f347889dc31aa76a96c6705118c2f21c80
 strings,legacy.phrase.phep.nhan.co.tinh.giao.hoan.ket.hop.va.pha.d0b3aef1,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,"Phép nhân có tính giao hoán, kết hợp và phân phối đối với phép cộng.",,,,,Views/CalculationPage.xaml.cs:1056,,untranslated,,23d7105955618084f3a18e1f93fc95113b1a11f154ccb35927a67901874405b8
 strings,legacy.phrase.phep.tinh.81bc1ef3,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép tính,,,,,"Services/Core/FractionCalculationEngine.cs:351
@@ -1626,9 +1606,7 @@ Services/Core/FractionCalculationEngine.cs:422
 Services/Localization/QuizLocalizationOverrides.cs:25",,untranslated,,0222cfa7e0f18766210b53f226fc708c66ecd6c3143720377523beea5335d791
 strings,legacy.phrase.phep.tinh.ban.dau.b1dc9a0b,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép tính ban đầu,,,,,Services/Core/FractionCalculationEngine.cs:139,,untranslated,,5bb482c4661e185f807c4c492e1ed1c53462e0bff2fdb2f884e8cad7f87c6764
 strings,legacy.phrase.phep.toan.khong.duoc.ho.tro.15987a53,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép toán không được hỗ trợ.,,,,,Services/Core/FractionCalculationEngine.cs:81,,untranslated,,033a8162ba8f96a25ebb65b86b6e475b23bc44c01478760fa7d38936d0013cfd
-strings,legacy.phrase.phep.tru.9503748f,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép trừ,,,,,"Services/Core/FractionCalculationEngine.cs:93
-Services/LocalLlmQuizGenerator.cs:1348
-Services/LocalLlmQuizGenerator.cs:5956",,untranslated,,aa3bf5ac6caef15ab73b8dfbb4d07eb7f3e8d84aeae97074bf6e5dad28d58026
+strings,legacy.phrase.phep.tru.9503748f,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,phép trừ,,,,,Services/Calculations/FractionCalculationEngine.cs:93,,untranslated,,aa3bf5ac6caef15ab73b8dfbb4d07eb7f3e8d84aeae97074bf6e5dad28d58026
 strings,legacy.phrase.phep.tru.cung.khong.co.tinh.chat.ket.hop.36d0c353,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép trừ cũng không có tính chất kết hợp.,,,,,Views/CalculationPage.xaml.cs:1641,,untranslated,,222d849067e5ec36d8f5786980c91c0dd9c7d49be1124e38fd3a3dc478d4f34b
 strings,legacy.phrase.phep.tru.khong.co.tinh.chat.giao.hoan.bc9e17f7,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép trừ không có tính chất giao hoán.,,,,,,,untranslated,,d6bd3828c6874421c8098d4d0e8268cd607f63b540a88b6283b14c1d4a9ebb3d
 strings,legacy.phrase.phep.tru.la.phep.toan.nguoc.cua.phep.cong.27fe4050,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Phép trừ là phép toán ngược của phép cộng.,,,,,Views/CalculationPage.xaml.cs:1047,,untranslated,,a67d102d38ebdee7c6e6c2e283bde4517fd54c9d4a36f824daf26ee9ec951c92
@@ -1695,7 +1673,7 @@ strings,legacy.phrase.tu.so.va.mau.so.phai.la.so.nguyen.mau.so.p.d3acc338,Cần 
 strings,legacy.phrase.tu.va.mau.eef7d8ec,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,tử và mẫu,,,,,,,untranslated,,be7b72eb1c13472596eb485e2685922365817de583f29c330b2521eea370231e
 strings,legacy.phrase.ucln.405d4334,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,ƯCLN,,,,,,,untranslated,,e7544dbedb659a69840f0c246ca50dc94b8643c586a80e82e67b1adc33c0e137
 strings,legacy.phrase.ung.dung.khong.lam.tron.ket.qua.de.tranh.s.25d205a6,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Ứng dụng không làm tròn kết quả để tránh sai lệch.,,,,,,,untranslated,,7cd866bd9f29af284206a11420db11a035a23fb1af11b178416959464eb9bde4
-strings,legacy.phrase.va.a72340e8,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển., và ,,,,,Services/LocalLlmQuizGenerator.cs:5061,,untranslated,,79e3d3b1974b10f0e9fc691415d828f60dda11313fd9a060e8c2d878e0811fb0
+strings,legacy.phrase.va.a72340e8,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển., và ,,,,,Services/Quizzes/PercentageQuizGenerator.Difficulty.cs:28,,untranslated,,79e3d3b1974b10f0e9fc691415d828f60dda11313fd9a060e8c2d878e0811fb0
 strings,legacy.phrase.va.so.du.la.652c163b,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,và số dư là,,,,,,,untranslated,,47da7ca9158191f50d6872821256b412491eed6f2ced247e891310dbb29d60c4
 strings,legacy.phrase.vao.phep.tinh.ban.dau.ae79f11e,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,vào phép tính ban đầu:,,,,,,,untranslated,,54ad86bfb936946c5812be91959ff92a694b4fae17e14ec06259c0ccec57c743
 strings,legacy.phrase.vay.8ac37e7f,Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.,Vậy ,,,,,,,untranslated,,db466651c1a4fc23d0284e30d3e3e3dcb9972fef4545c3ade43e34b39d0c1593
@@ -1822,36 +1800,39 @@ strings,Formula.Motion.Types.Advanced.Body,Công thức toán học — nội du
 • Một vật đi và về với hai vận tốc khác nhau.
 • Kết hợp cùng chiều + ngược chiều trong cùng một bài.
 • Có thời gian nghỉ, hoặc các vật xuất phát không cùng lúc.",,,,,Views/MotionFormulaView.xaml:389,,untranslated,,15a70d9b7a5d354c1b9f0290425065fa97f57957b4c541ffdd1d66d2a64254a0
-strings,Quiz.ProblemProportion,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tỉ lệ thuận / nghịch ↗↘,,,,,"Services/Localization/QuizLocalizationOverrides.cs:53
-Services/Localization/QuizLocalizationOverrides.cs:252
-Services/QuizProblemTypeCatalog.cs:29",,untranslated,,f016a7f4589c1165524c460d278b49a91720f672b62032b1fe5d1ba6802f1807
-strings,Quiz.ProportionTypeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn dạng tỉ lệ,,,,,"Services/Localization/QuizLocalizationOverrides.cs:64
-Services/Localization/QuizLocalizationOverrides.cs:263",,untranslated,,f534e62e074c9de51083417b3cec9bcb1ce6d105078f2b7c6806764511a49c0b
-strings,Quiz.ProportionDirect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",↗ Tỉ lệ thuận,,,,,"Services/Localization/QuizLocalizationOverrides.cs:65
-Services/Localization/QuizLocalizationOverrides.cs:264",,untranslated,,07d5f70dd96cf0d5cdc02d0ec668634dc7ba58384211ead161092162fa7ac79f
-strings,Quiz.ProportionInverse,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",↘ Tỉ lệ nghịch,,,,,"Services/Localization/QuizLocalizationOverrides.cs:66
-Services/Localization/QuizLocalizationOverrides.cs:265",,untranslated,,c6602451024b757339592d49cc60832723ddbb1f2ec6e3ede1b65214566b0225
-strings,Quiz.ProportionQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán tỉ lệ thuận / nghịch,,,,,"Services/Localization/QuizLocalizationOverrides.cs:67
-Services/Localization/QuizLocalizationOverrides.cs:266
-Views/MathPuzzlePage.xaml.cs:648",,untranslated,,33fd8a32304a69d1bdcbfafe61bfe881220a546f427c0799f2800df4ca8f38da
-strings,Quiz.ProportionEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm đúng dữ kiện tỉ lệ, công thức tính và giá trị đáp số.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:68
-Services/Localization/QuizLocalizationOverrides.cs:267
-Views/MathPuzzlePage.xaml.cs:721",,untranslated,,893253a1fa28f5a85d41eb0295bf4d25aa7eda1b08a836ca658156563a286c00
-strings,Quiz.ProportionEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 24 ÷ 4 × 6 = 36,,,,,"Services/Localization/QuizLocalizationOverrides.cs:70
-Services/Localization/QuizLocalizationOverrides.cs:269
-Views/MathPuzzlePage.xaml.cs:736",,untranslated,,e25e14baf6a7374021f6cea030c8698dce3e98c78f11c32888b01d78f0e15694
-strings,Quiz.ProblemMotion,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chuyển động ➜⏱️,,,,,"Services/Localization/QuizLocalizationOverrides.cs:54
-Services/Localization/QuizLocalizationOverrides.cs:253
-Services/QuizProblemTypeCatalog.cs:32",,untranslated,,067ddaf925f05f063c5d38c5830d84ef6c7a380762cc0c0f719d8e853c20427e
-strings,Quiz.MotionQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán chuyển động,,,,,"Services/Localization/QuizLocalizationOverrides.cs:55
-Services/Localization/QuizLocalizationOverrides.cs:254
-Views/MathPuzzlePage.xaml.cs:654",,untranslated,,b9438fc691421e31fb2b891fd7d56eae6eaabd0d9466f8471006a113bc0dab37
-strings,Quiz.MotionEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Nhập phép tính đúng theo dữ kiện chuyển động và đáp số kèm đúng đơn vị.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:61
-Services/Localization/QuizLocalizationOverrides.cs:260
-Views/MathPuzzlePage.xaml.cs:723",,untranslated,,f3c05d3f2cb9612259074bbeb9539bb68a757313d778f0095f0602f30559638d
-strings,Quiz.MotionEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 120 ÷ (60 + 40) = 1,,,,,"Services/Localization/QuizLocalizationOverrides.cs:63
-Services/Localization/QuizLocalizationOverrides.cs:262
-Views/MathPuzzlePage.xaml.cs:738",,untranslated,,2376a35db37d19d669aa4797d2850907c5676c862d1233d2c4ebc97565bc6613
+strings,Quiz.ProblemProportion,Math puzzle practice on Windows and Android.,Tỉ lệ thuận / nghịch ↗↘,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:146
+Services/Localization/QuizLocalizationOverrides.cs:314
+Services/Quizzes/QuizProblemTypeCatalog.cs:29",,untranslated,,f016a7f4589c1165524c460d278b49a91720f672b62032b1fe5d1ba6802f1807
+strings,Quiz.ProportionTypeTitle,Math puzzle practice on Windows and Android.,Chọn dạng tỉ lệ,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:156
+Services/Localization/QuizLocalizationOverrides.cs:324
+Views/Quizzes/MathPuzzlePage.xaml:322",,untranslated,,f534e62e074c9de51083417b3cec9bcb1ce6d105078f2b7c6806764511a49c0b
+strings,Quiz.ProportionDirect,Math puzzle practice on Windows and Android.,↗ Tỉ lệ thuận,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:157
+Services/Localization/QuizLocalizationOverrides.cs:325
+Views/Quizzes/MathPuzzlePage.xaml:342",,untranslated,,07d5f70dd96cf0d5cdc02d0ec668634dc7ba58384211ead161092162fa7ac79f
+strings,Quiz.ProportionInverse,Math puzzle practice on Windows and Android.,↘ Tỉ lệ nghịch,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:158
+Services/Localization/QuizLocalizationOverrides.cs:326
+Views/Quizzes/MathPuzzlePage.xaml:352",,untranslated,,c6602451024b757339592d49cc60832723ddbb1f2ec6e3ede1b65214566b0225
+strings,Quiz.ProportionQuestionTitle,Math puzzle practice on Windows and Android.,Bài toán tỉ lệ thuận / nghịch,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:159
+Services/Localization/QuizLocalizationOverrides.cs:327
+Views/Quizzes/MathPuzzlePage.xaml.cs:495",,untranslated,,33fd8a32304a69d1bdcbfafe61bfe881220a546f427c0799f2800df4ca8f38da
+strings,Quiz.ProportionEssayValidationHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm. Ứng dụng chấm dữ kiện tỉ lệ, công thức tính và đáp số.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:160
+Services/Localization/QuizLocalizationOverrides.cs:328
+Views/Quizzes/MathPuzzlePage.xaml.cs:579",,untranslated,,b4b9997179aece8cf447b37fcca4c8ae0dec1a051f35c4e60316695b4bbc6f99
+strings,Quiz.ProportionEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 24 ÷ 4 × 6 = 36,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:161
+Services/Localization/QuizLocalizationOverrides.cs:329
+Views/Quizzes/MathPuzzlePage.xaml.cs:603",,untranslated,,e25e14baf6a7374021f6cea030c8698dce3e98c78f11c32888b01d78f0e15694
+strings,Quiz.ProblemMotion,Math puzzle practice on Windows and Android.,Chuyển động ➜⏱️,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:147
+Services/Localization/QuizLocalizationOverrides.cs:315
+Services/Quizzes/QuizProblemTypeCatalog.cs:32",,untranslated,,067ddaf925f05f063c5d38c5830d84ef6c7a380762cc0c0f719d8e853c20427e
+strings,Quiz.MotionQuestionTitle,Math puzzle practice on Windows and Android.,Bài toán chuyển động,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:148
+Services/Localization/QuizLocalizationOverrides.cs:316
+Views/Quizzes/MathPuzzlePage.xaml.cs:500",,untranslated,,b9438fc691421e31fb2b891fd7d56eae6eaabd0d9466f8471006a113bc0dab37
+strings,Quiz.MotionEssayValidationHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm. Phép tính phải đúng dữ kiện chuyển động và đáp số kèm đúng đơn vị.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:154
+Services/Localization/QuizLocalizationOverrides.cs:322
+Views/Quizzes/MathPuzzlePage.xaml.cs:581",,untranslated,,36e99601930f3e9373548d8bd5186331dde7d79293a9ab5c7bfc536d1cbbb4e7
+strings,Quiz.MotionEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 120 ÷ (60 + 40) = 1,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:155
+Services/Localization/QuizLocalizationOverrides.cs:323
+Views/Quizzes/MathPuzzlePage.xaml.cs:605",,untranslated,,2376a35db37d19d669aa4797d2850907c5676c862d1233d2c4ebc97565bc6613
 strings,Equation.ChooseType,Giải phương trình — nhập dữ liệu và lời giải.,Chọn dạng phương trình,,,,,Views/QuadraticEquationView.xaml:26,,untranslated,,9e3e7d6e50a3c0af55f82c1d33ac5c9c3012647f0feca233102fe7d7cb23336e
 strings,Equation.Mode.Linear,Giải phương trình — nhập dữ liệu và lời giải.,x  Phương trình bậc 1,,,,,Views/QuadraticEquationView.xaml:39,,untranslated,,fe8b3651255a9d0f7ba9984dd1e5ac6c34974a407ac910b18f961210959bec9a
 strings,Equation.Mode.Quadratic,Giải phương trình — nhập dữ liệu và lời giải.,x²  Phương trình bậc 2,,,,,Views/QuadraticEquationView.xaml:49,,untranslated,,3040bf0a4cbc851f955d2f069d4e74922eb1b312847669b73324786fe9df9d44
@@ -1911,10 +1892,7 @@ strings,About.UsageNoteHint,Thông tin giới thiệu ứng dụng.,"Hãy tự l
 strings,Hardware.RuntimeSimdUnavailable,Thông tin phần cứng thiết bị.,"CPU hỗ trợ SIMD ARM, nhưng .NET runtime hiện tại chưa cung cấp tăng tốc SIMD. Float và Double sẽ dùng Scalar.",,,,,Services/Localization/LocalizationKeys.cs:48,,untranslated,,cfb2eae71343cfd7afd491703d73056a2c80ac1fe71b2e64698393a1d96c87c6
 strings,Equation.Quadratic.Step4.TwoRoots.Title,Giải phương trình — nhập dữ liệu và lời giải.,Bước 4. Tính hai nghiệm,,,,,Views/QuadraticEquationView.xaml.cs:2420,,untranslated,,eaf177a00f63c5e3d3ce287bc344b98b93dfa26b4eb41c6001630b28cf040278
 strings,Equation.Quadratic.Step4.TwoRoots.Intro,Giải phương trình — nhập dữ liệu và lời giải.,Ta áp dụng công thức nghiệm của phương trình bậc hai:,,,,,Views/QuadraticEquationView.xaml.cs:1682,,untranslated,,73a3fd497d7515fbac0a46f4b227b3c97b3cc0ad94f3fe3ba2d82b86d8eb235a
-strings,Equation.Quadratic.Step4.TwoRoots.And,Giải phương trình — nhập dữ liệu và lời giải.,và,,,,,"Services/LocalLlmQuizGenerator.cs:4495
-Services/LocalLlmQuizGenerator.cs:5908
-Services/LocalLlmQuizGenerator.cs:5987
-Views/QuadraticEquationView.xaml.cs:1748",,untranslated,,befa210d37d153269e18e7413d3352ae0d73df5616b52f96d5091aebf8ab7e34
+strings,Equation.Quadratic.Step4.TwoRoots.And,Giải phương trình — nhập dữ liệu và lời giải.,và,,,,,Views/Calculators/QuadraticEquationView.xaml.cs:1760,,untranslated,,befa210d37d153269e18e7413d3352ae0d73df5616b52f96d5091aebf8ab7e34
 strings,Equation.Quadratic.Step4.TwoRoots.SubstituteAll,Giải phương trình — nhập dữ liệu và lời giải.,"Thay a = {0}, b = {1}, Δ = {2} vào công thức:",,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,Views/QuadraticEquationView.xaml.cs:1772,,untranslated,,ee789d133b204659c5d2a8c6b904cc31aa5b6a57c58e6edac5001d282b70dc82
@@ -1924,70 +1902,74 @@ strings,Equation.Quadratic.Step4.TwoRoots.SubstituteA,Giải phương trình —
 strings,Equation.Quadratic.Step4.TwoRoots.SubstituteB,Giải phương trình — nhập dữ liệu và lời giải.,"b = {0},",,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/QuadraticEquationView.xaml.cs:1820,,untranslated,,b5c0c9b622624a6278b20cbba7a386edfb98f41b470b16d9a23f7c96d90a33e0
 strings,Equation.Quadratic.Step4.TwoRoots.SubstituteDelta,Giải phương trình — nhập dữ liệu và lời giải.,Δ = {0} vào công thức:,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/QuadraticEquationView.xaml.cs:1834,,untranslated,,34719e5ed8fbff57ac2e15f967f6f927ea52674b8192206ebeec80899e73f418
 strings,Equation.Quadratic.Step4.TwoRoots.ComputeRoot,Giải phương trình — nhập dữ liệu và lời giải.,Tính {0}:,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/QuadraticEquationView.xaml.cs:1859,,untranslated,,e41d97e4f87686c88c8da3e22e6eabbd73c3df1a9a9f900f79bcdf0c9ab81822
-strings,Quiz.ProblemAverage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Trung bình cộng,,,,,"Services/QuizProblemTypeCatalog.cs:35
-Views/HardwareLlmBenchmarkView.xaml.cs:819",,untranslated,,b34a5a7ee3ad6a5d404890965040cb08e8fc7fe709df24a8587c52dc723a6b60
-strings,Quiz.ProblemPercentage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phần trăm,,,,,"Services/QuizProblemTypeCatalog.cs:38
-Views/HardwareLlmBenchmarkView.xaml.cs:820",,untranslated,,83c902564151a0f2d31d11230d236960024fcb68877951b3d9138cdf6dfda16f
-strings,Quiz.SubtypeMixed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hỗn hợp các dạng,,,,,"Views/MathPuzzlePage.xaml.cs:798
-Views/MathPuzzlePage.xaml.cs:825
-Views/MathPuzzlePage.xaml.cs:846
-Views/MathPuzzlePage.xaml.cs:869",,untranslated,,50a835d988d02326e1ca42479a65f957545f8ba656d09d63c1fc6859024b9cf5
-strings,Quiz.AverageTypeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn dạng trung bình cộng,,,,,,,untranslated,,c735098058fb1cec0a4a97b6091e3a0a45ae243e9dfdf2a225d5799788341d8b
-strings,Quiz.AverageDirect,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tìm trung bình cộng trực tiếp,,,,,Views/MathPuzzlePage.xaml.cs:799,,untranslated,,3e184fde3f7c814a96c1af080f4177b96d6c65518f4e738791200a68c1374747
-strings,Quiz.AverageTotalToAverage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Biết tổng → tìm trung bình cộng,,,,,Views/MathPuzzlePage.xaml.cs:800,,untranslated,,d0f29205ac6b6de24b5a4749d81b834590d6f2e39a32e9d3d09f41358996b0df
-strings,Quiz.AverageAverageToTotal,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Biết trung bình cộng → tìm tổng,,,,,Views/MathPuzzlePage.xaml.cs:801,,untranslated,,61378180fe5bcefcaf4e154afa509af9792650f38ea00eb4947c63a66ac9a2e8
-strings,Quiz.AverageMissingValue,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Trung bình cộng + giá trị → tìm số còn thiếu,,,,,Views/MathPuzzlePage.xaml.cs:802,,untranslated,,ef88801bad90d75aeee9622534301fcf549f39495893da06a092a3aba6ad0462
-strings,Quiz.AverageIndirectData,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Dữ kiện gián tiếp,,,,,Views/MathPuzzlePage.xaml.cs:803,,untranslated,,7dbe02faa09c6fc23c44d679bc905f15bc4a8c112bb3201aede45848878b0da2
-strings,Quiz.AverageTwoGroups,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Trung bình cộng hai nhóm,,,,,Views/MathPuzzlePage.xaml.cs:804,,untranslated,,d96ba1e9c48f5b7ee3af2f503998a5c298f342be80cf8c76481d637d61ac3067
-strings,Quiz.PercentageTypeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn dạng phần trăm,,,,,,,untranslated,,0e5ba19915ecea20c223abba2bef038c952a795befc693692eb1c16605c128e6
-strings,Quiz.PercentageRatio,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tìm tỉ số phần trăm,,,,,Views/MathPuzzlePage.xaml.cs:826,,untranslated,,661c1ddd7ee08e4687de1f17ba7c98bac4b205a7c51f9522cab7e425b6b3d904
-strings,Quiz.PercentageValue,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tìm giá trị của một số phần trăm,,,,,Views/MathPuzzlePage.xaml.cs:827,,untranslated,,21ffc3cb64c95b6fbaf5e61c0bc883a0ca3a8c41bee71d76c61852fe274d0fb8
-strings,Quiz.PercentageWhole,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Biết giá trị phần trăm → tìm toàn bộ,,,,,Views/MathPuzzlePage.xaml.cs:828,,untranslated,,f11649408463124b15d128938b6fcac52f9d3513312cd412fe71592a1bf2aee6
-strings,Quiz.AverageQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán trung bình cộng,,,,,Views/MathPuzzlePage.xaml.cs:660,,untranslated,,d17e8907ff699e037adecf98a7dfef41f93c761e1988479f854332c397f9474e
-strings,Quiz.PercentageQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán phần trăm,,,,,Views/MathPuzzlePage.xaml.cs:666,,untranslated,,cdf6c4ed8b7f68275d24fe7bfd0769c282a08adb1b57ef850621339064c2ad6f
-strings,Quiz.FindXTypeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn dạng Tìm x,,,,,,,untranslated,,31fd7568562846fc7f99652dbb8a9fbfe01b3ee20ca2d654121049732f4c0762
-strings,Quiz.FindXSum,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tổng,,,,,"Views/FindXView.xaml:244
-Views/FindXView.xaml.cs:481
-Views/MathPuzzlePage.xaml.cs:870",,untranslated,,13fdbadf15c17c8bb9c14b46dce0901d1fb82c5f4e0abe718f6eeebf5073aadb
-strings,Quiz.FindXDifference,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hiệu,,,,,"Views/FindXView.xaml.cs:482
-Views/MathPuzzlePage.xaml.cs:871",,untranslated,,ec3dab1aa9c73b30fbaafbd30904619bb7e18dd5aba1ec94b2c7f8368b717b2c
-strings,Quiz.FindXProduct,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tích,,,,,"Views/FindXView.xaml.cs:483
-Views/MathPuzzlePage.xaml.cs:872",,untranslated,,fbc6df8ea8e77135ebd29e953a6069096782bcc346f067982db898d16227d5e9
-strings,Quiz.FindXQuotient,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Thương,,,,,"Services/ElementaryWordProblemContextCatalog.cs:83
-Views/CalculationPage.xaml:712
-Views/FindXView.xaml.cs:484
-Views/MathPuzzlePage.xaml.cs:873",,untranslated,,ceb274987dc7e7d07970b28d70458c109f9df6f7c080c774ab97f53c29cd5cb6
-strings,Quiz.GeometryShapeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn loại hình,,,,,,,untranslated,,f2be79bbfcb7960a1e9136e38f8f79eea4744ebd920a98df5b6d6827cc3771e7
-strings,Quiz.GeometrySquare,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình vuông,,,,,"Models/GeometryFormulaItem.cs:70
-Views/MathPuzzlePage.xaml.cs:893",,untranslated,,f636b9847d248a89e3f01fa8e9945e8b238172e42102f934836fe412a225302f
-strings,Quiz.GeometryRectangle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình chữ nhật,,,,,"Models/GeometryFormulaItem.cs:90
-Views/MathPuzzlePage.xaml.cs:894",,untranslated,,e77a7b47c15892513d2e395209a8c950e90a510cfb7f187334cdeca784a683eb
-strings,Quiz.GeometryCube,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình lập phương,,,,,"Models/GeometryFormulaItem.cs:313
-Views/MathPuzzlePage.xaml.cs:899",,untranslated,,de7545c2a211806145321f61f543d5a2cc70635d028da613c60fc97fd82bdcca
-strings,Quiz.GeometryRectangularPrism,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình hộp chữ nhật,,,,,"Models/GeometryFormulaItem.cs:336
-Views/MathPuzzlePage.xaml.cs:900",,untranslated,,a5e4e66b1e4b1f0b4c3019d373dddff1bac96ceec603edf4dc474b272b8a83f6
-strings,Quiz.GeometryTriangle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình tam giác,,,,,"Models/GeometryFormulaItem.cs:111
-Views/MathPuzzlePage.xaml.cs:895",,untranslated,,e1dfc6e43975f950dd6d49dba5d5f2b20ec7e253d083ac5a498f48505cd56dd6
-strings,Quiz.GeometryTrapezoid,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình thang,,,,,"Models/GeometryFormulaItem.cs:202
-Views/MathPuzzlePage.xaml.cs:896",,untranslated,,a929aa2a5fd41b1961f9b9dcef6992f954cb95e71ae3260a375fc155319934d5
-strings,Quiz.GeometryRhombus,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình thoi,,,,,"Models/GeometryFormulaItem.cs:268
-Views/MathPuzzlePage.xaml.cs:897",,untranslated,,b1d57d16dcf01467ac572af78e61ae3b612bfde918bdb962a27de8c972fa5e31
-strings,Quiz.GeometryParallelogram,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hình bình hành,,,,,"Models/GeometryFormulaItem.cs:291
-Views/MathPuzzlePage.xaml.cs:898",,untranslated,,12affc03c3e9a5bb3311f6c466a5a005a7233579827dc54bba13b738b6b4a77c
-strings,Quiz.MotionTypeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn dạng chuyển động,,,,,"Services/Localization/QuizLocalizationOverrides.cs:56
-Services/Localization/QuizLocalizationOverrides.cs:255",,untranslated,,b1db7709620e79af4f785f292d271df2cbc7b3e75082b71ea3e06bda675dfbfd
-strings,Quiz.MotionBasic,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Cơ bản – Một vật chuyển động,,,,,"Services/Localization/QuizLocalizationOverrides.cs:57
-Services/Localization/QuizLocalizationOverrides.cs:256
-Views/MathPuzzlePage.xaml.cs:847",,untranslated,,3c8eb60dd47d47cc5192fd298692491a881215c9afd1ecab81a845c05e60b8b6
-strings,Quiz.MotionChasing,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hai vật cùng chiều (đuổi nhau / đuổi kịp),,,,,"Services/Localization/QuizLocalizationOverrides.cs:58
-Services/Localization/QuizLocalizationOverrides.cs:257
-Views/MathPuzzlePage.xaml.cs:848",,untranslated,,019af12693eb1d4e29843e2e34817cdade6039f6e4925bffdb11ef8ec5183ab1
-strings,Quiz.MotionMeeting,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hai vật ngược chiều (gặp nhau),,,,,"Services/Localization/QuizLocalizationOverrides.cs:59
-Services/Localization/QuizLocalizationOverrides.cs:258
-Views/MathPuzzlePage.xaml.cs:849",,untranslated,,d5b12e2a67c5989657a7b4e8897b477e52684dd670f91c924491b7a1ca66159c
-strings,Quiz.MotionRiver,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chuyển động trên dòng nước (xuôi dòng – ngược dòng),,,,,"Services/Localization/QuizLocalizationOverrides.cs:60
-Services/Localization/QuizLocalizationOverrides.cs:259
-Views/MathPuzzlePage.xaml.cs:850",,untranslated,,830e6d2583de1f1ac77481ce332c6bcead3f2cd23bb9b944e8d38448480eed4f
+strings,Quiz.ProblemAverage,"Math puzzles: question generation, practice and grading.",Trung bình cộng,,,,,Services/Quizzes/QuizProblemTypeCatalog.cs:35,,untranslated,,b34a5a7ee3ad6a5d404890965040cb08e8fc7fe709df24a8587c52dc723a6b60
+strings,Quiz.ProblemPercentage,"Math puzzles: question generation, practice and grading.",Phần trăm,,,,,Services/Quizzes/QuizProblemTypeCatalog.cs:38,,untranslated,,83c902564151a0f2d31d11230d236960024fcb68877951b3d9138cdf6dfda16f
+strings,Quiz.SubtypeMixed,"Math puzzles: question generation, practice and grading.",Hỗn hợp các dạng,,,,,"Services/Quizzes/QuizCurriculumLayer.cs:570
+Views/Quizzes/MathPuzzlePage.xaml:291
+Views/Quizzes/MathPuzzlePage.xaml.cs:695
+Views/Quizzes/MathPuzzlePage.xaml.cs:704",,untranslated,,50a835d988d02326e1ca42479a65f957545f8ba656d09d63c1fc6859024b9cf5
+strings,Quiz.AverageTypeTitle,"Math puzzles: question generation, practice and grading.",Chọn dạng trung bình cộng,,,,,Views/Quizzes/MathPuzzlePage.xaml:417,,untranslated,,c735098058fb1cec0a4a97b6091e3a0a45ae243e9dfdf2a225d5799788341d8b
+strings,Quiz.AverageDirect,"Math puzzles: question generation, practice and grading.",Tìm trung bình cộng trực tiếp,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:705,,untranslated,,3e184fde3f7c814a96c1af080f4177b96d6c65518f4e738791200a68c1374747
+strings,Quiz.AverageTotalToAverage,"Math puzzles: question generation, practice and grading.",Biết tổng → tìm trung bình cộng,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:706,,untranslated,,d0f29205ac6b6de24b5a4749d81b834590d6f2e39a32e9d3d09f41358996b0df
+strings,Quiz.AverageAverageToTotal,"Math puzzles: question generation, practice and grading.",Biết trung bình cộng → tìm tổng,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:707,,untranslated,,61378180fe5bcefcaf4e154afa509af9792650f38ea00eb4947c63a66ac9a2e8
+strings,Quiz.AverageMissingValue,"Math puzzles: question generation, practice and grading.",Trung bình cộng + giá trị → tìm số còn thiếu,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:708,,untranslated,,ef88801bad90d75aeee9622534301fcf549f39495893da06a092a3aba6ad0462
+strings,Quiz.AverageIndirectData,"Math puzzles: question generation, practice and grading.",Dữ kiện gián tiếp,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:709,,untranslated,,7dbe02faa09c6fc23c44d679bc905f15bc4a8c112bb3201aede45848878b0da2
+strings,Quiz.AverageTwoGroups,"Math puzzles: question generation, practice and grading.",Trung bình cộng hai nhóm,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:710,,untranslated,,d96ba1e9c48f5b7ee3af2f503998a5c298f342be80cf8c76481d637d61ac3067
+strings,Quiz.PercentageTypeTitle,"Math puzzles: question generation, practice and grading.",Chọn dạng phần trăm,,,,,Views/Quizzes/MathPuzzlePage.xaml:465,,untranslated,,0e5ba19915ecea20c223abba2bef038c952a795befc693692eb1c16605c128e6
+strings,Quiz.PercentageRatio,"Math puzzles: question generation, practice and grading.",Tìm tỉ số phần trăm,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:732,,untranslated,,661c1ddd7ee08e4687de1f17ba7c98bac4b205a7c51f9522cab7e425b6b3d904
+strings,Quiz.PercentageValue,"Math puzzles: question generation, practice and grading.",Tìm giá trị của một số phần trăm,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:733,,untranslated,,21ffc3cb64c95b6fbaf5e61c0bc883a0ca3a8c41bee71d76c61852fe274d0fb8
+strings,Quiz.PercentageWhole,"Math puzzles: question generation, practice and grading.",Biết giá trị phần trăm → tìm toàn bộ,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:734,,untranslated,,f11649408463124b15d128938b6fcac52f9d3513312cd412fe71592a1bf2aee6
+strings,Quiz.AverageQuestionTitle,"Math puzzles: question generation, practice and grading.",Bài toán trung bình cộng,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:505,,untranslated,,d17e8907ff699e037adecf98a7dfef41f93c761e1988479f854332c397f9474e
+strings,Quiz.PercentageQuestionTitle,"Math puzzles: question generation, practice and grading.",Bài toán phần trăm,,,,,Views/Quizzes/MathPuzzlePage.xaml.cs:510,,untranslated,,cdf6c4ed8b7f68275d24fe7bfd0769c282a08adb1b57ef850621339064c2ad6f
+strings,Quiz.FindXTypeTitle,"Math puzzles: question generation, practice and grading.",Chọn dạng Tìm x,,,,,Views/Quizzes/MathPuzzlePage.xaml:513,,untranslated,,31fd7568562846fc7f99652dbb8a9fbfe01b3ee20ca2d654121049732f4c0762
+strings,Quiz.FindXSum,"Math puzzles: question generation, practice and grading.",Tổng,,,,,"Services/Quizzes/QuizDiagramBuilder.cs:97
+Services/Quizzes/QuizDiagramBuilder.cs:98
+Views/Calculators/FindXView.xaml:244
+Views/Calculators/FindXView.xaml.cs:481",,untranslated,,13fdbadf15c17c8bb9c14b46dce0901d1fb82c5f4e0abe718f6eeebf5073aadb
+strings,Quiz.FindXDifference,"Math puzzles: question generation, practice and grading.",Hiệu,,,,,"Services/Quizzes/QuizDiagramBuilder.cs:97
+Services/Quizzes/QuizDiagramBuilder.cs:99
+Views/Calculators/FindXView.xaml.cs:482
+Views/Quizzes/MathPuzzlePage.xaml.cs:777",,untranslated,,ec3dab1aa9c73b30fbaafbd30904619bb7e18dd5aba1ec94b2c7f8368b717b2c
+strings,Quiz.FindXProduct,"Math puzzles: question generation, practice and grading.",Tích,,,,,"Views/Calculators/FindXView.xaml.cs:483
+Views/Quizzes/MathPuzzlePage.xaml.cs:778",,untranslated,,fbc6df8ea8e77135ebd29e953a6069096782bcc346f067982db898d16227d5e9
+strings,Quiz.FindXQuotient,"Math puzzles: question generation, practice and grading.",Thương,,,,,"Services/Quizzes/ElementaryQuizGenerator.cs:123
+Views/Calculators/CalculationPage.xaml:716
+Views/Calculators/FindXView.xaml.cs:484
+Views/Quizzes/MathPuzzlePage.xaml.cs:779",,untranslated,,ceb274987dc7e7d07970b28d70458c109f9df6f7c080c774ab97f53c29cd5cb6
+strings,Quiz.GeometryShapeTitle,"Math puzzles: question generation, practice and grading.",Chọn loại hình,,,,,Views/Quizzes/MathPuzzlePage.xaml:561,,untranslated,,f2be79bbfcb7960a1e9136e38f8f79eea4744ebd920a98df5b6d6827cc3771e7
+strings,Quiz.GeometrySquare,"Math puzzles: question generation, practice and grading.",Hình vuông,,,,,"Models/Formulas/GeometryFormulaItem.cs:70
+Services/Quizzes/ElementaryQuizGenerator.Shapes.cs:105
+Views/Quizzes/MathPuzzlePage.xaml.cs:805",,untranslated,,f636b9847d248a89e3f01fa8e9945e8b238172e42102f934836fe412a225302f
+strings,Quiz.GeometryRectangle,"Math puzzles: question generation, practice and grading.",Hình chữ nhật,,,,,"Models/Formulas/GeometryFormulaItem.cs:90
+Views/Quizzes/MathPuzzlePage.xaml.cs:806",,untranslated,,e77a7b47c15892513d2e395209a8c950e90a510cfb7f187334cdeca784a683eb
+strings,Quiz.GeometryCube,"Math puzzles: question generation, practice and grading.",Hình lập phương,,,,,"Models/Formulas/GeometryFormulaItem.cs:313
+Views/Quizzes/MathPuzzlePage.xaml.cs:812",,untranslated,,de7545c2a211806145321f61f543d5a2cc70635d028da613c60fc97fd82bdcca
+strings,Quiz.GeometryRectangularPrism,"Math puzzles: question generation, practice and grading.",Hình hộp chữ nhật,,,,,"Models/Formulas/GeometryFormulaItem.cs:336
+Views/Quizzes/MathPuzzlePage.xaml.cs:813",,untranslated,,a5e4e66b1e4b1f0b4c3019d373dddff1bac96ceec603edf4dc474b272b8a83f6
+strings,Quiz.GeometryTriangle,"Math puzzles: question generation, practice and grading.",Hình tam giác,,,,,"Models/Formulas/GeometryFormulaItem.cs:111
+Views/Quizzes/MathPuzzlePage.xaml.cs:807",,untranslated,,e1dfc6e43975f950dd6d49dba5d5f2b20ec7e253d083ac5a498f48505cd56dd6
+strings,Quiz.GeometryTrapezoid,"Math puzzles: question generation, practice and grading.",Hình thang,,,,,"Models/Formulas/GeometryFormulaItem.cs:202
+Views/Quizzes/MathPuzzlePage.xaml.cs:808",,untranslated,,a929aa2a5fd41b1961f9b9dcef6992f954cb95e71ae3260a375fc155319934d5
+strings,Quiz.GeometryRhombus,"Math puzzles: question generation, practice and grading.",Hình thoi,,,,,"Models/Formulas/GeometryFormulaItem.cs:268
+Services/Quizzes/ElementaryQuizGenerator.Shapes.cs:105
+Views/Quizzes/MathPuzzlePage.xaml.cs:809",,untranslated,,b1d57d16dcf01467ac572af78e61ae3b612bfde918bdb962a27de8c972fa5e31
+strings,Quiz.GeometryParallelogram,"Math puzzles: question generation, practice and grading.",Hình bình hành,,,,,"Models/Formulas/GeometryFormulaItem.cs:291
+Views/Quizzes/MathPuzzlePage.xaml.cs:810",,untranslated,,12affc03c3e9a5bb3311f6c466a5a005a7233579827dc54bba13b738b6b4a77c
+strings,Quiz.MotionTypeTitle,Math puzzle practice on Windows and Android.,Chọn dạng chuyển động,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:149
+Services/Localization/QuizLocalizationOverrides.cs:317
+Views/Quizzes/MathPuzzlePage.xaml:369",,untranslated,,b1db7709620e79af4f785f292d271df2cbc7b3e75082b71ea3e06bda675dfbfd
+strings,Quiz.MotionBasic,Math puzzle practice on Windows and Android.,Cơ bản – Một vật chuyển động,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:150
+Services/Localization/QuizLocalizationOverrides.cs:318
+Views/Quizzes/MathPuzzlePage.xaml.cs:753",,untranslated,,3c8eb60dd47d47cc5192fd298692491a881215c9afd1ecab81a845c05e60b8b6
+strings,Quiz.MotionChasing,Math puzzle practice on Windows and Android.,Hai vật cùng chiều (đuổi nhau / đuổi kịp),A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:151
+Services/Localization/QuizLocalizationOverrides.cs:319
+Views/Quizzes/MathPuzzlePage.xaml.cs:754",,untranslated,,019af12693eb1d4e29843e2e34817cdade6039f6e4925bffdb11ef8ec5183ab1
+strings,Quiz.MotionMeeting,Math puzzle practice on Windows and Android.,Hai vật ngược chiều (gặp nhau),A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:152
+Services/Localization/QuizLocalizationOverrides.cs:320
+Views/Quizzes/MathPuzzlePage.xaml.cs:755",,untranslated,,d5b12e2a67c5989657a7b4e8897b477e52684dd670f91c924491b7a1ca66159c
+strings,Quiz.MotionRiver,Math puzzle practice on Windows and Android.,Chuyển động trên dòng nước (xuôi dòng – ngược dòng),A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:153
+Services/Localization/QuizLocalizationOverrides.cs:321
+Views/Quizzes/MathPuzzlePage.xaml.cs:756",,untranslated,,830e6d2583de1f1ac77481ce332c6bcead3f2cd23bb9b944e8d38448480eed4f
 strings,PowerRoot.LargeExponentWarningTitle,"Lũy thừa và căn — nhập dữ liệu, kết quả và lời giải.",Số mũ rất lớn • Cảnh báo RAM,,,,,Views/PowerRootView.xaml.cs:525,,untranslated,,fd06b3a99210b4a60e3defd6a4dd1335cac33051a88421756cdc058659cceb0a
 strings,PowerRoot.LargeExponentWarningMessage,"Lũy thừa và căn — nhập dữ liệu, kết quả và lời giải.","Số mũ {0} lớn hơn 10,000,000. Kết quả ước tính có {1} chữ số. Ở quy mô này, NTT/CRT chính xác có thể dùng nhiều GB RAM. Kể cả đường tắt ghép số 0 của ±10^k hoặc bitshift khi |a| = 2^k có phép tính trung gian nhẹ hơn, kết quả hoặc bước chuẩn bị xuất vẫn cực lớn nên ứng dụng vẫn hiển thị cảnh báo này. Hãy bảo đảm thiết bị còn đủ RAM và dung lượng lưu trữ trước khi tiếp tục.",,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,Views/PowerRootView.xaml.cs:527,,untranslated,,11ffd7deb2c98ec3428da4d2d32da3c6086645be79f7882b311c8187e77e3fdf
@@ -2112,3 +2094,298 @@ templates,dynamic.times_table_showing_division,Câu có biến được app thay
 templates,dynamic.times_table_showing_multiplication,Câu có biến được app thay bằng dữ liệu — giữ nguyên các placeholder.,Đang hiển thị bảng nhân từ {first} đến {last} • {count} bảng,,,"{first}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {last}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {count}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,Views/MultiplicationTablePage.xaml.cs:363,,untranslated,,31c09d5c3bfe490fc84cd2e497e2a7ba42febc9977ea30aa5ac9f1af29638638
+strings,Quiz.GeometryCircle,"Math puzzles: question generation, practice and grading.",Hình tròn,,,,,"Models/Formulas/GeometryFormulaItem.cs:179
+Views/Quizzes/MathPuzzlePage.xaml.cs:811",,untranslated,,2727db7de504408383be8524bc02c859fdf3c48084997308c5bdbc5c07545469
+strings,Quiz.CurriculumTitle,Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.,3. Chọn mức độ,Explains difficulty progression and the availability of problem types.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:78
+Services/Localization/QuizLocalizationOverrides.cs:246",,untranslated,,05acfea399180aaccc17c12744ed8158c9b909610ac2389ab8472e73df650b3d
+strings,Quiz.CurriculumHintMixed,Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.,"Hỗn hợp có bộ quy tắc riêng: số sao quyết định dạng toán được phép xuất hiện, phạm vi số và trọng số ngẫu nhiên.",Explains difficulty progression and the availability of problem types.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:80
+Services/Localization/QuizLocalizationOverrides.cs:248
+Views/Quizzes/MathPuzzlePage.xaml:179
+Views/Quizzes/MathPuzzlePage.xaml.cs:465",,untranslated,,f41339144fca2b8ff59e07f53d0e15fc30564c3833b1859f8c025ae598308150
+strings,Quiz.CurriculumHintSkill,Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.,"Mỗi dạng toán có lộ trình riêng theo số sao; độ khó xét dữ kiện, quan hệ và các bước suy luận cần dùng.",Explains difficulty progression and the availability of problem types.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:81
+Services/Localization/QuizLocalizationOverrides.cs:249
+Views/Quizzes/MathPuzzlePage.xaml.cs:466",,untranslated,,b2c9c6fcd9c293fddbe0339f342c5675b216b3e769abf43787fe28b865bdec8b
+strings,Quiz.CurriculumMinimumTier,Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.,Dạng này bắt đầu từ mức {0}.,Explains difficulty progression and the availability of problem types.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",{0}: Keep this placeholder unchanged; the app supplies its value at runtime.,,"Services/Localization/QuizLocalizationOverrides.cs:82
+Services/Localization/QuizLocalizationOverrides.cs:250",,untranslated,,caab8b18450b79456a6077b015befef728c3cf6138438e098cfd4779efc83915
+strings,Quiz.ShowDiagram,Math puzzles > Diagram; illustration controls and zoom dialog.,Xem sơ đồ,A control label or instruction for viewing the problem illustration.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:9
+Services/Localization/QuizLocalizationOverrides.cs:177
+Views/Quizzes/MathPuzzlePage.Diagrams.cs:31
+Views/Quizzes/MathPuzzlePage.xaml:706",,untranslated,,9c2a3c9826188526a6890609700c32b0ccbd2066d6a8fdb9a07405e2dc07ac07
+strings,Quiz.ComparisonSubtype,Math puzzle practice on Windows and Android.,So sánh < = >,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:10
+Services/Localization/QuizLocalizationOverrides.cs:178
+Views/Quizzes/MathPuzzlePage.xaml:298",,untranslated,,fad29586fa5d5566f5fab609a237c1dada028d93c1b454c5ca726de681f92680
+strings,Quiz.Elementary.IntegerCompare,Math puzzles > Choose problem > Choose subtype; skill label.,So sánh số nguyên,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:11
+Services/Localization/QuizLocalizationOverrides.cs:179",,untranslated,,11832719ba42f670aa56690945fb8b1ecadedef0724be53c3c3082f77734c067
+strings,Quiz.ComparisonQuestionTitle,Math puzzle practice on Windows and Android.,Điền dấu so sánh thích hợp,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:12
+Services/Localization/QuizLocalizationOverrides.cs:180
+Views/Quizzes/MathPuzzlePage.xaml.cs:474",,untranslated,,18a666e3b9a10ec9d5042bd20f81bf9e632ebf8b0f268b3d8f6ac6ebe9c87ca8
+strings,Quiz.ComparisonTrueFalseTitle,Math puzzle practice on Windows and Android.,So sánh sau đúng hay sai?,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:13
+Services/Localization/QuizLocalizationOverrides.cs:181
+Views/Quizzes/MathPuzzlePage.xaml.cs:474",,untranslated,,91381310dbbdcb787e9bb65398c51b3b994eb32a75ddb7cdc23d96077318f3cf
+strings,Quiz.ComparisonEssayHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Nhập dấu >, <, = hoặc cả dòng so sánh. Không bắt buộc lời giải hay phép tính riêng.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:14
+Services/Localization/QuizLocalizationOverrides.cs:182
+Views/Quizzes/MathPuzzlePage.xaml.cs:637",,untranslated,,abd0f8f2c12711dfa5cb2544e2db80ee7c7faa8feb471514fade877be3489c75
+strings,Quiz.ComparisonEssayPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Dấu >, <, = hoặc dòng so sánh hai số","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:15
+Services/Localization/QuizLocalizationOverrides.cs:183
+Views/Quizzes/MathPuzzlePage.xaml.cs:638",,untranslated,,d3e416ae4735fd62ad819ed8d3ffd0f490e609754e60987d5693d9baf0c311c6
+strings,Quiz.HideDiagram,Math puzzles > Diagram; illustration controls and zoom dialog.,Ẩn sơ đồ,A control label or instruction for viewing the problem illustration.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:16
+Services/Localization/QuizLocalizationOverrides.cs:184
+Views/Quizzes/MathPuzzlePage.Diagrams.cs:31",,untranslated,,99b8eba63135a43e8b87a539a07c065dcf455899a967ec1d716326d1e5e69272
+strings,Quiz.EnlargeDiagram,Math puzzles > Diagram; illustration controls and zoom dialog.,Phóng to hình,A control label or instruction for viewing the problem illustration.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:17
+Services/Localization/QuizLocalizationOverrides.cs:185
+Views/Quizzes/MathPuzzlePage.xaml:747",,untranslated,,e4cb635b485f6aa2b8cf090a2b769142b006f629a8acace941131aad32c94fb8
+strings,Quiz.CloseDiagram,Math puzzles > Diagram; illustration controls and zoom dialog.,Đóng hình,A control label or instruction for viewing the problem illustration.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:18
+Services/Localization/QuizLocalizationOverrides.cs:186
+Views/Quizzes/MathPuzzlePage.Diagrams.cs:100",,untranslated,,224c2e74e0582a23ce4b188fa7be5d97adf0ba289be2ec7ae17ce19be4f53f1d
+strings,Quiz.DiagramZoom,Math puzzles > Diagram; illustration controls and zoom dialog.,Mức phóng to,A control label or instruction for viewing the problem illustration.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:19
+Services/Localization/QuizLocalizationOverrides.cs:187
+Views/Quizzes/MathPuzzlePage.Diagrams.cs:127",,untranslated,,3b5fe8f66b6110b082961d61b747ba280a07775afa5fb016480f4d2d29d5f4b7
+strings,Quiz.DiagramNotToScale,Math puzzles > Diagram; illustration controls and zoom dialog.,Hình minh họa không theo tỉ lệ số đo.,A control label or instruction for viewing the problem illustration.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:20
+Services/Localization/QuizLocalizationOverrides.cs:188
+Views/Quizzes/MathPuzzlePage.xaml:740",,untranslated,,0dc55d5e2a4abdb459a96ba3e85912b2c7622a09f66406bc335a1f2bd1aa0d30
+strings,Quiz.ProblemTwoNumbers,Math puzzle practice on Windows and Android.,Tìm hai số,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:21
+Services/Localization/QuizLocalizationOverrides.cs:189
+Services/Quizzes/QuizProblemTypeCatalog.cs:43",,untranslated,,98b787e0c7ceea9678f46703883c21d0643cd7db66c79caa4c360a8acb028682
+strings,Quiz.ProblemMeasurement,Math puzzle practice on Windows and Android.,Đo lường,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:22
+Services/Localization/QuizLocalizationOverrides.cs:190
+Services/Quizzes/QuizProblemTypeCatalog.cs:44",,untranslated,,1e6d56d1c3f37e3d8ef96e879d29b3d45cfad085b19b798443d82314dc04ed39
+strings,Quiz.ProblemTime,Math puzzle practice on Windows and Android.,Thời gian,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:23
+Services/Localization/QuizLocalizationOverrides.cs:191
+Services/Quizzes/QuizDiagramBuilder.cs:177
+Services/Quizzes/QuizDiagramBuilder.cs:180",,untranslated,,b295fd620d82e277ea7abeeeae34b51902f315253d428d01f50ee20fdcd71091
+strings,Quiz.ProblemRemainder,Math puzzle practice on Windows and Android.,Chia có dư,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:24
+Services/Localization/QuizLocalizationOverrides.cs:192
+Services/Quizzes/QuizProblemTypeCatalog.cs:46",,untranslated,,2baa61f6b20e3789f1b56549cef05f1188072b6dff0959e850d4a6d9095fcd60
+strings,Quiz.ProblemDecimal,Math puzzle practice on Windows and Android.,Số thập phân,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:25
+Services/Localization/QuizLocalizationOverrides.cs:193
+Services/Quizzes/QuizProblemTypeCatalog.cs:47",,untranslated,,e4d370e7e64b98c8491537667f7c2b7b4fbff9670d9bc9b39fc6d5dbd8ca610e
+strings,Quiz.ProblemFractionSkills,Math puzzle practice on Windows and Android.,Kĩ năng phân số,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:26
+Services/Localization/QuizLocalizationOverrides.cs:194
+Services/Quizzes/QuizProblemTypeCatalog.cs:48",,untranslated,,3ee290cf1df5e696af263972f062d127f94dad3589c78b3eaeeaeecbc2702a1e
+strings,Quiz.ProblemData,Math puzzle practice on Windows and Android.,Bảng và biểu đồ,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:27
+Services/Localization/QuizLocalizationOverrides.cs:195
+Services/Quizzes/QuizProblemTypeCatalog.cs:49",,untranslated,,0be190543ba1b43c5bfe1d21346c79765f4e3c60f51b4591fbc45116f237f5c0
+strings,Quiz.ProblemProbability,Math puzzle practice on Windows and Android.,Khả năng xảy ra,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:28
+Services/Localization/QuizLocalizationOverrides.cs:196
+Services/Quizzes/ElementaryQuizGenerator.ProbabilityDifficulty.cs:50
+Services/Quizzes/QuizProblemTypeCatalog.cs:50",,untranslated,,8138cab7fb8c51dd02d1d4854e596daa65611a5e413db148a25c8194d4b5dbcb
+strings,Quiz.ProblemVisualGeometry,Math puzzle practice on Windows and Android.,Hình học trực quan,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:29
+Services/Localization/QuizLocalizationOverrides.cs:197
+Services/Quizzes/QuizProblemTypeCatalog.cs:51",,untranslated,,5ace275902044a19b78cd2a63552829f96330da1d5294f4aa7699963d8153d25
+strings,Quiz.Elementary.SumDifference,Math puzzles > Choose problem > Choose subtype; skill label.,Tổng – hiệu,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:30
+Services/Localization/QuizLocalizationOverrides.cs:198",,untranslated,,330884045364202e7aaebf6c591bebdcb8aee1c27e244d76963f26ebe234880b
+strings,Quiz.Elementary.SumRatio,Math puzzles > Choose problem > Choose subtype; skill label.,Tổng – tỉ,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:31
+Services/Localization/QuizLocalizationOverrides.cs:199",,untranslated,,f4bd33a4c00a0a6319b800f49c42420044f47a7643a871c3c39ab27a04684df9
+strings,Quiz.Elementary.DifferenceRatio,Math puzzles > Choose problem > Choose subtype; skill label.,Hiệu – tỉ,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:32
+Services/Localization/QuizLocalizationOverrides.cs:200",,untranslated,,f10aadff3327be80078e8a81f9455d9a67be2b2cdc3995b0b8247dcdd22723ef
+strings,Quiz.Elementary.LengthConversion,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi đơn vị độ dài,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:33
+Services/Localization/QuizLocalizationOverrides.cs:201",,untranslated,,49fbfae367fa54566ee951fcb985cbdcca24114b3d33da15083dcb35d8363cc1
+strings,Quiz.Elementary.MassConversion,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi đơn vị khối lượng,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:34
+Services/Localization/QuizLocalizationOverrides.cs:202",,untranslated,,de2c26124df8b078023a868afcebc0af0350834897e8feeb8a16f3b14e7ae851
+strings,Quiz.Elementary.CapacityConversion,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi đơn vị dung tích,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:35
+Services/Localization/QuizLocalizationOverrides.cs:203",,untranslated,,94152c9889efbbbe80f6fa32432a5457388786227eefc853b65b135282005a78
+strings,Quiz.Elementary.AreaConversion,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi đơn vị diện tích,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:36
+Services/Localization/QuizLocalizationOverrides.cs:204",,untranslated,,28f9da0deb21745efa5a7120b05878e56b6a3cb2d37f16983dfb51ff5ec9d641
+strings,Quiz.Elementary.VolumeConversion,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi đơn vị thể tích,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:37
+Services/Localization/QuizLocalizationOverrides.cs:205",,untranslated,,bd9e9e967aada21c44bf07b6348c032d98ed987aa149ab42ca0b82d89921b328
+strings,Quiz.Elementary.MixedLength,Math puzzles > Choose problem > Choose subtype; skill label.,Số đo có hai đơn vị,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:38
+Services/Localization/QuizLocalizationOverrides.cs:206",,untranslated,,42fcac5789bd41728b4c9460679e048e4d703922a05db4522202eb8258868200
+strings,Quiz.Elementary.ElapsedTime,Math puzzles > Choose problem > Choose subtype; skill label.,Thời gian trôi qua,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:39
+Services/Localization/QuizLocalizationOverrides.cs:207
+Services/Quizzes/ElementaryQuizGenerator.TimeDifficulty.cs:84",,untranslated,,a72595f012ac850c7e30ed8a14fd8e9828c721649f56081bf8f01d2fcef50381
+strings,Quiz.Elementary.TimeAddition,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi giờ và phút,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:40
+Services/Localization/QuizLocalizationOverrides.cs:208",,untranslated,,2d18927bed22786967ede0568384a0ec69c5541209f7cd49e88be6d1b265f488
+strings,Quiz.Elementary.ReadClock,Math puzzles > Choose problem > Choose subtype; skill label.,Đọc đồng hồ,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:41
+Services/Localization/QuizLocalizationOverrides.cs:209",,untranslated,,5b70a4405629034d601f84e1755abb9ab564bc79e61eeedcd96a60744390e69b
+strings,Quiz.Elementary.Calendar,Math puzzles > Choose problem > Choose subtype; skill label.,Tính số ngày,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:42
+Services/Localization/QuizLocalizationOverrides.cs:210",,untranslated,,482f468f5451ae14046dbbfa41708f3e355271aa795c0cf3cf56b17ab5fb396a
+strings,Quiz.Elementary.QuotientRemainder,Math puzzles > Choose problem > Choose subtype; skill label.,Thương và số dư,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:43
+Services/Localization/QuizLocalizationOverrides.cs:211
+Views/Calculators/CalculationPage.xaml:937",,untranslated,,bc3efcb3c8da33e4bc5f5e03da2940cdbd9c70ec76e0fbbd28c1d41b6aa943a7
+strings,Quiz.Elementary.MinimumGroups,Math puzzles > Choose problem > Choose subtype; skill label.,Số nhóm tối thiểu,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:44
+Services/Localization/QuizLocalizationOverrides.cs:212",,untranslated,,472e2476e4892d7ba39fb8a711b1b271628ca33fd71ba0a0e435e2fe4f3672b5
+strings,Quiz.Elementary.Leftovers,Math puzzles > Choose problem > Choose subtype; skill label.,Chia nhóm và phần còn lại,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:45
+Services/Localization/QuizLocalizationOverrides.cs:213",,untranslated,,5a8f89b117bd178bc05960da489388f9a36625d249124f1a715740a4d998030d
+strings,Quiz.Elementary.DecimalAdd,Math puzzles > Choose problem > Choose subtype; skill label.,Cộng số thập phân,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:46
+Services/Localization/QuizLocalizationOverrides.cs:214",,untranslated,,59baa951976a8517dbc0ded5d8b04144abe7fe02a443dfc764e1ccff46a9a58f
+strings,Quiz.Elementary.DecimalSubtract,Math puzzles > Choose problem > Choose subtype; skill label.,Trừ số thập phân,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:47
+Services/Localization/QuizLocalizationOverrides.cs:215",,untranslated,,22e4c09155d9417f7d179fddc5c456c0d1cc6d63ba0dedb5e46a4f4c9e4eb8d2
+strings,Quiz.Elementary.DecimalMultiply,Math puzzles > Choose problem > Choose subtype; skill label.,Nhân số thập phân,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:48
+Services/Localization/QuizLocalizationOverrides.cs:216",,untranslated,,340655cf3763219a62608fc346f562a9801aa4013b3cefa4d1e99d56dda73aac
+strings,Quiz.Elementary.DecimalDivide,Math puzzles > Choose problem > Choose subtype; skill label.,Chia số thập phân,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:49
+Services/Localization/QuizLocalizationOverrides.cs:217",,untranslated,,3536a43c47f26aa14b14246ae19278968e3d04b4139ea533414ac89ccde9cd95
+strings,Quiz.Elementary.DecimalRound,Math puzzles > Choose problem > Choose subtype; skill label.,Làm tròn,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:50
+Services/Localization/QuizLocalizationOverrides.cs:218",,untranslated,,1815f786e5499782eeaa1b6caca7e3cba341759854805e275be5ba5095c2d27f
+strings,Quiz.Elementary.DecimalCompare,Math puzzles > Choose problem > Choose subtype; skill label.,So sánh số thập phân,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:51
+Services/Localization/QuizLocalizationOverrides.cs:219",,untranslated,,ec73667ab7664c8f01f9e223e902977f761df4e959c39b737ae3f68bd6067134
+strings,Quiz.Elementary.ReduceFraction,Math puzzles > Choose problem > Choose subtype; skill label.,Rút gọn phân số,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/FractionCalculationEngine.cs:581
+Services/Localization/QuizLocalizationOverrides.cs:52
+Services/Localization/QuizLocalizationOverrides.cs:220",,untranslated,,eadc393702d69a3ad70668fdaa93e9e36922ddc25a8f10b72457bdd5e09cec75
+strings,Quiz.Elementary.CompareFractions,Math puzzles > Choose problem > Choose subtype; skill label.,So sánh phân số,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:53
+Services/Localization/QuizLocalizationOverrides.cs:221",,untranslated,,894687098b92e94f005826451880ddec008b3be674fe7d8d9f6d5536ab955f0d
+strings,Quiz.Elementary.MixedNumber,Math puzzles > Choose problem > Choose subtype; skill label.,Đổi sang hỗn số,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:54
+Services/Localization/QuizLocalizationOverrides.cs:222",,untranslated,,b22b0f5aa2ee6c579b109e9bed489d726da38b828d295a501453160795945aa4
+strings,Quiz.Elementary.CommonDenominator,Math puzzles > Choose problem > Choose subtype; skill label.,Quy đồng mẫu số,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/FractionCalculationEngine.cs:511
+Services/Localization/QuizLocalizationOverrides.cs:55
+Services/Localization/QuizLocalizationOverrides.cs:223",,untranslated,,5506fdad31ebabd6a7ed4b35e444c753d19572db0a8c19b3e8c102ded4697703
+strings,Quiz.Elementary.FractionOfNumber,Math puzzles > Choose problem > Choose subtype; skill label.,Tìm phân số của một số,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:56
+Services/Localization/QuizLocalizationOverrides.cs:224",,untranslated,,e8c24c7d0bea040467d0c0b84e67478e41cf53148b216824a02c036fadcd7821
+strings,Quiz.Elementary.WholeFromFraction,Math puzzles > Choose problem > Choose subtype; skill label.,Tìm số khi biết một phần,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:57
+Services/Localization/QuizLocalizationOverrides.cs:225",,untranslated,,f4826e2f32d8b87e282148cb1f034ec9c24477accdcc38fb9df2aed647a98e7f
+strings,Quiz.Elementary.ReadTable,Math puzzles > Choose problem > Choose subtype; skill label.,Đọc bảng,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:58
+Services/Localization/QuizLocalizationOverrides.cs:226",,untranslated,,10543e927b7f58cadadc5c33bf35da9c6691c65cce605b43760b08ceda5e1577
+strings,Quiz.Elementary.ReadBarChart,Math puzzles > Choose problem > Choose subtype; skill label.,Đọc biểu đồ cột,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:59
+Services/Localization/QuizLocalizationOverrides.cs:227",,untranslated,,320a656c15083515fe0fc6eade62c607c3d0629bace8a265bcef472297c6cd42
+strings,Quiz.Elementary.ReadPieChart,Math puzzles > Choose problem > Choose subtype; skill label.,Đọc biểu đồ tròn,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:60
+Services/Localization/QuizLocalizationOverrides.cs:228",,untranslated,,c6fe12b71a39c68949ddd7fd25002118425be9cd6a6b7139c3ca08b7ab84ed89
+strings,Quiz.Elementary.ChartTotal,Math puzzles > Choose problem > Choose subtype; skill label.,Tổng các giá trị,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:61
+Services/Localization/QuizLocalizationOverrides.cs:229",,untranslated,,a96ac16bd84011ee169a0dbcc733c8e0a8fbe19b958d72463adc49079eb8090d
+strings,Quiz.Elementary.ChartDifference,Math puzzles > Choose problem > Choose subtype; skill label.,Chênh lệch các giá trị,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:62
+Services/Localization/QuizLocalizationOverrides.cs:230",,untranslated,,b17247a6bdac2785aaa95341dd29602f42d86707d776a88f3e46436dbd3087e7
+strings,Quiz.Elementary.Likelihood,Math puzzles > Choose problem > Choose subtype; skill label.,"Chắc Chắn, Có Thể, Không Thể",Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:63
+Services/Localization/QuizLocalizationOverrides.cs:231",,untranslated,,b8434cd859ddd1af1617397981644b632d97b009b9e6f4f44e4ee8497ae4fbbc
+strings,Quiz.Elementary.ExperimentalProbability,Math puzzles > Choose problem > Choose subtype; skill label.,Phân số qua thử nghiệm,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:64
+Services/Localization/QuizLocalizationOverrides.cs:232",,untranslated,,50c8138d06cfb8bdb7445ec1f756c1a2757efe32b17c320bef0fbc97424849d2
+strings,Quiz.Elementary.ClassifyAngle,Math puzzles > Choose problem > Choose subtype; skill label.,Nhận biết góc,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:65
+Services/Localization/QuizLocalizationOverrides.cs:233",,untranslated,,468f8f73028f37dd9e0ccb4dc23c2ead68bbe9f411e2627ec0d621c6a0e60ce2
+strings,Quiz.Elementary.ParallelLines,Math puzzles > Choose problem > Choose subtype; skill label.,Hai đường song song,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:66
+Services/Localization/QuizLocalizationOverrides.cs:234",,untranslated,,f4c03b4da42830fe7f23ea7efd2c9370528dcf968f50f1e12b6387f49ec09af8
+strings,Quiz.Elementary.PerpendicularLines,Math puzzles > Choose problem > Choose subtype; skill label.,Hai đường vuông góc,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:67
+Services/Localization/QuizLocalizationOverrides.cs:235",,untranslated,,085b3a76be850d15b74c7cc10d2eb9bb3b1545d63f60ea5bab2cbb9e90a306f6
+strings,Quiz.Elementary.CountSides,Math puzzles > Choose problem > Choose subtype; skill label.,Đếm cạnh,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:68
+Services/Localization/QuizLocalizationOverrides.cs:236",,untranslated,,16eeeb4d0f1e413e7a4b6588586c948b1f2a74b58145d8cb10f9f65b71a4d7df
+strings,Quiz.Elementary.RectangleSide,Math puzzles > Choose problem > Choose subtype; skill label.,Tìm cạnh còn thiếu,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:69
+Services/Localization/QuizLocalizationOverrides.cs:237",,untranslated,,182273dcf88352ae6d6136c5fd5a7d1954009321a4127f28ed23313841a0ed6c
+strings,Quiz.Elementary.CompositeArea,Math puzzles > Choose problem > Choose subtype; skill label.,Diện tích hình ghép,Name of the math skill displayed in the subtype picker.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:70
+Services/Localization/QuizLocalizationOverrides.cs:238
+Services/Quizzes/ElementaryQuizGenerator.Shapes.cs:282",,untranslated,,7fe3397e7831673cbecd79f75d47a03e589595a2136b0d99241b3b93db36a057
+strings,Quiz.ElementaryTypeTitle,Math puzzle practice on Windows and Android.,Chọn dạng bài (hoặc hỗn hợp),A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:71
+Services/Localization/QuizLocalizationOverrides.cs:239
+Views/Quizzes/MathPuzzlePage.xaml:228",,untranslated,,4be436fb068bf67eb79591caa6457706615959ef328fe8ab7f8ae00f26584f06
+strings,Quiz.ElementaryEssayHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Có thể gộp hoặc tách bước; mỗi phép tính một dòng. Ghi đủ kết quả và đơn vị. Nếu có hai đáp số, ngăn cách bằng dấu chấm phẩy và có thể ghi nhãn từng kết quả.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:72
+Services/Localization/QuizLocalizationOverrides.cs:240
+Views/Quizzes/MathPuzzlePage.xaml.cs:633",,untranslated,,deb1ada7264169e2cd4c93c3f64ecc57fa6f27092d6ce97787d0c8a9aaa5a83c
+strings,Quiz.ElementaryEssayPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Lời giải: nêu đơn vị hoặc đối tượng cần tìm.
+Phép tính = kết quả
+Đáp số: kết quả thứ nhất; kết quả thứ hai","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:73
+Services/Localization/QuizLocalizationOverrides.cs:241
+Views/Quizzes/MathPuzzlePage.xaml.cs:634",,untranslated,,fb03422583f16d38c32bebc7d7f226c71bbb422e8f6101141ad8a824a268b503
+strings,Quiz.ElementaryAnswerPlaceholder,Math puzzle practice on Windows and Android.,"Phép tính (nếu cần) = kết quả
+Đáp số: …",A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:74
+Services/Localization/QuizLocalizationOverrides.cs:242
+Views/Quizzes/MathPuzzlePage.xaml.cs:634",,untranslated,,e6785e74ff4ffb9da45850f6ab43eecadfa30cd7f4bb395da46c1c3dd9cb378e
+strings,Quiz.PracticeSubtitleAlgorithmOnly,Math puzzle practice on Windows and Android.,Thuật toán • Đúng/Sai • 4 đáp án • Tự luận,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:75
+Services/Localization/QuizLocalizationOverrides.cs:243
+Views/Quizzes/MathPuzzlePage.xaml:41",,untranslated,,1610c8ad5637ef9e651cf0a14be795cc17c1617868a3f2d42cf2a12f33417580
+strings,Quiz.ModeTitleAlgorithmOnly,Math puzzle practice on Windows and Android.,1. Chọn kiểu câu hỏi,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:77
+Services/Localization/QuizLocalizationOverrides.cs:245
+Views/Quizzes/MathPuzzlePage.xaml:50",,untranslated,,317eecf8df51ddd9411c11dd5b3b8e9a929b351e270f6bbedc001b3ee33d6b06
+strings,Quiz.CurriculumTitleAlgorithmOnly,Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.,2. Chọn mức độ,Explains difficulty progression and the availability of problem types.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:79
+Services/Localization/QuizLocalizationOverrides.cs:247
+Views/Quizzes/MathPuzzlePage.xaml:98",,untranslated,,ecbc96a152426eef12ab31113cae0625d6725dc73a5eb8530f739263eb8500d4
+strings,Quiz.EssayCombinedLabel,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Lời giải, phép tính và đáp số","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:87
+Services/Localization/QuizLocalizationOverrides.cs:255
+Views/Quizzes/MathPuzzlePage.xaml:940
+Views/Quizzes/MathPuzzlePage.xaml.cs:559",,untranslated,,e5737c139b09350b0e8e39fb2b7829c0e77772ccdfe8c9ad0f2a5d0c5a0565ba
+strings,Quiz.EssayCombinedNumericLabel,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Phép tính và đáp số,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:88
+Services/Localization/QuizLocalizationOverrides.cs:256
+Views/Quizzes/MathPuzzlePage.xaml.cs:560",,untranslated,,ef7017f521029e5a70148a237ff2f827d130be51ec66d177811b27fc2e0d31fc
+strings,Quiz.EssayCombinedPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Viết câu lời giải, rồi xuống dòng để ghi phép tính và đáp số.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:89
+Services/Localization/QuizLocalizationOverrides.cs:257
+Views/Quizzes/MathPuzzlePage.xaml:962
+Views/Quizzes/MathPuzzlePage.xaml.cs:624",,untranslated,,cb6bcbe91228316d4e75882be59034eee0097eb42b5ca3b1f364463a88f2fc0b
+strings,Quiz.EssayCombinedAnswerPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Đáp số: …,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:90
+Services/Localization/QuizLocalizationOverrides.cs:258
+Views/Quizzes/MathPuzzlePage.xaml.cs:629",,untranslated,,5faf6dab1b2e4afd7418fdcc316ad94bb54226998ce41d8b51f0311a5df94e3f
+strings,Quiz.EssayCombinedAnswerHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Viết tất cả trong ô trên. Ghi đáp số trên dòng cuối theo mẫu ""Đáp số: …"".","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:91
+Services/Localization/QuizLocalizationOverrides.cs:259
+Views/Quizzes/MathPuzzlePage.xaml.cs:591",,untranslated,,7edf9ced08c61de8f859314eaca0324fd3dae5fda0984455fdf744c06e1a275b
+strings,Quiz.AverageEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: (2 + 4 + 6 + 8) ÷ 4 = 5,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:94
+Services/Localization/QuizLocalizationOverrides.cs:262
+Views/Quizzes/MathPuzzlePage.xaml.cs:607",,untranslated,,61b5db8064910823bc48d2be8cfdf5c6a4a4897fbb7afcb7770d4778dfdf217b
+strings,Quiz.PercentageRatioEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 20 ÷ 80 × 100 = 25,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:95
+Services/Localization/QuizLocalizationOverrides.cs:263
+Views/Quizzes/MathPuzzlePage.xaml.cs:609",,untranslated,,27a79e486edca7bd04e9415236bf1ee343725d53c123bacbd0bfad1f2c1d5441
+strings,Quiz.PercentageValueEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 200 × 25 ÷ 100 = 50,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:96
+Services/Localization/QuizLocalizationOverrides.cs:264
+Views/Quizzes/MathPuzzlePage.xaml.cs:611",,untranslated,,1de7acf3aed99fd373c3cb7709e196c6ebfa8ec125465d33e828f611363c4dd6
+strings,Quiz.PercentageWholeEssayEquationPlaceholder,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ví dụ: 50 × 100 ÷ 25 = 200,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:97
+Services/Localization/QuizLocalizationOverrides.cs:265
+Views/Quizzes/MathPuzzlePage.xaml.cs:613",,untranslated,,265208e3d747bc941d071ee7e9d8b497d6a32f780653e2cd93a4f645dcd7461c
+strings,Quiz.EssayValidationHintAlgorithmWordProblem,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm (ví dụ: kg, gam, đồng, trứng, sản phẩm, tiền). Ứng dụng vẫn chấm phép tính và đáp số.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:103
+Services/Localization/QuizLocalizationOverrides.cs:271
+Views/Quizzes/MathPuzzlePage.xaml.cs:583",,untranslated,,8dc5d2e0d31d810775a4cefaf9fd950238630dace36fda248870a983438f08a3
+strings,Quiz.EssayEquationUnitHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Ghi đúng đơn vị ngay sau kết quả trong phép tính.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:104
+Services/Localization/QuizLocalizationOverrides.cs:272
+Views/Quizzes/MathPuzzlePage.xaml.cs:588",,untranslated,,f83d3468c2beb0061442946c473eabb68da940f124020248fb66d09813966252
+strings,Quiz.EssayCorrectFeedbackNumeric,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Chính xác! Phép tính và đáp số đều đúng.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:108
+Services/Localization/QuizLocalizationOverrides.cs:276
+Views/Quizzes/MathPuzzlePage.xaml.cs:2368",,untranslated,,1e4edd327624ce01ff3bdc8758e5829d12a1707e4ee633f7bc0c27b92b02bddb
+strings,Quiz.EssayEquationUnitIncorrect,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Kết quả trong phép tính thiếu đơn vị hoặc ghi sai đơn vị so với đáp số.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:114
+Services/Localization/QuizLocalizationOverrides.cs:282",,untranslated,,03c0c61164c4b3c9cfd0bdb6a5f753c69d3ee752f066425976e391d35cb36bc9
+strings,Quiz.OperationTitleAlgorithmOnly,Math puzzle practice on Windows and Android.,3. Chọn bài toán,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:119
+Services/Localization/QuizLocalizationOverrides.cs:287
+Views/Quizzes/MathPuzzlePage.xaml:186",,untranslated,,ebf39d44b51a984de51b4bf2efe6201c7f12719f284ea74ef940f4b08b8f740a
+strings,Quiz.ProblemExpression,Math puzzle practice on Windows and Android.,Tính giá trị biểu thức,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:123
+Services/Localization/QuizLocalizationOverrides.cs:130
+Services/Localization/QuizLocalizationOverrides.cs:291
+Services/Quizzes/QuizProblemTypeCatalog.cs:41",,untranslated,,adc64f82fd580cae3e76659065525b3ac43d5ba54f18b5942636e608cd8110d4
+strings,Quiz.ExpressionTypeTitle,Math puzzle practice on Windows and Android.,Chọn dạng biểu thức,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:124
+Services/Localization/QuizLocalizationOverrides.cs:292
+Views/Quizzes/MathPuzzlePage.xaml:253",,untranslated,,f3f061c8a208baa3c4c0e732af0bcfc443f6af6e6679566833bfa7d3398d156a
+strings,Quiz.ExpressionInteger,Math puzzle practice on Windows and Android.,Số nguyên – Không ngoặc,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:125
+Services/Localization/QuizLocalizationOverrides.cs:293
+Views/Quizzes/MathPuzzlePage.xaml.cs:696",,untranslated,,02df4d0a1ffe63c3861661daa3f87f6212e4a04dc1bb3a834708aed878c7eb49
+strings,Quiz.ExpressionIntegerBrackets,Math puzzle practice on Windows and Android.,Số nguyên – Có ngoặc,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:126
+Services/Localization/QuizLocalizationOverrides.cs:294
+Views/Quizzes/MathPuzzlePage.xaml.cs:696",,untranslated,,22b3397fd52f1d63339d374901c8e9a8ffc47ca64f5d863bdf227b211cd9c356
+strings,Quiz.ExpressionFraction,Math puzzle practice on Windows and Android.,Phân số – Không ngoặc,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:127
+Services/Localization/QuizLocalizationOverrides.cs:295
+Views/Quizzes/MathPuzzlePage.xaml.cs:697",,untranslated,,2447c0db66c14a5a99a5b9c3a5758bdbc0ecce2456e7945cd917800b116312fe
+strings,Quiz.ExpressionFractionBrackets,Math puzzle practice on Windows and Android.,Phân số – Có ngoặc,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:128
+Services/Localization/QuizLocalizationOverrides.cs:296
+Views/Quizzes/MathPuzzlePage.xaml.cs:697",,untranslated,,ae059dcf3641c4add03eff5f8deb75e26dd9ecaafbf5846f36cf2b3f50de864f
+strings,Quiz.ExpressionDifficultyHint,Math puzzle practice on Windows and Android.,1–5 sao: 3–7 số. Dạng có ngoặc thêm 1–5 cặp ngoặc tương ứng; mỗi phân số tính là một số.,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:129
+Services/Localization/QuizLocalizationOverrides.cs:297
+Views/Quizzes/MathPuzzlePage.xaml.cs:463",,untranslated,,9db2908b8cb41f153aee81effc0e1b61fdd1cbf6b72a9b4b69337040c6aa7529
+strings,Quiz.ExpressionQuestionTitle,Math puzzle practice on Windows and Android.,Tính giá trị biểu thức,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:123
+Services/Localization/QuizLocalizationOverrides.cs:130
+Services/Localization/QuizLocalizationOverrides.cs:298
+Views/Quizzes/MathPuzzlePage.xaml.cs:477",,untranslated,,adc64f82fd580cae3e76659065525b3ac43d5ba54f18b5942636e608cd8110d4
+strings,Quiz.ExpressionEssayHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.","Nhập biểu thức và kết quả sau dấu =, rồi điền đáp số. Không cần câu lời giải hay đơn vị. Chấp nhận các phân số tương đương.","A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:131
+Services/Localization/QuizLocalizationOverrides.cs:299
+Views/Quizzes/MathPuzzlePage.xaml.cs:571",,untranslated,,0e542d501293648f34944e8903531e5216d92e4e4c4cd9e71c64adbfabf05e5a
+strings,Quiz.AverageIndirectEssayHint,"Math puzzles > Written answer; input labels, instructions and grading feedback.",Có thể gộp thành một phép tính hoặc giải 2–3 bước. Mỗi phép tính có dấu = viết trên một dòng; được dùng kết quả bước trước. Không bắt buộc câu lời giải riêng và đơn vị ở từng bước trung gian. Ghi đúng đơn vị ở phép tính cuối và đáp số.,"A label or instruction for writing the solution, calculation and final answer.","Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:132
+Services/Localization/QuizLocalizationOverrides.cs:300
+Views/Quizzes/MathPuzzlePage.xaml.cs:569",,untranslated,,ec34565d1d599f2931267d00d789336799e52d4887737d2acc13e8fbf35ae9db
+strings,Quiz.ExpressionIntegerPlaceholder,Math puzzle practice on Windows and Android.,Ví dụ: 1 + 2 + 3 = 6,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:133
+Services/Localization/QuizLocalizationOverrides.cs:301
+Views/Quizzes/MathPuzzlePage.xaml.cs:595",,untranslated,,743971dfdebeb8f1ac19eb1652f5d373b92f46659b360beda24028cc56b41adc
+strings,Quiz.ExpressionFractionPlaceholder,Math puzzle practice on Windows and Android.,Ví dụ: (1/2 + 1/3) × 3/5 = 1/2,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:134
+Services/Localization/QuizLocalizationOverrides.cs:302
+Views/Quizzes/MathPuzzlePage.xaml.cs:595",,untranslated,,4383189ec403bdcc1665db07fb0da61b4e097ec4a4e166553ada7cb28e1e8c75
+strings,Quiz.ExpressionAnswerPlaceholder,Math puzzle practice on Windows and Android.,Ví dụ: 6,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:135
+Services/Localization/QuizLocalizationOverrides.cs:303",,untranslated,,cbf6fd31782fe3d4739a2596e9b4836db0d8eb3536dbf5e128cb12a614875f7d
+strings,Quiz.GeometryMeasurementTitle,Math puzzle practice on Windows and Android.,Chọn đại lượng cần tính,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Localization/QuizLocalizationOverrides.cs:139
+Services/Localization/QuizLocalizationOverrides.cs:307
+Views/Quizzes/MathPuzzlePage.xaml:603",,untranslated,,d5e264868f6875906dfac79e8e2b89bc3c5306dddea2be95213559d9065a0e9e
+strings,Quiz.GeometryPerimeter,Math puzzle practice on Windows and Android.,Chu vi,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/GeometryCalculationEngine.cs:38
+Services/Calculations/GeometryCalculationEngine.cs:46
+Services/Calculations/GeometryCalculationEngine.cs:63
+Services/Calculations/GeometryCalculationEngine.cs:79",,untranslated,,077093abd977a282c21575a5d0a2ed63438465d370c3debdc7bccf30e9271477
+strings,Quiz.GeometryArea,Math puzzle practice on Windows and Android.,Diện tích,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/GeometryCalculationEngine.cs:39
+Services/Calculations/GeometryCalculationEngine.cs:47
+Services/Calculations/GeometryCalculationEngine.cs:64
+Services/Calculations/GeometryCalculationEngine.cs:80",,untranslated,,a7549af3abf9ddf6e82376de580b00a76ffda706d00e4e8662f400beaa3e67a4
+strings,Quiz.GeometryVolume,Math puzzle practice on Windows and Android.,Thể tích,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/GeometryCalculationEngine.cs:155
+Services/Calculations/GeometryCalculationEngine.cs:165
+Services/Calculations/GeometryCalculationEngine.cs:173
+Services/Calculations/GeometryCalculationEngine.cs:339",,untranslated,,bd26d714ad2f656c8b7bd3e1012a00bb7e1324f8b835f93a1e57e6341ad944e0
+strings,Quiz.GeometryLateralArea,Math puzzle practice on Windows and Android.,Diện tích xung quanh,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/GeometryCalculationEngine.cs:153
+Services/Calculations/GeometryCalculationEngine.cs:163
+Services/Calculations/GeometryCalculationEngine.cs:337
+Services/Calculations/GeometryCalculationEngine.cs:347",,untranslated,,2914195af1c64975e10a3cdfed07aa9258f39975a5ff5abf4c0db770a57fedc4
+strings,Quiz.GeometryTotalArea,Math puzzle practice on Windows and Android.,Diện tích toàn phần,A label or message displayed in the math puzzle interface.,"Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise.",,,"Services/Calculations/GeometryCalculationEngine.cs:154
+Services/Calculations/GeometryCalculationEngine.cs:164
+Services/Calculations/GeometryCalculationEngine.cs:338
+Services/Calculations/GeometryCalculationEngine.cs:348",,untranslated,,d44a676d2b11b2ac1882c3b9eb41ef2c144f62549038ee2ce9c055b81a9d0256

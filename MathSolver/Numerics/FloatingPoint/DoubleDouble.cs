@@ -90,7 +90,7 @@ public readonly struct DoubleDouble :
         bool alreadyNormalized)
     {
         High = high;
-        Low = low;
+        Low = low; 
     }
 
     /// <summary>

@@ -56,6 +56,25 @@ class TranslationWorkflowTests(unittest.TestCase):
         self.assertEqual(actual["strings"], self.source["strings"])
         self.assertEqual(actual["templates"], self.source["templates"])
 
+    def test_export_locates_quiz_and_standard_translation_bindings(self):
+        self.source["strings"]["Quiz.Title"] = "Luyện tập toán đố"
+        self.save("vi-VN.json", self.source)
+        project = self.folder / "MathSolver"
+        project.mkdir()
+        (project / "Quiz.xaml").write_text(
+            '<Label Text="{localization:QuizTranslate Quiz.Title}" />\n'
+            '<Label Text="{localization:Translate Formula.Label}" />\n',
+            encoding="utf-8")
+        generated = project / "obj"
+        generated.mkdir()
+        (generated / "Generated.xaml").write_text(
+            '<Label Text="{localization:QuizTranslate Quiz.Title}" />', encoding="utf-8")
+        with patch.object(loc, "ROOT", self.folder):
+            loc.export_sheet(self.export_args)
+        rows = loc.read_sheet(self.sheet)
+        self.assertEqual(rows[("strings", "Quiz.Title")]["references"], "Quiz.xaml:1")
+        self.assertEqual(rows[("strings", "Formula.Label")]["references"], "Quiz.xaml:2")
+
     def test_duplicate_and_unknown_keys_rejected_without_overwrite(self):
         self.export()
         rows = self.fill()

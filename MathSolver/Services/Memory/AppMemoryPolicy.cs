@@ -39,7 +39,7 @@ public static class AppMemoryPolicy
                 {
                     Interlocked.Exchange(ref _cleanupPending, 0);
                     await CollectReleasedMemoryAsync(await Registry.ReleaseAsync());
-                    // A calculation or inference can finish while another owner
+                    // A calculation can finish while another owner
                     // is archiving. Its request must run after this cycle.
                 } while (Volatile.Read(ref _cleanupPending) != 0);
             }

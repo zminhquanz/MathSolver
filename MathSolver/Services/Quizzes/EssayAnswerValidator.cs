@@ -1062,7 +1062,7 @@ public sealed partial class EssayAnswerValidator
     /// <summary>
     /// Cho phép cụm đơn vị trong đáp số cụ thể hơn hoặc khái quát hơn đơn vị
     /// chuẩn khi chính cụm đầy đủ có xuất hiện trong đề bài. Ví dụ đề có
-    /// "cây rau", answer_unit là "cây" thì cả "cây" và "cây rau" đều đúng;
+    /// "cây rau", đơn vị chuẩn là "cây" thì cả "cây" và "cây rau" đều đúng;
     /// "cây bút" vẫn sai vì không xuất hiện trong đề.
     /// </summary>
     private static bool IsContextualUnitExpansion(

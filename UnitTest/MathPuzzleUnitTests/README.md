@@ -4,13 +4,16 @@ The practice page uses the C# algorithm on Windows and Android. The previous
 AI implementation, model management, prompts, response validation, hardware AI
 benchmark, live-model harness and captured model fixtures have been removed.
 
-The console harness runs 26 test groups against the actual C# generators,
+The console harness runs 27 test groups against the actual C# generators,
 curriculum rules, exact arithmetic, essay graders and presentation helpers.
 It covers every registered problem family, both languages, all five star levels
 and all three answer modes. Checks include independent answers, distinct choices,
 realistic motion speeds, units, diagrams with hidden values, alternative solution
 steps, textbook fractions, combined essay input and recoverable result storage.
 Generic word-problem formatting tests remain because C# also generates story text.
+Localization checks cover quiz UI keys, bundled Vietnamese/English packs,
+runtime fallbacks, placeholders and generated problems, solutions, diagrams
+and grading messages. They catch missing strings and mixed-language content.
 
 ## Visual Studio
 

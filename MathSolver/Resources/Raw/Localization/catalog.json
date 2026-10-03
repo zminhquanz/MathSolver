@@ -75,6 +75,821 @@
       "context": "Trang Công thức → tab Đơn vị.",
       "description": "Mở bộ quy đổi các đơn vị đo lường; không bao gồm tiền tệ.",
       "translatorNote": "Giữ ký hiệu ↔ và dùng nhãn ngắn gọn."
+    },
+    "Quiz.ShowDiagram": {
+      "context": "Math puzzles > Diagram; illustration controls and zoom dialog.",
+      "description": "A control label or instruction for viewing the problem illustration.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ComparisonSubtype": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.IntegerCompare": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ComparisonQuestionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ComparisonTrueFalseTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ComparisonEssayHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ComparisonEssayPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.HideDiagram": {
+      "context": "Math puzzles > Diagram; illustration controls and zoom dialog.",
+      "description": "A control label or instruction for viewing the problem illustration.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EnlargeDiagram": {
+      "context": "Math puzzles > Diagram; illustration controls and zoom dialog.",
+      "description": "A control label or instruction for viewing the problem illustration.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.CloseDiagram": {
+      "context": "Math puzzles > Diagram; illustration controls and zoom dialog.",
+      "description": "A control label or instruction for viewing the problem illustration.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.DiagramZoom": {
+      "context": "Math puzzles > Diagram; illustration controls and zoom dialog.",
+      "description": "A control label or instruction for viewing the problem illustration.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.DiagramNotToScale": {
+      "context": "Math puzzles > Diagram; illustration controls and zoom dialog.",
+      "description": "A control label or instruction for viewing the problem illustration.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemTwoNumbers": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemMeasurement": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemTime": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemRemainder": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemDecimal": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemFractionSkills": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemData": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemProbability": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemVisualGeometry": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.SumDifference": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.SumRatio": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DifferenceRatio": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.LengthConversion": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.MassConversion": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.CapacityConversion": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.AreaConversion": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.VolumeConversion": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.MixedLength": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ElapsedTime": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.TimeAddition": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ReadClock": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.Calendar": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.QuotientRemainder": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.MinimumGroups": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.Leftovers": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DecimalAdd": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DecimalSubtract": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DecimalMultiply": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DecimalDivide": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DecimalRound": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.DecimalCompare": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ReduceFraction": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.CompareFractions": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.MixedNumber": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.CommonDenominator": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.FractionOfNumber": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.WholeFromFraction": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ReadTable": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ReadBarChart": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ReadPieChart": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ChartTotal": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ChartDifference": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.Likelihood": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ExperimentalProbability": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ClassifyAngle": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.ParallelLines": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.PerpendicularLines": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.CountSides": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.RectangleSide": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.Elementary.CompositeArea": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ElementaryTypeTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ElementaryEssayHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ElementaryEssayPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ElementaryAnswerPlaceholder": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.PracticeSubtitleAlgorithmOnly": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ModeTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ModeTitleAlgorithmOnly": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.CurriculumTitle": {
+      "context": "Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.",
+      "description": "Explains difficulty progression and the availability of problem types.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.CurriculumTitleAlgorithmOnly": {
+      "context": "Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.",
+      "description": "Explains difficulty progression and the availability of problem types.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.CurriculumHintMixed": {
+      "context": "Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.",
+      "description": "Explains difficulty progression and the availability of problem types.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.CurriculumHintSkill": {
+      "context": "Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.",
+      "description": "Explains difficulty progression and the availability of problem types.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.CurriculumMinimumTier": {
+      "context": "Math puzzles > Difficulty; labels and guidance below the one-to-five-star buttons.",
+      "description": "Explains difficulty progression and the availability of problem types.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayMode": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayQuestionTitle": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssaySolutionLabel": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssaySolutionPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCombinedLabel": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCombinedNumericLabel": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCombinedPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCombinedAnswerPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCombinedAnswerHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationLabel": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.AverageEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.PercentageRatioEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.PercentageValueEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.PercentageWholeEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayAnswerLabel": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayAnswerPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayValidationHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayValidationHintAlgorithm": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayValidationHintAlgorithmWordProblem": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationUnitHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryEssayValidationHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.SubmitEssayAnswer": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCorrectFeedback": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayCorrectFeedbackNumeric": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssaySolutionRequired": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssaySolutionContentIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationAndAnswerIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationFormatIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayEquationUnitIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayAnswerIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.EssayAnswerUnitIncorrect": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.RegenerateQuestion": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.OperationTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.OperationTitleAlgorithmOnly": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.OperationMixed": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemBasic": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemFraction": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemExpression": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionTypeTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionInteger": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionIntegerBrackets": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionFraction": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionFractionBrackets": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionDifficultyHint": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionQuestionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionEssayHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.AverageIndirectEssayHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionIntegerPlaceholder": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionFractionPlaceholder": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ExpressionAnswerPlaceholder": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.BasicOperationTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FractionOperationTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemGeometry": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryMeasurementTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryPerimeter": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryArea": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryVolume": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryLateralArea": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.GeometryTotalArea": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemFindX": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemProportion": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProblemMotion": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionQuestionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionTypeTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionBasic": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionChasing": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionMeeting": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionRiver": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionEssayValidationHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.MotionEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProportionTypeTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProportionDirect": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProportionInverse": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProportionQuestionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProportionEssayValidationHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.ProportionEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FractionQuestionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FractionEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FractionEssayValidationHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FractionEssayAnswerPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FindXQuestionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FindXEssayValidationHint": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.FindXEssayEquationPlaceholder": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "A label or instruction for writing the solution, calculation and final answer.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.WordProblemTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.PresentedAnswer": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "Quiz.SolutionTitle": {
+      "context": "Math puzzle practice on Windows and Android.",
+      "description": "A label or message displayed in the math puzzle interface.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
     }
   },
   "placeholderNotes": {
@@ -635,7 +1450,7 @@
     },
     {
       "key": "Quiz.EssayQuestionTitle",
-      "source": "Trình bày bài giải",
+      "source": "Thực hiện phép tính",
       "mode": "exact"
     },
     {
@@ -655,7 +1470,7 @@
     },
     {
       "key": "Quiz.EssaySolutionPlaceholder",
-      "source": "Viết câu lời giải nêu đúng đại lượng cần tìm (bắt buộc)",
+      "source": "Viết câu lời giải có đúng đơn vị hoặc đối tượng cần tìm (bắt buộc)",
       "mode": "exact"
     },
     {
@@ -685,7 +1500,7 @@
     },
     {
       "key": "Quiz.EssayValidationHint",
-      "source": "Bắt buộc điền lời giải. Ứng dụng chấm đại lượng trong lời giải, phép tính, kết quả, giá trị và đơn vị đáp số.",
+      "source": "Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm. Ứng dụng vẫn chấm phép tính, kết quả và đơn vị đáp số.",
       "mode": "exact"
     },
     {
@@ -695,7 +1510,7 @@
     },
     {
       "key": "Quiz.GeometryEssayValidationHint",
-      "source": "Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị: độ dài, diện tích hoặc thể tích.",
+      "source": "Bắt buộc điền lời giải có đúng đơn vị hoặc tên đối tượng hình học. Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị.",
       "mode": "exact"
     },
     {
@@ -710,12 +1525,12 @@
     },
     {
       "key": "Quiz.EssaySolutionRequired",
-      "source": "Em chưa điền lời giải. Phần lời giải là bắt buộc đối với bài toán đố.",
+      "source": "Em chưa điền lời giải. Phần lời giải là bắt buộc đối với bài toán có lời văn.",
       "mode": "exact"
     },
     {
       "key": "Quiz.EssaySolutionContentIncorrect",
-      "source": "Lời giải chưa nêu đúng đại lượng cần tìm. Hãy dùng đúng tên đơn vị trong đề bài.",
+      "source": "Lời giải chưa nêu đúng đơn vị hoặc đối tượng cần tìm trong đề bài.",
       "mode": "exact"
     },
     {
@@ -5455,7 +6270,7 @@
     },
     {
       "key": "Quiz.ProportionEssayValidationHint",
-      "source": "Ứng dụng chấm đúng dữ kiện tỉ lệ, công thức tính và giá trị đáp số.",
+      "source": "Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm. Ứng dụng chấm dữ kiện tỉ lệ, công thức tính và đáp số.",
       "mode": "exact"
     },
     {
@@ -5475,7 +6290,7 @@
     },
     {
       "key": "Quiz.MotionEssayValidationHint",
-      "source": "Nhập phép tính đúng theo dữ kiện chuyển động và đáp số kèm đúng đơn vị.",
+      "source": "Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm. Phép tính phải đúng dữ kiện chuyển động và đáp số kèm đúng đơn vị.",
       "mode": "exact"
     },
     {
@@ -6416,6 +7231,516 @@
     {
       "key": "Quiz.CurriculumMinimumTier",
       "source": "Dạng này bắt đầu từ mức {0}.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ShowDiagram",
+      "source": "Xem sơ đồ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ComparisonSubtype",
+      "source": "So sánh < = >",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.IntegerCompare",
+      "source": "So sánh số nguyên",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ComparisonQuestionTitle",
+      "source": "Điền dấu so sánh thích hợp",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ComparisonTrueFalseTitle",
+      "source": "So sánh sau đúng hay sai?",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ComparisonEssayHint",
+      "source": "Nhập dấu >, <, = hoặc cả dòng so sánh. Không bắt buộc lời giải hay phép tính riêng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ComparisonEssayPlaceholder",
+      "source": "Dấu >, <, = hoặc dòng so sánh hai số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.HideDiagram",
+      "source": "Ẩn sơ đồ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EnlargeDiagram",
+      "source": "Phóng to hình",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CloseDiagram",
+      "source": "Đóng hình",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagramZoom",
+      "source": "Mức phóng to",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.DiagramNotToScale",
+      "source": "Hình minh họa không theo tỉ lệ số đo.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemTwoNumbers",
+      "source": "Tìm hai số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemMeasurement",
+      "source": "Đo lường",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemTime",
+      "source": "Thời gian",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemRemainder",
+      "source": "Chia có dư",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemDecimal",
+      "source": "Số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemFractionSkills",
+      "source": "Kĩ năng phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemData",
+      "source": "Bảng và biểu đồ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemProbability",
+      "source": "Khả năng xảy ra",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemVisualGeometry",
+      "source": "Hình học trực quan",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.SumDifference",
+      "source": "Tổng – hiệu",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.SumRatio",
+      "source": "Tổng – tỉ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DifferenceRatio",
+      "source": "Hiệu – tỉ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.LengthConversion",
+      "source": "Đổi đơn vị độ dài",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MassConversion",
+      "source": "Đổi đơn vị khối lượng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.CapacityConversion",
+      "source": "Đổi đơn vị dung tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.AreaConversion",
+      "source": "Đổi đơn vị diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.VolumeConversion",
+      "source": "Đổi đơn vị thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MixedLength",
+      "source": "Số đo có hai đơn vị",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ElapsedTime",
+      "source": "Thời gian trôi qua",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.TimeAddition",
+      "source": "Đổi giờ và phút",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ReadClock",
+      "source": "Đọc đồng hồ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.Calendar",
+      "source": "Tính số ngày",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.QuotientRemainder",
+      "source": "Thương và số dư",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MinimumGroups",
+      "source": "Số nhóm tối thiểu",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.Leftovers",
+      "source": "Chia nhóm và phần còn lại",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DecimalAdd",
+      "source": "Cộng số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DecimalSubtract",
+      "source": "Trừ số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DecimalMultiply",
+      "source": "Nhân số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DecimalDivide",
+      "source": "Chia số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DecimalRound",
+      "source": "Làm tròn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.DecimalCompare",
+      "source": "So sánh số thập phân",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ReduceFraction",
+      "source": "Rút gọn phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.CompareFractions",
+      "source": "So sánh phân số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MixedNumber",
+      "source": "Đổi sang hỗn số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.CommonDenominator",
+      "source": "Quy đồng mẫu số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.FractionOfNumber",
+      "source": "Tìm phân số của một số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.WholeFromFraction",
+      "source": "Tìm số khi biết một phần",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ReadTable",
+      "source": "Đọc bảng",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ReadBarChart",
+      "source": "Đọc biểu đồ cột",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ReadPieChart",
+      "source": "Đọc biểu đồ tròn",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ChartTotal",
+      "source": "Tổng các giá trị",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ChartDifference",
+      "source": "Chênh lệch các giá trị",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.Likelihood",
+      "source": "Chắc Chắn, Có Thể, Không Thể",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ExperimentalProbability",
+      "source": "Phân số qua thử nghiệm",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ClassifyAngle",
+      "source": "Nhận biết góc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ParallelLines",
+      "source": "Hai đường song song",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.PerpendicularLines",
+      "source": "Hai đường vuông góc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.CountSides",
+      "source": "Đếm cạnh",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.RectangleSide",
+      "source": "Tìm cạnh còn thiếu",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.CompositeArea",
+      "source": "Diện tích hình ghép",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ElementaryTypeTitle",
+      "source": "Chọn dạng bài (hoặc hỗn hợp)",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ElementaryEssayHint",
+      "source": "Có thể gộp hoặc tách bước; mỗi phép tính một dòng. Ghi đủ kết quả và đơn vị. Nếu có hai đáp số, ngăn cách bằng dấu chấm phẩy và có thể ghi nhãn từng kết quả.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ElementaryEssayPlaceholder",
+      "source": "Lời giải: nêu đơn vị hoặc đối tượng cần tìm.\nPhép tính = kết quả\nĐáp số: kết quả thứ nhất; kết quả thứ hai",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ElementaryAnswerPlaceholder",
+      "source": "Phép tính (nếu cần) = kết quả\nĐáp số: …",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PracticeSubtitleAlgorithmOnly",
+      "source": "Thuật toán • Đúng/Sai • 4 đáp án • Tự luận",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ModeTitleAlgorithmOnly",
+      "source": "1. Chọn kiểu câu hỏi",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.CurriculumTitleAlgorithmOnly",
+      "source": "2. Chọn mức độ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCombinedLabel",
+      "source": "Lời giải, phép tính và đáp số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCombinedNumericLabel",
+      "source": "Phép tính và đáp số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCombinedPlaceholder",
+      "source": "Viết câu lời giải, rồi xuống dòng để ghi phép tính và đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCombinedAnswerPlaceholder",
+      "source": "Đáp số: …",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCombinedAnswerHint",
+      "source": "Viết tất cả trong ô trên. Ghi đáp số trên dòng cuối theo mẫu \"Đáp số: …\".",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageEssayEquationPlaceholder",
+      "source": "Ví dụ: (2 + 4 + 6 + 8) ÷ 4 = 5",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageRatioEssayEquationPlaceholder",
+      "source": "Ví dụ: 20 ÷ 80 × 100 = 25",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageValueEssayEquationPlaceholder",
+      "source": "Ví dụ: 200 × 25 ÷ 100 = 50",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.PercentageWholeEssayEquationPlaceholder",
+      "source": "Ví dụ: 50 × 100 ÷ 25 = 200",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayValidationHintAlgorithmWordProblem",
+      "source": "Bắt buộc điền lời giải có đúng đơn vị hoặc đối tượng cần tìm (ví dụ: kg, gam, đồng, trứng, sản phẩm, tiền). Ứng dụng vẫn chấm phép tính và đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationUnitHint",
+      "source": "Ghi đúng đơn vị ngay sau kết quả trong phép tính.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayCorrectFeedbackNumeric",
+      "source": "Chính xác! Phép tính và đáp số đều đúng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationUnitIncorrect",
+      "source": "Kết quả trong phép tính thiếu đơn vị hoặc ghi sai đơn vị so với đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.OperationTitleAlgorithmOnly",
+      "source": "3. Chọn bài toán",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemExpression",
+      "source": "Tính giá trị biểu thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionTypeTitle",
+      "source": "Chọn dạng biểu thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionInteger",
+      "source": "Số nguyên – Không ngoặc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionIntegerBrackets",
+      "source": "Số nguyên – Có ngoặc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionFraction",
+      "source": "Phân số – Không ngoặc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionFractionBrackets",
+      "source": "Phân số – Có ngoặc",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionDifficultyHint",
+      "source": "1–5 sao: 3–7 số. Dạng có ngoặc thêm 1–5 cặp ngoặc tương ứng; mỗi phân số tính là một số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionQuestionTitle",
+      "source": "Tính giá trị biểu thức",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionEssayHint",
+      "source": "Nhập biểu thức và kết quả sau dấu =, rồi điền đáp số. Không cần câu lời giải hay đơn vị. Chấp nhận các phân số tương đương.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.AverageIndirectEssayHint",
+      "source": "Có thể gộp thành một phép tính hoặc giải 2–3 bước. Mỗi phép tính có dấu = viết trên một dòng; được dùng kết quả bước trước. Không bắt buộc câu lời giải riêng và đơn vị ở từng bước trung gian. Ghi đúng đơn vị ở phép tính cuối và đáp số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionIntegerPlaceholder",
+      "source": "Ví dụ: 1 + 2 + 3 = 6",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionFractionPlaceholder",
+      "source": "Ví dụ: (1/2 + 1/3) × 3/5 = 1/2",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ExpressionAnswerPlaceholder",
+      "source": "Ví dụ: 6",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryMeasurementTitle",
+      "source": "Chọn đại lượng cần tính",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryPerimeter",
+      "source": "Chu vi",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryArea",
+      "source": "Diện tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryVolume",
+      "source": "Thể tích",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryLateralArea",
+      "source": "Diện tích xung quanh",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.GeometryTotalArea",
+      "source": "Diện tích toàn phần",
       "mode": "exact"
     }
   ],
