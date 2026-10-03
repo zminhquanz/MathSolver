@@ -26,7 +26,7 @@ The current release is **Math Solver v0.2.0** for **Android** and **Windows**. D
 | Platform | v0.2.0 build and scope |
 | --- | --- |
 | Android | ARM64 APK; the project sets Android 7.0 (API 24) as its minimum version. Includes the core calculators, quizzes, formula references, tables, settings, and hardware benchmarks. |
-| Windows | Windows x64 build; the project sets Windows 10 version 1809 (build 17763) as its minimum version. Includes the core features and, on eligible hardware, optional local AI question generation and AI benchmarks. |
+| Windows | Windows x64 build; the project sets Windows 10 version 1809 (build 17763) as its minimum version. Includes the core features and CPU arithmetic benchmarks. |
 
 The project also contains iOS and Mac Catalyst targets, but this release announcement covers Android and Windows only.
 
@@ -104,7 +104,56 @@ The codebase also uses higher-precision and big-integer types where appropriate 
 
 The **Math Puzzles** tab generates practice questions for basic arithmetic, fractions, geometry, finding x, direct or inverse proportion, motion, averages, and percentages. Choose a specific type or a mixed set, then choose a difficulty from one to five stars. Answer using true/false, multiple choice, or a written response; the app checks the answer and shows a solution.
 
-Algorithm-generated questions work offline on Android and Windows. On Windows, an optional **AI/LLM** source can generate word problems using a local Gemma 4 GGUF model. It appears only when the device supports AVX2 and has at least 12 GiB of physical RAM. The model can be imported or downloaded in the app; downloading it requires internet access. Android does not currently include local AI generation.
+Questions are generated offline by C# on both Android and Windows. The practice screen has no AI/LLM source selector, model management, inference progress, or AI diagnostics. Creating, regenerating, and advancing questions uses the existing algorithm generators, curriculum and graders without loading a model.
+
+The previous AI implementation, model management, AI prompt/response validation and hardware AI benchmark have been removed. SQLite question storage and a new background AI implementation are not connected yet; the current screen serves C# questions only.
+
+Probability practice includes ten contexts for classifying events and ten for experimental fractions, including colored objects, dice, numbered cards, spinners, coins, and target games. Each subtype cycles through shuffled contexts before repeating, with separate progress for each language. Questions vary the event, counts, colors, and wording. Classification distinguishes certain, impossible, and possible but not certain; experimental fractions use recorded trials and may ask about the event or its complement, including zero/all observed successes. The algorithm generates these scenarios and answers in C#.
+
+Visual geometry practice rotates through ten side-counting shapes, nine missing-side scenarios, and eight composite-area layouts, with a separate shuffled rotation for each language and star level. Counting includes convex and concave polygons with varied orientations. Missing sides use areas, perimeters, or known total/partial lengths. Composite areas include adjoining rectangles, a square and rectangle, L/T shapes, a rectangular frame, a board with two openings, and a rectangle joined to a right triangle. The algorithm uses the C# facts, polygon drawings, units, and answers. Unknown dimensions remain marked with a question mark; the diagrams are illustrative rather than a basis for measuring lengths.
+
+Difficulty for **proportion, motion, averages, percentages, and visual geometry** now changes the mathematical structure as well as the numbers. The algorithm uses `QuizDifficultyPolicy`; narration does not own mathematical difficulty. A fixed subtype remains available at all five levels. Selecting Mixed inside a family chooses relations appropriate to the star level, while the existing whole-curriculum Mixed pool still determines which families are eligible.
+
+| Level | Progression within the supported families |
+| --- | --- |
+| 1 star | Whole-number scale factors, motion with matching units, averages of two supplied quantities, 50%, familiar polygons, and direct side/area formulas. |
+| 2 stars | More scale factors, finding speed or time, averages of three quantities, familiar percentages such as 25%, and perimeter-based missing sides. |
+| 3 stars | Unit-rate reasoning, relative-motion problems, missing average values, a broader percentage set, rotated polygons, and L/T area decomposition. |
+| 4 stars | Rational unit rates, minutes-to-hours conversions, indirect or weighted averages, combining two quantities before a percentage calculation, concave outlines, and frame areas. |
+| 5 stars | Quarter-based unit rates, inverse proportions asking for additional quantities or a changed deadline, rest-time deduction plus conversion, combining three quantities before percentages, a side inferred from both perimeter and a partial length, and two-opening or rectangle/triangle areas. |
+
+This is a progression within each family, not a claim that every 1-star subtype has the same absolute difficulty. A deliberately selected advanced subtype retains its essential relations at lower levels. Test scores stay within 1-10 and motion speeds retain their subject-specific realistic ranges; larger numbers alone do not determine difficulty. Answers, units, and flexible grading of equivalent calculations remain owned by C#.
+
+Geometry measurement practice also has five reasoning levels for every supported plane and solid shape. The chosen shape and measurement (perimeter, area, volume, lateral area, or total area) stay selected in Skill Mode.
+
+| Level | Geometry measurement progression |
+| --- | --- |
+| 1 star | Apply the selected formula to supplied dimensions. |
+| 2 stars | Infer a dimension first, for example a side from a perimeter, a radius from a diameter, or a length from two consecutive segments. |
+| 3 stars | Calculate intermediate quantities before the final measurement, such as half a perimeter and then a missing length, or combine three consecutive segments. |
+| 4 stars | Combine linked dimensions or sum/difference relations before applying the formula. |
+| 5 stars | Combine those relations with conversion of a given length into the formula's length unit. |
+
+C# keeps supplied facts separate from solved dimensions. The algorithm owns these facts, inference steps, and exact answers. The separate narration validator accepts equivalent written length-unit names and rejects changed quantities, reversed relations, and wrong answer units. Unknown dimensions stay marked `?` until the solution is revealed. Triangle, trapezoid, and rhombus dimensions are generated with consistent geometric relationships. Circle questions retain the elementary convention of π = 3.14 and dimensions that produce whole-number answers.
+
+Written geometry work may merge, split, or reorder calculations, including fractional intermediate results. Every written equality is checked, along with the final calculation unit and answer unit; a correct final answer does not hide an incorrect earlier equality. The existing whole-curriculum Mixed eligibility rules remain in place.
+
+**Two-number problems, tables/charts, time, unit conversion, probability, and fraction skills** also have five reasoning levels. C# owns the givens, intermediate relations, units, and answers. Increasing stars introduces indirect facts and additional relationships; it does not just increase the size of the numbers.
+
+| Family | 1–2 stars | 3 stars | 4 stars | 5 stars |
+| --- | --- | --- | --- | --- |
+| Sum–difference, sum–ratio, difference–ratio | Direct relations, then infer a sum/difference from its double. | Recover the required sum/difference from two quantities. | Undo a change; infer a difference after a transfer between both numbers. | Undo two changes and infer either the original difference or a missing ratio component. |
+| Tables and bar charts | Read/calculate quantities, then account for a later addition. | Infer a missing category from a total or another category. | Combine chart data with a ratio or multiplicative relation. | Recover a total from two batches and use sum–difference, or combine two category relationships. |
+| Pie charts | Read a percentage, then convert it into a quantity. | Infer the missing percentage before calculating the quantity. | Recover the total from the other categories' combined quantity. | Recover the total from two known category counts and percentages, then calculate the missing category. |
+| Time | Read clocks, convert intervals, or cross an hour/month boundary. | Combine intervals, deduct rest, cross midnight, or include a full intervening month. | Carry clock minutes into hours, deduct rest, or account for leap February. | Combine active sessions, convert back to hours, calculate a changed clock interval, or deduct paused days from a multi-month leap-year interval. |
+| Unit conversion | Direct/reverse conversion; combine mixed units. | Convert before adding quantities. | Convert, add, and subtract. | Convert the remaining quantity back into the larger unit. Area and volume use squared/cubed conversion factors. |
+| Likelihood | Classify an event, then its complement. | Consider two independent trials with replacement when applicable. | Consider two outcome cards drawn without replacement. | Update the outcome-card set before drawing without replacement. |
+| Experimental fractions | Use recorded results, then their complement. | Aggregate two batches of recorded trials. | Infer one batch's successes from failures. | Aggregate three batches and exclude explicitly invalid failed records. |
+| Fraction skills | Familiar fractions, reduction, comparison, mixed numbers, and a supplied common denominator. | Infer a quantity, compare unlike denominators, combine fractions, or find the least common denominator. | Infer fraction components or a remaining quantity; compare a sum of fractions or combine unlike denominators. | Combine successive fractions, infer both numerator and denominator, compare two sums, or combine addition/subtraction before writing a mixed number. |
+
+Hidden table/bar-chart values are marked `?` until grading; unknown bar heights are placeholders rather than clues to their values. Pie-chart percentage labels follow the same rule. Written work can merge, split, or reorder valid calculations and reuse intermediate results. Intermediate units may differ from the final answer unit; arithmetic and units are checked separately. Fraction tasks retain their required final form, including lowest terms, a specified common denominator, or a reduced mixed number.
+
+Angle recognition starts with clear acute/right examples, adds all four angle types and rotated drawings, then uses displayed decimal measures close to 90° at the higher levels. The displayed measure is authoritative; the figure is illustrative. Parallel/perpendicular practice progresses from two-line relationships to searches among three, four, and five lines. Pair questions have at most one valid pair, can include a no-pair answer, and accept reversed line names.
 
 Written responses use one input box for the solution sentence, calculation, and final answer on both platforms. Put calculations on their own lines and finish with `Answer: …` (or `Đáp số: …` in Vietnamese), including the required unit. The app checks each part separately; numeric questions retain their existing exemptions from requiring a solution sentence.
 
@@ -112,7 +161,7 @@ Calculator sub-tabs and the proportion, motion, average, and measurement formula
 
 Completed power results occupying at least **32 MiB** of managed numeric storage are written to a private temporary TXT file after **60 seconds** away from the power tab, or when the app enters the background. The full file is completed before the in-memory number is released. The preview, solution, and TXT export remain available; later exports stream the retained file without reloading the number. A failed or canceled archive keeps the in-memory result. Clearing the result, starting a new calculation, or closing the app normally removes its temporary file. Temporary files left after an interrupted app session are pruned after seven days when result storage is first used in a new process. These files do not restore a session after the app process exits.
 
-Background cleanup releases live-wallpaper resources and idle Windows AI weights, while active calculations and exports finish before their recoverable data is considered for cleanup. Android also handles the system's supported `onTrimMemory` background signals, following the [Android memory lifecycle guidance](https://developer.android.com/topic/performance/memory/manage-app-memory). Garbage collection is requested only after a large number has been released, rather than on every tab switch.
+Background cleanup releases live-wallpaper resources, while active calculations and exports finish before their recoverable data is considered for cleanup. Android also handles the system's supported `onTrimMemory` background signals, following the [Android memory lifecycle guidance](https://developer.android.com/topic/performance/memory/manage-app-memory). Garbage collection is requested only after a large number has been released, rather than on every tab switch.
 
 ### Formula Reference
 
@@ -138,7 +187,7 @@ The **Multiplication Tables** tab provides:
 
 ### Hardware and Performance
 
-Open **Settings → Hardware information** to inspect device, CPU, memory, runtime, and supported instruction-set information. The page includes benchmarks for Int32, Int64, Float, and Double, with controls for SIMD acceleration and multithreading. Android has ARM/NEON-specific benchmark paths; Windows exposes supported x86 SIMD comparisons. On eligible Windows devices, a separate local AI benchmark measures model generation speed and question validity.
+Open **Settings → Hardware information** to inspect device, CPU, memory, runtime, and supported instruction-set information. The page includes benchmarks for Int32, Int64, Float, and Double, with controls for SIMD acceleration and multithreading. Android has ARM/NEON-specific benchmark paths; Windows exposes supported x86 SIMD comparisons.
 
 ## User Interface
 
@@ -159,14 +208,13 @@ Imported MP4 wallpaper clips require a compatible H.264 decoder and can be up to
 
 ## Offline Operation
 
-Calculators, algorithm-generated math puzzles, formulas, and multiplication tables work offline. Optional Windows local AI runs on the device after a supported model is available. Downloading a model, opening external links, and obtaining a release build require a network connection.
+Calculators, algorithm-generated math puzzles, formulas, and multiplication tables work offline. Opening external links and obtaining a release build require a network connection.
 
 ## Technology
 
 - C#
 - .NET 10 and .NET MAUI
 - XAML
-- LLamaSharp and llama.cpp for optional Windows-only local AI
 
 ## Project Structure
 

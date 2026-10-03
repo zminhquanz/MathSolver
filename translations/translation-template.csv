@@ -139,19 +139,6 @@ strings,Geometry.Properties.Sphere,"Hình học — đại lượng, công thứ
 strings,Geometry.Properties.Cylinder,"Hình học — đại lượng, công thức và kết quả.",Có hai đáy tròn bằng nhau và song song; chiều cao là khoảng cách vuông góc giữa hai mặt đáy.,,,,,Models/GeometryFormulaItem.cs:397,,untranslated,,5a2ac10516519679dc1ffe391c4a4091b2571b94a6cb3402ac4682d4026d8c1f
 strings,Geometry.Properties.Cone,"Hình học — đại lượng, công thức và kết quả.",Có một đáy tròn và một đỉnh; chiều cao vuông góc với mặt đáy; đường sinh nối đỉnh với đường tròn đáy.,,,,,Models/GeometryFormulaItem.cs:422,,untranslated,,aad120418c3a52c01b5ec30dc9f3d3d3a2c085b05de9fc1ac22ad2654a65263d
 strings,Quiz.PracticeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",LUYỆN TẬP TOÁN ĐỐ,,,,,Views/MathPuzzlePage.xaml:37,,untranslated,,63c00c773156ea0e0220723616c4f5fe870059cdee34a31a3412eda321d9b863
-strings,Quiz.PracticeSubtitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Thuật toán • Giáo viên AI • Đúng/Sai • 4 đáp án • Tự luận,,,,,"Services/Localization/QuizLocalizationOverrides.cs:14
-Services/Localization/QuizLocalizationOverrides.cs:213
-Views/MathPuzzlePage.xaml:42",,untranslated,,83da441f995eb169f28a50702d91d239a35b7dd36a5eeb15d5a5b21064c147e6
-strings,Quiz.SourceTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",1. Chọn cách tạo đề,,,,,"Services/Localization/QuizLocalizationOverrides.cs:16
-Services/Localization/QuizLocalizationOverrides.cs:215
-Views/MathPuzzlePage.xaml:61",,untranslated,,f06a08cceb9a75855d25fcb537b91bd397a6a6c488304aa24616539847744463
-strings,Quiz.AlgorithmSource,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",🧮 Thuật toán,,,,,"Services/Localization/QuizLocalizationOverrides.cs:17
-Services/Localization/QuizLocalizationOverrides.cs:216
-Views/MathPuzzlePage.xaml:72",,untranslated,,2af982778d5ff66470bb0d8016ec625dc390933fd17ec2d5d218b45e1fa59add
-strings,Quiz.LocalLlmSource,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",🤖 AI / LLM,,,,,"Services/Localization/QuizLocalizationOverrides.cs:18
-Services/Localization/QuizLocalizationOverrides.cs:217
-Views/HardwarePerformancePage.xaml:217
-Views/HardwarePerformancePage.xaml.cs:432",,untranslated,,65131f8510383df106e07cb80c230be01516e4de16375c658867824ff3e8bed5
 strings,Quiz.ModeTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",2. Chọn kiểu câu hỏi,,,,,"Services/Localization/QuizLocalizationOverrides.cs:19
 Services/Localization/QuizLocalizationOverrides.cs:218
 Views/MathPuzzlePage.xaml:576",,untranslated,,9c46feeba8512cf8369f374cbba333d3cf0779de4766b6ccb64d98fd6399ee39
@@ -198,21 +185,15 @@ Views/MathPuzzlePage.xaml.cs:732",,untranslated,,240eabfe96bcf2447d59f001892e1ac
 strings,Quiz.FractionEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm hai phân số, phép tính và kết quả đã rút gọn.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:73
 Services/Localization/QuizLocalizationOverrides.cs:272
 Views/MathPuzzlePage.xaml.cs:719",,untranslated,,c63c927b16c354e4feb5b033e4b48e4a1a6aaee7f1f38325383b6eda74ea11ed
-strings,Quiz.FractionEssayValidationHintAi,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Bắt buộc điền lời giải. Ứng dụng chấm hai phân số, phép tính, kết quả đã rút gọn và đúng đơn vị đáp số.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:74
-Services/Localization/QuizLocalizationOverrides.cs:273
-Views/MathPuzzlePage.xaml.cs:709",,untranslated,,c418d4a6528b4cc65b118e12862a691fd20da9edb2a3f38d054f6b59fd8a18ef
 strings,Quiz.FractionEssayAnswerPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 3/4 mét vải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:75
 Services/Localization/QuizLocalizationOverrides.cs:274
 Views/MathPuzzlePage.xaml.cs:743",,untranslated,,135d2e8cceb6c27a30eac560d32541ae071f5467841d7a066df61cf7ba24c39c
 strings,Quiz.FindXQuestionTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tìm giá trị của x,,,,,"Services/Localization/QuizLocalizationOverrides.cs:76
 Services/Localization/QuizLocalizationOverrides.cs:275
 Views/MathPuzzlePage.xaml.cs:636",,untranslated,,97f1a067cbdf8d4671d249edb35f1cf1151b6e024d48107477fb1270d9f9a0a9
-strings,Quiz.FindXEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm phép tính ngược và giá trị x; với đề AI, ứng dụng còn kiểm tra đúng đơn vị của x.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:77
+strings,Quiz.FindXEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ứng dụng chấm phép tính ngược và giá trị x; không cần câu lời giải cho phương trình số.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:77
 Services/Localization/QuizLocalizationOverrides.cs:276
-Views/MathPuzzlePage.xaml.cs:715",,untranslated,,9b61c90ba47bf04bbec22752d27142696e32aef078b623cc29ccab8479aff637
-strings,Quiz.FindXEssayValidationHintAi,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Bắt buộc điền lời giải. Ứng dụng chấm đúng đại lượng của x, phép tính ngược, giá trị và đơn vị của x.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:78
-Services/Localization/QuizLocalizationOverrides.cs:277
-Views/MathPuzzlePage.xaml.cs:705",,untranslated,,a9a250790d10cc3e9db1a962bbfcb3c6982b6d4e492443d180eb9089fd6c6da6
+Views/MathPuzzlePage.xaml.cs:715",,untranslated,,3caef5e84005d4924e8341b1224fca68b925032a4536df5fc6bc333085bb3866
 strings,Quiz.FindXEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 12 − 5 = 7,,,,,"Services/Localization/QuizLocalizationOverrides.cs:79
 Services/Localization/QuizLocalizationOverrides.cs:278
 Views/MathPuzzlePage.xaml.cs:730",,untranslated,,9e13041f0cef8eecae52f680f773bd7a3b0075bac9e5f9974bd9a4eec562a5eb
@@ -260,9 +241,6 @@ Views/MathPuzzlePage.xaml.cs:726",,untranslated,,26e91fdee344160e03ee6a628019529
 strings,Quiz.GeometryEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm công thức thay số, kết quả và đúng bậc đơn vị: độ dài, diện tích hoặc thể tích.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:32
 Services/Localization/QuizLocalizationOverrides.cs:231
 Views/MathPuzzlePage.xaml.cs:717",,untranslated,,74be8c53f85b3e6f11cd27390f404bcb16aea3028b6a35e17e31762cd461dfe3
-strings,Quiz.GeometryEssayValidationHintAi,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Bắt buộc điền lời giải. Ứng dụng chấm đại lượng hình học, công thức thay số, kết quả và đúng bậc đơn vị.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:33
-Services/Localization/QuizLocalizationOverrides.cs:232
-Views/MathPuzzlePage.xaml.cs:707",,untranslated,,9ed847dd429642f5e12cb2dd4b92b5b64cfeddaf582a23dffaa4078eb110d68e
 strings,Quiz.SubmitEssayAnswer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",📝 Chấm bài,,,,,"Services/Localization/QuizLocalizationOverrides.cs:34
 Services/Localization/QuizLocalizationOverrides.cs:233",,untranslated,,d28bd16aeeffdcf83d5a7c451e183897a19f8d6c0bf3e67edc9533a763231d60
 strings,Quiz.EssayCorrectFeedback,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Chính xác! Lời giải, phép tính và đáp số đều đúng.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:35
@@ -304,370 +282,10 @@ Views/MathPuzzlePage.xaml.cs:4089",,untranslated,,b8855a1509b3159f3aa2d3aab39c02
 strings,Quiz.QuestionCounter,Toán đố → số thứ tự câu hỏi đang làm.,Câu {0},,,"{0}: Số thứ tự câu hỏi, ví dụ: 3.",,Views/MathPuzzlePage.xaml.cs:4259,,untranslated,,f1dd4255b4563aeb02baa997a5c24f471d81a381ebccf45ff7a7b326a9ba1891
 strings,Quiz.CorrectCounter,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✓ {0},,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/MathPuzzlePage.xaml.cs:4265,,untranslated,,000b5c639cb541dbfac8f66d0cc8b2f60e876a555111427be6ae13a01324a26a
 strings,Quiz.IncorrectCounter,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✕ {0},,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/MathPuzzlePage.xaml.cs:4271,,untranslated,,e39130b41645cea3f78b7663f3c8a8632f5f9878161289e2d904853a50f4e677
-strings,Quiz.LlmSettingsTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Giáo viên AI cục bộ,,,,,"Services/Localization/QuizLocalizationOverrides.cs:80
-Services/Localization/QuizLocalizationOverrides.cs:279
-Views/MathPuzzlePage.xaml:139",,untranslated,,a3b1ed075886b9edf5efc694adf844b673a26215b5035a478aa793c29f6575c9
-strings,Quiz.LlmSettingsDescription,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",AI viết đề theo chương trình tiểu học Việt Nam. Ứng dụng tự tính đáp án và kiểm tra lại trước khi hiển thị.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:81
-Services/Localization/QuizLocalizationOverrides.cs:280
-Views/MathPuzzlePage.xaml:144",,untranslated,,4191d08aa676b65764e940a3821d15b02dec82d6b5ee478e3ca5942eba0cb731
-strings,Quiz.DownloadGemma4,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",⬇️ Tải model AI từ HuggingFace,,,,,"Services/Localization/QuizLocalizationOverrides.cs:82
-Services/Localization/QuizLocalizationOverrides.cs:281
-Views/MathPuzzlePage.xaml:195
-Views/MathPuzzlePage.xaml.cs:2458",,untranslated,,9158c22a0f4f8b8a4b3fa13ca3dbe153541f09497dc34626cbd60e7246595bc7
-strings,Quiz.StopModelDownload,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",⏹️ Dừng tải model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:83
-Services/Localization/QuizLocalizationOverrides.cs:282
-Views/MathPuzzlePage.xaml.cs:2457
-Views/MathPuzzlePage.xaml.cs:2552",,untranslated,,afb90604bb709b501e7631d3a1257111633cfe6c5c1306a043d1db6de867ba9d
-strings,Quiz.ChooseDownloadModelTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn model Gemma 4,,,,,"Services/Localization/QuizLocalizationOverrides.cs:84
-Services/Localization/QuizLocalizationOverrides.cs:283",,untranslated,,e4b89e81265928dee6d8f0f8fb7c9be8ed7804a56c2d2aeef8217e4c5b1c4b65
-strings,Quiz.DownloadE2BOption,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","E2B • Nhẹ hơn • 3,35 GB",,,,,"Services/Localization/QuizLocalizationOverrides.cs:85
-Services/Localization/QuizLocalizationOverrides.cs:284",,untranslated,,136f25cd9bf69a2ea3b953a45eb29e794c0abe04cad0499cb40912c9336d01e3
-strings,Quiz.DownloadE4BOption,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","E4B • Chất lượng tốt hơn • 5,15 GB",,,,,"Services/Localization/QuizLocalizationOverrides.cs:86
-Services/Localization/QuizLocalizationOverrides.cs:285",,untranslated,,1c79e32894efaa8b4d2f7dc16777af17e3fd2365ed4783409d6e4d3bc9b8ae1e
-strings,Quiz.OpenModelWebsiteOption,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Mở trang {0} trên Hugging Face,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:87
-Services/Localization/QuizLocalizationOverrides.cs:109
-Services/Localization/QuizLocalizationOverrides.cs:286",,untranslated,,f9fca1f56210384ce21a45ea3c51dc126b0e840a4b92497b6fcc2907bae49e86
-strings,Quiz.OpenModelWebsiteFailed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể mở trang model trên Hugging Face.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:88
-Services/Localization/QuizLocalizationOverrides.cs:287
-Views/GemmaModelCatalogPage.xaml.cs:634",,untranslated,,3cd99e6019882016f5a87b82622786f18ffcb5efd2af11f7cf412a0cdecaeb93
-strings,Quiz.ModelCatalogTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Thư viện model Gemma 4,,,,,"Services/Localization/QuizLocalizationOverrides.cs:89
-Services/Localization/QuizLocalizationOverrides.cs:288
-Views/GemmaModelCatalogPage.xaml.cs:207",,untranslated,,7750e91c99e2fd04b6db86c3cb56f4401c9c4281a8cd009008625773578d8a33
-strings,Quiz.ModelCatalogSubtitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Chọn model để xem chi tiết. Khi bấm Tải, ứng dụng sẽ hiện bước xác nhận nơi lưu file trước khi bắt đầu tải.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:90
-Services/Localization/QuizLocalizationOverrides.cs:289
-Views/GemmaModelCatalogPage.xaml.cs:208",,untranslated,,981fef97f6cec2e040c7a09a6142b724f1b461ce1c66801d740546a3438632de
-strings,Quiz.ModelCatalogModelsHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",MODEL PHÙ HỢP,,,,,"Services/Localization/QuizLocalizationOverrides.cs:91
-Services/Localization/QuizLocalizationOverrides.cs:290
-Views/GemmaModelCatalogPage.xaml.cs:211",,untranslated,,2344d38cf0e5986b6d2e14bf6de0211b76796a7a4f5b8b9b541eabd3b4a44d6a
-strings,Quiz.ModelCatalogReadmeHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",CHI TIẾT,,,,,"Services/Localization/QuizLocalizationOverrides.cs:92
-Services/Localization/QuizLocalizationOverrides.cs:291
-Views/GemmaModelCatalogPage.xaml.cs:212",,untranslated,,735d1990bf588ee6c2764dcbfd84c889bb44f9982fc2ce374714e8bb3da044a2
-strings,Quiz.ModelCatalogGuideTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn model phù hợp thiết bị,,,,,"Services/Localization/QuizLocalizationOverrides.cs:93
-Services/Localization/QuizLocalizationOverrides.cs:292
-Views/GemmaModelCatalogPage.xaml.cs:209",,untranslated,,ecfbc3e895b5a8573a0d6279f3cbd5f0ae98a1f525c4876b3ca73fa463bbe12a
-strings,Quiz.ModelCatalogGuideBody,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","E2B nhẹ hơn, phù hợp máy yếu hoặc điện thoại. E4B nặng hơn nhưng thường cho câu chữ tự nhiên hơn trên PC.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:94
-Services/Localization/QuizLocalizationOverrides.cs:293
-Views/GemmaModelCatalogPage.xaml.cs:210",,untranslated,,c84870d0ce5ab9d83e6406795d4ed06fafe69a7b6fc6bf2937cf0cba193a315e
-strings,Quiz.ModelCatalogE2BTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Gemma 4 E2B • Nhẹ hơn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:95
-Services/Localization/QuizLocalizationOverrides.cs:294
-Views/GemmaModelCatalogPage.xaml.cs:214",,untranslated,,5168a5d477d5152ee51682994a455188e2875e74dbf5a88e8c7a024ffb46fffd
-strings,Quiz.ModelCatalogE2BDescription,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Nhanh, ít RAM và tiết kiệm pin",,,,,"Services/Localization/QuizLocalizationOverrides.cs:96
-Services/Localization/QuizLocalizationOverrides.cs:295
-Views/GemmaModelCatalogPage.xaml.cs:215",,untranslated,,19caffb556f43af0d8be70a0c2456b03e69ba3543a8c527d8810dae4f9b75694
-strings,Quiz.ModelCatalogE4BTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Gemma 4 E4B • Chất lượng tốt hơn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:97
-Services/Localization/QuizLocalizationOverrides.cs:296
-Views/GemmaModelCatalogPage.xaml.cs:216",,untranslated,,e69e8b621e058da9db43681a0cb83f70cf51817b3f9864ba19623d3ae51dbd48
-strings,Quiz.ModelCatalogE4BDescription,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Viết tự nhiên và suy luận tốt hơn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:98
-Services/Localization/QuizLocalizationOverrides.cs:297
-Views/GemmaModelCatalogPage.xaml.cs:217",,untranslated,,8d5f36a01cc9b5a28298a2666c5bdc9e006b8e2471965b1a42fa5048ca1ddd2e
-strings,Quiz.ModelCatalogInteractionHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bấm vào một model để xem chi tiết. Nút Tải sẽ mở thêm bước xác nhận đường dẫn lưu model.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:99
-Services/Localization/QuizLocalizationOverrides.cs:298
-Views/GemmaModelCatalogPage.xaml.cs:231",,untranslated,,b0cd85db729554a8e6d6cd46932a01a915f4987672a9aeac358febd17faf6588
-strings,Quiz.ModelCatalogMathSolverHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Sử dụng trong Math Solver,,,,,"Services/Localization/QuizLocalizationOverrides.cs:100
-Services/Localization/QuizLocalizationOverrides.cs:299
-Views/GemmaModelCatalogPage.xaml.cs:234",,untranslated,,7d617022e4c482beb12be396927dfd67f10552873d4878d1bb80380edbd4d616
-strings,Quiz.ModelCatalogMathSolverBody,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Model chỉ đảm nhiệm việc viết đề bài bằng ngôn ngữ tự nhiên. Dữ kiện, phép tính và đáp án vẫn được C# kiểm tra trước khi hiển thị; model chạy cục bộ và không gửi nội dung bài toán lên máy chủ.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:101
-Services/Localization/QuizLocalizationOverrides.cs:300
-Views/GemmaModelCatalogPage.xaml.cs:236",,untranslated,,de28b9cf27e33c8121b087669c612dad2493df71cbebb29604f19297c2911f02
-strings,Quiz.ModelCatalogRecommendationHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Khuyến nghị,,,,,"Services/Localization/QuizLocalizationOverrides.cs:102
-Services/Localization/QuizLocalizationOverrides.cs:301
-Views/GemmaModelCatalogPage.xaml.cs:238",,untranslated,,cbc869278fcb4671fdcd265bce8d3e68fdb2de45c7f7c5aaca91e857e79c820f
-strings,Quiz.ModelCatalogE2BSummary,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Gemma 4 E2B Instruct là biến thể nhỏ hướng tới thiết bị cá nhân. Bản GGUF QAT Q4_0 giảm bộ nhớ cần thiết trong khi giữ chất lượng gần với checkpoint độ chính xác cao hơn.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:103
-Services/Localization/QuizLocalizationOverrides.cs:302
-Views/GemmaModelCatalogPage.xaml.cs:299",,untranslated,,9285079c569c2088cd3f8723f943a6abdc72073b7cd79321664a580ac1d3710d
-strings,Quiz.ModelCatalogE4BSummary,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Gemma 4 E4B Instruct có năng lực ngôn ngữ và suy luận tốt hơn E2B. Bản GGUF QAT Q4_0 phù hợp khi ưu tiên đề bài tự nhiên và đa dạng hơn.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:104
-Services/Localization/QuizLocalizationOverrides.cs:303
-Views/GemmaModelCatalogPage.xaml.cs:300",,untranslated,,d30e2aecab5ebcecfe989469a24a6a6cba93a657fe44045251b0467503e04557
-strings,Quiz.ModelCatalogE2BRecommendation,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Nên chọn cho điện thoại, máy ít RAM hoặc khi ưu tiên tốc độ, nhiệt độ và thời lượng pin. Đây là lựa chọn mặc định hợp lý để tạo toán đố tiểu học.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:105
-Services/Localization/QuizLocalizationOverrides.cs:304
-Views/GemmaModelCatalogPage.xaml.cs:227
-Views/GemmaModelCatalogPage.xaml.cs:304",,untranslated,,7fd0dc5095fc5e335dafb3ef911d78ba86d22b33eb6d2ce22385a85b52393824
-strings,Quiz.ModelCatalogE4BRecommendation,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Nên chọn cho PC hoặc thiết bị có nhiều RAM khi ưu tiên chất lượng câu chữ. Model tải và chạy nặng hơn E2B nhưng thường tạo đề tự nhiên hơn.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:106
-Services/Localization/QuizLocalizationOverrides.cs:305
-Views/GemmaModelCatalogPage.xaml.cs:228
-Views/GemmaModelCatalogPage.xaml.cs:305",,untranslated,,32bf860a88174958c4d255fa6a0983a3f9ea65a5362c228a44d23d2f0313c83f
-strings,Quiz.ModelCatalogFileHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Thông tin bản tải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:107
-Services/Localization/QuizLocalizationOverrides.cs:306
-Views/GemmaModelCatalogPage.xaml.cs:239",,untranslated,,1050884b4734639fe490b00053b010b7aba2b2b68f91fd9994eb4b0bd1c3f5f6
-strings,Quiz.ModelCatalogFileBody,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","{0}
-Khoảng {1} GB • GGUF • QAT Q4_0
-Nguồn: Google DeepMind trên Hugging Face • Apache 2.0",,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:108
-Services/Localization/QuizLocalizationOverrides.cs:307
-Views/GemmaModelCatalogPage.xaml.cs:310",,untranslated,,d9a2a9d4eace4c7f7cce2ad2c3194f423be503acf5b649f95278c6c677acca54
-strings,Quiz.ModelCatalogOpenPage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Mở trang {0} trên Hugging Face,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:87
-Services/Localization/QuizLocalizationOverrides.cs:109
-Services/Localization/QuizLocalizationOverrides.cs:308
-Views/GemmaModelCatalogPage.xaml.cs:343",,untranslated,,f9fca1f56210384ce21a45ea3c51dc126b0e840a4b92497b6fcc2907bae49e86
-strings,Quiz.ModelCatalogDownloadModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tải Gemma 4 {0},,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:110
-Services/Localization/QuizLocalizationOverrides.cs:309
-Views/GemmaModelCatalogPage.xaml.cs:365",,untranslated,,d53a59e6eb3649df1807f1308d23192c659120e710a2bbe611ee1fe825ce6ce4
-strings,Quiz.ModelCatalogOpenFailedTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể mở trang,,,,,"Services/Localization/QuizLocalizationOverrides.cs:111
-Services/Localization/QuizLocalizationOverrides.cs:310
-Views/GemmaModelCatalogPage.xaml.cs:633",,untranslated,,95b48fe47324f42fa5dacf1d1f2b0c3582befd06b26bca9320686f0e1daed980
-strings,Quiz.ModelCatalogClose,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đóng,,,,,"Services/Localization/QuizLocalizationOverrides.cs:112
-Services/Localization/QuizLocalizationOverrides.cs:311
-Views/GemmaModelCatalogPage.xaml.cs:473
-Views/GemmaModelCatalogPage.xaml.cs:488",,untranslated,,5d54c2a1a341732e78a44e444f128697ef3b42c8a15d743721c76fc22f979acb
-strings,Quiz.ModelCatalogFooterHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Sau khi bấm Tải, bạn có thể chọn thư mục lưu model bằng trình chọn thư mục của hệ điều hành rồi mới bắt đầu tải.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:113
-Services/Localization/QuizLocalizationOverrides.cs:312
-Views/GemmaModelCatalogPage.xaml.cs:240",,untranslated,,900eab19cfd1769254bd0ec02370fc496c75e6061f0666e5436d230acd27d5c3
-strings,Quiz.DownloadActionShort,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",↓ Tải,,,,,"Services/Localization/QuizLocalizationOverrides.cs:114
-Services/Localization/QuizLocalizationOverrides.cs:313
-Views/GemmaModelCatalogPage.xaml:195
-Views/GemmaModelCatalogPage.xaml:267",,untranslated,,cfa7f4e93a7ea6cf2574b921244835185fc00f234cd7b896d35be3b2f9d73fa7
-strings,Quiz.DownloadPathPopupTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Xác nhận nơi lưu model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:115
-Services/Localization/QuizLocalizationOverrides.cs:314
-Views/GemmaModelCatalogPage.xaml.cs:245",,untranslated,,062437724232415586a361fe3cc7f0a692a4aea95bfdb5b182798f48149d21e4
-strings,Quiz.DownloadPathPopupSubtitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bạn có thể giữ đường dẫn mặc định hoặc chọn một thư mục khác trước khi tải.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:116
-Services/Localization/QuizLocalizationOverrides.cs:315
-Views/GemmaModelCatalogPage.xaml.cs:246",,untranslated,,b209e1733269c9882b6c4227e6d2336e23eb98ff4735f1378754d8b937f09644
-strings,Quiz.DownloadPathPopupModelHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Model đã chọn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:117
-Services/Localization/QuizLocalizationOverrides.cs:316
-Views/GemmaModelCatalogPage.xaml.cs:247",,untranslated,,a7e7ba082a4e679addf8cbc4714e17f6c06d02d6546eec38d8135c0d021648a3
-strings,Quiz.DownloadPathPopupModelMeta,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Khoảng {0} GB • {1},,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:118
-Services/Localization/QuizLocalizationOverrides.cs:317
-Views/GemmaModelCatalogPage.xaml.cs:326",,untranslated,,fc96a0e8e903ed3444aa373c16263875adfe6d86186de915201cf394c4592719
-strings,Quiz.DownloadPathPopupPathHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Thư mục lưu model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:119
-Services/Localization/QuizLocalizationOverrides.cs:318
-Views/GemmaModelCatalogPage.xaml.cs:248",,untranslated,,b8849d289a817c6b1c24072b6584757b568da6c97727297dd8349197b512088a
-strings,Quiz.DownloadPathPopupNote,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Hãy bảo đảm ổ đĩa còn đủ dung lượng trống. Nếu tải bị gián đoạn, phần đã tải sẽ được giữ lại trong chính thư mục bạn chọn để tiếp tục lần sau.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:127
-Services/Localization/QuizLocalizationOverrides.cs:326
-Views/GemmaModelCatalogPage.xaml.cs:252",,untranslated,,d017aa07241933f86ca52c7dcb2a05d24f3652777fecce9ad4426bd5425b76e4
-strings,Quiz.Cancel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hủy,,,,,"AppShell.xaml.cs:650
-Services/Localization/QuizLocalizationOverrides.cs:128
-Services/Localization/QuizLocalizationOverrides.cs:327
-Views/GemmaModelCatalogPage.xaml.cs:253",,untranslated,,74fcd3522be7e175f00bfe7e5a4758425981d3f188f7ca8a1e06b163e1a2dd8f
-strings,Quiz.DownloadConfirmTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Xác nhận tải model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:129
-Services/Localization/QuizLocalizationOverrides.cs:328",,untranslated,,323659efc3bad0465f4b08adc5423f25f1029c34f1da32e311f9548ad6755456
-strings,Quiz.DownloadConfirmMessage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tải {0} (khoảng {1} GB) từ Hugging Face? Nên dùng Wi-Fi và bảo đảm thiết bị còn đủ dung lượng trống.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:130
-Services/Localization/QuizLocalizationOverrides.cs:329",,untranslated,,bebe0e7e9e82dfba808145bfd317db3731f9e169a1705d065c56d95a2134b2d6
-strings,Quiz.DownloadAction,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tải xuống,,,,,"Services/Localization/QuizLocalizationOverrides.cs:131
-Services/Localization/QuizLocalizationOverrides.cs:330
-Views/GemmaModelCatalogPage.xaml.cs:254",,untranslated,,5fcd810af6b56096296a8101dd709b92dc5cc08ab4f3c7a9e76b052c51ffdc4f
-strings,Quiz.DownloadingModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang bắt đầu tải {0}...,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:132
-Services/Localization/QuizLocalizationOverrides.cs:331
-Views/MathPuzzlePage.xaml.cs:1738",,untranslated,,63afa4f02269b679614a3fb4d2a9cdab48137ff22d6c994a0aef4a6a352c7842
-strings,Quiz.DownloadingModelProgress,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang tải {0}: {1}% • {2}/{3} GB,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{3}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:133
-Services/Localization/QuizLocalizationOverrides.cs:332
-Views/MathPuzzlePage.xaml.cs:1895",,untranslated,,930ab43d0359bc7bf2fa440f43371f2d65b531ec2cfbc54356d68cdab8e7b5b7
-strings,Quiz.DownloadComplete,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đã tải và chọn {0}. File GGUF đã sẵn sàng.,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:134
-Services/Localization/QuizLocalizationOverrides.cs:333
-Views/MathPuzzlePage.xaml.cs:1798",,untranslated,,b41c331f3d663c99de91c7cd5e969d88fb63d402015019f8304b42a5ed0f1e58
-strings,Quiz.DownloadCancelled,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đã dừng tải. Phần đã tải được giữ lại để tiếp tục lần sau.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:135
-Services/Localization/QuizLocalizationOverrides.cs:334
-Views/MathPuzzlePage.xaml.cs:1806",,untranslated,,5c0527c8e6e6e2d322ae1115e000323967fd0d6b340a6916a301e4baa969cbe0
-strings,Quiz.DownloadInvalid,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",File tải về không phải model Gemma 4 GGUF hợp lệ. Hãy thử tải lại.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:136
-Services/Localization/QuizLocalizationOverrides.cs:335
-Views/MathPuzzlePage.xaml.cs:1820",,untranslated,,99c7c7a7263f7ba6fa2569b051f7f3f0a9dd37a1522bf201d5b35b1e31a365a6
-strings,Quiz.DownloadAccessDenied,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hugging Face không cho phép tải model này. Hãy kiểm tra kết nối hoặc quyền truy cập rồi thử lại.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:137
-Services/Localization/QuizLocalizationOverrides.cs:336
-Views/MathPuzzlePage.xaml.cs:1833",,untranslated,,a4dde0eb616e705de5f7e209a83471b28953f6e977e67b2c8175bf070e8a3a5d
-strings,Quiz.DownloadFailed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể tải model. Hãy kiểm tra kết nối mạng; lần tải sau sẽ tiếp tục từ phần đã có.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:138
-Services/Localization/QuizLocalizationOverrides.cs:337
-Views/MathPuzzlePage.xaml.cs:1834
-Views/MathPuzzlePage.xaml.cs:1847",,untranslated,,0a696e46d3e04b7b0983bc2649b0fff4db800277a477e65cd410bb8da7ec28f3
-strings,Quiz.SelectModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",📦 Chọn model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:139
-Services/Localization/QuizLocalizationOverrides.cs:338
-Views/MathPuzzlePage.xaml:231",,untranslated,,e7d6f2d715109622a4490ded099ffd3e3f698f0839a2318d291c6348de3dbad4
-strings,Quiz.EjectModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",⏏️ Eject model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:140
-Services/Localization/QuizLocalizationOverrides.cs:339
-Views/MathPuzzlePage.xaml:246",,untranslated,,9df61a9bac5d9c15601552e4464ce214aacf8b5a6151496d7badd9bc5a327b57
-strings,Quiz.OpenInFileExplorer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",📂 Mở trong File Explorer,,,,,"Services/Localization/QuizLocalizationOverrides.cs:141
-Services/Localization/QuizLocalizationOverrides.cs:340
-Views/MathPuzzlePage.xaml:208",,untranslated,,3bbb5a137fd725b2a1acd76b89691c2179e302117ef84e3cda15a167c58fc28f
-strings,Quiz.ModelLocationTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Vị trí AI model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:142
-Services/Localization/QuizLocalizationOverrides.cs:341
-Views/MathPuzzlePage.xaml.cs:2010",,untranslated,,121146bf619427f92d631e7f2fda5b95bf76b1547f22c8da6d71d6132ad957b6
-strings,Quiz.ModelLocationUnavailable,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Nền tảng này không cho phép mở trực tiếp thư mục riêng của ứng dụng. AI model đang nằm tại:
-{0}",,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:143
-Services/Localization/QuizLocalizationOverrides.cs:342
-Views/MathPuzzlePage.xaml.cs:2013",,untranslated,,8c3e5dd1448f78865bfaa03e9436c8f223107b58a129b19d9ddb400068298b0c
-strings,Quiz.NoModelSelected,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chưa chọn model GGUF,,,,,"Services/Localization/QuizLocalizationOverrides.cs:144
-Services/Localization/QuizLocalizationOverrides.cs:343
-Views/MathPuzzlePage.xaml.cs:2424",,untranslated,,89774e9e4862390dbf431d3efcc5c3c078d1aed127687c395bcdb837b289025d
-strings,Quiz.ModelRecommendation,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chỉ hỗ trợ Gemma 4. Nên chọn E2B/E4B Instruct bản Q4 vì tạo câu tiếng Việt tự nhiên, đủ tốt cho toán tiểu học và nhẹ hơn để tiết kiệm pin.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:145
-Services/Localization/QuizLocalizationOverrides.cs:344
-Views/MathPuzzlePage.xaml.cs:2426
-Views/MathPuzzlePage.xaml.cs:2437",,untranslated,,dae9111e9bcd8aeb46990723284c255dea0002198436a12d633a041cb17da298
-strings,Quiz.RecommendedModelDetected,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Gemma 4 bản gọn nhẹ đã sẵn sàng để tạo đề.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:146
-Services/Localization/QuizLocalizationOverrides.cs:345
-Views/MathPuzzlePage.xaml.cs:2436",,untranslated,,4c55777767521e3b6568110bd5238980066a46d5a80e7483f7d98bfd9e7ba227
-strings,Quiz.CreateWithAi,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",✨ Tạo đề bằng AI,,,,,"Services/Localization/QuizLocalizationOverrides.cs:147
-Services/Localization/QuizLocalizationOverrides.cs:346
-Views/MathPuzzlePage.xaml:1427
-Views/MathPuzzlePage.xaml.cs:477",,untranslated,,828923ae6af2bbedd7c747667c64eb511a3066bdd3e765f5721c811bf5c2aa87
-strings,Quiz.ShowAiDiagnostics,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hiện JSON & Log,,,,,"Services/Localization/QuizLocalizationOverrides.cs:149
-Services/Localization/QuizLocalizationOverrides.cs:348
-Views/MathPuzzlePage.xaml.cs:2847",,untranslated,,3ee3643407fdd25f44daa720fd271df22caabc189cd34b2486e56886a5f1d4d9
-strings,Quiz.HideAiDiagnostics,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ẩn JSON & Log,,,,,"Services/Localization/QuizLocalizationOverrides.cs:150
-Services/Localization/QuizLocalizationOverrides.cs:349
-Views/MathPuzzlePage.xaml.cs:2846",,untranslated,,c972fdc3f15990bbb4d16158bc93d8a10a77eb8c81815798aaca1b7336e21164
-strings,Quiz.AiDiagnosticsTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",JSON và log kiểm tra AI,,,,,"Services/Localization/QuizLocalizationOverrides.cs:151
-Services/Localization/QuizLocalizationOverrides.cs:350
-Views/SettingsPage.xaml:1050
-Views/SettingsPage.xaml.cs:1330",,untranslated,,24078b9511a0094768c38e15c8836b2165b5098d1bc11317060d4a1a6b910e62
-strings,Quiz.AiDiagnosticsDescription,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Xem dữ liệu model trả về và từng bước validation của C#.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:152
-Services/Localization/QuizLocalizationOverrides.cs:351",,untranslated,,ae9f71093d5e341083480704cfd0f6aac1fe4b13d4c75277f5ac10620570b39c
-strings,Quiz.RawJsonTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",JSON do LLM tạo,,,,,"Services/Localization/QuizLocalizationOverrides.cs:163
-Services/Localization/QuizLocalizationOverrides.cs:362",,untranslated,,cef65a97ab9e1214f19f95f69da9c17f9b3091c5f70ef8ead58b19485f2e2102
-strings,Quiz.ValidationLogTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Log validation,,,,,"Services/Localization/QuizLocalizationOverrides.cs:164
-Services/Localization/QuizLocalizationOverrides.cs:363",,untranslated,,36ff80cac07c0e1d7698555d4e3881909fc7f0a3bdba27d56a3a521825d7fed6
-strings,Quiz.DiagnosticsNoJson,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",JSON thô sẽ xuất hiện tại đây khi AI bắt đầu tạo đề.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:165
-Services/Localization/QuizLocalizationOverrides.cs:364
-Views/MathPuzzlePage.xaml.cs:2889",,untranslated,,19a0b2303c298641e9081421cb884f1d89be1bcdb5dc49af3c65095f433d0a7f
-strings,Quiz.DiagnosticsNoLog,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Log parse và validation sẽ xuất hiện tại đây.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:166
-Services/Localization/QuizLocalizationOverrides.cs:365
-Views/MathPuzzlePage.xaml.cs:2892
-Views/MathPuzzlePage.xaml.cs:3131",,untranslated,,2616d472b20d1c1c972a7f6023867a561f1eee2cdb3bde2d7fe1383defe58731
-strings,Quiz.DiagnosticsAttemptHeader,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",── Lần {0}/{1} ──,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:167
-Services/Localization/QuizLocalizationOverrides.cs:366
-Views/MathPuzzlePage.xaml.cs:2915
-Views/MathPuzzlePage.xaml.cs:2968",,untranslated,,5bb75d7f54145e337ace21ea0a6ebaedf687313d9c55e34fcbb9f79f851925b8
-strings,Quiz.DiagnosticsAttemptStarted,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Bắt đầu nhận JSON từ model.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:168
-Services/Localization/QuizLocalizationOverrides.cs:367
-Views/MathPuzzlePage.xaml.cs:3145",,untranslated,,39f171be62f60c94741685247f546e24f2fb1f6e380d2da4e6a8908d6b81fc3c
-strings,Quiz.DiagnosticsJsonReceived,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Đã nhận {2} ký tự; bắt đầu parse JSON.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:169
-Services/Localization/QuizLocalizationOverrides.cs:368
-Views/MathPuzzlePage.xaml.cs:3147",,untranslated,,1b62ea669df7046420aadd7b0c8312815fed431eedf70e9871e2bb8f830b1b7e
-strings,Quiz.DiagnosticsParseSucceeded,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Parse JSON thành công.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:170
-Services/Localization/QuizLocalizationOverrides.cs:369
-Views/MathPuzzlePage.xaml.cs:3149",,untranslated,,2d8351d0293032a087ee130ff74f10f55746e1f8f86530ab8a559b40f55590b5
-strings,Quiz.DiagnosticsParseFailed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Parse JSON thất bại: {2}.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:171
-Services/Localization/QuizLocalizationOverrides.cs:370
-Views/MathPuzzlePage.xaml.cs:3151",,untranslated,,62ec955a7f91c92529a4423355d2d62126cd27ab4a92bfd236ef669e22355f0c
-strings,Quiz.DiagnosticsValidationSucceeded,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Validation thành công; đề được chấp nhận.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:172
-Services/Localization/QuizLocalizationOverrides.cs:371
-Views/MathPuzzlePage.xaml.cs:3153",,untranslated,,b5c6148e8586ea87f6522d953831749f01a017c66498a86c30197df3ade01c83
-strings,Quiz.DiagnosticsValidationFailed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Validation từ chối đề: {2}.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:173
-Services/Localization/QuizLocalizationOverrides.cs:372
-Views/MathPuzzlePage.xaml.cs:3155",,untranslated,,a763da0d7bce677ab1ed38eaf3f39541937e254fd50cc7f7f0a1cda7946fdb5e
-strings,Quiz.DiagnosticsRetryScheduled,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Tạo lại đề do lỗi: {2}.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:174
-Services/Localization/QuizLocalizationOverrides.cs:373
-Views/MathPuzzlePage.xaml.cs:3157",,untranslated,,0f48dc9e1b3d6ca296ff060f1cffefd17fd8b8ed68e5b686eba207b27bdc07e4
-strings,Quiz.DiagnosticsGenerationFailed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Đã hết số lần thử; lỗi cuối: {2}.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:175
-Services/Localization/QuizLocalizationOverrides.cs:374
-Views/MathPuzzlePage.xaml.cs:3159",,untranslated,,0a04561eae1a085ef30d2c5c334991c2f8a315a436e484fe0627dc29c7242ab7
-strings,Quiz.DiagnosticsRuntimeError,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",[{0}/{1}] Lỗi runtime AI: {2}.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{2}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:176
-Services/Localization/QuizLocalizationOverrides.cs:375
-Views/MathPuzzlePage.xaml.cs:3161",,untranslated,,de545e5e1a3080dcc9e627a322edf6366bbf75356c5edf9608a6bf242e136962
-strings,Quiz.SelectModelPickerTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn file Gemma 4 GGUF,,,,,"Services/Localization/QuizLocalizationOverrides.cs:177
-Services/Localization/QuizLocalizationOverrides.cs:376
-Views/MathPuzzlePage.xaml.cs:1586",,untranslated,,34ad63626fa82616736747f6cdb55fb21dbd3e9d01a83192be714e7b54468f99
-strings,Quiz.ImportingModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang kiểm tra file Gemma 4...,,,,,"Services/Localization/QuizLocalizationOverrides.cs:178
-Services/Localization/QuizLocalizationOverrides.cs:377
-Views/MathPuzzlePage.xaml.cs:1599",,untranslated,,ce6b2c01c54101c320f9d4b205315424e057eb88b56e9ce1ea988a4d4135e03f
-strings,Quiz.ModelReady,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",File model GGUF đúng định dạng.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:179
-Services/Localization/QuizLocalizationOverrides.cs:378
-Views/MathPuzzlePage.xaml.cs:1637",,untranslated,,0bc68120d0b48e3e1b778e260e7b08f11bf79e0f6299f10c794cb745f1d51059
-strings,Quiz.ModelEjected,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đã Eject model và đặt lại toàn bộ phiên luyện tập.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:180
-Services/Localization/QuizLocalizationOverrides.cs:379
-Views/MathPuzzlePage.xaml.cs:1950",,untranslated,,ea5d8de3825cbd97c74f6a0062a7d390291ec34cef27ba7eadb7b42aa76729d1
-strings,Quiz.UnsupportedModelFamily,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chỉ hỗ trợ model Gemma 4 dành cho tạo đề. Hãy chọn đúng file Gemma 4 GGUF.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:181
-Services/Localization/QuizLocalizationOverrides.cs:380
-Views/MathPuzzlePage.xaml.cs:1658",,untranslated,,7407e0ab2f4f3604bae76dd3b23712cda91dcb630cf271c0261bd76af0c44c87
-strings,Quiz.ModelTooLarge,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Model này quá nặng (trên 5,5 GB) nên có thể làm máy nóng và hao pin. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:182
-Services/Localization/QuizLocalizationOverrides.cs:381
-Views/MathPuzzlePage.xaml.cs:1651
-Views/MathPuzzlePage.xaml.cs:1813",,untranslated,,33f2029e1f5775b52e5869ae9b65c2699147e7ab307dcdcf790c9113a9367fcb
-strings,Quiz.InvalidModelFile,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",File đã chọn không phải là file GGUF hợp lệ.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:183
-Services/Localization/QuizLocalizationOverrides.cs:382
-Views/MathPuzzlePage.xaml.cs:1665",,untranslated,,3ea9a81bda7829da1079edc3ed18ec884df681813837efaf01edc9c6e1126c2c
-strings,Quiz.ModelImportError,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể mở hoặc lưu model đã chọn.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:184
-Services/Localization/QuizLocalizationOverrides.cs:383
-Views/MathPuzzlePage.xaml.cs:1675",,untranslated,,0558879d3438bebcc4538218d84a562d55bb4d5cb6b7ac2c555add490d010ca0
-strings,Quiz.SelectModelFirst,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Hãy chọn model GGUF trước khi tạo đề bằng AI.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:185
-Services/Localization/QuizLocalizationOverrides.cs:384
-Views/MathPuzzlePage.xaml.cs:1544
-Views/MathPuzzlePage.xaml.cs:1565",,untranslated,,7c0c8d4e6a7e2e802b1fc5dedd66f8d7081b02ff791317c99e8c973d72e09c8b
-strings,Quiz.LlmReady,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chọn bài toán rồi bấm Tạo đề bằng AI.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:186
-Services/Localization/QuizLocalizationOverrides.cs:385
-Views/MathPuzzlePage.xaml.cs:1545
-Views/MathPuzzlePage.xaml.cs:1566",,untranslated,,9190dd39287cec09cf196c4ee288115a1788debeb179c64c0017e31f62456d29
-strings,Quiz.AiTeacherGreetingTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Giáo viên AI,,,,,"Services/Localization/QuizLocalizationOverrides.cs:187
-Services/Localization/QuizLocalizationOverrides.cs:386
-Views/MathPuzzlePage.xaml:364",,untranslated,,492a7bfb4d67752195c2a326acd34192636dff6e841f8d4d04858717c20e91f3
-strings,Quiz.AiTeacherStateNoModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chưa có model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:188
-Services/Localization/QuizLocalizationOverrides.cs:387
-Views/MathPuzzlePage.xaml.cs:2611",,untranslated,,40304df5dd54a3b6ddde0b78712f0216e24d1f591776996ed0ae12d9264e89d2
-strings,Quiz.AiTeacherStateModelSelected,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đã chọn model,,,,,"Services/Localization/QuizLocalizationOverrides.cs:189
-Services/Localization/QuizLocalizationOverrides.cs:388
-Views/MathPuzzlePage.xaml.cs:2606",,untranslated,,321a22afaf9de5c340a260dd62b9dd620b93e0af90b0ea26790c66668b7b2477
-strings,Quiz.AiTeacherStateWorking,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang làm việc,,,,,"Services/Localization/QuizLocalizationOverrides.cs:190
-Services/Localization/QuizLocalizationOverrides.cs:389
-Views/MathPuzzlePage.xaml.cs:2596",,untranslated,,5e6aa9043479402a655d4bcd617036d3f61e9ce24e6e85fa2032d53f56cd020a
-strings,Quiz.AiTeacherStateReady,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Sẵn sàng,,,,,"Services/Localization/QuizLocalizationOverrides.cs:191
-Services/Localization/QuizLocalizationOverrides.cs:390
-Views/MathPuzzlePage.xaml.cs:2601",,untranslated,,d654065d13f45eeac2f5c93715d6538f88099bd82bbe9ad6b539799340baaea6
-strings,Quiz.FirstModelGreeting,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Chào em! Giáo viên AI đã sẵn sàng. Chúng ta cùng bắt đầu bài toán đầu tiên nhé!,,,,,"Services/Localization/QuizLocalizationOverrides.cs:192
-Services/Localization/QuizLocalizationOverrides.cs:391
-Views/MathPuzzlePage.xaml.cs:2630",,untranslated,,f26dc3576cb714697321ece32d8044ba64e77c7b907fb07c70ec14444c475266
-strings,Quiz.LoadingModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang tạo sinh đề bài bằng AI...,,,,,"Services/Localization/QuizLocalizationOverrides.cs:193
-Services/Localization/QuizLocalizationOverrides.cs:392
-Views/MathPuzzlePage.xaml.cs:2136
-Views/MathPuzzlePage.xaml.cs:2144",,untranslated,,cf6148e623289d4970f1e917870767565dd15051d15674c3c30969fdf7d70870
-strings,Quiz.ModelLoaded,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",AI đang chuẩn bị nội dung câu hỏi...,,,,,"Services/Localization/QuizLocalizationOverrides.cs:194
-Services/Localization/QuizLocalizationOverrides.cs:393
-Views/MathPuzzlePage.xaml.cs:2347",,untranslated,,aa26ee8bb914b39791e4a68bdbb7a7ba89f095f851925bc2effed23f3d95b8e1
-strings,Quiz.GeneratingAttempt,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","AI đang viết đề bài, lần {0}/{1}...",,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:195
-Services/Localization/QuizLocalizationOverrides.cs:394
-Views/MathPuzzlePage.xaml.cs:2351",,untranslated,,027f0c6fde0cedeab77920d7f1a52504297f92e332dae63ac9e3d01e3db8d354
-strings,Quiz.GenerationSpeed,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Tốc độ tạo sinh: {0} token/s,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,"Services/Localization/QuizLocalizationOverrides.cs:196
-Services/Localization/QuizLocalizationOverrides.cs:395
-Views/MathPuzzlePage.xaml.cs:2794",,untranslated,,93c6b4da3a04e27705d4f64deae057f177656d7780a9ef9f18e4c810c58d821d
-strings,Quiz.ValidatingProblem,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang kiểm tra lại đề bài và đáp án...,,,,,"Services/Localization/QuizLocalizationOverrides.cs:197
-Services/Localization/QuizLocalizationOverrides.cs:396
-Views/MathPuzzlePage.xaml.cs:2355",,untranslated,,dd411154badf8fca98f7821d4c7be893eeac0fa34dd2d07615993efb80c053d2
-strings,Quiz.RetryingProblem,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đề chưa hợp lệ. AI đang tự tạo lại...,,,,,"Services/Localization/QuizLocalizationOverrides.cs:198
-Services/Localization/QuizLocalizationOverrides.cs:397
-Views/MathPuzzlePage.xaml.cs:2357",,untranslated,,328c7c8d4d4cc0cbed98cfe5200f63b6cca6d8ef0bf3268451b86b2e3ba7c0b1
-strings,Quiz.DisposingModel,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang Eject model...,,,,,"Services/Localization/QuizLocalizationOverrides.cs:199
-Services/Localization/QuizLocalizationOverrides.cs:398
-Views/MathPuzzlePage.xaml.cs:1930
-Views/MathPuzzlePage.xaml.cs:2359",,untranslated,,6671a8bad3aa9eccf3837b72607e34d7bef80059e97360174774b5f1da96ff67
-strings,Quiz.GenerationSucceeded,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đề bài đã sẵn sàng.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:200
-Services/Localization/QuizLocalizationOverrides.cs:399
-Views/MathPuzzlePage.xaml.cs:2198",,untranslated,,44a13d5c4e4b09eb830463e9e42724a180f0d4c83780d234a72973c488e02a92
-strings,Quiz.GenerationCancelled,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đã dừng tạo đề.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:201
-Services/Localization/QuizLocalizationOverrides.cs:400
-Views/MathPuzzlePage.xaml.cs:285
-Views/MathPuzzlePage.xaml.cs:1644",,untranslated,,8f9421c5a42685c96a569fbcaa0162326eec00a10c124e1f2542c1da787c8083
-strings,Quiz.GenerationFailedAfterRetries,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",AI đã tạo sai dữ kiện 3 lần. Hãy bấm Tạo đề bằng AI để thử lại.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:202
-Services/Localization/QuizLocalizationOverrides.cs:401
-Views/MathPuzzlePage.xaml.cs:2400",,untranslated,,c20d9cb3b61f005184acecfd1ef846da76da1bf496398c636b52e15d0aed413b
-strings,Quiz.NotEnoughMemory,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Model này quá nặng đối với thiết bị. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:203
-Services/Localization/QuizLocalizationOverrides.cs:402
-Views/MathPuzzlePage.xaml.cs:2396",,untranslated,,610f0330528a8288de5d8c26f9d3934620bbe7eb016a36a24e884821682abfa5
-strings,Quiz.ModelRuntimeError,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể dùng model này trên thiết bị. Hãy chọn Gemma 4 E2B/E4B bản Q4 nhỏ hơn.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:204
-Services/Localization/QuizLocalizationOverrides.cs:403
-Views/MathPuzzlePage.xaml.cs:1967
-Views/MathPuzzlePage.xaml.cs:2397",,untranslated,,0165d44b16dc25ca723aaf4d5591fcb522022c24f26d6086f4bdf6756baa54f0
-strings,Quiz.WordProblemTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán do giáo viên AI tạo,,,,,"Services/Localization/QuizLocalizationOverrides.cs:205
+strings,Quiz.WordProblemTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bài toán có lời văn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:205
 Services/Localization/QuizLocalizationOverrides.cs:404
 Views/MathPuzzlePage.xaml.cs:671
-Views/MathPuzzlePage.xaml.cs:1540",,untranslated,,6e4aa2e22c449c2b4501eea1f4037085da3c7cf87754247d3a88b4ba9c4240a4
+Views/MathPuzzlePage.xaml.cs:1540",,untranslated,,5f3d6581895b66d19a64cecd922c6a29700fb559bfa27da97102ce9ef477e5c6
 strings,Quiz.PresentedAnswer,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đáp án được đưa ra: {0} {1},,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:206
 Services/Localization/QuizLocalizationOverrides.cs:405
@@ -2219,9 +1837,6 @@ Views/MathPuzzlePage.xaml.cs:648",,untranslated,,33fd8a32304a69d1bdcbfafe61bfe88
 strings,Quiz.ProportionEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Ứng dụng chấm đúng dữ kiện tỉ lệ, công thức tính và giá trị đáp số.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:68
 Services/Localization/QuizLocalizationOverrides.cs:267
 Views/MathPuzzlePage.xaml.cs:721",,untranslated,,893253a1fa28f5a85d41eb0295bf4d25aa7eda1b08a836ca658156563a286c00
-strings,Quiz.ProportionEssayValidationHintAi,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Bắt buộc điền lời giải. Ứng dụng chấm đúng quan hệ tỉ lệ, phép tính, kết quả và đơn vị đáp số.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:69
-Services/Localization/QuizLocalizationOverrides.cs:268
-Views/MathPuzzlePage.xaml.cs:711",,untranslated,,799e791829de32401e3026b4e2ccb18eaf77a4ec3e56a1b0140b081076e16ae0
 strings,Quiz.ProportionEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 24 ÷ 4 × 6 = 36,,,,,"Services/Localization/QuizLocalizationOverrides.cs:70
 Services/Localization/QuizLocalizationOverrides.cs:269
 Views/MathPuzzlePage.xaml.cs:736",,untranslated,,e25e14baf6a7374021f6cea030c8698dce3e98c78f11c32888b01d78f0e15694
@@ -2234,68 +1849,9 @@ Views/MathPuzzlePage.xaml.cs:654",,untranslated,,b9438fc691421e31fb2b891fd7d56ea
 strings,Quiz.MotionEssayValidationHint,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Nhập phép tính đúng theo dữ kiện chuyển động và đáp số kèm đúng đơn vị.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:61
 Services/Localization/QuizLocalizationOverrides.cs:260
 Views/MathPuzzlePage.xaml.cs:723",,untranslated,,f3c05d3f2cb9612259074bbeb9539bb68a757313d778f0095f0602f30559638d
-strings,Quiz.MotionEssayValidationHintAi,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Bắt buộc điền lời giải, phép tính và đáp số. Phép tính phải đúng quan hệ chuyển động; đáp số phải kèm đúng đơn vị.",,,,,"Services/Localization/QuizLocalizationOverrides.cs:62
-Services/Localization/QuizLocalizationOverrides.cs:261
-Views/MathPuzzlePage.xaml.cs:713",,untranslated,,be66e5427a6e8ca5165e3530815221da6ce711605391c88caa6f8b5f8614f5f2
 strings,Quiz.MotionEssayEquationPlaceholder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Ví dụ: 120 ÷ (60 + 40) = 1,,,,,"Services/Localization/QuizLocalizationOverrides.cs:63
 Services/Localization/QuizLocalizationOverrides.cs:262
 Views/MathPuzzlePage.xaml.cs:738",,untranslated,,2376a35db37d19d669aa4797d2850907c5676c862d1233d2c4ebc97565bc6613
-strings,Quiz.DownloadPathPopupChooseFolder,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",📁 Chọn thư mục,,,,,"Services/Localization/QuizLocalizationOverrides.cs:120
-Services/Localization/QuizLocalizationOverrides.cs:319
-Views/GemmaModelCatalogPage.xaml.cs:249",,untranslated,,09242241c25f5ee6db6db72638c1714333c91935b1763dd473380e823b8dbf5e
-strings,Quiz.DownloadPathPopupResetDefault,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Mặc định,,,,,"Services/Localization/QuizLocalizationOverrides.cs:121
-Services/Localization/QuizLocalizationOverrides.cs:320
-Views/GemmaModelCatalogPage.xaml.cs:250",,untranslated,,9a1af367211edfaf45a7ab07c359c1a56ccb638a0e7ade3d747ff231070e1f7d
-strings,Quiz.DownloadPathPopupFinalFileHeading,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",File GGUF sẽ lưu tại,,,,,"Services/Localization/QuizLocalizationOverrides.cs:122
-Services/Localization/QuizLocalizationOverrides.cs:321
-Views/GemmaModelCatalogPage.xaml.cs:251",,untranslated,,14d9eb07e34dfa86927216177cadc9acc18073f2ed200650031abe2420682ff6
-strings,Quiz.DownloadPathPopupFolderPickerFailedTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không mở được trình chọn thư mục,,,,,"Services/Localization/QuizLocalizationOverrides.cs:123
-Services/Localization/QuizLocalizationOverrides.cs:322
-Views/GemmaModelCatalogPage.xaml.cs:471
-Views/GemmaModelCatalogPage.xaml.cs:507",,untranslated,,e1a9727f20d7ec1495381d19b8489d4c31d466c79467c10c93fd7561dbef798c
-strings,Quiz.DownloadPathPopupFolderPickerFailedMessage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể mở hoặc đọc thư mục đã chọn. Hãy thử chọn một thư mục khác.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:124
-Services/Localization/QuizLocalizationOverrides.cs:323
-Views/GemmaModelCatalogPage.xaml.cs:472
-Views/GemmaModelCatalogPage.xaml.cs:508",,untranslated,,9c21ac7a74aa6185c0cd421580d99f473368113d910c877ea0c13ed78d1e81a1
-strings,Quiz.DownloadPathPopupFolderNotWritableTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không thể lưu vào thư mục này,,,,,"Services/Localization/QuizLocalizationOverrides.cs:125
-Services/Localization/QuizLocalizationOverrides.cs:324
-Views/GemmaModelCatalogPage.xaml.cs:486",,untranslated,,3786bdd0bef217d774dce17f75fbe3572ad12d17914b3ec00ab3412d3d80611d
-strings,Quiz.DownloadPathPopupFolderNotWritableMessage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Math Solver không có quyền ghi file vào thư mục đã chọn. Hãy chọn một thư mục khác có quyền ghi.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:126
-Services/Localization/QuizLocalizationOverrides.cs:325
-Views/GemmaModelCatalogPage.xaml.cs:487",,untranslated,,2f5c7c0b65314cb1e6fe8881380f34506cc13b67d19f21e12f267f968a4a3d76
-strings,Quiz.AiValidationCheckingTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đang kiểm tra đề AI,,,,,"Services/Localization/QuizLocalizationOverrides.cs:153
-Services/Localization/QuizLocalizationOverrides.cs:352
-Views/MathPuzzlePage.xaml.cs:2997",,untranslated,,be0a347a72ae6d14d766ab7f868ef658d3815fc5023f1bc421cc7c2070648c32
-strings,Quiz.AiValidationCheckingDetail,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",C# đang parse và validation đề ở lần {0}/{1}.,,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:154
-Services/Localization/QuizLocalizationOverrides.cs:353
-Views/MathPuzzlePage.xaml.cs:3000",,untranslated,,ee33ee14ceac2ec4ca584d5b955de613c1faa643e87fcccc01d4afdc7fdb973f
-strings,Quiz.AiValidationValidTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đề AI hợp lệ,,,,,"Services/Localization/QuizLocalizationOverrides.cs:155
-Services/Localization/QuizLocalizationOverrides.cs:354
-Views/MathPuzzlePage.xaml.cs:3034",,untranslated,,89c53be5c36c9e1e813c909a795f8e4fc461d6c3635697366b1cf46c5df277e0
-strings,Quiz.AiValidationValidDetail,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.","Validation thành công ở lần {0}/{1}. Dữ kiện, đơn vị và quan hệ toán đã được C# chấp nhận.",,,"{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
-{1}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,"Services/Localization/QuizLocalizationOverrides.cs:156
-Services/Localization/QuizLocalizationOverrides.cs:355
-Views/MathPuzzlePage.xaml.cs:3037",,untranslated,,e51092a28b6febf225297dfa3234c0b1913db89870526b9fc9891c41b89fe829
-strings,Quiz.AiValidationInvalidTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đề AI chưa hợp lệ,,,,,"Services/Localization/QuizLocalizationOverrides.cs:157
-Services/Localization/QuizLocalizationOverrides.cs:356
-Views/MathPuzzlePage.xaml.cs:3012",,untranslated,,9a1a72dd53fb2df1cb1a10556a14f58d0cbec5e21a9be7ffb5336bedd957c9ab
-strings,Quiz.AiValidationInvalidFallback,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đề không vượt qua validation. Model cần tạo lại câu khác.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:158
-Services/Localization/QuizLocalizationOverrides.cs:357
-Views/MathPuzzlePage.xaml.cs:3014
-Views/MathPuzzlePage.xaml.cs:3025",,untranslated,,5242a6c8659a0ee600d8c15cb75833211706af70ef3bc3d8dfb7cde70dc22023
-strings,Quiz.AiValidationRetryTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Đề chưa hợp lệ — đang tạo lại,,,,,"Services/Localization/QuizLocalizationOverrides.cs:159
-Services/Localization/QuizLocalizationOverrides.cs:358
-Views/MathPuzzlePage.xaml.cs:3023",,untranslated,,77d121494bcff9dde596c0d20d5ff8b3d44f72e00c7fca58304941f29147bd74
-strings,Quiz.AiValidationGenerationFailedTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không tạo được đề hợp lệ,,,,,"Services/Localization/QuizLocalizationOverrides.cs:160
-Services/Localization/QuizLocalizationOverrides.cs:359
-Views/MathPuzzlePage.xaml.cs:3048",,untranslated,,f6eaac46b8425931bd260eee84460f59e4232a251386b2c94f39b1f217909748
-strings,Quiz.AiValidationRuntimeErrorTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Validation bị gián đoạn,,,,,"Services/Localization/QuizLocalizationOverrides.cs:161
-Services/Localization/QuizLocalizationOverrides.cs:360
-Views/MathPuzzlePage.xaml.cs:3059",,untranslated,,0347fe1857da4eb384597ed7ca3867061f594246d461aebe879c8fbf950b7a5c
-strings,Quiz.AiValidationRuntimeErrorFallback,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Có lỗi runtime khi tạo hoặc kiểm tra đề AI.,,,,,"Services/Localization/QuizLocalizationOverrides.cs:162
-Services/Localization/QuizLocalizationOverrides.cs:361
-Views/MathPuzzlePage.xaml.cs:3061",,untranslated,,8599c319110ae4d78eceec37db5dcffc046646064550bc32b7990f7f0c0e8f80
 strings,Equation.ChooseType,Giải phương trình — nhập dữ liệu và lời giải.,Chọn dạng phương trình,,,,,Views/QuadraticEquationView.xaml:26,,untranslated,,9e3e7d6e50a3c0af55f82c1d33ac5c9c3012647f0feca233102fe7d7cb23336e
 strings,Equation.Mode.Linear,Giải phương trình — nhập dữ liệu và lời giải.,x  Phương trình bậc 1,,,,,Views/QuadraticEquationView.xaml:39,,untranslated,,fe8b3651255a9d0f7ba9984dd1e5ac6c34974a407ac910b18f961210959bec9a
 strings,Equation.Mode.Quadratic,Giải phương trình — nhập dữ liệu và lời giải.,x²  Phương trình bậc 2,,,,,Views/QuadraticEquationView.xaml:49,,untranslated,,3040bf0a4cbc851f955d2f069d4e74922eb1b312847669b73324786fe9df9d44
@@ -2368,15 +1924,6 @@ strings,Equation.Quadratic.Step4.TwoRoots.SubstituteA,Giải phương trình —
 strings,Equation.Quadratic.Step4.TwoRoots.SubstituteB,Giải phương trình — nhập dữ liệu và lời giải.,"b = {0},",,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/QuadraticEquationView.xaml.cs:1820,,untranslated,,b5c0c9b622624a6278b20cbba7a386edfb98f41b470b16d9a23f7c96d90a33e0
 strings,Equation.Quadratic.Step4.TwoRoots.SubstituteDelta,Giải phương trình — nhập dữ liệu và lời giải.,Δ = {0} vào công thức:,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/QuadraticEquationView.xaml.cs:1834,,untranslated,,34719e5ed8fbff57ac2e15f967f6f927ea52674b8192206ebeec80899e73f418
 strings,Equation.Quadratic.Step4.TwoRoots.ComputeRoot,Giải phương trình — nhập dữ liệu và lời giải.,Tính {0}:,,,{0}: Cần bổ sung ý nghĩa và ví dụ cho biến này.,,Views/QuadraticEquationView.xaml.cs:1859,,untranslated,,e41d97e4f87686c88c8da3e22e6eabbd73c3df1a9a9f900f79bcdf0c9ab81822
-strings,Quiz.StopAiGeneration,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",⏹️ Dừng tạo đề,,,,,"Services/Localization/QuizLocalizationOverrides.cs:148
-Services/Localization/QuizLocalizationOverrides.cs:347
-Views/MathPuzzlePage.xaml.cs:2659",,untranslated,,98f42362e7e2b3428ca6ae1cf87e1b146c59b54669e09bfe218357f27f57d98b
-strings,Quiz.AiExitConfirmTitle,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",AI đang tạo đề,,,,,Views/MathPuzzlePage.xaml.cs:2273,,untranslated,,f950291cb8e9fd1c67770be1533d8e0bc08ab6e70a33b3aea9f9112d6db17dcb
-strings,Quiz.AiExitConfirmMessage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Bạn có muốn dừng tạo đề bằng AI và thoát chương trình không?,,,,,Views/MathPuzzlePage.xaml.cs:2274,,untranslated,,e33c8e642f1a57ffff5656532b0247177c13b0a6504d6823f8a9e6a6bfb48e68
-strings,Quiz.AiExitConfirmYes,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Có,,,,,"Views/HardwarePerformancePage.xaml.cs:3383
-Views/MathPuzzlePage.xaml.cs:2275",,untranslated,,e25427d0c2bf3ab86e354412cad489e0a45a37b0aac0aa8fd48786e5210c5a56
-strings,Quiz.AiExitConfirmNo,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Không,,,,,"Views/HardwarePerformancePage.xaml.cs:3385
-Views/MathPuzzlePage.xaml.cs:2276",,untranslated,,5b3c9ba441e5afddc3ff22debcee6838fad74cf319b1c1af904c22b8a34cc0a4
 strings,Quiz.ProblemAverage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Trung bình cộng,,,,,"Services/QuizProblemTypeCatalog.cs:35
 Views/HardwareLlmBenchmarkView.xaml.cs:819",,untranslated,,b34a5a7ee3ad6a5d404890965040cb08e8fc7fe709df24a8587c52dc723a6b60
 strings,Quiz.ProblemPercentage,"Toán đố — tạo đề, làm bài, chấm bài và cấu hình giáo viên AI.",Phần trăm,,,,,"Services/QuizProblemTypeCatalog.cs:38
