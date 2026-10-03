@@ -7,7 +7,7 @@ namespace MathSolver.Services;
 /// Sinh ba dạng phần trăm cơ bản: tỉ số phần trăm, giá trị của một số phần
 /// trăm, và biết giá trị phần trăm để tìm toàn bộ.
 /// </summary>
-public sealed class PercentageQuizGenerator
+public sealed partial class PercentageQuizGenerator
 {
     private sealed record ItemContext(
         string ViUnit,
@@ -79,26 +79,31 @@ public sealed class PercentageQuizGenerator
                 "Percentage problems are not available at the selected curriculum tier.");
         }
 
+        int? level = QuizDifficultyPolicy.Level(curriculumContext);
+        allowedTypes = QuizDifficultyPolicy.Prefer(allowedTypes, requestedType, level,
+            QuizDifficultyPolicy.PercentageTypes);
         PercentageQuizType type =
             requestedType.HasValue &&
             allowedTypes.Contains(requestedType.Value)
                 ? requestedType.Value
                 : allowedTypes[_random.Next(allowedTypes.Count)];
 
-        return type switch
+        PercentageQuizContract contract = type switch
         {
-            PercentageQuizType.FindPercentageRatio => CreateRatio(language),
-            PercentageQuizType.FindPercentageValue => CreateValue(language),
-            PercentageQuizType.FindWholeFromPercentageValue => CreateWhole(language),
+            PercentageQuizType.FindPercentageRatio => CreateRatio(language, level),
+            PercentageQuizType.FindPercentageValue => CreateValue(language, level),
+            PercentageQuizType.FindWholeFromPercentageValue => CreateWhole(language, level),
             _ => throw new ArgumentOutOfRangeException(nameof(type))
         };
+        return level is >= 4 ? CombineKnownQuantity(contract, language, level.Value) : contract;
     }
 
-    private PercentageQuizContract CreateRatio(AppLanguage language)
+    private PercentageQuizContract CreateRatio(AppLanguage language, int? level)
     {
         int[] percentages = [10, 20, 25, 30, 40, 50, 60, 75, 80, 90];
+        if (level.HasValue) percentages = QuizDifficultyPolicy.Percentages(level.Value);
         int percentage = percentages[_random.Next(percentages.Length)];
-        int whole = PickMultipleOf(20, 40, 200);
+        int whole = level.HasValue ? PickPercentageWhole(percentage, level.Value) : PickMultipleOf(20, 40, 200);
         int part = whole * percentage / 100;
         ItemContext item = Contexts[_random.Next(Contexts.Length)];
         const string unit = "%";
@@ -129,11 +134,12 @@ public sealed class PercentageQuizGenerator
             whole);
     }
 
-    private PercentageQuizContract CreateValue(AppLanguage language)
+    private PercentageQuizContract CreateValue(AppLanguage language, int? level)
     {
         int[] percentages = [10, 20, 25, 30, 40, 50, 60, 75, 80];
+        if (level.HasValue) percentages = QuizDifficultyPolicy.Percentages(level.Value);
         int percentage = percentages[_random.Next(percentages.Length)];
-        int whole = PickMultipleOf(100, 100, 600);
+        int whole = level.HasValue ? PickPercentageWhole(percentage, level.Value) : PickMultipleOf(100, 100, 600);
         int value = whole * percentage / 100;
         ItemContext item = Contexts[_random.Next(Contexts.Length)];
         string unit = language == AppLanguage.Vietnamese ? item.ViRatioPart : item.EnRatioPart;
@@ -160,16 +166,17 @@ public sealed class PercentageQuizGenerator
             problem,
             equation,
             solution,
-            whole / 100,
-            ArithmeticOperation.Multiply,
-            percentage);
+            whole * percentage,
+            ArithmeticOperation.Divide,
+            100);
     }
 
-    private PercentageQuizContract CreateWhole(AppLanguage language)
+    private PercentageQuizContract CreateWhole(AppLanguage language, int? level)
     {
         int[] percentages = [10, 20, 25, 40, 50, 75, 80];
+        if (level.HasValue) percentages = QuizDifficultyPolicy.Percentages(level.Value);
         int percentage = percentages[_random.Next(percentages.Length)];
-        int whole = PickMultipleOf(100, 100, 600);
+        int whole = level.HasValue ? PickPercentageWhole(percentage, level.Value) : PickMultipleOf(100, 100, 600);
         int value = whole * percentage / 100;
         ItemContext item = Contexts[_random.Next(Contexts.Length)];
         string unit = language == AppLanguage.Vietnamese ? item.ViUnit : item.EnUnit;

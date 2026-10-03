@@ -19,13 +19,7 @@ public sealed record ExpressionQuizContract(
     int BracketPairCount,
     ReducedFraction CorrectAnswer,
     ReducedFraction? PresentedAnswer,
-    IReadOnlyList<ReducedFraction> Choices,
-    ExpressionStoryContract? Story = null)
+    IReadOnlyList<ReducedFraction> Choices)
 {
     public bool UsesFractions => Type is ExpressionQuizType.Fraction or ExpressionQuizType.FractionWithBrackets;
 }
-
-/// <summary>A verbal calculation plan generated from the same tree as the exact expression.</summary>
-public sealed record ExpressionStoryContract(
-    AppLanguage Language, string ContextName, string CalculationPlan,
-    MathWordProblem ReferenceProblem);

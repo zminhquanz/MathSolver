@@ -43,10 +43,7 @@ public enum GeometryQuizShape
     RectangularPrism
 }
 
-/// <summary>
-/// Yêu cầu đã được phân giải cho đúng một câu hỏi. Nguồn Thuật toán và AI
-/// cùng nhận đối tượng này để không tự diễn giải lựa chọn Hỗn hợp khác nhau.
-/// </summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public readonly record struct QuizProblemRequest(
     QuizProblemKind Kind,
     ArithmeticOperation? ArithmeticOperation = null,
@@ -68,8 +65,7 @@ public readonly record struct QuizProblemRequest(
 /// </summary>
 public sealed record QuizProblemOption(
     string LocalizationKey,
-    QuizProblemRequest? FixedRequest,
-    bool AlgorithmOnly = false)
+    QuizProblemRequest? FixedRequest)
 {
     public bool IsMixed =>
         FixedRequest is null;

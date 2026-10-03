@@ -5,23 +5,11 @@ using MathSolver.Services.Core;
 using MathSolver.Services.Localization;
 using System.Globalization;
 using System.Numerics;
-using System.Text.Encodings.Web;
-using System.Text.Json;
 
 namespace MathSolver.Views;
 
 public partial class MathPuzzlePage : ContentPage
 {
-    private const int LlmMaximumAttempts = 3;
-
-    private static readonly JsonSerializerOptions PrettyJsonOptions =
-        new()
-        {
-            Encoder =
-                JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            WriteIndented = true
-        };
-
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
     private readonly FractionCalculationEngine _fractionEngine = new();
     private readonly GeometryCalculationEngine _geometryEngine = new();
@@ -45,50 +33,17 @@ public partial class MathPuzzlePage : ContentPage
     private AppLanguage? _elementaryPickerLanguage;
     private bool _singleColumnChoices;
     private ExpressionQuizType? _selectedExpressionType;
-    private readonly SortedDictionary<int, string> _llmRawOutputs = new();
-    private readonly List<LlmQuizDiagnostic> _llmValidationDiagnostics = [];
     private readonly EssayAnswerValidator _essayAnswerValidator;
-#if WINDOWS
-    private readonly LocalLlmQuizGenerator _localLlmQuizGenerator;
-#endif
-    private readonly QuizLlmModelStore _llmModelStore = new();
-    private readonly Gemma4ModelDownloadService
-        _gemma4ModelDownloadService = new();
-    private readonly ModelFileLocationService
-        _modelFileLocationService = new();
-
     private ArithmeticQuizMode _selectedMode =
         ArithmeticQuizMode.TrueFalse;
 
     private CurriculumTier _selectedCurriculumTier =
         CurriculumTier.ThreeStars;
 
-    private QuizGenerationSource _generationSource =
-        QuizGenerationSource.Algorithm;
-
     private ArithmeticQuizQuestion? _currentQuestion;
     private QuizProblemRequest? _activeProblemRequest;
-    private CancellationTokenSource? _llmGenerationCancellation;
-#if WINDOWS
-    // Lets the native Windows close guard wait until llama.cpp has actually
-    // observed cancellation and GenerateLlmQuestionAsync has fully unwound.
-    private TaskCompletionSource<bool>? _llmGenerationCompletionSource;
-#endif
-    private string? _llmModelPath;
     private bool _questionAnswered;
     private bool? _lastAnswerWasCorrect;
-    private bool _isGeneratingWithLlm;
-#if WINDOWS
-    private bool _isLlmQuestionGenerationActive;
-#else
-    private bool _isLlmQuestionGenerationActive => false;
-#endif
-    private bool _isDownloadingModel;
-#if WINDOWS
-    private bool _showFriendlyGreetingForCurrentLoad;
-#else
-    private bool _showFriendlyGreetingForCurrentLoad => false;
-#endif
     private bool _isUpdatingOperationPicker;
     private ArithmeticOperation? _selectedBasicOperation =
         ArithmeticOperation.Add;
@@ -105,15 +60,6 @@ public partial class MathPuzzlePage : ContentPage
     private readonly List<GeometryMeasurement?> _geometryMeasurementPickerValues = [];
     private MotionQuizType? _selectedMotionType;
     private bool _isUpdatingSubtypePickers;
-    private bool _isAiDiagnosticsVisible;
-    private bool _isDeveloperModeSubscribed;
-    private int _llmProgressVersion;
-    // Khi bấm Câu tiếp theo, số câu mới chỉ được commit sau khi AI tạo được
-    // đề hợp lệ. Nếu cả ba attempt đều thất bại, giữ lại số này để lần bấm
-    // Tạo lại kế tiếp vẫn hoàn tất đúng câu đang chờ thay vì đứng ở câu cũ.
-#if WINDOWS
-    private int? _pendingLlmQuestionNumberOnSuccess;
-#endif
     private int _questionCount;
     private int _correctCount;
     private int _incorrectCount;
@@ -193,24 +139,6 @@ public partial class MathPuzzlePage : ContentPage
         _percentageQuizGenerator =
             new PercentageQuizGenerator();
 
-#if WINDOWS
-        // Reuse one Windows LLamaSharp runtime across Math Puzzle and the
-        // Hardware AI/LLM benchmark. This prevents the same GGUF model from
-        // being loaded twice when users move between the two screens.
-        _localLlmQuizGenerator =
-            LocalLlmRuntime.Generator;
-#endif
-
-#if WINDOWS
-        _llmModelPath =
-            _llmModelStore.GetSavedModelPath();
-#else
-        // Android/iOS/MacCatalyst do not use LLamaSharp/GGUF. Keep the path
-        // empty so no legacy local-model file is probed before LiteRT-LM is
-        // implemented for Android.
-        _llmModelPath = null;
-#endif
-
         LocalizationService.ExcludeSubtreeFromLegacyTracking(
             this);
 
@@ -223,66 +151,27 @@ public partial class MathPuzzlePage : ContentPage
         AppThemeManager.ThemeChanged +=
             OnThemeChanged;
 
+        UpdateQuestionModeLayout();
         UpdateOperationPickerItems();
-        UpdateGenerationSourceStyles();
         UpdateModeStyles();
         UpdateCurriculumTierStyles();
-        UpdateLlmModelUi();
-        ResetLlmDiagnostics();
-        UpdateAiDiagnosticsVisibility();
+        UpdateRegenerateQuestionButtonState();
         UpdateScoreLabels();
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-
         LiveWallpaper.Resume();
-
-        // Main page luôn là nguồn sự thật cuối cùng cho Shell TabBar. Nếu
-        // WinUI vừa hoàn tất một Settings Pop theo thứ tự native bất thường,
-        // re-assert này sửa chrome ngay trong lifecycle của trang chính.
-        Shell.SetTabBarIsVisible(
-            this,
-            true);
-
-        SubscribeDeveloperModeChanged();
-        UpdateAiDiagnosticsVisibility();
-
-        // WinUI can keep the old theme brush on stateful Buttons after a
-        // ResourceDictionary swap or after returning from Settings. Reattach
-        // every selection group's DynamicResource to the current palette.
+        Shell.SetTabBarIsVisible(this, true);
         RefreshStatefulButtonTheme();
-        UpdateAiTeacherState();
-
-#if WINDOWS
-        // Nếu quay lại trong grace period thì giữ nguyên GGUF weights đang
-        // nằm trong RAM; câu kế tiếp chỉ cần tạo context/KV mới.
-        _localLlmQuizGenerator.CancelScheduledModelUnload();
-#endif
-
         BeginMainTabTransitionIfPending();
 
         if (_currentQuestion is null)
-        {
-            if (_generationSource == QuizGenerationSource.Algorithm)
-            {
-                GenerateAlgorithmQuestion();
-            }
-            else
-            {
-                PrepareLlmQuestionForGeneration(
-                    cancelPending: false);
-            }
-        }
+            GenerateAlgorithmQuestion();
         else
         {
-            if (_currentQuestion is not null)
-            {
-                RenderCurrentQuestion(
-                    resetAnswerControls: false);
-            }
-
+            RenderCurrentQuestion(resetAnswerControls: false);
             UpdateScoreLabels();
         }
     }
@@ -290,49 +179,16 @@ public partial class MathPuzzlePage : ContentPage
     protected override void OnDisappearing()
     {
         LiveWallpaper.Pause();
-
-        UnsubscribeDeveloperModeChanged();
-
-        // Settings và thư viện Gemma chỉ là overlay trong suốt phủ lên trang.
-        // Constructor của overlay bật cờ trước khi popup làm trang
-        // nhận OnDisappearing, nên không được coi đây là thao tác rời tab lớn:
-        // giữ nguyên câu hỏi, lựa chọn, điểm số và model đang nằm trong RAM.
-        if (_diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive ||
-            GemmaModelCatalogPage.IsTransparentOverlayActive)
+        if (_diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive)
         {
             base.OnDisappearing();
             return;
         }
 
-        bool wasGeneratingWithLlm =
-            _isGeneratingWithLlm;
-
-        CancelLlmGeneration();
-
-        if (wasGeneratingWithLlm)
-        {
-            ShowLlmStatus(
-                Translate("Quiz.GenerationCancelled"),
-                isRunning: false);
-        }
-
-        // Không unload weights ngay khi đổi tab. Context/KV của lượt sinh
-        // hiện tại sẽ được hủy khi cancellation hoàn tất; weights chỉ được
-        // giải phóng nếu người dùng không quay lại sau 60 giây.
-#if WINDOWS
-        _localLlmQuizGenerator.ScheduleModelUnload(
-            ClearLlmQuestionAfterDelayedUnloadAsync);
-#endif
-
-        // Mỗi lần rời tab lớn Toán đố là kết thúc toàn bộ phiên luyện tập.
-        // Model đã chọn và weights cache vẫn tuân theo grace period 60 giây;
-        // chỉ câu hỏi, đáp án, phản hồi và điểm số được đưa về trạng thái đầu.
         ResetQuizSessionState();
-
         _mainTabAnimationVersion++;
         MathPuzzlePageContentRoot.CancelAnimations();
         ResetMainTabRoot();
-
         base.OnDisappearing();
     }
 
@@ -342,19 +198,19 @@ public partial class MathPuzzlePage : ContentPage
     {
         // AppThemeManager đã thay palette trước khi phát event. Dispatch sang
         // UI queue giúp WinUI hoàn tất state transition của Button rồi mới gắn
-        // lại DynamicResource, tránh hai nút Thuật toán / AI-LLM giữ màu cũ.
+        // lại DynamicResource để các nút giữ đúng màu của theme hiện tại.
         Dispatcher.Dispatch(
             RefreshStatefulButtonTheme);
     }
 
     private void RefreshStatefulButtonTheme()
     {
-        UpdateGenerationSourceStyles();
+
         UpdateModeStyles();
         UpdateCurriculumTierStyles();
         UpdateProblemOperationPanel();
         RefreshTrueFalseAnswerButtonTheme();
-        RefreshLlmActionButtonTheme();
+        RefreshQuestionActionButtonTheme();
     }
 
     private void RefreshTrueFalseAnswerButtonTheme()
@@ -398,138 +254,22 @@ public partial class MathPuzzlePage : ContentPage
         button.TextColor = foreground;
     }
 
-    private void OnCultureChanged(
-        object? sender,
-        EventArgs e)
+    private void OnCultureChanged(object? sender, EventArgs e)
     {
-        Dispatcher.Dispatch(
-            () =>
-            {
-                // Đổi ngôn ngữ bắt đầu một phiên luyện tập mới để câu hỏi,
-                // đáp án và toàn bộ nhãn điểm không bị trộn hai ngôn ngữ.
-                CancelLlmGeneration();
-                ResetQuizSessionState();
-
-                UpdateOperationPickerItems();
-                UpdateGenerationSourceStyles();
-                UpdateCurriculumTierStyles();
-                UpdateLlmModelUi();
-                UpdateScoreLabels();
-
-                if (_generationSource ==
-                        QuizGenerationSource.Algorithm)
-                {
-                    GenerateAlgorithmQuestion();
-                }
-                else
-                {
-                    // Đề AI phụ thuộc chương trình/ngôn ngữ tại thời điểm sinh.
-                    PrepareLlmQuestionForGeneration(
-                        cancelPending: false);
-                }
-            });
-    }
-
-    private void OnAlgorithmSourceClicked(
-        object? sender,
-        EventArgs e)
-    {
-        SelectGenerationSource(
-            QuizGenerationSource.Algorithm);
-    }
-
-    private void OnLocalLlmSourceClicked(
-        object? sender,
-        EventArgs e)
-    {
-#if WINDOWS
-        SelectGenerationSource(
-            QuizGenerationSource.LocalLlm);
-#else
-        // AI/LLM is intentionally unavailable on non-Windows targets until
-        // the Android LiteRT-LM backend is integrated.
-        SelectGenerationSource(
-            QuizGenerationSource.Algorithm);
-#endif
-    }
-
-    private void SelectGenerationSource(
-        QuizGenerationSource source)
-    {
-        // Also reject programmatic selection while the AI tab is hidden.
-        if (source == QuizGenerationSource.LocalLlm && !LocalAiHardwareEligibility.IsAvailable)
+        Dispatcher.Dispatch(() =>
         {
-            source = QuizGenerationSource.Algorithm;
-        }
-
-        if (_generationSource == source)
-        {
-            return;
-        }
-
-        CancelLlmGeneration();
-        ResetQuizSessionState();
-        _generationSource = source;
-        UpdateOperationPickerItems();
-        UpdateGenerationSourceStyles();
-
-        if (source == QuizGenerationSource.Algorithm)
-        {
+            ResetQuizSessionState();
+            UpdateOperationPickerItems();
+            UpdateCurriculumTierStyles();
+            UpdateScoreLabels();
             GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        });
     }
 
-    private void UpdateGenerationSourceStyles()
-    {
-        bool canUseLocalAi = LocalAiHardwareEligibility.IsAvailable;
-        LocalLlmSourceButton.IsVisible = canUseLocalAi;
-        Grid.SetColumnSpan(AlgorithmSourceButton, canUseLocalAi ? 1 : 2);
-
-        SelectionButtonStyler.Select(
-            _generationSource == QuizGenerationSource.Algorithm
-                ? AlgorithmSourceButton
-                : LocalLlmSourceButton,
-            AlgorithmSourceButton,
-            LocalLlmSourceButton);
-
-        bool isLocalLlm =
-            _generationSource == QuizGenerationSource.LocalLlm;
-
-        UpdateQuestionModeLayout(
-            isLocalLlm);
-
-        LlmSettingsBorder.IsVisible = isLocalLlm;
-        CreateOrRegenerateQuestionButton.Text =
-            TranslateQuiz(
-                isLocalLlm
-                    ? "Quiz.CreateWithAi"
-                    : "Quiz.RegenerateQuestion");
-
-        // Cả hai nguồn dùng chung nút bên trái: AI tạo đề bằng model cục bộ,
-        // còn Thuật toán tạo lại một câu cùng cấu hình để học sinh có thể
-        // bỏ qua câu đang quá khó mà không làm thay đổi điểm hay số thứ tự.
-        Grid.SetColumn(NextQuestionButton, 1);
-        Grid.SetColumnSpan(NextQuestionButton, 1);
-
-        UpdateEssayAnswerPresentation();
-        UpdateCreateOrRegenerateQuestionButtonState();
-        UpdateAiDiagnosticsVisibility();
-    }
-
-    private void UpdateQuestionModeLayout(
-        bool isLocalLlm)
+    private void UpdateQuestionModeLayout()
     {
 #if ANDROID
-        // Android phone layout is shared by both Algorithm and AI/LLM:
-        // True/False + Multiple Choice on the first row, Essay full-width on
-        // the second row. This prevents translated labels from being squeezed
-        // on narrow screens regardless of the generation source.
-        _ = isLocalLlm;
-
+        // Keep the three answer modes readable on narrow Android screens.
         QuestionModeGrid.ColumnDefinitions.Clear();
         QuestionModeGrid.RowDefinitions.Clear();
 
@@ -603,19 +343,11 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        CancelLlmGeneration();
         _selectedMode = mode;
         ResetQuizSessionState();
         UpdateModeStyles();
 
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        GenerateAlgorithmQuestion();
     }
 
     private void UpdateModeStyles()
@@ -671,21 +403,11 @@ public partial class MathPuzzlePage : ContentPage
 
     private void SelectCurriculumTier(CurriculumTier tier)
     {
-        // AI/LLM owns an immutable curriculum snapshot for the whole inference.
-        // Ignore any queued WinUI click while generation is active so the UI
-        // cannot show a different star level from the contract being validated.
-        if (_generationSource == QuizGenerationSource.LocalLlm &&
-            _isLlmQuestionGenerationActive)
-        {
-            return;
-        }
-
         if (_selectedCurriculumTier == tier)
         {
             return;
         }
 
-        CancelLlmGeneration();
         _selectedCurriculumTier = tier;
         ResetQuizSessionState();
         UpdateCurriculumTierStyles();
@@ -695,14 +417,7 @@ public partial class MathPuzzlePage : ContentPage
         // Không rebuild Picker/subtype khi đổi sao. Skill Mode luôn giữ nguyên
         // các lựa chọn hiện có; số sao chỉ thay đổi constraint của generator.
         // Cách này tránh re-entrant SelectionChanged/flyout trên WinUI.
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        GenerateAlgorithmQuestion();
     }
 
     private QuizCurriculumContext GetCurriculumContext() =>
@@ -723,7 +438,8 @@ public partial class MathPuzzlePage : ContentPage
     private void NormalizeSelectedSkillForCurriculum()
     {
         // Không thay đổi selection của subtype theo sao. Đây là chủ ý: khi
-        // người dùng đã chọn một skill, Curriculum chỉ scale dữ kiện số.
+        // người dùng đã chọn một skill, generator điều chỉnh dữ kiện và cấu
+        // trúc suy luận theo sao, giữ nguyên subtype được chọn.
     }
 
     private void UpdateCurriculumTierStyles()
@@ -736,16 +452,6 @@ public partial class MathPuzzlePage : ContentPage
             CurriculumFourStarsButton,
             CurriculumFiveStarsButton
         ];
-
-        bool tierSelectionEnabled =
-            !(_generationSource == QuizGenerationSource.LocalLlm &&
-              _isLlmQuestionGenerationActive);
-
-        foreach (Button button in buttons)
-        {
-            button.IsEnabled = tierSelectionEnabled;
-            button.Opacity = tierSelectionEnabled ? 1d : 0.72d;
-        }
 
         SelectionButtonStyler.Select(
             buttons[(int)_selectedCurriculumTier - 1],
@@ -769,44 +475,37 @@ public partial class MathPuzzlePage : ContentPage
                 : TranslateQuiz("Quiz.Problem" + elementary.Kind);
         if (_currentQuestion?.ExpressionProblem is not null)
             return TranslateQuiz("Quiz.ExpressionQuestionTitle");
-        if (_currentQuestion?.FractionProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.FractionProblem is not null)
         {
             return TranslateQuiz("Quiz.FractionQuestionTitle");
         }
 
-        if (_currentQuestion?.FindXProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.FindXProblem is not null)
         {
             return TranslateQuiz("Quiz.FindXQuestionTitle");
         }
 
-        if (_currentQuestion?.GeometryProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.GeometryProblem is not null)
         {
             return Translate("Quiz.GeometryQuestionTitle");
         }
 
-        if (_currentQuestion?.ProportionProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.ProportionProblem is not null)
         {
             return TranslateQuiz("Quiz.ProportionQuestionTitle");
         }
 
-        if (_currentQuestion?.MotionProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.MotionProblem is not null)
         {
             return TranslateQuiz("Quiz.MotionQuestionTitle");
         }
 
-        if (_currentQuestion?.AverageProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.AverageProblem is not null)
         {
             return TranslateQuiz("Quiz.AverageQuestionTitle");
         }
 
-        if (_currentQuestion?.PercentageProblem is not null &&
-            _generationSource == QuizGenerationSource.Algorithm)
+        if (_currentQuestion?.PercentageProblem is not null)
         {
             return TranslateQuiz("Quiz.PercentageQuestionTitle");
         }
@@ -832,8 +531,6 @@ public partial class MathPuzzlePage : ContentPage
     private void UpdateEssayAnswerPresentation()
     {
         ArithmeticQuizQuestion? question = _currentQuestion;
-        bool isWordProblemSource =
-            _generationSource == QuizGenerationSource.LocalLlm;
         bool requiresSolution =
             question is not null &&
             EssayAnswerValidator.RequiresSolution(question);
@@ -871,17 +568,7 @@ public partial class MathPuzzlePage : ContentPage
                 question?.AverageProblem?.Type == AverageQuizType.IndirectData
                     ? "Quiz.AverageIndirectEssayHint"
                     : question?.ExpressionProblem is not null
-                    ? requiresSolution ? "Quiz.ExpressionEssayHintAi" : "Quiz.ExpressionEssayHint"
-                    : isWordProblemSource && isFindX
-                    ? "Quiz.FindXEssayValidationHintAi"
-                    : isWordProblemSource && isGeometry
-                    ? "Quiz.GeometryEssayValidationHintAi"
-                    : isWordProblemSource && isFraction
-                    ? "Quiz.FractionEssayValidationHintAi"
-                    : isWordProblemSource && isProportion
-                    ? "Quiz.ProportionEssayValidationHintAi"
-                    : isWordProblemSource && isMotion
-                    ? "Quiz.MotionEssayValidationHintAi"
+                    ? "Quiz.ExpressionEssayHint"
                     : isFindX
                     ? "Quiz.FindXEssayValidationHint"
                     : isGeometry
@@ -893,9 +580,7 @@ public partial class MathPuzzlePage : ContentPage
                     : isMotion
                     ? "Quiz.MotionEssayValidationHint"
                     : requiresSolution
-                        ? isWordProblemSource
-                            ? "Quiz.EssayValidationHint"
-                            : "Quiz.EssayValidationHintAlgorithmWordProblem"
+                        ? "Quiz.EssayValidationHintAlgorithmWordProblem"
                         : "Quiz.EssayValidationHintAlgorithm");
         if (!string.IsNullOrWhiteSpace(expectedEquationUnit))
         {
@@ -968,7 +653,7 @@ public partial class MathPuzzlePage : ContentPage
         {
             OperationPicker.Items.Clear();
             foreach (QuizProblemOption option in
-                     _quizProblemTypeCatalog.GetOptions(_generationSource == QuizGenerationSource.Algorithm))
+                     _quizProblemTypeCatalog.Options)
             {
                 OperationPicker.Items.Add(
                     TranslateQuiz(option.LocalizationKey));
@@ -1335,7 +1020,6 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        CancelLlmGeneration();
         NormalizeSelectedSkillForCurriculum();
 
         if (refreshSubtypePickers)
@@ -1347,14 +1031,7 @@ public partial class MathPuzzlePage : ContentPage
         _activeProblemRequest = GetSelectedFixedProblemRequest();
         UpdateEssayAnswerPresentation();
 
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        GenerateAlgorithmQuestion();
     }
 
     private void OnOperationChanged(
@@ -1370,7 +1047,7 @@ public partial class MathPuzzlePage : ContentPage
         // Đổi dạng bài toán bắt đầu một phiên luyện tập mới, giống hệt đổi
         // kiểu câu hỏi hoặc đổi tab chính. Không giữ lại số câu/đúng/sai của
         // dạng trước vì chúng không còn cùng một cấu hình luyện tập.
-        CancelLlmGeneration();
+
         ResetQuizSessionState();
 
         EnsureCurriculumTierAvailableForSelection();
@@ -1386,14 +1063,7 @@ public partial class MathPuzzlePage : ContentPage
 
         UpdateEssayAnswerPresentation();
 
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        GenerateAlgorithmQuestion();
     }
 
     private QuizProblemRequest ResolveSelectedProblem() =>
@@ -1476,7 +1146,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         ElementaryTypePanel.IsVisible = kind.HasValue && ElementaryQuizGenerator.Supports(kind.Value);
         if (!ElementaryTypePanel.IsVisible) return;
-        ElementaryTypePicker.IsEnabled = !_isGeneratingWithLlm;
+        ElementaryTypePicker.IsEnabled = true;
         if (_elementaryPickerKind == kind && _elementaryPickerLanguage == AppLanguageManager.CurrentLanguage
             && ElementaryTypePicker.Items.Count > 0) return;
         bool updating = _isUpdatingSubtypePickers;
@@ -1493,19 +1163,18 @@ public partial class MathPuzzlePage : ContentPage
             foreach (var type in _elementaryTypePickerValues)
                 ElementaryTypePicker.Items.Add(TranslateQuiz(type.HasValue ? "Quiz.Elementary." + type.Value : "Quiz.OperationMixed"));
             ElementaryTypePicker.SelectedIndex = Math.Max(0, _elementaryTypePickerValues.IndexOf(_selectedElementaryType));
-            ElementaryTypePicker.IsEnabled = !_isGeneratingWithLlm;
+            ElementaryTypePicker.IsEnabled = true;
         }
         finally { _isUpdatingSubtypePickers = updating; }
     }
 
     private void OnElementaryTypeChanged(object? sender, EventArgs e)
     {
-        if (_isUpdatingSubtypePickers || _isGeneratingWithLlm || ElementaryTypePicker.SelectedIndex < 0) return;
+        if (_isUpdatingSubtypePickers || ElementaryTypePicker.SelectedIndex < 0) return;
         _selectedElementaryType = _elementaryTypePickerValues[ElementaryTypePicker.SelectedIndex];
-        CancelLlmGeneration();
+
         ResetQuizSessionState();
-        if (_generationSource == QuizGenerationSource.Algorithm) GenerateAlgorithmQuestion();
-        else PrepareLlmQuestionForGeneration();
+        GenerateAlgorithmQuestion();
     }
 
     private void UpdateProblemOperationPanel()
@@ -1542,9 +1211,9 @@ public partial class MathPuzzlePage : ContentPage
 
         if (showProportionType)
         {
-            MixedProportionButton.IsEnabled = !_isGeneratingWithLlm;
-            DirectProportionButton.IsEnabled = !_isGeneratingWithLlm;
-            InverseProportionButton.IsEnabled = !_isGeneratingWithLlm;
+            MixedProportionButton.IsEnabled = true;
+            DirectProportionButton.IsEnabled = true;
+            InverseProportionButton.IsEnabled = true;
             MixedProportionButton.Opacity = 1d;
             DirectProportionButton.Opacity = 1d;
             InverseProportionButton.Opacity = 1d;
@@ -1668,19 +1337,11 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        CancelLlmGeneration();
         ResetQuizSessionState();
         _activeProblemRequest = GetSelectedFixedProblemRequest();
         UpdateEssayAnswerPresentation();
 
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        GenerateAlgorithmQuestion();
     }
 
     private void OnMixedProportionClicked(object? sender, EventArgs e) =>
@@ -1724,19 +1385,11 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        CancelLlmGeneration();
         ResetQuizSessionState();
         _activeProblemRequest = GetSelectedFixedProblemRequest();
         UpdateEssayAnswerPresentation();
 
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion();
-        }
-        else
-        {
-            PrepareLlmQuestionForGeneration();
-        }
+        GenerateAlgorithmQuestion();
     }
 
     private static FractionOperation MapArithmeticOperation(
@@ -1845,7 +1498,7 @@ public partial class MathPuzzlePage : ContentPage
     private void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
     {
-        CancelLlmGeneration();
+
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
         NextQuestionButton.IsEnabled = false;
@@ -1940,1763 +1593,30 @@ public partial class MathPuzzlePage : ContentPage
             // Câu vừa được tạo mới hoặc tạo lại nên trạng thái đã trả lời đã
             // được xóa. Bật lại nút Tạo đề lại; nếu không, trạng thái Disabled
             // của câu trước sẽ còn giữ nguyên sau khi bấm Câu tiếp theo.
-            UpdateCreateOrRegenerateQuestionButtonState();
+            UpdateRegenerateQuestionButtonState();
         }
     }
 
-    private void PrepareLlmQuestionForGeneration(
-        bool cancelPending = true)
+    private void OnRegenerateQuestionClicked(object? sender, EventArgs e)
     {
-        if (cancelPending)
-        {
-            CancelLlmGeneration();
-        }
-
-        _currentQuestion = null;
-        _activeProblemRequest =
-            GetSelectedFixedProblemRequest();
-        _questionAnswered = false;
-        _lastAnswerWasCorrect = null;
-        ResetQuizDiagram();
-
-        QuestionPromptLabel.Text =
-            Translate("Quiz.WordProblemTitle");
-
-        string readyMessage =
-            _llmModelPath is null
-                ? Translate("Quiz.SelectModelFirst")
-                : Translate("Quiz.LlmReady");
-
-        SetQuestionContent(
-            readyMessage,
-            20,
-            "WallpaperTextSecondaryColor",
-            useFractionFormatting: false);
-
-        PresentedAnswerLabel.IsVisible = false;
-        PresentedAnswerFractionView.IsVisible = false;
-        FeedbackBorder.IsVisible = false;
-        SolutionBorder.IsVisible = false;
-        NextQuestionButton.IsEnabled = false;
-
-        ClearMultipleChoiceAnswers();
-        SetAnswerControlsEnabled(false);
-        UpdateModeStyles();
-        UpdateLlmModelUi();
-        ShowLlmStatus(
-            _llmModelPath is null
-                ? Translate("Quiz.SelectModelFirst")
-                : Translate("Quiz.LlmReady"),
-            isRunning: false);
-        ResetLlmTokenSpeed();
-        ResetLlmDiagnostics();
+        if (_questionAnswered) return;
+        // Replace the current question without changing its number or score.
+        GenerateAlgorithmQuestion();
     }
 
-    private async void OnSelectLlmModelClicked(
-        object? sender,
-        EventArgs e)
+    private void UpdateRegenerateQuestionButtonState()
     {
-        if (_isGeneratingWithLlm)
-        {
-            return;
-        }
-
-        FileResult? fileResult =
-            await FilePicker.Default.PickAsync(
-                new PickOptions
-                {
-                    PickerTitle =
-                        Translate("Quiz.SelectModelPickerTitle")
-                });
-
-        if (fileResult is null)
-        {
-            return;
-        }
-
-        var cancellation = new CancellationTokenSource();
-        int progressVersion =
-            BeginLlmProgress(cancellation);
-        SetLlmBusy(true);
-        ShowLlmStatus(
-            Translate("Quiz.ImportingModel"),
-            isRunning: true);
-
-        try
-        {
-            string? previousModelPath =
-                _llmModelPath;
-
-            string selectedModelPath =
-                await _llmModelStore.ImportAsync(
-                    fileResult,
-                    cancellation.Token);
-
-            // Chọn file chỉ kiểm tra/lưu đường dẫn. Nếu người dùng đổi sang
-            // file khác thì giải phóng cache cũ; weights mới chỉ được nạp khi
-            // bấm Tạo đề bằng AI.
-            if (!string.Equals(
-                    previousModelPath,
-                    selectedModelPath,
-                    OperatingSystem.IsWindows()
-                        ? StringComparison.OrdinalIgnoreCase
-                        : StringComparison.Ordinal))
-            {
-#if WINDOWS
-                await _localLlmQuizGenerator.UnloadModelAsync(
-                    cancellation.Token);
-#endif
-            }
-
-            _llmModelPath = selectedModelPath;
-            _llmModelStore.SaveModelPath(
-                selectedModelPath);
-            UpdateLlmModelUi();
-
-            CompleteLlmProgress(progressVersion);
-            PrepareLlmQuestionForGeneration(
-                cancelPending: false);
-            ShowLlmStatus(
-                Translate("Quiz.ModelReady"),
-                isRunning: false);
-        }
-        catch (OperationCanceledException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.GenerationCancelled"),
-                isRunning: false);
-        }
-        catch (QuizLlmModelTooLargeException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.ModelTooLarge"),
-                isRunning: false);
-        }
-        catch (UnsupportedQuizLlmModelException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.UnsupportedModelFamily"),
-                isRunning: false);
-        }
-        catch (InvalidDataException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.InvalidModelFile"),
-                isRunning: false);
-        }
-        catch (Exception exception)
-        {
-            CompleteLlmProgress(progressVersion);
-            System.Diagnostics.Debug.WriteLine(
-                $"Local LLM file selection failed: {exception}");
-
-            ShowLlmStatus(
-                Translate("Quiz.ModelImportError"),
-                isRunning: false);
-        }
-        finally
-        {
-            CompleteLlmProgress(progressVersion);
-
-            if (ReferenceEquals(
-                    _llmGenerationCancellation,
-                    cancellation))
-            {
-                _llmGenerationCancellation = null;
-                SetLlmBusy(false);
-            }
-
-            cancellation.Dispose();
-        }
+        RegenerateQuestionButton.IsEnabled = !_questionAnswered;
+        RefreshQuestionActionButtonTheme();
     }
 
-    private async void OnDownloadGemma4Clicked(
-        object? sender,
-        EventArgs e)
+    private void RefreshQuestionActionButtonTheme()
     {
-        if (_isDownloadingModel)
+        foreach (Button button in new[] { RegenerateQuestionButton, NextQuestionButton, SubmitEssayAnswerButton })
         {
-            CancelLlmGeneration();
-            return;
+            button.SetDynamicResource(Button.BackgroundColorProperty, "PrimaryColor");
+            button.SetDynamicResource(Button.TextColorProperty, "OnPrimaryColor");
         }
-
-        if (_isGeneratingWithLlm)
-        {
-            return;
-        }
-
-        var catalogPage =
-            new GemmaModelCatalogPage();
-
-        await Navigation.PushModalAsync(
-            catalogPage,
-            animated: false);
-
-        Gemma4ModelDownloadSelection? selection =
-            await catalogPage.WaitForDownloadSelectionAsync();
-
-        if (selection is null)
-        {
-            return;
-        }
-
-        Gemma4ModelDescriptor model =
-            selection.Model;
-
-        var cancellation = new CancellationTokenSource();
-        int progressVersion =
-            BeginLlmProgress(cancellation);
-
-        _isDownloadingModel = true;
-        LlmDownloadProgressBar.Progress = 0;
-        LlmDownloadProgressBar.IsVisible = true;
-        SetLlmBusy(true);
-        ShowLlmStatus(
-            string.Format(
-                CultureInfo.CurrentCulture,
-                Translate("Quiz.DownloadingModel"),
-                model.DisplayName),
-            isRunning: false);
-
-        try
-        {
-            var progress =
-                new Progress<Gemma4ModelDownloadProgress>(
-                    value =>
-                    {
-                        if (progressVersion !=
-                                Volatile.Read(ref _llmProgressVersion) ||
-                            cancellation.IsCancellationRequested ||
-                            !ReferenceEquals(
-                                _llmGenerationCancellation,
-                                cancellation))
-                        {
-                            return;
-                        }
-
-                        UpdateGemma4DownloadProgress(
-                            model,
-                            value);
-                    });
-
-            string? previousModelPath =
-                _llmModelPath;
-
-            string downloadedModelPath =
-                await _gemma4ModelDownloadService.DownloadAsync(
-                    model,
-                    selection.DestinationDirectory,
-                    progress,
-                    cancellation.Token);
-
-            if (!string.Equals(
-                    previousModelPath,
-                    downloadedModelPath,
-                    OperatingSystem.IsWindows()
-                        ? StringComparison.OrdinalIgnoreCase
-                        : StringComparison.Ordinal))
-            {
-#if WINDOWS
-                await _localLlmQuizGenerator.UnloadModelAsync(
-                    cancellation.Token);
-#endif
-            }
-
-            cancellation.Token.ThrowIfCancellationRequested();
-
-            _llmModelPath = downloadedModelPath;
-            _llmModelStore.SaveModelPath(
-                downloadedModelPath);
-
-            CompleteLlmProgress(progressVersion);
-            PrepareLlmQuestionForGeneration(
-                cancelPending: false);
-            ShowLlmStatus(
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    Translate("Quiz.DownloadComplete"),
-                    model.DisplayName),
-                isRunning: false);
-        }
-        catch (OperationCanceledException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.DownloadCancelled"),
-                isRunning: false);
-        }
-        catch (QuizLlmModelTooLargeException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.ModelTooLarge"),
-                isRunning: false);
-        }
-        catch (InvalidDataException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.DownloadInvalid"),
-                isRunning: false);
-        }
-        catch (HttpRequestException exception)
-        {
-            CompleteLlmProgress(progressVersion);
-            System.Diagnostics.Debug.WriteLine(
-                $"Gemma 4 download failed: {exception}");
-
-            string key =
-                exception.StatusCode is
-                    System.Net.HttpStatusCode.Unauthorized or
-                    System.Net.HttpStatusCode.Forbidden
-                    ? "Quiz.DownloadAccessDenied"
-                    : "Quiz.DownloadFailed";
-
-            ShowLlmStatus(
-                Translate(key),
-                isRunning: false);
-        }
-        catch (Exception exception)
-        {
-            CompleteLlmProgress(progressVersion);
-            System.Diagnostics.Debug.WriteLine(
-                $"Gemma 4 download failed: {exception}");
-
-            ShowLlmStatus(
-                Translate("Quiz.DownloadFailed"),
-                isRunning: false);
-        }
-        finally
-        {
-            CompleteLlmProgress(progressVersion);
-            _isDownloadingModel = false;
-            LlmDownloadProgressBar.IsVisible = false;
-            LlmDownloadProgressBar.Progress = 0;
-
-            if (ReferenceEquals(
-                    _llmGenerationCancellation,
-                    cancellation))
-            {
-                _llmGenerationCancellation = null;
-                SetLlmBusy(false);
-            }
-
-            cancellation.Dispose();
-        }
-    }
-
-    private void UpdateGemma4DownloadProgress(
-        Gemma4ModelDescriptor model,
-        Gemma4ModelDownloadProgress progress)
-    {
-        long totalBytes =
-            progress.TotalBytes is > 0
-                ? progress.TotalBytes.Value
-                : model.ApproximateSizeBytes;
-
-        double fraction =
-            totalBytes > 0
-                ? Math.Clamp(
-                    (double)progress.BytesReceived / totalBytes,
-                    0d,
-                    1d)
-                : 0d;
-
-        int percentage =
-            (int)Math.Round(
-                fraction * 100d,
-                MidpointRounding.AwayFromZero);
-
-        LlmDownloadProgressBar.Progress = fraction;
-        ShowLlmStatus(
-            string.Format(
-                CultureInfo.CurrentCulture,
-                Translate("Quiz.DownloadingModelProgress"),
-                model.DisplayName,
-                percentage,
-                FormatDownloadGigabytes(
-                    progress.BytesReceived),
-                FormatDownloadGigabytes(totalBytes)),
-            isRunning: false);
-    }
-
-    private static string FormatDownloadGigabytes(
-        long bytes)
-    {
-        return (bytes / 1_000_000_000d).ToString(
-            "0.00",
-            CultureInfo.CurrentCulture);
-    }
-
-    private async void OnEjectLlmModelClicked(
-        object? sender,
-        EventArgs e)
-    {
-        if (_isGeneratingWithLlm ||
-            _llmModelPath is null)
-        {
-            return;
-        }
-
-        CancelLlmGeneration();
-
-        var cancellation = new CancellationTokenSource();
-        int progressVersion =
-            BeginLlmProgress(cancellation);
-
-        SetLlmBusy(true);
-        ShowLlmStatus(
-            Translate("Quiz.DisposingModel"),
-            isRunning: true);
-
-        try
-        {
-#if WINDOWS
-            await _localLlmQuizGenerator.UnloadModelAsync(
-                cancellation.Token);
-#endif
-
-            cancellation.Token.ThrowIfCancellationRequested();
-
-            _llmModelStore.ClearSavedModelPath();
-            _llmModelPath = null;
-            ResetQuizSessionCounters();
-
-            CompleteLlmProgress(progressVersion);
-            PrepareLlmQuestionForGeneration(
-                cancelPending: false);
-            ShowLlmStatus(
-                Translate("Quiz.ModelEjected"),
-                isRunning: false);
-        }
-        catch (OperationCanceledException)
-        {
-            CompleteLlmProgress(progressVersion);
-            ShowLlmStatus(
-                Translate("Quiz.GenerationCancelled"),
-                isRunning: false);
-        }
-        catch (Exception exception)
-        {
-            CompleteLlmProgress(progressVersion);
-            System.Diagnostics.Debug.WriteLine(
-                $"Local LLM ejection failed: {exception}");
-
-            ShowLlmStatus(
-                Translate("Quiz.ModelRuntimeError"),
-                isRunning: false);
-        }
-        finally
-        {
-            CompleteLlmProgress(progressVersion);
-
-            if (ReferenceEquals(
-                    _llmGenerationCancellation,
-                    cancellation))
-            {
-                _llmGenerationCancellation = null;
-                SetLlmBusy(false);
-            }
-
-            cancellation.Dispose();
-        }
-    }
-
-    private async void OnOpenLlmModelFolderClicked(
-        object? sender,
-        EventArgs e)
-    {
-        if (_isGeneratingWithLlm ||
-            !QuizLlmModelStore.IsSupportedModelPath(
-                _llmModelPath))
-        {
-            UpdateLlmModelUi();
-            return;
-        }
-
-        string modelPath = _llmModelPath!;
-        bool opened =
-            await _modelFileLocationService
-                .TryOpenContainingFolderAsync(modelPath);
-
-        if (opened)
-        {
-            return;
-        }
-
-        await MaterialDialogService.ShowAlertAsync(
-            this,
-            Translate("Quiz.ModelLocationTitle"),
-            string.Format(
-                CultureInfo.CurrentCulture,
-                Translate("Quiz.ModelLocationUnavailable"),
-                modelPath),
-            Translate("Common.OK"));
-    }
-
-    private async void OnCreateOrRegenerateQuestionClicked(
-        object? sender,
-        EventArgs e)
-    {
-        // Khi AI đang sinh đề, cùng nút này trở thành nút Dừng. Hủy qua
-        // CancellationToken để LLamaSharp/llama.cpp thoát khỏi vòng InferAsync
-        // an toàn thay vì unload model hoặc chặn UI thread.
-        if (_generationSource == QuizGenerationSource.LocalLlm &&
-            _isLlmQuestionGenerationActive)
-        {
-            CancelLlmGeneration();
-            return;
-        }
-
-        if (_questionAnswered)
-        {
-            UpdateCreateOrRegenerateQuestionButtonState();
-            return;
-        }
-
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            // Tạo lại câu hiện tại, không tăng bộ đếm và không tính điểm.
-            GenerateAlgorithmQuestion(
-                questionNumberOnSuccess: null);
-            return;
-        }
-
-        // Nút này vừa tạo câu đầu tiên vừa cho phép bỏ qua/tạo lại câu hiện
-        // tại trước khi trả lời. Tạo lại thông thường không tăng số câu; riêng
-        // khi lần sinh từ nút Câu tiếp theo đã thất bại, GenerateLlmQuestionAsync
-        // tiếp tục dùng số câu đang chờ và chỉ commit khi đề hợp lệ.
-        await GenerateLlmQuestionAsync(
-            questionNumberOnSuccess: null);
-    }
-
-#if WINDOWS
-    private async Task GenerateLlmQuestionAsync(
-        int? questionNumberOnSuccess)
-    {
-        if (_isGeneratingWithLlm ||
-            (!questionNumberOnSuccess.HasValue &&
-             _questionAnswered) ||
-            (questionNumberOnSuccess.HasValue &&
-             (!_questionAnswered ||
-              _currentQuestion is null)))
-        {
-            return;
-        }
-
-        if (questionNumberOnSuccess.HasValue)
-        {
-            _pendingLlmQuestionNumberOnSuccess =
-                questionNumberOnSuccess;
-        }
-
-        // Một lần Tạo lại sau khi AI đã thất bại đủ ba attempt phải tiếp tục
-        // commit số câu của lần bấm Câu tiếp theo trước đó. Tạo lại một câu
-        // hiện có vẫn truyền null và không làm tăng bộ đếm.
-        int? resolvedQuestionNumberOnSuccess =
-            questionNumberOnSuccess ??
-            _pendingLlmQuestionNumberOnSuccess;
-
-        if (!QuizLlmModelStore.IsSupportedModelPath(
-                _llmModelPath))
-        {
-            _llmModelStore.ClearSavedModelPath();
-            _llmModelPath = null;
-            UpdateLlmModelUi();
-            PrepareLlmQuestionForGeneration();
-            return;
-        }
-
-        CancelLlmGeneration();
-
-        QuizProblemRequest problemRequest =
-            ResolveSelectedProblem();
-
-        _activeProblemRequest = problemRequest;
-
-        ResetLlmDiagnostics();
-
-        var cancellation = new CancellationTokenSource();
-        int progressVersion =
-            BeginLlmProgress(cancellation);
-
-        var generationCompletionSource =
-            new TaskCompletionSource<bool>(
-                TaskCreationOptions.RunContinuationsAsynchronously);
-
-        _llmGenerationCompletionSource =
-            generationCompletionSource;
-
-        _localLlmQuizGenerator.CancelScheduledModelUnload();
-        _showFriendlyGreetingForCurrentLoad =
-            !_localLlmQuizGenerator.IsModelLoaded(
-                _llmModelPath);
-
-        HideAiTeacherGreeting();
-
-        _currentQuestion = null;
-        _questionAnswered = false;
-        _lastAnswerWasCorrect = null;
-        ResetQuizDiagram();
-        FeedbackBorder.IsVisible = false;
-        SolutionBorder.IsVisible = false;
-        PresentedAnswerLabel.IsVisible = false;
-        PresentedAnswerFractionView.IsVisible = false;
-        NextQuestionButton.IsEnabled = false;
-        ClearMultipleChoiceAnswers();
-        UpdateModeStyles();
-        SetAnswerControlsEnabled(false);
-        _isLlmQuestionGenerationActive = true;
-        SetLlmBusy(true);
-        SetAiGenerationInteractionLocked(true);
-
-        QuestionPromptLabel.Text =
-            Translate("Quiz.WordProblemTitle");
-        SetQuestionContent(
-            Translate("Quiz.LoadingModel"),
-            21,
-            "WallpaperTextPrimaryColor",
-            useFractionFormatting: false);
-
-        ResetLlmTokenSpeed();
-
-        ShowLlmStatus(
-            Translate("Quiz.LoadingModel"),
-            isRunning: true);
-
-        try
-        {
-            var progress =
-                CreateLlmProgress(
-                    cancellation,
-                    progressVersion);
-
-            LlmQuizGenerationResult result;
-
-            result =
-                await _localLlmQuizGenerator.GenerateAsync(
-                    _llmModelPath,
-                    _selectedMode,
-                    problemRequest,
-                    AppLanguageManager.CurrentLanguage,
-                    progress,
-                    cancellation.Token,
-                    curriculumContext: GetCurriculumContext());
-
-            // Vô hiệu hóa callback Progress<T> đang chờ trên UI thread trước
-            // khi hiển thị trạng thái cuối. Nếu không, ModelLoaded/Validating
-            // đến muộn có thể bật spinner trở lại sau khi tác vụ đã hoàn tất.
-            CompleteLlmProgress(progressVersion);
-
-            ApplyLlmAttemptReports(
-                result.AttemptReports);
-
-            if (result.Question is null &&
-                result.ErrorCode is
-                    "ModelFileNotFound" or
-                    "NotEnoughMemory" or
-                    "ModelRuntimeError")
-            {
-                AppendLlmDiagnostic(
-                    new(
-                        LlmQuizDiagnosticEvent.RuntimeError,
-                        Math.Max(1, result.Attempts),
-                        LlmMaximumAttempts,
-                        result.ErrorCode));
-            }
-
-            if (result.Question is not null)
-            {
-                _currentQuestion = result.Question;
-                CommitGeneratedQuestionNumber(
-                    resolvedQuestionNumberOnSuccess);
-                _pendingLlmQuestionNumberOnSuccess =
-                    null;
-                RenderCurrentQuestion(
-                    resetAnswerControls: true);
-                UpdateScoreLabels();
-                ShowLlmStatus(
-                    Translate("Quiz.GenerationSucceeded"),
-                    isRunning: false);
-                ShowLlmTokenSpeed(
-                    result.TokensPerSecond);
-            }
-            else
-            {
-                ShowLlmGenerationFailure(result);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            CompleteLlmProgress(progressVersion);
-
-            // Bỏ phần preview đang sinh dở và đưa vùng đề về trạng thái sẵn
-            // sàng. JSON/log chẩn đoán vẫn được giữ để Developer Mode có thể
-            // xem những gì model đã phát ra trước khi người dùng bấm Dừng.
-            SetQuestionContent(
-                Translate("Quiz.LlmReady"),
-                20,
-                "WallpaperTextSecondaryColor",
-                useFractionFormatting: false);
-            ShowLlmStatus(
-                Translate("Quiz.GenerationCancelled"),
-                isRunning: false);
-        }
-        finally
-        {
-            CompleteLlmProgress(progressVersion);
-            _isLlmQuestionGenerationActive = false;
-
-            if (ReferenceEquals(
-                    _llmGenerationCancellation,
-                    cancellation))
-            {
-                _llmGenerationCancellation = null;
-                SetLlmBusy(false);
-                SetAiGenerationInteractionLocked(false);
-            }
-            else
-            {
-                // Defensive refresh in case another operation replaced the CTS
-                // while this generation was unwinding. Phiên inference hiện tại
-                // đã kết thúc nên navigation và toàn bộ controls phải được mở lại.
-                SetAiGenerationInteractionLocked(false);
-                UpdateCreateOrRegenerateQuestionButtonState();
-            }
-
-            cancellation.Dispose();
-
-            if (ReferenceEquals(
-                    _llmGenerationCompletionSource,
-                    generationCompletionSource))
-            {
-                _llmGenerationCompletionSource = null;
-            }
-
-            // Complete last: the close guard may now safely reissue X/Alt+F4.
-            // At this point InferAsync has returned, UI state is unlocked, and
-            // the generation CancellationTokenSource has been disposed.
-            generationCompletionSource.TrySetResult(true);
-        }
-    }
-    private async Task<bool> ConfirmWindowsCloseDuringAiGenerationAsync()
-    {
-        // If generation already completed between the native Closing event and
-        // this callback, there is nothing left to stop. Close normally.
-        if (!_isLlmQuestionGenerationActive)
-        {
-            return true;
-        }
-
-        bool shouldStopAndExit =
-            await MaterialDialogService.ConfirmAsync(
-                this,
-                Translate("Quiz.AiExitConfirmTitle"),
-                Translate("Quiz.AiExitConfirmMessage"),
-                Translate("Quiz.AiExitConfirmYes"),
-                Translate("Quiz.AiExitConfirmNo"));
-
-        if (!shouldStopAndExit)
-        {
-            // Keep inference alive exactly where it is.
-            return false;
-        }
-
-        Task? generationCompletionTask =
-            _llmGenerationCompletionSource?.Task;
-
-        CancelLlmGeneration();
-
-        if (generationCompletionTask is not null)
-        {
-            await generationCompletionTask;
-        }
-
-        return true;
-    }
-
-#else
-    private Task GenerateLlmQuestionAsync(
-        int? questionNumberOnSuccess) =>
-        Task.CompletedTask;
-#endif
-
-    private void UpdateLlmProgress(
-        LlmQuizProgress progress)
-    {
-        if (progress.Stage == LlmQuizProgressStage.ModelLoaded &&
-            _showFriendlyGreetingForCurrentLoad)
-        {
-            ShowAiTeacherGreeting();
-        }
-
-        if (progress.RawModelOutput is not null &&
-            progress.Attempt > 0)
-        {
-            UpdateLlmRawOutput(
-                progress.Attempt,
-                progress.MaximumAttempts,
-                progress.RawModelOutput);
-        }
-
-        if (progress.Diagnostic is not null)
-        {
-            AppendLlmDiagnostic(
-                progress.Diagnostic);
-        }
-
-        if (_isGeneratingWithLlm &&
-            !string.IsNullOrWhiteSpace(
-                progress.ProblemPreview))
-        {
-            ShowGeneratedProblemPreview(
-                progress.ProblemPreview);
-        }
-
-        if (progress.TokensPerSecond > 0d)
-        {
-            ShowLlmTokenSpeed(
-                progress.TokensPerSecond);
-        }
-
-        string status =
-            progress.Stage switch
-            {
-                LlmQuizProgressStage.LoadingModel =>
-                    Translate("Quiz.LoadingModel"),
-                LlmQuizProgressStage.ModelLoaded =>
-                    Translate("Quiz.ModelLoaded"),
-                LlmQuizProgressStage.Generating =>
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        Translate("Quiz.GeneratingAttempt"),
-                        progress.Attempt,
-                        progress.MaximumAttempts),
-                LlmQuizProgressStage.Validating =>
-                    Translate("Quiz.ValidatingProblem"),
-                LlmQuizProgressStage.Retrying =>
-                    Translate("Quiz.RetryingProblem"),
-                LlmQuizProgressStage.DisposingModel =>
-                    Translate("Quiz.DisposingModel"),
-                _ => Translate("Quiz.LoadingModel")
-            };
-
-        ShowLlmStatus(
-            status,
-            isRunning: progress.Stage !=
-                LlmQuizProgressStage.DisposingModel);
-    }
-
-    private void ShowGeneratedProblemPreview(
-        string problemText)
-    {
-        QuestionPromptLabel.Text =
-            Translate("Quiz.WordProblemTitle");
-
-        SetQuestionContent(
-            problemText,
-            21,
-            "WallpaperTextPrimaryColor",
-            useFractionFormatting:
-                IsFractionProblemSelected());
-
-        PresentedAnswerLabel.IsVisible = false;
-        PresentedAnswerFractionView.IsVisible = false;
-        FeedbackBorder.IsVisible = false;
-        SolutionBorder.IsVisible = false;
-        SetAnswerControlsEnabled(false);
-    }
-
-    private void ShowLlmGenerationFailure(
-        LlmQuizGenerationResult result)
-    {
-        string key =
-            result.ErrorCode switch
-            {
-                "ModelFileNotFound" => "Quiz.SelectModelFirst",
-                "NotEnoughMemory" => "Quiz.NotEnoughMemory",
-                "ModelRuntimeError" => "Quiz.ModelRuntimeError",
-                _ when result.Attempts >=
-                    LlmMaximumAttempts =>
-                    "Quiz.GenerationFailedAfterRetries",
-                _ => "Quiz.GenerationError"
-            };
-
-        string message = Translate(key);
-
-        SetQuestionContent(
-            message,
-            20,
-            "DangerColor",
-            useFractionFormatting: false);
-        ShowLlmStatus(message, isRunning: false);
-        ShowLlmTokenSpeed(
-            result.TokensPerSecond);
-    }
-
-    private void UpdateLlmModelUi()
-    {
-        if (!QuizLlmModelStore.IsSupportedModelPath(
-                _llmModelPath))
-        {
-            _llmModelStore.ClearSavedModelPath();
-            _llmModelPath = null;
-            LlmModelNameLabel.Text =
-                Translate("Quiz.NoModelSelected");
-            LlmModelRecommendationLabel.Text =
-                Translate("Quiz.ModelRecommendation");
-        }
-        else
-        {
-            LlmModelNameLabel.Text =
-                Path.GetFileName(_llmModelPath);
-
-            LlmModelRecommendationLabel.Text =
-                QuizLlmModelStore.IsRecommendedQuantization(
-                    _llmModelPath)
-                    ? Translate("Quiz.RecommendedModelDetected")
-                    : Translate("Quiz.ModelRecommendation");
-        }
-
-        UpdateCreateOrRegenerateQuestionButtonState();
-
-        EjectLlmModelButton.IsEnabled =
-            !_isGeneratingWithLlm &&
-            _llmModelPath is not null;
-
-        OpenLlmModelFolderButton.IsEnabled =
-            !_isGeneratingWithLlm &&
-            _llmModelPath is not null;
-
-        DownloadGemma4Button.IsEnabled =
-            !_isGeneratingWithLlm ||
-            _isDownloadingModel;
-
-        DownloadGemma4Button.Text =
-            Translate(
-                _isDownloadingModel
-                    ? "Quiz.StopModelDownload"
-                    : "Quiz.DownloadGemma4");
-
-        RefreshLlmActionButtonTheme();
-        UpdateAiTeacherState();
-    }
-
-    private void SetAiGenerationInteractionLocked(
-        bool isLocked)
-    {
-        // Chỉ dùng cho giai đoạn InferAsync thật sự. Các thao tác chọn/tải/eject
-        // model vẫn dùng SetLlmBusy riêng và không khóa navigation toàn app.
-        if (Shell.Current is AppShell appShell)
-        {
-            appShell.SetMathPuzzleAiInteractionLocked(
-                isLocked);
-        }
-
-#if WINDOWS
-        if (isLocked)
-        {
-            MathSolver.Platforms.Windows.WindowStateManager.SetCloseGuard(
-                this,
-                ConfirmWindowsCloseDuringAiGenerationAsync);
-        }
-        else
-        {
-            MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
-                this);
-        }
-#endif
-
-        AlgorithmSourceButton.IsEnabled = !isLocked;
-        LocalLlmSourceButton.IsEnabled = !isLocked;
-
-        DownloadGemma4Button.IsEnabled = !isLocked;
-        OpenLlmModelFolderButton.IsEnabled =
-            !isLocked && _llmModelPath is not null;
-        SelectLlmModelButton.IsEnabled = !isLocked;
-        EjectLlmModelButton.IsEnabled =
-            !isLocked && _llmModelPath is not null;
-
-        // JSON & Log is intentionally still interactive while generation is
-        // running. It is a read-only diagnostics surface and is useful for
-        // watching streamed raw JSON/validation without mutating AI state.
-        AiDiagnosticsToggleButton.IsEnabled = true;
-        TrueFalseModeButton.IsEnabled = !isLocked;
-        MultipleChoiceModeButton.IsEnabled = !isLocked;
-        EssayModeButton.IsEnabled = !isLocked;
-        OperationPicker.IsEnabled = !isLocked;
-        AverageTypePicker.IsEnabled = !isLocked;
-        PercentageTypePicker.IsEnabled = !isLocked;
-        FindXTypePicker.IsEnabled = !isLocked;
-        GeometryShapePicker.IsEnabled = !isLocked;
-        GeometryMeasurementPicker.IsEnabled = !isLocked;
-        MotionTypePicker.IsEnabled = !isLocked;
-        ExpressionTypePicker.IsEnabled = !isLocked;
-        ElementaryTypePicker.IsEnabled = !isLocked;
-
-        ProblemMixedButton.IsEnabled = !isLocked;
-        ProblemAddButton.IsEnabled = !isLocked;
-        ProblemSubtractButton.IsEnabled = !isLocked;
-        ProblemMultiplyButton.IsEnabled = !isLocked;
-        ProblemDivideButton.IsEnabled = !isLocked;
-        ProblemCompareButton.IsEnabled = !isLocked;
-        MixedProportionButton.IsEnabled = !isLocked;
-        DirectProportionButton.IsEnabled = !isLocked;
-        InverseProportionButton.IsEnabled = !isLocked;
-
-        // Star level is part of the deterministic C# contract handed to the
-        // model. Lock it for the entire inference/validation cycle; otherwise
-        // WinUI could display a new tier while the running request still uses
-        // the old tier. The click handler also guards against queued clicks.
-        CurriculumOneStarButton.IsEnabled = !isLocked;
-        CurriculumTwoStarsButton.IsEnabled = !isLocked;
-        CurriculumThreeStarsButton.IsEnabled = !isLocked;
-        CurriculumFourStarsButton.IsEnabled = !isLocked;
-        CurriculumFiveStarsButton.IsEnabled = !isLocked;
-
-        double curriculumOpacity = isLocked ? 0.72d : 1d;
-        CurriculumOneStarButton.Opacity = curriculumOpacity;
-        CurriculumTwoStarsButton.Opacity = curriculumOpacity;
-        CurriculumThreeStarsButton.Opacity = curriculumOpacity;
-        CurriculumFourStarsButton.Opacity = curriculumOpacity;
-        CurriculumFiveStarsButton.Opacity = curriculumOpacity;
-
-        // Reapply the selected-star visual state after Enabled/Disabled changes
-        // because WinUI can otherwise keep its default disabled/accent brush.
-        UpdateCurriculumTierStyles();
-
-        // Trong lúc AI chạy, không cho trả lời câu cũ hay chuyển sang câu kế
-        // tiếp. Nút CreateOrRegenerate không bị khóa vì nó chính là nút Dừng.
-        if (isLocked)
-        {
-            NextQuestionButton.IsEnabled = false;
-            SetAnswerControlsEnabled(false);
-        }
-        else
-        {
-            NextQuestionButton.IsEnabled =
-                _questionAnswered && _currentQuestion is not null;
-
-            SetAnswerControlsEnabled(
-                _currentQuestion is not null &&
-                !_questionAnswered);
-        }
-
-        UpdateCreateOrRegenerateQuestionButtonState();
-        RefreshLlmActionButtonTheme();
-    }
-
-    private void SetLlmBusy(
-        bool isBusy)
-    {
-        _isGeneratingWithLlm = isBusy;
-        SelectLlmModelButton.IsEnabled = !isBusy;
-        DownloadGemma4Button.IsEnabled =
-            !isBusy ||
-            _isDownloadingModel;
-        DownloadGemma4Button.Text =
-            Translate(
-                _isDownloadingModel
-                    ? "Quiz.StopModelDownload"
-                    : "Quiz.DownloadGemma4");
-        EjectLlmModelButton.IsEnabled =
-            !isBusy &&
-            _llmModelPath is not null;
-        OpenLlmModelFolderButton.IsEnabled =
-            !isBusy &&
-            _llmModelPath is not null;
-        AlgorithmSourceButton.IsEnabled = !isBusy;
-        LocalLlmSourceButton.IsEnabled = !isBusy;
-        TrueFalseModeButton.IsEnabled = !isBusy;
-        MultipleChoiceModeButton.IsEnabled = !isBusy;
-        EssayModeButton.IsEnabled = !isBusy;
-        OperationPicker.IsEnabled = !isBusy;
-        AverageTypePicker.IsEnabled = !isBusy;
-        PercentageTypePicker.IsEnabled = !isBusy;
-        FindXTypePicker.IsEnabled = !isBusy;
-        GeometryShapePicker.IsEnabled = !isBusy;
-        GeometryMeasurementPicker.IsEnabled = !isBusy;
-        MotionTypePicker.IsEnabled = !isBusy;
-        ExpressionTypePicker.IsEnabled = !isBusy;
-        ElementaryTypePicker.IsEnabled = !isBusy;
-        MixedProportionButton.IsEnabled = !isBusy;
-        DirectProportionButton.IsEnabled = !isBusy;
-        InverseProportionButton.IsEnabled = !isBusy;
-
-        UpdateCreateOrRegenerateQuestionButtonState();
-        UpdateAiTeacherState();
-        RefreshLlmActionButtonTheme();
-    }
-
-    private void UpdateAiTeacherState()
-    {
-        bool hasSelectedModel =
-            !string.IsNullOrWhiteSpace(_llmModelPath);
-
-#if WINDOWS
-        bool modelIsLoaded =
-            hasSelectedModel &&
-            _localLlmQuizGenerator.IsModelLoaded(
-                _llmModelPath);
-#else
-        bool modelIsLoaded = false;
-#endif
-
-        string key;
-        string colorKey;
-
-        if (_isGeneratingWithLlm)
-        {
-            key = "Quiz.AiTeacherStateWorking";
-            colorKey = "PrimaryColor";
-        }
-        else if (modelIsLoaded)
-        {
-            key = "Quiz.AiTeacherStateReady";
-            colorKey = "SuccessColor";
-        }
-        else if (hasSelectedModel)
-        {
-            key = "Quiz.AiTeacherStateModelSelected";
-            colorKey = "WarningColor";
-        }
-        else
-        {
-            key = "Quiz.AiTeacherStateNoModel";
-            colorKey = "WallpaperTextSecondaryColor";
-        }
-
-        AiTeacherStateLabel.Text =
-            TranslateQuiz(key);
-
-        AiTeacherStateLabel.SetDynamicResource(
-            Label.TextColorProperty,
-            colorKey);
-
-        AiTeacherStateDot.SetDynamicResource(
-            BoxView.ColorProperty,
-            colorKey);
-    }
-
-    private void ShowAiTeacherGreeting()
-    {
-        AiTeacherGreetingLabel.Text =
-            TranslateQuiz("Quiz.FirstModelGreeting");
-
-        AiTeacherGreetingBorder.IsVisible = true;
-    }
-
-    private void HideAiTeacherGreeting()
-    {
-        AiTeacherGreetingBorder.IsVisible = false;
-        AiTeacherGreetingLabel.Text = string.Empty;
-    }
-
-    private void UpdateCreateOrRegenerateQuestionButtonState()
-    {
-        bool canStopAiGeneration =
-            _generationSource == QuizGenerationSource.LocalLlm &&
-            _isLlmQuestionGenerationActive;
-
-        // Riêng lúc AI đang sinh, nút phải vẫn bấm được để gửi Cancel. Các
-        // trạng thái busy khác (chọn/tải/eject model) vẫn khóa nút như cũ.
-        CreateOrRegenerateQuestionButton.IsEnabled =
-            canStopAiGeneration ||
-            (!_isGeneratingWithLlm &&
-             (_generationSource == QuizGenerationSource.Algorithm ||
-              _llmModelPath is not null) &&
-             !_questionAnswered);
-
-        CreateOrRegenerateQuestionButton.Text =
-            TranslateQuiz(
-                canStopAiGeneration
-                    ? "Quiz.StopAiGeneration"
-                    : _generationSource == QuizGenerationSource.LocalLlm
-                        ? "Quiz.CreateWithAi"
-                        : "Quiz.RegenerateQuestion");
-
-        // Reapply after the Enabled/Disabled transition. On Windows this
-        // transition can otherwise replace the DynamicResource with the
-        // platform's default blue accent.
-        RefreshLlmActionButtonTheme();
-    }
-
-    private void RefreshLlmActionButtonTheme()
-    {
-        // WinUI có thể khôi phục màu accent mặc định (xanh dương) sau khi
-        // Button đi qua visual state Disabled/Enabled. Áp lại cả hai nút chọn
-        // nguồn để nút đang chọn luôn theo accent hiện tại của ứng dụng.
-        SelectionButtonStyler.Select(
-            _generationSource == QuizGenerationSource.Algorithm
-                ? AlgorithmSourceButton
-                : LocalLlmSourceButton,
-            AlgorithmSourceButton,
-            LocalLlmSourceButton);
-
-        DownloadGemma4Button.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-        DownloadGemma4Button.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-
-        // WinUI can keep a previous Enabled/Disabled brush across a theme
-        // transition. Resolve these secondary model actions directly from the
-        // current adaptive palette, just like the semantic Eject action below.
-        Color modelActionBackground = ThemeResource.GetColor(
-            "WallpaperSurfaceStrongColor",
-            AppThemeManager.IsDarkThemeEffective
-                ? "#111827"
-                : "#FFFFFF");
-        Color modelActionBorder = ThemeResource.GetColor(
-            "WallpaperPrimaryBorderColor",
-            "#C4B5FD");
-        Color modelActionText = ThemeResource.GetColor(
-            "PrimaryColor",
-            "#6D28D9");
-
-        OpenLlmModelFolderButton.BackgroundColor = modelActionBackground;
-        OpenLlmModelFolderButton.BorderColor = modelActionBorder;
-        OpenLlmModelFolderButton.TextColor = modelActionText;
-
-        SelectLlmModelButton.BackgroundColor = modelActionBackground;
-        SelectLlmModelButton.BorderColor = modelActionBorder;
-        SelectLlmModelButton.TextColor = modelActionText;
-
-        // Eject is a semantic Danger button. WinUI can cache the brush of
-        // the Disabled visual state across a theme switch, so resolve the
-        // current palette directly instead of relying only on the original
-        // XAML DynamicResource. This keeps Dark -> Light and Light -> Dark
-        // transitions correct even while a model is selected.
-        EjectLlmModelButton.BackgroundColor =
-            ThemeResource.GetColor(
-                "WallpaperDangerActionBackgroundColor",
-                "#FEF2F2");
-        EjectLlmModelButton.BorderColor =
-            ThemeResource.GetColor(
-                "WallpaperDangerActionBorderColor",
-                "#FCA5A5");
-        EjectLlmModelButton.TextColor =
-            ThemeResource.GetColor(
-                "WallpaperDangerActionTextColor",
-                "#B91C1C");
-
-        AiDiagnosticsToggleButton.BackgroundColor =
-            ThemeResource.GetColor(
-                "WallpaperSelectionBackgroundColor",
-                "#6D28D9");
-        AiDiagnosticsToggleButton.BorderColor =
-            ThemeResource.GetColor(
-                "WallpaperSelectionBorderColor",
-                "#6D28D9");
-        AiDiagnosticsToggleButton.TextColor =
-            ThemeResource.GetColor(
-                "WallpaperSelectionTextColor",
-                "#FFFFFF");
-        AiDiagnosticsToggleButton.BorderWidth = 1d;
-
-        CreateOrRegenerateQuestionButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            _generationSource == QuizGenerationSource.LocalLlm &&
-            _isLlmQuestionGenerationActive
-                ? "DangerColor"
-                : "PrimaryColor");
-        CreateOrRegenerateQuestionButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-
-        // This button follows the same disabled-to-enabled lifecycle after
-        // an answer is selected, so keep it on the active accent as well.
-        NextQuestionButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-        NextQuestionButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-
-        SubmitEssayAnswerButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-        SubmitEssayAnswerButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-    }
-
-    private void ShowLlmStatus(
-        string message,
-        bool isRunning)
-    {
-        LlmProgressGrid.IsVisible = true;
-        LlmActivityIndicator.IsRunning = isRunning;
-        LlmActivityIndicator.IsVisible = isRunning;
-        LlmStatusLabel.Text = message;
-    }
-
-    private void ShowLlmTokenSpeed(
-        double tokensPerSecond)
-    {
-        if (!double.IsFinite(tokensPerSecond) ||
-            tokensPerSecond <= 0d)
-        {
-            ResetLlmTokenSpeed();
-            return;
-        }
-
-        LlmTokenSpeedLabel.Text =
-            string.Format(
-                CultureInfo.CurrentCulture,
-                TranslateQuiz("Quiz.GenerationSpeed"),
-                tokensPerSecond.ToString(
-                    "0.0",
-                    CultureInfo.CurrentCulture));
-
-        LlmTokenSpeedLabel.IsVisible = true;
-    }
-
-    private void ResetLlmTokenSpeed()
-    {
-        LlmTokenSpeedLabel.Text = string.Empty;
-        LlmTokenSpeedLabel.IsVisible = false;
-    }
-
-    private void OnAiDiagnosticsToggleClicked(
-        object? sender,
-        EventArgs e)
-    {
-        if (!DeveloperModeManager.IsEnabled)
-        {
-            return;
-        }
-
-        _isAiDiagnosticsVisible =
-            !_isAiDiagnosticsVisible;
-
-        UpdateAiDiagnosticsVisibility();
-    }
-
-    private void UpdateAiDiagnosticsVisibility()
-    {
-        bool developerModeEnabled =
-            DeveloperModeManager.IsEnabled;
-
-        AiDiagnosticsSectionBorder.IsVisible =
-            developerModeEnabled;
-
-        if (!developerModeEnabled)
-        {
-            _isAiDiagnosticsVisible = false;
-        }
-
-        AiDiagnosticsBorder.IsVisible =
-            developerModeEnabled &&
-            _isAiDiagnosticsVisible;
-
-        AiDiagnosticsToggleButton.IsVisible =
-            developerModeEnabled;
-
-        AiDiagnosticsToggleButton.Text =
-            TranslateQuiz(
-                _isAiDiagnosticsVisible
-                    ? "Quiz.HideAiDiagnostics"
-                    : "Quiz.ShowAiDiagnostics");
-    }
-
-    private void SubscribeDeveloperModeChanged()
-    {
-        if (_isDeveloperModeSubscribed)
-        {
-            return;
-        }
-
-        DeveloperModeManager.DeveloperModeChanged +=
-            OnDeveloperModeChanged;
-
-        _isDeveloperModeSubscribed = true;
-    }
-
-    private void UnsubscribeDeveloperModeChanged()
-    {
-        if (!_isDeveloperModeSubscribed)
-        {
-            return;
-        }
-
-        DeveloperModeManager.DeveloperModeChanged -=
-            OnDeveloperModeChanged;
-
-        _isDeveloperModeSubscribed = false;
-    }
-
-    private void OnDeveloperModeChanged(
-        object? sender,
-        EventArgs e)
-    {
-        Dispatcher.Dispatch(
-            UpdateAiDiagnosticsVisibility);
-    }
-
-    private void ResetLlmDiagnostics()
-    {
-        _llmRawOutputs.Clear();
-        _llmValidationDiagnostics.Clear();
-        LlmRawJsonEditor.Text =
-            TranslateQuiz("Quiz.DiagnosticsNoJson");
-
-        LlmValidationLogEditor.Text =
-            TranslateQuiz("Quiz.DiagnosticsNoLog");
-
-        AiValidationStatusBorder.IsVisible = false;
-        AiValidationStatusTitleLabel.Text = string.Empty;
-        AiValidationStatusDetailLabel.Text = string.Empty;
-    }
-
-    private void UpdateLlmRawOutput(
-        int attempt,
-        int maximumAttempts,
-        string rawModelOutput)
-    {
-        _llmRawOutputs[attempt] =
-            rawModelOutput;
-
-        LlmRawJsonEditor.Text =
-            string.Join(
-                Environment.NewLine +
-                Environment.NewLine,
-                _llmRawOutputs.Select(entry =>
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        TranslateQuiz(
-                            "Quiz.DiagnosticsAttemptHeader"),
-                        entry.Key,
-                        maximumAttempts) +
-                    Environment.NewLine +
-                    FormatLlmJsonForDisplay(entry.Value)));
-    }
-
-    private void AppendLlmDiagnostic(
-        LlmQuizDiagnostic diagnostic)
-    {
-        if (_llmValidationDiagnostics.Contains(diagnostic))
-        {
-            return;
-        }
-
-        _llmValidationDiagnostics.Add(diagnostic);
-        RenderLlmValidationLog();
-        UpdateLlmValidationStatus(diagnostic);
-    }
-
-    private void ApplyLlmAttemptReports(
-        IReadOnlyList<LlmQuizAttemptReport>? reports)
-    {
-        if (reports is null || reports.Count == 0)
-        {
-            return;
-        }
-
-        _llmRawOutputs.Clear();
-        _llmValidationDiagnostics.Clear();
-
-        foreach (LlmQuizAttemptReport report in
-                 reports.OrderBy(report => report.Attempt))
-        {
-            _llmRawOutputs[report.Attempt] =
-                report.RawModelOutput;
-
-            _llmValidationDiagnostics.AddRange(
-                report.Diagnostics);
-        }
-
-        int maximumAttempts =
-            reports.Max(report =>
-                report.MaximumAttempts);
-
-        LlmRawJsonEditor.Text =
-            string.Join(
-                Environment.NewLine +
-                Environment.NewLine,
-                _llmRawOutputs.Select(entry =>
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        TranslateQuiz(
-                            "Quiz.DiagnosticsAttemptHeader"),
-                        entry.Key,
-                        maximumAttempts) +
-                    Environment.NewLine +
-                    FormatLlmJsonForDisplay(entry.Value)));
-
-        RenderLlmValidationLog();
-
-        LlmQuizDiagnostic? lastDiagnostic =
-            reports
-                .OrderBy(report => report.Attempt)
-                .SelectMany(report => report.Diagnostics)
-                .LastOrDefault();
-
-        if (lastDiagnostic is not null)
-        {
-            UpdateLlmValidationStatus(lastDiagnostic);
-        }
-    }
-
-    private void UpdateLlmValidationStatus(
-        LlmQuizDiagnostic diagnostic)
-    {
-        switch (diagnostic.Event)
-        {
-            case LlmQuizDiagnosticEvent.JsonReceived:
-            case LlmQuizDiagnosticEvent.ParseSucceeded:
-                ShowLlmValidationStatus(
-                    "⏳",
-                    "Quiz.AiValidationCheckingTitle",
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        TranslateQuiz("Quiz.AiValidationCheckingDetail"),
-                        diagnostic.Attempt,
-                        diagnostic.MaximumAttempts),
-                    "WallpaperPrimarySoftColor",
-                    "WallpaperPrimaryBorderBrush",
-                    "PrimaryColor");
-                break;
-
-            case LlmQuizDiagnosticEvent.ParseFailed:
-            case LlmQuizDiagnosticEvent.ValidationFailed:
-                ShowLlmValidationStatus(
-                    "✕",
-                    "Quiz.AiValidationInvalidTitle",
-                    diagnostic.Detail ??
-                        TranslateQuiz("Quiz.AiValidationInvalidFallback"),
-                    "WallpaperDangerSoftColor",
-                    "DangerBorderBrush",
-                    "DangerColor");
-                break;
-
-            case LlmQuizDiagnosticEvent.RetryScheduled:
-                ShowLlmValidationStatus(
-                    "↻",
-                    "Quiz.AiValidationRetryTitle",
-                    diagnostic.Detail ??
-                        TranslateQuiz("Quiz.AiValidationInvalidFallback"),
-                    "WallpaperWarningSoftColor",
-                    "WarningBorderBrush",
-                    "WarningColor");
-                break;
-
-            case LlmQuizDiagnosticEvent.ValidationSucceeded:
-                ShowLlmValidationStatus(
-                    "✓",
-                    "Quiz.AiValidationValidTitle",
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        TranslateQuiz("Quiz.AiValidationValidDetail"),
-                        diagnostic.Attempt,
-                        diagnostic.MaximumAttempts),
-                    "WallpaperSuccessSoftColor",
-                    "SuccessBorderBrush",
-                    "SuccessColor");
-                break;
-
-            case LlmQuizDiagnosticEvent.GenerationFailed:
-                ShowLlmValidationStatus(
-                    "✕",
-                    "Quiz.AiValidationGenerationFailedTitle",
-                    diagnostic.Detail ??
-                        TranslateQuiz("Quiz.AiValidationInvalidFallback"),
-                    "WallpaperDangerSoftColor",
-                    "DangerBorderBrush",
-                    "DangerColor");
-                break;
-
-            case LlmQuizDiagnosticEvent.RuntimeError:
-                ShowLlmValidationStatus(
-                    "!",
-                    "Quiz.AiValidationRuntimeErrorTitle",
-                    diagnostic.Detail ??
-                        TranslateQuiz("Quiz.AiValidationRuntimeErrorFallback"),
-                    "WallpaperDangerSoftColor",
-                    "DangerBorderBrush",
-                    "DangerColor");
-                break;
-        }
-    }
-
-    private void ShowLlmValidationStatus(
-        string icon,
-        string titleKey,
-        string detail,
-        string backgroundResourceKey,
-        string borderResourceKey,
-        string foregroundResourceKey)
-    {
-        AiValidationStatusBorder.IsVisible = true;
-        AiValidationStatusIconLabel.Text = icon;
-        AiValidationStatusTitleLabel.Text = TranslateQuiz(titleKey);
-        AiValidationStatusDetailLabel.Text = detail;
-
-        AiValidationStatusBorder.SetDynamicResource(
-            Border.BackgroundColorProperty,
-            backgroundResourceKey);
-        AiValidationStatusBorder.SetDynamicResource(
-            Border.StrokeProperty,
-            borderResourceKey);
-        AiValidationStatusTitleLabel.SetDynamicResource(
-            Label.TextColorProperty,
-            foregroundResourceKey);
-    }
-
-    private static string FormatLlmJsonForDisplay(
-        string rawModelOutput)
-    {
-        string trimmed = rawModelOutput.Trim();
-        int objectStart = trimmed.IndexOf('{');
-        int objectEnd = trimmed.LastIndexOf('}');
-
-        if (objectStart < 0 ||
-            objectEnd <= objectStart)
-        {
-            return rawModelOutput;
-        }
-
-        string json =
-            trimmed[objectStart..(objectEnd + 1)];
-
-        try
-        {
-            using JsonDocument document =
-                JsonDocument.Parse(json);
-
-            return JsonSerializer.Serialize(
-                document.RootElement,
-                PrettyJsonOptions);
-        }
-        catch (JsonException)
-        {
-            // Khi model còn streaming, JSON chưa đóng đủ ngoặc. Giữ nguyên
-            // nội dung tạm thời và tự định dạng ở lần cập nhật hoàn chỉnh.
-            return rawModelOutput;
-        }
-    }
-
-    private void RenderLlmValidationLog()
-    {
-        LlmValidationLogEditor.Text =
-            _llmValidationDiagnostics.Count == 0
-                ? TranslateQuiz(
-                    "Quiz.DiagnosticsNoLog")
-                : string.Join(
-                    Environment.NewLine,
-                    _llmValidationDiagnostics.Select(
-                        FormatLlmDiagnostic));
-    }
-
-    private static string FormatLlmDiagnostic(
-        LlmQuizDiagnostic diagnostic)
-    {
-        string key =
-            diagnostic.Event switch
-            {
-                LlmQuizDiagnosticEvent.AttemptStarted =>
-                    "Quiz.DiagnosticsAttemptStarted",
-                LlmQuizDiagnosticEvent.JsonReceived =>
-                    "Quiz.DiagnosticsJsonReceived",
-                LlmQuizDiagnosticEvent.ParseSucceeded =>
-                    "Quiz.DiagnosticsParseSucceeded",
-                LlmQuizDiagnosticEvent.ParseFailed =>
-                    "Quiz.DiagnosticsParseFailed",
-                LlmQuizDiagnosticEvent.ValidationSucceeded =>
-                    "Quiz.DiagnosticsValidationSucceeded",
-                LlmQuizDiagnosticEvent.ValidationFailed =>
-                    "Quiz.DiagnosticsValidationFailed",
-                LlmQuizDiagnosticEvent.RetryScheduled =>
-                    "Quiz.DiagnosticsRetryScheduled",
-                LlmQuizDiagnosticEvent.GenerationFailed =>
-                    "Quiz.DiagnosticsGenerationFailed",
-                LlmQuizDiagnosticEvent.RuntimeError =>
-                    "Quiz.DiagnosticsRuntimeError",
-                _ => throw new ArgumentOutOfRangeException(
-                    nameof(diagnostic))
-            };
-
-        return string.Format(
-            CultureInfo.CurrentCulture,
-            TranslateQuiz(key),
-            diagnostic.Attempt,
-            diagnostic.MaximumAttempts,
-            diagnostic.Event ==
-                LlmQuizDiagnosticEvent.JsonReceived
-                    ? diagnostic.CharacterCount
-                    : diagnostic.Detail ?? string.Empty);
-    }
-
-    private int BeginLlmProgress(
-        CancellationTokenSource cancellation)
-    {
-        _llmGenerationCancellation = cancellation;
-
-        return Interlocked.Increment(
-            ref _llmProgressVersion);
-    }
-
-    private IProgress<LlmQuizProgress> CreateLlmProgress(
-        CancellationTokenSource cancellation,
-        int progressVersion)
-    {
-        return new Progress<LlmQuizProgress>(
-            progress =>
-            {
-                if (progressVersion !=
-                        Volatile.Read(ref _llmProgressVersion) ||
-                    cancellation.IsCancellationRequested ||
-                    !ReferenceEquals(
-                        _llmGenerationCancellation,
-                        cancellation))
-                {
-                    return;
-                }
-
-                UpdateLlmProgress(progress);
-            });
-    }
-
-    private void CompleteLlmProgress(
-        int progressVersion)
-    {
-        Interlocked.CompareExchange(
-            ref _llmProgressVersion,
-            progressVersion + 1,
-            progressVersion);
-    }
-
-    private void CancelLlmGeneration()
-    {
-        Interlocked.Increment(
-            ref _llmProgressVersion);
-
-        _llmGenerationCancellation?.Cancel();
-        LlmActivityIndicator.IsRunning = false;
-        LlmActivityIndicator.IsVisible = false;
-    }
-
-    private Task ClearLlmQuestionAfterDelayedUnloadAsync()
-    {
-        return Microsoft.Maui.ApplicationModel.MainThread
-            .InvokeOnMainThreadAsync(
-                () =>
-                {
-                    if (_generationSource !=
-                            QuizGenerationSource.LocalLlm ||
-                        _isGeneratingWithLlm)
-                    {
-                        return;
-                    }
-
-                    PrepareLlmQuestionForGeneration(
-                        cancelPending: false);
-                });
     }
 
     private void ClearMultipleChoiceAnswers()
@@ -3802,6 +1722,11 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.PercentageProblem;
 
         ElementaryQuizContract? elementary = _currentQuestion.ElementaryProblem;
+        bool parseFractionSkills = elementary?.Kind == QuizProblemKind.FractionSkills;
+        foreach (var view in new[] { QuestionFractionExpressionView, QuestionComparisonFractionView,
+            PresentedAnswerFractionView, FeedbackFractionView, SolutionFractionView, QuizDiagramExplanationFractionView }
+            .Concat(ChoiceFractionViews))
+            view.ParseArithmeticExpressions = parseFractionSkills;
         UpdateElementaryChoiceLayout(elementary);
         UpdateQuizDiagram();
         if (elementary is not null)
@@ -4298,7 +2223,7 @@ public partial class MathPuzzlePage : ContentPage
             EssayCombinedInputParser.Parse(
                 EssayWorkEditor.Text,
                 EssayAnswerValidator.RequiresSolution(_currentQuestion),
-                preserveAllCalculations: _currentQuestion.ElementaryProblem is not null || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
+                preserveAllCalculations: _currentQuestion.GeometryProblem?.Reasoning is not null || _currentQuestion.ElementaryProblem is not null || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
 
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(
@@ -4424,7 +2349,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         NextQuestionButton.IsEnabled = true;
-        UpdateCreateOrRegenerateQuestionButtonState();
+        UpdateRegenerateQuestionButtonState();
         UpdateScoreLabels();
     }
 
@@ -4665,33 +2590,10 @@ public partial class MathPuzzlePage : ContentPage
         }
     }
 
-    private async void OnNextQuestionClicked(
-        object? sender,
-        EventArgs e)
+    private void OnNextQuestionClicked(object? sender, EventArgs e)
     {
-        if (!_questionAnswered)
-        {
-            return;
-        }
-
-        // Số câu kế tiếp được chốt từ bộ đếm hiện tại, hoàn toàn độc lập
-        // với việc câu vừa trả lời là đúng hay sai. Chỉ khi tạo câu mới
-        // thành công thì giá trị này mới được commit.
-        int nextQuestionNumber =
-            checked(_questionCount + 1);
-
-        if (_generationSource == QuizGenerationSource.Algorithm)
-        {
-            GenerateAlgorithmQuestion(
-                questionNumberOnSuccess:
-                    nextQuestionNumber);
-        }
-        else
-        {
-            await GenerateLlmQuestionAsync(
-                questionNumberOnSuccess:
-                    nextQuestionNumber);
-        }
+        if (!_questionAnswered) return;
+        GenerateAlgorithmQuestion(questionNumberOnSuccess: checked(_questionCount + 1));
     }
 
     private void CommitGeneratedQuestionNumber(
@@ -4755,20 +2657,10 @@ public partial class MathPuzzlePage : ContentPage
         SetAnswerControlsEnabled(false);
         UpdateModeStyles();
 
-        LlmActivityIndicator.IsRunning = false;
-        LlmActivityIndicator.IsVisible = false;
-        LlmStatusLabel.Text = string.Empty;
-        LlmProgressGrid.IsVisible = false;
-        ResetLlmTokenSpeed();
-        HideAiTeacherGreeting();
     }
 
     private void ResetQuizSessionState()
     {
-#if WINDOWS
-        _pendingLlmQuestionNumberOnSuccess =
-            null;
-#endif
         ResetCurrentQuestionState();
         ResetQuizSessionCounters();
     }

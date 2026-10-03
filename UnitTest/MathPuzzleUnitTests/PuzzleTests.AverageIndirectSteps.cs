@@ -22,11 +22,11 @@ internal static partial class PuzzleTests
             string unit = average.AnswerUnit;
             string lead = language == AppLanguage.Vietnamese ? $"Số {unit} trung bình là:" : $"The average ({unit}) is:";
             string answer = $"{average.CorrectAnswer} {unit}";
-            var ai = algorithm with
+            var contextual = algorithm with
             {
                 WordProblem = new MathWordProblem(average.ProblemText, lead, unit, average.SubjectName)
             };
-            foreach (var question in new[] { algorithm, ai })
+            foreach (var question in new[] { algorithm, contextual })
             {
                 string[] validSolutions =
                 [

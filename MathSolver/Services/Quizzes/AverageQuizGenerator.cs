@@ -3,11 +3,8 @@ using System.Numerics;
 
 namespace MathSolver.Services;
 
-/// <summary>
-/// Sinh sáu dạng toán trung bình cộng bằng C#. Mọi dữ kiện và đáp án đều được
-/// tạo trước ở C#; AI/LLM chỉ được phép diễn đạt lại contract.
-/// </summary>
-public sealed class AverageQuizGenerator
+/// <summary>C# math puzzle data and rules.</summary>
+public sealed partial class AverageQuizGenerator
 {
     private sealed record DirectContext(
         string ViAction, string EnAction,
@@ -97,6 +94,10 @@ public sealed class AverageQuizGenerator
                 "Average problems are not available at the selected curriculum tier.");
         }
 
+        int? level = QuizDifficultyPolicy.Level(curriculumContext);
+        allowedTypes = QuizDifficultyPolicy.Prefer(allowedTypes, requestedType, level,
+            QuizDifficultyPolicy.AverageTypes);
+
         AverageQuizType type =
             requestedType.HasValue &&
             allowedTypes.Contains(requestedType.Value)
@@ -105,21 +106,21 @@ public sealed class AverageQuizGenerator
 
         return type switch
         {
-            AverageQuizType.Direct => CreateDirect(language),
-            AverageQuizType.TotalToAverage => CreateTotalToAverage(language),
-            AverageQuizType.AverageToTotal => CreateAverageToTotal(language),
-            AverageQuizType.MissingValue => CreateMissingValue(language),
-            AverageQuizType.IndirectData => CreateIndirectData(language),
-            AverageQuizType.TwoGroups => CreateTwoGroups(language),
+            AverageQuizType.Direct => CreateDirect(language, level),
+            AverageQuizType.TotalToAverage => CreateTotalToAverage(language, level),
+            AverageQuizType.AverageToTotal => CreateAverageToTotal(language, level),
+            AverageQuizType.MissingValue => CreateMissingValue(language, level),
+            AverageQuizType.IndirectData => CreateIndirectData(language, level),
+            AverageQuizType.TwoGroups => CreateTwoGroups(language, level),
             _ => throw new ArgumentOutOfRangeException(nameof(type))
         };
     }
 
-    private AverageQuizContract CreateDirect(AppLanguage language)
+    private AverageQuizContract CreateDirect(AppLanguage language, int? level)
     {
-        int count = _random.Next(3, 6);
-        int average = _random.Next(20, 81);
-        int[] values = CreateValuesWithAverage(count, average, 4, 18);
+        int count = level.HasValue ? level.Value + 1 : _random.Next(3, 6);
+        int average = level.HasValue ? _random.Next(5 * level.Value, 15 * level.Value + 1) : _random.Next(20, 81);
+        int[] values = CreateValuesWithAverage(count, average, level ?? 4, level.HasValue ? 3 * level.Value : 18);
         int total = values.Sum();
         string list = JoinValues(values);
         DirectContext context = DirectContexts[_random.Next(DirectContexts.Length)];
@@ -151,10 +152,10 @@ public sealed class AverageQuizGenerator
             count);
     }
 
-    private AverageQuizContract CreateTotalToAverage(AppLanguage language)
+    private AverageQuizContract CreateTotalToAverage(AppLanguage language, int? level)
     {
-        int count = _random.Next(3, 9);
-        int average = _random.Next(12, 51);
+        int count = level.HasValue ? _random.Next(2 + level.Value, 4 + 2 * level.Value) : _random.Next(3, 9);
+        int average = level.HasValue ? _random.Next(3 * level.Value, 12 * level.Value + 1) : _random.Next(12, 51);
         int total = count * average;
         DistributionContext context = DistributionContexts[_random.Next(DistributionContexts.Length)];
         string problem = language == AppLanguage.Vietnamese
@@ -184,10 +185,10 @@ public sealed class AverageQuizGenerator
             count);
     }
 
-    private AverageQuizContract CreateAverageToTotal(AppLanguage language)
+    private AverageQuizContract CreateAverageToTotal(AppLanguage language, int? level)
     {
-        int count = _random.Next(3, 9);
-        int average = _random.Next(8, 31);
+        int count = level.HasValue ? _random.Next(2 + level.Value, 4 + 2 * level.Value) : _random.Next(3, 9);
+        int average = level.HasValue ? _random.Next(3 * level.Value, 10 * level.Value + 1) : _random.Next(8, 31);
         int total = count * average;
         DistributionContext context = DistributionContexts[_random.Next(DistributionContexts.Length)];
         string problem = language == AppLanguage.Vietnamese
@@ -217,8 +218,9 @@ public sealed class AverageQuizGenerator
             count);
     }
 
-    private AverageQuizContract CreateMissingValue(AppLanguage language)
+    private AverageQuizContract CreateMissingValue(AppLanguage language, int? level)
     {
+        if (level.HasValue) return CreateTieredMissingValue(language, level.Value);
         const int count = 4;
 
         for (int attempt = 0; attempt < 64; attempt++)
@@ -275,13 +277,13 @@ public sealed class AverageQuizGenerator
         throw new InvalidOperationException("Could not create an average missing-value problem.");
     }
 
-    private AverageQuizContract CreateIndirectData(AppLanguage language)
+    private AverageQuizContract CreateIndirectData(AppLanguage language, int? level)
     {
         for (int attempt = 0; attempt < 64; attempt++)
         {
-            int lan = _random.Next(12, 41);
-            int more = _random.Next(2, 9);
-            int less = _random.Next(1, 8);
+            int lan = level.HasValue ? _random.Next(8 * level.Value, 20 * level.Value + 1) : _random.Next(12, 41);
+            int more = _random.Next(2, level.HasValue ? 3 * level.Value + 1 : 9);
+            int less = _random.Next(1, level.HasValue ? 2 * level.Value + 1 : 8);
             int mai = lan + more;
             int hoa = mai - less;
             int total = lan + mai + hoa;
@@ -317,18 +319,19 @@ public sealed class AverageQuizGenerator
         throw new InvalidOperationException("Could not create an indirect average problem.");
     }
 
-    private AverageQuizContract CreateTwoGroups(AppLanguage language)
+    private AverageQuizContract CreateTwoGroups(AppLanguage language, int? level)
     {
-        for (int attempt = 0; attempt < 64; attempt++)
+        for (int attempt = 0; attempt < 1024; attempt++)
         {
-            int countA = _random.Next(3, 9);
-            int countB = _random.Next(3, 9);
+            int countA = _random.Next(2, level.HasValue ? 4 + 2 * level.Value : 9);
+            int countB = level is <= 2 ? countA : _random.Next(2, level.HasValue ? 4 + 2 * level.Value : 9);
+            if (level is >= 4 && countA == countB) continue;
             int averageA = _random.Next(6, 11);
             int averageB = _random.Next(6, 11);
             int totalCount = countA + countB;
             int totalPoints = countA * averageA + countB * averageB;
 
-            if (totalPoints % totalCount != 0)
+            if (totalPoints % totalCount != 0 || (level is >= 4 && averageA == averageB))
             {
                 continue;
             }

@@ -9,7 +9,6 @@ internal static partial class PuzzleTests
     internal static void CheckVisualGeometryVariety()
     {
         var validator = new EssayAnswerValidator(new BasicArithmeticEngine());
-        var aiValidator = new LlmWordProblemValidator();
         int count = 0;
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
@@ -44,7 +43,7 @@ internal static partial class PuzzleTests
                 else
                 {
                     var lines = visual.Lines!;
-                    Require(lines.Count is 2 or 3 && lines.Select(line => line.Label).Distinct().Count() == lines.Count,
+                    Require(lines.Count >= 2 && lines.Count <= 5 && lines.Select(line => line.Label).Distinct().Count() == lines.Count,
                         "Line tasks require distinct labels and explicit drawing directions.");
                     rotations.Add(lines[0].DirectionDegrees % 180);
                     if (lines.Count == 2)
@@ -65,6 +64,7 @@ internal static partial class PuzzleTests
                     {
                         pairTasks++;
                         Require((int)tier >= 3, "Pair selection should not replace beginner two-line tasks.");
+                        Require(lines.Count == (int)tier, "The line search does not grow with its tier.");
                         string target = type == ElementaryQuizType.ParallelLines ? "parallel" : "perpendicular";
                         var matches = (from left in Enumerable.Range(0, lines.Count)
                             from right in Enumerable.Range(left + 1, lines.Count - left - 1)
@@ -101,25 +101,21 @@ internal static partial class PuzzleTests
                 var parts = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true);
                 Require(validator.Validate(question, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
                     "The visual geometry worked answer was rejected.");
-                string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
-                Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var draft, out _, out _, allowEmptyAnswerUnit: true),
-                    "The varied visual geometry AI prompt could not be parsed.");
-                var ai = aiValidator.ValidateElementary(draft!, contract);
-                Require(ai.IsValid && validator.Validate(question with { WordProblem = ai.WordProblem },
-                    parts.Solution, parts.Equation, parts.Answer).IsCorrect, "AI and Algorithm disagree on the visual answer.");
                 count++;
             }
-            Require(rotations.Count >= 8, "Visual geometry drawings still use a fixed orientation.");
+            Require(rotations.Count >= ((int)tier == 1 ? 2 : (int)tier == 2 ? 4 : 8), "Visual geometry drawings still use a fixed orientation.");
             if (type == ElementaryQuizType.ClassifyAngle)
-                Require(angles.Count > 12 && angleKinds.Count == 4, "Angle tasks must cover varied measures and all four angle types.");
+                Require(angles.Count >= ((int)tier == 1 ? 4 : 13) && angleKinds.Count == ((int)tier == 1 ? 2 : 4),
+                    "Angle measures and classifications do not match their learning tier.");
             else
             {
-                Require(relations.SetEquals(new[] { "parallel", "perpendicular", "intersecting" }), "Two-line answers remain constant.");
+                if ((int)tier <= 3)
+                    Require(relations.SetEquals(new[] { "parallel", "perpendicular", "intersecting" }), "Two-line answers remain constant.");
                 if ((int)tier >= 3) Require(pairTasks > 0 && noPairTasks > 0 && noPairTasks < pairTasks,
                     "Higher tiers need both existing-pair and no-pair questions.");
             }
         }
-        Console.WriteLine($"  Checked {count} varied angle/line drawings, independent geometry, choices and bilingual AI grading.");
+        Console.WriteLine($"  Checked {count} varied angle/line drawings, independent geometry, choices and bilingual grading.");
 
         static string Relation(QuizVisualLine first, QuizVisualLine second)
         {

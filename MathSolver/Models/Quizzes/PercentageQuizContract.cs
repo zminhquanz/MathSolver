@@ -24,4 +24,5 @@ public sealed record PercentageQuizContract(
     string SolutionText,
     BigInteger RepresentativeLeft,
     ArithmeticOperation RepresentativeOperation,
-    BigInteger RepresentativeRight);
+    BigInteger RepresentativeRight,
+    IReadOnlyList<int>? CombinedQuantities = null);

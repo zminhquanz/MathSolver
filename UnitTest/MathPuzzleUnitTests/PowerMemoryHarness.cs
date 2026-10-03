@@ -12,6 +12,8 @@ namespace MathSolver.Services
         public const long LargeResultThresholdBytes = 64;
         public static readonly TimeSpan InactiveResultDelay = TimeSpan.FromSeconds(60);
         public static bool IsInBackground { get; set; }
+        public static void Register(IRecoverableMemoryOwner _) { }
+        public static void RequestCleanup() { }
         public static Task CollectReleasedMemoryAsync(long _) => Task.CompletedTask;
     }
 }

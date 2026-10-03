@@ -21,7 +21,7 @@
     <Compile Include="../../MathSolver/Services/Calculations/*.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Services/Localization/QuizLocalizationOverrides.cs" Link="Services/Localization/QuizLocalizationOverrides.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
+    <Compile Include="../../MathSolver/Services/Formatting/TextbookFractionParser.cs" Link="Services/Formatting/TextbookFractionParser.cs" />
     <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/AI/LocalLlmQuizGenerator.cs" Link="Services/AI/LocalLlmQuizGenerator.cs" />
   </ItemGroup>
 </Project>

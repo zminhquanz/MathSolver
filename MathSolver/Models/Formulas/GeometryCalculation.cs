@@ -55,6 +55,7 @@ public sealed record GeometryQuizContract(
     string Formula,
     string SubstitutionExpression)
 {
+    public GeometryQuizReasoning? Reasoning { get; init; }
     public int UnitPower =>
         Measurement switch
         {
@@ -73,7 +74,7 @@ public sealed record GeometryQuizContract(
             UnitPower);
 
     public string EquationText =>
-        $"{SubstitutionExpression} = {CorrectAnswer}";
+        $"{Reasoning?.CombinedExpression ?? SubstitutionExpression} = {CorrectAnswer}";
 }
 
 public static class GeometryUnitFormatter

@@ -23,23 +23,23 @@ internal static partial class PuzzleTests
             string aiUnit = EssayAnswerValidator.GetExpectedUnit(algorithm);
             if (aiUnit.Length == 0)
                 aiUnit = language == AppLanguage.Vietnamese ? "cây bút" : "pens";
-            ArithmeticQuizQuestion ai = algorithm with
+            ArithmeticQuizQuestion contextual = algorithm with
             {
                 WordProblem = new MathWordProblem(
                     "A word problem with the same contract.",
                     "The requested amount is:", aiUnit, "The problem")
             };
-            CheckEquationUnit(validator, ai,
-                $"AI/{kind}/{subtype}/{language}");
+            CheckEquationUnit(validator, contextual,
+                $"word-problem/{kind}/{subtype}/{language}");
             if (kind is QuizProblemKind.Arithmetic or QuizProblemKind.Fraction or
                 QuizProblemKind.FindX or QuizProblemKind.Geometry or QuizProblemKind.Proportion)
             {
                 string formatted = ElementaryWordProblemSolutionFormatter.Format(
-                    ai, language, CultureInfo.InvariantCulture);
-                string formattedValue = ai.FractionProblem?.CorrectAnswer.ToString() ??
-                                        ai.CorrectAnswer.ToString("N0", CultureInfo.InvariantCulture);
+                    contextual, language, CultureInfo.InvariantCulture);
+                string formattedValue = contextual.FractionProblem?.CorrectAnswer.ToString() ??
+                                        contextual.CorrectAnswer.ToString("N0", CultureInfo.InvariantCulture);
                 Require(formatted.Contains($"= {formattedValue} {aiUnit}", StringComparison.Ordinal),
-                    $"AI/{kind}/{subtype}/{language}: worked solution omits calculation unit.");
+                    $"word-problem/{kind}/{subtype}/{language}: worked solution omits calculation unit.");
             }
             count += 2;
         }
@@ -58,7 +58,7 @@ internal static partial class PuzzleTests
 
         CheckMetricUnitAbbreviations(validator);
 
-        Console.WriteLine($"  Checked {count} algorithm/AI equations with correct, missing, and wrong units.");
+        Console.WriteLine($"  Checked {count} algorithm/word-problem equations with correct, missing, and wrong units.");
     }
 
     private static void CheckMetricUnitAbbreviations(

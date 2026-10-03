@@ -14,7 +14,7 @@ internal static partial class PuzzleTests
             .GenerateAlgorithm(ArithmeticQuizMode.Essay,
                 AverageQuizType.Direct, AppLanguage.Vietnamese);
         AverageQuizContract average = algorithm.AverageProblem!;
-        ArithmeticQuizQuestion ai = algorithm with
+        ArithmeticQuizQuestion contextual = algorithm with
         {
             WordProblem = new MathWordProblem(
                 average.ProblemText, "Trung bình mỗi ngày là:",
@@ -24,7 +24,7 @@ internal static partial class PuzzleTests
         string equation = $"{average.EquationText} {average.AnswerUnit}";
         string answer = $"{average.CorrectAnswer} {average.AnswerUnit}";
 
-        foreach (ArithmeticQuizQuestion question in new[] { algorithm, ai })
+        foreach (ArithmeticQuizQuestion question in new[] { algorithm, contextual })
         {
             var parts = EssayCombinedInputParser.Split(
                 $"{sentence}\r\n{equation}", requiresSolution: true);
@@ -86,14 +86,14 @@ internal static partial class PuzzleTests
                 ? BuildSolutionSentence(algorithm, language) : string.Empty;
             string value = algorithm.ExactAnswer.ToString();
             string label = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
-            ArithmeticQuizQuestion ai = algorithm with
+            ArithmeticQuizQuestion contextual = algorithm with
             {
                 WordProblem = new MathWordProblem("", sentence,
                     algorithmUnit.Length > 0 ? algorithmUnit :
                         language == AppLanguage.Vietnamese ? "quả trứng" : "eggs", "")
             };
 
-            foreach (ArithmeticQuizQuestion question in new[] { algorithm, ai })
+            foreach (ArithmeticQuizQuestion question in new[] { algorithm, contextual })
             {
                 string unit = EssayAnswerValidator.GetExpectedUnit(question);
                 string solution = sentence.Length > 0 ? sentence :

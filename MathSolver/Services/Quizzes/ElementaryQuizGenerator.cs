@@ -4,8 +4,8 @@ using System.Globalization;
 
 namespace MathSolver.Services;
 
-/// <summary>Elementary practice contracts, shared by Algorithm and local AI generation.</summary>
-public sealed class ElementaryQuizGenerator(Random? random = null)
+/// <summary>C# math puzzle data and rules.</summary>
+public sealed partial class ElementaryQuizGenerator(Random? random = null)
 {
     private readonly Random _random = random ?? Random.Shared;
     public static bool Supports(QuizProblemKind kind) => Types(kind).Count > 0;
@@ -42,6 +42,8 @@ public sealed class ElementaryQuizGenerator(Random? random = null)
         };
         if (types.Count == 0) throw new ArgumentOutOfRangeException(nameof(kind));
         var type = selected.HasValue && types.Contains(selected.Value) ? selected.Value : types[_random.Next(types.Count)];
+        if (CreateDifficultyContract(kind, type, language, tier) is { } difficultyContract)
+            return CompleteQuestion(mode, difficultyContract, [], null);
         bool vi = language == AppLanguage.Vietnamese;
         string L(string vietnamese, string english) => vi ? vietnamese : english;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
@@ -97,100 +99,6 @@ public sealed class ElementaryQuizGenerator(Random? random = null)
                 TextAnswer(L("Dấu so sánh", "Comparison"), a < b ? "<" : a > b ? ">" : "=");
                 break;
             }
-            case ElementaryQuizType.SumDifference:
-            case ElementaryQuizType.SumRatio:
-            case ElementaryQuizType.DifferenceRatio:
-            {
-                int smallParts = _random.Next(1, 4), largeParts = smallParts + _random.Next(1, 4);
-                int small = smallParts * a, large = largeParts * a, sum = small + large, difference = large - small;
-                string smallLabel = L("Số bé", "Smaller number"), largeLabel = L("Số lớn", "Larger number");
-                if (type == ElementaryQuizType.SumDifference)
-                {
-                    Fact(sum, difference); Constant(2);
-                    problem = L($"Tổng hai số là {sum}, hiệu số lớn và số bé là {difference}. Tìm hai số đó.",
-                        $"Two numbers have a sum of {sum} and the larger minus the smaller is {difference}. Find both numbers.");
-                    Answer(smallLabel, $"({sum}-{difference})/2");
-                    Answer(largeLabel, $"{sum}-({sum}-{difference})/2");
-                }
-                else
-                {
-                    int given = type == ElementaryQuizType.SumRatio ? sum : difference;
-                    Fact(given, smallParts, largeParts);
-                    string op = type == ElementaryQuizType.SumRatio ? "+" : "-";
-                    string partExpression = type == ElementaryQuizType.SumRatio ? $"{smallParts}+{largeParts}" : $"{largeParts}-{smallParts}";
-                    problem = L($"{(op == "+" ? "Tổng" : "Hiệu số lớn và số bé")} hai số là {given}. Tỉ số của số bé và số lớn là {smallParts}/{largeParts}. Tìm hai số đó.",
-                        $"The {(op == "+" ? "sum" : "difference (larger minus smaller)")} is {given}. The ratio of smaller to larger is {smallParts}/{largeParts}. Find both numbers.");
-                    work.Add(L("Giá trị một phần là:", "The value of one part is:"));
-                    work.Add($"{given}/({partExpression})={a}");
-                    Answer(smallLabel, $"{given}/({partExpression})*{smallParts}");
-                    Answer(largeLabel, $"{given}/({partExpression})*{largeParts}");
-                }
-                break;
-            }
-            case ElementaryQuizType.LengthConversion:
-            case ElementaryQuizType.MassConversion:
-            case ElementaryQuizType.CapacityConversion:
-            case ElementaryQuizType.AreaConversion:
-            case ElementaryQuizType.VolumeConversion:
-            case ElementaryQuizType.MixedLength:
-            {
-                (string categoryId, string fromId, string toId) = type switch
-                {
-                    ElementaryQuizType.MassConversion => ("mass", "kg", "g"),
-                    ElementaryQuizType.CapacityConversion => ("capacity", "l", "ml"),
-                    ElementaryQuizType.AreaConversion => ("area", "m2", "cm2"),
-                    ElementaryQuizType.VolumeConversion => ("volume", "dm3", "cm3"),
-                    _ => ("length", "m", "cm")
-                };
-                var units = MeasurementEngine.GetCategory(categoryId).Units;
-                var fromUnit = units.First(unit => unit.Id == fromId);
-                var toUnit = units.First(unit => unit.Id == toId);
-                decimal factor = MeasurementEngine.Convert(1, fromUnit, toUnit);
-                string from = fromUnit.Symbol, to = toUnit.Symbol;
-                Fact(a); Constant(factor);
-                bool mixed = type == ElementaryQuizType.MixedLength;
-                bool reverse = !mixed && _random.Next(2) == 0;
-                if (reverse) (from, to) = (to, from);
-                if (mixed) Fact(b);
-                problem = L($"Đổi {a} {from}{(mixed ? $" {b} {to}" : "")} sang {to}.",
-                    $"Convert {a} {from}{(mixed ? $" {b} {to}" : "")} to {to}.");
-                Answer(L("Số đo sau khi đổi", "Converted measurement"), $"{a}{(reverse ? "/" : "*")}{N(factor)}" + (mixed ? $"+{b}" : ""), to);
-                break;
-            }
-            case ElementaryQuizType.ElapsedTime:
-            case ElementaryQuizType.ReadClock:
-            {
-                int hour = _random.Next(1, 11), minute = _random.Next(0, 12) * 5, duration = a * 5 + b;
-                Fact(hour, minute);
-                visual = new("clock", [], [hour, minute], "");
-                if (type == ElementaryQuizType.ReadClock)
-                {
-                    problem = L("Đồng hồ chỉ mấy giờ, bao nhiêu phút?", "What hour and minute does the clock show?");
-                    Answer(L("Giờ", "Hour"), hour.ToString());
-                    Answer(L("Phút", "Minute"), minute.ToString());
-                    requiresSolution = false;
-                }
-                else
-                {
-                    int end = hour * 60 + minute + duration;
-                    Fact(end / 60, end % 60); Constant(60);
-                    problem = L($"Bắt đầu lúc {hour}:{minute:00}, kết thúc lúc {end / 60}:{end % 60:00} trong cùng ngày. Thời gian kéo dài bao nhiêu phút?",
-                        $"Start at {hour}:{minute:00} and finish at {end / 60}:{end % 60:00} on the same day. How many minutes elapse?");
-                    Answer(L("Thời gian kéo dài", "Elapsed time"), $"({end / 60}*60+{end % 60})-({hour}*60+{minute})", L("phút", "minutes"));
-                }
-                break;
-            }
-            case ElementaryQuizType.TimeAddition:
-                Fact(a, b); Constant(60);
-                problem = L($"Tính {a} giờ + {b} phút, trả lời theo phút.", $"Add {a} hours and {b} minutes. Answer in minutes.");
-                Answer(L("Thời gian", "Time"), $"{a}*60+{b}", L("phút", "minutes")); break;
-            case ElementaryQuizType.Calendar:
-                a = _random.Next(1, 15); b = _random.Next(2, 15);
-                Fact(a, b);
-                problem = L($"Trong tháng 10, từ đầu ngày {a} đến đầu ngày {a + b} cách nhau bao nhiêu ngày?",
-                    $"In October, how many days pass from the start of day {a} to the start of day {a + b}?");
-                facts.Clear(); Fact(a, a + b);
-                Answer(L("Số ngày", "Days elapsed"), $"{a + b}-{a}", L("ngày", "days")); break;
             case ElementaryQuizType.QuotientRemainder:
             case ElementaryQuizType.MinimumGroups:
             case ElementaryQuizType.Leftovers:
@@ -253,171 +161,51 @@ public sealed class ElementaryQuizGenerator(Random? random = null)
                 Fact(x, y); problem = L($"Tính {displayExpression}.", $"Calculate {displayExpression}.");
                 Answer(L("Kết quả", "Result"), $"{N(x)}{op}{N(y)}", displayExpression: displayExpression); requiresSolution = false; break;
             }
-            case ElementaryQuizType.ReduceFraction:
             case ElementaryQuizType.CompareFractions:
-            case ElementaryQuizType.MixedNumber:
-            case ElementaryQuizType.CommonDenominator:
-            case ElementaryQuizType.FractionOfNumber:
-            case ElementaryQuizType.WholeFromFraction:
             {
                 int denominator = kind == QuizProblemKind.Fraction
                     ? QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2) : _random.Next(3, 9);
                 int numerator = kind == QuizProblemKind.Fraction
                     ? QuizCurriculumLayer.NextSecondaryOperand(_random, tier, maximumOverride: denominator - 1)
                     : _random.Next(1, denominator);
-                if (type == ElementaryQuizType.ReduceFraction)
+                int otherDenominator = scale < 3 ? denominator : kind == QuizProblemKind.Fraction
+                    ? QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2) : _random.Next(3, 9);
+                int otherNumerator = _random.Next(1, otherDenominator);
+                if (_random.Next(3) == 0)
                 {
-                    Fact(numerator * 2, denominator * 2);
-                    problem = L($"Rút gọn {numerator * 2}/{denominator * 2} đến tối giản.", $"Reduce {numerator * 2}/{denominator * 2} to lowest terms.");
-                    Answer(L("Phân số tối giản", "Reduced fraction"), $"{numerator * 2}/{denominator * 2}", reduced: true);
+                    int factor = scale < 3 ? 1 : kind == QuizProblemKind.Fraction
+                        ? _random.Next(1, Math.Min(scale, QuizCurriculumLayer.GetMaximumOperandValue(tier) / denominator) + 1)
+                        : _random.Next(2, scale + 1);
+                    otherNumerator = numerator * factor;
+                    otherDenominator = denominator * factor;
                 }
-                else if (type == ElementaryQuizType.MixedNumber)
-                {
-                    int n = a * denominator + numerator;
-                    Fact(n, denominator); problem = L($"Viết {n}/{denominator} dưới dạng hỗn số.", $"Write {n}/{denominator} as a mixed number.");
-                    Answer(L("Hỗn số", "Mixed number"), $"{n}/{denominator}", mixed: true);
-                }
-                else if (type == ElementaryQuizType.CompareFractions)
-                {
-                    int otherDenominator = scale < 3 ? denominator : kind == QuizProblemKind.Fraction
-                        ? QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2) : _random.Next(3, 9);
-                    int otherNumerator = _random.Next(1, otherDenominator);
-                    if (_random.Next(3) == 0)
-                    {
-                        int factor = scale < 3 ? 1 : kind == QuizProblemKind.Fraction
-                            ? _random.Next(1, Math.Min(scale, QuizCurriculumLayer.GetMaximumOperandValue(tier) / denominator) + 1)
-                            : _random.Next(2, scale + 1);
-                        otherNumerator = numerator * factor;
-                        otherDenominator = denominator * factor;
-                    }
-                    Fact(numerator, denominator, otherNumerator, otherDenominator);
-                    problem = L($"So sánh {numerator}/{denominator} và {otherNumerator}/{otherDenominator}.",
-                        $"Compare {numerator}/{denominator} and {otherNumerator}/{otherDenominator}.");
-                    int comparison = ((long)numerator * otherDenominator).CompareTo((long)otherNumerator * denominator);
-                    TextAnswer(L("Dấu so sánh", "Comparison"), comparison < 0 ? "<" : comparison > 0 ? ">" : "=");
-                }
-                else if (type == ElementaryQuizType.CommonDenominator)
-                {
-                    int otherNumerator = _random.Next(1, denominator * 2);
-                    Fact(numerator, otherNumerator, denominator, denominator * 2); Constant(2);
-                    problem = L($"Quy đồng {numerator}/{denominator} và {otherNumerator}/{denominator * 2} về mẫu số {denominator * 2}.",
-                        $"Express {numerator}/{denominator} and {otherNumerator}/{denominator * 2} with denominator {denominator * 2}.");
-                    Answer(L("Phân số thứ nhất", "First fraction"), $"{numerator}/{denominator}", denominator: denominator * 2);
-                    Answer(L("Phân số thứ hai", "Second fraction"), $"{otherNumerator}/{denominator * 2}", denominator: denominator * 2);
-                }
-                else
-                {
-                    int whole = a * denominator, part = a * numerator;
-                    IReadOnlyList<FractionQuantityStoryContext> contexts = FractionQuantityStoryContextCatalog.GetProfile(language);
-                    FractionQuantityStoryContext context = contexts[_random.Next(contexts.Count)];
-                    string fraction = $"{numerator}/{denominator}";
-                    if (type == ElementaryQuizType.FractionOfNumber)
-                    {
-                        Fact(whole, numerator, denominator);
-                        problem = string.Format(CultureInfo.InvariantCulture, context.PartProblemTemplate, whole, fraction);
-                        Answer(context.PartLabel, $"{whole}*{numerator}/{denominator}", context.Unit,
-                            displayExpression: $"{whole} × {numerator}/{denominator}");
-                    }
-                    else
-                    {
-                        Fact(part, numerator, denominator);
-                        problem = string.Format(CultureInfo.InvariantCulture, context.WholeProblemTemplate, part, fraction);
-                        Answer(context.WholeLabel, $"{part}/{numerator}*{denominator}", context.Unit,
-                            displayExpression: $"{part} ÷ ({numerator}/{denominator})");
-                    }
-                }
-                if (type is not (ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction)) requiresSolution = false;
+                Fact(numerator, denominator, otherNumerator, otherDenominator);
+                problem = L($"So sánh {numerator}/{denominator} và {otherNumerator}/{otherDenominator}.",
+                    $"Compare {numerator}/{denominator} and {otherNumerator}/{otherDenominator}.");
+                int comparison = ((long)numerator * otherDenominator).CompareTo((long)otherNumerator * denominator);
+                TextAnswer(L("Dấu so sánh", "Comparison"), comparison < 0 ? "<" : comparison > 0 ? ">" : "=");
                 break;
             }
-            case ElementaryQuizType.ReadTable:
-            case ElementaryQuizType.ReadBarChart:
-            case ElementaryQuizType.ReadPieChart:
-            case ElementaryQuizType.ChartTotal:
-            case ElementaryQuizType.ChartDifference:
-            {
-                IReadOnlyList<DataChartStoryContext> contexts = DataChartStoryContextCatalog.GetProfile(language);
-                DataChartStoryContext context = contexts[_random.Next(contexts.Count)];
-                string[] labels = context.Labels.ToArray();
-                _random.Shuffle(labels);
-                bool pie = type == ElementaryQuizType.ReadPieChart;
-                decimal[] values = [a * 2, b * 2, a + b];
-                if (pie)
-                {
-                    int first = _random.Next(2, 11) * 5;
-                    int second = _random.Next(2, (100 - first) / 5 - 1) * 5;
-                    values = [first, second, 100 - first - second];
-                }
-                string unit = pie ? "%" : context.Unit;
-                string visualKind = type == ElementaryQuizType.ReadTable ? "table" : pie ? "pie" : "bar";
-                string visualName = visualKind switch
-                {
-                    "table" => L("bảng", "table"),
-                    "pie" => L("biểu đồ tròn", "pie chart"),
-                    _ => L("biểu đồ cột", "bar chart")
-                };
-                visual = new(visualKind, labels, values, unit);
-                Fact(values);
-                string introduction = L($"{char.ToUpperInvariant(visualName[0])}{visualName[1..]} thống kê {context.Description}{(pie ? " theo tỉ lệ phần trăm" : "")}.",
-                    $"The {visualName} shows {context.Description}{(pie ? " as percentages" : "")}.");
-                string questionText, chartAnswerLabel, expression;
-                if (type == ElementaryQuizType.ChartTotal)
-                {
-                    questionText = L($"Tổng {context.QuantityName} trong {visualName} là bao nhiêu {unit}?",
-                        $"What is the total {context.QuantityName} shown (in {unit})?");
-                    chartAnswerLabel = L($"Tổng {context.QuantityName}", $"Total {context.QuantityName}");
-                    expression = string.Join("+", values.Select(N));
-                }
-                else if (type == ElementaryQuizType.ChartDifference)
-                {
-                    int firstRow = _random.Next(labels.Length);
-                    int secondRow = (firstRow + _random.Next(1, labels.Length)) % labels.Length;
-                    questionText = L($"{char.ToUpperInvariant(context.QuantityName[0])}{context.QuantityName[1..]} ở hai mục “{labels[firstRow]}” và “{labels[secondRow]}” chênh lệch bao nhiêu {unit}?",
-                        $"What is the difference in {context.QuantityName} between “{labels[firstRow]}” and “{labels[secondRow]}” (in {unit})?");
-                    chartAnswerLabel = L($"Chênh lệch {context.QuantityName}", $"Difference in {context.QuantityName}");
-                    expression = $"{N(Math.Max(values[firstRow], values[secondRow]))}-{N(Math.Min(values[firstRow], values[secondRow]))}";
-                }
-                else
-                {
-                    int selectedRow = _random.Next(labels.Length);
-                    questionText = pie
-                        ? L($"Mục “{labels[selectedRow]}” chiếm bao nhiêu phần trăm?", $"What percentage belongs to “{labels[selectedRow]}”?")
-                        : L($"Theo {visualName}, {context.QuantityName} ở mục “{labels[selectedRow]}” là bao nhiêu {unit}?",
-                            $"According to the {visualName}, what is the {context.QuantityName} for “{labels[selectedRow]}” (in {unit})?");
-                    chartAnswerLabel = pie ? L($"Tỉ lệ “{labels[selectedRow]}”", $"Percentage for “{labels[selectedRow]}”")
-                        : L($"{char.ToUpperInvariant(context.QuantityName[0])}{context.QuantityName[1..]} ở mục “{labels[selectedRow]}”",
-                            $"{char.ToUpperInvariant(context.QuantityName[0])}{context.QuantityName[1..]} for “{labels[selectedRow]}”");
-                    expression = N(values[selectedRow]);
-                }
-                problem = introduction + " " + questionText;
-                Answer(chartAnswerLabel, expression, unit);
-                requiresSolution = type is ElementaryQuizType.ChartTotal or ElementaryQuizType.ChartDifference;
-                break;
-            }
-            case ElementaryQuizType.Likelihood:
-            {
-                int category = _random.Next(3);
-                problem = L("Một túi chỉ có bi đỏ. ", "A bag contains only red marbles. ") + (category switch
-                {
-                    0 => L("Lấy một viên bi: việc lấy được bi đỏ là chắc chắn, có thể hay không thể?", "When drawing a marble, is getting red certain, possible or impossible?"),
-                    1 => L("Lấy một viên bi: việc lấy được bi xanh là chắc chắn, có thể hay không thể?", "When drawing a marble, is getting blue certain, possible or impossible?"),
-                    _ => L("Thêm một viên bi xanh rồi lấy ngẫu nhiên một viên: lấy được bi xanh là chắc chắn, có thể hay không thể?", "Add one blue marble and draw randomly: is getting blue certain, possible or impossible?")
-                });
-                TextAnswer(L("Khả năng xảy ra", "Likelihood"), category == 0 ? L("Chắc Chắn", "certain") : category == 1 ? L("Không Thể", "impossible") : L("Có Thể", "possible")); break;
-            }
-            case ElementaryQuizType.ExperimentalProbability:
-                Fact(a, a + b);
-                problem = L($"Tung đồng xu {a + b} lần, mặt ngửa xuất hiện {a} lần. Viết phân số chỉ số lần mặt ngửa so với tổng số lần tung.",
-                    $"A coin is tossed {a + b} times and lands heads {a} times. Express the heads count as a fraction of the total trials.");
-                Answer(L("Phân số số lần mặt ngửa", "Heads fraction"), $"{a}/{a + b}"); requiresSolution = false; break;
             case ElementaryQuizType.ClassifyAngle:
             {
-                int index = _random.Next(4);
-                int degrees = index switch { 0 => _random.Next(3, 18) * 5, 1 => 90, 2 => _random.Next(19, 34) * 5, _ => 180 };
+                int index = _random.Next(scale == 1 ? 2 : 4);
+                decimal degrees = index switch
+                {
+                    1 => 90, 3 => 180,
+                    0 when scale == 1 => _random.Next(2, 5) * 15,
+                    0 when scale == 4 => 90 - _random.Next(1, 10) / 10m,
+                    0 when scale == 5 => 90 - _random.Next(1, 10) / 100m,
+                    2 when scale == 4 => 90 + _random.Next(1, 10) / 10m,
+                    2 when scale == 5 => 90 + _random.Next(1, 10) / 100m,
+                    0 => _random.Next(3, 18) * 5,
+                    _ => _random.Next(19, 34) * 5
+                };
                 Fact(degrees);
                 string[][] names = [["A", "O", "B"], ["M", "O", "N"], ["X", "P", "Y"], ["C", "E", "D"]];
                 string[] labels = names[_random.Next(names.Length)];
                 string name = string.Concat(labels);
-                visual = new("angle", labels, [degrees], "°", RotationDegrees: _random.Next(12) * 30);
+                visual = new("angle", labels, [degrees], "°", RotationDegrees:
+                    scale == 1 ? _random.Next(2) * 180 : scale == 2 ? _random.Next(4) * 90 : _random.Next(12) * 30);
                 string[] prompts = vi
                     ? [$"Quan sát hình: góc {name} là góc nhọn, góc vuông, góc tù hay góc bẹt?",
                        $"Góc {name} trong hình thuộc loại góc nào?",
@@ -436,45 +224,55 @@ public sealed class ElementaryQuizGenerator(Random? random = null)
             case ElementaryQuizType.PerpendicularLines:
             {
                 bool parallel = type == ElementaryQuizType.ParallelLines;
-                bool choosePair = scale >= 3 && _random.Next(2) == 0;
-                decimal rotation = _random.Next(12) * 15;
-                string[][] nameSets = [["a", "b", "c"], ["d", "e", "f"], ["m", "n", "p"]];
+                bool choosePair = scale >= 4 || scale == 3 && _random.Next(2) == 0;
+                decimal rotation = scale == 1 ? _random.Next(2) * 90 : scale == 2 ? _random.Next(4) * 45 : _random.Next(12) * 15;
+                string[][] nameSets = [["a", "b", "c", "d", "e"], ["d", "e", "f", "g", "h"], ["m", "n", "p", "q", "r"]];
                 string[] names = nameSets[_random.Next(nameSets.Length)];
                 if (choosePair)
                 {
                     bool hasPair = _random.Next(4) != 0;
+                    int lineCount = scale >= 4 ? scale : 3;
+                    names = names[..lineCount];
                     decimal[] directions = hasPair
-                        ? parallel ? [rotation, rotation, rotation + 45] : [rotation, rotation + 90, rotation + 35]
-                        : [rotation, rotation + 30, rotation + 65];
+                        ? parallel ? [0, 0, 25, 55, 120] : [0, 90, 25, 55, 120]
+                        : [0, 25, 55, 120, 155];
+                    directions = directions[..lineCount].Select(direction => direction + rotation).ToArray();
                     _random.Shuffle(directions);
                     var lines = names.Select((label, lineIndex) => new QuizVisualLine(label, directions[lineIndex],
-                        parallel && hasPair ? (lineIndex - 1) * .35f : 0)).ToArray();
+                        parallel && hasPair ? (lineIndex - (lineCount - 1) / 2f) * .22f : 0)).ToArray();
                     visual = new("line-pairs", names, [], "", Lines: lines);
                     string Pair(int left, int right) => L($"Đường {names[left]} Và Đường {names[right]}", $"Lines {names[left]} and {names[right]}");
                     string none = parallel ? L("Không Có Cặp Song Song", "No parallel pair") : L("Không Có Cặp Vuông Góc", "No perpendicular pair");
-                    textChoices = [Pair(0, 1), Pair(0, 2), Pair(1, 2), none];
-                    int pairIndex = 3;
-                    (int Left, int Right)[] pairs = [(0, 1), (0, 2), (1, 2)];
+                    int pairIndex = -1;
+                    var pairs = (from left in Enumerable.Range(0, lineCount)
+                                 from right in Enumerable.Range(left + 1, lineCount - left - 1)
+                                 select (Left: left, Right: right)).ToArray();
                     for (int candidate = 0; candidate < pairs.Length; candidate++)
                     {
                         var pair = pairs[candidate];
                         decimal difference = Math.Abs(directions[pair.Left] - directions[pair.Right]) % 180;
                         if (difference == (parallel ? 0 : 90)) pairIndex = candidate;
                     }
+                    string[] distractors = pairs.Where((_, candidate) => candidate != pairIndex)
+                        .Select(pair => Pair(pair.Left, pair.Right)).ToArray();
+                    _random.Shuffle(distractors);
+                    string correctPair = pairIndex < 0 ? none : Pair(pairs[pairIndex].Left, pairs[pairIndex].Right);
+                    textChoices = pairIndex < 0 ? [.. distractors.Take(3), none]
+                        : [correctPair, .. distractors.Take(2), none];
                     string relationName = parallel ? L("song song", "parallel") : L("vuông góc", "perpendicular");
                     string[] prompts = vi
-                        ? [$"Trong ba đường thẳng {string.Join(", ", names)}, cặp đường nào {relationName}? Nếu không có cặp phù hợp, ghi không có.",
+                        ? [$"Trong các đường thẳng {string.Join(", ", names)}, cặp đường nào {relationName}? Nếu không có cặp phù hợp, ghi không có.",
                            $"Quan sát hình và tìm cặp đường thẳng {relationName}. Nếu không có, hãy cho biết không có cặp phù hợp.",
                            $"Cặp nào trong hình có quan hệ {relationName}? Chọn cặp đúng hoặc cho biết không có."]
                         : [$"Which pair among lines {string.Join(", ", names)} is {relationName}? If there is none, say there is no such pair.",
                            $"Find the {relationName} pair of lines in the figure, or state that there is no such pair.",
                            $"Which pair in the figure is {relationName}? Choose the pair or state that none exists."];
                     problem = prompts[_random.Next(prompts.Length)];
-                    if (pairIndex == 3) TextAnswer(L("Cặp đường thẳng", "Pair of lines"), none, L("không có", "none"));
+                    if (pairIndex < 0) TextAnswer(L("Cặp đường thẳng", "Pair of lines"), none, L("không có", "none"));
                     else
                     {
                         var pair = pairs[pairIndex];
-                        TextAnswer(L("Cặp đường thẳng", "Pair of lines"), textChoices[pairIndex],
+                        TextAnswer(L("Cặp đường thẳng", "Pair of lines"), correctPair,
                             L($"{names[pair.Left]} và {names[pair.Right]}", $"{names[pair.Left]} and {names[pair.Right]}"),
                             L($"{names[pair.Right]} và {names[pair.Left]}", $"{names[pair.Right]} and {names[pair.Left]}"),
                             L($"Đường {names[pair.Right]} Và Đường {names[pair.Left]}", $"Lines {names[pair.Right]} and {names[pair.Left]}"));
@@ -506,22 +304,37 @@ public sealed class ElementaryQuizGenerator(Random? random = null)
                 break;
             }
             case ElementaryQuizType.CountSides:
-                visual = new("rectangle", [], [], ""); Constant(4);
-                problem = L("Hình chữ nhật trong hình có bao nhiêu cạnh?", "How many sides does the shown rectangle have?");
-                Answer(L("Số cạnh", "Sides"), "4"); requiresSolution = false; break;
             case ElementaryQuizType.RectangleSide:
-                if (a < b) (a, b) = (b, a);
-                Fact(a * b, a); visual = new("rectangle", [L("Chiều dài", "Length"), "?"], [a], "cm");
-                problem = L($"Hình chữ nhật có diện tích {a * b} cm², chiều dài {a} cm. Tìm chiều rộng.",
-                    $"A rectangle has area {a * b} cm² and length {a} cm. Find its width.");
-                Answer(L("Chiều rộng", "Width"), $"{a * b}/{a}", "cm"); break;
             case ElementaryQuizType.CompositeArea:
-                Fact(a, b); visual = new("composite", [], [a, b], "cm");
-                problem = L($"Hình gồm hai hình vuông không chồng lấn, cạnh lần lượt {a} cm và {b} cm. Tính tổng diện tích.",
-                    $"Two non-overlapping squares have side lengths {a} cm and {b} cm. Find their combined area.");
-                Answer(L("Tổng diện tích", "Combined area"), $"{a}*{a}+{b}*{b}", "cm²"); break;
+            {
+                var task = type switch
+                {
+                    ElementaryQuizType.CountSides => CreateCountSidesTask(language, scale),
+                    ElementaryQuizType.RectangleSide => CreateMissingSideTask(language, a, b, scale),
+                    _ => CreateCompositeAreaTask(language, a, b, _random.Next(2, 5 + scale * 3), scale)
+                };
+                problem = task.ProblemText;
+                visual = task.Visual;
+                facts.AddRange(task.Facts);
+                constants.AddRange(task.Constants);
+                if (task.Hint is not null) work.Add(task.Hint);
+                Answer(task.AnswerLabel, task.Expression, task.Unit);
+                requiresSolution = task.RequiresSolution;
+                break;
+            }
         }
         var contract = new ElementaryQuizContract(kind, type, language, problem, "", facts, constants, answers, requiresSolution, visual);
+        return CompleteQuestion(mode, contract, work, textChoices);
+    }
+
+    private ArithmeticQuizQuestion CompleteQuestion(ArithmeticQuizMode mode, ElementaryQuizContract contract,
+        List<string> work, string[]? textChoices)
+    {
+        bool vi = contract.Language == AppLanguage.Vietnamese;
+        string L(string a, string b) => vi ? a : b;
+        string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
+        var answers = contract.Answers.ToList();
+        if (contract.Reasoning?.Explanation is { } explanation) work.Add(explanation);
         if (contract.IsComparison)
             work.Add(contract.FormatComparison(answers[0].Text!));
         // Display task-required forms, not only their normalized rational values.
@@ -529,10 +342,21 @@ public sealed class ElementaryQuizGenerator(Random? random = null)
             : answer.RequiredDenominator is int denominator ? answer with { Text = $"{answer.Value.Numerator * denominator / answer.Value.Denominator}/{denominator}" } : answer).ToList();
         contract = contract with { Answers = answers };
         string answerLabel = L("Đáp số", "Answer");
+        if (contract.Reasoning is not null)
+            work.AddRange(contract.Reasoning.Steps.Select(step => step.Label + ":" + Environment.NewLine +
+                step.Expression + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit)));
+        if (contract.Reasoning is not null && work.Count == 0) work.Add(answers[0].Label + ":");
         contract = contract with { SolutionText = string.Join(Environment.NewLine, work) + Environment.NewLine + answerLabel + ": " + contract.AnswerText };
         var choices = new List<string> { contract.AnswerText };
         if (textChoices is not null)
             choices.AddRange(textChoices.Where(text => !string.Equals(text, contract.AnswerText, StringComparison.OrdinalIgnoreCase)));
+        else if (contract.Type == ElementaryQuizType.ExperimentalProbability)
+        {
+            int total = contract.ProbabilityScenario!.TotalCount;
+            int favorable = contract.ProbabilityScenario.EventCount;
+            choices.AddRange(Enumerable.Range(1, 3).Select(delta =>
+                new ReducedFraction((favorable + delta) % (total + 1), total).ToString()));
+        }
         else for (int delta = 1; delta <= 3; delta++)
         {
             var alternative = answers.Select((answer, index) => index != 0 ? answer : answer.Text is not null

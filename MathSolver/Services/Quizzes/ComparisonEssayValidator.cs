@@ -63,13 +63,11 @@ internal static partial class ComparisonEssayValidator
         }
     }
 
-    private static bool SameValue(string entered, string expected) => NumericValueRegex().IsMatch(entered)
+    private static bool SameValue(string entered, string expected) => entered.Length <= 4096
         && EssayCalculationEvaluator.TryEvaluate(entered, out var value, out _, true)
         && EssayCalculationEvaluator.TryEvaluate(expected, out var given, out _, true) && value == given;
 
     [GeneratedRegex(@"^(?<left>[^<>=]+)(?<symbol>[<>=])(?<right>[^<>=]+)$", RegexOptions.CultureInvariant)]
     private static partial Regex ComparisonRegex();
 
-    [GeneratedRegex(@"^[+\-−]?\d+(?:[.,]\d+)?(?:\s*/\s*[+\-−]?\d+)?$", RegexOptions.CultureInvariant)]
-    private static partial Regex NumericValueRegex();
 }

@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace MathSolver.Services;
 
-/// <summary>Reads authoritative contracts, never the AI's rewritten prose or representative arithmetic.</summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public static class QuizDiagramBuilder
 {
     public static QuizDiagram? Build(ArithmeticQuizQuestion question, AppLanguage language, bool revealSolution = false)
@@ -32,7 +32,8 @@ public static class QuizDiagramBuilder
                 _ => []
             };
             var labels = keys.Where(geometry.Dimensions.ContainsKey).ToDictionary(key => key,
-                key => geometry.Dimensions[key].ToString(CultureInfo.InvariantCulture) + " " + geometry.LengthUnitSymbol);
+                key => !revealSolution && geometry.Reasoning?.HiddenDimensions.Contains(key) == true ? "? " + geometry.LengthUnitSymbol
+                    : geometry.Dimensions[key].ToString(CultureInfo.InvariantCulture) + " " + geometry.LengthUnitSymbol);
             string target = geometry.Measurement switch
             {
                 GeometryMeasurement.Perimeter => L("Chu vi", "Perimeter"),
@@ -43,12 +44,45 @@ public static class QuizDiagramBuilder
             };
             diagram = new("geometry", target + " = " + (revealSolution ? geometry.CorrectAnswer.ToString(CultureInfo.InvariantCulture) : "?") + " " + geometry.AnswerUnit, [], geometry.ShapeId,
                 new ReadOnlyDictionary<string, string>(labels));
-            if (revealSolution) solution = geometry.Formula + Environment.NewLine + geometry.EquationText + " " + geometry.AnswerUnit;
+            if (revealSolution) solution = geometry.Reasoning is not null ? GeometryReasoningText.FormatSolution(geometry)
+                : geometry.Formula + Environment.NewLine + geometry.EquationText + " " + geometry.AnswerUnit;
         }
         else if (question.ElementaryProblem is ElementaryQuizContract elementary)
         {
             IReadOnlyList<string> facts = elementary.Facts;
-            if (elementary.Kind == QuizProblemKind.TwoNumbers)
+            if (elementary.Reasoning?.SupportingDiagram is { } supporting)
+            {
+                diagram = revealSolution ? supporting with
+                {
+                    Rows = supporting.Rows.Select((row, index) => row with
+                    {
+                        Label = row.Label + " = " + ElementaryQuizContract.FormatAnswer(elementary.Answers[index])
+                    }).ToArray()
+                } : supporting;
+            }
+            else if (elementary.Reasoning is not null && elementary.Kind == QuizProblemKind.FractionSkills)
+            {
+                // Quantities can be inferred from several givens. No solved quantity is supplied as a diagram label.
+                var givens = elementary.Reasoning.Givens;
+                bool quantity = elementary.Type is ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction;
+                string unit = elementary.Answers[0].Unit;
+                var rows = new List<QuizDiagramRow>();
+                foreach (var numerator in givens.Where(given => given.Role.StartsWith("numerator", StringComparison.Ordinal)))
+                {
+                    string denominatorRole = numerator.Role.Replace("numerator", "denominator", StringComparison.Ordinal);
+                    var denominator = givens.FirstOrDefault(given => given.Role == denominatorRole);
+                    if (denominator is null) continue;
+                    int n = int.Parse(numerator.Value, CultureInfo.InvariantCulture);
+                    int d = int.Parse(denominator.Value, CultureInfo.InvariantCulture);
+                    rows.Add(new(quantity ? L("Phần đang xét", "Considered portion") + " = ? " + unit : $"{n}/{d}",
+                        [], FractionNumerator: n, FractionDenominator: d));
+                }
+                if (rows.Count == 0) rows.Add(new(L("Phân số cần suy ra", "Fraction to infer") + " = ?", []));
+                diagram = new("fractions", quantity ? (elementary.Reasoning.Tier == CurriculumTier.FiveStars
+                    ? L("Lượng còn lại sau phần đầu", "Quantity after the first portion") : L("Toàn bộ", "Whole")) + " = ? " + unit
+                    : L("Các phân số đã cho; suy ra phần còn thiếu", "Given fractions; infer missing components"), rows);
+            }
+            else if (elementary.Kind == QuizProblemKind.TwoNumbers)
             {
                 bool ratio = elementary.Type != ElementaryQuizType.SumDifference;
                 int small = ratio ? int.Parse(facts[1], CultureInfo.InvariantCulture) : 2;

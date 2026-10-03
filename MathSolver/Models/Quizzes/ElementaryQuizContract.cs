@@ -25,11 +25,23 @@ public sealed record ElementaryAnswer(string Label, ReducedFraction Value, strin
 
 public sealed record QuizVisualLine(string Label, decimal DirectionDegrees, float OffsetRatio = 0);
 
+/// <summary>Possible outcomes for classification, or observed trials for an experimental fraction.</summary>
+public sealed record ProbabilityQuizScenario(string ContextId, string EventText,
+    int EventCount, int TotalCount, bool UsesObservedResults);
+
+public sealed record QuizVisualPoint(decimal X, decimal Y, string Label = "");
+public sealed record QuizVisualPolygon(IReadOnlyList<QuizVisualPoint> Vertices, string Label = "",
+    bool IsCutout = false);
+public sealed record QuizVisualAnnotation(string Text, decimal X, decimal Y);
+
 public sealed record QuizVisualData(string Kind, IReadOnlyList<string> Labels,
     IReadOnlyList<decimal> Values, string Unit, decimal RotationDegrees = 0,
-    IReadOnlyList<QuizVisualLine>? Lines = null);
+    IReadOnlyList<QuizVisualLine>? Lines = null,
+    IReadOnlyList<QuizVisualPolygon>? Polygons = null,
+    IReadOnlyList<QuizVisualAnnotation>? Annotations = null, string? ScenarioId = null,
+    IReadOnlySet<int>? HiddenValueIndices = null);
 
-/// <summary>C# owns every relation, answer and visual; AI may rewrite introductory wording only.</summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuizType Type,
     AppLanguage Language, string ProblemText, string SolutionText,
     IReadOnlyList<string> Facts, IReadOnlyList<string> Constants,
@@ -37,6 +49,11 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     QuizVisualData? Visual = null, string? PresentedText = null,
     IReadOnlyList<string>? ChoiceTexts = null)
 {
+    public ProbabilityQuizScenario? ProbabilityScenario { get; init; }
+    public ElementaryQuizReasoning? Reasoning { get; init; }
+    public string? ComparisonLeftExpression { get; init; }
+    public string? ComparisonRightExpression { get; init; }
+
     public bool UsesFractionFormatting => Type is ElementaryQuizType.ReduceFraction or
         ElementaryQuizType.CompareFractions or ElementaryQuizType.MixedNumber or
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
@@ -46,7 +63,7 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions;
 
     public (string Left, string Right) ComparisonOperands => Type == ElementaryQuizType.CompareFractions
-        ? ($"{Facts[0]}/{Facts[1]}", $"{Facts[2]}/{Facts[3]}") : (Facts[0], Facts[1]);
+        ? (ComparisonLeftExpression ?? $"{Facts[0]}/{Facts[1]}", ComparisonRightExpression ?? $"{Facts[2]}/{Facts[3]}") : (Facts[0], Facts[1]);
 
     public string FormatComparison(string symbol)
     {

@@ -1,4 +1,4 @@
-﻿# Views
+# Views
 
 [Bản đồ toàn project](../FOLDER_STRUCTURE.md)
 
@@ -33,10 +33,8 @@ Tra cứu và tính theo công thức, chuyển đổi đơn vị, bảng cửu 
 
 ## Hardware
 
-Thông tin phần cứng, benchmark số học/LLM và danh mục model.
+Thông tin phần cứng và benchmark số học CPU.
 
-- [GemmaModelCatalogPage.xaml](Hardware/GemmaModelCatalogPage.xaml)
-- [HardwareLlmBenchmarkView.xaml](Hardware/HardwareLlmBenchmarkView.xaml)
 - [HardwarePerformancePage.xaml](Hardware/HardwarePerformancePage.xaml)
 
 ## Quizzes
@@ -58,4 +56,3 @@ Cài đặt, menu cài đặt và giới thiệu ứng dụng.
 Màn hình khởi động.
 
 - [SplashPage.xaml](Startup/SplashPage.xaml)
-

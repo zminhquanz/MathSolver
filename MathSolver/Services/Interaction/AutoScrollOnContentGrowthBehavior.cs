@@ -11,7 +11,7 @@ namespace MathSolver.Services;
 ///
 /// This is intentionally layout-driven instead of being tied to individual
 /// Calculate buttons, so the same behavior also covers validation cards,
-/// solution cards, AI diagnostics and future result Borders throughout the app.
+/// solution cards and result Borders throughout the app.
 /// </summary>
 public static class AutoScrollOnContentGrowthBehavior
 {

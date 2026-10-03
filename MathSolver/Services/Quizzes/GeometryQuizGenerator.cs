@@ -4,14 +4,8 @@ using System.Numerics;
 
 namespace MathSolver.Services;
 
-/// <summary>
-/// Sinh hợp đồng hình học dùng chung cho nguồn Thuật toán và AI/LLM.
-/// Nguồn Thuật toán ghép câu hỏi trực tiếp bằng template ngắn; AI/LLM chỉ
-/// diễn đạt lại hợp đồng. Các hình dùng số nguyên lấy đáp án từ
-/// GeometryCalculationEngine; riêng hình tròn tiểu học dùng π = 3.14 chính xác
-/// theo hợp đồng Toán đố để giữ đáp án tương thích với model số nguyên hiện có.
-/// </summary>
-public sealed class GeometryQuizGenerator
+/// <summary>C# math puzzle data and rules.</summary>
+public sealed partial class GeometryQuizGenerator
 {
     private readonly GeometryCalculationEngine _engine;
     private readonly Random _random;
@@ -66,7 +60,7 @@ public sealed class GeometryQuizGenerator
             eligibleTemplates[_random.Next(eligibleTemplates.Length)];
 
         IReadOnlyDictionary<string, BigInteger> dimensions =
-            CreateDimensions(
+            curriculumContext.HasValue ? CreateTieredDimensions(template.ShapeId, template.Measurement, curriculumContext.Value.Tier, curriculumRules!.MaximumDimension) : CreateDimensions(
                 template.ShapeId,
                 template.Measurement,
                 curriculumRules);
@@ -95,6 +89,8 @@ public sealed class GeometryQuizGenerator
                 template.Measurement,
                 dimensions));
 
+        if (curriculumContext.HasValue)
+            contract = contract with { Reasoning = CreateReasoning(contract, curriculumContext.Value.Tier, language) };
         return CreateQuestion(mode, contract);
     }
 
@@ -199,10 +195,13 @@ public sealed class GeometryQuizGenerator
             _ => throw new ArgumentOutOfRangeException(nameof(shape))
         };
 
-    private static MathWordProblem BuildAlgorithmProblem(
+    internal static MathWordProblem BuildAlgorithmProblem(
         GeometryQuizContract contract,
         AppLanguage language)
     {
+        if (contract.Reasoning is { } reasoning)
+            return new(reasoning.ProblemText, GeometryReasoningText.SolutionLead(contract, language),
+                contract.AnswerUnit, contract.ObjectName);
         IReadOnlyDictionary<string, BigInteger> value =
             contract.Dimensions;
 
@@ -510,6 +509,13 @@ public sealed class GeometryQuizGenerator
             };
 
             return (answer, formula);
+        }
+
+        if (shapeId == "rhombus" && !dimensions.ContainsKey("h"))
+        {
+            BigInteger answer = measurement == GeometryMeasurement.Perimeter
+                ? 4 * dimensions["a"] : dimensions["d1"] * dimensions["d2"] / 2;
+            return (answer, measurement == GeometryMeasurement.Perimeter ? "P = a × 4" : "S = (d₁ × d₂) ÷ 2");
         }
 
         GeometryCalculationResult calculation =

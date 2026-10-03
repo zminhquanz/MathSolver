@@ -74,13 +74,13 @@ internal static partial class PuzzleTests
         QuizDiagram before = QuizDiagramBuilder.Build(question, language)!;
         Require(before is not null && before.Explanation is null, "Diagram leaked the worked solution before grading.");
         string original = JsonSerializer.Serialize(before);
-        var changed = question with { CorrectAnswer = 987654321, WordProblem = new("AI prose 987654321", "AI solution 987654321", "wrong", "wrong") };
+        var changed = question with { CorrectAnswer = 987654321, WordProblem = new("word-problem prose 987654321", "word-problem solution 987654321", "wrong", "wrong") };
         if (question.MotionProblem is { } motion) changed = changed with { MotionProblem = motion with { CorrectAnswer = 987654321, SolutionText = "SECRET" } };
         if (question.AverageProblem is { } average) changed = changed with { AverageProblem = average with { CorrectAnswer = 987654321, SolutionText = "SECRET" } };
         if (question.FractionProblem is { } fraction) changed = changed with { FractionProblem = fraction with { CorrectAnswer = new(987654321, 1) } };
         if (question.ElementaryProblem is { } elementary) changed = changed with { ElementaryProblem = elementary with
             { SolutionText = "SECRET", Answers = elementary.Answers.Select(answer => answer with { Value = new(987654321, 1) }).ToArray() } };
-        Require(original == JsonSerializer.Serialize(QuizDiagramBuilder.Build(changed, language)), "Diagram used AI prose or hidden answer values.");
+        Require(original == JsonSerializer.Serialize(QuizDiagramBuilder.Build(changed, language)), "Diagram used word-problem prose or hidden answer values.");
         Require(!string.IsNullOrWhiteSpace(QuizDiagramBuilder.Build(question, language, true)!.Explanation), "Diagram explanation missing after grading.");
     }
 }

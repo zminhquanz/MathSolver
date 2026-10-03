@@ -8,7 +8,7 @@ namespace MathSolver.Controls;
 /// <summary>
 /// Shared animated-background host for the four learning tabs. Both the built-in
 /// GraphicsView animation and validated hardware-decoded H.264 MP4 keep running
-/// during local AI inference. All native/drawing resources are allocated lazily
+/// while the owning tab is active. All native/drawing resources are allocated lazily
 /// and are released when the background or owning tab is inactive.
 /// </summary>
 public sealed class LiveWallpaperView : Grid
@@ -224,8 +224,8 @@ public sealed class LiveWallpaperView : Grid
 
         if (mode != LiveWallpaperMode.Mp4)
         {
-            // Built-in animations are intentionally allowed to continue during
-            // AI/LLM inference. At 24 FPS their ambient drawing overhead is
+            // Built-in animations continue while this tab is active.
+            // At 24 FPS their ambient drawing overhead is
             // very small and they do not allocate a native media decoder.
             StopAdaptiveContrast();
             AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
@@ -249,7 +249,7 @@ public sealed class LiveWallpaperView : Grid
         }
 #endif
         // MP4 mode was accepted only after H.264/hardware-path validation.
-        // Keep playback uninterrupted during AI/LLM inference. Tell the manager
+        // Keep playback uninterrupted while this tab is active. Tell the manager
         // before creating the player so optional frame analysis cannot overlap
         // a second native decoder with live playback.
         ReleaseMathAnimationResources();

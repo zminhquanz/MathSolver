@@ -66,9 +66,6 @@ public sealed class QuizProblemTypeCatalog
     public IReadOnlyList<QuizProblemOption> Options =>
         ReadOnlyOptions;
 
-    public IEnumerable<QuizProblemOption> GetOptions(bool algorithm) =>
-        ReadOnlyOptions.Where(option => algorithm || !option.AlgorithmOnly);
-
     public QuizProblemRequest Resolve(
         int selectedIndex,
         ArithmeticOperation? basicOperation,
@@ -89,9 +86,6 @@ public sealed class QuizProblemTypeCatalog
     {
         QuizProblemOption option =
             GetOption(selectedIndex);
-
-        if (option.AlgorithmOnly && !includeExpressions)
-            return QuizCurriculumLayer.ResolveMixedRequest(curriculumTier, _random);
 
         if (option.FixedRequest is
             QuizProblemRequest fixedRequest)

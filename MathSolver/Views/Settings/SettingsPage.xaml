@@ -568,7 +568,7 @@
                                     TextColor="{DynamicResource TextPrimaryColor}" />
                                 <Label
                                     x:Name="LiveWallpaperEnabledSummaryLabel"
-                                    Text="Hình nền chỉ dừng khi tab không hoạt động; Math Animation và H.264 phần cứng đều tiếp tục chạy khi AI local tạo sinh."
+                                    Text="Hình nền chạy khi tab đang hoạt động và dừng khi tab không hoạt động."
                                     FontSize="12"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
                             </VerticalStackLayout>
@@ -966,7 +966,7 @@
 
                         <Label
                             x:Name="DeveloperSectionDescriptionLabel"
-                            Text="Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán và AI/LLM."
+                            Text="Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán."
                             FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                             TextColor="{DynamicResource TextSecondaryColor}" />
 
@@ -1050,26 +1050,7 @@
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource TextSecondaryColor}" />
 
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                    <Label
-                                        Grid.Column="0"
-                                        Text="JSON"
-                                        FontSize="11"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
-                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                        <Label
-                                            x:Name="DeveloperLlmToolsTitleLabel"
-                                            Text="JSON và log kiểm tra AI"
-                                            FontAttributes="Bold"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
-                                        <Label
-                                            x:Name="DeveloperLlmToolsDescriptionLabel"
-                                            Text="Hiện JSON do LLM tạo và từng bước validation của C#."
-                                            FontSize="12"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
-                                    </VerticalStackLayout>
-                                </Grid>
+
 
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                     <Label

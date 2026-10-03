@@ -126,7 +126,6 @@ public partial class HardwarePerformancePage : ContentPage
     private bool _isPageDisappearing;
     private CancellationTokenSource? _benchmarkCancellationTokenSource;
     private TaskCompletionSource<bool>? _benchmarkCompletionSource;
-    private bool _showLlmPerformance;
     private bool _isUpdatingBenchmarkTestPicker;
 
     private readonly List<SimdModeOption>
@@ -137,8 +136,6 @@ public partial class HardwarePerformancePage : ContentPage
     {
         InitializeComponent();
 
-        LlmBenchmarkView.BenchmarkRunningChanged +=
-            OnLlmBenchmarkRunningChanged;
 
 #if ANDROID
         AndroidPickerVisualHelper.Attach(
@@ -157,8 +154,6 @@ public partial class HardwarePerformancePage : ContentPage
         LoadHardwareInformation();
         RenderBenchmarkResult();
         RefreshExtendedBenchmarkUi();
-        UpdateBenchmarkModeTabs();
-        LlmBenchmarkView.RefreshState();
         PreparePageEntryAnimation();
     }
 
@@ -182,8 +177,6 @@ public partial class HardwarePerformancePage : ContentPage
         LoadHardwareInformation();
         RenderBenchmarkResult();
         RefreshExtendedBenchmarkUi();
-        UpdateBenchmarkModeTabs();
-        LlmBenchmarkView.RefreshState();
 
 #if WINDOWS
         MathSolver.Platforms.Windows.WindowStateManager.SetCloseGuard(
@@ -210,7 +203,6 @@ public partial class HardwarePerformancePage : ContentPage
         // Chỉ gửi yêu cầu dừng không phát sinh exception.
         // CloseAsync sẽ chờ benchmark kết thúc khi điều hướng trong ứng dụng.
         _benchmarkCancellationTokenSource?.Cancel();
-        LlmBenchmarkView.CancelBenchmark();
 
 #if WINDOWS
         MathSolver.Platforms.Windows.WindowStateManager.ClearCloseGuard(
@@ -239,8 +231,7 @@ public partial class HardwarePerformancePage : ContentPage
     private async Task<bool> ConfirmWindowsWindowCloseAsync()
     {
         // When no benchmark is active, X and Alt+F4 close immediately.
-        if (!_isBenchmarkRunning &&
-            !LlmBenchmarkView.IsBenchmarkRunning)
+        if (!_isBenchmarkRunning)
         {
             return true;
         }
@@ -257,7 +248,6 @@ public partial class HardwarePerformancePage : ContentPage
         // The application can close only after every benchmark worker has
         // observed cancellation and the benchmark task has completed.
         await StopBenchmarkAndWaitAsync();
-        await LlmBenchmarkView.StopAndWaitAsync();
 
         return true;
     }
@@ -368,108 +358,8 @@ public partial class HardwarePerformancePage : ContentPage
         LoadHardwareInformation();
         RenderBenchmarkResult();
         RefreshExtendedBenchmarkUi();
-        UpdateBenchmarkModeTabs();
-        LlmBenchmarkView.RefreshState();
         SetBenchmarkButtonRunningState(
             _isBenchmarkRunning);
-    }
-
-    private void OnLlmBenchmarkRunningChanged(
-        bool isRunning)
-    {
-        UpdateBenchmarkTabLockState();
-    }
-
-    private void UpdateBenchmarkTabLockState()
-    {
-        bool anyBenchmarkRunning =
-            _isBenchmarkRunning ||
-            LlmBenchmarkView.IsBenchmarkRunning;
-
-        RawPerformanceTabButton.IsEnabled =
-            !anyBenchmarkRunning;
-
-#if WINDOWS
-        LlmPerformanceTabButton.IsEnabled =
-            LocalAiHardwareEligibility.IsAvailable && !anyBenchmarkRunning;
-#else
-        LlmPerformanceTabButton.IsEnabled = false;
-#endif
-    }
-
-    private void OnRawPerformanceTabClicked(
-        object? sender,
-        EventArgs e)
-    {
-        _showLlmPerformance = false;
-        UpdateBenchmarkModeTabs();
-    }
-
-    private void OnLlmPerformanceTabClicked(
-        object? sender,
-        EventArgs e)
-    {
-#if WINDOWS
-        if (!LocalAiHardwareEligibility.IsAvailable) return;
-        _showLlmPerformance = true;
-        LlmBenchmarkView.RefreshState();
-        UpdateBenchmarkModeTabs();
-#endif
-    }
-
-    private void UpdateBenchmarkModeTabs()
-    {
-        bool canUseLocalAi = LocalAiHardwareEligibility.IsAvailable;
-        BenchmarkModeTabs.IsVisible = canUseLocalAi;
-        LlmPerformanceTabButton.IsVisible = canUseLocalAi;
-        if (!canUseLocalAi) _showLlmPerformance = false;
-
-        bool vietnamese =
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.Vietnamese;
-
-        RawPerformanceTabButton.Text = vietnamese
-            ? "⚙ Hiệu năng thuần"
-            : "⚙ Raw performance";
-        LlmPerformanceTabButton.Text = "🤖 AI / LLM";
-
-        RawPerformanceContent.IsVisible =
-            !_showLlmPerformance;
-        LlmBenchmarkView.IsVisible =
-            _showLlmPerformance;
-
-        if (_showLlmPerformance)
-        {
-            LlmPerformanceTabButton.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "PrimaryColor");
-            LlmPerformanceTabButton.SetDynamicResource(
-                Button.TextColorProperty,
-                "OnPrimaryColor");
-            RawPerformanceTabButton.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-            RawPerformanceTabButton.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
-        else
-        {
-            RawPerformanceTabButton.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "PrimaryColor");
-            RawPerformanceTabButton.SetDynamicResource(
-                Button.TextColorProperty,
-                "OnPrimaryColor");
-            LlmPerformanceTabButton.SetDynamicResource(
-                Button.BackgroundColorProperty,
-                "SurfaceAltColor");
-            LlmPerformanceTabButton.SetDynamicResource(
-                Button.TextColorProperty,
-                "TextPrimaryColor");
-        }
-
-        UpdateBenchmarkTabLockState();
     }
 
     private void LoadHardwareInformation()
@@ -873,7 +763,6 @@ public partial class HardwarePerformancePage : ContentPage
         BenchmarkTestPicker.Opacity =
             isLocked ? 0.55d : 1d;
 
-        UpdateBenchmarkTabLockState();
 
         bool useEnglish =
             AppLanguageManager.CurrentLanguage ==
@@ -6435,8 +6324,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         try
         {
-            if (_isBenchmarkRunning ||
-                LlmBenchmarkView.IsBenchmarkRunning)
+            if (_isBenchmarkRunning)
             {
                 bool shouldStop =
                     await ConfirmStopBenchmarkAsync();
@@ -6448,9 +6336,8 @@ public partial class HardwarePerformancePage : ContentPage
             }
 
             // Sau khi người dùng xác nhận, dừng nhẹ nhàng và chờ benchmark
-            // thuần hoặc AI/LLM thoát trước khi trở về màn hình chính.
+            // Wait for benchmark workers before returning to the main screen.
             await StopBenchmarkAndWaitAsync();
-            await LlmBenchmarkView.StopAndWaitAsync();
 
             await PlayPageExitAnimationAsync();
 

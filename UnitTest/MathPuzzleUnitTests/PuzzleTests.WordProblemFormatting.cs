@@ -7,9 +7,9 @@ namespace MathSolver.Tests;
 
 internal static partial class PuzzleTests
 {
-    internal static void CheckAiEssayFormatting()
+    internal static void CheckWordProblemFormatting()
     {
-        CheckAiSolutionCues();
+        CheckWordProblemSolutionCues();
         CheckPaintAreaEssayValidation();
         CheckProportionFormatting();
         CheckMotionFormatting();
@@ -28,14 +28,14 @@ internal static partial class PuzzleTests
             new IntegerArithmeticExpression(60, ArithmeticOperation.Multiply, 8),
             ArithmeticQuizMode.Essay, 240, null, null, [],
             ProportionProblem: contract);
-        ArithmeticQuizQuestion ai = algorithm with
+        ArithmeticQuizQuestion contextual = algorithm with
         {
             WordProblem = new MathWordProblem(
                 contract.ProblemText, "Diện tích tường sơn được là:",
                 "m²", "thùng sơn")
         };
 
-        foreach (ArithmeticQuizQuestion question in new[] { algorithm, ai })
+        foreach (ArithmeticQuizQuestion question in new[] { algorithm, contextual })
         {
             EssayAnswerValidationResult accepted = validator.Validate(
                 question, "Số m2 tường mà 8 thùng sơn được là:",
@@ -61,7 +61,7 @@ internal static partial class PuzzleTests
         }
     }
 
-    private static void CheckAiSolutionCues()
+    private static void CheckWordProblemSolutionCues()
     {
         var validator = new EssayAnswerValidator(new BasicArithmeticEngine());
         ArithmeticQuizQuestion arithmetic = Generate(
@@ -76,10 +76,10 @@ internal static partial class PuzzleTests
 
         Require(validator.Validate(arithmetic, "Số trứng là:", null, null)
                 .SolutionIsCorrect,
-            "AI word problem rejected the requested object in the solution.");
+            "word-problem word problem rejected the requested object in the solution.");
         Require(!validator.Validate(arithmetic, "Lan tính là:", null, null)
                 .SolutionIsCorrect,
-            "AI word problem accepted a person's name without the requested object.");
+            "word-problem word problem accepted a person's name without the requested object.");
 
         ArithmeticQuizQuestion mass = arithmetic with
         {
@@ -87,7 +87,7 @@ internal static partial class PuzzleTests
         };
         Require(validator.Validate(mass, "Khối lượng (g) là:", null, null)
                 .SolutionIsCorrect,
-            "AI word problem rejected the matching unit abbreviation in the solution.");
+            "word-problem word problem rejected the matching unit abbreviation in the solution.");
     }
 
     private static void CheckProportionFormatting()
@@ -125,15 +125,15 @@ internal static partial class PuzzleTests
 
             string algorithm = ProportionQuizSolutionFormatter.Format(
                 contract, AppLanguage.Vietnamese, CultureInfo.InvariantCulture);
-            string ai = ElementaryWordProblemSolutionFormatter.Format(
+            string contextual = ElementaryWordProblemSolutionFormatter.Format(
                 question, AppLanguage.Vietnamese, CultureInfo.InvariantCulture);
 
-            Require(algorithm == ai,
-                "Algorithm and AI proportion solutions should use the same format.");
-            Require(ai.Split(Environment.NewLine).Length == 3 &&
-                    ai.Contains(expectedEquations[index], StringComparison.Ordinal) &&
-                    !ai.Contains("Giá trị ứng với 1 đơn vị", StringComparison.Ordinal),
-                $"Proportion solution should have one specific lead and one equation: {ai}");
+            Require(algorithm == contextual,
+                "Algorithm and word-problem proportion solutions should use the same format.");
+            Require(contextual.Split(Environment.NewLine).Length == 3 &&
+                    contextual.Contains(expectedEquations[index], StringComparison.Ordinal) &&
+                    !contextual.Contains("Giá trị ứng với 1 đơn vị", StringComparison.Ordinal),
+                $"Proportion solution should have one specific lead and one equation: {contextual}");
         }
     }
 
@@ -170,12 +170,12 @@ internal static partial class PuzzleTests
                     motion.ProblemText, "Quãng đường đi được là:",
                     motion.AnswerUnit, motion.SubjectName),
                 MotionProblem: motion);
-            string ai = ElementaryWordProblemSolutionFormatter.Format(
+            string contextual = ElementaryWordProblemSolutionFormatter.Format(
                 question, AppLanguage.Vietnamese, CultureInfo.InvariantCulture);
-            Require(ai.Split(Environment.NewLine).Length == 3 &&
-                    ai.Contains(motion.EquationText, StringComparison.Ordinal) &&
-                    !ai.Contains(" × 1 ", StringComparison.Ordinal),
-                $"AI motion solution should use one equation without × 1: {ai}");
+            Require(contextual.Split(Environment.NewLine).Length == 3 &&
+                    contextual.Contains(motion.EquationText, StringComparison.Ordinal) &&
+                    !contextual.Contains(" × 1 ", StringComparison.Ordinal),
+                $"word-problem motion solution should use one equation without × 1: {contextual}");
 
             foundConvertedTimeUnit |= needsTimeConversion;
             foundSameTimeUnit |= !needsTimeConversion;
@@ -220,7 +220,7 @@ internal static partial class PuzzleTests
                         $"{language}/{type} did not combine the average into one equation.");
                 }
 
-                ArithmeticQuizQuestion ai = algorithm with
+                ArithmeticQuizQuestion contextual = algorithm with
                 {
                     WordProblem = new MathWordProblem(
                         average.ProblemText,
@@ -231,7 +231,7 @@ internal static partial class PuzzleTests
                         average.SubjectName)
                 };
                 string formatted = ElementaryWordProblemSolutionFormatter.Format(
-                    ai, language, CultureInfo.InvariantCulture);
+                    contextual, language, CultureInfo.InvariantCulture);
                 string[] aiLines = formatted.Split(Environment.NewLine);
                 Require(type == AverageQuizType.IndirectData
                         ? aiLines.Length == 7 && aiLines.Count(line => line.Contains('=')) == 3 &&
@@ -239,9 +239,9 @@ internal static partial class PuzzleTests
                         : aiLines.Length == 3 &&
                         aiLines[1] == $"{average.EquationText} {average.AnswerUnit}" &&
                         aiLines[2] == expectedAnswerLine,
-                    $"AI {language}/{type} should show one lead, equation and answer: {formatted}");
+                    $"word-problem {language}/{type} should show one lead, equation and answer: {formatted}");
 
-                foreach (ArithmeticQuizQuestion question in new[] { algorithm, ai })
+                foreach (ArithmeticQuizQuestion question in new[] { algorithm, contextual })
                 {
                     EssayAnswerValidationResult result = validator.Validate(
                         question,
@@ -293,7 +293,7 @@ internal static partial class PuzzleTests
                         !lines[0].StartsWith("Percentage ratio:", StringComparison.Ordinal),
                     $"{language}/{type} used a generic percentage lead.");
 
-                ArithmeticQuizQuestion ai = algorithm with
+                ArithmeticQuizQuestion contextual = algorithm with
                 {
                     WordProblem = new MathWordProblem(
                         percentage.ProblemText,
@@ -304,14 +304,14 @@ internal static partial class PuzzleTests
                         percentage.SubjectName)
                 };
                 string aiSolution = ElementaryWordProblemSolutionFormatter.Format(
-                    ai, language, CultureInfo.InvariantCulture);
+                    contextual, language, CultureInfo.InvariantCulture);
                 Require(aiSolution == percentage.SolutionText,
-                    $"AI {language}/{type} should use the contextual contract solution once.");
+                    $"word-problem {language}/{type} should use the contextual contract solution once.");
 
                 string studentLead = language == AppLanguage.Vietnamese
                     ? $"Số {(type == PercentageQuizType.FindPercentageRatio ? percentage.SubjectName : percentage.AnswerUnit)} cần tìm là:"
                     : $"The {(type == PercentageQuizType.FindPercentageRatio ? percentage.SubjectName : percentage.AnswerUnit)} requested is:";
-                foreach (ArithmeticQuizQuestion question in new[] { algorithm, ai })
+                foreach (ArithmeticQuizQuestion question in new[] { algorithm, contextual })
                 {
                     EssayAnswerValidationResult result = validator.Validate(
                         question,

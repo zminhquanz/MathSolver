@@ -6,7 +6,7 @@ namespace MathSolver.Services.Core;
 
 /// <summary>
 /// Engine hình học độc lập với UI. Cả tab Giải toán/Hình học và bộ sinh
-/// toán đố AI đều gọi lớp này, nên công thức và đáp án chỉ có một nguồn đúng.
+/// toán đố C# đều gọi lớp này, nên công thức và đáp án chỉ có một nguồn đúng.
 /// </summary>
 public sealed class GeometryCalculationEngine
 {

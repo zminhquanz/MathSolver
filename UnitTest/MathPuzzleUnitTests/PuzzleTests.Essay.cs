@@ -48,7 +48,7 @@ internal static partial class PuzzleTests
             count++;
         }
 
-        // AI word problems still require a sentence for arithmetic, fractions,
+        // word-problem word problems still require a sentence for arithmetic, fractions,
         // and Find X; the exception applies to algorithm-only expressions.
         foreach (QuizProblemKind kind in new[]
             { QuizProblemKind.Arithmetic, QuizProblemKind.Fraction,
@@ -64,10 +64,10 @@ internal static partial class PuzzleTests
             Require(EssayAnswerValidator.RequiresSolution(question) &&
                     validator.Validate(question, null, null, null).SolutionError ==
                     EssayAnswerError.MissingSolution,
-                $"AI {kind}: solution sentence should remain required.");
+                $"word-problem {kind}: solution sentence should remain required.");
         }
 
-        Console.WriteLine($"  Checked {count} algorithm essay contracts and AI basic exceptions.");
+        Console.WriteLine($"  Checked {count} algorithm essay contracts and word-problem basic exceptions.");
     }
 
     private static string BuildSolutionSentence(

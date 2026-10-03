@@ -81,11 +81,13 @@ public sealed partial class EssayAnswerValidator
 
         IReadOnlyList<EssayStepValidationResult> steps = [];
         bool indirect = question.AverageProblem?.Type == AverageQuizType.IndirectData;
+        bool geometryWork = question.GeometryProblem?.Reasoning is not null;
         (bool equationIsCorrect, EssayAnswerError equationError) = indirect
             ? AverageIndirectEssayValidator.Validate(question, equationText, out steps)
+            : geometryWork ? GeometryWorkedEssayValidator.Validate(question, equationText, out steps)
             : ValidateCalculatedEquation(question, calculation);
 
-        if (!indirect && equationIsCorrect &&
+        if (!indirect && !geometryWork && equationIsCorrect &&
             !IsExpectedUnit(question, enteredEquationUnit))
         {
             equationIsCorrect = false;
@@ -268,10 +270,6 @@ public sealed partial class EssayAnswerValidator
         string? originalSolution)
     {
         string expectedUnit = NormalizeUnit(GetExpectedUnit(question));
-        if (question.ExpressionProblem?.Story is not null &&
-            new[] { "giá trị", "kết quả", "biểu thức", "value", "result", "expression" }
-                .Any(cue => ContainsNormalizedPhrase(normalizedSolution, cue)))
-            return true;
         if (expectedUnit == "%" &&
             ((originalSolution ?? string.Empty).Contains('%') ||
              ContainsNormalizedPhrase(normalizedSolution, "phần trăm") ||
@@ -410,14 +408,7 @@ public sealed partial class EssayAnswerValidator
         {
             string entered = NormalizeNumericExpression(parts[firstCalculationPart]);
             string given = NormalizeNumericExpression(expressionProblem.ExpressionText);
-            // Verbal AI plans describe grouping rather than a literal printed
-            // formula. Accept redundant grouping while preserving every ordered
-            // operand and operation. Numeric Algorithm grading stays unchanged.
-            bool same = entered == given || question.WordProblem is not null &&
-                EssayCalculationEvaluator.TryGetStructure(entered, out string enteredTree, expressionProblem.UsesFractions) &&
-                EssayCalculationEvaluator.TryGetStructure(given, out string givenTree, expressionProblem.UsesFractions) &&
-                enteredTree == givenTree;
-            if (!same)
+            if (entered != given)
                 return (false, EssayAnswerError.WrongOperandsOrOperation);
         }
 

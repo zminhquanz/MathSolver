@@ -4,10 +4,7 @@ using System.Numerics;
 
 namespace MathSolver.Services;
 
-/// <summary>
-/// Sinh hợp đồng phân số cho cả nguồn Thuật toán và AI. Đáp án luôn được
-/// FractionCalculationEngine tính và rút gọn trước khi đưa sang giao diện.
-/// </summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public sealed class FractionQuizGenerator
 {
     private static readonly FractionOperation[] SupportedOperations =

@@ -1,4 +1,4 @@
-﻿# Models
+# Models
 
 [Bản đồ toàn project](../FOLDER_STRUCTURE.md)
 
@@ -37,16 +37,15 @@ Cấu trúc gói ngôn ngữ.
 
 ## Quizzes
 
-Cấu trúc đề toán, chương trình học, lựa chọn dạng bài và dữ liệu đề từ LLM.
+Cấu trúc đề toán, chương trình học, lựa chọn dạng bài và nội dung lời văn.
 
 - [ArithmeticQuizQuestion.cs](Quizzes/ArithmeticQuizQuestion.cs)
 - [AverageQuizContract.cs](Quizzes/AverageQuizContract.cs)
 - [FindXQuizContract.cs](Quizzes/FindXQuizContract.cs)
 - [FractionQuizContract.cs](Quizzes/FractionQuizContract.cs)
-- [LlmMathWordProblem.cs](Quizzes/LlmMathWordProblem.cs)
+- [MathWordProblem.cs](Quizzes/MathWordProblem.cs)
 - [MotionQuizContract.cs](Quizzes/MotionQuizContract.cs)
 - [PercentageQuizContract.cs](Quizzes/PercentageQuizContract.cs)
 - [ProportionQuizContract.cs](Quizzes/ProportionQuizContract.cs)
 - [QuizCurriculum.cs](Quizzes/QuizCurriculum.cs)
 - [QuizProblemSelection.cs](Quizzes/QuizProblemSelection.cs)
-

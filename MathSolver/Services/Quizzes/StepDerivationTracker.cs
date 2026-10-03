@@ -104,9 +104,13 @@ internal sealed class StepDerivationTracker
             foreach (Origin a in left)
             foreach (Origin b in right)
             {
-                var origin = a.Apply(kind, b);
+                Origin origin;
+                try { origin = a.Apply(kind, b); }
+                catch (InvalidOperationException) { continue; }
                 if (!result.Any(old => old.Equivalent(origin))) result.Add(origin);
-                if (result.Count > 64) throw new InvalidOperationException("Too many ambiguous interpretations.");
+                // Keep a bounded set of valid origins rather than discarding all of them
+                // when a reused number also matches another fact or intermediate result.
+                if (result.Count >= 64) return result;
             }
             return result;
         }

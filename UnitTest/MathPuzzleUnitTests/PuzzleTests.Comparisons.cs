@@ -11,7 +11,6 @@ internal static partial class PuzzleTests
     internal static void CheckComparisons()
     {
         var validator = new EssayAnswerValidator(new BasicArithmeticEngine());
-        var aiValidator = new LlmWordProblemValidator();
         var relations = new Dictionary<QuizProblemKind, HashSet<string>>
         {
             [QuizProblemKind.Arithmetic] = [], [QuizProblemKind.Fraction] = []
@@ -58,18 +57,6 @@ internal static partial class PuzzleTests
                 !validator.Validate(question, null, null, ";;").IsCorrect,
                 "Empty or separator-only answers must fail.");
 
-            string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
-            Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var draft,
-                out _, out _, allowEmptyAnswerUnit: true), "The production AI schema must parse.");
-            var ai = aiValidator.ValidateElementary(draft!, contract);
-            Require(ai.IsValid && validator.Validate(question with { WordProblem = ai.WordProblem }, null, null, expected).IsCorrect,
-                "AI and Algorithm comparison grading must agree.");
-            var changedDraft = new LlmWordProblemDraft
-            {
-                ProblemText = contract.ProblemText.Replace(facts[0].ToString(), "123456789", StringComparison.Ordinal),
-                AnswerUnit = contract.Answers[0].Unit
-            };
-            Require(!aiValidator.ValidateElementary(changedDraft, contract).IsValid, "AI cannot change comparison operands.");
             count++;
         }
         Require(relations.Values.All(values => values.SetEquals(["<", ">", "="])) && equivalentFractions,
@@ -121,6 +108,6 @@ internal static partial class PuzzleTests
             }
             Require(mixedComparison && mixedArithmetic, "Subtype mixed must include comparisons and arithmetic.");
         }
-        Console.WriteLine($"  Checked {count} bilingual integer/fraction comparison contracts, exact grading and AI responses.");
+        Console.WriteLine($"  Checked {count} bilingual integer/fraction comparison contracts, exact grading.");
     }
 }

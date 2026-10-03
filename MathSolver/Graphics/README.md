@@ -1,4 +1,4 @@
-﻿# Graphics
+# Graphics
 
 [Bản đồ toàn project](../FOLDER_STRUCTURE.md)
 
@@ -20,10 +20,9 @@ Nền động và hợp đồng drawable cập nhật theo thời gian.
 
 ## Benchmarks
 
-Biểu đồ kết quả benchmark CPU và LLM.
+Biểu đồ kết quả benchmark CPU.
 
 - [BenchmarkVerticalChartDrawable.cs](Benchmarks/BenchmarkVerticalChartDrawable.cs)
-- [LlmAccuracyHorizontalChartDrawable.cs](Benchmarks/LlmAccuracyHorizontalChartDrawable.cs)
 
 ## Equations
 
@@ -44,11 +43,10 @@ Minh họa chuyển động, tỉ lệ và hình học.
 ## Quizzes
 
 Bảng, biểu đồ cột/tròn, đồng hồ và hình học trực quan dùng dữ kiện của câu hỏi.
-Hai nguồn Thuật toán và AI/LLM dùng cùng drawable trên Windows và Android.
+Các đề do C# tạo dùng cùng drawable trên Windows và Android.
 
 - [ElementaryQuizDrawable.cs](Quizzes/ElementaryQuizDrawable.cs)
 - [QuizDiagramDrawable.cs](Quizzes/QuizDiagramDrawable.cs): hình học có số đo,
   sơ đồ đoạn thẳng tìm hai số, chuyển động, phân số và trung bình cộng gián tiếp.
-  `QuizDiagramBuilder` chọn dữ kiện từ hợp đồng C#, không đọc câu văn AI;
+  `QuizDiagramBuilder` chọn dữ kiện từ hợp đồng C#;
   kết quả và diễn giải chỉ được đưa vào sơ đồ sau khi chấm.
-

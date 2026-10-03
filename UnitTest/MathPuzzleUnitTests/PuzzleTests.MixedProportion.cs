@@ -22,28 +22,27 @@ internal static partial class PuzzleTests
                 "The catalog lost a mixed or fixed proportion selection.");
         }
 
-        var aiValidator = new LlmWordProblemValidator();
         var essayValidator = new EssayAnswerValidator(new BasicArithmeticEngine());
         int count = 0;
         foreach (CurriculumTier tier in Enum.GetValues<CurriculumTier>())
         foreach (AppLanguage language in Enum.GetValues<AppLanguage>())
         foreach (ArithmeticQuizMode mode in Enum.GetValues<ArithmeticQuizMode>())
-        foreach (bool ai in new[] { false, true })
+        foreach (bool contextual in new[] { false, true })
         {
             AppLanguageManager.CurrentLanguage = language;
             var generator = new ProportionQuizGenerator(new Random(
-                92002 + (int)tier * 100 + (int)language * 10 + (int)mode * 2 + (ai ? 1 : 0)));
+                92002 + (int)tier * 100 + (int)language * 10 + (int)mode * 2 + (contextual ? 1 : 0)));
             QuizProblemRequest request = catalog.Resolve(proportionIndex, null, null, null,
                 null, null, null, null, null, tier);
             var curriculum = new QuizCurriculumContext(tier, false);
             var seen = new HashSet<ProportionQuizType>();
             for (int sample = 0; sample < 64; sample++)
             {
-                ArithmeticQuizQuestion question = ai
+                ArithmeticQuizQuestion question = contextual
                     ? generator.GenerateContract(mode, request.ProportionType, language, curriculum)
                     : generator.GenerateAlgorithm(mode, request.ProportionType, language, curriculum);
                 ProportionQuizContract contract = question.ProportionProblem!;
-                string label = $"Mixed proportion/{tier}/{language}/{mode}/{ai}/{sample}";
+                string label = $"Mixed proportion/{tier}/{language}/{mode}/{contextual}/{sample}";
                 Require(contract.Type is ProportionQuizType.Direct or ProportionQuizType.Inverse,
                     $"{label}: the generated contract must contain a concrete relationship.");
                 seen.Add(contract.Type);
@@ -60,27 +59,17 @@ internal static partial class PuzzleTests
                     Require(essayValidator.Validate(question, solution[0], solution[1],
                             $"{contract.CorrectAnswer} {contract.AnswerUnit}").IsCorrect,
                         $"{label}: correct essay rejected for the sampled relationship.");
-                if (ai)
-                {
-                    Require(LlmQuizPromptBuilder.BuildProportionUserPrompt(contract, language, null).Length > 100,
-                        $"{label}: no AI prompt for the sampled relationship.");
-                    var validation = aiValidator.ValidateProportion(
-                        DraftFromAlgorithm(QuizProblemKind.Proportion, question), contract, language);
-                    Require(validation.IsValid,
-                        $"{label}/{contract.Scenario}: AI rejected a matching proportion story: " +
-                        $"{validation.ErrorCode}; {contract.ProblemText}");
-                }
                 count++;
             }
-            Require(seen.SetEquals(Enum.GetValues<ProportionQuizType>()),
-                $"{tier}/{language}/{mode}/{ai}: mixed mode never selected both relationships.");
+            Require(seen.SetEquals(tier == CurriculumTier.OneStar ? new[] { ProportionQuizType.Direct } : tier == CurriculumTier.FiveStars ? new[] { ProportionQuizType.Inverse } : Enum.GetValues<ProportionQuizType>()),
+                $"{tier}/{language}/{mode}/{contextual}: mixed mode did not match the tier-appropriate relationships.");
 
             // Choosing a fixed type again must stop the random relationship selection.
             foreach (ProportionQuizType type in Enum.GetValues<ProportionQuizType>())
             {
                 request = catalog.Resolve(proportionIndex, null, null, type,
                     null, null, null, null, null, tier);
-                ArithmeticQuizQuestion question = ai
+                ArithmeticQuizQuestion question = contextual
                     ? generator.GenerateContract(mode, request.ProportionType, language, curriculum)
                     : generator.GenerateAlgorithm(mode, request.ProportionType, language, curriculum);
                 Require(question.ProportionProblem!.Type == type,

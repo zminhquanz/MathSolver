@@ -1,18 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Maui" Version="15.0.1" />
     <PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="10.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.110" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.110" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
-  </ItemGroup>
-
-  <!-- Local GGUF inference is Windows-only. Android deliberately does not
-       restore or package LLamaSharp/native llama.cpp; its AI/LLM source is
-       hidden until the future LiteRT-LM Android backend is integrated. -->
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-    <PackageReference Include="LLamaSharp" Version="0.27.0" />
-    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.27.0" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -125,13 +117,7 @@
     <Compile Update="Views\Quizzes\MathPuzzlePage.xaml.cs">
       <DependentUpon>MathPuzzlePage.xaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\Hardware\HardwareLlmBenchmarkView.xaml.cs">
-      <DependentUpon>HardwareLlmBenchmarkView.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Views\Hardware\GemmaModelCatalogPage.xaml.cs">
-      <DependentUpon>GemmaModelCatalogPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Views\Calculators\PowerRootView.xaml.cs">
+  <Compile Update="Views\Calculators\PowerRootView.xaml.cs">
       <DependentUpon>PowerRootView.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
@@ -161,13 +147,7 @@
     <MauiXaml Update="Views\Quizzes\MathPuzzlePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Views\Hardware\HardwareLlmBenchmarkView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Views\Hardware\GemmaModelCatalogPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Views\Settings\SettingsMenuPage.xaml">
+  <MauiXaml Update="Views\Settings\SettingsMenuPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\Startup\SplashPage.xaml">

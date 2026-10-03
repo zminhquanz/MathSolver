@@ -14,14 +14,14 @@ internal static partial class PuzzleTests
             .GenerateAlgorithm(ArithmeticQuizMode.Essay,
                 AverageQuizType.Direct, AppLanguage.Vietnamese);
         AverageQuizContract average = algorithm.AverageProblem!;
-        ArithmeticQuizQuestion ai = algorithm with
+        ArithmeticQuizQuestion contextual = algorithm with
         {
             WordProblem = new MathWordProblem(
                 average.ProblemText, "Trung bình mỗi ngày là:",
                 average.AnswerUnit, average.SubjectName)
         };
 
-        foreach (ArithmeticQuizQuestion question in new[] { algorithm, ai })
+        foreach (ArithmeticQuizQuestion question in new[] { algorithm, contextual })
         {
             EssayAnswerValidationResult missing = validator.Validate(
                 question, string.Empty, string.Empty, string.Empty);

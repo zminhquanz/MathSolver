@@ -2,17 +2,7 @@ using MathSolver.Models;
 
 namespace MathSolver.Services;
 
-/// <summary>
-/// Curriculum Layer chỉ điều phối nội dung do tab Toán đố sinh.
-///
-/// Hai luồng được tách rõ:
-/// 1) Hỗn hợp toàn bộ: số sao quyết định pool dạng toán được phép xuất hiện.
-/// 2) Đã chọn một dạng toán: 1..5 sao chỉ điều khiển độ lớn dữ kiện; không
-///    khóa skill/subtype và không làm UI phải thêm/xóa item theo số sao.
-///
-/// Các rule này dùng chung cho nguồn Thuật toán và AI/LLM. Tab Giải toán
-/// không được phụ thuộc Curriculum Layer.
-/// </summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public static class QuizCurriculumLayer
 {
     private sealed record WeightedMixedRequest(

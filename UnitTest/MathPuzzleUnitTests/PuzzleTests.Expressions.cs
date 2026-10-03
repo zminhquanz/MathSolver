@@ -121,9 +121,8 @@ internal static partial class PuzzleTests
             "Nested bracket/fraction evaluation is wrong.");
 
         var catalog = new QuizProblemTypeCatalog(new Random(904));
-        Require(catalog.GetOptions(true).Any(option => option.FixedRequest?.Kind == QuizProblemKind.Expression) &&
-                catalog.GetOptions(false).Any(option => option.FixedRequest?.Kind == QuizProblemKind.Expression),
-            "Expressions must appear in both source catalogs.");
+        Require(catalog.Options.Any(option => option.FixedRequest?.Kind == QuizProblemKind.Expression),
+            "Expressions must appear in the problem catalog.");
         int expressionIndex = catalog.Options.ToList().FindIndex(option => option.FixedRequest?.Kind == QuizProblemKind.Expression);
         foreach (ExpressionQuizType type in Enum.GetValues<ExpressionQuizType>())
         {
@@ -135,7 +134,7 @@ internal static partial class PuzzleTests
         Require(catalog.Resolve(expressionIndex, null, null, ProportionQuizType.Direct, null, null,
                 null, null, null, CurriculumTier.FiveStars) is
                 { Kind: QuizProblemKind.Expression, ExpressionType: null },
-            "Expression Mixed was not passed to AI generation.");
+            "Expression Mixed was not passed to word-problem generation.");
         foreach (CurriculumTier tier in Enum.GetValues<CurriculumTier>())
         {
             bool found = false;
@@ -147,7 +146,7 @@ internal static partial class PuzzleTests
                     Require(algorithm.ExpressionType is ExpressionQuizType.Integer or ExpressionQuizType.IntegerWithBrackets,
                         "Mixed fractions should keep their existing curriculum gate.");
                 Require(QuizCurriculumLayer.ResolveMixedRequest(tier, new Random(5000 + index)) == algorithm,
-                    "Algorithm and AI mixed pools must match.");
+                    "Algorithm and word-problem mixed pools must match.");
                 Require(QuizCurriculumLayer.ResolveMixedRequest(tier, new Random(5000 + index), false).Kind !=
                         QuizProblemKind.Expression, "Explicit expression exclusion was ignored.");
             }

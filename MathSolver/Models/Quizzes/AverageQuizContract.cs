@@ -28,6 +28,7 @@ public sealed record AverageQuizContract(
     BigInteger RepresentativeLeft,
     ArithmeticOperation RepresentativeOperation,
     BigInteger RepresentativeRight,
-    AverageIndirectData? IndirectData = null);
+    AverageIndirectData? IndirectData = null,
+    IReadOnlyList<int>? KnownScores = null);
 
 public sealed record AverageIndirectData(int FirstQuantity, int Increase, int Decrease, int PersonCount = 3);

@@ -11,7 +11,6 @@ internal static partial class PuzzleTests
     {
         var generator = new GeometryQuizGenerator(new GeometryCalculationEngine(), new Random(91001));
         var grader = new EssayAnswerValidator(new BasicArithmeticEngine());
-        var aiValidator = new LlmWordProblemValidator();
         var catalog = new QuizProblemTypeCatalog(new Random(91002));
         int geometryIndex = catalog.Options.ToList().FindIndex(option => option.FixedRequest?.Kind == QuizProblemKind.Geometry);
         int count = 0;
@@ -68,34 +67,10 @@ internal static partial class PuzzleTests
                             $"{label}: incorrect unit power accepted.");
                     }
 
-                    // AI receives the same requested contract before it writes the story.
-                    ArithmeticQuizQuestion ai = generator.Generate(mode, language, shape, curriculum, measurement);
-                    Require(ai.GeometryProblem!.Measurement == measurement,
-                        $"{label}: AI contract ignored the selection.");
-                    string prompt = LlmQuizPromptBuilder.BuildGeometryUserPrompt(ai.GeometryProblem, language, null, null);
-                    Require(prompt.Length > 100, $"{label}: AI prompt is missing.");
-                    LlmWordProblemDraft draft = DraftFromAlgorithm(QuizProblemKind.Geometry, ai);
-                    Require(aiValidator.ValidateGeometry(draft, ai.GeometryProblem, language).IsValid,
-                        $"{label}: matching AI story rejected.");
-                    if (measurement is GeometryMeasurement.LateralArea or GeometryMeasurement.TotalArea)
-                    {
-                        string lateral = language == AppLanguage.Vietnamese ? "diện tích xung quanh" : "lateral surface area";
-                        string total = language == AppLanguage.Vietnamese ? "diện tích toàn phần" : "total surface area";
-                        string required = measurement == GeometryMeasurement.LateralArea ? lateral : total;
-                        string other = measurement == GeometryMeasurement.LateralArea ? total : lateral;
-                        Require(prompt.Contains(required, StringComparison.OrdinalIgnoreCase),
-                            $"{label}: AI prompt lost the requested area.");
-                        var wrong = new LlmWordProblemDraft
-                        {
-                            ProblemText = draft.ProblemText!.Replace(required, other),
-                            SubjectName = draft.SubjectName,
-                            AnswerUnit = draft.AnswerUnit,
-                            SolutionLead = draft.SolutionLead
-                        };
-                        Require(aiValidator.ValidateGeometry(wrong, ai.GeometryProblem, language).ErrorCode ==
-                                "GeometryMeasurementMismatch",
-                            $"{label}: AI confused lateral and total area.");
-                    }
+                    // word-problem receives the same requested contract before it writes the story.
+                    ArithmeticQuizQuestion contextual = generator.Generate(mode, language, shape, curriculum, measurement);
+                    Require(contextual.GeometryProblem!.Measurement == measurement,
+                        $"{label}: word-problem contract ignored the selection.");
                     count++;
                 }
             }
@@ -128,6 +103,6 @@ internal static partial class PuzzleTests
             null, null, null, GeometryQuizShape.Cube, null, CurriculumTier.FiveStars,
             geometryMeasurement: GeometryMeasurement.LateralArea);
         Require(mixedRequest.GeometryMeasurement is null, "Global mixed mode inherited a hidden geometry selection.");
-        Console.WriteLine($"  Checked {count} geometry selections, exact formulas, unit powers and bilingual AI contracts.");
+        Console.WriteLine($"  Checked {count} geometry selections, exact formulas, unit powers and bilingual contracts.");
     }
 }

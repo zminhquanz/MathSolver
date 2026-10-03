@@ -36,10 +36,7 @@ public enum ProportionScenarioKind
     PackagingCount
 }
 
-/// <summary>
-/// Dữ kiện C# sở hữu cho một bài toán tỉ lệ. AI chỉ được phép diễn đạt lại
-/// các dữ kiện này thành câu văn, không được tự thay số hay đổi quan hệ.
-/// </summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public sealed record ProportionQuizContract(
     ProportionQuizType Type,
     ProportionScenarioKind Scenario,

@@ -1,16 +1,6 @@
-﻿# Services
+# Services
 
 [Bản đồ toàn project](../FOLDER_STRUCTURE.md)
-
-## AI
-
-Chạy LLM cục bộ, sinh đề bằng LLM, quản lý và tải model.
-
-- [Gemma4ModelDownloadService.cs](AI/Gemma4ModelDownloadService.cs)
-- [LocalLlmQuizGenerator.cs](AI/LocalLlmQuizGenerator.cs)
-- [LocalLlmRuntime.Windows.cs](AI/LocalLlmRuntime.Windows.cs)
-- [ModelFileLocationService.cs](AI/ModelFileLocationService.cs)
-- [QuizLlmModelStore.cs](AI/QuizLlmModelStore.cs)
 
 ## Appearance
 

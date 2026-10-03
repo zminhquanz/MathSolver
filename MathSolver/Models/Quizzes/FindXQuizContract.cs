@@ -2,11 +2,7 @@ using System.Numerics;
 
 namespace MathSolver.Models;
 
-/// <summary>
-/// Hợp đồng phương trình một bước dùng chung cho nguồn Thuật toán và AI/LLM.
-/// KnownValue là toán hạng đã biết, ResultValue là vế phải và CorrectAnswer
-/// là giá trị x đã được FindXEngine giải rồi thay ngược để xác minh.
-/// </summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public sealed record FindXQuizContract(
     BigInteger KnownValue,
     BigInteger ResultValue,

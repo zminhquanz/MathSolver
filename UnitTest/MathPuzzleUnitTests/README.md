@@ -1,19 +1,16 @@
 # Math puzzle checks
 
-The comparison group checks 2,880 integer/fraction contracts across both languages,
-five star levels and three answer modes. It independently compares cross products,
-checks equality of equivalent fractions, correct and incorrect signs, full and
-reversed comparisons, conflicting submissions, AI fact preservation and fixed/mixed
-subtype selection. Algorithm and AI use the same C# contract and grader.
+The practice page uses the C# algorithm on Windows and Android. The previous
+AI implementation, model management, prompts, response validation, hardware AI
+benchmark, live-model harness and captured model fixtures have been removed.
 
-The elementary-expansion groups cover 4,920 Algorithm/AI contracts for 41 skills
-across nine new families, both languages, all five star levels and all three answer
-modes. They check examples, distinct choices, subtype translations, unchanged AI
-mathematical passages and answer units. Independent cases cover merged/split work,
-reordered two-number answers, missing/duplicate results, earlier errors, school
-division-with-remainder notation, extra groups, exact decimals with comma notation,
-mixed numbers and reduced fractions. Indirect averages use the same derivation
-grader. See [implementation details](../../MathSolver/ELEMENTARY_QUIZ_EXPANSION.md).
+The console harness runs 26 test groups against the actual C# generators,
+curriculum rules, exact arithmetic, essay graders and presentation helpers.
+It covers every registered problem family, both languages, all five star levels
+and all three answer modes. Checks include independent answers, distinct choices,
+realistic motion speeds, units, diagrams with hidden values, alternative solution
+steps, textbook fractions, combined essay input and recoverable result storage.
+Generic word-problem formatting tests remain because C# also generates story text.
 
 ## Visual Studio
 
@@ -33,79 +30,14 @@ Run from the repository root:
 dotnet run --project UnitTest/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj -c Release
 ```
 
-The command exits with a nonzero status when any check fails. It uses the real
-quiz generators, prompts, JSON parser, and AI response validators, linked from
-the app source. Small stubs replace only platform services needed to compile
-these components outside MAUI. It needs no model download, API key, network
-connection, or unit-test package.
+To run selected groups, pass one or more case-insensitive name fragments:
 
-The quiz-diagram group verifies geometry labels against the dimensions actually
-stated in each task (excluding generated but unmentioned lengths), all ten motion
-kinds and arrow directions, fraction and two-number diagrams, indirect averages,
-and Vietnamese/English controls. Changing AI prose or hidden answer values must
-not change an ungraded diagram. Worked explanations are available only after
-grading. Native layout, modal navigation and pinch gestures still need device
-checks; these contract tests do not simulate MAUI rendering.
+```powershell
+dotnet run --project UnitTest/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj -c Release -- "Motion" "Geometry"
+```
 
-The recoverable-result group links the production result file store, weak memory
-registry, power-of-ten streaming writer, and `PowerRootView.Memory.cs`. A small
-platform harness replaces UI dependencies and uses a small storage threshold.
-It checks retained previews and exact values, foreground/busy exemptions,
-returning before the idle timeout, concurrent cleanup, clear/new-result races,
-disk-write failure, cancellation, repeated file exports, stale-file cleanup,
-and weak registrations. It does not measure RAM savings or benchmark the app.
+A filter that matches no group exits with a nonzero status.
 
-The checks cover all supported puzzle subtypes in Vietnamese and English across
-true/false, multiple choice, and essay modes. They also check prompts for every
-subtype; JSON acceptance and rejection; valid and invalid AI stories for the
-geometry, proportion, motion, average, and percentage contracts; and direct AI
-validation cases for arithmetic, fractions, and find-x. These checks validate
-the app's AI integration contract, not the quality of a live model's writing.
-
-The elementary group also checks 400 fraction-of-a-number and whole-from-a-part
-stories across ten themes in both languages. Each story retains its own unit
-and solution label in Algorithm, AI prompts, essay grading and ungraded diagrams.
-It also checks 1,000 themed table/bar/pie/total/difference questions in both
-languages, independently deriving the answer from the categories named in each
-question. Every subtype samples all ten themes, and pie percentages vary while
-remaining positive and adding up to 100. Algorithm and AI share grading data.
-
-The visual-geometry variety group checks 2,400 bilingual angle/line questions
-across the five tiers and three answer modes. It independently classifies line
-directions with dot/cross products, covers four angle types and rotated figures,
-and checks that three-line selection has at most one valid pair. Higher tiers
-include no-pair cases and accept reversed line names. App builds compile the
-renderer; native drawing layout still needs verification on a device.
-
-The numeric-expression group checks all five star levels, integer/fraction
-expressions with and without brackets, and all three answer modes. It verifies
-the exact 3–7 operand / 1–5 bracket-pair rules, compares answers with the solve
-tab's independent postfix engine, checks equivalent fractions and multiline
-equalities, rejects invalid brackets and unrelated calculations, and checks
-expression selection in both source catalogs and their shared mixed pool.
-
-The AI-expression group checks 960 bilingual contracts across every star,
-subtype and answer mode. It decodes verbal plans independently, verifies exact
-answers, covers all eight contexts and all Mixed subtypes, and exercises the
-production JSON parser, prompt, model-output validator and essay grading.
-Changed operations, missing plans, extra numbers, duplicate plans, physical
-answer units and answer disclosure in the solution lead are rejected. Empty
-JSON answer units are allowed only when expression parsing explicitly opts in.
-
-The geometry-selection group checks every supported shape/measurement across
-all star levels, languages and answer modes, including lateral versus total
-surface area, squared/cubed units, mixed selections and AI contract validation.
-
-The mixed-proportion group checks that both sources sample direct and inverse
-at every skill tier, retain concrete contracts for grading and AI prompts, and
-honor fixed selections after mixed mode.
-
-The indirect-average group checks bilingual Algorithm and AI essay grading
-with a merged calculation, two or three steps, and longer regrouped solutions.
-It checks reuse of derived values (including fractions), optional intermediate
-units, equality chains and inline solution headings. Incorrect earlier steps
-cannot be hidden by a correct final calculation; feedback identifies the
-failing step and its computed/written result. Final calculation/answer units
-remain required, and the other average subtypes retain their existing grading.
-The worked example uses three steps and an answer, without prescribing how many
-steps the learner must submit.
+The command returns a nonzero exit code when any check fails. It needs no
+AI model, API key or unit-test package. Platform stubs let the shared math and
+storage code run outside MAUI. No benchmark is run by this test harness.

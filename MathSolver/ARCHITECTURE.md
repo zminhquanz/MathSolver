@@ -1,3 +1,6 @@
+> The previous AI implementation and AI hardware benchmark have been removed.
+> Practice uses C# generators, curriculum and graders on both platforms.
+
 # Math Solver Architecture Reference
 
 [Folder structure and class groups](FOLDER_STRUCTURE.md)
@@ -45,16 +48,6 @@ All three use fused-multiply-add (`Math.FusedMultiplyAdd`) to capture rounding e
 ---
 
 ## Memory & Lifetime Management
-
-### Local AI visibility
-
-`Services/Performance/LocalAiHardwareEligibility.cs` reuses `PhysicalMemoryInfo`
-to expose AI/LLM only on Windows with AVX2 support (`Avx2.IsSupported`) and at least
-12 GiB of installed RAM. The AVX2 check is independent of the app's SIMD preference. Unknown
-or lower RAM hides AI in both Hardware benchmarks and Math Puzzle; programmatic
-source selection and benchmark start also respect this rule. Android and other
-non-Windows targets remain hidden regardless of RAM. Eligibility is cached for
-the app session and is independent of the NTT exponent policy.
 
 ### Physical RAM eligibility for large NTT powers
 
@@ -189,26 +182,25 @@ and four unique multiple-choice answers containing the correct answer once.
 
 ### Mixed Proportion Selection
 
-The proportion selector offers mixed, direct and inverse in both Algorithm and
-AI/LLM. Mixed is a null `ProportionType` in the request; the existing generator
+The proportion selector offers mixed, direct and inverse in the C# generator. Mixed is a null `ProportionType` in the request; the existing generator
 chooses an allowed relationship before selecting its story template. Each
 generated contract still has a concrete direct/inverse type for its formula,
-AI prompt and grading. Fixed selections remain fixed. This skill-level mixed
+formulas and grading. Fixed selections remain fixed. This skill-level mixed
 choice uses skill curriculum rules, independently of the global mixed pool.
 
 ### Geometry Quiz Measurement Selection
 
 Geometry quizzes share a shape and measurement selection across Algorithm and
-AI/LLM. Plane shapes offer perimeter, area, or mixed; cubes and rectangular
+C#. Plane shapes offer perimeter, area, or mixed; cubes and rectangular
 prisms offer volume, lateral surface area, total surface area, or mixed.
 Mixed shapes can be filtered by any supported measurement. Changing shape
 resets an incompatible measurement to mixed. The request carries the chosen
-measurement into the C# contract before either source generates a question.
+measurement into the C# contract before C# generates a question.
 Lateral-area contracts use `4 × a²` for cubes and `2 × (a + b) × h` for prisms;
 the answer unit is squared, while volume uses cubed units. Global mixed mode
 continues to use curriculum rules and does not inherit hidden picker values.
 
-### Numeric and Verbal Expressions
+### Numeric Expressions
 
 `ExpressionQuizGenerator` owns the **Evaluate an expression**
 category. `ExpressionQuizContract` stores the complete expression and exact
@@ -230,43 +222,22 @@ answers need not already be reduced. The UI supports true/false, four choices
 and essay on Windows/Android with bilingual strings and wrapping fraction
 display. After grading it shows the calculation and answer.
 
-Both Algorithm and Windows AI/LLM expose the category and its **Mixed** subtype.
-`QuizProblemRequest.ExpressionType = null` samples the four subtypes; the
-generated contract always stores a concrete type. Global Mixed includes
-expressions for both sources, with fraction expressions joining at four stars.
-Explicit expression selection offers all four subtypes at every star level.
-
-AI expression contracts include an `ExpressionStoryContract`: a bilingual
-context, verbal calculation plan and reference question. The plan is derived
-from the expression tree (including precedence for unbracketed expressions).
-Eight classroom/game/STEM themes vary independently of the numeric facts.
-LLM wording may vary the introduction and question, but the mathematical span
-must occur exactly once without changed operations, order, grouping or added
-numbers. Only expression contracts allow an empty `answer_unit` in JSON parsing;
-ordinary word problems retain their existing unit checks. AI essays require a
-short value/result sentence, the calculation and answer; their displayed
-solution includes all three. Android continues to expose Algorithm only.
-AI expression grading accepts redundant brackets by comparing ordered operation
-trees, rather than the hidden formula's literal formatting. Changed operands,
-operations or grouping remain invalid even if they coincidentally give the
-same answer. Algorithm expression matching retains its existing behavior.
-See [expression research and validation](EXPRESSION_AI_MIXED_NOTES.md).
+The category supports a Mixed subtype. A null ExpressionType samples the four
+subtypes, while each generated contract stores its concrete type. Global Mixed
+includes fraction expressions from four stars. Explicit selection offers all
+four subtypes at every star level.
 
 ### Average & Percentage Word Problems
 
-`AverageQuizGenerator` and `PercentageQuizGenerator` are shared by the Algorithm
-and Windows AI/LLM paths. C# owns all numeric facts, subtype semantics, answer
-unit, equation and correct answer; the local model may only rewrite the supplied
-contract into natural `problem_text`. Average supports direct average, total to
-average, average to total, missing value, indirect data and two-group weighted
-average. Percentage supports percentage ratio, percentage value and whole from
-a known percentage value. The UI exposes a subtype Picker for each family, with
-a mixed-subtype option. `LlmWordProblemValidator` checks every numeric occurrence
-in order, the final-question semantic family, and the final-question answer unit
-before an AI question can reach the learner.
+`AverageQuizGenerator` and `PercentageQuizGenerator` create C# questions with
+numeric facts, subtype semantics, units, equations and exact answers. Average
+supports direct average, total to average, average to total, missing value,
+indirect data and two-group weighted average. Percentage supports percentage
+ratio, percentage value and whole from a known percentage value. Each family
+has a subtype picker and a mixed-subtype option.
 
 Indirect-data average essays support multiple calculations in the shared
-multiline work editor on both platforms and both question sources. The
+multiline work editor on both platforms. The
 `AverageIndirectData` contract keeps the first quantity and its increase/decrease
 relations. `EssayCombinedInputParser` preserves all equation lines for this
 subtype; other subtypes retain their existing input parsing.
@@ -278,7 +249,7 @@ sentence with a valid unit or subject is enough; intermediate units are optional
 but written units are checked and the final calculation and answer require them.
 `EssayAnswerValidationResult.Steps` provides per-step errors for bilingual
 `EssayFeedbackFormatter` messages. `AverageIndirectSolutionFormatter` supplies
-a three-step worked example plus the answer for Algorithm and AI/LLM questions.
+a three-step worked example plus the answer for C# questions.
 
 ### Math Puzzle Curriculum Layer — `Services/Quizzes/QuizCurriculumLayer.cs`
 
@@ -286,7 +257,7 @@ Curriculum is intentionally scoped to **app-generated Math Puzzle content only**
 
 - **Mixed Mode has its own profile.** A tier first selects an allowed skill from a weighted pool, then the chosen generator receives `QuizCurriculumContext(IsMixedMode: true)`. Mixed rules can prefer smaller number ranges and simpler subtypes than the same star tier in a dedicated skill.
 - **Each skill has an independent progression.** Arithmetic, fractions, Find X and geometry use dedicated rules; proportion, motion, average and percentage expose tier-gated subtype sets. Fractions deliberately start at `★★★★`. Dedicated Arithmetic uses the normalized primary progression `★ = 0..9`, `★★ = 0..99`, `★★★ = 0..999`, `★★★★ = 0..9,999`, `★★★★★ = 0..99,999`; generated operands and answers are kept inside that tier range. Mixed Mode keeps its separate arithmetic ranges.
-- **Algorithm and AI/LLM share one source of truth.** Algorithm generation passes the curriculum context directly to the C# generators. AI/LLM first creates the same deterministic C# contract under the same rules; the model only rewrites that validated contract into natural language and receives a short tier-guidance sentence. It cannot choose a harder skill, larger number range, or extra mathematical concept independently.
+- **C# owns the question contract.** Generators receive the curriculum context and create facts, relations and exact answers under the selected rules.
 - **Fixed-skill UI enforces availability.** Selecting a skill whose progression starts later automatically promotes the star tier to its minimum; lower star buttons are disabled for that skill. Unsupported operation/subtype selections are normalized before question generation.
 
 Flow:
@@ -294,7 +265,6 @@ Flow:
 ```text
 Mixed:  Star tier -> Mixed weighted pool -> Skill -> Skill curriculum -> C# generator -> validator
 Skill:  Star tier -------------------------> Skill curriculum -> C# generator -> validator
-AI/LLM: same C# contract -----------------------------------------------------> wording only
 ```
 
 ### Localization — `Services/Localization/LocalizationService.cs` / `TRANSLATING.md`
@@ -385,43 +355,9 @@ Android is now the platform-specific Material You surface while WinUI remains th
 - Custom SGK/math renderers and `GraphicsView` content remain shared and are not Materialized.
 - WinUI values are preserved through `#if ANDROID` and `OnPlatform ... WinUI=<previous value>` branches.
 
-## AI/LLM platform split (2026-08-20)
-
-LLamaSharp/GGUF inference is Windows-only. The Android target does not restore or package LLamaSharp, does not probe a saved GGUF model path, and hides the entire quiz source-selection / AI card. Android goes directly to the deterministic Algorithm workflow, with visible steps renumbered to question mode and problem type, until a dedicated LiteRT-LM backend is implemented. The obsolete non-Windows LocalLlmQuizGenerator placeholder is removed; all live LocalLlmQuizGenerator references are guarded by `#if WINDOWS`.
-
-
-
-## Windows local-LLM baseline
-
-- The supported GGUF family is Gemma 4 only (E2B/E4B QAT Q4_0).
-- The Hugging Face model catalog contains only the E2B and E4B one-click download cards.
-- The main download action is labeled generically as “Download AI model from HuggingFace” / “Tải model AI từ HuggingFace”.
-- While local inference is active, the Create-with-AI button becomes a red Stop-generation button that cancels the current token generation without unloading the selected model.
-
-## Hardware AI/LLM benchmark (2026-08-21)
-
-The Hardware Information page has two benchmark modes on Windows: **Raw performance** and **AI/LLM**. Android keeps Raw performance only because LLamaSharp is not packaged there.
-
-The AI/LLM benchmark reuses the shared `LocalLlmRuntime.Generator`, so Math Puzzle and Hardware benchmarking share one GGUF weight cache instead of loading the model twice. It reports the Windows LLamaSharp/llama.cpp CPU backend, the highest available x86 ISA tier (AVX, AVX2/FMA, or AVX-512), configured decode/batch thread counts, and average decode throughput in token/s.
-
-Accuracy is measured with the same C# contracts, parser, and `LlmWordProblemValidator` used by production generation. Eight categories are tested: basic arithmetic, fractions, Find x, geometry, direct/inverse proportion, motion, arithmetic mean, and percentage. Each category runs exactly 10 independent samples. The AI/LLM Hardware view has a benchmark-scope picker: **Overall** runs all 8 categories (80 samples total), while selecting one category runs only its 10 samples. Benchmark generation forces `maximumAttempts = 1`, so every sample is scored from one model response and retry logic cannot inflate measured accuracy. Overall mode reports valid questions / 80 plus the per-category chart/table; single-category mode reports valid questions / 10 for the selected category only. Subtypes are cycled deterministically within each 10-sample set (for example Find x operations, Geometry shapes, Motion scenarios, Average types, and Percentage types) so a category benchmark covers its internal domain instead of depending entirely on random selection.
-
-## AI generation interaction lock (2026-08-21)
-
-While a Windows local-LLM question is actively generating, Math Puzzle enters an interaction lock. The three other Shell main tabs and the Settings action are disabled, and Math Puzzle disables source selection, model download/open/select/eject, question mode, problem type, basic-operation/proportion/motion/average/percentage subtype selectors, answer controls, and Next Question. The JSON & Log diagnostics toggle intentionally remains available because it is read-only. The only state-changing generation action left enabled is the primary Create-with-AI button, which switches to the red Stop action and cancels through the existing inference `CancellationToken`.
-
-The lock stays active across all validator retries in the same generation request and is released only after generation succeeds, is cancelled, or exhausts its attempts and returns a failure. Model import/download/eject busy states continue to use the existing local busy handling and do not use this app-wide AI-generation lock.
-
-## Windows local-AI interaction lock
-
-- While Math Puzzle is generating with the Windows LLamaSharp backend, AppShell disables both the non-selected `ShellContent` objects and their implicit `ShellSection` wrappers. On .NET MAUI 10.0.60, WinUI's `ShellItemHandler` caches top-tab `NavigationView` view models and does not reliably propagate a later `IsEnabled` change for direct/implicit `ShellContent` tabs. AppShell therefore forces the existing Windows `ShellItemHandler.MapTitle()` path to remap `MapMenuItems()` after every lock/unlock, then synchronizes any already-realized `NavigationViewItem` containers. This uses MAUI's existing handler rather than a custom renderer and makes the native tabs non-clickable on the first AI run. `Shell.Navigating` remains a second guard for keyboard/programmatic route navigation.
-- Lock/unlock application is idempotent: every unlock re-enables the `ShellContent`, corresponding implicit `ShellSection`, cached WinUI menu model, and realized navigation-item containers, repairing stale native enabled state instead of returning early from a cached Boolean.
-- The JSON & Log diagnostics toggle intentionally remains interactive during generation because it is read-only and useful for observing the live stream.
-- Windows X / Alt+F4 is guarded while AI generation is active. The user can keep the app open and continue inference, or confirm stopping generation; the application closes only after the LLamaSharp generation task has observed cancellation and fully unwound.
-
 ## Power calculation interaction lock (2026-08-21)
 
-Long-running power calculations reuse the same AppShell native-tab lock used by local AI. Once a power calculation starts, the Calculation tab remains selected while Formula, Multiplication Table, Math Puzzle, Settings, and every Calculation sub-tab button are disabled. Inside Power/Root, base/exponent inputs, Power/Root mode selection, Calculate/Clear, result actions, export, and diagnostics actions are disabled; the red Stop Calculation action remains available. The lock is released only after the calculation completes, fails, or cancellation has fully unwound.
+Long-running power calculations reuse an AppShell native-tab lock. Once a power calculation starts, the Calculation tab remains selected while Formula, Multiplication Table, Math Puzzle, Settings, and every Calculation sub-tab button are disabled. Inside Power/Root, base/exponent inputs, Power/Root mode selection, Calculate/Clear, result actions, export, and diagnostics actions are disabled; the red Stop Calculation action remains available. The lock is released only after the calculation completes, fails, or cancellation has fully unwound.
 
 On Windows, the existing `WindowStateManager` close guard also owns X / Alt+F4 during an active power calculation. The confirmation text is localized as “Bạn có muốn dừng tính toán và thoát chương trình không?” / “Do you want to stop the calculation and exit the application?”. Choosing No leaves the calculation running. Choosing Yes requests cancellation, awaits the calculation completion source, and only then reissues the native window close. Root calculations are synchronous/short and do not install this long-running interaction lock.
 
@@ -431,7 +367,7 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 
 - **Single-thread / multi-thread comparison** runs the same four-type benchmark twice, once with one worker and once with the recommended multi-thread worker count. It keeps the current Hardware acceleration state fixed across both passes: when SIMD is enabled, Int32/Int64 and Float/Double all use the selected SIMD backend; when disabled, all four use Scalar. This isolates thread scaling without silently forcing integer work back to Scalar.
 - **Windows x86 SIMD comparison** remains a dedicated floating-point width comparison (Float + Double) so its historical chart stays directly comparable. The standard four-type benchmark, however, now vectorizes Int32/Int64 too whenever Hardware acceleration is enabled. Integer kernels use 128-bit SSE2, 256-bit AVX2, or 512-bit AVX-512F add/XOR ALU work matching the selected backend, with NEON/AdvSIMD on ARM and portable SIMD fallback where applicable. It runs each supported floating-point comparison tier — 128-bit SSE, 256-bit AVX/AVX2, and 512-bit AVX-512 — once single-threaded and once multi-threaded, for up to six passes. Unsupported tiers are never executed and are omitted from both the comparison chart and the score summary; the availability status shows a cross mark for unsupported tiers.
-- Both comparison charts use `Graphics/Benchmarks/BenchmarkVerticalChartDrawable.cs`; the Picker, raw benchmark controls, and the AI/LLM benchmark tab are locked while a raw benchmark is running, and the existing cancellation/close guard is reused.
+- Both comparison charts use `Graphics/Benchmarks/BenchmarkVerticalChartDrawable.cs`; the Picker, raw benchmark controls are locked while a raw benchmark is running, and the existing cancellation/close guard is reused.
 - Benchmark buttons use red only while active and explicitly clear that local brush before restoring the theme `PrimaryColor`, preventing WinUI from leaving a completed/cancelled button red.
 - Human-facing ISA text is standardized as **AVX-512** (the internal enum remains `Avx512`).
 
@@ -441,7 +377,6 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 - The optimized wallpaper path accepts H.264 / AVC video only. New imports are inspected before replacing the current wallpaper; legacy wallpapers are validated once on first use after upgrade.
 - Windows playback stays on CommunityToolkit `MediaElement` -> WinUI `MediaPlayer` / Media Foundation, which uses the OS hardware-accelerated DXVA/D3D decode path when the GPU/driver/profile supports it. Android playback stays on `MediaElement` -> ExoPlayer / MediaCodec and requires an H.264 hardware decoder to be present. No FFmpeg/software decoder is added to Math Solver.
 - `LiveWallpaperView` is layered behind the four main learning tabs (Calculation, Math Puzzle, Formula, Multiplication Table), loops silently, hides playback controls and releases its media source whenever the owning tab disappears. Android keeps `TextureView` because the glass UI requires correct sibling Z-order/transparency.
-- Local AI/LLM inference no longer suspends either animated-background backend. Validated H.264 MP4 stays on its hardware-preferred video path, and the 24 FPS Math GraphicsView animation is lightweight enough to remain active during generation/benchmark runs. Both backends still stop when their owning learning tab is inactive.
 - A theme-aware `LiveWallpaperScrimColor` sits above the video for readability; Light uses a lighter veil and Dark uses a darker veil. Future wallpaper formats/intensity controls should extend this service/control boundary instead of duplicating player logic in pages.
 
 
@@ -457,7 +392,7 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 
 `LiveWallpaperManager` now supports two mutually exclusive animated-background modes for the four main learning tabs:
 
-- `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. It keeps running during local AI inference and stops only when the owning tab is inactive or animated backgrounds are disabled.
+- `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. It runs while the owning tab is active and stops when the tab is inactive or animated backgrounds are disabled.
 - Runtime memory is lifecycle-bound for both backends. `GraphicsView`, its drawable, and its 24 FPS timer are now created lazily and removed entirely when unused; `MediaElement` is created lazily only on an active MP4 page, its `Source` is detached as soon as that page becomes inactive, and the player object is retired after a short grace period when MP4 mode is no longer needed.
 - `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 3 forces older saved wallpapers to be rechecked against the duration rule and the Android decoded-pixel memory budget.
 
@@ -498,30 +433,12 @@ The Settings UI exposes the mode with one Picker. MP4 controls are shown only fo
 - MP4 adaptive contrast uses hard text polarity: dark frame/glass -> primary text is pure white and secondary text is near-white; bright frame/glass -> primary text is pure black and secondary text is near-black. Selected/primary actions continue to use `OnPrimaryColor` so accent buttons keep their intended contrast.
 - When animated backgrounds are disabled, the wallpaper text tokens map back to the ordinary app palette, so these bindings do not alter the static Light/Dark appearance.
 
-## Local LLM semantic question validation (2026-08-22)
-
-For item-based word problems (basic arithmetic, fractions, and Find X), validator acceptance now requires the **final interrogative clause itself** to name the same `answer_unit`/story item used by the C# contract. It is no longer enough for the required item to appear somewhere in the facts. This prevents mixed-object outputs such as facts about stamps followed by a question asking for books. Vietnamese matching reuses `WordProblemUnitEquivalence`, so classifier variants such as `cây/cái/chiếc bút` remain valid while a different noun is rejected. Retry feedback explicitly tells the model to rewrite the final question with the contract item.
-
-`LlmWordProblemParser` also classifies output that contains only Gemma control/channel tokens after stripping as `EmptyModelOutput`. Production generation therefore follows the existing fresh-context retry path instead of treating control-token-only output as generic malformed JSON. Hardware accuracy benchmarking still preserves its explicit `maximumAttempts: 1` no-retry behavior.
-
-### Average missing-value LLM validation refinement
-- `AverageQuizType.MissingValue` no longer requires the structural test count/index to be repeated an identical number of times in `problem_text`; natural phrasing may mention the `4` once or twice.
-- The three known scores and the target average remain immutable contract facts. A model output that substitutes the test index/count for the target average is still rejected because it changes the mathematics and can invalidate the C# answer/options.
-- Retry feedback is role-aware and explicitly distinguishes known-test count, score values, test index/total test count, and target average.
-
-## Percentage ratio semantic consistency (2026-08-22)
-- `FindPercentageRatio` now stores only the two real numeric facts `[whole, part]`; repeated copies of the same numbers are no longer part of the LLM contract.
-- Ratio reference contexts use a concrete subset noun (for example female students, story books, mango trees, red marbles) and ask for that subset's percentage of the whole without repeating the numeric values in the final question.
-- The LLM prompt explicitly forbids inventing a complementary/secondary subgroup or assigning another count to it.
-- `ValidatePercentageRatioFacts` rejects any extra/repeated numeric occurrence with `PercentageRatioFactsMismatch`; this prevents internally inconsistent stories such as total 200 students + 50 female + 50 male unless the remaining 100 students are explained (such extra partition data is not part of this basic ratio contract).
-
 ## Math Puzzle subtype expansion (2026-08-22)
 
-- Motion now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Basic single-object motion, same-direction catch-up, opposite-direction meeting, and river downstream/upstream motion. `QuizProblemRequest.MotionType` carries the requested `MotionQuizType?` into the existing `MotionQuizGenerator`; null preserves mixed random generation. The generator already owns all four mathematical contracts, and the LLM validator continues to enforce the generated contract's exact motion family.
-- Find X now has a second-level Picker shared by Algorithm and AI/LLM: Mixed, Sum, Difference, Product, and Quotient. `QuizProblemRequest.FindXOperation` carries the selected relationship through `QuizProblemTypeCatalog` into both `FindXQuizGenerator` and `LocalLlmQuizGenerator`; Mixed keeps it null so C# chooses randomly.
-- Geometry has a second-level shape Picker shared by Algorithm and AI/LLM. Its visible choices are filtered by the selected Curriculum tier so an unavailable shape cannot be selected in the first place (for example `★` exposes only Mixed, Square and Rectangle; Trapezoid first appears at `★★★★`). This also avoids mutating the WinUI Picker items while its native selection flyout is closing, which previously could leave the flyout stuck open. `QuizProblemRequest.GeometryShape` still filters the C# geometry story-template catalog before the contract is generated, so AI/LLM cannot silently switch to a different shape.
+- Motion now has a second-level Picker used by the C# generator: Mixed, Basic single-object motion, same-direction catch-up, opposite-direction meeting, and river downstream/upstream motion. `QuizProblemRequest.MotionType` carries the requested `MotionQuizType?` into the existing `MotionQuizGenerator`; null preserves mixed random generation. The generator already owns all four mathematical contracts, and the C# generator owns the selected motion family.
+- Find X now has a second-level Picker used by the C# generator: Mixed, Sum, Difference, Product, and Quotient. `QuizProblemRequest.FindXOperation` carries the selected relationship through `QuizProblemTypeCatalog` into `FindXQuizGenerator`; Mixed keeps it null so C# chooses randomly.
+- Geometry has a second-level shape Picker used by the C# generator. Its visible choices are filtered by the selected Curriculum tier so an unavailable shape cannot be selected in the first place (for example `★` exposes only Mixed, Square and Rectangle; Trapezoid first appears at `★★★★`). This also avoids mutating the WinUI Picker items while its native selection flyout is closing, which previously could leave the flyout stuck open. `QuizProblemRequest.GeometryShape` still filters the C# geometry story-template catalog before the contract is generated, so C# cannot silently switch to a different shape.
 - Average and Percentage generators use broader C# context catalogs. Average problems rotate through notebooks/books/fruit mass/pen boxes, distribution contexts, names, indirect-data objects, and two-group contexts while preserving the same six mathematical contracts. Percentage problems rotate through books, trees, students, marbles, flowers, pens, oranges, and tickets, with concrete subset nouns for ratio/value/whole problems.
-- Diversity is owned by C#, not by free-form model creativity. The LLM continues to receive one authoritative reference contract and the existing role-aware validators still own numeric facts, requested quantity, unit, and semantic family.
 
 ### Live wallpaper static-restore resource safety
 
@@ -529,10 +446,6 @@ For item-based word problems (basic arithmetic, fractions, and Find X), validato
 - This allows `LiveWallpaperView` to disconnect `MediaElement`/`GraphicsView` native handlers before WinUI `DynamicResource` targets are repainted when animated wallpaper is disabled.
 - Transient WinUI `COMException` during native teardown is retried on the dispatcher and is never allowed to crash the app.
 - Existing `SolidColorBrush` instances are reused and only updated when their color actually changes, reducing allocations and resource churn during adaptive MP4 contrast transitions.
-
-### Hardware AI/LLM benchmark scope display
-- The per-category 10-sample benchmark intentionally hides the category-breakdown chart/table because the selected scope already represents exactly one category; only average decode speed and that category's `x/10 • %` accuracy remain visible.
-- The horizontal accuracy chart and 8-row category breakdown are rendered only for the overall 80-sample benchmark (`8 categories × 10 samples`).
 
 ### WinUI theme restore after live wallpaper teardown
 - When MP4/Math animated wallpaper is disabled or its backend is switched on Windows, `AppThemeManager` opens a short native-transition gate before mutating `Application.Resources`.
@@ -842,28 +755,19 @@ AVX-512 power branches now use left-to-right binary exponentiation: each set bit
 
 ## Curriculum Layer – Mixed vs Skill Mode (2026-09-12)
 
-Curriculum chỉ áp dụng trong tab Toán đố và dùng chung cho nguồn Thuật toán + AI/LLM.
+Curriculum chỉ áp dụng trong tab Toán đố và dùng chung cho nguồn Thuật toán + C#.
 
-- **Hỗn hợp các dạng (top-level Mixed):** số sao quyết định pool skill được phép xuất hiện. Ví dụ các skill nâng cao như Phân số/Tỉ lệ/Chuyển động chỉ được đưa vào pool ở mốc phù hợp. Sau khi chọn skill, generator vẫn là nguồn tạo contract C# và AI/LLM chỉ diễn đạt lại contract đó.
+- **Hỗn hợp các dạng (top-level Mixed):** số sao quyết định pool skill được phép xuất hiện. Ví dụ các skill nâng cao như Phân số/Tỉ lệ/Chuyển động chỉ được đưa vào pool ở mốc phù hợp. Sau khi chọn skill, generator vẫn là nguồn tạo contract C# và C# chỉ diễn đạt lại contract đó.
 - **Đã chọn một skill cụ thể:** luôn cho phép đủ ★..★★★★★ và toàn bộ subtype của skill. Không thêm/xóa/disable Picker item theo sao. Điều này tránh re-entrant `SelectionChanged`/native flyout trên WinUI.
 - **Hỗn hợp bên trong skill:** Phép tính và Phân số hỗ trợ lựa chọn `Hỗn hợp các dạng`, truyền operation = `null` để generator random `+ - × ÷`. Find X và các Picker subtype khác giữ lựa chọn Hỗn hợp tương tự.
 - **Giới hạn dữ kiện a/b cho Cơ bản, Phân số, Tìm X:** ★ `0..9`, ★★ `0..99`, ★★★ `0..999`, ★★★★ `0..9,999`, ★★★★★ `0..99,999`. Đây là giới hạn **dữ kiện/toán hạng**, không phải giới hạn kết quả; tổng/tích/vế kết quả có thể vượt số chữ số của tier.
 - **WinUI stability:** đổi số sao không rebuild bất kỳ subtype Picker nào; chọn một subtype cũng không clear/repopulate Picker ngay trong `SelectedIndexChanged`.
 
-### Curriculum/AI realism + WinUI generation lock (2026-09-12)
-
-- Khi AI/LLM đang infer/validate một câu hỏi, năm nút ★..★★★★★ bị khóa cho đến khi tác vụ kết thúc hoặc bị hủy. `SelectCurriculumTier` cũng bỏ qua queued click để UI không thể hiển thị một tier khác với snapshot Curriculum đã truyền vào contract C#.
-- AI/LLM dùng catalog ngữ cảnh theo **quy mô dữ kiện**. Từ hàng nghìn trở lên, Cơ bản/Tìm X chuyển sang ngữ cảnh có thể chứa số lượng lớn như kho, nhà máy, xưởng in, trung tâm phân phối, thư viện lớn, trang trại/vườn ươm; validator từ chối bối cảnh cá nhân nhỏ như lớp học, tủ sách lớp, khu vườn gia đình, khay/hộp bánh.
-- Phép nhân quy mô lớn dùng riêng nhóm vật có thể sản xuất/đóng lô hàng loạt (linh kiện, chai nước, gói hàng, giấy in, tem nhãn, cây giống...) và prompt yêu cầu lô/thùng/pallet/dãy sản xuất/khu vực kho thay vì khay bánh hoặc vật chứa nhỏ.
-- Phân số có tử/mẫu từ hàng nghìn trở lên chỉ dùng đại lượng liên tục ở xưởng/kho/bồn (dây, vải, nước, nguyên liệu), không dùng bánh/chậu cây như một số lượng đồ vật khổng lồ.
-- Contract phép nhân của `ArithmeticQuizGenerator` và phép nhân trong `FindXQuizGenerator` được sinh sao cho tích/vế kết quả luôn nằm trong `Int32`. `ArithmeticQuizValidator` và `LlmWordProblemValidator` có guard `Int32` riêng cho multiplication; dữ kiện vượt phạm vi phải được C# sinh lại, không chuyển sang model để retry câu chữ.
-
-
 ### Curriculum operand-scale + result auto-scroll follow-up (2026-09-13)
 
 - Với Cơ bản, Phân số và Tìm X ở Skill Mode, toán hạng/dữ kiện chính `a` luôn nằm đúng bucket của tier hiện tại: ★ đơn vị, ★★ chục, ★★★ trăm, ★★★★ nghìn, ★★★★★ chục nghìn.
 - Toán hạng/dữ kiện thứ hai `b` không bị ép cùng bucket với `a`: generator chọn ngẫu nhiên một bucket từ ★ đến tier hiện tại rồi sinh `b` trong bucket đó. Vì vậy ★★★★★ có thể tạo dạng `18,258 ÷ 2`, `43,721 + 85`, hoặc phân số có vế thứ hai nhỏ hơn nhiều. Cộng/trừ/chia vẫn giữ các ràng buộc toán học; phép nhân còn bị chặn để tích nằm trong `Int32`.
-- AI/LLM luôn nhận đúng contract C# đã sinh, nên quy tắc bucket `a/b` giống hệt nguồn Thuật toán. Khi có dữ kiện lớn, catalog/prompt/validator realism tiếp tục bắt buộc ngữ cảnh kho, nhà máy, trung tâm phân phối, bồn chứa... phù hợp thay vì lớp học, vườn nhà hay khay bánh.
+- C# luôn nhận đúng contract C# đã sinh, nên quy tắc bucket `a/b` giống hệt nguồn Thuật toán. Khi có dữ kiện lớn, catalog/prompt/validator realism tiếp tục bắt buộc ngữ cảnh kho, nhà máy, trung tâm phân phối, bồn chứa... phù hợp thay vì lớp học, vườn nhà hay khay bánh.
 - `FractionExpressionView` tách dấu câu cuối token trước khi parse phân số, nhờ đó tử/mẫu `BigInteger` luôn được format grouping đúng (`24,508,967,912`) và dấu chấm cuối câu không bị hiểu nhầm là dấu thập phân của mẫu số.
 - Mọi `ScrollView` dọc dùng behavior layout chung: sau layout ban đầu, nếu nội dung tăng chiều cao do result/feedback/validation Border xuất hiện thì viewport tự cuộn xuống cuối. ScrollView chỉ ngang bị bỏ qua.
 
@@ -889,7 +793,7 @@ The five stars remain Math Solver's abstract difficulty axis, but **global Mixed
 - ★★★★: fraction arithmetic enters global Mixed with intentionally small numerators/denominators; average enters; Geometry adds parallelogram/rhombus while triangle remains perimeter-only.
 - ★★★★★: percentage, proportion, motion and the full supported geometry set enter. Global Mixed motion uses the core speed-distance-time form; advanced chasing/meeting/river variants remain available when Motion is selected directly. Percentage Mixed uses ratio and percentage-of-a-number; reverse-whole remains available in dedicated Percentage mode.
 
-Both Algorithm and AI/LLM consume the same C# contracts, so these restrictions apply before any LLM wording step.
+All C# questions use these curriculum restrictions before they are displayed.
 
 ### Audit bổ sung: Geometry ★★
 

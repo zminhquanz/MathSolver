@@ -644,7 +644,7 @@ public sealed class LocalizationManager :
             return currentValue;
         }
 
-        // Stable quiz/LLM strings are kept as a code fallback so an older
+        // Stable quiz strings are kept as a code fallback so an older
         // imported language pack cannot surface raw [Quiz.*] keys when the
         // app adds new controls. A custom pack still wins when it contains
         // the key because _currentPack is checked first.

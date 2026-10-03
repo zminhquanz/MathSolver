@@ -23,7 +23,18 @@ internal static partial class ElementaryEssayValidator
         var reports = new List<EssayStepValidationResult>();
         var details = new List<string>();
         var tracker = new StepDerivationTracker(contract.Facts, contract.Constants, preferDecimals);
-        var targets = contract.Answers.Select(answer => tracker.Read(answer.Expression)).ToArray();
+        // Keep the original facts separate from the growing set of intermediate results.
+        // A result can have the same numeric value as a given without replacing its origin.
+        var givensTracker = new StepDerivationTracker(contract.Facts, contract.Constants, preferDecimals);
+        List<StepDerivationTracker.Origin> ReadOrigins(string expression)
+        {
+            var original = givensTracker.Read(expression);
+            foreach (var origin in tracker.Read(expression))
+                if (original.Count < 64 && !original.Any(existing => existing.Equivalent(origin))) original.Add(origin);
+            return original;
+        }
+        var targets = contract.Answers.Select(answer => givensTracker.Read(answer.Expression)).ToArray();
+        var inferenceTargets = contract.Reasoning?.Steps.Select(step => givensTracker.Read(step.Expression)).ToArray();
         var achieved = new bool[contract.Answers.Count];
         string[] lines = (equations ?? "").Replace("\r", "", StringComparison.Ordinal).Split(['\n', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (lines.Length > 64 || (equations?.Length ?? 0) > 32768 || (answerText?.Length ?? 0) > 4096)
@@ -68,11 +79,11 @@ internal static partial class ElementaryEssayValidator
                 for (int member = 0; member < members.Length; member++)
                 {
                     if (!TryValue(members[member], out V value, preferDecimals)) { error = EssayAnswerError.InvalidEquationFormat; break; }
-                    if (member == 0) { result = value; computed = EssayCalculationEvaluator.Format(value); origins = tracker.Read(members[member]); }
+                    if (member == 0) { result = value; computed = EssayCalculationEvaluator.Format(value); origins = ReadOrigins(members[member]); }
                     else if (value != result) { error = EssayAnswerError.WrongEquationResult; written = members[member]; break; }
                     else if (member < members.Length - 1)
                     {
-                        var candidates = tracker.Read(members[member]);
+                        var candidates = ReadOrigins(members[member]);
                         origins = origins.Where(origin => candidates.Any(other => origin.Equivalent(other))).ToList();
                     }
                 }
@@ -92,8 +103,22 @@ internal static partial class ElementaryEssayValidator
                 }
                 // Intermediate units can name quantities, people, or equal parts.
                 if (!matched && parsed.Unit.Length > 0 && !contract.Answers.Any(answer => UnitsMatch(question, parsed.Unit, answer.Unit))
+                    && !(contract.Reasoning?.IntermediateUnits.Any(unit => UnitsMatch(question, parsed.Unit, unit)) == true)
                     && !new[] { "phần", "parts", "bạn", "people", "người", "học sinh", "students" }.Contains(parsed.Unit.ToLowerInvariant()))
                 { error = EssayAnswerError.WrongEquationUnit; expectedUnit = string.Join(" / ", contract.Answers.Select(answer => answer.Unit).Where(unit => unit.Length > 0).Distinct()); }
+            }
+            var canonical = contract.Reasoning?.Steps.FirstOrDefault(step =>
+                NormalizeWorkExpression(step.Expression) == NormalizeWorkExpression(members.FirstOrDefault() ?? ""));
+            if (error == EssayAnswerError.None && canonical is not null && parsed.Unit.Length > 0 &&
+                !UnitsMatch(question, parsed.Unit, canonical.Unit))
+            { error = EssayAnswerError.WrongEquationUnit; expectedUnit = canonical.Unit; }
+            if (error == EssayAnswerError.None && parsed.Unit.Length > 0 && contract.Reasoning is { } reasoning && inferenceTargets is not null)
+            {
+                var inferredUnits = reasoning.Steps.Where((step, stepIndex) => result == ToValue(step.Value)
+                    && origins.Any(origin => inferenceTargets[stepIndex].Any(expected => origin.Equivalent(expected))))
+                    .Select(step => step.Unit).Distinct().ToArray();
+                if (inferredUnits.Length > 0 && !inferredUnits.Any(unit => UnitsMatch(question, parsed.Unit, unit)))
+                { error = EssayAnswerError.WrongEquationUnit; expectedUnit = string.Join(" / ", inferredUnits); }
             }
             reports.Add(new(index + 1, line, error == EssayAnswerError.None, error, computed, written, parsed.Unit, expectedUnit));
         }
@@ -181,6 +206,8 @@ internal static partial class ElementaryEssayValidator
         }
         return correct;
     }
+    private static string NormalizeWorkExpression(string expression) => Regex.Replace(expression, @"\s", "")
+        .Replace("×", "*", StringComparison.Ordinal).Replace("÷", "/", StringComparison.Ordinal).Replace("−", "-", StringComparison.Ordinal);
     private static bool CorrectForm(string text, ElementaryAnswer answer)
     {
         Match mixed = MixedRegex().Match(text);

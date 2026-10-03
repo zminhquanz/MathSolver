@@ -118,13 +118,15 @@ internal static partial class PuzzleTests
                 PercentageQuizContract percentage = question.PercentageProblem!;
                 Require(percentage.Type == (PercentageQuizType)subtype,
                     $"{label}: wrong percentage type.");
+                int quantity = percentage.CombinedQuantities?.Sum() ?? percentage.Facts[0];
+                int secondFact = percentage.Facts[^1];
                 BigInteger expectedPercentage = percentage.Type switch
                 {
                     PercentageQuizType.FindPercentageRatio =>
-                        percentage.Facts[1] * 100 / percentage.Facts[0],
+                        secondFact * 100 / quantity,
                     PercentageQuizType.FindPercentageValue =>
-                        percentage.Facts[0] * percentage.Facts[1] / 100,
-                    _ => percentage.Facts[0] * 100 / percentage.Facts[1]
+                        quantity * secondFact / 100,
+                    _ => quantity * 100 / secondFact
                 };
                 Require(percentage.CorrectAnswer == expectedPercentage &&
                         question.CorrectAnswer == expectedPercentage,

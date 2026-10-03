@@ -9,7 +9,6 @@ internal static partial class PuzzleTests
     internal static void CheckElementaryContracts()
     {
         var validator = new EssayAnswerValidator(new BasicArithmeticEngine());
-        var aiValidator = new LlmWordProblemValidator();
         int count = 0;
         foreach (var kind in Enum.GetValues<QuizProblemKind>().Where(ElementaryQuizGenerator.Supports))
         foreach (var type in ElementaryQuizGenerator.Types(kind))
@@ -34,26 +33,10 @@ internal static partial class PuzzleTests
             var result = validator.Validate(question, parts.Solution, parts.Equation, parts.Answer);
             Require(result.IsCorrect, $"{language}/{tier}/{type}/{seed}: example rejected: " +
                 string.Join(" | ", result.Details) + "\n" + contract.SolutionText);
-            var draft = new LlmWordProblemDraft { ProblemText = contract.ProblemText,
-                SolutionLead = contract.Answers[0].Label, AnswerUnit = contract.Answers[0].Unit,
-                SubjectName = contract.Answers[0].Label };
-            var ai = aiValidator.ValidateElementary(draft, contract);
-            Require(ai.IsValid, $"{type}: AI draft should preserve the authoritative contract.");
-            string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
-            Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var parsedDraft,
-                out _, out _, allowEmptyAnswerUnit: true) && aiValidator.ValidateElementary(parsedDraft!, contract).IsValid,
-                $"{type}: the production JSON parser must accept the new prompt schema.");
-            var aiQuestion = question with { WordProblem = ai.WordProblem };
-            Require(validator.Validate(aiQuestion, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
-                $"{type}: AI and Algorithm grading disagree.");
-            Require(!aiValidator.ValidateElementary(new LlmWordProblemDraft { ProblemText = contract.ProblemText + " 999", AnswerUnit = contract.Answers[0].Unit }, contract).IsValid,
-                "AI must not append unrelated facts.");
-            Require(!aiValidator.ValidateElementary(new LlmWordProblemDraft { ProblemText = contract.ProblemText, AnswerUnit = "invalidunit" }, contract).IsValid,
-                "AI must not replace the expected unit.");
             count++;
         }
         Require(count > 3000, "The new curriculum matrix is unexpectedly small.");
-        Console.WriteLine($"  Checked {count} elementary contracts, examples, choices and AI responses.");
+        Console.WriteLine($"  Checked {count} elementary contracts, examples, choices and grading.");
 
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var type in new[] { ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction })
@@ -69,22 +52,20 @@ internal static partial class PuzzleTests
                 seenUnits.Add(answer.Unit);
                 var context = contexts.Single(story => story.Unit == answer.Unit);
                 bool findingPart = type == ElementaryQuizType.FractionOfNumber;
-                int given = int.Parse(contract.Facts[0]), numerator = int.Parse(contract.Facts[1]), denominator = int.Parse(contract.Facts[2]);
-                int expectedValue = findingPart ? given * numerator / denominator : given * denominator / numerator;
-                Require(answer.Value == new ReducedFraction(expectedValue, 1) && answer.Label ==
-                    (findingPart ? context.PartLabel : context.WholeLabel), "Fraction story labels or answer differ from the given facts.");
+                var givens = contract.Reasoning!.Givens.ToDictionary(given => given.Role, given => int.Parse(given.Value));
+                int supplied = givens["quantity"], numerator = givens["numerator"], denominator = givens["denominator"];
+                var fractionUsed = new ReducedFraction(3 * numerator, 4 * denominator);
+                var expectedValue = findingPart
+                    ? new ReducedFraction(supplied * fractionUsed.Numerator, fractionUsed.Denominator)
+                    : new ReducedFraction(supplied * fractionUsed.Denominator, fractionUsed.Numerator);
+                Require(answer.Value == expectedValue && answer.Label ==
+                    (findingPart ? context.PartLabel : context.WholeLabel), "Successive fraction story labels or answer differ from the givens.");
                 var parts = EssayCombinedInputParser.Parse(contract.SolutionText, true, true);
                 Require(validator.Validate(question, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
                     $"{type}/{language}/{answer.Unit}: themed example was rejected.");
-                string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
-                Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var draft,
-                    out _, out _, allowEmptyAnswerUnit: true), "Themed AI prompt could not be parsed.");
-                var ai = aiValidator.ValidateElementary(draft!, contract);
-                Require(ai.IsValid && validator.Validate(question with { WordProblem = ai.WordProblem },
-                    parts.Solution, parts.Equation, parts.Answer).IsCorrect, "AI themed grading differs from Algorithm.");
                 if (answer.Unit is "lít" or "litres")
                 {
-                    foreach (var sourceQuestion in new[] { question, question with { WordProblem = ai.WordProblem } })
+                    foreach (var sourceQuestion in new[] { question })
                         Require(validator.Validate(sourceQuestion, parts.Solution,
                             parts.Equation.Replace(" " + answer.Unit, " l", StringComparison.Ordinal),
                             answer.Value + "l").IsCorrect, "The litre symbol must remain accepted in calculations and answers.");
@@ -98,11 +79,11 @@ internal static partial class PuzzleTests
             }
             Require(contexts.All(context => seenUnits.Contains(context.Unit)), "Fraction stories did not cover all themes.");
         }
-        Console.WriteLine("  Checked 400 themed fraction-part/whole stories, AI contracts, grading and diagram units.");
-        CheckDataChartStories(validator, aiValidator);
+        Console.WriteLine("  Checked 400 themed fraction-part/whole stories, contracts, grading and diagram units.");
+        CheckDataChartStories(validator);
     }
 
-    private static void CheckDataChartStories(EssayAnswerValidator validator, LlmWordProblemValidator aiValidator)
+    private static void CheckDataChartStories(EssayAnswerValidator validator)
     {
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Data))
@@ -123,21 +104,40 @@ internal static partial class PuzzleTests
                 seenThemes.Add(context.Description);
                 Require(contract.ProblemText.Contains(context.Description, StringComparison.Ordinal),
                     "The chart question lost its story context.");
-                Require(contract.Facts.SequenceEqual(visual.Values.Select(value => value.ToString(System.Globalization.CultureInfo.InvariantCulture))),
-                    "The chart and grading facts disagree.");
-                string expectedUnit = type == ElementaryQuizType.ReadPieChart ? "%" : context.Unit;
-                Require(visual.Unit == expectedUnit && contract.Answers[0].Unit == expectedUnit,
-                    "The question, chart and answer must use the same unit.");
-                int[] queriedRows = Enumerable.Range(0, visual.Labels.Count)
-                    .Where(index => contract.ProblemText.Contains($"“{visual.Labels[index]}”", StringComparison.Ordinal)).ToArray();
+                var givens = contract.Reasoning!.Givens.ToDictionary(given => given.Role, given => decimal.Parse(given.Value, System.Globalization.CultureInfo.InvariantCulture));
+                for (int row = 0; row < 3; row++)
+                {
+                    bool hidden = visual.HiddenValueIndices?.Contains(row) == true;
+                    Require(hidden ? !givens.ContainsKey("row-" + row) : givens["row-" + row] == visual.Values[row],
+                        "A hidden chart value must be inferred; visible chart values must agree with givens.");
+                }
+                bool pie = type == ElementaryQuizType.ReadPieChart;
+                int level = seed % 5 + 1;
+                string expectedUnit = pie && level == 1 ? "%" : context.Unit;
+                Require(visual.Unit == (pie ? "%" : context.Unit) && contract.Answers[0].Unit == expectedUnit,
+                    "Chart percentages and converted quantity must have their respective units.");
+                int selected = Enumerable.Range(0, 3).SingleOrDefault(index => contract.Answers[0].Label.Contains(visual.Labels[index], StringComparison.Ordinal));
                 decimal expectedValue = type switch
                 {
                     ElementaryQuizType.ChartTotal => visual.Values.Sum(),
-                    ElementaryQuizType.ChartDifference when queriedRows.Length == 2 =>
-                        Math.Abs(visual.Values[queriedRows[0]] - visual.Values[queriedRows[1]]),
-                    _ when queriedRows.Length == 1 => visual.Values[queriedRows[0]],
-                    _ => throw new InvalidOperationException("Chart question refers to the wrong number of categories.")
+                    ElementaryQuizType.ChartDifference => level == 5 ? Math.Abs(visual.Values[0] - visual.Values[1])
+                        : Math.Abs(visual.Values[1] - visual.Values[2]),
+                    _ => visual.Values[selected]
                 };
+                if (pie && level > 1)
+                {
+                    decimal total;
+                    if (level <= 3) total = givens["total"];
+                    else if (level == 4) total = givens["other-count"] * 100 / (100 - visual.Values[selected]);
+                    else
+                    {
+                        int[] others = Enumerable.Range(0, 3).Where(row => row != selected).ToArray();
+                        total = (givens["count-" + others[0]] + givens["count-" + others[1]]) * 100 /
+                            (visual.Values[others[0]] + visual.Values[others[1]]);
+                    }
+                    expectedValue = total * visual.Values[selected] / 100;
+                }
+                if (!pie && level == 2) expectedValue += givens["added-after-recording"];
                 Require(contract.Answers[0].Value == new ReducedFraction((int)expectedValue, 1),
                     "The answer differs from the categories actually requested in the chart question.");
                 Require(contract.ChoiceTexts!.Count(choice => ElementaryEssayValidator.CheckAnswers(question, choice)) == 1,
@@ -145,12 +145,6 @@ internal static partial class PuzzleTests
                 var parts = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true);
                 Require(validator.Validate(question, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
                     $"{type}/{language}/{context.Description}: themed chart example was rejected.");
-                string prompt = LlmQuizPromptBuilder.BuildElementaryUserPrompt(contract);
-                Require(LlmWordProblemParser.TryParse(prompt[prompt.IndexOf('{')..], out var draft,
-                    out _, out _, allowEmptyAnswerUnit: true), "The themed chart AI prompt could not be parsed.");
-                var ai = aiValidator.ValidateElementary(draft!, contract);
-                Require(ai.IsValid && validator.Validate(question with { WordProblem = ai.WordProblem },
-                    parts.Solution, parts.Equation, parts.Answer).IsCorrect, "Chart grading differs between Algorithm and AI.");
                 if (type == ElementaryQuizType.ReadPieChart)
                 {
                     Require(visual.Values.All(value => value > 0) && visual.Values.Sum() == 100,
@@ -162,7 +156,7 @@ internal static partial class PuzzleTests
             if (type == ElementaryQuizType.ReadPieChart)
                 Require(pieDistributions.Count > 10, "Pie chart percentages are still repetitive.");
         }
-        Console.WriteLine("  Checked 1000 bilingual themed charts, independent answers, percentage totals and AI grading.");
+        Console.WriteLine("  Checked 1000 bilingual themed charts, independent answers, percentage totals and grading.");
     }
 
     internal static void CheckElementaryFlexibleWork()

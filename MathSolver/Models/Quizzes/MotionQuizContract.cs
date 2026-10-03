@@ -24,10 +24,7 @@ public enum MotionQuestionKind
     RiverCurrentSpeed
 }
 
-/// <summary>
-/// Hợp đồng dữ kiện cho một bài toán chuyển động cơ bản. C# sở hữu toàn bộ
-/// số, đơn vị, quan hệ và đáp án; LLM chỉ được diễn đạt lại câu chữ.
-/// </summary>
+/// <summary>C# math puzzle data and rules.</summary>
 public sealed record MotionQuizContract(
     MotionQuizType Type,
     MotionQuestionKind QuestionKind,

@@ -198,6 +198,9 @@ public static class ElementaryWordProblemSolutionFormatter
         AppLanguage language,
         CultureInfo culture)
     {
+        if (geometry.Reasoning is not null)
+            return GeometryReasoningText.FormatSolution(geometry, NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead), culture);
+
         string answer =
             geometry.CorrectAnswer.ToString("N0", culture);
 

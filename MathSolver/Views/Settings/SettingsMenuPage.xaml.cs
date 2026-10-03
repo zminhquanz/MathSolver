@@ -80,7 +80,7 @@ public partial class SettingsMenuPage : ContentView
 
     // Overlay này nằm trực tiếp trên visual tree của tab hiện tại, không phải
     // Shell route và cũng không dùng Navigation.PushModalAsync. Giữ cờ để các
-    // trang cũ vẫn tương thích với logic bảo toàn GraphicsView/LLM.
+    // trang cũ vẫn tương thích với logic bảo toàn GraphicsView.
     internal static bool IsTransparentOverlayActive { get; private set; }
 
     private readonly List<AppFontOption> _fontOptions =

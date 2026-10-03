@@ -13,14 +13,10 @@ public sealed class ExpressionQuizGenerator(Random? random = null)
 
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode, ExpressionQuizType? type, CurriculumTier tier) =>
-        GenerateCore(mode, type, tier, null);
-
-    public ArithmeticQuizQuestion GenerateContract(
-        ArithmeticQuizMode mode, ExpressionQuizType? type, AppLanguage language, CurriculumTier tier) =>
-        GenerateCore(mode, type, tier, language);
+        GenerateCore(mode, type, tier);
 
     private ArithmeticQuizQuestion GenerateCore(
-        ArithmeticQuizMode mode, ExpressionQuizType? requestedType, CurriculumTier tier, AppLanguage? language)
+        ArithmeticQuizMode mode, ExpressionQuizType? requestedType, CurriculumTier tier)
     {
         if (requestedType.HasValue && !Enum.IsDefined(requestedType.Value))
             throw new ArgumentOutOfRangeException(nameof(requestedType));
@@ -28,8 +24,6 @@ public sealed class ExpressionQuizGenerator(Random? random = null)
             throw new ArgumentOutOfRangeException(nameof(tier));
         if (!Enum.IsDefined(mode))
             throw new ArgumentOutOfRangeException(nameof(mode));
-        if (language.HasValue && !Enum.IsDefined(language.Value))
-            throw new ArgumentOutOfRangeException(nameof(language));
 
         ExpressionQuizType type = requestedType ?? (ExpressionQuizType)_random.Next(4);
 
@@ -89,10 +83,8 @@ public sealed class ExpressionQuizGenerator(Random? random = null)
             choices = options;
         }
 
-        ExpressionStoryContract? story = language.HasValue
-            ? CreateStory(tree!, language.Value) : null;
         var contract = new ExpressionQuizContract(type, tier, text, operands,
-            brackets ? (int)tier : 0, answer, presented, choices, story);
+            brackets ? (int)tier : 0, answer, presented, choices);
         BigInteger integerAnswer = fractions ? BigInteger.Zero : answer.Numerator;
         return new(new(integerAnswer, ArithmeticOperation.Add, BigInteger.Zero), mode,
             integerAnswer, fractions ? null : presented?.Numerator,
@@ -183,53 +175,6 @@ public sealed class ExpressionQuizGenerator(Random? random = null)
         Node left = nodes.Pop();
         nodes.Push(new(string.Empty, Calculate(left.Value, right.Value, operation),
             Math.Max(left.Height, right.Height) + 1, operation, left, right));
-    }
-
-    private ExpressionStoryContract CreateStory(Node tree, AppLanguage language)
-    {
-        (string Vietnamese, string English)[] contexts =
-        [
-            ("câu lạc bộ toán", "a maths club"),
-            ("trò chơi thẻ số", "a number-card game"),
-            ("thử thách lập trình robot", "a robot-programming challenge"),
-            ("hoạt động nhóm trong lớp", "a classroom team activity"),
-            ("cuộc thi tính nhẩm", "a mental-maths contest"),
-            ("dự án tìm quy luật số", "a number-pattern project"),
-            ("bài thực hành bảng tính", "a spreadsheet activity"),
-            ("trò chơi tìm mã bí mật", "a secret-code puzzle")
-        ];
-        var context = contexts[_random.Next(contexts.Length)];
-        bool vietnamese = language == AppLanguage.Vietnamese;
-        string name = vietnamese ? context.Vietnamese : context.English;
-        string plan = Describe(tree, vietnamese);
-        var problem = new MathWordProblem(
-            vietnamese
-                ? $"Trong {name}, em cần tìm giá trị của {plan}. Kết quả cần ghi là bao nhiêu?"
-                : $"In {name}, find the value of {plan}. What is the result?",
-            SolutionLead: vietnamese ? "Giá trị cần tìm là:" : "The required value is:",
-            AnswerUnit: string.Empty, SubjectName: vietnamese ? "kết quả" : "result");
-        return new(language, name, plan, problem);
-    }
-
-    private static string Describe(Node node, bool vietnamese)
-    {
-        if (!node.Operation.HasValue)
-            return node.Text;
-        string left = Describe(node.Left!, vietnamese);
-        string right = Describe(node.Right!, vietnamese);
-        if (node.Left!.Operation.HasValue) left = $"({left})";
-        if (node.Right!.Operation.HasValue) right = $"({right})";
-        return (node.Operation.Value, vietnamese) switch
-        {
-            (ArithmeticOperation.Add, true) => $"tổng của {left} và {right}",
-            (ArithmeticOperation.Subtract, true) => $"hiệu của {left} và {right}",
-            (ArithmeticOperation.Multiply, true) => $"tích của {left} và {right}",
-            (ArithmeticOperation.Divide, true) => $"thương của {left} chia cho {right}",
-            (ArithmeticOperation.Add, false) => $"the sum of {left} and {right}",
-            (ArithmeticOperation.Subtract, false) => $"the difference between {left} and {right}",
-            (ArithmeticOperation.Multiply, false) => $"the product of {left} and {right}",
-            _ => $"the quotient of {left} divided by {right}"
-        };
     }
 
     private Node CreateLeaf(bool fractions, CurriculumTier tier)

@@ -31,15 +31,17 @@ public partial class MathPuzzlePage
         QuizDiagramToggleButton.Text = TranslateQuiz(_diagramExpanded ? "Quiz.HideDiagram" : "Quiz.ShowDiagram");
         QuizDiagramPanel.IsVisible = visible;
         QuizVisualView.IsVisible = visible;
-        QuizVisualView.Drawable = mandatory ? new ElementaryQuizDrawable(essential)
+        QuizVisualView.Drawable = mandatory ? new ElementaryQuizDrawable(_questionAnswered ? essential! with { HiddenValueIndices = null } : essential)
             : diagram is not null ? new QuizDiagramDrawable(diagram) : null;
         QuizVisualView.Invalidate();
         QuizDiagramCaptionLabel.Text = diagram?.Caption ?? "";
         QuizDiagramCaptionLabel.IsVisible = diagram is not null && !mandatory;
         QuizVisualDataLabel.IsVisible = visible && essential?.Kind is "table" or "bar" or "pie";
         QuizVisualDataLabel.Text = QuizVisualDataLabel.IsVisible && essential is not null
-            ? string.Join(" · ", essential.Labels.Select((label, index) => $"{label}: {essential.Values[index]} {essential.Unit}")) : "";
-        QuizDiagramNoteLabel.IsVisible = visible && diagram?.Kind is "geometry" or "motion" or "bars";
+            ? string.Join(" · ", essential.Labels.Select((label, index) => $"{label}: {(essential.HiddenValueIndices?.Contains(index) == true && !_questionAnswered ? "?" : essential.Values[index].ToString())} {essential.Unit}")) : "";
+        QuizDiagramNoteLabel.IsVisible = visible &&
+            (essential?.Polygons is { Count: > 0 } || essential is { Kind: "bar", HiddenValueIndices.Count: > 0 }
+                || diagram?.Kind is "geometry" or "motion" or "bars");
         QuizDiagramExplanationLabel.Text = diagram?.Explanation ?? "";
         bool showExplanation = visible && _questionAnswered && !string.IsNullOrWhiteSpace(diagram?.Explanation);
         QuizDiagramExplanationLabel.IsVisible = showExplanation && !_currentQuestion.UsesFractionFormatting;
@@ -134,6 +136,7 @@ public partial class MathPuzzlePage
         if (_currentQuestion?.UsesFractionFormatting == true)
         {
             var formatted = new FractionExpressionView { Expression = QuizDiagramExplanationLabel.Text,
+                ParseArithmeticExpressions = _currentQuestion?.ElementaryProblem?.Kind == QuizProblemKind.FractionSkills,
                 IsVisible = showExplanation, MathFontSize = 15, WrapContent = true, TokenSpacing = 4 };
             formatted.SetDynamicResource(FractionExpressionView.MathColorProperty, "WallpaperTextPrimaryColor");
             explanation = formatted;

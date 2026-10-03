@@ -143,6 +143,9 @@ public sealed class MotionQuizGenerator
                 "Motion problems are not available at the selected curriculum tier.");
         }
 
+        int? level = QuizDifficultyPolicy.Level(curriculumContext);
+        allowedTypes = QuizDifficultyPolicy.Prefer(allowedTypes, requestedType, level,
+            QuizDifficultyPolicy.MotionTypes);
         MotionQuizType type =
             requestedType.HasValue &&
             allowedTypes.Contains(requestedType.Value)
@@ -151,17 +154,24 @@ public sealed class MotionQuizGenerator
 
         return type switch
         {
-            MotionQuizType.Basic => CreateBasicContract(language),
-            MotionQuizType.Chasing => CreateChasingContract(language),
-            MotionQuizType.Meeting => CreateMeetingContract(language),
-            MotionQuizType.River => CreateRiverContract(language),
+            MotionQuizType.Basic => CreateBasicContract(language, level),
+            MotionQuizType.Chasing => CreateChasingContract(language, level),
+            MotionQuizType.Meeting => CreateMeetingContract(language, level),
+            MotionQuizType.River => CreateRiverContract(language, level),
             _ => throw new ArgumentOutOfRangeException(nameof(type))
         };
     }
 
-    private MotionQuizContract CreateBasicContract(AppLanguage language)
+    private MotionQuizContract CreateBasicContract(AppLanguage language, int? level)
     {
-        MotionQuestionKind kind = _random.Next(4) switch
+        MotionQuestionKind kind = (level switch
+        {
+            1 => 0,
+            2 => _random.Next(1, 3),
+            3 => _random.Next(3),
+            5 => 3,
+            _ => _random.Next(4)
+        }) switch
         {
             0 => MotionQuestionKind.BasicDistance,
             1 => MotionQuestionKind.BasicSpeed,
@@ -170,7 +180,7 @@ public sealed class MotionQuizGenerator
         };
 
         (MovingSubject movingSubject, MotionUnitProfile profile) =
-            PickMovingSubjectAndProfile(language, kind == MotionQuestionKind.BasicRestDistance);
+            PickMovingSubjectAndProfile(language, kind == MotionQuestionKind.BasicRestDistance, level);
         string subject = GetSubjectText(movingSubject, language);
         string speedUnit = GetSpeedUnit(profile, language);
         string timeUnit = GetTimeUnit(profile, language);
@@ -178,21 +188,11 @@ public sealed class MotionQuizGenerator
 
         if (kind == MotionQuestionKind.BasicRestDistance)
         {
-            // Giữ dạng nghỉ dễ hiểu: giờ/km-h hoặc giây/m-s; không dùng phút
-            // để tránh phải đưa thêm dữ kiện quy đổi không cần thiết.
-            // Profile đã được chọn theo chính đối tượng ở trên; rest-only chỉ
-            // loại profile phút chứ không thay sang đơn vị không phù hợp.
-            speedUnit = GetSpeedUnit(profile, language);
-            timeUnit = GetTimeUnit(profile, language);
-            distanceUnit = GetDistanceUnit(profile, language);
-
-            int speed = PickRealisticSpeed(movingSubject.Kind, profile);
-            int travelTime = profile.TimeUnitEn == "seconds"
-                ? _random.Next(10, 61)
-                : _random.Next(1, 5);
+            // At five stars, deduct rest time before converting minutes to hours.
+            // Lower tiers keep matching speed/time units for this variant.
+            (int speed, int travelTime, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
             int restTime = _random.Next(1, travelTime + 1);
             int totalElapsed = travelTime + restTime;
-            int distance = checked(speed * travelTime * profile.DistanceScale);
 
             string problem = language == AppLanguage.Vietnamese
                 ? $"{Capitalize(subject)} đi với vận tốc {speed} {speedUnit}. Tổng thời gian từ lúc xuất phát đến lúc đến nơi là {totalElapsed} {timeUnit}, trong đó nghỉ {restTime} {timeUnit}. Hỏi {subject} đi được quãng đường bao nhiêu {distanceUnit}?"
@@ -201,6 +201,7 @@ public sealed class MotionQuizGenerator
             string calculation = MultiplyIfNeeded(
                 $"({totalElapsed} - {restTime}) × {speed}",
                 profile.DistanceScale);
+            calculation = DivideIfNeeded(calculation, profile.TimeDivisor);
             string equation = $"{calculation} = {distance}";
             string solution = language == AppLanguage.Vietnamese
                 ? $"{Capitalize(subject)} đi được quãng đường là:{Environment.NewLine}{equation} {distanceUnit}"
@@ -216,15 +217,15 @@ public sealed class MotionQuizGenerator
                 problem,
                 equation,
                 solution,
-                travelTime,
-                ArithmeticOperation.Multiply,
-                speed * profile.DistanceScale,
+                profile.TimeDivisor == 1 ? travelTime : speed * travelTime,
+                profile.TimeDivisor == 1 ? ArithmeticOperation.Multiply : ArithmeticOperation.Divide,
+                profile.TimeDivisor == 1 ? speed * profile.DistanceScale : profile.TimeDivisor,
                 DistinctUnits(speedUnit, timeUnit, distanceUnit));
         }
 
         if (kind == MotionQuestionKind.BasicDistance)
         {
-            (int speed, int time, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind);
+            (int speed, int time, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
             string problem = language == AppLanguage.Vietnamese
                 ? $"{Capitalize(subject)} đi đều với vận tốc {speed} {speedUnit} trong {time} {timeUnit}. Hỏi quãng đường đi được là bao nhiêu {distanceUnit}?"
                 : $"{Capitalize(subject)} moves at a constant speed of {speed} {speedUnit} for {time} {timeUnit}. How far does it travel in {distanceUnit}?";
@@ -254,7 +255,7 @@ public sealed class MotionQuizGenerator
 
         if (kind == MotionQuestionKind.BasicSpeed)
         {
-            (int speed, int time, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind);
+            (int speed, int time, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
             string problem = language == AppLanguage.Vietnamese
                 ? $"{Capitalize(subject)} đi được {distance} {distanceUnit} trong {time} {timeUnit}. Hỏi vận tốc của {subject} là bao nhiêu {speedUnit}?"
                 : $"{Capitalize(subject)} travels {distance} {distanceUnit} in {time} {timeUnit}. What is its speed in {speedUnit}?";
@@ -286,7 +287,7 @@ public sealed class MotionQuizGenerator
 
         // BasicTime
         (int targetSpeed, int targetTime, int targetDistance) =
-            CreateSpeedTimeDistance(profile, movingSubject.Kind);
+            CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
         string timeProblem = language == AppLanguage.Vietnamese
             ? $"{Capitalize(subject)} đi đều với vận tốc {targetSpeed} {speedUnit} và đi được {targetDistance} {distanceUnit}. Hỏi {subject} đi trong bao nhiêu {timeUnit}?"
             : $"{Capitalize(subject)} moves at {targetSpeed} {speedUnit} and covers {targetDistance} {distanceUnit}. How many {timeUnit} does it travel?";
@@ -316,10 +317,10 @@ public sealed class MotionQuizGenerator
             DistinctUnits(speedUnit, distanceUnit, timeUnit));
     }
 
-    private MotionQuizContract CreateChasingContract(AppLanguage language)
+    private MotionQuizContract CreateChasingContract(AppLanguage language, int? level)
     {
         (MovingSubject slowMovingSubject, MovingSubject fastMovingSubject, MotionUnitProfile profile) =
-            PickMovingSubjectPairAndProfile(language);
+            PickMovingSubjectPairAndProfile(language, level);
         string slowSubject = GetSubjectText(slowMovingSubject, language);
         string fastSubject = GetSubjectText(fastMovingSubject, language);
 
@@ -328,7 +329,7 @@ public sealed class MotionQuizGenerator
         string distanceUnit = GetDistanceUnit(profile, language);
 
         (int slowSpeed, int fastSpeed, int time, int gap) =
-            CreateChasingNumbers(profile, slowMovingSubject.Kind);
+            CreateChasingNumbers(profile, slowMovingSubject.Kind, level);
 
         string problem = language == AppLanguage.Vietnamese
             ? $"{Capitalize(slowSubject)} đi trước và đang cách {fastSubject} {gap} {distanceUnit}. {Capitalize(slowSubject)} đi với vận tốc {slowSpeed} {speedUnit}, còn {fastSubject} đi cùng chiều với vận tốc {fastSpeed} {speedUnit}. Hỏi sau bao nhiêu {timeUnit} thì {fastSubject} đuổi kịp?"
@@ -363,10 +364,10 @@ public sealed class MotionQuizGenerator
             DistinctUnits(distanceUnit, speedUnit, timeUnit));
     }
 
-    private MotionQuizContract CreateMeetingContract(AppLanguage language)
+    private MotionQuizContract CreateMeetingContract(AppLanguage language, int? level)
     {
         (MovingSubject movingSubject1, MovingSubject movingSubject2, MotionUnitProfile profile) =
-            PickMovingSubjectPairAndProfile(language);
+            PickMovingSubjectPairAndProfile(language, level);
         string subject1 = GetSubjectText(movingSubject1, language);
         string subject2 = GetSubjectText(movingSubject2, language);
 
@@ -375,7 +376,7 @@ public sealed class MotionQuizGenerator
         string distanceUnit = GetDistanceUnit(profile, language);
 
         (int speed1, int speed2, int time, int distance) =
-            CreateMeetingNumbers(profile, movingSubject1.Kind);
+            CreateMeetingNumbers(profile, movingSubject1.Kind, level);
 
         string problem = language == AppLanguage.Vietnamese
             ? $"{Capitalize(subject1)} và {subject2} ở hai điểm cách nhau {distance} {distanceUnit}, cùng lúc đi ngược chiều về phía nhau. Vận tốc lần lượt là {speed1} {speedUnit} và {speed2} {speedUnit}. Hỏi sau bao nhiêu {timeUnit} thì hai bên gặp nhau?"
@@ -410,9 +411,15 @@ public sealed class MotionQuizGenerator
             DistinctUnits(distanceUnit, speedUnit, timeUnit));
     }
 
-    private MotionQuizContract CreateRiverContract(AppLanguage language)
+    private MotionQuizContract CreateRiverContract(AppLanguage language, int? level)
     {
-        MotionQuestionKind kind = _random.Next(4) switch
+        MotionQuestionKind kind = (level switch
+        {
+            <= 2 => _random.Next(2),
+            3 => _random.Next(3),
+            >= 4 => _random.Next(2, 4),
+            _ => _random.Next(4)
+        }) switch
         {
             0 => MotionQuestionKind.RiverDownstreamSpeed,
             1 => MotionQuestionKind.RiverUpstreamSpeed,
@@ -663,16 +670,16 @@ public sealed class MotionQuizGenerator
     private (int Speed, int Time, int Distance)
         CreateSpeedTimeDistance(
             MotionUnitProfile profile,
-            MotionSubjectKind subjectKind)
+            MotionSubjectKind subjectKind, int? level)
     {
         for (int attempt = 0; attempt < 128; attempt++)
         {
             int speed = PickRealisticSpeed(subjectKind, profile);
             int time = profile.TimeDivisor switch
             {
-                60 => Pick(new[] { 10, 15, 20, 30, 45, 60, 90, 120 }),
-                _ when profile.TimeUnitEn == "seconds" => _random.Next(5, 61),
-                _ => _random.Next(2, 6)
+                60 => PickMinuteDuration(level),
+                _ when profile.TimeUnitEn == "seconds" => _random.Next(5, level.HasValue ? 6 + 10 * level.Value : 61),
+                _ => _random.Next(2, level.HasValue ? level.Value + 3 : 6)
             };
 
             int numerator = checked(speed * time);
@@ -700,11 +707,11 @@ public sealed class MotionQuizGenerator
     private (int Slow, int Fast, int Time, int Gap)
         CreateChasingNumbers(
             MotionUnitProfile profile,
-            MotionSubjectKind subjectKind)
+            MotionSubjectKind subjectKind, int? level)
     {
         for (int attempt = 0; attempt < 128; attempt++)
         {
-            int time = PickTimeForRelativeProfile(profile);
+            int time = PickTimeForRelativeProfile(profile, level);
             int first = PickRealisticSpeed(subjectKind, profile);
             int second = PickRealisticSpeed(subjectKind, profile);
             if (first == second)
@@ -742,11 +749,11 @@ public sealed class MotionQuizGenerator
     private (int Speed1, int Speed2, int Time, int Distance)
         CreateMeetingNumbers(
             MotionUnitProfile profile,
-            MotionSubjectKind subjectKind)
+            MotionSubjectKind subjectKind, int? level)
     {
         for (int attempt = 0; attempt < 128; attempt++)
         {
-            int time = PickTimeForRelativeProfile(profile);
+            int time = PickTimeForRelativeProfile(profile, level);
             int speed1 = PickRealisticSpeed(subjectKind, profile);
             int speed2 = PickRealisticSpeed(subjectKind, profile);
 
@@ -775,32 +782,42 @@ public sealed class MotionQuizGenerator
         return (fallbackSpeed1, fallbackSpeed2, fallbackTime, Math.Max(1, fallbackDistance));
     }
 
-    private int PickTimeForRelativeProfile(MotionUnitProfile profile) =>
+    private int PickMinuteDuration(int? level) => level switch
+    {
+        4 => Pick(new[] { 15, 20, 30, 45, 60 }),
+        5 => Pick(new[] { 12, 18, 24, 36, 42, 48, 54, 72, 84, 96 }),
+        _ => Pick(new[] { 10, 15, 20, 30, 45, 60, 90, 120 })
+    };
+
+    private int PickTimeForRelativeProfile(MotionUnitProfile profile, int? level) =>
         profile.TimeDivisor == 60
-            ? Pick(new[] { 10, 15, 20, 30, 45, 60 })
+            ? PickMinuteDuration(level)
             : profile.TimeUnitEn == "seconds"
-                ? _random.Next(5, 61)
-                : _random.Next(1, 5);
+                ? _random.Next(5, level.HasValue ? 6 + 10 * level.Value : 61)
+                : _random.Next(1, level.HasValue ? level.Value + 2 : 5);
 
     private (MovingSubject Subject, MotionUnitProfile Profile)
         PickMovingSubjectAndProfile(
             AppLanguage language,
-            bool restOnly)
+            bool restOnly, int? level)
     {
-        MovingSubject subject = Pick(MovingSubjects);
+        MovingSubject[] subjects = level is >= 4
+            ? MovingSubjects.Where(subject => subject.Kind is MotionSubjectKind.MotorVehicle or MotionSubjectKind.Train).ToArray()
+            : MovingSubjects;
+        MovingSubject subject = Pick(subjects);
         MotionUnitProfile profile = PickProfileForSubject(
             subject.Kind,
             language,
-            restOnly);
+            restOnly, level);
         return (subject, profile);
     }
 
     private (MovingSubject First, MovingSubject Second, MotionUnitProfile Profile)
-        PickMovingSubjectPairAndProfile(AppLanguage language)
+        PickMovingSubjectPairAndProfile(AppLanguage language, int? level)
     {
         MotionSubjectKind[] pairKinds = MovingSubjects
             .GroupBy(subject => subject.Kind)
-            .Where(group => group.Count() >= 2)
+            .Where(group => group.Count() >= 2 && (level is not >= 4 || group.Key == MotionSubjectKind.MotorVehicle))
             .Select(group => group.Key)
             .ToArray();
 
@@ -820,7 +837,7 @@ public sealed class MotionQuizGenerator
         MotionUnitProfile profile = PickProfileForSubject(
             kind,
             language,
-            restOnly: false);
+            restOnly: false, level);
 
         return (first, second, profile);
     }
@@ -828,7 +845,7 @@ public sealed class MotionQuizGenerator
     private MotionUnitProfile PickProfileForSubject(
         MotionSubjectKind kind,
         AppLanguage language,
-        bool restOnly)
+        bool restOnly, int? level)
     {
         MotionUnitKind[] allowedKinds = kind switch
         {
@@ -863,7 +880,9 @@ public sealed class MotionQuizGenerator
             .Where(profile =>
                 allowedKinds.Contains(profile.Kind) &&
                 (!profile.EnglishOnly || language == AppLanguage.English) &&
-                (!restOnly || profile.TimeDivisor == 1))
+                (!restOnly || level == 5 || profile.TimeDivisor == 1) &&
+                (level is not <= 2 || profile.TimeDivisor == 1) &&
+                (level is not >= 4 || (restOnly && level == 4) || profile.TimeDivisor == 60))
             .ToArray();
 
         return Pick(candidates);

@@ -6,7 +6,7 @@ using System.ComponentModel;
 namespace MathSolver.MarkupExtensions;
 
 /// <summary>
-/// Translation binding for the quiz surface. New AI strings have a built-in
+/// Translation binding for the quiz surface. Quiz strings have a built-in
 /// Vietnamese/English fallback so older external language packs remain usable.
 /// </summary>
 [ContentProperty(nameof(Key))]

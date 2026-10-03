@@ -524,6 +524,9 @@ public sealed class ProportionQuizGenerator
                 "Proportion problems are not available at the selected curriculum tier.");
         }
 
+        int? level = QuizDifficultyPolicy.Level(curriculumContext);
+        allowedTypes = QuizDifficultyPolicy.Prefer(allowedTypes, requestedType, level,
+            QuizDifficultyPolicy.ProportionTypes);
         ProportionQuizType type =
             requestedType.HasValue &&
             allowedTypes.Contains(requestedType.Value)
@@ -531,17 +534,23 @@ public sealed class ProportionQuizGenerator
                 : allowedTypes[_random.Next(allowedTypes.Count)];
 
         TemplateDefinition[] candidates = Templates
-            .Where(template => template.Type == type)
+            .Where(template => template.Type == type &&
+                (level is not >= 4 || type != ProportionQuizType.Direct ||
+                    template.RateProfile is not (DirectRateProfile.TreesPerStudent or DirectRateProfile.GenericCount or DirectRateProfile.MoneyDong)) &&
+                (level is not <= 2 || (!template.AsksForAdditionalPeople &&
+                    template.Scenario is not (ProportionScenarioKind.WorkersRequired or ProportionScenarioKind.MachinesRequired))) &&
+                (level is not >= 5 || type != ProportionQuizType.Inverse ||
+                    template.AsksForAdditionalPeople || template.Scenario is ProportionScenarioKind.WorkersRequired or ProportionScenarioKind.MachinesRequired))
             .ToArray();
 
         TemplateDefinition template = PickWeightedTemplate(candidates);
 
         (int a, int b, int c, BigInteger answer) =
             template.Type == ProportionQuizType.Direct
-                ? CreateDirectNumbers(template.RateProfile, language)
+                ? CreateDirectNumbers(template.RateProfile, language, level)
                 : CreateInverseNumbers(
                     template.Scenario,
-                    template.AsksForAdditionalPeople);
+                    template.AsksForAdditionalPeople, level);
 
         string problemTemplate = language == AppLanguage.Vietnamese
             ? template.VietnameseTemplate
@@ -656,13 +665,13 @@ public sealed class ProportionQuizGenerator
     private (int A, int B, int C, BigInteger Answer)
         CreateDirectNumbers(
             DirectRateProfile rateProfile,
-            AppLanguage language)
+            AppLanguage language, int? level)
     {
-        int a = _random.Next(2, 11);
+        int a = level.HasValue ? _random.Next(2, 4 + 2 * level.Value) : _random.Next(2, 11);
         int c;
         do
         {
-            c = _random.Next(2, 16);
+            c = level is <= 2 ? a * _random.Next(2, 4) : _random.Next(2, 6 + 3 * (level ?? 3));
         }
         while (c == a);
 
@@ -687,17 +696,26 @@ public sealed class ProportionQuizGenerator
             _ => _random.Next(2, 16)
         };
 
-        int b = checked(a * rate);
-        BigInteger answer = (BigInteger)c * rate;
+        // Higher tiers use rational rates only for continuous quantities.
+        // Individual trees/items and prices in whole dong keep integer rates.
+        int denominator = level is >= 4 ? (level == 5 ? 4 : 2) : 1;
+        if (denominator > 1)
+        {
+            a *= denominator;
+            c *= denominator;
+        }
+        int numerator = rate * denominator + (denominator > 1 ? 1 : 0);
+        int b = checked(a * numerator / denominator);
+        BigInteger answer = (BigInteger)c * numerator / denominator;
         return (a, b, c, answer);
     }
 
     private (int A, int B, int C, BigInteger Answer)
         CreateInverseNumbers(
             ProportionScenarioKind scenario,
-            bool asksForAdditionalPeople)
+            bool asksForAdditionalPeople, int? level)
     {
-        for (int attempt = 0; attempt < 192; attempt++)
+        for (int attempt = 0; attempt < 1024; attempt++)
         {
             int a;
             int b;
@@ -795,6 +813,10 @@ public sealed class ProportionQuizGenerator
                 continue;
             }
 
+            if (level is <= 2 &&
+                ((changedQuantity % c != 0 && c % changedQuantity != 0) ||
+                 Math.Max(changedQuantity, c) / Math.Min(changedQuantity, c) > level.Value + 1))
+                continue;
             int total = checked(a * b);
             if (total % c != 0)
             {

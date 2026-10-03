@@ -54,8 +54,8 @@ public partial class AverageFormulaView : ContentView
             ? "6 dạng toán trung bình cộng"
             : "6 arithmetic-mean problem types";
         SixTypesSubtitleLabel.Text = vi
-            ? "Các công thức và ví dụ dùng cùng logic với phần Toán đố → Thuật toán / AI-LLM."
-            : "These formulas and examples use the same logic as Math Puzzle → Algorithm / AI-LLM.";
+            ? "Các công thức và ví dụ dùng cùng logic với phần Toán đố → Thuật toán."
+            : "These formulas and examples use the same logic as Math Puzzle → Algorithm.";
 
         FormulaItems.Clear();
         foreach (AverageFormulaItem item in BuildFormulaItems(vi))

@@ -1,6 +1,7 @@
 using MathSolver.Models;
 using MathSolver.Services;
 using Microsoft.Maui.Graphics;
+using System.Numerics;
 
 namespace MathSolver.Graphics;
 
@@ -41,16 +42,16 @@ public sealed class QuizDiagramDrawable(QuizDiagram diagram) : IDrawable
             float rowHeight = dirtyRect.Height / Math.Max(1, diagram.Rows.Count);
             void Text(string value, float x, float y, float w, float h = 30) =>
                 canvas.DrawString(value, x, y, w, h, HorizontalAlignment.Center, VerticalAlignment.Center);
-            void FractionLabel(int numerator, int denominator, float y, float height)
+            void FractionLabel(string numerator, string denominator, float y, float height)
             {
                 float fontSize = Math.Min(14, Math.Max(1, (height - 7) / 2));
-                float fractionWidth = Math.Max(24, Math.Max(numerator.ToString().Length, denominator.ToString().Length) * fontSize * .65f);
+                float fractionWidth = Math.Max(24, Math.Max(numerator.Length, denominator.Length) * fontSize * .65f);
                 float x = (dirtyRect.Width - fractionWidth) / 2;
                 float top = y + (height - fontSize * 2 - 5) / 2;
                 canvas.FontSize = fontSize;
-                Text(numerator.ToString(), x, top, fractionWidth, fontSize + 2);
+                Text(numerator.Replace('-', '−'), x, top, fractionWidth, fontSize + 2);
                 canvas.DrawLine(x, top + fontSize + 3, x + fractionWidth, top + fontSize + 3);
-                Text(denominator.ToString(), x, top + fontSize + 5, fractionWidth, fontSize + 2);
+                Text(denominator.Replace('-', '−'), x, top + fontSize + 5, fractionWidth, fontSize + 2);
                 canvas.FontSize = 14;
             }
             for (int index = 0; index < diagram.Rows.Count; index++)
@@ -58,9 +59,10 @@ public sealed class QuizDiagramDrawable(QuizDiagram diagram) : IDrawable
                 QuizDiagramRow row = diagram.Rows[index];
                 float y = index * rowHeight + 4;
                 float labelHeight = Math.Min(42, rowHeight * .4f);
-                bool fractionLabel = diagram.Kind == "fractions" && row.FractionNumerator is int labelNumerator &&
-                    row.FractionDenominator is int labelDenominator && row.Label == $"{labelNumerator}/{labelDenominator}";
-                if (fractionLabel) FractionLabel(row.FractionNumerator!.Value, row.FractionDenominator!.Value, y, labelHeight);
+                string[] labelParts = row.Label.Split('/');
+                bool fractionLabel = diagram.Kind == "fractions" && labelParts.Length == 2 &&
+                    BigInteger.TryParse(labelParts[0], out _) && BigInteger.TryParse(labelParts[1], out _);
+                if (fractionLabel) FractionLabel(labelParts[0], labelParts[1], y, labelHeight);
                 else Text(row.Label, 14, y, width, labelHeight);
                 float top = y + labelHeight + 6;
                 if (diagram.Kind == "fractions")
@@ -69,7 +71,6 @@ public sealed class QuizDiagramDrawable(QuizDiagram diagram) : IDrawable
                     if (row.FractionNumerator is not int n || row.FractionDenominator is not int d || d <= 0 ||
                         n < 0 || d > 32 || n > d * 6)
                     {
-                        if (!fractionLabel) Text(row.Label, 14, top, width);
                         continue;
                     }
                     int wholes = Math.Max(1, (n + d - 1) / d);

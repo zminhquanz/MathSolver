@@ -6,7 +6,7 @@ using System.Globalization;
 namespace MathSolver.Graphics;
 
 /// <summary>Responsive diagrams generated from the same immutable data as the grader.</summary>
-public sealed class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
+public sealed partial class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
 {
     private static readonly Color[] Series = [Color.FromArgb("#16A34A"), Color.FromArgb("#2563EB"), Color.FromArgb("#F97316")];
 
@@ -21,11 +21,16 @@ public sealed class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
             canvas.FontSize = 14;
             canvas.StrokeSize = 2;
             float width = dirtyRect.Width, height = dirtyRect.Height;
-            string Value(int index) => data.Values[index].ToString("0.##", CultureInfo.CurrentCulture) + " " + data.Unit;
+            bool Hidden(int index) => data.HiddenValueIndices?.Contains(index) == true;
+            string Value(int index) => Hidden(index) ? "? " + data.Unit : data.Values[index].ToString("0.##", CultureInfo.CurrentCulture) + " " + data.Unit;
             void Text(string text, float x, float y, float w, float h = 26) =>
                 canvas.DrawString(text, x, y, w, h, HorizontalAlignment.Center, VerticalAlignment.Center);
 
-            if (data.Kind == "table")
+            if (data.Polygons is { Count: > 0 })
+            {
+                DrawPolygons(canvas, data, width, height);
+            }
+            else if (data.Kind == "table")
             {
                 for (int index = 0; index < data.Labels.Count; index++)
                 {
@@ -38,7 +43,7 @@ public sealed class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
             }
             else if (data.Kind == "bar")
             {
-                float max = Math.Max(1, (float)data.Values.Max());
+                float max = Math.Max(1, (float)data.Values.Where((_, index) => !Hidden(index)).DefaultIfEmpty(1).Max());
                 float top = 38, baseline = height - 45, plotHeight = baseline - top;
                 canvas.DrawLine(35, top, 35, baseline);
                 canvas.DrawLine(35, baseline, width - 12, baseline);
@@ -46,10 +51,10 @@ public sealed class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
                 float column = (width - 56) / data.Values.Count;
                 for (int index = 0; index < data.Values.Count; index++)
                 {
-                    float x = 40 + column * index, barHeight = (float)data.Values[index] / max * (plotHeight - 24);
+                    float x = 40 + column * index, barHeight = Hidden(index) ? (plotHeight - 24) * .55f : (float)data.Values[index] / max * (plotHeight - 24);
                     canvas.FillColor = Series[index % Series.Length];
                     canvas.FillRectangle(x + column * .2f, baseline - barHeight, column * .6f, barHeight);
-                    Text(data.Values[index].ToString(CultureInfo.CurrentCulture), x, baseline - barHeight - 27, column);
+                    Text(Hidden(index) ? "?" : data.Values[index].ToString(CultureInfo.CurrentCulture), x, baseline - barHeight - 27, column);
                     Text(data.Labels[index], x, baseline + 6, column);
                 }
             }

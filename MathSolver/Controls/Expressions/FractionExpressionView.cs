@@ -1,11 +1,20 @@
 using System.Numerics;
 using System.Globalization;
 using Microsoft.Maui.Layouts;
+using MathSolver.Services;
 
 namespace MathSolver.Controls;
 
 public sealed class FractionExpressionView : ContentView
 {
+    public static readonly BindableProperty ParseArithmeticExpressionsProperty = BindableProperty.Create(
+        nameof(ParseArithmeticExpressions), typeof(bool), typeof(FractionExpressionView), false,
+        propertyChanged: OnVisualPropertyChanged);
+    public bool ParseArithmeticExpressions
+    {
+        get => (bool)GetValue(ParseArithmeticExpressionsProperty);
+        set => SetValue(ParseArithmeticExpressionsProperty, value);
+    }
     public static readonly BindableProperty ExpressionProperty =
         BindableProperty.Create(
             nameof(Expression),
@@ -137,6 +146,13 @@ public sealed class FractionExpressionView : ContentView
     private View CreateExpressionLine(
         string line)
     {
+        if (ParseArithmeticExpressions)
+        {
+            var fragments = TextbookFractionParser.ParseLine(line);
+            if (fragments.Any(fragment => fragment.Math is not null))
+                return CreateTextbookLine(fragments);
+        }
+
         string[] tokens =
             line.Split(
                 ' ',
@@ -204,6 +220,86 @@ public sealed class FractionExpressionView : ContentView
         }
 
         return wrappingLayout;
+    }
+
+    private View CreateTextbookLine(IReadOnlyList<TextbookFractionParser.Fragment> fragments)
+    {
+        var items = new List<View>();
+        foreach (var fragment in fragments)
+        {
+            if (fragment.Math is { } math)
+                items.AddRange(TopLevelMathViews(math));
+            else
+                items.AddRange(fragment.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(CreateTextToken));
+        }
+        if (!WrapContent)
+        {
+            var row = new HorizontalStackLayout { Spacing = TokenSpacing, VerticalOptions = LayoutOptions.Center,
+                HorizontalOptions = GetHorizontalLayoutOptions() };
+            foreach (var item in items) row.Children.Add(item);
+            return row;
+        }
+        var wrap = new FlexLayout { Direction = FlexDirection.Row, Wrap = FlexWrap.Wrap, AlignItems = FlexAlignItems.Center,
+            JustifyContent = HorizontalTextAlignment switch { TextAlignment.Center => FlexJustify.Center,
+                TextAlignment.End => FlexJustify.End, _ => FlexJustify.Start }, HorizontalOptions = LayoutOptions.Fill };
+        foreach (var item in items)
+        {
+            item.Margin = new Thickness(0, 0, TokenSpacing, Math.Min(4, TokenSpacing));
+            wrap.Children.Add(item);
+        }
+        return wrap;
+    }
+
+    private IEnumerable<View> TopLevelMathViews(TextbookFractionParser.Node node)
+    {
+        // Fractions and mixed numbers stay intact; equations can wrap between operators.
+        if (node is TextbookFractionParser.Binary { Operator: not "/" } binary)
+        {
+            foreach (var child in TopLevelMathViews(binary.Left)) yield return child;
+            yield return CreateTextToken(MathSymbol(binary.Operator));
+            foreach (var child in TopLevelMathViews(binary.Right)) yield return child;
+        }
+        else yield return CreateMathNode(node);
+    }
+
+    private static string MathSymbol(string symbol) => symbol switch { "*" => "×", "-" => "−", _ => symbol };
+
+    private View CreateMathNode(TextbookFractionParser.Node node)
+    {
+        View Row(params View[] children)
+        {
+            var row = new HorizontalStackLayout { Spacing = Math.Min(TokenSpacing, MathFontSize * .2),
+                VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Center };
+            foreach (var child in children) row.Children.Add(child);
+            return row;
+        }
+        TextbookFractionParser.Node Ungroup(TextbookFractionParser.Node part) => part is TextbookFractionParser.Group group
+            ? Ungroup(group.Content) : part;
+        return node switch
+        {
+            TextbookFractionParser.Number number => CreateTextToken(BigInteger.TryParse(number.Text,
+                NumberStyles.Integer, CultureInfo.InvariantCulture, out var integer) ? FormatIntegerForDisplay(integer) : number.Text),
+            TextbookFractionParser.Group group => Row(CreateTextToken("("), CreateMathNode(group.Content), CreateTextToken(")")),
+            TextbookFractionParser.Unary unary => Row(CreateTextToken(MathSymbol(unary.Operator)), CreateMathNode(unary.Content)),
+            TextbookFractionParser.Mixed mixed => Row(CreateTextToken(mixed.Whole.Text),
+                CreateFractionView(CreateMathNode(mixed.Numerator), CreateMathNode(mixed.Denominator))),
+            TextbookFractionParser.Binary { Operator: "/" } fraction => CreateFractionView(
+                CreateMathNode(Ungroup(fraction.Left)), CreateMathNode(Ungroup(fraction.Right))),
+            TextbookFractionParser.Binary binary => Row(CreateMathNode(binary.Left), CreateTextToken(MathSymbol(binary.Operator)), CreateMathNode(binary.Right)),
+            _ => throw new ArgumentOutOfRangeException(nameof(node))
+        };
+    }
+
+    private View CreateFractionView(View numerator, View denominator)
+    {
+        var grid = new Grid { RowDefinitions = { new(GridLength.Auto), new(new GridLength(2)), new(GridLength.Auto) },
+            RowSpacing = 2, MinimumWidthRequest = MathFontSize * 1.25, VerticalOptions = LayoutOptions.Center };
+        numerator.HorizontalOptions = LayoutOptions.Center;
+        denominator.HorizontalOptions = LayoutOptions.Center;
+        grid.Add(numerator, 0, 0);
+        grid.Add(new BoxView { HeightRequest = 2, BackgroundColor = MathColor, HorizontalOptions = LayoutOptions.Fill }, 0, 1);
+        grid.Add(denominator, 0, 2);
+        return grid;
     }
 
     private IEnumerable<View> CreateTokenViews(string[] tokens)

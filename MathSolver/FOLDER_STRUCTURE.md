@@ -5,7 +5,7 @@ Project tổ chức theo **lớp trách nhiệm**, bên trong chia theo **chức
 | Thư mục | Trách nhiệm |
 |---|---|
 | [Views](Views/README.md) | Trang và giao diện nhập liệu, hiển thị kết quả; XAML nằm cạnh code-behind. |
-| [Services](Services/README.md) | Điều phối tính toán, sinh đề, AI, tùy chọn ứng dụng và dịch vụ dùng chung. |
+| [Services](Services/README.md) | Điều phối tính toán, sinh đề, tùy chọn ứng dụng và dịch vụ dùng chung. |
 | [Numerics](Numerics/README.md) | Kiểu số, kernel số học, SIMD, NTT/CRT và chuyển đổi số. |
 | [Models](Models/README.md) | Dữ liệu đầu vào/kết quả, hợp đồng đề toán và gói ngôn ngữ. |
 | [Graphics](Graphics/README.md) | Vẽ đồ thị, hình minh họa, biểu đồ benchmark và nền động. |
@@ -22,7 +22,7 @@ Project tổ chức theo **lớp trách nhiệm**, bên trong chia theo **chức
 - **Lũy thừa:** `Views/Calculators/PowerRootView` → `Services/Calculations/PowerRootEngine` → `Numerics/Powers` và `Numerics/BigIntegers`; xuất số ở `Numerics/Serialization`.
 - **Parabol/phương trình:** `Views/Calculators/QuadraticEquationView` → `Services/Calculations` → `Graphics/Equations`; kiểu số chính xác cao ở `Numerics/FloatingPoint`.
 - **Chọn SIMD/số luồng:** `Views/Hardware` → `Services/Performance` → các kernel số học hoặc renderer sử dụng chính sách đó.
-- **Sinh đề toán:** `Views/Quizzes` → `Services/Quizzes` hoặc `Services/AI` → `Models/Quizzes`.
+- **Sinh đề toán:** `Views/Quizzes` → `Services/Quizzes` → `Models/Quizzes`.
 - **Giao diện và ngôn ngữ:** `Views/Settings` → `Services/Appearance`, `Services/Localization`, `Services/Wallpaper`.
 
 ## Quy ước khi phát triển

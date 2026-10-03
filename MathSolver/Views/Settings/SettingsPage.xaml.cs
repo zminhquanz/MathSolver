@@ -1033,8 +1033,8 @@ public partial class SettingsPage : ContentPage
 
             LiveWallpaperEnabledSummaryLabel.Text =
                 useEnglish
-                    ? "The lightweight 24 FPS GraphicsView animation keeps running during local AI inference and stops only when the tab is inactive."
-                    : "Animation GraphicsView nhẹ ở 24 FPS vẫn chạy khi AI local tạo sinh và chỉ dừng khi tab không hoạt động.";
+                    ? "The lightweight 24 FPS GraphicsView animation keeps running while the tab is active and stops only when the tab is inactive."
+                    : "Animation GraphicsView nhẹ ở 24 FPS chạy khi tab đang hoạt động và dừng khi tab không hoạt động.";
         }
         else if (mode == LiveWallpaperMode.MathAnimation2)
         {
@@ -1049,8 +1049,8 @@ public partial class SettingsPage : ContentPage
 
             LiveWallpaperEnabledSummaryLabel.Text =
                 useEnglish
-                    ? "The neural-math GraphicsView animation keeps running during local AI inference and stops only when the tab is inactive."
-                    : "Animation neural-math bằng GraphicsView vẫn chạy khi AI local tạo sinh và chỉ dừng khi tab không hoạt động.";
+                    ? "The neural-math GraphicsView animation keeps running while the tab is active and stops only when the tab is inactive."
+                    : "Animation neural-math bằng GraphicsView chạy khi tab đang hoạt động và dừng khi tab không hoạt động.";
         }
         else
         {
@@ -1065,8 +1065,8 @@ public partial class SettingsPage : ContentPage
 
             LiveWallpaperEnabledSummaryLabel.Text =
                 useEnglish
-                    ? "H.264 video loops silently with native hardware-preferred decoding and keeps playing during local AI inference."
-                    : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và vẫn phát khi AI local tạo sinh.";
+                    ? "H.264 video loops silently with native hardware-preferred decoding and keeps playing while the tab is active."
+                    : "Video H.264 tự lặp, tắt tiếng, ưu tiên giải mã phần cứng native và phát khi tab đang hoạt động.";
         }
     }
 
@@ -1151,8 +1151,8 @@ public partial class SettingsPage : ContentPage
 
         LiveWallpaperEnabledSummaryLabel.Text =
             useEnglish
-                ? "Backgrounds stop on inactive tabs; both the Math animation and validated hardware H.264 keep running during local AI inference."
-                : "Hình nền dừng khi tab không hoạt động; cả Math Animation và H.264 đã xác nhận giải mã phần cứng vẫn tiếp tục chạy khi AI local tạo sinh.";
+                ? "Backgrounds stop on inactive tabs; both the Math animation and validated hardware H.264 keep running while the tab is active."
+                : "Hình nền chạy khi tab đang hoạt động và dừng khi tab không hoạt động.";
 
         LiveWallpaperModeTitleLabel.Text =
             useEnglish
@@ -1276,8 +1276,8 @@ public partial class SettingsPage : ContentPage
 
         DeveloperSectionDescriptionLabel.Text =
             useEnglish
-                ? "Enable diagnostic data used to inspect algorithms and AI/LLM behavior."
-                : "Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán và AI/LLM.";
+                ? "Enable diagnostic data used to inspect algorithms."
+                : "Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán.";
 
         DeveloperModeTitleLabel.Text =
             useEnglish
@@ -1325,16 +1325,6 @@ public partial class SettingsPage : ContentPage
             useEnglish
                 ? "Content shown while enabled"
                 : "Nội dung được hiển thị khi bật";
-
-        DeveloperLlmToolsTitleLabel.Text =
-            useEnglish
-                ? "AI JSON and validation logs"
-                : "JSON và log kiểm tra AI";
-
-        DeveloperLlmToolsDescriptionLabel.Text =
-            useEnglish
-                ? "Show LLM-generated JSON and each C# validation step."
-                : "Hiện JSON do LLM tạo và từng bước validation của C#.";
 
         DeveloperPowerToolsTitleLabel.Text =
             useEnglish
