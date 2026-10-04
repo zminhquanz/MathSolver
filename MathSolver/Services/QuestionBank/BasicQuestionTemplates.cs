@@ -129,7 +129,7 @@ public static class BasicQuestionTemplates
         string a = Render(givenA.Trim(), c), b = Render(givenB.Trim(), c), q = Render(question.Trim(), c);
         if (a.Length > 0 && b.Length > 0)
         {
-            a = a.TrimEnd('.', ',', '!', '?', ':', ';').TrimEnd() + ",";
+            a = a.TrimEnd('.', ',', '!', '?', ':', ';', ' ') + ",";
             // Ordinary openings and Vietnamese role/group labels become lowercase.
             // Bare names and English titles such as Mary / Uncle John stay intact.
             bool properActor = new[] { c.Subject, c.OtherSubject }.Any(actor => actor.Length > 0
@@ -166,6 +166,10 @@ public static class BasicQuestionTemplates
                 }
             }
         }
+        // Native text can contain a space before punctuation or a repeated comma.
+        // Tidy displayed/live prose without changing stored JSON or its hash.
+        text = Regex.Replace(text, @"\s+([,.!?:;])", "$1");
+        text = Regex.Replace(text, @",(?:\s*,)+", ",");
         return Regex.Replace(text, @"(^|[.!?]\s+)(\p{Ll})", m => m.Groups[1].Value + m.Groups[2].Value.ToUpperInvariant());
     }
 

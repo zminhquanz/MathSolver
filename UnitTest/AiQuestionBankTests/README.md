@@ -40,18 +40,34 @@ values. SQLite/Excel round-trips retain structure, secondary actors, unit IDs an
 prose solution leads. The 100-entry Vietnamese name pools and legacy fixed-fact
 questions are also checked.
 
-Version 3 addition checks cover 870 bilingual scene/relation/unit/star combinations,
+Version 3 addition checks cover the bilingual scene/relation/unit/star combinations,
 including production, harvesting, periods, garden parts, groups, arrivals and stock.
 They verify fresh C# values, scene quantity limits, existing answer modes and essay
 grading, accepted natural action prose, reversed comparisons, wrong period/actor/
 target/event/unit rejection, topic/relationship rotation, skewed SQLite row counts,
 persistent selection after restart, deduplication, Excel metadata round-trips,
 forged indexed metadata rejection and migration from a pre-addition SQLite schema.
+Scale checks additionally exercise every eligible 1–5-star domain in both languages,
+including minimum/maximum random draws, primary digit buckets, smaller secondary
+operands, results crossing a digit boundary, total capacity, matching actor/unit/time
+roles, carrying progression, and exclusion of incompatible small settings. They reject
+monthly output rewritten as morning output, mixed object nouns, overlapping or
+cumulative periods, and old actor patterns inconsistent with the selected scale.
+Real-output regressions reject Unicode numeric facts, doubled English actor roles
+and dangling conjunctions. They accept combined-period questions without the
+literal word `total` and past-tense/passive removal with original-stock targets.
 
 Run only these checks with `--addition-tests`. A real-model addition check covers
 five mathematical relationships, different scene roles, stars 1–5 and both languages.
-It includes independent family holdings at 1 and 5 stars to reproduce the
-reported `given_a` / `given_b` / `question` generation failure:
+The loaded model's 75% thread budget is asserted (12 logical CPUs use 9 workers).
+The full live run exercises 19 cases, including both languages at every star level,
+factory production at stars 3–5, spatial nursery sections, comparisons, restored
+stock and arrivals. Each accepted template is rendered with four fresh C# fact sets
+and passed through the existing essay grader; the first rendering is printed for
+manual review. Failed cases are collected after at most three attempts, allowing
+the other selected cases to be inspected in the same run.
+It includes personal holdings at 1 star and distribution stock at 5 stars to exercise
+`given_a` / `given_b` / `question` at the appropriate physical scale:
 
 ```powershell
 dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --addition-model "E:\AI Models\google\gemma-4-E4B-it-qat-q4_0-gguf\gemma-4-E4B_q4_0-it.gguf"
@@ -61,12 +77,17 @@ This checks native grammar, streamed JSON, production validation and fresh C# es
 grading with at most three attempts per case. It runs no benchmark and does not
 write the app's database.
 
-Use `--addition-model-stock <GGUF path>` for only those two family-holdings cases.
+Use `--addition-model-stock <GGUF path>` for five stock cases: personal holdings
+at 1 star and restored wholesale stock at 4 stars in both languages, plus
+Vietnamese distribution stock at 5 stars.
 The default checks also cover repeated explanations, worked answers appended to
 the question, duplicated actors/units, and short valid paraphrases.
 Joined-clause checks cover comma-separated facts in live and completed previews,
 lowercase ordinary/role openings, preserved proper names, and unchanged raw
 historical JSON used for hashing.
+Displayed/live prose also removes repeated commas and spaces before punctuation,
+while preserving raw saved JSON. A lone letter before a stock quantity, observed
+in a real GGUF response, is rejected rather than saved as prose.
 
 Rendered prose leads, equations and answer units are passed through the existing
 essay grader. A lead naming an unrelated actor is rejected alongside incorrect

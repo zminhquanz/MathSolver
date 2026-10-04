@@ -99,6 +99,7 @@ public static class BasicQuestionPrompt
     private static string BuildAddition(BasicQuestionContract c, string? correction)
     {
         var scene = AdditionQuestionCatalogue.Find(c.SceneId)!;
+        var scale = scene.Scale(c.Tier)!;
         bool vi = c.Language == AppLanguage.Vietnamese;
         string relationship = c.Structure switch
         {
@@ -108,8 +109,8 @@ public static class BasicQuestionPrompt
             BasicQuestionStructure.AddComparisonInverse => vi ? "Biết lượng của {other}; {other} ít hơn {name}; hỏi lượng của {name}." : "The amount/result of {other} is known; that of {other} is fewer than that of {name}; ask the amount/result of {name}.",
             _ => scene.Kind switch
             {
-                AdditionSceneKind.Periods => vi ? "Kết quả cùng hoạt động qua các buổi/hiệp; hỏi tổng kết quả, không hỏi đồ vật còn giữ." : "Results of the same activity over separate periods; ask their total, not remaining possessions.",
-                AdditionSceneKind.Parts => vi ? "Lượng trong các luống riêng biệt; hỏi tổng lượng của các luống." : "Amounts in separate rows; ask the total across the rows.",
+                AdditionSceneKind.Periods => vi ? "Kết quả cùng hoạt động qua các thời kỳ riêng; hỏi tổng kết quả, không hỏi đồ vật còn giữ." : "Results of the same activity over separate periods; ask their total, not remaining possessions.",
+                AdditionSceneKind.Parts => vi ? "Lượng trong các phần riêng không chứa nhau; hỏi tổng lượng của các phần." : "Amounts in disjoint spatial parts; ask their total.",
                 _ => vi ? "Lượng riêng của {name} và {other}; hỏi tổng của cả hai, không chuyển đồ vật giữa hai chủ thể." : "Separate amounts of {name} and {other}; ask their combined amount, not a transfer between them."
             }
         };
@@ -142,10 +143,18 @@ public static class BasicQuestionPrompt
             - unit_id: choose one compatible ID from the catalogue below.
             C# fills the slots later: {name}/{other} are complete actors; {a}/{b} are quantities; {unit} is the complete object/unit noun.
             Keep the example's slots. Never substitute literal names, add actor titles, or write numerical values or number words.
+            {name}/{other} already include the full group, business or personal role. Write '{name} makes', never '{name}'s craft group makes'; do not append an actor role to a slot.
             Each given uses its quantity once followed by {unit} (more/fewer may intervene). No {a}/{b} in question or solution_lead.
             Write only {unit}, with no extra object noun after it. Each sentence states one idea; add no actors, facts or solution steps.
             Vary openings and verbs within this activity while keeping the example's relationship and target.
             """;
+        string magnitude = ((int)c.Tier, vi) switch {
+            (1, true) => "hàng đơn vị", (2, true) => "hàng chục", (3, true) => "hàng trăm", (4, true) => "hàng nghìn", (5, true) => "hàng chục nghìn",
+            (1, false) => "ones", (2, false) => "tens", (3, false) => "hundreds", (4, false) => "thousands", _ => "tens of thousands" };
+        prompt += vi ? $"\nQuy mô dữ kiện chính: {magnitude}. Vai trò đầy đủ của {{name}}/{{other}}: {scale.VietnameseActor.Replace("{person}", "…")}. {scale.VietnameseScope}"
+            : $"\nPrimary quantity scale: {magnitude}. Each {{name}}/{{other}} slot represents an ENTIRE {scale.EnglishActor.Replace("{person}'s ", "").Replace("{person}", "person")}; use it directly as the subject. {scale.EnglishScope}";
+        prompt += vi ? "\nHai lượng cùng loại {unit}. Không thêm loại đồ vật khác, tiền, đơn vị đo, quan hệ đổi đơn vị, nhóm hoặc thời kỳ chứa nhau. Giữ quy mô chủ thể; không biến cơ sở lớn thành một người tự làm trong một buổi."
+            : "\nBoth quantities count the same kind of {unit}. No additional object kinds, money, measures, conversions or overlapping groups/periods. Keep the selected actor scale; do not turn a large organisation into one person working in a single morning.";
         if (scene.Kind == AdditionSceneKind.Contributions)
             prompt += vi ? "\nCả hai dữ kiện so sánh kết quả góp/thu gom của hoạt động này, không đổi sang số đồ vật đang có."
                 : "\nBoth givens describe this activity's contributions/collected amounts. Do not replace an activity result with possessions ('has').";
@@ -153,11 +162,11 @@ public static class BasicQuestionPrompt
             prompt += vi ? "\n{name} là địa điểm, không phải người hay con vật. Các {unit} có mặt ở đó hoặc đến đó; không viết chúng đến đậu cùng {name}."
                 : "\n{name} is a PLACE, not a person or animal. The {unit} are present there or arrive there; they do not perch together with {name}.";
         if (scene.Kind is AdditionSceneKind.Periods or AdditionSceneKind.Parts)
-            prompt += vi ? "\n{part_a}/{part_b} là các buổi/hiệp hoặc luống khác nhau. Dùng đúng biến ở từng dữ kiện như ví dụ."
-                : "\n{part_a}/{part_b} are separate periods or rows. Keep their slots in the corresponding givens as shown.";
+            prompt += vi ? $"\n{{part_a}} nghĩa là {scale.VietnamesePartA}; {{part_b}} nghĩa là {scale.VietnamesePartB}. Trong dữ kiện dùng biến, không viết các tên này ra. Trong câu hỏi/câu dẫn có thể gọi chung là {scale.VietnameseSpan}; không đổi thành thời kỳ hoặc phần nhỏ khác."
+                : $"\n{{part_a}} means {scale.EnglishPartA}; {{part_b}} means {scale.EnglishPartB}. Use the slots, not their literal meanings, in the givens. Questions/leads may refer collectively to {scale.EnglishSpan}; do not change the periods or spatial parts.";
         prompt += (vi ? "\nDanh mục đơn vị (chỉ unit_id là giá trị cụ thể; trong câu vẫn dùng {unit}): "
             : "\nCompatible units (only unit_id is literal; use {unit} in all prose): ")
-            + JsonSerializer.Serialize(scene.UnitIds.Select(id => new { unit_id = id, meaning = QuestionUnits.Find(id)!.Item(c.Language) }), JsonOptions)
+            + JsonSerializer.Serialize(scale.UnitIds.Select(id => new { unit_id = id, meaning = QuestionUnits.Find(id)!.Item(c.Language) }), JsonOptions)
             + "\nCorrect role example: " + QuestionBankStore.SerializeDraft(AdditionQuestionCatalogue.Example(c));
         if (!string.IsNullOrEmpty(correction))
             prompt += vi ? $"\nLần trước bị từ chối: {correction}. Viết lại toàn bộ JSON ngắn gọn theo ví dụ. Mỗi dữ kiện chỉ một mệnh đề, đúng biến; câu hỏi chỉ hỏi, câu dẫn không giải bài."

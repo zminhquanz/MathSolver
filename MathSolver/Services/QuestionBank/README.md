@@ -2,6 +2,8 @@
 
 The practice engine owns arithmetic, random operands, answer choices and grading. Local AI supplies reusable prose templates and a prose solution lead. Selecting a question remains an independent 50/50 choice between a fresh C# question and the optional SQLite bank. Empty, inaccessible or invalid bank entries fall back to the C# generator.
 
+Local GGUF prompt processing and token decoding use `max(1, floor(Environment.ProcessorCount * 0.75))` worker threads: 12 logical processors means 9 workers. This limits the configured inference thread count, not operating-system CPU utilisation; other app/native work and hardware scheduling can affect measured CPU usage.
+
 ## Version 3 addition: separate relationships and topics
 
 New addition jobs use version 3. C# selects a mathematical relationship independently of the story setting; AI supplies only the prose and a compatible countable-object unit ID. Subtraction, multiplication and division continue to use version 2. Existing version 1/2 bank rows remain readable.
@@ -12,9 +14,21 @@ New addition jobs use version 3. C# selects a mathematical relationship independ
 | 2 | The above, plus find the larger amount from a known amount and a positive difference |
 | 3–5 | The above, plus recover an initial amount after removal, and find a larger amount when the known amount is described as fewer |
 
-Higher stars also use the existing arithmetic operand progression, bounded by the selected setting. These are **one-step, two-operand** templates, not a complete grade 1–5 syllabus or multistep reasoning progression. A club's attendance, a garden row or a sports score does not grow to implausible five-digit quantities just because five stars are selected. Such domains reroll within their limits rather than clamping all large values to the same maximum.
+These are **one-step, two-operand** templates, not a complete grade 1–5 syllabus or multistep reasoning progression. C# chooses a viable scene and star-specific scale **before** generating values. An incompatible small scene is excluded rather than rerolling a high-star primary into a smaller digit bucket.
 
-Twelve settings span family, school, community, environment, activities, nature and shopping: gifts, libraries, school supplies, donations, recycling, crafts, harvesting, garden rows, sports halves, arriving birds, club arrivals and shop inventory. Each defines compatible units, actor types, activities and supported relationships. A shop story counts objects; it does not introduce money. Measurement, money and additional solution steps require separate fact models.
+| Stars | Primary operand | Typical scale |
+| --- | --- | --- |
+| 1 | 1–9 | Personal belongings, small groups, short activities, reading corners |
+| 2 | 10–99, within the scene's capacity | Collections, classes, small clubs, craft groups, stalls |
+| 3 | 100–999 | Schools, school libraries, workshops, farms, nurseries, bookshops |
+| 4 | 1,000–9,999 | School clusters, district libraries, wholesale stock, weekly production |
+| 5 | 10,000–99,999 | School networks, city libraries, distribution centres, factories and monthly production |
+
+`AdditionQuestionScales` binds actor patterns, compatible object units, spatial/time labels, operand caps and combined-quantity capacities to each scene/tier. For example, club arrivals are available only at stars 1–2 and total at most 30 participants. Family belongings, sports scores and arriving birds are also excluded at stars 3–5. A large garden scene counts **seedlings** in nursery rows/sections, not tens of thousands of mature trees in a household garden. Notebook production uses days at star 3, weeks at star 4 and months at star 5. Counts belonging to different periods/groups must not overlap or be cumulative totals containing one another.
+
+The primary retains the selected digit bucket. The secondary may use any lower bucket up to the selected tier; the result can cross the primary's digit boundary. Carrying is varied, with a preference for one, two and three carry positions at stars 3, 4 and 5 respectively. Sampling is bounded and never violates the quantity domain in pursuit of a carry target. The plain C# arithmetic generator and grading rules are unchanged.
+
+Fourteen settings span family, school, community, environment, activities, nature and shopping: gifts, libraries, school supplies, donations, recycling, crafts, notebook production, book distribution, harvesting, garden rows/sections, sports halves, arriving birds, club arrivals and shop inventory. Their availability, actors and units depend on the tier. A shop story counts objects; it does not introduce money. Measurement, money and additional solution steps require separate fact models.
 
 Version 3 contracts add `TopicId`, `SceneId`, `PartA` and `PartB`. Roles can be people, teams or places. For two periods/spatial parts, the same actor/location owns both operands; `{part_a}` and `{part_b}` preserve the C#-selected period/part roles. For independent groups, `{name}` and `{other}` bind different groups. For comparison, `{a}` is the known amount of `{other}`, `{b}` is the difference and `{name}` is the amount requested. C# regenerates actors and numbers at each use without changing these roles.
 
@@ -30,7 +44,9 @@ Version 3 contracts add `TopicId`, `SceneId`, `PartA` and `PartB`. Roles can be 
 
 The five-field output schema stays the same. Version 3 placeholders are `{a}`, `{b}`, `{name}`, `{other}`, `{unit}`, `{part_a}` and `{part_b}`. Time/place/activity scenes permit varied openings; comparison facts keep the known actor as the active subject, while the wording remains generated. Validation checks the selected setting's activity, actor/period roles, comparison direction, target and compatible units, including the solution lead. It does not force every story to express possession or receiving. Generated prose still needs bounded semantic rules; this is not unrestricted natural-language validation.
 
-Generation balances relationships, topics and settings with a bounded per-selection history. SQLite selection first balances semantic buckets, then selects a row within a bucket. A topic with many saved phrasings cannot dominate simply because it has more rows. `LastUsedUtc` persists usage across store/app restarts. Template hashes include topic/setting/relationship but exclude preview operands and actors.
+Generation balances relationships, settings and topics with a bounded per-selection history. An unused setting precedes its broad topic so, for example, library usage cannot starve school supplies. SQLite selection first balances semantic buckets, then selects a row within a bucket. A topic with many saved phrasings cannot dominate simply because it has more rows. `LastUsedUtc` persists usage across store/app restarts. Template hashes include topic/setting/relationship but exclude preview operands and actors.
+
+The version 3 schema and Excel columns are unchanged. The same scale checks apply at generation, insertion/import, practice selection and export. Previously saved version 3 contracts that violate the current actor, unit, period or quantity policy are skipped, not deleted or silently rewritten into a different setting. Valid templates retain their scene, tier, unit and period roles when C# refreshes their facts. Legacy version 1/2 formats retain their existing compatibility path.
 
 SQLite adds `Structure`, `TopicId` and `SceneId` as queryable columns and a selection index. Existing tables receive these columns automatically without deleting saved questions. Version 3 indexed metadata must agree with `ContractJson`; invalid edits are skipped during practice and export. Old schemas and legacy deduplication remain supported.
 
@@ -58,6 +74,18 @@ Contribution comparisons keep the same activity in both givens: an amount
 collected/donated cannot silently become an amount merely owned. The native
 comparison clause uses the selected activity; validation still accepts the
 catalogue's supported synonyms.
+
+Live GGUF checks also guard against literal Unicode digits and doubled actor
+roles such as `{name}'s craft group` when `{name}` already names the group.
+Addition grammar permits Vietnamese/English Latin prose and clause punctuation,
+with quantities confined to placeholders. Validation accepts natural combined-period
+questions without requiring the word `total`, and past-tense removal/original-stock
+phrasing, while rejecting partial-period targets and dangling conjunctions.
+Original-stock questions may ask what the actor `started with`. The native second
+fact in this relation must use an explicit removal phrase; ambiguous ownership or
+`took` alone cannot replace it. Stock facts also reject orphaned letters before a
+quantity. Display formatting removes duplicate commas and spaces before punctuation,
+while retaining original saved JSON and hashes.
 
 Streaming previews and stored templates use the same clause formatter. Old
 period-separated givens also display with a comma and lowercase continuation;

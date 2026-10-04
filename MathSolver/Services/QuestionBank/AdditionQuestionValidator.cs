@@ -36,10 +36,16 @@ public static class AdditionQuestionValidator
             string Field(string key) => document.RootElement.GetProperty(key).GetString()!;
             var d = new BasicQuestionDraft(Field("given_a"), Field("given_b"), Field("question"), Field("solution_lead"), Field("unit_id"));
             var scene = AdditionQuestionCatalogue.Find(c.SceneId)!;
+            var scale = scene.Scale(c.Tier)!;
             var unit = QuestionUnits.Find(d.UnitId!);
-            if (unit is null || !scene.UnitIds.Contains(unit.Id)) return new(null, "ChangedUnits");
+            if (unit is null || !scale.UnitIds.Contains(unit.Id)) return new(null, "ChangedUnits");
             c = BasicQuestionTemplates.ApplyUnit(c, unit);
+            if (!c.IsValid) return new(null, "InvalidContract");
             string[] text = [d.GivenA, d.GivenB, d.Question, d.SolutionLead!];
+            if (Has(d.GivenA + " " + d.GivenB, c.Language == AppLanguage.Vietnamese
+                ? @"\b(?:lũy kế|bao gồm|đã tính|tính cả|trong đó)\b"
+                : @"\b(?:cumulative|including|includes?|already counted|of which|so far)\b"))
+                return new(null, "ExtraRelations");
             foreach (string s in text)
             {
                 if (s.Length is < 10 or > 700 || s.Any(char.IsControl)) return new(null, "InvalidText");
@@ -52,21 +58,34 @@ public static class AdditionQuestionValidator
                 // not include a worked solution. Keep this independent of native
                 // grammar: imports and alternative runtimes use the same validator.
                 if (Has(s.Trim().TrimEnd('.', '?', '!', ':'), @"[.?!:;]")) return new(null, "InvalidText");
+                if (Has(s, @"\b(?:and|but|while|when|because|và|nhưng|vì|khi)\s*[,.:?!]*\s*$"))
+                    return new(null, "InvalidText");
+                // Supported stock verbs/adverbs are words, not a lone letter
+                // before the count. A live GGUF returned 'có ộ {a} {unit}'.
+                if (scene.Kind == AdditionSceneKind.Stock && Has(s, @"(?<!\p{L})\p{L}\s+\{[ab]\}"))
+                    return new(null, "InvalidText");
                 if (Count(s, "{name}") > 1 || Count(s, "{other}") > 1
                     || Count(s, "{unit}") > (s == d.GivenB && c.Structure is
                         BasicQuestionStructure.AddComparisonMore or BasicQuestionStructure.AddComparisonInverse ? 2 : 1))
                     return new(null, "InvalidPlaceholders");
-                string unitWords = c.Language == AppLanguage.Vietnamese ? Regex.Escape(unit.Item(c.Language))
-                    : Regex.Escape(unit.Plural) + "|" + Regex.Escape(unit.Singular);
+                string unitWords = string.Join("|", QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits)
+                    .Select(u => c.Language == AppLanguage.Vietnamese ? u.Vietnamese : u.Plural)
+                    .Append(c.Language == AppLanguage.English ? unit.Singular : unit.Vietnamese)
+                    .Distinct().OrderByDescending(s => s.Length).Select(Regex.Escape));
                 if (Has(s, @"\{unit\}\s+(?:" + unitWords + @")\b")) return new(null, "ChangedUnits");
                 string prose = Regex.Replace(s, @"\b(?:một hôm|một ngày nọ|one day)\b", "", RegexOptions.IgnoreCase, Timeout);
                 // 'Cả hai nhóm' describes the already-bound operands, not a third numeric fact.
                 if (c.Structure == BasicQuestionStructure.Combine)
                     prose = Regex.Replace(prose, @"\b(?:cả hai|hai nhóm|hai buổi|hai luống|hai thư viện|both|two groups|two periods|two rows|two teams)\b", "", RegexOptions.IgnoreCase, Timeout);
+                if (c.Structure == BasicQuestionStructure.Combine && scene.Kind is AdditionSceneKind.Periods or AdditionSceneKind.Parts)
+                    prose = Regex.Replace(prose, @"\b(?:hai ngày|hai tuần|hai tháng|hai khu|two days|two weeks|two months|two sections)\b", "", RegexOptions.IgnoreCase, Timeout);
                 if (Has(prose, @"\b(?:một|hai|ba|bốn|năm|sáu|bảy|tám|chín|mười|one|two|three|four|five|six|seven|eight|nine|ten|half|nửa|gấp đôi)\b"))
                     return new(null, "ChangedQuantities");
                 if (Has(s, @"\b(?:không|chẳng|chưa|not|never|except|trừ khi|mỗi|each|every|times)\b|gấp\s+(?:\{[ab]\}|đôi|\S+\s+lần)")) return new(null, "ExtraRelations");
-                if (Has(s, @"\b(?:bạn|bé|ông|bà|cô|chú|bác|anh|chị|mẹ|cha|dì|cậu|mợ|Grandma|Grandpa|Uncle|Aunt)\s+\{(?:name|other)\}"))
+                if (Has(s, @"\b(?:bạn|bé|ông|bà|cô|chú|bác|anh|chị|mẹ|cha|dì|cậu|mợ|học sinh|Grandma|Grandpa|Uncle|Aunt|pupil|child)\s+\{(?:name|other)\}"))
+                    return new(null, "InvalidContext");
+                if (c.Language == AppLanguage.English && Has(s,
+                    @"\{(?:name|other)\}['’]s\s+(?:(?:craft|wholesale|notebook|seedling|book|volunteer|aid|collection|recycling)\s+){0,2}(?:group|team|family|school|library|bookshop|shop|store|warehouse|workshop|factory|nursery|cooperative|organisation|organization)\b"))
                     return new(null, "InvalidContext");
             }
             if (Count(d.GivenA, "{a}") != 1 || Count(d.GivenB, "{b}") != 1
@@ -81,12 +100,26 @@ public static class AdditionQuestionValidator
             if (parts ? Count(d.GivenA, "{part_a}") != 1 || Count(d.GivenB, "{part_b}") != 1
                     || d.GivenA.Contains("{part_b}") || d.GivenB.Contains("{part_a}")
                 : text.Any(s => s.Contains("{part_a}") || s.Contains("{part_b}"))) return new(null, "InvalidPlaceholders");
+            if (parts && !MatchesPartsScale(text, scene, scale, vi)) return new(null, "InvalidContext");
             if (!RolesMatch(d, c, scene, vi)) return new(null, "ChangedRelationOrTarget");
             return new(d, null, c);
         }
         catch (JsonException) { return new(null, "InvalidJson"); }
         catch (InvalidOperationException) { return new(null, "InvalidJson"); }
         catch (RegexMatchTimeoutException) { return new(null, "InvalidText"); }
+    }
+
+    private static bool MatchesPartsScale(string[] text, AdditionScene scene, AdditionQuestionScale scale, bool vi)
+    {
+        string prose = Regex.Replace(string.Join(" ", text), @"\{[^{}]*\}", "", RegexOptions.CultureInvariant, Timeout);
+        // The named periods/sections are bound by C#. Literal changes to their
+        // kind would shrink a monthly factory result to one morning, for example.
+        string[] kinds = scene.Kind == AdditionSceneKind.Periods
+            ? vi ? ["buổi", "ngày", "tuần", "tháng", "hiệp"] : ["morning", "afternoon", "day", "days", "week", "weeks", "month", "months", "half", "halves"]
+            : vi ? ["luống", "khu"] : ["row", "rows", "section", "sections"];
+        string allowed = string.Join(" ", new[] { scale.Parts(vi ? AppLanguage.Vietnamese : AppLanguage.English).A,
+            scale.Parts(vi ? AppLanguage.Vietnamese : AppLanguage.English).B, scale.Span(vi ? AppLanguage.Vietnamese : AppLanguage.English) });
+        return kinds.All(kind => !Has(prose, @"\b" + kind + @"\b") || Has(allowed, @"\b" + kind + @"\b"));
     }
 
     private static bool RolesMatch(BasicQuestionDraft d, BasicQuestionContract c, AdditionScene scene, bool vi)
@@ -97,12 +130,15 @@ public static class AdditionQuestionValidator
             || Has(s, quantity + Between + @"\b(?:" + verbs + @")\b" + Between + actor);
         bool Both(string s) => s.Contains("{name}") && s.Contains("{other}");
         bool OnlyName(string s) => s.Contains("{name}") && !s.Contains("{other}");
-        bool total(string s) => Has(s, vi ? @"\b(?:tổng|tất cả|cộng lại|cả hai)\b" : @"\b(?:total|altogether|in all|together|combined)\b");
-        bool original(string s) => Has(s, vi ? @"\b(?:ban đầu|lúc đầu|trước khi)\b" : @"\b(?:original|originally|initial|initially|before)\b");
+        bool total(string s) => Has(s, vi ? @"\b(?:tổng|tất cả|cộng lại|cả hai)\b" : @"\b(?:total|altogether|in all|together|combined)\b")
+            || scene.Kind == AdditionSceneKind.Periods && Has(s, vi
+                ? @"\b(?:qua|trong|của)\s+(?:các|cả hai|hai)\s+(?:buổi|ngày|tuần|tháng|hiệp)\b"
+                : @"\b(?:over|across|during|in)\s+(?:these|both|the two)\s+(?:periods|days|weeks|months|halves)\b");
+        bool original(string s) => Has(s, vi ? @"\b(?:ban đầu|lúc đầu|trước khi)\b" : @"\b(?:original|originally|initial|initially|before|at the start|at first|in the beginning|to begin with|(?:start(?:ed)?|begin|began)(?: off| out)? with)\b");
         bool remaining(string s) => Has(s, vi ? @"\bcòn(?: lại)?\b" : @"\b(?:left|remaining|remain)\b");
         bool comparison(string s) => Has(s, vi ? @"\b(?:hơn|kém|chênh lệch|thiếu|cần thêm)\b" : @"\b(?:more|fewer|difference|short|additional)\b");
         bool loss(string s) => Has(Regex.Replace(s, @"\b(?:được tặng|được cho|is given|is gifted)\b", "", RegexOptions.IgnoreCase, Timeout),
-            vi ? @"\b(?:cho đi|cho tặng|tặng|bán|mất|bớt|dùng|ăn|lấy ra|chuyển đi)\b" : @"\b(?:gives?|gave|sells?|sold|loses?|lost|removes?|uses?|eats?|ate|donates?)\b");
+            vi ? @"\b(?:cho đi|cho tặng|tặng|bán|mất|bớt|dùng|ăn|lấy ra|chuyển đi)\b" : @"\b(?:gives?|gave|given away|sells?|sold|loses?|lost|removes?|removed|uses?|used|eats?|ate|eaten|donates?|donated)\b");
         bool neutral = !original(d.Question) && !remaining(d.Question) && !comparison(d.Question);
         string lead = d.SolutionLead!;
         bool correctLead = c.Structure == BasicQuestionStructure.Combine && scene.Kind is not (AdditionSceneKind.Periods or AdditionSceneKind.Parts)
@@ -149,6 +185,7 @@ public static class AdditionQuestionValidator
             case BasicQuestionStructure.RecoverInitial:
                 return OnlyName(d.GivenA) && remaining(d.GivenA) && Fact(d.GivenA, name, @"\{a\}")
                     && OnlyName(d.GivenB) && loss(d.GivenB) && Has(d.GivenB, name + Between + @"\{b\}")
+                    && !comparison(d.GivenA + d.GivenB)
                     && OnlyName(d.Question) && original(d.Question) && !remaining(d.Question) && !comparison(d.Question)
                     && original(lead) && !remaining(lead) && !comparison(lead);
             case BasicQuestionStructure.AddComparisonMore:

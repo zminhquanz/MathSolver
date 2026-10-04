@@ -145,7 +145,9 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         var topicUsed = buckets.GroupBy(b => b.TopicId).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));
         var ordered = buckets.OrderBy(_ => Random.Shared.Next())
             .OrderBy(b => history.Count(h => h.Structure == b.Structure)).ThenBy(b => relationUsed[b.Structure])
-            .ThenBy(b => history.Count(h => h.TopicId == b.TopicId)).ThenBy(b => history.Count(h => h.SceneId == b.SceneId))
+            // Prefer an unused setting before its broad topic. Otherwise a
+            // school-supplies setting can starve because the library was used.
+            .ThenBy(b => history.Count(h => h.SceneId == b.SceneId)).ThenBy(b => history.Count(h => h.TopicId == b.TopicId))
             .ThenBy(b => topicUsed[b.TopicId])
             .ThenBy(b => history.Count > 0 && history[^1].SceneId == b.SceneId).ThenBy(b => b.LastUsedUtc);
         foreach (var bucket in ordered)

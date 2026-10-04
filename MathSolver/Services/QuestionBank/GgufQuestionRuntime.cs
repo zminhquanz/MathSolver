@@ -28,6 +28,16 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     public bool IsLoaded => _weights is not null;
     public string ModelName { get; private set; } = "";
     public string ModelPath { get; private set; } = "";
+    public int InferenceThreadCount => IsLoaded ? _parameters?.Threads ?? 0 : 0;
+    public int PromptThreadCount => IsLoaded ? _parameters?.BatchThreads ?? 0 : 0;
+
+    // This is a worker-thread budget, not an operating-system CPU-utilisation
+    // limiter. Use the same budget for prompt processing and token decoding.
+    internal static int GetInferenceThreadCount(int logicalProcessorCount)
+    {
+        if (logicalProcessorCount < 1) throw new ArgumentOutOfRangeException(nameof(logicalProcessorCount));
+        return Math.Max(1, (int)((long)logicalProcessorCount * 3 / 4));
+    }
 
     public async Task LoadAsync(string path, CancellationToken cancellationToken = default)
     {
@@ -59,8 +69,8 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                     ContextSize = 2048, BatchSize = 256, UBatchSize = 128,
                     GpuLayerCount = 0, UseMemorymap = true,
                     // Leave CPU capacity for navigation, rendering and the C# calculators.
-                    Threads = Math.Clamp(Environment.ProcessorCount / 2, 1, 4),
-                    BatchThreads = Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
+                    Threads = GetInferenceThreadCount(Environment.ProcessorCount),
+                    BatchThreads = GetInferenceThreadCount(Environment.ProcessorCount)
                 };
                 // Eject first: switching models must not double peak resident weights.
                 _weights?.Dispose();
@@ -157,6 +167,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     private static string BuildAdditionGrammar(BasicQuestionContract c)
     {
         var scene = AdditionQuestionCatalogue.Find(c.SceneId)!;
+        var scale = scene.Scale(c.Tier)!;
         bool parts = scene.Kind is AdditionSceneKind.Periods or AdditionSceneKind.Parts;
         bool comparison = c.Structure is BasicQuestionStructure.AddComparisonMore or BasicQuestionStructure.AddComparisonInverse;
         string actorA = comparison ? "{other}" : "{name}";
@@ -169,7 +180,8 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         // into a dangling explanation at the end. Each field is now one sentence;
         // required slots are separate from prose, so they cannot be repeated there.
         static string Literal(string value) => System.Text.Json.JsonSerializer.Serialize(value);
-        static string Sequence(string[] slots) => string.Join(" prose{0,48} ", slots.Select(Literal)) + " prose{0,48}";
+        static string Sequence(string[] slots) => string.Join(" prose{0,48} ",
+            slots.Select(slot => Literal(slot is "{name}" or "{other}" ? slot + " " : slot))) + " prose{0,48}";
         static string Sentence(string body, string ending) => "\"\\\"\" " + body + " " + Literal(ending) + " \"\\\"\"";
         string QuantityB() => !vi && c.Structure == BasicQuestionStructure.AddComparisonMore ? Literal("{b} more {unit}")
             : !vi && c.Structure == BasicQuestionStructure.AddComparisonInverse ? Literal("{b} fewer {unit}")
@@ -188,7 +200,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                     alternative = char.ToLowerInvariant(alternative[0]) + alternative[1..];
                 }
                 string link = scene.Kind == AdditionSceneKind.Parts ? vi ? " trong " : " in " : ", ";
-                return "(" + Literal(opening) + " | " + Literal(alternative) + ")? " + Literal(part + link + actor)
+                return "(" + Literal(opening) + " | " + Literal(alternative) + ")? " + Literal(part + link + actor + " ")
                     + " prose{1,48} " + Literal(quantity) + " prose{0,32}";
             }
             aBody = PartBody("{part_a}", actorA, "{a} {unit}");
@@ -219,35 +231,48 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 : QuantityB();
             string bStart = comparison && scene.Kind == AdditionSceneKind.Contributions
                 ? actorB + " " + (vi ? scene.VietnameseAction : scene.EnglishAction) : actorB;
-            bBody = prefix + Literal(bStart) + " prose{0,48} " + rest + " prose{0,48}";
+            bBody = prefix + Literal(bStart + " ") + " prose{0,48} " + rest + " prose{0,48}";
+            if (c.Structure == BasicQuestionStructure.RecoverInitial)
+            {
+                // The second amount was removed, not just owned or 'taken'
+                // ambiguously. Let the model choose a supported removal phrase.
+                string[] removals = vi
+                    ? ["đã cho đi ", "cho đi ", "đã bán ", "bán ", "đã lấy ra ", "lấy ra ", "đã dùng ", "dùng ", "đã tặng ", "tặng "]
+                    : ["gave away ", "removed ", "sold ", "used ", "donated ", "lost ", "had given away ", "had removed ", "had sold "];
+                bBody = prefix + Literal(actorB + " ") + " (" + string.Join(" | ", removals.Select(Literal))
+                    + ") " + QuantityB() + " prose{0,48}";
+            }
         }
         bool both = c.Structure == BasicQuestionStructure.Combine && !parts;
         string actors = both ? "(" + Literal("{name}") + " " + Literal(vi ? " và " : " and ") + " " + Literal("{other}")
             + " | " + Literal("{other}") + " " + Literal(vi ? " và " : " and ") + " " + Literal("{name}") + ")" : Literal("{name}");
         string questionPrefix = c.Structure == BasicQuestionStructure.RecoverInitial ? vi ? "ban đầu " : ""
-            : scene.Kind == AdditionSceneKind.Parts ? vi ? "các luống này trong " : ""
+            : scene.Kind == AdditionSceneKind.Parts ? vi ? scale.VietnameseSpan + " này trong " : ""
             : scene.Kind == AdditionSceneKind.Arrivals ? vi ? "ở " : "" : "";
         // Put the target in a normal question order, rather than allowing the model
         // to mention it only after an unrelated question or a lengthy explanation.
-        string q = vi ? Literal("Hỏi " + questionPrefix) + " " + actors + " prose{1,64} " + Literal("{unit}")
-            : Literal("How many {unit}") + " prose{1,48} " + actors + " prose{0,48}";
+        string q = vi ? Literal("Hỏi " + questionPrefix) + " " + actors + " " + Literal(" ") + " prose{1,64} " + Literal("{unit}")
+            : Literal("How many {unit}") + " prose{1,48} " + actors + " " + Literal(" ") + " prose{0,48}";
         string leadPrefix = c.Structure == BasicQuestionStructure.RecoverInitial ? vi ? "Số " : "The original number of "
             : comparison ? vi ? "Số " : "The number of " : vi ? "Tổng số " : "The total number of ";
         string lead = Literal(leadPrefix + "{unit}") + " (prose{1,48} | prose{1,32} " + actors + " prose{1,48})";
+        // These templates support Vietnamese and English. Allow their Latin letters
+        // and clause punctuation, rather than only excluding ASCII digits: otherwise
+        // the sampler can insert Arabic/full-width digits despite the numeric ban.
         return """
             root ::= "{" ws "\"given_a\"" ws ":" ws string-a ws "," ws "\"given_b\"" ws ":" ws string-b ws "," ws "\"question\"" ws ":" ws string-q ws "," ws "\"solution_lead\"" ws ":" ws string ws "," ws "\"unit_id\"" ws ":" ws unit ws "}" ws
             string-a ::= {STRING_A}
             string-b ::= {STRING_B}
             string-q ::= {STRING_Q}
             string ::= {STRING_LEAD}
-            prose ::= [^"\\{}0-9.?!:;=<>%+*/\u00d7\u00f7\x00-\x1f]
+            prose ::= [A-Za-z\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u024f\u1e00-\u1eff ,'\u2019-]
             unit ::= "\"" ({UNIT_IDS}) "\""
             ws ::= [ \t\n\r]*
             """.Replace("{STRING_A}", Sentence(aBody, ","))
             .Replace("{STRING_B}", Sentence(bBody, "."))
             .Replace("{STRING_Q}", Sentence(q, "?"))
             .Replace("{STRING_LEAD}", Sentence(lead, ":"))
-            .Replace("{UNIT_IDS}", string.Join(" | ", scene.UnitIds.Select(id => "\"" + id + "\"")));
+            .Replace("{UNIT_IDS}", string.Join(" | ", scale.UnitIds.Select(id => "\"" + id + "\"")));
     }
 
 }

@@ -18,18 +18,28 @@ internal static class AdditionTests
         await runtime.LoadAsync(path);
         try
         {
-            var cases = new[] {
-                Create("family-gifts", BasicQuestionStructure.Combine, CurriculumTier.OneStar),
-                Create("family-gifts", BasicQuestionStructure.Combine, CurriculumTier.FiveStars),
+            Check(runtime.InferenceThreadCount == GgufQuestionRuntime.GetInferenceThreadCount(Environment.ProcessorCount)
+                && runtime.PromptThreadCount == runtime.InferenceThreadCount,
+                "Loaded GGUF did not use the configured 75% thread budget.");
+            Console.WriteLine($"GGUF loaded: {runtime.ModelName}; logical CPUs: {Environment.ProcessorCount}; inference/prompt threads: {runtime.InferenceThreadCount}/{runtime.PromptThreadCount}");
+            var cases = Enum.GetValues<AppLanguage>().SelectMany(language => new[] {
+                Create("family-gifts", BasicQuestionStructure.Combine, CurriculumTier.OneStar, language),
+                Create("craft", BasicQuestionStructure.Combine, CurriculumTier.TwoStars, language),
+                Create("donations", BasicQuestionStructure.AddComparisonMore, CurriculumTier.ThreeStars, language),
+                Create("shop-stock", BasicQuestionStructure.RecoverInitial, CurriculumTier.FourStars, language),
+                Create("notebook-production", BasicQuestionStructure.Combine, CurriculumTier.FiveStars, language),
+                Create("garden", BasicQuestionStructure.Combine, CurriculumTier.FiveStars, language),
+                Create("recycling", BasicQuestionStructure.AddComparisonInverse, CurriculumTier.FiveStars, language)
+            }).Concat(new[] {
                 Create("birds-arrive", BasicQuestionStructure.Increase, CurriculumTier.OneStar),
-                Create("craft", BasicQuestionStructure.Combine, CurriculumTier.TwoStars),
-                Create("donations", BasicQuestionStructure.AddComparisonMore, CurriculumTier.ThreeStars),
-                Create("shop-stock", BasicQuestionStructure.RecoverInitial, CurriculumTier.FourStars),
-                Create("garden", BasicQuestionStructure.Combine, CurriculumTier.FiveStars),
-                Create("recycling", BasicQuestionStructure.AddComparisonInverse, CurriculumTier.FiveStars, AppLanguage.English)
-            };
+                Create("club-arrivals", BasicQuestionStructure.Increase, CurriculumTier.TwoStars),
+                Create("notebook-production", BasicQuestionStructure.Combine, CurriculumTier.ThreeStars),
+                Create("notebook-production", BasicQuestionStructure.Combine, CurriculumTier.FourStars),
+                Create("book-distribution", BasicQuestionStructure.Combine, CurriculumTier.FiveStars)
+            });
+            var failed = new List<string>();
             foreach (var c in cases.Where(c => (!englishOnly || c.Language == AppLanguage.English)
-                && (!stockOnly || c.SceneId == "family-gifts")))
+                && (!stockOnly || AdditionQuestionCatalogue.Find(c.SceneId)!.Kind == AdditionSceneKind.Stock)))
             {
                 string? correction = null;
                 bool passed = false;
@@ -37,6 +47,7 @@ internal static class AdditionTests
                 {
                     using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(5));
                     var streamed = new System.Text.StringBuilder();
+                    Console.WriteLine($"GENERATING {c.Language}/{c.Tier}/{c.SceneId}/{c.Structure} attempt {attempt}");
                     string raw = await runtime.GenerateAsync(c, BasicQuestionPrompt.Build(c, correction), cancellation.Token, delta => streamed.Append(delta));
                     var validation = BasicQuestionValidator.Validate(raw, c);
                     Console.WriteLine($"{c.Language}/{c.Tier}/{c.SceneId}/{c.Structure} attempt {attempt}: {validation.ErrorCode ?? "PASS"}\n{raw}");
@@ -50,15 +61,17 @@ internal static class AdditionTests
                         string equation = $"{fresh.Left} + {fresh.Right} = {fresh.Answer} {word.AnswerUnit}";
                         Check(new EssayAnswerValidator(new BasicArithmeticEngine()).Validate(fresh.ToPracticeQuestion(word, ArithmeticQuizMode.Essay),
                             word.SolutionLead, equation, $"{fresh.Answer} {word.AnswerUnit}").IsCorrect, "Real addition template failed fresh C# essay grading.");
+                        if (seed == 0) Console.WriteLine("RENDERED: " + word.ProblemText + "\nSOLUTION: " + word.SolutionLead + "\n" + equation);
                     }
                     passed = true; break;
                 }
-                Check(passed, "Real model failed addition context: " + c.SceneId);
+                if (!passed) failed.Add($"{c.Language}/{c.Tier}/{c.SceneId}/{c.Structure}");
             }
+            Check(failed.Count == 0, "Real model failed addition cases after three attempts: " + string.Join(", ", failed));
         }
         finally { await runtime.EjectAsync(); }
-        Console.WriteLine(stockOnly ? "PASS real GGUF independent family holdings at 1 and 5 stars, streamed JSON and fresh C# grading. No benchmark or app database writes."
-            : englishOnly ? "PASS real GGUF English inverse addition, streamed JSON and fresh C# grading. No benchmark or app database writes."
+        Console.WriteLine(stockOnly ? "PASS real GGUF stock addition: personal holdings, restored wholesale stock and distribution stock, streamed JSON and fresh C# grading. No benchmark or app database writes."
+            : englishOnly ? "PASS real GGUF English addition at 1–5 stars, streamed JSON and fresh C# grading. No benchmark or app database writes."
             : "PASS real GGUF addition: 1–5 stars, five relations, different scene roles, streamed JSON and fresh C# grading. No benchmark or app database writes.");
     }
     public static async Task RunAsync(string directory)
@@ -69,7 +82,7 @@ internal static class AdditionTests
         foreach (var language in Enum.GetValues<AppLanguage>())
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var pair in AdditionQuestionCatalogue.Available(tier))
-        foreach (var id in pair.Scene.UnitIds)
+        foreach (var id in pair.Scene.Scale(tier)!.UnitIds)
         {
             var c = BasicQuestionTemplates.ApplyUnit(Create(pair.Scene.Id, pair.Structure, tier, language), QuestionUnits.Find(id)!);
             var d = AdditionQuestionCatalogue.Example(c);
@@ -85,7 +98,8 @@ internal static class AdditionTests
                 var word = d.ToWordProblem(fresh);
                 Check(fresh.IsValid && fresh.SceneId == c.SceneId && fresh.TopicId == c.TopicId && fresh.Structure == c.Structure
                     && fresh.Unit == c.Unit && fresh.PartA == c.PartA && fresh.PartB == c.PartB
-                    && !word.ProblemText.Contains('{') && fresh.Left <= pair.Scene.MaxOperand && fresh.Right <= pair.Scene.MaxOperand,
+                    && !word.ProblemText.Contains('{') && fresh.Left >= QuizCurriculumLayer.GetMinimumPrimaryOperandValue(tier)
+                    && fresh.Left <= pair.Scene.Scale(tier)!.MaxOperand && fresh.Right <= pair.Scene.Scale(tier)!.MaxOperand,
                     "Fresh addition facts lost roles/domain/slots.");
                 foreach (var mode in Enum.GetValues<ArithmeticQuizMode>()) Check(math.Validate(fresh.ToPracticeQuestion(word, mode)).IsValid, "Addition C# result/mode invalid.");
                 if (i == 0)
@@ -107,6 +121,8 @@ internal static class AdditionTests
         NaturalAndInvalidProse();
         PromptFieldRegression();
         CheckJoinedClauses();
+        CheckScalePolicies();
+        CheckThreadBudget();
         CheckRotation();
         await PersistenceAsync(directory);
     }
@@ -165,12 +181,22 @@ internal static class AdditionTests
             "A Vietnamese family role was capitalized, or its proper name was lowercased.");
         Check(BasicQuestionTemplates.RenderProblem("{name} có {a} {unit}.", "Sau đó, {name} nhận thêm {b} {unit}.", example.Question, stock)
             .Contains(", sau đó, Cường nhận thêm"), "Ordinary clause opening remained uppercase.");
+        var englishStock = Create("shop-stock", BasicQuestionStructure.RecoverInitial, CurriculumTier.FourStars, AppLanguage.English);
+        var spaced = AdditionQuestionCatalogue.Example(englishStock) with {
+            GivenA = "{name} has {a} {unit} remaining, ,",
+            GivenB = "previously, {name} gave away {b} {unit} ." };
+        string tidy = spaced.ToWordProblem(englishStock).ProblemText;
+        Check(!tidy.Contains(",,") && !tidy.Contains(" .") && tidy.Contains("remaining, previously,"),
+            "Actual GGUF repeated commas/spaced punctuation survived display formatting.");
+        Check(StreamingQuestionPreview.Render(QuestionBankStore.SerializeDraft(spaced), englishStock) == tidy
+            && spaced.GivenA.EndsWith(", ,") && spaced.GivenB.EndsWith(" ."),
+            "Live punctuation diverged from saved display or modified historical JSON.");
         Console.WriteLine("PASS joined clauses in saved/live previews, lowercase role/opening, proper names and unchanged raw hash input");
     }
 
     private static void NaturalAndInvalidProse()
     {
-        var craft = Create("craft", BasicQuestionStructure.Combine);
+        var craft = Create("craft", BasicQuestionStructure.Combine, CurriculumTier.TwoStars);
         var d = AdditionQuestionCatalogue.Example(craft) with {
             GivenA = "Trong {part_a}, {name} gấp được {a} {unit} để trang trí.",
             GivenB = "Đến {part_b}, {name} hoàn thành thêm {b} {unit}.",
@@ -186,6 +212,43 @@ internal static class AdditionTests
             "Real-model natural imperative 'Tính tổng' was rejected as wrong language.");
         Check(!Validate(craft, d with { GivenB = "Vào {part_b}, {name} nhận thêm {b} {unit}." }).IsValid,
             "Possession increase silently replaced a production result.");
+        var englishCraft = Create("craft", BasicQuestionStructure.Combine, CurriculumTier.TwoStars, AppLanguage.English);
+        var ec = AdditionQuestionCatalogue.Example(englishCraft) with {
+            GivenA = "In {part_a}, {name} makes {a} {unit},",
+            GivenB = "in {part_b}, {name} makes {b} {unit}.",
+            Question = "How many {unit} does {name} make over these periods?",
+            SolutionLead = "The number of {unit} made over these periods is:" };
+        Check(Validate(englishCraft, ec).IsValid, "A combined-period question without the literal word 'total' was rejected.");
+        Check(!Validate(englishCraft, ec with { GivenA = ec.GivenA.Replace("{name}", "{name}'s craft group") }).IsValid,
+            "Actual GGUF output appended a duplicated craft-group role to the complete actor.");
+        Check(!Validate(englishCraft, ec with { Question = "How many {unit} does {name} make in {part_a}?" }).IsValid,
+            "Partial-period target was accepted after widening natural aggregate phrasing.");
+        var englishStock = Create("shop-stock", BasicQuestionStructure.RecoverInitial, CurriculumTier.FourStars, AppLanguage.English);
+        var es = AdditionQuestionCatalogue.Example(englishStock) with { Question = "How many {unit} did {name} have at the start?" };
+        Check(Validate(englishStock, es).IsValid, "Actual GGUF 'at the start' original-stock target was rejected.");
+        Check(Validate(englishStock, es with { GivenB = "previously, {name} removed {b} {unit}.",
+            Question = "How many {unit} did {name} start with?" }).IsValid,
+            "Actual GGUF 'start with' original-stock target was rejected.");
+        Check(!Validate(englishStock, es with { GivenB = "previously, {name} took {b} {unit}." }).IsValid,
+            "Ambiguous 'took' was accepted without indicating removal from the known stock.");
+        Check(!Validate(englishStock, es with {
+            GivenA = "{name} has {a} {unit} left, previously, the shop has fewer than that,",
+            GivenB = "previously, {name} removed {b} {unit}." }).IsValid,
+            "Actual GGUF extra comparison was accepted in a remaining-stock fact.");
+        Check(!Validate(englishStock, es with { GivenA = es.GivenA.Replace("{name}", "{name}'s wholesale shop") }).IsValid,
+            "Actual GGUF wholesale-shop role was appended to the complete actor.");
+        Check(Validate(englishStock, es with { GivenB = "previously, {name} removed {b} {unit}." }).IsValid
+            && Validate(englishStock, es with { GivenB = "{name} had {b} {unit} removed from the stock.",
+                Question = "How many {unit} did {name} have in the beginning?" }).IsValid,
+            "Actual GGUF past-tense/passive removed-stock paraphrases were rejected.");
+        Check(!Validate(englishStock, es with { GivenA = "{name} has {a} {unit} left, while," }).IsValid,
+            "Actual GGUF dangling conjunction in a given was accepted.");
+        var distribution = Create("book-distribution", BasicQuestionStructure.Combine);
+        var distributionDraft = AdditionQuestionCatalogue.Example(distribution);
+        Check(!Validate(distribution, distributionDraft with { GivenA = "{name} có ộ {a} {unit}," }).IsValid,
+            "Actual GGUF orphaned letter before a stock quantity was accepted.");
+        Check(Validate(distribution, distributionDraft with { GivenA = "{name} hiện đang giữ {a} {unit}," }).IsValid,
+            "A valid stock adverb/verb was rejected alongside the orphaned-letter guard.");
         Check(!Validate(craft, d with { GivenB = d.GivenB.Replace("{part_b}", "{part_a}") }).IsValid
             && !Validate(craft, d with { Question = "Hỏi vào {part_a}, {name} làm được tất cả bao nhiêu {unit}?" }).IsValid
             && !Validate(craft, d with { GivenB = d.GivenB.Replace("{name}", "{other}") }).IsValid,
@@ -202,6 +265,10 @@ internal static class AdditionTests
             "The word 'hơn' inside 'ít hơn' reversed the comparison.");
         var inverse = Create("school-supplies", BasicQuestionStructure.AddComparisonInverse);
         var inv = AdditionQuestionCatalogue.Example(inverse);
+        Check(!Validate(inverse, inv with {
+            GivenA = "{other} góp được ٤٥٠٠٠ {a} {unit},",
+            GivenB = "{other} góp được ít hơn {name} là ٨٠٠٠ {b} {unit}."
+        }).IsValid, "Actual GGUF Unicode digits bypassed the C#-only numeric facts.");
         Check(Validate(inverse, inv with { GivenB = "Số {unit} {other} góp được kém {name} là {b} {unit}." }).IsValid,
             "Natural inverse 'kém' phrasing rejected.");
         var englishInverse = Create("recycling", BasicQuestionStructure.AddComparisonInverse, CurriculumTier.FiveStars, AppLanguage.English);
@@ -219,7 +286,7 @@ internal static class AdditionTests
         Check(!Validate(inverse, inv with { GivenB = "{name} góp được ít hơn {other} là {b} {unit}." }).IsValid
             && !Validate(inverse, inv with { Question = "Hỏi {other} góp được bao nhiêu {unit}?" }).IsValid,
             "Reversed inverse comparison or target accepted.");
-        var arrivals = Create("birds-arrive", BasicQuestionStructure.Increase);
+        var arrivals = Create("birds-arrive", BasicQuestionStructure.Increase, CurriculumTier.OneStar);
         var bird = AdditionQuestionCatalogue.Example(arrivals) with { GivenB = "Sau đó, {b} {unit} khác bay tới {name}." };
         Check(Validate(arrivals, bird).IsValid, "Quantity-first arrival prose rejected.");
         var englishBird = Create("birds-arrive", BasicQuestionStructure.Increase, CurriculumTier.OneStar, AppLanguage.English) with { Left = 1, Right = 1 };
@@ -254,6 +321,104 @@ internal static class AdditionTests
         Console.WriteLine("PASS natural folding/planting/arrival roles, reversed comparisons, wrong period/target/event/unit and added-fact rejection");
     }
 
+    private static void CheckThreadBudget()
+    {
+        foreach (var (cpus, threads) in new[] { (1, 1), (2, 1), (3, 2), (4, 3), (8, 6), (12, 9), (16, 12), (32, 24) })
+            Check(GgufQuestionRuntime.GetInferenceThreadCount(cpus) == threads, "Incorrect 75% CPU thread budget.");
+        Check(GgufQuestionRuntime.GetInferenceThreadCount(int.MaxValue) == 1_610_612_735,
+            "Thread budget arithmetic overflowed.");
+        Console.WriteLine("PASS 75% logical-CPU thread budgets, minimum one worker and overflow-safe rounding");
+    }
+
+    private static void CheckScalePolicies()
+    {
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (var tier in Enum.GetValues<CurriculumTier>())
+        {
+            int lower = QuizCurriculumLayer.GetMinimumPrimaryOperandValue(tier);
+            int upper = QuizCurriculumLayer.GetMaximumOperandValue(tier);
+            foreach (var pair in AdditionQuestionCatalogue.Available(tier))
+            {
+                var scale = pair.Scene.Scale(tier)!;
+                foreach (Random random in Enumerable.Range(0, 24).Select(seed => new Random(seed))
+                    .Cast<Random>().Concat([new ExtremeRandom(false), new ExtremeRandom(true)]))
+                {
+                    var c = AdditionQuestionCatalogue.Create(tier, language, random, pair.Scene.Id, pair.Structure);
+                    var d = AdditionQuestionCatalogue.Example(c);
+                    Check(c.IsValid && c.Left >= lower && c.Left <= upper && c.Right > 0 && c.Right <= upper
+                        && c.Left <= scale.MaxOperand && c.Right <= scale.MaxOperand
+                        && c.Answer <= scale.MaxCombinedQuantity,
+                        $"Scale/capacity invalid: {language}/{tier}/{pair.Scene.Id}: {c.Left}+{c.Right}");
+                    Check(c.Subject != c.OtherSubject && !c.Subject.Contains("'s shop's")
+                        && scale.MatchesActor(language, c.Subject) && scale.MatchesActor(language, c.OtherSubject),
+                        "Distinct actors did not retain the selected scale.");
+                    Check(Validate(c, d).IsValid && !d.ToWordProblem(c).ProblemText.Contains('{'),
+                        "Scaled roles no longer render/validate.");
+                    Check(!(c with { Left = lower - 1 }).IsValid && !(c with { Right = upper + 1 }).IsValid,
+                        "A forged tier operand was accepted.");
+                    foreach (string excluded in pair.Scene.UnitIds.Except(scale.UnitIds))
+                        Check(!Validate(c, d with { UnitId = excluded }).IsValid,
+                            "Unit incompatible with the star-specific activity was accepted.");
+                }
+            }
+            if ((int)tier >= 3)
+            {
+                Check(!AdditionQuestionCatalogue.Available(tier).Any(p => p.Scene.Id is "family-gifts" or "sports" or "birds-arrive" or "club-arrivals"),
+                    "A small personal/attendance/score scene still appears at high stars.");
+                var numbers = Enumerable.Range(0, 100).Select(seed => AdditionQuestionCatalogue.Create(tier, language,
+                    new Random(seed), "library", BasicQuestionStructure.Combine)).ToArray();
+                Check(numbers.Any(c => c.Right < lower) && numbers.Any(c => c.Answer > upper),
+                    "The second operand or result was incorrectly forced into the primary digit bucket.");
+                Check(numbers.Count(c => AdditionQuestionCatalogue.CountCarries(c.Left, c.Right) >= (int)tier - 2) > 45,
+                    "Higher stars did not include sufficient carrying practice.");
+            }
+        }
+
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        {
+            var c = Create("notebook-production", BasicQuestionStructure.Combine, CurriculumTier.FiveStars, language);
+            var d = AdditionQuestionCatalogue.Example(c);
+            string prompt = BasicQuestionPrompt.Build(c);
+            Check(prompt.Contains(c.PartA) && prompt.Contains(c.PartB) && prompt.Contains(language == AppLanguage.Vietnamese
+                ? "nhà máy sản xuất vở" : "notebook factory"), "Prompt omitted the bound scale or time periods.");
+            Check(!(c with { Subject = language == AppLanguage.Vietnamese ? "Lan" : "Mary" }).IsValid
+                && !(c with { PartB = c.PartA }).IsValid,
+                "An individual producing thousands of objects, or overlapping periods, was accepted.");
+            Check(!Validate(c, d with { GivenB = d.GivenB.Replace("{part_b}", "{part_b}, " + (language == AppLanguage.Vietnamese
+                ? "trong buổi sáng" : "in the morning")) }).IsValid,
+                "Monthly factory output was silently narrowed to one morning.");
+            Check(!Validate(c, d with { GivenB = d.GivenB.Replace("{b} {unit}", language == AppLanguage.Vietnamese
+                ? "{b} {unit} quyển sách" : "{b} {unit} books") }).IsValid,
+                "A second object noun changed the selected unit.");
+            Check(!Validate(c, d with { GivenB = d.GivenB.Replace("{b} {unit}", language == AppLanguage.Vietnamese
+                ? "{b} {unit} lũy kế" : "{b} {unit} cumulatively so far") }).IsValid,
+                "A cumulative amount containing the previous period was added again.");
+
+            var club = Create("club-arrivals", BasicQuestionStructure.Increase, CurriculumTier.TwoStars, language) with { Left = 20, Right = 20 };
+            Check(!club.IsValid, "Individually bounded operands exceeded club capacity.");
+            var smallLibrary = Create("library", BasicQuestionStructure.Increase, CurriculumTier.TwoStars, language);
+            var largeLibrary = Create("library", BasicQuestionStructure.Increase, CurriculumTier.FiveStars, language);
+            Check(!(largeLibrary with { Subject = smallLibrary.Subject }).IsValid,
+                "An old low-scale actor could be reused with a five-digit quantity.");
+        }
+        foreach (string person in new[] { "Trường", "Khoa", "cô Lan" })
+        {
+            var c = Create("family-gifts", BasicQuestionStructure.Combine, CurriculumTier.OneStar) with { Subject = person, OtherSubject = "An" };
+            Check(c.IsValid, "A valid personal name/title was mistaken for an institution: " + person);
+        }
+        bool rejected = false;
+        try { Create("club-arrivals", BasicQuestionStructure.Increase, CurriculumTier.FiveStars); }
+        catch (ArgumentException) { rejected = true; }
+        Check(rejected, "Explicitly requesting a high-star small club downgraded the primary number.");
+        Console.WriteLine("PASS all five scene scales in both languages, primary/secondary/result ranges, total capacity, actor/unit/time roles, carry progression and incompatible-setting rejection");
+    }
+
+    private sealed class ExtremeRandom(bool high) : Random
+    {
+        public override int Next(int maxValue) => high ? maxValue - 1 : 0;
+        public override int Next(int minValue, int maxValue) => high ? maxValue - 1 : minValue;
+    }
+
     private static void CheckRotation()
     {
         foreach (var tier in Enum.GetValues<CurriculumTier>())
@@ -264,12 +429,13 @@ internal static class AdditionTests
             Check(values.Take(availableRelations).Select(c => c.Structure).Distinct().Count() == availableRelations,
                 "A large scene family dominated relationship choice.");
             var counts = values.GroupBy(c => c.Structure).Select(g => g.Count()).ToArray();
-            Check(counts.Max() - counts.Min() <= 1 && values.Select(c => c.SceneId).Distinct().Count() >= 10,
-                "Addition generator failed relation/scene diversity.");
+            int scenes = AdditionQuestionCatalogue.Available(tier).Select(p => p.Scene.Id).Distinct().Count();
+            Check(counts.Max() - counts.Min() <= 1 && values.Select(c => c.SceneId).Distinct().Count() >= Math.Min(10, scenes),
+                $"Addition generator failed relation/scene diversity at {tier}: " + string.Join(",", values.Select(c => c.SceneId).Distinct()));
             Check(values.Zip(values.Skip(1), (a,b) => a.SceneId == b.SceneId).Count(b => b) <= 3,
                 "Addition batch repeatedly chose the same setting.");
         }
-        // Small physical domains reroll instead of repeatedly becoming the domain maximum at high stars.
+        // A high-star nursery retains its digit bucket and produces fresh values.
         var garden = Create("garden", BasicQuestionStructure.Combine);
         var valuesSet = Enumerable.Range(0, 50).Select(i => garden.FreshFacts(new Random(i)).Expression).Distinct().Count();
         Check(valuesSet > 30, "Bounded high-star scenes froze their quantities.");
@@ -290,7 +456,7 @@ internal static class AdditionTests
             Check(!await store.InsertAsync(q with { Contract = c.FreshFacts(new Random(624)) }), "Preview values duplicated the addition template.");
         }
         // Unequal row counts must not drown out small relation/topic families.
-        var repeat = entries.First(q => q.Contract.SceneId == "family-gifts" && q.Contract.Structure == BasicQuestionStructure.Increase);
+        var repeat = entries.First(q => q.Contract.SceneId == "library" && q.Contract.Structure == BasicQuestionStructure.Increase);
         for (int i = 0; i < 40; i++) Check(await store.InsertAsync(repeat with { Draft = repeat.Draft with {
             GivenA = new string(' ', i + 1) + repeat.Draft.GivenA } }), "Test skewed bank insert failed.");
         var picked = new List<BasicQuestionContract>();
@@ -301,7 +467,7 @@ internal static class AdditionTests
             picked.Add(question!.Contract);
         }
         Check(picked.Take(5).Select(c => c.Structure).Distinct().Count() == 5
-            && picked.Select(c => c.SceneId).Distinct().Count() >= 10,
+            && picked.Select(c => c.SceneId).Distinct().Count() == entries.Select(q => q.Contract.SceneId).Distinct().Count(),
             "Skewed row counts defeated bank relation/scene rotation: " + string.Join(",", picked.Select(c => c.Structure + "/" + c.SceneId)));
         var relationCounts = picked.GroupBy(c => c.Structure).Select(g => g.Count()).ToArray();
         Check(relationCounts.Max() - relationCounts.Min() <= 1, "Bank relationships were not balanced.");
@@ -332,7 +498,7 @@ internal static class AdditionTests
         var imported = new QuestionBankStore(Path.Combine(directory, "addition-import.db3"));
         var report = await imported.ImportExcelAsync(workbook);
         Check(report.Inserted == entries.Count && report.Rejected == 0, "Addition Excel import failed.");
-        var tampered = await imported.QueryAsync("UPDATE BasicQuestionBank SET TopicId='wrong' WHERE SceneId='craft'");
+        var tampered = await imported.QueryAsync("UPDATE BasicQuestionBank SET TopicId='wrong' WHERE SceneId='notebook-production'");
         Check(tampered.IsSuccess, "Metadata edit failed.");
         using var export = new MemoryStream();
         var exported = await imported.ExportExcelAsync(export);
@@ -341,7 +507,37 @@ internal static class AdditionTests
         Check(await imported.TakeAsync(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.Vietnamese) is null,
             "Corrupt addition prose reached practice.");
         await MigrationAsync(directory, repeat);
+        await OutdatedScaleRowsAsync(directory, repeat);
         Console.WriteLine("PASS addition SQLite semantic rotation despite skewed row counts, dedup, restart, Excel, forged metadata and old schema migration");
+    }
+
+    private static async Task OutdatedScaleRowsAsync(string directory, ValidatedBankQuestion valid)
+    {
+        string path = Path.Combine(directory, "outdated-addition-scales.db3");
+        var store = new QuestionBankStore(path);
+        Check(await store.InsertAsync(valid), "Could not initialise scale regression bank.");
+        var oldLibrary = valid.Contract with { Subject = "tủ sách của Lan", OtherSubject = "tủ sách của An" };
+        var oldClub = Create("club-arrivals", BasicQuestionStructure.Increase, CurriculumTier.OneStar) with {
+            Tier = CurriculumTier.FiveStars, Left = 12, Right = 6 };
+        using (var db = new SQLite.SQLiteConnection(path))
+        {
+            foreach (var old in new[] { oldLibrary, oldClub })
+                db.Insert(new QuestionBankStore.Row {
+                    Hash = "outdated-" + old.SceneId, Version = old.Version, Operation = (int)old.Operation,
+                    Stars = (int)old.Tier, Language = (int)old.Language, Structure = (int)old.Structure,
+                    TopicId = old.TopicId, SceneId = old.SceneId, ContractJson = JsonSerializer.Serialize(old),
+                    DraftJson = QuestionBankStore.SerializeDraft(valid.Draft), CreatedUtc = DateTime.UtcNow,
+                    LastUsedUtc = DateTime.MinValue });
+        }
+        var selected = await store.TakeAsync(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.Vietnamese);
+        Check(selected?.Contract == valid.Contract, "An obsolete small setting reached high-star practice.");
+        using var excel = new MemoryStream();
+        var export = await store.ExportExcelAsync(excel);
+        Check(export.Exported == 1 && export.Skipped == 2, "Export did not reject obsolete scale contracts.");
+        var count = await store.QueryAsync("SELECT COUNT(*) FROM BasicQuestionBank");
+        Check(count.IsSuccess && count.Rows.Count == 1 && count.Rows[0][0] == "3",
+            "Validation deleted saved data instead of skipping obsolete templates.");
+        Console.WriteLine("PASS obsolete SQLite scales skipped during practice/export without deleting saved rows");
     }
 
     private static async Task MigrationAsync(string directory, ValidatedBankQuestion addition)

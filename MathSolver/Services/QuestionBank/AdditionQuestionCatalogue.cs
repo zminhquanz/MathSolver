@@ -9,8 +9,10 @@ public sealed record AdditionScene(string Id, string TopicId, AdditionSceneKind 
     string[] UnitIds, string VietnameseAction, string EnglishAction, string VietnameseVerbs, string EnglishVerbs,
     int MaxOperand, BasicQuestionStructure[] Structures)
 {
+    public AdditionQuestionScale? Scale(CurriculumTier tier) => AdditionQuestionScales.Find(Id, tier);
     public bool Supports(BasicQuestionStructure structure, CurriculumTier tier) => Structures.Contains(structure)
-        && (int)tier >= AdditionQuestionCatalogue.MinimumStars(structure);
+        && (int)tier >= AdditionQuestionCatalogue.MinimumStars(structure)
+        && Scale(tier) is { } scale && scale.MaxOperand >= QuizCurriculumLayer.GetMinimumPrimaryOperandValue(tier);
 }
 
 /// <summary>Independent one-step relations, story settings, actor roles and realistic quantity domains.</summary>
@@ -25,29 +27,33 @@ public static class AdditionQuestionCatalogue
     public static IReadOnlyList<AdditionScene> Scenes { get; } = Array.AsReadOnly(new AdditionScene[]
     {
         new("family-gifts", "family", AdditionSceneKind.Stock, AdditionActorKind.Person,
-            ["books", "notebooks", "pencils", "candies", "cards", "stickers"], "có", "has", "có|giữ|sở hữu", "has|owns|holds|had", 50000, StockRelations),
+            ["books", "notebooks", "pencils", "candies", "cards", "stickers"], "có", "has", "có|giữ|sở hữu", "has|owns|holds|had", 99, StockRelations),
         new("library", "school", AdditionSceneKind.Stock, AdditionActorKind.Library,
-            ["books", "notebooks"], "có", "has", "có|giữ|lưu giữ", "has|holds|had", 50000, StockRelations),
+            ["books", "notebooks"], "có", "has", "có|giữ|lưu giữ", "has|holds|had", 99999, StockRelations),
         new("school-supplies", "school", AdditionSceneKind.Contributions, AdditionActorKind.Team,
-            ["books", "notebooks", "pencils", "cards"], "góp được", "contributes", "góp|quyên góp|mang đến|chuẩn bị", "contributes?|donates?|brings?|prepares?", 5000, ContributionRelations),
+            ["books", "notebooks", "pencils", "cards"], "góp được", "contributes", "góp|quyên góp|mang đến|chuẩn bị", "contributes?|donates?|brings?|prepares?", 99999, ContributionRelations),
         new("donations", "community", AdditionSceneKind.Contributions, AdditionActorKind.Team,
-            ["books", "notebooks", "pencils", "cakes"], "quyên góp được", "donates", "góp|quyên góp|ủng hộ|chuẩn bị", "contributes?|donates?|prepares?|collects?", 5000, ContributionRelations),
+            ["books", "notebooks", "pencils", "cakes"], "quyên góp được", "donates", "góp|quyên góp|ủng hộ|chuẩn bị", "contributes?|donates?|prepares?|collects?", 99999, ContributionRelations),
         new("recycling", "environment", AdditionSceneKind.Contributions, AdditionActorKind.Team,
-            ["plastic-bottles", "cans"], "thu gom được", "collects", "thu gom|gom|nhặt", "collects?|gathers?|picks? up", 5000, ContributionRelations),
+            ["plastic-bottles", "cans"], "thu gom được", "collects", "thu gom|gom|nhặt", "collects?|gathers?|picks? up", 99999, ContributionRelations),
         new("craft", "activities", AdditionSceneKind.Periods, AdditionActorKind.Workshop,
-            ["cards", "paper-flowers"], "làm được", "makes", "gấp|làm|cắt|hoàn thành", "folds?|makes?|made|finishes?|cuts?", 50000, [BasicQuestionStructure.Combine]),
+            ["cards", "paper-flowers"], "làm được", "makes", "gấp|làm|cắt|hoàn thành", "folds?|makes?|made|finishes?|cuts?", 999, [BasicQuestionStructure.Combine]),
+        new("notebook-production", "activities", AdditionSceneKind.Periods, AdditionActorKind.Workshop,
+            ["notebooks"], "sản xuất được", "produces", "sản xuất|làm|hoàn thành", "produces?|makes?|made|manufactures?|finishes?", 99999, [BasicQuestionStructure.Combine]),
+        new("book-distribution", "shopping", AdditionSceneKind.Stock, AdditionActorKind.Library,
+            ["books", "notebooks"], "có", "has", "có|giữ|lưu giữ", "has|holds|had", 99999, StockRelations),
         new("harvest", "nature", AdditionSceneKind.Periods, AdditionActorKind.Farm,
-            ["apples", "oranges", "flowers"], "thu hoạch được", "harvests", "hái|thu hoạch|thu gom", "picks?|harvests?|gathers?", 5000, [BasicQuestionStructure.Combine]),
+            ["apples", "oranges", "flowers"], "thu hoạch được", "harvests", "hái|thu hoạch|thu gom", "picks?|harvests?|gathers?", 99999, [BasicQuestionStructure.Combine]),
         new("garden", "nature", AdditionSceneKind.Parts, AdditionActorKind.Garden,
-            ["trees", "seedlings", "flowers"], "có", "has", "có|trồng|mọc", "has|contains?|grows?|planted", 50, [BasicQuestionStructure.Combine]),
+            ["trees", "seedlings", "flowers"], "có", "has", "có|trồng|mọc", "has|contains?|grows?|planted", 99999, [BasicQuestionStructure.Combine]),
         new("sports", "activities", AdditionSceneKind.Periods, AdditionActorKind.Team,
-            ["points"], "ghi được", "scores", "ghi|đạt|giành", "scores?|earns?|gains?", 100, [BasicQuestionStructure.Combine]),
+            ["points"], "ghi được", "scores", "ghi|đạt|giành", "scores?|earns?|gains?", 45, [BasicQuestionStructure.Combine]),
         new("birds-arrive", "nature", AdditionSceneKind.Arrivals, AdditionActorKind.Park,
-            ["birds"], "bay đến", "fly in", "bay đến|bay tới|đậu thêm|đến thêm", "fly in|flies in|fly into|arrive|join", 250, [BasicQuestionStructure.Increase]),
+            ["birds"], "bay đến", "fly in", "bay đến|bay tới|đậu thêm|đến thêm", "fly in|flies in|fly into|arrive|join", 99, [BasicQuestionStructure.Increase]),
         new("club-arrivals", "school", AdditionSceneKind.Arrivals, AdditionActorKind.Club,
             ["students"], "đến tham gia", "arrive to join", "đến|tới|tham gia|vào", "arrive|join|come|enter", 20, [BasicQuestionStructure.Increase]),
         new("shop-stock", "shopping", AdditionSceneKind.Stock, AdditionActorKind.Person,
-            ["apples", "oranges", "cakes", "balls", "pencils"], "có", "has", "có|giữ|sở hữu", "has|owns|holds|had", 50000, StockRelations)
+            ["apples", "oranges", "cakes", "balls", "pencils"], "có", "has", "có|giữ|sở hữu", "has|owns|holds|had", 99999, StockRelations)
     });
 
     public static IReadOnlyList<QuestionUnit> ExtraUnits { get; } = Array.AsReadOnly(new QuestionUnit[]
@@ -75,11 +81,16 @@ public static class AdditionQuestionCatalogue
     public static bool IsValid(BasicQuestionContract c)
     {
         var scene = Find(c.SceneId);
+        var scale = scene?.Scale(c.Tier);
         return c.Version == Version && c.Operation == ArithmeticOperation.Add && scene is not null
+            && scale is not null
             && scene.TopicId == c.TopicId && scene.Supports(c.Structure, c.Tier)
-            && c.Left <= scene.MaxOperand && c.Right <= scene.MaxOperand
-            && scene.UnitIds.Any(id => QuestionUnits.Find(id) is { } u && u.Item(c.Language) == c.Unit && u.GroupFor(c) == c.GroupUnit)
-            && (c.PartA, c.PartB) == Parts(scene, c.Language);
+            && c.Left >= QuizCurriculumLayer.GetMinimumPrimaryOperandValue(c.Tier)
+            && c.Left <= scale.MaxOperand && c.Right <= scale.MaxOperand
+            && (long)c.Left + c.Right <= scale.MaxCombinedQuantity
+            && scale.MatchesActor(c.Language, c.Subject) && scale.MatchesActor(c.Language, c.OtherSubject)
+            && scale.UnitIds.Any(id => QuestionUnits.Find(id) is { } u && u.Item(c.Language) == c.Unit && u.GroupFor(c) == c.GroupUnit)
+            && (c.PartA, c.PartB) == scale.Parts(c.Language);
     }
 
     public static BasicQuestionContract Create(CurriculumTier tier, AppLanguage language, Random? random = null,
@@ -92,19 +103,17 @@ public static class AdditionQuestionCatalogue
             && (structure is null || p.Structure == structure)).ToArray();
         if (choices.Length == 0) throw new ArgumentException("InvalidAdditionScene");
         var choice = choices[random.Next(choices.Length)];
-        var numbers = BasicQuestionContract.Create(ArithmeticOperation.Add, tier, language, random);
-        int a = numbers.Left, b = numbers.Right;
-        // Reroll rather than clamp: large tiers must not freeze bounded settings at their limit.
-        if (a > choice.Scene.MaxOperand) a = random.Next(1, choice.Scene.MaxOperand + 1);
-        if (b > choice.Scene.MaxOperand) b = random.Next(1, choice.Scene.MaxOperand + 1);
-        string name = Actor(choice.Scene, language, random, Math.Max(a, b)), other = name;
-        for (int i = 0; i < 32 && QuestionNames.GivenName(other) == QuestionNames.GivenName(name); i++)
-            other = Actor(choice.Scene, language, random, Math.Max(a, b));
-        if (QuestionNames.GivenName(other) == QuestionNames.GivenName(name))
-            other = Actor(choice.Scene, language, new Random(7919), Math.Max(a, b));
-        if (other == name) other = language == AppLanguage.Vietnamese ? "nhóm khác" : "the other team";
-        var unit = QuestionUnits.Find(choice.Scene.UnitIds[random.Next(choice.Scene.UnitIds.Length)])!;
-        var parts = Parts(choice.Scene, language);
+        var scale = choice.Scene.Scale(tier)!;
+        // Choose a viable domain first. Never reroll a high-star primary into a
+        // lower digit bucket to make an incompatible small scene fit.
+        var (a, b) = Numbers(tier, scale, random);
+        string name = Actor(scale, language, random), other = name;
+        for (int i = 0; i < 32 && other == name; i++) other = Actor(scale, language, random);
+        if (other == name) other = scale.Actor(language, language == AppLanguage.Vietnamese
+            ? name == scale.Actor(language, "An") ? "Bình" : "An"
+            : name == scale.Actor(language, "James") ? "Mary" : "James");
+        var unit = QuestionUnits.Find(scale.UnitIds[random.Next(scale.UnitIds.Length)])!;
+        var parts = scale.Parts(language);
         return BasicQuestionTemplates.ApplyUnit(new(Version, ArithmeticOperation.Add, tier, language, a, b,
             name, unit.Item(language), unit.Group(language), choice.Structure, other,
             choice.Scene.TopicId, choice.Scene.Id, parts.A, parts.B), unit);
@@ -113,46 +122,54 @@ public static class AdditionQuestionCatalogue
     public static BasicQuestionContract Refresh(BasicQuestionContract stored, Random? random = null)
         => BasicQuestionTemplates.ApplyUnit(Create(stored.Tier, stored.Language, random, stored.SceneId, stored.Structure), QuestionUnits.Find(stored)!);
 
-    private static (string A, string B) Parts(AdditionScene scene, AppLanguage language)
+    private static (int A, int B) Numbers(CurriculumTier tier, AdditionQuestionScale scale, Random random)
     {
-        bool vi = language == AppLanguage.Vietnamese;
-        return scene.Kind switch
+        int primaryCap = Math.Min(scale.MaxOperand, scale.MaxCombinedQuantity - 1);
+        int desiredCarries = (int)tier >= 3 && random.Next(3) != 0 ? (int)tier - 2 : 0;
+        (int A, int B) best = default;
+        int bestCarries = -1;
+        for (int attempt = 0; attempt < 48; attempt++)
         {
-            AdditionSceneKind.Periods when scene.Id == "sports" => vi ? ("hiệp đầu", "hiệp sau") : ("the first half", "the second half"),
-            AdditionSceneKind.Periods => vi ? ("buổi sáng", "buổi chiều") : ("the morning", "the afternoon"),
-            AdditionSceneKind.Parts => vi ? ("luống bên trái", "luống bên phải") : ("the left row", "the right row"),
-            _ => ("", "")
-        };
+            int a = QuizCurriculumLayer.NextPrimaryOperand(random, tier, maximumOverride: primaryCap);
+            int b = QuizCurriculumLayer.NextSecondaryOperand(random, tier,
+                maximumOverride: Math.Min(scale.MaxOperand, scale.MaxCombinedQuantity - a));
+            int carries = CountCarries(a, b);
+            if (carries > bestCarries) { best = (a, b); bestCarries = carries; }
+            if (carries >= desiredCarries) return (a, b);
+        }
+        return best;
     }
 
-    private static string Actor(AdditionScene scene, AppLanguage language, Random random, int quantity)
+    internal static int CountCarries(int a, int b)
+    {
+        int carry = 0, count = 0;
+        while (a > 0 || b > 0)
+        {
+            carry = (a % 10 + b % 10 + carry) / 10;
+            count += carry; a /= 10; b /= 10;
+        }
+        return count;
+    }
+
+    private static string Actor(AdditionQuestionScale scale, AppLanguage language, Random random)
     {
         bool vi = language == AppLanguage.Vietnamese;
         var pool = random.Next(2) == 0 ? QuestionNames.VietnameseMale : QuestionNames.VietnameseFemale;
         string person = vi ? pool[random.Next(pool.Count)] : QuestionNames.GivenName(QuestionNames.Create(language, random));
-        return scene.ActorKind switch
-        {
-            AdditionActorKind.Person => scene.Id == "shop-stock" || quantity > 100
-                ? vi ? $"cửa hàng của {person}" : $"{person}'s shop" : QuestionNames.Create(language, random),
-            AdditionActorKind.Team => vi ? $"nhóm của {person}" : $"{person}'s team",
-            AdditionActorKind.Library => vi ? $"thư viện trường {person}" : $"{person} School's library",
-            AdditionActorKind.Garden => vi ? $"vườn của {person}" : $"{person}'s garden",
-            AdditionActorKind.Park => vi ? $"công viên {person}" : $"{person} Park",
-            AdditionActorKind.Club => vi ? $"câu lạc bộ của {person}" : $"{person}'s club",
-            AdditionActorKind.Workshop => quantity > 100 ? vi ? $"xưởng của {person}" : $"{person}'s workshop" : person,
-            _ => quantity > 100 ? vi ? $"nông trại của {person}" : $"{person}'s farm" : person
-        };
+        return scale.Actor(language, scale.ActorPattern(language) == "{person}"
+            ? QuestionNames.Create(language, random) : person);
     }
 
     public static BasicQuestionDraft Example(BasicQuestionContract c)
     {
         var scene = Find(c.SceneId)!;
+        var scale = scene.Scale(c.Tier)!;
         bool vi = c.Language == AppLanguage.Vietnamese;
         string verb = vi ? scene.VietnameseAction : scene.EnglishAction;
-        string baseVerb = scene.Id switch { "craft" => "make", "harvest" => "harvest", "sports" => "score",
+        string baseVerb = scene.Id switch { "craft" => "make", "notebook-production" => "produce", "harvest" => "harvest", "sports" => "score",
             "recycling" => "collect", "donations" => "donate", "school-supplies" => "contribute", _ => "have" };
-        string periods = scene.Id == "sports" ? "các hiệp" : "các buổi";
-        string loss = scene.Id == "shop-stock" ? "bán" : "cho đi";
+        string periods = scale.VietnameseSpan;
+        string loss = scene.Id is "shop-stock" or "book-distribution" ? "bán" : "cho đi";
         string amount = scene.Kind == AdditionSceneKind.Contributions ? $"{verb}" : "có";
         string amountEn = scene.Kind == AdditionSceneKind.Contributions ? baseVerb : "have";
         var clauses = c.Structure switch
@@ -165,10 +182,10 @@ public static class AdditionQuestionCatalogue
                 : ("{name} has {a} {unit}.", "{name} gets {b} more {unit}.", "How many {unit} does {name} have in total?", "The total number of {unit} that {name} has is:"),
             BasicQuestionStructure.Combine when scene.Kind == AdditionSceneKind.Periods => vi
                 ? ($"Vào {{part_a}}, {{name}} {verb} {{a}} {{unit}}.", $"Vào {{part_b}}, {{name}} {verb} {{b}} {{unit}}.", $"Qua {periods}, {{name}} {verb} tất cả bao nhiêu {{unit}}?", $"Tổng số {{unit}} mà {{name}} {verb} qua {periods} là:")
-                : ($"In {{part_a}}, {{name}} {verb} {{a}} {{unit}}.", $"In {{part_b}}, {{name}} {verb} {{b}} {{unit}}.", $"How many {{unit}} does {{name}} {baseVerb} in total over these periods?", $"The total number of {{unit}} {(scene.Id == "sports" ? "scored" : scene.Id == "harvest" ? "harvested" : "made")} over these periods is:"),
+                : ($"In {{part_a}}, {{name}} {verb} {{a}} {{unit}}.", $"In {{part_b}}, {{name}} {verb} {{b}} {{unit}}.", $"How many {{unit}} does {{name}} {baseVerb} in total over {scale.EnglishSpan}?", $"The total number of {{unit}} {(scene.Id == "sports" ? "scored" : scene.Id == "harvest" ? "harvested" : scene.Id == "notebook-production" ? "produced" : "made")} over {scale.EnglishSpan} is:"),
             BasicQuestionStructure.Combine when scene.Kind == AdditionSceneKind.Parts => vi
-                ? ("{part_a} trong {name} có {a} {unit}.", "{part_b} trong {name} có {b} {unit}.", "Hỏi các luống này trong {name} có tổng cộng bao nhiêu {unit}?", "Tổng số {unit} trong các luống này của {name} là:")
-                : ("{part_a} in {name} has {a} {unit}.", "{part_b} in {name} has {b} {unit}.", "How many {unit} are in these rows of {name} altogether?", "The total number of {unit} in these rows is:"),
+                ? ("{part_a} trong {name} có {a} {unit}.", "{part_b} trong {name} có {b} {unit}.", $"Hỏi {scale.VietnameseSpan} này trong {{name}} có tổng cộng bao nhiêu {{unit}}?", $"Tổng số {{unit}} trong {scale.VietnameseSpan} này của {{name}} là:")
+                : ("{part_a} in {name} has {a} {unit}.", "{part_b} in {name} has {b} {unit}.", $"How many {{unit}} are in {scale.EnglishSpan} of {{name}} altogether?", $"The total number of {{unit}} in {scale.EnglishSpan} is:"),
             BasicQuestionStructure.Combine => vi
                 ? ($"{{name}} {verb} {{a}} {{unit}}.", $"{{other}} {verb} {{b}} {{unit}}.", $"Hỏi {{name}} và {{other}} {amount} tổng cộng bao nhiêu {{unit}}?", "Tổng số {unit} của {name} và {other} là:")
                 : ($"{{name}} {verb} {{a}} {{unit}}.", $"{{other}} {verb} {{b}} {{unit}}.", $"How many {{unit}} do {{name}} and {{other}} {amountEn} altogether?", "The combined number of {unit} is:"),
@@ -201,8 +218,8 @@ public sealed class AdditionQuestionCycle(Random? random = null)
         if (!_history.TryGetValue(key, out var history)) _history[key] = history = [];
         var candidates = AdditionQuestionCatalogue.Available(tier).OrderBy(_ => _random.Next())
             .OrderBy(p => history.Count(h => h.Structure == p.Structure))
-            .ThenBy(p => history.Count(h => h.Topic == p.Scene.TopicId))
             .ThenBy(p => history.Count(h => h.Scene == p.Scene.Id))
+            .ThenBy(p => history.Count(h => h.Topic == p.Scene.TopicId))
             .ThenBy(p => history.Count > 0 && history[^1].Scene == p.Scene.Id).ToArray();
         var selected = candidates[0];
         history.Add((selected.Scene.Id, selected.Scene.TopicId, selected.Structure));
