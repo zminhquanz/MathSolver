@@ -16,6 +16,7 @@
             x:Name="LiveWallpaper" />
 
         <ScrollView
+            x:Name="MathPuzzleScrollView"
             Grid.Row="0"
             HorizontalOptions="Fill"
             VerticalOptions="Fill">
@@ -640,6 +641,12 @@
 
                         </VerticalStackLayout>
                     </Border>
+
+                    <Button
+                        Text="{localization:Translate AiBank.Open}"
+                        Style="{StaticResource SolverOutlinedActionStyle}"
+                        Clicked="OnOpenAiQuestionBankClicked" />
+                    <Label x:Name="AiQuestionBankProgressLabel" IsVisible="False" FontSize="13" />
 
                     <Border
                         Padding="14"

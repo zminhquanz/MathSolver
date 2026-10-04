@@ -1,5 +1,11 @@
-> The previous AI implementation and AI hardware benchmark have been removed.
-> Practice uses C# generators, curriculum and graders on both platforms.
+> The previous AI practice source and AI hardware benchmark remain removed.
+> Optional AI question-bank enrichment is isolated in Services/QuestionBank.
+> Version 2 stores reusable prose/solution templates with typed C# structures and unit IDs;
+> practice regenerates numeric facts and actors. Version 1 fixed-fact records remain readable.
+> New addition uses version 3: separate relationship/topic/setting roles, realistic quantity domains,
+> scene-aware prompt/grammar/validation and balanced SQLite selection. Other operations retain version 2.
+> [Template format, validation and name attribution](Services/QuestionBank/README.md).
+> Basic arithmetic practice randomly mixes fresh C# questions and matching SQLite questions (50/50), retaining C# as the fallback. C# owns math, curriculum and grading.
 
 # Math Solver Architecture Reference
 
@@ -769,7 +775,7 @@ Curriculum chỉ áp dụng trong tab Toán đố và được các generator C#
 - Toán hạng/dữ kiện thứ hai `b` không bị ép cùng bucket với `a`: generator chọn ngẫu nhiên một bucket từ ★ đến tier hiện tại rồi sinh `b` trong bucket đó. Vì vậy ★★★★★ có thể tạo dạng `18,258 ÷ 2`, `43,721 + 85`, hoặc phân số có vế thứ hai nhỏ hơn nhiều. Cộng/trừ/chia vẫn giữ các ràng buộc toán học; phép nhân còn bị chặn để tích nằm trong `Int32`.
 - Generator C# áp dụng quy tắc bucket `a/b` khi sinh dữ kiện. Ngữ cảnh đề bài được chọn theo độ lớn của dữ kiện để số lượng lớn phù hợp với kho, nhà máy, trung tâm phân phối hoặc bồn chứa.
 - `FractionExpressionView` tách dấu câu cuối token trước khi parse phân số, nhờ đó tử/mẫu `BigInteger` luôn được format grouping đúng (`24,508,967,912`) và dấu chấm cuối câu không bị hiểu nhầm là dấu thập phân của mẫu số.
-- Mọi `ScrollView` dọc dùng behavior layout chung: sau layout ban đầu, nếu nội dung tăng chiều cao do result/feedback/validation Border xuất hiện thì viewport tự cuộn xuống cuối. ScrollView chỉ ngang bị bỏ qua.
+- `CalculationAutoScroll` chỉ cuộn đến kết quả sau khi người dùng bấm Tính toán ở tab Giải toán (cả các tab con). Lũy thừa có thêm một lần cuộn khi hiện tiến trình. Tab Toán đố có một ngoại lệ riêng: bấm Xem sơ đồ sẽ chờ bố cục ổn định rồi cuộn với `ScrollToPosition.Start` đến sơ đồ, kể cả khi sơ đồ đã nằm trong vùng nhìn thấy (`MakeVisible` sẽ bỏ qua trường hợp này). Không cuộn khi ẩn sơ đồ hoặc tự cập nhật đề. Mở JSON & Log, các phần mở rộng khác, thay đổi dữ liệu nhập hoặc cập nhật định dạng không tự cuộn. Yêu cầu cuộn bị hủy nếu trang rời màn hình trong lúc chờ.
 
 ### Mixed curriculum milestone correction (2026-09-13)
 

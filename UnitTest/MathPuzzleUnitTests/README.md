@@ -3,6 +3,9 @@
 The practice page uses the C# algorithm on Windows and Android. The previous
 AI implementation, model management, prompts, response validation, hardware AI
 benchmark, live-model harness and captured model fixtures have been removed.
+The new optional question-bank enrichment has its own
+[checks and model smoke test](../AiQuestionBankTests/README.md); this project
+continues to check C# practice and grading.
 
 The console harness runs 27 test groups against the actual C# generators,
 curriculum rules, exact arithmetic, essay graders and presentation helpers.

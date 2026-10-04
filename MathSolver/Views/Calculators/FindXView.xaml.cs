@@ -1182,6 +1182,7 @@ public partial class FindXView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
+        using var autoScroll = CalculationAutoScroll.Begin(sender, FindXResultBorder, FindXErrorBorder);
         FindXErrorBorder.IsVisible =
             false;
 

@@ -12,6 +12,7 @@ public partial class MathPuzzlePage
     private bool _diagramExpanded;
     private bool _diagramPreviewOpen;
     private bool _wideDiagramLayout;
+    private int _diagramScrollVersion;
 
     private void UpdateQuizDiagram()
     {
@@ -50,10 +51,47 @@ public partial class MathPuzzlePage
         UpdateQuestionDiagramLayout();
     }
 
-    private void OnQuizDiagramToggleClicked(object? sender, EventArgs e)
+    private async void OnQuizDiagramToggleClicked(object? sender, EventArgs e)
     {
+        int version = ++_diagramScrollVersion;
         _diagramExpanded = !_diagramExpanded;
         UpdateQuizDiagram();
+
+        if (!_diagramExpanded || !QuizDiagramPanel.IsVisible) return;
+        ArithmeticQuizQuestion? question = _currentQuestion;
+
+        // Opening changes both the panel visibility and the Grid columns on
+        // wide Windows layouts. Wait for two matching layout snapshots instead
+        // of assuming the native scroll extent has settled after a fixed delay.
+        (Rect Diagram, Size Content)? previousLayout = null;
+        for (int attempt = 0; attempt < 8; attempt++)
+        {
+            await Task.Delay(32);
+            if (version != _diagramScrollVersion || !_diagramExpanded ||
+                !ReferenceEquals(question, _currentQuestion) ||
+                !QuizDiagramPanel.IsVisible || !QuizVisualView.IsVisible ||
+                MathPuzzleScrollView.Handler is null || Shell.Current?.CurrentPage != this)
+                return;
+
+#if WINDOWS
+            if (MathPuzzleScrollView.Handler.PlatformView is Microsoft.UI.Xaml.Controls.ScrollViewer viewer)
+                viewer.UpdateLayout();
+#endif
+
+            var layout = (QuizDiagramPanel.Bounds, MathPuzzleScrollView.ContentSize);
+            bool arranged = QuizDiagramPanel.Height > 0 &&
+                MathPuzzleScrollView.Height > 0 && MathPuzzleScrollView.ContentSize.Height > 0;
+            if (arranged && previousLayout == layout) break;
+            previousLayout = layout;
+        }
+
+        if (QuizDiagramPanel.Height <= 0 || MathPuzzleScrollView.Height <= 0) return;
+
+        // MakeVisible deliberately does nothing when the panel already fits in
+        // the viewport. Start explicitly focuses the diagram even in that case;
+        // the platform clamps the offset to the end of shorter content.
+        await MathPuzzleScrollView.ScrollToAsync(
+            QuizDiagramPanel, ScrollToPosition.Start, animated: false);
     }
 
     private void OnQuestionDiagramSizeChanged(object? sender, EventArgs e) => UpdateQuestionDiagramLayout();
@@ -75,6 +113,7 @@ public partial class MathPuzzlePage
 
     private void ResetQuizDiagram()
     {
+        _diagramScrollVersion++;
         _diagramQuestion = null;
         _diagramExpanded = false;
         QuizDiagramToggleButton.IsVisible = false;

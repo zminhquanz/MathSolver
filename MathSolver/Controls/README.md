@@ -30,3 +30,9 @@ Control hiển thị hình nền động.
 
 - [LiveWallpaperView.cs](Wallpaper/LiveWallpaperView.cs)
 
+## Data
+
+Bảng kết quả SQL chỉ đọc, tiêu đề cố định, cuộn hai chiều và tái sử dụng hàng khi cuộn.
+
+- [SqlResultTableView.cs](Data/SqlResultTableView.cs)
+

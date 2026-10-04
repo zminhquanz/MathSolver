@@ -553,6 +553,7 @@ public partial class CalculationPage : ContentPage
 
     private void OnCalculateClicked(object? sender, EventArgs e)
     {
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         HideMessages();
 
         if (_isExpressionMode)

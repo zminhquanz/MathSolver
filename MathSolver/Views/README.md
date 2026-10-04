@@ -42,6 +42,7 @@ Thông tin phần cứng và benchmark số học CPU.
 Giao diện đề toán và bài tập.
 
 - [MathPuzzlePage.xaml](Quizzes/MathPuzzlePage.xaml)
+- [AiQuestionBankPage.xaml](Quizzes/AiQuestionBankPage.xaml): màn hình riêng để tạo, xem và lưu đề AI; không có phần làm bài.
 
 ## Settings
 

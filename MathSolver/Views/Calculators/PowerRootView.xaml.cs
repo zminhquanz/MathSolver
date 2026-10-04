@@ -478,6 +478,7 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         HideError();
         HideResult();
 
@@ -496,9 +497,11 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        await CalculatePowerAsync(
+        Task calculation = CalculatePowerAsync(
             baseValue,
             exponent);
+        autoScroll?.Reveal(ProgressBorder);
+        await calculation;
     }
 
     private async Task<bool> ConfirmVeryLargePowerAsync(
@@ -940,6 +943,7 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
+        using var autoScroll = CalculationAutoScroll.Begin(sender, RootResultBorder, RootErrorBorder);
         HideRootError();
         HideRootResult();
 

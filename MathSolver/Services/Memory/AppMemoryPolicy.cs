@@ -17,6 +17,7 @@ public static class AppMemoryPolicy
     public static void EnterBackground()
     {
         IsInBackground = true;
+        QuestionBank.AiQuestionBank.StopForBackground();
         LiveWallpaperManager.NotifyHostSuspended();
         RequestCleanup();
     }

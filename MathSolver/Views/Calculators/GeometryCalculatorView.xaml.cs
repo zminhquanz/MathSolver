@@ -1261,6 +1261,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         HideError();
         ClearResultsOnly();
 

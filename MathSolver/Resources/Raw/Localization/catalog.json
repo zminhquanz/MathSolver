@@ -25,7 +25,8 @@
     "Validation": "Thông báo kiểm tra dữ liệu nhập.",
     "captured": "Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.",
     "dynamic": "Câu có biến được app thay bằng dữ liệu — giữ nguyên các placeholder.",
-    "legacy": "Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển."
+    "legacy": "Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.",
+    "AiBank": "AI question bank: model management, generation, validation, review and storage."
   },
   "translationNotes": {
     "Formula.Tabs.UnknownComponent": {
@@ -890,6 +891,538 @@
       "context": "Math puzzle practice on Windows and Android.",
       "description": "A label or message displayed in the math puzzle interface.",
       "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
+    "AiBank.Open": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Back": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Title": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Description": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ModelSection": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ChooseModel": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Eject": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.OpenFolder": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.DownloadHint": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Download": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.CancelModelAction": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ProblemSection": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ProblemType": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.BasicArithmetic": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Operation": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Add": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Subtract": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Multiply": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Divide": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Difficulty": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Language": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.GenerationMode": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Single": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Batch": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Count": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.AutoInsert": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.InsertHint": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Generate": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Stop": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.BackgroundHint": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ProcessedQuestions": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Preview": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ReadOnlyHint": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Insert": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Share": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ShowDiagnostics": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.HideDiagnostics": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Contract": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.RawJson": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ValidationLog": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Prompt": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Loaded": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.NoModel": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ModelActionFailed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Loading": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Downloading": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Ejecting": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Stopped": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Progress": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.PracticeProgress": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Question": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Attempt": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.NoPreview": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ValidationPassed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.AndroidFolderHint": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.AndroidModelFiles": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.CountHint": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Ok": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Cancel": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.ExportFailed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Job.Idle": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Job.Generating": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Job.Validating": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Job.Completed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Job.Stopped": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Job.Failed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Generating": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Validating": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Ready": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Saved": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Duplicate": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Rejected": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.Stopped": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Item.SaveFailed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.InvalidContract": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.InvalidJson": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.InvalidFields": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.InvalidText": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.ChangedQuantities": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page.",
+      "placeholders": {
+        "a": "Literal AI template slot for the first C# quantity.",
+        "b": "Literal AI template slot for the second C# quantity."
+      }
+    },
+    "AiBank.Error.ExtraRelations": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.ChangedSubject": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.ChangedUnits": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.ChangedRelationOrTarget": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.WrongLanguage": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.GenerationTimeout": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.RetriesExhausted": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.DatabaseSaveFailed": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.JobAlreadyRunning": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.ModelNotLoaded": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.InvalidModelFile": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.IncompleteModelDownload": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.HuggingFaceAccessRequired": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.InquiryShow": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.InquiryHide": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.InquiryHint": {
+      "context": "Math puzzles > AI question bank > SQLite inquiry",
+      "translatorNote": "Preserve SQLite field names, SQL keywords and .NET. This describes a single read or write statement, not a batch."
+    },
+    "AiBank.RunInquiry": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.CancelData": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.InquiryResult": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.InquiryTruncated": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.DataTransferHint": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.ImportExcel": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.ExportExcel": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.DataWorking": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.DataCancelled": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.DataFailed": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.ImportResult": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.ImportRowError": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.ImportIssuesTruncated": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.ExportResult": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.QueryTimedOut": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.QueryColumnLimit": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.InvalidExcelFile": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.ExcelFileTooLarge": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.ExcelColumnsMissing": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.ExcelImportRowLimit": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.ExcelRowLimit": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.ExcelCellTooLong": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.ExcelFormulaNotAllowed": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.Error.InvalidExcelRow": {
+      "context": "Math puzzles > AI question bank > SQLite and Excel",
+      "translatorNote": "Preserve SQLite field names, SELECT, WITH, LIMIT, JSON, Excel column names, .xlsx and placeholders."
+    },
+    "AiBank.GenerationPhase": {
+      "context": "Màn hình bổ sung đề bằng AI → ô Model AI → tiến trình sinh đề.",
+      "translatorNote": "{0} là số thứ tự đề, {1} là số đề trong lượt, {2} là lần thử hiện tại, {3} là trạng thái đã dịch. Giữ nguyên cả bốn placeholder."
+    },
+    "AiBank.GenerationRetrying": {
+      "context": "Màn hình bổ sung đề bằng AI → ô Model AI → trạng thái sau khi đề bị từ chối.",
+      "translatorNote": "Model đang sinh lại sau một lỗi validation hoặc timeout; không phải thao tác lưu vào database."
+    },
+    "AiBank.GenerationIssue": {
+      "context": "Màn hình bổ sung đề bằng AI → ô Model AI → thông báo lỗi sinh, kiểm tra hoặc lưu đề.",
+      "translatorNote": "{0} là mô tả lỗi đã dịch. Giữ nguyên placeholder."
+    },
+    "AiBank.InquiryChanged": {
+      "context": "Math puzzles > AI question bank > SQLite inquiry > completed write",
+      "translatorNote": "{0} is the number of rows affected by INSERT, UPDATE or DELETE; it can be zero."
+    },
+    "AiBank.Error.SupportedStatementRequired": {
+      "context": "Math puzzles > AI question bank > SQLite inquiry > unsupported input",
+      "translatorNote": "Preserve SQL keywords. Shown for unsupported commands, multiple statements or invalid input limits."
+    },
+    "AiBank.SqlGridHint": {
+      "context": "Math puzzles > AI question bank > SQLite result table",
+      "translatorNote": "Explains a read-only result table. Tap also means click on Windows."
+    },
+    "AiBank.SqlCellTitle": {
+      "context": "Math puzzles > AI question bank > selected SQL cell",
+      "translatorNote": "{0} is the one-based result row number; {1} is the SQL column name or alias and must be preserved."
+    },
+    "AiBank.CopySqlCell": {
+      "context": "Math puzzles > AI question bank > selected SQL cell > clipboard action",
+      "translatorNote": "Copies the cell value with original whitespace, not the shortened preview."
+    },
+    "AiBank.SqlCellCopied": {
+      "context": "Math puzzles > AI question bank > selected SQL cell > clipboard success",
+      "translatorNote": "Shown on the copy button after its cell value has been copied successfully."
+    },
+    "AiBank.GenerationSpeed": {
+      "context": "Math puzzles > AI question bank > AI model > live token speed",
+      "translatorNote": "{0:N1} is the average generation speed for the current attempt, formatted with one decimal place. Excludes processing before the first generated token. Preserve the numeric format placeholder."
+    },
+    "AiBank.GenerationSpeedWaiting": {
+      "context": "Math puzzles > AI question bank > AI model > token speed pending",
+      "translatorNote": "No speed measurement is available until the second token; resets at each retry and question."
+    },
+    "AiBank.Error.InvalidPlaceholders": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve JSON field names and literal template placeholder names."
+    },
+    "AiBank.Error.InvalidContext": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve JSON field names and literal template placeholder names."
     }
   },
   "placeholderNotes": {
@@ -7741,6 +8274,666 @@
     {
       "key": "Quiz.GeometryTotalArea",
       "source": "Diện tích toàn phần",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Open",
+      "source": "✨ Bổ sung đề bằng AI",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Back",
+      "source": "← Quay lại",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Title",
+      "source": "Bổ sung đề bài bằng AI",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Description",
+      "source": "AI viết mẫu đề và câu lời giải; C# thay tên, sinh số và tính đáp án khi luyện tập. Mẫu hợp lệ được lưu vào ngân hàng đề, bên cạnh bộ tạo đề C# có sẵn.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ModelSection",
+      "source": "1. Model AI",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ChooseModel",
+      "source": "📦 Chọn model GGUF",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Eject",
+      "source": "⏏ Gỡ model khỏi RAM",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.OpenFolder",
+      "source": "📂 Mở thư mục model",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DownloadHint",
+      "source": "Tải model Gemma 4 từ kho chính thức của Google trên Hugging Face. File có thể lớn vài GB; chỉ tải khi bạn bấm nút.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Download",
+      "source": "↓ Tải và load model",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.CancelModelAction",
+      "source": "Dừng tải / load",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ProblemSection",
+      "source": "2. Chọn đề cần bổ sung",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ProblemType",
+      "source": "Chọn bài toán",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.BasicArithmetic",
+      "source": "Toán đố cơ bản",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Operation",
+      "source": "Chọn dạng toán",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Add",
+      "source": "Phép cộng +",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Subtract",
+      "source": "Phép trừ −",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Multiply",
+      "source": "Phép nhân ×",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Divide",
+      "source": "Phép chia ÷",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Difficulty",
+      "source": "Độ khó",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Language",
+      "source": "Ngôn ngữ đề bài",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GenerationMode",
+      "source": "Số đề mỗi lần tạo",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Single",
+      "source": "Tạo 1 đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Batch",
+      "source": "Tạo nhiều đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Count",
+      "source": "Số đề (1–100)",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.AutoInsert",
+      "source": "Tự động lưu đề hợp lệ vào SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InsertHint",
+      "source": "Nếu tắt, đề hợp lệ chỉ được lưu khi bạn bấm Lưu vào ngân hàng đề. Mỗi đề lỗi được thử tối đa 3 lần; nếu vẫn lỗi, tác vụ dừng để bạn bấm tạo lại. Tạo lượt mới sẽ thay bản xem của lượt cũ; hãy lưu hoặc xuất đề muốn giữ trước.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Generate",
+      "source": "✨ Tạo đề bằng AI",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Stop",
+      "source": "■ Dừng tạo đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.BackgroundHint",
+      "source": "Bạn có thể quay lại hoặc chuyển tab trong lúc tạo đề. Các đề đã lưu vẫn được giữ khi dừng. Trên Android, tác vụ dừng khi app vào nền hoặc khóa màn hình.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ProcessedQuestions",
+      "source": "Xem đề đã xử lý",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Preview",
+      "source": "Đề bài xem trước",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ReadOnlyHint",
+      "source": "Chỉ xem đề tại đây. Làm bài và chấm bài ở tab Toán đố.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Insert",
+      "source": "💾 Lưu vào ngân hàng đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Share",
+      "source": "Chia sẻ đề bài",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ShowDiagnostics",
+      "source": "Xem JSON & log",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.HideDiagnostics",
+      "source": "Ẩn JSON & log",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Contract",
+      "source": "Dữ kiện C#",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.RawJson",
+      "source": "JSON model trả về",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ValidationLog",
+      "source": "Log kiểm tra và lưu đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Prompt",
+      "source": "Prompt gửi model",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Loaded",
+      "source": "Đã load",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.NoModel",
+      "source": "Chưa load model. Chọn file GGUF hoặc tải một model để bắt đầu.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ModelActionFailed",
+      "source": "Không hoàn tất thao tác model",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Loading",
+      "source": "Đang load model…",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Downloading",
+      "source": "Đang tải model…",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Ejecting",
+      "source": "Đang giải phóng model…",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Stopped",
+      "source": "Đã dừng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Progress",
+      "source": "{0} · Hợp lệ {1}/{2} · Đã lưu {3}",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.PracticeProgress",
+      "source": "AI đang bổ sung: {0}/{1} đề · Bấm Bổ sung đề bằng AI để xem tiến độ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Question",
+      "source": "Đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Attempt",
+      "source": "Lần thử",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.NoPreview",
+      "source": "Chưa có đề hợp lệ để xem. Bấm Tạo đề bằng AI để bắt đầu.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ValidationPassed",
+      "source": "Đạt: cấu trúc JSON, biến thay thế, đơn vị, vai trò dữ kiện, quan hệ, câu hỏi và câu lời giải phù hợp mẫu toán C#.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.AndroidFolderHint",
+      "source": "Chưa có model trong thư mục app. Android bảo vệ thư mục riêng; dùng Chọn model để nhập hoặc Tải model để bổ sung.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.AndroidModelFiles",
+      "source": "Model trong thư mục app · Chọn để xuất ra thư mục khác",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.CountHint",
+      "source": "Nhập số đề từ 1 đến 100.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Ok",
+      "source": "Đóng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Cancel",
+      "source": "Hủy",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ExportFailed",
+      "source": "Không thể xuất đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Job.Idle",
+      "source": "Sẵn sàng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Job.Generating",
+      "source": "Đang tạo đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Job.Validating",
+      "source": "Đang kiểm tra đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Job.Completed",
+      "source": "Đã hoàn tất",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Job.Stopped",
+      "source": "Đã dừng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Job.Failed",
+      "source": "Tác vụ chưa hoàn tất",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Generating",
+      "source": "Đang sinh đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Validating",
+      "source": "Đang kiểm tra",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Ready",
+      "source": "Đề hợp lệ · Chưa lưu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Saved",
+      "source": "Đề hợp lệ · Đã lưu SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Duplicate",
+      "source": "Đề trùng · Đã có trong SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Rejected",
+      "source": "Bản nháp chưa hợp lệ · Không lưu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.Stopped",
+      "source": "Đã dừng · Chưa có đề hoàn chỉnh",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Item.SaveFailed",
+      "source": "Đề hợp lệ · Lưu thất bại, có thể thử lưu lại",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidContract",
+      "source": "Dữ kiện C# không hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidJson",
+      "source": "JSON rỗng, không hợp lệ hoặc chưa hoàn chỉnh.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidFields",
+      "source": "Mẫu đề mới phải có đúng năm trường văn bản: given_a, given_b, question, solution_lead và unit_id. Đề cũ dùng ba trường đầu.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidText",
+      "source": "Câu văn rỗng, quá dài hoặc chứa ký tự không hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ChangedQuantities",
+      "source": "Mẫu đề không được chứa số cụ thể, đáp án, phép tính hoặc dữ kiện thừa. Dùng {a} và {b} để C# thay số.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExtraRelations",
+      "source": "Đề có thêm quan hệ, phủ định hoặc tiết lộ kết quả.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ChangedSubject",
+      "source": "Chủ thể trong dữ kiện hoặc câu hỏi không khớp.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ChangedUnits",
+      "source": "Đơn vị chưa thuộc danh mục, không phù hợp vai trò dữ kiện hoặc đại lượng cần tìm.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ChangedRelationOrTarget",
+      "source": "Quan hệ toán, chủ thể, đại lượng cần tìm hoặc câu lời giải không phù hợp cấu trúc C# đã chọn.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.WrongLanguage",
+      "source": "Ngôn ngữ hoặc câu hỏi chưa đúng yêu cầu.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.GenerationTimeout",
+      "source": "Quá thời gian sinh một đề; thử lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.RetriesExhausted",
+      "source": "Đề vẫn không hợp lệ sau 3 lần thử. Bấm Tạo đề bằng AI để chạy lại; các đề đã lưu vẫn được giữ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.DatabaseSaveFailed",
+      "source": "Không lưu được vào SQLite. Đề hợp lệ vẫn còn để bạn thử lưu lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.JobAlreadyRunning",
+      "source": "Một tác vụ đang chạy. Hãy dừng hoặc chờ tác vụ hoàn tất.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ModelNotLoaded",
+      "source": "Hãy load model trước khi tạo đề.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidModelFile",
+      "source": "File không phải model GGUF hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.IncompleteModelDownload",
+      "source": "File model tải chưa đầy đủ. Hãy tải lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.HuggingFaceAccessRequired",
+      "source": "Hugging Face yêu cầu quyền truy cập. Hãy tải file GGUF qua trình duyệt rồi chọn model từ máy.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryShow",
+      "source": "Tra cứu dữ liệu đề trong SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryHide",
+      "source": "Ẩn phần tra cứu SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryHint",
+      "source": "Dành cho người dùng nâng cao: chạy một câu lệnh SELECT, INSERT, UPDATE hoặc DELETE trên bảng BasicQuestionBank; hỗ trợ WITH và chú thích SQL. Các cột chính: Operation (0: cộng, 1: trừ, 2: nhân, 3: chia), Stars (1–5), Language (0: Việt, 1: Anh), Structure (quan hệ toán), TopicId (chủ đề), SceneId (tình huống), ContractJson, DraftJson, ModelName, CreatedUtc, UseCount. Lệnh ghi hiển thị số dòng bị tác động và được hoàn tác nếu lỗi hoặc bị dừng. Hiển thị tối đa 100 dòng, 32 cột và 4.000 ký tự mỗi ô; truy vấn dừng sau 3 giây. CreatedUtc được lưu theo ticks UTC của .NET.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.RunInquiry",
+      "source": "Chạy truy vấn",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.CancelData",
+      "source": "Dừng xử lý dữ liệu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryResult",
+      "source": "Đã đọc {0} dòng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryTruncated",
+      "source": "Kết quả được rút gọn theo giới hạn hiển thị; thêm điều kiện lọc hoặc LIMIT để xem phần cần tìm.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DataTransferHint",
+      "source": "Nhập/xuất toàn bộ ngân hàng đề bằng Excel (.xlsx), không cần load model. Xuất khi ngân hàng rỗng để lấy file mẫu. File nhập tối đa 20 MB và 10.000 dòng; dữ liệu sai bị bỏ qua, đề trùng không được thêm lại. Đáp số do C# tính lại.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportExcel",
+      "source": "Nhập dữ liệu đề bài",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ExportExcel",
+      "source": "Xuất dữ liệu đề bài",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DataWorking",
+      "source": "Đang xử lý dữ liệu…",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DataCancelled",
+      "source": "Đã dừng xử lý dữ liệu.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DataFailed",
+      "source": "Không xử lý được dữ liệu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportResult",
+      "source": "Đã thêm {0} đề · Trùng {1} đề · Bỏ qua {2} dòng không hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportRowError",
+      "source": "Dòng {0}: {1}",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportIssuesTruncated",
+      "source": "Chỉ hiển thị chi tiết 50 dòng lỗi đầu tiên.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ExportResult",
+      "source": "Đã xuất {0} đề · Bỏ qua {1} bản ghi SQLite không hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.QueryTimedOut",
+      "source": "Truy vấn vượt quá 3 giây. Hãy thêm điều kiện lọc hoặc giảm dữ liệu cần đọc.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.QueryColumnLimit",
+      "source": "Truy vấn phải trả về từ 1 đến 32 cột.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidExcelFile",
+      "source": "File Excel không hợp lệ. Hãy dùng file .xlsx theo mẫu xuất từ ứng dụng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelFileTooLarge",
+      "source": "File nhập vượt quá giới hạn 20 MB hoặc dữ liệu giải nén vượt quá 40 MB.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelColumnsMissing",
+      "source": "File Excel thiếu cột bắt buộc hoặc có tiêu đề cột trùng. Hãy dùng mẫu xuất từ ứng dụng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelImportRowLimit",
+      "source": "Mỗi lần nhập tối đa 10.000 dòng. Hãy chia file thành các phần nhỏ hơn.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelRowLimit",
+      "source": "Ngân hàng đề vượt quá giới hạn số dòng của một trang Excel.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelCellTooLong",
+      "source": "Một ô Excel vượt quá 32.767 ký tự.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelFormulaNotAllowed",
+      "source": "Dữ kiện và nội dung đề phải là giá trị hoặc văn bản, không được chứa công thức Excel.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidExcelRow",
+      "source": "Số, dạng toán, ngôn ngữ hoặc thời gian trong dòng Excel không hợp lệ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GenerationPhase",
+      "source": "Đề {0}/{1} · Lần thử {2}/3 · {3}",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GenerationRetrying",
+      "source": "Đang thử lại",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GenerationIssue",
+      "source": "Lỗi: {0}",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryChanged",
+      "mode": "exact",
+      "source": "Đã tác động {0} dòng."
+    },
+    {
+      "key": "AiBank.Error.SupportedStatementRequired",
+      "mode": "exact",
+      "source": "Chỉ hỗ trợ một câu lệnh SELECT, INSERT, UPDATE hoặc DELETE, có thể dùng WITH và chú thích SQL."
+    },
+    {
+      "key": "AiBank.SqlGridHint",
+      "mode": "exact",
+      "source": "Cuộn ngang để xem thêm cột, cuộn dọc để xem thêm dòng. Bấm vào ô để xem nội dung và sao chép."
+    },
+    {
+      "key": "AiBank.SqlCellTitle",
+      "mode": "exact",
+      "source": "Dòng {0} · {1}"
+    },
+    {
+      "key": "AiBank.CopySqlCell",
+      "mode": "exact",
+      "source": "Sao chép nội dung ô"
+    },
+    {
+      "key": "AiBank.SqlCellCopied",
+      "mode": "exact",
+      "source": "Đã sao chép"
+    },
+    {
+      "key": "AiBank.GenerationSpeed",
+      "mode": "exact",
+      "source": "Tốc độ tạo sinh: {0:N1} token/s"
+    },
+    {
+      "key": "AiBank.GenerationSpeedWaiting",
+      "mode": "exact",
+      "source": "Tốc độ tạo sinh: — token/s"
+    },
+    {
+      "key": "AiBank.Error.InvalidPlaceholders",
+      "source": "Biến thay thế bị thiếu, trùng, đổi vai trò hoặc không được hỗ trợ. Giữ đúng các biến của mẫu C#.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.InvalidContext",
+      "source": "Bối cảnh không hợp lý: nhân vật phải là chủ thể sở hữu hoặc thực hiện hành động, không phải đồ vật nằm trong vật chứa.",
       "mode": "exact"
     }
   ],

@@ -3,6 +3,7 @@ using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
 using MathSolver.Services.Localization;
+using MathSolver.Services.QuestionBank;
 using System.Globalization;
 using System.Numerics;
 
@@ -64,6 +65,8 @@ public partial class MathPuzzlePage : ContentPage
     private int _correctCount;
     private int _incorrectCount;
     private int _mainTabAnimationVersion;
+    private int _questionGenerationVersion;
+    private bool _openingAiQuestionBank;
 
     private Button[] ChoiceButtons =>
     [
@@ -164,6 +167,8 @@ public partial class MathPuzzlePage : ContentPage
         base.OnAppearing();
         LiveWallpaper.Resume();
         Shell.SetTabBarIsVisible(this, true);
+        AiQuestionBank.Current.Generation.Changed += OnAiQuestionBankProgress;
+        UpdateAiQuestionBankProgress();
         RefreshStatefulButtonTheme();
         BeginMainTabTransitionIfPending();
 
@@ -178,8 +183,10 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _diagramScrollVersion++;
+        AiQuestionBank.Current.Generation.Changed -= OnAiQuestionBankProgress;
         LiveWallpaper.Pause();
-        if (_diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive)
+        if (_openingAiQuestionBank || _diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive)
         {
             base.OnDisappearing();
             return;
@@ -1495,10 +1502,11 @@ public partial class MathPuzzlePage : ContentPage
         return request?.Kind == QuizProblemKind.Motion;
     }
 
-    private void GenerateAlgorithmQuestion(
+    private async void GenerateAlgorithmQuestion(
         int? questionNumberOnSuccess = null)
     {
-
+        int version = ++_questionGenerationVersion;
+        SetAnswerControlsEnabled(false);
         _questionAnswered = false;
         _lastAnswerWasCorrect = null;
         NextQuestionButton.IsEnabled = false;
@@ -1573,6 +1581,15 @@ public partial class MathPuzzlePage : ContentPage
                         nameof(problemRequest))
                 };
 
+            if (problemRequest.Kind == QuizProblemKind.Arithmetic && !problemRequest.IsComparison)
+            {
+                var selected = await AiQuestionBank.Current.Practice.SelectAsync(_currentQuestion,
+                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage);
+                // Selection, language and answer mode can change during the SQLite read.
+                if (version != _questionGenerationVersion) return;
+                _currentQuestion = selected;
+            }
+
             CommitGeneratedQuestionNumber(
                 questionNumberOnSuccess);
             RenderCurrentQuestion(
@@ -1602,6 +1619,23 @@ public partial class MathPuzzlePage : ContentPage
         if (_questionAnswered) return;
         // Replace the current question without changing its number or score.
         GenerateAlgorithmQuestion();
+    }
+
+    private async void OnOpenAiQuestionBankClicked(object? sender, EventArgs e)
+    {
+        if (_openingAiQuestionBank) return;
+        _openingAiQuestionBank = true;
+        try { await Shell.Current.GoToAsync(nameof(AiQuestionBankPage)); }
+        finally { _openingAiQuestionBank = false; }
+    }
+
+    private void OnAiQuestionBankProgress(object? sender, EventArgs e) => Dispatcher.Dispatch(UpdateAiQuestionBankProgress);
+    private void UpdateAiQuestionBankProgress()
+    {
+        var job = AiQuestionBank.Current.Generation.Snapshot;
+        AiQuestionBankProgressLabel.IsVisible = job.IsRunning;
+        AiQuestionBankProgressLabel.Text = string.Format(CultureInfo.CurrentCulture,
+            LocalizationService.TranslateKey("AiBank.PracticeProgress"), job.Items.Count(i => i.Question is not null), job.Options?.Count ?? 0);
     }
 
     private void UpdateRegenerateQuestionButtonState()
@@ -2661,6 +2695,7 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ResetQuizSessionState()
     {
+        _questionGenerationVersion++;
         ResetCurrentQuestionState();
         ResetQuizSessionCounters();
     }

@@ -108,6 +108,48 @@
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
     </Style>
 
+    <!-- Tinted actions remain distinguishable from pale wallpaper and cards. -->
+    <Style x:Key="SolverOutlinedActionStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
+        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+        <Setter Property="BorderColor" Value="{DynamicResource PrimaryBorderColor}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
+                            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+                            <Setter Property="BorderColor" Value="{DynamicResource PrimaryBorderColor}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryBorderColor}" />
+                            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+                            <Setter Property="BorderColor" Value="{DynamicResource PrimaryColor}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Focused">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
+                            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+                            <Setter Property="BorderColor" Value="{DynamicResource PrimaryColor}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{DynamicResource BorderColor}" />
+                            <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
+                            <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
     <Style x:Key="SolverSubTabButtonStyle" TargetType="Button">
         <Setter Property="HeightRequest" Value="{OnPlatform Android=42, WinUI=44, Default=44}" />
         <Setter Property="Padding" Value="{OnPlatform Android='7,0', WinUI='8,0', Default='8,0'}" />

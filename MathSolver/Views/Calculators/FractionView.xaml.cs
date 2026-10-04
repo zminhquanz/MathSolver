@@ -204,6 +204,7 @@ public partial class FractionView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         ResetOutput();
 
         if (!TryReadInteger(

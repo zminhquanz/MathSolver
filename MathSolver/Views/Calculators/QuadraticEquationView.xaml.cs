@@ -1135,6 +1135,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         HideResultAndError();
 
         if (_equationMode == EquationMode.Linear)

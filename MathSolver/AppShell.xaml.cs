@@ -123,6 +123,8 @@ public partial class AppShell : Shell
             nameof(AboutPage),
             typeof(AboutPage));
 
+        Routing.RegisterRoute(nameof(AiQuestionBankPage), typeof(AiQuestionBankPage));
+
         // Chặn navigation ở cấp Shell trước khi native TabBar commit route.
         // IsEnabled trên ShellContent không đủ tin cậy trên WinUI: native tab
         // đôi lúc vẫn phát navigation dù item đã disabled. Navigating là hard guard
