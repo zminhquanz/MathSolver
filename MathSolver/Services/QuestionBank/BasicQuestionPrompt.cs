@@ -47,7 +47,7 @@ public static class BasicQuestionPrompt
         };
         // The visible problem is assembled from these validated clauses. There is no
         // unvalidated free-text problem_text alongside a correct-but-irrelevant facts array.
-        return instruction + "\n" + rule + "\nFacts: " + JsonSerializer.Serialize(new
+        return instruction + "\n" + LanguageRule(vi) + "\n" + rule + "\nFacts: " + JsonSerializer.Serialize(new
         {
             contract.Left, contract.Right, contract.Subject, contract.Unit,
             Operation = contract.Operation.ToString(), Stars = (int)contract.Tier
@@ -78,7 +78,7 @@ public static class BasicQuestionPrompt
             BasicQuestionStructure.CountGroups => "a = total objects of name; b = objects packed into EACH group; ask NUMBER OF GROUPS (a/b), not objects per group.",
             _ => "a = objects owned by other; OTHER has b times as many objects as NAME; ask objects owned by name (a/b)."
         };
-        return instruction + "\nC# mathematical roles (do not output the formulas): " + role
+        return instruction + "\n" + LanguageRule(vi) + "\nC# mathematical roles (do not output the formulas): " + role
             + (vi ? "\ngiven_a kết thúc bằng dấu phẩy; given_b bắt đầu bằng chữ thường, kết thúc bằng dấu chấm. Giữ nguyên biến tên riêng."
                 : "\nEnd given_a with a comma; begin given_b lowercase and end it with a period. Keep proper-name slots intact.")
             + (vi ? "\n{name} và {other} đã là tên/chủ thể đầy đủ, có thể gồm vai gia đình hoặc cửa hàng. Không thêm bạn/cô giáo/cửa hàng trước các biến này. Nếu thêm lời dẫn, dùng bối cảnh chung như Trong buổi chuẩn bị quà."
@@ -171,11 +171,14 @@ public static class BasicQuestionPrompt
         if (!string.IsNullOrEmpty(correction))
             prompt += vi ? $"\nLần trước bị từ chối: {correction}. Viết lại toàn bộ JSON ngắn gọn theo ví dụ. Mỗi dữ kiện chỉ một mệnh đề, đúng biến; câu hỏi chỉ hỏi, câu dẫn không giải bài."
                 : $"\nPrevious output rejected: {correction}. Rewrite the complete short JSON with the example's roles. Each given states one fact, the question only asks, and the lead does not solve it.";
-        return prompt;
+        return prompt + "\n" + LanguageRule(vi)
+            + (correction is "WrongLanguage" or "InvalidText" ? "\n" + Correction(correction) : "");
     }
 
     private static string Correction(string code) => code switch
     {
+        "WrongLanguage" => "Use only the requested prose language in both givens, the question and solution_lead. Remove foreign-language words; preserve brace placeholders and unit_id.",
+        "InvalidText" => "Use clean prose without replacement glyphs, invisible characters, stray combining marks or symbols. Preserve brace placeholders.",
         "InvalidPlaceholders" => "Use {name}/{other} as the actors shown in the example, not a literal name/title. given_a uses {a}, given_b uses {b}, exactly once each; the question/solution contain neither number slot.",
         "ChangedRelationOrTarget" => "Preserve the actor who owns/gains/loses the objects and the exact target in the role example. The solution_lead must describe that same target.",
         "ChangedUnits" => "Choose a listed unit_id and use {unit}, {group}, {group_one} for their exact item/container roles.",
@@ -183,6 +186,10 @@ public static class BasicQuestionPrompt
         "ChangedQuantities" => "No literal numeric or spelled-out quantities, formulas or answers. Keep only {a} and {b} in their respective givens.",
         _ => "Follow the five-field JSON schema and the role example."
     };
+
+    private static string LanguageRule(bool vi) => vi
+        ? "Cả hai dữ kiện, câu hỏi và lời dẫn lời giải chỉ dùng tiếng Việt có dấu; không xen từ ngoại ngữ, ký tự lạ hoặc ký tự vô hình. Giữ nguyên biến và mã unit_id."
+        : "Both givens, the question and solution lead must use English only, without foreign-language words, stray symbols or invisible characters. Preserve placeholders and unit_id.";
 
     private static readonly JsonSerializerOptions JsonOptions = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 }

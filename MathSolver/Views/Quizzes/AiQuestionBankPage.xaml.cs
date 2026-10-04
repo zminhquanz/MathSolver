@@ -114,11 +114,12 @@ public partial class AiQuestionBankPage : ContentPage
         ConfigurationPanel.IsEnabled = !busy;
         ChooseModelButton.IsEnabled = DownloadButton.IsEnabled = !busy;
         DownloadModelPicker.IsEnabled = !busy;
-        EjectModelButton.IsEnabled = !busy && _bank.Runtime.IsLoaded;
+        EjectModelButton.IsEnabled = !busy && _bank.Runtime.CanGenerate;
         CancelModelButton.IsEnabled = _bank.IsManaging;
-        GenerateButton.IsEnabled = !busy && !_saving && _bank.Runtime.IsLoaded;
+        GenerateButton.IsEnabled = !busy && !_saving && _bank.Runtime.CanGenerate;
         StopButton.IsEnabled = running;
-        ModelStatusLabel.Text = _bank.Runtime.IsLoaded ? T("Loaded") + ": " + _bank.Runtime.ModelName : T("NoModel");
+        ModelStatusLabel.Text = _bank.Runtime.IsLoaded ? T("Loaded") + ": " + _bank.Runtime.ModelName
+            : _bank.Runtime.CanGenerate ? T("SelectedModel") + ": " + _bank.Runtime.ModelName : T("NoModel");
         DownloadProgressBar.IsVisible = _bank.IsManaging && _bank.DownloadProgress is not null;
         DownloadProgressBar.Progress = _bank.DownloadProgress is { Total: > 0 } p ? (double)p.Received / p.Total.Value : 0;
         DownloadStatusLabel.Text = _bank.ManagementError is not null ? T("ModelActionFailed") + ": " + _bank.ManagementError
@@ -259,7 +260,7 @@ public partial class AiQuestionBankPage : ContentPage
                     await using var source = await file.OpenReadAsync();
                     path = await _bank.Models.ImportAsync(source, file.FileName, cancellation);
                 }
-                await _bank.Runtime.LoadAsync(path, cancellation);
+                await _bank.Runtime.SelectAsync(path, cancellation);
             });
         }
         catch (Exception error) { await ShowErrorAsync(error); }
@@ -279,7 +280,7 @@ public partial class AiQuestionBankPage : ContentPage
             await _bank.ManageAsync("Downloading", async cancellation =>
             {
                 string path = await _bank.Models.DownloadAsync(model, _bank.CreateDownloadProgress(), cancellation);
-                await _bank.Runtime.LoadAsync(path, cancellation);
+                await _bank.Runtime.SelectAsync(path, cancellation);
             });
         }
         catch (Exception error) { await ShowErrorAsync(error); }
@@ -290,7 +291,7 @@ public partial class AiQuestionBankPage : ContentPage
     {
         string directory = _bank.Models.DirectoryPath;
 #if WINDOWS
-        if (_bank.Runtime.IsLoaded && File.Exists(_bank.Runtime.ModelPath))
+        if (_bank.Runtime.CanGenerate && File.Exists(_bank.Runtime.ModelPath))
             directory = Path.GetDirectoryName(_bank.Runtime.ModelPath)!;
 #endif
         Directory.CreateDirectory(directory);

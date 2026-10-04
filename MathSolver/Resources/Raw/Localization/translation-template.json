@@ -1565,7 +1565,9 @@
     "AiBank.GenerationSpeed": "",
     "AiBank.GenerationSpeedWaiting": "",
     "AiBank.Error.InvalidPlaceholders": "Biến thay thế bị thiếu, trùng, đổi vai trò hoặc không được hỗ trợ. Giữ đúng các biến của mẫu C#.",
-    "AiBank.Error.InvalidContext": "Bối cảnh không hợp lý: nhân vật phải là chủ thể sở hữu hoặc thực hiện hành động, không phải đồ vật nằm trong vật chứa."
+    "AiBank.Error.InvalidContext": "Bối cảnh không hợp lý: nhân vật phải là chủ thể sở hữu hoặc thực hiện hành động, không phải đồ vật nằm trong vật chứa.",
+    "AiBank.SelectedModel": "",
+    "AiBank.Error.PromptTooLong": ""
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

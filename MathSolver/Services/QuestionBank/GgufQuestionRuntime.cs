@@ -2,6 +2,7 @@ using LLama;
 using LLama.Common;
 using LLama.Native;
 using LLama.Sampling;
+using LLama.Transformers;
 using System.Diagnostics;
 using System.Text;
 
@@ -16,7 +17,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         string-b ::= "\"" "{ACTOR_B}" char{0,180} "{b}" char{0,180} "\""
         string-q ::= "\"" char{0,180} "{ACTOR_Q}" char{0,180} "\""
         string ::= "\"" char{1,400} "\""
-        char ::= [^"\\{}0-9\x00-\x1f] | "\\" ["\\/bfnrt] | placeholder
+        char ::= [{PROSE_LETTERS} ,.'?!:\u2019-] | placeholder
         placeholder ::= "{name}" | "{other}" | "{unit}" | "{group}" | "{group_one}"
         unit ::= "\"" ("books" | "notebooks" | "pencils" | "candies" | "apples" | "oranges" | "flowers" | "cards" | "balls" | "stickers" | "cakes") "\""
         ws ::= [ \t\n\r]*
@@ -26,10 +27,59 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     private ModelParams? _parameters;
     private static int _nativeConfigured;
     public bool IsLoaded => _weights is not null;
+    public bool CanGenerate => ModelPath.Length > 0;
     public string ModelName { get; private set; } = "";
     public string ModelPath { get; private set; } = "";
     public int InferenceThreadCount => IsLoaded ? _parameters?.Threads ?? 0 : 0;
     public int PromptThreadCount => IsLoaded ? _parameters?.BatchThreads ?? 0 : 0;
+    internal const int MaximumContextTokens = 2048;
+    internal const int MaximumOutputTokens = 700;
+    public int LastContextTokens { get; private set; }
+
+    internal static int GetContextTokens(int promptTokens)
+    {
+        if (promptTokens < 0) throw new ArgumentOutOfRangeException(nameof(promptTokens));
+        long required = (long)promptTokens + MaximumOutputTokens + 64;
+        if (required > MaximumContextTokens) throw new InvalidDataException("PromptTooLong");
+        return Math.Max(1024, (int)((required + 255) / 256 * 256));
+    }
+
+    // Selecting/importing a model must not keep gigabytes of unused weights resident.
+    public async Task SelectAsync(string path, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ValidateModelPath(path);
+            await using var file = File.OpenRead(path);
+            var magic = new byte[4];
+            await file.ReadExactlyAsync(magic, cancellationToken).ConfigureAwait(false);
+            if (!magic.AsSpan().SequenceEqual("GGUF"u8)) throw new InvalidDataException("Choose a GGUF model file.");
+            await Task.Run(DisposeWeights).ConfigureAwait(false);
+            ModelPath = Path.GetFullPath(path);
+            ModelName = Path.GetFileName(path);
+        }
+        finally { _gate.Release(); }
+    }
+
+    private static void ValidateModelPath(string path)
+    {
+        if (!File.Exists(path) || !path.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Choose a GGUF model file.");
+    }
+
+    public Task PrepareAsync(CancellationToken cancellationToken)
+        => IsLoaded ? Task.CompletedTask : LoadAsync(ModelPath, cancellationToken);
+
+    public Task ReleaseAsync() => ReleaseWeightsAsync(clearSelection: false);
+
+    private void DisposeWeights()
+    {
+        var weights = _weights;
+        _weights = null;
+        _parameters = null;
+        weights?.Dispose();
+    }
 
     // This is a worker-thread budget, not an operating-system CPU-utilisation
     // limiter. Use the same budget for prompt processing and token decoding.
@@ -47,8 +97,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             await Task.Run(async () =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (!File.Exists(path) || !path.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException("Choose a GGUF model file.");
+                ValidateModelPath(path);
                 if (Interlocked.Exchange(ref _nativeConfigured, 1) == 0)
                 {
                     NativeLibraryConfig.All.WithLogCallback((_, _) => { });
@@ -66,17 +115,19 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 }
                 var parameters = new ModelParams(path)
                 {
-                    ContextSize = 2048, BatchSize = 256, UBatchSize = 128,
-                    GpuLayerCount = 0, UseMemorymap = true,
+                    ContextSize = MaximumContextTokens, BatchSize = 256, UBatchSize = 128,
+                    // Map CPU weights rather than copying/locking the entire GGUF.
+                    // No vision/audio projector or embedding context is created.
+                    GpuLayerCount = 0, UseMemorymap = true, UseMemoryLock = false,
+                    Embeddings = false, SwaFull = false,
                     // Leave CPU capacity for navigation, rendering and the C# calculators.
                     Threads = GetInferenceThreadCount(Environment.ProcessorCount),
                     BatchThreads = GetInferenceThreadCount(Environment.ProcessorCount)
                 };
                 // Eject first: switching models must not double peak resident weights.
-                _weights?.Dispose();
-                _weights = null;
-                ModelName = "";
-                ModelPath = "";
+                DisposeWeights();
+                ModelName = Path.GetFileName(path);
+                ModelPath = Path.GetFullPath(path);
                 var weights = await LLamaWeights.LoadFromFileAsync(parameters, cancellationToken).ConfigureAwait(false);
                 if (cancellationToken.IsCancellationRequested) { weights.Dispose(); cancellationToken.ThrowIfCancellationRequested(); }
                 _parameters = parameters;
@@ -88,12 +139,18 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         finally { _gate.Release(); }
     }
 
-    public async Task EjectAsync()
+    public Task EjectAsync() => ReleaseWeightsAsync(clearSelection: true);
+
+    private async Task ReleaseWeightsAsync(bool clearSelection)
     {
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
-            await Task.Run(() => { _weights?.Dispose(); _weights = null; _parameters = null; ModelName = ""; ModelPath = ""; }).ConfigureAwait(false);
+            await Task.Run(() =>
+            {
+                DisposeWeights();
+                if (clearSelection) { ModelName = ""; ModelPath = ""; }
+            }).ConfigureAwait(false);
         }
         finally { _gate.Release(); }
     }
@@ -109,12 +166,28 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             return await Task.Run(async () =>
             {
                 bool gemma4 = _weights.Metadata.TryGetValue("general.architecture", out string? architecture) && architecture == "gemma4";
-                var executor = new StatelessExecutor(_weights, _parameters) { ApplyTemplate = !gemma4 };
                 // Google's newer Gemma 4 GGUF chat template is full Jinja, which
                 // llama_chat_apply_template in this backend cannot interpret.
                 // Use the documented E2B/E4B text-only, thinking-off framing.
                 // https://ai.google.dev/gemma/docs/capabilities/thinking
                 string input = gemma4 ? $"<|turn>user\n{prompt}<turn|>\n<|turn>model\n" : prompt;
+                if (!gemma4)
+                {
+                    var template = new LLamaTemplate(_weights.NativeHandle) { AddAssistant = true };
+                    template.Add("user", prompt);
+                    input = PromptTemplateTransformer.ToModelPrompt(template);
+                }
+                // Count the exact chat framing without allocating a KV cache first.
+                int tokens = _weights.Tokenize(input, true, true, _parameters.Encoding).Length;
+                int contextTokens = GetContextTokens(tokens);
+                var parameters = _parameters with { ContextSize = (uint)contextTokens };
+                LastContextTokens = contextTokens;
+                // Sampling owns native grammar/sampler chains too; release them
+                // deterministically before the job releases the model weights.
+                using var sampling = new DefaultSamplingPipeline { Temperature = 0.65f, TopP = 0.9f,
+                    GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.None,
+                    Grammar = new Grammar(BuildGrammar(contract), "root") };
+                var executor = new StatelessExecutor(_weights, parameters) { ApplyTemplate = false };
                 var result = new StringBuilder();
                 int generatedTokens = 0;
                 long generationStarted = 0;
@@ -122,10 +195,9 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 {
                     await foreach (string text in executor.InferAsync(input, new InferenceParams
                     {
-                        MaxTokens = 700,
-                        SamplingPipeline = new DefaultSamplingPipeline { Temperature = 0.65f, TopP = 0.9f,
-                            GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.None,
-                            Grammar = new Grammar(BuildGrammar(contract), "root") },
+                        MaxTokens = MaximumOutputTokens,
+                        OverflowStrategy = ContextOverflowStrategy.ThrowException,
+                        SamplingPipeline = sampling,
                         AntiPrompts = ["<end_of_turn>", "<|im_end|>", "<|turn>", "<turn|>"]
                     }, cancellationToken).ConfigureAwait(false))
                     {
@@ -159,6 +231,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         // Exactly one quantity slot in each given; actor/item words remain freely generated.
         // Keep the grammar ASCII for native Windows interop.
         return JsonGrammar.Replace("{ACTOR_A}", "{" + a + "}")
+            .Replace("{PROSE_LETTERS}", QuestionProseLanguage.GrammarLetters(c.Language))
             .Replace("{A_PREFIX}", c.Structure == BasicQuestionStructure.EqualGroups
                 ? c.Language == MathSolver.Services.AppLanguage.Vietnamese ? "M\\u1ed7i " : "Each " : "")
             .Replace("{ACTOR_B}", "{" + b + "}").Replace("{ACTOR_Q}", "{" + q + "}");
@@ -256,19 +329,19 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         string leadPrefix = c.Structure == BasicQuestionStructure.RecoverInitial ? vi ? "Số " : "The original number of "
             : comparison ? vi ? "Số " : "The number of " : vi ? "Tổng số " : "The total number of ";
         string lead = Literal(leadPrefix + "{unit}") + " (prose{1,48} | prose{1,32} " + actors + " prose{1,48})";
-        // These templates support Vietnamese and English. Allow their Latin letters
-        // and clause punctuation, rather than only excluding ASCII digits: otherwise
-        // the sampler can insert Arabic/full-width digits despite the numeric ban.
+        // Share the validation alphabet. Broad Latin ranges allow foreign prose,
+        // such as Polish 'łącznie', to reach an otherwise correct Vietnamese fact.
         return """
             root ::= "{" ws "\"given_a\"" ws ":" ws string-a ws "," ws "\"given_b\"" ws ":" ws string-b ws "," ws "\"question\"" ws ":" ws string-q ws "," ws "\"solution_lead\"" ws ":" ws string ws "," ws "\"unit_id\"" ws ":" ws unit ws "}" ws
             string-a ::= {STRING_A}
             string-b ::= {STRING_B}
             string-q ::= {STRING_Q}
             string ::= {STRING_LEAD}
-            prose ::= [A-Za-z\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u024f\u1e00-\u1eff ,'\u2019-]
+            prose ::= [{PROSE_LETTERS} ,'\u2019-]
             unit ::= "\"" ({UNIT_IDS}) "\""
             ws ::= [ \t\n\r]*
             """.Replace("{STRING_A}", Sentence(aBody, ","))
+            .Replace("{PROSE_LETTERS}", QuestionProseLanguage.GrammarLetters(c.Language))
             .Replace("{STRING_B}", Sentence(bBody, "."))
             .Replace("{STRING_Q}", Sentence(q, "?"))
             .Replace("{STRING_LEAD}", Sentence(lead, ":"))

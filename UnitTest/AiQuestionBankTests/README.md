@@ -32,6 +32,29 @@ display limits; rejection of multiple statements before any write; deletion
 without WHERE; and validation of directly edited data during practice/export.
 It runs no model inference and no benchmark.
 
+Language checks reproduce a saved Vietnamese question containing the Polish word
+`łącznie`, including JSON-escaped letters. They cover all prose fields in versions
+1–3, Vietnamese/English character boundaries, legitimate Vietnamese accents in
+NFC and decomposed form, invisible/replacement characters, native grammar alphabets,
+three failed retries without saving, manual insertion, existing SQLite rows, and
+Excel import/export. Invalid historical rows remain available for SQL inspection
+but are skipped during practice and export; no app database is modified by tests.
+
+Memory lifecycle checks cover one weight load per batch, automatic loading on the
+next job, bounded context sizing, and cleanup after successful generation, three
+rejected attempts, loading/generation errors, cancellation and failed cleanup.
+They also ensure that a new job cannot start while native disposal is pending.
+Run the optional real-GGUF lifecycle check to generate a Vietnamese batch and an
+English five-star question, validate the results, assert disposal after both jobs,
+and verify automatic loading of the same selected model:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --memory-model "E:\AI Models\google\gemma-4-E4B-it-qat-q4_0-gguf\gemma-4-E4B_q4_0-it.gguf"
+```
+
+This functional check writes only to an in-memory test store. It does not measure
+RAM savings, run a performance benchmark or modify the app's SQLite database.
+
 Version 2 checks cover 968 combinations of mathematical structure, allowed stars,
 unit family and language. They instantiate fresh C# values in every answer mode,
 reject incorrect placeholders, extra numeric facts, reversed relations and wrong

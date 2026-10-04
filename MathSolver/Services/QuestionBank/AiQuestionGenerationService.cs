@@ -7,7 +7,10 @@ namespace MathSolver.Services.QuestionBank;
 public interface IQuestionTextRuntime
 {
     bool IsLoaded { get; }
+    bool CanGenerate => IsLoaded;
     string ModelName { get; }
+    Task PrepareAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    Task ReleaseAsync() => Task.CompletedTask;
     // The optional callback receives text deltas synchronously, before generation completes.
     // Metrics, when available, are delivered before their corresponding text delta;
     // an empty delta can still represent a generated UTF-8 byte token.
@@ -54,7 +57,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         lock (_sync)
         {
             if (_snapshot.IsRunning || _pendingInserts != 0) throw new InvalidOperationException("JobAlreadyRunning");
-            if (!runtime.IsLoaded) throw new InvalidOperationException("ModelNotLoaded");
+            if (!runtime.CanGenerate) throw new InvalidOperationException("ModelNotLoaded");
             _cancellation?.Dispose();
             _cancellation = new();
             _snapshot = new(AiJobState.Generating, options, []);
@@ -90,109 +93,128 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
 
     private async Task RunAsync(AiGenerationOptions options, CancellationToken cancellationToken)
     {
+        AiJobState finalState = AiJobState.Failed;
+        string? finalError = null;
         try
         {
-            for (int number = 1; number <= options.Count; number++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var contract = options.Operation == ArithmeticOperation.Add
-                    ? _additionCycle.Next(options.Tier, options.Language)
-                    : BasicQuestionContract.CreateTemplate(options.Operation, options.Tier, options.Language);
-                Append(new(number, contract, AiItemState.Generating, []));
-                string? correction = null;
-                for (int attempt = 1; attempt <= 3; attempt++)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    SetState(AiJobState.Generating);
-                    string prompt = BasicQuestionPrompt.Build(contract, correction);
-                    UpdateItem(number, i => i with { State = AiItemState.Generating,
-                        Attempts = [.. i.Attempts, new(attempt, prompt, "", null, false)] });
-                    using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    timeout.CancelAfter(TimeSpan.FromMinutes(5));
-                    var partial = new StringBuilder();
-                    var refresh = Stopwatch.StartNew();
-                    AiGenerationMetrics? metrics = null;
-                    bool published = false, acceptingText = true;
-                    void OnText(string text)
-                    {
-                        if (!acceptingText || timeout.IsCancellationRequested) return;
-                        partial.Append(text);
-                        if (partial.Length > 12_000) throw new InvalidDataException("ModelOutputTooLong");
-                        // Publish the first chunk immediately, then at most ten updates/second.
-                        if (published && refresh.ElapsedMilliseconds < 100) return;
-                        UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
-                        published = true;
-                        refresh.Restart();
-                    }
-                    string raw;
-                    void OnMetrics(AiGenerationMetrics value)
-                    {
-                        if (acceptingText && !timeout.IsCancellationRequested) metrics = value;
-                    }
-                    try { raw = await runtime.GenerateAsync(contract, prompt, timeout.Token, OnText, OnMetrics).ConfigureAwait(false); }
-                    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-                    {
-                        correction = "GenerationTimeout";
-                        UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction, IsComplete = true, Metrics = metrics });
-                        UpdateItem(number, i => i with { Error = correction });
-                        continue;
-                    }
-                    catch
-                    {
-                        UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
-                        throw;
-                    }
-                    finally { acceptingText = false; }
-                    // Some executors finish normally when cancelled between token yields.
-                    // Retain their final buffered text without treating it as validated.
-                    UpdateAttempt(number, attempt, a => a with { RawJson = raw, Metrics = metrics });
-                    cancellationToken.ThrowIfCancellationRequested();
-                    SetState(AiJobState.Validating);
-                    UpdateItem(number, i => i with { State = AiItemState.Validating,
-                        Attempts = i.Attempts.Select(a => a.Number == attempt ? a with { RawJson = raw, Metrics = metrics } : a).ToArray() });
-                    var validation = BasicQuestionValidator.Validate(raw, contract);
-                    correction = validation.ErrorCode;
-                    UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, IsComplete = true });
-                    UpdateItem(number, i => i with { Error = correction });
-                    if (!validation.IsValid) continue;
-                    var question = new ValidatedBankQuestion(validation.Contract ?? contract, validation.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
-                    UpdateItem(number, i => i with { State = AiItemState.Ready, Question = question, Contract = question.Contract });
-                    if (options.AutoInsert)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        await InsertAsync(number).ConfigureAwait(false);
-                        if (Snapshot.Items.Single(i => i.Number == number).State == AiItemState.SaveFailed)
-                        { SetState(AiJobState.Failed, "DatabaseSaveFailed"); return; }
-                    }
-                    break;
-                }
-                var result = Snapshot.Items.Single(i => i.Number == number);
-                if (result.Question is null)
-                {
-                    UpdateItem(number, i => i with { State = AiItemState.Rejected, Error = correction });
-                    SetState(AiJobState.Failed, "RetriesExhausted");
-                    return;
-                }
-            }
-            SetState(AiJobState.Completed);
+            await runtime.PrepareAsync(cancellationToken).ConfigureAwait(false);
+            (finalState, finalError) = await RunQuestionsAsync(options, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
+            finalState = AiJobState.Stopped;
             lock (_sync)
-                _snapshot = _snapshot with { State = AiJobState.Stopped,
+                _snapshot = _snapshot with {
                     Items = _snapshot.Items.Select(i => i.Question is null && i.State != AiItemState.Rejected
                         ? i with { State = AiItemState.Stopped } : i).ToArray() };
-            Notify();
         }
         catch (Exception error)
         {
-            string reason = error.GetType().Name + ": " + error.Message;
+            finalError = error.GetType().Name + ": " + error.Message;
             lock (_sync)
-                _snapshot = _snapshot with { State = AiJobState.Failed, Error = reason,
+                _snapshot = _snapshot with {
                     Items = _snapshot.Items.Select(i => i.Question is null && i.State is AiItemState.Generating or AiItemState.Validating
-                        ? i with { State = AiItemState.Rejected, Error = reason } : i).ToArray() };
-            Notify();
+                        ? i with { State = AiItemState.Rejected, Error = finalError } : i).ToArray() };
         }
+        finally
+        {
+            // Release once per single/batch job, including load failure and cancellation.
+            // Keep the job running until cleanup finishes so model management/new jobs
+            // cannot race native disposal. Cancellation must not skip cleanup.
+            try { await runtime.ReleaseAsync().ConfigureAwait(false); }
+            catch (Exception error)
+            {
+                finalState = AiJobState.Failed;
+                finalError = (finalError is null ? "" : finalError + "\n") + error.GetType().Name + ": " + error.Message;
+            }
+            SetState(finalState, finalError);
+        }
+    }
+
+    private async Task<(AiJobState State, string? Error)> RunQuestionsAsync(AiGenerationOptions options, CancellationToken cancellationToken)
+    {
+        for (int number = 1; number <= options.Count; number++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var contract = options.Operation == ArithmeticOperation.Add
+                ? _additionCycle.Next(options.Tier, options.Language)
+                : BasicQuestionContract.CreateTemplate(options.Operation, options.Tier, options.Language);
+            Append(new(number, contract, AiItemState.Generating, []));
+            string? correction = null;
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                SetState(AiJobState.Generating);
+                string prompt = BasicQuestionPrompt.Build(contract, correction);
+                UpdateItem(number, i => i with { State = AiItemState.Generating,
+                    Attempts = [.. i.Attempts, new(attempt, prompt, "", null, false)] });
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeout.CancelAfter(TimeSpan.FromMinutes(5));
+                var partial = new StringBuilder();
+                var refresh = Stopwatch.StartNew();
+                AiGenerationMetrics? metrics = null;
+                bool published = false, acceptingText = true;
+                void OnText(string text)
+                {
+                    if (!acceptingText || timeout.IsCancellationRequested) return;
+                    partial.Append(text);
+                    if (partial.Length > 12_000) throw new InvalidDataException("ModelOutputTooLong");
+                    // Publish the first chunk immediately, then at most ten updates/second.
+                    if (published && refresh.ElapsedMilliseconds < 100) return;
+                    UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
+                    published = true;
+                    refresh.Restart();
+                }
+                string raw;
+                void OnMetrics(AiGenerationMetrics value)
+                {
+                    if (acceptingText && !timeout.IsCancellationRequested) metrics = value;
+                }
+                try { raw = await runtime.GenerateAsync(contract, prompt, timeout.Token, OnText, OnMetrics).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    correction = "GenerationTimeout";
+                    UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction, IsComplete = true, Metrics = metrics });
+                    UpdateItem(number, i => i with { Error = correction });
+                    continue;
+                }
+                catch
+                {
+                    UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
+                    throw;
+                }
+                finally { acceptingText = false; }
+                // Some executors finish normally when cancelled between token yields.
+                // Retain their final buffered text without treating it as validated.
+                UpdateAttempt(number, attempt, a => a with { RawJson = raw, Metrics = metrics });
+                cancellationToken.ThrowIfCancellationRequested();
+                SetState(AiJobState.Validating);
+                UpdateItem(number, i => i with { State = AiItemState.Validating,
+                    Attempts = i.Attempts.Select(a => a.Number == attempt ? a with { RawJson = raw, Metrics = metrics } : a).ToArray() });
+                var validation = BasicQuestionValidator.Validate(raw, contract);
+                correction = validation.ErrorCode;
+                UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, IsComplete = true });
+                UpdateItem(number, i => i with { Error = correction });
+                if (!validation.IsValid) continue;
+                var question = new ValidatedBankQuestion(validation.Contract ?? contract, validation.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
+                UpdateItem(number, i => i with { State = AiItemState.Ready, Question = question, Contract = question.Contract });
+                if (options.AutoInsert)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await InsertAsync(number).ConfigureAwait(false);
+                    if (Snapshot.Items.Single(i => i.Number == number).State == AiItemState.SaveFailed)
+                    { return (AiJobState.Failed, "DatabaseSaveFailed"); }
+                }
+                break;
+            }
+            var result = Snapshot.Items.Single(i => i.Number == number);
+            if (result.Question is null)
+            {
+                UpdateItem(number, i => i with { State = AiItemState.Rejected, Error = correction });
+                return (AiJobState.Failed, "RetriesExhausted");
+            }
+        }
+        return (AiJobState.Completed, null);
     }
 
     private void Append(AiQuestionItem item)

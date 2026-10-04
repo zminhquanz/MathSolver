@@ -196,6 +196,13 @@ internal static class AdditionTests
 
     private static void NaturalAndInvalidProse()
     {
+        var increase = Create("family-gifts", BasicQuestionStructure.Increase, CurriculumTier.OneStar);
+        var increased = AdditionQuestionCatalogue.Example(increase);
+        Check(Validate(increase, increased with { GivenB = "{name} thêm {b} {unit}." }).IsValid
+            && Validate(increase, increased with { GivenB = "{name} được thêm {b} {unit} vào." }).IsValid,
+            "Real GGUF natural stock-increase phrasing was rejected.");
+        Check(!Validate(increase, increased with { GivenB = "{name} cần thêm {b} {unit}." }).IsValid,
+            "Required stock was confused with an actual increase.");
         var craft = Create("craft", BasicQuestionStructure.Combine, CurriculumTier.TwoStars);
         var d = AdditionQuestionCatalogue.Example(craft) with {
             GivenA = "Trong {part_a}, {name} gấp được {a} {unit} để trang trí.",

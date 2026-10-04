@@ -34,6 +34,8 @@ public static class BasicQuestionValidator
                 return new(null, "InvalidFields");
             string Field(string name) => document.RootElement.GetProperty(name).GetString()!;
             var draft = new BasicQuestionDraft(Field("given_a"), Field("given_b"), Field("question"), Field("solution_lead"), Field("unit_id"));
+            var languageError = QuestionProseLanguage.ValidateAndNormalize(draft, c.Language, out draft);
+            if (languageError is not null) return new(null, languageError);
             var unit = QuestionUnits.Find(draft.UnitId);
             if (unit is null) return new(null, "ChangedUnits");
             c = BasicQuestionTemplates.ApplyUnit(c, unit);

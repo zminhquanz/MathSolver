@@ -29,7 +29,7 @@ public partial class AiQuestionBankPage
                     snapshot.Options?.Count ?? 1, active.Attempts.LastOrDefault()?.Number ?? 1,
                     T(retrying ? "GenerationRetrying" : "Job." + snapshot.State));
             }
-            else status = T("Job." + snapshot.State);
+            else status = snapshot.IsRunning && !_bank.Runtime.IsLoaded ? T("Loading") : T("Job." + snapshot.State);
             if (error is not null)
             {
                 status += "\n" + string.Format(CultureInfo.CurrentCulture, T("GenerationIssue"), ErrorText(error));

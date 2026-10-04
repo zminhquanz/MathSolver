@@ -30,6 +30,12 @@ static string Draft(BasicQuestionContract c)
     return JsonSerializer.Serialize(new { given_a = a, given_b = b, question = q });
 }
 
+if (args is ["--memory-model", var memoryModelPath])
+{
+    await MemoryLifecycleTests.RunModelAsync(memoryModelPath);
+    return;
+}
+
 if (args is ["--model", var modelPath])
 {
     var runtime = new GgufQuestionRuntime();
@@ -225,6 +231,8 @@ try
     await service.InsertAsync(1);
     Check(service.Snapshot.Items[0].State == AiItemState.Saved && retryStore.Attempts == 2, "Manual save recovery failed.");
     Console.WriteLine("PASS batch, manual/auto insertion, three-attempt limit and cancellation");
+    await MemoryLifecycleTests.RunAsync();
+    await LanguageTests.RunAsync(directory);
     await TemplateTests.RunAsync(directory);
     await AdditionTests.RunAsync(directory);
 }

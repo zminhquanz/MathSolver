@@ -1423,6 +1423,14 @@
     "AiBank.Error.InvalidContext": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve JSON field names and literal template placeholder names."
+    },
+    "AiBank.SelectedModel": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.PromptTooLong": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
     }
   },
   "placeholderNotes": {
@@ -8308,7 +8316,7 @@
     },
     {
       "key": "AiBank.Eject",
-      "source": "⏏ Gỡ model khỏi RAM",
+      "source": "⏏ Bỏ chọn / gỡ model",
       "mode": "exact"
     },
     {
@@ -8323,12 +8331,12 @@
     },
     {
       "key": "AiBank.Download",
-      "source": "↓ Tải và load model",
+      "source": "↓ Tải model",
       "mode": "exact"
     },
     {
       "key": "AiBank.CancelModelAction",
-      "source": "Dừng tải / load",
+      "source": "Dừng tải / chọn model",
       "mode": "exact"
     },
     {
@@ -8488,7 +8496,7 @@
     },
     {
       "key": "AiBank.NoModel",
-      "source": "Chưa load model. Chọn file GGUF hoặc tải một model để bắt đầu.",
+      "source": "Chọn file GGUF hoặc tải một model để bắt đầu. Model chỉ được nạp khi tạo đề và tự giải phóng sau mỗi lượt.",
       "mode": "exact"
     },
     {
@@ -8718,7 +8726,7 @@
     },
     {
       "key": "AiBank.Error.ModelNotLoaded",
-      "source": "Hãy load model trước khi tạo đề.",
+      "source": "Hãy chọn model trước khi tạo đề.",
       "mode": "exact"
     },
     {
@@ -8934,6 +8942,16 @@
     {
       "key": "AiBank.Error.InvalidContext",
       "source": "Bối cảnh không hợp lý: nhân vật phải là chủ thể sở hữu hoặc thực hiện hành động, không phải đồ vật nằm trong vật chứa.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SelectedModel",
+      "source": "Đã chọn model · chưa nạp vào RAM; tự nạp khi tạo đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.PromptTooLong",
+      "source": "Prompt vượt giới hạn context 2.048 token dành cho prompt và JSON trả về. Hãy rút gọn prompt.",
       "mode": "exact"
     }
   ],

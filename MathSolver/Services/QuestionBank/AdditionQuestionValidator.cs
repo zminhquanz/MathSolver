@@ -35,6 +35,8 @@ public static class AdditionQuestionValidator
                 || properties.Select(p => p.Name).Distinct().Count() != Fields.Length) return new(null, "InvalidFields");
             string Field(string key) => document.RootElement.GetProperty(key).GetString()!;
             var d = new BasicQuestionDraft(Field("given_a"), Field("given_b"), Field("question"), Field("solution_lead"), Field("unit_id"));
+            var languageError = QuestionProseLanguage.ValidateAndNormalize(d, c.Language, out d);
+            if (languageError is not null) return new(null, languageError);
             var scene = AdditionQuestionCatalogue.Find(c.SceneId)!;
             var scale = scene.Scale(c.Tier)!;
             var unit = QuestionUnits.Find(d.UnitId!);
@@ -165,7 +167,7 @@ public static class AdditionQuestionValidator
                         && (Has(d.GivenB, atPlace) || PlaceOwnsAmount(d.GivenB, @"\{b\}"));
                 }
                 return Fact(d.GivenA, name, @"\{a\}") && !d.GivenA.Contains("{other}") && !remaining(d.GivenA)
-                    && Has(d.GivenB, name + Between + (vi ? @"(?:nhận|mua|nhập|được tặng|được cho|bổ sung|thêm vào)" : @"(?:receives?|received|gets?|got|buys?|bought|adds?|added|is given)") + Between + @"\{b\}")
+                    && Has(d.GivenB, name + Between + (vi ? @"\b(?:nhận|mua|nhập|được tặng|được cho|bổ sung|thêm)\b" : @"(?:receives?|received|gets?|got|buys?|bought|adds?|added|is given)") + Between + @"\{b\}")
                     && !d.GivenB.Contains("{other}") && !loss(d.GivenB)
                     && !Has(d.GivenB, vi ? @"\b(?:hơn|kém)\b" : @"\bthan\b");
             case BasicQuestionStructure.Combine:

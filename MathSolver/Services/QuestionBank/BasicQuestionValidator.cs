@@ -49,6 +49,8 @@ public static class LegacyBasicQuestionValidator
                 || fields.Any(p => p.Value.ValueKind != JsonValueKind.String)) return new(null, "InvalidFields");
             var draft = new BasicQuestionDraft(root.GetProperty("given_a").GetString()!,
                 root.GetProperty("given_b").GetString()!, root.GetProperty("question").GetString()!);
+            var languageError = QuestionProseLanguage.ValidateAndNormalize(draft, contract.Language, out draft);
+            if (languageError is not null) return new(null, languageError);
             if (new[] { draft.GivenA, draft.GivenB, draft.Question }.Any(s => s.Length is < 10 or > 700
                 || s.Any(c => char.IsControl(c) && c is not '\r' and not '\n'))) return new(null, "InvalidText");
             string a = Normalize(draft.GivenA), b = Normalize(draft.GivenB), q = Normalize(draft.Question);
