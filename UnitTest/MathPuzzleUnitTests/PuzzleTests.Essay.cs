@@ -67,7 +67,17 @@ internal static partial class PuzzleTests
                 $"word-problem {kind}: solution sentence should remain required.");
         }
 
-        Console.WriteLine($"  Checked {count} algorithm essay contracts and word-problem basic exceptions.");
+        foreach (var (unit, lead) in new[] { ("tree", "The number of trees remaining is:"),
+            ("stock lot", "The number of stock lots filled is:"), ("response batch", "The number of response batches is:") })
+        {
+            var q = new ArithmeticQuizQuestion(new(2, ArithmeticOperation.Subtract, 1), ArithmeticQuizMode.Essay, 1,
+                null, null, [], new MathWordProblem("How many remain?", lead, unit, "Emma"));
+            Require(validator.Validate(q, lead, $"2 - 1 = 1 {unit}", $"1 {unit}").IsCorrect,
+                "Plural lead failed for singular answer: " + unit);
+            Require(!validator.Validate(q, "The number of apples is:", $"2 - 1 = 1 {unit}", $"1 {unit}").SolutionIsCorrect,
+                "Unrelated solution quantity passed: " + unit);
+        }
+        Console.WriteLine($"  Checked {count} algorithm essay contracts, word-problem basic exceptions and singular/plural solution units.");
     }
 
     private static string BuildSolutionSentence(

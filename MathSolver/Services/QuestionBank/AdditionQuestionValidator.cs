@@ -83,7 +83,9 @@ public static class AdditionQuestionValidator
                     prose = Regex.Replace(prose, @"\b(?:hai ngày|hai tuần|hai tháng|hai khu|two days|two weeks|two months|two sections)\b", "", RegexOptions.IgnoreCase, Timeout);
                 if (Has(prose, @"\b(?:một|hai|ba|bốn|năm|sáu|bảy|tám|chín|mười|one|two|three|four|five|six|seven|eight|nine|ten|half|nửa|gấp đôi)\b"))
                     return new(null, "ChangedQuantities");
-                if (Has(s, @"\b(?:không|chẳng|chưa|not|never|except|trừ khi|mỗi|each|every|times)\b|gấp\s+(?:\{[ab]\}|đôi|\S+\s+lần)")) return new(null, "ExtraRelations");
+                // English contractions still negate the fact even when a valid
+                // action verb follows them (e.g. "don't bring {a} {unit}").
+                if (Has(s, @"\b(?:không|chẳng|chưa|not|never|cannot|no|without|[a-z]+n['’]t|except|trừ khi|mỗi|each|every|times)\b|gấp\s+(?:\{[ab]\}|đôi|\S+\s+lần)")) return new(null, "ExtraRelations");
                 if (Has(s, @"\b(?:bạn|bé|ông|bà|cô|chú|bác|anh|chị|mẹ|cha|dì|cậu|mợ|học sinh|Grandma|Grandpa|Uncle|Aunt|pupil|child)\s+\{(?:name|other)\}"))
                     return new(null, "InvalidContext");
                 if (c.Language == AppLanguage.English && Has(s,
@@ -127,7 +129,11 @@ public static class AdditionQuestionValidator
     private static bool RolesMatch(BasicQuestionDraft d, BasicQuestionContract c, AdditionScene scene, bool vi)
     {
         string name = @"\{name\}", other = @"\{other\}";
-        string verbs = vi ? scene.VietnameseVerbs + (scene.Kind == AdditionSceneKind.Stock ? "|còn lại|còn" : "") : scene.EnglishVerbs;
+        string verbs = vi ? scene.VietnameseVerbs + (scene.Kind == AdditionSceneKind.Stock ? "|còn lại|còn|sở hữu" : "")
+            : scene.EnglishVerbs + (scene.Kind == AdditionSceneKind.Stock ? "|owns" : "");
+        // Reaping is appropriate for rice, not mangoes. Accept the natural
+        // activity synonym only for the matching object chosen by C#.
+        if (vi && scene.Id == "crop-harvest" && QuestionUnits.Find(c)?.Id == "rice-sacks") verbs += "|gặt";
         bool Fact(string s, string actor, string quantity) => Has(s, actor + Between + @"\b(?:" + verbs + @")\b" + Between + quantity)
             || Has(s, quantity + Between + @"\b(?:" + verbs + @")\b" + Between + actor);
         bool Both(string s) => s.Contains("{name}") && s.Contains("{other}");

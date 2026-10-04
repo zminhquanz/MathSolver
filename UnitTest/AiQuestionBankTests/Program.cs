@@ -30,6 +30,35 @@ static string Draft(BasicQuestionContract c)
     return JsonSerializer.Serialize(new { given_a = a, given_b = b, question = q });
 }
 
+if (args is ["--arithmetic-context-model", var arithmeticModelPath])
+{
+    try { await ArithmeticContextTests.RunModelAsync(arithmeticModelPath); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--arithmetic-contexts"])
+{
+    string contextDirectory = Path.Combine(Path.GetTempPath(), "MathSolver-arithmetic-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(contextDirectory);
+    try { await ArithmeticContextTests.RunAsync(contextDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    finally { Directory.Delete(contextDirectory, true); }
+    return;
+}
+if (args is ["--addition-throughput", var throughputModelPath])
+{
+    try { await AdditionThroughputChecks.RunAsync(throughputModelPath); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--addition-context-model", var contextModelPath])
+{
+    try { await AdditionThroughputChecks.RunAsync(contextModelPath, newContexts: true); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--memory-model", var memoryModelPath])
 {
     await MemoryLifecycleTests.RunModelAsync(memoryModelPath);
@@ -198,7 +227,8 @@ try
     var memoryStore = new MemoryStore();
     var fake = new FakeRuntime(prompt =>
     {
-        return prompt.Split("Correct role example: ")[1].Split('\n')[0];
+        string marker = prompt.Contains("\nJSON: ") ? "\nJSON: " : "Correct role example: ";
+        return prompt.Split(marker)[1].Split('\n')[0];
     });
     var service = new AiQuestionGenerationService(fake, memoryStore);
     service.Start(new(ArithmeticOperation.Add, CurriculumTier.OneStar, AppLanguage.Vietnamese, 3, false));
@@ -235,6 +265,7 @@ try
     await LanguageTests.RunAsync(directory);
     await TemplateTests.RunAsync(directory);
     await AdditionTests.RunAsync(directory);
+    await ArithmeticContextTests.RunAsync(directory);
 }
 finally { Directory.Delete(directory, true); }
 

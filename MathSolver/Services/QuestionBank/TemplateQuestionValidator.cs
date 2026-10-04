@@ -38,6 +38,8 @@ public static class BasicQuestionValidator
             if (languageError is not null) return new(null, languageError);
             var unit = QuestionUnits.Find(draft.UnitId);
             if (unit is null) return new(null, "ChangedUnits");
+            bool contextual = c.Version == ArithmeticQuestionCatalogue.Version;
+            if (contextual && unit.Id != QuestionUnits.Find(c)!.Id) return new(null, "ChangedUnits");
             c = BasicQuestionTemplates.ApplyUnit(c, unit);
             if (!c.IsValid) return new(null, "ChangedUnits");
             string[] text = [draft.GivenA, draft.GivenB, draft.Question, draft.SolutionLead!];
@@ -55,6 +57,7 @@ public static class BasicQuestionValidator
                 if (Regex.IsMatch(withoutOpening, @"\b(?:một|hai|ba|bốn|năm|sáu|bảy|tám|chín|mười|one|two|three|four|five|six|seven|eight|nine|ten|half|nửa|gấp đôi)\b",
                     RegexOptions.IgnoreCase, Timeout)) return new(null, "ChangedQuantities");
                 if (Has(s, @"\b(?:không|chẳng|chưa|not|never|except|trừ khi)\b")) return new(null, "ExtraRelations");
+                if (contextual && Has(s, @"\b[a-z]+n['’]t\b|\b(?:cannot|without|no)\b")) return new(null, "ExtraRelations");
             }
             if (Count(draft.GivenA, "{a}") != 1 || Count(draft.GivenB, "{b}") != 1
                 || Count(draft.GivenA, "{b}") != 0 || Count(draft.GivenB, "{a}") != 0
@@ -91,6 +94,7 @@ public static class BasicQuestionValidator
                 || vi && !draft.ProblemText.Any(ch => ch > 127)) return new(null, "WrongLanguage");
             if (!RolesAndRelation(draft, c.Structure, vi) || !SolutionActorsMatch(draft, c.Structure))
                 return new(null, "ChangedRelationOrTarget");
+            if (contextual && !ContextMatches(draft, c, unit, vi)) return new(null, "InvalidContext");
             // Stored contracts carry preview values only; template semantics cannot depend on those values.
             // Re-render with small, large and unit quantities to catch unsupported slots before insertion.
             foreach (var (a, b) in new[] { (8, 2), (12, 3), (100, 5) })
@@ -127,7 +131,7 @@ public static class BasicQuestionValidator
             ? @"[^{}]*(?:có|giữ|sở hữu|còn lại|còn)[^{}]*" : @"[^{}]*(?:has|holds|owns|had)[^{}]*") + quantity);
         bool Both(string text) => text.Contains("{name}") && text.Contains("{other}");
         string gains = vi ? @"\b(?:nhận|mua|nhập|được tặng|được cho|được biếu|được thưởng|bổ sung|thêm vào|kiếm|thu gom|nhặt|hái)\b" : @"\b(?:receives?|received|gets?|got|buys?|bought|collects?|collected|adds?|added|gains?|earned|earns?|finds?|found|is given|is gifted)\b";
-        string loses = vi ? @"\b(?:cho đi|cho tặng|tặng|bán|lấy ra|chuyển đi|mất|bớt|dùng|sử dụng|đã cho|đem cho|phát|chia cho|ăn|tiêu thụ)\b" : @"\b(?:gives?|gave|sells?|sold|removes?|removed|loses?|lost|uses?|used|donates?|donated|hands? out|handed out|eats?|ate)\b";
+        string loses = vi ? @"\b(?:cho đi|cho tặng|tặng|bán|lấy ra|chuyển đi|cho mượn|mất|bớt|dùng|sử dụng|đã cho|đem cho|phát|chia cho|ăn|tiêu thụ)\b" : @"\b(?:gives?|gave|sells?|sold|removes?|removed|loses?|lost|uses?|used|donates?|donated|hands? out|handed out|eats?|ate|lends? out|lent out|sends? for|sent for|transfers? out|transferred out)\b";
         bool Gain(string text) => Has(text, gains) || Has(text, @"\bđược tặng\b");
         bool Loss(string text) => Has(Regex.Replace(text, @"\b(?:được tặng|được cho|được biếu|is gifted|is given)\b", "", RegexOptions.IgnoreCase, Timeout), loses);
         bool eachA = Has(d.GivenA, vi ? @"\bmỗi\s+\{group_one\}" : @"\b(?:each|every)\s+\{group_one\}");
@@ -184,5 +188,52 @@ public static class BasicQuestionValidator
     {
         const string between = @"(?:[^{}]|\{(?:unit|group|group_one)\})*";
         return Has(text, larger + between + (vi ? @"gấp\s+\{b\}\s+lần" : @"\{b\}\s+times") + between + smaller);
+    }
+
+    private static bool ContextMatches(BasicQuestionDraft draft, BasicQuestionContract c, QuestionUnit unit, bool vi)
+    {
+        string[] fields = [draft.GivenA, draft.GivenB, draft.Question, draft.SolutionLead!];
+        bool comparison = c.Structure is BasicQuestionStructure.TimesAsMany or BasicQuestionStructure.TimesFewer;
+        if (Has(draft.GivenA + " " + draft.GivenB, vi ? @"\b(?:hỏi|bao nhiêu)\b" : @"\b(?:how many|what|why)\b")) return false;
+        if (Count(draft.GivenA, "{unit}") != 1 || Count(draft.Question, "{unit}") != (c.Structure == BasicQuestionStructure.CountGroups ? 0 : 1)) return false;
+        if (comparison)
+        {
+            string larger = c.Structure == BasicQuestionStructure.TimesFewer ? @"\{other\}" : @"\{name\}";
+            string smaller = c.Structure == BasicQuestionStructure.TimesFewer ? @"\{name\}" : @"\{other\}";
+            // Match a complete comparison clause, not an isolated 'gấp b lần'
+            // substring buried in an explanation of template placeholders.
+            string relation = vi ? larger + @"\s+(?:có|sở hữu|giữ)\s+(?:số(?: lượng)?\s+)?\{unit\}\s+(?:nhiều\s+)?gấp\s+\{b\}\s+lần\s+(?:số(?: lượng)?\s+)?(?:\{unit\}\s+)?(?:của\s+)?" + smaller
+                : larger + @"\s+(?:has|owns|holds)\s+(?:(?:currently|now)\s+)?\{b\}\s+times\s+as\s+many\s+\{unit\}\s+as\s+" + smaller;
+            if (!Has(draft.GivenB.Trim(), @"\A" + relation + @"\s*[.]?\z")) return false;
+        }
+        string actorA = comparison ? "{other}" : "{name}";
+        string actorB = c.Structure is BasicQuestionStructure.Difference or BasicQuestionStructure.TimesFewer ? "{other}" : "{name}";
+        if (c.Structure == BasicQuestionStructure.EqualGroups
+            ? Count(draft.GivenA, "{name}") + Count(draft.GivenA, "{other}") != 0
+            : Count(draft.GivenA, actorA) != 1 || Count(draft.GivenA, actorA == "{name}" ? "{other}" : "{name}") != 0) return false;
+        if (comparison ? Count(draft.GivenB, "{name}") != 1 || Count(draft.GivenB, "{other}") != 1
+            : Count(draft.GivenB, actorB) != 1 || Count(draft.GivenB, actorB == "{name}" ? "{other}" : "{name}") != 0) return false;
+        // Object words are bound through {unit}; importing a correctly labelled
+        // template must not smuggle a second, incompatible object into the prose.
+        foreach (var u in QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits))
+            foreach (string noun in vi ? new[] { u.Vietnamese } : new[] { u.Singular, u.Plural })
+                if (noun != "can" && fields.Any(s => Has(s, @"\b" + Regex.Escape(noun) + @"\b"))) return false;
+        bool grouping = c.Structure is BasicQuestionStructure.EqualGroups or BasicQuestionStructure.EqualShare or BasicQuestionStructure.CountGroups;
+        if (!grouping && fields.Any(s => s.Contains("{group}") || s.Contains("{group_one}"))) return false;
+        if (c.Structure == BasicQuestionStructure.CountGroups && (!Has(draft.SolutionLead!, vi
+            ? @"(?:số|tổng).*\{group\}" : @"(?:number|total).*\{group\}")
+            || Has(draft.SolutionLead!, vi ? @"\bmỗi\b" : @"\b(?:each|per|every)\b"))) return false;
+        if (c.Structure == BasicQuestionStructure.EqualGroups && !Has(draft.GivenA, vi
+            ? @"(?:chứa|có|đựng|gồm).*\{a\}" : @"(?:holds?|contains?|has|includes?).*\{a\}")) return false;
+        if (c.Structure == BasicQuestionStructure.Remaining)
+        {
+            bool food = c.SceneId is "family-gifts" or "food-supplies" or "shop-stock" or "bakery" or "harvest" or "crop-harvest";
+            bool edible = unit.Id is "apples" or "oranges" or "mangoes" or "candies" or "cakes" or "bread-rolls";
+            if ((!food || !edible) && Has(draft.GivenB, vi ? @"\b(?:ăn|uống)\b" : @"\b(?:eats?|ate|drinks?|drank)\b")) return false;
+        }
+        // Animal/plant groups are herds, rearing areas or nursery sections, never packed in boxes.
+        if (unit.Id is "chickens" or "ducks" or "cows" or "fish" or "trees" or "seedlings"
+            && grouping && Has(draft.GivenB, vi ? @"\b(?:đóng gói|đóng hộp)\b" : @"\b(?:packs?|packed|boxes?|boxed)\b")) return false;
+        return true;
     }
 }

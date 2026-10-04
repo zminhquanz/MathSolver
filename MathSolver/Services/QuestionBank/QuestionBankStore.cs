@@ -26,7 +26,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _initialized;
     // Accessed only inside the database gate. Keep a small history, never the question payloads.
-    private readonly Dictionary<(CurriculumTier, AppLanguage), List<AdditionBucket>> _additionHistory = [];
+    private readonly Dictionary<(ArithmeticOperation, CurriculumTier, AppLanguage), List<SelectionBucket>> _selectionHistory = [];
     private static readonly JsonSerializerOptions JsonOptions = new() {
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
@@ -69,7 +69,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         string identity = c.IsTemplate
             ? $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Structure}/{question.Draft.UnitId}\n{draftJson}"
             : legacyContract + "\n" + BasicQuestionValidator.Normalize(question.Draft.ProblemText);
-        if (c.Version == AdditionQuestionCatalogue.Version)
+        if (c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version)
             identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Structure}/{c.TopicId}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
         string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
         return db.Execute(
@@ -86,9 +86,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         {
             return await WithDatabaseAsync<ValidatedBankQuestion?>(db =>
             {
-                var candidates = operation == ArithmeticOperation.Add ? AdditionCandidates(db, tier, language)
-                    : db.Query<Row>("SELECT * FROM BasicQuestionBank WHERE Operation=? AND Stars=? AND Language=? AND Version IN (1,2) ORDER BY UseCount,LastUsedUtc LIMIT 32",
-                        (int)operation, (int)tier, (int)language);
+                var candidates = ContextCandidates(db, operation, tier, language);
                 foreach (var row in candidates)
                 {
                     try
@@ -96,19 +94,16 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                         var contract = JsonSerializer.Deserialize<BasicQuestionContract>(row.ContractJson, JsonOptions);
                         if (contract is null || row.Version != contract.Version || contract.Operation != operation || contract.Tier != tier || contract.Language != language)
                             continue;
-                        if (contract.Version == AdditionQuestionCatalogue.Version && ((int)contract.Structure != row.Structure
+                        if (contract.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version && ((int)contract.Structure != row.Structure
                             || contract.TopicId != row.TopicId || contract.SceneId != row.SceneId)) continue;
                         var validation = BasicQuestionValidator.Validate(row.DraftJson, contract);
                         if (!validation.IsValid) continue;
                         if (validation.Contract is { } resolved && resolved != contract) continue;
                         db.Execute("UPDATE BasicQuestionBank SET UseCount=UseCount+1,LastUsedUtc=? WHERE Hash=?", DateTime.UtcNow, row.Hash);
-                        if (operation == ArithmeticOperation.Add)
-                        {
-                            var key = (tier, language);
-                            if (!_additionHistory.TryGetValue(key, out var history)) _additionHistory[key] = history = [];
-                            history.Add(new() { Structure = (int)contract.Structure, TopicId = contract.TopicId, SceneId = contract.SceneId });
-                            if (history.Count > 64) history.RemoveAt(0);
-                        }
+                        var key = (operation, tier, language);
+                        if (!_selectionHistory.TryGetValue(key, out var history)) _selectionHistory[key] = history = [];
+                        history.Add(new() { Structure = (int)contract.Structure, TopicId = contract.TopicId, SceneId = contract.SceneId });
+                        if (history.Count > 64) history.RemoveAt(0);
                         return new(contract, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc);
                     }
                     catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException)
@@ -125,7 +120,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         }
     }
 
-    private sealed class AdditionBucket
+    private sealed class SelectionBucket
     {
         public int Structure { get; set; }
         public string TopicId { get; set; } = "";
@@ -133,14 +128,15 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         public DateTime LastUsedUtc { get; set; }
     }
 
-    private IEnumerable<Row> AdditionCandidates(SQLiteConnection db, CurriculumTier tier, AppLanguage language)
+    private IEnumerable<Row> ContextCandidates(SQLiteConnection db, ArithmeticOperation operation, CurriculumTier tier, AppLanguage language)
     {
-        var buckets = db.Query<AdditionBucket>("SELECT COALESCE(Structure,0) AS Structure,COALESCE(TopicId,'') AS TopicId,COALESCE(SceneId,'') AS SceneId,MAX(LastUsedUtc) AS LastUsedUtc FROM BasicQuestionBank WHERE Operation=0 AND Stars=? AND Language=? AND Version IN (1,2,3) GROUP BY COALESCE(Structure,0),COALESCE(TopicId,''),COALESCE(SceneId,'')",
-            (int)tier, (int)language);
+        var buckets = db.Query<SelectionBucket>("SELECT COALESCE(Structure,0) AS Structure,COALESCE(TopicId,'') AS TopicId,COALESCE(SceneId,'') AS SceneId,MAX(LastUsedUtc) AS LastUsedUtc FROM BasicQuestionBank WHERE Operation=? AND Stars=? AND Language=? AND Version IN (1,2,3,4) GROUP BY COALESCE(Structure,0),COALESCE(TopicId,''),COALESCE(SceneId,'')",
+            (int)operation, (int)tier, (int)language);
         // Ignore forged metadata buckets before sorting, but retain historical v1/v2 rows.
         buckets = buckets.Where(b => b.SceneId == "" && b.TopicId == "" || AdditionQuestionCatalogue.Find(b.SceneId) is { } scene
-            && scene.TopicId == b.TopicId && scene.Supports((BasicQuestionStructure)b.Structure, tier)).ToList();
-        var history = _additionHistory.GetValueOrDefault((tier, language)) ?? [];
+            && scene.TopicId == b.TopicId && (operation == ArithmeticOperation.Add ? scene.Supports((BasicQuestionStructure)b.Structure, tier)
+                : ArithmeticQuestionCatalogue.Supports(b.SceneId, operation, tier, (BasicQuestionStructure)b.Structure))).ToList();
+        var history = _selectionHistory.GetValueOrDefault((operation, tier, language)) ?? [];
         var relationUsed = buckets.GroupBy(b => b.Structure).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));
         var topicUsed = buckets.GroupBy(b => b.TopicId).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));
         var ordered = buckets.OrderBy(_ => Random.Shared.Next())
@@ -151,8 +147,8 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             .ThenBy(b => topicUsed[b.TopicId])
             .ThenBy(b => history.Count > 0 && history[^1].SceneId == b.SceneId).ThenBy(b => b.LastUsedUtc);
         foreach (var bucket in ordered)
-            foreach (var row in db.Query<Row>("SELECT * FROM BasicQuestionBank WHERE Operation=0 AND Stars=? AND Language=? AND Version IN (1,2,3) AND COALESCE(Structure,0)=? AND COALESCE(TopicId,'')=? AND COALESCE(SceneId,'')=? ORDER BY UseCount,LastUsedUtc LIMIT 32",
-                (int)tier, (int)language, bucket.Structure, bucket.TopicId, bucket.SceneId)) yield return row;
+            foreach (var row in db.Query<Row>("SELECT * FROM BasicQuestionBank WHERE Operation=? AND Stars=? AND Language=? AND Version IN (1,2,3,4) AND COALESCE(Structure,0)=? AND COALESCE(TopicId,'')=? AND COALESCE(SceneId,'')=? ORDER BY UseCount,LastUsedUtc LIMIT 32",
+                (int)operation, (int)tier, (int)language, bucket.Structure, bucket.TopicId, bucket.SceneId)) yield return row;
     }
 
     public static string SerializeDraft(BasicQuestionDraft draft) => draft.UnitId is null && draft.SolutionLead is null

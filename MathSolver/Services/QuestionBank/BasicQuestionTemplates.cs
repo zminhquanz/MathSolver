@@ -20,6 +20,7 @@ public sealed record QuestionUnit(string Id, string Vietnamese, string Singular,
         ? VietnameseGroup : singular ? GroupSingular : GroupPlural;
     public string GroupFor(BasicQuestionContract c, bool singular = false)
     {
+        if (c.Version == ArithmeticQuestionCatalogue.Version) return ArithmeticQuestionCatalogue.GroupFor(c, this, singular);
         int perGroup = c.Structure switch
         {
             BasicQuestionStructure.EqualGroups => c.Left,
@@ -51,7 +52,7 @@ public static class QuestionUnits
         new("cakes", "chiếc bánh", "cake", "cakes", "hộp", "box", "boxes")
     });
     public static QuestionUnit? Find(string? id) => All.Concat(AdditionQuestionCatalogue.ExtraUnits).FirstOrDefault(u => u.Id == id);
-    public static QuestionUnit? Find(BasicQuestionContract c) => (c.Version == AdditionQuestionCatalogue.Version
+    public static QuestionUnit? Find(BasicQuestionContract c) => (c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         ? All.Concat(AdditionQuestionCatalogue.ExtraUnits) : All).FirstOrDefault(u =>
         u.Item(c.Language) == c.Unit && u.GroupFor(c) == c.GroupUnit);
 }
@@ -82,6 +83,7 @@ public static class BasicQuestionTemplates
     public static BasicQuestionDraft Example(BasicQuestionContract c, string? unitId = null)
     {
         if (c.Version == AdditionQuestionCatalogue.Version) return AdditionQuestionCatalogue.Example(c) with { UnitId = unitId ?? QuestionUnits.Find(c)?.Id };
+        if (c.Version == ArithmeticQuestionCatalogue.Version) return ArithmeticQuestionCatalogue.Example(c) with { UnitId = unitId ?? QuestionUnits.Find(c)?.Id };
         bool vi = c.Language == AppLanguage.Vietnamese;
         var clauses = c.Structure switch
         {

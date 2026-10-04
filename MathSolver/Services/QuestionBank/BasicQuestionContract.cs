@@ -16,18 +16,19 @@ public sealed record BasicQuestionContract(
     public const int CurrentVersion = 2;
     [JsonIgnore] public BigInteger Answer => new BasicArithmeticEngine().CalculateInteger(Expression).Result;
     [JsonIgnore] public IntegerArithmeticExpression Expression => new(Left, Operation, Right);
-    [JsonIgnore] public bool IsTemplate => Version is CurrentVersion or AdditionQuestionCatalogue.Version;
+    [JsonIgnore] public bool IsTemplate => Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version;
     [JsonIgnore] public string AnswerUnit => !IsTemplate ? Unit : Structure == BasicQuestionStructure.CountGroups
         ? QuestionUnits.Find(this)?.GroupFor(this, Answer.IsOne) ?? GroupUnit
         : QuestionUnits.Find(this)?.Item(Language, Answer.IsOne) ?? Unit;
-    [JsonIgnore] public bool IsValid => Version is 1 or CurrentVersion or AdditionQuestionCatalogue.Version && Enum.IsDefined(Operation)
+    [JsonIgnore] public bool IsValid => Version is 1 or CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version && Enum.IsDefined(Operation)
         && Enum.IsDefined(Tier) && Language is AppLanguage.Vietnamese or AppLanguage.English
         && Left > 0 && Right > 0 && !string.IsNullOrWhiteSpace(Subject)
         && Subject.Length <= 100 && !Subject.Any(c => char.IsControl(c) || char.IsDigit(c) || c is '{' or '}')
-        && (Version == AdditionQuestionCatalogue.Version || string.IsNullOrEmpty(TopicId) && string.IsNullOrEmpty(SceneId)
+        && (Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version || string.IsNullOrEmpty(TopicId) && string.IsNullOrEmpty(SceneId)
             && string.IsNullOrEmpty(PartA) && string.IsNullOrEmpty(PartB))
         && (IsTemplate ? Enum.IsDefined(Structure) && BasicQuestionTemplates.Operation(Structure) == Operation
             && (Version == AdditionQuestionCatalogue.Version ? AdditionQuestionCatalogue.IsValid(this)
+                : Version == ArithmeticQuestionCatalogue.Version ? ArithmeticQuestionCatalogue.IsValid(this)
                 : BasicQuestionTemplates.Allowed(Operation, Tier).Contains(Structure))
             && QuestionUnits.Find(this) is not null && !string.IsNullOrWhiteSpace(OtherSubject)
             && OtherSubject.Length <= 100 && !OtherSubject.Any(c => char.IsControl(c) || char.IsDigit(c) || c is '{' or '}')
@@ -89,6 +90,7 @@ public sealed record BasicQuestionContract(
     {
         if (!IsTemplate) return this;
         if (Version == AdditionQuestionCatalogue.Version) return AdditionQuestionCatalogue.Refresh(this, random);
+        if (Version == ArithmeticQuestionCatalogue.Version) return ArithmeticQuestionCatalogue.Refresh(this, random);
         var fresh = CreateTemplate(Operation, Tier, Language, random) with { Structure = Structure };
         return BasicQuestionTemplates.ApplyUnit(fresh, QuestionUnits.Find(this)!);
     }

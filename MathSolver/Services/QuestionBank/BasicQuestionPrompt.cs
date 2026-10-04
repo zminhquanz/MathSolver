@@ -9,6 +9,7 @@ public static class BasicQuestionPrompt
     {
         if (!contract.IsValid) throw new ArgumentException("Invalid C# contract.", nameof(contract));
         if (contract.Version == AdditionQuestionCatalogue.Version) return BuildAddition(contract, correction);
+        if (contract.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmetic(contract, correction);
         if (contract.IsTemplate) return BuildTemplate(contract, correction);
         bool vi = contract.Language == AppLanguage.Vietnamese;
         string rule = contract.Operation switch
@@ -96,83 +97,101 @@ public static class BasicQuestionPrompt
             + (string.IsNullOrEmpty(correction) ? "" : "\nRejected previous template: " + correction + ". " + Correction(correction) + " Rewrite the complete JSON.");
     }
 
+    private static string BuildArithmetic(BasicQuestionContract c, string? correction)
+    {
+        var scale = ArithmeticQuestionCatalogue.Scale(c.SceneId, c.Operation, c.Tier)!;
+        var unit = QuestionUnits.Find(c)!;
+        bool vi = c.Language == AppLanguage.Vietnamese;
+        string role = c.Structure switch {
+            BasicQuestionStructure.Remaining => vi ? "{a}: lượng có ban đầu; {b}: lượng lấy ra của cùng chủ thể; hỏi còn lại"
+                : "{a}: initial stock; {b}: removed from the same owner; ask what remains",
+            BasicQuestionStructure.Difference => vi ? "{a}: lượng của {name}; {b}: lượng riêng của {other}; hỏi {name} nhiều hơn bao nhiêu"
+                : "{a}: stock of {name}; {b}: separate stock of {other}; ask how many more {name} has",
+            BasicQuestionStructure.MissingPart => vi ? "{a}: tổng lượng cần; {b}: lượng đã có; hỏi lượng còn thiếu"
+                : "{a}: total needed; {b}: already available; ask the additional amount needed",
+            BasicQuestionStructure.EqualGroups => vi ? "{a}: số vật trong MỖI nhóm; {b}: số nhóm như nhau; hỏi tổng số vật"
+                : "{a}: objects in EACH group; {b}: number of identical groups; ask total objects",
+            BasicQuestionStructure.TimesAsMany => vi ? "{other} có {a}; {name} có gấp {b} lần {other}; hỏi {name}"
+                : "{other} has {a}; {name} has {b} times as many as {other}; ask for {name}",
+            BasicQuestionStructure.EqualShare => vi ? "{a}: tổng số vật; chia ĐỀU vào {b} nhóm; hỏi số vật MỖI nhóm"
+                : "{a}: total objects; share EQUALLY into {b} groups; ask objects in EACH group",
+            BasicQuestionStructure.CountGroups => vi ? "{a}: tổng số vật; MỖI nhóm có {b} vật; hỏi SỐ NHÓM, đơn vị đáp số là {group}"
+                : "{a}: total objects; EACH group holds {b} objects; ask NUMBER OF GROUPS, answer unit is {group}",
+            _ => vi ? "{other} có {a}; {other} có gấp {b} lần {name}; hỏi {name}, không đảo chủ thể"
+                : "{other} has {a}; OTHER has {b} times as many as NAME; ask for {name}, do not reverse the actors" };
+        string actor = scale.ActorPattern(c.Language).Replace("{person}", vi ? "…" : "a person");
+        string scope = c.SceneId is "harvest" or "crop-harvest" or "bakery" or "product-production" or "craft" or "notebook-production"
+            ? vi ? "Hàng cùng loại đã thu hoạch/làm xong, nay đang có để bán hoặc chia nhóm."
+                : "Finished goods or harvested produce now held as stock for sale or grouping."
+            : c.SceneId is "green-planting" or "garden" ? vi ? "Cây cùng loại đang chờ trồng hoặc chuyển đi; không cộng cây đã trồng vào kho cây chờ trồng."
+                : "Plants of one kind awaiting planting or transfer, not plants already planted."
+            : vi ? "Đếm đồ vật cùng loại của các chủ thể hoặc các nhóm riêng biệt." : "Count objects of one kind belonging to distinct owners or groups.";
+        string prompt = vi ? $$"""
+            Viết lại mẫu toán một bước bằng tiếng Việt có dấu, tự nhiên. Chỉ trả JSON cùng 5 trường, không giải bài.
+            Bối cảnh: {{c.TopicId}}/{{c.SceneId}}. {name}/{other} là chủ thể đầy đủ: {{actor}}. {{scope}}
+            Vai trò: {{role}}.
+            unit_id="{{unit.Id}}"; {unit}={{unit.Vietnamese}}; {group}={{c.GroupUnit}}; {group_one}={{unit.GroupFor(c, true)}}.
+            Giữ đúng biến và vai trò; không thêm tên, danh xưng, đồ vật quanh biến, số cụ thể, dữ kiện, phủ định hoặc bước giải.
+            given_a: một mệnh đề kết thúc dấu phẩy; given_b: nối tiếp đầu chữ thường, cuối dấu chấm.
+            {a} chỉ trong given_a, {b} chỉ trong given_b, mỗi biến đúng một lần. question chỉ hỏi; solution_lead là câu dẫn đúng đại lượng, cuối dấu hai chấm.
+            """ : $$"""
+            Rewrite this one-step template in natural English. Return only the same five-field JSON, no calculation.
+            Setting: {{c.TopicId}}/{{c.SceneId}}. {name}/{other} are complete actors: {{actor}}. {{scope}}
+            Roles: {{role}}.
+            unit_id="{{unit.Id}}"; {unit}={{unit.Plural}}; {group}={{c.GroupUnit}}; {group_one}={{unit.GroupFor(c, true)}}.
+            Keep slots and roles; add no names, titles, nouns around slots, concrete numbers, facts, negations or solution steps.
+            given_a: one clause ending with a comma; given_b: continuing lowercase clause ending with a period.
+            {a} occurs once only in given_a; {b} once only in given_b. question asks only; solution_lead names the same target and ends with a colon.
+            """;
+        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(ArithmeticQuestionCatalogue.Example(c));
+        if (!string.IsNullOrEmpty(correction)) prompt += "\n" + correction + ": " + Correction(correction) + " Rewrite the complete JSON.";
+        return prompt;
+    }
+
     private static string BuildAddition(BasicQuestionContract c, string? correction)
     {
         var scene = AdditionQuestionCatalogue.Find(c.SceneId)!;
         var scale = scene.Scale(c.Tier)!;
+        var unit = QuestionUnits.Find(c)!;
         bool vi = c.Language == AppLanguage.Vietnamese;
-        string relationship = c.Structure switch
-        {
-            BasicQuestionStructure.Increase => vi ? "Lượng ban đầu và lượng thêm vào cùng nơi/chủ thể; hỏi lượng sau đó." : "An initial amount and an increase for the same actor/place; ask the final amount.",
-            BasicQuestionStructure.RecoverInitial => vi ? "Lượng còn lại và lượng đã lấy ra trước đó; hỏi lượng ban đầu." : "An amount left and an amount previously removed; ask the original amount.",
-            BasicQuestionStructure.AddComparisonMore => vi ? "Biết lượng của {other}; {name} nhiều hơn {other}; hỏi lượng của {name}." : "The amount/result of {other} is known; that of {name} is greater; ask the amount/result of {name}.",
-            BasicQuestionStructure.AddComparisonInverse => vi ? "Biết lượng của {other}; {other} ít hơn {name}; hỏi lượng của {name}." : "The amount/result of {other} is known; that of {other} is fewer than that of {name}; ask the amount/result of {name}.",
-            _ => scene.Kind switch
-            {
-                AdditionSceneKind.Periods => vi ? "Kết quả cùng hoạt động qua các thời kỳ riêng; hỏi tổng kết quả, không hỏi đồ vật còn giữ." : "Results of the same activity over separate periods; ask their total, not remaining possessions.",
-                AdditionSceneKind.Parts => vi ? "Lượng trong các phần riêng không chứa nhau; hỏi tổng lượng của các phần." : "Amounts in disjoint spatial parts; ask their total.",
-                _ => vi ? "Lượng riêng của {name} và {other}; hỏi tổng của cả hai, không chuyển đồ vật giữa hai chủ thể." : "Separate amounts of {name} and {other}; ask their combined amount, not a transfer between them."
-            }
+        string relationship = c.Structure switch {
+            BasicQuestionStructure.Increase => vi ? "lượng ban đầu và lượng thêm vào; hỏi tổng sau đó" : "initial amount plus increase; ask the final total",
+            BasicQuestionStructure.RecoverInitial => vi ? "còn lại và đã lấy ra; hỏi lượng ban đầu" : "remaining amount plus an earlier removal; ask the original amount",
+            BasicQuestionStructure.AddComparisonMore => vi ? "{name} nhiều hơn {other}; hỏi {name}" : "{name} has more than {other}; ask for {name}",
+            BasicQuestionStructure.AddComparisonInverse => vi ? "{other} ít hơn {name}; hỏi {name}" : "{other} has fewer than {name}; ask for {name}",
+            _ => vi ? "hai lượng riêng không trùng nhau; hỏi tổng" : "two separate nonoverlapping amounts; ask their total"
         };
-        // One complete example defines the roles; no verbs from unrelated scenes,
-        // numerical preview values or literal actor names are sent to the model.
+        // C# has already selected one context, scale, relation and unit. Never send
+        // the whole catalogue or preview numbers/names to the model.
+        string actor = scale.ActorPattern(c.Language).Replace("{person}", vi ? "…" : "a person");
         string prompt = vi ? $$"""
-            Viết mẫu bài toán có lời văn bằng tiếng Việt cho học sinh tiểu học. Chỉ trả về JSON, không giải bài.
-            Bối cảnh: {{c.TopicId}}/{{c.SceneId}}. Hoạt động: {{scene.VietnameseAction}}.
-            Quan hệ: {{relationship}}
-            Nhiệm vụ từng trường:
-            - given_a: một mệnh đề nêu dữ kiện đầu, dùng {a} và chủ thể như ví dụ; kết thúc bằng dấu phẩy.
-            - given_b: mệnh đề nối tiếp, bắt đầu bằng chữ thường, kết thúc bằng dấu chấm; dùng {b}, giữ đúng vai trò như ví dụ và giữ nguyên biến tên riêng.
-            - question: đúng một câu hỏi ngắn về đại lượng cần tìm. Không nhắc lại dữ kiện, không trả lời hoặc giải thích.
-            - solution_lead: một câu dẫn để học sinh viết phép tính, kết thúc bằng dấu hai chấm. Không chứa phép tính hay đáp số.
-            - unit_id: chọn một mã phù hợp hoạt động trong danh mục bên dưới.
-            C# điền biến sau: {name}/{other} là toàn bộ tên/chủ thể; {a}/{b} là số; {unit} là toàn bộ tên đồ vật/đơn vị.
-            Giữ nguyên biến trong ví dụ, không thay bằng tên cụ thể, không thêm danh xưng trước biến, không viết số bằng chữ hoặc chữ số.
-            Mỗi dữ kiện dùng số của mình đúng một lần, sát {unit}. Không có {a}/{b} trong question hoặc solution_lead.
-            Chỉ viết {unit}, không thêm tên đồ vật sau biến. Mỗi câu chỉ một ý, không thêm nhân vật, dữ kiện hay bước giải.
-            Có thể đổi cách mở câu và động từ cùng hoạt động; giữ nguyên quan hệ và đại lượng cần tìm trong ví dụ.
+            Viết lại mẫu toán tiểu học dưới đây bằng tiếng Việt có dấu, tự nhiên. Chỉ trả JSON cùng 5 trường, không giải bài.
+            Bối cảnh: {{c.TopicId}}/{{c.SceneId}}; hoạt động: {{scene.VietnameseAction}}.
+            Chủ thể đầy đủ {name}/{other}: {{actor}}. {{scale.VietnameseScope}}
+            Quan hệ: {{relationship}}. unit_id="{{unit.Id}}"; {unit}={{unit.Vietnamese}}.
+            Giữ biến của mẫu; không thêm tên, danh xưng, đồ vật quanh biến, số cụ thể, dữ kiện, phủ định hay quan hệ mới.
+            given_a: một mệnh đề kết thúc dấu phẩy. given_b: mệnh đề nối tiếp đầu chữ thường, cuối dấu chấm.
+            question: một câu hỏi, không lặp dữ kiện. solution_lead: câu dẫn phép tính, cuối dấu hai chấm, không đáp số.
+            {a} chỉ trong given_a, {b} chỉ trong given_b, mỗi biến đúng một lần. Đổi câu chữ/động từ cùng hoạt động.
             """ : $$"""
-            Write a natural English elementary-school word-problem template. Return JSON only; do not solve it.
-            Setting: {{c.TopicId}}/{{c.SceneId}}. Activity: {{scene.EnglishAction}}.
-            Relationship: {{relationship}}
-            Field tasks:
-            - given_a: one clause stating the first fact, using {a} and the example's actor; end with a comma.
-            - given_b: the continuing clause, beginning lowercase and ending with a period; use {b}, preserve the example's roles and keep proper-name slots intact.
-            - question: one short question asking for the target. Do not repeat the facts, explain or answer it.
-            - solution_lead: one prose lead ending with a colon, ready for the pupil's calculation. No formula or answer.
-            - unit_id: choose one compatible ID from the catalogue below.
-            C# fills the slots later: {name}/{other} are complete actors; {a}/{b} are quantities; {unit} is the complete object/unit noun.
-            Keep the example's slots. Never substitute literal names, add actor titles, or write numerical values or number words.
-            {name}/{other} already include the full group, business or personal role. Write '{name} makes', never '{name}'s craft group makes'; do not append an actor role to a slot.
-            Each given uses its quantity once followed by {unit} (more/fewer may intervene). No {a}/{b} in question or solution_lead.
-            Write only {unit}, with no extra object noun after it. Each sentence states one idea; add no actors, facts or solution steps.
-            Vary openings and verbs within this activity while keeping the example's relationship and target.
+            Rewrite this elementary word-problem template in natural English. Return only the same five-field JSON; do not solve it.
+            Setting: {{c.TopicId}}/{{c.SceneId}}; activity: {{scene.EnglishAction}}.
+            {name}/{other} each represent an entire {{actor}}. {{scale.EnglishScope}}
+            Relation: {{relationship}}. unit_id="{{unit.Id}}"; {unit}={{unit.Plural}}.
+            Preserve slots; add no names, titles, object nouns around slots, numerical values, facts, negations or relationships.
+            given_a: one clause ending with a comma. given_b: a continuing lowercase clause ending with a period.
+            question: one question, no repeated facts. solution_lead: one calculation lead ending with a colon, no answer.
+            {a} occurs once in given_a, {b} once in given_b, neither elsewhere. Vary wording/verbs within this activity.
             """;
-        string magnitude = ((int)c.Tier, vi) switch {
-            (1, true) => "hàng đơn vị", (2, true) => "hàng chục", (3, true) => "hàng trăm", (4, true) => "hàng nghìn", (5, true) => "hàng chục nghìn",
-            (1, false) => "ones", (2, false) => "tens", (3, false) => "hundreds", (4, false) => "thousands", _ => "tens of thousands" };
-        prompt += vi ? $"\nQuy mô dữ kiện chính: {magnitude}. Vai trò đầy đủ của {{name}}/{{other}}: {scale.VietnameseActor.Replace("{person}", "…")}. {scale.VietnameseScope}"
-            : $"\nPrimary quantity scale: {magnitude}. Each {{name}}/{{other}} slot represents an ENTIRE {scale.EnglishActor.Replace("{person}'s ", "").Replace("{person}", "person")}; use it directly as the subject. {scale.EnglishScope}";
-        prompt += vi ? "\nHai lượng cùng loại {unit}. Không thêm loại đồ vật khác, tiền, đơn vị đo, quan hệ đổi đơn vị, nhóm hoặc thời kỳ chứa nhau. Giữ quy mô chủ thể; không biến cơ sở lớn thành một người tự làm trong một buổi."
-            : "\nBoth quantities count the same kind of {unit}. No additional object kinds, money, measures, conversions or overlapping groups/periods. Keep the selected actor scale; do not turn a large organisation into one person working in a single morning.";
-        if (scene.Kind == AdditionSceneKind.Contributions)
-            prompt += vi ? "\nCả hai dữ kiện so sánh kết quả góp/thu gom của hoạt động này, không đổi sang số đồ vật đang có."
-                : "\nBoth givens describe this activity's contributions/collected amounts. Do not replace an activity result with possessions ('has').";
-        if (scene.Kind == AdditionSceneKind.Arrivals)
-            prompt += vi ? "\n{name} là địa điểm, không phải người hay con vật. Các {unit} có mặt ở đó hoặc đến đó; không viết chúng đến đậu cùng {name}."
-                : "\n{name} is a PLACE, not a person or animal. The {unit} are present there or arrive there; they do not perch together with {name}.";
         if (scene.Kind is AdditionSceneKind.Periods or AdditionSceneKind.Parts)
-            prompt += vi ? $"\n{{part_a}} nghĩa là {scale.VietnamesePartA}; {{part_b}} nghĩa là {scale.VietnamesePartB}. Trong dữ kiện dùng biến, không viết các tên này ra. Trong câu hỏi/câu dẫn có thể gọi chung là {scale.VietnameseSpan}; không đổi thành thời kỳ hoặc phần nhỏ khác."
-                : $"\n{{part_a}} means {scale.EnglishPartA}; {{part_b}} means {scale.EnglishPartB}. Use the slots, not their literal meanings, in the givens. Questions/leads may refer collectively to {scale.EnglishSpan}; do not change the periods or spatial parts.";
-        prompt += (vi ? "\nDanh mục đơn vị (chỉ unit_id là giá trị cụ thể; trong câu vẫn dùng {unit}): "
-            : "\nCompatible units (only unit_id is literal; use {unit} in all prose): ")
-            + JsonSerializer.Serialize(scale.UnitIds.Select(id => new { unit_id = id, meaning = QuestionUnits.Find(id)!.Item(c.Language) }), JsonOptions)
-            + "\nCorrect role example: " + QuestionBankStore.SerializeDraft(AdditionQuestionCatalogue.Example(c));
+        {
+            var parts = scale.Parts(c.Language);
+            prompt += $"\n{{part_a}}={parts.A}; {{part_b}}={parts.B}; " + scale.Span(c.Language) + ".";
+        }
+        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(AdditionQuestionCatalogue.Example(c));
         if (!string.IsNullOrEmpty(correction))
-            prompt += vi ? $"\nLần trước bị từ chối: {correction}. Viết lại toàn bộ JSON ngắn gọn theo ví dụ. Mỗi dữ kiện chỉ một mệnh đề, đúng biến; câu hỏi chỉ hỏi, câu dẫn không giải bài."
-                : $"\nPrevious output rejected: {correction}. Rewrite the complete short JSON with the example's roles. Each given states one fact, the question only asks, and the lead does not solve it.";
-        return prompt + "\n" + LanguageRule(vi)
-            + (correction is "WrongLanguage" or "InvalidText" ? "\n" + Correction(correction) : "");
+            prompt += "\n" + correction + ": " + Correction(correction) + " Rewrite the complete JSON.";
+        return prompt;
     }
 
     private static string Correction(string code) => code switch
@@ -184,6 +203,7 @@ public static class BasicQuestionPrompt
         "ChangedUnits" => "Choose a listed unit_id and use {unit}, {group}, {group_one} for their exact item/container roles.",
         "InvalidContext" => "People or businesses own containers; do not put the actor inside a container or treat an actor as a counted object.",
         "ChangedQuantities" => "No literal numeric or spelled-out quantities, formulas or answers. Keep only {a} and {b} in their respective givens.",
+        "ExtraRelations" => "Use affirmative facts, no negation (including don't/doesn't), extra conditions or extra mathematical relationships.",
         _ => "Follow the five-field JSON schema and the role example."
     };
 

@@ -7,7 +7,7 @@ public enum AdditionActorKind { Person, Team, Library, Garden, Park, Club, Works
 
 public sealed record AdditionScene(string Id, string TopicId, AdditionSceneKind Kind, AdditionActorKind ActorKind,
     string[] UnitIds, string VietnameseAction, string EnglishAction, string VietnameseVerbs, string EnglishVerbs,
-    int MaxOperand, BasicQuestionStructure[] Structures)
+    int MaxOperand, BasicQuestionStructure[] Structures, string? EnglishBaseVerb = null, string? EnglishPastVerb = null)
 {
     public AdditionQuestionScale? Scale(CurriculumTier tier) => AdditionQuestionScales.Find(Id, tier);
     public bool Supports(BasicQuestionStructure structure, CurriculumTier tier) => Structures.Contains(structure)
@@ -53,7 +53,45 @@ public static class AdditionQuestionCatalogue
         new("club-arrivals", "school", AdditionSceneKind.Arrivals, AdditionActorKind.Club,
             ["students"], "đến tham gia", "arrive to join", "đến|tới|tham gia|vào", "arrive|join|come|enter", 20, [BasicQuestionStructure.Increase]),
         new("shop-stock", "shopping", AdditionSceneKind.Stock, AdditionActorKind.Person,
-            ["apples", "oranges", "cakes", "balls", "pencils"], "có", "has", "có|giữ|sở hữu", "has|owns|holds|had", 99999, StockRelations)
+            ["apples", "oranges", "cakes", "balls", "pencils"], "có", "has", "có|giữ|sở hữu", "has|owns|holds|had", 99999, StockRelations),
+        new("school-reading", "school", AdditionSceneKind.Periods, AdditionActorKind.Team,
+            ["pages"], "đọc được", "reads", "đọc|hoàn thành", "reads?|read|finishes?", 99999,
+            [BasicQuestionStructure.Combine], "read", "read"),
+        new("school-furniture", "school", AdditionSceneKind.Stock, AdditionActorKind.Library,
+            ["desks", "chairs"], "có", "has", "có|giữ|lưu giữ", "has|holds|had", 99999, StockRelations),
+        new("food-supplies", "food", AdditionSceneKind.Stock, AdditionActorKind.Person,
+            ["apples", "oranges", "cakes", "milk-cartons", "rice-bags"], "có", "has", "có|giữ|lưu giữ", "has|holds|owns|had", 99999, StockRelations),
+        new("bakery", "food", AdditionSceneKind.Periods, AdditionActorKind.Workshop,
+            ["cakes", "bread-rolls"], "làm được", "bakes", "làm|nướng|hoàn thành", "bakes?|baked|makes?|made", 99999,
+            [BasicQuestionStructure.Combine], "bake", "baked"),
+        new("poultry", "animals", AdditionSceneKind.Stock, AdditionActorKind.Farm,
+            ["chickens", "ducks"], "có", "has", "có|nuôi|giữ", "has|keeps?|raises?|had", 99999, StockRelations),
+        new("fish-farm", "animals", AdditionSceneKind.Stock, AdditionActorKind.Farm,
+            ["fish"], "có", "has", "có|nuôi|giữ", "has|keeps?|raises?|had", 99999, StockRelations),
+        new("cattle", "animals", AdditionSceneKind.Stock, AdditionActorKind.Farm,
+            ["cows"], "có", "has", "có|nuôi|giữ", "has|keeps?|raises?|had", 99999, StockRelations),
+        new("crop-harvest", "agriculture", AdditionSceneKind.Periods, AdditionActorKind.Farm,
+            ["mangoes", "rice-sacks"], "thu hoạch được", "harvests", "thu hoạch|thu gom|hái", "harvests?|harvested|gathers?|picks?", 99999,
+            [BasicQuestionStructure.Combine], "harvest", "harvested"),
+        new("product-production", "trade", AdditionSceneKind.Periods, AdditionActorKind.Workshop,
+            ["products"], "sản xuất được", "produces", "sản xuất|làm|hoàn thành", "produces?|produced|makes?|made|manufactures?", 99999,
+            [BasicQuestionStructure.Combine], "produce", "produced"),
+        new("passenger-count", "traffic", AdditionSceneKind.Periods, AdditionActorKind.Team,
+            ["passengers"], "đón được", "welcomes", "đón|phục vụ", "welcomes?|welcomed|serves?|served", 99999,
+            [BasicQuestionStructure.Combine], "welcome", "welcomed"),
+        new("vehicle-count", "traffic", AdditionSceneKind.Periods, AdditionActorKind.Team,
+            ["vehicles"], "ghi nhận", "records", "ghi nhận|đếm|thống kê|quan sát", "records?|recorded|counts?|counted|logs?|logged|observes?|observed|tally|tallies|tallied", 99999,
+            [BasicQuestionStructure.Combine], "record", "recorded"),
+        new("construction-stock", "construction", AdditionSceneKind.Stock, AdditionActorKind.Workshop,
+            ["bricks", "tiles"], "có", "has", "có|giữ|lưu giữ", "has|holds|had", 99999, StockRelations),
+        new("green-planting", "environment", AdditionSceneKind.Contributions, AdditionActorKind.Team,
+            ["trees", "seedlings"], "trồng được", "plants", "trồng|ươm", "plants?|planted|grows?|grew", 99999, ContributionRelations, "plant", "planted"),
+        new("survey-responses", "statistics", AdditionSceneKind.Contributions, AdditionActorKind.Team,
+            ["responses"], "thu được", "collects", "thu|thu thập|ghi nhận|nhận", "collects?|collected|gathers?|gathered|records?|recorded|receives?", 99999,
+            ContributionRelations, "collect", "collected"),
+        new("trial-results", "probability", AdditionSceneKind.Periods, AdditionActorKind.Team,
+            ["coin-heads", "die-sixes"], "ghi nhận được", "records", "ghi nhận|đếm|thống kê|quan sát", "records?|recorded|counts?|counted|logs?|logged|observes?|observed|tally|tallies|tallied", 99999,
+            [BasicQuestionStructure.Combine], "record", "recorded")
     });
 
     public static IReadOnlyList<QuestionUnit> ExtraUnits { get; } = Array.AsReadOnly(new QuestionUnit[]
@@ -65,7 +103,27 @@ public static class AdditionQuestionCatalogue
         new("seedlings", "cây con", "seedling", "seedlings", "luống", "row", "rows"),
         new("points", "điểm", "point", "points", "lượt", "round", "rounds"),
         new("birds", "con chim", "bird", "birds", "đàn", "flock", "flocks"),
-        new("students", "bạn", "student", "students", "nhóm", "group", "groups")
+        new("students", "bạn", "student", "students", "nhóm", "group", "groups"),
+        new("pages", "trang sách", "page", "pages", "quyển", "book", "books"),
+        new("desks", "chiếc bàn", "desk", "desks", "phòng", "room", "rooms"),
+        new("chairs", "chiếc ghế", "chair", "chairs", "phòng", "room", "rooms"),
+        new("milk-cartons", "hộp sữa", "milk carton", "milk cartons", "thùng", "box", "boxes"),
+        new("rice-bags", "túi gạo", "rice bag", "rice bags", "thùng", "box", "boxes"),
+        new("bread-rolls", "chiếc bánh mì", "bread roll", "bread rolls", "giỏ", "basket", "baskets"),
+        new("chickens", "con gà", "chicken", "chickens", "đàn", "flock", "flocks"),
+        new("ducks", "con vịt", "duck", "ducks", "đàn", "flock", "flocks"),
+        new("fish", "con cá", "fish", "fish", "bể", "tank", "tanks"),
+        new("cows", "con bò", "cow", "cows", "đàn", "herd", "herds"),
+        new("mangoes", "quả xoài", "mango", "mangoes", "giỏ", "basket", "baskets"),
+        new("rice-sacks", "bao lúa", "rice sack", "rice sacks", "kho", "warehouse", "warehouses"),
+        new("products", "sản phẩm", "product", "products", "thùng", "box", "boxes"),
+        new("passengers", "lượt khách", "passenger visit", "passenger visits", "đợt", "period", "periods"),
+        new("vehicles", "lượt xe", "vehicle passage", "vehicle passages", "đợt", "period", "periods"),
+        new("bricks", "viên gạch", "brick", "bricks", "kiện", "pallet", "pallets"),
+        new("tiles", "viên gạch lát", "tile", "tiles", "kiện", "pallet", "pallets"),
+        new("responses", "phiếu trả lời", "survey response", "survey responses", "tập", "bundle", "bundles"),
+        new("coin-heads", "lần xuất hiện mặt ngửa", "heads outcome", "heads outcomes", "đợt", "trial session", "trial sessions"),
+        new("die-sixes", "lần xuất hiện mặt sáu", "six outcome", "six outcomes", "đợt", "trial session", "trial sessions")
     });
     public static AdditionScene? Find(string id) => Scenes.FirstOrDefault(s => s.Id == id);
     public static int MinimumStars(BasicQuestionStructure structure) => structure switch
@@ -166,8 +224,10 @@ public static class AdditionQuestionCatalogue
         var scale = scene.Scale(c.Tier)!;
         bool vi = c.Language == AppLanguage.Vietnamese;
         string verb = vi ? scene.VietnameseAction : scene.EnglishAction;
-        string baseVerb = scene.Id switch { "craft" => "make", "notebook-production" => "produce", "harvest" => "harvest", "sports" => "score",
-            "recycling" => "collect", "donations" => "donate", "school-supplies" => "contribute", _ => "have" };
+        string baseVerb = scene.EnglishBaseVerb ?? (scene.Id switch { "craft" => "make", "notebook-production" => "produce", "harvest" => "harvest", "sports" => "score",
+            "recycling" => "collect", "donations" => "donate", "school-supplies" => "contribute", _ => "have" });
+        string pastVerb = scene.EnglishPastVerb ?? (scene.Id switch {
+            "sports" => "scored", "harvest" => "harvested", "notebook-production" => "produced", _ => "made" });
         string periods = scale.VietnameseSpan;
         string loss = scene.Id is "shop-stock" or "book-distribution" ? "bán" : "cho đi";
         string amount = scene.Kind == AdditionSceneKind.Contributions ? $"{verb}" : "có";
@@ -182,7 +242,7 @@ public static class AdditionQuestionCatalogue
                 : ("{name} has {a} {unit}.", "{name} gets {b} more {unit}.", "How many {unit} does {name} have in total?", "The total number of {unit} that {name} has is:"),
             BasicQuestionStructure.Combine when scene.Kind == AdditionSceneKind.Periods => vi
                 ? ($"Vào {{part_a}}, {{name}} {verb} {{a}} {{unit}}.", $"Vào {{part_b}}, {{name}} {verb} {{b}} {{unit}}.", $"Qua {periods}, {{name}} {verb} tất cả bao nhiêu {{unit}}?", $"Tổng số {{unit}} mà {{name}} {verb} qua {periods} là:")
-                : ($"In {{part_a}}, {{name}} {verb} {{a}} {{unit}}.", $"In {{part_b}}, {{name}} {verb} {{b}} {{unit}}.", $"How many {{unit}} does {{name}} {baseVerb} in total over {scale.EnglishSpan}?", $"The total number of {{unit}} {(scene.Id == "sports" ? "scored" : scene.Id == "harvest" ? "harvested" : scene.Id == "notebook-production" ? "produced" : "made")} over {scale.EnglishSpan} is:"),
+                : ($"In {{part_a}}, {{name}} {verb} {{a}} {{unit}}.", $"In {{part_b}}, {{name}} {verb} {{b}} {{unit}}.", $"How many {{unit}} does {{name}} {baseVerb} in total over {scale.EnglishSpan}?", $"The total number of {{unit}} {pastVerb} over {scale.EnglishSpan} is:"),
             BasicQuestionStructure.Combine when scene.Kind == AdditionSceneKind.Parts => vi
                 ? ("{part_a} trong {name} có {a} {unit}.", "{part_b} trong {name} có {b} {unit}.", $"Hỏi {scale.VietnameseSpan} này trong {{name}} có tổng cộng bao nhiêu {{unit}}?", $"Tổng số {{unit}} trong {scale.VietnameseSpan} này của {{name}} là:")
                 : ("{part_a} in {name} has {a} {unit}.", "{part_b} in {name} has {b} {unit}.", $"How many {{unit}} are in {scale.EnglishSpan} of {{name}} altogether?", $"The total number of {{unit}} in {scale.EnglishSpan} is:"),

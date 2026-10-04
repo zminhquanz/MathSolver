@@ -283,6 +283,7 @@ public sealed partial class EssayAnswerValidator
 
         if (WordProblemUnitEquivalence.ContainsVietnameseUnit(
                 normalizedSolution, expectedUnit) ||
+            ContainsEnglishUnitPhrase(normalizedSolution, expectedUnit) ||
             ContainsNormalizedPhrase(normalizedSolution, expectedUnit) ||
             ContainsNormalizedPhrase(
                 normalizedSolution,
@@ -1154,6 +1155,19 @@ public sealed partial class EssayAnswerValidator
         return string.Concat(
             value[..(lastSpace + 1)],
             SingularizeEnglishWord(value[(lastSpace + 1)..]));
+    }
+
+    private static bool ContainsEnglishUnitPhrase(string solution, string expectedUnit)
+    {
+        // A lead describes "the number of trees" even when the answer happens
+        // to be "1 tree". Compare whole unit phrases in both number forms.
+        if (!Regex.IsMatch(expectedUnit, @"\A[a-z]+(?: [a-z]+)*\z", RegexOptions.CultureInvariant)) return false;
+        string singular = NormalizeEnglishUnitToSingular(expectedUnit);
+        int length = expectedUnit.Split(' ').Length;
+        string[] words = Regex.Matches(solution, @"[a-z]+", RegexOptions.CultureInvariant).Select(m => m.Value).ToArray();
+        for (int i = 0; i + length <= words.Length; i++)
+            if (NormalizeEnglishUnitToSingular(string.Join(" ", words.Skip(i).Take(length))) == singular) return true;
+        return false;
     }
 
     private static string SingularizeEnglishWord(

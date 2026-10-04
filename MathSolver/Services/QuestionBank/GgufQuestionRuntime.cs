@@ -185,7 +185,9 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 // Sampling owns native grammar/sampler chains too; release them
                 // deterministically before the job releases the model weights.
                 using var sampling = new DefaultSamplingPipeline { Temperature = 0.65f, TopP = 0.9f,
-                    GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.None,
+                    // Validate the sampled candidate first; fall back to the full
+                    // vocabulary when it violates the grammar. Grammar remains enforced.
+                    GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.Basic,
                     Grammar = new Grammar(BuildGrammar(contract), "root") };
                 var executor = new StatelessExecutor(_weights, parameters) { ApplyTemplate = false };
                 var result = new StringBuilder();
@@ -220,6 +222,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     internal static string BuildGrammar(BasicQuestionContract c)
     {
+        if (c.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmeticGrammar(c);
         if (c.Version == AdditionQuestionCatalogue.Version)
         {
             return BuildAdditionGrammar(c);
@@ -235,6 +238,58 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             .Replace("{A_PREFIX}", c.Structure == BasicQuestionStructure.EqualGroups
                 ? c.Language == MathSolver.Services.AppLanguage.Vietnamese ? "M\\u1ed7i " : "Each " : "")
             .Replace("{ACTOR_B}", "{" + b + "}").Replace("{ACTOR_Q}", "{" + q + "}");
+    }
+
+    private static string BuildArithmeticGrammar(BasicQuestionContract c)
+    {
+        bool vi = c.Language == MathSolver.Services.AppLanguage.Vietnamese;
+        static string L(string value) => System.Text.Json.JsonSerializer.Serialize(value);
+        static string Seq(params string[] slots) => string.Join(" prose{0,48} ", slots.Select(L)) + " prose{0,32}";
+        static string Sentence(string body, string end) => "\"\\\"\" " + body + " " + L(end) + " \"\\\"\"";
+        bool factor = c.Structure is BasicQuestionStructure.TimesAsMany or BasicQuestionStructure.TimesFewer;
+        string a = c.Structure == BasicQuestionStructure.EqualGroups
+            ? Seq(vi ? "Mỗi {group_one} " : "Each {group_one} ", "{a} {unit}")
+            : Seq(factor ? "{other} " : "{name} ", "{a} {unit}");
+        string bActor = c.Structure is BasicQuestionStructure.Difference or BasicQuestionStructure.TimesFewer ? "{other} " : "{name} ";
+        string b = c.Structure switch {
+            BasicQuestionStructure.EqualGroups or BasicQuestionStructure.EqualShare => Seq(bActor, "{b} {group}"),
+            BasicQuestionStructure.CountGroups => Seq(bActor, "{group}", vi ? "mỗi {group_one} " : "each {group_one} ", "{b} {unit}")
+                + " | " + Seq(bActor, "{group}", "{b} {unit}", vi ? "mỗi {group_one}" : "each {group_one}"),
+            BasicQuestionStructure.TimesAsMany or BasicQuestionStructure.TimesFewer => vi
+                ? Seq(bActor, "{unit}", "gấp {b} lần", "{unit}", c.Structure == BasicQuestionStructure.TimesFewer ? "{name}" : "{other}")
+                : Seq(bActor, "{b} times", "{unit}", c.Structure == BasicQuestionStructure.TimesFewer ? "{name}" : "{other}"),
+            _ => Seq(bActor, "{b} {unit}") };
+        if (factor)
+        {
+            string smaller = c.Structure == BasicQuestionStructure.TimesFewer ? "{name}" : "{other}";
+            // The comparison itself is the exact C# relation. Free prose between
+            // its slots previously let a small model explain the placeholders or
+            // reverse the actors while trying to complete the forced sequence.
+            b = vi ? "(" + L(bActor + "có số {unit} gấp {b} lần số {unit} của " + smaller)
+                    + " | " + L(bActor + "sở hữu số {unit} gấp {b} lần số {unit} của " + smaller) + ")"
+                : "(" + L(bActor + "has {b} times as many {unit} as " + smaller)
+                    + " | " + L(bActor + "owns {b} times as many {unit} as " + smaller) + ")";
+        }
+        string q = c.Structure switch {
+            BasicQuestionStructure.EqualShare => Seq("{unit}", "{group_one}") + " | " + Seq("{group_one}", "{unit}"),
+            BasicQuestionStructure.CountGroups => Seq("{name}", "{group}") + " | " + Seq("{group}", "{name}"),
+            BasicQuestionStructure.Difference => vi ? Seq("{name}", "{other}", "{unit}") + " | " + Seq("{name}", "{unit}", "{other}")
+                : Seq("{unit}", "{name}", "{other}"),
+            _ => Seq("{name}", "{unit}") + " | " + Seq("{unit}", "{name}") };
+        string question = "prose{1,48} (" + q + ")";
+        if (factor)
+            question = vi ? "(" + L("Hỏi {name} ") + " | " + L("{name} ") + ") prose{1,32} " + L("bao nhiêu {unit}")
+                : "(" + L("How many {unit} does {name} have") + " | " + L("How many {unit} does {name} own") + ")";
+        return $$"""
+            root ::= "{" ws "\"given_a\"" ws ":" ws a ws "," ws "\"given_b\"" ws ":" ws b ws "," ws "\"question\"" ws ":" ws q ws "," ws "\"solution_lead\"" ws ":" ws lead ws "," ws "\"unit_id\"" ws ":" ws "\"" {{L(QuestionUnits.Find(c)!.Id)}} "\"" ws "}" ws
+            a ::= {{Sentence(a, ",")}}
+            b ::= {{Sentence("(" + b + ")", ".")}}
+            q ::= {{Sentence(question, "?")}}
+            lead ::= "\"" (prose | lead-slot){1,180} ":" "\""
+            lead-slot ::= "{name}" | "{other}" | "{unit}" | "{group}" | "{group_one}"
+            prose ::= [{{QuestionProseLanguage.GrammarLetters(c.Language)}} ,'\u2019-]
+            ws ::= [ \t\n\r]*
+            """;
     }
 
     private static string BuildAdditionGrammar(BasicQuestionContract c)
@@ -316,6 +371,22 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                     + ") " + QuantityB() + " prose{0,48}";
             }
         }
+        if (!vi && scene.Kind == AdditionSceneKind.Contributions)
+        {
+            // Keep affirmative action choices close to the actor. Free prose
+            // before the verb let a small model repeatedly negate valid facts
+            // ("don't contribute"), spending all three retries on the same error.
+            // These are the scene's supported verb alternatives, not one fixed
+            // receiving/possession phrase; ordinary prose may still follow.
+            var actions = scene.EnglishVerbs.Split('|').SelectMany(verb => verb.Contains('?')
+                ? new[] { verb.Replace("?", ""), System.Text.RegularExpressions.Regex.Replace(verb, @".\?", "") }
+                : new[] { verb }).Distinct().Select(verb => Literal(verb + " "));
+            string action = "(" + string.Join(" | ", actions) + ")";
+            string Affirmative(string actor, string quantity) => Literal(actor + " ") + " " + action + " "
+                + Literal(quantity) + " prose{0,32}";
+            aBody = Affirmative(actorA, "{a} {unit}");
+            if (c.Structure == BasicQuestionStructure.Combine) bBody = Affirmative(actorB, "{b} {unit}");
+        }
         bool both = c.Structure == BasicQuestionStructure.Combine && !parts;
         string actors = both ? "(" + Literal("{name}") + " " + Literal(vi ? " và " : " and ") + " " + Literal("{other}")
             + " | " + Literal("{other}") + " " + Literal(vi ? " và " : " and ") + " " + Literal("{name}") + ")" : Literal("{name}");
@@ -345,7 +416,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             .Replace("{STRING_B}", Sentence(bBody, "."))
             .Replace("{STRING_Q}", Sentence(q, "?"))
             .Replace("{STRING_LEAD}", Sentence(lead, ":"))
-            .Replace("{UNIT_IDS}", string.Join(" | ", scale.UnitIds.Select(id => "\"" + id + "\"")));
+            .Replace("{UNIT_IDS}", Literal(QuestionUnits.Find(c)!.Id));
     }
 
 }

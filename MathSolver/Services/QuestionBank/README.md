@@ -6,7 +6,7 @@ Local GGUF prompt processing and token decoding use `max(1, floor(Environment.Pr
 
 ## Version 3 addition: separate relationships and topics
 
-New addition jobs use version 3. C# selects a mathematical relationship independently of the story setting; AI supplies only the prose and a compatible countable-object unit ID. Subtraction, multiplication and division continue to use version 2. Existing version 1/2 bank rows remain readable.
+New addition jobs use version 3. C# selects a mathematical relationship independently of the story setting, then selects a compatible countable-object unit. AI supplies only the prose and returns the selected unit ID. New subtraction, multiplication and division jobs use version 4, described below. Existing version 1/2/3 bank rows remain readable.
 
 | Stars | Available addition relationships |
 | --- | --- |
@@ -28,7 +28,22 @@ These are **one-step, two-operand** templates, not a complete grade 1–5 syllab
 
 The primary retains the selected digit bucket. The secondary may use any lower bucket up to the selected tier; the result can cross the primary's digit boundary. Carrying is varied, with a preference for one, two and three carry positions at stars 3, 4 and 5 respectively. Sampling is bounded and never violates the quantity domain in pursuit of a carry target. The plain C# arithmetic generator and grading rules are unchanged.
 
-Fourteen settings span family, school, community, environment, activities, nature and shopping: gifts, libraries, school supplies, donations, recycling, crafts, notebook production, book distribution, harvesting, garden rows/sections, sports halves, arriving birds, club arrivals and shop inventory. Their availability, actors and units depend on the tier. A shop story counts objects; it does not introduce money. Measurement, money and additional solution steps require separate fact models.
+Twenty-nine settings include the original fourteen plus reading, school furniture, food stock, baking, poultry, fish farming, cattle, crop harvesting, product manufacturing, passenger visits, vehicle passages, building materials, planting, survey responses and experiment outcomes. Their availability, actors and units depend on the tier.
+
+| Context group | Supported addition quantities |
+| --- | --- |
+| School | Books, supplies, pages read, desks and chairs |
+| Food | Fruit, cakes, bread rolls, cartons of milk and bags of rice |
+| Animals | Chickens, ducks, fish and cattle |
+| Agriculture | Mangoes, rice sacks, seedlings and harvested fruit |
+| Trade | Product counts, stock and production across separate periods |
+| Traffic | Passenger visits and vehicle passages in separate periods |
+| Construction | Bricks and tiles held in appropriately sized material stores |
+| Environment | Planting results, seedlings and recycling collections |
+| Statistics | Responses from separate, nonoverlapping survey samples |
+| Probability experiments | Counts of the same outcome in separate coin/die trials |
+
+These are addition **counts**, not revenue, discounts, distance/speed, mass, temperature, area/volume, averages or probability calculations. Milk cartons and rice sacks are counted packages, not converted measurements. Passenger visits count visits rather than unique people or simultaneous occupancy. Large experiment counts use simulations, and large animal counts use farms/networks instead of home pens. Money, measurement and additional solution steps require separate fact models.
 
 Version 3 contracts add `TopicId`, `SceneId`, `PartA` and `PartB`. Roles can be people, teams or places. For two periods/spatial parts, the same actor/location owns both operands; `{part_a}` and `{part_b}` preserve the C#-selected period/part roles. For independent groups, `{name}` and `{other}` bind different groups. For comparison, `{a}` is the known amount of `{other}`, `{b}` is the difference and `{name}` is the amount requested. C# regenerates actors and numbers at each use without changing these roles.
 
@@ -56,9 +71,21 @@ The addition prompt gives each field a separate task: `given_a` states one fact
 and ends with a comma, `given_b` continues in lowercase and ends with a period,
 `question` asks only for the target, and
 `solution_lead` introduces the pupil's calculation without solving it. Only the
-selected setting's activity and one role example are supplied; verbs from other
+selected setting's activity, actor scale, relation, one selected unit and one role example are supplied; verbs from other
 settings are not mixed into the instructions. `{unit}` represents the complete
 object noun, so appending a literal noun to it is invalid.
+
+The prompt never includes the entire scene/unit catalogue. C# random selection and
+balanced recent-use history supply diversity without adding unrelated choices to
+each generation. Addition grammar binds the selected unit ID; import validation
+continues to accept compatible units from the same scene/tier. Inference uses the
+LLamaSharp `Basic` grammar optimisation: validate the sampled candidate first,
+falling back to full-vocabulary grammar filtering when needed. Both paths enforce
+grammar; C# semantic/language validation remains required before insertion.
+English contribution facts bind one of the selected scene's affirmative verbs
+before the quantity; questions and solution leads remain generated prose.
+Validation also rejects English contracted negation (`don't`, `doesn't`, curly
+apostrophe variants) in every field, including imported/historical templates.
 
 Native grammar binds actors early, keeps quantities in their own givens, and
 allows a single clause per given and one sentence for the question/lead. The question uses a normal target-first
@@ -97,7 +124,56 @@ This is a supplementary exercise source, not a claim of official curriculum
 approval. Multi-step examples and problems needing heterogeneous object groups
 are not added to the two-operand schema.
 
-## Version 2 format (other operations and existing templates)
+## Version 4: subtraction, multiplication and division
+
+`ArithmeticQuestionCatalogue` reuses 22 bilingual countable-stock settings and the
+star-specific actor profiles. The operation determines the activity: lending books,
+selling stock, handing out supplies, transferring seedlings or recycling collected
+bottles. Completed harvests and manufactured goods are now stock; plants awaiting
+planting are distinct from those already planted. Visits, scores and experimental
+outcomes are not forced into physical-container stories.
+
+The primary operand retains its digit bucket: 1–9, 10–99, 100–999, 1,000–9,999,
+and 10,000–99,999 for 1–5 stars. A scene can impose a tighter limit without allowing
+a primary value below the tier minimum. Small personal collections are excluded
+at large scales. Subtraction keeps the removed/available amount within the initial
+stock and prefers borrowing at higher tiers. Zero remaining stock is allowed.
+
+Multiplication uses a factor/group count from 2–9 and bounds the total by twice the
+primary bucket maximum and the context capacity. Its owner profile is planned one
+scale larger (up to five stars) to accommodate the product. Division constructs an
+exact multiple inside the primary bucket; it never retries down to a tiny dividend.
+Equal sharing and multiplicative comparison use a divisor from 2–9. Counting groups
+uses a per-group quantity chosen so the resulting number of groups is 2–9; the
+divisor is not incorrectly interpreted as the group count.
+
+| Stars | Subtraction | Multiplication | Division |
+| --- | --- | --- | --- |
+| 1 | Remaining stock | Equal groups | Equal sharing |
+| 2 | Also missing part | Equal groups | Also counting groups |
+| 3–5 | Also difference | Also multiplicative comparison | Also smaller quantity from multiplicative comparison |
+
+Groups depend on the actual objects and per-group amount: boxes/packs for small
+goods and stock lots for large goods; flocks or rearing sections for poultry;
+herds or farm clusters for cattle; tanks or ponds for fish; rows, nursery sections
+or nursery clusters for seedlings; pallets or material lots for bricks. Furniture
+above 40 items per group uses stock lots, not classroom occupancy. Fresh practice
+numbers can change the group label; templates use `{group}`/`{group_one}` throughout.
+Counting-group answers use the group unit; equal-sharing answers use the object unit.
+
+The compact prompt sends only the selected setting, actor scope, roles, units and
+one example, without preview numbers/names or the full catalogue. Grammar binds the
+numeric placeholders, actors and selected unit ID. Validation checks the existing
+mathematical roles plus context compatibility, extra object nouns, negation, changed
+units and misplaced actors. It remains a bounded validator, not a complete semantic
+proof engine. Generation and SQLite selection balance relationships/settings with
+separate bounded histories for each operation, tier and language.
+
+Version 4 uses the existing SQLite/Excel fields; `TopicId` and `SceneId` identify the
+setting, while `PartA` and `PartB` are empty. All storage, practice and Excel boundaries
+revalidate the contract and prose. Versions 1–3 keep their original interpretation.
+
+## Version 2 format (existing templates)
 
 `ContractJson` records the operation, stars, language and C# mathematical structure. Its operands and actors are preview values; they are regenerated during practice using the existing curriculum. `DraftJson` stores five string fields:
 
@@ -143,6 +219,11 @@ GROUP BY Stars, TopicId, SceneId, Structure;
 Export the entire bank as `.xlsx`, or export an empty bank to obtain column headers. Existing version 1 files need the original required columns: `Version`, `Operation`, `Stars`, `Language`, `Left`, `Right`, `Subject`, `Unit`, `GroupUnit`, `GivenA`, `GivenB` and `Question`. For version 2 also supply `Structure`, `OtherSubject`, `SolutionLead` and `UnitId`. Keep `Left`, `Right` and actors valid for the preview; practice regenerates them. Operations and structures use their C# enum names; language uses `vi-VN` or `en-US`. The three problem clauses and solution lead contain placeholders, not preview values. Units must match the selected `UnitId`.
 
 For version 3 also provide `TopicId` and `SceneId` from the addition catalogue. `PartA` and `PartB` must match the scene's periods/rows, or be empty for scenes without those roles. These fields are retained on export/import; setting, activity and units must agree. Do not turn an existing version 2 row into version 3 just by changing its version number.
+
+For version 4, choose `TopicId`/`SceneId` from `ArithmeticQuestionCatalogue`, leave
+`PartA`/`PartB` empty, and supply preview actors, numbers and group labels compatible
+with the operation's scale profile. Do not migrate old templates by changing only
+the version field.
 
 `ModelName`, ISO 8601 `CreatedUtc` and `RawJson` are optional import metadata. `Answer` and `ProblemText` are export previews and are not trusted as mathematical facts. Import skips duplicate/invalid rows and reports row errors. Accepted inserts commit together; cancellation or a database failure rolls back the import. Limits are 20 MB compressed, 40 MB expanded and 10,000 imported rows. Data columns must contain values rather than Excel formulas.
 

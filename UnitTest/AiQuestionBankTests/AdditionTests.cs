@@ -122,6 +122,7 @@ internal static class AdditionTests
         PromptFieldRegression();
         CheckJoinedClauses();
         CheckScalePolicies();
+        CheckContextCoverageAndPromptBudget();
         CheckThreadBudget();
         CheckRotation();
         await PersistenceAsync(directory);
@@ -148,6 +149,46 @@ internal static class AdditionTests
             "Repeated units silently introduced a third amount.");
         Check(!Validate(c, d with { Question = "Hỏi {name} và {other} có tổng cộng bao nhiêu {unit}, vì {name} có sẵn?" }).IsValid,
             "Repeated actor/explanation within the question was accepted.");
+        var en = Create("school-supplies", BasicQuestionStructure.Combine, CurriculumTier.FourStars, AppLanguage.English);
+        var enDraft = AdditionQuestionCatalogue.Example(en);
+        foreach (string negation in new[] { "don't", "DON'T", "don’t", "doesn't", "doesn’t", "didn't", "can't", "won't", "cannot", "never" })
+        foreach (bool first in new[] { true, false })
+        {
+            string fact = (first ? "{name}" : "{other}") + " " + negation + " bring " + (first ? "{a}" : "{b}") + " {unit}.";
+            var invalid = first ? enDraft with { GivenA = fact } : enDraft with { GivenB = fact };
+            Check(Validate(en, invalid).ErrorCode == "ExtraRelations", "Live-model negation passed: " + fact);
+        }
+        Check(Validate(en, enDraft with { GivenA = "{name} bring {a} {unit},", GivenB = "{other} bring {b} {unit}." }).IsValid,
+            "Affirmative natural action was rejected by negation check.");
+        var survey = Create("survey-responses", BasicQuestionStructure.AddComparisonMore, CurriculumTier.ThreeStars, AppLanguage.English);
+        var surveyDraft = AdditionQuestionCatalogue.Example(survey);
+        Check(Validate(survey, surveyDraft with {
+            GivenA = "{other} gathers {a} {unit},", Question = "How many {unit} does {name} gather?"
+        }).IsValid, "A natural survey response collection synonym was rejected.");
+        foreach (string sceneId in new[] { "trial-results", "vehicle-count" })
+        foreach (var (past, basic) in new[] { ("logged", "log"), ("observed", "observe"), ("tallied", "tally") })
+        {
+            var observed = Create(sceneId, BasicQuestionStructure.Combine, CurriculumTier.FiveStars, AppLanguage.English);
+            var recorded = AdditionQuestionCatalogue.Example(observed);
+            Check(Validate(observed, recorded with {
+                GivenA = "During {part_a}, {name} " + past + " {a} {unit},",
+                Question = "How many {unit} did {name} " + basic + " across these months?"
+            }).IsValid, "A natural observation count synonym was rejected: " + sceneId);
+        }
+        var material = Create("construction-stock", BasicQuestionStructure.AddComparisonInverse);
+        var stock = AdditionQuestionCatalogue.Example(material);
+        Check(Validate(material, stock with { GivenA = "{other} sở hữu {a} {unit},",
+            GivenB = "{other} sở hữu ít hơn {name} là {b} {unit}." }).IsValid,
+            "Natural material-stock ownership was rejected.");
+        var crop = Create("crop-harvest", BasicQuestionStructure.Combine, CurriculumTier.ThreeStars);
+        var rice = BasicQuestionTemplates.ApplyUnit(crop, QuestionUnits.Find("rice-sacks")!);
+        var reaped = AdditionQuestionCatalogue.Example(rice) with {
+            GivenA = "Vào {part_a}, {name} gặt được {a} {unit},",
+            GivenB = "vào {part_b}, {name} gặt được {b} {unit}."
+        };
+        Check(Validate(rice, reaped).IsValid
+            && !Validate(BasicQuestionTemplates.ApplyUnit(crop, QuestionUnits.Find("mangoes")!), reaped with { UnitId = "mangoes" }).IsValid,
+            "Reaping must be accepted for rice and rejected for mangoes.");
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
             var contract = Create("family-gifts", BasicQuestionStructure.Combine, CurriculumTier.OneStar, language);
@@ -426,6 +467,40 @@ internal static class AdditionTests
         public override int Next(int minValue, int maxValue) => high ? maxValue - 1 : minValue;
     }
 
+    private static void CheckContextCoverageAndPromptBudget()
+    {
+        string[] topics = ["school", "food", "animals", "agriculture", "trade", "traffic",
+            "construction", "environment", "statistics", "probability"];
+        foreach (var tier in Enum.GetValues<CurriculumTier>())
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        {
+            var available = AdditionQuestionCatalogue.Available(tier).ToArray();
+            Check(topics.All(topic => available.Any(p => p.Scene.TopicId == topic)),
+                "A requested count context is unavailable at " + tier);
+            foreach (var pair in available)
+            {
+                var c = Create(pair.Scene.Id, pair.Structure, tier, language);
+                string prompt = BasicQuestionPrompt.Build(c);
+                string grammar = GgufQuestionRuntime.BuildGrammar(c);
+                var chosen = QuestionUnits.Find(c)!;
+                Check(prompt.Length < 1900 && !prompt.Contains("Unit catalogue:")
+                    && prompt.Contains("unit_id=\"" + chosen.Id + "\""),
+                    "Prompt lost its chosen unit or exceeded the single-context budget: " + pair.Scene.Id);
+                foreach (string other in pair.Scene.Scale(tier)!.UnitIds.Where(id => id != chosen.Id))
+                    Check(!grammar.Contains("\"" + other + "\""),
+                        "Grammar still permits generation to switch the C#-selected unit.");
+            }
+            var cycle = new AdditionQuestionCycle(new Random(271));
+            var selected = Enumerable.Range(0, 5 * AdditionQuestionCatalogue.Scenes.Count * 3)
+                .Select(_ => cycle.Next(tier, language)).ToArray();
+            Check(topics.All(topic => selected.Any(c => c.TopicId == topic)),
+                "Random balanced selection starved one of the requested count contexts.");
+            Check(selected.Select(c => c.SceneId).Distinct().Count() == available.Select(p => p.Scene.Id).Distinct().Count(),
+                "Random selection failed to reach all compatible scenes.");
+        }
+        Console.WriteLine("PASS ten count-context groups at all stars/languages, random full-scene coverage, compact prompts and one-unit generation grammar");
+    }
+
     private static void CheckRotation()
     {
         foreach (var tier in Enum.GetValues<CurriculumTier>())
@@ -467,7 +542,11 @@ internal static class AdditionTests
         for (int i = 0; i < 40; i++) Check(await store.InsertAsync(repeat with { Draft = repeat.Draft with {
             GivenA = new string(' ', i + 1) + repeat.Draft.GivenA } }), "Test skewed bank insert failed.");
         var picked = new List<BasicQuestionContract>();
-        for (int i = 0; i < 50; i++)
+        // Each relation gets an equal share; cover every scene of the largest
+        // relation family after the catalogue grows, despite skewed row counts.
+        int selectionCount = 5 * entries.GroupBy(q => q.Contract.Structure)
+            .Max(group => group.Select(q => q.Contract.SceneId).Distinct().Count()) * 2;
+        for (int i = 0; i < selectionCount; i++)
         {
             var question = await store.TakeAsync(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.Vietnamese);
             Check(question is not null && question.Contract.IsValid, "Addition SQLite selection returned no valid row.");

@@ -42,6 +42,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
 {
     private readonly object _sync = new();
     private readonly AdditionQuestionCycle _additionCycle = new();
+    private readonly ArithmeticQuestionCycle _arithmeticCycle = new();
     private CancellationTokenSource? _cancellation;
     private Task _work = Task.CompletedTask;
     private int _pendingInserts;
@@ -138,7 +139,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             cancellationToken.ThrowIfCancellationRequested();
             var contract = options.Operation == ArithmeticOperation.Add
                 ? _additionCycle.Next(options.Tier, options.Language)
-                : BasicQuestionContract.CreateTemplate(options.Operation, options.Tier, options.Language);
+                : _arithmeticCycle.Next(options.Operation, options.Tier, options.Language);
             Append(new(number, contract, AiItemState.Generating, []));
             string? correction = null;
             for (int attempt = 1; attempt <= 3; attempt++)

@@ -70,6 +70,10 @@ grading, accepted natural action prose, reversed comparisons, wrong period/actor
 target/event/unit rejection, topic/relationship rotation, skewed SQLite row counts,
 persistent selection after restart, deduplication, Excel metadata round-trips,
 forged indexed metadata rejection and migration from a pre-addition SQLite schema.
+The expanded catalogue covers 1,254 combinations across 29 settings. Checks also
+require all ten requested count-context groups at every tier in both languages,
+reach every eligible setting through balanced random selection, bound each prompt
+to a single context/unit, and verify the native grammar cannot switch that unit.
 Scale checks additionally exercise every eligible 1–5-star domain in both languages,
 including minimum/maximum random draws, primary digit buckets, smaller secondary
 operands, results crossing a digit boundary, total capacity, matching actor/unit/time
@@ -140,3 +144,37 @@ not a speed or memory benchmark. It never inserts questions into the app's datab
 In Visual Studio, select `AiQuestionBankTests` as the startup project and press
 Ctrl+F5. Like the existing math test harness, it is a console project rather than
 a Test Explorer adapter.
+
+Version 4 subtraction/multiplication/division checks cover all eligible bilingual
+setting/role/unit combinations at 1–5 stars, including fresh operand buckets,
+nonnegative stock, exact division, realistic groups, object/group answer units,
+all answer modes and essay grading. Mutations reject swapped number/target roles,
+foreign prose, negation, extra objects, forged context metadata and unbounded factors.
+SQLite rotation/deduplication, Excel interchange and legacy v2 selection are included.
+The English essay check also covers plural solution leads when the answer is singular.
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --arithmetic-contexts
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --arithmetic-context-model "E:\AI Models\google\gemma-4-E4B-it-qat-q4_0-gguf\gemma-4-E4B_q4_0-it.gguf"
+```
+
+The explicit model command exercises all five tiers for each of the three operations,
+including Vietnamese/English, retries, live output and token metrics. It validates
+each accepted template with four fresh C# fact sets and existing essay grading,
+and always ejects native weights. It never writes to the app's database.
+
+Explicit live-model performance and expanded-context checks:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --addition-throughput "E:\AI Models\google\gemma-4-E4B-it-qat-q4_0-gguf\gemma-4-E4B_q4_0-it.gguf"
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --addition-context-model "E:\AI Models\google\gemma-4-E4B-it-qat-q4_0-gguf\gemma-4-E4B_q4_0-it.gguf"
+```
+
+The first uses four fixed cases for before/after comparison. The second exercises
+seven new settings over stars 1–5 and both languages. Each prints streamed-output
+validation, rendered prose, prompt character count, allocated context, first-token
+latency and decode token/s, with at most three attempts per question. Weights are
+shared across the selected batch and disposed afterwards. Neither command writes
+the app's question bank. Run without simultaneous builds/inference for meaningful
+speed comparisons. Token/s measures decoding after the first token, excluding
+prompt processing and model loading; end-to-end latency is reported separately.
