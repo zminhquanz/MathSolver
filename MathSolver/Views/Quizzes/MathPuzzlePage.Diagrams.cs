@@ -36,7 +36,11 @@ public partial class MathPuzzlePage
             : diagram is not null ? new QuizDiagramDrawable(diagram) : null;
         QuizVisualView.Invalidate();
         QuizDiagramCaptionLabel.Text = diagram?.Caption ?? "";
-        QuizDiagramCaptionLabel.IsVisible = diagram is not null && !mandatory;
+        bool fractionCaption = TextbookFractionParser.ParseLine(QuizDiagramCaptionLabel.Text)
+            .Any(fragment => fragment.Math is not null);
+        QuizDiagramCaptionLabel.IsVisible = diagram is not null && !mandatory && !fractionCaption;
+        QuizDiagramCaptionFractionView.Expression = QuizDiagramCaptionLabel.Text;
+        QuizDiagramCaptionFractionView.IsVisible = diagram is not null && !mandatory && fractionCaption;
         QuizVisualDataLabel.IsVisible = visible && essential?.Kind is "table" or "bar" or "pie";
         QuizVisualDataLabel.Text = QuizVisualDataLabel.IsVisible && essential is not null
             ? string.Join(" · ", essential.Labels.Select((label, index) => $"{label}: {(essential.HiddenValueIndices?.Contains(index) == true && !_questionAnswered ? "?" : essential.Values[index].ToString())} {essential.Unit}")) : "";
@@ -121,6 +125,8 @@ public partial class MathPuzzlePage
         QuizVisualView.IsVisible = false;
         QuizVisualView.Drawable = null;
         QuizDiagramCaptionLabel.Text = "";
+        QuizDiagramCaptionFractionView.IsVisible = false;
+        QuizDiagramCaptionFractionView.Expression = "";
         QuizVisualDataLabel.IsVisible = false;
         QuizVisualDataLabel.Text = "";
         QuizDiagramExplanationLabel.IsVisible = false;
@@ -137,9 +143,22 @@ public partial class MathPuzzlePage
         var page = new ContentPage();
         page.SetDynamicResource(BackgroundColorProperty, "WallpaperSurfaceColor");
         var close = new Button { Text = TranslateQuiz("Quiz.CloseDiagram"), CornerRadius = 12 };
-        var caption = new Label { Text = QuizDiagramCaptionLabel.Text, FontSize = 18,
-            HorizontalTextAlignment = TextAlignment.Center };
-        caption.SetDynamicResource(Label.TextColorProperty, "WallpaperTextPrimaryColor");
+        View caption;
+        if (QuizDiagramCaptionFractionView.IsVisible)
+        {
+            var formatted = new FractionExpressionView { Expression = QuizDiagramCaptionLabel.Text,
+                MathFontSize = 18, ParseArithmeticExpressions = true, WrapContent = true,
+                TokenSpacing = 4, HorizontalTextAlignment = TextAlignment.Center };
+            formatted.SetDynamicResource(FractionExpressionView.MathColorProperty, "WallpaperTextPrimaryColor");
+            caption = formatted;
+        }
+        else
+        {
+            var label = new Label { Text = QuizDiagramCaptionLabel.Text, FontSize = 18,
+                HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.WordWrap };
+            label.SetDynamicResource(Label.TextColorProperty, "WallpaperTextPrimaryColor");
+            caption = label;
+        }
         var image = new GraphicsView { WidthRequest = 720, HeightRequest = 520,
             Drawable = new DiagramPreviewDrawable(source, 2) };
         var zoom = new Slider { Minimum = 1, Maximum = 3, Value = 2 };

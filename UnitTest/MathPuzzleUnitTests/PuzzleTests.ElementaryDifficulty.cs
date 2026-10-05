@@ -33,6 +33,19 @@ internal static partial class PuzzleTests
                 Require(Value() != Get("extra"), "A five-star chart difference must combine relations rather than copy the supplied gap.");
             if (family == QuizProblemKind.TwoNumbers)
             {
+                Require(contract.ProblemText.Split(". ").All(sentence => char.IsUpper(sentence[0])),
+                    $"{language}/{tier}/{type}: two-number story sentences must start with a capital letter.");
+                bool ratio = type is ElementaryQuizType.SumRatio or ElementaryQuizType.DifferenceRatio;
+                Require(question.UsesFractionFormatting == ratio,
+                    "Sum/difference ratio questions must use textbook fraction presentation.");
+                if (ratio && level < 5)
+                {
+                    string fraction = $"{Get("ratio-small")}/{Get("ratio-large")}";
+                    var fragments = TextbookFractionParser.ParseLine(contract.ProblemText);
+                    Require(fragments.Any(fragment => fragment.Math is not null && fragment.Text == fraction) &&
+                        string.Concat(fragments.Select(fragment => fragment.Text)) == contract.ProblemText,
+                        "Ratio presentation must preserve the given numerator/denominator and story wording.");
+                }
                 decimal quantity = level == 1 ? Get("quantity") : level == 2 ? Get("double-quantity") / 2
                     : level == 3 ? Get("quantity-first") + Get("quantity-second")
                     : Get("after") + Get("previous-reduction") - Get("added") * (type == ElementaryQuizType.DifferenceRatio ? 1 : 2);

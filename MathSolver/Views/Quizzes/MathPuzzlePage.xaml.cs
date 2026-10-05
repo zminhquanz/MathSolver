@@ -1756,11 +1756,12 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.PercentageProblem;
 
         ElementaryQuizContract? elementary = _currentQuestion.ElementaryProblem;
-        bool parseFractionSkills = elementary?.Kind == QuizProblemKind.FractionSkills;
+        bool parseFractionExpressions = elementary?.Kind == QuizProblemKind.FractionSkills ||
+            elementary?.Type is ElementaryQuizType.SumRatio or ElementaryQuizType.DifferenceRatio;
         foreach (var view in new[] { QuestionFractionExpressionView, QuestionComparisonFractionView,
             PresentedAnswerFractionView, FeedbackFractionView, SolutionFractionView, QuizDiagramExplanationFractionView }
             .Concat(ChoiceFractionViews))
-            view.ParseArithmeticExpressions = parseFractionSkills;
+            view.ParseArithmeticExpressions = parseFractionExpressions;
         UpdateElementaryChoiceLayout(elementary);
         UpdateQuizDiagram();
         if (elementary is not null)

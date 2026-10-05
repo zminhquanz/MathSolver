@@ -738,6 +738,10 @@
                                     <Label x:Name="QuizDiagramCaptionLabel" FontSize="15" FontAttributes="Bold"
                                            LineBreakMode="WordWrap" HorizontalTextAlignment="Center"
                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <controls:FractionExpressionView x:Name="QuizDiagramCaptionFractionView"
+                                        IsVisible="False" MathFontSize="15" WrapContent="True" TokenSpacing="4"
+                                        ParseArithmeticExpressions="True" HorizontalTextAlignment="Center"
+                                        HorizontalOptions="Fill" MathColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                     <GraphicsView x:Name="QuizVisualView" IsVisible="False" HeightRequest="260"
                                                   HorizontalOptions="Fill" />
                                     <Label x:Name="QuizVisualDataLabel" IsVisible="False" FontSize="14"

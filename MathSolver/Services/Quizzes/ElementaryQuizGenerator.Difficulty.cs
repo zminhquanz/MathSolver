@@ -90,6 +90,7 @@ public sealed partial class ElementaryQuizGenerator
         bool sum = type != ElementaryQuizType.DifferenceRatio;
         int given = sum ? total : difference;
         string quantityName = t.L(sum ? "tổng" : "hiệu số lớn và số bé", sum ? "sum" : "difference (larger minus smaller)");
+        string sentenceQuantityName = char.ToUpperInvariant(quantityName[0]) + quantityName[1..];
         if (level == 1)
         {
             quantity = t.Given("quantity", given);
@@ -109,7 +110,7 @@ public sealed partial class ElementaryQuizGenerator
             int x = given / 2;
             string first = t.Given("quantity-first", x), second = t.Given("quantity-second", given - x);
             quantity = $"({first}+{second})";
-            text = t.L($"{quantityName} của hai số bằng tổng của {first} và {second}. ",
+            text = t.L($"{sentenceQuantityName} của hai số bằng tổng của {first} và {second}. ",
                 $"The {quantityName} of the two numbers equals {first} plus {second}. ");
             t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity);
             scenario = "infer-quantity";
@@ -131,7 +132,7 @@ public sealed partial class ElementaryQuizGenerator
                 restored = $"({after}+{removed})";
                 t.Step(t.L("Khôi phục trước lần giảm", "Undo the decrease"), restored);
             }
-            text += t.L($"{quantityName} cuối cùng là {after}. ", $"The final {quantityName} is {after}. ");
+            text += t.L($"{sentenceQuantityName} cuối cùng là {after}. ", $"The final {quantityName} is {after}. ");
             quantity = sum ? $"({restored}-2*{added})" : $"({restored}-{added})";
             t.Step(t.L("Dữ kiện ban đầu", "Original quantity"), quantity);
             scenario = level == 5 ? "two-changes" : "reverse-change";

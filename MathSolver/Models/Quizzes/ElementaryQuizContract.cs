@@ -54,7 +54,8 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     public string? ComparisonLeftExpression { get; init; }
     public string? ComparisonRightExpression { get; init; }
 
-    public bool UsesFractionFormatting => Type is ElementaryQuizType.ReduceFraction or
+    public bool UsesFractionFormatting => Type is ElementaryQuizType.SumRatio or
+        ElementaryQuizType.DifferenceRatio or ElementaryQuizType.ReduceFraction or
         ElementaryQuizType.CompareFractions or ElementaryQuizType.MixedNumber or
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
         ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability;
