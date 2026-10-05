@@ -3,7 +3,6 @@ using MathSolver.Services;
 using MathSolver.Graphics;
 using MathSolver.Models;
 using System.Collections.ObjectModel;
-using Microsoft.Maui.Devices;
 
 namespace MathSolver.Views;
 
@@ -132,6 +131,7 @@ public partial class FormulaPage : ContentPage
         // GraphicsView không đè lên trang khác. Khôi phục trạng thái hiển thị
         // ngay khi quay lại, kể cả khi trang đích trước đó là SettingsMenuPage.
         RestoreSelectedSubTabVisualState();
+        OnFormulaSubTabGridSizeChanged(this, EventArgs.Empty);
 
         // Chuẩn bị nội dung đang chọn trước. Không tạo lại GeometryItems nếu
         // visual tree cũ vẫn còn; phần redraw GraphicsView được xử lý riêng.
@@ -631,6 +631,7 @@ public partial class FormulaPage : ContentPage
     private void UpdateUnknownComponentCardWidthsIfNeeded(
         bool force = false)
     {
+        RefreshLayoutTextScale();
         if (!_isUnknownComponentLayoutInitialized)
         {
             return;
@@ -716,6 +717,7 @@ public partial class FormulaPage : ContentPage
         ref double lastLayoutWidth,
         bool force)
     {
+        RefreshLayoutTextScale();
         double availableWidth =
             layout.Width;
 
@@ -903,10 +905,7 @@ public partial class FormulaPage : ContentPage
 
             RefreshSelectedFormulaSubTabLayout();
 
-#if ANDROID
-            await ScrollAndroidFormulaSubTabIntoViewAsync(
-                selectedTab);
-#endif
+            await ScrollFormulaSubTabIntoViewAsync(selectedTab);
         }
         finally
         {
@@ -1108,13 +1107,6 @@ public partial class FormulaPage : ContentPage
             AndroidFormulaGeometryTabIndicator,
             _selectedSubTab == FormulaSubTab.Geometry);
 #else
-        ResetSubTabButton(UnknownComponentTabButton);
-        ResetSubTabButton(ProportionTabButton);
-        ResetSubTabButton(MotionTabButton);
-        ResetSubTabButton(AverageTabButton);
-        ResetSubTabButton(MeasurementTabButton);
-        ResetSubTabButton(GeometryTabButton);
-
         Button selectedButton =
             _selectedSubTab switch
             {
@@ -1127,18 +1119,14 @@ public partial class FormulaPage : ContentPage
                 _ => UnknownComponentTabButton
             };
 
-        selectedButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "PrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.TextColorProperty,
-            "OnPrimaryColor");
-
-        selectedButton.SetDynamicResource(
-            Button.BorderColorProperty,
-            "PrimaryColor");
-        selectedButton.BorderWidth = 0d;
+        SelectionButtonStyler.Select(
+            selectedButton,
+            UnknownComponentTabButton,
+            ProportionTabButton,
+            MotionTabButton,
+            AverageTabButton,
+            MeasurementTabButton,
+            GeometryTabButton);
 #endif
     }
 
@@ -1201,24 +1189,53 @@ public partial class FormulaPage : ContentPage
             // Trang có thể vừa rời visual tree khi đổi tab chính.
         }
     }
-#else
-    private static void ResetSubTabButton(Button button)
-    {
-        button.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "WallpaperSurfaceAltColor");
-
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            "WallpaperTextPrimaryColor");
-
-        button.SetDynamicResource(
-            Button.BorderColorProperty,
-            "WallpaperBorderColor");
-        button.BorderWidth = 1d;
-    }
 #endif
 
+
+    private double _layoutTextScale = 1d;
+
+    private void RefreshLayoutTextScale()
+    {
+        double scale = ResponsiveLayoutPolicy.TextScale;
+        if (Math.Abs(scale - _layoutTextScale) < 0.001d)
+            return;
+        _layoutTextScale = scale;
+        _lastUnknownComponentLayoutWidth = -1d;
+        _lastPlaneGeometryLayoutWidth = -1d;
+        _lastSolidGeometryLayoutWidth = -1d;
+    }
+
+    private void OnFormulaSubTabGridSizeChanged(object? sender, EventArgs e)
+    {
+        if (!FormulaSubTabBar.IsVisible) return;
+        if (FormulaSubTabScrollView.UpdateTabLayout(FormulaSubTabGrid))
+            Dispatcher.Dispatch(async () => await ScrollFormulaSubTabIntoViewAsync(_selectedSubTab));
+    }
+
+    private async Task ScrollFormulaSubTabIntoViewAsync(FormulaSubTab tab)
+    {
+#if ANDROID
+        await ScrollAndroidFormulaSubTabIntoViewAsync(tab);
+#else
+        Button selected = tab switch
+        {
+            FormulaSubTab.UnknownComponent => UnknownComponentTabButton,
+            FormulaSubTab.Proportion => ProportionTabButton,
+            FormulaSubTab.Motion => MotionTabButton,
+            FormulaSubTab.Average => AverageTabButton,
+            FormulaSubTab.Measurement => MeasurementTabButton,
+            _ => GeometryTabButton
+        };
+        try
+        {
+            await FormulaSubTabScrollView.ScrollToAsync(selected, ScrollToPosition.Center, true);
+        }
+        catch (InvalidOperationException)
+        {
+            // The page may have detached while switching main tabs.
+        }
+#endif
+    }
     protected override void OnSizeAllocated(
         double width,
         double height)
@@ -1232,9 +1249,13 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
+        if (FormulaSubTabBar.IsVisible)
+            FormulaSubTabBar.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
+
         Dispatcher.Dispatch(
             () =>
             {
+                OnFormulaSubTabGridSizeChanged(this, EventArgs.Empty);
                 if (_selectedSubTab ==
                     FormulaSubTab.UnknownComponent)
                 {
@@ -1269,22 +1290,13 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        // Giữ đúng ba thẻ mỗi hàng trên desktop. Khi cửa sổ thật sự hẹp mới
-        // hạ xuống hai hoặc một cột để nội dung không bị ép và mất khả năng đọc.
-        int columnCount =
-            availableWidth switch
-            {
-                >= 900d => 3,
-                >= 580d => 2,
-                _ => 1
-            };
+        int columnCount = ResponsiveLayoutPolicy.Columns(availableWidth - 6d, 280d, 3, 14d);
 
         UpdateFlexCardWidths(
             UnknownComponentFlexLayout,
             availableWidth,
             columnCount,
-            horizontalMarginPerCard: 14d,
-            minimumCardWidth: 250d);
+            horizontalMarginPerCard: 14d);
 
         ScheduleUnknownComponentFlexHeightUpdate(
             columnCount);
@@ -1440,8 +1452,7 @@ public partial class FormulaPage : ContentPage
                 layout,
                 availableWidth,
                 columnCount,
-                horizontalMarginPerCard: 10d,
-                minimumCardWidth: 112d);
+                horizontalMarginPerCard: 10d);
 
         if (requestedWidth <= 0d)
         {
@@ -1585,42 +1596,14 @@ public partial class FormulaPage : ContentPage
     private static int GetGeometryColumnCount(
         double availableWidth)
     {
-        // Điện thoại luôn dùng hai cột, kể cả khi xoay ngang.
-        if (DeviceInfo.Idiom ==
-            DeviceIdiom.Phone)
-        {
-            return 2;
-        }
-
-        // Cửa sổ quá hẹp cũng dùng hai cột để tránh card bị bóp nhỏ.
-        if (availableWidth < 600d)
-        {
-            return 2;
-        }
-
-        // Desktop rộng: 5 card. Laptop và tablet lớn: 4 card.
-        // Tablet 10 inch trở xuống: 3 card.
-        if (DeviceInfo.Idiom ==
-                DeviceIdiom.Desktop &&
-            availableWidth >= 1500d)
-        {
-            return 5;
-        }
-
-        if (availableWidth >= 950d)
-        {
-            return 4;
-        }
-
-        return 3;
+        return ResponsiveLayoutPolicy.Columns(availableWidth - 6d, 250d, 5, 10d);
     }
 
     private static double UpdateFlexCardWidths(
         FlexLayout layout,
         double availableWidth,
         int columnCount,
-        double horizontalMarginPerCard,
-        double minimumCardWidth)
+        double horizontalMarginPerCard)
     {
         if (availableWidth <= 0 ||
             layout.Children.Count == 0 ||
@@ -1644,9 +1627,7 @@ public partial class FormulaPage : ContentPage
                 columnCount);
 
         requestedWidth =
-            Math.Max(
-                minimumCardWidth,
-                requestedWidth);
+            Math.Max(1d, requestedWidth);
 
         bool sizeChanged =
             false;
@@ -1777,6 +1758,7 @@ public partial class FormulaPage : ContentPage
 
                 LocalizationService.Attach(
                     this);
+                Dispatcher.Dispatch(() => OnFormulaSubTabGridSizeChanged(this, EventArgs.Empty));
             });
     }
 

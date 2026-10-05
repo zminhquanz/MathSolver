@@ -4,6 +4,7 @@
     x:Class="MathSolver.Views.ProportionFormulaView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill"
@@ -14,10 +15,10 @@
         VerticalOptions="Fill"
         VerticalScrollBarVisibility="Default">
 
-        <VerticalStackLayout
+        <VerticalStackLayout x:Name="FormulaContent" Style="{StaticResource SolverContentStyle}" SizeChanged="OnFormulaContentSizeChanged"
             Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,28', Default='20,16,20,28'}"
             Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
-            HorizontalOptions="Fill">
+            HorizontalOptions="Center">
 
             <VerticalStackLayout
                 Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
@@ -184,7 +185,7 @@
                         LineBreakMode="WordWrap"
                         TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Grid controls:AdaptiveColumns.MinimumColumnWidth="240" ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="10">
                         <Button
                             x:Name="SingleModeButton"
                             Grid.Column="0"

@@ -137,10 +137,10 @@
 
         <Style x:Key="TimesTableRangeRadioStyle" TargetType="RadioButton">
             <Setter Property="ControlTemplate" Value="{StaticResource TimesTableRangeRadioTemplate}" />
-            <Setter Property="WidthRequest" Value="24" />
-            <Setter Property="HeightRequest" Value="24" />
-            <Setter Property="MinimumWidthRequest" Value="24" />
-            <Setter Property="MinimumHeightRequest" Value="24" />
+            <Setter Property="WidthRequest" Value="48" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="MinimumWidthRequest" Value="48" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
             <Setter Property="BackgroundColor" Value="Transparent" />
         </Style>
     </ContentPage.Resources>
@@ -153,6 +153,7 @@
             Margin="{OnPlatform Android='-12,-10,-12,-20', WinUI='-20,-16', Default='-20,-16'}" />
         <CollectionView
             x:Name="TablesCollectionView"
+            HorizontalOptions="Center" MaximumWidthRequest="1320" SizeChanged="OnTablesSizeChanged"
             x:DataType="views:MultiplicationTablePage"
             ItemsSource="{Binding TableCards}"
             SelectionMode="None"
@@ -245,7 +246,7 @@
                                     Style="{StaticResource SubLabelStyle}" />
 
                                 <Grid
-                                    ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*,*', Default='*,*,*'}"
+                                    controls:AdaptiveColumns.MinimumColumnWidth="280" controls:AdaptiveColumns.MaximumColumns="3" ColumnDefinitions="*"
                                     RowDefinitions="{OnPlatform Android='Auto,Auto,Auto', WinUI='Auto', Default='Auto'}"
                                     ColumnSpacing="12"
                                     RowSpacing="8">
@@ -255,19 +256,24 @@
                                         Grid.Column="0"
                                         Style="{StaticResource CardBorderStyle}"
                                         Padding="14,12">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnRangeCardTapped" CommandParameter="Range1To10Radio" />
+                                        </Border.GestureRecognizers>
 
-                                        <HorizontalStackLayout
-                                            Spacing="10"
+                                        <Grid ColumnDefinitions="Auto,*"
+                                            ColumnSpacing="10"
                                             VerticalOptions="Center">
 
                                             <RadioButton
                                                 x:Name="Range1To10Radio"
                                                 Style="{StaticResource TimesTableRangeRadioStyle}"
                                                 GroupName="RangeGroup"
+                                                SemanticProperties.Description="{localization:Translate TimesTables.Range1To10Title}"
+                                                SemanticProperties.Hint="{localization:Translate TimesTables.Range1To10Subtitle}"
                                                 CheckedChanged="OnRangeChanged"
                                                 VerticalOptions="Center" />
 
-                                            <VerticalStackLayout Spacing="2">
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
                                                 <Label
                                                     Text="{localization:Translate TimesTables.Range1To10Title}"
                                                     FontSize="16"
@@ -280,7 +286,7 @@
                                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                             </VerticalStackLayout>
 
-                                        </HorizontalStackLayout>
+                                        </Grid>
                                     </Border>
 
                                     <Border
@@ -289,19 +295,24 @@
                                         Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                                         Style="{StaticResource CardBorderStyle}"
                                         Padding="14,12">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnRangeCardTapped" CommandParameter="Range11To20Radio" />
+                                        </Border.GestureRecognizers>
 
-                                        <HorizontalStackLayout
-                                            Spacing="10"
+                                        <Grid ColumnDefinitions="Auto,*"
+                                            ColumnSpacing="10"
                                             VerticalOptions="Center">
 
                                             <RadioButton
                                                 x:Name="Range11To20Radio"
                                                 Style="{StaticResource TimesTableRangeRadioStyle}"
                                                 GroupName="RangeGroup"
+                                                SemanticProperties.Description="{localization:Translate TimesTables.Range11To20Title}"
+                                                SemanticProperties.Hint="{localization:Translate TimesTables.Range11To20Subtitle}"
                                                 CheckedChanged="OnRangeChanged"
                                                 VerticalOptions="Center" />
 
-                                            <VerticalStackLayout Spacing="2">
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
                                                 <Label
                                                     Text="{localization:Translate TimesTables.Range11To20Title}"
                                                     FontSize="16"
@@ -314,7 +325,7 @@
                                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                             </VerticalStackLayout>
 
-                                        </HorizontalStackLayout>
+                                        </Grid>
                                     </Border>
 
                                     <Border
@@ -323,19 +334,24 @@
                                         Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                                         Style="{StaticResource CardBorderStyle}"
                                         Padding="14,12">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnRangeCardTapped" CommandParameter="RangeAllRadio" />
+                                        </Border.GestureRecognizers>
 
-                                        <HorizontalStackLayout
-                                            Spacing="10"
+                                        <Grid ColumnDefinitions="Auto,*"
+                                            ColumnSpacing="10"
                                             VerticalOptions="Center">
 
                                             <RadioButton
                                                 x:Name="RangeAllRadio"
                                                 Style="{StaticResource TimesTableRangeRadioStyle}"
                                                 GroupName="RangeGroup"
+                                                SemanticProperties.Description="{localization:Translate TimesTables.RangeAllTitle}"
+                                                SemanticProperties.Hint="{localization:Translate TimesTables.RangeAllSubtitle}"
                                                 CheckedChanged="OnRangeChanged"
                                                 VerticalOptions="Center" />
 
-                                            <VerticalStackLayout Spacing="2">
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
                                                 <Label
                                                     Text="{localization:Translate TimesTables.RangeAllTitle}"
                                                     FontSize="16"
@@ -348,7 +364,7 @@
                                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                             </VerticalStackLayout>
 
-                                        </HorizontalStackLayout>
+                                        </Grid>
                                     </Border>
 
                                 </Grid>
@@ -389,7 +405,7 @@
             <CollectionView.ItemsLayout>
                 <GridItemsLayout
                     Orientation="Vertical"
-                    Span="{OnPlatform Android=2, WinUI=5, Default=5}"
+                    Span="1"
                     HorizontalItemSpacing="{OnPlatform Android=8, WinUI=12, Default=12}"
                     VerticalItemSpacing="{OnPlatform Android=8, WinUI=12, Default=12}" />
             </CollectionView.ItemsLayout>
@@ -400,6 +416,7 @@
                         <VerticalStackLayout Spacing="12">
                             <Label
                                 Text="{Binding Title}"
+                                SemanticProperties.HeadingLevel="Level2"
                                 HorizontalTextAlignment="Center"
                                 FontSize="20"
                                 FontAttributes="Bold"

@@ -8,6 +8,7 @@ public partial class MathPuzzlePage
 {
     private bool _practiceSettingsExpanded = true;
     private bool? _compactSettings;
+    private (bool Inline, bool StackActions)? _summaryLayout;
     private int _practiceScrollVersion;
     private readonly Dictionary<Button, (string Icon, string Key)> _choiceStatuses = [];
 
@@ -60,8 +61,12 @@ public partial class MathPuzzlePage
                     : _selectedBasicOperation is { } operation ? BasicArithmeticEngine.GetSymbol(operation) : ProblemMixedButton.Text));
         PracticeSummaryLabel.Text = $"{mode} · {new string('★', (int)_selectedCurriculumTier)} · " +
             string.Join(" · ", selections.Where(value => !string.IsNullOrWhiteSpace(value)));
-        ChangePracticeSettingsButton.Text = TranslateQuiz(_practiceSettingsExpanded ? "Quiz.HideSettings" : "Quiz.ChangeSettings");
-        StartPracticeButton.IsEnabled = _currentQuestion is not null;
+        ChangePracticeSettingsButton.Text = TranslateQuiz(_practiceSettingsExpanded
+            ? "Quiz.HideSettingsCompact" : "Quiz.ChangeSettingsCompact");
+        string settingsDescription = TranslateQuiz(_practiceSettingsExpanded ? "Quiz.HideSettings" : "Quiz.ChangeSettings");
+        SemanticProperties.SetDescription(ChangePracticeSettingsButton, settingsDescription);
+        ToolTipProperties.SetText(ChangePracticeSettingsButton, settingsDescription);
+        Dispatcher.Dispatch(UpdatePracticeSummaryLayout);
     }
 
     private void SetPracticeSettingsExpanded(bool expanded)
@@ -76,14 +81,6 @@ public partial class MathPuzzlePage
     {
         SetPracticeSettingsExpanded(!_practiceSettingsExpanded);
         if (_practiceSettingsExpanded) TrueFalseModeButton.Focus();
-    }
-
-    private async void OnStartPracticeClicked(object? sender, EventArgs e)
-    {
-        if (_currentQuestion is null) return;
-        SetPracticeSettingsExpanded(false);
-        ChangePracticeSettingsButton.Focus();
-        await ScrollToPracticeElementAsync(QuestionCard, ScrollToPosition.Start);
     }
 
     private async void OnEssayWorkFocused(object? sender, FocusEventArgs e)
@@ -127,29 +124,48 @@ public partial class MathPuzzlePage
 
     private void OnPracticeLayoutSizeChanged(object? sender, EventArgs e)
     {
-        PracticeSettingsPanel.WidthRequest = Math.Min(1120,
-            Math.Max(0, QuizContent.Width - QuizContent.Padding.HorizontalThickness));
         double width = PracticeSummaryGrid.Width;
         if (width <= 0) return;
+        UpdatePracticeSummaryLayout();
         bool compact = QuizResponsiveLayout.UseCompactSettings(width, CurrentTextScale);
         if (_compactSettings != compact)
         {
             _compactSettings = compact;
-            PracticeSummaryGrid.ColumnDefinitions.Clear();
-            PracticeSummaryGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-            PracticeSummaryGrid.ColumnDefinitions.Add(new ColumnDefinition(compact ? GridLength.Star : GridLength.Auto));
-            if (!compact) PracticeSummaryGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-            Grid.SetColumnSpan(PracticeSummaryLabel, compact ? 2 : 1);
-            Grid.SetRow(ChangePracticeSettingsButton, compact ? 1 : 0);
-            Grid.SetColumn(ChangePracticeSettingsButton, compact ? 0 : 1);
-            Grid.SetRow(OpenAiQuestionBankButton, compact ? 1 : 0);
-            Grid.SetColumn(OpenAiQuestionBankButton, compact ? 1 : 2);
-            Grid.SetRow(AiQuestionBankProgressLabel, compact ? 2 : 1);
-            Grid.SetColumnSpan(AiQuestionBankProgressLabel, compact ? 2 : 3);
             UpdateQuestionModeLayout();
             UpdateDifficultyLayout(compact);
         }
         UpdateElementaryChoiceLayout(_currentQuestion?.ElementaryProblem);
+    }
+
+    private void UpdatePracticeSummaryLayout()
+    {
+        double width = PracticeSummaryGrid.Width;
+        if (width <= 0) return;
+        // Measure the actual localized labels, including system font scaling.
+        double actionsWidth = ((IView)ChangePracticeSettingsButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
+            + ((IView)OpenAiQuestionBankButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
+            + PracticeSummaryActionsGrid.ColumnSpacing;
+        double summaryWidth = ((IView)PracticeSummaryLabel).Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
+        bool inline = width >= actionsWidth + PracticeSummaryGrid.ColumnSpacing + Math.Min(summaryWidth, 320 * CurrentTextScale);
+        bool stackActions = width < actionsWidth;
+        if (_summaryLayout == (inline, stackActions)) return;
+        _summaryLayout = (inline, stackActions);
+
+        Grid.SetColumnSpan(PracticeSummaryLabel, inline ? 1 : 2);
+        Grid.SetRow(PracticeSummaryActionsGrid, inline ? 0 : 1);
+        Grid.SetColumn(PracticeSummaryActionsGrid, inline ? 1 : 0);
+        Grid.SetColumnSpan(PracticeSummaryActionsGrid, inline ? 1 : 2);
+        PracticeSummaryActionsGrid.Margin = inline ? Thickness.Zero : new Thickness(0, 6, 0, 0);
+        PracticeSummaryActionsGrid.ColumnDefinitions.Clear();
+        PracticeSummaryActionsGrid.RowDefinitions.Clear();
+        PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
+        if (!stackActions)
+            PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
+        PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        if (stackActions) PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        Grid.SetRow(OpenAiQuestionBankButton, stackActions ? 1 : 0);
+        Grid.SetColumn(OpenAiQuestionBankButton, stackActions ? 0 : 1);
+        Grid.SetRow(AiQuestionBankProgressLabel, inline ? 1 : 2);
     }
 
     private void UpdateDifficultyLayout(bool compact)

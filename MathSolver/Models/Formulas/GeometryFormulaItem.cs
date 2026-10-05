@@ -41,6 +41,8 @@ public sealed class GeometryFormulaItem
 
     public ObservableCollection<string> Symbols { get; init; } = [];
 
+    public string DiagramDescription => Name + ". " + string.Join(". ", Symbols);
+
     /// <summary>
     /// Các tính chất nhận biết và quan hệ hình học, hiển thị sau phần chú
     /// thích ký hiệu. Công thức tính toán vẫn được giữ riêng trong Formulas.

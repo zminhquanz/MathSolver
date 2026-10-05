@@ -24,11 +24,6 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private const int ScientificDisplayDigitThreshold = 18;
     private const int ScientificDisplaySignificantDigits = 12;
 
-    // Chiều cao tối thiểu của một card nhập liệu khi BindableLayout vừa tạo
-    // children và WinUI chưa kịp arrange hàng mới. Giá trị này chỉ là fallback;
-    // sau khi card được đo, chiều cao thực (kể cả label xuống dòng) vẫn được dùng.
-    private const double GeometryInputCardMinimumHeight = 116d;
-
     // OctoDouble vẫn tính nội bộ với khoảng 127-128 chữ số có nghĩa,
     // nhưng giao diện chỉ hiển thị tối đa 10 chữ số sau dấu thập phân.
     private const int OctoDoubleScientificSignificantDigits =
@@ -67,8 +62,11 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
     private bool _isUpdatingEntryText;
     private readonly Dictionary<Entry, string> _pendingRestoredEntryTexts = [];
+    private bool _isUpdatingInputGridLayout;
     private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
+    private bool? _usesTwoMainColumns;
+    private bool? _usesHorizontalPreview;
     private bool _isWallpaperVisualSyncSubscribed;
 
     public ObservableCollection<GeometryFormulaItem> GeometryItems { get; } =
@@ -170,14 +168,14 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             () =>
             {
                 UpdateMainResponsiveLayout();
-                UpdateInputFieldWidths();
+                UpdateInputGridLayout();
                 SynchronizeFormulaPreviewHeight();
 
                 Dispatcher.Dispatch(
                     () =>
                     {
                         UpdateMainResponsiveLayout();
-                        UpdateInputFieldWidths();
+                        UpdateInputGridLayout();
                         SynchronizeFormulaPreviewHeight();
                     });
             });
@@ -459,19 +457,17 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         Dispatcher.Dispatch(
             () =>
             {
-                UpdateInputFieldWidths();
+                UpdateInputGridLayout();
                 SynchronizeFormulaPreviewHeight();
-                ScheduleInputFlexHeightUpdate();
 
                 // BindableLayout tạo công thức, chú thích và các ô nhập
                 // sau một lượt layout. Đo lại lần hai để kích thước cuối
-                // của từng card và chiều cao FlexLayout đều chính xác.
+                // của từng card và các hàng tự đo theo nội dung.
                 Dispatcher.Dispatch(
                     () =>
                     {
-                        UpdateInputFieldWidths();
+                        UpdateInputGridLayout();
                         SynchronizeFormulaPreviewHeight();
-                        ScheduleInputFlexHeightUpdate();
                     });
             });
     }
@@ -479,12 +475,6 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private void BuildInputFields(
         string geometryId)
     {
-        // Không giữ HeightRequest của hình trước. Nếu hình cũ chỉ có một hàng
-        // nhưng hình mới cần hai hàng, chiều cao cũ sẽ cắt hàng dưới trước khi
-        // WinUI kịp đo các card mới và tạo ra vòng lặp không thể tự mở rộng.
-        GeometryInputFlexLayout.HeightRequest =
-            -1d;
-
         _pendingRestoredEntryTexts.Clear();
         InputFields.Clear();
 
@@ -510,8 +500,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 });
         }
 
-        GeometryInputFlexLayout.InvalidateMeasure();
-        ScheduleInputFlexHeightUpdate();
+        Dispatcher.Dispatch(UpdateInputGridLayout);
     }
 
     private static IReadOnlyList<GeometryInputFieldDefinition>
@@ -765,27 +754,16 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             BuildInputFields(
                 SelectedGeometry.Id);
 
-            /*
-             * BuildInputFields tạo lại toàn bộ BindableLayout children.
-             * Ngay tại thời điểm này, các card mới vẫn đang dùng WidthRequest
-             * mặc định từ DataTemplate và chưa được đo theo chiều rộng thật
-             * của GeometryInputFlexLayout.
-             *
-             * Đợi hai lượt UI layout giống OnGeometryShapeSelected, rồi tính
-             * lại WidthRequest và HeightRequest. Điều này giữ kích thước card
-             * ổn định khi đổi qua lại giữa Số nguyên và Số thập phân.
-             */
+            // BindableLayout adds the new cards before the next layout pass.
             Dispatcher.Dispatch(
                 () =>
                 {
-                    UpdateInputFieldWidths();
-                    ScheduleInputFlexHeightUpdate();
+                    UpdateInputGridLayout();
 
                     Dispatcher.Dispatch(
                         () =>
                         {
-                            UpdateInputFieldWidths();
-                            ScheduleInputFlexHeightUpdate();
+                            UpdateInputGridLayout();
                         });
                 });
         }
@@ -2737,6 +2715,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         UpdateMainResponsiveLayout();
     }
 
+    private void OnGeometryControlColumnSizeChanged(object? sender, EventArgs e) => SynchronizeFormulaPreviewHeight();
+
     private void OnGeometryDiagramViewSizeChanged(
         object? sender,
         EventArgs e)
@@ -2744,727 +2724,151 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         // Drawable dùng chính dirtyRect mới để scale theo vùng border thực.
         // Chủ động invalidate giúp WinUI/Android cập nhật ngay sau khi layout
         // chuyển giữa hai cột và một cột.
+        SynchronizeFormulaPreviewHeight();
         GeometryDiagramView.Invalidate();
     }
 
     private void UpdateMainResponsiveLayout()
     {
-        if (_isUpdatingResponsiveLayout)
-        {
+        if (_isUpdatingResponsiveLayout || GeometryMainResponsiveGrid.Width <= 0d)
             return;
-        }
 
-        double availableWidth =
-            GeometryMainResponsiveGrid.Width;
-
-        if (availableWidth <=
-            0d)
-        {
-            return;
-        }
-
-        _isUpdatingResponsiveLayout =
-            true;
-
+        _isUpdatingResponsiveLayout = true;
         try
         {
-            bool useTwoMainColumns =
-                availableWidth >=
-                900d;
-
-            GeometryMainResponsiveGrid
-                .ColumnDefinitions
-                .Clear();
-
-            GeometryMainResponsiveGrid
-                .RowDefinitions
-                .Clear();
-
-            if (useTwoMainColumns)
+            bool wide = !ResponsiveLayoutPolicy.UseStackedLayout(GeometryMainResponsiveGrid.Width, 1040d);
+            if (_usesTwoMainColumns != wide)
             {
-                const double leftStar =
-                    1d;
+                _usesTwoMainColumns = wide;
+                GeometryMainResponsiveGrid.ColumnDefinitions.Clear();
+                GeometryMainResponsiveGrid.RowDefinitions.Clear();
+                GeometryMainResponsiveGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                GeometryMainResponsiveGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                if (wide)
+                    GeometryMainResponsiveGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                else
+                    GeometryMainResponsiveGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-                const double rightStar =
-                    1d;
-
-                GeometryMainResponsiveGrid
-                    .ColumnDefinitions
-                    .Add(
-                        new ColumnDefinition
-                        {
-                            Width =
-                                new GridLength(
-                                    leftStar,
-                                    GridUnitType.Star)
-                        });
-
-                GeometryMainResponsiveGrid
-                    .ColumnDefinitions
-                    .Add(
-                        new ColumnDefinition
-                        {
-                            Width =
-                                new GridLength(
-                                    rightStar,
-                                    GridUnitType.Star)
-                        });
-
-                GeometryMainResponsiveGrid
-                    .RowDefinitions
-                    .Add(
-                        new RowDefinition
-                        {
-                            Height =
-                                GridLength.Auto
-                        });
-
-                Grid.SetRow(
-                    GeometryControlColumn,
-                    0);
-
-                Grid.SetColumn(
-                    GeometryControlColumn,
-                    0);
-
-                Grid.SetRow(
-                    FormulaPreviewBorder,
-                    0);
-
-                Grid.SetColumn(
-                    FormulaPreviewBorder,
-                    1);
-
-                GeometryMainResponsiveGrid.ColumnSpacing =
-                    14d;
-
-                GeometryMainResponsiveGrid.RowSpacing =
-                    0d;
+                Grid.SetRow(GeometryControlColumn, 0);
+                Grid.SetColumn(GeometryControlColumn, 0);
+                Grid.SetRow(FormulaPreviewBorder, wide ? 0 : 1);
+                Grid.SetColumn(FormulaPreviewBorder, wide ? 1 : 0);
+                GeometryMainResponsiveGrid.ColumnSpacing = wide ? 14d : 0d;
+                GeometryMainResponsiveGrid.RowSpacing = wide ? 0d : 14d;
             }
-            else
-            {
-                GeometryMainResponsiveGrid
-                    .ColumnDefinitions
-                    .Add(
-                        new ColumnDefinition
-                        {
-                            Width =
-                                GridLength.Star
-                        });
-
-                GeometryMainResponsiveGrid
-                    .RowDefinitions
-                    .Add(
-                        new RowDefinition
-                        {
-                            Height =
-                                GridLength.Auto
-                        });
-
-                GeometryMainResponsiveGrid
-                    .RowDefinitions
-                    .Add(
-                        new RowDefinition
-                        {
-                            Height =
-                                GridLength.Auto
-                        });
-
-                Grid.SetRow(
-                    GeometryControlColumn,
-                    0);
-
-                Grid.SetColumn(
-                    GeometryControlColumn,
-                    0);
-
-                Grid.SetRow(
-                    FormulaPreviewBorder,
-                    1);
-
-                Grid.SetColumn(
-                    FormulaPreviewBorder,
-                    0);
-
-                GeometryMainResponsiveGrid.ColumnSpacing =
-                    0d;
-
-                GeometryMainResponsiveGrid.RowSpacing =
-                    14d;
-            }
-
-            UpdateFormulaPreviewContentLayout(
-                availableWidth,
-                useTwoMainColumns);
+            UpdateFormulaPreviewContentLayout();
         }
         finally
         {
-            _isUpdatingResponsiveLayout =
-                false;
+            _isUpdatingResponsiveLayout = false;
         }
-
-        GeometryMainResponsiveGrid.InvalidateMeasure();
-
-        Dispatcher.Dispatch(
-            SynchronizeFormulaPreviewHeight);
+        Dispatcher.Dispatch(SynchronizeFormulaPreviewHeight);
     }
 
-    private void UpdateFormulaPreviewContentLayout(
-        double availableWidth,
-        bool useTwoMainColumns)
+    private void OnFormulaPreviewContentGridSizeChanged(object? sender, EventArgs e)
     {
-        FormulaPreviewContentGrid
-            .ColumnDefinitions
-            .Clear();
+        UpdateFormulaPreviewContentLayout();
+        SynchronizeFormulaPreviewHeight();
+    }
 
-        FormulaPreviewContentGrid
-            .RowDefinitions
-            .Clear();
-
-        // Khi phần preview nằm bên phải, luôn dùng bố cục ngang gọn:
-        // hình minh họa bên trái, công thức và chú thích bên phải.
-        if (useTwoMainColumns)
-        {
-            FormulaPreviewContentGrid
-                .ColumnDefinitions
-                .Add(
-                    new ColumnDefinition
-                    {
-                        Width =
-                            new GridLength(
-                                11d,
-                                GridUnitType.Star)
-                    });
-
-            FormulaPreviewContentGrid
-                .ColumnDefinitions
-                .Add(
-                    new ColumnDefinition
-                    {
-                        Width =
-                            new GridLength(
-                                9d,
-                                GridUnitType.Star)
-                    });
-
-            FormulaPreviewContentGrid
-                .RowDefinitions
-                .Add(
-                    new RowDefinition
-                    {
-                        Height =
-                            GridLength.Star
-                    });
-
-            Grid.SetRow(
-                FormulaDiagramPanel,
-                0);
-
-            Grid.SetColumn(
-                FormulaDiagramPanel,
-                0);
-
-            Grid.SetRow(
-                FormulaTextPanel,
-                0);
-
-            Grid.SetColumn(
-                FormulaTextPanel,
-                1);
-
-            FormulaPreviewContentGrid.ColumnSpacing =
-                10d;
-
-            FormulaPreviewContentGrid.RowSpacing =
-                0d;
-
+    private void UpdateFormulaPreviewContentLayout()
+    {
+        // Use the actual preview width, including when it occupies only half the page.
+        double width = FormulaPreviewContentGrid.Width;
+        if (width <= 0d)
             return;
-        }
-
-        // Tablet nhỏ vẫn có đủ chiều rộng để giữ hình và công thức cạnh nhau.
-        if (availableWidth >=
-            650d)
-        {
-            FormulaPreviewContentGrid
-                .ColumnDefinitions
-                .Add(
-                    new ColumnDefinition
-                    {
-                        Width =
-                            new GridLength(
-                                11d,
-                                GridUnitType.Star)
-                    });
-
-            FormulaPreviewContentGrid
-                .ColumnDefinitions
-                .Add(
-                    new ColumnDefinition
-                    {
-                        Width =
-                            new GridLength(
-                                9d,
-                                GridUnitType.Star)
-                    });
-
-            FormulaPreviewContentGrid
-                .RowDefinitions
-                .Add(
-                    new RowDefinition
-                    {
-                        Height =
-                            GridLength.Star
-                    });
-
-            Grid.SetRow(
-                FormulaDiagramPanel,
-                0);
-
-            Grid.SetColumn(
-                FormulaDiagramPanel,
-                0);
-
-            Grid.SetRow(
-                FormulaTextPanel,
-                0);
-
-            Grid.SetColumn(
-                FormulaTextPanel,
-                1);
-
-            FormulaPreviewContentGrid.ColumnSpacing =
-                10d;
-
-            FormulaPreviewContentGrid.RowSpacing =
-                0d;
-
+        bool horizontal = !ResponsiveLayoutPolicy.UseStackedLayout(width, 520d);
+        if (_usesHorizontalPreview == horizontal)
             return;
-        }
 
-        // Điện thoại: xếp dọc để nội dung không bị quá hẹp.
-        FormulaPreviewContentGrid
-            .ColumnDefinitions
-            .Add(
-                new ColumnDefinition
-                {
-                    Width =
-                        GridLength.Star
-                });
+        _usesHorizontalPreview = horizontal;
+        FormulaPreviewContentGrid.ColumnDefinitions.Clear();
+        FormulaPreviewContentGrid.RowDefinitions.Clear();
+        FormulaPreviewContentGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        FormulaPreviewContentGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        if (horizontal)
+            FormulaPreviewContentGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        else
+            FormulaPreviewContentGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        FormulaPreviewContentGrid
-            .RowDefinitions
-            .Add(
-                new RowDefinition
-                {
-                    Height =
-                        GridLength.Star
-                });
-
-        FormulaPreviewContentGrid
-            .RowDefinitions
-            .Add(
-                new RowDefinition
-                {
-                    Height =
-                        GridLength.Auto
-                });
-
-        Grid.SetRow(
-            FormulaDiagramPanel,
-            0);
-
-        Grid.SetColumn(
-            FormulaDiagramPanel,
-            0);
-
-        Grid.SetRow(
-            FormulaTextPanel,
-            1);
-
-        Grid.SetColumn(
-            FormulaTextPanel,
-            0);
-
-        FormulaPreviewContentGrid.ColumnSpacing =
-            0d;
-
-        FormulaPreviewContentGrid.RowSpacing =
-            8d;
+        Grid.SetRow(FormulaDiagramPanel, 0);
+        Grid.SetColumn(FormulaDiagramPanel, 0);
+        Grid.SetRow(FormulaTextPanel, horizontal ? 0 : 1);
+        Grid.SetColumn(FormulaTextPanel, horizontal ? 1 : 0);
+        FormulaPreviewContentGrid.ColumnSpacing = horizontal ? 10d : 0d;
+        FormulaPreviewContentGrid.RowSpacing = horizontal ? 0d : 10d;
     }
 
     private void SynchronizeFormulaPreviewHeight()
     {
-        if (_isSynchronizingFormulaPreviewHeight)
-        {
+        if (_isSynchronizingFormulaPreviewHeight || GeometryMainResponsiveGrid.Width <= 0d)
             return;
-        }
 
-        double availableWidth =
-            GeometryMainResponsiveGrid.Width;
-
-        if (availableWidth <=
-            0d)
-        {
-            return;
-        }
-
-        _isSynchronizingFormulaPreviewHeight =
-            true;
-
+        _isSynchronizingFormulaPreviewHeight = true;
         try
         {
-            bool useTwoMainColumns =
-                availableWidth >=
-                900d;
+            // Align the two desktop panels without clipping longer formulas or large text.
+            double minimumHeight = _usesTwoMainColumns == true && GeometryControlColumn.Height > 0d
+                ? Math.Ceiling(GeometryControlColumn.Height)
+                : -1d;
+            if (Math.Abs(FormulaPreviewBorder.MinimumHeightRequest - minimumHeight) >= 1d)
+                FormulaPreviewBorder.MinimumHeightRequest = minimumHeight;
 
-            if (useTwoMainColumns)
+            double width = GeometryDiagramView.Width;
+            if (width > 0d)
             {
-                double controlColumnHeight =
-                    GeometryControlColumn.Height;
-
-                if (!double.IsFinite(
-                        controlColumnHeight) ||
-                    controlColumnHeight <=
-                        0d)
-                {
-                    return;
-                }
-
-                // Ba card bên trái quyết định chiều cao duy nhất của hàng.
-                // Preview không còn tự cao lên khi đổi sang hình nón.
-                double requestedHeight =
-                    Math.Ceiling(
-                        controlColumnHeight);
-
-                FormulaPreviewBorder.MinimumHeightRequest =
-                    requestedHeight;
-
-                FormulaPreviewBorder.MaximumHeightRequest =
-                    requestedHeight;
-
-                FormulaPreviewBorder.HeightRequest =
-                    requestedHeight;
-
-                // Phần hình chiếm toàn bộ chiều cao còn lại sau tiêu đề.
-                double diagramHeight =
-                    Math.Clamp(
-                        requestedHeight -
-                        104d,
-                        210d,
-                        330d);
-
-                GeometryDiagramView.HeightRequest =
-                    diagramHeight;
-
-                GeometryDiagramView.MinimumHeightRequest =
-                    diagramHeight;
-            }
-            else
-            {
-                // Màn hình hẹp dùng chiều cao cố định theo trường hợp nhiều
-                // nội dung nhất là hình nón. Vì vậy chuyển hình không làm
-                // phần Nhập kích thước nhảy lên/xuống.
-                bool useHorizontalPreview =
-                    availableWidth >=
-                    650d;
-
-                double requestedHeight =
-                    useHorizontalPreview
-                        ? 430d
-                        : 590d;
-
-                FormulaPreviewBorder.MinimumHeightRequest =
-                    requestedHeight;
-
-                FormulaPreviewBorder.MaximumHeightRequest =
-                    requestedHeight;
-
-                FormulaPreviewBorder.HeightRequest =
-                    requestedHeight;
-
-                double diagramHeight =
-                    useHorizontalPreview
-                        ? 280d
-                        : 230d;
-
-                GeometryDiagramView.HeightRequest =
-                    diagramHeight;
-
-                GeometryDiagramView.MinimumHeightRequest =
-                    diagramHeight;
+                double height = Math.Clamp(width * 0.75d, 180d, 320d);
+                if (Math.Abs(GeometryDiagramView.HeightRequest - height) >= 1d)
+                    GeometryDiagramView.HeightRequest = height;
             }
         }
         finally
         {
-            _isSynchronizingFormulaPreviewHeight =
-                false;
+            _isSynchronizingFormulaPreviewHeight = false;
         }
-
-        FormulaPreviewBorder.InvalidateMeasure();
-        FormulaPreviewContentGrid.InvalidateMeasure();
         GeometryDiagramView.Invalidate();
     }
 
-    private void OnGeometryInputFlexLayoutSizeChanged(
-        object? sender,
-        EventArgs e)
+    private void OnGeometryInputGridSizeChanged(object? sender, EventArgs e) => UpdateInputGridLayout();
+
+    private void UpdateInputGridLayout()
     {
-        UpdateInputFieldWidths();
-        ScheduleInputFlexHeightUpdate();
-    }
-
-    private void UpdateInputFieldWidths()
-    {
-        double availableWidth =
-            GeometryInputFlexLayout.Width;
-
-        int fieldCount =
-            GeometryInputFlexLayout.Children.Count;
-
-        if (availableWidth <=
-                0d ||
-            fieldCount ==
-                0)
-        {
+        int count = GeometryInputGrid.Children.Count;
+        if (_isUpdatingInputGridLayout || GeometryInputGrid.Width <= 0d || count == 0)
             return;
-        }
 
-        int columnCount =
-            GetInputColumnCount(
-                availableWidth,
-                fieldCount);
-
-        // Khoảng cách chỉ nằm giữa hai card. Card đầu tiên và cuối cùng của
-        // mỗi hàng không có lề ngoài, nhờ đó cạnh trái/phải của vùng nhập
-        // trùng chính xác với hàng nút Tính toán / Xóa phía dưới.
-        const double columnSpacing =
-            10d;
-
-        double requestedWidth =
-            Math.Floor(
-                (availableWidth -
-                 (columnCount - 1) *
-                 columnSpacing) /
-                columnCount);
-
-        requestedWidth =
-            Math.Max(
-                150d,
-                requestedWidth);
-
-        for (int index = 0;
-             index < fieldCount;
-             index++)
+        int columns = GetInputColumnCount(GeometryInputGrid.Width, count);
+        int rows = (count + columns - 1) / columns;
+        _isUpdatingInputGridLayout = true;
+        try
         {
-            IView child =
-                GeometryInputFlexLayout.Children[index];
-
-            if (child is not Microsoft.Maui.Controls.View element)
+            if (GeometryInputGrid.ColumnDefinitions.Count != columns || GeometryInputGrid.RowDefinitions.Count != rows)
             {
-                continue;
+                GeometryInputGrid.ColumnDefinitions.Clear();
+                GeometryInputGrid.RowDefinitions.Clear();
+                for (int i = 0; i < columns; i++)
+                    GeometryInputGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                for (int i = 0; i < rows; i++)
+                    GeometryInputGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             }
-
-            bool isLastCardInRow =
-                (index + 1) % columnCount == 0 ||
-                index == fieldCount - 1;
-
-            element.Margin =
-                new Thickness(
-                    0d,
-                    5d,
-                    isLastCardInRow
-                        ? 0d
-                        : columnSpacing,
-                    5d);
-
-            element.MinimumWidthRequest =
-                0d;
-
-            element.MaximumWidthRequest =
-                double.PositiveInfinity;
-
-            element.WidthRequest =
-                requestedWidth;
-        }
-
-        GeometryInputFlexLayout.InvalidateMeasure();
-
-        if (GeometryInputFlexLayout.Parent
-            is VisualElement parent)
-        {
-            parent.InvalidateMeasure();
-        }
-
-        ScheduleInputFlexHeightUpdate(
-            columnCount);
-    }
-
-    private void ScheduleInputFlexHeightUpdate(
-        int? knownColumnCount = null)
-    {
-        if (GeometryInputFlexLayout.Children.Count ==
-            0)
-        {
-            GeometryInputFlexLayout.HeightRequest =
-                -1d;
-
-            return;
-        }
-
-        Dispatcher.Dispatch(
-            () =>
+            for (int i = 0; i < count; i++)
             {
-                UpdateInputFlexHeight(
-                    knownColumnCount);
-
-                Dispatcher.Dispatch(
-                    () => UpdateInputFlexHeight(
-                        knownColumnCount));
-            });
-    }
-
-    private void UpdateInputFlexHeight(
-        int? knownColumnCount = null)
-    {
-        int fieldCount =
-            GeometryInputFlexLayout.Children.Count;
-
-        double availableWidth =
-            GeometryInputFlexLayout.Width;
-
-        if (fieldCount == 0 ||
-            availableWidth <= 0d)
-        {
-            return;
-        }
-
-        int columnCount =
-            knownColumnCount ??
-            GetInputColumnCount(
-                availableWidth,
-                fieldCount);
-
-        columnCount =
-            Math.Clamp(
-                columnCount,
-                1,
-                fieldCount);
-
-        int rowCount =
-            (int)Math.Ceiling(
-                fieldCount /
-                (double)columnCount);
-
-        double[] rowHeights =
-            new double[rowCount];
-
-        for (int index = 0;
-             index < fieldCount;
-             index++)
-        {
-            if (GeometryInputFlexLayout.Children[index]
-                is not VisualElement card)
-            {
-                continue;
+                // Auto rows measure the entire border, padding and native Entry.
+                // Reposition existing cards without rebuilding their inputs.
+                GeometryInputGrid.SetRow(GeometryInputGrid.Children[i], i / columns);
+                GeometryInputGrid.SetColumn(GeometryInputGrid.Children[i], i % columns);
             }
-
-            double cardHeight =
-                card.Height;
-
-            if (!double.IsFinite(
-                    cardHeight) ||
-                cardHeight <= 0d)
-            {
-                // Card ở hàng mới có thể chưa được arrange vì HeightRequest
-                // trước đó chỉ đủ một hàng. Dùng chiều cao yêu cầu/tối thiểu
-                // để mở khung trước; lượt layout kế tiếp sẽ cập nhật bằng
-                // chiều cao thật nếu label cần xuống dòng.
-                cardHeight =
-                    double.IsFinite(
-                            card.HeightRequest) &&
-                        card.HeightRequest > 0d
-                            ? card.HeightRequest
-                            : Math.Max(
-                                GeometryInputCardMinimumHeight,
-                                card.MinimumHeightRequest);
-            }
-
-            int rowIndex =
-                index /
-                columnCount;
-
-            rowHeights[rowIndex] =
-                Math.Max(
-                    rowHeights[rowIndex],
-                    cardHeight);
         }
-
-        for (int rowIndex = 0;
-             rowIndex < rowHeights.Length;
-             rowIndex++)
+        finally
         {
-            rowHeights[rowIndex] =
-                Math.Max(
-                    GeometryInputCardMinimumHeight,
-                    rowHeights[rowIndex]);
-        }
-
-        // Mỗi card dùng lề dọc 5 px ở trên và dưới, nên mỗi hàng cần
-        // thêm tổng cộng 10 px vào chiều cao FlexLayout.
-        const double verticalMarginPerRow =
-            10d;
-
-        double requestedHeight =
-            Math.Ceiling(
-                rowHeights.Sum() +
-                rowCount *
-                verticalMarginPerRow);
-
-#if ANDROID
-        // Ở Android, khi màn hình hẹp làm các ô nhập xếp thành 3+ hàng,
-        // native Entry có thể vẽ sát mép dưới vùng FlexLayout hơn phần đo
-        // cuối cùng một chút. Chừa thêm một khoảng nhỏ ở đáy để hàng nút
-        // Tính toán / Xóa không dính vào card dữ kiện cuối. Chỉ áp dụng
-        // cho form dài; Windows và các form ngắn giữ nguyên spacing cũ.
-        if (rowCount >= 3)
-        {
-            requestedHeight +=
-                12d;
-        }
-#endif
-
-        if (Math.Abs(
-                GeometryInputFlexLayout.HeightRequest -
-                requestedHeight) < 1d)
-        {
-            return;
-        }
-
-        GeometryInputFlexLayout.HeightRequest =
-            requestedHeight;
-
-        GeometryInputFlexLayout.InvalidateMeasure();
-
-        if (GeometryInputFlexLayout.Parent
-            is VisualElement parent)
-        {
-            parent.InvalidateMeasure();
+            _isUpdatingInputGridLayout = false;
         }
     }
-
     private static int GetInputColumnCount(
         double availableWidth,
         int fieldCount)
     {
-        int maximumColumnCount =
-            availableWidth switch
-            {
-                >= 1500d => 5,
-                >= 1120d => 4,
-                >= 760d => 3,
-                >= 520d => 2,
-                _ => 1
-            };
+        int maximumColumnCount = ResponsiveLayoutPolicy.Columns(availableWidth, 240d, 5, 10d);
 
         int columnCount =
             Math.Max(

@@ -13,10 +13,10 @@
         VerticalOptions="Fill"
         VerticalScrollBarVisibility="Default">
 
-        <VerticalStackLayout
+        <VerticalStackLayout x:Name="FormulaContent" Style="{StaticResource SolverContentStyle}" SizeChanged="OnFormulaContentSizeChanged"
             Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,28', Default='20,16,20,28'}"
             Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
-            HorizontalOptions="Fill">
+            HorizontalOptions="Center">
 
             <VerticalStackLayout Spacing="3">
                 <Label
@@ -106,12 +106,12 @@
                     </Border>
 
                     <!--
-                        Desktop has enough width for From / Swap / To on one line.
-                        On Android, stack the two pickers vertically so long localized unit names
-                        (for example "Kilometre (km)" / "Ki-lô-mét (km)") are never clipped.
+                        Reflow From / Swap / To by available content width and text scale.
+                        Narrow windows and tablet split-screen use the same stacked layout.
                     -->
                     <Grid
-                        ColumnDefinitions="{OnPlatform Android='*', Default='*,Auto,*'}"
+                        x:Name="UnitSelectionGrid"
+                        ColumnDefinitions="*"
                         RowDefinitions="{OnPlatform Android='Auto,Auto,Auto,Auto,Auto', Default='Auto,Auto'}"
                         ColumnSpacing="10"
                         RowSpacing="{OnPlatform Android=7, Default=0}">
@@ -137,6 +137,7 @@
                         <Border
                             Grid.Row="{OnPlatform Android=1, Default=1}"
                             Grid.Column="0"
+                            x:Name="FromUnitBorder"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1"
@@ -175,6 +176,7 @@
                         <Border
                             Grid.Row="{OnPlatform Android=4, Default=1}"
                             Grid.Column="{OnPlatform Android=0, Default=2}"
+                            x:Name="ToUnitBorder"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1"

@@ -99,8 +99,7 @@ public partial class CalculationPage : ContentPage
     private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
 #endif
 
-    private const double CalculationSubTabSpacing =
-        6d;
+
 
     private LongDivisionDisplayMode _longDivisionDisplayMode = LongDivisionDisplayMode.Elementary;
 
@@ -150,9 +149,6 @@ public partial class CalculationPage : ContentPage
         SecondNumberEntry.Unfocused +=
             OnNumberEntryUnfocused;
 
-        CalculationSubTabScrollView.SizeChanged +=
-            OnCalculationSubTabScrollViewSizeChanged;
-
         SelectNumberType(
             NumberInputType.Integer,
             clearInputs: false);
@@ -189,8 +185,8 @@ public partial class CalculationPage : ContentPage
             this,
             true);
 
-        OnCalculationSubTabScrollViewSizeChanged(
-            CalculationSubTabScrollView,
+        OnCalculationSubTabGridSizeChanged(
+            CalculationSubTabGrid,
             EventArgs.Empty);
 
         BeginMainTabTransitionIfPending();
@@ -215,6 +211,12 @@ public partial class CalculationPage : ContentPage
         if (width <= 0d)
         {
             return;
+        }
+
+        if (CalculationSubTabBar.IsVisible)
+        {
+            CalculationSubTabBar.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
+            OnCalculationSubTabGridSizeChanged(CalculationSubTabGrid, EventArgs.Empty);
         }
 
         bool compact = width < 720d;
@@ -3850,6 +3852,8 @@ public partial class CalculationPage : ContentPage
             return;
         }
 
+        Dispatcher.Dispatch(() => OnCalculationSubTabGridSizeChanged(this, EventArgs.Empty));
+
         if (!BasicArithmeticBorder.IsVisible)
         {
             return;
@@ -4208,88 +4212,28 @@ public partial class CalculationPage : ContentPage
         }
     }
 
-    private void OnCalculationSubTabScrollViewSizeChanged(
-        object? sender,
-        EventArgs e)
+    private void OnCalculationSubTabGridSizeChanged(object? sender, EventArgs e)
     {
-#if ANDROID
-        // Android dùng Material-style horizontal tabs với kích thước theo nội dung.
-        return;
-#else
-        double availableWidth =
-            CalculationSubTabScrollView.Width;
-
-        if (availableWidth <= 0)
-        {
-            return;
-        }
-
-        Button[] buttons =
-        [
-            BasicTabButton,
-            AverageTabButton,
-            PowerRootTabButton,
-            FractionTabButton,
-            FindXTabButton,
-            QuadraticTabButton,
-            GeometryTabButton
-        ];
-
-        double minimumButtonsWidth =
-            buttons.Sum(
-                button =>
-                    button.MinimumWidthRequest);
-
-        double totalSpacing =
-            CalculationSubTabSpacing *
-            (buttons.Length - 1);
-
-        double extraWidthPerButton =
-            Math.Max(
-                0d,
-                (availableWidth -
-                 minimumButtonsWidth -
-                 totalSpacing) /
-                buttons.Length);
-
-        foreach (Button button in buttons)
-        {
-            button.WidthRequest =
-                button.MinimumWidthRequest +
-                extraWidthPerButton;
-        }
-
-        CalculationSubTabGrid.WidthRequest =
-            Math.Max(
-                availableWidth,
-                minimumButtonsWidth +
-                totalSpacing);
-#endif
+        if (!CalculationSubTabBar.IsVisible) return;
+        if (CalculationSubTabScrollView.UpdateTabLayout(CalculationSubTabGrid))
+            Dispatcher.Dispatch(async () => await ScrollSubTabIntoViewAsync(GetSubTabButton(_selectedSubTab)));
     }
 
-    private async Task ScrollSubTabIntoViewAsync(
-        Button selectedButton)
+    private async Task ScrollSubTabIntoViewAsync(Button selectedButton)
     {
         try
         {
 #if ANDROID
-            await AndroidCalculationSubTabScrollView.ScrollToAsync(
-                selectedButton,
-                ScrollToPosition.Center,
-                true);
+            await AndroidCalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, true);
 #else
-            await CalculationSubTabScrollView.ScrollToAsync(
-                selectedButton,
-                ScrollToPosition.Center,
-                true);
+            await CalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, true);
 #endif
         }
         catch (InvalidOperationException)
         {
-            // View có thể vừa bị gỡ khỏi visual tree khi đổi tab chính.
+            // The page may have detached while switching main tabs.
         }
     }
-
     private VisualElement GetSubTabContent(
         CalculationSubTab tab)
     {

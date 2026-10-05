@@ -48,7 +48,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
             new();
 
     private bool _isUpdatingText;
-    private bool? _isCompactLayout;
+    private bool _isUpdatingCoefficientLayout;
 
     // Khi khôi phục OldTextValue, MAUI có thể phát sinh thêm một
     // TextChanged sau khi SetEntryText đã hoàn tất. Nếu không ghi nhớ
@@ -113,10 +113,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         UpdateGraphStatus();
 
-        ConfigureExpandedLayout();
-
-        _isCompactLayout =
-            false;
+        UpdateCoefficientLayout();
 
         UpdateEquationPreview();
     }
@@ -129,12 +126,14 @@ public partial class QuadraticEquationView : LocalizedSolverView
         base.RefreshLocalizedContent();
         ApplyModeLocalizedText();
 
-        if (hadVisibleResult)
+        if (hadVisibleResult && !_isGraphPreviewOpen && !_preserveGraphOnReturn)
         {
             OnCalculateClicked(
                 this,
                 EventArgs.Empty);
         }
+        if (!_isGraphPreviewOpen)
+            _preserveGraphOnReturn = false;
     }
 
     private static string T(string key) =>
@@ -184,14 +183,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
         ApplyModeLocalizedText();
 
-        if (_isCompactLayout == true)
-        {
-            ConfigureCompactLayout();
-        }
-        else
-        {
-            ConfigureExpandedLayout();
-        }
+        UpdateCoefficientLayout();
 
         if (clearResults)
         {
@@ -266,6 +258,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
+        // Some platform navigation hosts unload the underlying calculator.
+        // Returning from the preview must keep the user's graph viewport.
+        if (_isGraphPreviewOpen)
+            _preserveGraphOnReturn = true;
         CalculationAccelerationManager.AccelerationChanged -= OnGraphAccelerationChanged;
         UnsubscribeGraphThemeChanges();
 
@@ -747,135 +743,64 @@ public partial class QuadraticEquationView : LocalizedSolverView
     }
 #endif
 
-    protected override void OnSizeAllocated(
-        double width,
-        double height)
+    protected override void OnSizeAllocated(double width, double height)
     {
-        base.OnSizeAllocated(
-            width,
-            height);
+        base.OnSizeAllocated(width, height);
+        UpdateCoefficientLayout();
+        UpdateGraphToolbarLayout();
+        UpdateGraphHeight();
+    }
 
-        if (width <= 0)
-        {
+    private void OnCoefficientGridSizeChanged(object? sender, EventArgs e) => UpdateCoefficientLayout();
+
+    private void UpdateCoefficientLayout()
+    {
+        if (_isUpdatingCoefficientLayout || CoefficientGrid.Width <= 0d)
             return;
-        }
 
-        bool useCompactLayout =
-            width < 700;
-
-        if (_isCompactLayout ==
-            useCompactLayout)
-        {
+        int count = _equationMode == EquationMode.Linear ? 2 : 3;
+        int columns = ResponsiveLayoutPolicy.Columns(CoefficientGrid.Width, 240d, count, 12d);
+        int rows = (count + columns - 1) / columns;
+        if (CoefficientGrid.ColumnDefinitions.Count == columns && CoefficientGrid.RowDefinitions.Count == rows)
             return;
-        }
 
-        _isCompactLayout =
-            useCompactLayout;
+        _isUpdatingCoefficientLayout = true;
+        try
+        {
+            CoefficientGrid.ColumnDefinitions.Clear();
+            CoefficientGrid.RowDefinitions.Clear();
+            for (int i = 0; i < columns; i++)
+                CoefficientGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            for (int i = 0; i < rows; i++)
+                CoefficientGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        if (useCompactLayout)
-        {
-            ConfigureCompactLayout();
+            SetCoefficientPanelPosition(CoefficientAPanel, 0, 0);
+            SetCoefficientPanelPosition(CoefficientBPanel, 1 / columns, 1 % columns);
+            // The hidden quadratic field must not reserve space in linear mode.
+            SetCoefficientPanelPosition(CoefficientCPanel,
+                count == 3 ? 2 / columns : 0, count == 3 ? 2 % columns : 0);
         }
-        else
+        finally
         {
-            ConfigureExpandedLayout();
+            _isUpdatingCoefficientLayout = false;
         }
     }
 
-    private void ConfigureCompactLayout()
+    private void OnParabolaGraphicsViewSizeChanged(object? sender, EventArgs e) => UpdateGraphHeight();
+
+    private void UpdateGraphHeight()
     {
-        CoefficientGrid.ColumnDefinitions.Clear();
-        CoefficientGrid.RowDefinitions.Clear();
+        if (_isGraphPreviewOpen)
+            return;
+        double width = ParabolaGraphicsView.Width;
+        if (width <= 0d)
+            return;
 
-        CoefficientGrid.ColumnDefinitions.Add(
-            new ColumnDefinition(
-                GridLength.Star));
-
-        int coefficientCount =
-            _equationMode == EquationMode.Linear
-                ? 2
-                : 3;
-
-        for (int index = 0;
-             index < coefficientCount;
-             index++)
-        {
-            CoefficientGrid.RowDefinitions.Add(
-                new RowDefinition(
-                    GridLength.Auto));
-        }
-
-        SetCoefficientPanelPosition(
-            CoefficientAPanel,
-            row: 0,
-            column: 0);
-
-        SetCoefficientPanelPosition(
-            CoefficientBPanel,
-            row: 1,
-            column: 0);
-
-        if (_equationMode == EquationMode.Quadratic)
-        {
-            SetCoefficientPanelPosition(
-                CoefficientCPanel,
-                row: 2,
-                column: 0);
-        }
-
-        CoefficientGrid.ColumnSpacing =
-            0;
-
-        CoefficientGrid.RowSpacing =
-            10;
-    }
-
-    private void ConfigureExpandedLayout()
-    {
-        CoefficientGrid.ColumnDefinitions.Clear();
-        CoefficientGrid.RowDefinitions.Clear();
-
-        int coefficientCount =
-            _equationMode == EquationMode.Linear
-                ? 2
-                : 3;
-
-        for (int index = 0;
-             index < coefficientCount;
-             index++)
-        {
-            CoefficientGrid.ColumnDefinitions.Add(
-                new ColumnDefinition(
-                    GridLength.Star));
-        }
-
-        CoefficientGrid.RowDefinitions.Add(
-            new RowDefinition(
-                GridLength.Auto));
-
-        SetCoefficientPanelPosition(
-            CoefficientAPanel,
-            row: 0,
-            column: 0);
-
-        SetCoefficientPanelPosition(
-            CoefficientBPanel,
-            row: 0,
-            column: 1);
-
-        if (_equationMode == EquationMode.Quadratic)
-        {
-            SetCoefficientPanelPosition(
-                CoefficientCPanel,
-                row: 0,
-                column: 2);
-        }
-
-        CoefficientGrid.ColumnSpacing =
-            12;
-
-        CoefficientGrid.RowSpacing =
-            0;
+        double height = Math.Clamp(width * 0.65d, 280d, 620d);
+        if (Math.Abs(ParabolaGraphicsView.HeightRequest - height) < 1d)
+            return;
+        ParabolaGraphicsView.HeightRequest = height;
+        ParabolaGraphicsView.Invalidate();
     }
 
     private static void SetCoefficientPanelPosition(
@@ -2629,11 +2554,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
         int zoomPercent =
             CurrentGraphZoomPercent;
 
-        GraphStatusLabel.Text =
-            $"Zoom: {zoomPercent}%";
-
         GraphResetZoomButton.Text =
             $"{zoomPercent}%";
+        if (_graphPreviewResetButton is not null)
+            _graphPreviewResetButton.Text = $"{zoomPercent}%";
     }
 
     private void SetResultStateColors(

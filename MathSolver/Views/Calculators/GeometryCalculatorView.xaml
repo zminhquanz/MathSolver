@@ -21,7 +21,7 @@
         VerticalScrollBarVisibility="Default">
 
         <VerticalStackLayout
-            Style="{StaticResource SolverWideContentStyle}">
+            Style="{StaticResource SolverContentStyle}">
 
             <!-- Tiêu đề -->
             <VerticalStackLayout
@@ -64,6 +64,7 @@
 
                 <VerticalStackLayout
                     x:Name="GeometryControlColumn"
+                    SizeChanged="OnGeometryControlColumnSizeChanged"
                     Grid.Row="0"
                     Grid.Column="0"
                     Spacing="14"
@@ -81,30 +82,26 @@
                                 Style="{StaticResource SolverSectionTitleStyle}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                            <Grid
-                                RowDefinitions="Auto,Auto"
-                                ColumnDefinitions="*,*"
-                                RowSpacing="{OnPlatform Android=10, WinUI=0, Default=0}"
-                                ColumnSpacing="10">
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
 
                                 <Button
                                     x:Name="PlaneGeometryButton"
                                     Grid.Row="0"
                                     Grid.Column="0"
-                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+
                                     HorizontalOptions="Fill"
                                     Text="{localization:Translate Geometry.Plane}"
-                                    Style="{StaticResource SolverChoiceButtonStyle}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
                                     Clicked="OnPlaneGeometryClicked" />
 
                                 <Button
                                     x:Name="SolidGeometryButton"
-                                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
-                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+
                                     HorizontalOptions="Fill"
                                     Text="{localization:Translate Geometry.Solid}"
-                                    Style="{StaticResource SolverChoiceButtonStyle}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
                                     Clicked="OnSolidGeometryClicked" />
 
                             </Grid>
@@ -149,7 +146,7 @@
                                 <Grid>
                                     <Picker
                                         x:Name="GeometryShapePicker"
-                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=48, Default=48}"
                                         Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
@@ -193,22 +190,20 @@
                                 Style="{StaticResource SolverSectionTitleStyle}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                            <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
 
                                 <Button
                                     x:Name="IntegerNumberButton"
                                     Grid.Column="0"
                                     Text="{localization:Translate Numbers.Integer}"
-                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}" LineBreakMode="WordWrap"
                                     Clicked="OnIntegerNumberClicked" />
 
                                 <Button
                                     x:Name="DecimalNumberButton"
                                     Grid.Column="1"
                                     Text="{localization:Translate Numbers.Decimal}"
-                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}" LineBreakMode="WordWrap"
                                     Clicked="OnDecimalNumberClicked" />
 
                             </Grid>
@@ -251,7 +246,7 @@
                             - Màn hình hẹp: hai phần xếp dọc.
                         -->
                         <Grid
-                            x:Name="FormulaPreviewContentGrid"
+                            x:Name="FormulaPreviewContentGrid" SizeChanged="OnFormulaPreviewContentGridSizeChanged"
                             Grid.Row="1"
                             RowDefinitions="*"
                             ColumnDefinitions="5*,4*"
@@ -276,11 +271,11 @@
                                     FontSize="21"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    LineBreakMode="TailTruncation"
+                                    LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <GraphicsView
-                                    x:Name="GeometryDiagramView"
+                                    x:Name="GeometryDiagramView" x:DataType="views:GeometryCalculatorView" SemanticProperties.Description="{Binding SelectedGeometry.DiagramDescription}"
                                     Grid.Row="1"
                                     MinimumHeightRequest="170"
                                     HorizontalOptions="Fill"
@@ -469,16 +464,15 @@
                         FontSize="15"
                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                    <FlexLayout
-                        x:Name="GeometryInputFlexLayout"
-                        Direction="Row"
-                        Wrap="Wrap"
-                        JustifyContent="Start"
-                        AlignItems="Start"
-                        AlignContent="Start"
+                    <Grid
+                        x:Name="GeometryInputGrid"
+                        ColumnDefinitions="*"
+                        RowDefinitions="Auto"
+                        ColumnSpacing="10"
+                        RowSpacing="10"
                         HorizontalOptions="Fill"
                         VerticalOptions="Start"
-                        SizeChanged="OnGeometryInputFlexLayoutSizeChanged"
+                        SizeChanged="OnGeometryInputGridSizeChanged"
                         x:DataType="views:GeometryCalculatorView"
                         BindableLayout.ItemsSource="{Binding InputFields}">
 
@@ -486,15 +480,12 @@
                             <DataTemplate x:DataType="views:GeometryInputField">
 
                                 <Border
-                                    Margin="0,5"
-                                    WidthRequest="260"
                                     MinimumHeightRequest="116"
-                                    FlexLayout.Shrink="0"
                                     Padding="12"
                                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                     Stroke="{DynamicResource WallpaperBorderBrush}"
                                     StrokeThickness="1"
-                                    HorizontalOptions="Start"
+                                    HorizontalOptions="Fill"
                                     VerticalOptions="Start">
 
                                     <Border.StrokeShape>
@@ -511,7 +502,7 @@
                                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                         <Border
-                                            HeightRequest="48"
+                                            MinimumHeightRequest="48"
                                             Padding="10,0"
                                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                             Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -522,7 +513,7 @@
                                             </Border.StrokeShape>
 
                                             <Entry
-                                                Text="{Binding Text, Mode=TwoWay}"
+                                                Text="{Binding Text, Mode=TwoWay}" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Label}"
                                                 Placeholder="{Binding Placeholder}"
                                                 PlaceholderColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                 Keyboard="Numeric"
@@ -546,32 +537,33 @@
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
 
-                    </FlexLayout>
+                    </Grid>
 
                     <!--
                         Hàng thao tác luôn chiếm toàn bộ bề rộng hữu dụng của
                         khung nhập và chia đều 50:50, độc lập với số cột dữ kiện.
-                        FlexLayout phía trên tự tăng/giảm chiều cao theo số ô nên
+                        Các hàng Auto phía trên tự lấy chiều cao đầy đủ của ô nhập nên
                         hàng nút luôn được đẩy xuống ngay sau hàng dữ kiện cuối.
                     -->
                     <Grid
-                        x:Name="GeometryActionGrid"
+                        x:Name="GeometryActionGrid" controls:AdaptiveColumns.MinimumColumnWidth="220"
                         Margin="0,16,0,0"
                         ColumnDefinitions="*,*"
-                        ColumnSpacing="10">
+                        ColumnSpacing="10"
+                        RowSpacing="10">
 
                         <Button
                             x:Name="CalculateGeometryButton"
                             Grid.Column="0"
                             Text="{localization:Translate Actions.Calculate}"
-                            Style="{StaticResource SolverPrimaryActionStyle}"
+                            Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
                             Clicked="OnCalculateClicked" />
 
                         <Button
                             x:Name="ClearGeometryButton"
                             Grid.Column="1"
                             Text="{localization:Translate Actions.Clear}"
-                            Style="{StaticResource SolverSecondaryActionStyle}"
+                            Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                             BorderColor="{DynamicResource WallpaperBorderColor}"
@@ -715,37 +707,37 @@
 
                     </VerticalStackLayout>
 
-                    <Grid HeightRequest="48">
+                    <Grid MinimumHeightRequest="48">
 
                         <controls:ResultCopyButton
                             x:Name="GeometryCopyResultButton"
                             NormalTextKey="PowerRoot.CopyResult"
                             Text=""
-                            HeightRequest="48"
+                            MinimumHeightRequest="48"
                             CornerRadius="12"
                             FontSize="15"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource WallpaperDividerColor}"
                             Clicked="OnGeometryCopyResultClicked" />
 
-                        <HorizontalStackLayout
+                        <Grid ColumnDefinitions="Auto,*" Padding="12,8"
                             InputTransparent="True"
                             HorizontalOptions="Center"
                             VerticalOptions="Center"
-                            Spacing="8">
+                            ColumnSpacing="8">
 
                             <controls:ThemedCopyIcon
                                 WidthRequest="20"
                                 HeightRequest="20" />
 
-                            <Label
+                            <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                 Text="{Binding DisplayText, Source={x:Reference GeometryCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
-                        </HorizontalStackLayout>
+                        </Grid>
 
                     </Grid>
 

@@ -17,43 +17,7 @@
 
         <VerticalStackLayout
             x:Name="QuadraticContent"
-            Style="{StaticResource SolverWideContentStyle}">
-
-            <!-- Chọn dạng phương trình -->
-            <Border Style="{StaticResource SolverCardStyle}">
-                <VerticalStackLayout Spacing="12">
-                    <Label
-                        Text="{localization:Translate Equation.ChooseType}"
-                        Style="{StaticResource SolverSectionTitleStyle}" />
-
-                    <Grid
-                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
-                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
-                        ColumnSpacing="{OnPlatform Android=0, WinUI=10, Default=10}"
-                        RowSpacing="{OnPlatform Android=8, WinUI=0, Default=0}">
-
-                        <Button
-                            x:Name="LinearModeButton"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Text="{localization:Translate Equation.Mode.Linear}"
-                            Style="{StaticResource SolverChoiceButtonStyle}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnLinearModeClicked" />
-
-                        <Button
-                            x:Name="QuadraticModeButton"
-                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
-                            Text="{localization:Translate Equation.Mode.Quadratic}"
-                            Style="{StaticResource SolverChoiceButtonStyle}"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
-                            Clicked="OnQuadraticModeClicked" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
+            Style="{StaticResource SolverContentStyle}">
 
             <!-- Tiêu đề đồng bộ với Cơ bản, Phân số và Tìm x -->
             <VerticalStackLayout
@@ -64,7 +28,7 @@
                     Text="ax² + bx + c = 0"
                     Style="{StaticResource SolverHeroSymbolStyle}"
                     FontAttributes="Bold"
-                    LineBreakMode="NoWrap"
+                    LineBreakMode="WordWrap"
                     />
 
                 <Label
@@ -79,6 +43,38 @@
 
             </VerticalStackLayout>
 
+            <!-- Chọn dạng phương trình -->
+            <Border Style="{StaticResource SolverCardStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="{localization:Translate Equation.ChooseType}"
+                        Style="{StaticResource SolverSectionTitleStyle}" />
+
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="240">
+
+                        <Button
+                            x:Name="LinearModeButton"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Text="{localization:Translate Equation.Mode.Linear}"
+                            Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                            Clicked="OnLinearModeClicked" />
+
+                        <Button
+                            x:Name="QuadraticModeButton"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Text="{localization:Translate Equation.Mode.Quadratic}"
+                            Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            Clicked="OnQuadraticModeClicked" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
             <!-- 1. Nhập hệ số -->
             <Border
                 Style="{StaticResource SolverCardStyle}">
@@ -91,9 +87,9 @@
 
 
                     <Grid
-                        x:Name="CoefficientGrid"
-                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*,*', Default='*,*,*'}"
-                        RowDefinitions="{OnPlatform Android='Auto,Auto,Auto', WinUI='Auto', Default='Auto'}"
+                        x:Name="CoefficientGrid" SizeChanged="OnCoefficientGridSizeChanged"
+                        ColumnDefinitions="*,*,*"
+                        RowDefinitions="Auto"
                         ColumnSpacing="12"
                         RowSpacing="10">
 
@@ -129,7 +125,7 @@
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
-                                    HeightRequest="48"
+                                    MinimumHeightRequest="48"
                                     Padding="10,0"
                                     BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -140,7 +136,7 @@
                                     </Border.StrokeShape>
 
                                     <Entry
-                                        x:Name="CoefficientAEntry"
+                                        x:Name="CoefficientAEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientADescriptionLabel}, x:DataType=Label}"
                                         Placeholder="Ví dụ: 1"
                                         PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Text"
@@ -163,8 +159,8 @@
                         <!-- Hệ số b -->
                         <Border
                             x:Name="CoefficientBPanel"
-                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                            Grid.Row="0"
+                            Grid.Column="1"
                             Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -192,7 +188,7 @@
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
-                                    HeightRequest="48"
+                                    MinimumHeightRequest="48"
                                     Padding="10,0"
                                     BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -203,7 +199,7 @@
                                     </Border.StrokeShape>
 
                                     <Entry
-                                        x:Name="CoefficientBEntry"
+                                        x:Name="CoefficientBEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientBDescriptionLabel}, x:DataType=Label}"
                                         Placeholder="Ví dụ: −3"
                                         PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Text"
@@ -226,8 +222,8 @@
                         <!-- Hệ số c -->
                         <Border
                             x:Name="CoefficientCPanel"
-                            Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
-                            Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                            Grid.Row="0"
+                            Grid.Column="2"
                             Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                             Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -248,13 +244,13 @@
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 <Label
-                                    Text="Hệ số tự do"
+                                    x:Name="CoefficientCDescriptionLabel" Text="Hệ số tự do"
                                     FontSize="14"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                 <Border
-                                    HeightRequest="48"
+                                    MinimumHeightRequest="48"
                                     Padding="10,0"
                                     BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -265,7 +261,7 @@
                                     </Border.StrokeShape>
 
                                     <Entry
-                                        x:Name="CoefficientCEntry"
+                                        x:Name="CoefficientCEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientCDescriptionLabel}, x:DataType=Label}"
                                         Placeholder="Ví dụ: 2"
                                         PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Text"
@@ -320,21 +316,19 @@
 
                     </Border>
 
-                    <Grid
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="10">
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
 
                         <Button
                             x:Name="CalculateQuadraticButton"
                             Grid.Column="0"
                             Text="{localization:Translate Equation.Action}"
-                            Style="{StaticResource SolverPrimaryActionStyle}"
+                            Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
                             Clicked="OnCalculateClicked" />
 
                         <Button
                             Grid.Column="1"
                             Text="{localization:Translate Actions.Clear}"
-                            Style="{StaticResource SolverSecondaryActionStyle}"
+                            Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
                             BackgroundColor="{DynamicResource WallpaperDividerColor}"
                             Clicked="OnClearClicked" />
 
@@ -461,37 +455,37 @@
 
                     </Border>
 
-                    <Grid HeightRequest="48">
+                    <Grid MinimumHeightRequest="48">
 
                         <controls:ResultCopyButton
                             x:Name="QuadraticCopyResultButton"
                             NormalTextKey="PowerRoot.CopyResult"
                             Text=""
-                            HeightRequest="48"
+                            MinimumHeightRequest="48"
                             CornerRadius="12"
                             FontSize="15"
                             FontAttributes="Bold"
                             BackgroundColor="{DynamicResource WallpaperDividerColor}"
                             Clicked="OnQuadraticCopyResultClicked" />
 
-                        <HorizontalStackLayout
+                        <Grid ColumnDefinitions="Auto,*" Padding="12,8"
                             InputTransparent="True"
                             HorizontalOptions="Center"
                             VerticalOptions="Center"
-                            Spacing="8">
+                            ColumnSpacing="8">
 
                             <controls:ThemedCopyIcon
                                 WidthRequest="20"
                                 HeightRequest="20" />
 
-                            <Label
+                            <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                 Text="{Binding DisplayText, Source={x:Reference QuadraticCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 VerticalTextAlignment="Center" />
 
-                        </HorizontalStackLayout>
+                        </Grid>
 
                     </Grid>
 
@@ -680,74 +674,89 @@
                 <VerticalStackLayout Spacing="10">
 
                     <Grid
-                        ColumnDefinitions="*,Auto,Auto,Auto"
-                        ColumnSpacing="8">
+                        x:Name="GraphToolbarGrid"
+                        ColumnDefinitions="*,Auto"
+                        RowDefinitions="Auto"
+                        ColumnSpacing="12"
+                        RowSpacing="8"
+                        SizeChanged="OnGraphToolbarSizeChanged">
 
                         <VerticalStackLayout
-                            Grid.Column="0"
+                            x:Name="GraphCaptionPanel"
                             Spacing="2"
                             VerticalOptions="Center">
-
                             <Label
                                 x:Name="GraphTitleLabel"
                                 Text="Đồ thị parabol"
                                 FontSize="20"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            <Label
-                                x:Name="GraphStatusLabel"
-                                FontSize="14"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </VerticalStackLayout>
 
-                        <Button
+                        <Grid
+                            x:Name="GraphCommandsPanel"
                             Grid.Column="1"
-                            Text="−"
-                            WidthRequest="46"
-                            HeightRequest="42"
-                            Padding="0"
-                            CornerRadius="10"
-                            FontSize="24"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            SemanticProperties.Description="Thu nhỏ đồ thị"
-                            Clicked="OnGraphZoomOutClicked" />
-
-                        <Button
-                            x:Name="GraphResetZoomButton"
-                            Grid.Column="2"
-                            Text="100%"
-                            MinimumWidthRequest="74"
-                            HeightRequest="42"
-                            Padding="10,0"
-                            CornerRadius="10"
-                            FontSize="15"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                            TextColor="{DynamicResource PrimaryColor}"
-                            SemanticProperties.Description="Đặt lại mức thu phóng"
-                            Clicked="OnGraphResetZoomClicked" />
-
-                        <Button
-                            Grid.Column="3"
-                            Text="+"
-                            WidthRequest="46"
-                            HeightRequest="42"
-                            Padding="0"
-                            CornerRadius="10"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            SemanticProperties.Description="Phóng to đồ thị"
-                            Clicked="OnGraphZoomInClicked" />
-
+                            ColumnDefinitions="48,Auto,48,48"
+                            ColumnSpacing="8"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End">
+                                <Button
+                                    Text="−"
+                                    MinimumHeightRequest="48"
+                                    Padding="0"
+                                    CornerRadius="10"
+                                    FontSize="24"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    SemanticProperties.Description="{localization:Translate Equation.Graph.ZoomOut}"
+                                    Clicked="OnGraphZoomOutClicked" />
+                                <Button
+                                    x:Name="GraphResetZoomButton"
+                                    Grid.Column="1"
+                                    Text="100%"
+                                    MinimumWidthRequest="74"
+                                    MinimumHeightRequest="48"
+                                    Padding="10,8"
+                                    CornerRadius="10"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                    TextColor="{DynamicResource PrimaryColor}"
+                                    SemanticProperties.Description="{localization:Translate Equation.Graph.ResetZoom}"
+                                    Clicked="OnGraphResetZoomClicked" />
+                                <Button
+                                    Grid.Column="2"
+                                    Text="+"
+                                    MinimumHeightRequest="48"
+                                    Padding="0"
+                                    CornerRadius="10"
+                                    FontSize="22"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    SemanticProperties.Description="{localization:Translate Equation.Graph.ZoomIn}"
+                                    Clicked="OnGraphZoomInClicked" />
+                            <Button
+                                x:Name="GraphEnlargeButton"
+                                Grid.Column="3"
+                                Text="🔍"
+                                WidthRequest="48"
+                                HorizontalOptions="End"
+                                FontSize="22"
+                                FontAutoScalingEnabled="False"
+                                SemanticProperties.Description="{localization:Translate Equation.Graph.Enlarge}"
+                                ToolTipProperties.Text="{localization:Translate Equation.Graph.Enlarge}"
+                                Style="{StaticResource SolverChoiceButtonStyle}"
+                                Padding="0"
+                                CornerRadius="10"
+                                LineBreakMode="WordWrap"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                TextColor="{DynamicResource PrimaryColor}"
+                                Clicked="OnEnlargeGraphClicked" />
+                        </Grid>
                     </Grid>
-
                     <Border
                         Padding="6"
                         BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
@@ -758,13 +767,13 @@
                             <RoundRectangle CornerRadius="12" />
                         </Border.StrokeShape>
 
-                        <Grid RowDefinitions="Auto,*" RowSpacing="4">
+                        <Grid x:Name="GraphViewportGrid" RowDefinitions="Auto,*" RowSpacing="4">
                         <Label x:Name="GraphSimdBackendLabel"
                                FontSize="12"
                                TextColor="{DynamicResource TextSecondaryColor}" />
                         <GraphicsView Grid.Row="1"
                             x:Name="ParabolaGraphicsView"
-                            HeightRequest="960"
+                            HeightRequest="320" SizeChanged="OnParabolaGraphicsViewSizeChanged"
                             HorizontalOptions="Fill"
                             VerticalOptions="Fill"
                             InputTransparent="False"

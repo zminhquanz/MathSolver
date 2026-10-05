@@ -5,6 +5,38 @@ namespace MathSolver.Views;
 public partial class MeasurementFormulaView : ContentView
 {
     private bool _isUpdatingPickers;
+    private bool? _isStackedLayout;
+
+    private void OnFormulaContentSizeChanged(object? sender, EventArgs e)
+    {
+        if (FormulaContent.Width <= 0d)
+            return;
+        bool stacked = ResponsiveLayoutPolicy.UseStackedLayout(FormulaContent.Width, 760d);
+        if (_isStackedLayout == stacked)
+            return;
+        _isStackedLayout = stacked;
+        UnitSelectionGrid.ColumnDefinitions.Clear();
+        UnitSelectionGrid.RowDefinitions.Clear();
+        UnitSelectionGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        if (!stacked)
+        {
+            UnitSelectionGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+            UnitSelectionGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        }
+        for (int i = 0; i < (stacked ? 5 : 2); i++)
+            UnitSelectionGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        UnitSelectionGrid.RowSpacing = 7d;
+        Grid.SetRow(FromLabel, 0);
+        Grid.SetColumn(FromLabel, 0);
+        Grid.SetRow(FromUnitBorder, 1);
+        Grid.SetColumn(FromUnitBorder, 0);
+        Grid.SetRow(SwapButton, stacked ? 2 : 1);
+        Grid.SetColumn(SwapButton, stacked ? 0 : 1);
+        Grid.SetRow(ToLabel, stacked ? 3 : 0);
+        Grid.SetColumn(ToLabel, stacked ? 0 : 2);
+        Grid.SetRow(ToUnitBorder, stacked ? 4 : 1);
+        Grid.SetColumn(ToUnitBorder, stacked ? 0 : 2);
+    }
 
     private MeasurementEngine.MeasurementCategory? _selectedCategory;
 
@@ -45,6 +77,11 @@ public partial class MeasurementFormulaView : ContentView
         TipsTitleLabel.Text = T("Formula.Measurement.TipsTitle");
         TipsTextLabel.Text = T("Formula.Measurement.TipsText");
         ValueEntry.Placeholder = T("Formula.Measurement.ValuePlaceholder");
+        SemanticProperties.SetDescription(CategoryPicker, CategoryLabel.Text);
+        SemanticProperties.SetDescription(ValueEntry, ValueLabel.Text);
+        SemanticProperties.SetDescription(FromUnitPicker, FromLabel.Text);
+        SemanticProperties.SetDescription(ToUnitPicker, ToLabel.Text);
+        SemanticProperties.SetDescription(SwapButton, T("Formula.Measurement.SwapUnits"));
 
         int previousCategoryIndex =
             Math.Max(

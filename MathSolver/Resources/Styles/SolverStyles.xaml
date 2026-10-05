@@ -155,9 +155,11 @@
 
     <Style x:Key="SolverSubTabButtonStyle" TargetType="Button">
         <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="LineBreakMode" Value="NoWrap" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="Padding" Value="{OnPlatform Android='7,8', WinUI='8,8', Default='8,8'}" />
         <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=16, Default=16}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceAltColor}" />
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />

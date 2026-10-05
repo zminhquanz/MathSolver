@@ -14,6 +14,65 @@ namespace MathSolver.Controls;
 /// </summary>
 public sealed class MouseDragScrollView : ScrollView
 {
+    private bool _isUpdatingTabs;
+    private double _lastTabViewportWidth = -1d;
+
+    /// <summary>Fits one row when there is room, otherwise keeps its readable width for horizontal scrolling.</summary>
+    public bool UpdateTabLayout(Grid tabs)
+    {
+        if (_isUpdatingTabs || Width <= 0d || tabs.Children.Count == 0)
+            return false;
+        _isUpdatingTabs = true;
+        try
+        {
+            double available = Math.Max(1d, Width - Padding.HorizontalThickness);
+            bool changed = Math.Abs(_lastTabViewportWidth - available) >= 0.5d;
+            _lastTabViewportWidth = available;
+            double minimum = 170d * MathSolver.Services.ResponsiveLayoutPolicy.TextScale;
+            double[] widths = tabs.Children.Select(child => Math.Max(minimum,
+                child.Measure(double.PositiveInfinity, double.PositiveInfinity).Width)).ToArray();
+            double natural = widths.Sum() + tabs.ColumnSpacing * (widths.Length - 1);
+            double extra = Math.Max(0d, available - natural) / widths.Length;
+
+            if (tabs.RowDefinitions.Count != 1)
+            {
+                changed = true;
+                tabs.RowDefinitions.Clear();
+                tabs.RowDefinitions.Add(new RowDefinition(Microsoft.Maui.GridLength.Auto));
+            }
+            if (tabs.ColumnDefinitions.Count != widths.Length)
+            {
+                changed = true;
+                tabs.ColumnDefinitions.Clear();
+                for (int i = 0; i < widths.Length; i++)
+                    tabs.ColumnDefinitions.Add(new ColumnDefinition());
+            }
+            for (int i = 0; i < widths.Length; i++)
+            {
+                double width = widths[i] + extra;
+                Microsoft.Maui.GridLength current = tabs.ColumnDefinitions[i].Width;
+                if (!current.IsAbsolute || Math.Abs(current.Value - width) >= 0.5d)
+                {
+                    changed = true;
+                    tabs.ColumnDefinitions[i].Width = new Microsoft.Maui.GridLength(width);
+                }
+                tabs.SetRow(tabs.Children[i], 0);
+                tabs.SetColumn(tabs.Children[i], i);
+            }
+            double contentWidth = Math.Max(available, natural);
+            if (Math.Abs(tabs.WidthRequest - contentWidth) >= 0.5d)
+            {
+                changed = true;
+                tabs.WidthRequest = contentWidth;
+            }
+            return changed;
+        }
+        finally
+        {
+            _isUpdatingTabs = false;
+        }
+    }
+
 #if WINDOWS
     private const double DragThreshold = 6d;
     private NativeScrollViewer? _viewer;

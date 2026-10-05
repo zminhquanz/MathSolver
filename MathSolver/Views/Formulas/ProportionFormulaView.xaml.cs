@@ -50,13 +50,21 @@ public partial class ProportionFormulaView : ContentView
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
+        UpdateResponsiveLayout(FormulaContent.Width > 0d ? FormulaContent.Width : Math.Min(width, 1320d));
+    }
+
+    private void OnFormulaContentSizeChanged(object? sender, EventArgs e) =>
+        UpdateResponsiveLayout(FormulaContent.Width);
+
+    private void UpdateResponsiveLayout(double width)
+    {
 
         if (width <= 0d)
         {
             return;
         }
 
-        bool useCompactLayout = width < CompactLayoutThreshold;
+        bool useCompactLayout = ResponsiveLayoutPolicy.UseStackedLayout(width, CompactLayoutThreshold);
 
         if (_isCompactLayout != useCompactLayout)
         {
@@ -324,6 +332,9 @@ public partial class ProportionFormulaView : ContentView
         GraphDirectValueLabel.Text = FormatLocalizedValue("Formula.Proportion.Graph.DirectValue", directY);
         GraphInverseValueLabel.Text = FormatLocalizedValue("Formula.Proportion.Graph.InverseValue", inverseY);
 
+        SemanticProperties.SetDescription(ProportionXSlider, GraphXValueLabel.Text);
+        SemanticProperties.SetDescription(ProportionGraphicsView,
+            string.Join(". ", GraphXValueLabel.Text, GraphDirectValueLabel.Text, GraphInverseValueLabel.Text));
         ProportionGraphicsView.Invalidate();
     }
 
@@ -364,6 +375,12 @@ public partial class ProportionFormulaView : ContentView
         _compoundDrawable.HoursPerDay = hoursPerDay;
         _compoundDrawable.DaysNeeded = daysNeeded;
 
+        SemanticProperties.SetDescription(CompoundProductSlider, CompoundProductValueLabel.Text);
+        SemanticProperties.SetDescription(CompoundWorkersSlider, CompoundWorkersValueLabel.Text);
+        SemanticProperties.SetDescription(CompoundHoursSlider, CompoundHoursValueLabel.Text);
+        SemanticProperties.SetDescription(CompoundGraphicsView, string.Join(". ",
+            CompoundProductValueLabel.Text, CompoundWorkersValueLabel.Text,
+            CompoundHoursValueLabel.Text, CompoundDaysValueLabel.Text));
         CompoundGraphicsView.Invalidate();
     }
 

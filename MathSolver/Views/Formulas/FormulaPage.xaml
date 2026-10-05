@@ -145,6 +145,7 @@
 
         <Border
             x:Name="FormulaSubTabBar"
+            HorizontalOptions="Center" MaximumWidthRequest="1280"
             Grid.Row="0"
             IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
             Margin="{OnPlatform Android='10,8,10,6', WinUI='20,12,20,8', Default='20,12,20,8'}"
@@ -157,10 +158,11 @@
                 <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
+            <controls:MouseDragScrollView x:Name="FormulaSubTabScrollView" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnFormulaSubTabGridSizeChanged">
             <Grid
                 x:Name="FormulaSubTabGrid"
-                ColumnDefinitions="{OnPlatform Android='*,*', WinUI='*,*,*,*,*,*', Default='*,*,*,*,*,*'}"
-                RowDefinitions="{OnPlatform Android='Auto,Auto,Auto', WinUI='Auto', Default='Auto'}"
+                ColumnDefinitions="*,*,*,*,*,*"
+                RowDefinitions="Auto"
                 ColumnSpacing="6"
                 RowSpacing="6">
 
@@ -168,11 +170,7 @@
                     x:Name="UnknownComponentTabButton"
                     Grid.Column="0"
                     Text="{localization:Translate Formula.Tabs.UnknownComponent}"
-                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
-                    Padding="8,0"
-                    FontSize="14"
-                    FontAttributes="Bold"
-                    CornerRadius="10"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     TextColor="{DynamicResource OnPrimaryColor}"
                     Clicked="OnUnknownComponentTabClicked" />
@@ -182,11 +180,7 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{localization:Translate Formula.Tabs.Proportion}"
-                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
-                    Padding="8,0"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    CornerRadius="10"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
@@ -195,14 +189,10 @@
 
                 <Button
                     x:Name="MotionTabButton"
-                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                    Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                    Grid.Row="0"
+                    Grid.Column="2"
                     Text="{localization:Translate Formula.Tabs.Motion}"
-                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
-                    Padding="8,0"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    CornerRadius="10"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
@@ -211,14 +201,10 @@
 
                 <Button
                     x:Name="AverageTabButton"
-                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                    Grid.Column="{OnPlatform Android=1, WinUI=3, Default=3}"
+                    Grid.Row="0"
+                    Grid.Column="3"
                     Text="{localization:Translate Formula.Tabs.Average}"
-                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
-                    Padding="8,0"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    CornerRadius="10"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
@@ -227,14 +213,10 @@
 
                 <Button
                     x:Name="MeasurementTabButton"
-                    Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
+                    Grid.Row="0"
+                    Grid.Column="4"
                     Text="{localization:Translate Formula.Tabs.Measurement}"
-                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
-                    Padding="8,0"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    CornerRadius="10"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
@@ -243,14 +225,10 @@
 
                 <Button
                     x:Name="GeometryTabButton"
-                    Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
-                    Grid.Column="{OnPlatform Android=1, WinUI=5, Default=5}"
+                    Grid.Row="0"
+                    Grid.Column="5"
                     Text="{localization:Translate Formula.Tabs.Geometry}"
-                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
-                    Padding="8,0"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    CornerRadius="10"
+                    Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
                     BorderWidth="1"
@@ -258,6 +236,7 @@
                     Clicked="OnGeometryTabClicked" />
 
             </Grid>
+            </controls:MouseDragScrollView>
         </Border>
 
         <!-- Nội dung tab con -->
@@ -286,7 +265,8 @@
                         x:Name="UnknownComponentPageContent"
                         Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16', Default='20,16'}"
                         Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
-                        HorizontalOptions="Fill">
+                        HorizontalOptions="Center"
+                        Style="{StaticResource SolverContentStyle}">
 
                         <VerticalStackLayout
                             Margin="0,4,0,6"
@@ -852,6 +832,7 @@
                                 <GraphicsView
                                     Grid.Row="1"
                                     Drawable="{Binding Diagram}"
+                                    SemanticProperties.Description="{Binding DiagramDescription}"
                                     HeightRequest="170"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
@@ -987,7 +968,8 @@
                         x:Name="GeometryPageContent"
                         Padding="20,16"
                         Spacing="14"
-                        HorizontalOptions="Fill">
+                        HorizontalOptions="Center"
+                        Style="{StaticResource SolverContentStyle}">
 
                         <VerticalStackLayout
                             Margin="0,4,0,6"

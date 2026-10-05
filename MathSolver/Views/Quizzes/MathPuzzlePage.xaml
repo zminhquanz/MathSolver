@@ -8,6 +8,20 @@
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
+    <ContentPage.Resources>
+        <Style x:Key="PracticeToolbarButtonStyle" TargetType="Button"
+               BasedOn="{StaticResource SolverOutlinedActionStyle}">
+            <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, Default=40}" />
+            <Setter Property="MinimumWidthRequest" Value="48" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAutoScalingEnabled" Value="True" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+    </ContentPage.Resources>
+
     <Grid
         x:Name="MathPuzzlePageContentRoot"
         RowDefinitions="*">
@@ -26,30 +40,36 @@
                     x:Name="QuizContent"
                     Padding="{OnPlatform Android='12,10,12,20', WinUI='20,12,20,28', Default='20,12,20,28'}"
                     Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
-                    MaximumWidthRequest="1440"
+                    MaximumWidthRequest="1320"
                     WidthRequest="{Binding Source={x:Reference MathPuzzleScrollView}, Path=Width, x:DataType='ScrollView'}"
                     HorizontalOptions="Center">
 
-                    <Border Style="{StaticResource SolverCardStyle}">
-                        <Grid x:Name="PracticeSummaryGrid" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto"
-                              ColumnSpacing="12" RowSpacing="8" SizeChanged="OnPracticeLayoutSizeChanged">
-                            <Label x:Name="PracticeSummaryLabel" FontSize="15" FontAttributes="Bold"
+                    <Border Style="{StaticResource SolverCardStyle}" Padding="12,6">
+                        <Grid x:Name="PracticeSummaryGrid" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="10" RowSpacing="0" SizeChanged="OnPracticeLayoutSizeChanged">
+                            <Label x:Name="PracticeSummaryLabel" FontSize="13" FontAttributes="Bold"
                                    VerticalOptions="Center" LineBreakMode="WordWrap"
                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                            <Button x:Name="ChangePracticeSettingsButton" Grid.Column="1"
-                                    Text="{localization:QuizTranslate Quiz.ChangeSettings}"
-                                    Style="{StaticResource SolverOutlinedActionStyle}"
-                                    Clicked="OnChangePracticeSettingsClicked" />
-                            <Button x:Name="OpenAiQuestionBankButton" Grid.Column="2"
-                                    Text="{localization:Translate AiBank.Open}"
-                                    Style="{StaticResource SolverOutlinedActionStyle}"
-                                    Clicked="OnOpenAiQuestionBankClicked" />
-                            <Label x:Name="AiQuestionBankProgressLabel" Grid.Row="1" Grid.ColumnSpan="3"
-                                   IsVisible="False" FontSize="13" LineBreakMode="WordWrap" />
+                            <Grid x:Name="PracticeSummaryActionsGrid" Grid.Column="1" ColumnDefinitions="Auto,Auto"
+                                  RowDefinitions="Auto" ColumnSpacing="6" RowSpacing="6">
+                                <Button x:Name="ChangePracticeSettingsButton"
+                                        Text="{localization:QuizTranslate Quiz.ChangeSettingsCompact}"
+                                        Style="{StaticResource PracticeToolbarButtonStyle}"
+                                        Clicked="OnChangePracticeSettingsClicked" />
+                                <Button x:Name="OpenAiQuestionBankButton" Grid.Column="1"
+                                        Text="{localization:Translate AiBank.OpenCompact}"
+                                        SemanticProperties.Description="{localization:Translate AiBank.Open}"
+                                        ToolTipProperties.Text="{localization:Translate AiBank.Open}"
+                                        Style="{StaticResource PracticeToolbarButtonStyle}"
+                                        Clicked="OnOpenAiQuestionBankClicked" />
+                            </Grid>
+                            <Label x:Name="AiQuestionBankProgressLabel" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,6,0,0"
+                                   IsVisible="False" FontSize="12" LineBreakMode="WordWrap"
+                                   TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                         </Grid>
                     </Border>
 
-                    <VerticalStackLayout x:Name="PracticeSettingsPanel" Spacing="14" HorizontalOptions="Center">
+                    <VerticalStackLayout x:Name="PracticeSettingsPanel" Spacing="14" HorizontalOptions="Fill">
                     <VerticalStackLayout
                         Margin="0,4,0,4"
                         Spacing="3">
@@ -667,10 +687,6 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <Button x:Name="StartPracticeButton"
-                            Text="{localization:QuizTranslate Quiz.StartPractice}"
-                            Style="{StaticResource SolverPrimaryActionStyle}"
-                            Clicked="OnStartPracticeClicked" />
                     </VerticalStackLayout>
 
                     <Border
@@ -968,9 +984,7 @@
                             <VerticalStackLayout
                                 x:Name="EssayAnswerLayout"
                                 IsVisible="False"
-                                MaximumWidthRequest="960"
-                                WidthRequest="{Binding Source={x:Reference QuestionDiagramGrid}, Path=Width, x:DataType='Grid'}"
-                                HorizontalOptions="Center"
+                                HorizontalOptions="Fill"
                                 Spacing="10">
 
                                 <VerticalStackLayout

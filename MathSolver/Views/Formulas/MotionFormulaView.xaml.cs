@@ -36,13 +36,21 @@ public partial class MotionFormulaView : ContentView
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
+        UpdateResponsiveLayout(FormulaContent.Width > 0d ? FormulaContent.Width : Math.Min(width, 1320d));
+    }
+
+    private void OnFormulaContentSizeChanged(object? sender, EventArgs e) =>
+        UpdateResponsiveLayout(FormulaContent.Width);
+
+    private void UpdateResponsiveLayout(double width)
+    {
 
         if (width <= 0d)
         {
             return;
         }
 
-        bool useCompactLayout = width < CompactLayoutThreshold;
+        bool useCompactLayout = ResponsiveLayoutPolicy.UseStackedLayout(width, CompactLayoutThreshold);
 
         if (_isCompactLayout != useCompactLayout)
         {
@@ -237,6 +245,11 @@ public partial class MotionFormulaView : ContentView
         _motionDrawable.TimeSeconds = Math.Max(1, (int)snappedTime);
         _motionDrawable.SpeedMetersPerSecond = speed;
 
+        SemanticProperties.SetDescription(MotionDistanceSlider,
+            LocalizationService.TranslateKey("Formula.Motion.Symbol.Distance"));
+        SemanticProperties.SetDescription(MotionTimeSlider,
+            LocalizationService.TranslateKey("Formula.Motion.Symbol.Time"));
+        SemanticProperties.SetDescription(MotionGraphicsView, MotionAverageFormulaLabel.Text + ". " + MotionSpeedValueLabel.Text);
         MotionGraphicsView.Invalidate();
     }
 

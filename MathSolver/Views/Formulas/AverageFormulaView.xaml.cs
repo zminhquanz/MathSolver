@@ -178,7 +178,7 @@ public partial class AverageFormulaView : ContentView
                 ColumnDefinitions =
                 {
                     new ColumnDefinition { Width = GridLength.Auto },
-                    new ColumnDefinition { Width = new GridLength(48) },
+                    new ColumnDefinition { Width = GridLength.Auto },
                     new ColumnDefinition { Width = GridLength.Star }
                 },
                 ColumnSpacing = 10
@@ -196,6 +196,7 @@ public partial class AverageFormulaView : ContentView
 
             var value = new Label
             {
+                MinimumWidthRequest = 48d,
                 Text = _values[index].ToString("0", CultureInfo.CurrentCulture),
                 FontSize = 16,
                 HorizontalTextAlignment = TextAlignment.Center,
@@ -208,8 +209,10 @@ public partial class AverageFormulaView : ContentView
                 Minimum = 1d,
                 Maximum = InteractiveMaximumValue,
                 Value = _values[index],
+                MinimumHeightRequest = 48d,
                 HorizontalOptions = LayoutOptions.Fill
             };
+            SemanticProperties.SetDescription(slider, name.Text);
             slider.SetDynamicResource(Slider.MinimumTrackColorProperty, "PrimaryColor");
             slider.SetDynamicResource(Slider.ThumbColorProperty, "PrimaryColor");
             slider.SetDynamicResource(Slider.MaximumTrackColorProperty, "WallpaperDividerColor");
@@ -307,6 +310,8 @@ public partial class AverageFormulaView : ContentView
         string result = BuildFractionResult(totalInt, count);
         InteractiveFormulaView.Expression = $"x̄ = {totalInt}/{count} = {result}";
 
+        SemanticProperties.SetDescription(AverageGraphicsView,
+            InteractiveSumLabel.Text + ". " + InteractiveFormulaView.Expression);
         AverageGraphicsView.Invalidate();
     }
 

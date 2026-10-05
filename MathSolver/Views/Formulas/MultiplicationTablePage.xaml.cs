@@ -17,6 +17,39 @@ public partial class MultiplicationTablePage : ContentPage
     private TableMode _currentMode = TableMode.Multiply;
     private TableRange _currentRange = TableRange.OneToTen;
 
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0d || TablesCollectionView is null)
+            return;
+        TablesCollectionView.WidthRequest = Math.Max(1d,
+            Math.Min(1320d, width - MultiplicationPageContentRoot.Padding.HorizontalThickness));
+        UpdateTableColumns();
+    }
+
+    private void OnTablesSizeChanged(object? sender, EventArgs e) => UpdateTableColumns();
+
+    private void UpdateTableColumns()
+    {
+        if (TablesCollectionView.Width <= 0d || TablesCollectionView.ItemsLayout is not GridItemsLayout layout)
+            return;
+        int columns = ResponsiveLayoutPolicy.Columns(TablesCollectionView.Width, 220d, 5,
+            layout.HorizontalItemSpacing);
+        if (layout.Span != columns)
+            layout.Span = columns;
+    }
+
+    private void OnRangeCardTapped(object? sender, TappedEventArgs e)
+    {
+        RadioButton radio = e.Parameter switch
+        {
+            "Range1To10Radio" => Range1To10Radio,
+            "Range11To20Radio" => Range11To20Radio,
+            _ => RangeAllRadio
+        };
+        radio.IsChecked = true;
+    }
+
     public MultiplicationTablePage()
     {
         InitializeComponent();
@@ -418,7 +451,7 @@ public partial class MultiplicationTablePage : ContentPage
                 : "WallpaperBorderColor");
 
         button.BorderWidth =
-            1;
+            isSelected ? 2 : 1;
 
         button.CornerRadius =
             12;
