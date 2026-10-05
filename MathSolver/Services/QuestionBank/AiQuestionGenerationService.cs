@@ -43,6 +43,8 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     private readonly object _sync = new();
     private readonly AdditionQuestionCycle _additionCycle = new();
     private readonly ArithmeticQuestionCycle _arithmeticCycle = new();
+    private readonly AppliedQuestionCycle _appliedCycle = new();
+    private readonly FindXQuestionCycle _findXCycle = new();
     private CancellationTokenSource? _cancellation;
     private Task _work = Task.CompletedTask;
     private int _pendingInserts;
@@ -137,7 +139,11 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         for (int number = 1; number <= options.Count; number++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var contract = options.Operation == ArithmeticOperation.Add
+            var contract = options.Family == BankQuestionFamily.FindX
+                ? _findXCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, options.UnknownRole)
+                : options.Profile is { } profile
+                ? _appliedCycle.Next(profile, options.Operation, options.Tier, options.Language)
+                : options.Operation == ArithmeticOperation.Add
                 ? _additionCycle.Next(options.Tier, options.Language)
                 : _arithmeticCycle.Next(options.Operation, options.Tier, options.Language);
             Append(new(number, contract, AiItemState.Generating, []));

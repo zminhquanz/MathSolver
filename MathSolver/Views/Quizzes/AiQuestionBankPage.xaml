@@ -157,15 +157,26 @@
                         <Label Text="{localization:Translate AiBank.ProblemSection}" Style="{StaticResource SolverSectionTitleStyle}" />
                         <Label Text="{localization:Translate AiBank.ProblemType}" />
                         <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="ProblemPicker" IsEnabled="False" />
+                            <Picker x:Name="ProblemPicker" SelectedIndexChanged="OnBankProblemChanged" />
                         </Border>
+                        <Label Text="{localization:Translate Learning.Group}" />
+                        <Border Style="{StaticResource AiBankInputBorderStyle}">
+                            <Picker x:Name="LearningGroupPicker" SelectedIndexChanged="OnLearningGroupChanged" />
+                        </Border>
+                        <Label Text="{localization:Translate Learning.Hint}" FontSize="13" />
                         <Label Text="{localization:Translate AiBank.Operation}" />
                         <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="OperationPicker" />
+                            <Picker x:Name="OperationPicker" SelectedIndexChanged="OnBankOperationChanged" />
                         </Border>
+                        <VerticalStackLayout x:Name="FindXRolePanel" IsVisible="False" Spacing="8">
+                            <Label Text="{localization:Translate FindXBank.UnknownRole}" />
+                            <Border Style="{StaticResource AiBankInputBorderStyle}">
+                                <Picker x:Name="FindXRolePicker" SelectedIndexChanged="OnFindXRoleChanged" />
+                            </Border>
+                        </VerticalStackLayout>
                         <Label Text="{localization:Translate AiBank.Difficulty}" />
                         <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="StarsPicker" />
+                            <Picker x:Name="StarsPicker" SelectedIndexChanged="OnBankOperationChanged" />
                         </Border>
                         <Label Text="{localization:Translate AiBank.Language}" />
                         <Border Style="{StaticResource AiBankInputBorderStyle}">
@@ -203,6 +214,7 @@
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{localization:Translate AiBank.Preview}" Style="{StaticResource SolverSectionTitleStyle}" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewStatusLabel" HorizontalTextAlignment="Center" />
+                        <controls:QuestionFactTableView x:Name="PreviewFactTable" />
                         <controls:FractionExpressionView x:Name="PreviewText" MathFontSize="22" WrapContent="True" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewSolutionLabel" IsVisible="False" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewStreamingTextLabel" IsVisible="False" FontSize="22" LineBreakMode="WordWrap"

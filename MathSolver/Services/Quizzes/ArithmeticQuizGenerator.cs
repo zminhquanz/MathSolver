@@ -433,6 +433,20 @@ public sealed class ArithmeticQuizValidator
         ArgumentNullException.ThrowIfNull(
             question);
 
+        if (question.FindXProblem is { } findX)
+        {
+            if (question.Expression != findX.SolutionExpression || question.CorrectAnswer != findX.CorrectAnswer)
+                return new(false, "InvalidFindXFacts");
+            var engine = new FindXEngine();
+            var solved = engine.SolveInteger(findX.KnownValue, findX.ResultValue, findX.Operation, findX.UnknownIsLeftOperand);
+            if (solved.Kind != FindXCoreSolutionKind.Unique || solved.Denominator != BigInteger.One
+                || solved.Numerator != question.CorrectAnswer) return new(false, "InvalidFindXFacts");
+            var evaluated = engine.EvaluateIntegerLeftSide(solved.Numerator, solved.Denominator,
+                findX.KnownValue, findX.Operation, findX.UnknownIsLeftOperand);
+            if (evaluated.Denominator != BigInteger.One || evaluated.Numerator != findX.ResultValue)
+                return new(false, "InvalidFindXFacts");
+        }
+
         IntegerArithmeticResult calculation;
 
         try
@@ -446,7 +460,9 @@ public sealed class ArithmeticQuizValidator
             return new(false, "DivisionByZero");
         }
 
-        if (calculation.IsDivision &&
+        var applied = question.WordProblem?.ArithmeticReasoning;
+        if (applied is not null && !applied.Matches(question.Expression)) return new(false, "InvalidAppliedFacts");
+        if (applied is null && calculation.IsDivision &&
             !calculation.IsExactDivision)
         {
             return new(false, "NonExactDivision");
@@ -463,7 +479,7 @@ public sealed class ArithmeticQuizValidator
             return new(false, "MultiplicationOutOfInt32Range");
         }
 
-        if (calculation.Result !=
+        if ((applied?.Answer ?? calculation.Result) !=
             question.CorrectAnswer)
         {
             return new(false, "IncorrectAnswerKey");
@@ -485,7 +501,7 @@ public sealed class ArithmeticQuizValidator
             bool expectedTruth =
                 question.PresentedEquationIsCorrect.Value;
 
-            bool actualTruth =
+            bool actualTruth = applied is not null ? presentedAnswer == applied.Answer :
                 _engine.IsEquationCorrect(
                     question.Expression,
                     presentedAnswer);

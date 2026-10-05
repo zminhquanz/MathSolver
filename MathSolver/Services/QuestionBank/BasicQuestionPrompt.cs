@@ -8,6 +8,8 @@ public static class BasicQuestionPrompt
     public static string Build(BasicQuestionContract contract, string? correction = null)
     {
         if (!contract.IsValid) throw new ArgumentException("Invalid C# contract.", nameof(contract));
+        if (contract.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Prompt(contract, correction);
+        if (contract.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Prompt(contract, correction);
         if (contract.Version == AdditionQuestionCatalogue.Version) return BuildAddition(contract, correction);
         if (contract.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmetic(contract, correction);
         if (contract.IsTemplate) return BuildTemplate(contract, correction);
@@ -103,6 +105,14 @@ public static class BasicQuestionPrompt
         var unit = QuestionUnits.Find(c)!;
         bool vi = c.Language == AppLanguage.Vietnamese;
         string role = c.Structure switch {
+            BasicQuestionStructure.SubComparisonLess => vi ? "{other} có {a}; {name} ít hơn {other} là {b}; hỏi lượng của {name}"
+                : "{other} has {a}; {name} has {b} fewer than {other}; ask the amount of {name}",
+            BasicQuestionStructure.SubComparisonInverse => vi ? "{other} có {a}; {other} nhiều hơn {name} là {b}; hỏi lượng của {name}"
+                : "{other} has {a}; {other} has {b} more than {name}; ask the amount of {name}",
+            BasicQuestionStructure.FindPart => vi ? "{a}: tổng riêng của {name} và {other}; {other} có {b}; hỏi lượng của {name}"
+                : "{a}: combined stock of {name} and {other}; {other} owns {b}; ask the stock of {name}",
+            BasicQuestionStructure.CompareFactor => vi ? "{other} có {a}; {name} có {b}; hỏi lượng {other} gấp lượng {name} mấy lần; đáp số đơn vị lần"
+                : "{other} owns {a}; {name} owns {b}; ask how many times as many OTHER has as NAME; answer unit is times",
             BasicQuestionStructure.Remaining => vi ? "{a}: lượng có ban đầu; {b}: lượng lấy ra của cùng chủ thể; hỏi còn lại"
                 : "{a}: initial stock; {b}: removed from the same owner; ask what remains",
             BasicQuestionStructure.Difference => vi ? "{a}: lượng của {name}; {b}: lượng riêng của {other}; hỏi {name} nhiều hơn bao nhiêu"
@@ -143,7 +153,7 @@ public static class BasicQuestionPrompt
             given_a: one clause ending with a comma; given_b: continuing lowercase clause ending with a period.
             {a} occurs once only in given_a; {b} once only in given_b. question asks only; solution_lead names the same target and ends with a colon.
             """;
-        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(ArithmeticQuestionCatalogue.Example(c));
+        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(OneStepQuestionCatalogue.Draft(c));
         if (!string.IsNullOrEmpty(correction)) prompt += "\n" + correction + ": " + Correction(correction) + " Rewrite the complete JSON.";
         return prompt;
     }
@@ -188,7 +198,7 @@ public static class BasicQuestionPrompt
             var parts = scale.Parts(c.Language);
             prompt += $"\n{{part_a}}={parts.A}; {{part_b}}={parts.B}; " + scale.Span(c.Language) + ".";
         }
-        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(AdditionQuestionCatalogue.Example(c));
+        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(OneStepQuestionCatalogue.Draft(c));
         if (!string.IsNullOrEmpty(correction))
             prompt += "\n" + correction + ": " + Correction(correction) + " Rewrite the complete JSON.";
         return prompt;

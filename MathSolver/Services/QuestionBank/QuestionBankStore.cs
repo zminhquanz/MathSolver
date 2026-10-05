@@ -18,6 +18,15 @@ public interface IQuestionBankStore
     Task<bool> InsertAsync(ValidatedBankQuestion question, CancellationToken cancellationToken = default);
     Task<ValidatedBankQuestion?> TakeAsync(ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, CancellationToken cancellationToken = default);
+    Task<ValidatedBankQuestion?> TakeFindXAsync(ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
+        => Task.FromResult<ValidatedBankQuestion?>(null);
+    async Task<ValidatedBankQuestion?> TakeForProfileAsync(ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
+    {
+        var question = await TakeAsync(operation, tier, language, cancellationToken).ConfigureAwait(false);
+        return question?.Contract is { } c && profile.Includes(c.KnowledgeGroup) ? question : null;
+    }
 }
 
 /// <summary>Short serialized SQLite operations; no connection/transaction spans inference.</summary>
@@ -48,6 +57,10 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         public int Structure { get; set; }
         public string TopicId { get; set; } = "";
         public string SceneId { get; set; } = "";
+        public int Grade { get; set; }
+        public int KnowledgeGroup { get; set; }
+        public int Family { get; set; }
+        public int UnknownRole { get; set; }
     }
 
     public Task<bool> InsertAsync(ValidatedBankQuestion question, CancellationToken cancellationToken = default)
@@ -71,31 +84,44 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             : legacyContract + "\n" + BasicQuestionValidator.Normalize(question.Draft.ProblemText);
         if (c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version)
             identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Structure}/{c.TopicId}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
+        if (c.Version is AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version)
+            identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Grade}/{c.KnowledgeGroup}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
+        if (c.Family == BankQuestionFamily.FindX) identity += "\n" + c.UnknownRole;
         string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
         return db.Execute(
-            "INSERT OR IGNORE INTO BasicQuestionBank (Hash,Operation,Stars,Language,Version,ContractJson,DraftJson,RawJson,ModelName,CreatedUtc,LastUsedUtc,UseCount,Structure,TopicId,SceneId) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR IGNORE INTO BasicQuestionBank (Hash,Operation,Stars,Language,Version,ContractJson,DraftJson,RawJson,ModelName,CreatedUtc,LastUsedUtc,UseCount,Structure,TopicId,SceneId,Grade,KnowledgeGroup,Family,UnknownRole) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             hash, (int)question.Contract.Operation, (int)question.Contract.Tier, (int)question.Contract.Language,
             question.Contract.Version, contractJson, draftJson, question.RawJson, question.ModelName,
-            question.CreatedUtc, DateTime.MinValue, 0, (int)c.Structure, c.TopicId, c.SceneId) == 1;
+            question.CreatedUtc, DateTime.MinValue, 0, (int)c.Structure, c.TopicId, c.SceneId, c.Grade, (int)c.KnowledgeGroup, (int)c.Family, (int)c.UnknownRole) == 1;
     }
 
-    public async Task<ValidatedBankQuestion?> TakeAsync(ArithmeticOperation operation, CurriculumTier tier,
+    public Task<ValidatedBankQuestion?> TakeAsync(ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, CancellationToken cancellationToken = default)
+        => TakeCoreAsync(operation, tier, language, null, cancellationToken);
+
+    public Task<ValidatedBankQuestion?> TakeForProfileAsync(ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
+        => TakeCoreAsync(operation, tier, language, profile, cancellationToken);
+
+    private async Task<ValidatedBankQuestion?> TakeCoreAsync(ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, QuestionLearningProfile? profile, CancellationToken cancellationToken)
     {
         try
         {
             return await WithDatabaseAsync<ValidatedBankQuestion?>(db =>
             {
-                var candidates = ContextCandidates(db, operation, tier, language);
+                var candidates = ContextCandidates(db, operation, tier, language, profile);
                 foreach (var row in candidates)
                 {
                     try
                     {
                         var contract = JsonSerializer.Deserialize<BasicQuestionContract>(row.ContractJson, JsonOptions);
-                        if (contract is null || row.Version != contract.Version || contract.Operation != operation || contract.Tier != tier || contract.Language != language)
+                        if (contract is null || row.Family != (int)contract.Family || row.UnknownRole != (int)contract.UnknownRole || row.Version != contract.Version || contract.Operation != operation || contract.Tier != tier || contract.Language != language)
                             continue;
-                        if (contract.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version && ((int)contract.Structure != row.Structure
+                        if (contract.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version && ((int)contract.Structure != row.Structure
                             || contract.TopicId != row.TopicId || contract.SceneId != row.SceneId)) continue;
+                        if (contract.Grade != row.Grade || (int)contract.KnowledgeGroup != row.KnowledgeGroup
+                            || profile is not null && !profile.Includes(contract.KnowledgeGroup)) continue;
                         var validation = BasicQuestionValidator.Validate(row.DraftJson, contract);
                         if (!validation.IsValid) continue;
                         if (validation.Contract is { } resolved && resolved != contract) continue;
@@ -128,14 +154,29 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         public DateTime LastUsedUtc { get; set; }
     }
 
-    private IEnumerable<Row> ContextCandidates(SQLiteConnection db, ArithmeticOperation operation, CurriculumTier tier, AppLanguage language)
+    private IEnumerable<Row> ContextCandidates(SQLiteConnection db, ArithmeticOperation operation, CurriculumTier tier, AppLanguage language,
+        QuestionLearningProfile? profile)
     {
-        var buckets = db.Query<SelectionBucket>("SELECT COALESCE(Structure,0) AS Structure,COALESCE(TopicId,'') AS TopicId,COALESCE(SceneId,'') AS SceneId,MAX(LastUsedUtc) AS LastUsedUtc FROM BasicQuestionBank WHERE Operation=? AND Stars=? AND Language=? AND Version IN (1,2,3,4) GROUP BY COALESCE(Structure,0),COALESCE(TopicId,''),COALESCE(SceneId,'')",
-            (int)operation, (int)tier, (int)language);
+        // Historical imports can omit the new columns even after initialization.
+        // Treat NULL family/group as the original arithmetic/objects defaults.
+        string filter = "COALESCE(Family,0)=0 AND Operation=? AND Stars=? AND Language=? AND " + (profile is null
+            ? "Version IN (1,2,3,4)" : profile.Group == QuestionKnowledgeGroup.Objects
+                ? "Version IN (1,2,3,4,5) AND COALESCE(KnowledgeGroup,0)=?" : profile.Group == QuestionKnowledgeGroup.Measurement
+                    ? "Version=5 AND KnowledgeGroup IN (2,3,4,7)" : "Version=5 AND KnowledgeGroup=?");
+        object[] args = profile is null ? [(int)operation, (int)tier, (int)language]
+            : profile.Group == QuestionKnowledgeGroup.Measurement ? [(int)operation, (int)tier, (int)language]
+            : [(int)operation, (int)tier, (int)language, (int)profile.Group];
+        var buckets = db.Query<SelectionBucket>("SELECT COALESCE(Structure,0) AS Structure,COALESCE(TopicId,'') AS TopicId,COALESCE(SceneId,'') AS SceneId,MAX(LastUsedUtc) AS LastUsedUtc FROM BasicQuestionBank WHERE "
+            + filter + " GROUP BY COALESCE(Structure,0),COALESCE(TopicId,''),COALESCE(SceneId,'')", args);
         // Ignore forged metadata buckets before sorting, but retain historical v1/v2 rows.
-        buckets = buckets.Where(b => b.SceneId == "" && b.TopicId == "" || AdditionQuestionCatalogue.Find(b.SceneId) is { } scene
+        bool LegacyBucket(SelectionBucket b) => b.SceneId == "" && b.TopicId == "" || AdditionQuestionCatalogue.Find(b.SceneId) is { } scene
             && scene.TopicId == b.TopicId && (operation == ArithmeticOperation.Add ? scene.Supports((BasicQuestionStructure)b.Structure, tier)
-                : ArithmeticQuestionCatalogue.Supports(b.SceneId, operation, tier, (BasicQuestionStructure)b.Structure))).ToList();
+                : ArithmeticQuestionCatalogue.Supports(b.SceneId, operation, tier, (BasicQuestionStructure)b.Structure));
+        buckets = buckets.Where(b => profile is not null
+            ? Enum.TryParse<QuestionKnowledgeGroup>(b.TopicId, out var group) && profile.Includes(group)
+                && AppliedQuestionCatalogue.Available(profile, operation, tier).Any(s => s.Id == b.SceneId)
+                || profile.Group == QuestionKnowledgeGroup.Objects && LegacyBucket(b)
+            : LegacyBucket(b)).ToList();
         var history = _selectionHistory.GetValueOrDefault((operation, tier, language)) ?? [];
         var relationUsed = buckets.GroupBy(b => b.Structure).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));
         var topicUsed = buckets.GroupBy(b => b.TopicId).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));
@@ -147,8 +188,9 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             .ThenBy(b => topicUsed[b.TopicId])
             .ThenBy(b => history.Count > 0 && history[^1].SceneId == b.SceneId).ThenBy(b => b.LastUsedUtc);
         foreach (var bucket in ordered)
-            foreach (var row in db.Query<Row>("SELECT * FROM BasicQuestionBank WHERE Operation=? AND Stars=? AND Language=? AND Version IN (1,2,3,4) AND COALESCE(Structure,0)=? AND COALESCE(TopicId,'')=? AND COALESCE(SceneId,'')=? ORDER BY UseCount,LastUsedUtc LIMIT 32",
-                (int)operation, (int)tier, (int)language, bucket.Structure, bucket.TopicId, bucket.SceneId)) yield return row;
+            foreach (var row in db.Query<Row>("SELECT * FROM BasicQuestionBank WHERE " + filter
+                + " AND COALESCE(Structure,0)=? AND COALESCE(TopicId,'')=? AND COALESCE(SceneId,'')=? ORDER BY UseCount,LastUsedUtc LIMIT 32",
+                [.. args, bucket.Structure, bucket.TopicId, bucket.SceneId])) yield return row;
     }
 
     public static string SerializeDraft(BasicQuestionDraft draft) => draft.UnitId is null && draft.SolutionLead is null
@@ -171,8 +213,14 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                 {
                     db.ExecuteScalar<string>("PRAGMA journal_mode=WAL");
                     db.CreateTable<Row>();
+                    // Added integer columns can be NULL on pre-v6 SQLite tables.
+                    // Keep their arithmetic rows available after the schema upgrade.
+                    db.Execute("UPDATE BasicQuestionBank SET Family=0 WHERE Family IS NULL");
+                    db.Execute("UPDATE BasicQuestionBank SET UnknownRole=0 WHERE UnknownRole IS NULL");
                     // SQLite-net adds missing columns in existing installations; old payloads stay intact.
                     db.Execute("CREATE INDEX IF NOT EXISTS AdditionSelection ON BasicQuestionBank(Operation,Stars,Language,Structure,TopicId,SceneId)");
+                    db.Execute("CREATE INDEX IF NOT EXISTS KnowledgeSelection ON BasicQuestionBank(Operation,Stars,Language,KnowledgeGroup,SceneId)");
+                    db.Execute("CREATE INDEX IF NOT EXISTS FindXSelection ON BasicQuestionBank(Family,Operation,Stars,Language,KnowledgeGroup,UnknownRole,SceneId)");
                     _initialized = true;
                 }
                 return action(db);

@@ -49,12 +49,19 @@ public partial class AiQuestionBankPage : ContentPage
         var options = _bank.Generation.Snapshot.Options;
         if (options is not null)
         {
-            OperationPicker.SelectedIndex = (int)options.Operation;
+            _learningGroup = options.Profile?.Group ?? QuestionKnowledgeGroup.Objects;
+            _family = options.Family;
+            _unknownRole = options.UnknownRole;
+            _updating = true;
+            ProblemPicker.SelectedIndex = (int)_family;
+            _updating = false;
+            RefreshLearningPickers(options.Operation);
             StarsPicker.SelectedIndex = (int)options.Tier - 1;
             LanguagePicker.SelectedIndex = options.Language == AppLanguage.Vietnamese ? 0 : 1;
             BatchModePicker.SelectedIndex = options.Count > 1 ? 1 : 0;
             CountEntry.Text = options.Count.ToString(CultureInfo.InvariantCulture);
             AutoInsertSwitch.IsToggled = options.AutoInsert;
+            RefreshFindXRoles();
         }
         Render();
     }
@@ -92,19 +99,20 @@ public partial class AiQuestionBankPage : ContentPage
     private void RefreshPickerLabels()
     {
         _updating = true;
-        int operation = Math.Max(0, OperationPicker.SelectedIndex), stars = Math.Max(0, StarsPicker.SelectedIndex);
+        var operation = SelectedLearningOperation;
+        int stars = Math.Max(0, StarsPicker.SelectedIndex);
         int language = Math.Max(0, LanguagePicker.SelectedIndex), mode = Math.Max(0, BatchModePicker.SelectedIndex);
-        ProblemPicker.ItemsSource = new[] { T("BasicArithmetic") }; ProblemPicker.SelectedIndex = 0;
-        OperationPicker.ItemsSource = new[] { T("Add"), T("Subtract"), T("Multiply"), T("Divide") };
+        ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title") }; ProblemPicker.SelectedIndex = (int)_family;
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
         DownloadModelPicker.ItemsSource = AiModelLibrary.Downloads.Select(m => m.Name).ToArray();
         if (DownloadModelPicker.SelectedIndex < 0) DownloadModelPicker.SelectedIndex = 0;
-        OperationPicker.SelectedIndex = operation; StarsPicker.SelectedIndex = stars;
+        RefreshLearningPickers(operation); StarsPicker.SelectedIndex = stars;
         LanguagePicker.SelectedIndex = language; BatchModePicker.SelectedIndex = mode;
         _updating = false;
         CountEntry.IsEnabled = mode == 1;
+        RefreshFindXRoles();
     }
 
     private void Render()
@@ -156,11 +164,13 @@ public partial class AiQuestionBankPage : ContentPage
         PreviewStreamingTextLabel.Text = streaming ? preview : "";
         PreviewText.IsVisible = !streaming;
         PreviewText.Expression = item?.Question?.WordProblem.ProblemText ?? T("NoPreview");
+        PreviewFactTable.Table = item?.Question?.WordProblem.FactTable;
         PreviewSolutionLabel.IsVisible = item?.Question is not null;
         PreviewSolutionLabel.Text = item?.Question is { } question
-            ? question.WordProblem.SolutionLead + "\n" + question.Contract.Left + " "
-                + MathSolver.Services.Core.BasicArithmeticEngine.GetSymbol(question.Contract.Operation) + " "
-                + question.Contract.Right + " = " + question.Contract.Answer + " " + question.Contract.AnswerUnit : "";
+            ? (question.WordProblem.ConversionStep is { } step ? step + "\n" : "")
+                + question.WordProblem.SolutionLead + "\n" + (question.WordProblem.ArithmeticReasoning?.Equation ?? question.Contract.Left + " "
+                + MathSolver.Services.Core.BasicArithmeticEngine.GetSymbol(question.Contract.Expression.Operation) + " "
+                + question.Contract.Right) + " = " + question.Contract.Answer + " " + question.Contract.AnswerUnit : "";
         // Only complete, validated drafts can be exported or inserted.
         InsertButton.IsEnabled = !_saving && item?.Question is not null
             && (item.State == AiItemState.SaveFailed || item.State == AiItemState.Ready
@@ -325,8 +335,8 @@ public partial class AiQuestionBankPage : ContentPage
         try
         {
             _followLatestItem = true;
-            _bank.Generation.Start(new((ArithmeticOperation)OperationPicker.SelectedIndex, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
-                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled));
+            _bank.Generation.Start(new(SelectedLearningOperation, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
+                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, CurrentLearningProfile, _family, _unknownRole));
             _updating = true;
             try { QuestionPicker.SelectedIndex = -1; }
             finally { _updating = false; }

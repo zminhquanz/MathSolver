@@ -87,6 +87,8 @@ public partial class MathPuzzlePage : ContentPage
     public MathPuzzlePage()
     {
         InitializeComponent();
+        Loaded += OnPracticePageLoaded;
+        Unloaded += OnPracticePageUnloaded;
 
         // Fraction overlays share their accessible description with the button.
         foreach (var view in ChoiceFractionViews) AutomationProperties.SetExcludedWithChildren(view, true);
@@ -158,6 +160,7 @@ public partial class MathPuzzlePage : ContentPage
             OnThemeChanged;
 
         UpdateQuestionModeLayout();
+        RefreshLearningPickers();
         UpdateOperationPickerItems();
         UpdateModeStyles();
         UpdateCurriculumTierStyles();
@@ -167,6 +170,7 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnAppearing()
     {
+        _practicePageVisible = true;
         base.OnAppearing();
         LiveWallpaper.Resume();
         Shell.SetTabBarIsVisible(this, true);
@@ -182,10 +186,15 @@ public partial class MathPuzzlePage : ContentPage
             RenderCurrentQuestion(resetAnswerControls: false);
             UpdateScoreLabels();
         }
+        // Shell can show an already loaded page without raising Loaded again.
+        if (IsLoaded) OnPracticePageLoaded(this, EventArgs.Empty);
     }
 
     protected override void OnDisappearing()
     {
+        _practicePageVisible = false;
+        _practiceLayoutVersion++;
+        _practiceScrollVersion++;
         _diagramScrollVersion++;
         AiQuestionBank.Current.Generation.Changed -= OnAiQuestionBankProgress;
         LiveWallpaper.Pause();
@@ -270,6 +279,7 @@ public partial class MathPuzzlePage : ContentPage
         Dispatcher.Dispatch(() =>
         {
             ResetQuizSessionState();
+            RefreshLearningPickers();
             UpdateOperationPickerItems();
             UpdateCurriculumTierStyles();
             UpdateScoreLabels();
@@ -549,7 +559,7 @@ public partial class MathPuzzlePage : ContentPage
         // Mixed can resolve to any kind on each new question. Once generated,
         // the question contract, not the picker, owns the essay presentation.
         bool isFindX = question is not null
-            ? question.FindXProblem is not null
+            ? question.FindXProblem is not null && question.WordProblem is null
             : IsFindXProblemSelected();
         bool isFraction = question is not null
             ? question.UsesFractionFormatting
@@ -1212,6 +1222,7 @@ public partial class MathPuzzlePage : ContentPage
             kind == QuizProblemKind.Motion;
 
         ProblemOperationPanel.IsVisible = showOperations;
+        LearningProfilePanel.IsVisible = kind == QuizProblemKind.FindX || kind == QuizProblemKind.Arithmetic && !_selectedBasicComparison;
         ProportionTypePanel.IsVisible = showProportionType;
         AverageTypePanel.IsVisible = showAverageType;
         PercentageTypePanel.IsVisible = showPercentageType;
@@ -1329,6 +1340,7 @@ public partial class MathPuzzlePage : ContentPage
         bool changed;
         if (kind == QuizProblemKind.Arithmetic)
         {
+            if (operation is { } selected && CurrentLearningProfile is { } profile && !profile.Allows(selected)) return;
             changed = _selectedBasicOperation != operation || _selectedBasicComparison != comparison;
             _selectedBasicOperation = operation;
             _selectedBasicComparison = comparison;
@@ -1521,6 +1533,14 @@ public partial class MathPuzzlePage : ContentPage
             QuizProblemRequest problemRequest =
                 ResolveSelectedProblem();
 
+            var learning = _quizProblemTypeCatalog.GetFixedRequest(OperationPicker.SelectedIndex)?.Kind == QuizProblemKind.Arithmetic
+                && !problemRequest.IsComparison ? CurrentLearningProfile : null;
+            if (learning is not null && (problemRequest.ArithmeticOperation is not { } operation || !learning.Allows(operation)))
+            {
+                var allowed = Enum.GetValues<ArithmeticOperation>().Where(learning.Allows).ToArray();
+                problemRequest = problemRequest with { ArithmeticOperation = allowed[Random.Shared.Next(allowed.Length)] };
+            }
+
             _activeProblemRequest = problemRequest;
 
             QuizCurriculumContext curriculumContext =
@@ -1589,8 +1609,16 @@ public partial class MathPuzzlePage : ContentPage
             if (problemRequest.Kind == QuizProblemKind.Arithmetic && !problemRequest.IsComparison)
             {
                 var selected = await AiQuestionBank.Current.Practice.SelectAsync(_currentQuestion,
-                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage);
+                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, profile: learning);
                 // Selection, language and answer mode can change during the SQLite read.
+                if (version != _questionGenerationVersion) return;
+                _currentQuestion = selected;
+            }
+
+            if (problemRequest.Kind == QuizProblemKind.FindX)
+            {
+                var selected = await AiQuestionBank.Current.Practice.SelectFindXAsync(_currentQuestion,
+                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, CurrentLearningProfile);
                 if (version != _questionGenerationVersion) return;
                 _currentQuestion = selected;
             }
@@ -1751,6 +1779,7 @@ public partial class MathPuzzlePage : ContentPage
 
         MathWordProblem? wordProblem =
             _currentQuestion.WordProblem;
+        PracticeFactTable.Table = wordProblem?.FactTable;
         FindXQuizContract? findXProblem =
             _currentQuestion.FindXProblem;
         FractionQuizContract? fractionProblem =
@@ -2270,7 +2299,9 @@ public partial class MathPuzzlePage : ContentPage
             EssayCombinedInputParser.Parse(
                 EssayWorkEditor.Text,
                 EssayAnswerValidator.RequiresSolution(_currentQuestion),
-                preserveAllCalculations: _currentQuestion.GeometryProblem?.Reasoning is not null || _currentQuestion.ElementaryProblem is not null || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
+                preserveAllCalculations: _currentQuestion.WordProblem?.ConversionStep is not null
+                    || _currentQuestion.GeometryProblem?.Reasoning is not null || _currentQuestion.ElementaryProblem is not null
+                    || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
 
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(
@@ -2302,7 +2333,6 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         _questionAnswered = true;
-        SetPracticeSettingsExpanded(false);
         _lastAnswerWasCorrect = isCorrect;
         UpdateQuizDiagram();
 
@@ -2505,7 +2535,7 @@ public partial class MathPuzzlePage : ContentPage
                 ? "Đáp số"
                 : "Answer";
 
-        if (question.FindXProblem is
+        if (question.WordProblem is null && question.FindXProblem is
             FindXQuizContract findX)
         {
             string xLabel =

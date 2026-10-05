@@ -5,16 +5,38 @@ previous AI practice source, validators, benchmark or model test fixtures.
 
 Run from the repository root:
 
+Knowledge-group profiles are covered by `LearningProfileTests`: all nine UI groups, all four operations, all stars, both languages, every eligible scene, fresh operands, reviewed variants and all answer modes. It rejects role/unit/quantity mutations and foreign text; verifies star scales, exact conversions (including l/ml), age/activity scales, area/volume dimensions, perimeter/remainder/minimum-pack answer rules, factual tables, natural solution leads, group-isolated SQLite selection, historical grade-independent selection, legacy counted-template access and merged measurement access to old mass/length/transport rows. It also checks the editable SQL grid, all-group Excel roundtrips, numeric/story C# variety, background worker insertion and cleanup. Existing v1–v4 tests remain in the full suite. These are deterministic functional checks; no GGUF inference or benchmark runs by default.
+
+To run just the profile checks:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --learning-profiles
+```
+
 ```powershell
 dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release
 ```
 
 The default run uses deterministic model responses and temporary SQLite files.
+It also includes `FindXBankTests`: 11,316 bilingual scene/star/role/wording cases across
+the nine knowledge groups and six unknown roles. These verify unique integer solutions
+and back substitution, all three answer modes, essay units, malformed/foreign prose,
+fresh facts, role-specific scene rotation, explicit AI role selection, three-attempt
+failure without insertion, family-isolated SQLite selection, legacy compatibility,
+Excel roundtrips and numeric/story practice mixing. They use simulated model output.
+
+Run only the Find-X bank checks:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --findx-bank
+```
+
 It checks all four operations, five star levels and both languages; mutations of
 the generated prose; exact C# answers in each practice mode; persistence,
 deduplication and matching by operation/stars/language; manual/automatic insertion;
-random 50/50 source mixing with fresh C# questions even when SQLite is populated,
-preserved fresh operands and all answer modes, and empty/unreadable bank fallback;
+random 50/50 source mixing even when SQLite is populated, plus independent numeric/story
+mixing inside C# with original random operands, answer choices and all answer modes,
+and both numeric and word-problem fallbacks for an empty/unreadable bank;
 the three-attempt limit; cancellation without saving partial output; failed-save
 recovery; unavailable-database fallback; and cleanup after an invalid GGUF import.
 Data checks cover SELECT/INSERT/UPDATE/DELETE, SQL comments, affected-row counts,
@@ -31,6 +53,14 @@ cancellation and timeouts; completion of every changed row despite RETURNING
 display limits; rejection of multiple statements before any write; deletion
 without WHERE; and validation of directly edited data during practice/export.
 It runs no model inference and no benchmark.
+
+Shared one-step checks cover every reviewed C# pattern and wording variant in both languages, using the same validator as the AI bank. They verify all answer modes, correct and incorrect essay answers, fresh-number variety, smaller-amount/inverse comparisons, total-to-part relations, factor comparisons with `lần`/`times` answer units, and rejected actor/target inversions. Built-in source selection does not read SQLite. Paused AI inference cannot prevent immediate built-in practice.
+
+Run just the shared one-step pattern checks:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c Release -- --one-step-practice
+```
 
 Background-practice checks pause a simulated inference job while every answer
 mode requests a question. An empty bank serves fresh C# questions immediately;

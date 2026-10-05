@@ -10,7 +10,62 @@ public partial class MathPuzzlePage
     private bool? _compactSettings;
     private (bool Inline, bool StackActions)? _summaryLayout;
     private int _practiceScrollVersion;
+    private bool _practicePageVisible;
+    private bool _practiceLayoutLoaded;
+    private int _practiceLayoutVersion;
+    private Window? _practiceLayoutWindow;
     private readonly Dictionary<Button, (string Icon, string Key)> _choiceStatuses = [];
+
+    private bool CanUpdatePracticeLayout => _practicePageVisible && _practiceLayoutLoaded && IsLoaded
+        && _practiceLayoutWindow is not null && ReferenceEquals(Window, _practiceLayoutWindow)
+        && Handler?.MauiContext is not null && _practiceLayoutWindow.Handler?.MauiContext is not null
+        && PracticeSummaryGrid.Handler?.MauiContext is not null
+        && ChangePracticeSettingsButton.Handler?.MauiContext is not null
+        && OpenAiQuestionBankButton.Handler?.MauiContext is not null
+        && PracticeSummaryLabel.Handler?.MauiContext is not null;
+
+    private void OnPracticePageLoaded(object? sender, EventArgs e)
+    {
+        _practiceLayoutLoaded = false;
+        _practiceLayoutVersion++;
+        DetachPracticeLayoutWindow();
+        _practiceLayoutWindow = Window;
+        if (_practiceLayoutWindow is null) return;
+        _practiceLayoutWindow.Destroying += OnPracticeWindowDestroying;
+        _practiceLayoutLoaded = true;
+        _summaryLayout = null;
+        QueuePracticeSummaryLayout();
+    }
+
+    private void OnPracticePageUnloaded(object? sender, EventArgs e)
+    {
+        _practiceLayoutLoaded = false;
+        _practiceLayoutVersion++;
+        _practiceScrollVersion++;
+        DetachPracticeLayoutWindow();
+    }
+
+    private void OnPracticeWindowDestroying(object? sender, EventArgs e) => OnPracticePageUnloaded(sender, e);
+
+    private void DetachPracticeLayoutWindow()
+    {
+        if (_practiceLayoutWindow is not null)
+            _practiceLayoutWindow.Destroying -= OnPracticeWindowDestroying;
+        _practiceLayoutWindow = null;
+    }
+
+    private void QueuePracticeSummaryLayout()
+    {
+        if (!CanUpdatePracticeLayout) return;
+        int version = ++_practiceLayoutVersion;
+        var handler = Handler;
+        Dispatcher.Dispatch(() =>
+        {
+            // A queued callback belongs to one visible page/handler lifetime.
+            if (version == _practiceLayoutVersion && ReferenceEquals(handler, Handler))
+                OnPracticeLayoutSizeChanged(this, EventArgs.Empty);
+        });
+    }
 
     private static double CurrentTextScale
     {
@@ -35,6 +90,10 @@ public partial class MathPuzzlePage
             _ => "Quiz.TrueFalseMode"
         });
         var selections = new List<string> { OperationPicker.SelectedItem?.ToString() ?? "" };
+        if (LearningProfilePanel.IsVisible)
+        {
+            if (CurrentLearningProfile is not null && LearningGroupPicker.SelectedItem is { } group) selections.Add(group.ToString()!);
+        }
         foreach (var (panel, picker) in new (View Panel, Picker Picker)[]
         {
             (ElementaryTypePanel, ElementaryTypePicker), (ExpressionTypePanel, ExpressionTypePicker),
@@ -66,7 +125,7 @@ public partial class MathPuzzlePage
         string settingsDescription = TranslateQuiz(_practiceSettingsExpanded ? "Quiz.HideSettings" : "Quiz.ChangeSettings");
         SemanticProperties.SetDescription(ChangePracticeSettingsButton, settingsDescription);
         ToolTipProperties.SetText(ChangePracticeSettingsButton, settingsDescription);
-        Dispatcher.Dispatch(UpdatePracticeSummaryLayout);
+        QueuePracticeSummaryLayout();
     }
 
     private void SetPracticeSettingsExpanded(bool expanded)
@@ -85,8 +144,7 @@ public partial class MathPuzzlePage
 
     private async void OnEssayWorkFocused(object? sender, FocusEventArgs e)
     {
-        if (!_practiceSettingsExpanded || _currentQuestion is null) return;
-        SetPracticeSettingsExpanded(false);
+        if (_currentQuestion is null) return;
         await ScrollToPracticeElementAsync(EssayWorkEditor, ScrollToPosition.MakeVisible);
     }
 
@@ -94,7 +152,7 @@ public partial class MathPuzzlePage
     {
         // AdjustResize and rotation can move an already focused editor while
         // the question and draft stay intact.
-        if (EssayWorkEditor.IsFocused && !_practiceSettingsExpanded)
+        if (EssayWorkEditor.IsFocused)
             await ScrollToPracticeElementAsync(EssayWorkEditor, ScrollToPosition.MakeVisible);
     }
 
@@ -103,12 +161,12 @@ public partial class MathPuzzlePage
         int version = ++_practiceScrollVersion;
         var question = _currentQuestion;
         (Rect Bounds, Size Content, double Height)? previous = null;
-        // Visibility changes invalidate the layout. Wait for stable bounds so
-        // scrolling uses the collapsed position, not the old settings height.
+        // Focus, keyboard resizing and visibility changes invalidate the layout.
+        // Wait for stable bounds without changing the user's settings visibility.
         for (int attempt = 0; attempt < 6; attempt++)
         {
             await Task.Delay(16);
-            if (version != _practiceScrollVersion || _practiceSettingsExpanded ||
+            if (version != _practiceScrollVersion ||
                 !ReferenceEquals(question, _currentQuestion) || MathPuzzleScrollView.Handler is null ||
                 Shell.Current?.CurrentPage != this) return;
 #if WINDOWS
@@ -124,9 +182,11 @@ public partial class MathPuzzlePage
 
     private void OnPracticeLayoutSizeChanged(object? sender, EventArgs e)
     {
+        if (!CanUpdatePracticeLayout) return;
         double width = PracticeSummaryGrid.Width;
         if (width <= 0) return;
         UpdatePracticeSummaryLayout();
+        if (!CanUpdatePracticeLayout) return;
         bool compact = QuizResponsiveLayout.UseCompactSettings(width, CurrentTextScale);
         if (_compactSettings != compact)
         {
@@ -139,13 +199,26 @@ public partial class MathPuzzlePage
 
     private void UpdatePracticeSummaryLayout()
     {
+        if (!CanUpdatePracticeLayout) return;
         double width = PracticeSummaryGrid.Width;
         if (width <= 0) return;
         // Measure the actual localized labels, including system font scaling.
-        double actionsWidth = ((IView)ChangePracticeSettingsButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
-            + ((IView)OpenAiQuestionBankButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
-            + PracticeSummaryActionsGrid.ColumnSpacing;
-        double summaryWidth = ((IView)PracticeSummaryLabel).Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
+        double actionsWidth, summaryWidth;
+        try
+        {
+            actionsWidth = ((IView)ChangePracticeSettingsButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
+                + ((IView)OpenAiQuestionBankButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
+                + PracticeSummaryActionsGrid.ColumnSpacing;
+            summaryWidth = ((IView)PracticeSummaryLabel).Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
+        }
+        catch (ObjectDisposedException)
+        {
+            // Window services may already be disposed before Unloaded is raised.
+            // Skip this cosmetic pass; Loaded/Appearing will request fresh layout.
+            _practiceLayoutVersion++;
+            _practiceLayoutLoaded = false;
+            return;
+        }
         bool inline = width >= actionsWidth + PracticeSummaryGrid.ColumnSpacing + Math.Min(summaryWidth, 320 * CurrentTextScale);
         bool stackActions = width < actionsWidth;
         if (_summaryLayout == (inline, stackActions)) return;

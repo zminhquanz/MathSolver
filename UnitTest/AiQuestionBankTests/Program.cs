@@ -45,6 +45,29 @@ if (args is ["--arithmetic-contexts"])
     finally { Directory.Delete(contextDirectory, true); }
     return;
 }
+if (args is ["--one-step-practice"])
+{
+    try { OneStepPracticeTests.Run(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--findx-bank"])
+{
+    string folder = Path.GetFullPath(Path.Combine("artifacts", "verification", "findx-tests-" + Guid.NewGuid().ToString("N")));
+    Directory.CreateDirectory(folder);
+    try { await FindXBankTests.RunAsync(folder); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--learning-profiles"])
+{
+    string folder = Path.Combine(Path.GetTempPath(), "MathSolver-learning-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(folder);
+    try { await LearningProfileTests.RunAsync(folder); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    finally { Directory.Delete(folder, true); }
+    return;
+}
 if (args is ["--addition-throughput", var throughputModelPath])
 {
     try { await AdditionThroughputChecks.RunAsync(throughputModelPath); }
@@ -268,6 +291,9 @@ try
     await TemplateTests.RunAsync(directory);
     await AdditionTests.RunAsync(directory);
     await ArithmeticContextTests.RunAsync(directory);
+    OneStepPracticeTests.Run();
+    await LearningProfileTests.RunAsync(directory);
+    await FindXBankTests.RunAsync(directory);
 }
 finally { Directory.Delete(directory, true); }
 

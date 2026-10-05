@@ -8,7 +8,8 @@ public enum BasicQuestionStructure
 {
     Increase, Combine, RecoverInitial, Remaining, Difference, MissingPart,
     EqualGroups, TimesAsMany, EqualShare, CountGroups, TimesFewer,
-    AddComparisonMore, AddComparisonInverse
+    AddComparisonMore, AddComparisonInverse,
+    SubComparisonLess, SubComparisonInverse, FindPart, CompareFactor
 }
 
 public sealed record QuestionUnit(string Id, string Vietnamese, string Singular, string Plural,
@@ -64,29 +65,50 @@ public static class BasicQuestionTemplates
     {
         BasicQuestionStructure.Increase or BasicQuestionStructure.Combine or BasicQuestionStructure.RecoverInitial
             or BasicQuestionStructure.AddComparisonMore or BasicQuestionStructure.AddComparisonInverse => ArithmeticOperation.Add,
-        BasicQuestionStructure.Remaining or BasicQuestionStructure.Difference or BasicQuestionStructure.MissingPart => ArithmeticOperation.Subtract,
+        BasicQuestionStructure.Remaining or BasicQuestionStructure.Difference or BasicQuestionStructure.MissingPart
+            or BasicQuestionStructure.SubComparisonLess or BasicQuestionStructure.SubComparisonInverse or BasicQuestionStructure.FindPart => ArithmeticOperation.Subtract,
         BasicQuestionStructure.EqualGroups or BasicQuestionStructure.TimesAsMany => ArithmeticOperation.Multiply,
         _ => ArithmeticOperation.Divide
     };
 
     public static BasicQuestionStructure[] Allowed(ArithmeticOperation operation, CurriculumTier tier)
         => Enum.GetValues<BasicQuestionStructure>().Where(s => s is not (BasicQuestionStructure.AddComparisonMore or BasicQuestionStructure.AddComparisonInverse)
+            && !OneStepRelationRules.IsExtended(s)
             && Operation(s) == operation && (int)tier >= MinimumStars(s)).ToArray();
+    public static BasicQuestionStructure[] AllowedContextual(ArithmeticOperation operation, CurriculumTier tier)
+        => Allowed(operation, tier).Concat(Enum.GetValues<BasicQuestionStructure>().Where(s => OneStepRelationRules.IsExtended(s)
+            && Operation(s) == operation && (int)tier >= MinimumStars(s))).ToArray();
     public static int MinimumStars(BasicQuestionStructure s) => s switch
     {
-        BasicQuestionStructure.Combine or BasicQuestionStructure.MissingPart or BasicQuestionStructure.CountGroups => 2,
-        BasicQuestionStructure.RecoverInitial or BasicQuestionStructure.Difference or BasicQuestionStructure.TimesAsMany or BasicQuestionStructure.TimesFewer => 3,
+        BasicQuestionStructure.Combine or BasicQuestionStructure.MissingPart or BasicQuestionStructure.CountGroups
+            or BasicQuestionStructure.SubComparisonLess or BasicQuestionStructure.FindPart => 2,
+        BasicQuestionStructure.RecoverInitial or BasicQuestionStructure.Difference or BasicQuestionStructure.TimesAsMany or BasicQuestionStructure.TimesFewer
+            or BasicQuestionStructure.SubComparisonInverse or BasicQuestionStructure.CompareFactor => 3,
         _ => 1
     };
 
     // Examples anchor roles, not sentence wording. Every structure remains one exact integer operation.
     public static BasicQuestionDraft Example(BasicQuestionContract c, string? unitId = null)
     {
+        if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Draft(c);
+        if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Draft(c);
         if (c.Version == AdditionQuestionCatalogue.Version) return AdditionQuestionCatalogue.Example(c) with { UnitId = unitId ?? QuestionUnits.Find(c)?.Id };
         if (c.Version == ArithmeticQuestionCatalogue.Version) return ArithmeticQuestionCatalogue.Example(c) with { UnitId = unitId ?? QuestionUnits.Find(c)?.Id };
         bool vi = c.Language == AppLanguage.Vietnamese;
         var clauses = c.Structure switch
         {
+            BasicQuestionStructure.SubComparisonLess => vi
+                ? ("{other} có {a} {unit}.", "{name} có ít hơn {other} là {b} {unit}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
+                : ("{other} has {a} {unit}.", "{name} has {b} fewer {unit} than {other}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
+            BasicQuestionStructure.SubComparisonInverse => vi
+                ? ("{other} có {a} {unit}.", "{other} có nhiều hơn {name} là {b} {unit}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
+                : ("{other} has {a} {unit}.", "{other} has {b} more {unit} than {name}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
+            BasicQuestionStructure.FindPart => vi
+                ? ("{name} và {other} có tổng cộng {a} {unit}.", "{other} có {b} {unit}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
+                : ("{name} and {other} have a total of {a} {unit}.", "{other} has {b} {unit}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
+            BasicQuestionStructure.CompareFactor => vi
+                ? ("{other} có {a} {unit}.", "{name} có {b} {unit}.", "Hỏi số {unit} của {other} gấp mấy lần số {unit} của {name}?", "Số lần lượng của {other} gấp lượng của {name} là:")
+                : ("{other} has {a} {unit}.", "{name} has {b} {unit}.", "How many times as many {unit} does {other} have as {name}?", "The number of times the amount of {other} is that of {name} is:"),
             BasicQuestionStructure.Increase => vi
                 ? ("{name} có {a} {unit}.", "{name} nhận thêm {b} {unit}.", "Hỏi {name} có tất cả bao nhiêu {unit}?", "Số {unit} mà {name} có tất cả là:")
                 : ("{name} has {a} {unit}.", "{name} receives {b} more {unit}.", "How many {unit} does {name} have in total?", "The total number of {unit} that {name} has is:"),
@@ -144,6 +166,8 @@ public static class BasicQuestionTemplates
 
     public static string Render(string template, BasicQuestionContract c)
     {
+        if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Render(template, c);
+        if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Render(template, c);
         var unit = QuestionUnits.Find(c);
         string text = template.Replace("{part_a}", c.PartA).Replace("{part_b}", c.PartB)
             .Replace("{name}", c.Subject).Replace("{other}", c.OtherSubject)

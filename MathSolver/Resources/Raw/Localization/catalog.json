@@ -26,7 +26,9 @@
     "captured": "Thuật ngữ được chèn vào câu động — cần phù hợp ngữ pháp của cả câu.",
     "dynamic": "Câu có biến được app thay bằng dữ liệu — giữ nguyên các placeholder.",
     "legacy": "Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.",
-    "AiBank": "AI question bank: model management, generation, validation, review and storage."
+    "AiBank": "AI question bank: model management, generation, validation, review and storage.",
+    "Learning": "Chọn nhóm kiến thức ở luyện tập toán cơ bản hoặc bổ sung đề bằng AI.",
+    "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
     "Formula.Tabs.UnknownComponent": {
@@ -1511,6 +1513,94 @@
     "AiBank.Error.PromptTooLong": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "Learning.Group": {
+      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+    },
+    "Learning.Group.Objects": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Money": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Mass": {
+      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+    },
+    "Learning.Group.Length": {
+      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+    },
+    "Learning.Group.Transport": {
+      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+    },
+    "Learning.Group.Motion": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Hint": {
+      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+    },
+    "Learning.Group.Time": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Measurement": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Geometry": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Packaging": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Production": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "Learning.Group.Data": {
+      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
+    },
+    "FindXBank.Title": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.UnknownRole": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.Role.Addend": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.Role.Minuend": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.Role.Subtrahend": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.Role.Factor": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.Role.Dividend": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "FindXBank.Role.Divisor": {
+      "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
+      "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
     }
   },
   "placeholderNotes": {

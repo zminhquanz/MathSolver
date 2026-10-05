@@ -30,7 +30,9 @@ internal static class ArithmeticContextTests
             Check(c.IsValid && validation.IsValid && validation.Contract == c, $"Valid context rejected {tag}: {validation.ErrorCode}");
             Check(draft.GivenA.EndsWith(',') && !char.IsUpper(draft.GivenB[0]), "Broken joined clauses: " + tag);
             string prompt = BasicQuestionPrompt.Build(c), grammar = GgufQuestionRuntime.BuildGrammar(c);
-            Check(prompt.Length < 2300 && !prompt.Contains("Unit catalogue:") && !prompt.Contains(c.Subject), "Prompt expanded the catalogue or concrete facts: " + tag);
+            Check(prompt.Length < 2300 && !prompt.Contains("Unit catalogue:")
+                && !System.Text.RegularExpressions.Regex.IsMatch(prompt, @"(?<!\p{L})" + System.Text.RegularExpressions.Regex.Escape(c.Subject) + @"(?!\p{L})"),
+                "Prompt expanded the catalogue or concrete facts: " + tag);
             Check(grammar.All(ch => ch < 128) && !grammar.Contains("\"books\" | \"notebooks\""), "Grammar lost exact C# units/Unicode safety: " + tag);
             foreach (int seed in new[] { 1, 36, 812 })
             {
@@ -62,7 +64,7 @@ internal static class ArithmeticContextTests
                 "Extra literal object accepted: " + tag);
             Check(!(c with { TopicId = "wrong" }).IsValid && !(c with { Left = QuizCurriculumLayer.GetMinimumPrimaryOperandValue(tier) - 1 }).IsValid,
                 "Forged context or smaller primary accepted: " + tag);
-            if (operation != ArithmeticOperation.Subtract && structure != BasicQuestionStructure.CountGroups)
+            if (operation != ArithmeticOperation.Subtract && structure is not (BasicQuestionStructure.CountGroups or BasicQuestionStructure.CompareFactor))
                 Check(!(c with { Right = 1 }).IsValid && !(c with { Right = 100 }).IsValid, "Trivial/unbounded factor accepted: " + tag);
             if (language == AppLanguage.Vietnamese && id == ArithmeticQuestionCatalogue.Scale(scene.Id, operation, tier)!.UnitIds[0])
                 bankEntries.Add(new(c, draft, QuestionBankStore.SerializeDraft(draft), "context-test", DateTime.UtcNow));
@@ -85,7 +87,7 @@ internal static class ArithmeticContextTests
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         {
             var cycle = new ArithmeticQuestionCycle(new Random(114));
-            int relationCount = BasicQuestionTemplates.Allowed(operation, tier).Length;
+            int relationCount = BasicQuestionTemplates.AllowedContextual(operation, tier).Length;
             var picks = Enumerable.Range(0, ArithmeticQuestionCatalogue.Available(operation, tier).Count())
                 .Select(_ => cycle.Next(operation, tier, AppLanguage.Vietnamese)).ToArray();
             Check(picks.All(c => c.IsValid) && picks.Take(relationCount).Select(c => c.Structure).Distinct().Count() == relationCount,

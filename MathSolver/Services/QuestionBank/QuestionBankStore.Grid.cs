@@ -18,7 +18,9 @@ public sealed partial class QuestionBankStore
         new("Language", true, "0"), new("Version", true, "1"), new("ContractJson", false, ""),
         new("DraftJson", false, ""), new("RawJson", false, ""), new("ModelName", false, ""),
         new("CreatedUtc", true, "0"), new("LastUsedUtc", true, "0"), new("UseCount", true, "0"),
-        new("Structure", true, "0"), new("TopicId", false, ""), new("SceneId", false, "")
+        new("Structure", true, "0"), new("TopicId", false, ""), new("SceneId", false, ""),
+        new("Grade", true, "0"), new("KnowledgeGroup", true, "0"),
+        new("Family", true, "0"), new("UnknownRole", true, "0")
     });
 
     // Only direct single-table projections with a genuine Hash are editable. Never infer

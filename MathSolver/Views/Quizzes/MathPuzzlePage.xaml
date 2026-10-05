@@ -270,6 +270,13 @@
 
                             </Border>
 
+                            <VerticalStackLayout x:Name="LearningProfilePanel" IsVisible="False" Spacing="8">
+                                <Label Text="{localization:Translate Learning.Group}" FontAttributes="Bold" />
+                                <Border Style="{StaticResource SolverInputBorderStyle}">
+                                    <Picker x:Name="LearningGroupPicker" SelectedIndexChanged="OnLearningGroupChanged" />
+                                </Border>
+                                <Label Text="{localization:Translate Learning.Hint}" FontSize="13" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
                             <VerticalStackLayout x:Name="ElementaryTypePanel" IsVisible="False" Spacing="8">
                                 <Label Text="{localization:QuizTranslate Quiz.ElementaryTypeTitle}"
                                        FontSize="15" FontAttributes="Bold"
@@ -760,6 +767,7 @@
                             <Grid x:Name="QuestionDiagramGrid" RowDefinitions="Auto,Auto"
                                   RowSpacing="16" ColumnSpacing="20" SizeChanged="OnQuestionDiagramSizeChanged">
                                 <VerticalStackLayout x:Name="QuestionTextPanel" Spacing="8" VerticalOptions="Center">
+                                    <controls:QuestionFactTableView x:Name="PracticeFactTable" />
                                     <Label x:Name="QuestionExpressionLabel" FontSize="34" FontAttributes="Bold"
                                            HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                            TextColor="{DynamicResource PrimaryColor}" />

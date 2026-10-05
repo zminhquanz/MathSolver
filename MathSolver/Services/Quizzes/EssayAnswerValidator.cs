@@ -82,7 +82,8 @@ public sealed partial class EssayAnswerValidator
         IReadOnlyList<EssayStepValidationResult> steps = [];
         bool indirect = question.AverageProblem?.Type == AverageQuizType.IndirectData;
         bool geometryWork = question.GeometryProblem?.Reasoning is not null;
-        (bool equationIsCorrect, EssayAnswerError equationError) = indirect
+        (bool equationIsCorrect, EssayAnswerError equationError) = question.WordProblem?.ConversionStep is not null
+            ? ValidateDimensionCalculations(question, equationText, out steps) : indirect
             ? AverageIndirectEssayValidator.Validate(question, equationText, out steps)
             : geometryWork ? GeometryWorkedEssayValidator.Validate(question, equationText, out steps)
             : ValidateCalculatedEquation(question, calculation);
@@ -269,6 +270,24 @@ public sealed partial class EssayAnswerValidator
         string normalizedSolution,
         string? originalSolution)
     {
+        // Dimensional facts may use a quantity name rather than a unit symbol in prose.
+        // The C# contract supplies the quantity; this does not loosen legacy grading.
+        if (question.WordProblem is { Quantity: not WordProblemQuantity.Unspecified } word)
+        {
+            string[] phrases = word.Quantity switch
+            {
+                WordProblemQuantity.Money => ["số tiền", "giá tiền", "total cost", "amount", "savings", "price"],
+                WordProblemQuantity.Mass => ["khối lượng", "mass", "load", "weight"],
+                WordProblemQuantity.Distance => ["quãng đường", "độ dài", "chiều dài", "chiều cao", "chu vi", "distance", "length", "height", "perimeter"],
+                WordProblemQuantity.Speed => ["vận tốc", "tốc độ", "speed"],
+                WordProblemQuantity.Time => ["thời gian", "tuổi", "duration", "time", "age", "ages"],
+                WordProblemQuantity.Capacity => ["dung tích", "lượng nước", "volume", "capacity", "water"],
+                WordProblemQuantity.Area => ["diện tích", "area"],
+                WordProblemQuantity.Volume => ["thể tích", "volume"],
+                _ => []
+            };
+            if (phrases.Any(p => ContainsNormalizedPhrase(normalizedSolution, p))) return true;
+        }
         string expectedUnit = NormalizeUnit(GetExpectedUnit(question));
         if (expectedUnit == "%" &&
             ((originalSolution ?? string.Empty).Contains('%') ||

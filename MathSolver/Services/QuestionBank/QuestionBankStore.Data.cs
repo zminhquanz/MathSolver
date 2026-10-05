@@ -216,7 +216,9 @@ public sealed partial class QuestionBankStore
                         var contract = JsonSerializer.Deserialize<BasicQuestionContract>(row.ContractJson, JsonOptions);
                         if (contract is not null && row.Version == contract.Version && row.Operation == (int)contract.Operation
                             && row.Stars == (int)contract.Tier && row.Language == (int)contract.Language
-                            && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version) || (int)contract.Structure == row.Structure
+                            && contract.Grade == row.Grade && (int)contract.KnowledgeGroup == row.KnowledgeGroup
+                            && (int)contract.Family == row.Family && (int)contract.UnknownRole == row.UnknownRole
+                            && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version) || (int)contract.Structure == row.Structure
                                 && contract.TopicId == row.TopicId && contract.SceneId == row.SceneId))
                         {
                             var checkedDraft = BasicQuestionValidator.Validate(row.DraftJson, contract);

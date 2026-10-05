@@ -11,16 +11,35 @@ public sealed record BasicQuestionContract(
     int Version, ArithmeticOperation Operation, CurriculumTier Tier, AppLanguage Language,
     int Left, int Right, string Subject, string Unit, string GroupUnit,
     BasicQuestionStructure Structure = BasicQuestionStructure.Increase, string OtherSubject = "",
-    string TopicId = "", string SceneId = "", string PartA = "", string PartB = "")
+    string TopicId = "", string SceneId = "", string PartA = "", string PartB = "",
+    int Grade = 0, QuestionKnowledgeGroup KnowledgeGroup = QuestionKnowledgeGroup.Objects,
+    FindXUnknownRole UnknownRole = FindXUnknownRole.None)
 {
     public const int CurrentVersion = 2;
-    [JsonIgnore] public BigInteger Answer => new BasicArithmeticEngine().CalculateInteger(Expression).Result;
-    [JsonIgnore] public IntegerArithmeticExpression Expression => new(Left, Operation, Right);
-    [JsonIgnore] public bool IsTemplate => Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version;
-    [JsonIgnore] public string AnswerUnit => !IsTemplate ? Unit : Structure == BasicQuestionStructure.CountGroups
+    [JsonIgnore] public BankQuestionFamily Family => Version == FindXQuestionCatalogue.Version ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
+    [JsonIgnore] public BigInteger Answer => Version == AppliedQuestionCatalogue.Version
+        && AppliedQuestionCatalogue.Reasoning(this) is { } reasoning ? reasoning.Answer
+        : new BasicArithmeticEngine().CalculateInteger(Expression).Result;
+    [JsonIgnore] public IntegerArithmeticExpression Expression => Version == FindXQuestionCatalogue.Version
+        ? FindXQuestionCatalogue.Equation(this).SolutionExpression : new(Left, Operation, Right);
+    [JsonIgnore] public bool IsTemplate => Version == FindXQuestionCatalogue.Version || Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version;
+    [JsonIgnore] public string AnswerUnit => Version == FindXQuestionCatalogue.Version
+        ? AppliedQuestionCatalogue.ResultUnit(FindXQuestionCatalogue.AsApplied(this))
+        : Version == AppliedQuestionCatalogue.Version
+        ? AppliedQuestionCatalogue.ResultUnit(this)
+        : !IsTemplate ? Unit : Structure == BasicQuestionStructure.CompareFactor
+        ? Language == AppLanguage.Vietnamese ? "lần" : "times" : Structure == BasicQuestionStructure.CountGroups
         ? QuestionUnits.Find(this)?.GroupFor(this, Answer.IsOne) ?? GroupUnit
         : QuestionUnits.Find(this)?.Item(Language, Answer.IsOne) ?? Unit;
-    [JsonIgnore] public bool IsValid => Version is 1 or CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version && Enum.IsDefined(Operation)
+    [JsonIgnore] public bool IsValid => Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.IsValid(this)
+        : UnknownRole == FindXUnknownRole.None && (Version == AppliedQuestionCatalogue.Version
+        ? Enum.IsDefined(Operation) && Enum.IsDefined(Tier) && Language is AppLanguage.Vietnamese or AppLanguage.English
+            && Left > 0 && Right > 0 && (Operation != ArithmeticOperation.Divide || Left % Right == 0
+                || AppliedQuestionCatalogue.Reasoning(this) is { } reasoning && reasoning.Matches(Expression))
+            && (Operation != ArithmeticOperation.Subtract || Left > Right)
+            && ValidActor(Subject) && ValidActor(OtherSubject) && Subject != OtherSubject && AppliedQuestionCatalogue.IsValid(this)
+        : Grade == 0 && KnowledgeGroup == QuestionKnowledgeGroup.Objects
+        && Version is 1 or CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version && Enum.IsDefined(Operation)
         && Enum.IsDefined(Tier) && Language is AppLanguage.Vietnamese or AppLanguage.English
         && Left > 0 && Right > 0 && !string.IsNullOrWhiteSpace(Subject)
         && Subject.Length <= 100 && !Subject.Any(c => char.IsControl(c) || char.IsDigit(c) || c is '{' or '}')
@@ -35,13 +54,23 @@ public sealed record BasicQuestionContract(
             && Subject != OtherSubject && Left <= 99999 && Right <= 99999
             : Language == AppLanguage.Vietnamese ? Unit == "quyển sách" && GroupUnit == "thùng" : Unit == "books" && GroupUnit == "box")
         && (Operation != ArithmeticOperation.Subtract || Left >= Right)
-        && (Operation != ArithmeticOperation.Divide || Left % Right == 0);
+        && (Operation != ArithmeticOperation.Divide || Left % Right == 0));
 
-    [JsonIgnore] public string SolutionLead => Language == AppLanguage.Vietnamese
+    private static bool ValidActor(string actor) => !string.IsNullOrWhiteSpace(actor) && actor.Length <= 100
+        && !actor.Any(c => char.IsControl(c) || char.IsDigit(c) || c is '{' or '}');
+
+    [JsonIgnore] public string SolutionLead => Version == FindXQuestionCatalogue.Version
+        ? FindXQuestionCatalogue.Render(FindXQuestionCatalogue.Draft(this).SolutionLead!, this)
+        : Version == AppliedQuestionCatalogue.Version
+        ? AppliedQuestionCatalogue.Render(AppliedQuestionCatalogue.Draft(this).SolutionLead!, this)
+        : Language == AppLanguage.Vietnamese
         ? $"Số {Unit} {(Operation == ArithmeticOperation.Divide ? "trong mỗi " + GroupUnit : "cần tìm")} là:"
         : $"The number of {Unit} {(Operation == ArithmeticOperation.Divide ? "in each " + GroupUnit : "requested")} is:";
 
-    [JsonIgnore] public string Solution => $"{SolutionLead}\n{Left} {BasicArithmeticEngine.GetSymbol(Operation)} {Right} = {Answer} {AnswerUnit}";
+    [JsonIgnore] public string Solution => Version == FindXQuestionCatalogue.Version
+        ? $"{SolutionLead}\n{Expression.LeftOperand} {BasicArithmeticEngine.GetSymbol(Expression.Operation)} {Expression.RightOperand} = {Answer} {AnswerUnit}"
+        : (Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.ConversionStep(this) is { } step ? step + "\n" : "")
+        + $"{SolutionLead}\n{(Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Reasoning(this)?.Equation : null) ?? $"{Left} {BasicArithmeticEngine.GetSymbol(Operation)} {Right}"} = {Answer} {AnswerUnit}";
 
     public static BasicQuestionContract Create(ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, Random? random = null)
@@ -89,6 +118,8 @@ public sealed record BasicQuestionContract(
     public BasicQuestionContract FreshFacts(Random? random = null)
     {
         if (!IsTemplate) return this;
+        if (Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, UnknownRole, SceneId);
+        if (Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
         if (Version == AdditionQuestionCatalogue.Version) return AdditionQuestionCatalogue.Refresh(this, random);
         if (Version == ArithmeticQuestionCatalogue.Version) return ArithmeticQuestionCatalogue.Refresh(this, random);
         var fresh = CreateTemplate(Operation, Tier, Language, random) with { Structure = Structure };
@@ -100,25 +131,32 @@ public sealed record BasicQuestionContract(
         if (!IsValid) throw new InvalidOperationException("Invalid stored arithmetic contract.");
         random ??= Random.Shared;
         BigInteger answer = Answer;
-        if (mode == ArithmeticQuizMode.Essay) return new(Expression, mode, answer, null, null, [], text);
+        FindXQuizContract? findX = Family == BankQuestionFamily.FindX ? FindXQuestionCatalogue.Equation(this) : null;
+        if (mode == ArithmeticQuizMode.Essay) return new(Expression, mode, answer, null, null, [], text, FindXProblem: findX);
         if (mode == ArithmeticQuizMode.TrueFalse)
         {
             BigInteger presented = random.Next(2) == 0 ? answer : answer + random.Next(1, 10);
-            return new(Expression, mode, answer, presented, presented == answer, [], text);
+            return new(Expression, mode, answer, presented, presented == answer, [], text, FindXProblem: findX);
         }
         var choices = new List<BigInteger> { answer, answer + 1, answer + 2, answer + 3 };
         random.Shuffle(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(choices));
-        return new(Expression, mode, answer, null, null, choices, text);
+        return new(Expression, mode, answer, null, null, choices, text, FindXProblem: findX);
     }
 }
 
 public sealed record AiGenerationOptions(ArithmeticOperation Operation, CurriculumTier Tier,
-    AppLanguage Language, int Count, bool AutoInsert)
+    AppLanguage Language, int Count, bool AutoInsert, QuestionLearningProfile? Profile = null,
+    BankQuestionFamily Family = BankQuestionFamily.Arithmetic, FindXUnknownRole UnknownRole = FindXUnknownRole.None)
 {
     public void Validate()
     {
-        if (!Enum.IsDefined(Operation) || !Enum.IsDefined(Tier)
-            || Language is not (AppLanguage.Vietnamese or AppLanguage.English) || Count is < 1 or > 100)
+        if (!Enum.IsDefined(Family) || !Enum.IsDefined(UnknownRole)
+            || Family == BankQuestionFamily.Arithmetic && UnknownRole != FindXUnknownRole.None
+            || Family == BankQuestionFamily.FindX && UnknownRole == FindXUnknownRole.None
+            || Family == BankQuestionFamily.FindX && !FindXQuestionCatalogue.Available(Profile ?? new(QuestionKnowledgeGroup.Objects), Operation, Tier, UnknownRole).Any()
+            || !Enum.IsDefined(Operation) || !Enum.IsDefined(Tier)
+            || Language is not (AppLanguage.Vietnamese or AppLanguage.English) || Count is < 1 or > 100
+            || Profile is not null && !Profile.Allows(Operation))
             throw new ArgumentOutOfRangeException(nameof(Count));
     }
 }

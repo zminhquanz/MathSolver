@@ -10,7 +10,8 @@ internal static class BackgroundPracticeTests
         var store = new QuestionBankStore(Path.Combine(directory, "background-practice.db3"));
         var runtime = new PausedRuntime();
         var generation = new AiQuestionGenerationService(runtime, store);
-        var provider = new BasicPracticeQuestionProvider(store, new BankSourceRandom());
+        var provider = new BasicPracticeQuestionProvider(store, new BankSourceRandom(), new FormatRandom(1));
+        var numericProvider = new BasicPracticeQuestionProvider(store, new BankSourceRandom(), new FormatRandom(0));
         var generator = new ArithmeticQuizGenerator(new BasicArithmeticEngine(), new Random(3456));
         var validator = new ArithmeticQuizValidator(new BasicArithmeticEngine());
         var options = new AiGenerationOptions(ArithmeticOperation.Add, CurriculumTier.OneStar,
@@ -25,8 +26,12 @@ internal static class BackgroundPracticeTests
                 var fresh = generator.Generate(mode, options.Operation, new(options.Tier, false));
                 var selected = await provider.SelectAsync(fresh, options.Tier, options.Language)
                     .WaitAsync(TimeSpan.FromSeconds(5));
-                Check(ReferenceEquals(selected, fresh) && generation.IsRunning,
+                Check(selected.WordProblem is not null && selected.Mode == mode && validator.Validate(selected).IsValid && generation.IsRunning,
                     "An empty bank waited for inference instead of serving a C# question.");
+                var numeric = await numericProvider.SelectAsync(fresh, options.Tier, options.Language)
+                    .WaitAsync(TimeSpan.FromSeconds(5));
+                Check(ReferenceEquals(numeric, fresh) && numeric.WordProblem is null && generation.IsRunning,
+                    "Paused inference prevented immediate original random arithmetic practice.");
             }
 
             runtime.FirstOutput.TrySetResult();
@@ -63,6 +68,9 @@ internal static class BackgroundPracticeTests
 
     private sealed class BankSourceRandom : Random
     { public override int Next(int maxValue) => 1; }
+
+    private sealed class FormatRandom(int format) : Random
+    { public override int Next(int maxValue) => format; }
 
     private sealed class PausedRuntime : IQuestionTextRuntime
     {

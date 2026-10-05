@@ -13,6 +13,8 @@ public static class BasicQuestionValidator
 
     public static BasicDraftValidation Validate(string rawJson, BasicQuestionContract c)
     {
+        if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Validate(rawJson, c);
+        if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Validate(rawJson, c);
         if (c.Version == AdditionQuestionCatalogue.Version) return AdditionQuestionValidator.Validate(rawJson, c);
         if (!c.IsTemplate) return LegacyBasicQuestionValidator.Validate(rawJson, c);
         if (!c.IsValid) return new(null, "InvalidContract");
@@ -63,6 +65,8 @@ public static class BasicQuestionValidator
                 || Count(draft.GivenA, "{b}") != 0 || Count(draft.GivenB, "{a}") != 0
                 || Count(draft.Question + draft.SolutionLead, "{a}") + Count(draft.Question + draft.SolutionLead, "{b}") != 0)
                 return new(null, "InvalidPlaceholders");
+            if (contextual && OneStepRelationRules.IsExtended(c.Structure))
+                return OneStepRelationRules.Validate(draft, c);
             string ownerA = c.Structure is BasicQuestionStructure.TimesAsMany or BasicQuestionStructure.TimesFewer ? "{other}" : "{name}";
             string ownerB = c.Structure is BasicQuestionStructure.Combine or BasicQuestionStructure.Difference ? "{other}" : "{name}";
             if ((c.Structure != BasicQuestionStructure.EqualGroups && !draft.GivenA.Contains(ownerA))

@@ -117,8 +117,9 @@ public static class ElementaryWordProblemSolutionFormatter
                 wordProblem.SolutionLead);
 
         return
+            (wordProblem.ConversionStep is { } conversion ? conversion + Environment.NewLine : "") +
             $"{solutionLead}{Environment.NewLine}" +
-            $"{left} {symbol} {right} = {answer} {wordProblem.AnswerUnit}{Environment.NewLine}" +
+            $"{wordProblem.ArithmeticReasoning?.Equation ?? $"{left} {symbol} {right}"} = {answer} {wordProblem.AnswerUnit}{Environment.NewLine}" +
             $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
     }
 
@@ -166,6 +167,7 @@ public static class ElementaryWordProblemSolutionFormatter
                 wordProblem.SolutionLead);
 
         return
+            (wordProblem.ConversionStep is { } conversion ? conversion + Environment.NewLine : "") +
             $"{solutionLead}{Environment.NewLine}" +
             $"{findX.EquationText}{Environment.NewLine}" +
             $"x = {left} {symbol} {right}{Environment.NewLine}" +

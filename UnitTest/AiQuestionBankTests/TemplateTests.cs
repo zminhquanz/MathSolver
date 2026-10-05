@@ -21,7 +21,7 @@ internal static class TemplateTests
         var essays = new EssayAnswerValidator(new BasicArithmeticEngine());
         foreach (var language in Enum.GetValues<AppLanguage>())
         foreach (var structure in Enum.GetValues<BasicQuestionStructure>().Where(s => s is not
-            (BasicQuestionStructure.AddComparisonMore or BasicQuestionStructure.AddComparisonInverse)))
+            (BasicQuestionStructure.AddComparisonMore or BasicQuestionStructure.AddComparisonInverse) && !OneStepRelationRules.IsExtended(s)))
         foreach (var tier in Enum.GetValues<CurriculumTier>().Where(t => (int)t >= BasicQuestionTemplates.MinimumStars(structure)))
         foreach (var unit in QuestionUnits.All)
         {

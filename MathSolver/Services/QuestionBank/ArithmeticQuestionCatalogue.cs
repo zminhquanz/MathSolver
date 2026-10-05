@@ -46,11 +46,11 @@ public static class ArithmeticQuestionCatalogue
     }
     public static bool Supports(string sceneId, ArithmeticOperation operation, CurriculumTier tier, BasicQuestionStructure structure)
         => operation is ArithmeticOperation.Subtract or ArithmeticOperation.Multiply or ArithmeticOperation.Divide
-        && BasicQuestionTemplates.Allowed(operation, tier).Contains(structure)
+        && BasicQuestionTemplates.AllowedContextual(operation, tier).Contains(structure)
         && Scale(sceneId, operation, tier) is { } scale
         && scale.MaxOperand >= QuizCurriculumLayer.GetMinimumPrimaryOperandValue(tier);
     public static IEnumerable<(AdditionScene Scene, BasicQuestionStructure Structure)> Available(ArithmeticOperation operation, CurriculumTier tier)
-        => Scenes.SelectMany(scene => BasicQuestionTemplates.Allowed(operation, tier)
+        => Scenes.SelectMany(scene => BasicQuestionTemplates.AllowedContextual(operation, tier)
             .Where(s => Supports(scene.Id, operation, tier, s)).Select(s => (scene, s)));
 
     public static bool IsValid(BasicQuestionContract c)
@@ -63,7 +63,7 @@ public static class ArithmeticQuestionCatalogue
             && c.PartA == "" && c.PartB == ""
             && c.Left >= QuizCurriculumLayer.GetMinimumPrimaryOperandValue(c.Tier) && c.Left <= Math.Min(cap, scale.MaxOperand)
             && c.Right > 0 && (c.Operation == ArithmeticOperation.Subtract ? c.Structure == BasicQuestionStructure.Remaining ? c.Right <= c.Left : c.Right < c.Left
-                : c.Structure == BasicQuestionStructure.CountGroups ? c.Left % c.Right == 0 && c.Left / c.Right is >= 2 and <= 9
+                : c.Structure is BasicQuestionStructure.CountGroups or BasicQuestionStructure.CompareFactor ? c.Left % c.Right == 0 && c.Left / c.Right is >= 2 and <= 9
                 : c.Right is >= 2 and <= 9)
             && (c.Operation != ArithmeticOperation.Divide || c.Left % c.Right == 0)
             && (c.Operation != ArithmeticOperation.Multiply || (long)c.Left * c.Right <= Math.Min(2L * cap, scale.MaxCombinedQuantity))
@@ -129,7 +129,7 @@ public static class ArithmeticQuestionCatalogue
         int factor = random.Next(2, Math.Min(9, max) + 1);
         int quotient = random.Next(Math.Max(1, (min + factor - 1) / factor), max / factor + 1);
         int dividend = factor * quotient;
-        return (dividend, structure == BasicQuestionStructure.CountGroups ? quotient : factor);
+        return (dividend, structure is BasicQuestionStructure.CountGroups or BasicQuestionStructure.CompareFactor ? quotient : factor);
     }
 
     internal static int CountBorrows(int a, int b)

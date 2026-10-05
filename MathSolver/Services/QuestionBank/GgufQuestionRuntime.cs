@@ -222,6 +222,8 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     internal static string BuildGrammar(BasicQuestionContract c)
     {
+        if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Grammar(c);
+        if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Grammar(c);
         if (c.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmeticGrammar(c);
         if (c.Version == AdditionQuestionCatalogue.Version)
         {
@@ -242,6 +244,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     private static string BuildArithmeticGrammar(BasicQuestionContract c)
     {
+        if (OneStepRelationRules.IsExtended(c.Structure)) return BuildExtendedGrammar(c);
         bool vi = c.Language == MathSolver.Services.AppLanguage.Vietnamese;
         static string L(string value) => System.Text.Json.JsonSerializer.Serialize(value);
         static string Seq(params string[] slots) => string.Join(" prose{0,48} ", slots.Select(L)) + " prose{0,32}";
@@ -288,6 +291,24 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             lead ::= "\"" (prose | lead-slot){1,180} ":" "\""
             lead-slot ::= "{name}" | "{other}" | "{unit}" | "{group}" | "{group_one}"
             prose ::= [{{QuestionProseLanguage.GrammarLetters(c.Language)}} ,'\u2019-]
+            ws ::= [ \t\n\r]*
+            """;
+    }
+
+    private static string BuildExtendedGrammar(BasicQuestionContract c)
+    {
+        static string L(string value) => System.Text.Json.JsonSerializer.Serialize(value);
+        string Field(string value, string alternative) => "\"\\\"\" (" + L(value) + " | " + L(alternative) + ") \"\\\"\"";
+        var d = OneStepQuestionCatalogue.Draft(c);
+        var alternative = OneStepQuestionCatalogue.Draft(c, 1);
+        bool vi = c.Language == MathSolver.Services.AppLanguage.Vietnamese;
+        string Owns(string value) => vi ? value.Replace(" có ", " sở hữu ") : value.Replace(" has ", " owns ");
+        return $$"""
+            root ::= "{" ws "\"given_a\"" ws ":" ws a ws "," ws "\"given_b\"" ws ":" ws b ws "," ws "\"question\"" ws ":" ws q ws "," ws "\"solution_lead\"" ws ":" ws lead ws "," ws "\"unit_id\"" ws ":" ws "\"" {{L(d.UnitId!)}} "\"" ws "}" ws
+            a ::= {{Field(d.GivenA, Owns(d.GivenA))}}
+            b ::= {{Field(d.GivenB, Owns(d.GivenB))}}
+            q ::= {{Field(d.Question, alternative.Question)}}
+            lead ::= {{Field(d.SolutionLead!, Owns(d.SolutionLead!))}}
             ws ::= [ \t\n\r]*
             """;
     }

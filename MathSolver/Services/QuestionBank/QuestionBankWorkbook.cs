@@ -20,7 +20,7 @@ public static class QuestionBankWorkbook
     {
         "Version", "Operation", "Stars", "Language", "Left", "Right", "Subject", "Unit", "GroupUnit",
         "GivenA", "GivenB", "Question", "ModelName", "CreatedUtc", "RawJson", "Answer", "ProblemText",
-        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB"
+        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole"
     });
 
     public static int Write(Stream output, IEnumerable<ValidatedBankQuestion> questions, CancellationToken cancellationToken = default)
@@ -79,7 +79,7 @@ public static class QuestionBankWorkbook
                 DateTime.SpecifyKind(question.CreatedUtc, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture), question.RawJson,
                 c.Answer.ToString(CultureInfo.InvariantCulture), question.WordProblem.ProblemText,
                 c.IsTemplate ? c.Structure.ToString() : "", c.OtherSubject, question.Draft.SolutionLead ?? "", question.Draft.UnitId ?? "",
-                c.TopicId, c.SceneId, c.PartA, c.PartB]);
+                c.TopicId, c.SceneId, c.PartA, c.PartB, c.Grade.ToString(CultureInfo.InvariantCulture), c.KnowledgeGroup.ToString(), c.UnknownRole.ToString()]);
         }
         xml.WriteEndElement();
         xml.WriteStartElement("autoFilter", Main); xml.WriteAttributeString("ref", $"A1:{ColumnName(Columns.Count - 1)}{rowNumber - 1}"); xml.WriteEndElement();
@@ -182,7 +182,11 @@ public static class QuestionBankWorkbook
                 var contract = new BasicQuestionContract(Integer("Version"), Enum.Parse<ArithmeticOperation>(Get("Operation"), true),
                     (CurriculumTier)Integer("Stars"), language, Integer("Left"), Integer("Right"), Get("Subject"), Get("Unit"), Get("GroupUnit"),
                     Integer("Version") == 1 ? BasicQuestionStructure.Increase : Enum.Parse<BasicQuestionStructure>(Get("Structure"), true), Get("OtherSubject"),
-                    Get("TopicId"), Get("SceneId"), Get("PartA"), Get("PartB"));
+                    Get("TopicId"), Get("SceneId"), Get("PartA"), Get("PartB"),
+                    string.IsNullOrWhiteSpace(Get("Grade")) ? 0 : Integer("Grade"),
+                    string.IsNullOrWhiteSpace(Get("KnowledgeGroup")) ? QuestionKnowledgeGroup.Objects
+                        : Enum.Parse<QuestionKnowledgeGroup>(Get("KnowledgeGroup"), true),
+                    string.IsNullOrWhiteSpace(Get("UnknownRole")) ? FindXUnknownRole.None : Enum.Parse<FindXUnknownRole>(Get("UnknownRole"), true));
                 var draft = new BasicQuestionDraft(Get("GivenA"), Get("GivenB"), Get("Question"),
                     contract.IsTemplate ? Get("SolutionLead") : null, contract.IsTemplate ? Get("UnitId") : null);
                 string json = QuestionBankStore.SerializeDraft(draft);

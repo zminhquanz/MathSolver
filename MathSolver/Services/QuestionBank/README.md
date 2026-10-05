@@ -1,6 +1,61 @@
 # Local AI question templates
 
-The practice engine owns arithmetic, random operands, answer choices and grading. Local AI supplies reusable prose templates and a prose solution lead. Selecting a question remains an independent 50/50 choice between a fresh C# question and the optional SQLite bank. Empty, inaccessible or invalid bank entries fall back to the C# generator.
+The practice engine owns arithmetic, random operands, answer choices and grading. Local AI supplies reusable prose templates and a prose solution lead. Selecting a question remains an independent 50/50 choice between C# and the optional SQLite bank. Within C#, another independent 50/50 choice serves either the original two-random-operand exercise or a reviewed word-problem pattern with fresh facts. Empty, inaccessible or invalid bank entries fall back to the same C# choice. Neither practice source runs model inference. With a matching bank entry, the expected mix is 25% numeric C#, 25% story C# and 50% bank stories; these are random choices, not quotas.
+
+## Shared one-step practice catalogue
+
+### Knowledge groups and star difficulty (version 5)
+
+In **Basic arithmetic** practice and AI supplementation, select **Knowledge group** and 1–5 stars. Both screens initially select quantities and comparison. There is no grade selector, grade-based group filtering or grade-based operation restriction. All nine groups and all four operations are available. The profile applies to the four basic operations; the other puzzle families keep their own curricula.
+
+| Group | Selected C# facts and supported questions |
+| --- | --- |
+| Quantities and comparison | People, animals, pages, points, visits, seedlings, recycling, baking and harvests; independent totals, comparisons and equal activity groups |
+| Money and transactions | Purchases, savings, remaining money and price per item |
+| Time and age | Age differences and inverse comparison; successive activities, remaining time, repeated daily durations and duration per day |
+| Measurement | Mass, length, transport loads, water capacity; kg/g, km/m and l/ml conversion |
+| Practical geometry | Areas of separate plots, remaining area, rectangular area, missing side, perimeter from two sides, tank volume from base area and height, missing height |
+| Grouping and packing | Packing progress, equal packs, exact sharing, counting packs; remainders from 3 stars and minimum packs from 4 stars |
+| Production and simple rates | Independent shifts, remaining target, equal output per shift and unitary output; recovering total dispatched output at 5 stars |
+| Data and averages | Two-category survey totals/differences, repeated daily visits, average from total and days, total from a given average from 4 stars; a factual table is shown in practice and AI preview |
+| Motion | Successive/remaining distances, distance from constant speed and time, speed from distance and time |
+
+`AppliedQuestionCatalogue.Contexts.cs` adds these reviewed contexts without putting the catalogue into an AI prompt. A selected scene binds activity, unit, scale and question target. A classroom is capped at 40 pupils, ages at 90 years, practice at 60 minutes per day, water cans at 20 litres, notebook packs at 100 items and tank height at 5 metres. These are scenario limits, not school-grade labels. High stars can select small-scale inverse relationships as well as larger counts. Practical perimeter, remainder and minimum-pack questions have explicit algorithm-owned answer rules; they never use a truncated quotient as the answer to a rounding question. A numeric C# exercise keeps ordinary arithmetic when its paired scene needs a derived answer rule.
+
+`QuestionLearningProfile` selects a knowledge group and star policy, `AppliedQuestionCatalogue` binds units, quantity roles and context capacity, and `AppliedQuestionCycle` rotates eligible scenes with a bounded history. They supply both numeric C# exercises and reviewed C#/AI stories:
+
+| Stars | Count ceiling before context limits | Maximum multiplier/divisor before context limits |
+| --- | --- | --- |
+| 1 | 9 | 5 |
+| 2 | 99 | 9 |
+| 3 | 999 | 9 |
+| 4 | 9,999 | 20 |
+| 5 | 99,999 | 99 |
+
+For ordinary addition/subtraction, one star has no carrying/borrowing; later stars prefer one through four carry/borrow positions when the context allows them. Higher stars unlock inverse stock/comparison/age questions and conversions. Small pencil/card collections remain eligible at high stars; the ceilings are upper bounds, not mandatory stock sizes. Ordinary division constructs exact multiples; explicit packing remainder/rounding scenes instead require a nonzero remainder and use their dedicated answer rule. Money has its own scale: Vietnamese total ceilings are 20,000 / 50,000 / 100,000 / 300,000 / 500,000 đồng before scene capacity, and English totals have ceilings of 10 / 30 / 100 / 200 / 300 dollars. Notebook prices remain 3,000–30,000 đồng or 1–15 dollars, with separate item-count limits. Bags, truck loads and journey lengths have separate capacities. Uniform motion binds realistic distance, speed and time rather than treating speeds as object counts. At 4–5 stars it can give travel time in minutes, converted to working hours; five-star measurement can present decimal kg/km/l with exact integer g/m/ml answers.
+
+The version-5 prompt contains only the selected scene, its dimensions and two short reviewed surface examples; it includes no numerical facts, personal names or full catalogue. Grammar and validation bind complete reviewed clauses for these dimensional scenes. This intentionally bounds AI wording to supported alternatives; it is not free-form generation or general semantic verification. Extra quantities, changed units/roles/targets and foreign prose fail validation. Conversion steps are generated by C# and shown in the worked solution. Written submissions for these problems preserve all calculation lines, check exact kg/g, km/m or hour/minute conversions and intermediate arithmetic, then check the final value/unit. They accept a correct alternative arithmetic method and reject an incorrect conversion even when the final answer happens to match.
+
+SQLite selection matches group/operation/stars/language before revalidation. Persisted enum IDs remain stable: Objects=0, Money=1, legacy Mass=2/Length=3/Transport=4, Motion=5, Time=6, Measurement=7, Geometry=8, Packaging=9, Production=10, Data=11. The new Measurement picker also reads historical mass/length/transport rows. The `Grade` column is retained only for historical database/Excel compatibility; new facts use zero and it does not partition selection or constrain fresh operands. Saved version-5 templates from different grades share the same group pool. Version 1–4 counted templates remain available under quantities and comparison, without needing a separate general selector. Old Excel files still import. Normal practice retains the independent C#/bank 50/50 choice and the C# numeric/story 50/50 choice. Model inference remains outside the practice request.
+
+The relation and measurement types draw on the [2018 Ministry mathematics curriculum (PDF mirror)](https://lophocnguvan.com/wp-content/uploads/Giao-duc-pho-thong-2018-Mon-Toan.pdf); app stars are skill levels rather than grade classifications. This implementation covers natural-number one-step arithmetic and selected measurement conversions. General fraction/decimal answers, percentages and multistep monetary dependencies remain with their existing dedicated C# engines; they are not silently added to this bank schema.
+
+`OneStepQuestionCatalogue.All` holds a reviewed list of scene/relationship/star patterns, not finished questions with fixed numbers. `OneStepQuestionCycle` selects a relationship and a compatible setting with bounded history, creates fresh facts through the same addition/arithmetic catalogues used by AI, and selects a reviewed wording variant. Both sources use `BasicQuestionContract.ToPracticeQuestion` for true/false, multiple-choice and essay answers. C# templates also pass the AI bank's validator in tests.
+
+Arithmetic practice keeps both numeric exercises and word problems even when the bank is empty or model inference is unavailable. The numeric branch returns the original generated question intact, including its operands, answer choices and grading behavior. Comparison exercises and the other mathematical families keep their existing generators. The built-in branch does not access SQLite; selecting the bank remains an independent 50/50 decision. No built-in patterns are inserted into the user's database.
+
+| Operation | Shared one-step relationships |
+| --- | --- |
+| Addition | Increase/arrivals, combine independent groups/periods/parts, find the larger amount, recover original stock, inverse additive comparison |
+| Subtraction | Remaining stock, difference, missing amount, find the smaller amount, inverse additive comparison, find one part from a combined total |
+| Multiplication | Equal groups, multiplicative comparison |
+| Division | Equal sharing, count groups, find the smaller amount from a factor, compare two amounts to find the factor |
+
+New version-4 enum values are appended, preserving all previous stored structure IDs. Finding the smaller additive amount and finding a part unlock at two stars; inverse additive comparison and finding a factor unlock at three stars. Their primary operand keeps the existing digit bucket and context capacity. The factor-comparison answer is measured in Vietnamese `lần` or English `times`, rather than the counted object's unit. Legacy version-2 relation eligibility is unchanged.
+
+Extended relationships use explicit actor/quantity/target checks, and native grammar offers reviewed alternatives for their relation clauses. Changing comparison direction, asking for the other actor, hiding another relation in a clause or changing the solution target is rejected. The prompt contains only the selected context and one shared role example. It does not send the complete pattern list or preview operands to the model.
+
+The legacy patterns below remain one-step counted-integer problems. Knowledge-group money and measurement use version 5 above. Fractions, general decimal answers and multistep dependencies use separate engines.
 
 Local GGUF prompt processing and token decoding use `max(1, floor(Environment.ProcessorCount * 0.75))` worker threads: 12 logical processors means 9 workers. This limits the configured inference thread count, not operating-system CPU utilisation; other app/native work and hardware scheduling can affect measured CPU usage.
 
@@ -26,7 +81,7 @@ These are **one-step, two-operand** templates, not a complete grade 1–5 syllab
 
 `AdditionQuestionScales` binds actor patterns, compatible object units, spatial/time labels, operand caps and combined-quantity capacities to each scene/tier. For example, club arrivals are available only at stars 1–2 and total at most 30 participants. Family belongings, sports scores and arriving birds are also excluded at stars 3–5. A large garden scene counts **seedlings** in nursery rows/sections, not tens of thousands of mature trees in a household garden. Notebook production uses days at star 3, weeks at star 4 and months at star 5. Counts belonging to different periods/groups must not overlap or be cumulative totals containing one another.
 
-The primary retains the selected digit bucket. The secondary may use any lower bucket up to the selected tier; the result can cross the primary's digit boundary. Carrying is varied, with a preference for one, two and three carry positions at stars 3, 4 and 5 respectively. Sampling is bounded and never violates the quantity domain in pursuit of a carry target. The plain C# arithmetic generator and grading rules are unchanged.
+The primary retains the selected digit bucket. The secondary may use any lower bucket up to the selected tier; the result can cross the primary's digit boundary. Carrying is varied, with a preference for one, two and three carry positions at stars 3, 4 and 5 respectively. Sampling is bounded and never violates the quantity domain in pursuit of a carry target. The arithmetic engine and grading rules are unchanged; basic practice now uses the reviewed prose catalogue for its C# source.
 
 Twenty-nine settings include the original fourteen plus reading, school furniture, food stock, baking, poultry, fish farming, cattle, crop harvesting, product manufacturing, passenger visits, vehicle passages, building materials, planting, survey responses and experiment outcomes. Their availability, actors and units depend on the tier.
 
@@ -195,7 +250,48 @@ The validator checks JSON fields, bounded text, placeholder counts and roles, ap
 
 Native GBNF constrains output to the five fields, known placeholders and catalogue IDs. It does not constrain prose to the example's exact sentences. Streaming previews render provisional slots from the C# preview contract; a unit choice arriving later can update the display. Partial or rejected output is never inserted. Retry limits, background generation, cancellation and developer diagnostics remain unchanged.
 
-SQLite keeps the existing `BasicQuestionBank` table. Version 1 fixed-fact rows remain readable and retain their original values. Deduplication of templates excludes random preview numbers and actors. Excel exports now have 25 columns: the original 17, version 2's `Structure`, `OtherSubject`, `SolutionLead`, `UnitId`, and version 3's `TopicId`, `SceneId`, `PartA`, `PartB`. Old version 1/2 workbooks still import. Numeric answers in imported workbooks never override C# calculations.
+SQLite keeps the existing `BasicQuestionBank` table. Version 1 fixed-fact rows remain readable and retain their original values. Deduplication of templates excludes random preview numbers and actors. Excel exports now have 28 columns: the original 17, version 2's `Structure`, `OtherSubject`, `SolutionLead`, `UnitId`, version 3's `TopicId`, `SceneId`, `PartA`, `PartB`, version 5's `Grade`, `KnowledgeGroup`, and version 6's `UnknownRole`. Old workbooks still import. Numeric answers in imported workbooks never override C# calculations.
+
+## Find-X situations (version 6)
+
+Practice and AI supplementation reuse the nine knowledge groups. In AI supplementation,
+select **Find X**, a group, sum/difference/product/quotient, stars and an explicit unknown
+role. Roles are an addend, minuend, subtrahend, factor, dividend or divisor. C# practice
+can rotate eligible roles; AI generation requires a specific role.
+
+`FindXQuestionCatalogue` builds a structured list from the reviewed applied scenes.
+Each entry binds its group, setting/activity, known-fact roles, target role, unknown
+role and equation operation to the source scene's input/answer units, star eligibility,
+capacity, factor limits and bilingual problem/question/solution templates. Selection
+chooses an eligible scene first, then C# generates compatible facts. It constructs the
+equation, verifies a unique integer solution and substitutes it back into the equality.
+For example, a total of 24 books shared equally among 6 boxes yields an unknown factor
+in `6 × X = 24`, with **books per box** as the target, rather than the number of boxes.
+
+The selected scene remains the same when practice regenerates numbers and actors.
+Practice independently mixes C# and saved templates, and retains random numeric Find-X
+exercises alongside C# stories. An empty or invalid bank falls back to C#; practice never
+starts inference. Background generation, three attempts, manual/automatic insertion,
+streaming previews and model cleanup use the existing worker.
+
+The compact prompt contains only the selected scene, fact/target roles and units,
+allowed placeholders, and one JSON example. It contains no preview numbers or actor
+names. Version 6 shares version 5's grammar and reviewed whole-clause variants:
+validation accepts supported wording and binds the quantity/actor/unit roles and target.
+It rejects swapped group/per-group values, exposed answers, extra facts, incompatible
+units and foreign/corrupt text. This is bounded template validation, not unrestricted
+natural-language understanding. Add reviewed alternatives and rejection tests together
+when extending wording. Conversions, remainder/rounding problems and compound formulas
+are excluded from this one-step integer Find-X catalogue.
+
+SQLite adds `Family` (0 = arithmetic, 1 = Find X) and `UnknownRole` (0 = none, 1 = addend,
+2 = minuend, 3 = subtrahend, 4 = factor, 5 = dividend, 6 = divisor). Existing rows remain
+available as arithmetic. Selection matches family, group, equation operation, stars,
+language and validated scene metadata. Excel version 6 requires the matching catalogue
+`SceneId`, `KnowledgeGroup`, `UnknownRole` enum name and `Grade = 0`. `Operation` is the
+equation's operation; `Left`/`Right` hold the two known values used by the story's solution,
+which can use the inverse operation. Do not convert an old row simply by changing its
+version or role. Family is derived from the contract version during Excel import.
 
 ## SQLite inquiry and Excel interchange
 
@@ -224,6 +320,8 @@ For version 4, choose `TopicId`/`SceneId` from `ArithmeticQuestionCatalogue`, le
 `PartA`/`PartB` empty, and supply preview actors, numbers and group labels compatible
 with the operation's scale profile. Do not migrate old templates by changing only
 the version field.
+
+Version 5 requires `KnowledgeGroup` (enum name in Excel; stable IDs 0–11 in SQLite), and a matching `AppliedQuestionCatalogue` scene, relation and units. `Grade` may be omitted or zero; historical values 1–5 remain readable as metadata only. `Left` and `Right` hold the working operands; the selected scene may display kg/km/l instead of g/m/ml or minutes instead of hours. Its conversion policy supplies the mapping. Perimeter/remainder/minimum-pack answers are recomputed from the selected C# scene when importing; spreadsheet answers never override them. Do not change only the version or profile columns on an older template; its roles and units must agree too.
 
 `ModelName`, ISO 8601 `CreatedUtc` and `RawJson` are optional import metadata. `Answer` and `ProblemText` are export previews and are not trusted as mathematical facts. Import skips duplicate/invalid rows and reports row errors. Accepted inserts commit together; cancellation or a database failure rolls back the import. Limits are 20 MB compressed, 40 MB expanded and 10,000 imported rows. Data columns must contain values rather than Excel formulas.
 
