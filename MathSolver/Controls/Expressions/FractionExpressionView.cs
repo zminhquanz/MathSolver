@@ -101,12 +101,24 @@ public sealed class FractionExpressionView : ContentView
 
     public FractionExpressionView()
     {
+        Loaded += OnLoaded;
+        Unloaded += (_, _) => AppLanguageManager.LanguageChanged -= OnLanguageChanged;
         SetDynamicResource(
             MathColorProperty,
             "WallpaperTextPrimaryColor");
 
         Rebuild();
     }
+
+    private void OnLoaded(object? sender, EventArgs e)
+    {
+        AppLanguageManager.LanguageChanged -= OnLanguageChanged;
+        AppLanguageManager.LanguageChanged += OnLanguageChanged;
+        Rebuild();
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs e) =>
+        Dispatcher.Dispatch(Rebuild);
 
     private static void OnVisualPropertyChanged(
         BindableObject bindable,
@@ -128,6 +140,11 @@ public sealed class FractionExpressionView : ContentView
 
         string expression =
             Expression ?? string.Empty;
+
+        SemanticProperties.SetDescription(this,
+            AccessibleMathText.Format(expression, AppLanguageManager.CurrentLanguage));
+        AutomationProperties.SetIsInAccessibleTree(this, true);
+        AutomationProperties.SetExcludedWithChildren(rootLayout, true);
 
         string[] lines =
             expression

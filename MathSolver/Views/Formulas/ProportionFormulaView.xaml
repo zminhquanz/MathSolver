@@ -188,7 +188,7 @@
                         <Button
                             x:Name="SingleModeButton"
                             Grid.Column="0"
-                            HeightRequest="42"
+                            MinimumHeightRequest="48"
                             CornerRadius="12"
                             FontAttributes="Bold"
                             Text="{localization:Translate Formula.Proportion.Mode.Single}"
@@ -196,7 +196,7 @@
                         <Button
                             x:Name="CompoundModeButton"
                             Grid.Column="1"
-                            HeightRequest="42"
+                            MinimumHeightRequest="48"
                             CornerRadius="12"
                             FontAttributes="Bold"
                             Text="{localization:Translate Formula.Proportion.Mode.Compound}"

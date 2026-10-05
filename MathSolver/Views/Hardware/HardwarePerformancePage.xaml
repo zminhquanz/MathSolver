@@ -257,7 +257,7 @@
                                 <Grid>
                                     <Picker
                                         x:Name="SimdModePicker"
-                                        HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
                                         Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
@@ -381,7 +381,7 @@
                                     <Picker
                                         x:Name="BenchmarkTestPicker"
                                         SelectedIndex="0"
-                                        HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
                                         Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
@@ -417,7 +417,7 @@
                             <Button
                                 x:Name="RunBenchmarkButton"
                                 Text="Chạy đo sức mạnh"
-                                HeightRequest="46"
+                                MinimumHeightRequest="48"
                                 CornerRadius="12"
                                 BackgroundColor="{DynamicResource PrimaryColor}"
                                 TextColor="{DynamicResource OnPrimaryColor}"
@@ -522,7 +522,7 @@
                             <Button
                                 x:Name="RunThreadComparisonButton"
                                 Text="Chạy so sánh đơn / đa luồng"
-                                HeightRequest="46"
+                                MinimumHeightRequest="48"
                                 CornerRadius="12"
                                 BackgroundColor="{DynamicResource PrimaryColor}"
                                 TextColor="{DynamicResource OnPrimaryColor}"
@@ -589,7 +589,7 @@
                             <Button
                                 x:Name="RunSimdComparisonButton"
                                 Text="Chạy so sánh SIMD"
-                                HeightRequest="46"
+                                MinimumHeightRequest="48"
                                 CornerRadius="12"
                                 BackgroundColor="{DynamicResource PrimaryColor}"
                                 TextColor="{DynamicResource OnPrimaryColor}"

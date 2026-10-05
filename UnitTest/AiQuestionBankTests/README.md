@@ -32,6 +32,14 @@ display limits; rejection of multiple statements before any write; deletion
 without WHERE; and validation of directly edited data during practice/export.
 It runs no model inference and no benchmark.
 
+Background-practice checks pause a simulated inference job while every answer
+mode requests a question. An empty bank serves fresh C# questions immediately;
+after the first auto-save, practice can read the committed SQLite question while
+the next inference remains paused. Stopping the job releases the runtime and
+retains saved questions. The production bank entry supports Windows and Android
+and stays accessible when practice settings are collapsed. These checks do not
+measure Android inference performance or prove physical-device rendering.
+
 Language checks reproduce a saved Vietnamese question containing the Polish word
 `łącznie`, including JSON-escaped letters. They cover all prose fields in versions
 1–3, Vietnamese/English character boundaries, legitimate Vietnamese accents in

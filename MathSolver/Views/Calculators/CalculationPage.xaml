@@ -36,7 +36,7 @@
                 HorizontalScrollBarVisibility="Never">
 
                 <HorizontalStackLayout Spacing="0" Padding="6,0">
-                    <Grid MinimumWidthRequest="92" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="92" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidBasicTabButton"
                             Grid.Row="0"
@@ -53,7 +53,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="118" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="118" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidAverageTabButton"
                             Grid.Row="0"
@@ -69,7 +69,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="144" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="144" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidPowerRootTabButton"
                             Grid.Row="0"
@@ -85,7 +85,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="92" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="92" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidFractionTabButton"
                             Grid.Row="0"
@@ -101,7 +101,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="84" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="84" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidFindXTabButton"
                             Grid.Row="0"
@@ -117,7 +117,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="140" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="140" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidQuadraticTabButton"
                             Grid.Row="0"
@@ -133,7 +133,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="96" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="96" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidGeometryTabButton"
                             Grid.Row="0"

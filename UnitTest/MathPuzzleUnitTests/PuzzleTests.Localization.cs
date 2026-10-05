@@ -20,7 +20,8 @@ internal static partial class PuzzleTests
         {
             "QuizLocalization.MathPuzzlePage.xaml",
             "QuizLocalization.MathPuzzlePage.xaml.cs",
-            "QuizLocalization.MathPuzzlePage.Diagrams.cs"
+            "QuizLocalization.MathPuzzlePage.Diagrams.cs",
+            "QuizLocalization.MathPuzzlePage.Layout.cs"
         })
         {
             foreach (Match match in Regex.Matches(ReadQuizResource(resource), @"Quiz\.[A-Za-z0-9_.]+"))

@@ -127,7 +127,7 @@
                         <Button
                             x:Name="RemoveValueButton"
                             Grid.Column="0"
-                            HeightRequest="44"
+                            MinimumHeightRequest="48"
                             FontAttributes="Bold"
                             CornerRadius="11"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
@@ -139,7 +139,7 @@
                         <Button
                             x:Name="AddValueButton"
                             Grid.Column="1"
-                            HeightRequest="44"
+                            MinimumHeightRequest="48"
                             FontAttributes="Bold"
                             CornerRadius="11"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"

@@ -88,6 +88,9 @@ public partial class MathPuzzlePage : ContentPage
     {
         InitializeComponent();
 
+        // Fraction overlays share their accessible description with the button.
+        foreach (var view in ChoiceFractionViews) AutomationProperties.SetExcludedWithChildren(view, true);
+
 #if ANDROID
         AndroidPickerVisualHelper.Attach(ElementaryTypePicker);
         AndroidPickerVisualHelper.Attach(
@@ -194,6 +197,7 @@ public partial class MathPuzzlePage : ContentPage
 
         ResetQuizSessionState();
         _mainTabAnimationVersion++;
+        SetPracticeSettingsExpanded(true);
         MathPuzzlePageContentRoot.CancelAnimations();
         ResetMainTabRoot();
         base.OnDisappearing();
@@ -275,8 +279,8 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateQuestionModeLayout()
     {
-#if ANDROID
-        // Keep the three answer modes readable on narrow Android screens.
+        // Logical width also covers Android tablets and narrow Windows windows.
+        bool compact = _compactSettings ?? true;
         QuestionModeGrid.ColumnDefinitions.Clear();
         QuestionModeGrid.RowDefinitions.Clear();
 
@@ -286,13 +290,15 @@ public partial class MathPuzzlePage : ContentPage
                 Width = GridLength.Star
             });
 
+        if (!compact) QuestionModeGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+
         QuestionModeGrid.ColumnDefinitions.Add(
             new ColumnDefinition
             {
                 Width = GridLength.Star
             });
 
-        QuestionModeGrid.RowDefinitions.Add(
+        if (compact) QuestionModeGrid.RowDefinitions.Add(
             new RowDefinition
             {
                 Height = GridLength.Auto
@@ -312,10 +318,9 @@ public partial class MathPuzzlePage : ContentPage
         Grid.SetColumn(MultipleChoiceModeButton, 1);
         Grid.SetColumnSpan(MultipleChoiceModeButton, 1);
 
-        Grid.SetRow(EssayModeButton, 1);
-        Grid.SetColumn(EssayModeButton, 0);
-        Grid.SetColumnSpan(EssayModeButton, 2);
-#endif
+        Grid.SetRow(EssayModeButton, compact ? 1 : 0);
+        Grid.SetColumn(EssayModeButton, compact ? 0 : 2);
+        Grid.SetColumnSpan(EssayModeButton, compact ? 2 : 1);
     }
 
     private void OnTrueFalseModeClicked(
@@ -1611,6 +1616,8 @@ public partial class MathPuzzlePage : ContentPage
             // được xóa. Bật lại nút Tạo đề lại; nếu không, trạng thái Disabled
             // của câu trước sẽ còn giữ nguyên sau khi bấm Câu tiếp theo.
             UpdateRegenerateQuestionButtonState();
+            UpdatePracticeSummary();
+            if (_currentQuestion is null) SetPracticeSettingsExpanded(true);
         }
     }
 
@@ -1655,6 +1662,7 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ClearMultipleChoiceAnswers()
     {
+        _choiceStatuses.Clear();
         for (int index = 0;
              index < ChoiceButtons.Length;
              index++)
@@ -1725,6 +1733,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         UpdateModeStyles();
+        UpdatePracticeSummary();
 
         string left =
             _currentQuestion.Expression.LeftOperand.ToString(
@@ -1762,7 +1771,6 @@ public partial class MathPuzzlePage : ContentPage
             PresentedAnswerFractionView, FeedbackFractionView, SolutionFractionView, QuizDiagramExplanationFractionView }
             .Concat(ChoiceFractionViews))
             view.ParseArithmeticExpressions = parseFractionExpressions;
-        UpdateElementaryChoiceLayout(elementary);
         UpdateQuizDiagram();
         if (elementary is not null)
         {
@@ -2110,10 +2118,13 @@ public partial class MathPuzzlePage : ContentPage
         {
             ResetAnswerControls();
         }
+        UpdateElementaryChoiceLayout(elementary);
+        UpdateChoiceDescriptions();
     }
 
     private void ResetAnswerControls()
     {
+        _choiceStatuses.Clear();
         SetAnswerControlsEnabled(true);
 
         EssayWorkEditor.Text = string.Empty;
@@ -2133,11 +2144,12 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateElementaryChoiceLayout(ElementaryQuizContract? contract)
     {
-        bool singleColumn = contract is not null &&
-            (DeviceInfo.Platform == DevicePlatform.Android || Width < 600) &&
-            (contract.Answers.Count > 1 ||
-             contract.Type is ElementaryQuizType.ParallelLines or ElementaryQuizType.PerpendicularLines ||
-             contract.ChoiceTexts?.Any(choice => choice.Length > 40) == true);
+        double width = MultipleChoiceAnswerGrid.Width;
+        if (width <= 0) width = Math.Max(0, QuizContent.Width - QuizContent.Padding.HorizontalThickness - 36);
+        int longestChoice = ChoiceButtons.Select((button, index) => ChoiceFractionViews[index].IsVisible
+            ? ChoiceFractionViews[index].Expression.Length : button.Text?.Length ?? 0).Max();
+        bool singleColumn = QuizResponsiveLayout.UseSingleColumnChoices(width, CurrentTextScale,
+            longestChoice, contract?.Answers.Count > 1);
         if (_singleColumnChoices == singleColumn) return;
         _singleColumnChoices = singleColumn;
         MultipleChoiceAnswerGrid.ColumnDefinitions.Clear();
@@ -2290,6 +2302,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         _questionAnswered = true;
+        SetPracticeSettingsExpanded(false);
         _lastAnswerWasCorrect = isCorrect;
         UpdateQuizDiagram();
 
@@ -2386,6 +2399,8 @@ public partial class MathPuzzlePage : ContentPage
         NextQuestionButton.IsEnabled = true;
         UpdateRegenerateQuestionButtonState();
         UpdateScoreLabels();
+        string feedback = FeedbackFractionView.IsVisible ? FeedbackFractionView.Expression : FeedbackLabel.Text;
+        SemanticScreenReader.Default.Announce(AccessibleMathText.Format(feedback, AppLanguageManager.CurrentLanguage));
     }
 
     private static string BuildEssayFeedback(
@@ -2750,6 +2765,7 @@ public partial class MathPuzzlePage : ContentPage
             Button.TextColorProperty,
             "SuccessColor");
         SetChoiceFractionColor(button, "SuccessColor");
+        SetChoiceStatus(button, "✓", "Quiz.CorrectAnswerDescription");
     }
 
     private void ApplyIncorrectAnswerStyle(
@@ -2765,6 +2781,7 @@ public partial class MathPuzzlePage : ContentPage
             Button.TextColorProperty,
             "DangerColor");
         SetChoiceFractionColor(button, "DangerColor");
+        SetChoiceStatus(button, "✗", "Quiz.IncorrectAnswerDescription");
     }
 
     private void SetChoiceFractionColor(

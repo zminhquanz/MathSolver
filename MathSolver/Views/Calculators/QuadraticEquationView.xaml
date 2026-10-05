@@ -17,7 +17,7 @@
 
         <VerticalStackLayout
             x:Name="QuadraticContent"
-            Style="{StaticResource SolverContentStyle}">
+            Style="{StaticResource SolverWideContentStyle}">
 
             <!-- Chọn dạng phương trình -->
             <Border Style="{StaticResource SolverCardStyle}">

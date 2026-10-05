@@ -1661,7 +1661,13 @@
     "AiBank.Error.InvalidPlaceholders": "A placeholder is missing, repeated, assigned to the wrong fact or unsupported. Preserve the C# template slots.",
     "AiBank.Error.InvalidContext": "The context is implausible: an actor must own objects or perform actions, not be an object inside a container.",
     "AiBank.SelectedModel": "Model selected · not loaded in RAM; loads when generating",
-    "AiBank.Error.PromptTooLong": "The prompt exceeds the 2,048-token budget for the prompt and JSON output. Shorten the prompt."
+    "AiBank.Error.PromptTooLong": "The prompt exceeds the 2,048-token budget for the prompt and JSON output. Shorten the prompt.",
+    "Quiz.ChangeSettings": "Change settings",
+    "Quiz.HideSettings": "Collapse settings",
+    "Quiz.StartPractice": "Start practice",
+    "Quiz.DifficultyDescription": "Difficulty: {0} stars",
+    "Quiz.CorrectAnswerDescription": "Correct answer",
+    "Quiz.IncorrectAnswerDescription": "Incorrect selected answer"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

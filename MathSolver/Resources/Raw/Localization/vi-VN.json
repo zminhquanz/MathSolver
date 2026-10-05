@@ -1661,7 +1661,13 @@
     "AiBank.Error.InvalidPlaceholders": "Biến thay thế bị thiếu, trùng, đổi vai trò hoặc không được hỗ trợ. Giữ đúng các biến của mẫu C#.",
     "AiBank.Error.InvalidContext": "Bối cảnh không hợp lý: nhân vật phải là chủ thể sở hữu hoặc thực hiện hành động, không phải đồ vật nằm trong vật chứa.",
     "AiBank.SelectedModel": "Đã chọn model · chưa nạp vào RAM; tự nạp khi tạo đề",
-    "AiBank.Error.PromptTooLong": "Prompt vượt giới hạn context 2.048 token dành cho prompt và JSON trả về. Hãy rút gọn prompt."
+    "AiBank.Error.PromptTooLong": "Prompt vượt giới hạn context 2.048 token dành cho prompt và JSON trả về. Hãy rút gọn prompt.",
+    "Quiz.ChangeSettings": "Đổi thiết lập",
+    "Quiz.HideSettings": "Thu gọn thiết lập",
+    "Quiz.StartPractice": "Bắt đầu làm bài",
+    "Quiz.DifficultyDescription": "Độ khó: {0} sao",
+    "Quiz.CorrectAnswerDescription": "Đáp án đúng",
+    "Quiz.IncorrectAnswerDescription": "Đáp án đã chọn sai"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

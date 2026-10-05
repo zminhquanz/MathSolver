@@ -7,7 +7,7 @@ The new optional question-bank enrichment has its own
 [checks and model smoke test](../AiQuestionBankTests/README.md); this project
 continues to check C# practice and grading.
 
-The console harness runs 27 test groups against the actual C# generators,
+The console harness runs 28 test groups against the actual C# generators,
 curriculum rules, exact arithmetic, essay graders and presentation helpers.
 It covers every registered problem family, both languages, all five star levels
 and all three answer modes. Checks include independent answers, distinct choices,
@@ -17,6 +17,11 @@ Generic word-problem formatting tests remain because C# also generates story tex
 Localization checks cover quiz UI keys, bundled Vietnamese/English packs,
 runtime fallbacks, placeholders and generated problems, solutions, diagrams
 and grading messages. They catch missing strings and mixed-language content.
+
+Responsive presentation checks cover narrow/wide logical widths and enlarged
+text, including tablet two-column choices and diagram reflow. Accessible diagram
+checks ensure hidden chart values and worked explanations are not read before
+grading. These are layout-policy checks, not screenshots or physical device tests.
 
 ## Visual Studio
 

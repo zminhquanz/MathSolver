@@ -72,7 +72,7 @@
                         </Border.StrokeShape>
                         <Picker
                             x:Name="CategoryPicker"
-                            HeightRequest="50"
+                            MinimumHeightRequest="50"
                             Margin="2,0"
                             FontSize="16"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}"
@@ -146,7 +146,7 @@
                             </Border.StrokeShape>
                             <Picker
                                 x:Name="FromUnitPicker"
-                                HeightRequest="50"
+                                MinimumHeightRequest="50"
                                 Margin="{OnPlatform Android='8,0', Default='2,0'}"
                                 FontSize="15"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
@@ -184,7 +184,7 @@
                             </Border.StrokeShape>
                             <Picker
                                 x:Name="ToUnitPicker"
-                                HeightRequest="50"
+                                MinimumHeightRequest="50"
                                 Margin="{OnPlatform Android='8,0', Default='2,0'}"
                                 FontSize="15"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"

@@ -7,7 +7,14 @@
     <Style x:Key="SolverContentStyle" TargetType="VerticalStackLayout">
         <Setter Property="Padding" Value="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,24', Default='20,16,20,24'}" />
         <Setter Property="Spacing" Value="{OnPlatform Android=10, WinUI=14, Default=14}" />
-        <Setter Property="HorizontalOptions" Value="Fill" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="MaximumWidthRequest" Value="1320" />
+        <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type ScrollView}}, Path=Width, x:DataType='ScrollView'}" />
+    </Style>
+
+    <!-- Diagrams and plots get more room than ordinary reading/input pages. -->
+    <Style x:Key="SolverWideContentStyle" TargetType="VerticalStackLayout" BasedOn="{StaticResource SolverContentStyle}">
+        <Setter Property="MaximumWidthRequest" Value="1440" />
     </Style>
 
     <Style x:Key="SolverHeroStyle" TargetType="VerticalStackLayout">
@@ -60,8 +67,8 @@
     </Style>
 
     <Style x:Key="SolverChoiceButtonStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="48" />
-        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="Padding" Value="8,8" />
         <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=12, Default=12}" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -72,7 +79,7 @@
          Integer/Decimal segmented controls; other SolverChoice buttons are
          intentionally left unchanged. -->
     <Style x:Key="SolverNumberTypeButtonStyle" TargetType="Button" BasedOn="{StaticResource SolverChoiceButtonStyle}">
-        <Setter Property="Padding" Value="{OnPlatform Android='8,3,8,0', WinUI='8,0', Default='8,0'}" />
+        <Setter Property="Padding" Value="{OnPlatform Android='8,11,8,8', WinUI='8,8', Default='8,8'}" />
     </Style>
 
     <Style x:Key="SolverOperationButtonStyle" TargetType="Button" BasedOn="{StaticResource SolverChoiceButtonStyle}">
@@ -82,7 +89,7 @@
     </Style>
 
     <Style x:Key="SolverInputBorderStyle" TargetType="Border">
-        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperInputBackgroundColor}" />
         <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
@@ -95,7 +102,7 @@
     </Style>
 
     <Style x:Key="SolverPrimaryActionStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -124,13 +131,9 @@
                             <Setter Property="BorderColor" Value="{DynamicResource PrimaryBorderColor}" />
                         </VisualState.Setters>
                     </VisualState>
-                    <VisualState x:Name="PointerOver">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryBorderColor}" />
-                            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
-                            <Setter Property="BorderColor" Value="{DynamicResource PrimaryColor}" />
-                        </VisualState.Setters>
-                    </VisualState>
+                    <!-- Native color feedback animates the current palette without
+                         replacing DynamicResource or selected/answer colors. -->
+                    <VisualState x:Name="PointerOver" />
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
@@ -151,8 +154,8 @@
     </Style>
 
     <Style x:Key="SolverSubTabButtonStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="{OnPlatform Android=42, WinUI=44, Default=44}" />
-        <Setter Property="Padding" Value="{OnPlatform Android='7,0', WinUI='8,0', Default='8,0'}" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="Padding" Value="{OnPlatform Android='7,8', WinUI='8,8', Default='8,8'}" />
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -164,9 +167,8 @@
 
     <!-- Android-only visual style for Material/DevCheck-like sub tabs. -->
     <Style x:Key="AndroidNativeSubTabButtonStyle" TargetType="Button">
-        <Setter Property="HeightRequest" Value="48" />
         <Setter Property="MinimumHeightRequest" Value="48" />
-        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="Padding" Value="16,8" />
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="BorderWidth" Value="0" />
         <Setter Property="FontSize" Value="14" />

@@ -52,6 +52,9 @@ public partial class MathPuzzlePage
         QuizDiagramExplanationLabel.IsVisible = showExplanation && !_currentQuestion.UsesFractionFormatting;
         QuizDiagramExplanationFractionView.Expression = diagram?.Explanation ?? "";
         QuizDiagramExplanationFractionView.IsVisible = showExplanation && _currentQuestion.UsesFractionFormatting;
+        SemanticProperties.SetDescription(QuizVisualView, QuizDiagramDescriptionFormatter.Format(
+            diagram, essential, _questionAnswered, AppLanguageManager.CurrentLanguage));
+        AutomationProperties.SetIsInAccessibleTree(QuizVisualView, true);
         UpdateQuestionDiagramLayout();
     }
 
@@ -102,10 +105,8 @@ public partial class MathPuzzlePage
 
     private void UpdateQuestionDiagramLayout()
     {
-        bool wide = false;
-#if WINDOWS
-        wide = QuizDiagramPanel.IsVisible && QuestionDiagramGrid.Width >= 920;
-#endif
+        bool wide = QuizDiagramPanel.IsVisible &&
+            QuizResponsiveLayout.PlaceDiagramBesideQuestion(QuestionDiagramGrid.Width, CurrentTextScale);
         if (_wideDiagramLayout == wide) return;
         _wideDiagramLayout = wide;
         QuestionDiagramGrid.ColumnDefinitions.Clear();
@@ -161,6 +162,8 @@ public partial class MathPuzzlePage
         }
         var image = new GraphicsView { WidthRequest = 720, HeightRequest = 520,
             Drawable = new DiagramPreviewDrawable(source, 2) };
+        SemanticProperties.SetDescription(image, SemanticProperties.GetDescription(QuizVisualView));
+        AutomationProperties.SetIsInAccessibleTree(image, true);
         var zoom = new Slider { Minimum = 1, Maximum = 3, Value = 2 };
         void SetZoom(double factor)
         {

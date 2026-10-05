@@ -38,7 +38,7 @@
                 HorizontalScrollBarVisibility="Never">
 
                 <HorizontalStackLayout Spacing="0" Padding="6,0">
-                    <Grid MinimumWidthRequest="158" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="158" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidUnknownComponentTabButton"
                             Grid.Row="0"
@@ -55,7 +55,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="112" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="112" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidProportionTabButton"
                             Grid.Row="0"
@@ -71,7 +71,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="112" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="112" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidMotionTabButton"
                             Grid.Row="0"
@@ -87,7 +87,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="138" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="138" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidAverageTabButton"
                             Grid.Row="0"
@@ -103,7 +103,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="105" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="105" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidMeasurementTabButton"
                             Grid.Row="0"
@@ -119,7 +119,7 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
-                    <Grid MinimumWidthRequest="102" RowDefinitions="48,3">
+                    <Grid MinimumWidthRequest="102" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidFormulaGeometryTabButton"
                             Grid.Row="0"
@@ -168,7 +168,7 @@
                     x:Name="UnknownComponentTabButton"
                     Grid.Column="0"
                     Text="{localization:Translate Formula.Tabs.UnknownComponent}"
-                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="14"
                     FontAttributes="Bold"
@@ -182,7 +182,7 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{localization:Translate Formula.Tabs.Proportion}"
-                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -198,7 +198,7 @@
                     Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
                     Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
                     Text="{localization:Translate Formula.Tabs.Motion}"
-                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -214,7 +214,7 @@
                     Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
                     Grid.Column="{OnPlatform Android=1, WinUI=3, Default=3}"
                     Text="{localization:Translate Formula.Tabs.Average}"
-                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -230,7 +230,7 @@
                     Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
                     Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
                     Text="{localization:Translate Formula.Tabs.Measurement}"
-                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"
@@ -246,7 +246,7 @@
                     Grid.Row="{OnPlatform Android=2, WinUI=0, Default=0}"
                     Grid.Column="{OnPlatform Android=1, WinUI=5, Default=5}"
                     Text="{localization:Translate Formula.Tabs.Geometry}"
-                    HeightRequest="{OnPlatform Android=40, WinUI=44, Default=44}"
+                    MinimumHeightRequest="{OnPlatform Android=48, WinUI=44, Default=44}"
                     Padding="8,0"
                     FontSize="13"
                     FontAttributes="Bold"

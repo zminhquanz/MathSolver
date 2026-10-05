@@ -21,7 +21,7 @@
         VerticalScrollBarVisibility="Default">
 
         <VerticalStackLayout
-            Style="{StaticResource SolverContentStyle}">
+            Style="{StaticResource SolverWideContentStyle}">
 
             <!-- Tiêu đề -->
             <VerticalStackLayout
@@ -149,7 +149,7 @@
                                 <Grid>
                                     <Picker
                                         x:Name="GeometryShapePicker"
-                                        HeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
                                         Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"

@@ -21,7 +21,11 @@ internal static class SelectionButtonStyler
             Button.BorderColorProperty,
             isSelected ? "WallpaperSelectionBorderColor" : "WallpaperBorderColor");
 
-        button.BorderWidth = 1d;
+        // Thickness distinguishes selection even without perceiving its color.
+        button.BorderWidth = isSelected ? 2d : 1d;
+        SemanticProperties.SetDescription(button, button.Text + (isSelected
+            ? AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese ? ", đang chọn" : ", selected"
+            : ""));
     }
 
     public static void Select(Button selectedButton, params Button[] buttons)

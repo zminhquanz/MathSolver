@@ -220,6 +220,7 @@ try
     }
     Console.WriteLine("PASS SQLite persistence, deduplication, selection and invalid-insert protection");
     await PracticeProviderTests.RunAsync(directory, validated, Draft);
+    await BackgroundPracticeTests.RunAsync(directory);
     await BankDataTests.RunAsync(directory, validated, Draft);
     await SqlMutationTests.RunAsync(directory, validated);
     await SqlGridTests.RunAsync(directory, validated);

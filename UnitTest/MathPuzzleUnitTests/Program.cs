@@ -5,6 +5,7 @@ var tests = new (string Name, Action Run)[]
     ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),
     ("Catalog", PuzzleTests.CheckCatalog),
     ("Quiz localization", PuzzleTests.CheckQuizLocalization),
+    ("Responsive quiz layouts and accessible diagrams", PuzzleTests.CheckResponsivePresentation),
     ("Integer and fraction comparisons", PuzzleTests.CheckComparisons),
     ("Quiz diagrams and hidden answers", PuzzleTests.CheckQuizDiagrams),
     ("Elementary contracts and grading matrix", PuzzleTests.CheckElementaryContracts),

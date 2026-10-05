@@ -25,8 +25,8 @@
         -->
         <Grid
             x:Name="OverlaySettingsButton"
-            WidthRequest="42"
-            HeightRequest="42"
+            WidthRequest="48"
+            HeightRequest="48"
             Margin="0"
             HorizontalOptions="{OnPlatform Android=Fill, WinUI=End, Default=End}"
             VerticalOptions="{OnPlatform Android=End, WinUI=Start, Default=Start}"
@@ -34,8 +34,8 @@
             ZIndex="3">
 
             <ImageButton
-                WidthRequest="42"
-                HeightRequest="42"
+                WidthRequest="48"
+                HeightRequest="48"
                 Padding="0"
                 BorderWidth="1"
                 CornerRadius="24"

@@ -17,15 +17,39 @@
 
         <ScrollView
             x:Name="MathPuzzleScrollView"
+            SizeChanged="OnPracticeViewportSizeChanged"
             Grid.Row="0"
             HorizontalOptions="Fill"
             VerticalOptions="Fill">
 
                 <VerticalStackLayout
+                    x:Name="QuizContent"
                     Padding="{OnPlatform Android='12,10,12,20', WinUI='20,12,20,28', Default='20,12,20,28'}"
                     Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
-                    HorizontalOptions="Fill">
+                    MaximumWidthRequest="1440"
+                    WidthRequest="{Binding Source={x:Reference MathPuzzleScrollView}, Path=Width, x:DataType='ScrollView'}"
+                    HorizontalOptions="Center">
 
+                    <Border Style="{StaticResource SolverCardStyle}">
+                        <Grid x:Name="PracticeSummaryGrid" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="12" RowSpacing="8" SizeChanged="OnPracticeLayoutSizeChanged">
+                            <Label x:Name="PracticeSummaryLabel" FontSize="15" FontAttributes="Bold"
+                                   VerticalOptions="Center" LineBreakMode="WordWrap"
+                                   TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Button x:Name="ChangePracticeSettingsButton" Grid.Column="1"
+                                    Text="{localization:QuizTranslate Quiz.ChangeSettings}"
+                                    Style="{StaticResource SolverOutlinedActionStyle}"
+                                    Clicked="OnChangePracticeSettingsClicked" />
+                            <Button x:Name="OpenAiQuestionBankButton" Grid.Column="2"
+                                    Text="{localization:Translate AiBank.Open}"
+                                    Style="{StaticResource SolverOutlinedActionStyle}"
+                                    Clicked="OnOpenAiQuestionBankClicked" />
+                            <Label x:Name="AiQuestionBankProgressLabel" Grid.Row="1" Grid.ColumnSpan="3"
+                                   IsVisible="False" FontSize="13" LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
+
+                    <VerticalStackLayout x:Name="PracticeSettingsPanel" Spacing="14" HorizontalOptions="Center">
                     <VerticalStackLayout
                         Margin="0,4,0,4"
                         Spacing="3">
@@ -61,7 +85,7 @@
                                     x:Name="TrueFalseModeButton"
                                     Grid.Column="0"
                                     Text="{localization:Translate Quiz.TrueFalseMode}"
-                                    HeightRequest="48"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="14"
                                     FontAttributes="Bold"
@@ -73,7 +97,7 @@
                                     x:Name="MultipleChoiceModeButton"
                                     Grid.Column="1"
                                     Text="{localization:Translate Quiz.MultipleChoiceMode}"
-                                    HeightRequest="48"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="14"
                                     FontAttributes="Bold"
@@ -85,7 +109,7 @@
                                     x:Name="EssayModeButton"
                                     Grid.Column="2"
                                     Text="{localization:QuizTranslate Quiz.EssayMode}"
-                                    HeightRequest="48"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="14"
                                     FontAttributes="Bold"
@@ -108,6 +132,7 @@
                                 and the second row use 3-column spans (2 equal cells) without rebuilding controls.
                             -->
                             <Grid
+                                x:Name="CurriculumGrid"
                                 ColumnDefinitions="{OnPlatform Android='*,*,*,*,*,*', Default='*,*,*,*,*'}"
                                 RowDefinitions="{OnPlatform Android='Auto,Auto', Default='Auto'}"
                                 ColumnSpacing="6"
@@ -119,7 +144,7 @@
                                     Grid.Column="0"
                                     Grid.ColumnSpan="{OnPlatform Android=2, Default=1}"
                                     Text="★"
-                                    HeightRequest="46"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=15, Default=16}"
                                     FontAttributes="Bold"
@@ -131,7 +156,7 @@
                                     Grid.Column="{OnPlatform Android=2, Default=1}"
                                     Grid.ColumnSpan="{OnPlatform Android=2, Default=1}"
                                     Text="★★"
-                                    HeightRequest="46"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=15, Default=14}"
                                     FontAttributes="Bold"
@@ -143,7 +168,7 @@
                                     Grid.Column="{OnPlatform Android=4, Default=2}"
                                     Grid.ColumnSpan="{OnPlatform Android=2, Default=1}"
                                     Text="★★★"
-                                    HeightRequest="46"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=15, Default=13}"
                                     FontAttributes="Bold"
@@ -155,7 +180,7 @@
                                     Grid.Column="{OnPlatform Android=0, Default=3}"
                                     Grid.ColumnSpan="{OnPlatform Android=3, Default=1}"
                                     Text="★★★★"
-                                    HeightRequest="46"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=15, Default=12}"
                                     FontAttributes="Bold"
@@ -167,7 +192,7 @@
                                     Grid.Column="{OnPlatform Android=3, Default=4}"
                                     Grid.ColumnSpan="{OnPlatform Android=3, Default=1}"
                                     Text="★★★★★"
-                                    HeightRequest="46"
+                                    MinimumHeightRequest="48"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=15, Default=11}"
                                     FontAttributes="Bold"
@@ -202,7 +227,7 @@
                                 <Grid>
                                     <Picker
                                         x:Name="OperationPicker"
-                                        HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                         Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
@@ -237,7 +262,7 @@
                                     </Border.StrokeShape>
                                     <Grid>
                                         <Picker x:Name="ElementaryTypePicker"
-                                                HeightRequest="{OnPlatform Android=56, Default=50}"
+                                                MinimumHeightRequest="{OnPlatform Android=56, Default=50}"
                                                 FontSize="16" FontAttributes="Bold"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                 SelectedIndexChanged="OnElementaryTypeChanged" />
@@ -262,7 +287,7 @@
                                     </Border.StrokeShape>
                                     <Grid>
                                         <Picker x:Name="ExpressionTypePicker"
-                                                HeightRequest="{OnPlatform Android=56, Default=50}"
+                                                MinimumHeightRequest="{OnPlatform Android=56, Default=50}"
                                                 FontSize="16" FontAttributes="Bold"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                 SelectedIndexChanged="OnExpressionTypeChanged" />
@@ -290,14 +315,14 @@
                                     <Button
                                         x:Name="ProblemMixedButton"
                                         Text="{localization:QuizTranslate Quiz.SubtypeMixed}"
-                                        HeightRequest="44"
+                                        MinimumHeightRequest="48"
                                         CornerRadius="12"
                                         FontSize="14"
                                         FontAttributes="Bold"
                                         Clicked="OnProblemMixedClicked" />
                                     <Button x:Name="ProblemCompareButton" Grid.Column="1"
                                             Text="{localization:QuizTranslate Quiz.ComparisonSubtype}"
-                                            HeightRequest="44" CornerRadius="12" FontSize="14" FontAttributes="Bold"
+                                            MinimumHeightRequest="48" CornerRadius="12" FontSize="14" FontAttributes="Bold"
                                             Clicked="OnProblemCompareClicked" />
                                 </Grid>
 
@@ -305,10 +330,10 @@
                                     ColumnDefinitions="*,*,*,*"
                                     ColumnSpacing="8">
 
-                                    <Button x:Name="ProblemAddButton" Grid.Column="0" Text="+" HeightRequest="46" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemAddClicked" />
-                                    <Button x:Name="ProblemSubtractButton" Grid.Column="1" Text="−" HeightRequest="46" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemSubtractClicked" />
-                                    <Button x:Name="ProblemMultiplyButton" Grid.Column="2" Text="×" HeightRequest="46" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemMultiplyClicked" />
-                                    <Button x:Name="ProblemDivideButton" Grid.Column="3" Text="÷" HeightRequest="46" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemDivideClicked" />
+                                    <Button x:Name="ProblemAddButton" Grid.Column="0" Text="+" MinimumHeightRequest="48" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemAddClicked" />
+                                    <Button x:Name="ProblemSubtractButton" Grid.Column="1" Text="−" MinimumHeightRequest="48" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemSubtractClicked" />
+                                    <Button x:Name="ProblemMultiplyButton" Grid.Column="2" Text="×" MinimumHeightRequest="48" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemMultiplyClicked" />
+                                    <Button x:Name="ProblemDivideButton" Grid.Column="3" Text="÷" MinimumHeightRequest="48" CornerRadius="12" FontSize="20" FontAttributes="Bold" Clicked="OnProblemDivideClicked" />
 
                                 </Grid>
 
@@ -331,7 +356,7 @@
                                         Grid.Row="0"
                                         Grid.ColumnSpan="2"
                                         Text="{localization:QuizTranslate Quiz.OperationMixed}"
-                                        HeightRequest="46"
+                                        MinimumHeightRequest="48"
                                         CornerRadius="12"
                                         FontSize="15"
                                         FontAttributes="Bold"
@@ -341,7 +366,7 @@
                                         Grid.Row="1"
                                         Grid.Column="0"
                                         Text="{localization:QuizTranslate Quiz.ProportionDirect}"
-                                        HeightRequest="46"
+                                        MinimumHeightRequest="48"
                                         CornerRadius="12"
                                         FontSize="15"
                                         FontAttributes="Bold"
@@ -351,7 +376,7 @@
                                         Grid.Row="1"
                                         Grid.Column="1"
                                         Text="{localization:QuizTranslate Quiz.ProportionInverse}"
-                                        HeightRequest="46"
+                                        MinimumHeightRequest="48"
                                         CornerRadius="12"
                                         FontSize="15"
                                         FontAttributes="Bold"
@@ -385,7 +410,7 @@
                                     <Grid>
                                         <Picker
                                             x:Name="MotionTypePicker"
-                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                             Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Fill"
@@ -433,7 +458,7 @@
                                     <Grid>
                                         <Picker
                                             x:Name="AverageTypePicker"
-                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                             Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Fill"
@@ -481,7 +506,7 @@
                                     <Grid>
                                         <Picker
                                             x:Name="PercentageTypePicker"
-                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                             Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Fill"
@@ -529,7 +554,7 @@
                                     <Grid>
                                         <Picker
                                             x:Name="FindXTypePicker"
-                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                             Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Fill"
@@ -577,7 +602,7 @@
                                     <Grid>
                                         <Picker
                                             x:Name="GeometryShapePicker"
-                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                             Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Fill"
@@ -617,7 +642,7 @@
                                     <Grid>
                                         <Picker
                                             x:Name="GeometryMeasurementPicker"
-                                            HeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
+                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=50, Default=50}"
                                             Margin="{OnPlatform Android='0', WinUI='0', Default='14,0,0,0'}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Fill"
@@ -642,11 +667,11 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <Button
-                        Text="{localization:Translate AiBank.Open}"
-                        Style="{StaticResource SolverOutlinedActionStyle}"
-                        Clicked="OnOpenAiQuestionBankClicked" />
-                    <Label x:Name="AiQuestionBankProgressLabel" IsVisible="False" FontSize="13" />
+                    <Button x:Name="StartPracticeButton"
+                            Text="{localization:QuizTranslate Quiz.StartPractice}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
+                            Clicked="OnStartPracticeClicked" />
+                    </VerticalStackLayout>
 
                     <Border
                         Padding="14"
@@ -690,6 +715,7 @@
                     </Border>
 
                     <Border
+                        x:Name="QuestionCard"
                         Padding="18"
                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                         Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -707,6 +733,7 @@
                                 FontSize="18"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
+                                SemanticProperties.HeadingLevel="Level2"
                                 TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                             <Button x:Name="QuizDiagramToggleButton" IsVisible="False"
@@ -788,7 +815,7 @@
                                     Grid.Column="0"
                                     Text="{localization:Translate Quiz.TrueAnswer}"
                                     CommandParameter="true"
-                                    HeightRequest="54"
+                                    MinimumHeightRequest="54"
                                     CornerRadius="12"
                                     FontSize="18"
                                     FontAttributes="Bold"
@@ -803,7 +830,7 @@
                                     Grid.Column="1"
                                     Text="{localization:Translate Quiz.FalseAnswer}"
                                     CommandParameter="false"
-                                    HeightRequest="54"
+                                    MinimumHeightRequest="54"
                                     CornerRadius="12"
                                     FontSize="18"
                                     FontAttributes="Bold"
@@ -817,6 +844,7 @@
 
                             <Grid
                                 x:Name="MultipleChoiceAnswerGrid"
+                                SizeChanged="OnAnswerGridSizeChanged"
                                 IsVisible="False"
                                 RowDefinitions="Auto,Auto"
                                 ColumnDefinitions="*,*"
@@ -827,7 +855,7 @@
                                     x:Name="ChoiceAButton"
                                     Grid.Row="0"
                                     Grid.Column="0"
-                                    HeightRequest="54"
+                                    MinimumHeightRequest="54"
                                     CornerRadius="12"
                                     FontSize="18"
                                     FontAttributes="Bold"
@@ -841,7 +869,7 @@
                                     x:Name="ChoiceBButton"
                                     Grid.Row="0"
                                     Grid.Column="1"
-                                    HeightRequest="54"
+                                    MinimumHeightRequest="54"
                                     CornerRadius="12"
                                     FontSize="18"
                                     FontAttributes="Bold"
@@ -855,7 +883,7 @@
                                     x:Name="ChoiceCButton"
                                     Grid.Row="1"
                                     Grid.Column="0"
-                                    HeightRequest="54"
+                                    MinimumHeightRequest="54"
                                     CornerRadius="12"
                                     FontSize="18"
                                     FontAttributes="Bold"
@@ -869,7 +897,7 @@
                                     x:Name="ChoiceDButton"
                                     Grid.Row="1"
                                     Grid.Column="1"
-                                    HeightRequest="54"
+                                    MinimumHeightRequest="54"
                                     CornerRadius="12"
                                     FontSize="18"
                                     FontAttributes="Bold"
@@ -940,6 +968,9 @@
                             <VerticalStackLayout
                                 x:Name="EssayAnswerLayout"
                                 IsVisible="False"
+                                MaximumWidthRequest="960"
+                                WidthRequest="{Binding Source={x:Reference QuestionDiagramGrid}, Path=Width, x:DataType='Grid'}"
+                                HorizontalOptions="Center"
                                 Spacing="10">
 
                                 <VerticalStackLayout
@@ -965,6 +996,7 @@
 
                                         <Editor
                                             x:Name="EssayWorkEditor"
+                                            Focused="OnEssayWorkFocused"
                                             MinimumHeightRequest="180"
                                             AutoSize="TextChanges"
                                             FontSize="16"
@@ -987,7 +1019,7 @@
                                 <Button
                                     x:Name="SubmitEssayAnswerButton"
                                     Text="{localization:QuizTranslate Quiz.SubmitEssayAnswer}"
-                                    HeightRequest="50"
+                                    MinimumHeightRequest="50"
                                     CornerRadius="12"
                                     FontSize="16"
                                     FontAttributes="Bold"
@@ -1080,7 +1112,7 @@
                                     x:Name="RegenerateQuestionButton"
                                     Grid.Column="0"
                                     Text="{localization:QuizTranslate Quiz.RegenerateQuestion}"
-                                    HeightRequest="50"
+                                    MinimumHeightRequest="50"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=14, WinUI=16, Default=16}"
                                     FontAttributes="Bold"
@@ -1093,7 +1125,7 @@
                                     Grid.Column="1"
                                     IsEnabled="False"
                                     Text="{localization:Translate Quiz.NextQuestion}"
-                                    HeightRequest="50"
+                                    MinimumHeightRequest="50"
                                     CornerRadius="12"
                                     FontSize="{OnPlatform Android=14, WinUI=16, Default=16}"
                                     FontAttributes="Bold"

@@ -24,6 +24,7 @@
     <Compile Include="../../MathSolver/Services/Localization/QuizLocalizationOverrides.cs" Link="QuizLocalizationOverrides.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/TextbookFractionParser.cs" Link="Services/Formatting/TextbookFractionParser.cs" />
+    <Compile Include="../../MathSolver/Services/Formatting/AccessibleMathText.cs" Link="Services/Formatting/AccessibleMathText.cs" />
     <Compile Include="../../MathSolver/Services/QuestionBank/*.cs" Exclude="../../MathSolver/Services/QuestionBank/AiQuestionBank.cs" Link="QuestionBank/%(Filename)%(Extension)" />
     <Compile Include="../MathPuzzleUnitTests/ServicesStub.cs" Link="ServicesStub.cs" />
   </ItemGroup>

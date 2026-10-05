@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls">
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{DynamicResource PrimaryColor}" />
@@ -27,6 +28,8 @@
     </Style>
 
     <Style TargetType="Button">
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{DynamicResource OnPrimaryColor}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryColor}" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
@@ -71,11 +74,7 @@
                             <Setter Property="Opacity" Value="1" />
                         </VisualState.Setters>
                     </VisualState>
-                    <VisualState x:Name="PointerOver">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
-                        </VisualState.Setters>
-                    </VisualState>
+                    <VisualState x:Name="PointerOver" />
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="Opacity" Value="0.45" />
@@ -481,6 +480,7 @@
 
     <!-- Compact Android-style settings menu -->
     <Style x:Key="ThemeMenuRowStyle" TargetType="Border">
+        <Setter Property="controls:InteractiveColorFeedback.IsEnabled" Value="True" />
         <Setter Property="Padding" Value="{OnPlatform Android='8,6', WinUI='10,8', Default='10,8'}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="Stroke" Value="Transparent" />
@@ -538,11 +538,11 @@
     </Style>
 
     <Style x:Key="AccentSwatchButtonStyle" TargetType="Button">
-        <Setter Property="WidthRequest" Value="42" />
-        <Setter Property="HeightRequest" Value="42" />
-        <Setter Property="MinimumWidthRequest" Value="42" />
-        <Setter Property="MinimumHeightRequest" Value="42" />
-        <Setter Property="CornerRadius" Value="21" />
+        <Setter Property="WidthRequest" Value="48" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="CornerRadius" Value="24" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="3" />
         <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
@@ -590,7 +590,7 @@
     </Style>
 
     <Style x:Key="SettingsMenuPickerFrameStyle" TargetType="Border">
-        <Setter Property="HeightRequest" Value="46" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="BackgroundColor" Value="{DynamicResource InputBackgroundColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
@@ -599,11 +599,11 @@
     </Style>
 
     <Style x:Key="SettingsMenuAccentSwatchStyle" TargetType="Button">
-        <Setter Property="WidthRequest" Value="38" />
-        <Setter Property="HeightRequest" Value="38" />
-        <Setter Property="MinimumWidthRequest" Value="38" />
-        <Setter Property="MinimumHeightRequest" Value="38" />
-        <Setter Property="CornerRadius" Value="19" />
+        <Setter Property="WidthRequest" Value="48" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="CornerRadius" Value="24" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />

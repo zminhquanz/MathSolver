@@ -71,15 +71,15 @@
 
                 <Grid
                     x:Name="SettingsButtonHost"
-                    WidthRequest="42"
-                    HeightRequest="42"
+                    WidthRequest="48"
+                    HeightRequest="48"
                     VerticalOptions="Center">
 
                     <!-- Transparent hit target; the vector gear is rendered separately. -->
                     <ImageButton
                         x:Name="SettingsButton"
-                        WidthRequest="42"
-                        HeightRequest="42"
+                        WidthRequest="48"
+                        HeightRequest="48"
                         Padding="0"
                         BorderWidth="1"
                         CornerRadius="24"

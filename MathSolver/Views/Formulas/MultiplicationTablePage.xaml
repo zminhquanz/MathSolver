@@ -205,7 +205,7 @@
                                     <Button
                                         x:Name="MultiplyButton"
                                         Grid.Column="0"
-                                        HeightRequest="50"
+                                        MinimumHeightRequest="50"
                                         CornerRadius="12"
                                         Clicked="OnMultiplyClicked"
                                         FontAttributes="Bold"
@@ -217,7 +217,7 @@
                                     <Button
                                         x:Name="DivideButton"
                                         Grid.Column="1"
-                                        HeightRequest="50"
+                                        MinimumHeightRequest="50"
                                         CornerRadius="12"
                                         Clicked="OnDivideClicked"
                                         FontAttributes="Bold"

@@ -12,6 +12,7 @@
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.xaml" LogicalName="QuizLocalization.MathPuzzlePage.xaml" />
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.xaml.cs" LogicalName="QuizLocalization.MathPuzzlePage.xaml.cs" />
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.Diagrams.cs" LogicalName="QuizLocalization.MathPuzzlePage.Diagrams.cs" />
+    <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.Layout.cs" LogicalName="QuizLocalization.MathPuzzlePage.Layout.cs" />
     <Compile Include="../../MathSolver/Services/Memory/ResultFileStore.cs" Link="Services/Memory/ResultFileStore.cs" />
     <Compile Include="../../MathSolver/Views/Calculators/PowerRootView.Memory.cs" Link="Views/PowerRootView.Memory.cs" />
     <Compile Include="../../MathSolver/Services/Memory/RecoverableMemoryRegistry.cs" Link="Services/Memory/RecoverableMemoryRegistry.cs" />
@@ -27,6 +28,7 @@
     <Compile Include="../../MathSolver/Services/Localization/QuizLocalizationOverrides.cs" Link="Services/Localization/QuizLocalizationOverrides.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/TextbookFractionParser.cs" Link="Services/Formatting/TextbookFractionParser.cs" />
+    <Compile Include="../../MathSolver/Services/Formatting/AccessibleMathText.cs" Link="Services/Formatting/AccessibleMathText.cs" />
     <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

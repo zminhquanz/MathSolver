@@ -107,7 +107,7 @@
                             Text="Quy đồng"
                             FontSize="16"
                             FontAttributes="Bold"
-                            HeightRequest="48"
+                            MinimumHeightRequest="48"
                             Padding="10,0"
                             CornerRadius="12"
                             BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
