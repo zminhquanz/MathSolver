@@ -222,6 +222,7 @@ try
     await PracticeProviderTests.RunAsync(directory, validated, Draft);
     await BankDataTests.RunAsync(directory, validated, Draft);
     await SqlMutationTests.RunAsync(directory, validated);
+    await SqlGridTests.RunAsync(directory, validated);
     await StreamingTests.RunAsync(Draft);
 
     var memoryStore = new MemoryStore();

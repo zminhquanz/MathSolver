@@ -97,7 +97,7 @@
                     <VerticalStackLayout Spacing="10">
                         <Button x:Name="InquiryToggleButton" Text="{localization:Translate AiBank.InquiryShow}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleInquiryClicked" />
                         <VerticalStackLayout x:Name="InquiryPanel" Spacing="10" IsVisible="False">
-                            <Label Text="{localization:Translate AiBank.InquiryHint}" LineBreakMode="WordWrap" />
+                            <Label Text="{localization:Translate AiBank.InquiryHint}" LineBreakMode="WordWrap" FontSize="13" FontAttributes="None" LineHeight="1.2" />
                             <Border Style="{StaticResource AiBankDiagnosticCardStyle}">
                                 <Editor x:Name="QueryEditor" HeightRequest="110" AutoSize="Disabled" BackgroundColor="Transparent" FontSize="14"
                                         FontFamily="{DynamicResource AppFontFamily}" />
@@ -110,6 +110,12 @@
                             <Border x:Name="QueryResultsPanel" Style="{StaticResource AiBankDiagnosticCardStyle}" IsVisible="False">
                                 <VerticalStackLayout Spacing="8">
                                     <Label x:Name="QueryResultMessageLabel" LineBreakMode="WordWrap" IsVisible="False" />
+                                    <Label x:Name="QueryEditHintLabel" LineBreakMode="WordWrap" FontSize="13" />
+                                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                                        <Button x:Name="AddSqlRowButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridAddRow}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnAddSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="ReloadSqlGridButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridReload}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReloadSqlGridClicked" />
+                                        <Button x:Name="LoadEditableSqlButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridLoadEditable}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnLoadEditableSqlClicked" IsVisible="False" />
+                                    </FlexLayout>
                                     <controls:SqlResultTableView x:Name="QueryResultsTable" CellSelected="OnSqlCellSelected" IsVisible="False" />
                                     <Label x:Name="QueryGridHintLabel" Text="{localization:Translate AiBank.SqlGridHint}" FontSize="13" IsVisible="False" />
                                 </VerticalStackLayout>
@@ -117,12 +123,30 @@
                             <Border x:Name="QueryCellDetailPanel" Style="{StaticResource AiBankDiagnosticCardStyle}" IsVisible="False">
                                 <VerticalStackLayout Spacing="8">
                                     <Label x:Name="QueryCellTitleLabel" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                                    <Label x:Name="QueryCellReadOnlyLabel" Text="{localization:Translate AiBank.GridKeyReadOnly}" LineBreakMode="WordWrap" FontSize="13" IsVisible="False" />
                                     <Editor x:Name="QueryCellEditor" IsReadOnly="True" HeightRequest="180" AutoSize="Disabled"
                                             BackgroundColor="Transparent" FontSize="14" FontFamily="{DynamicResource AppFontFamily}" />
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                                        <Button x:Name="CopySqlCellButton" Text="{localization:Translate AiBank.CopySqlCell}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCopySqlCellClicked" />
-                                        <Button Grid.Column="1" Text="{localization:Translate AiBank.Ok}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCloseSqlCellClicked" />
-                                    </Grid>
+                                    <HorizontalStackLayout x:Name="SqlCellNullPanel" IsVisible="False" Spacing="8">
+                                        <CheckBox x:Name="SqlCellNullCheckBox" CheckedChanged="OnSqlCellNullChanged" />
+                                        <Label Text="{localization:Translate AiBank.GridNull}" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                    <FlexLayout Direction="Row" Wrap="Wrap">
+                                        <Button x:Name="SaveSqlCellButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridSaveCell}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnSaveSqlCellClicked" IsVisible="False" />
+                                        <Button x:Name="DeleteSqlRowButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridDeleteRow}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDeleteSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="CopySqlCellButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.CopySqlCell}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCopySqlCellClicked" />
+                                        <Button x:Name="CloseSqlCellButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCloseSqlCellClicked" />
+                                    </FlexLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border x:Name="NewSqlRowPanel" Style="{StaticResource AiBankDiagnosticCardStyle}" IsVisible="False">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="{localization:Translate AiBank.GridAddRow}" FontAttributes="Bold" />
+                                    <Label Text="{localization:Translate AiBank.GridInsertHint}" LineBreakMode="WordWrap" FontSize="13" />
+                                    <VerticalStackLayout x:Name="NewSqlRowFields" Spacing="8" />
+                                    <FlexLayout Direction="Row" Wrap="Wrap">
+                                        <Button x:Name="SaveNewSqlRowButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridInsertRow}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnSaveNewSqlRowClicked" />
+                                        <Button x:Name="CancelNewSqlRowButton" Margin="0,0,8,8" Text="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelNewSqlRowClicked" />
+                                    </FlexLayout>
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>

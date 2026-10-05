@@ -2,14 +2,15 @@ using System.Globalization;
 
 namespace MathSolver.Controls;
 
-public sealed class SqlResultCellEventArgs(int rowNumber, string columnName, string value) : EventArgs
+public sealed class SqlResultCellEventArgs(int rowNumber, string columnName, string value, int columnIndex) : EventArgs
 {
     public int RowNumber { get; } = rowNumber;
     public string ColumnName { get; } = columnName;
     public string Value { get; } = value;
+    public int ColumnIndex { get; } = columnIndex;
 }
 
-/// <summary>A bounded, read-only table with a fixed header and recycled rows.</summary>
+/// <summary>A bounded table with a fixed header and recycled rows; cell actions are owned by its page.</summary>
 public sealed class SqlResultTableView : ContentView
 {
     private const double RowHeight = 44;
@@ -94,7 +95,7 @@ public sealed class SqlResultTableView : ContentView
             {
                 // Read the current recycled binding context, not the original row.
                 if (grid.BindingContext is ResultRow row)
-                    CellSelected?.Invoke(this, new(row.Number, columns[column], row.Values[column]));
+                    CellSelected?.Invoke(this, new(row.Number, columns[column], row.Values[column], column));
             };
             cell.GestureRecognizers.Add(tap);
             grid.Add(cell, i + 1, 0);

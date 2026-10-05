@@ -178,3 +178,19 @@ shared across the selected batch and disposed afterwards. Neither command writes
 the app's question bank. Run without simultaneous builds/inference for meaningful
 speed comparisons. Token/s measures decoding after the first token, excluding
 prompt processing and model loading; end-to-end latency is reported separately.
+
+## SQLite grid editing
+
+The query results support cell updates, row insertion and deletion for direct
+`BasicQuestionBank` SELECT projections that include the genuine `Hash` column.
+`SELECT *` respects the actual database column order, including older migrated
+databases. Aliases are mapped by column index; aggregates, expressions, joins,
+CTEs and result sets without a key stay read-only.
+
+`SqlGridTests` checks identity mapping, empty editable results, quoted text,
+multiline and long JSON, SQL NULL versus literal text, exact Int64 values,
+insertion, duplicate keys, deletion, optimistic conflicts, cancellation and
+failed-write rollback. It also verifies that invalid manually edited JSON still
+cannot enter normal practice. The tests use temporary SQLite databases, without
+model inference or benchmarks. App builds compile the native editor UI; device
+layout has not been verified by this harness.

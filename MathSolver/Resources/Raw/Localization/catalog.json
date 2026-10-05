@@ -1394,7 +1394,87 @@
     },
     "AiBank.SqlGridHint": {
       "context": "Math puzzles > AI question bank > SQLite result table",
-      "translatorNote": "Explains a read-only result table. Tap also means click on Windows."
+      "translatorNote": "Explains selecting cells for viewing or editing. Tap also means click on Windows."
+    },
+    "AiBank.GridAddRow": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridReload": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridLoadEditable": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridSaveCell": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridDeleteRow": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridCancelEdit": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridNull": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridInsertRow": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridKeyReadOnly": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridInsertHint": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridEditableHint": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridReadOnlyHint": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridCellLoaded": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridCellSaved": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridRowDeleted": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.GridRowInserted": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.Error.GridRowChanged": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.Error.GridIntegerRequired": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.Error.GridColumnReadOnly": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
+    },
+    "AiBank.Error.GridDuplicateHash": {
+      "context": "Math puzzles > AI question bank > SQLite table editor",
+      "translatorNote": "Preserve SQL keywords and database column names. Newlines separate instructions."
     },
     "AiBank.SqlCellTitle": {
       "context": "Math puzzles > AI question bank > selected SQL cell",
@@ -8756,7 +8836,7 @@
     },
     {
       "key": "AiBank.InquiryHint",
-      "source": "Dành cho người dùng nâng cao: chạy một câu lệnh SELECT, INSERT, UPDATE hoặc DELETE trên bảng BasicQuestionBank; hỗ trợ WITH và chú thích SQL. Các cột chính: Operation (0: cộng, 1: trừ, 2: nhân, 3: chia), Stars (1–5), Language (0: Việt, 1: Anh), Structure (quan hệ toán), TopicId (chủ đề), SceneId (tình huống), ContractJson, DraftJson, ModelName, CreatedUtc, UseCount. Lệnh ghi hiển thị số dòng bị tác động và được hoàn tác nếu lỗi hoặc bị dừng. Hiển thị tối đa 100 dòng, 32 cột và 4.000 ký tự mỗi ô; truy vấn dừng sau 3 giây. CreatedUtc được lưu theo ticks UTC của .NET.",
+      "source": "TRUY VẤN\n• Chạy một lệnh SELECT, INSERT, UPDATE hoặc DELETE trên BasicQuestionBank. Hỗ trợ WITH, -- chú thích một dòng và /* chú thích nhiều dòng */.\n\nCHỈNH SỬA TRÊN BẢNG\n• SELECT trực tiếp các cột của BasicQuestionBank và giữ cột Hash, hoặc dùng SELECT *. Bấm một ô để sửa; chọn Lưu ô để ghi dữ liệu, Xóa dòng để xóa cả bản ghi. Có thể thêm dòng mới ngay khi bảng chưa có dữ liệu.\n• Hash là khóa định danh, không sửa trên dòng đã có. Truy vấn tổng hợp, JOIN, WITH và biểu thức chỉ xem; bấm Mở bảng để chỉnh sửa nếu cần. Sau khi lưu, bảng chạy lại SELECT nên dòng có thể biến mất do điều kiện lọc.\n\nCỘT VÀ KIỂU DỮ LIỆU\n• Operation: 0 = cộng, 1 = trừ, 2 = nhân, 3 = chia. Stars: 1–5. Language: 0 = Việt, 1 = Anh.\n• Version, Structure: phiên bản và quan hệ toán. TopicId, SceneId: chủ đề và tình huống.\n• ContractJson, DraftJson, RawJson: nội dung JSON. ModelName: tên model. UseCount: số lần dùng.\n• CreatedUtc, LastUsedUtc: số ticks UTC của .NET (số nguyên). Chọn NULL để lưu giá trị rỗng của SQLite; ô chữ để trống vẫn là chuỗi rỗng.\n\nGIỚI HẠN\n• Hiển thị tối đa 100 dòng, 32 cột, 4.000 ký tự mỗi ô; truy vấn dừng sau 3 giây. Khi sửa, app tải giá trị đầy đủ của ô.\n• Thay đổi được hoàn tác nếu lỗi hoặc bị dừng trước khi lưu. Nếu dòng đã thay đổi, tải lại bảng rồi sửa tiếp. Dữ liệu dùng cho bài luyện tập và xuất Excel vẫn được C# kiểm tra.",
       "mode": "exact"
     },
     {
@@ -8907,7 +8987,107 @@
     {
       "key": "AiBank.SqlGridHint",
       "mode": "exact",
-      "source": "Cuộn ngang để xem thêm cột, cuộn dọc để xem thêm dòng. Bấm vào ô để xem nội dung và sao chép."
+      "source": "Cuộn ngang để xem cột, cuộn dọc để xem dòng. Bấm vào ô để xem hoặc chỉnh sửa nội dung; thay đổi chỉ được ghi khi bấm Lưu ô."
+    },
+    {
+      "key": "AiBank.GridAddRow",
+      "mode": "exact",
+      "source": "Thêm dòng"
+    },
+    {
+      "key": "AiBank.GridReload",
+      "mode": "exact",
+      "source": "Tải lại bảng"
+    },
+    {
+      "key": "AiBank.GridLoadEditable",
+      "mode": "exact",
+      "source": "Mở bảng để chỉnh sửa"
+    },
+    {
+      "key": "AiBank.GridSaveCell",
+      "mode": "exact",
+      "source": "Lưu ô"
+    },
+    {
+      "key": "AiBank.GridDeleteRow",
+      "mode": "exact",
+      "source": "Xóa dòng"
+    },
+    {
+      "key": "AiBank.GridCancelEdit",
+      "mode": "exact",
+      "source": "Đóng / bỏ thay đổi chưa lưu"
+    },
+    {
+      "key": "AiBank.GridNull",
+      "mode": "exact",
+      "source": "Lưu giá trị NULL"
+    },
+    {
+      "key": "AiBank.GridInsertRow",
+      "mode": "exact",
+      "source": "Lưu dòng mới"
+    },
+    {
+      "key": "AiBank.GridKeyReadOnly",
+      "mode": "exact",
+      "source": "Hash là khóa định danh: chỉ xem, không sửa trên bản ghi đã có."
+    },
+    {
+      "key": "AiBank.GridInsertHint",
+      "mode": "exact",
+      "source": "Nhập dữ liệu theo tên cột. Để Hash trống để tự tạo khóa; CreatedUtc đã điền thời điểm hiện tại. ContractJson và DraftJson cần đúng dữ kiện C# để dùng cho luyện tập. Dòng mới có thể không xuất hiện nếu không thỏa bộ lọc SELECT."
+    },
+    {
+      "key": "AiBank.GridEditableHint",
+      "mode": "exact",
+      "source": "Có thể chỉnh sửa: bấm ô rồi Lưu ô hoặc Xóa dòng. Thêm dòng để nhập bản ghi mới; Tải lại bảng để cập nhật kết quả."
+    },
+    {
+      "key": "AiBank.GridReadOnlyHint",
+      "mode": "exact",
+      "source": "Kết quả này chỉ xem. Để chỉnh sửa, SELECT trực tiếp các cột và Hash từ BasicQuestionBank, hoặc bấm Mở bảng để chỉnh sửa. Truy vấn tổng hợp, JOIN, WITH và biểu thức không có bản ghi nguồn duy nhất để sửa."
+    },
+    {
+      "key": "AiBank.GridCellLoaded",
+      "mode": "exact",
+      "source": "Đã tải nội dung đầy đủ của ô. Chỉnh sửa rồi bấm Lưu ô."
+    },
+    {
+      "key": "AiBank.GridCellSaved",
+      "mode": "exact",
+      "source": "Đã lưu ô."
+    },
+    {
+      "key": "AiBank.GridRowDeleted",
+      "mode": "exact",
+      "source": "Đã xóa dòng."
+    },
+    {
+      "key": "AiBank.GridRowInserted",
+      "mode": "exact",
+      "source": "Đã thêm dòng mới."
+    },
+    {
+      "key": "AiBank.Error.GridRowChanged",
+      "mode": "exact",
+      "source": "Bản ghi đã thay đổi hoặc bị xóa. Tải lại bảng rồi mở ô để chỉnh sửa tiếp; thay đổi của bạn chưa được ghi."
+    },
+    {
+      "key": "AiBank.Error.GridIntegerRequired",
+      "mode": "exact",
+      "source": "Cột số cần số nguyên trong phạm vi Int64 (không dùng dấu phân cách hàng nghìn), hoặc chọn NULL. Dữ liệu chưa được ghi."
+    },
+    {
+      "key": "AiBank.Error.GridColumnReadOnly",
+      "mode": "exact",
+      "source": "Cột này không thể chỉnh sửa. Hash của bản ghi đã có chỉ được xem."
+    },
+    {
+      "key": "AiBank.Error.GridDuplicateHash",
+      "mode": "exact",
+      "source": "Hash đã tồn tại. Để Hash trống để tạo khóa mới, hoặc nhập khóa khác."
     },
     {
       "key": "AiBank.SqlCellTitle",

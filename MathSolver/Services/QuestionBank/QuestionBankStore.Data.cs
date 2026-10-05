@@ -13,6 +13,7 @@ public sealed record BankQueryResult(string[] Columns, IReadOnlyList<string[]> R
     public bool IsSuccess => ErrorCode is null;
     public bool IsWrite { get; init; }
     public int AffectedRows { get; init; }
+    public string[]? EditableColumns { get; init; }
 
     public static BankQueryResult Failure(string code, int? sqliteCode = null, string? message = null)
         => new([], [], false) { ErrorCode = code, SqliteErrorCode = sqliteCode, ErrorMessage = message };
@@ -23,7 +24,7 @@ public sealed record BankExportReport(int Exported, int Skipped);
 
 public sealed partial class QuestionBankStore
 {
-    public const string DefaultInquiry = "SELECT Operation, Stars, Language, DraftJson FROM BasicQuestionBank ORDER BY CreatedUtc DESC LIMIT 50;";
+    public const string DefaultInquiry = "SELECT Hash, Operation, Stars, Language, DraftJson\nFROM BasicQuestionBank\nORDER BY CreatedUtc DESC\nLIMIT 50;";
 
     public async Task<BankQueryResult> QueryAsync(string sql, CancellationToken cancellationToken = default)
     {
@@ -57,7 +58,11 @@ public sealed partial class QuestionBankStore
                 int count = SQLite3.ColumnCount(statement);
                 if (count > 32 || !isWrite && count < 1) return BankQueryResult.Failure("QueryColumnLimit");
                 string[] columns = Enumerable.Range(0, count).Select(i => SQLite3.ColumnName(statement, i)).ToArray();
+                string[]? editable = isWrite ? null : GridProjection(sql, columns);
+                // Protect identity too: a NULL/non-text/truncated Hash is never an editable row.
+                int hashIndex = editable is null ? -1 : Array.IndexOf(editable, "Hash");
                 var rows = new List<string[]>();
+                BankQueryResult ReadResult(bool capped) => new(columns, rows, capped) { EditableColumns = editable };
                 int characters = columns.Sum(column => column.Length);
                 bool transaction = false, truncated = false;
                 try
@@ -93,7 +98,7 @@ public sealed partial class QuestionBankStore
                                 }
                                 transaction = false;
                             }
-                            return new BankQueryResult(columns, rows, truncated) { IsWrite = isWrite, AffectedRows = affected };
+                            return new BankQueryResult(columns, rows, truncated) { IsWrite = isWrite, AffectedRows = affected, EditableColumns = editable };
                         }
                         if (result != SQLite3.Result.Row)
                             return BankQueryResult.Failure("SqliteQueryError", (int)result,
@@ -102,10 +107,13 @@ public sealed partial class QuestionBankStore
                         if (truncated) continue;
                         if (rows.Count == 100)
                         {
-                            if (!isWrite) return new BankQueryResult(columns, rows, true);
+                            if (!isWrite) return ReadResult(true);
                             truncated = true;
                             continue;
                         }
+                        if (hashIndex >= 0 && (SQLitePCL.raw.sqlite3_column_type(statement, hashIndex) != SQLitePCL.raw.SQLITE_TEXT
+                            || string.IsNullOrEmpty(SQLite3.ColumnString(statement, hashIndex))
+                            || SQLite3.ColumnString(statement, hashIndex)!.Length > 4000)) editable = null;
                         var values = Enumerable.Range(0, count).Select(i =>
                         {
                             string text = SQLite3.ColumnString(statement, i) ?? "NULL";
@@ -114,7 +122,7 @@ public sealed partial class QuestionBankStore
                         characters += values.Sum(value => value.Length);
                         if (characters > 256 * 1024)
                         {
-                            if (!isWrite) return new BankQueryResult(columns, rows, true);
+                            if (!isWrite) return ReadResult(true);
                             truncated = true;
                         }
                         else rows.Add(values);
