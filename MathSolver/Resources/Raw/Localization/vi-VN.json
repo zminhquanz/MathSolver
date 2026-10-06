@@ -1724,7 +1724,20 @@
     "FindXBank.Role.Subtrahend": "Số trừ",
     "FindXBank.Role.Factor": "Thừa số chưa biết",
     "FindXBank.Role.Dividend": "Số bị chia",
-    "FindXBank.Role.Divisor": "Số chia"
+    "FindXBank.Role.Divisor": "Số chia",
+    "Quiz.ClockAnswerLabel": "Đáp số: giờ và phút",
+    "Quiz.ClockAnswerHint": "Bắt buộc ghi Đáp số: trước giờ và phút, ví dụ: Đáp số: Giờ: 3, phút: 35 hoặc Đáp số: 3 giờ 35 phút. Không cần lời giải hay phép tính.",
+    "Quiz.ClockAnswerPlaceholder": "Đáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+    "Quiz.ClockEssayHint": "Ghi lời giải và phép tính cho thời gian cần tìm, rồi ghi đáp số theo mẫu: Đáp số: Giờ: …, phút: … hoặc Đáp số: … giờ … phút.",
+    "Quiz.ClockEssayPlaceholder": "Lời giải và phép tính cho thời gian cần tìm\nĐáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+    "Quiz.ProblemMultiStep": "Bài toán nhiều bước",
+    "Quiz.Elementary.MapScale": "Tỉ lệ bản đồ",
+    "Quiz.Elementary.ReadPictograph": "Đọc biểu đồ tranh",
+    "Quiz.Elementary.RecognizeShape": "Nhận diện hình",
+    "Quiz.Elementary.MultiStepAddSubtract": "Gộp, bớt và tìm lượng ban đầu",
+    "Quiz.Elementary.MultiStepEqualGroups": "Các nhóm bằng nhau và điều chỉnh",
+    "Quiz.Elementary.MultiStepRemaining": "Tìm lượng còn lại qua nhiều bước",
+    "Quiz.Elementary.MultiStepShare": "Tổng hợp lượng rồi chia đều"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

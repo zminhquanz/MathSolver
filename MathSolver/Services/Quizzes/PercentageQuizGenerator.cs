@@ -88,7 +88,7 @@ public sealed partial class PercentageQuizGenerator
                 ? requestedType.Value
                 : allowedTypes[_random.Next(allowedTypes.Count)];
 
-        PercentageQuizContract contract = type switch
+        PercentageQuizContract contract = _random.Next(2) == 0 ? CreateStoryPercentage(type, language, level) : type switch
         {
             PercentageQuizType.FindPercentageRatio => CreateRatio(language, level),
             PercentageQuizType.FindPercentageValue => CreateValue(language, level),

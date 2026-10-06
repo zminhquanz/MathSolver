@@ -111,7 +111,7 @@ internal static partial class PuzzleTests
                     var result = validator.Validate(question, parts.Solution, parts.Equation, parts.Answer);
                     Require(parts.Equation == equation && parts.Answer == answer && result.IsCorrect,
                         $"Unified essay rejected {kind}/{subtype}/{language}: " +
-                        $"{result.SolutionError}/{result.EquationError}/{result.AnswerError}");
+                        $"{result.SolutionError}/{result.EquationError}/{result.AnswerError}; submission={submission}; parsed answer={parts.Answer}; expected={answer}");
                     count++;
                 }
 

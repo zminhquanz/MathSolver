@@ -2904,3 +2904,27 @@ templates,dynamic.times_table_showing_division,Câu có biến được app thay
 templates,dynamic.times_table_showing_multiplication,Câu có biến được app thay bằng dữ liệu — giữ nguyên các placeholder.,Đang hiển thị bảng nhân từ {first} đến {last} • {count} bảng,,,"{first}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {last}: Cần bổ sung ý nghĩa và ví dụ cho biến này.
 {count}: Cần bổ sung ý nghĩa và ví dụ cho biến này.",,Views/Formulas/MultiplicationTablePage.xaml.cs:396,Showing multiplication tables {first} to {last} • {count} tables,translated,,31c09d5c3bfe490fc84cd2e497e2a7ba42febc9977ea30aa5ac9f1af29638638
+strings,Quiz.ClockAnswerLabel,Math puzzles > Time > Read clock > Written answer.,Đáp số: giờ và phút,Clock reading input guidance; an Answer label is required before the hour and minute.,Keep the colon separator in labeled examples. Translate hour/minute labels and time units.,,,"Services/Localization/QuizLocalizationOverrides.cs
+Views/Quizzes/MathPuzzlePage.xaml.cs",Answer: hour and minute,translated,,4f5e0f53dd04d596a292c7e1a81b95305b989367a2219efa3c33eeb0e15ef325
+strings,Quiz.ClockAnswerHint,Math puzzles > Time > Read clock > Written answer.,"Bắt buộc ghi Đáp số: trước giờ và phút, ví dụ: Đáp số: Giờ: 3, phút: 35 hoặc Đáp số: 3 giờ 35 phút. Không cần lời giải hay phép tính.",Clock reading input guidance; an Answer label is required before the hour and minute.,Keep the colon separator in labeled examples. Translate hour/minute labels and time units.,,,"Services/Localization/QuizLocalizationOverrides.cs
+Views/Quizzes/MathPuzzlePage.xaml.cs","An Answer: label is required before the hour and minute, for example: Answer: Hour: 3, minute: 35 or Answer: 3 hours 35 minutes. No explanation or calculation is needed.",translated,,9b7d30f94cd5a7b5611f012c740029e878e9b7daf7b4ce54cc6cf5fee964b7b0
+strings,Quiz.ClockAnswerPlaceholder,Math puzzles > Time > Read clock > Written answer.,"Đáp số: Giờ: …, phút: …
+Hoặc: Đáp số: … giờ … phút",Clock reading input guidance; an Answer label is required before the hour and minute.,Keep the colon separator in labeled examples. Translate hour/minute labels and time units.,,,"Services/Localization/QuizLocalizationOverrides.cs
+Views/Quizzes/MathPuzzlePage.xaml.cs","Answer: Hour: …, minute: …
+Or: Answer: … hours … minutes",translated,,8bf43af9891f6a54237e3812c424b8f5c0d3eb5c0aa83f757af9b7b11a5ea0d6
+strings,Quiz.ClockEssayHint,Math puzzles > Time > Read clock > Written answer.,"Ghi lời giải và phép tính cho thời gian cần tìm, rồi ghi đáp số theo mẫu: Đáp số: Giờ: …, phút: … hoặc Đáp số: … giờ … phút.",Clock reading input guidance; an Answer label is required before the hour and minute.,Keep the colon separator in labeled examples. Translate hour/minute labels and time units.,,,"Services/Localization/QuizLocalizationOverrides.cs
+Views/Quizzes/MathPuzzlePage.xaml.cs","Write the explanation and calculations for the requested time, then enter the final answer as: Answer: Hour: …, minute: … or Answer: … hours … minutes.",translated,,8ba09fa6ab58b824b3e59553d5de4a803d9790e4bca2bf3a10b170801002f379
+strings,Quiz.ClockEssayPlaceholder,Math puzzles > Time > Read clock > Written answer.,"Lời giải và phép tính cho thời gian cần tìm
+Đáp số: Giờ: …, phút: …
+Hoặc: Đáp số: … giờ … phút",Clock reading input guidance; an Answer label is required before the hour and minute.,Keep the colon separator in labeled examples. Translate hour/minute labels and time units.,,,"Services/Localization/QuizLocalizationOverrides.cs
+Views/Quizzes/MathPuzzlePage.xaml.cs","Explanation and calculations for the requested time
+Answer: Hour: …, minute: …
+Or: Answer: … hours … minutes",translated,,3633ca92bba56bcd37392e1e341540966a4fe46c9fe7bb578a954dac95027695
+strings,Quiz.ProblemMultiStep,,Bài toán nhiều bước,,,,,,Multi-step word problems,translated,,d03caa5e6cfbb5d3732a7c7f437ed7a12931c0c058690cebf040ac78d0e04729
+strings,Quiz.Elementary.MapScale,,Tỉ lệ bản đồ,,,,,,Map scale,translated,,4ebe80248d397d2c2d18c82193e6fd8dcbaa1a2c3c9d6b7cda32a2ce30d07182
+strings,Quiz.Elementary.ReadPictograph,,Đọc biểu đồ tranh,,,,,,Read a pictograph,translated,,bb4cf6fefcedb9c7be800efda0b4e86c32a6a5f43efe07a337fdb46c7320a805
+strings,Quiz.Elementary.RecognizeShape,,Nhận diện hình,,,,,,Recognize a shape,translated,,fa57631517d5fd52f0455d8fd9b305c7a3e316d46d3969d28a6e02678500e701
+strings,Quiz.Elementary.MultiStepAddSubtract,,"Gộp, bớt và tìm lượng ban đầu",,,,,,"Combine, remove and recover an initial amount",translated,,ea7d34f6c2ae6b8ed51368c2ae16d939ac10280dcae9bd0cfaeb70107913e0b2
+strings,Quiz.Elementary.MultiStepEqualGroups,,Các nhóm bằng nhau và điều chỉnh,,,,,,Equal groups and adjustments,translated,,2c2999ceeed4f4b2f8c72321c78d8850eed7adb586a37422c76e82a22da9f366
+strings,Quiz.Elementary.MultiStepRemaining,,Tìm lượng còn lại qua nhiều bước,,,,,,Find the remainder in several steps,translated,,aedd52414ccf59d7abef69b071a768e14c7e8eefc25568cb1e950b1194356826
+strings,Quiz.Elementary.MultiStepShare,,Tổng hợp lượng rồi chia đều,,,,,,Combine quantities and share equally,translated,,5469cb3998e6f091901b6276e66a1dbffbd1cac459fde85bda8d8db247419cc9

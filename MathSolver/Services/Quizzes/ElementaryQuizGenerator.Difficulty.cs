@@ -9,9 +9,15 @@ public sealed partial class ElementaryQuizGenerator
         AppLanguage language, CurriculumTier tier) => kind switch
     {
         QuizProblemKind.TwoNumbers => CreateTwoNumberDifficulty(type, language, tier),
+        QuizProblemKind.Data when type == ElementaryQuizType.ReadPictograph => CreatePictograph(language, tier),
         QuizProblemKind.Data => CreateDataDifficulty(type, language, tier),
-        QuizProblemKind.Time => CreateTimeDifficulty(type, language, tier),
+        QuizProblemKind.Time => AddTimeStory(CreateTimeDifficulty(type, language, tier)),
+        QuizProblemKind.Measurement when type == ElementaryQuizType.MapScale => CreateMapScale(language, tier),
         QuizProblemKind.Measurement => CreateMeasurementDifficulty(type, language, tier),
+        QuizProblemKind.Remainder => CreateRemainderStory(type, language, tier),
+        QuizProblemKind.Decimal => CreateDecimalDifficulty(type, language, tier),
+        QuizProblemKind.MultiStep => CreateMultiStep(type, language, tier),
+        QuizProblemKind.VisualGeometry when type == ElementaryQuizType.RecognizeShape => CreateShapeRecognition(language, tier),
         QuizProblemKind.Probability => CreateProbabilityDifficulty(type, language, tier),
         QuizProblemKind.FractionSkills => CreateFractionDifficulty(type, language, tier),
         _ => null
@@ -20,6 +26,8 @@ public sealed partial class ElementaryQuizGenerator
     private sealed class DifficultyBuilder(QuizProblemKind kind, ElementaryQuizType type,
         AppLanguage language, CurriculumTier tier)
     {
+        internal AppLanguage Language => language;
+        internal ElementaryQuizType Type => type;
         internal readonly List<ElementaryGivenValue> Givens = [];
         internal readonly List<ElementaryInferenceStep> Steps = [];
         internal readonly List<ElementaryAnswer> Answers = [];
@@ -39,11 +47,11 @@ public sealed partial class ElementaryQuizGenerator
         { foreach (int value in values) Constants.Add(value.ToString(CultureInfo.InvariantCulture)); }
         private ReducedFraction Evaluate(string expression)
         {
-            if (!EssayCalculationEvaluator.TryEvaluate(expression, out var result, out _, kind == QuizProblemKind.Measurement))
+            if (!EssayCalculationEvaluator.TryEvaluate(expression, out var result, out _, kind is QuizProblemKind.Measurement or QuizProblemKind.Decimal))
                 throw new InvalidOperationException("Invalid elementary difficulty expression: " + expression);
             return new(result.Numerator, result.Denominator);
         }
-        private string Display(ReducedFraction value) => kind == QuizProblemKind.Measurement
+        private string Display(ReducedFraction value) => kind is QuizProblemKind.Measurement or QuizProblemKind.Decimal
             ? ((decimal)value.Numerator / (decimal)value.Denominator).ToString("0.################", CultureInfo.InvariantCulture)
             : value.ToString();
         internal void Step(string label, string expression, string unit = "")
@@ -58,7 +66,7 @@ public sealed partial class ElementaryQuizGenerator
             var value = Evaluate(expression);
             var answer = new ElementaryAnswer(label, value, unit, expression, RequireReduced: reduced,
                 RequiredDenominator: denominator, RequireMixedNumber: mixed,
-                DisplayValue: kind == QuizProblemKind.Measurement ? Display(value) : null);
+                DisplayValue: kind is QuizProblemKind.Measurement or QuizProblemKind.Decimal ? Display(value) : null);
             if (mixed) answer = answer with { Text = Mixed(value) };
             if (denominator.HasValue) answer = answer with { Text = $"{value.Numerator * denominator.Value / value.Denominator}/{denominator}" };
             Answers.Add(answer);
@@ -80,29 +88,40 @@ public sealed partial class ElementaryQuizGenerator
 
     private ElementaryQuizContract CreateTwoNumberDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
     {
+        var candidates = QuizStoryContextCatalog.All.Where(c => c.Id is "classroom" or "library" or "craft" or "community" or "events" or "family-age").ToArray();
+        var context = candidates[NextContextVariant(type, language, "two-number-story", candidates.Length)];
+        if (context.Id == "family-age") return CreateAgeTwoNumbers(type, language, tier);
         var t = new DifficultyBuilder(QuizProblemKind.TwoNumbers, type, language, tier);
-        int level = (int)tier, part = _random.Next(4, 15), smallParts = level <= 2 ? 1 : _random.Next(2, 5);
-        int largeParts = smallParts + _random.Next(1, 4), small = part * smallParts, large = part * largeParts;
+        int level = (int)tier, smallParts = level <= 2 ? 1 : _random.Next(2, 5);
+        int largeParts = smallParts + _random.Next(1, 4);
+        int part = _random.Next(2, Math.Max(3, Math.Min(15, (context.MaximumPerPeriod - 12) / (smallParts + largeParts) + 1)));
+        int small = part * smallParts, large = part * largeParts;
         int total = small + large, difference = large - small;
-        string quantity, differenceExpression = "", ratioExpression = "", text, scenario;
-        string smallLabel = t.L("Số bé", "Smaller number"), largeLabel = t.L("Số lớn", "Larger number");
+        string quantity, differenceExpression = "", ratioExpression = "", scenario;
+        var owners = context.Id switch
+        {
+            "classroom" => ("Tổ thứ nhất", "Tổ thứ hai", "The first team", "The second team"),
+            "library" => ("Kệ thứ nhất", "Kệ thứ hai", "The first shelf", "The second shelf"),
+            "events" => ("Khu ghế thứ nhất", "Khu ghế thứ hai", "The first seating section", "The second seating section"),
+            _ => ("Nhóm thứ nhất", "Nhóm thứ hai", "The first group", "The second group")
+        };
+        string smallLabel = t.L(owners.Item1, owners.Item3), largeLabel = t.L(owners.Item2, owners.Item4);
+        string unit = context.Unit(language);
         t.Constant(2);
         bool sum = type != ElementaryQuizType.DifferenceRatio;
         int given = sum ? total : difference;
-        string quantityName = t.L(sum ? "tổng" : "hiệu số lớn và số bé", sum ? "sum" : "difference (larger minus smaller)");
-        string sentenceQuantityName = char.ToUpperInvariant(quantityName[0]) + quantityName[1..];
         if (level == 1)
         {
             quantity = t.Given("quantity", given);
-            text = t.L($"Hai số có {quantityName} là {quantity}. ", $"Two numbers have a {quantityName} of {quantity}. ");
+
             scenario = "direct";
         }
         else if (level == 2)
         {
             string twice = t.Given("double-quantity", 2 * given);
             quantity = $"({twice}/2)";
-            text = t.L($"Hai lần {quantityName} của hai số bằng {twice}. ", $"Twice the {quantityName} of the two numbers equals {twice}. ");
-            t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity);
+
+            t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity, unit);
             scenario = "infer-half-quantity";
         }
         else if (level == 3)
@@ -110,9 +129,8 @@ public sealed partial class ElementaryQuizGenerator
             int x = given / 2;
             string first = t.Given("quantity-first", x), second = t.Given("quantity-second", given - x);
             quantity = $"({first}+{second})";
-            text = t.L($"{sentenceQuantityName} của hai số bằng tổng của {first} và {second}. ",
-                $"The {quantityName} of the two numbers equals {first} plus {second}. ");
-            t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity);
+
+            t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity, unit);
             scenario = "infer-quantity";
         }
         else
@@ -121,20 +139,17 @@ public sealed partial class ElementaryQuizGenerator
             string added = t.Given("added", increase);
             string after = t.Given("after", given + (sum ? 2 : 1) * increase - reduction);
             string restored = after;
-            text = t.L(sum ? $"Tăng mỗi số thêm {added}. "
-                    : $"Tăng số lớn thêm {added} và giữ nguyên số bé. ",
-                sum ? $"Increase each number by {added}. " : $"Increase only the larger number by {added}. ");
+
             if (level == 5)
             {
                 string removed = t.Given("previous-reduction", reduction);
-                text += t.L(sum ? $"Sau đó giảm số lớn đi {removed}. " : $"Sau đó giảm số lớn đi {removed}. ",
-                    $"Then decrease the larger number by {removed}. ");
+
                 restored = $"({after}+{removed})";
-                t.Step(t.L("Khôi phục trước lần giảm", "Undo the decrease"), restored);
+                t.Step(t.L("Khôi phục trước lần giảm", "Undo the decrease"), restored, unit);
             }
-            text += t.L($"{sentenceQuantityName} cuối cùng là {after}. ", $"The final {quantityName} is {after}. ");
+
             quantity = sum ? $"({restored}-2*{added})" : $"({restored}-{added})";
-            t.Step(t.L("Dữ kiện ban đầu", "Original quantity"), quantity);
+            t.Step(t.L("Dữ kiện ban đầu", "Original quantity"), quantity, unit);
             scenario = level == 5 ? "two-changes" : "reverse-change";
         }
 
@@ -143,44 +158,42 @@ public sealed partial class ElementaryQuizGenerator
             if (level <= 3)
             {
                 differenceExpression = t.Given("difference", difference);
-                text += t.L($"Số lớn hơn số bé {differenceExpression}. ", $"The larger exceeds the smaller by {differenceExpression}. ");
+
             }
             else
             {
                 string transfer = t.Given("transfer", _random.Next(1, Math.Max(2, difference / 2)));
                 string remaining = t.Given("remaining-difference", difference - 2 * int.Parse(transfer));
                 differenceExpression = $"({remaining}+2*{transfer})";
-                text += t.L($"Riêng với hai số ban đầu, nếu chuyển {transfer} từ số lớn sang số bé thì số lớn còn hơn số bé {remaining}. ",
-                    $"For the original pair, transferring {transfer} from the larger to the smaller leaves a difference of {remaining}. ");
-                t.Step(t.L("Hiệu ban đầu", "Original difference"), differenceExpression);
+
+                t.Step(t.L("Hiệu ban đầu", "Original difference"), differenceExpression, unit);
             }
-            t.Answer(smallLabel, $"({quantity}-{differenceExpression})/2");
-            t.Answer(largeLabel, $"({quantity}+{differenceExpression})/2");
+            t.Answer(smallLabel, $"({quantity}-{differenceExpression})/2", unit);
+            t.Answer(largeLabel, $"({quantity}+{differenceExpression})/2", unit);
         }
         else
         {
             string r1 = t.Given("ratio-small", smallParts), r2 = t.Given("ratio-large", largeParts);
             if (level < 5)
             {
-                text += t.L($"Tỉ số số bé và số lớn là {r1}/{r2}. ", $"The smaller-to-larger ratio is {r1}/{r2}. ");
+
                 ratioExpression = sum ? $"({r1}+{r2})" : $"({r2}-{r1})";
             }
             else
             {
                 t.Givens.RemoveAll(fact => fact.Role == "ratio-large");
                 string delta = t.Given("ratio-extra", largeParts - smallParts);
-                text += t.L($"Cứ {r1} phần bằng nhau của số bé thì số lớn có nhiều hơn {delta} phần cùng cỡ. ",
-                    $"For {r1} equal parts in the smaller number, the larger has {delta} more parts of the same size. ");
+
                 r2 = $"({r1}+{delta})";
                 t.Step(t.L("Số phần của số lớn", "Parts in the larger number"), r2, t.L("phần", "parts"));
                 ratioExpression = sum ? $"({r1}+{r2})" : $"({r2}-{r1})";
                 scenario = "change-and-inferred-ratio";
             }
-            t.Step(t.L("Giá trị một phần", "Value of one part"), $"{quantity}/{ratioExpression}");
-            t.Answer(smallLabel, $"{quantity}/{ratioExpression}*{r1}");
-            t.Answer(largeLabel, $"{quantity}/{ratioExpression}*{r2}");
+            t.Step(t.L("Giá trị một phần", "Value of one part"), $"{quantity}/{ratioExpression}", unit);
+            t.Answer(smallLabel, $"{quantity}/{ratioExpression}*{r1}", unit);
+            t.Answer(largeLabel, $"{quantity}/{ratioExpression}*{r2}", unit);
         }
-        text += t.L("Tìm hai số ban đầu.", "Find the two original numbers.");
+
         QuizDiagramRow[] rows;
         if (type != ElementaryQuizType.SumDifference && level < 5)
         {
@@ -192,6 +205,8 @@ public sealed partial class ElementaryQuizGenerator
                 [new("?", 2), new(level <= 3 ? differenceExpression : "?", Highlight: true)])];
         else rows = [new(smallLabel, [new("?")]), new(largeLabel, [new("?")])];
         var diagram = new QuizDiagram("bars", t.L("Sơ đồ hai số ban đầu (minh họa)", "Original numbers (schematic)"), rows);
-        return t.Build(scenario, text, diagram: diagram);
+        // Prose is built from semantic fact roles, never by replacing mathematical nouns.
+        string text = TwoNumberStory(t, context, smallLabel, largeLabel, sum, level);
+        return t.Build(scenario, text, diagram: diagram) with { StoryContextId = context.Id };
     }
 }

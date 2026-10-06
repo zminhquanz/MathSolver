@@ -11,7 +11,9 @@ public static partial class EssayCombinedInputParser
     public static (string Solution, string Equation, string Answer) Parse(
         string? input,
         bool requiresSolution,
-        bool preserveAllCalculations = false)
+        bool preserveAllCalculations = false,
+        bool requireAnswerLabel = false,
+        bool allowTextAnswer = false)
     {
         string[] lines = (input ?? string.Empty).Normalize()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -35,9 +37,17 @@ public static partial class EssayCombinedInputParser
             answers.Add(line[(label.Index + label.Length)..].Trim());
         }
 
+        // Identification tasks can consist of a single textual answer.
+        // Keep multi-line submissions intact so conflicting answers are not hidden.
+        if (allowTextAnswer && !requireAnswerLabel && !requiresSolution && answers.Count == 0 && work.Count == 1)
+        {
+            answers.Add(work[0]);
+            work.Clear();
+        }
+
         // A bare final value with an optional unit is also accepted. Never
         // infer the answer from an equation: an omitted answer must be reported.
-        if (answers.Count == 0 && work.Count > 0 &&
+        if (!requireAnswerLabel && answers.Count == 0 && work.Count > 0 &&
             (BareAnswerRegex().IsMatch(work[^1]) || work[^1] is "<" or ">" or "="))
         {
             answers.Add(work[^1]);
@@ -52,6 +62,39 @@ public static partial class EssayCombinedInputParser
         // Multiple answers stay visible to the validator rather than silently
         // choosing a correct answer and hiding a conflicting one.
         return (parts.Solution, parts.Equation, string.Join(Environment.NewLine, answers));
+    }
+
+    internal static bool TryNormalizeClockAnswer(string? input, out string answer)
+    {
+        answer = string.Empty;
+        string text = (input ?? string.Empty).Normalize().Trim();
+        Match natural = ClockTimeRegex().Match(text);
+        if (natural.Success)
+        {
+            answer = natural.Groups["h"].Value + ";" + natural.Groups["m"].Value;
+            return true;
+        }
+        string[] fields = text.Split([',', ';', '\n', '\r'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (fields.Length != 2) return false;
+        string? hour = null, minute = null;
+        foreach (string field in fields)
+        {
+            Match match = ClockFieldRegex().Match(field);
+            if (!match.Success) return false;
+            if (match.Groups["hour"].Success)
+            {
+                if (hour is not null) return false;
+                hour = match.Groups["value"].Value;
+            }
+            else
+            {
+                if (minute is not null) return false;
+                minute = match.Groups["value"].Value;
+            }
+        }
+        if (hour is null || minute is null) return false;
+        answer = hour + ";" + minute;
+        return true;
     }
 
     public static (string Solution, string Equation) Split(
@@ -140,7 +183,13 @@ public static partial class EssayCombinedInputParser
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex AnswerLabelRegex();
 
-    [GeneratedRegex(@"^[+\-−]?\d(?:[\d.,\u00A0\u202F ]*\d)?(?:\s*/\s*[+\-−]?\d+)?\s*(?:%|\p{L}[\p{L}\p{N}\s²³^/.-]*)?[.!]?$",
+    [GeneratedRegex(@"^\s*(?<h>\d{1,2})\s*(?:giờ|gio|hours?|h|:)\s*(?<m>\d{1,2})\s*(?:phút|phut|minutes?|min)?\s*[.!]?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ClockTimeRegex();
+
+    [GeneratedRegex(@"^\s*(?:(?<hour>giờ|gio|hours?)|phút|phut|minutes?)\s*[:=]\s*(?<value>\d{1,2})\s*[.!]?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ClockFieldRegex();
+
+    [GeneratedRegex(@"^[+\-−]?\d(?:[\d.,\u00A0\u202F ]*\d)?(?:\s*/\s*[+\-−]?\d+)?\s*(?:%|\p{L}[\p{L}\p{N}\s²³^/.'’\-]*)?[.!]?$",
         RegexOptions.CultureInvariant)]
     private static partial Regex BareAnswerRegex();
 }

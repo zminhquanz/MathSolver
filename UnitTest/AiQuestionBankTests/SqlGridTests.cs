@@ -1,4 +1,5 @@
 using MathSolver.Services.QuestionBank;
+using MathSolver.Models;
 using SQLite;
 using System.Text.Json;
 

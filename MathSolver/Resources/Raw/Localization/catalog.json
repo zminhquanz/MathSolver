@@ -1601,6 +1601,31 @@
     "FindXBank.Role.Divisor": {
       "context": "Màn hình bổ sung đề bằng AI → chọn Tìm X.",
       "description": "Tên bài toán hoặc vai trò thành phần chưa biết; giữ thuật ngữ toán học."
+    },
+    "Quiz.ClockAnswerLabel": {
+      "context": "Math puzzles > Time > Read clock > Written answer.",
+      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
+    },
+    "Quiz.ClockAnswerHint": {
+      "context": "Math puzzles > Time > Read clock > Written answer.",
+      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
+    },
+    "Quiz.ClockAnswerPlaceholder": {
+      "context": "Math puzzles > Time > Read clock > Written answer.",
+      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
+    },
+    "Quiz.ClockEssayHint": {
+      "context": "Math puzzles > Time > Read clock > Written answer.",
+      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
+    },
+    "Quiz.ClockEssayPlaceholder": {
+      "context": "Math puzzles > Time > Read clock > Written answer.",
+      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
     }
   },
   "placeholderNotes": {
@@ -9222,6 +9247,71 @@
     {
       "key": "AiBank.Error.PromptTooLong",
       "source": "Prompt vượt giới hạn context 2.048 token dành cho prompt và JSON trả về. Hãy rút gọn prompt.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ClockAnswerLabel",
+      "source": "Đáp số: giờ và phút",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ClockAnswerHint",
+      "source": "Bắt buộc ghi Đáp số: trước giờ và phút, ví dụ: Đáp số: Giờ: 3, phút: 35 hoặc Đáp số: 3 giờ 35 phút. Không cần lời giải hay phép tính.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ClockAnswerPlaceholder",
+      "source": "Đáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ClockEssayHint",
+      "source": "Ghi lời giải và phép tính cho thời gian cần tìm, rồi ghi đáp số theo mẫu: Đáp số: Giờ: …, phút: … hoặc Đáp số: … giờ … phút.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ClockEssayPlaceholder",
+      "source": "Lời giải và phép tính cho thời gian cần tìm\nĐáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.ProblemMultiStep",
+      "source": "Bài toán nhiều bước",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MapScale",
+      "source": "Tỉ lệ bản đồ",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.ReadPictograph",
+      "source": "Đọc biểu đồ tranh",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.RecognizeShape",
+      "source": "Nhận diện hình",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MultiStepAddSubtract",
+      "source": "Gộp, bớt và tìm lượng ban đầu",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MultiStepEqualGroups",
+      "source": "Các nhóm bằng nhau và điều chỉnh",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MultiStepRemaining",
+      "source": "Tìm lượng còn lại qua nhiều bước",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.MultiStepShare",
+      "source": "Tổng hợp lượng rồi chia đều",
       "mode": "exact"
     }
   ],

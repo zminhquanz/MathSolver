@@ -9,7 +9,7 @@ public sealed partial class AverageQuizGenerator
     private sealed record DirectContext(
         string ViAction, string EnAction,
         string ViUnit, string EnUnit,
-        string ViSubject, string EnSubject);
+        string ViSubject, string EnSubject, string Id, string ViPeriod, string EnPeriod, int Capacity);
 
     private sealed record DistributionContext(
         string ViGroup, string EnGroup,
@@ -21,20 +21,20 @@ public sealed partial class AverageQuizGenerator
         string ViUnit, string EnUnit,
         string ViSubject, string EnSubject);
 
-    private static readonly DirectContext[] DirectContexts =
-    [
-        new("một cửa hàng bán", "a store sells", "quyển vở", "notebooks", "số vở trung bình mỗi ngày", "average notebooks per day"),
-        new("một thư viện cho mượn", "a library lends", "quyển sách", "books", "số sách trung bình mỗi ngày", "average books per day"),
-        new("một trang trại thu hoạch", "a farm harvests", "kg cam", "kg of oranges", "khối lượng cam trung bình mỗi ngày", "average kilograms of oranges per day"),
-        new("một xưởng đóng gói", "a workshop packs", "hộp bút", "pen boxes", "số hộp bút trung bình mỗi ngày", "average pen boxes per day")
-    ];
+    private static readonly DirectContext[] DirectContexts = QuizStoryContextCatalog.AverageContexts.Select(c =>
+        new DirectContext(c.ViAction, c.EnAction, c.ViUnit, c.EnUnit,
+            $"lượng {c.ViUnit} trung bình mỗi {c.ViPeriod}", $"average {c.EnUnit} per {c.EnPeriod}",
+            c.Id, c.ViPeriod, c.EnPeriod, c.MaximumPerPeriod)).ToArray();
 
     private static readonly DistributionContext[] DistributionContexts =
     [
         new("lớp", "classes", "cây", "trees", "số cây trung bình mỗi lớp", "average trees per class"),
         new("hộp", "boxes", "chiếc bút", "pens", "số bút trung bình mỗi hộp", "average pens per box"),
         new("kệ", "shelves", "quyển sách", "books", "số sách trung bình mỗi kệ", "average books per shelf"),
-        new("đội", "teams", "kg giấy", "kg of paper", "khối lượng giấy trung bình mỗi đội", "average kilograms of paper per team")
+        new("đội", "teams", "kg giấy", "kg of paper", "khối lượng giấy trung bình mỗi đội", "average kilograms of paper per team"),
+        new("bếp ăn", "kitchens", "suất ăn", "meals", "số suất ăn trung bình mỗi bếp", "average meals per kitchen"),
+        new("đoàn", "tour groups", "người", "people", "số người trung bình mỗi đoàn", "average people per tour group"),
+        new("đợt", "sessions", "chai nhựa", "plastic bottles", "số chai trung bình mỗi đợt", "average bottles per session")
     ];
 
     private static readonly TwoGroupContext[] TwoGroupContexts =
@@ -118,27 +118,28 @@ public sealed partial class AverageQuizGenerator
 
     private AverageQuizContract CreateDirect(AppLanguage language, int? level)
     {
+        DirectContext context = DirectContexts[_random.Next(DirectContexts.Length)];
         int count = level.HasValue ? level.Value + 1 : _random.Next(3, 6);
-        int average = level.HasValue ? _random.Next(5 * level.Value, 15 * level.Value + 1) : _random.Next(20, 81);
-        int[] values = CreateValuesWithAverage(count, average, level ?? 4, level.HasValue ? 3 * level.Value : 18);
+        int ceiling = Math.Min(context.Capacity, level.HasValue ? 15 * level.Value : 80);
+        int average = _random.Next(Math.Min(ceiling, level.HasValue ? 5 * level.Value : 20), ceiling + 1);
+        int[] values = CreateValuesWithAverage(count, average, level ?? 4, level.HasValue ? 3 * level.Value : 18, context.Capacity);
         int total = values.Sum();
         string list = JoinValues(values);
-        DirectContext context = DirectContexts[_random.Next(DirectContexts.Length)];
 
         string problem = language == AppLanguage.Vietnamese
-            ? $"Trong {count} ngày, {context.ViAction} lần lượt {list} {context.ViUnit}. Trung bình mỗi ngày là bao nhiêu {context.ViUnit}?"
-            : $"Over {count} days, {context.EnAction} {list} {context.EnUnit}, respectively. What is the average number of {context.EnUnit} per day?";
+            ? $"Trong {count} {context.ViPeriod}, {context.ViAction} lần lượt {list} {context.ViUnit}. Trung bình mỗi {context.ViPeriod} là bao nhiêu {context.ViUnit}?"
+            : $"Across {count} separate {QuizStoryContextCatalog.PluralPeriod(context.EnPeriod)}, {context.EnAction} {list} {context.EnUnit}, respectively. What is the average in {context.EnUnit} per {context.EnPeriod}?";
         string equation = $"({string.Join(" + ", values)}) ÷ {count} = {average}";
         string solution = FormatSolution(
             language == AppLanguage.Vietnamese
-                ? $"Trung bình mỗi ngày ({context.ViUnit}) là:"
-                : $"The average per day ({context.EnUnit}) is:",
+                ? $"Trung bình mỗi {context.ViPeriod} ({context.ViUnit}) là:"
+                : $"The average per {context.EnPeriod} ({context.EnUnit}) is:",
             equation,
             language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
             average,
             language);
 
-        return new(
+        return new AverageQuizContract(
             AverageQuizType.Direct,
             [count, .. values],
             average,
@@ -149,7 +150,7 @@ public sealed partial class AverageQuizGenerator
             solution,
             total,
             ArithmeticOperation.Divide,
-            count);
+            count) { StoryContextId = context.Id };
     }
 
     private AverageQuizContract CreateTotalToAverage(AppLanguage language, int? level)
@@ -487,7 +488,7 @@ public sealed partial class AverageQuizGenerator
         return values.Take(count).ToArray();
     }
 
-    private int[] CreateValuesWithAverage(int count, int average, int minOffset, int maxOffset)
+    private int[] CreateValuesWithAverage(int count, int average, int minOffset, int maxOffset, int capacity = int.MaxValue)
     {
         for (int attempt = 0; attempt < 64; attempt++)
         {
@@ -500,7 +501,7 @@ public sealed partial class AverageQuizGenerator
                 partial += values[i];
             }
             values[^1] = average * count - partial;
-            if (values[^1] > 0 && values[^1] <= average + maxOffset * 2)
+            if (values[^1] > 0 && values[^1] <= average + maxOffset * 2 && values.All(value => value <= capacity))
             {
                 Shuffle(values);
                 return values;

@@ -47,7 +47,7 @@ internal static class GeometryReasoningText
     {
         var reasoning = contract.Reasoning!;
         string lines = string.Join(Environment.NewLine, reasoning.Steps.Select(step =>
-            $"{step.Label}: {step.Expression} = {step.Value} {step.Unit}"));
+            $"{step.Label}: {QuizMathExpressionFormatter.Format(step.Expression)} = {step.Value} {step.Unit}"));
         string answer = reasoning.Language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
         string formattedAnswer = contract.CorrectAnswer.ToString("N0", culture ?? CultureInfo.InvariantCulture);
         return (lines.Length == 0 ? "" : lines + Environment.NewLine) +

@@ -25,4 +25,8 @@ public sealed record PercentageQuizContract(
     BigInteger RepresentativeLeft,
     ArithmeticOperation RepresentativeOperation,
     BigInteger RepresentativeRight,
-    IReadOnlyList<int>? CombinedQuantities = null);
+    IReadOnlyList<int>? CombinedQuantities = null)
+{
+    public string? StoryContextId { get; init; }
+    public string? CombinedProblemTemplate { get; init; }
+}

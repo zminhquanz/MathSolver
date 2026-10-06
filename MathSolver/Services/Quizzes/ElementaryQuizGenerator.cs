@@ -12,14 +12,15 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
     public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind) => kind switch
     {
         QuizProblemKind.TwoNumbers => [ElementaryQuizType.SumDifference, ElementaryQuizType.SumRatio, ElementaryQuizType.DifferenceRatio],
-        QuizProblemKind.Measurement => [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength],
+        QuizProblemKind.Measurement => [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.MapScale],
         QuizProblemKind.Time => [ElementaryQuizType.ElapsedTime, ElementaryQuizType.TimeAddition, ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar],
         QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers],
         QuizProblemKind.Decimal => [ElementaryQuizType.DecimalAdd, ElementaryQuizType.DecimalSubtract, ElementaryQuizType.DecimalMultiply, ElementaryQuizType.DecimalDivide, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare],
         QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction],
-        QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference],
+        QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference, ElementaryQuizType.ReadPictograph],
         QuizProblemKind.Probability => [ElementaryQuizType.Likelihood, ElementaryQuizType.ExperimentalProbability],
-        QuizProblemKind.VisualGeometry => [ElementaryQuizType.ClassifyAngle, ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.CountSides, ElementaryQuizType.RectangleSide, ElementaryQuizType.CompositeArea],
+        QuizProblemKind.VisualGeometry => [ElementaryQuizType.ClassifyAngle, ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.CountSides, ElementaryQuizType.RectangleSide, ElementaryQuizType.CompositeArea, ElementaryQuizType.RecognizeShape],
+        QuizProblemKind.MultiStep => [ElementaryQuizType.MultiStepAddSubtract, ElementaryQuizType.MultiStepEqualGroups, ElementaryQuizType.MultiStepRemaining, ElementaryQuizType.MultiStepShare],
         _ => []
     };
 
@@ -43,7 +44,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         if (types.Count == 0) throw new ArgumentOutOfRangeException(nameof(kind));
         var type = selected.HasValue && types.Contains(selected.Value) ? selected.Value : types[_random.Next(types.Count)];
         if (CreateDifficultyContract(kind, type, language, tier) is { } difficultyContract)
-            return CompleteQuestion(mode, difficultyContract, [], null);
+            return CompleteQuestion(mode, difficultyContract, [], difficultyContract.ChoiceTexts?.ToArray());
         bool vi = language == AppLanguage.Vietnamese;
         string L(string vietnamese, string english) => vi ? vietnamese : english;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
@@ -58,7 +59,6 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         QuizVisualData? visual = null;
         string[]? textChoices = null;
         void Fact(params decimal[] values) => facts.AddRange(values.Select(N));
-        void Constant(params decimal[] values) => constants.AddRange(values.Select(N));
         void Answer(string label, string expression, string unit = "", bool reduced = false,
             int? denominator = null, bool mixed = false, string? displayExpression = null)
         {
@@ -73,12 +73,16 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
             answers.Add(answer);
             bool calculation = expression.Any(character => "+-*/".Contains(character));
             work.Add(label + ":" + (calculation ? "" : " " + ElementaryQuizContract.FormatAnswer(answer)));
-            if (calculation) work.Add((displayExpression ?? expression) + " = " + ElementaryQuizContract.FormatAnswer(answer));
+            if (calculation) work.Add(QuizMathExpressionFormatter.Format(displayExpression ?? expression,
+                preserveFractions: kind == QuizProblemKind.FractionSkills || type == ElementaryQuizType.ExperimentalProbability)
+                + " = " + ElementaryQuizContract.FormatAnswer(answer));
         }
         void TextAnswer(string label, string text, params string[] aliases)
         {
             answers.Add(new(label, new(0, 1), "", "", text, aliases));
-            work.Add(label + ":");
+            // Comparisons already receive their complete relation in CompleteQuestion.
+            if (type is not (ElementaryQuizType.IntegerCompare or ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions))
+                work.Add(label + ": " + text);
             requiresSolution = false;
         }
         switch (type)
@@ -98,68 +102,6 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                 problem = L($"So sánh {a} và {b}.", $"Compare {a} and {b}.");
                 TextAnswer(L("Dấu so sánh", "Comparison"), a < b ? "<" : a > b ? ">" : "=");
                 break;
-            }
-            case ElementaryQuizType.QuotientRemainder:
-            case ElementaryQuizType.MinimumGroups:
-            case ElementaryQuizType.Leftovers:
-            {
-                int divisor = b, dividend = a * divisor + _random.Next(divisor);
-                int quotient = Math.DivRem(dividend, divisor, out int remainder);
-                a = quotient;
-                Fact(dividend, divisor); Constant(a, remainder);
-                if (type == ElementaryQuizType.MinimumGroups)
-                {
-                    problem = L($"Có {dividend} học sinh. Mỗi xe chở tối đa {divisor} học sinh. Cần ít nhất bao nhiêu xe?",
-                        $"There are {dividend} students. Each vehicle holds at most {divisor} students. How many vehicles are needed?");
-                    work.Add($"{dividend}-{a}*{divisor}={remainder}");
-                    Answer(L("Số xe cần", "Vehicles needed"), $"({dividend}-{remainder})/{divisor}" + (remainder > 0 ? "+1" : ""), L("xe", "vehicles"));
-                }
-                else
-                {
-                    problem = type == ElementaryQuizType.QuotientRemainder
-                        ? L($"Chia {dividend} cho {divisor}. Tìm thương và số dư.", $"Divide {dividend} by {divisor}. Find quotient and remainder.")
-                        : L($"Có {dividend} quả cam, mỗi hộp chứa {divisor} quả. Đóng được bao nhiêu hộp đầy và còn dư bao nhiêu quả?",
-                            $"There are {dividend} oranges, with {divisor} in each box. How many full boxes and how many oranges left over?");
-                    Answer(type == ElementaryQuizType.Leftovers ? L("Số hộp đầy", "Full boxes") : L("Thương", "Quotient"), $"({dividend}-{remainder})/{divisor}", type == ElementaryQuizType.Leftovers ? L("hộp", "boxes") : "");
-                    Answer(type == ElementaryQuizType.Leftovers ? L("Số cam còn lại", "Oranges left over") : L("Số dư", "Remainder"), $"{dividend}-{a}*{divisor}", type == ElementaryQuizType.Leftovers ? L("quả", "oranges") : "");
-                }
-                break;
-            }
-            case ElementaryQuizType.DecimalAdd:
-            case ElementaryQuizType.DecimalSubtract:
-            case ElementaryQuizType.DecimalMultiply:
-            case ElementaryQuizType.DecimalDivide:
-            case ElementaryQuizType.DecimalRound:
-            case ElementaryQuizType.DecimalCompare:
-            {
-                decimal x = a + _random.Next(1, 10) / 10m, y = b + _random.Next(1, 10) / 10m;
-                if (type == ElementaryQuizType.DecimalCompare)
-                {
-                    int comparison = _random.Next(3);
-                    y = comparison == 0 ? x : comparison == 1 ? x - _random.Next(1, 10) / 10m : x + _random.Next(1, 10) / 10m;
-                    Fact(x, y); problem = L($"Điền dấu so sánh giữa {N(x)} và {N(y)}.", $"Compare {N(x)} and {N(y)}.");
-                    TextAnswer(L("Dấu so sánh", "Comparison"), x > y ? ">" : x < y ? "<" : "="); break;
-                }
-                if (type == ElementaryQuizType.DecimalRound)
-                {
-                    Fact(x); Constant(decimal.Round(x, 0, MidpointRounding.AwayFromZero));
-                    problem = L($"Làm tròn {N(x)} đến số nguyên gần nhất.", $"Round {N(x)} to the nearest integer (halves round up).");
-                    Answer(L("Số sau khi làm tròn", "Rounded number"), N(decimal.Round(x, 0, MidpointRounding.AwayFromZero)));
-                    requiresSolution = false; break;
-                }
-                string op = type switch { ElementaryQuizType.DecimalAdd => "+", ElementaryQuizType.DecimalSubtract => "-", ElementaryQuizType.DecimalMultiply => "*", _ => "/" };
-                var operation = type switch
-                {
-                    ElementaryQuizType.DecimalAdd => ArithmeticOperation.Add,
-                    ElementaryQuizType.DecimalSubtract => ArithmeticOperation.Subtract,
-                    ElementaryQuizType.DecimalMultiply => ArithmeticOperation.Multiply,
-                    _ => ArithmeticOperation.Divide
-                };
-                if (op == "/") x = a * y;
-                if (op == "-" && x < y) (x, y) = (y, x);
-                string displayExpression = $"{N(x)} {BasicArithmeticEngine.GetSymbol(operation)} {N(y)}";
-                Fact(x, y); problem = L($"Tính {displayExpression}.", $"Calculate {displayExpression}.");
-                Answer(L("Kết quả", "Result"), $"{N(x)}{op}{N(y)}", displayExpression: displayExpression); requiresSolution = false; break;
             }
             case ElementaryQuizType.CompareFractions:
             {
@@ -338,11 +280,16 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
             : answer.RequiredDenominator is int denominator ? answer with { Text = $"{answer.Value.Numerator * denominator / answer.Value.Denominator}/{denominator}" } : answer).ToList();
         contract = contract with { Answers = answers };
         string answerLabel = L("Đáp số", "Answer");
+        // Keep evaluation expressions intact; use school division notation only in the displayed work.
+        string DisplayStepExpression(string expression) => QuizMathExpressionFormatter.Format(expression,
+            preserveFractions: contract.Kind == QuizProblemKind.FractionSkills || contract.Type == ElementaryQuizType.ExperimentalProbability);
         if (contract.Reasoning is not null)
             work.AddRange(contract.Reasoning.Steps.Select(step => step.Label + ":" + Environment.NewLine +
-                step.Expression + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit)));
-        if (contract.Reasoning is not null && work.Count == 0) work.Add(answers[0].Label + ":");
-        contract = contract with { SolutionText = string.Join(Environment.NewLine, work) + Environment.NewLine + answerLabel + ": " + contract.AnswerText };
+                DisplayStepExpression(step.Expression) + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit)));
+        if (contract.Reasoning is not null && work.Count == 0 && contract.Type != ElementaryQuizType.ReadClock)
+            work.Add(answers[0].Label + ": " + ElementaryQuizContract.FormatAnswer(answers[0]));
+        contract = contract with { SolutionText = string.Join(Environment.NewLine,
+            work.Append(answerLabel + ": " + contract.AnswerText)) };
         var choices = new List<string> { contract.AnswerText };
         if (textChoices is not null)
             choices.AddRange(textChoices.Where(text => !string.Equals(text, contract.AnswerText, StringComparison.OrdinalIgnoreCase)));

@@ -4,7 +4,7 @@ namespace MathSolver.Services;
 
 public sealed record FractionQuantityStoryContext(
     string Unit, string PartLabel, string WholeLabel,
-    string PartProblemTemplate, string WholeProblemTemplate);
+    string PartProblemTemplate, string WholeProblemTemplate, int Capacity = 5000, string? ContextId = null);
 
 public static class FractionQuantityStoryContextCatalog
 {
@@ -79,12 +79,37 @@ public static class FractionQuantityStoryContextCatalog
     ]);
 
     public static IReadOnlyList<FractionQuantityStoryContext> GetProfile(AppLanguage language) =>
-        language == AppLanguage.Vietnamese ? VietnameseProfile : EnglishProfile;
+        language == AppLanguage.Vietnamese ? CombinedVietnamese : CombinedEnglish;
+
+    private static FractionQuantityStoryContext Limit(FractionQuantityStoryContext c) => c with {
+        Capacity = c.Unit switch { "kg" => 50, "m" => 200, "cây bút" or "pencils" => 100, "học sinh" or "students" => 600, _ => 1000 },
+        PartProblemTemplate = c.PartProblemTemplate.Replace("bình", "bể").Replace("container", "tank"),
+        WholeProblemTemplate = c.WholeProblemTemplate.Replace("bình", "bể").Replace("container", "tank") };
+    private static readonly IReadOnlyList<FractionQuantityStoryContext> CombinedVietnamese = Array.AsReadOnly(
+        VietnameseProfile.Select(Limit).Concat(Expanded(AppLanguage.Vietnamese)).ToArray());
+    private static readonly IReadOnlyList<FractionQuantityStoryContext> CombinedEnglish = Array.AsReadOnly(
+        EnglishProfile.Select(Limit).Concat(Expanded(AppLanguage.English)).ToArray());
+
+    private static IEnumerable<FractionQuantityStoryContext> Expanded(AppLanguage language)
+    {
+        bool vi = language == AppLanguage.Vietnamese;
+        foreach (var c in QuizStoryContextCatalog.All.Where(c => c.Id is "kitchen" or "craft" or "community" or "distribution" or "survey"))
+        {
+            string unit = c.Unit(language), setting = c.Setting(language);
+            yield return vi
+                ? new(unit, "Lượng đã hoàn thành", "Tổng lượng cần hoàn thành",
+                    $"Trong {setting}, cần hoàn thành {{0}} {unit}. Đã hoàn thành {{1}} lượng đó. Hỏi đã hoàn thành bao nhiêu {unit}?",
+                    $"Trong {setting}, đã hoàn thành {{0}} {unit}, bằng {{1}} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu {unit}?", c.MaximumPerPeriod, c.Id)
+                : new(unit, "Completed quantity", "Total target quantity",
+                    $"For {setting}, the target is {{0}} {unit}. {{1}} of this target is complete. How many {unit} are complete?",
+                    $"For {setting}, {{0}} {unit} are complete, representing {{1}} of the target. What is the total target in {unit}?", c.MaximumPerPeriod, c.Id);
+        }
+    }
 }
 
 /// <summary>A chart theme keeps its categories, quantity and unit together.</summary>
 public sealed record DataChartStoryContext(string Description, IReadOnlyList<string> Labels,
-    string Unit, string QuantityName);
+    string Unit, string QuantityName, int Capacity = 5000, string? ContextId = null);
 
 public static class DataChartStoryContextCatalog
 {
@@ -117,7 +142,19 @@ public static class DataChartStoryContextCatalog
     ]);
 
     public static IReadOnlyList<DataChartStoryContext> GetProfile(AppLanguage language) =>
-        language == AppLanguage.Vietnamese ? VietnameseProfile : EnglishProfile;
+        language == AppLanguage.Vietnamese ? CombinedVietnamese : CombinedEnglish;
+
+    private static IReadOnlyList<DataChartStoryContext> Combine(AppLanguage language) => Array.AsReadOnly(
+        (language == AppLanguage.Vietnamese ? VietnameseProfile : EnglishProfile)
+        .Concat(QuizStoryContextCatalog.AverageContexts.Select(c => language == AppLanguage.Vietnamese
+            ? new DataChartStoryContext($"{c.ViSetting} trong ba {c.ViPeriod} riêng biệt",
+                [Capital(c.ViPeriod) + " đầu", Capital(c.ViPeriod) + " giữa", Capital(c.ViPeriod) + " cuối"], c.ViUnit, c.ViUnit, c.MaximumPerPeriod, c.Id)
+            : new DataChartStoryContext($"{c.EnSetting} across three separate {QuizStoryContextCatalog.PluralPeriod(c.EnPeriod)}",
+                ["First " + c.EnPeriod, "Middle " + c.EnPeriod, "Last " + c.EnPeriod], c.EnUnit, c.EnUnit, c.MaximumPerPeriod, c.Id)))
+        .ToArray());
+    private static readonly IReadOnlyList<DataChartStoryContext> CombinedVietnamese = Combine(AppLanguage.Vietnamese);
+    private static readonly IReadOnlyList<DataChartStoryContext> CombinedEnglish = Combine(AppLanguage.English);
+    private static string Capital(string text) => char.ToUpperInvariant(text[0]) + text[1..];
 }
 
 /// <summary>

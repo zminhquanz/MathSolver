@@ -23,7 +23,8 @@ public enum QuizProblemKind
     FractionSkills,
     Data,
     Probability,
-    VisualGeometry
+    VisualGeometry,
+    MultiStep
 }
 
 /// <summary>

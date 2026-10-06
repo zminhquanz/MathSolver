@@ -12,7 +12,10 @@ public sealed partial class ElementaryQuizGenerator
 
         public int Next(Random random, int count)
         {
-            if (_position == _order.Length)
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            // Star changes can replace the candidate pool before a cycle finishes.
+            // Rebuild the order so every cached index remains valid for this pool.
+            if (_order.Length != count || _position >= _order.Length)
             {
                 _order = Enumerable.Range(0, count).ToArray();
                 random.Shuffle(_order);

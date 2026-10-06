@@ -14,7 +14,8 @@ public sealed partial class ElementaryQuizGenerator
         string[] labels = context.Labels.ToArray();
         _random.Shuffle(labels);
         bool pie = type == ElementaryQuizType.ReadPieChart;
-        int[] values = [_random.Next(2, 9) * 5, _random.Next(2, 7) * 5, 0];
+        int maxFirst = Math.Min(40, (context.Capacity - 10) / 2);
+        int[] values = [_random.Next(2, Math.Max(3, maxFirst / 5 + 1)) * 5, _random.Next(2, 7) * 5, 0];
         values[2] = pie ? 100 - values[0] - values[1] : _random.Next(8, 25);
         string unit = pie ? "%" : context.Unit;
         var hidden = new HashSet<int>();
@@ -27,7 +28,7 @@ public sealed partial class ElementaryQuizGenerator
         {
             int selected = _random.Next(3);
             int[] others = Enumerable.Range(0, 3).Where(index => index != selected).ToArray();
-            int total = _random.Next(2, 9) * 100;
+            int total = _random.Next(1, Math.Max(2, Math.Min(40, context.Capacity / 20) + 1)) * 20;
             if (level == 1)
             {
                 foreach (int index in Enumerable.Range(0, 3)) t.Given("row-" + index, values[index], "%");
@@ -210,6 +211,6 @@ public sealed partial class ElementaryQuizGenerator
         t.Answer(answerLabel, expression, unit);
         var visual = new QuizVisualData(kind, labels, values.Select(value => (decimal)value).ToArray(), pie ? "%" : context.Unit,
             ScenarioId: context.Description, HiddenValueIndices: hidden);
-        return t.Build(scenario, problem, visual);
+        return t.Build(scenario, problem, visual) with { StoryContextId = context.ContextId };
     }
 }

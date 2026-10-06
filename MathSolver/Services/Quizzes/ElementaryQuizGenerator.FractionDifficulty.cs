@@ -18,7 +18,8 @@ public sealed partial class ElementaryQuizGenerator
             t.RequiresSolution = true;
             var contexts = FractionQuantityStoryContextCatalog.GetProfile(language);
             var context = contexts[_random.Next(contexts.Count)];
-            int whole = denominator * (level == 5 ? 8 : 1) * _random.Next(3, 9);
+            int quantum = denominator * (level == 5 ? 4 : 1);
+            int whole = quantum * _random.Next(1, Math.Max(2, Math.Min(8, context.Capacity / quantum) + 1));
             string unit = context.Unit, wholeExpression, problem;
             bool findPart = type == ElementaryQuizType.FractionOfNumber;
             string n = t.Given("numerator", numerator), d = t.Given("denominator", denominator);
@@ -30,7 +31,7 @@ public sealed partial class ElementaryQuizGenerator
                 problem = string.Format(System.Globalization.CultureInfo.InvariantCulture,
                     findPart ? context.PartProblemTemplate : context.WholeProblemTemplate, given, fraction);
                 t.Answer(findPart ? context.PartLabel : context.WholeLabel, expression, unit);
-                return t.Build("direct-fraction-" + level, problem);
+                return t.Build("direct-fraction-" + level, problem) with { StoryContextId = context.ContextId };
             }
             if (level < 5)
             {
@@ -77,7 +78,7 @@ public sealed partial class ElementaryQuizGenerator
                 t.Answer(findPart ? context.PartLabel : context.WholeLabel,
                     findPart ? $"{quantity}*{retained}*{n}/{d}" : $"{quantity}/({retained}*{n}/{d})", unit);
             }
-            return t.Build("inferred-fraction-" + level, problem);
+            return t.Build("inferred-fraction-" + level, problem) with { StoryContextId = context.ContextId };
         }
         if (type == ElementaryQuizType.ReduceFraction)
         {

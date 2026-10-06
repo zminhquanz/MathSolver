@@ -60,10 +60,10 @@ public sealed partial class GeometryQuizGenerator
             eligibleTemplates[_random.Next(eligibleTemplates.Length)];
 
         IReadOnlyDictionary<string, BigInteger> dimensions =
-            curriculumContext.HasValue ? CreateTieredDimensions(template.ShapeId, template.Measurement, curriculumContext.Value.Tier, curriculumRules!.MaximumDimension) : CreateDimensions(
+            curriculumContext.HasValue ? CreateTieredDimensions(template.ShapeId, template.Measurement, curriculumContext.Value.Tier, Math.Min(curriculumRules!.MaximumDimension, template.MaximumDimension)) : CreateDimensions(
                 template.ShapeId,
                 template.Measurement,
-                curriculumRules);
+                curriculumRules, template.MaximumDimension);
 
         (BigInteger correctAnswer, string formula) =
             ResolveExactQuizAnswer(
@@ -542,11 +542,10 @@ public sealed partial class GeometryQuizGenerator
     private IReadOnlyDictionary<string, BigInteger> CreateDimensions(
         string shapeId,
         GeometryMeasurement measurement,
-        QuizCurriculumLayer.GeometryRules? curriculumRules)
+        QuizCurriculumLayer.GeometryRules? curriculumRules, int contextMaximum = int.MaxValue)
     {
         int maximumDimension =
-            curriculumRules?.MaximumDimension ??
-            int.MaxValue;
+            Math.Min(curriculumRules?.MaximumDimension ?? int.MaxValue, contextMaximum);
 
         int Value(int minimum = 2, int maximum = 21)
         {
@@ -723,6 +722,16 @@ public sealed partial class GeometryQuizGenerator
 
     private static readonly GeometryStoryTemplate[] Templates =
     [
+        new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
+            "sân trường cần làm hàng rào", "school yard needing a fence", "hình chữ nhật", "rectangle", 100),
+        new("rectangle", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
+            "nền phòng cần lát gạch", "room floor to be tiled", "hình chữ nhật", "rectangle", 30),
+        new("square", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
+            "khu trồng rau", "vegetable plot", "hình vuông", "square", 50),
+        new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
+            "khung tranh cần viền ruy băng", "picture frame needing a ribbon border", "hình chữ nhật", "rectangle", 100),
+        new("rectangular_prism", GeometryMeasurement.Volume, GeometryLengthUnit.Decimeter,
+            "bể chứa nước tưới cây", "irrigation water tank", "hình hộp chữ nhật", "rectangular prism", 30),
         new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Kilometer,
             "khu bảo tồn", "nature reserve", "hình chữ nhật", "rectangle"),
         new("rectangle", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
@@ -790,5 +799,5 @@ public sealed partial class GeometryQuizGenerator
         string VietnameseObject,
         string EnglishObject,
         string VietnameseShape,
-        string EnglishShape);
+        string EnglishShape, int MaximumDimension = int.MaxValue);
 }

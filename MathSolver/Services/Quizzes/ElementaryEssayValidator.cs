@@ -35,6 +35,17 @@ internal static partial class ElementaryEssayValidator
         }
         var targets = contract.Answers.Select(answer => givensTracker.Read(answer.Expression)).ToArray();
         var inferenceTargets = contract.Reasoning?.Steps.Select(step => givensTracker.Read(step.Expression)).ToArray();
+        var knownWork = new Dictionary<string, ElementaryInferenceStep>(StringComparer.Ordinal);
+        var knownSteps = contract.Reasoning?.Steps ?? [];
+        for (int stepIndex = 0; stepIndex < knownSteps.Count; stepIndex++)
+        {
+            var step = knownSteps[stepIndex];
+            knownWork.TryAdd(NormalizeWorkExpression(step.Expression), step);
+            string split = step.Expression;
+            foreach (var previous in knownSteps.Take(stepIndex).OrderByDescending(previous => previous.Expression.Length))
+                split = split.Replace(previous.Expression, "(" + previous.DisplayValue + ")", StringComparison.Ordinal);
+            knownWork.TryAdd(NormalizeWorkExpression(split), step);
+        }
         var achieved = new bool[contract.Answers.Count];
         string[] lines = (equations ?? "").Replace("\r", "", StringComparison.Ordinal).Split(['\n', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (lines.Length > 64 || (equations?.Length ?? 0) > 32768 || (answerText?.Length ?? 0) > 4096)
@@ -92,14 +103,30 @@ internal static partial class ElementaryEssayValidator
             {
                 tracker.Remember(result, origins);
                 bool matched = false;
+                bool matchedUnit = false;
+                string? candidateUnit = null;
                 for (int target = 0; target < achieved.Length; target++)
                 {
                     if (contract.Answers[target].IsText || result != ToValue(contract.Answers[target].Value) ||
                         !origins.Any(origin => targets[target].Any(expected => origin.Equivalent(expected)))) continue;
                     matched = true;
-                    if (!(parsed.Unit.Length == 0 && index < lines.Length - 1) && !UnitsMatch(question, parsed.Unit, contract.Answers[target].Unit))
-                    { error = EssayAnswerError.WrongEquationUnit; expectedUnit = contract.Answers[target].Unit; }
-                    else achieved[target] = true;
+                    candidateUnit ??= contract.Answers[target].Unit;
+                    // Equal numeric results can represent distinct quantities (e.g.
+                    // one full box and one remaining gift). Match the stated dimension
+                    // before marking a target; a different candidate must not override it.
+                    if (parsed.Unit.Length == 0 && index < lines.Length - 1 || UnitsMatch(question, parsed.Unit, contract.Answers[target].Unit))
+                    { achieved[target] = true; matchedUnit = true; }
+                }
+                if (matched && !matchedUnit)
+                {
+                    // Unit conversion may preserve the numeric value (e.g. a 1 : 100000 map).
+                    // A declared intermediate with another dimension is valid work, but it
+                    // must not count as deriving the final quantity in the requested unit.
+                    bool declaredIntermediate = knownWork.TryGetValue(NormalizeWorkExpression(members[0]), out var declaredStep)
+                        && !contract.Answers.Any(answer => NormalizeWorkExpression(answer.Expression) == NormalizeWorkExpression(declaredStep.Expression))
+                        && result == ToValue(declaredStep.Value) && UnitsMatch(question, parsed.Unit, declaredStep.Unit);
+                    if (!declaredIntermediate)
+                    { error = EssayAnswerError.WrongEquationUnit; expectedUnit = candidateUnit; }
                 }
                 // Intermediate units can name quantities, people, or equal parts.
                 if (!matched && parsed.Unit.Length > 0 && !contract.Answers.Any(answer => UnitsMatch(question, parsed.Unit, answer.Unit))
@@ -107,8 +134,7 @@ internal static partial class ElementaryEssayValidator
                     && !new[] { "phần", "parts", "bạn", "people", "người", "học sinh", "students" }.Contains(parsed.Unit.ToLowerInvariant()))
                 { error = EssayAnswerError.WrongEquationUnit; expectedUnit = string.Join(" / ", contract.Answers.Select(answer => answer.Unit).Where(unit => unit.Length > 0).Distinct()); }
             }
-            var canonical = contract.Reasoning?.Steps.FirstOrDefault(step =>
-                NormalizeWorkExpression(step.Expression) == NormalizeWorkExpression(members.FirstOrDefault() ?? ""));
+            knownWork.TryGetValue(NormalizeWorkExpression(members.FirstOrDefault() ?? ""), out var canonical);
             if (error == EssayAnswerError.None && canonical is not null && parsed.Unit.Length > 0 &&
                 !UnitsMatch(question, parsed.Unit, canonical.Unit))
             { error = EssayAnswerError.WrongEquationUnit; expectedUnit = canonical.Unit; }
@@ -159,8 +185,7 @@ internal static partial class ElementaryEssayValidator
         var contract = question.ElementaryProblem!; bool vi = contract.Language == AppLanguage.Vietnamese;
         if (contract.Type == ElementaryQuizType.ReadClock)
         {
-            Match clock = ClockRegex().Match(text ?? "");
-            if (clock.Success) text = clock.Groups["h"].Value + ";" + clock.Groups["m"].Value;
+            if (EssayCombinedInputParser.TryNormalizeClockAnswer(text, out string clockAnswer)) text = clockAnswer;
         }
         var entries = (text ?? "").Split([';', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         bool correct = entries.Length == contract.Answers.Count;
@@ -188,7 +213,8 @@ internal static partial class ElementaryEssayValidator
             if (expected.IsText)
             {
                 bool matches = string.Equals(entry.Trim().TrimEnd('.'), expected.Text, StringComparison.OrdinalIgnoreCase)
-                    || expected.Aliases?.Any(alias => string.Equals(entry.Trim().TrimEnd('.'), alias, StringComparison.OrdinalIgnoreCase)) == true;
+                    || expected.Aliases?.Any(alias => string.Equals(entry.Trim().TrimEnd('.'), alias, StringComparison.OrdinalIgnoreCase)) == true
+                    || MatchesLineNames(contract, entry, expected.Text!);
                 if (!matches) { correct = false; details?.Add(vi ? $"Đáp số “{expected.Label}”: em ghi “{entry}”; đúng là “{expected.Text}”." : $"Answer “{expected.Label}”: you wrote “{entry}”; expected “{expected.Text}”."); }
                 continue;
             }
@@ -206,8 +232,19 @@ internal static partial class ElementaryEssayValidator
         }
         return correct;
     }
-    private static string NormalizeWorkExpression(string expression) => Regex.Replace(expression, @"\s", "")
-        .Replace("×", "*", StringComparison.Ordinal).Replace("÷", "/", StringComparison.Ordinal).Replace("−", "-", StringComparison.Ordinal);
+    private static string NormalizeWorkExpression(string expression)
+    {
+        string text = Regex.Replace(expression, @"\s", "").Replace("\u00d7", "*", StringComparison.Ordinal)
+            .Replace("\u00f7", "/", StringComparison.Ordinal).Replace("\u2212", "-", StringComparison.Ordinal)
+            .Replace(',', '.');
+        // Parentheses around one numeric intermediate do not change its role.
+        while (true)
+        {
+            string next = Regex.Replace(text, @"\(([+-]?\d+(?:\.\d+)?)\)", "$1");
+            if (next == text) return text;
+            text = next;
+        }
+    }
     private static bool CorrectForm(string text, ElementaryAnswer answer)
     {
         Match mixed = MixedRegex().Match(text);
@@ -240,6 +277,4 @@ internal static partial class ElementaryEssayValidator
     private static partial Regex MixedRegex();
     [GeneratedRegex(@"^\s*(?<a>\d+)\s*(?:÷|/|:)\s*(?<b>\d+)\s*=\s*(?<q>\d+)\s*(?:dư|du|remainder|r)\s*(?<r>\d+)\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex DivisionRegex();
-    [GeneratedRegex(@"^\s*(?<h>\d{1,2})\s*(?:giờ|hours?|h|:)\s*(?<m>\d{1,2})\s*(?:phút|minutes?|min)?\s*$", RegexOptions.IgnoreCase)]
-    private static partial Regex ClockRegex();
 }

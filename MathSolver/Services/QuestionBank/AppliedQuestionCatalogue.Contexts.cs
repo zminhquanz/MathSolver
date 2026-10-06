@@ -202,7 +202,13 @@ public static partial class AppliedQuestionCatalogue
             ["students"] = ("học sinh", "students", "student"), ["points"] = ("điểm", "points", "point"),
             ["chickens"] = ("con gà", "chickens", "chicken"), ["pages"] = ("trang sách", "pages", "page"),
             ["seedlings"] = ("cây con", "seedlings", "seedling"), ["bottles"] = ("chai nhựa", "plastic bottles", "plastic bottle"),
-            ["rolls"] = ("ổ bánh mì", "bread rolls", "bread roll"), ["mangoes"] = ("quả xoài", "mangoes", "mango") };
+            ["rolls"] = ("ổ bánh mì", "bread rolls", "bread roll"), ["mangoes"] = ("quả xoài", "mangoes", "mango"),
+            ["meals"] = ("suất ăn", "meals", "meal"), ["eggs"] = ("quả trứng", "eggs", "egg"),
+            ["paper-flowers"] = ("bông hoa giấy", "paper flowers", "paper flower"),
+            ["chairs"] = ("chiếc ghế", "chairs", "chair"), ["responses"] = ("phiếu trả lời", "responses", "response"),
+            ["gift-packs"] = ("gói quà", "gift packs", "gift pack"),
+            ["passenger-journeys"] = ("lượt khách", "passenger journeys", "passenger journey"),
+            ["litres-water"] = ("lít nước", "litres of water", "litre of water") };
     private static string? ExpandedUnit(string id, AppLanguage language, bool singular) => ExpandedUnits.TryGetValue(id, out var u)
         ? language == AppLanguage.Vietnamese ? u.Vi : singular ? u.Singular : u.En : null;
     private static string? ExpandedSingular(string unit) => ExpandedUnits.Values.FirstOrDefault(u => u.En == unit).Singular;
@@ -218,6 +224,7 @@ public static partial class AppliedQuestionCatalogue
     private static string? CountedPrefix(AppliedQuestionScene s) => CountedPrefixes.FirstOrDefault(p => s.Id.StartsWith(p + "-", StringComparison.Ordinal));
     private static string? SceneGroupUnit(AppliedQuestionScene s, AppLanguage language)
     {
+        if (s.StoryContextId is { } id) return QuizStoryContextCatalog.Find(id).Period(language);
         if (s.Group == QuestionKnowledgeGroup.Packaging) return language == AppLanguage.Vietnamese ? "gói" : "pack";
         if (s.Group == QuestionKnowledgeGroup.Objects && CountedPrefix(s) is { } prefix) {
             var group = CountedActivityGroup(prefix);
@@ -229,6 +236,11 @@ public static partial class AppliedQuestionCatalogue
     {
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
+        if (s.StoryContextId is { } id) {
+            var context = QuizStoryContextCatalog.Find(id);
+            return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+                ? (unit, vi ? context.ViPeriod : PluralGroup(context.EnPeriod)) : (unit, unit);
+        }
         if (s.Group == QuestionKnowledgeGroup.Production && s.Id.EndsWith("recover-groups", StringComparison.Ordinal)) return (vi ? "ca" : "shifts", unit);
         if (s.Id is "age-past-total" or "age-future-left") return (unit, vi ? "năm" : "years");
         if (s.Group == QuestionKnowledgeGroup.Objects && CountedPrefix(s) is { } prefix
@@ -266,6 +278,11 @@ public static partial class AppliedQuestionCatalogue
     private static bool HasDerivedAnswer(AppliedQuestionScene s) => s.Id is "garden-perimeter" or "packing-remainder" or "packing-minimum";
     private static (int, int)? ExpandedNumbers(AppliedQuestionScene s, CurriculumTier tier, int cap, int factor, Random random)
     {
+        if (s.StoryContextId is not null && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide) {
+            int count = random.Next(2, Math.Min(factor, cap / 2) + 1);
+            int per = random.Next(1, Math.Max(2, cap / count + 1));
+            return s.Operation == ArithmeticOperation.Divide ? (per * count, count) : (per, count);
+        }
         if (s.Group == QuestionKnowledgeGroup.Measurement && s.Conversion != 1
             && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide) {
             int step = tier == CurriculumTier.FiveStars ? 100 : 1000;
@@ -303,6 +320,7 @@ public static partial class AppliedQuestionCatalogue
     }
     private static bool ExpandedFactsValid(BasicQuestionContract c, AppliedQuestionScene s)
     {
+        if (s.StoryContextId is { } id) return c.Left <= QuizStoryContextCatalog.Find(id).MaximumPerPeriod;
         if (Reasoning(c) is { } r) return r.Matches(c.Expression) && (s.Id != "garden-perimeter" || c.Left >= c.Right);
         if (s.Id is "garden-area-groups" or "garden-side-share")
             return (c.Operation == ArithmeticOperation.Divide ? c.Answer : c.Left) >= c.Right && c.Right <= 20;
@@ -340,6 +358,21 @@ public static partial class AppliedQuestionCatalogue
     {
         if (c.KnowledgeGroup != QuestionKnowledgeGroup.Data) return null;
         bool vi = c.Language == AppLanguage.Vietnamese;
+        if (Find(c.SceneId)!.StoryContextId is { } id) {
+            var context = QuizStoryContextCatalog.Find(id);
+            string firstLabel = c.Operation switch {
+                ArithmeticOperation.Add => vi ? "Phần thứ nhất" : "First period",
+                ArithmeticOperation.Subtract => vi ? "Mục tiêu" : "Target",
+                ArithmeticOperation.Multiply => vi ? "Lượng mỗi " + context.ViPeriod : "Quantity per " + context.EnPeriod,
+                _ => vi ? "Tổng lượng" : "Total quantity" };
+            string secondLabel = c.Operation switch {
+                ArithmeticOperation.Add => vi ? "Phần thứ hai" : "Second period",
+                ArithmeticOperation.Subtract => vi ? "Đã hoàn thành" : "Completed",
+                _ => vi ? "Số " + context.ViPeriod : "Number of " + QuizStoryContextCatalog.PluralPeriod(context.EnPeriod) };
+            return new(vi ? "Dữ kiện" : "Fact", vi ? "Giá trị" : "Value", [
+                new(firstLabel, c.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                new(secondLabel, c.Right.ToString(System.Globalization.CultureInfo.InvariantCulture)) ]);
+        }
         if (c.SceneId.StartsWith("survey-", StringComparison.Ordinal))
             return new(vi ? "Sở thích" : "Preference", vi ? "Số học sinh" : "Students", [
                 new(vi ? "Bóng đá" : "Football", c.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)),

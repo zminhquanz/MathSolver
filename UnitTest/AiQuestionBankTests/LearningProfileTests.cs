@@ -63,7 +63,7 @@ internal static class LearningProfileTests
                         var graded = essay.Validate(question, word.SolutionLead, equation, $"{c.Answer} {c.AnswerUnit}");
                         Check(graded.IsCorrect, $"Correct solution failed grading: {scene.Id}/{language}: {graded}");
                         Check(!essay.Validate(question, word.SolutionLead, equation, $"{c.Answer + 1} {c.AnswerUnit}").IsCorrect, "Wrong answer passed.");
-                        string badUnit = c.AnswerUnit == "m³" ? "m²" : c.AnswerUnit == "m²" ? "m³" : c.AnswerUnit == "kg" ? "km" : "kg";
+                        string badUnit = c.AnswerUnit.StartsWith("m³", StringComparison.Ordinal) ? "m²" : c.AnswerUnit.StartsWith("m²", StringComparison.Ordinal) ? "m³" : c.AnswerUnit.StartsWith("kg", StringComparison.Ordinal) ? "km" : "kg";
                         Check(!essay.Validate(question, word.SolutionLead, equation, $"{c.Answer} {badUnit}").IsCorrect,
                             $"Cross-dimensional answer unit passed: {scene.Id}/{language}");
                         if (word.FactTable is { } table) Check(table.Rows.Count == 2 && table.Rows[0].Value == c.Left.ToString()
@@ -163,7 +163,8 @@ internal static class LearningProfileTests
         Check(QuestionBankWorkbook.Read(workbook).All(row => row.Question is not null && row.Question.Contract.IsValid), "New group Excel import failed.");
         var runtime = new TemplateRuntime();
         var service = new AiQuestionGenerationService(runtime, store);
-        service.Start(new(ArithmeticOperation.Divide, CurriculumTier.FiveStars, AppLanguage.English, 4, true, new(QuestionKnowledgeGroup.Packaging)));
+        int sceneCount = AppliedQuestionCatalogue.Available(new(QuestionKnowledgeGroup.Packaging), ArithmeticOperation.Divide, CurriculumTier.FiveStars).Count();
+        service.Start(new(ArithmeticOperation.Divide, CurriculumTier.FiveStars, AppLanguage.English, sceneCount, true, new(QuestionKnowledgeGroup.Packaging)));
         await service.Completion.WaitAsync(TimeSpan.FromSeconds(10));
         Check(service.Snapshot.State == AiJobState.Completed && service.Snapshot.Items.All(i => i.State == AiItemState.Saved)
             && service.Snapshot.Items.Any(i => i.Question?.WordProblem.ArithmeticReasoning?.Rule == AppliedArithmeticRule.MinimumGroups)

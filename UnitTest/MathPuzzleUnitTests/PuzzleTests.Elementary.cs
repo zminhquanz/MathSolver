@@ -29,7 +29,8 @@ internal static partial class PuzzleTests
                 $"{type}/{seed}: ambiguous or missing correct choice.");
             Require(ElementaryEssayValidator.CheckAnswers(question, contract.PresentedText) == question.PresentedEquationIsCorrect,
                 $"{type}/{seed}: true/false answer mismatch.");
-            var parts = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true);
+            var parts = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true,
+                requireAnswerLabel: contract.Type == ElementaryQuizType.ReadClock);
             var result = validator.Validate(question, parts.Solution, parts.Equation, parts.Answer);
             Require(result.IsCorrect, $"{language}/{tier}/{type}/{seed}: example rejected: " +
                 string.Join(" | ", result.Details) + "\n" + contract.SolutionText);
@@ -50,7 +51,8 @@ internal static partial class PuzzleTests
                 var contract = question.ElementaryProblem!;
                 var answer = contract.Answers[0];
                 seenUnits.Add(answer.Unit);
-                var context = contexts.Single(story => story.Unit == answer.Unit);
+                var context = contexts.Single(story => story.Unit == answer.Unit &&
+                    (type == ElementaryQuizType.FractionOfNumber ? story.PartLabel : story.WholeLabel) == answer.Label);
                 bool findingPart = type == ElementaryQuizType.FractionOfNumber;
                 var givens = contract.Reasoning!.Givens.ToDictionary(given => given.Role, given => int.Parse(given.Value));
                 int supplied = givens["quantity"], numerator = givens["numerator"], denominator = givens["denominator"];
@@ -86,7 +88,7 @@ internal static partial class PuzzleTests
     private static void CheckDataChartStories(EssayAnswerValidator validator)
     {
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-        foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Data))
+        foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Data).Where(type => type != ElementaryQuizType.ReadPictograph))
         {
             var contexts = DataChartStoryContextCatalog.GetProfile(language);
             var seenThemes = new HashSet<string>();
@@ -100,7 +102,8 @@ internal static partial class PuzzleTests
                 var visual = contract.Visual!;
                 Require(visual.Labels.Count == 3 && visual.Labels.Distinct().Count() == 3 && visual.Values.Count == 3,
                     "A themed chart must have three distinct labeled values.");
-                var context = contexts.Single(story => story.Labels.Order().SequenceEqual(visual.Labels.Order()));
+                var context = contexts.Single(story => story.Labels.Order().SequenceEqual(visual.Labels.Order()) &&
+                    story.ContextId == contract.StoryContextId);
                 seenThemes.Add(context.Description);
                 Require(contract.ProblemText.Contains(context.Description, StringComparison.Ordinal),
                     "The chart question lost its story context.");
@@ -234,6 +237,36 @@ internal static partial class PuzzleTests
         Require(validator.Validate(clock, null, null, "3:15").IsCorrect && validator.Validate(clock, null, null, "3 giờ 15 phút").IsCorrect,
             "Clock reading should also accept natural time notation.");
         Require(!validator.Validate(clock, null, null, "3:16").IsCorrect, "Clock reading must retain the minute value.");
+        foreach (string input in new[] { "Đáp số: Giờ: 3, phút: 15", "Đáp số: phút: 15; giờ: 3", "Đáp số: Giờ: 3\nĐáp số: Phút: 15", "Đáp số: 3 giờ 15 phút", "Đáp số: 3:15" })
+        {
+            var parsed = EssayCombinedInputParser.Parse(input, false, requireAnswerLabel: true);
+            Require(validator.Validate(clock, parsed.Solution, parsed.Equation, parsed.Answer).IsCorrect,
+                "Labeled clock input must reach grading: " + input);
+        }
+        foreach (string input in new[] { "Đáp số: Giờ: 3, phút: 16", "Đáp số: Giờ: 3, giờ: 15", "Đáp số: Giờ: 3", "Đáp số: 3 giờ 15 phút\nĐáp số: 3 giờ 16 phút", "Đáp số: Giờ: 3, phút: 15, giây: 0", "Giờ: 3, phút: 15", "3 giờ 15 phút", "3:15", "Giờ: 3\nPhút: 15", "3;15" })
+        {
+            var parsed = EssayCombinedInputParser.Parse(input, false, requireAnswerLabel: true);
+            Require(!validator.Validate(clock, parsed.Solution, parsed.Equation, parsed.Answer).IsCorrect,
+                "Wrong, unlabeled, incomplete or conflicting clock input must fail: " + input);
+        }
+        var englishClock = clock with { ElementaryProblem = clock.ElementaryProblem! with
+            { Language = AppLanguage.English, Answers = [new("Hour", new(3, 1), "", "3"), new("Minute", new(15, 1), "", "15")] } };
+        foreach (string input in new[] { "Answer: Hour: 3, minute: 15", "Answer: 3 hours 15 minutes", "Answer: Minute: 15\nAnswer: Hour: 3" })
+        {
+            var parsed = EssayCombinedInputParser.Parse(input, false, requireAnswerLabel: true);
+            Require(validator.Validate(englishClock, parsed.Solution, parsed.Equation, parsed.Answer).IsCorrect,
+                "English clock reading with an Answer label must pass.");
+        }
+        foreach (string input in new[] { "Hour: 3, minute: 15", "3 hours 15 minutes", "Minute: 15\nHour: 3" })
+        {
+            var parsed = EssayCombinedInputParser.Parse(input, false, requireAnswerLabel: true);
+            Require(parsed.Answer.Length == 0 && !validator.Validate(englishClock, parsed.Solution, parsed.Equation, parsed.Answer).IsCorrect,
+                "English clock reading must require an Answer label.");
+        }
+        Require(EssayCombinedInputParser.Parse("15 phút", false).Answer == "15 phút",
+            "Other questions must retain their existing bare-answer behavior.");
+        Require(EssayCombinedInputParser.Parse("Giờ: 3, phút: 15", false).Answer.Length == 0,
+            "Clock recognition must not change submissions for other question types.");
         var mass = Make(QuizProblemKind.Measurement, ElementaryQuizType.MassConversion, ["2"], ["1000"],
             new ElementaryAnswer("Khối lượng", new(2000, 1), "g", "2*1000"));
         mass = mass with { ElementaryProblem = mass.ElementaryProblem! with { RequiresSolution = true } };

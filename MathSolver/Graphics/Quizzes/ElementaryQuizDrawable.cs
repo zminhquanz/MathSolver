@@ -30,6 +30,14 @@ public sealed partial class ElementaryQuizDrawable(QuizVisualData? data) : IDraw
             {
                 DrawPolygons(canvas, data, width, height);
             }
+            else if (data.Kind == "pictograph")
+            {
+                DrawPictograph(canvas, data, width, height);
+            }
+            else if (data.Kind == "shape")
+            {
+                DrawRecognitionShape(canvas, data, width, height);
+            }
             else if (data.Kind == "table")
             {
                 for (int index = 0; index < data.Labels.Count; index++)

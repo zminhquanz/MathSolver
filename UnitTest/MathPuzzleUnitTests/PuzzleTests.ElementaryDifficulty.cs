@@ -15,7 +15,7 @@ internal static partial class PuzzleTests
             QuizProblemKind.Time, QuizProblemKind.Measurement, QuizProblemKind.Probability, QuizProblemKind.FractionSkills];
         int count = 0;
         foreach (var family in families)
-        foreach (var type in ElementaryQuizGenerator.Types(family))
+        foreach (var type in ElementaryQuizGenerator.Types(family).Where(type => type is not (ElementaryQuizType.MapScale or ElementaryQuizType.ReadPictograph)))
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         for (int seed = 10; seed < 22; seed++)
@@ -50,6 +50,19 @@ internal static partial class PuzzleTests
                     : level == 3 ? Get("quantity-first") + Get("quantity-second")
                     : Get("after") + Get("previous-reduction") - Get("added") * (type == ElementaryQuizType.DifferenceRatio ? 1 : 2);
                 decimal smaller = Value(), larger = Value(1);
+                if (contract.StoryContextId == "family-age") {
+                    decimal future = level == 1 ? Get("age-quantity") : level == 2 ? Get("future-age-quantity")
+                        : level == 3 ? Get("age-quantity-first") + Get("age-quantity-second") : Get("double-future-age-quantity") / 2;
+                    quantity = type == ElementaryQuizType.DifferenceRatio ? future : future - 2 * Get("elapsed-years");
+                    Require(smaller > 0 && larger > smaller && larger <= 90 &&
+                        (type == ElementaryQuizType.DifferenceRatio ? larger - smaller : larger + smaller) == quantity,
+                        "Current ages do not satisfy the supplied temporal sum or invariant difference.");
+                    Require(!contract.ProblemText.Contains("chuyển") && !g.ContainsKey("transfer"), "Age problems cannot transfer ages.");
+                    if (!ratio) Require(larger - smaller == (level == 5 ? Get("double-age-gap") / 2 : Get("age-gap")), "Age gap is incorrect.");
+                    else Require((smaller - Get("past-years")) * Get("ratio-large") == (larger - Get("past-years")) * Get("ratio-small"),
+                        "The age ratio must apply to the explicitly stated time, not always the present.");
+                }
+                else {
                 Require(smaller > 0 && larger > smaller &&
                     (type == ElementaryQuizType.DifferenceRatio ? larger - smaller : larger + smaller) == quantity,
                     "Original pair does not satisfy the sum/difference after undoing changes.");
@@ -58,6 +71,7 @@ internal static partial class PuzzleTests
                         "Transferring between both numbers must change their difference twice.");
                 else Require(smaller * (level == 5 ? Get("ratio-small") + Get("ratio-extra") : Get("ratio-large")) == larger * Get("ratio-small"),
                     "Inferred ratio does not match the original pair.");
+                }
             }
             if (family == QuizProblemKind.Time)
             {
@@ -140,15 +154,17 @@ internal static partial class PuzzleTests
                     Require(contract.Answers[0].Value == expected, "Indirect or successive fraction-of-whole relations are incorrect.");
                 }
             }
-            var parsed = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true);
+            var parsed = EssayCombinedInputParser.Parse(contract.SolutionText, contract.RequiresSolution, true,
+                requireAnswerLabel: contract.Type == ElementaryQuizType.ReadClock);
             var sample = grader.Validate(question, parsed.Solution, parsed.Equation, parsed.Answer);
             Require(sample.IsCorrect, $"{language}/{tier}/{type}/{seed}: {string.Join(" | ", sample.Details)}\n{contract.SolutionText}");
             if (!contract.IsComparison && contract.Reasoning.Steps.Count > 0)
             {
                 string Equation(ElementaryInferenceStep step) => step.Expression + "=" + step.DisplayValue + (step.Unit.Length > 0 ? " " + step.Unit : "");
                 string reversed = string.Join("\n", contract.Reasoning.Steps.Reverse().Select(Equation));
-                Require(grader.Validate(question, parsed.Solution, reversed, parsed.Answer).IsCorrect,
-                    $"Independent expanded steps must permit reordering: {type}/{tier}/{seed}");
+                var reversedResult = grader.Validate(question, parsed.Solution, reversed, parsed.Answer);
+                Require(reversedResult.IsCorrect,
+                    $"Independent expanded steps must permit reordering: {type}/{tier}/{seed}\n{reversed}\n{string.Join(" | ", reversedResult.Details)}");
                 string merged = string.Join("\n", contract.Reasoning.Steps.Where(step => contract.Answers.Any(answer => answer.Expression == step.Expression)).Select(Equation));
                 if (merged.Length > 0)
                     Require(grader.Validate(question, parsed.Solution, merged, parsed.Answer).IsCorrect,

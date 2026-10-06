@@ -1724,7 +1724,20 @@
     "FindXBank.Role.Subtrahend": "Missing subtrahend",
     "FindXBank.Role.Factor": "Missing factor",
     "FindXBank.Role.Dividend": "Missing dividend",
-    "FindXBank.Role.Divisor": "Missing divisor"
+    "FindXBank.Role.Divisor": "Missing divisor",
+    "Quiz.ClockAnswerLabel": "Answer: hour and minute",
+    "Quiz.ClockAnswerHint": "An Answer: label is required before the hour and minute, for example: Answer: Hour: 3, minute: 35 or Answer: 3 hours 35 minutes. No explanation or calculation is needed.",
+    "Quiz.ClockAnswerPlaceholder": "Answer: Hour: …, minute: …\nOr: Answer: … hours … minutes",
+    "Quiz.ClockEssayHint": "Write the explanation and calculations for the requested time, then enter the final answer as: Answer: Hour: …, minute: … or Answer: … hours … minutes.",
+    "Quiz.ClockEssayPlaceholder": "Explanation and calculations for the requested time\nAnswer: Hour: …, minute: …\nOr: Answer: … hours … minutes",
+    "Quiz.ProblemMultiStep": "Multi-step word problems",
+    "Quiz.Elementary.MapScale": "Map scale",
+    "Quiz.Elementary.ReadPictograph": "Read a pictograph",
+    "Quiz.Elementary.RecognizeShape": "Recognize a shape",
+    "Quiz.Elementary.MultiStepAddSubtract": "Combine, remove and recover an initial amount",
+    "Quiz.Elementary.MultiStepEqualGroups": "Equal groups and adjustments",
+    "Quiz.Elementary.MultiStepRemaining": "Find the remainder in several steps",
+    "Quiz.Elementary.MultiStepShare": "Combine quantities and share equally"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

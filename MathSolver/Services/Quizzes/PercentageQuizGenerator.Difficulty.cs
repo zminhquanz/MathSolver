@@ -30,7 +30,9 @@ public sealed partial class PercentageQuizGenerator
         // Replace only the supplied quantity; inferred totals never become extra facts.
         int quantityPosition = contract.ProblemText.IndexOf(quantity.ToString(), StringComparison.Ordinal);
         int suffixPosition = quantityPosition + quantity.ToString().Length;
-        string problem = prefix + contract.ProblemText[suffixPosition..];
+        string problem = contract.CombinedProblemTemplate is { } template
+            ? template.Replace("{quantity}", list)
+            : prefix + contract.ProblemText[suffixPosition..];
         string sum = $"({string.Join(" + ", parts)})";
         string equation = contract.Type == PercentageQuizType.FindPercentageRatio
             ? contract.EquationText.Replace($"÷ {quantity} ×", $"÷ {sum} ×", StringComparison.Ordinal)

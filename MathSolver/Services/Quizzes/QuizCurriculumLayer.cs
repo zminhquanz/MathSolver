@@ -637,11 +637,12 @@ public static class QuizCurriculumLayer
 
         // Skills become available individually at every star; Mixed follows a
         // gradual progression and uses the same pool for both sources.
+        pool = [.. pool, new(new(QuizProblemKind.VisualGeometry), 1), new(new(QuizProblemKind.Time), 1)];
         if (tier >= CurriculumTier.TwoStars)
             pool = [.. pool, new(new(QuizProblemKind.Data), 1), new(new(QuizProblemKind.Probability), 1),
-                new(new(QuizProblemKind.VisualGeometry), 1)];
+                new(new(QuizProblemKind.MultiStep), 1)];
         if (tier >= CurriculumTier.ThreeStars)
-            pool = [.. pool, new(new(QuizProblemKind.Measurement), 1), new(new(QuizProblemKind.Time), 1),
+            pool = [.. pool, new(new(QuizProblemKind.Measurement), 1),
                 new(new(QuizProblemKind.Remainder), 1)];
         if (tier >= CurriculumTier.FourStars)
             pool = [.. pool, new(new(QuizProblemKind.TwoNumbers), 2), new(new(QuizProblemKind.FractionSkills), 1)];
@@ -655,13 +656,55 @@ public static class QuizCurriculumLayer
         {
             if (roll < item.Weight)
             {
-                return item.Request;
+                return ResolveElementaryType(item.Request, tier, random);
             }
 
             roll -= item.Weight;
         }
 
-        return pool[^1].Request;
+        return ResolveElementaryType(pool[^1].Request, tier, random);
+    }
+
+    private static QuizProblemRequest ResolveElementaryType(QuizProblemRequest request, CurriculumTier tier, Random random)
+    {
+        if (!ElementaryQuizGenerator.Supports(request.Kind)) return request;
+        var types = GetMixedElementaryTypes(request.Kind, tier);
+        if (types.Count == 0) throw new InvalidOperationException("Mixed pool contains a family without an allowed subtype.");
+        return request with { ElementaryType = types[random.Next(types.Count)] };
+    }
+
+    /// <summary>Mixed practice introduces relationships progressively; stars are difficulty, not school grades.</summary>
+    public static IReadOnlyList<ElementaryQuizType> GetMixedElementaryTypes(QuizProblemKind kind, CurriculumTier tier)
+    {
+        if (!Enum.IsDefined(tier)) throw new ArgumentOutOfRangeException(nameof(tier));
+        int level = (int)tier;
+        return kind switch
+        {
+            QuizProblemKind.VisualGeometry => level <= 2 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides]
+                : level == 3 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle]
+                : level == 4 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle,
+                    ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.RectangleSide]
+                : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Time => level == 1 ? [ElementaryQuizType.ReadClock]
+                : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Data => level < 2 ? [] : level <= 3 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph]
+                : level == 4 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph, ElementaryQuizType.ReadBarChart,
+                    ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Measurement => level < 3 ? [] : level == 3 ? [ElementaryQuizType.LengthConversion,
+                    ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.MixedLength]
+                : level == 4 ? [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion,
+                    ElementaryQuizType.CapacityConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.AreaConversion]
+                : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.TwoNumbers => level < 4 ? [] : level == 4 ? [ElementaryQuizType.SumDifference] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.FractionSkills => level < 4 ? [] : level == 4 ? [ElementaryQuizType.ReduceFraction,
+                    ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Probability => level < 2 ? [] : level < 5 ? [ElementaryQuizType.Likelihood] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Remainder => level < 3 ? [] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Decimal => level < 5 ? [] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.MultiStep => level < 2 ? [] : level == 2 ? [ElementaryQuizType.MultiStepAddSubtract,
+                ElementaryQuizType.MultiStepEqualGroups, ElementaryQuizType.MultiStepRemaining] : ElementaryQuizGenerator.Types(kind),
+            _ => []
+        };
     }
 
     public static bool IsArithmeticOperationAllowed(

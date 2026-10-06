@@ -1609,7 +1609,20 @@
     "FindXBank.Role.Subtrahend": "",
     "FindXBank.Role.Factor": "",
     "FindXBank.Role.Dividend": "",
-    "FindXBank.Role.Divisor": ""
+    "FindXBank.Role.Divisor": "",
+    "Quiz.ClockAnswerLabel": "Đáp số: giờ và phút",
+    "Quiz.ClockAnswerHint": "Bắt buộc ghi Đáp số: trước giờ và phút, ví dụ: Đáp số: Giờ: 3, phút: 35 hoặc Đáp số: 3 giờ 35 phút. Không cần lời giải hay phép tính.",
+    "Quiz.ClockAnswerPlaceholder": "Đáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+    "Quiz.ClockEssayHint": "Ghi lời giải và phép tính cho thời gian cần tìm, rồi ghi đáp số theo mẫu: Đáp số: Giờ: …, phút: … hoặc Đáp số: … giờ … phút.",
+    "Quiz.ClockEssayPlaceholder": "Lời giải và phép tính cho thời gian cần tìm\nĐáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+    "Quiz.ProblemMultiStep": "",
+    "Quiz.Elementary.MapScale": "",
+    "Quiz.Elementary.ReadPictograph": "",
+    "Quiz.Elementary.RecognizeShape": "",
+    "Quiz.Elementary.MultiStepAddSubtract": "",
+    "Quiz.Elementary.MultiStepEqualGroups": "",
+    "Quiz.Elementary.MultiStepRemaining": "",
+    "Quiz.Elementary.MultiStepShare": ""
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

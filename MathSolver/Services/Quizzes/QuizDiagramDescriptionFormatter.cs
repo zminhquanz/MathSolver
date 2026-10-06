@@ -24,6 +24,27 @@ internal static class QuizDiagramDescriptionFormatter
                     parts.Add($"{label}: {value} {visual.Unit}");
                 }
             }
+            if (visual.Kind == "pictograph" && visual.PictographKey is > 0)
+            {
+                parts.Add(L("Mỗi hình tròn biểu thị ", "Each circle represents ") + visual.PictographKey + " " + visual.Unit);
+                for (int row = 0; row < visual.Labels.Count; row++)
+                    parts.Add(visual.Labels[row] + ": " + visual.Values[row] / visual.PictographKey + L(" hình tròn", " circles"));
+            }
+            if (visual.Kind == "shape")
+                parts.Add(visual.ScenarioId switch
+                {
+                    "circle" => L("Đường cong kín tròn đều, hình phẳng.", "A round closed curve, a plane figure."),
+                    "triangle" => L("Hình phẳng có ba cạnh thẳng.", "A plane figure with three straight sides."),
+                    "square" => L("Hình phẳng có bốn cạnh bằng nhau và bốn góc vuông.", "A plane figure with four equal sides and four right angles."),
+                    "rectangle" => L("Hình phẳng có bốn góc vuông, chiều dài lớn hơn chiều rộng.", "A plane figure with four right angles, longer than it is wide."),
+                    "trapezoid" => L("Hình phẳng có một cặp cạnh đối song song, cạnh trên ngắn hơn cạnh dưới.", "A plane figure with one parallel pair, its top side shorter than its bottom side."),
+                    "parallelogram" => L("Hình phẳng có hai cặp cạnh đối song song, các góc không vuông, các cạnh kề không bằng nhau.", "A plane figure with two parallel pairs, no right angles, and unequal adjacent sides."),
+                    "rhombus" => L("Hình phẳng có bốn cạnh bằng nhau, hai góc nhọn và hai góc tù.", "A plane figure with four equal sides, two acute and two obtuse angles."),
+                    "cube" => L("Hình khối có sáu mặt vuông bằng nhau.", "A solid with six equal square faces."),
+                    "cuboid" => L("Hình khối có sáu mặt chữ nhật, chiều dài lớn hơn chiều rộng và chiều cao.", "A solid with six rectangular faces, longer than it is wide or tall."),
+                    "cylinder" => L("Hình khối có hai đáy tròn bằng nhau và mặt bên cong.", "A solid with two equal circular bases and a curved side."),
+                    _ => L("Hình khối tròn đều, không có cạnh và đỉnh.", "A round solid with no edges or vertices.")
+                });
             if (visual.Annotations is { } annotations) parts.AddRange(annotations.Select(item => item.Text));
             if (visual.Polygons is { } polygons)
                 parts.AddRange(polygons.Select(polygon => polygon.Label + " " + string.Join("–", polygon.Vertices.Select(point => point.Label))));

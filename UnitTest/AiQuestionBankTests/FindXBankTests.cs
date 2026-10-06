@@ -41,7 +41,9 @@ internal static class FindXBankTests
                 Check(fresh.IsValid && fresh.SceneId == c.SceneId && fresh.UnknownRole == c.UnknownRole && fresh.KnowledgeGroup == group,
                     "Fresh facts changed scene/role/profile: " + tag);
                 string prompt = BasicQuestionPrompt.Build(c), grammar = GgufQuestionRuntime.BuildGrammar(c);
-                Check(prompt.Length < 2800 && !prompt.Contains(c.Subject) && !prompt.Contains("Unit catalogue:"), "Bloated/exposed prompt: " + tag);
+                bool actorIsSelectedContext = scene.SourceScene.StoryContextId is not null &&
+                    (scene.SourceScene.ViA + scene.SourceScene.EnA).Contains(c.Subject, StringComparison.Ordinal);
+                Check(prompt.Length < 2800 && (!prompt.Contains(c.Subject) || actorIsSelectedContext) && !prompt.Contains("Unit catalogue:"), "Bloated/exposed prompt: " + tag);
                 Check(grammar.StartsWith("root ::=") && grammar.All(ch => ch <= 127), "Invalid grammar: " + tag);
                 foreach (int variant in new[] { 0, 1 })
                 {

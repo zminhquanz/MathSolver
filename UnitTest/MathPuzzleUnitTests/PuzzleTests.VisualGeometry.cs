@@ -86,6 +86,22 @@ internal static partial class PuzzleTests
                             expected = vi ? $"Đường {left} Và Đường {right}" : $"Lines {left} and {right}";
                             Require(ElementaryEssayValidator.CheckAnswers(question, vi ? $"{right} và {left}" : $"{right} and {left}"),
                                 "Reversing the two line names must remain a valid answer.");
+                            foreach (string answer in vi
+                                ? new[] { $"đường {left} và {right}", $"đường {left},{right}", $"đường thẳng {left}, {right}",
+                                    $"{right}, {left}", $"ĐƯỜNG {right} VÀ {left}.", $"đường {left}, đường {right}" }
+                                : new[] { $"line {left} and {right}", $"lines {left},{right}", $"{right}, {left}",
+                                    $"line {left}, line {right}", $"LINES {right} AND {left}." })
+                            {
+                                Require(ElementaryEssayValidator.CheckAnswers(question, answer),
+                                    "Equivalent line names rejected: " + answer);
+                                CheckTextSubmission(answer);
+                                CheckTextSubmission((vi ? "Đáp số: " : "Answer: ") + answer);
+                            }
+                            string other = lines.First(line => line.Label != left && line.Label != right).Label;
+                            foreach (string answer in new[] { left, $"{left},{left}", $"{left},{other}", $"{left},{right},{other}",
+                                $"{left},{right},{left}", $"{left},{right} łącznie", "unknown, missing" })
+                                Require(!ElementaryEssayValidator.CheckAnswers(question, answer),
+                                    "Wrong, duplicated, extra or malformed line names accepted: " + answer);
                             if (target == "parallel")
                                 Require(lines[pair.Left].OffsetRatio != lines[pair.Right].OffsetRatio,
                                     "A highlighted parallel pair must not be coincident.");
@@ -93,6 +109,13 @@ internal static partial class PuzzleTests
                     }
                 }
                 Require(contract.AnswerText == expected, "The answer contradicts the independently classified drawing.");
+                CheckTextSubmission(expected);
+                var conflicting = EssayCombinedInputParser.Parse(expected + "\ninvalid answer",
+                    contract.RequiresSolution, true, allowTextAnswer: true);
+                Require(!validator.Validate(question, conflicting.Solution, conflicting.Equation, conflicting.Answer).IsCorrect,
+                    "A multi-line conflicting identification answer must not silently become a valid single answer.");
+                Require(contract.SolutionText.Contains(contract.Answers[0].Label + ": " + expected, StringComparison.Ordinal),
+                    "The visual identification solution must show the answer after its label, not leave an empty heading.");
                 Require(contract.ChoiceTexts!.Count == 4 && contract.ChoiceTexts.Distinct().Count() == 4 &&
                     contract.ChoiceTexts.Count(choice => ElementaryEssayValidator.CheckAnswers(question, choice)) == 1,
                     "Visual geometry must have four distinct choices and exactly one correct answer.");
@@ -102,6 +125,13 @@ internal static partial class PuzzleTests
                 Require(validator.Validate(question, parts.Solution, parts.Equation, parts.Answer).IsCorrect,
                     "The visual geometry worked answer was rejected.");
                 count++;
+
+                void CheckTextSubmission(string input)
+                {
+                    var parsed = EssayCombinedInputParser.Parse(input, contract.RequiresSolution, true, allowTextAnswer: true);
+                    Require(validator.Validate(question, parsed.Solution, parsed.Equation, parsed.Answer).IsCorrect,
+                        "Visual identification input rejected through the UI parser: " + input);
+                }
             }
             Require(rotations.Count >= ((int)tier == 1 ? 2 : (int)tier == 2 ? 4 : 8), "Visual geometry drawings still use a fixed orientation.");
             if (type == ElementaryQuizType.ClassifyAngle)

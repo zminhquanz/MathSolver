@@ -9,7 +9,7 @@ namespace MathSolver.Services.QuestionBank;
 public sealed record AppliedQuestionScene(string Id, QuestionKnowledgeGroup Group, ArithmeticOperation Operation,
     int MinimumStars, int Capacity, int MaxFactor, string UnitId,
     string ViA, string ViB, string ViQ, string ViLead, string EnA, string EnB, string EnQ, string EnLead,
-    int Conversion = 1, int RightDisplayFactor = 1)
+    int Conversion = 1, int RightDisplayFactor = 1, string? StoryContextId = null)
 {
     public BasicQuestionStructure Structure => Operation switch
     {
@@ -230,6 +230,7 @@ public static partial class AppliedQuestionCatalogue
         scenes.AddRange(scenes.Where(s => s.Group == QuestionKnowledgeGroup.Length && s.Operation is ArithmeticOperation.Add or ArithmeticOperation.Subtract
             && s.Conversion == 1).Select(s => s with { Id = "motion-" + s.Id, Group = QuestionKnowledgeGroup.Motion }).ToArray());
         AddExpandedScenes(scenes);
+        AddSharedStoryScenes(scenes);
         return scenes;
     }
 
@@ -308,11 +309,14 @@ public static partial class AppliedQuestionCatalogue
                 ? new[] { 20000, 50000, 100000, 300000, 500000 }[(int)tier - 1]
                 : new[] { 10, 30, 100, 200, 300 }[(int)tier - 1], Capacity(s, language))
             : Math.Min(p.ArithmeticCeiling(tier), Capacity(s, language));
-    public static string AnswerUnit(AppliedQuestionScene s, AppLanguage language) => s.UnitId == "currency"
+    public static string AnswerUnit(AppliedQuestionScene s, AppLanguage language) => s.StoryContextId is { } id
+        ? QuizStoryContextCatalog.Find(id).Unit(language) : s.UnitId == "currency"
         ? language == AppLanguage.Vietnamese ? "đồng" : "dollars"
         : ExpandedUnit(s.UnitId, language, false) ?? QuestionUnits.Find(s.UnitId)?.Item(language) ?? s.UnitId;
     public static string ResultUnit(BasicQuestionContract c)
     {
+        if (Find(c.SceneId)!.StoryContextId is not null)
+            return c.Language == AppLanguage.English && c.Answer.IsOne ? ExpandedSingular(c.Unit) ?? c.Unit : c.Unit;
         if (c.Structure == BasicQuestionStructure.CountGroups)
             return c.Language == AppLanguage.Vietnamese || c.Answer.IsOne ? c.GroupUnit : c.GroupUnit + "s";
         if (c.Language == AppLanguage.English && c.Answer.IsOne)
@@ -511,6 +515,7 @@ public static partial class AppliedQuestionCatalogue
             ? "Viết mẫu đề và câu dẫn lời giải bằng tiếng Việt cho bối cảnh đã chọn. Giữ biến, đơn vị và vai trò; không giải bài, không sinh số. given_a kết thúc dấu phẩy, given_b là vế tiếp nối."
             : "Write an English question template and solution lead for this selected scene. Preserve placeholders, dimensions and roles; no numbers or answers. Join the two givens as clauses.")
             + "\nScene: " + c.SceneId + "; group=" + c.KnowledgeGroup + "; stars=" + (int)c.Tier
+            + (Find(c.SceneId)!.StoryContextId is { } id ? "; activity=" + QuizStoryContextCatalog.Find(id).Setting(c.Language) : "")
             + "; input units=" + JsonSerializer.Serialize(new { GivenA = InputUnits(c).A, GivenB = InputUnits(c).B },
                 new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "; answer unit=" + c.AnswerUnit
             + "\nPreserve the facts and target of this example. Equivalent wording is allowed; do not copy wording rejected as duplicate:\n"

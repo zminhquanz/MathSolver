@@ -23,13 +23,31 @@ public sealed partial class ElementaryQuizGenerator
         decimal factor = MeasurementEngine.Convert(1, large, small);
         t.Constants.Add(factor.ToString(System.Globalization.CultureInfo.InvariantCulture));
         string label = t.L("Số đo sau khi đổi", "Converted measurement"), expression, problem;
+        var context = type switch
+        {
+            ElementaryQuizType.MassConversion => QuizStoryContextCatalog.Find("kitchen"),
+            ElementaryQuizType.CapacityConversion => QuizStoryContextCatalog.Find("water"),
+            ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion => QuizStoryContextCatalog.Find("construction"),
+            _ => QuizStoryContextCatalog.Find("decoration")
+        };
+        string subject = t.L(type switch {
+            ElementaryQuizType.MassConversion => "Khối lượng gạo của bếp ăn",
+            ElementaryQuizType.CapacityConversion => "Lượng nước chuẩn bị để tưới cây",
+            ElementaryQuizType.AreaConversion => "Diện tích vật liệu lát nền",
+            ElementaryQuizType.VolumeConversion => "Thể tích vật liệu dùng cho công trình",
+            _ => "Độ dài ruy băng trang trí" }, type switch {
+            ElementaryQuizType.MassConversion => "The kitchen's rice mass",
+            ElementaryQuizType.CapacityConversion => "The water volume prepared for watering plants",
+            ElementaryQuizType.AreaConversion => "The area of flooring material",
+            ElementaryQuizType.VolumeConversion => "The volume of construction material",
+            _ => "The length of decorative ribbon" });
         string a = t.Given("large-quantity", _random.Next(2, 10), large.Symbol);
         bool mixed = type == ElementaryQuizType.MixedLength;
         string scenario;
         if (level == 1 && !mixed)
         {
             expression = $"{a}*{factor}";
-            problem = t.L($"Đổi {a} {large.Symbol} sang {small.Symbol}.", $"Convert {a} {large.Symbol} to {small.Symbol}.");
+            problem = t.L($"{subject} là {a} {large.Symbol}. Đổi lượng này sang {small.Symbol}.", $"{subject} is {a} {large.Symbol}. Convert it to {small.Symbol}.");
             scenario = "one-conversion";
         }
         else if (level == 2 && !mixed)
@@ -38,14 +56,15 @@ public sealed partial class ElementaryQuizGenerator
             string value = t.Given("small-quantity", int.Parse(a) * factor + factor / 2, small.Symbol);
             expression = $"{value}/{factor}";
             t.Answer(label, expression, large.Symbol);
-            return t.Build("reverse-conversion", t.L($"Đổi {value} {small.Symbol} sang {large.Symbol}.", $"Convert {value} {small.Symbol} to {large.Symbol}."));
+            return t.Build("reverse-conversion", t.L($"{subject} là {value} {small.Symbol}. Đổi lượng này sang {large.Symbol}.", $"{subject} is {value} {small.Symbol}. Convert it to {large.Symbol}."))
+                with { StoryContextId = context.Id };
         }
         else
         {
             string b = t.Given("small-quantity", _random.Next(2, (int)Math.Min(40, factor)), small.Symbol);
             expression = $"{a}*{factor}+{b}";
-            problem = t.L($"Một số đo gồm {a} {large.Symbol} và {b} {small.Symbol}. ",
-                $"A measurement consists of {a} {large.Symbol} and {b} {small.Symbol}. ");
+            problem = t.L($"{subject} gồm {a} {large.Symbol} và {b} {small.Symbol}. ",
+                $"{subject} consists of {a} {large.Symbol} and {b} {small.Symbol}. ");
             scenario = "mixed-measurement";
             t.Step(t.L("Đổi phần đơn vị lớn", "Convert the larger unit"), $"{a}*{factor}", small.Symbol);
             if (level >= 3)
@@ -74,6 +93,6 @@ public sealed partial class ElementaryQuizGenerator
         if (level > 1 || mixed)
             problem += t.L($"Kết quả là bao nhiêu {answerUnit}?", $"What is the result in {answerUnit}?");
         t.Answer(label, expression, answerUnit);
-        return t.Build(scenario, problem);
+        return t.Build(scenario, problem) with { StoryContextId = context.Id };
     }
 }

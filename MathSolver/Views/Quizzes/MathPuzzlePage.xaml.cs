@@ -652,12 +652,48 @@ public partial class MathPuzzlePage : ContentPage
             (string.IsNullOrWhiteSpace(expectedEquationUnit) ? string.Empty : " " + expectedEquationUnit);
         if (question?.ElementaryProblem is ElementaryQuizContract elementary)
         {
-            EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ElementaryEssayHint");
-            EssayWorkEditor.Placeholder = TranslateQuiz(requiresSolution ? "Quiz.ElementaryEssayPlaceholder" : "Quiz.ElementaryAnswerPlaceholder");
+            if (elementary.Kind != QuizProblemKind.Decimal)
+            {
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ElementaryEssayHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz(requiresSolution ? "Quiz.ElementaryEssayPlaceholder" : "Quiz.ElementaryAnswerPlaceholder");
+            }
             if (elementary.IsComparison)
             {
+                if (elementary.Kind == QuizProblemKind.Decimal)
+                    EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayAnswerLabel");
                 EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ComparisonEssayHint");
                 EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.ComparisonEssayPlaceholder");
+            }
+            else if (elementary.Type == ElementaryQuizType.ReadClock)
+            {
+                if (!requiresSolution) EssayWorkLabel.Text = TranslateQuiz("Quiz.ClockAnswerLabel");
+                EssayValidationHintLabel.Text = TranslateQuiz(requiresSolution ? "Quiz.ClockEssayHint" : "Quiz.ClockAnswerHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz(requiresSolution ? "Quiz.ClockEssayPlaceholder" : "Quiz.ClockAnswerPlaceholder");
+            }
+            else if (elementary.IsDecimalArithmetic && !elementary.IsNumericDecimalCalculation)
+            {
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ElementaryEssayHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.ElementaryEssayPlaceholder");
+            }
+            else if (elementary.IsNumericDecimalCalculation)
+            {
+                string unit = string.IsNullOrWhiteSpace(expectedEquationUnit) ? "" : " " + expectedEquationUnit;
+                EssayWorkEditor.Placeholder = (requiresSolution
+                    ? TranslateQuiz("Quiz.EssayCombinedPlaceholder") + Environment.NewLine : "")
+                    + elementary.FormatDecimalCalculation("…" + unit) + Environment.NewLine
+                    + TranslateQuiz("Quiz.EssayCombinedAnswerPlaceholder") + unit;
+            }
+            else if (elementary.Type == ElementaryQuizType.DecimalRound)
+            {
+                EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayAnswerLabel");
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.EssayCombinedAnswerHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.EssayCombinedAnswerPlaceholder");
+            }
+            else if (elementary.Kind == QuizProblemKind.VisualGeometry && elementary.Answers.All(answer => answer.IsText))
+            {
+                EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayAnswerLabel");
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.EssayCombinedAnswerHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.EssayCombinedAnswerPlaceholder");
             }
         }
     }
@@ -1810,7 +1846,7 @@ public partial class MathPuzzlePage : ContentPage
 
         ElementaryQuizContract? elementary = _currentQuestion.ElementaryProblem;
         bool parseFractionExpressions = _currentQuestion.UsesFractionFormatting && _currentQuestion.WordProblem is not null || elementary?.Kind == QuizProblemKind.FractionSkills ||
-            elementary?.Type is ElementaryQuizType.SumRatio or ElementaryQuizType.DifferenceRatio;
+            elementary?.Type is ElementaryQuizType.TimeAddition or ElementaryQuizType.SumRatio or ElementaryQuizType.DifferenceRatio;
         foreach (var view in new[] { QuestionFractionExpressionView, QuestionComparisonFractionView,
             PresentedAnswerFractionView, FeedbackFractionView, SolutionFractionView, QuizDiagramExplanationFractionView }
             .Concat(ChoiceFractionViews))
@@ -1840,21 +1876,11 @@ public partial class MathPuzzlePage : ContentPage
                 PresentedAnswerLabel.IsVisible = false;
                 PresentedAnswerLabel.Text = string.Empty;
             }
-            else if (wordProblem is null && elementary.Type is
-                (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract or
-                 ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide))
+            else if (wordProblem is null && elementary.IsNumericDecimalCalculation)
             {
-                ArithmeticOperation operation = elementary.Type switch
-                {
-                    ElementaryQuizType.DecimalAdd => ArithmeticOperation.Add,
-                    ElementaryQuizType.DecimalSubtract => ArithmeticOperation.Subtract,
-                    ElementaryQuizType.DecimalMultiply => ArithmeticOperation.Multiply,
-                    _ => ArithmeticOperation.Divide
-                };
-                string decimalExpression = $"{elementary.Facts[0]} {BasicArithmeticEngine.GetSymbol(operation)} {elementary.Facts[1]}";
                 string displayedAnswer = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
                     ? elementary.PresentedText ?? "" : "?";
-                SetQuestionContent($"{decimalExpression} = {displayedAnswer}", 34,
+                SetQuestionContent(elementary.FormatDecimalCalculation(displayedAnswer), 34,
                     "PrimaryColor", useFractionFormatting: false);
                 PresentedAnswerLabel.IsVisible = false;
                 PresentedAnswerLabel.Text = string.Empty;
@@ -2316,7 +2342,10 @@ public partial class MathPuzzlePage : ContentPage
                 EssayAnswerValidator.RequiresSolution(_currentQuestion),
                 preserveAllCalculations: _currentQuestion.WordProblem?.ConversionStep is not null
                     || _currentQuestion.GeometryProblem?.Reasoning is not null || _currentQuestion.ElementaryProblem is not null
-                    || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData);
+                    || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData,
+                requireAnswerLabel: _currentQuestion.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
+                allowTextAnswer: _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.VisualGeometry,
+                    Type: ElementaryQuizType.ClassifyAngle or ElementaryQuizType.ParallelLines or ElementaryQuizType.PerpendicularLines or ElementaryQuizType.RecognizeShape });
 
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(

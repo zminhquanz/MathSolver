@@ -1,4 +1,5 @@
 using MathSolver.Services;
+using MathSolver.Services.Core;
 
 namespace MathSolver.Models;
 
@@ -13,7 +14,9 @@ public enum ElementaryQuizType
     ReadTable, ReadBarChart, ReadPieChart, ChartTotal, ChartDifference,
     Likelihood, ExperimentalProbability,
     ClassifyAngle, ParallelLines, PerpendicularLines, CountSides, RectangleSide, CompositeArea,
-    IntegerCompare
+    IntegerCompare,
+    MapScale, ReadPictograph, RecognizeShape,
+    MultiStepAddSubtract, MultiStepEqualGroups, MultiStepRemaining, MultiStepShare
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,
@@ -39,7 +42,7 @@ public sealed record QuizVisualData(string Kind, IReadOnlyList<string> Labels,
     IReadOnlyList<QuizVisualLine>? Lines = null,
     IReadOnlyList<QuizVisualPolygon>? Polygons = null,
     IReadOnlyList<QuizVisualAnnotation>? Annotations = null, string? ScenarioId = null,
-    IReadOnlySet<int>? HiddenValueIndices = null);
+    IReadOnlySet<int>? HiddenValueIndices = null, decimal? PictographKey = null);
 
 /// <summary>C# math puzzle data and rules.</summary>
 public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuizType Type,
@@ -49,10 +52,33 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     QuizVisualData? Visual = null, string? PresentedText = null,
     IReadOnlyList<string>? ChoiceTexts = null)
 {
+    public string? StoryContextId { get; init; }
     public ProbabilityQuizScenario? ProbabilityScenario { get; init; }
     public ElementaryQuizReasoning? Reasoning { get; init; }
+    public int? RoundingDecimalPlaces { get; init; }
 
-    public bool UsesFractionFormatting => Type is ElementaryQuizType.SumRatio or
+    public bool IsDecimalArithmetic => Kind == QuizProblemKind.Decimal && Type is
+        ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract or
+        ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide;
+
+    // A contextual problem must retain its prose and units in every answer mode.
+    public bool IsNumericDecimalCalculation => IsDecimalArithmetic && StoryContextId is null
+        && !RequiresSolution && Answers.All(answer => answer.Unit.Length == 0);
+
+    public string FormatDecimalCalculation(string result)
+    {
+        if (!IsNumericDecimalCalculation) throw new InvalidOperationException("Only direct decimal practice has two displayed operands.");
+        var operation = Type switch
+        {
+            ElementaryQuizType.DecimalAdd => ArithmeticOperation.Add,
+            ElementaryQuizType.DecimalSubtract => ArithmeticOperation.Subtract,
+            ElementaryQuizType.DecimalMultiply => ArithmeticOperation.Multiply,
+            _ => ArithmeticOperation.Divide
+        };
+        return $"{Facts[0]} {BasicArithmeticEngine.GetSymbol(operation)} {Facts[1]} = {result}";
+    }
+
+    public bool UsesFractionFormatting => Type is ElementaryQuizType.TimeAddition or ElementaryQuizType.SumRatio or
         ElementaryQuizType.DifferenceRatio or ElementaryQuizType.ReduceFraction or
         ElementaryQuizType.CompareFractions or ElementaryQuizType.MixedNumber or
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or

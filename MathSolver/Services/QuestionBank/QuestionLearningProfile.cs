@@ -2,10 +2,6 @@ using MathSolver.Models;
 
 namespace MathSolver.Services.QuestionBank;
 
-// Persisted numeric identities are stable; Mass/Length/Transport are legacy subgroups.
-public enum QuestionKnowledgeGroup { Objects = 0, Money = 1, Mass = 2, Length = 3, Transport = 4, Motion = 5,
-    Time = 6, Measurement = 7, Geometry = 8, Packaging = 9, Production = 10, Data = 11 }
-
 /// <summary>The knowledge group selects dimensions; stars select numeric and reasoning difficulty.</summary>
 public sealed record QuestionLearningProfile(QuestionKnowledgeGroup Group)
 {
