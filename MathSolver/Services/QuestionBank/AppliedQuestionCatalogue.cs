@@ -469,11 +469,11 @@ public static partial class AppliedQuestionCatalogue
             if (d.UnitId != Find(c.SceneId)!.UnitId) return new(null, "ChangedUnits");
             // Compare complete clauses against reviewed alternatives, not a bag of keywords.
             // Numeric/unit/actor slots and their order bind the roles for mixed dimensions.
-            var examples = new[] { Draft(c), Draft(c, 1) };
+            var prose = ReviewedQuestionProse.For(c)!;
             bool Same(string a, string b) => string.Equals(Regex.Replace(a.Trim(), @"\s+", " "),
                 Regex.Replace(b.Trim(), @"\s+", " "), StringComparison.OrdinalIgnoreCase);
-            if (!examples.Any(e => Same(d.GivenA, e.GivenA)) || !examples.Any(e => Same(d.GivenB, e.GivenB))
-                || !examples.Any(e => Same(d.Question, e.Question)) || !examples.Any(e => Same(d.SolutionLead!, e.SolutionLead!)))
+            if (!prose.GivenA.Any(e => Same(d.GivenA, e)) || !prose.GivenB.Any(e => Same(d.GivenB, e))
+                || !prose.Questions.Any(e => Same(d.Question, e)) || !prose.Leads.Any(e => Same(d.SolutionLead!, e)))
                 return new(null, "ChangedRelationOrTarget");
             return new(d, null, c);
         }
@@ -506,29 +506,17 @@ public static partial class AppliedQuestionCatalogue
                 m => "1 " + m.Groups[1].Value + Singular(c.Unit, 1));
         return Regex.Replace(text, @"(^|[.!?]\s+)(\p{Ll})", m => m.Groups[1].Value + m.Groups[2].Value.ToUpperInvariant());
     }
-    public static string Prompt(BasicQuestionContract c, string? correction)
+    public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example = null)
         => (c.Language == AppLanguage.Vietnamese
             ? "Viết mẫu đề và câu dẫn lời giải bằng tiếng Việt cho bối cảnh đã chọn. Giữ biến, đơn vị và vai trò; không giải bài, không sinh số. given_a kết thúc dấu phẩy, given_b là vế tiếp nối."
             : "Write an English question template and solution lead for this selected scene. Preserve placeholders, dimensions and roles; no numbers or answers. Join the two givens as clauses.")
             + "\nScene: " + c.SceneId + "; group=" + c.KnowledgeGroup + "; stars=" + (int)c.Tier
             + "; input units=" + JsonSerializer.Serialize(new { GivenA = InputUnits(c).A, GivenB = InputUnits(c).B },
                 new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "; answer unit=" + c.AnswerUnit
-            + "\nUse natural wording from either reviewed example, independently in each field:\n"
-            + QuestionBankStore.SerializeDraft(Draft(c)) + "\n" + QuestionBankStore.SerializeDraft(Draft(c, 1))
+            + "\nPreserve the facts and target of this example. Equivalent wording is allowed; do not copy wording rejected as duplicate:\n"
+            + QuestionBankStore.SerializeDraft(example ?? Draft(c))
             + "\nReturn only JSON with given_a, given_b, question, solution_lead, unit_id."
             + (correction is null ? "" : "\nCorrect the rejected output: " + correction);
     public static string Grammar(BasicQuestionContract c)
-    {
-        static string L(string value) => JsonSerializer.Serialize(value);
-        var d = Draft(c); var e = Draft(c, 1);
-        string Choice(string a, string b) => "\"\\\"\" (" + L(a) + " | " + L(b) + ") \"\\\"\"";
-        return $$"""
-            root ::= "{" ws "\"given_a\"" ws ":" ws a ws "," ws "\"given_b\"" ws ":" ws b ws "," ws "\"question\"" ws ":" ws q ws "," ws "\"solution_lead\"" ws ":" ws lead ws "," ws "\"unit_id\"" ws ":" ws "\"" {{L(d.UnitId!)}} "\"" ws "}" ws
-            a ::= {{Choice(d.GivenA, e.GivenA)}}
-            b ::= {{Choice(d.GivenB, e.GivenB)}}
-            q ::= {{Choice(d.Question, e.Question)}}
-            lead ::= {{Choice(d.SolutionLead!, e.SolutionLead!)}}
-            ws ::= [ \t\n\r]*
-            """;
-    }
+        => ReviewedQuestionProse.For(c)!.Grammar(c, new HashSet<string>(StringComparer.Ordinal));
 }

@@ -5,11 +5,25 @@ namespace MathSolver.Services.QuestionBank;
 
 public static class BasicQuestionPrompt
 {
-    public static string Build(BasicQuestionContract contract, string? correction = null)
+    public static string Build(BasicQuestionContract contract, string? correction = null,
+        IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null)
+    {
+        string prompt = BuildCore(contract, correction, excludedProse);
+        if (duplicateProse is not { Count: > 0 }) return prompt;
+        string instruction = contract.Language == AppLanguage.Vietnamese
+            ? "Mẫu lời văn trước đã trùng. Viết lại đề với cách diễn đạt khác các mẫu bị loại bên dưới; thay số, tên, chữ hoa, khoảng trắng, dấu câu hoặc chỉ câu dẫn lời giải không tạo ra mẫu mới. Giữ nguyên vai trò toán học, các biến và đơn vị; không sinh số. Trả lại toàn bộ JSON đúng schema."
+            : "The previous question wording was duplicated. Rewrite the question with different phrasing from the rejected wording below. Changing numbers, names, case, whitespace, punctuation or only the solution lead does not create new wording. Preserve mathematical roles, placeholders and units; do not generate numbers. Return complete JSON using the same schema.";
+        return prompt + "\n" + instruction + "\n" + string.Join("\n", duplicateProse.Distinct(StringComparer.Ordinal).TakeLast(2)
+            .Select(prose => JsonSerializer.Serialize(prose.Length <= 1000 ? prose : prose[..1000], JsonOptions)));
+    }
+
+    private static string BuildCore(BasicQuestionContract contract, string? correction, IReadOnlySet<string>? excludedProse)
     {
         if (!contract.IsValid) throw new ArgumentException("Invalid C# contract.", nameof(contract));
-        if (contract.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Prompt(contract, correction);
-        if (contract.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Prompt(contract, correction);
+        var novelExample = excludedProse is { Count: > 0 } ? ReviewedQuestionProse.For(contract)?.NovelExample(contract, excludedProse) : null;
+        if (contract.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prompt(contract, correction, novelExample);
+        if (contract.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Prompt(contract, correction, novelExample);
+        if (contract.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Prompt(contract, correction, novelExample);
         if (contract.Version == AdditionQuestionCatalogue.Version) return BuildAddition(contract, correction);
         if (contract.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmetic(contract, correction);
         if (contract.IsTemplate) return BuildTemplate(contract, correction);

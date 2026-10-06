@@ -101,8 +101,27 @@ internal static class ArithmeticContextTests
 
     private static async Task StorageAsync(string directory, List<ValidatedBankQuestion> entries)
     {
-        var store = new QuestionBankStore(Path.Combine(directory, "arithmetic-contexts.db3"));
-        foreach (var entry in entries) Check(await store.InsertAsync(entry), "Context failed SQLite insertion.");
+        string path = Path.Combine(directory, "arithmetic-contexts.db3");
+        var store = new QuestionBankStore(path);
+        var uniqueEntries = new List<ValidatedBankQuestion>();
+        var identities = new HashSet<string>();
+        foreach (var entry in entries)
+        {
+            bool unique = identities.Add(QuestionProseIdentity.Hash(entry.Contract, entry.Draft));
+            Check(await store.InsertAsync(entry) == unique, "Context wording deduplication failed.");
+            if (unique) { uniqueEntries.Add(entry); continue; }
+            // Retain coverage of pre-existing banks containing the same wording
+            // at multiple star levels; new insertion correctly rejects it.
+            var c = entry.Contract;
+            using var db = new SQLite.SQLiteConnection(path);
+            db.Insert(new QuestionBankStore.Row {
+                Hash = "historical-context-" + db.ExecuteScalar<int>("SELECT COUNT(*) FROM BasicQuestionBank"),
+                Operation = (int)c.Operation, Stars = (int)c.Tier, Language = (int)c.Language, Version = c.Version,
+                ContractJson = JsonSerializer.Serialize(c), DraftJson = QuestionBankStore.SerializeDraft(entry.Draft),
+                RawJson = entry.RawJson, ModelName = entry.ModelName, CreatedUtc = entry.CreatedUtc,
+                Structure = (int)c.Structure, TopicId = c.TopicId, SceneId = c.SceneId, Grade = c.Grade,
+                KnowledgeGroup = (int)c.KnowledgeGroup, ProblemType = (int)c.Family, ProblemVariant = (int)c.UnknownRole });
+        }
         Check(!await store.InsertAsync(entries[0] with { Contract = entries[0].Contract.FreshFacts(new Random(735)) }), "Preview numbers defeated template dedup.");
         foreach (var operation in Operations)
         foreach (var tier in Enum.GetValues<CurriculumTier>())
@@ -124,11 +143,12 @@ internal static class ArithmeticContextTests
         workbook.Position = 0;
         var imported = new QuestionBankStore(Path.Combine(directory, "arithmetic-import.db3"));
         var report = await imported.ImportExcelAsync(workbook);
-        Check(report.Inserted == entries.Count && report.Rejected == 0, "Excel lost arithmetic metadata/group units.");
+        Check(report.Inserted == uniqueEntries.Count && report.Duplicates == entries.Count - uniqueEntries.Count
+            && report.Rejected == 0, "Excel lost arithmetic metadata/group units or retained duplicate wording.");
         await imported.QueryAsync("UPDATE BasicQuestionBank SET TopicId='wrong' WHERE SceneId='library'");
         using var tamperedExport = new MemoryStream();
         var forged = await imported.ExportExcelAsync(tamperedExport);
-        Check(forged.Skipped == entries.Count(q => q.Contract.SceneId == "library"), "Indexed metadata tampering reached export.");
+        Check(forged.Skipped == uniqueEntries.Count(q => q.Contract.SceneId == "library"), "Indexed metadata tampering reached export.");
         foreach (var operation in Operations)
         {
             var legacy = BasicQuestionContract.CreateTemplate(operation, CurriculumTier.OneStar, AppLanguage.English, new Random(17));

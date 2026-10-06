@@ -20,7 +20,7 @@ public static class QuestionBankWorkbook
     {
         "Version", "Operation", "Stars", "Language", "Left", "Right", "Subject", "Unit", "GroupUnit",
         "GivenA", "GivenB", "Question", "ModelName", "CreatedUtc", "RawJson", "Answer", "ProblemText",
-        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole"
+        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator"
     });
 
     public static int Write(Stream output, IEnumerable<ValidatedBankQuestion> questions, CancellationToken cancellationToken = default)
@@ -77,9 +77,9 @@ public static class QuestionBankWorkbook
                 c.Language == AppLanguage.Vietnamese ? "vi-VN" : "en-US", c.Left.ToString(CultureInfo.InvariantCulture), c.Right.ToString(CultureInfo.InvariantCulture),
                 c.Subject, c.Unit, c.GroupUnit, question.Draft.GivenA, question.Draft.GivenB, question.Draft.Question, question.ModelName,
                 DateTime.SpecifyKind(question.CreatedUtc, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture), question.RawJson,
-                c.Answer.ToString(CultureInfo.InvariantCulture), question.WordProblem.ProblemText,
+                c.AnswerText, question.WordProblem.ProblemText,
                 c.IsTemplate ? c.Structure.ToString() : "", c.OtherSubject, question.Draft.SolutionLead ?? "", question.Draft.UnitId ?? "",
-                c.TopicId, c.SceneId, c.PartA, c.PartB, c.Grade.ToString(CultureInfo.InvariantCulture), c.KnowledgeGroup.ToString(), c.UnknownRole.ToString()]);
+                c.TopicId, c.SceneId, c.PartA, c.PartB, c.Grade.ToString(CultureInfo.InvariantCulture), c.KnowledgeGroup.ToString(), c.UnknownRole.ToString(), c.LeftDenominator.ToString(CultureInfo.InvariantCulture), c.RightDenominator.ToString(CultureInfo.InvariantCulture)]);
         }
         xml.WriteEndElement();
         xml.WriteStartElement("autoFilter", Main); xml.WriteAttributeString("ref", $"A1:{ColumnName(Columns.Count - 1)}{rowNumber - 1}"); xml.WriteEndElement();
@@ -186,7 +186,9 @@ public static class QuestionBankWorkbook
                     string.IsNullOrWhiteSpace(Get("Grade")) ? 0 : Integer("Grade"),
                     string.IsNullOrWhiteSpace(Get("KnowledgeGroup")) ? QuestionKnowledgeGroup.Objects
                         : Enum.Parse<QuestionKnowledgeGroup>(Get("KnowledgeGroup"), true),
-                    string.IsNullOrWhiteSpace(Get("UnknownRole")) ? FindXUnknownRole.None : Enum.Parse<FindXUnknownRole>(Get("UnknownRole"), true));
+                    string.IsNullOrWhiteSpace(Get("UnknownRole")) ? FindXUnknownRole.None : Enum.Parse<FindXUnknownRole>(Get("UnknownRole"), true),
+                    string.IsNullOrWhiteSpace(Get("LeftDenominator")) ? 1 : int.Parse(Get("LeftDenominator"), CultureInfo.InvariantCulture),
+                    string.IsNullOrWhiteSpace(Get("RightDenominator")) ? 1 : int.Parse(Get("RightDenominator"), CultureInfo.InvariantCulture));
                 var draft = new BasicQuestionDraft(Get("GivenA"), Get("GivenB"), Get("Question"),
                     contract.IsTemplate ? Get("SolutionLead") : null, contract.IsTemplate ? Get("UnitId") : null);
                 string json = QuestionBankStore.SerializeDraft(draft);

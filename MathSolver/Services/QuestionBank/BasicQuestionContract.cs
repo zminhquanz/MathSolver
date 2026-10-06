@@ -13,17 +13,20 @@ public sealed record BasicQuestionContract(
     BasicQuestionStructure Structure = BasicQuestionStructure.Increase, string OtherSubject = "",
     string TopicId = "", string SceneId = "", string PartA = "", string PartB = "",
     int Grade = 0, QuestionKnowledgeGroup KnowledgeGroup = QuestionKnowledgeGroup.Objects,
-    FindXUnknownRole UnknownRole = FindXUnknownRole.None)
+    FindXUnknownRole UnknownRole = FindXUnknownRole.None, int LeftDenominator = 1, int RightDenominator = 1)
 {
     public const int CurrentVersion = 2;
-    [JsonIgnore] public BankQuestionFamily Family => Version == FindXQuestionCatalogue.Version ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
-    [JsonIgnore] public BigInteger Answer => Version == AppliedQuestionCatalogue.Version
+    [JsonIgnore] public BankQuestionFamily Family => Version == FractionQuestionCatalogue.Version ? BankQuestionFamily.Fraction : Version == FindXQuestionCatalogue.Version ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
+    [JsonIgnore] public string AnswerText => Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Answer(this).ToString() : Answer.ToString(CultureInfo.InvariantCulture);
+    [JsonIgnore] public BigInteger Answer => Version == FractionQuestionCatalogue.Version
+        ? FractionQuestionCatalogue.Answer(this) is { } fraction && fraction.Denominator.IsOne ? fraction.Numerator : throw new InvalidOperationException("UseExactFractionAnswer")
+        : Version == AppliedQuestionCatalogue.Version
         && AppliedQuestionCatalogue.Reasoning(this) is { } reasoning ? reasoning.Answer
         : new BasicArithmeticEngine().CalculateInteger(Expression).Result;
     [JsonIgnore] public IntegerArithmeticExpression Expression => Version == FindXQuestionCatalogue.Version
         ? FindXQuestionCatalogue.Equation(this).SolutionExpression : new(Left, Operation, Right);
-    [JsonIgnore] public bool IsTemplate => Version == FindXQuestionCatalogue.Version || Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version;
-    [JsonIgnore] public string AnswerUnit => Version == FindXQuestionCatalogue.Version
+    [JsonIgnore] public bool IsTemplate => Version == FractionQuestionCatalogue.Version || Version == FindXQuestionCatalogue.Version || Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version;
+    [JsonIgnore] public string AnswerUnit => Version == FractionQuestionCatalogue.Version ? Unit : Version == FindXQuestionCatalogue.Version
         ? AppliedQuestionCatalogue.ResultUnit(FindXQuestionCatalogue.AsApplied(this))
         : Version == AppliedQuestionCatalogue.Version
         ? AppliedQuestionCatalogue.ResultUnit(this)
@@ -31,7 +34,8 @@ public sealed record BasicQuestionContract(
         ? Language == AppLanguage.Vietnamese ? "lần" : "times" : Structure == BasicQuestionStructure.CountGroups
         ? QuestionUnits.Find(this)?.GroupFor(this, Answer.IsOne) ?? GroupUnit
         : QuestionUnits.Find(this)?.Item(Language, Answer.IsOne) ?? Unit;
-    [JsonIgnore] public bool IsValid => Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.IsValid(this)
+    [JsonIgnore] public bool IsValid => Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.IsValid(this)
+        : LeftDenominator == 1 && RightDenominator == 1 && (Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.IsValid(this)
         : UnknownRole == FindXUnknownRole.None && (Version == AppliedQuestionCatalogue.Version
         ? Enum.IsDefined(Operation) && Enum.IsDefined(Tier) && Language is AppLanguage.Vietnamese or AppLanguage.English
             && Left > 0 && Right > 0 && (Operation != ArithmeticOperation.Divide || Left % Right == 0
@@ -54,12 +58,13 @@ public sealed record BasicQuestionContract(
             && Subject != OtherSubject && Left <= 99999 && Right <= 99999
             : Language == AppLanguage.Vietnamese ? Unit == "quyển sách" && GroupUnit == "thùng" : Unit == "books" && GroupUnit == "box")
         && (Operation != ArithmeticOperation.Subtract || Left >= Right)
-        && (Operation != ArithmeticOperation.Divide || Left % Right == 0));
+        && (Operation != ArithmeticOperation.Divide || Left % Right == 0)));
 
     private static bool ValidActor(string actor) => !string.IsNullOrWhiteSpace(actor) && actor.Length <= 100
         && !actor.Any(c => char.IsControl(c) || char.IsDigit(c) || c is '{' or '}');
 
-    [JsonIgnore] public string SolutionLead => Version == FindXQuestionCatalogue.Version
+    [JsonIgnore] public string SolutionLead => Version == FractionQuestionCatalogue.Version
+        ? FractionQuestionCatalogue.Render(FractionQuestionCatalogue.Draft(this).SolutionLead!, this) : Version == FindXQuestionCatalogue.Version
         ? FindXQuestionCatalogue.Render(FindXQuestionCatalogue.Draft(this).SolutionLead!, this)
         : Version == AppliedQuestionCatalogue.Version
         ? AppliedQuestionCatalogue.Render(AppliedQuestionCatalogue.Draft(this).SolutionLead!, this)
@@ -67,7 +72,8 @@ public sealed record BasicQuestionContract(
         ? $"Số {Unit} {(Operation == ArithmeticOperation.Divide ? "trong mỗi " + GroupUnit : "cần tìm")} là:"
         : $"The number of {Unit} {(Operation == ArithmeticOperation.Divide ? "in each " + GroupUnit : "requested")} is:";
 
-    [JsonIgnore] public string Solution => Version == FindXQuestionCatalogue.Version
+    [JsonIgnore] public string Solution => Version == FractionQuestionCatalogue.Version
+        ? $"{SolutionLead}\n{FractionQuestionCatalogue.Expression(this)} = {AnswerText} {AnswerUnit}" : Version == FindXQuestionCatalogue.Version
         ? $"{SolutionLead}\n{Expression.LeftOperand} {BasicArithmeticEngine.GetSymbol(Expression.Operation)} {Expression.RightOperand} = {Answer} {AnswerUnit}"
         : (Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.ConversionStep(this) is { } step ? step + "\n" : "")
         + $"{SolutionLead}\n{(Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Reasoning(this)?.Equation : null) ?? $"{Left} {BasicArithmeticEngine.GetSymbol(Operation)} {Right}"} = {Answer} {AnswerUnit}";
@@ -118,6 +124,7 @@ public sealed record BasicQuestionContract(
     public BasicQuestionContract FreshFacts(Random? random = null)
     {
         if (!IsTemplate) return this;
+        if (Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
         if (Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, UnknownRole, SceneId);
         if (Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
         if (Version == AdditionQuestionCatalogue.Version) return AdditionQuestionCatalogue.Refresh(this, random);
@@ -130,6 +137,7 @@ public sealed record BasicQuestionContract(
     {
         if (!IsValid) throw new InvalidOperationException("Invalid stored arithmetic contract.");
         random ??= Random.Shared;
+        if (Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.ToPractice(this, text, mode, random);
         BigInteger answer = Answer;
         FindXQuizContract? findX = Family == BankQuestionFamily.FindX ? FindXQuestionCatalogue.Equation(this) : null;
         if (mode == ArithmeticQuizMode.Essay) return new(Expression, mode, answer, null, null, [], text, FindXProblem: findX);
@@ -151,9 +159,10 @@ public sealed record AiGenerationOptions(ArithmeticOperation Operation, Curricul
     public void Validate()
     {
         if (!Enum.IsDefined(Family) || !Enum.IsDefined(UnknownRole)
-            || Family == BankQuestionFamily.Arithmetic && UnknownRole != FindXUnknownRole.None
+            || Family != BankQuestionFamily.FindX && UnknownRole != FindXUnknownRole.None
             || Family == BankQuestionFamily.FindX && UnknownRole == FindXUnknownRole.None
             || Family == BankQuestionFamily.FindX && !FindXQuestionCatalogue.Available(Profile ?? new(QuestionKnowledgeGroup.Objects), Operation, Tier, UnknownRole).Any()
+            || Family == BankQuestionFamily.Fraction && !FractionQuestionCatalogue.Available(Profile ?? new(QuestionKnowledgeGroup.Objects), Operation, Tier).Any()
             || !Enum.IsDefined(Operation) || !Enum.IsDefined(Tier)
             || Language is not (AppLanguage.Vietnamese or AppLanguage.English) || Count is < 1 or > 100
             || Profile is not null && !Profile.Allows(Operation))

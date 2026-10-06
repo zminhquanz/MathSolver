@@ -12,7 +12,8 @@ public sealed record BasicQuestionDraft(string GivenA, string GivenB, string Que
     public MathWordProblem ToWordProblem(BasicQuestionContract c) => new(c.IsTemplate
         ? BasicQuestionTemplates.RenderProblem(GivenA, GivenB, Question, c) : ProblemText,
         c.IsTemplate ? BasicQuestionTemplates.Render(SolutionLead!, c) : c.SolutionLead, c.AnswerUnit, c.Subject,
-        c.Version == FindXQuestionCatalogue.Version ? AppliedQuestionCatalogue.Quantity(FindXQuestionCatalogue.AsApplied(c))
+        c.Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Find(c.SceneId)!.Quantity
+            : c.Version == FindXQuestionCatalogue.Version ? AppliedQuestionCatalogue.Quantity(FindXQuestionCatalogue.AsApplied(c))
             : c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Quantity(c) : WordProblemQuantity.Unspecified,
         c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.ConversionStep(c) : null,
         c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Reasoning(c) : null,

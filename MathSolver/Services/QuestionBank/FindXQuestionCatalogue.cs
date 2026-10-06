@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace MathSolver.Services.QuestionBank;
 
-public enum BankQuestionFamily { Arithmetic, FindX }
+public enum BankQuestionFamily { Arithmetic, FindX, Fraction }
 public enum FindXUnknownRole { None, Addend, Minuend, Subtrahend, Factor, Dividend, Divisor }
 
 /// <summary>The same reviewed situation, with an explicit equation/unknown role.
@@ -171,7 +171,7 @@ public static class FindXQuestionCatalogue
         return validation.IsValid ? new(validation.Draft, null, c) : validation with { Contract = null };
     }
 
-    public static string Prompt(BasicQuestionContract c, string? correction)
+    public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example = null)
     {
         var s = Find(c.SceneId)!;
         var source = AsApplied(c);
@@ -182,7 +182,7 @@ public static class FindXQuestionCatalogue
             + $"\nScene={s.SourceScene.Id}; group={s.Group}; stars={(int)c.Tier}; unknown={s.Role}."
             + $"\nGiven A: {s.KnownARole} [{units.A}]; given B: {s.KnownBRole} [{units.B}]; target: {s.TargetRole} [{c.AnswerUnit}]."
             + "\nUse only the placeholders and roles of this selected example; keep its target and affirmative facts:\n"
-            + QuestionBankStore.SerializeDraft(Draft(c))
+            + QuestionBankStore.SerializeDraft(example ?? Draft(c))
             + "\nReturn only JSON: given_a, given_b, question, solution_lead, unit_id."
             + (correction is null ? "" : "\nCorrect rejected output: " + correction);
     }

@@ -91,8 +91,10 @@ internal static class FindXBankTests
         foreach (var _ in roleScenes)
             Check(seenScenes.Add(cycle.Next(new(QuestionKnowledgeGroup.Objects), ArithmeticOperation.Subtract,
                 CurriculumTier.FiveStars, AppLanguage.Vietnamese, FindXUnknownRole.Minuend).SceneId), "Explicit-role cycle repeated a setting.");
-        var store = new QuestionBankStore(Path.Combine(directory, "findx.db3"));
+        string path = Path.Combine(directory, "findx.db3");
+        var store = new QuestionBankStore(path);
         var records = new List<ValidatedBankQuestion>();
+        var proseIdentities = new HashSet<string>();
         foreach (var group in QuestionLearningProfile.Groups())
         foreach (var operation in Enum.GetValues<ArithmeticOperation>())
         {
@@ -100,7 +102,9 @@ internal static class FindXBankTests
             var d = FindXQuestionCatalogue.Draft(c);
             var saved = new ValidatedBankQuestion(c, d, QuestionBankStore.SerializeDraft(d), "test-runtime", DateTime.UtcNow);
             records.Add(saved);
-            Check(await store.InsertAsync(saved), "Insert failed.");
+            bool unique = proseIdentities.Add(QuestionProseIdentity.Hash(c, d));
+            Check(await store.InsertAsync(saved) == unique, "Find-X wording deduplication failed.");
+            if (!unique) QuestionBankTestFixtures.SeedHistorical(path, saved);
             Check(!await store.InsertAsync(saved with { Contract = c.FreshFacts(new Random(150)) }), "Template dedup included random facts.");
             var selected = await store.TakeFindXAsync(operation, c.Tier, c.Language, new(group));
             Check(selected?.Contract.Family == BankQuestionFamily.FindX && selected.Contract.UnknownRole == c.UnknownRole, "Find-X SQL selection mismatch.");
@@ -116,9 +120,10 @@ internal static class FindXBankTests
         workbook.Position = 0;
         var importStore = new QuestionBankStore(Path.Combine(directory, "findx-import.db3"));
         var imported = await importStore.ImportExcelAsync(workbook);
-        Check(imported.Inserted == records.Count + 1 && imported.Rejected == 0, "Find-X Excel roundtrip lost unknown roles.");
+        Check(imported.Inserted == proseIdentities.Count + 1 && imported.Duplicates == records.Count - proseIdentities.Count
+            && imported.Rejected == 0, "Find-X Excel roundtrip lost unknown roles or retained duplicate wording.");
         // A direct SQL edit cannot poison practice: storage payload and metadata must agree.
-        await store.QueryAsync("UPDATE BasicQuestionBank SET UnknownRole=99 WHERE Family=1");
+        await store.QueryAsync("UPDATE BasicQuestionBank SET ProblemVariant=99 WHERE ProblemType=1");
         Check(await store.TakeFindXAsync(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.Vietnamese,
             new(QuestionKnowledgeGroup.Objects)) is null, "Forged SQL metadata passed.");
 
@@ -127,8 +132,8 @@ internal static class FindXBankTests
             new(QuestionKnowledgeGroup.Packaging), BankQuestionFamily.FindX, FindXUnknownRole.Minuend));
         await background.Completion;
         Check(background.Snapshot.State == AiJobState.Completed && background.Snapshot.Items.Count == 2
-            && background.Snapshot.Items.All(i => i.State is AiItemState.Saved or AiItemState.Duplicate
-                && i.Contract.UnknownRole == FindXUnknownRole.Minuend && i.Attempts.Count == 2), "Retry/background insertion failed.");
+            && background.Snapshot.Items.All(i => i.State == AiItemState.Saved
+                && i.Contract.UnknownRole == FindXUnknownRole.Minuend && i.Attempts.Count is 2 or 3), "Retry/background insertion failed.");
         var rejectedStore = new QuestionBankStore(Path.Combine(directory, "findx-rejected.db3"));
         var rejectedJob = new AiQuestionGenerationService(new Runtime(rejectAll: true), rejectedStore);
         rejectedJob.Start(new(ArithmeticOperation.Divide, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, 2, true,
@@ -161,8 +166,9 @@ internal static class FindXBankTests
         public Task<string> GenerateAsync(BasicQuestionContract c, string prompt, CancellationToken cancellationToken,
             Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
         {
-            var d = FindXQuestionCatalogue.Draft(c);
-            if (rejectAll || _calls++ % 2 == 0) d = d with { GivenA = d.GivenA + " łącznie" };
+            bool duplicate = prompt.Contains("DuplicateProse");
+            var d = FindXQuestionCatalogue.Draft(c, duplicate ? 1 : 0);
+            if (rejectAll || !duplicate && _calls++ % 2 == 0) d = d with { GivenA = d.GivenA + " łącznie" };
             string raw = QuestionBankStore.SerializeDraft(d);
             onText?.Invoke(raw);
             return Task.FromResult(raw);

@@ -30,6 +30,12 @@ static string Draft(BasicQuestionContract c)
     return JsonSerializer.Serialize(new { given_a = a, given_b = b, question = q });
 }
 
+if (args is ["--prose-model", var proseModelPath])
+{
+    try { await ProseModelTests.RunAsync(proseModelPath); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
 if (args is ["--arithmetic-context-model", var arithmeticModelPath])
 {
     try { await ArithmeticContextTests.RunModelAsync(arithmeticModelPath); }
@@ -51,12 +57,68 @@ if (args is ["--one-step-practice"])
     catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
     return;
 }
+if (args is ["--fraction-model", var fractionModelPath])
+{
+    try { await FractionBankTests.RunModelAsync(fractionModelPath); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--practice-formats"])
+{
+    string folder = Path.Combine(Path.GetTempPath(), "MathSolver-practice-formats-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(folder);
+    try { await PracticeFormatTests.RunAsync(folder); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    finally { Directory.Delete(folder, true); }
+    return;
+}
+if (args is ["--fraction-bank"])
+{
+    string folder = Path.GetFullPath(Path.Combine("artifacts", "verification", "fraction-tests-" + Guid.NewGuid().ToString("N")));
+    Directory.CreateDirectory(folder);
+    try { await FractionBankTests.RunAsync(folder); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
 if (args is ["--findx-bank"])
 {
     string folder = Path.GetFullPath(Path.Combine("artifacts", "verification", "findx-tests-" + Guid.NewGuid().ToString("N")));
     Directory.CreateDirectory(folder);
     try { await FindXBankTests.RunAsync(folder); }
     catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--clear-bank"])
+{
+    string folder = Path.Combine(Path.GetTempPath(), "MathSolver-clear-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(folder);
+    try { await DeleteAllTests.RunAsync(folder); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    finally { Directory.Delete(folder, true); }
+    return;
+}
+if (args is ["--sql-grid"])
+{
+    string folder = Path.Combine(Path.GetTempPath(), "MathSolver-grid-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(folder);
+    try
+    {
+        var contract = BasicQuestionContract.Create(ArithmeticOperation.Add, CurriculumTier.OneStar, AppLanguage.Vietnamese, new Random(43));
+        string raw = Draft(contract);
+        var draft = BasicQuestionValidator.Validate(raw, contract).Draft!;
+        await SqlGridTests.RunAsync(folder, new(contract, draft, raw, "grid-test", DateTime.UtcNow));
+    }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    finally { Directory.Delete(folder, true); }
+    return;
+}
+if (args is ["--prose-deduplication"])
+{
+    string folder = Path.Combine(Path.GetTempPath(), "MathSolver-prose-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(folder);
+    try { await ProseDeduplicationTests.RunAsync(folder); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    finally { Directory.Delete(folder, true); }
     return;
 }
 if (args is ["--learning-profiles"])
@@ -242,6 +304,8 @@ try
         Check(invalidHeader && !Directory.EnumerateFiles(modelLibrary.DirectoryPath).Any(), "Invalid import published a model or left a partial file.");
     }
     Console.WriteLine("PASS SQLite persistence, deduplication, selection and invalid-insert protection");
+    await ProseDeduplicationTests.RunAsync(directory);
+    await DeleteAllTests.RunAsync(directory);
     await PracticeProviderTests.RunAsync(directory, validated, Draft);
     await BackgroundPracticeTests.RunAsync(directory);
     await BankDataTests.RunAsync(directory, validated, Draft);
@@ -294,6 +358,8 @@ try
     OneStepPracticeTests.Run();
     await LearningProfileTests.RunAsync(directory);
     await FindXBankTests.RunAsync(directory);
+    await PracticeFormatTests.RunAsync(directory);
+    await FractionBankTests.RunAsync(directory);
 }
 finally { Directory.Delete(directory, true); }
 

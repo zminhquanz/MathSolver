@@ -14,6 +14,13 @@ namespace MathSolver.Controls;
 /// </summary>
 public sealed class MouseDragScrollView : ScrollView
 {
+    /// <summary>
+    /// Uses scrollbar-style mouse dragging: moving right increases the horizontal
+    /// offset. The default keeps tab-strip content following the pointer.
+    /// Native touch scrolling is unaffected.
+    /// </summary>
+    public bool ScrollInPointerDirection { get; set; }
+
     private bool _isUpdatingTabs;
     private double _lastTabViewportWidth = -1d;
 
@@ -111,6 +118,16 @@ public sealed class MouseDragScrollView : ScrollView
             args.Pointer.PointerDeviceType != PointerDeviceType.Mouse)
             return;
 
+        // Native scrollbars and inline editors own their pointer gestures.
+        // Capturing an editor drag here would interfere with text selection.
+        for (DependencyObject? element = args.OriginalSource as DependencyObject;
+             element is not null && !ReferenceEquals(element, _viewer);
+             element = VisualTreeHelper.GetParent(element))
+            if (element is Microsoft.UI.Xaml.Controls.Primitives.ScrollBar
+                or Microsoft.UI.Xaml.Controls.TextBox or Microsoft.UI.Xaml.Controls.PasswordBox
+                or Microsoft.UI.Xaml.Controls.RichEditBox or Microsoft.UI.Xaml.Controls.CheckBox)
+                return;
+
         var point = args.GetCurrentPoint(_viewer);
         if (!point.Properties.IsLeftButtonPressed)
             return;
@@ -170,7 +187,7 @@ public sealed class MouseDragScrollView : ScrollView
         }
 
         _viewer.ChangeView(
-            Math.Clamp(_pressOffset - delta, 0d, _viewer.ScrollableWidth),
+            Math.Clamp(_pressOffset + (ScrollInPointerDirection ? delta : -delta), 0d, _viewer.ScrollableWidth),
             null, null, disableAnimation: true);
         args.Handled = true;
     }

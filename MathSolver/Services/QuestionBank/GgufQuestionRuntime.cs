@@ -155,7 +155,12 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         finally { _gate.Release(); }
     }
 
-    public async Task<string> GenerateAsync(BasicQuestionContract contract, string prompt, CancellationToken cancellationToken,
+    public Task<string> GenerateAsync(BasicQuestionContract contract, string prompt, CancellationToken cancellationToken,
+        Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
+        => GenerateNovelAsync(contract, prompt, new HashSet<string>(StringComparer.Ordinal), cancellationToken, onText, onMetrics);
+
+    public async Task<string> GenerateNovelAsync(BasicQuestionContract contract, string prompt, IReadOnlySet<string> excludedProse,
+        CancellationToken cancellationToken,
         Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
     {
         if (!contract.IsTemplate || !contract.IsValid) throw new ArgumentException("InvalidContract", nameof(contract));
@@ -188,7 +193,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                     // Validate the sampled candidate first; fall back to the full
                     // vocabulary when it violates the grammar. Grammar remains enforced.
                     GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.Basic,
-                    Grammar = new Grammar(BuildGrammar(contract), "root") };
+                    Grammar = new Grammar(BuildNovelGrammar(contract, excludedProse), "root") };
                 var executor = new StatelessExecutor(_weights, parameters) { ApplyTemplate = false };
                 var result = new StringBuilder();
                 int generatedTokens = 0;
@@ -222,6 +227,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     internal static string BuildGrammar(BasicQuestionContract c)
     {
+        if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prose(c).Grammar(c, new HashSet<string>(StringComparer.Ordinal));
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Grammar(c);
         if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Grammar(c);
         if (c.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmeticGrammar(c);
@@ -241,6 +247,9 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 ? c.Language == MathSolver.Services.AppLanguage.Vietnamese ? "M\\u1ed7i " : "Each " : "")
             .Replace("{ACTOR_B}", "{" + b + "}").Replace("{ACTOR_Q}", "{" + q + "}");
     }
+
+    internal static string BuildNovelGrammar(BasicQuestionContract c, IReadOnlySet<string> excludedProse)
+        => ReviewedQuestionProse.For(c)?.Grammar(c, excludedProse) ?? BuildGrammar(c);
 
     private static string BuildArithmeticGrammar(BasicQuestionContract c)
     {

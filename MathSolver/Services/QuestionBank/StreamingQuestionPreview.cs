@@ -40,7 +40,7 @@ public static class StreamingQuestionPreview
     {
         if (!c.IsTemplate) return Read(json);
         var unit = QuestionUnits.Find(ReadField(json, "unit_id"));
-        if (unit is not null && c.Version is not (AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version)) c = BasicQuestionTemplates.ApplyUnit(c, unit);
+        if (unit is not null && c.Version is not (AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version)) c = BasicQuestionTemplates.ApplyUnit(c, unit);
         // A stream may end halfway through a placeholder. Wait for its closing brace.
         string CompleteSlots(string field)
         {

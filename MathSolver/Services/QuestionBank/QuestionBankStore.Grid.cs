@@ -20,7 +20,7 @@ public sealed partial class QuestionBankStore
         new("CreatedUtc", true, "0"), new("LastUsedUtc", true, "0"), new("UseCount", true, "0"),
         new("Structure", true, "0"), new("TopicId", false, ""), new("SceneId", false, ""),
         new("Grade", true, "0"), new("KnowledgeGroup", true, "0"),
-        new("Family", true, "0"), new("UnknownRole", true, "0")
+        new("ProblemType", true, "0"), new("ProblemVariant", true, "0")
     });
 
     // Only direct single-table projections with a genuine Hash are editable. Never infer
@@ -103,6 +103,26 @@ public sealed partial class QuestionBankStore
 
     public Task<BankGridMutationResult> DeleteGridRowAsync(BankGridRow original, CancellationToken cancellationToken = default) =>
         MutateGridRowAsync(original, "DELETE FROM BasicQuestionBank", [], cancellationToken);
+
+    public Task<BankGridMutationResult> UpdateGridRowAsync(BankGridRow original,
+        IReadOnlyDictionary<string, string?> inputs, CancellationToken cancellationToken = default)
+    {
+        if (inputs.Count == 0) return Task.FromResult(new BankGridMutationResult(false, "GridColumnReadOnly"));
+        var assignments = new List<string>();
+        var values = new List<object?>();
+        foreach (var (name, text) in inputs)
+        {
+            var column = GridColumns.FirstOrDefault(c => c.Name == name && !c.IsKey);
+            if (column is null) return Task.FromResult(new BankGridMutationResult(false, "GridColumnReadOnly"));
+            if (!TryGridValue(column, text ?? "", text is null, out var value))
+                return Task.FromResult(new BankGridMutationResult(false, "GridIntegerRequired"));
+            assignments.Add($"\"{column.Name}\"=?");
+            values.Add(value);
+        }
+        // One UPDATE and one optimistic comparison for the whole row: never partially save a draft.
+        return MutateGridRowAsync(original, "UPDATE BasicQuestionBank SET " + string.Join(',', assignments),
+            values.ToArray(), cancellationToken);
+    }
 
     private Task<BankGridMutationResult> MutateGridRowAsync(BankGridRow original, string command, object?[] args, CancellationToken cancellationToken) =>
         WithDatabaseAsync(db =>

@@ -8,12 +8,13 @@ namespace MathSolver.Views;
 public partial class AiQuestionBankPage
 {
     private CancellationTokenSource? _dataCancellation;
+    private bool _confirmingDeleteAll;
     private SqlResultCellEventArgs? _selectedSqlCell;
     private BankQueryResult? _sqlResults;
     private string? _sqlResultQuery;
     private BankGridRow? _selectedSqlRow;
+    private BankGridRow? _editingSqlRow;
     private string? _selectedSqlColumn;
-    private readonly Dictionary<string, (InputView Input, CheckBox Null)> _newSqlFields = [];
     private static readonly FilePickerFileType ExcelType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
     {
         [DevicePlatform.WinUI] = [".xlsx"],
@@ -24,15 +25,29 @@ public partial class AiQuestionBankPage
 
     private void UpdateDataActions()
     {
-        bool idle = _dataCancellation is null;
-        QueryButton.IsEnabled = QueryEditor.IsEnabled = ImportExcelButton.IsEnabled = ExportExcelButton.IsEnabled = idle;
-        CancelDataButton.IsEnabled = !idle;
-        QueryResultsTable.IsEnabled = ReloadSqlGridButton.IsEnabled = LoadEditableSqlButton.IsEnabled = idle;
-        AddSqlRowButton.IsEnabled = idle && _sqlResults?.EditableColumns is not null;
-        SaveSqlCellButton.IsEnabled = DeleteSqlRowButton.IsEnabled = idle && _selectedSqlRow is not null;
+        bool idle = _dataCancellation is null && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll;
+        bool inserting = QueryResultsTable.IsInserting;
+        bool editing = QueryResultsTable.IsEditing;
+        bool draft = inserting || editing;
+        DeleteAllButton.IsEnabled = idle && !draft && !_saving && !_bank.Generation.IsRunning;
+        QueryButton.IsEnabled = ImportExcelButton.IsEnabled = idle && !draft;
+        QueryEditor.IsEnabled = ExportExcelButton.IsEnabled = idle;
+        CancelDataButton.IsEnabled = _dataCancellation is not null;
+        QueryResultsTable.IsEnabled = idle;
+        ReloadSqlGridButton.IsEnabled = LoadEditableSqlButton.IsEnabled = idle && !draft;
+        AddSqlRowButton.IsEnabled = idle && !draft && _sqlResults?.EditableColumns is not null;
+        EditSqlRowButton.IsVisible = !draft && _sqlResults?.EditableColumns is not null;
+        EditSqlRowButton.IsEnabled = idle && !draft && _selectedSqlRow is not null && _selectedSqlCell is not null
+            && _sqlResults?.EditableColumns?.Any(column => column != "Hash") == true;
+        SaveSqlRowButton.IsEnabled = CancelSqlRowButton.IsEnabled = idle && editing;
+        SaveSqlRowButton.IsVisible = CancelSqlRowButton.IsVisible = editing;
+        bool canDelete = !inserting && _selectedSqlRow is not null
+            && (!editing || _selectedSqlRow.Hash == _editingSqlRow?.Hash);
+        DeleteSqlRowButton.IsEnabled = idle && canDelete;
+        DeleteSqlRowButton.IsVisible = canDelete;
         SaveNewSqlRowButton.IsEnabled = CancelNewSqlRowButton.IsEnabled = CloseSqlCellButton.IsEnabled = idle;
-        NewSqlRowFields.IsEnabled = SqlCellNullPanel.IsEnabled = idle;
-        QueryCellEditor.IsEnabled = idle && !SqlCellNullCheckBox.IsChecked;
+        SaveNewSqlRowButton.IsVisible = CancelNewSqlRowButton.IsVisible = NewSqlRowHintLabel.IsVisible = inserting;
+        QueryCellEditor.IsEnabled = idle;
         InquiryToggleButton.Text = T(InquiryPanel.IsVisible ? "InquiryHide" : "InquiryShow");
     }
 
@@ -43,6 +58,29 @@ public partial class AiQuestionBankPage
     }
 
     private void OnCancelDataClicked(object? sender, EventArgs e) => _dataCancellation?.Cancel();
+
+    private async void OnDeleteAllClicked(object? sender, EventArgs e)
+    {
+        if (!DeleteAllButton.IsEnabled) return;
+        _confirmingDeleteAll = true;
+        Render();
+        try
+        {
+            bool confirmed = await DisplayAlertAsync(T("DeleteAllTitle"), T("DeleteAllConfirm"),
+                T("DeleteAllAccept"), T("Cancel"));
+            if (!confirmed) return;
+            await RunDataOperationAsync(true, async cancellation =>
+            {
+                int deleted = await _bank.Generation.DeleteAllAsync(cancellation);
+                ClearSqlResults();
+                InquiryStatusLabel.Text = "";
+                DataTransferStatusLabel.Text = deleted == 0 ? T("DeleteAllEmpty")
+                    : string.Format(CultureInfo.CurrentCulture, T("DeleteAllSuccess"), deleted);
+            });
+        }
+        catch (Exception error) { await ShowErrorAsync(error); }
+        finally { _confirmingDeleteAll = false; Render(); }
+    }
 
     private async Task RunDataOperationAsync(bool transfer, Func<CancellationToken, Task> work)
     {
@@ -111,20 +149,28 @@ public partial class AiQuestionBankPage
         AddSqlRowButton.IsVisible = LoadEditableSqlButton.IsVisible = ReloadSqlGridButton.IsVisible = false;
         _sqlResults = null;
         _sqlResultQuery = null;
+        _editingSqlRow = null;
         CloseNewSqlRow();
         CloseSqlCell();
     }
 
     private async void OnSqlCellSelected(object? sender, SqlResultCellEventArgs cell)
     {
-        if (_dataCancellation is not null) return;
+        if (_dataCancellation is not null || QueryResultsTable.IsInserting) return;
+        if (QueryResultsTable.IsEditing && cell.RowNumber == QueryResultsTable.EditingRowNumber)
+        {
+            _selectedSqlCell = cell;
+            _selectedSqlRow = _editingSqlRow;
+            _selectedSqlColumn = _sqlResults!.EditableColumns![cell.ColumnIndex];
+            RefreshSqlCellLabels();
+            ShowSqlCellInfo(QueryResultsTable.GetEditValues()[_selectedSqlColumn]);
+            UpdateDataActions();
+            return;
+        }
         CloseSqlCell();
-        CloseNewSqlRow();
         _selectedSqlCell = cell;
         RefreshSqlCellLabels();
-        // Preserve literal whitespace and JSON instead of copying the truncated preview.
-        QueryCellEditor.Text = cell.Value;
-        QueryCellDetailPanel.IsVisible = true;
+        ShowSqlCellInfo(cell.Value);
         if (_sqlResults?.EditableColumns is not { } columns) return;
         string hash = _sqlResults.Rows[cell.RowNumber - 1][Array.IndexOf(columns, "Hash")];
         await RunDataOperationAsync(false, async cancellation =>
@@ -134,15 +180,63 @@ public partial class AiQuestionBankPage
             _selectedSqlRow = row;
             _selectedSqlColumn = columns[cell.ColumnIndex];
             object? value = row.Values[_selectedSqlColumn];
-            QueryCellEditor.Text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
-            bool editable = _selectedSqlColumn != "Hash";
-            QueryCellEditor.IsReadOnly = !editable;
-            QueryCellReadOnlyLabel.IsVisible = !editable;
-            SqlCellNullPanel.IsVisible = SaveSqlCellButton.IsVisible = editable;
-            SqlCellNullCheckBox.IsChecked = value is null;
-            DeleteSqlRowButton.IsVisible = true;
-            InquiryStatusLabel.Text = T(editable ? "GridCellLoaded" : "GridKeyReadOnly");
+            ShowSqlCellInfo(value is null ? null : Convert.ToString(value, CultureInfo.InvariantCulture));
+            InquiryStatusLabel.Text = T("GridCellLoaded");
         });
+    }
+
+    private async void OnEditSqlRowClicked(object? sender, EventArgs e)
+    {
+        if (!EditSqlRowButton.IsEnabled || _selectedSqlRow is not { } selected || _selectedSqlCell is not { } cell
+            || _sqlResults?.EditableColumns is not { } columns) return;
+        await RunDataOperationAsync(false, async cancellation =>
+        {
+            // Refresh the original snapshot only when explicitly entering edit mode.
+            var row = await _bank.Store.GetGridRowAsync(selected.Hash, cancellation);
+            if (row is null)
+            {
+                _selectedSqlRow = null;
+                InquiryStatusLabel.Text = ErrorText("GridRowChanged");
+                return;
+            }
+            _selectedSqlRow = _editingSqlRow = row;
+            QueryResultsTable.BeginEdit(cell.RowNumber, columns.Select(name => new SqlInsertColumn(name, "", name == "Hash")).ToArray(),
+                row.Values, T("GridNull"), T("GridAutoKey"));
+            _selectedSqlColumn = columns[cell.ColumnIndex];
+            ShowSqlCellInfo(QueryResultsTable.GetEditValues()[_selectedSqlColumn]);
+            InquiryStatusLabel.Text = T("GridRowEditing");
+        });
+        int focusColumn = columns[cell.ColumnIndex] == "Hash" ? Array.FindIndex(columns, name => name != "Hash") : cell.ColumnIndex;
+        QueryResultsTable.FocusEditCell(focusColumn);
+    }
+
+    private void OnSqlRowDraftChanged(object? sender, EventArgs e)
+    {
+        if (_selectedSqlCell?.RowNumber == QueryResultsTable.EditingRowNumber && _selectedSqlColumn is not null && QueryCellDetailPanel.IsVisible
+            && QueryResultsTable.GetEditValues().TryGetValue(_selectedSqlColumn, out var value))
+            ShowSqlCellInfo(value);
+    }
+
+    private void ShowSqlCellInfo(string? value)
+    {
+        // The detail panel is read-only; full whitespace/JSON is retained for copying.
+        QueryCellEditor.Text = value ?? "NULL";
+        QueryCellDetailPanel.IsVisible = true;
+        QueryCellReadOnlyLabel.IsVisible = _selectedSqlColumn == "Hash";
+        ResizeSqlCellInfo();
+    }
+
+    private void OnSqlCellInfoSizeChanged(object? sender, EventArgs e) => ResizeSqlCellInfo();
+    private void ResizeSqlCellInfo()
+    {
+        int charactersPerLine = Math.Max(12, (int)((QueryCellDetailPanel.Width > 0 ? QueryCellDetailPanel.Width - 32 : 560) / 8));
+        int lines = 0;
+        foreach (string line in (QueryCellEditor.Text ?? "").Replace("\r\n", "\n").Split('\n'))
+        {
+            lines += Math.Max(1, (line.Length + charactersPerLine - 1) / charactersPerLine);
+            if (lines >= 5) break;
+        }
+        QueryCellEditor.HeightRequest = Math.Clamp(lines * 22 + 14, 48, 128);
     }
 
     private void RefreshSqlCellLabels()
@@ -150,11 +244,9 @@ public partial class AiQuestionBankPage
         if (_selectedSqlCell is { } cell)
             QueryCellTitleLabel.Text = string.Format(CultureInfo.CurrentCulture, T("SqlCellTitle"), cell.RowNumber, cell.ColumnName);
         CopySqlCellButton.Text = T("CopySqlCell");
+        QueryResultsTable.UpdateInsertLabels(T("GridNull"), T("GridAutoKey"));
         if (_sqlResults is not null)
             QueryEditHintLabel.Text = T(_sqlResults.EditableColumns is not null ? "GridEditableHint" : "GridReadOnlyHint");
-        foreach (var field in _newSqlFields.Values)
-            if (field.Null.Parent is HorizontalStackLayout layout && layout.Children.LastOrDefault() is Label label)
-                label.Text = T("GridNull");
     }
 
     private async void OnCopySqlCellClicked(object? sender, EventArgs e)
@@ -175,32 +267,36 @@ public partial class AiQuestionBankPage
         _selectedSqlRow = null;
         _selectedSqlColumn = null;
         QueryCellDetailPanel.IsVisible = false;
-        SqlCellNullPanel.IsVisible = SaveSqlCellButton.IsVisible = DeleteSqlRowButton.IsVisible = QueryCellReadOnlyLabel.IsVisible = false;
-        SqlCellNullCheckBox.IsChecked = false;
-        QueryCellEditor.IsReadOnly = true;
+        QueryCellReadOnlyLabel.IsVisible = false;
         QueryCellEditor.Text = "";
         QueryCellTitleLabel.Text = "";
+        UpdateDataActions();
     }
 
-    private void OnSqlCellNullChanged(object? sender, CheckedChangedEventArgs e) =>
-        QueryCellEditor.IsEnabled = !e.Value && _dataCancellation is null;
-
-    private async void OnSaveSqlCellClicked(object? sender, EventArgs e)
+    private async void OnSaveSqlRowClicked(object? sender, EventArgs e)
     {
-        if (_selectedSqlRow is not { } row || _selectedSqlColumn is not { } column) return;
-        string text = QueryCellEditor.Text ?? "";
-        bool isNull = SqlCellNullCheckBox.IsChecked;
+        if (_dataCancellation is not null || !QueryResultsTable.IsEditing || _editingSqlRow is not { } row) return;
+        var values = QueryResultsTable.GetEditValues().Where(field => field.Key != "Hash").ToDictionary(field => field.Key, field => field.Value);
         await RunDataOperationAsync(false, async cancellation =>
         {
-            var saved = await _bank.Store.UpdateGridCellAsync(row, column, text, isNull, cancellation);
+            var saved = await _bank.Store.UpdateGridRowAsync(row, values, cancellation);
             if (!saved.IsSuccess) { InquiryStatusLabel.Text = ErrorText(saved.ErrorCode!); return; }
-            await RefreshSqlGridAsync(CancellationToken.None, T("GridCellSaved"));
+            await RefreshSqlGridAsync(CancellationToken.None, T("GridRowSaved"));
         });
+    }
+
+    private void OnCancelSqlRowClicked(object? sender, EventArgs e)
+    {
+        if (_dataCancellation is not null) return;
+        QueryResultsTable.CancelEdit();
+        _editingSqlRow = null;
+        CloseSqlCell();
+        UpdateDataActions();
     }
 
     private async void OnDeleteSqlRowClicked(object? sender, EventArgs e)
     {
-        if (_selectedSqlRow is not { } row) return;
+        if (!DeleteSqlRowButton.IsEnabled || _selectedSqlRow is not { } row) return;
         await RunDataOperationAsync(false, async cancellation =>
         {
             var deleted = await _bank.Store.DeleteGridRowAsync(row, cancellation);
@@ -242,36 +338,22 @@ public partial class AiQuestionBankPage
 
     private void OnAddSqlRowClicked(object? sender, EventArgs e)
     {
-        if (_dataCancellation is not null || _sqlResults?.EditableColumns is null) return;
+        if (_dataCancellation is not null || QueryResultsTable.IsInserting || QueryResultsTable.IsEditing || _sqlResults?.EditableColumns is not { } columns) return;
         CloseSqlCell();
-        CloseNewSqlRow();
-        foreach (var column in QuestionBankStore.GridColumns)
+        QueryResultsTable.BeginInsert(columns.Select(name =>
         {
-            var label = new Label { Text = column.Name, FontAttributes = FontAttributes.Bold, FontSize = 14 };
-            InputView input = column.Name.EndsWith("Json", StringComparison.Ordinal)
-                ? new Editor { HeightRequest = 100, AutoSize = EditorAutoSizeOption.Disabled }
-                : new Entry { Keyboard = column.IsInteger ? Keyboard.Numeric : Keyboard.Default };
-            input.Text = column.Name == "CreatedUtc" ? DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture) : column.DefaultValue;
-            input.SetDynamicResource(InputView.FontFamilyProperty, "AppFontFamily");
-            input.SetDynamicResource(InputView.TextColorProperty, "TextPrimaryColor");
-            input.FontSize = 14;
-            var isNull = new CheckBox();
-            isNull.CheckedChanged += (_, change) => input.IsEnabled = !change.Value;
-            NewSqlRowFields.Add(new VerticalStackLayout
-            {
-                Spacing = 4,
-                Children = { label, input, new HorizontalStackLayout { Spacing = 8, IsVisible = !column.IsKey,
-                    Children = { isNull, new Label { Text = T("GridNull"), VerticalOptions = LayoutOptions.Center, FontSize = 13 } } } }
-            });
-            _newSqlFields[column.Name] = (input, isNull);
-        }
-        NewSqlRowPanel.IsVisible = true;
+            var column = QuestionBankStore.GridColumns.Single(c => c.Name == name);
+            return new SqlInsertColumn(name, name == "CreatedUtc"
+                ? DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture) : column.DefaultValue, column.IsKey);
+        }).ToArray(), T("GridNull"), T("GridAutoKey"));
+        UpdateDataActions();
     }
 
     private async void OnSaveNewSqlRowClicked(object? sender, EventArgs e)
     {
-        if (_sqlResults?.EditableColumns is null || _newSqlFields.Count == 0) return;
-        var values = _newSqlFields.ToDictionary(field => field.Key, field => field.Value.Null.IsChecked ? null : field.Value.Input.Text ?? "");
+        if (_dataCancellation is not null || _sqlResults?.EditableColumns is null || !QueryResultsTable.IsInserting) return;
+        var values = new Dictionary<string, string?>(QueryResultsTable.GetInsertValues());
+        values.TryAdd("CreatedUtc", DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture));
         await RunDataOperationAsync(false, async cancellation =>
         {
             var inserted = await _bank.Store.InsertGridRowAsync(values, cancellation);
@@ -283,9 +365,8 @@ public partial class AiQuestionBankPage
     private void OnCancelNewSqlRowClicked(object? sender, EventArgs e) => CloseNewSqlRow();
     private void CloseNewSqlRow()
     {
-        NewSqlRowPanel.IsVisible = false;
-        NewSqlRowFields.Clear();
-        _newSqlFields.Clear();
+        QueryResultsTable.CancelInsert();
+        UpdateDataActions();
     }
 
     private async void OnImportExcelClicked(object? sender, EventArgs e)

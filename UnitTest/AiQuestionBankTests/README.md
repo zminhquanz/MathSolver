@@ -1,5 +1,31 @@
 # AI question bank checks
 
+`--practice-formats` checks 1,080 combinations of nine groups, four operations,
+five star levels, two languages and three answer modes for arithmetic and Find X.
+Numeric mode preserves the original question without SQLite reads; word mode
+keeps prose through both C# and bank selection, including empty/invalid-bank
+fallback. Real SQLite selection preserves the two families. Also runs in the
+default suite; no model inference is required.
+
+`--fraction-bank` checks 2,448 fraction scene/star/language/seed cases covering all
+nine knowledge groups, four operations and three answer modes, plus rational
+grading, full-clause validation, native grammar, SQLite selection/deduplication,
+Excel denominator roundtrips, background generation and instant C# fallback.
+This also runs in the default suite. `--fraction-model <GGUF path>` loads a real
+local model, seeds duplicate wording and generates novel validated stories for
+all nine groups, in Vietnamese/English, using isolated SQLite databases under
+`artifacts/verification/fraction-model-*`.
+
+`--prose-model <GGUF path>` runs a real local model against separate verification
+SQLite databases. It pre-seeds old savings givens with every supported question,
+generates three distinct Vietnamese and three English stories, checks streaming,
+units/roles, C# grading and insertion, verifies two Find X stories against the
+same stored wording, then runs the real automatic three-item
+worker against existing money questions. Logs and databases remain under
+`artifacts/verification/prose-model-*`. It never writes the installed app bank.
+`--prose-deduplication` also checks reviewed wording pool exhaustion, unused prompt
+examples and index snapshot synchronization without loading a model.
+
 This is the new optional question-bank implementation. It does not restore the
 previous AI practice source, validators, benchmark or model test fixtures.
 
@@ -18,6 +44,20 @@ dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -c 
 ```
 
 The default run uses deterministic model responses and temporary SQLite files.
+`ProseDeduplicationTests` checks question wording independently of random facts,
+actor names, stars and solution leads; Unicode/case/spacing/punctuation normalization;
+distinct phrasing and units; existing SQLite rows and direct SQL edit/delete index
+synchronization; bilingual manual/automatic duplicate retries with rejected wording
+in the prompt; the three-attempt limit; an insert-time duplicate after precheck;
+pending manual-batch duplicates; and a worker rewriting a duplicate in real SQLite.
+Selection tests seed historical duplicates directly, because new inserts must reject
+cosmetic variants even when historical banks already contain them.
+
+Run only the wording checks with:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -- --prose-deduplication
+```
 It also includes `FindXBankTests`: 11,316 bilingual scene/star/role/wording cases across
 the nine knowledge groups and six unknown roles. These verify unique integer solutions
 and back substitution, all three answer modes, essay units, malformed/foreign prose,
@@ -53,6 +93,15 @@ cancellation and timeouts; completion of every changed row despite RETURNING
 display limits; rejection of multiple statements before any write; deletion
 without WHERE; and validation of directly edited data during practice/export.
 It runs no model inference and no benchmark.
+
+The grid checks also migrate an installed `Family`/`UnknownRole` schema to
+`ProblemType`/`ProblemVariant`, preserving row keys, payloads, classification values
+and selection indexes. They verify editing by the new names, Find-X isolation,
+deduplication after migration and repeated initialization. Run these alone with:
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj -- --sql-grid
+```
 
 Shared one-step checks cover every reviewed C# pattern and wording variant in both languages, using the same validator as the AI bank. They verify all answer modes, correct and incorrect essay answers, fresh-number variety, smaller-amount/inverse comparisons, total-to-part relations, factor comparisons with `lần`/`times` answer units, and rejected actor/target inversions. Built-in source selection does not read SQLite. Paused AI inference cannot prevent immediate built-in practice.
 
@@ -218,6 +267,18 @@ speed comparisons. Token/s measures decoding after the first token, excluding
 prompt processing and model loading; end-to-end latency is reported separately.
 
 ## SQLite grid editing
+
+`SqlGridTests` also verifies atomic multi-cell row updates: an invalid cell, stale
+snapshot, cancellation or failing trigger must not partially save the other
+cells. Projected updates preserve hidden columns, full JSON, literal NULL versus
+SQL NULL and exact Int64 values. The MAUI table owns inline drafts; the detail
+panel is read-only. UI compilation is checked separately on Windows/Android.
+
+Run `dotnet run --project UnitTest/AiQuestionBankTests -- --clear-bank` for
+`DeleteAllTests`: whole-bank deletion (including malformed historical records),
+an empty bank, cancellation, SQLite rollback, prose-index cleanup, preview
+re-saving, reopening the database and exclusion of concurrent generation/writes.
+Only temporary databases are used; installed user data is never deleted.
 
 The query results support cell updates, row insertion and deletion for direct
 `BasicQuestionBank` SELECT projections that include the genuine `Hash` column.

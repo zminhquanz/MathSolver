@@ -71,17 +71,20 @@ internal static class BankDataTests
             try { await backgroundQuery; } catch (OperationCanceledException) { }
         }
 
+        int expectedRecords = 1;
         foreach (var language in Enum.GetValues<MathSolver.Services.AppLanguage>())
         foreach (var operation in Enum.GetValues<ArithmeticOperation>())
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         {
             var contract = BasicQuestionContract.Create(operation, tier, language, new Random(420 + (int)tier));
             var draft = BasicQuestionValidator.Validate(prose(contract), contract).Draft!;
-            await store.InsertAsync(new(contract, draft, prose(contract), "model-đề.xlsx", new DateTime(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc)));
+            if (await store.InsertAsync(new(contract, draft, prose(contract), "model-đề.xlsx", new DateTime(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc))))
+                expectedRecords++;
         }
         using var workbook = new MemoryStream();
         var exported = await store.ExportExcelAsync(workbook);
-        Check(exported.Exported >= 40 && exported.Skipped == 0, "Whole-bank Excel export missed valid records.");
+        Check(expectedRecords >= 8 && exported.Exported == expectedRecords && exported.Skipped == 0,
+            "Whole-bank Excel export missed unique bilingual operation wording.");
         using (var packageStream = new MemoryStream(workbook.ToArray()))
         using (var package = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(packageStream, false))
         {
@@ -178,7 +181,14 @@ internal static class BankDataTests
         // A real database failure on the second insert must roll back the first insert.
         var firstContract = sample.Contract with { Subject = "ExcelFirst" };
         var failedContract = sample.Contract with { Subject = "ExcelFailure" };
-        ValidatedBankQuestion Question(BasicQuestionContract c) => new(c, BasicQuestionValidator.Validate(prose(c), c).Draft!, prose(c), "transaction-test", DateTime.UtcNow);
+        ValidatedBankQuestion Question(BasicQuestionContract c)
+        {
+            var draft = BasicQuestionValidator.Validate(prose(c), c).Draft!;
+            draft = draft with { GivenA = (c.Subject == "ExcelFirst" ? "Tại thư viện, " : "Tại kho sách, ") + draft.GivenA };
+            string json = QuestionBankStore.SerializeDraft(draft);
+            Check(BasicQuestionValidator.Validate(json, c).IsValid, "Atomic-import fixture lost valid prose.");
+            return new(c, draft, json, "transaction-test", DateTime.UtcNow);
+        }
         using (var db = new SQLiteConnection(database))
             db.Execute("CREATE TRIGGER fail_excel BEFORE INSERT ON BasicQuestionBank WHEN NEW.ContractJson LIKE '%ExcelFailure%' BEGIN SELECT RAISE(ABORT, 'test failure'); END");
         using (var transactionFile = new MemoryStream())

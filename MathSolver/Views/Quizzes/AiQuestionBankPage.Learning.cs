@@ -44,7 +44,8 @@ public partial class AiQuestionBankPage
     private void OnBankProblemChanged(object? sender, EventArgs e)
     {
         if (_updating || ProblemPicker.SelectedIndex < 0) return;
-        _family = ProblemPicker.SelectedIndex == 1 ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
+        _family = Enum.IsDefined((BankQuestionFamily)ProblemPicker.SelectedIndex)
+            ? (BankQuestionFamily)ProblemPicker.SelectedIndex : BankQuestionFamily.Arithmetic;
         RefreshLearningPickers(SelectedLearningOperation);
         RefreshFindXRoles();
     }

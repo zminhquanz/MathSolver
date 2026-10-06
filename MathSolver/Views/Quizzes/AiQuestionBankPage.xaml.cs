@@ -102,7 +102,8 @@ public partial class AiQuestionBankPage : ContentPage
         var operation = SelectedLearningOperation;
         int stars = Math.Max(0, StarsPicker.SelectedIndex);
         int language = Math.Max(0, LanguagePicker.SelectedIndex), mode = Math.Max(0, BatchModePicker.SelectedIndex);
-        ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title") }; ProblemPicker.SelectedIndex = (int)_family;
+        ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
+            LocalizationService.TranslateKey("FractionBank.Title") }; ProblemPicker.SelectedIndex = (int)_family;
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
@@ -118,7 +119,7 @@ public partial class AiQuestionBankPage : ContentPage
     private void Render()
     {
         var snapshot = _bank.Generation.Snapshot;
-        bool running = snapshot.IsRunning, busy = running || _bank.IsManaging;
+        bool running = snapshot.IsRunning, busy = running || _bank.IsManaging || _confirmingDeleteAll || _bank.Generation.IsDeletingAll;
         ConfigurationPanel.IsEnabled = !busy;
         ChooseModelButton.IsEnabled = DownloadButton.IsEnabled = !busy;
         DownloadModelPicker.IsEnabled = !busy;
@@ -165,14 +166,17 @@ public partial class AiQuestionBankPage : ContentPage
         PreviewText.IsVisible = !streaming;
         PreviewText.Expression = item?.Question?.WordProblem.ProblemText ?? T("NoPreview");
         PreviewFactTable.Table = item?.Question?.WordProblem.FactTable;
-        PreviewSolutionLabel.IsVisible = item?.Question is not null;
-        PreviewSolutionLabel.Text = item?.Question is { } question
+        bool fractionStory = item?.Question?.Contract.Family == BankQuestionFamily.Fraction;
+        PreviewFractionSolution.IsVisible = fractionStory;
+        PreviewFractionSolution.Expression = fractionStory ? item!.Question!.Contract.Solution : "";
+        PreviewSolutionLabel.IsVisible = item?.Question is not null && !fractionStory;
+        PreviewSolutionLabel.Text = item?.Question is { } question && !fractionStory
             ? (question.WordProblem.ConversionStep is { } step ? step + "\n" : "")
                 + question.WordProblem.SolutionLead + "\n" + (question.WordProblem.ArithmeticReasoning?.Equation ?? question.Contract.Left + " "
                 + MathSolver.Services.Core.BasicArithmeticEngine.GetSymbol(question.Contract.Expression.Operation) + " "
                 + question.Contract.Right) + " = " + question.Contract.Answer + " " + question.Contract.AnswerUnit : "";
         // Only complete, validated drafts can be exported or inserted.
-        InsertButton.IsEnabled = !_saving && item?.Question is not null
+        InsertButton.IsEnabled = !_saving && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll && item?.Question is not null
             && (item.State == AiItemState.SaveFailed || item.State == AiItemState.Ready
                 && (!_bank.Generation.IsRunning || _bank.Generation.Snapshot.Options?.AutoInsert != true));
         ShareButton.IsEnabled = item?.Question is not null;
@@ -328,7 +332,7 @@ public partial class AiQuestionBankPage : ContentPage
 
     private async void OnGenerateClicked(object? sender, EventArgs e)
     {
-        if (_bank.IsManaging || _bank.Generation.IsRunning || _saving) return;
+        if (_bank.IsManaging || _bank.Generation.IsRunning || _saving || _confirmingDeleteAll || _bank.Generation.IsDeletingAll) return;
         int count = 1;
         if (BatchModePicker.SelectedIndex == 1 && (!int.TryParse(CountEntry.Text, out count) || count is < 1 or > 100))
         { await DisplayAlertAsync(T("Title"), T("CountHint"), T("Ok")); return; }
@@ -349,7 +353,7 @@ public partial class AiQuestionBankPage : ContentPage
     private async void OnInsertClicked(object? sender, EventArgs e)
     {
         var item = SelectedItem;
-        if (item?.Question is null) return;
+        if (item?.Question is null || _saving || _confirmingDeleteAll || _bank.Generation.IsDeletingAll) return;
         _saving = true; Render();
         try { await _bank.Generation.InsertAsync(item.Number); }
         finally { _saving = false; Render(); }

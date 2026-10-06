@@ -9,11 +9,12 @@ internal static class SqlGridTests
 
     public static async Task RunAsync(string directory, ValidatedBankQuestion sample)
     {
+        await CheckRowEditsAsync(directory, sample);
         string path = Path.Combine(directory, "sql-grid.db3");
         var store = new QuestionBankStore(path);
         Check(await store.InsertAsync(sample), "Grid seed failed.");
         var query = await store.QueryAsync(QuestionBankStore.DefaultInquiry);
-        Check(query.EditableColumns?.SequenceEqual(["Hash", "Operation", "Stars", "Language", "DraftJson"]) == true,
+        Check(query.EditableColumns?.SequenceEqual(["Hash", "ProblemType", "ProblemVariant", "Operation", "Stars", "Language", "DraftJson"]) == true,
             "Default SELECT does not provide editable identity.");
         string hash = query.Rows.Single()[0];
         foreach (string sql in new[]
@@ -125,6 +126,104 @@ internal static class SqlGridTests
         var reordered = await new QuestionBankStore(reorderedPath).QueryAsync("SELECT * FROM BasicQuestionBank");
         Check(reordered.IsSuccess && reordered.EditableColumns?.SequenceEqual(reordered.Columns) == true,
             "Historical column order maps a displayed cell to a different database column.");
+        await ProblemColumnMigrationAsync(directory, sample);
         Console.WriteLine("PASS editable SELECT identity, aliases, empty results, safe cell/row CRUD, NULL/JSON/Int64, conflicts, cancellation and C# practice validation");
+    }
+
+    private static async Task ProblemColumnMigrationAsync(string directory, ValidatedBankQuestion sample)
+    {
+        string path = Path.Combine(directory, "problem-column-migration.db3");
+        var initial = new QuestionBankStore(path);
+        var contract = FindXQuestionCatalogue.Create(new(QuestionKnowledgeGroup.Objects),
+            MathSolver.Models.ArithmeticOperation.Subtract, MathSolver.Models.CurriculumTier.ThreeStars,
+            MathSolver.Services.AppLanguage.Vietnamese, new Random(43), FindXUnknownRole.Minuend);
+        var draft = FindXQuestionCatalogue.Draft(contract);
+        var findX = new ValidatedBankQuestion(contract, draft, QuestionBankStore.SerializeDraft(draft), "migration-test", DateTime.UtcNow);
+        Check(await initial.InsertAsync(sample) && await initial.InsertAsync(findX), "Migration fixture insert failed.");
+        const string snapshotQuery = "SELECT Hash,ContractJson,DraftJson,Grade,KnowledgeGroup,ProblemType,ProblemVariant FROM BasicQuestionBank ORDER BY Hash";
+        var before = await initial.QueryAsync(snapshotQuery);
+        // Simulate the schema in installed versions, including the existing selection index.
+        using (var db = new SQLiteConnection(path))
+        {
+            db.Execute("ALTER TABLE BasicQuestionBank RENAME COLUMN ProblemType TO Family");
+            db.Execute("ALTER TABLE BasicQuestionBank RENAME COLUMN ProblemVariant TO UnknownRole");
+        }
+        var migrated = new QuestionBankStore(path);
+        var after = await migrated.QueryAsync(snapshotQuery);
+        Check(after.IsSuccess && before.Rows.SelectMany(row => row).SequenceEqual(after.Rows.SelectMany(row => row)),
+            "Column migration changed keys, payloads or classification values.");
+        var all = await migrated.QueryAsync("SELECT * FROM BasicQuestionBank");
+        Check(all.EditableColumns?.SequenceEqual(all.Columns) == true
+            && all.Columns.Contains("ProblemType") && all.Columns.Contains("ProblemVariant")
+            && !all.Columns.Contains("Family") && !all.Columns.Contains("UnknownRole"),
+            "New column names were not editable or old technical columns remained.");
+        var selected = await migrated.TakeFindXAsync(contract.Operation, contract.Tier, contract.Language, new(contract.KnowledgeGroup));
+        Check(selected?.Contract == contract && !await migrated.InsertAsync(findX),
+            "Migration broke Find-X selection or existing prose deduplication.");
+        string hash = after.Rows.Single(row => row[1] == JsonSerializer.Serialize(contract,
+            new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))[0];
+        var row = (await migrated.GetGridRowAsync(hash))!;
+        Check((await migrated.UpdateGridCellAsync(row, "ProblemVariant", "99", false)).IsSuccess
+            && await migrated.TakeFindXAsync(contract.Operation, contract.Tier, contract.Language, new(contract.KnowledgeGroup)) is null,
+            "Renamed variant column could not be edited or forged data reached practice.");
+        row = (await migrated.GetGridRowAsync(hash))!;
+        Check((await migrated.UpdateGridCellAsync(row, "ProblemVariant", ((int)contract.UnknownRole).ToString(), false)).IsSuccess,
+            "Could not restore the migrated variant.");
+        var reopened = new QuestionBankStore(path);
+        Check((await reopened.TakeFindXAsync(contract.Operation, contract.Tier, contract.Language, new(contract.KnowledgeGroup)))?.Contract == contract,
+            "Repeat initialization damaged the migrated bank.");
+        using (var db = new SQLiteConnection(path))
+        {
+            string index = db.ExecuteScalar<string>("SELECT sql FROM sqlite_master WHERE name='FindXSelection'");
+            Check(index.Contains("ProblemType") && index.Contains("ProblemVariant"), "Migration lost the selection index.");
+        }
+    }
+
+    private static async Task CheckRowEditsAsync(string directory, ValidatedBankQuestion sample)
+    {
+        string path = Path.Combine(directory, "sql-row-edit.db3");
+        var store = new QuestionBankStore(path);
+        Check(await store.InsertAsync(sample), "Row edit seed failed.");
+        string hash = (await store.QueryAsync("SELECT Hash FROM BasicQuestionBank")).Rows.Single()[0];
+        var original = (await store.GetGridRowAsync(hash))!;
+        string literal = "' ; DELETE FROM BasicQuestionBank --\nTiếng Việt\tNULL";
+        string json = JsonSerializer.Serialize(new { text = new string('x', 8000) });
+        var edits = new Dictionary<string, string?> {
+            ["ModelName"] = literal, ["RawJson"] = json,
+            ["UseCount"] = long.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture), ["TopicId"] = null };
+        Check((await store.UpdateGridRowAsync(original, edits)).IsSuccess, "Whole-row save failed.");
+        var current = (await store.GetGridRowAsync(hash))!;
+        Check(Equals(current.Values["ModelName"], literal) && Equals(current.Values["RawJson"], json)
+            && Equals(current.Values["UseCount"], long.MaxValue) && current.Values["TopicId"] is null,
+            "Whole-row save lost literal text, long JSON, NULL or integer precision.");
+        Check(Equals(current.Values["ContractJson"], original.Values["ContractJson"]), "Unprojected column was overwritten.");
+        Check((await store.UpdateGridRowAsync(original, new Dictionary<string, string?> { ["ModelName"] = "stale" })).ErrorCode == "GridRowChanged",
+            "A stale row edit overwrote concurrent changes.");
+        foreach (var invalid in new Dictionary<string, string?>[] {
+            new() { ["ModelName"] = "must not persist", ["Stars"] = "1.5" },
+            new() { ["ModelName"] = "must not persist", ["Hash"] = "changed-key" },
+            new() { ["ModelName"] = "must not persist", ["ModelName\"=NULL; DELETE"] = "bad" } })
+        {
+            Check(!(await store.UpdateGridRowAsync(current, invalid)).IsSuccess, "Invalid row edit was accepted.");
+            Check(Equals((await store.GetGridRowAsync(hash))!.Values["ModelName"], literal), "A rejected edit partially saved other cells.");
+        }
+        using (var cancellation = new CancellationTokenSource())
+        {
+            cancellation.Cancel();
+            try { await store.UpdateGridRowAsync(current, edits, cancellation.Token); throw new InvalidOperationException("Cancelled row edit succeeded."); }
+            catch (OperationCanceledException) { }
+        }
+        using (var db = new SQLiteConnection(path))
+            db.Execute("CREATE TRIGGER reject_row BEFORE UPDATE ON BasicQuestionBank BEGIN SELECT RAISE(ABORT,'row test'); END");
+        try
+        {
+            await store.UpdateGridRowAsync(current, new Dictionary<string, string?> { ["ModelName"] = "failed", ["RawJson"] = "{}" });
+            throw new InvalidOperationException("Failing row trigger did not fail.");
+        }
+        catch (SQLiteException) { }
+        var afterFailure = (await store.GetGridRowAsync(hash))!;
+        Check(Equals(afterFailure.Values["ModelName"], literal) && Equals(afterFailure.Values["RawJson"], json),
+            "SQLite failure persisted part of a row edit.");
+        Console.WriteLine("PASS atomic row edits, full JSON/NULL/Int64, unchanged hidden columns, stale rows and failed-save rollback");
     }
 }

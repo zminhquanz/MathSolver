@@ -22,6 +22,9 @@ internal static class PracticeProviderTests
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
+            // These cases deliberately reuse legacy wording across tiers. Test each
+            // selection contract in isolation under the global prose-uniqueness rule.
+            await store.QueryAsync("DELETE FROM BasicQuestionBank");
             var contract = BasicQuestionContract.Create(operation, tier, language, new Random(700 + (int)tier));
             string json = prose(contract);
             var saved = new ValidatedBankQuestion(contract, BasicQuestionValidator.Validate(json, contract).Draft!,
@@ -47,6 +50,7 @@ internal static class PracticeProviderTests
             }
         }
 
+        Check(await store.InsertAsync(sample), "Mixed-source addition seed failed.");
         // Use the real random source choice with a reproducible seed, while the bank is populated.
         var mixed = new BasicPracticeQuestionProvider(tracked, new Random(24680), new Random(13579));
         int freshCount = 0, savedCount = 0, numericCount = 0, storyCount = 0;

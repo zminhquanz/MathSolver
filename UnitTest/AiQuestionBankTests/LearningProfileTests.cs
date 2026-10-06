@@ -122,13 +122,19 @@ internal static class LearningProfileTests
 
     private static async Task ExpandedPersistenceAsync(string directory)
     {
-        var store = new QuestionBankStore(Path.Combine(directory, "expanded-groups.db3"));
+        string path = Path.Combine(directory, "expanded-groups.db3");
+        var store = new QuestionBankStore(path);
         foreach (var group in QuestionLearningProfile.Groups())
         foreach (var op in Enum.GetValues<ArithmeticOperation>())
         {
             var c = AppliedQuestionCatalogue.Create(new(group), op, CurriculumTier.FiveStars, AppLanguage.Vietnamese, new Random(47));
             var d = AppliedQuestionCatalogue.Draft(c);
-            Check(await store.InsertAsync(new(c, d, QuestionBankStore.SerializeDraft(d), "expanded-test", DateTime.UtcNow)), "New group insert failed.");
+            var question = new ValidatedBankQuestion(c, d, QuestionBankStore.SerializeDraft(d), "expanded-test", DateTime.UtcNow);
+            if (!await store.InsertAsync(question))
+            {
+                Check(await store.ContainsProseAsync(question), "New group insert failed without duplicate wording.");
+                QuestionBankTestFixtures.SeedHistorical(path, question);
+            }
             var saved = await store.TakeForProfileAsync(op, c.Tier, c.Language, new(group));
             var word = d.ToWordProblem(c);
             Check(saved?.Contract == c && saved.WordProblem.ProblemText == word.ProblemText && saved.WordProblem.AnswerUnit == word.AnswerUnit
@@ -140,7 +146,8 @@ internal static class LearningProfileTests
         {
             var c = AppliedQuestionCatalogue.Create(new(old), ArithmeticOperation.Subtract, CurriculumTier.ThreeStars, AppLanguage.English, new Random(9));
             var d = AppliedQuestionCatalogue.Draft(c);
-            await store.InsertAsync(new(c, d, QuestionBankStore.SerializeDraft(d), "legacy-dimension", DateTime.UtcNow));
+            var question = new ValidatedBankQuestion(c, d, QuestionBankStore.SerializeDraft(d), "legacy-dimension", DateTime.UtcNow);
+            if (!await store.InsertAsync(question)) QuestionBankTestFixtures.SeedHistorical(path, question);
         }
         var read = new HashSet<QuestionKnowledgeGroup>();
         for (int i = 0; i < 3; i++) {
@@ -189,9 +196,13 @@ internal static class LearningProfileTests
 
         // Saved grade metadata no longer partitions the bank. Its template must
         // remain readable, but new practice operands use the group/star policy.
-        var historical = new QuestionBankStore(Path.Combine(directory, "historical-grades.db3"));
-        foreach (int oldGrade in new[] { 4, 5 })
-            Check(await historical.InsertAsync(q with { Contract = c with { Grade = oldGrade } }), "Historical grade insert failed.");
+        string historicalPath = Path.Combine(directory, "historical-grades.db3");
+        var historical = new QuestionBankStore(historicalPath);
+        Check(await historical.InsertAsync(q with { Contract = c with { Grade = 4 } }), "Historical grade insert failed.");
+        Check(!await historical.InsertAsync(q with { Contract = c with { Grade = 5 } }), "Grade metadata duplicated prose.");
+        using (var db = new SQLite.SQLiteConnection(historicalPath))
+            db.Execute("INSERT INTO BasicQuestionBank SELECT ?,Operation,Stars,Language,Version,?,DraftJson,RawJson,ModelName,CreatedUtc,LastUsedUtc,UseCount,Structure,TopicId,SceneId,?,KnowledgeGroup,ProblemType,ProblemVariant FROM BasicQuestionBank LIMIT 1",
+                "historical-grade-5", System.Text.Json.JsonSerializer.Serialize(c with { Grade = 5 }), 5);
         var readGrades = new HashSet<int>();
         for (int i = 0; i < 2; i++)
         {
@@ -249,7 +260,8 @@ internal static class LearningProfileTests
         public Task<string> GenerateAsync(BasicQuestionContract contract, string prompt, CancellationToken token,
             Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
         {
-            string raw = QuestionBankStore.SerializeDraft(AppliedQuestionCatalogue.Draft(contract, 1));
+            string raw = QuestionBankStore.SerializeDraft(AppliedQuestionCatalogue.Draft(contract,
+                prompt.Contains("DuplicateProse") ? 0 : 1));
             foreach (char ch in raw) onText?.Invoke(ch.ToString());
             return Task.FromResult(raw);
         }

@@ -428,8 +428,17 @@ public sealed partial class EssayAnswerValidator
         {
             string entered = NormalizeNumericExpression(parts[firstCalculationPart]);
             string given = NormalizeNumericExpression(expressionProblem.ExpressionText);
-            if (entered != given)
+            if (entered != given && !(question.WordProblem is not null && expressionProblem.EquivalentExpressions
+                .Any(alternative => entered == NormalizeNumericExpression(alternative))))
                 return (false, EssayAnswerError.WrongOperandsOrOperation);
+        }
+        else if (question.WordProblem is not null && question.FractionProblem is { } fractionProblem)
+        {
+            // A correct total alone does not establish that the story's quantities were used.
+            // Check the first line; subsequent equivalent fractions remain valid work steps.
+            var operands = ValidateFractionEquation(fractionProblem,
+                Regex.Replace(parts[firstCalculationPart], @"\(\s*(\d+(?:\s*/\s*\d+)?)\s*\)", "$1") + "=" + fractionProblem.CorrectAnswer);
+            if (!operands.IsCorrect) return operands;
         }
 
         EssayCalculationEvaluator.Value expected =

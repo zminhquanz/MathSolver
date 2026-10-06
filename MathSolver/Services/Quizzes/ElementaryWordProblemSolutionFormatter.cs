@@ -27,8 +27,8 @@ public static class ElementaryWordProblemSolutionFormatter
         {
             string label = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
             return NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead) + Environment.NewLine +
-                $"{expression.ExpressionText} = {expression.CorrectAnswer}" + Environment.NewLine +
-                $"{label}: {expression.CorrectAnswer}";
+                $"{expression.ExpressionText} = {expression.CorrectAnswer} {wordProblem.AnswerUnit}".TrimEnd() + Environment.NewLine +
+                $"{label}: {expression.CorrectAnswer} {wordProblem.AnswerUnit}".TrimEnd();
         }
 
         if (question.GeometryProblem is GeometryQuizContract geometry)

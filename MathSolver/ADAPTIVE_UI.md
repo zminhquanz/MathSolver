@@ -1,5 +1,12 @@
 # Adaptive practice and solver layout
 
+Basic arithmetic, Find X and fractions share a practice-style picker with the
+same responsive border, Android arrow, minimum touch height and accessible title.
+Each family starts in numeric mode and remembers its own choice during the page
+session. Word-problem mode reveals the nine knowledge groups; numeric and comparison
+practice hide them. The collapsed summary includes the selected style and only
+shows the group when it applies. Labels and hints update with Vietnamese/English.
+
 Practice settings stay open on entering a fresh session. Questions appear directly,
 without a start button. Focusing the essay editor or submitting an answer collapses
 the settings into a bilingual summary.
@@ -98,6 +105,11 @@ of equation graphs, wrapping below the heading on narrow screens. The 🔍 butto
 has a bilingual tooltip and accessible description. Expand graph
 opens a modal plot using the existing interactive view; closing it (including
 Android Back) restores that view to the calculator and retains its zoom/pan.
+
+SQLite result grids use scrollbar-style mouse dragging on Windows: dragging right
+increases the horizontal offset and reveals later columns. Native scrollbar drags
+are excluded from the custom pointer handler. Tab strips keep content-following
+dragging, and Android retains standard touch scrolling.
 
 Manual verification remains necessary for these device-specific cases:
 

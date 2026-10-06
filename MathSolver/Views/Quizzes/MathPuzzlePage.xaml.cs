@@ -1222,7 +1222,11 @@ public partial class MathPuzzlePage : ContentPage
             kind == QuizProblemKind.Motion;
 
         ProblemOperationPanel.IsVisible = showOperations;
-        LearningProfilePanel.IsVisible = kind == QuizProblemKind.FindX || kind == QuizProblemKind.Arithmetic && !_selectedBasicComparison;
+        PracticeFormatPanel.IsVisible = kind == QuizProblemKind.FindX
+            || kind == QuizProblemKind.Arithmetic && !_selectedBasicComparison
+            || kind == QuizProblemKind.Fraction && !_selectedFractionComparison;
+        RefreshPracticeFormatPicker(kind);
+        LearningProfilePanel.IsVisible = PracticeFormatPanel.IsVisible && UsesWordProblems(kind);
         ProportionTypePanel.IsVisible = showProportionType;
         AverageTypePanel.IsVisible = showAverageType;
         PercentageTypePanel.IsVisible = showPercentageType;
@@ -1534,7 +1538,7 @@ public partial class MathPuzzlePage : ContentPage
                 ResolveSelectedProblem();
 
             var learning = _quizProblemTypeCatalog.GetFixedRequest(OperationPicker.SelectedIndex)?.Kind == QuizProblemKind.Arithmetic
-                && !problemRequest.IsComparison ? CurrentLearningProfile : null;
+                && !problemRequest.IsComparison && _arithmeticWordProblems ? CurrentLearningProfile : null;
             if (learning is not null && (problemRequest.ArithmeticOperation is not { } operation || !learning.Allows(operation)))
             {
                 var allowed = Enum.GetValues<ArithmeticOperation>().Where(learning.Allows).ToArray();
@@ -1609,7 +1613,8 @@ public partial class MathPuzzlePage : ContentPage
             if (problemRequest.Kind == QuizProblemKind.Arithmetic && !problemRequest.IsComparison)
             {
                 var selected = await AiQuestionBank.Current.Practice.SelectAsync(_currentQuestion,
-                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, profile: learning);
+                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, profile: learning,
+                    format: GetPracticeFormat(QuizProblemKind.Arithmetic));
                 // Selection, language and answer mode can change during the SQLite read.
                 if (version != _questionGenerationVersion) return;
                 _currentQuestion = selected;
@@ -1618,6 +1623,16 @@ public partial class MathPuzzlePage : ContentPage
             if (problemRequest.Kind == QuizProblemKind.FindX)
             {
                 var selected = await AiQuestionBank.Current.Practice.SelectFindXAsync(_currentQuestion,
+                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, CurrentLearningProfile,
+                    format: GetPracticeFormat(QuizProblemKind.FindX));
+                if (version != _questionGenerationVersion) return;
+                _currentQuestion = selected;
+            }
+
+            if (problemRequest.Kind == QuizProblemKind.Fraction && !problemRequest.IsComparison && _fractionWordProblems
+                && GetSelectedFixedProblemRequest()?.Kind == QuizProblemKind.Fraction)
+            {
+                var selected = await AiQuestionBank.Current.Practice.SelectFractionAsync(_currentQuestion,
                     curriculumContext.Tier, AppLanguageManager.CurrentLanguage, CurrentLearningProfile);
                 if (version != _questionGenerationVersion) return;
                 _currentQuestion = selected;
@@ -1794,7 +1809,7 @@ public partial class MathPuzzlePage : ContentPage
             _currentQuestion.PercentageProblem;
 
         ElementaryQuizContract? elementary = _currentQuestion.ElementaryProblem;
-        bool parseFractionExpressions = elementary?.Kind == QuizProblemKind.FractionSkills ||
+        bool parseFractionExpressions = _currentQuestion.UsesFractionFormatting && _currentQuestion.WordProblem is not null || elementary?.Kind == QuizProblemKind.FractionSkills ||
             elementary?.Type is ElementaryQuizType.SumRatio or ElementaryQuizType.DifferenceRatio;
         foreach (var view in new[] { QuestionFractionExpressionView, QuestionComparisonFractionView,
             PresentedAnswerFractionView, FeedbackFractionView, SolutionFractionView, QuizDiagramExplanationFractionView }

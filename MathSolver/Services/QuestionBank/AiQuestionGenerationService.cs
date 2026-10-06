@@ -16,6 +16,9 @@ public interface IQuestionTextRuntime
     // an empty delta can still represent a generated UTF-8 byte token.
     Task<string> GenerateAsync(BasicQuestionContract contract, string prompt, CancellationToken cancellationToken,
         Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null);
+    Task<string> GenerateNovelAsync(BasicQuestionContract contract, string prompt, IReadOnlySet<string> excludedProse,
+        CancellationToken cancellationToken, Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
+        => GenerateAsync(contract, prompt, cancellationToken, onText, onMetrics);
 }
 
 public sealed record AiGenerationMetrics(int GeneratedTokens, TimeSpan GenerationElapsed)
@@ -45,21 +48,24 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     private readonly ArithmeticQuestionCycle _arithmeticCycle = new();
     private readonly AppliedQuestionCycle _appliedCycle = new();
     private readonly FindXQuestionCycle _findXCycle = new();
+    private readonly FractionQuestionCycle _fractionCycle = new();
     private CancellationTokenSource? _cancellation;
     private Task _work = Task.CompletedTask;
     private int _pendingInserts;
+    private bool _deletingAll;
     private AiJobSnapshot _snapshot = new(AiJobState.Idle, null, []);
     public event EventHandler? Changed;
     public AiJobSnapshot Snapshot { get { lock (_sync) return _snapshot; } }
     public Task Completion { get { lock (_sync) return _work; } }
     public bool IsRunning => Snapshot.IsRunning;
+    public bool IsDeletingAll { get { lock (_sync) return _deletingAll; } }
 
     public void Start(AiGenerationOptions options)
     {
         options.Validate();
         lock (_sync)
         {
-            if (_snapshot.IsRunning || _pendingInserts != 0) throw new InvalidOperationException("JobAlreadyRunning");
+            if (_snapshot.IsRunning || _pendingInserts != 0 || _deletingAll) throw new InvalidOperationException("JobAlreadyRunning");
             if (!runtime.CanGenerate) throw new InvalidOperationException("ModelNotLoaded");
             _cancellation?.Dispose();
             _cancellation = new();
@@ -77,6 +83,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         AiQuestionItem item;
         lock (_sync)
         {
+            if (_deletingAll) throw new InvalidOperationException("JobAlreadyRunning");
             item = _snapshot.Items.Single(i => i.Number == itemNumber);
             if (item.State is not (AiItemState.Ready or AiItemState.SaveFailed) || item.Question is null) return;
             _pendingInserts++;
@@ -85,13 +92,39 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         {
             bool inserted = await store.InsertAsync(item.Question).ConfigureAwait(false);
             // Merge the state into the latest snapshot; generation may have appended attempts/items.
-            UpdateItem(itemNumber, i => i with { State = inserted ? AiItemState.Saved : AiItemState.Duplicate, Error = null });
+            UpdateItem(itemNumber, i => i with { State = inserted ? AiItemState.Saved : AiItemState.Duplicate,
+                Error = inserted ? null : "DuplicateProse" });
         }
         catch (Exception error)
         {
             UpdateItem(itemNumber, i => i with { State = AiItemState.SaveFailed, Error = error.GetType().Name });
         }
         finally { lock (_sync) _pendingInserts--; }
+    }
+
+    public async Task<int> DeleteAllAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            if (_snapshot.IsRunning || _pendingInserts != 0 || _deletingAll)
+                throw new InvalidOperationException("JobAlreadyRunning");
+            _deletingAll = true;
+        }
+        try
+        {
+            Notify();
+            int deleted = await store.DeleteAllAsync(cancellationToken).ConfigureAwait(false);
+            lock (_sync)
+                _snapshot = _snapshot with { Items = _snapshot.Items.Select(i =>
+                    i.Question is not null && i.State is AiItemState.Saved or AiItemState.Duplicate
+                        ? i with { State = AiItemState.Ready, Error = null } : i).ToArray() };
+            return deleted;
+        }
+        finally
+        {
+            lock (_sync) _deletingAll = false;
+            Notify();
+        }
     }
 
     private async Task RunAsync(AiGenerationOptions options, CancellationToken cancellationToken)
@@ -136,10 +169,14 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
 
     private async Task<(AiJobState State, string? Error)> RunQuestionsAsync(AiGenerationOptions options, CancellationToken cancellationToken)
     {
+        var batchProse = new HashSet<string>(StringComparer.Ordinal);
+        var excludedProse = new HashSet<string>(await store.GetProseHashesAsync(cancellationToken).ConfigureAwait(false), StringComparer.Ordinal);
         for (int number = 1; number <= options.Count; number++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var contract = options.Family == BankQuestionFamily.FindX
+            var contract = options.Family == BankQuestionFamily.Fraction
+                ? _fractionCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language)
+                : options.Family == BankQuestionFamily.FindX
                 ? _findXCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, options.UnknownRole)
                 : options.Profile is { } profile
                 ? _appliedCycle.Next(profile, options.Operation, options.Tier, options.Language)
@@ -148,11 +185,12 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 : _arithmeticCycle.Next(options.Operation, options.Tier, options.Language);
             Append(new(number, contract, AiItemState.Generating, []));
             string? correction = null;
+            var duplicateProse = new List<string>();
             for (int attempt = 1; attempt <= 3; attempt++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 SetState(AiJobState.Generating);
-                string prompt = BasicQuestionPrompt.Build(contract, correction);
+                string prompt = BasicQuestionPrompt.Build(contract, correction, duplicateProse, excludedProse);
                 UpdateItem(number, i => i with { State = AiItemState.Generating,
                     Attempts = [.. i.Attempts, new(attempt, prompt, "", null, false)] });
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -177,7 +215,14 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 {
                     if (acceptingText && !timeout.IsCancellationRequested) metrics = value;
                 }
-                try { raw = await runtime.GenerateAsync(contract, prompt, timeout.Token, OnText, OnMetrics).ConfigureAwait(false); }
+                try { raw = await runtime.GenerateNovelAsync(contract, prompt, excludedProse, timeout.Token, OnText, OnMetrics).ConfigureAwait(false); }
+                catch (ProseAlternativesExhaustedException)
+                {
+                    const string exhausted = "ProseAlternativesExhausted";
+                    UpdateAttempt(number, attempt, a => a with { ErrorCode = exhausted, IsComplete = true });
+                    UpdateItem(number, i => i with { State = AiItemState.Duplicate, Question = null, Error = exhausted });
+                    return (AiJobState.Failed, exhausted);
+                }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     correction = "GenerationTimeout";
@@ -204,6 +249,12 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 UpdateItem(number, i => i with { Error = correction });
                 if (!validation.IsValid) continue;
                 var question = new ValidatedBankQuestion(validation.Contract ?? contract, validation.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
+                string proseHash = QuestionProseIdentity.Hash(question.Contract, question.Draft);
+                if (batchProse.Contains(proseHash) || await store.ContainsProseAsync(question, cancellationToken).ConfigureAwait(false))
+                {
+                    RejectDuplicate();
+                    continue;
+                }
                 UpdateItem(number, i => i with { State = AiItemState.Ready, Question = question, Contract = question.Contract });
                 if (options.AutoInsert)
                 {
@@ -211,14 +262,31 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     await InsertAsync(number).ConfigureAwait(false);
                     if (Snapshot.Items.Single(i => i.Number == number).State == AiItemState.SaveFailed)
                     { return (AiJobState.Failed, "DatabaseSaveFailed"); }
+                    if (Snapshot.Items.Single(i => i.Number == number).State == AiItemState.Duplicate)
+                    {
+                        // A different writer may insert the wording after the precheck.
+                        RejectDuplicate();
+                        continue;
+                    }
                 }
+                batchProse.Add(proseHash);
+                excludedProse.Add(proseHash);
                 break;
+
+                void RejectDuplicate()
+                {
+                    correction = "DuplicateProse";
+                    excludedProse.Add(proseHash);
+                    duplicateProse.Add(question.Draft.ProblemText);
+                    UpdateAttempt(number, attempt, a => a with { ErrorCode = correction });
+                    UpdateItem(number, i => i with { State = AiItemState.Duplicate, Question = null, Error = correction });
+                }
             }
             var result = Snapshot.Items.Single(i => i.Number == number);
             if (result.Question is null)
             {
-                UpdateItem(number, i => i with { State = AiItemState.Rejected, Error = correction });
-                return (AiJobState.Failed, "RetriesExhausted");
+                UpdateItem(number, i => i with { State = correction == "DuplicateProse" ? AiItemState.Duplicate : AiItemState.Rejected, Error = correction });
+                return (AiJobState.Failed, correction == "DuplicateProse" ? "DuplicateProseRetriesExhausted" : "RetriesExhausted");
             }
         }
         return (AiJobState.Completed, null);

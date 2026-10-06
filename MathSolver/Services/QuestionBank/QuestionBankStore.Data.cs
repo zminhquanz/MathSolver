@@ -24,7 +24,7 @@ public sealed record BankExportReport(int Exported, int Skipped);
 
 public sealed partial class QuestionBankStore
 {
-    public const string DefaultInquiry = "SELECT Hash, Operation, Stars, Language, DraftJson\nFROM BasicQuestionBank\nORDER BY CreatedUtc DESC\nLIMIT 50;";
+    public const string DefaultInquiry = "SELECT Hash, ProblemType, ProblemVariant, Operation, Stars, Language, DraftJson\nFROM BasicQuestionBank\nORDER BY CreatedUtc DESC\nLIMIT 50;";
 
     public async Task<BankQueryResult> QueryAsync(string sql, CancellationToken cancellationToken = default)
     {
@@ -217,8 +217,8 @@ public sealed partial class QuestionBankStore
                         if (contract is not null && row.Version == contract.Version && row.Operation == (int)contract.Operation
                             && row.Stars == (int)contract.Tier && row.Language == (int)contract.Language
                             && contract.Grade == row.Grade && (int)contract.KnowledgeGroup == row.KnowledgeGroup
-                            && (int)contract.Family == row.Family && (int)contract.UnknownRole == row.UnknownRole
-                            && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version) || (int)contract.Structure == row.Structure
+                            && (int)contract.Family == row.ProblemType && (int)contract.UnknownRole == row.ProblemVariant
+                            && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version) || (int)contract.Structure == row.Structure
                                 && contract.TopicId == row.TopicId && contract.SceneId == row.SceneId))
                         {
                             var checkedDraft = BasicQuestionValidator.Validate(row.DraftJson, contract);

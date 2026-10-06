@@ -90,6 +90,8 @@ public partial class MathPuzzlePage
             _ => "Quiz.TrueFalseMode"
         });
         var selections = new List<string> { OperationPicker.SelectedItem?.ToString() ?? "" };
+        if (PracticeFormatPanel.IsVisible && PracticeFormatPicker.SelectedItem is { } practiceFormat)
+            selections.Add(practiceFormat.ToString()!);
         if (LearningProfilePanel.IsVisible)
         {
             if (CurrentLearningProfile is not null && LearningGroupPicker.SelectedItem is { } group) selections.Add(group.ToString()!);

@@ -2,6 +2,8 @@ using MathSolver.Models;
 
 namespace MathSolver.Services.QuestionBank;
 
+public enum PracticeQuestionFormat { Mixed, Numeric, WordProblem }
+
 /// <summary>Mixes random arithmetic, reviewed C# prose and optional stored templates; never runs model inference.</summary>
 public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Random? random = null,
     Random? csharpFormatRandom = null)
@@ -11,17 +13,44 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
     private readonly OneStepQuestionCycle _builtIn = new();
     private readonly AppliedQuestionCycle _applied = new();
     private readonly FindXQuestionCycle _findX = new();
+    private readonly FractionQuestionCycle _fractions = new();
 
-    public async Task<ArithmeticQuizQuestion> SelectFindXAsync(ArithmeticQuizQuestion generated,
+    public async Task<ArithmeticQuizQuestion> SelectFractionAsync(ArithmeticQuizQuestion generated,
         CurriculumTier tier, AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var operation = (ArithmeticOperation)(generated.FractionProblem?.Operation ?? throw new ArgumentException("ExpectedFractionQuestion"));
+        ArithmeticQuizQuestion BuiltIn()
+        {
+            var c = _fractions.Next(profile, operation, tier, language);
+            return c.ToPracticeQuestion(FractionQuestionCatalogue.Draft(c).ToWordProblem(c), generated.Mode, _random);
+        }
+        if (_random.Next(2) == 0) return BuiltIn();
+        var saved = await store.TakeFractionAsync(operation, tier, language, profile, cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (saved is null) return BuiltIn();
+        var c = saved.Contract;
+        var validation = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c);
+        if (!validation.IsValid || c.Family != BankQuestionFamily.Fraction || c.Operation != operation
+            || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group) return BuiltIn();
+        var fresh = c.FreshFacts(_random);
+        return fresh.ToPracticeQuestion(saved.Draft.ToWordProblem(fresh), generated.Mode, _random);
+    }
+
+    public async Task<ArithmeticQuizQuestion> SelectFindXAsync(ArithmeticQuizQuestion generated,
+        CurriculumTier tier, AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default,
+        PracticeQuestionFormat format = PracticeQuestionFormat.Mixed)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!Enum.IsDefined(format)) throw new ArgumentOutOfRangeException(nameof(format));
+        if (format == PracticeQuestionFormat.Numeric) return generated;
         var operation = generated.FindXProblem?.Operation ?? throw new ArgumentException("ExpectedFindXQuestion");
         ArithmeticQuizQuestion BuiltIn()
         {
             var c = _findX.Next(profile, operation, tier, language);
             var q = c.ToPracticeQuestion(FindXQuestionCatalogue.Draft(c).ToWordProblem(c), generated.Mode);
-            return _csharpFormatRandom.Next(2) == 0 ? q with { WordProblem = null } : q;
+            return format == PracticeQuestionFormat.Mixed && _csharpFormatRandom.Next(2) == 0
+                ? q with { WordProblem = null } : q;
         }
         if (_random.Next(2) == 0) return BuiltIn();
         var saved = await store.TakeFindXAsync(operation, tier, language, profile, cancellationToken).ConfigureAwait(false);
@@ -38,9 +67,12 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
 
     public async Task<ArithmeticQuizQuestion> SelectAsync(ArithmeticQuizQuestion generated,
         CurriculumTier tier, AppLanguage language, CancellationToken cancellationToken = default,
-        QuestionLearningProfile? profile = null)
+        QuestionLearningProfile? profile = null, PracticeQuestionFormat format = PracticeQuestionFormat.Mixed)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (!Enum.IsDefined(format)) throw new ArgumentOutOfRangeException(nameof(format));
+        // Numeric practice preserves the generator's facts and choices and never reads SQLite.
+        if (format == PracticeQuestionFormat.Numeric) return generated;
         // An independent 50/50 choice per question, even when the bank contains matching entries.
         // Within C#, keep the original random-number exercise alongside reviewed stories.
         // Return the original question intact so its operands, choices and grading are preserved.
@@ -48,7 +80,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             throw new ArgumentException("InvalidLearningProfile", nameof(profile));
         ArithmeticQuizQuestion BuiltIn()
         {
-            bool numeric = _csharpFormatRandom.Next(2) == 0;
+            bool numeric = format == PracticeQuestionFormat.Mixed && _csharpFormatRandom.Next(2) == 0;
             if (profile is null) return numeric ? generated
                 : _builtIn.Next(generated.Expression.Operation, tier, language, generated.Mode);
             var c = _applied.Next(profile, generated.Expression.Operation, tier, language);
@@ -63,6 +95,11 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             : store.TakeForProfileAsync(generated.Expression.Operation, tier, language, profile, cancellationToken)).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         if (saved is null) return BuiltIn();
+        var c = saved.Contract;
+        var validation = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c);
+        if (!validation.IsValid || c.Family != BankQuestionFamily.Arithmetic
+            || c.Operation != generated.Expression.Operation || c.Tier != tier || c.Language != language
+            || profile is not null && !profile.Includes(c.KnowledgeGroup)) return BuiltIn();
         var facts = saved.Contract.FreshFacts();
         return facts.ToPracticeQuestion(saved.Draft.ToWordProblem(facts), generated.Mode);
     }

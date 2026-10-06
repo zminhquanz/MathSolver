@@ -539,8 +539,17 @@ internal static class AdditionTests
         }
         // Unequal row counts must not drown out small relation/topic families.
         var repeat = entries.First(q => q.Contract.SceneId == "library" && q.Contract.Structure == BasicQuestionStructure.Increase);
-        for (int i = 0; i < 40; i++) Check(await store.InsertAsync(repeat with { Draft = repeat.Draft with {
-            GivenA = new string(' ', i + 1) + repeat.Draft.GivenA } }), "Test skewed bank insert failed.");
+        using (var db = new SQLite.SQLiteConnection(path))
+        for (int i = 0; i < 40; i++)
+        {
+            var padded = repeat with { Draft = repeat.Draft with {
+                GivenA = new string(' ', i + 1) + repeat.Draft.GivenA } };
+            Check(!await store.InsertAsync(padded), "Whitespace created a new prose template.");
+            // Old banks can already contain duplicate wording. Seed those historical
+            // rows directly to retain the skewed-selection regression coverage.
+            db.Execute("INSERT INTO BasicQuestionBank SELECT ?,Operation,Stars,Language,Version,ContractJson,?,RawJson,ModelName,CreatedUtc,LastUsedUtc,UseCount,Structure,TopicId,SceneId,Grade,KnowledgeGroup,ProblemType,ProblemVariant FROM BasicQuestionBank WHERE SceneId=? AND Structure=? LIMIT 1",
+                "historical-skew-" + i, QuestionBankStore.SerializeDraft(padded.Draft), repeat.Contract.SceneId, (int)repeat.Contract.Structure);
+        }
         var picked = new List<BasicQuestionContract>();
         // Each relation gets an equal share; cover every scene of the largest
         // relation family after the catalogue grows, despite skewed row counts.

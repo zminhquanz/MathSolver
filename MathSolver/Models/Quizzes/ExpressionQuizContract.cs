@@ -22,4 +22,6 @@ public sealed record ExpressionQuizContract(
     IReadOnlyList<ReducedFraction> Choices)
 {
     public bool UsesFractions => Type is ExpressionQuizType.Fraction or ExpressionQuizType.FractionWithBrackets;
+    /// <summary>C#-derived equivalent arrangements for a word problem, never model output.</summary>
+    public IReadOnlyList<string> EquivalentExpressions { get; init; } = [];
 }
