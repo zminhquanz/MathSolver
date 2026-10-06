@@ -127,15 +127,6 @@ internal static partial class PuzzleTests
                     if (level == 5) expected = Add(expected, Fraction("subtract-numerator", "subtract-denominator"), -1);
                     Require(contract.Answers[0].Value == expected && expected.Numerator > expected.Denominator, "Combined fractions do not match the mixed-number value.");
                 }
-                else if (type == ElementaryQuizType.CompareFractions)
-                {
-                    var left = Fraction("numerator-first", "denominator-first");
-                    var right = Fraction("numerator-second", "denominator-second");
-                    if (level >= 4) left = Add(left, Fraction("extra-numerator", "extra-denominator"));
-                    if (level == 5) right = Add(right, Fraction("right-extra-numerator", "right-extra-denominator"));
-                    int comparison = (left.Numerator * right.Denominator).CompareTo(right.Numerator * left.Denominator);
-                    Require(contract.Answers[0].Text == (comparison < 0 ? "<" : comparison > 0 ? ">" : "="), "Comparing fraction sums must use their complete values.");
-                }
                 else if (type is ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction)
                 {
                     Require(contract.RequiresSolution, "Fraction word problems must retain their solution-sentence requirement.");

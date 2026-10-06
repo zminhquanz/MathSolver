@@ -51,8 +51,6 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
 {
     public ProbabilityQuizScenario? ProbabilityScenario { get; init; }
     public ElementaryQuizReasoning? Reasoning { get; init; }
-    public string? ComparisonLeftExpression { get; init; }
-    public string? ComparisonRightExpression { get; init; }
 
     public bool UsesFractionFormatting => Type is ElementaryQuizType.SumRatio or
         ElementaryQuizType.DifferenceRatio or ElementaryQuizType.ReduceFraction or
@@ -64,7 +62,7 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions;
 
     public (string Left, string Right) ComparisonOperands => Type == ElementaryQuizType.CompareFractions
-        ? (ComparisonLeftExpression ?? $"{Facts[0]}/{Facts[1]}", ComparisonRightExpression ?? $"{Facts[2]}/{Facts[3]}") : (Facts[0], Facts[1]);
+        ? ($"{Facts[0]}/{Facts[1]}", $"{Facts[2]}/{Facts[3]}") : (Facts[0], Facts[1]);
 
     public string FormatComparison(string symbol)
     {

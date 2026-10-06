@@ -107,31 +107,6 @@ public sealed partial class ElementaryQuizGenerator
             t.Answer(t.L("Phân số tối giản", "Reduced fraction"), $"{nExpression}/{dExpression}", reduced: true);
             return t.Build("reduce-inferred-components-" + level, problem);
         }
-        if (type == ElementaryQuizType.CompareFractions)
-        {
-            string n1 = t.Given("numerator-first", _random.Next(1, denominator));
-            string d1 = t.Given("denominator-first", denominator);
-            int secondD = level == 1 ? denominator : level == 2 ? 2 * denominator : denominator - 1;
-            string n2 = t.Given("numerator-second", _random.Next(1, secondD));
-            string d2 = t.Given("denominator-second", secondD);
-            string left = $"{n1}/{d1}", right = $"{n2}/{d2}";
-            if (level >= 4)
-            {
-                string n3 = t.Given("extra-numerator", 1), d3 = t.Given("extra-denominator", denominator + 1);
-                left = $"({left}+{n3}/{d3})";
-                if (level == 5)
-                {
-                    string n4 = t.Given("right-extra-numerator", 1), d4 = t.Given("right-extra-denominator", denominator + 2);
-                    right = $"({right}+{n4}/{d4})";
-                }
-            }
-            EssayCalculationEvaluator.TryEvaluate(left, out var leftValue, out _);
-            EssayCalculationEvaluator.TryEvaluate(right, out var rightValue, out _);
-            int compare = (leftValue.Numerator * rightValue.Denominator).CompareTo(rightValue.Numerator * leftValue.Denominator);
-            t.TextAnswer(t.L("Dấu so sánh", "Comparison"), compare < 0 ? "<" : compare > 0 ? ">" : "=");
-            return t.Build("compare-relations-" + level, t.L($"So sánh {left} và {right}.", $"Compare {left} and {right}.")) with
-                { ComparisonLeftExpression = left, ComparisonRightExpression = right };
-        }
         if (type == ElementaryQuizType.CommonDenominator)
         {
             int[] denominators = level switch { 1 => [3, 6], 2 => [4, 8], 3 => [4, 5], 4 => [4, 6, 9], _ => [5, 7, 8] };

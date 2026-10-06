@@ -16,7 +16,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         QuizProblemKind.Time => [ElementaryQuizType.ElapsedTime, ElementaryQuizType.TimeAddition, ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar],
         QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers],
         QuizProblemKind.Decimal => [ElementaryQuizType.DecimalAdd, ElementaryQuizType.DecimalSubtract, ElementaryQuizType.DecimalMultiply, ElementaryQuizType.DecimalDivide, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare],
-        QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.CompareFractions, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction],
+        QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction],
         QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference],
         QuizProblemKind.Probability => [ElementaryQuizType.Likelihood, ElementaryQuizType.ExperimentalProbability],
         QuizProblemKind.VisualGeometry => [ElementaryQuizType.ClassifyAngle, ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.CountSides, ElementaryQuizType.RectangleSide, ElementaryQuizType.CompositeArea],
@@ -163,19 +163,15 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
             }
             case ElementaryQuizType.CompareFractions:
             {
-                int denominator = kind == QuizProblemKind.Fraction
-                    ? QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2) : _random.Next(3, 9);
-                int numerator = kind == QuizProblemKind.Fraction
-                    ? QuizCurriculumLayer.NextSecondaryOperand(_random, tier, maximumOverride: denominator - 1)
-                    : _random.Next(1, denominator);
-                int otherDenominator = scale < 3 ? denominator : kind == QuizProblemKind.Fraction
-                    ? QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2) : _random.Next(3, 9);
+                int denominator = QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2);
+                int numerator = QuizCurriculumLayer.NextSecondaryOperand(_random, tier, maximumOverride: denominator - 1);
+                int otherDenominator = scale < 3 ? denominator
+                    : QuizCurriculumLayer.NextPrimaryOperand(_random, tier, minimumAllowed: 2);
                 int otherNumerator = _random.Next(1, otherDenominator);
                 if (_random.Next(3) == 0)
                 {
-                    int factor = scale < 3 ? 1 : kind == QuizProblemKind.Fraction
-                        ? _random.Next(1, Math.Min(scale, QuizCurriculumLayer.GetMaximumOperandValue(tier) / denominator) + 1)
-                        : _random.Next(2, scale + 1);
+                    int factor = scale < 3 ? 1
+                        : _random.Next(1, Math.Min(scale, QuizCurriculumLayer.GetMaximumOperandValue(tier) / denominator) + 1);
                     otherNumerator = numerator * factor;
                     otherDenominator = denominator * factor;
                 }

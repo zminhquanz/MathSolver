@@ -132,7 +132,7 @@ public static class QuizDiagramBuilder
             else if (elementary.Kind == QuizProblemKind.FractionSkills && elementary.Visual is null)
             {
                 var rows = new List<QuizDiagramRow>();
-                int pairs = elementary.Type is ElementaryQuizType.CompareFractions or ElementaryQuizType.CommonDenominator ? 2 : 1;
+                int pairs = elementary.Type == ElementaryQuizType.CommonDenominator ? 2 : 1;
                 for (int index = 0; index < pairs; index++)
                 {
                     // Common-denominator facts are stored as n1, n2, d1, d2.
