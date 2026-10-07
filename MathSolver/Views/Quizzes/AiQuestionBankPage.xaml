@@ -59,7 +59,7 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=56, WinUI=48, Default=48}" />
         </Style>
-        <Style x:Key="AiBankPickerStyle" TargetType="Picker" BasedOn="{StaticResource {x:Type Picker}}">
+        <Style x:Key="AiBankPickerStyle" TargetType="Picker" BasedOn="{StaticResource DefaultPickerStyle}">
             <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=56, WinUI=48, Default=48}" />
             <Setter Property="Margin" Value="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}" />
             <Setter Property="HorizontalOptions" Value="Fill" />
