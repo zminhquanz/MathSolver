@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Numerics;
 using MathSolver.Services;
@@ -101,13 +102,13 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     {
         InitializeComponent();
 
-#if ANDROID
-        AndroidPickerVisualHelper.Attach(
-            GeometryShapePicker);
-#endif
-
         BindingContext =
             this;
+
+        // The backing Picker leaves the visual tree. Keep its object-source
+        // binding alive explicitly; selection still updates formulas and inputs.
+        GeometryShapePicker.BindingContext = this;
+        IllustratedQuizPicker.Attach(GeometryShapePicker, "Choice.SelectShape");
 
         InitializeLocalization();
 
@@ -366,6 +367,9 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
         int selectedIndex =
             0;
+
+        IllustratedQuizPicker.SetKeys(GeometryShapePicker,
+            GeometryItems.Select(item => "Calculator.Geometry." + item.Id));
 
         if (!string.IsNullOrWhiteSpace(
                 preferredGeometryId))

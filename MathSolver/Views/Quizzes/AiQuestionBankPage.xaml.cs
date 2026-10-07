@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Storage;
+using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.QuestionBank;
@@ -28,6 +29,9 @@ public partial class AiQuestionBankPage : ContentPage
     public AiQuestionBankPage()
     {
         InitializeComponent();
+        IllustratedQuizPicker.Attach(ProblemPicker, "Choice.SelectProblem");
+        IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectSubtype");
+        IllustratedQuizPicker.Attach(FindXRolePicker, "Choice.SelectSubtype");
         QueryEditor.Text = QuestionBankStore.DefaultInquiry;
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         RefreshPickerLabels();
@@ -104,6 +108,7 @@ public partial class AiQuestionBankPage : ContentPage
         int language = Math.Max(0, LanguagePicker.SelectedIndex), mode = Math.Max(0, BatchModePicker.SelectedIndex);
         ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
             LocalizationService.TranslateKey("FractionBank.Title") }; ProblemPicker.SelectedIndex = (int)_family;
+        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title" });
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };

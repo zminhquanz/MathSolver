@@ -1,4 +1,5 @@
 using MathSolver.Models;
+using MathSolver.Controls;
 using MathSolver.Services;
 using MathSolver.Services.QuestionBank;
 
@@ -30,6 +31,7 @@ public partial class AiQuestionBankPage
             LearningGroupPicker.SelectedIndex = Array.IndexOf(_learningGroups, _learningGroup);
             _learningOperations = Enum.GetValues<ArithmeticOperation>();
             OperationPicker.ItemsSource = _learningOperations.Select(op => T(op.ToString())).ToArray();
+            IllustratedQuizPicker.SetKeys(OperationPicker, _learningOperations.Select(op => "AiBank." + op));
             OperationPicker.SelectedIndex = Math.Max(0, Array.IndexOf(_learningOperations, operation));
         }
         finally { _updatingLearning = false; }
@@ -66,10 +68,12 @@ public partial class AiQuestionBankPage
                 (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1)).Select(s => s.Role).Distinct().ToArray();
             if (!_unknownRoles.Contains(_unknownRole)) _unknownRole = _unknownRoles.FirstOrDefault();
             FindXRolePicker.ItemsSource = _unknownRoles.Select(r => LocalizationService.TranslateKey("FindXBank.Role." + r)).ToArray();
+            IllustratedQuizPicker.SetKeys(FindXRolePicker, _unknownRoles.Select(role => "FindXBank.Role." + role));
             FindXRolePicker.SelectedIndex = Array.IndexOf(_unknownRoles, _unknownRole);
             string[] keys = ["Quiz.FindXSum", "Quiz.FindXDifference", "Quiz.FindXProduct", "Quiz.FindXQuotient"];
             int operation = OperationPicker.SelectedIndex;
             OperationPicker.ItemsSource = keys.Select(LocalizationService.TranslateKey).ToArray();
+            IllustratedQuizPicker.SetKeys(OperationPicker, keys);
             OperationPicker.SelectedIndex = Math.Max(0, operation);
         }
         finally { _updatingLearning = false; }

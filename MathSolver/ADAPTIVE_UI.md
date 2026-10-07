@@ -124,3 +124,63 @@ Manual verification remains necessary for these device-specific cases:
 
 The automated checks do not establish physical tablet/phone visual correctness,
 keyboard inset behavior, actual OS DPI changes or full screen-reader interaction.
+
+Quiz topic and subtype pickers now open the shared `IllustratedQuizPicker` modal.
+The same chooser is used for the AI question-bank topic, operation and unknown
+role. The collapsed field contains a small mathematical illustration, its name
+and a chevron, keeping the configuration panel compact. Native Picker values and
+selection events remain the backing model; no generation or grading route changes.
+
+The geometry calculator's “2. Chọn hình” field uses the same illustrated chooser.
+Its options come from GeometryFormulaCatalog: 11 plane shapes or 5 solids according
+to the selected category, keyed by Calculator.Geometry.<shape Id>. The backing
+Picker retains an explicit BindingContext after leaving the visual tree, and its
+Items use ItemDisplayBinding for translated model names. Choosing a card continues
+to update the formula preview, diagram and dimension fields through the existing
+selection event. Shape descriptions are localized in QuizContent language packs;
+thumbnails distinguish triangle/trapezoid variants and the five solid shapes.
+
+The modal is centered, capped at 1100 by 780 logical units, with a search field
+and one internally scrolling CollectionView. Its cards use 1–3 columns according
+to available width and system text scale. Narrow windows and phones show an
+illustration on the left and text on the right in a single column. Search matches
+localized titles and descriptions, including Vietnamese without accents, while
+preserving the original selection indexes.
+
+On Windows, the list reserves a 24-unit gutter inside its native ItemsPresenter
+for the overlay scrollbar. Card columns share the remaining width evenly, and
+the responsive column calculation excludes this gutter. The scrollbar remains
+visible and draggable without covering card borders or keyboard focus outlines.
+
+The current selection has a stronger border and a check mark. Cards are native
+buttons with a visible focus border and localized accessible name/description;
+decorative drawings are excluded from screen readers. Selection, Close, Windows
+Escape and Android Back dismiss the modal; focus returns to the original field.
+Changing app language dismisses an open chooser so its next opening uses the new
+language. Illustrations follow the current theme and accent through resources.
+
+Collapsed illustrated fields match the hardware-page pickers: InputBackgroundColor,
+BorderBrush, a 10-unit corner radius, 15-unit bold text and a small vector chevron.
+The 32-unit thumbnail and inset padding fit a 48-unit minimum on Windows and
+56 on Android, with wrapping for larger text. The input button uses an opaque
+theme surface, so hover shades that surface instead of filling it with the accent.
+Composite picker buttons opt out of scale/fade press animation: the fill, caption,
+thumbnail and chevron stay aligned with the frame throughout a click. Focus changes
+the outer stroke color at constant thickness, rather than adding an inner outline.
+Native hover/ripple and keyboard focus feedback remain enabled.
+
+Chooser focus callbacks only update outlines while their native handlers have a
+PlatformView. MAUI can raise Unfocused after clearing PlatformView during modal
+teardown; changing Button.BorderWidth at that point would crash its stroke mapper.
+Loaded callbacks restore the outline when controls are recycled or reconnected.
+The caption/illustration overlay is wrapped in an input-transparent ContentView.
+On Windows this disables native hit testing for the entire decorative subtree,
+including nested layouts and spaces between labels. The underlying Button owns
+hover, clicks and keyboard activation across the full field/card surface.
+
+Presentation IDs are in `QuizContent/catalogues.json`, list `QuizChoices`.
+Descriptions and chooser UI text are in each language pack. See
+[authoring instructions](QUIZ_CONTENT_AUTHORING.md#9-bảng-chọn-dạng-bài-có-minh-họa).
+Automated checks cover catalogue completeness, both language packs and filtered
+selection routing. Still check actual keyboard navigation, Narrator/TalkBack,
+large text and narrow/tablet layouts on devices before declaring visual coverage.

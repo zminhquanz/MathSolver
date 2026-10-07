@@ -37,6 +37,27 @@ public static class InteractiveButtonAnimation
     private static readonly ConditionalWeakTable<Button, AnimationState>
         States = new();
 
+    // Composite fields draw their caption and outline outside the input button.
+    // Scaling only that button would pull its fill away from the surrounding frame.
+    public static readonly BindableProperty IsPressAnimationEnabledProperty =
+        BindableProperty.CreateAttached(
+            "IsPressAnimationEnabled",
+            typeof(bool),
+            typeof(InteractiveButtonAnimation),
+            true,
+            propertyChanged: static (bindable, _, value) =>
+            {
+                if (value is false && bindable is Button button &&
+                    States.TryGetValue(button, out AnimationState? state))
+                    Reset(button, state);
+            });
+
+    public static bool GetIsPressAnimationEnabled(BindableObject bindable) =>
+        (bool)bindable.GetValue(IsPressAnimationEnabledProperty);
+
+    public static void SetIsPressAnimationEnabled(BindableObject bindable, bool value) =>
+        bindable.SetValue(IsPressAnimationEnabledProperty, value);
+
     public static readonly BindableProperty IsScopeEnabledProperty =
         BindableProperty.CreateAttached(
             "IsScopeEnabled",
@@ -102,6 +123,7 @@ public static class InteractiveButtonAnimation
     {
         if (sender is not Button button ||
             !button.IsEnabled ||
+            !GetIsPressAnimationEnabled(button) ||
             !IsInsideEnabledScope(button))
         {
             return;

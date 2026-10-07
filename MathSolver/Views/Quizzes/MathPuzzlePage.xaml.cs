@@ -93,23 +93,10 @@ public partial class MathPuzzlePage : ContentPage
         // Fraction overlays share their accessible description with the button.
         foreach (var view in ChoiceFractionViews) AutomationProperties.SetExcludedWithChildren(view, true);
 
-#if ANDROID
-        AndroidPickerVisualHelper.Attach(ElementaryTypePicker);
-        AndroidPickerVisualHelper.Attach(
-            OperationPicker);
-        AndroidPickerVisualHelper.Attach(
-            AverageTypePicker);
-        AndroidPickerVisualHelper.Attach(
-            PercentageTypePicker);
-        AndroidPickerVisualHelper.Attach(
-            FindXTypePicker);
-        AndroidPickerVisualHelper.Attach(
-            GeometryShapePicker);
-        AndroidPickerVisualHelper.Attach(
-            GeometryMeasurementPicker);
-        AndroidPickerVisualHelper.Attach(
-            MotionTypePicker);
-#endif
+        IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectProblem");
+        foreach (var picker in new[] { ElementaryTypePicker, ExpressionTypePicker, AverageTypePicker,
+                     PercentageTypePicker, FindXTypePicker, GeometryShapePicker, GeometryMeasurementPicker, MotionTypePicker })
+            IllustratedQuizPicker.Attach(picker, "Choice.SelectSubtype");
 
         InteractiveButtonAnimation.SetIsScopeEnabled(
             this,
@@ -716,6 +703,7 @@ public partial class MathPuzzlePage : ContentPage
                 OperationPicker.Items.Add(
                     TranslateQuiz(option.LocalizationKey));
             }
+            IllustratedQuizPicker.SetKeys(OperationPicker, _quizProblemTypeCatalog.Options.Select(option => option.LocalizationKey));
 
             if (selectedIndex >= OperationPicker.Items.Count)
             {
@@ -754,6 +742,8 @@ public partial class MathPuzzlePage : ContentPage
             foreach (string key in new[] { "Quiz.ExpressionInteger", "Quiz.ExpressionIntegerBrackets",
                          "Quiz.ExpressionFraction", "Quiz.ExpressionFractionBrackets" })
                 ExpressionTypePicker.Items.Add(TranslateQuiz(key));
+            IllustratedQuizPicker.SetKeys(ExpressionTypePicker, new[] { "Quiz.SubtypeMixed", "Quiz.ExpressionInteger",
+                "Quiz.ExpressionIntegerBrackets", "Quiz.ExpressionFraction", "Quiz.ExpressionFractionBrackets" });
             ExpressionTypePicker.SelectedIndex = _selectedExpressionType.HasValue
                 ? (int)_selectedExpressionType.Value + 1 : 0;
             AverageTypePicker.Items.Clear();
@@ -771,6 +761,7 @@ public partial class MathPuzzlePage : ContentPage
             {
                 AverageTypePicker.Items.Add(TranslateQuiz(key));
             }
+            IllustratedQuizPicker.SetKeys(AverageTypePicker, averageKeys);
             AverageTypePicker.SelectedIndex = _selectedAverageType switch
             {
                 null => 0,
@@ -795,6 +786,7 @@ public partial class MathPuzzlePage : ContentPage
             {
                 PercentageTypePicker.Items.Add(TranslateQuiz(key));
             }
+            IllustratedQuizPicker.SetKeys(PercentageTypePicker, percentageKeys);
             PercentageTypePicker.SelectedIndex = _selectedPercentageType switch
             {
                 null => 0,
@@ -817,6 +809,7 @@ public partial class MathPuzzlePage : ContentPage
             {
                 MotionTypePicker.Items.Add(TranslateQuiz(key));
             }
+            IllustratedQuizPicker.SetKeys(MotionTypePicker, motionKeys);
             MotionTypePicker.SelectedIndex = _selectedMotionType switch
             {
                 null => 0,
@@ -840,6 +833,7 @@ public partial class MathPuzzlePage : ContentPage
             {
                 FindXTypePicker.Items.Add(TranslateQuiz(key));
             }
+            IllustratedQuizPicker.SetKeys(FindXTypePicker, findXKeys);
             FindXTypePicker.SelectedIndex = _selectedFindXOperation switch
             {
                 null => 0,
@@ -876,6 +870,7 @@ public partial class MathPuzzlePage : ContentPage
                 GeometryShapePicker.Items.Add(TranslateQuiz(key));
                 _geometryShapePickerValues.Add(shape);
             }
+            IllustratedQuizPicker.SetKeys(GeometryShapePicker, geometryOptions.Select(option => option.Key));
 
             int geometrySelectedIndex =
                 _geometryShapePickerValues.IndexOf(_selectedGeometryShape);
@@ -904,6 +899,7 @@ public partial class MathPuzzlePage : ContentPage
             _geometryMeasurementPickerValues.Clear();
             GeometryMeasurementPicker.Items.Add(TranslateQuiz("Quiz.SubtypeMixed"));
             _geometryMeasurementPickerValues.Add(null);
+            var illustratedMeasurementKeys = new List<string> { "Quiz.SubtypeMixed" };
             foreach (GeometryMeasurement measurement in available)
             {
                 string key = measurement switch
@@ -916,8 +912,10 @@ public partial class MathPuzzlePage : ContentPage
                     _ => throw new ArgumentOutOfRangeException(nameof(measurement))
                 };
                 GeometryMeasurementPicker.Items.Add(TranslateQuiz(key));
+                illustratedMeasurementKeys.Add(key);
                 _geometryMeasurementPickerValues.Add(measurement);
             }
+            IllustratedQuizPicker.SetKeys(GeometryMeasurementPicker, illustratedMeasurementKeys);
             GeometryMeasurementPicker.SelectedIndex =
                 _geometryMeasurementPickerValues.IndexOf(_selectedGeometryMeasurement);
         }
@@ -1220,6 +1218,8 @@ public partial class MathPuzzlePage : ContentPage
             ElementaryTypePicker.Items.Clear();
             foreach (var type in _elementaryTypePickerValues)
                 ElementaryTypePicker.Items.Add(TranslateQuiz(type.HasValue ? "Quiz.Elementary." + type.Value : "Quiz.OperationMixed"));
+            IllustratedQuizPicker.SetKeys(ElementaryTypePicker, _elementaryTypePickerValues.Select(type =>
+                type.HasValue ? "Quiz.Elementary." + type.Value : "Quiz.OperationMixed"));
             ElementaryTypePicker.SelectedIndex = Math.Max(0, _elementaryTypePickerValues.IndexOf(_selectedElementaryType));
             ElementaryTypePicker.IsEnabled = true;
         }

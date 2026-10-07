@@ -6,6 +6,37 @@
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     Shell.NavBarIsVisible="True" BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
+        <Style x:Key="AiBankBackButtonStyle" TargetType="Button" BasedOn="{StaticResource PlatformBackButtonStyle}">
+            <Setter Property="WidthRequest" Value="48" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="MinimumWidthRequest" Value="48" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+            <Setter Property="CornerRadius" Value="24" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BorderWidth" Value="0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="PointerOver" />
+                        <VisualState x:Name="Focused">
+                            <VisualState.Setters>
+                                <Setter Property="BorderWidth" Value="1" />
+                                <Setter Property="BorderColor" Value="{DynamicResource PrimaryColor}" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Disabled">
+                            <VisualState.Setters>
+                                <Setter Property="Opacity" Value="0.45" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
         <Style x:Key="AiBankGridActionStyle" TargetType="Button" BasedOn="{StaticResource SolverOutlinedActionStyle}">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Padding" Value="10,6" />
@@ -86,7 +117,21 @@
         <ScrollView>
             <VerticalStackLayout Style="{StaticResource SolverContentStyle}">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                    <Button Text="{localization:Translate AiBank.Back}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnBackClicked" />
+                    <Grid WidthRequest="48" HeightRequest="48" VerticalOptions="Center">
+                        <Button x:Name="AiBankBackButton" Style="{StaticResource AiBankBackButtonStyle}"
+                                controls:InteractiveButtonAnimation.IsScopeEnabled="True"
+                                controls:InteractiveButtonAnimation.IsPlatformBackButton="True"
+                                controls:InteractiveButtonAnimation.IsPressAnimationEnabled="False"
+                                SemanticProperties.Description="{localization:Translate About.Back.Accessibility}"
+                                ToolTipProperties.Text="{localization:Translate About.Back.Accessibility}"
+                                Clicked="OnBackClicked" />
+                        <controls:ThemedSvgPathIcon
+                            Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
+                            WidthRequest="20" HeightRequest="20"
+                            HorizontalOptions="Center" VerticalOptions="Center"
+                            AutomationProperties.IsInAccessibleTree="False"
+                            Opacity="{Binding Source={x:Reference AiBankBackButton}, Path=Opacity, x:DataType='Button'}" />
+                    </Grid>
                     <Label Grid.Column="1" Text="{localization:Translate AiBank.Title}" Style="{StaticResource SolverSectionTitleStyle}" VerticalOptions="Center" />
                 </Grid>
                 <Label Text="{localization:Translate AiBank.Description}" Style="{StaticResource SolverHeroSubtitleStyle}" />
