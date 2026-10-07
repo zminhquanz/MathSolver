@@ -305,6 +305,14 @@
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{localization:Translate AiBank.Preview}" Style="{StaticResource SolverSectionTitleStyle}" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewStatusLabel" HorizontalTextAlignment="Center" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8"
+                              controls:AdaptiveColumns.MinimumColumnWidth="200" controls:AdaptiveColumns.MaximumColumns="2">
+                            <Button x:Name="DeleteAllButton" Text="{localization:Translate AiBank.DeleteAll}"
+                                    Style="{StaticResource AiBankDeleteAllStyle}" Clicked="OnDeleteAllClicked" />
+                            <Button x:Name="ShareButton" Grid.Column="1" Text="{localization:Translate AiBank.Share}"
+                                    Padding="12,10" LineBreakMode="WordWrap" Style="{StaticResource SolverOutlinedActionStyle}"
+                                    Clicked="OnShareClicked" IsEnabled="False" />
+                        </Grid>
                         <controls:QuestionFactTableView x:Name="PreviewFactTable" />
                         <controls:FractionExpressionView x:Name="PreviewText" MathFontSize="22" WrapContent="True" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewSolutionLabel" IsVisible="False" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
@@ -320,14 +328,6 @@
                             <Button x:Name="ExportExcelButton" Grid.Column="1" Text="{localization:Translate AiBank.ExportExcel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnExportExcelClicked" />
                         </Grid>
                         <Label x:Name="DataTransferStatusLabel" LineBreakMode="WordWrap" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8"
-                              controls:AdaptiveColumns.MinimumColumnWidth="160" controls:AdaptiveColumns.MaximumColumns="2">
-                            <Button x:Name="DeleteAllButton" Text="{localization:Translate AiBank.DeleteAll}"
-                                    Style="{StaticResource AiBankDeleteAllStyle}" Clicked="OnDeleteAllClicked" />
-                            <Button x:Name="ShareButton" Grid.Column="1" Text="{localization:Translate AiBank.Share}"
-                                    Padding="12,10" LineBreakMode="WordWrap" Style="{StaticResource SolverOutlinedActionStyle}"
-                                    Clicked="OnShareClicked" IsEnabled="False" />
-                        </Grid>
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>

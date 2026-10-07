@@ -3,6 +3,7 @@ using MathSolver.Tests;
 var tests = new (string Name, Action Run)[]
 {
     ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),
+    ("Shutdown exception diagnostics", PuzzleTests.CheckShutdownDiagnostics),
     ("Catalog", PuzzleTests.CheckCatalog),
     ("Illustrated choices and search routing", PuzzleTests.CheckIllustratedChoices),
     ("Primary curriculum mapping", PuzzleTests.CheckPrimaryCurriculum),

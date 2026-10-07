@@ -179,6 +179,14 @@ including nested layouts and spaces between labels. The underlying Button owns
 hover, clicks and keyboard activation across the full field/card surface.
 
 Presentation IDs are in `QuizContent/catalogues.json`, list `QuizChoices`.
+Skill selectors use separate mathematical thumbnails for each skill (table, bars,
+pie, pictograph, calendar, balances, fraction transformations, and so on).
+The shared renderer is `Graphics/Quizzes/QuizChoiceDrawable*.cs`; IDs may be reused
+across different selectors for the same skill or shape. Do not reuse a category
+thumbnail for different skills within one selector. Catalogue tests check this
+rule, and `UnitTest/QuizIllustrationTests` compares actual canvas commands and
+checks drawing at field, card and enlarged sizes. Its optional `--preview <file>`
+argument exports an HTML gallery from the same drawing commands for visual review.
 Descriptions and chooser UI text are in each language pack. See
 [authoring instructions](QUIZ_CONTENT_AUTHORING.md#9-bảng-chọn-dạng-bài-có-minh-họa).
 Automated checks cover catalogue completeness, both language packs and filtered

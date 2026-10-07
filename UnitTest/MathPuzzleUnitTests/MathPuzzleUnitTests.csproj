@@ -15,6 +15,7 @@
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.Diagrams.cs" LogicalName="QuizLocalization.MathPuzzlePage.Diagrams.cs" />
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.Layout.cs" LogicalName="QuizLocalization.MathPuzzlePage.Layout.cs" />
     <Compile Include="../../MathSolver/Services/Memory/ResultFileStore.cs" Link="Services/Memory/ResultFileStore.cs" />
+    <Compile Include="../../MathSolver/Services/Diagnostics/UnhandledExceptionLog.cs" Link="Services/Diagnostics/UnhandledExceptionLog.cs" />
     <Compile Include="../../MathSolver/Views/Calculators/PowerRootView.Memory.cs" Link="Views/PowerRootView.Memory.cs" />
     <Compile Include="../../MathSolver/Services/Memory/RecoverableMemoryRegistry.cs" Link="Services/Memory/RecoverableMemoryRegistry.cs" />
     <Compile Include="../../MathSolver/Models/Arithmetic/*.cs" Link="Models/Arithmetic/%(Filename)%(Extension)" />

@@ -16,24 +16,28 @@ internal static partial class PuzzleTests
             if (!QuizChoiceCatalog.Definitions.ContainsKey("Quiz.Elementary." + type))
                 throw new Exception("Missing skill illustration: " + type);
 
-        var illustrationIds = new HashSet<string>(StringComparer.Ordinal)
+        // Choices in the same selector need distinct skill thumbnails. Shape aliases in
+        // different selectors may intentionally share the same mathematical shape.
+        foreach (var kind in Enum.GetValues<QuizProblemKind>().Where(ElementaryQuizGenerator.Supports))
         {
-            "mixed", "arithmetic", "fraction", "find-x", "geometry", "geometry-square", "geometry-rectangle",
-            "geometry-triangle", "geometry-trapezoid", "geometry-rhombus", "geometry-parallelogram", "geometry-circle",
-            "geometry-cube", "geometry-prism", "visual-angle", "visual-parallel", "visual-perpendicular", "two-numbers",
-            "geometry-right-triangle", "geometry-equilateral-triangle", "geometry-isosceles-trapezoid",
-            "geometry-right-trapezoid", "geometry-sphere", "geometry-cylinder", "geometry-cone",
-            "measurement", "clock", "motion", "percentage", "probability", "number-place-value", "number-counting",
-            "remainder", "decimal", "proportion", "average", "data", "multi-step", "expression",
-            "find-x-sum", "find-x-difference", "find-x-minuend", "find-x-product", "find-x-quotient", "find-x-dividend",
-            "arithmetic-add", "arithmetic-subtract", "arithmetic-multiply", "arithmetic-divide"
-        };
+            var types = ElementaryQuizGenerator.Types(kind);
+            var ids = types.Select(type => QuizChoiceCatalog.Definitions["Quiz.Elementary." + type].IllustrationId).ToArray();
+            Require(ids.Distinct(StringComparer.Ordinal).Count() == ids.Length,
+                "Repeated skill illustration in " + kind);
+        }
+        foreach (string prefix in new[] { "Quiz.Problem", "Quiz.Expression", "Quiz.Average", "Quiz.Percentage", "Quiz.Motion", "FindXBank.Role." })
+        {
+            var ids = QuizChoiceCatalog.Definitions.Values.Where(row => row.Key.StartsWith(prefix, StringComparison.Ordinal))
+                .Select(row => row.IllustrationId).ToArray();
+            Require(ids.Distinct(StringComparer.Ordinal).Count() == ids.Length,
+                "Repeated illustration in selector " + prefix);
+        }
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
             foreach (var definition in QuizChoiceCatalog.Definitions.Values)
             {
                 var choice = QuizChoiceCatalog.Create(7, definition.Key, "label", language, true);
-                if (string.IsNullOrWhiteSpace(choice.Description) || !illustrationIds.Contains(choice.IllustrationId))
+                if (string.IsNullOrWhiteSpace(choice.Description) || string.IsNullOrWhiteSpace(choice.IllustrationId))
                     throw new Exception("Invalid choice content: " + definition.Key);
             }
             foreach (string key in new[] { "Choice.SelectProblem", "Choice.SelectSubtype", "Choice.SelectShape", "Choice.Search",

@@ -133,21 +133,25 @@ public sealed class IllustratedQuizPicker : ContentView
         if (_opening || !IsEnabled || !_picker.IsEnabled || _keys.Length == 0) return;
         _opening = true;
         _open.IsEnabled = false;
+        QuizChoicePage? page = null;
         try
         {
             // Freeze options for this dialog. Original indexes survive filtering and resizing.
             var choices = _keys.Select((key, index) => QuizChoiceCatalog.Create(index, key,
                 _picker.Items[index],
                 AppLanguageManager.CurrentLanguage, index == _picker.SelectedIndex)).ToArray();
-            var page = new QuizChoicePage(Text(_captionKey), choices);
+            page = new QuizChoicePage(Text(_captionKey), choices);
             int? selected = await page.ChooseAsync(Navigation);
             if (selected.HasValue && IsEnabled && _picker.IsEnabled) _picker.SelectedIndex = selected.Value;
         }
         finally
         {
             _opening = false;
-            UpdateSelection();
-            if (IsLoaded && _open.Handler?.PlatformView is not null) _open.Focus();
+            if (page?.WasHostDestroyed != true)
+            {
+                UpdateSelection();
+                if (IsLoaded && _open.Handler?.PlatformView is not null) _open.Focus();
+            }
         }
     }
 
@@ -203,10 +207,24 @@ internal sealed class QuizChoicePage : ContentPage
     private readonly TaskCompletionSource<int?> _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly CollectionView _list;
     private readonly SearchBar _search;
+    private readonly Grid _header;
     private readonly Border _card;
+    private int _visibleCount;
+    public static readonly BindableProperty ChoiceCardHeightProperty = BindableProperty.Create(
+        nameof(ChoiceCardHeight), typeof(double), typeof(QuizChoicePage), 136d);
+    public double ChoiceCardHeight
+    {
+        get => (double)GetValue(ChoiceCardHeightProperty);
+        private set => SetValue(ChoiceCardHeightProperty, value);
+    }
     private readonly GridItemsLayout _itemsLayout = new(1, ItemsLayoutOrientation.Vertical)
         { HorizontalItemSpacing = 10, VerticalItemSpacing = 10 };
     private bool _closing;
+    private bool _dismissed;
+    private bool _visible;
+    private bool _hostDestroyed;
+    private Window? _hostWindow;
+    internal bool WasHostDestroyed => _hostDestroyed;
 #if WINDOWS
     private Microsoft.UI.Xaml.UIElement? _keyboardSurface;
     private Microsoft.UI.Xaml.Input.KeyEventHandler? _keyHandler;
@@ -226,16 +244,19 @@ internal sealed class QuizChoicePage : ContentPage
         close.SetDynamicResource(Button.BackgroundColorProperty, "SurfaceAltColor");
         close.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
         close.Clicked += async (_, _) => await CloseAsync(null);
-        var header = new Grid { ColumnDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 12 };
-        header.Add(heading);
-        header.Add(close, 1);
+        _header = new Grid { ColumnDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 12 };
+        _header.Add(heading);
+        _header.Add(close, 1);
+        _header.SizeChanged += (_, _) => Resize();
         _search = new SearchBar { Placeholder = IllustratedQuizPicker.Text("Choice.Search"), MinimumHeightRequest = 48 };
         _search.SetDynamicResource(SearchBar.TextColorProperty, "TextPrimaryColor");
         _search.SetDynamicResource(SearchBar.PlaceholderColorProperty, "TextSecondaryColor");
         SemanticProperties.SetDescription(_search, IllustratedQuizPicker.Text("Choice.Search"));
         _search.TextChanged += (_, _) => ApplyFilter();
+        _search.SizeChanged += (_, _) => Resize();
         _list = new CollectionView { SelectionMode = SelectionMode.None, ItemsLayout = _itemsLayout,
-            ItemSizingStrategy = ItemSizingStrategy.MeasureAllItems,
+            ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Default,
             ItemTemplate = new DataTemplate(CreateChoiceCard),
             EmptyView = new Label { Text = IllustratedQuizPicker.Text("Choice.Empty"), FontSize = 16,
                 HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(12) } };
@@ -244,7 +265,7 @@ internal sealed class QuizChoicePage : ContentPage
         _list.Loaded += (_, _) => ApplyScrollbarGutter();
 #endif
         var body = new Grid { RowDefinitions = new() { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star) }, RowSpacing = 12 };
-        body.Add(header);
+        body.Add(_header);
         body.Add(_search, 0, 1);
         body.Add(_list, 0, 2);
         _card = new Border { Content = body, Padding = 16, StrokeThickness = 1,
@@ -256,6 +277,7 @@ internal sealed class QuizChoicePage : ContentPage
         root.Add(_card);
         Content = root;
         SizeChanged += (_, _) => Resize();
+        Unloaded += (_, _) => EndLifetime();
         ApplyFilter();
     }
 
@@ -267,22 +289,21 @@ internal sealed class QuizChoicePage : ContentPage
 
     private void Resize()
     {
-        if (Width <= 0 || Height <= 0) return;
-        _card.WidthRequest = Math.Max(1, Math.Min(1100, Width - 24));
-        _card.HeightRequest = Math.Max(1, Math.Min(780, Height - 24));
-        double scale = 1;
-#if ANDROID
-        scale = Math.Max(1, Android.App.Application.Context.Resources?.Configuration?.FontScale ?? 1);
-#elif WINDOWS
-        scale = Math.Max(1, new global::Windows.UI.ViewManagement.UISettings().TextScaleFactor);
-#endif
-        int span = ResponsiveLayoutPolicy.Columns(_card.WidthRequest - 34 - ScrollbarGutter, 320 * scale, 3, 10);
-        if (_itemsLayout.Span != span) _itemsLayout.Span = span;
+        if (_closing || _dismissed || !_visible || Width <= 0 || Height <= 0) return;
+        var layout = QuizChoiceLayout.Calculate(Width, Height, _visibleCount,
+            ResponsiveLayoutPolicy.TextScale, ScrollbarGutter,
+            _header.Height > 0 && _search.Height > 0 ? _header.Height + _search.Height : 0);
+        _card.WidthRequest = layout.Width;
+        _card.HeightRequest = layout.Height;
+        _card.Padding = layout.Padding;
+        ChoiceCardHeight = layout.ItemHeight - 4; // The card's two-pixel margins belong to the row too.
+        if (_itemsLayout.Span != layout.Columns) _itemsLayout.Span = layout.Columns;
     }
 
 #if WINDOWS
     private void ApplyScrollbarGutter()
     {
+        if (_dismissed) return;
         if (_list.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.ListViewBase nativeList)
         {
             // FormsGridView binds this padding to its ItemsPresenter. The wrap
@@ -294,7 +315,10 @@ internal sealed class QuizChoicePage : ContentPage
 
     private void ApplyFilter()
     {
-        _list.ItemsSource = QuizChoiceCatalog.Filter(_choices, _search.Text ?? "");
+        var visible = QuizChoiceCatalog.Filter(_choices, _search.Text ?? "");
+        _visibleCount = visible.Count;
+        _list.ItemsSource = visible;
+        Resize();
     }
 
     private View CreateChoiceCard()
@@ -302,17 +326,18 @@ internal sealed class QuizChoicePage : ContentPage
         var button = IllustratedQuizPicker.ChoiceButton();
         var icon = new QuizChoiceIllustration { WidthRequest = 54, HeightRequest = 54,
             VerticalOptions = LayoutOptions.Center };
-        var title = new Label { FontSize = 16, FontAttributes = FontAttributes.Bold, LineBreakMode = LineBreakMode.WordWrap };
+        var title = new Label { FontSize = 16, FontAttributes = FontAttributes.Bold, MaxLines = 2, LineBreakMode = LineBreakMode.WordWrap };
         title.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
         var description = new Label { FontSize = 13, MaxLines = 3, LineBreakMode = LineBreakMode.WordWrap };
         description.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
-        var check = new Label { Text = "✓", FontSize = 22, FontAttributes = FontAttributes.Bold };
+        var check = new Label { Text = "✓", FontSize = 22, FontAttributes = FontAttributes.Bold,
+            VerticalOptions = LayoutOptions.Start };
         check.SetDynamicResource(Label.TextColorProperty, "PrimaryColor");
         var text = new VerticalStackLayout { Spacing = 4, VerticalOptions = LayoutOptions.Center };
         text.Add(title);
         text.Add(description);
         var display = new Grid { ColumnDefinitions = new() { new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 10,
-            Padding = 12, InputTransparent = true, MinimumHeightRequest = 102 };
+            Padding = 12, InputTransparent = true };
         display.Add(icon);
         display.Add(text, 1);
         display.Add(check, 2);
@@ -322,6 +347,7 @@ internal sealed class QuizChoicePage : ContentPage
         layout.Add(IllustratedQuizPicker.ChoiceDisplay(display));
         var card = new Border { Content = layout, StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = 12 }, Margin = new Thickness(2) };
+        card.SetBinding(HeightRequestProperty, new Binding(nameof(ChoiceCardHeight), source: this));
         card.BindingContextChanged += (_, _) =>
         {
             if (card.BindingContext is not QuizChoiceOption option) return;
@@ -344,12 +370,17 @@ internal sealed class QuizChoicePage : ContentPage
 
     private async Task CloseAsync(int? selection)
     {
-        if (_closing) return;
+        if (_closing || _dismissed) return;
         _closing = true;
         try
         {
             await Navigation.PopModalAsync();
             _completion.TrySetResult(selection);
+        }
+        catch (Exception error) when (_hostDestroyed && error is (ObjectDisposedException
+            or System.Runtime.InteropServices.COMException or OperationCanceledException))
+        {
+            _completion.TrySetResult(null);
         }
         catch
         {
@@ -367,33 +398,65 @@ internal sealed class QuizChoicePage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _visible = true;
+        _hostWindow = Window;
+        if (_hostWindow is not null) _hostWindow.Destroying += OnHostDestroying;
         Resize();
         LocalizationService.CultureChanged += OnCultureChanged;
 #if WINDOWS
         _keyboardSurface = Content.Handler?.PlatformView as Microsoft.UI.Xaml.UIElement;
         _keyHandler = OnKeyDown;
         _keyboardSurface?.AddHandler(Microsoft.UI.Xaml.UIElement.KeyDownEvent, _keyHandler, true);
-        Dispatcher.Dispatch(() => _search.Focus());
+        Dispatcher.Dispatch(() => { if (CanUseDialog) _search.Focus(); });
 #endif
         var selected = _choices.FirstOrDefault(option => option.IsSelected);
-        if (selected is not null) Dispatcher.Dispatch(() => _list.ScrollTo(selected, position: ScrollToPosition.MakeVisible));
+        if (selected is not null) Dispatcher.Dispatch(() =>
+        { if (CanUseDialog) _list.ScrollTo(selected, position: ScrollToPosition.MakeVisible); });
     }
 
     protected override void OnDisappearing()
     {
-        LocalizationService.CultureChanged -= OnCultureChanged;
-#if WINDOWS
-        if (_keyHandler is not null)
-            _keyboardSurface?.RemoveHandler(Microsoft.UI.Xaml.UIElement.KeyDownEvent, _keyHandler);
-        _keyboardSurface = null;
-        _keyHandler = null;
-#endif
-        // An external navigation may dismiss the modal without the Close button.
-        if (!_closing) _completion.TrySetResult(null);
+        EndLifetime();
         base.OnDisappearing();
     }
 
-    private void OnCultureChanged(object? sender, EventArgs e) => Dispatcher.Dispatch(async () => await CloseAsync(null));
+    private bool CanUseDialog => _visible && !_dismissed && !_closing && IsLoaded
+        && Handler?.PlatformView is not null && _hostWindow?.Handler?.PlatformView is not null;
+
+    private void OnHostDestroying(object? sender, EventArgs e)
+    {
+        _hostDestroyed = true;
+        EndLifetime();
+        _completion.TrySetResult(null);
+    }
+
+    private void EndLifetime()
+    {
+        if (_dismissed) return;
+        _visible = false;
+        _dismissed = true;
+        LocalizationService.CultureChanged -= OnCultureChanged;
+        if (_hostWindow is not null) _hostWindow.Destroying -= OnHostDestroying;
+        _hostWindow = null;
+#if WINDOWS
+        try
+        {
+            if (!_hostDestroyed && _keyHandler is not null)
+                _keyboardSurface?.RemoveHandler(Microsoft.UI.Xaml.UIElement.KeyDownEvent, _keyHandler);
+        }
+        catch (Exception error) when (error is ObjectDisposedException or System.Runtime.InteropServices.COMException)
+        {
+            System.Diagnostics.Debug.WriteLine($"Picker keyboard surface already disconnected: {error.Message}");
+        }
+        _keyboardSurface = null;
+        _keyHandler = null;
+#endif
+        // Navigation can remove the modal without calling CloseAsync.
+        if (!_closing) _completion.TrySetResult(null);
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e) => Dispatcher.Dispatch(async () =>
+    { if (CanUseDialog) await CloseAsync(null); });
 #if WINDOWS
     private async void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {

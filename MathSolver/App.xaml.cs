@@ -72,10 +72,14 @@ public partial class App : Application
 #endif
 
 #if !ANDROID
+        bool windowDestroyed = false;
+        window.Destroying += (_, _) => windowDestroyed = true;
         splashPage.Loaded += async (_, _) =>
         {
             await Task.Delay(500);
-
+            // Loaded may run more than once, or the window may close during
+            // the splash delay. Never construct UI against disposed services.
+            if (windowDestroyed || !ReferenceEquals(window.Page, splashPage)) return;
             window.Page = new AppShell();
         };
 #endif

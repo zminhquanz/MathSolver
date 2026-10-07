@@ -17,21 +17,24 @@ namespace MathSolver.WinUI
         /// </summary>
         public App()
         {
+            // Register before InitializeComponent: generated XAML registers its
+            // Debugger.Break handler there. Capture the original error first.
+            this.UnhandledException += OnWinUiUnhandledException;
             this.InitializeComponent();
 
-            // Last-resort WinUI guard for transient native COM failures that can
-            // surface *after* a MAUI DynamicResource assignment has returned.
-            // AppThemeManager catches synchronous failures itself; this event is
-            // specifically for the asynchronous WinUI callback path that used to
-            // terminate the process while MediaElement/ComboBox native objects
-            // were being rebuilt during a live-wallpaper transition.
-            this.UnhandledException += OnWinUiUnhandledException;
         }
+
+        private static readonly string ExceptionLogPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MathSolver", "Diagnostics", "windows-unhandled.log");
 
         private static void OnWinUiUnhandledException(
             object sender,
             Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         {
+            UnhandledExceptionLog.Record(ExceptionLogPath, "WinUI UnhandledException", e.Exception, e.Message);
+            // AppThemeManager handles synchronous resource failures. This guard
+            // covers delayed native COM callbacks during live-wallpaper changes.
             if (e.Exception is not System.Runtime.InteropServices.COMException exception ||
                 !AppThemeManager.IsLiveWallpaperNativeExceptionGuardActive)
             {

@@ -7,6 +7,34 @@ internal static partial class PuzzleTests
 {
     public static void CheckResponsivePresentation()
     {
+        foreach (double width in new[] { 320d, 360, 480, 600, 768, 1024, 1440, 1920, 3840 })
+        foreach (double height in new[] { 320d, 640, 900, 2160 })
+        foreach (double scale in new[] { 1d, 1.5, 2 })
+        foreach (int count in new[] { 0, 1, 2, 4, 9, 19, 40 })
+        {
+            var dialog = QuizChoiceLayout.Calculate(width, height, count, scale, scrollbarGutter: 24);
+            Require(dialog.Width > 0 && dialog.Width <= width - 24 && dialog.Height > 0 && dialog.Height <= height - 24,
+                "Choice dialog must stay inside the viewport, including landscape and enlarged text.");
+            Require(dialog.Columns >= 1 && dialog.Columns <= Math.Max(1, Math.Min(count, 3)),
+                "Choice dialog must not create unused columns.");
+            if (dialog.Columns > 1)
+                Require((dialog.Width - 2 * dialog.Padding - 2 - 24 - (dialog.Columns - 1) * 10)
+                    / dialog.Columns >= 320 * scale - 0.01,
+                    "Every choice column needs enough room for scaled text and the scrollbar.");
+            if (width <= 600) Require(dialog.Columns == 1, "Phone choices must use one column.");
+        }
+        var fourChoices = QuizChoiceLayout.Calculate(1920, 1080, 4, scrollbarGutter: 24);
+        Require(fourChoices.Columns == 2 && fourChoices.Height < 500,
+            "Four desktop choices should form a compact two-by-two dialog.");
+        var manyChoices = QuizChoiceLayout.Calculate(1920, 1080, 19, scrollbarGutter: 24);
+        Require(manyChoices.Columns == 3 && manyChoices.Height == 780,
+            "Long desktop lists need three columns and a bounded scrolling viewport.");
+        var filteredChoices = QuizChoiceLayout.Calculate(1920, 1080, 1, scrollbarGutter: 24);
+        Require(filteredChoices.Height < fourChoices.Height && filteredChoices.Width < fourChoices.Width,
+            "Filtering should shrink the dialog to its remaining choices.");
+        Require(QuizChoiceLayout.Calculate(1920, 1080, 0).Height < filteredChoices.Height,
+            "Empty search results should not leave a tall blank list.");
+
         foreach (double width in new[] { 320d, 360, 480, 600, 720, 920, 1024, 1280, 1440 })
         {
             Require(QuizResponsiveLayout.UseSingleColumnChoices(width, 1, 60, true) || width >= 916,
