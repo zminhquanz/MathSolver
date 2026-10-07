@@ -11,6 +11,7 @@ internal static partial class AccessibleMathText
         string result = FractionPattern().Replace(text ?? string.Empty, match =>
             $"{match.Groups[1].Value} {(vi ? "trên" : "over")} {match.Groups[2].Value}");
         return result.Replace("²", vi ? " bình phương" : " squared", StringComparison.Ordinal)
+            .Replace("𝑥", "x", StringComparison.Ordinal)
             .Replace("³", vi ? " lập phương" : " cubed", StringComparison.Ordinal)
             .Replace("?", vi ? "chưa biết" : "unknown", StringComparison.Ordinal);
     }

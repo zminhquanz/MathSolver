@@ -66,6 +66,7 @@ public partial class FindXView : LocalizedSolverView
         InitializeComponent();
 
         InitializeLocalization();
+        LocalizationService.SetTextDisplayFormatter(this, FindXDisplayText.Format);
 
         ConfigureExpandedInputLayout();
         _isCompactInputLayout =

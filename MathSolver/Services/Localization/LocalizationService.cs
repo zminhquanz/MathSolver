@@ -24,6 +24,8 @@ public static class LocalizationService
 
         public string SourceText { get; set; } =
             string.Empty;
+
+        public Func<string, string>? DisplayFormatter { get; set; }
     }
 
     private sealed class TrackedObject
@@ -234,6 +236,25 @@ public static class LocalizationService
             root,
             new HashSet<Element>(
                 ReferenceEqualityComparer.Instance));
+    }
+
+    // Format after translation while preserving the original tracked source for culture changes.
+    internal static void SetTextDisplayFormatter(Element root, Func<string, string> formatter)
+    {
+        var visited = new HashSet<Element>(ReferenceEqualityComparer.Instance);
+        void Visit(Element element)
+        {
+            if (!visited.Add(element) || LegacyTrackingExclusions.TryGetValue(element, out _)) return;
+            if (TrackedObjects.TryGetValue(element, out var tracked))
+                foreach (var property in tracked.Properties.Where(p => p.PropertyName == "Text"))
+                {
+                    property.DisplayFormatter = formatter;
+                    ApplyTrackedProperty(property);
+                }
+            if (element is Microsoft.Maui.IVisualTreeElement visual)
+                foreach (var child in visual.GetVisualChildren().OfType<Element>()) Visit(child);
+        }
+        Visit(root);
     }
 
     public static void RefreshAll()
@@ -650,6 +671,8 @@ public static class LocalizationService
             string expectedText =
                 Translate(
                     property.SourceText);
+            if (property.DisplayFormatter is { } expectedFormatter)
+                expectedText = expectedFormatter(expectedText);
 
             if (string.Equals(
                     currentText,
@@ -684,6 +707,8 @@ public static class LocalizationService
         string translatedText =
             Translate(
                 property.SourceText);
+        if (property.DisplayFormatter is { } formatter)
+            translatedText = formatter(translatedText);
 
         if (string.Equals(
                 property.Getter(),

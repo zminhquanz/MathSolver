@@ -1765,6 +1765,7 @@ public partial class MathPuzzlePage : ContentPage
         string colorResource,
         bool useFractionFormatting)
     {
+        if (_currentQuestion?.FindXProblem is not null) text = FindXDisplayText.Format(text);
         NumericResultLabel.IsVisible = false;
         QuestionComparisonFractionView.IsVisible = false;
         QuestionExpressionLabel.IsVisible =
@@ -2428,6 +2429,7 @@ public partial class MathPuzzlePage : ContentPage
         if (!string.IsNullOrWhiteSpace(
                 feedbackOverride))
         {
+            if (_currentQuestion.FindXProblem is not null) feedbackOverride = FindXDisplayText.Format(feedbackOverride);
             FeedbackLabel.Text = feedbackOverride;
             FeedbackFractionView.Expression = feedbackOverride;
             FeedbackLabel.IsVisible = !_currentQuestion.UsesFractionFormatting;
@@ -2701,6 +2703,7 @@ public partial class MathPuzzlePage : ContentPage
         string text,
         bool useFractionFormatting)
     {
+        if (_currentQuestion?.FindXProblem is not null) text = FindXDisplayText.Format(text);
         SolutionLabel.IsVisible = !useFractionFormatting;
         SolutionFractionView.IsVisible = useFractionFormatting;
 
